@@ -25,7 +25,7 @@ Experts are the composable unit. Over time, a registry of experts representing c
 
 ## Where it came from
 
-FML emerged from six months of real-world LLM usage across meaningfully different problem domains: production debugging on custom applications, Envoy proxy configuration, Kubernetes and Helm operations, and software development in Go and C#.
+FML emerged from six months of real-world LLM usage across meaningfully different problem domains: production debugging on custom applications, understanding and debugging complex infrastructure defined in IaC, Kubernetes and Helm operations, and software development in Go and C#.
 
 In every case, getting reliable output required the same manual work: decompose the problem, identify the relevant reasoning lenses, sequence them deliberately, and structure the handoff between them. That process was always implicit — buried in ad-hoc prompts, markdown files, and trial and error.
 
