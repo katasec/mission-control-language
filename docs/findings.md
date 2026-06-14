@@ -9,7 +9,7 @@
 **Test case**: `examples/build-operator/` — design a Kubernetes operator for container image builds using Tekton.
 
 **Expert pipeline** (FML):
-```
+```fsharp
 mission BuildOperatorDesign =
     KubernetesArchitect
     |> SecurityArchitect
