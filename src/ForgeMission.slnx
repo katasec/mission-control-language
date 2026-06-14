@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ForgeMission.Cli/ForgeMission.Cli.csproj" />
+  <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
+  <Project Path="ForgeMission.Tests/ForgeMission.Tests.csproj" />
+</Solution>

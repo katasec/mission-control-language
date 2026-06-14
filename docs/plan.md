@@ -4,7 +4,7 @@
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 1 — Project Scaffold](phases/phase-1-scaffold.md) | Solution structure, projects, package references | Not Started |
+| [Phase 1 — Project Scaffold](phases/phase-1-scaffold.md) | Solution structure, projects, package references | Done |
 | [Phase 2 — Parser](phases/phase-2-parser.md) | Lexer, token stream, recursive-descent parser, AST | Not Started |
 | [Phase 3 — Expert Loader](phases/phase-3-expert-loader.md) | Resolve expert names to markdown, parse frontmatter, validate | Not Started |
 | [Phase 4 — Pipeline Runner](phases/phase-4-pipeline-runner.md) | Orchestration loop, IExpertRunner interface, output writer | Not Started |
