@@ -95,6 +95,21 @@ Variable resolution order (lowest → highest precedence):
 2. `with { }` clause on a step
 3. `--var key=value` CLI flag
 
+### Reserved context variables
+
+A small set of variables are injected by the runtime and available to every expert in every
+mission. They cannot be overridden by `let` bindings or `--var`.
+
+| Variable | Set by | Value |
+|----------|--------|-------|
+| `{{output}}` | Runtime, after each step | The previous step's text output. Empty string on the first step. |
+| `{{attempt}}` | Runtime, at the start of each loop iteration | Current attempt number, 1-based. Always `1` for missions without `loop`. |
+| `{{max_loops}}` | Runtime, from the mission's `loop N` declaration | Declared loop cap. Always `1` for missions without `loop`. |
+
+These are the only reserved variables. The set is intentionally minimal — everything else
+comes from `let` bindings or `--var`. A new reserved variable requires a language design
+decision, not just a runtime change.
+
 ### Strict subset
 
 The following constructs are explicitly excluded:
@@ -126,11 +141,13 @@ This means a high-level expert is itself a pipeline. The runtime resolves expert
 The following are out of scope at the language level:
 
 - Tool calls
-- Retry logic
 - Model provider selection (beyond `env("FML_MODEL")`)
 - Vector store configuration
 - Agent loop internals
 - DAG or branching syntax
+
+Note: `loop N` on a mission declaration is in scope — it is a bounded retry up to N attempts
+until all steps pass. Unbounded loops, conditional branching, and DAG execution are not.
 
 These live in the runtime layer or below. The language expresses only reasoning structure and
 the context that flows through it.

@@ -57,8 +57,30 @@ attempt 3 → PitchJudge fails → mission fails, surface last result + failure 
 ```
 
 Each attempt is a full fresh pipeline run. Context is re-seeded from scratch each time.
-`{{attempt}}` is available in context so experts can adjust behaviour across retries
-(e.g. "this is attempt 2 — be stricter").
+
+## Reserved Loop Variables
+
+The runtime automatically injects two reserved variables into the context bag at the start of
+each attempt. Expert authors use them via `{{attempt}}` and `{{max_loops}}` in their system
+prompts — no declaration required.
+
+| Variable | Value | Always available? |
+|----------|-------|-------------------|
+| `{{attempt}}` | Current iteration, 1-based | Yes — is `1` for missions without `loop` |
+| `{{max_loops}}` | Declared loop cap | Yes — is `1` for missions without `loop` |
+
+These join `{{output}}` as the full set of runtime-reserved context variables. Everything else
+in context comes from `let` bindings or `--var` overrides.
+
+`{{attempt}}` is always `1` for non-looping missions, so experts that reference it are safe to
+use in any mission — the same way `$?` in bash is always defined even if you never check it.
+
+Example usage in an expert prompt:
+
+```
+You are reviewing attempt {{attempt}} of {{max_loops}}.
+If this is the final attempt, be especially strict — there are no more chances to improve.
+```
 
 ## Grammar Changes
 

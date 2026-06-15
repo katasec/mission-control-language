@@ -17,7 +17,8 @@
 | [Phase 11 — OCI Source Support](phases/phase-11-oci-sources.md) | `use "oci://..."` runtime resolution, pull from OCI registry | Blocked |
 | [Phase 12 — StepEnvelope](phases/phase-12-step-envelope.md) | Structured JSON envelope flowing through pipeline; fail-fast on any step failure; `MissionResult` carries status | Pending |
 | ~~Phase 13 — passes when~~ | Dropped — failure is declared in the expert MD, not the mission grammar. Bash exit-code model: all steps pass by default; any step returning `fail` stops the mission. | Dropped |
-| [Phase 14 — loop N](phases/phase-14-loop.md) | `loop N` on the mission declaration — retry the full pipeline up to N times until all steps pass | Pending |
+| [Phase 14 — loop N](phases/phase-14-loop.md) | `loop N` on the mission declaration; reserved variables `{{attempt}}` and `{{max_loops}}` injected by runtime | Pending |
+| [Phase 14.5 — Loop Demo](phases/phase-14.5-loop-demo.md) | `ContextOverloaded` (drunk expert, always self-passes) + `QualityJudge` demo showing loop converging on quality | Pending |
 | [Phase 15 — Token Streaming](phases/phase-15-streaming.md) | `IAsyncEnumerable<string>` from runner; chunks forwarded to `StepWriter` live; no more silent wait per expert | Pending |
 | [Phase 16 — FML → FMS Rename](phases/phase-16-fms-rename.md) | Surface rename: CLI binary `fml`→`fms`, extension `.fml`→`.fms`, docs. C# namespaces unchanged. | Pending |
 
