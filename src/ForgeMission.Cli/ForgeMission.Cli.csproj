@@ -14,7 +14,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>fml</AssemblyName>
+    <AssemblyName>fms</AssemblyName>
   </PropertyGroup>
 
 </Project>

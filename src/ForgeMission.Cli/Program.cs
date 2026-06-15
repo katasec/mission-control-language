@@ -6,7 +6,7 @@ using ForgeMission.Core.Resolution;
 using ForgeMission.Core.Runtime;
 using Microsoft.Extensions.AI;
 using OpenAI;
-using FmlProgram = ForgeMission.Core.Parser.Program;
+using FmsProgram = ForgeMission.Core.Parser.Program;
 
 var rootCommand = new RootCommand("fms — Forge Mission Script runtime");
 rootCommand.Add(BuildInitCommand());
@@ -22,7 +22,7 @@ return await rootCommand.Parse(args).InvokeAsync();
 
 static Command BuildInitCommand()
 {
-    var missionArg = new Argument<FileInfo?>("mission") { Description = "Path to the .fms mission file (default: mission.fml)", Arity = ArgumentArity.ZeroOrOne };
+    var missionArg = new Argument<FileInfo?>("mission") { Description = "Path to the .fms mission file (default: mission.fms)", Arity = ArgumentArity.ZeroOrOne };
 
     var cmd = new Command("init", "Resolve expert sources and generate fms.lock");
     cmd.Add(missionArg);
@@ -82,7 +82,7 @@ static Command BuildInitCommand()
 
 static Command BuildRunCommand()
 {
-    var missionArg = new Argument<FileInfo?>("mission") { Description = "Path to the .fms mission file (default: mission.fml)", Arity = ArgumentArity.ZeroOrOne };
+    var missionArg = new Argument<FileInfo?>("mission") { Description = "Path to the .fms mission file (default: mission.fms)", Arity = ArgumentArity.ZeroOrOne };
     var stepsOpt   = new Option<bool>("--steps") { Description = "Stream each expert's output to stderr as the pipeline runs" };
     var varOpt     = new Option<string[]>("--var")
     {
@@ -164,7 +164,7 @@ static Command BuildRunCommand()
 
 static Command BuildValidateCommand()
 {
-    var missionArg = new Argument<FileInfo?>("mission") { Description = "Path to the .fms mission file (default: mission.fml)", Arity = ArgumentArity.ZeroOrOne };
+    var missionArg = new Argument<FileInfo?>("mission") { Description = "Path to the .fms mission file (default: mission.fms)", Arity = ArgumentArity.ZeroOrOne };
 
     var cmd = new Command("validate", "Validate a mission file and its expert references");
     cmd.Add(missionArg);
@@ -301,9 +301,9 @@ static async Task<string?> TryReadFile(string path)
     catch (Exception ex) { Die($"Cannot read file '{path}': {ex.Message}"); return null; }
 }
 
-static FmlProgram? TryParse(string source)
+static FmsProgram? TryParse(string source)
 {
-    try { return FmlParser.Parse(source); }
+    try { return FmsParser.Parse(source); }
     catch (ParseException ex) { Die(ex.Message); return null; }
 }
 
@@ -314,7 +314,7 @@ static Dictionary<string, ExpertDefinition>? TryLoadExperts(string expertsDir)
     catch (ExpertLoadException ex) { Die(ex.Message); return null; }
 }
 
-static bool TryValidate(FmlProgram ast, Dictionary<string, ExpertDefinition> experts)
+static bool TryValidate(FmsProgram ast, Dictionary<string, ExpertDefinition> experts)
 {
     try { ExpertLoader.Validate(ast, experts); return true; }
     catch (ExpertLoadException ex) { Die(ex.Message); return false; }
@@ -360,7 +360,7 @@ static string ExpertTemplate(string name) => $"""
     """;
 
 static FileInfo ResolveMission(FileInfo? arg)
-    => new FileInfo(Path.GetFullPath(arg?.FullName ?? "mission.fml"));
+    => new FileInfo(Path.GetFullPath(arg?.FullName ?? "mission.fms"));
 
 static void Die(string message)
 {

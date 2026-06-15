@@ -1,4 +1,4 @@
-grammar FmlGrammar;
+grammar FmsGrammar;
 
 // Parser rules
 

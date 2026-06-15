@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from src/ForgeMission.Core/Parser/FmlGrammar.g4 by ANTLR 4.13.1
+// Generated from /Users/ameerdeen/progs/fml/src/ForgeMission.Core/Parser/FmsGrammar.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -30,7 +30,7 @@ using DFA = Antlr4.Runtime.Dfa.DFA;
 
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.13.1")]
 [System.CLSCompliant(false)]
-public partial class FmlGrammarLexer : Lexer {
+public partial class FmsGrammarLexer : Lexer {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
@@ -52,10 +52,10 @@ public partial class FmlGrammarLexer : Lexer {
 	};
 
 
-	public FmlGrammarLexer(ICharStream input)
+	public FmsGrammarLexer(ICharStream input)
 	: this(input, Console.Out, Console.Error) { }
 
-	public FmlGrammarLexer(ICharStream input, TextWriter output, TextWriter errorOutput)
+	public FmsGrammarLexer(ICharStream input, TextWriter output, TextWriter errorOutput)
 	: base(input, output, errorOutput)
 	{
 		Interpreter = new LexerATNSimulator(this, _ATN, decisionToDFA, sharedContextCache);
@@ -81,7 +81,7 @@ public partial class FmlGrammarLexer : Lexer {
 		}
 	}
 
-	public override string GrammarFileName { get { return "FmlGrammar.g4"; } }
+	public override string GrammarFileName { get { return "FmsGrammar.g4"; } }
 
 	public override string[] RuleNames { get { return ruleNames; } }
 
@@ -91,7 +91,7 @@ public partial class FmlGrammarLexer : Lexer {
 
 	public override int[] SerializedAtn { get { return _serializedATN; } }
 
-	static FmlGrammarLexer() {
+	static FmsGrammarLexer() {
 		decisionToDFA = new DFA[_ATN.NumberOfDecisions];
 		for (int i = 0; i < _ATN.NumberOfDecisions; i++) {
 			decisionToDFA[i] = new DFA(_ATN.GetDecisionState(i), i);

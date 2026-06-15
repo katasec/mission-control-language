@@ -1,8 +1,8 @@
 namespace ForgeMission.Core.Parser;
 
-internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
+internal class FmsAstBuilder : FmsGrammarBaseVisitor<object?>
 {
-    public override object? VisitProgram(FmlGrammarParser.ProgramContext ctx)
+    public override object? VisitProgram(FmsGrammarParser.ProgramContext ctx)
     {
         var uses = ctx.useDecl()
             .Select(u => (UseDeclaration)Visit(u)!)
@@ -23,31 +23,31 @@ internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
         return new Program(uses, bindings, declarations, outputs);
     }
 
-    public override object? VisitUseDecl(FmlGrammarParser.UseDeclContext ctx)
+    public override object? VisitUseDecl(FmsGrammarParser.UseDeclContext ctx)
         => new UseDeclaration(StripQuotes(ctx.STRING().GetText()));
 
-    public override object? VisitLetBinding(FmlGrammarParser.LetBindingContext ctx)
+    public override object? VisitLetBinding(FmsGrammarParser.LetBindingContext ctx)
     {
         var name  = ctx.LOWER_ID().GetText();
         var value = ParseLetValue(ctx.value());
         return new LetBinding(name, value);
     }
 
-    public override object? VisitOutputDecl(FmlGrammarParser.OutputDeclContext ctx)
+    public override object? VisitOutputDecl(FmsGrammarParser.OutputDeclContext ctx)
     {
         var missionName = ctx.UPPER_ID().GetText();
         var filePath    = ctx.STRING() is { } s ? StripQuotes(s.GetText()) : null;
         return new OutputDeclaration(missionName, filePath);
     }
 
-    public override object? VisitDeclaration(FmlGrammarParser.DeclarationContext ctx)
+    public override object? VisitDeclaration(FmsGrammarParser.DeclarationContext ctx)
     {
         if (ctx.mission() is { } m) return Visit(m);
         if (ctx.expert() is { } e)  return Visit(e);
         throw new ParseException("Unknown declaration", ctx.Start.Line, ctx.Start.Column);
     }
 
-    public override object? VisitMission(FmlGrammarParser.MissionContext ctx)
+    public override object? VisitMission(FmsGrammarParser.MissionContext ctx)
     {
         var name     = ctx.UPPER_ID().GetText();
         var @params  = ParseParams(ctx.@params());
@@ -55,7 +55,7 @@ internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
         return new MissionDeclaration(name, @params, pipeline);
     }
 
-    public override object? VisitExpert(FmlGrammarParser.ExpertContext ctx)
+    public override object? VisitExpert(FmsGrammarParser.ExpertContext ctx)
     {
         var name     = ctx.UPPER_ID().GetText();
         var @params  = ParseParams(ctx.@params());
@@ -63,13 +63,13 @@ internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
         return new ExpertDeclaration(name, @params, pipeline);
     }
 
-    public override object? VisitPipeline(FmlGrammarParser.PipelineContext ctx)
+    public override object? VisitPipeline(FmsGrammarParser.PipelineContext ctx)
     {
         var steps = ctx.step().Select(s => (Step)Visit(s)!).ToList();
         return new Pipeline(steps);
     }
 
-    public override object? VisitStep(FmlGrammarParser.StepContext ctx)
+    public override object? VisitStep(FmsGrammarParser.StepContext ctx)
     {
         var name = ctx.UPPER_ID().GetText();
         var with = ctx.withClause() is { } wc
@@ -78,25 +78,25 @@ internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
         return new Step(name, with);
     }
 
-    public override object? VisitWithClause(FmlGrammarParser.WithClauseContext ctx)
+    public override object? VisitWithClause(FmsGrammarParser.WithClauseContext ctx)
     {
         var bindings = ctx.binding().Select(b => (Binding)Visit(b)!).ToList();
         return (IReadOnlyList<Binding>)bindings;
     }
 
-    public override object? VisitBinding(FmlGrammarParser.BindingContext ctx)
+    public override object? VisitBinding(FmsGrammarParser.BindingContext ctx)
     {
         var key   = ctx.LOWER_ID().GetText();
         var value = ParseBindingValue(ctx.value());
         return new Binding(key, value);
     }
 
-    private static IReadOnlyList<string> ParseParams(FmlGrammarParser.ParamsContext? ctx)
+    private static IReadOnlyList<string> ParseParams(FmsGrammarParser.ParamsContext? ctx)
         => ctx is null
             ? []
             : ctx.LOWER_ID().Select(id => id.GetText()).ToList();
 
-    private static LetValue ParseLetValue(FmlGrammarParser.ValueContext ctx)
+    private static LetValue ParseLetValue(FmsGrammarParser.ValueContext ctx)
     {
         if (ctx.STRING() is { } str)
             return new StringLetValue(StripQuotes(str.GetText()));
@@ -107,7 +107,7 @@ internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
             ctx.Start.Line, ctx.Start.Column);
     }
 
-    private static BindingValue ParseBindingValue(FmlGrammarParser.ValueContext ctx)
+    private static BindingValue ParseBindingValue(FmsGrammarParser.ValueContext ctx)
     {
         if (ctx.STRING() is { } str)
             return new StringBindingValue(StripQuotes(str.GetText()));
@@ -121,7 +121,7 @@ internal class FmlAstBuilder : FmlGrammarBaseVisitor<object?>
         throw new ParseException("Unknown value form", ctx.Start.Line, ctx.Start.Column);
     }
 
-    private static EnvLetValue ParseEnvLetValue(FmlGrammarParser.EnvCallContext ctx)
+    private static EnvLetValue ParseEnvLetValue(FmsGrammarParser.EnvCallContext ctx)
     {
         var strings      = ctx.STRING();
         var varName      = StripQuotes(strings[0].GetText());

@@ -46,7 +46,7 @@ public class MafExpertRunnerIntegrationTests
     {
         Skip.If(string.IsNullOrWhiteSpace(ApiKey), "OPENAI_API_KEY not set — skipping integration test");
 
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission TestMission =
                 Summariser
                 |> Reviewer

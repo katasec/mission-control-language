@@ -26,7 +26,7 @@ what you need when showing it to someone.
 ## Mission File
 
 ```
-// missions/loop-demo/mission.fml
+// missions/loop-demo/mission.fms
 
 use "./experts"
 
@@ -98,7 +98,7 @@ Running mission 'DemoReliability'... (attempt 2/3)
 ## Contrast Mission (single expert, no loop)
 
 ```
-// missions/loop-demo-naive/mission.fml
+// missions/loop-demo-naive/mission.fms
 
 use "./experts"
 
@@ -117,10 +117,10 @@ Run both side by side. `NaiveAnswer` always returns the attempt-1 vague output w
 
 ```bash
 # Naive — one shot, whatever comes out
-cd missions/loop-demo-naive && fml run
+cd missions/loop-demo-naive && fms run
 
 # Reliable — loops until quality passes
-cd missions/loop-demo && fml run --steps
+cd missions/loop-demo && fms run --steps
 ```
 
 The `--steps` flag on the second run shows the retry happening in real time on stderr while

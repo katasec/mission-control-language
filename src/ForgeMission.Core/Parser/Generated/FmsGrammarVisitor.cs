@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from src/ForgeMission.Core/Parser/FmlGrammar.g4 by ANTLR 4.13.1
+// Generated from /Users/ameerdeen/progs/fml/src/ForgeMission.Core/Parser/FmsGrammar.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -26,95 +26,95 @@ using IToken = Antlr4.Runtime.IToken;
 
 /// <summary>
 /// This interface defines a complete generic visitor for a parse tree produced
-/// by <see cref="FmlGrammarParser"/>.
+/// by <see cref="FmsGrammarParser"/>.
 /// </summary>
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.13.1")]
 [System.CLSCompliant(false)]
-public interface IFmlGrammarVisitor<Result> : IParseTreeVisitor<Result> {
+public interface IFmsGrammarVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.program"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.program"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitProgram([NotNull] FmlGrammarParser.ProgramContext context);
+	Result VisitProgram([NotNull] FmsGrammarParser.ProgramContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.useDecl"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.useDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitUseDecl([NotNull] FmlGrammarParser.UseDeclContext context);
+	Result VisitUseDecl([NotNull] FmsGrammarParser.UseDeclContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.letBinding"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.letBinding"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLetBinding([NotNull] FmlGrammarParser.LetBindingContext context);
+	Result VisitLetBinding([NotNull] FmsGrammarParser.LetBindingContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.declaration"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.declaration"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitDeclaration([NotNull] FmlGrammarParser.DeclarationContext context);
+	Result VisitDeclaration([NotNull] FmsGrammarParser.DeclarationContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.outputDecl"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.outputDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitOutputDecl([NotNull] FmlGrammarParser.OutputDeclContext context);
+	Result VisitOutputDecl([NotNull] FmsGrammarParser.OutputDeclContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.mission"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.mission"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitMission([NotNull] FmlGrammarParser.MissionContext context);
+	Result VisitMission([NotNull] FmsGrammarParser.MissionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.expert"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.expert"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpert([NotNull] FmlGrammarParser.ExpertContext context);
+	Result VisitExpert([NotNull] FmsGrammarParser.ExpertContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.params"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.params"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitParams([NotNull] FmlGrammarParser.ParamsContext context);
+	Result VisitParams([NotNull] FmsGrammarParser.ParamsContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.pipeline"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.pipeline"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitPipeline([NotNull] FmlGrammarParser.PipelineContext context);
+	Result VisitPipeline([NotNull] FmsGrammarParser.PipelineContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.step"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.step"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStep([NotNull] FmlGrammarParser.StepContext context);
+	Result VisitStep([NotNull] FmsGrammarParser.StepContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.withClause"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.withClause"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitWithClause([NotNull] FmlGrammarParser.WithClauseContext context);
+	Result VisitWithClause([NotNull] FmsGrammarParser.WithClauseContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.binding"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.binding"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitBinding([NotNull] FmlGrammarParser.BindingContext context);
+	Result VisitBinding([NotNull] FmsGrammarParser.BindingContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.value"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitValue([NotNull] FmlGrammarParser.ValueContext context);
+	Result VisitValue([NotNull] FmsGrammarParser.ValueContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="FmlGrammarParser.envCall"/>.
+	/// Visit a parse tree produced by <see cref="FmsGrammarParser.envCall"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitEnvCall([NotNull] FmlGrammarParser.EnvCallContext context);
+	Result VisitEnvCall([NotNull] FmsGrammarParser.EnvCallContext context);
 }
 } // namespace ForgeMission.Core.Parser

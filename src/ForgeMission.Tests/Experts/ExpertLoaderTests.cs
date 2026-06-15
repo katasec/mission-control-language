@@ -126,7 +126,7 @@ public class ExpertLoaderTests : IDisposable
     [Fact]
     public void Validate_MissingExpert_ThrowsExpertLoadException()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect
                 |> SecurityArchitect
@@ -142,7 +142,7 @@ public class ExpertLoaderTests : IDisposable
     [Fact]
     public void Validate_AllExpertsPresent_DoesNotThrow()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect
                 |> SecurityArchitect
@@ -159,7 +159,7 @@ public class ExpertLoaderTests : IDisposable
     [Fact]
     public void Validate_ExpertDeclaredInAst_DoesNotRequireMarkdownFile()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             expert KubernetesArchitect =
                 RequirementsAnalyst
                 |> PlatformArchitect

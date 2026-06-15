@@ -39,10 +39,10 @@ install: ## Publish single-file binary to ~/.local/bin
 		-p:PublishSingleFile=true \
 		-p:DebugType=none \
 		-o $(INSTALL_DIR)
-	@echo "Installed: $(INSTALL_DIR)/fml"
+	@echo "Installed: $(INSTALL_DIR)/fms"
 
 demo: install ## Install then run the build-operator sample mission end-to-end
-	cd missions/build-operator && fml init && fml run
+	cd missions/build-operator && fms init && fms run
 
 clean: ## Remove build artefacts (bin/ and obj/)
 	dotnet clean src/

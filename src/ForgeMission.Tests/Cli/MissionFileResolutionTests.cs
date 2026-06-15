@@ -9,20 +9,20 @@ public class MissionFileResolutionTests
 {
     // Mirrors the ResolveMission helper in Program.cs exactly
     private static FileInfo ResolveMission(FileInfo? arg)
-        => new FileInfo(Path.GetFullPath(arg?.FullName ?? "mission.fml"));
+        => new FileInfo(Path.GetFullPath(arg?.FullName ?? "mission.fms"));
 
     [Fact]
-    public void NoArg_ResolvesToMissionFml()
+    public void NoArg_ResolvesToMissionFms()
     {
         var result = ResolveMission(null);
-        Assert.Equal("mission.fml", result.Name);
+        Assert.Equal("mission.fms", result.Name);
     }
 
     [Fact]
     public void NoArg_DirectoryNameIsNotNull()
     {
         // This is the exact invariant that caused the NullReferenceException.
-        // new FileInfo("mission.fml").DirectoryName returns null — Path.GetFullPath fixes it.
+        // new FileInfo("mission.fms").DirectoryName returns null — Path.GetFullPath fixes it.
         var result = ResolveMission(null);
         Assert.NotNull(result.DirectoryName);
     }

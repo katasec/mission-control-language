@@ -15,7 +15,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task SingleStep_CallsRunnerOnce_ReturnsOutput()
     {
-        var ast    = FmlParser.Parse("mission BuildOperator = KubernetesArchitect");
+        var ast    = FmsParser.Parse("mission BuildOperator = KubernetesArchitect");
         var stub   = new StubExpertRunner();
         var result = await new PipelineRunner(stub)
             .RunAsync(ast, Experts("KubernetesArchitect"), new PipelineRunOptions("BuildOperator"));
@@ -28,7 +28,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task MultiStep_PassesOutputForward()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect
                 |> SecurityArchitect
@@ -54,7 +54,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task Result_ContainsLastStepOutput()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect
                 |> PrincipalReviewer
@@ -71,7 +71,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task StepWriter_ReceivesEachStepOutput()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect
                 |> SecurityArchitect
@@ -93,7 +93,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task CancellationToken_IsRespected()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect
                 |> SecurityArchitect
@@ -112,7 +112,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task LetBindings_SeedContext()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             let goal = "Design a K8s operator"
             mission BuildOperator = KubernetesArchitect
             """);
@@ -127,7 +127,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task WithClause_OverridesContextForStep()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             mission BuildOperator =
                 KubernetesArchitect with { style = "terse" }
             """);
@@ -142,7 +142,7 @@ public class PipelineRunnerTests
     [Fact]
     public async Task VarFlag_OverridesLetBinding()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             let goal = "original"
             mission BuildOperator = KubernetesArchitect
             """);
@@ -159,7 +159,7 @@ public class PipelineRunnerTests
     [Fact]
     public void MissingEnvVar_ThrowsClearly()
     {
-        var ast = FmlParser.Parse("""
+        var ast = FmsParser.Parse("""
             let apiKey = env("FMLTEST_MISSING_VAR_XYZ")
             mission BuildOperator = KubernetesArchitect
             """);

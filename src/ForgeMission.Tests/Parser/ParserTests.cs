@@ -7,7 +7,7 @@ public class ParserTests
     [Fact]
     public void ValidMission_SingleExpert_ParsesCorrectly()
     {
-        var result = FmlParser.Parse("mission BuildOperator = KubernetesArchitect");
+        var result = FmsParser.Parse("mission BuildOperator = KubernetesArchitect");
 
         var mission = Assert.Single(result.Declarations) as MissionDeclaration;
         Assert.NotNull(mission);
@@ -25,7 +25,7 @@ public class ParserTests
                 |> PrincipalReviewer
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var mission = Assert.Single(result.Declarations) as MissionDeclaration;
         Assert.NotNull(mission);
@@ -45,7 +45,7 @@ public class ParserTests
                 |> ReliabilityArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var expert = Assert.Single(result.Declarations) as ExpertDeclaration;
         Assert.NotNull(expert);
@@ -68,7 +68,7 @@ public class ParserTests
                 |> SecurityArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         Assert.Equal(2, result.Declarations.Count);
         Assert.IsType<ExpertDeclaration>(result.Declarations[0]);
@@ -89,7 +89,7 @@ public class ParserTests
                 |> PlatformArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         Assert.Equal(2, result.Declarations.Count);
         var mission = result.Declarations[0] as MissionDeclaration;
@@ -105,7 +105,7 @@ public class ParserTests
     {
         var source = "mission BuildOperator = kubernetesArchitect";
 
-        var ex = Assert.Throws<ParseException>(() => FmlParser.Parse(source));
+        var ex = Assert.Throws<ParseException>(() => FmsParser.Parse(source));
         Assert.Contains("PascalCase", ex.Message);
     }
 
@@ -114,7 +114,7 @@ public class ParserTests
     {
         var source = "mission BuildOperator KubernetesArchitect";
 
-        var ex = Assert.Throws<ParseException>(() => FmlParser.Parse(source));
+        var ex = Assert.Throws<ParseException>(() => FmsParser.Parse(source));
         Assert.Contains("'='", ex.Message);
     }
 
@@ -123,7 +123,7 @@ public class ParserTests
     {
         var source = "mission BuildOperator =";
 
-        Assert.Throws<ParseException>(() => FmlParser.Parse(source));
+        Assert.Throws<ParseException>(() => FmsParser.Parse(source));
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class ParserTests
             mission BuildOperator = KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         Assert.Single(result.Bindings);
         var binding = result.Bindings[0];
@@ -151,7 +151,7 @@ public class ParserTests
             mission BuildOperator = KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var binding = Assert.Single(result.Bindings);
         var value = Assert.IsType<EnvLetValue>(binding.Value);
@@ -167,7 +167,7 @@ public class ParserTests
             mission BuildOperator = KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var binding = Assert.Single(result.Bindings);
         var value = Assert.IsType<EnvLetValue>(binding.Value);
@@ -183,7 +183,7 @@ public class ParserTests
                 KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var mission = Assert.Single(result.Declarations) as MissionDeclaration;
         Assert.NotNull(mission);
@@ -199,7 +199,7 @@ public class ParserTests
                 |> PrincipalReviewer with { style = "terse ADR" }
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var mission = Assert.Single(result.Declarations) as MissionDeclaration;
         Assert.NotNull(mission);
@@ -220,7 +220,7 @@ public class ParserTests
                 KubernetesArchitect with { style = myStyle }
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var mission = Assert.Single(result.Declarations) as MissionDeclaration;
         Assert.NotNull(mission);
@@ -240,7 +240,7 @@ public class ParserTests
             mission BuildOperator = KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var use = Assert.Single(result.Uses);
         Assert.Equal("./experts", use.Source);
@@ -254,7 +254,7 @@ public class ParserTests
             mission BuildOperator = KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         var use = Assert.Single(result.Uses);
         Assert.Equal("oci://ghcr.io/forge/experts/platform:v1", use.Source);
@@ -269,7 +269,7 @@ public class ParserTests
             mission BuildOperator = KubernetesArchitect
             """;
 
-        var result = FmlParser.Parse(source);
+        var result = FmsParser.Parse(source);
 
         Assert.Equal(2, result.Uses.Count);
         Assert.Equal("./experts", result.Uses[0].Source);
@@ -279,7 +279,7 @@ public class ParserTests
     [Fact]
     public void NoUseDeclarations_UsesIsEmpty()
     {
-        var result = FmlParser.Parse("mission BuildOperator = KubernetesArchitect");
+        var result = FmsParser.Parse("mission BuildOperator = KubernetesArchitect");
         Assert.Empty(result.Uses);
     }
 }
