@@ -107,7 +107,7 @@ for the authoritative grammar.
 | 10 | Update `MafExpertRunner` — extract `output` key, interpolate system prompt | Done |
 | 11 | Implement `env()` builtin — fails clearly on missing var with no default | Done |
 | 12 | Update CLI `fml run` — add `--var key=value` flag | Done |
-| 13 | Update `examples/build-operator/mission.fml` — `let`, params, `with` clause | Done |
+| 13 | Update `missions/build-operator/mission.fml` — `let`, params, `with` clause | Done |
 | 14 | Update expert markdown files — `{{goal}}`, `{{persona}}`, `{{style}}` placeholders | Done |
 | 15 | Parser tests — let, env(), params, with clause | Done |
 | 16 | Runtime tests — context seeding, with override, --var override, missing env var | Done |

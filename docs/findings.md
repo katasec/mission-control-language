@@ -6,7 +6,7 @@
 
 ## Method
 
-**Test case**: `examples/build-operator/` — design a Kubernetes operator for container image builds using Tekton.
+**Test case**: `missions/build-operator/` — design a Kubernetes operator for container image builds using Tekton.
 
 **Expert pipeline** (FML):
 ```fsharp
@@ -18,7 +18,7 @@ mission BuildOperatorDesign =
 
 **Baseline**: single prompt to `gpt-4o-mini` with a system prompt that asked it to cover all the same areas (CRD design, controller, RBAC, operations, security, ADR) in one shot.
 
-Both used the same model (`gpt-4o-mini`) and the same input (`examples/build-operator/input.md`). Outputs are in `runs/`.
+Both used the same model (`gpt-4o-mini`) and the same input (`missions/build-operator/input.md`). Outputs are in `runs/`.
 
 ---
 

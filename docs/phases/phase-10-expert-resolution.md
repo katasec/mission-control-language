@@ -42,7 +42,7 @@ The following workflow succeeds end-to-end on the `build-operator` example:
 ```pwsh
 fms init
 fms validate
-fms run examples/build-operator/mission.fms --input examples/build-operator/input.md
+fms run missions/build-operator/mission.fms --input missions/build-operator/input.md
 ```
 
 `fms run` without a prior `fms init` fails with a clear error pointing to `fms init`.
@@ -309,7 +309,7 @@ Suggested action:
 | 1 | Add `use` declaration to `FmlGrammar.g4`; regenerate ANTLR | Done |
 | 2 | Add `UseDeclaration` to AST; update `FmlAstBuilder` | Done |
 | 3 | Update `ExpertLoader` — look for `<name>/expert.md` instead of `<name>.md` | Done |
-| 4 | Migrate `examples/build-operator/experts/` to directory-per-expert structure | Done |
+| 4 | Migrate `missions/build-operator/experts/` to directory-per-expert structure | Done |
 | 5 | Implement `LockFileWriter` — generate `fms.lock` from resolved expert map | Done |
 | 6 | Implement `LockFileReader` — load resolved expert paths from `fms.lock` | Done |
 | 7 | Implement `SourceResolver` — resolve local path sources; emit FMS010 for OCI | Done |

@@ -21,7 +21,7 @@ Create the solution structure, projects, and package references. Nothing functio
 | 7 | Add MAF package references to `Core` (`Microsoft.Agents.AI`, `Microsoft.Agents.AI.OpenAI`) | Done |
 | 8 | Add `YamlDotNet` package reference to `Core` (frontmatter parsing) | Done |
 | 9 | Add `System.CommandLine` package reference to `Cli` | Done |
-| 10 | Create top-level folder structure: `src/`, `examples/`, `runs/` | Done |
+| 10 | Create top-level folder structure: `src/`, `missions/`, `runs/` | Done |
 | 11 | Add `runs/`, `bin/`, `obj/` to `.gitignore` | Done |
 | 12 | Verify `dotnet build` passes clean | Done |
 

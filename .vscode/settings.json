@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.forge": "fsharp",
+        "*.mission": "fsharp",
+        "*.fms": "fsharp",
+        "*.fml": "fsharp"
+    }
+}

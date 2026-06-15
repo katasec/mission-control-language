@@ -78,7 +78,7 @@ src/
   ForgeMission.Core/    — parser, expert loader, pipeline runner, MAF adapter
   ForgeMission.Cli/     — CLI entry point
   ForgeMission.Tests/   — xUnit tests
-examples/               — example missions (build-operator added in Phase 6)
+missions/               — example missions (build-operator added in Phase 6)
 runs/                   — gitignored, output of fml run
 ```
 

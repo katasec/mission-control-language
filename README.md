@@ -383,7 +383,7 @@ forge-mission-language/
     ForgeMission.Core/    # Parser (ANTLR4), AST, pipeline runner, expert resolution
     ForgeMission.Cli/     # CLI (fms init / run / validate / list / expert)
     ForgeMission.Tests/   # Unit and integration tests
-  examples/
+  missions/
     build-operator/
       mission.fms
       fms.lock             # committed — reproducible expert resolution
