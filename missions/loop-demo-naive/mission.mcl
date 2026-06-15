@@ -1,10 +1,16 @@
+// Loop demo — naive single-shot (no retry, no judge)
+// Pair this with loop-demo/mission.mcl to see the difference.
+// Run: make demo-naive
+
 use "./experts"
 
+// LLM configuration — set MCL_MODEL to override the default
 let apiKey = env("OPENAI_API_KEY")
 let model  = env("MCL_MODEL", "gpt-4o-mini")
+
 let topic  = "why the sky is blue"
 
 mission NaiveAnswer(topic) =
-    ContextOverloaded
+    ContextOverloaded   // one shot — whatever comes out, no retry
 
 output(NaiveAnswer)

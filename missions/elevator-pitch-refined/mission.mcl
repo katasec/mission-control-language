@@ -1,13 +1,19 @@
+// Elevator pitch — refined via adversarial review
+// Four experts in sequence: draft, critique, revise, judge.
+// Compare with elevator-pitch for the difference composition makes.
+
 use "./experts"
 
+// LLM configuration — set MCL_MODEL to override the default
 let apiKey   = env("OPENAI_API_KEY")
 let model    = env("MCL_MODEL", "gpt-4o-mini")
+
 let product  = "an app that turns voice memos into structured tasks"
 
 mission RefinedPitch(product) =
-    PitchDrafter
-    |> PitchCritic
-    |> PitchReviser
-    |> PitchJudge
+    PitchDrafter    // writes the initial pitch
+    |> PitchCritic  // identifies weaknesses
+    |> PitchReviser // rewrites based on the critique
+    |> PitchJudge   // passes or fails the final pitch
 
 output(RefinedPitch)
