@@ -66,7 +66,7 @@ static Command BuildInitCommand()
         foreach (var (name, expert) in catalog.OrderBy(k => k.Key))
             Console.WriteLine($"  {name,-30} {expert.Source}");
 
-        var lockFile = LockFileIO.Build(ast.Uses.Select(u => u.Source).ToList(), catalog);
+        var lockFile = LockFileIO.Build(ast.Uses.Select(u => u.Source).ToList(), catalog, missionDir);
         var lockPath = Path.Combine(missionDir, "mcl.lock");
         LockFileIO.Write(lockPath, lockFile);
 
@@ -125,7 +125,7 @@ static Command BuildRunCommand()
         catch (Exception ex) { Die($"Cannot read mcl.lock: {ex.Message}"); return; }
 
         Dictionary<string, ExpertDefinition> expertDefs;
-        try { expertDefs = ExpertLoader.LoadFromLockFile(lockFile); }
+        try { expertDefs = ExpertLoader.LoadFromLockFile(lockFile, missionDir); }
         catch (ExpertLoadException ex) { Die(ex.Message); return; }
 
         if (!TryValidate(ast, expertDefs)) return;
@@ -216,7 +216,7 @@ static Command BuildValidateCommand()
         else
         {
             var lockFile   = LockFileIO.Read(lockPath);
-            var expertDefs = ExpertLoader.LoadFromLockFile(lockFile);
+            var expertDefs = ExpertLoader.LoadFromLockFile(lockFile, missionDir);
             if (TryValidate(ast, expertDefs))
                 Console.WriteLine("OK — mission is valid.");
         }

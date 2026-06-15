@@ -183,18 +183,18 @@ public class ExpertLoaderTests : IDisposable
     public void LoadFromLockFile_ReadsExpertsByPath()
     {
         WriteDirExpert("KubernetesArchitect", ValidExpertMarkdown());
-        var expertMdPath = Path.Combine(_dir, "KubernetesArchitect", "expert.md");
+        var relativePath = Path.Combine("KubernetesArchitect", "expert.md");
 
         var lockFile = new LockFile
         {
             Sources = ["./experts"],
             Experts = new Dictionary<string, LockFileExpert>
             {
-                ["KubernetesArchitect"] = new() { Source = "./experts", Path = expertMdPath }
+                ["KubernetesArchitect"] = new() { Source = "./experts", Path = relativePath }
             }
         };
 
-        var experts = ExpertLoader.LoadFromLockFile(lockFile);
+        var experts = ExpertLoader.LoadFromLockFile(lockFile, _dir);
         Assert.Single(experts);
         Assert.Equal("KubernetesArchitect", experts["KubernetesArchitect"].Name);
     }

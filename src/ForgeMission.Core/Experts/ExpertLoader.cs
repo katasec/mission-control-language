@@ -13,11 +13,16 @@ public class ExpertLoader(string expertsDirectory)
         .Build();
 
     /// <summary>Load experts from a resolved lock file catalog.</summary>
-    public static Dictionary<string, ExpertDefinition> LoadFromLockFile(LockFile lockFile)
+    public static Dictionary<string, ExpertDefinition> LoadFromLockFile(LockFile lockFile, string lockFileDirectory)
     {
         var experts = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal);
         foreach (var (name, entry) in lockFile.Experts)
-            experts[name] = ParseFile(entry.Path);
+        {
+            var path = Path.IsPathRooted(entry.Path)
+                ? entry.Path
+                : Path.GetFullPath(Path.Combine(lockFileDirectory, entry.Path));
+            experts[name] = ParseFile(path);
+        }
         return experts;
     }
 

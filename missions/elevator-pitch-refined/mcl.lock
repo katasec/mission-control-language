@@ -4,13 +4,13 @@ sources:
 experts:
   PitchCritic:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/elevator-pitch-refined/experts/PitchCritic/expert.md
+    path: experts/PitchCritic/expert.md
   PitchDrafter:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/elevator-pitch-refined/experts/PitchDrafter/expert.md
+    path: experts/PitchDrafter/expert.md
   PitchJudge:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/elevator-pitch-refined/experts/PitchJudge/expert.md
+    path: experts/PitchJudge/expert.md
   PitchReviser:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/elevator-pitch-refined/experts/PitchReviser/expert.md
+    path: experts/PitchReviser/expert.md

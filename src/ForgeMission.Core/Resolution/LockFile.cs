@@ -35,11 +35,15 @@ public static class LockFileIO
 
     public static LockFile Build(
         IReadOnlyList<string> sources,
-        Dictionary<string, ResolvedExpert> catalog)
+        Dictionary<string, ResolvedExpert> catalog,
+        string missionDirectory)
     {
         var lf = new LockFile { Sources = [..sources] };
         foreach (var (name, expert) in catalog.OrderBy(k => k.Key))
-            lf.Experts[name] = new LockFileExpert { Source = expert.Source, Path = expert.ExpertMdPath };
+        {
+            var relativePath = Path.GetRelativePath(missionDirectory, expert.ExpertMdPath);
+            lf.Experts[name] = new LockFileExpert { Source = expert.Source, Path = relativePath };
+        }
         return lf;
     }
 }

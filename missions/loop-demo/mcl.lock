@@ -4,7 +4,7 @@ sources:
 experts:
   ContextOverloaded:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/loop-demo/experts/ContextOverloaded/expert.md
+    path: experts/ContextOverloaded/expert.md
   QualityJudge:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/loop-demo/experts/QualityJudge/expert.md
+    path: experts/QualityJudge/expert.md

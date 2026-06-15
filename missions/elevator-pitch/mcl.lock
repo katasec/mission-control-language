@@ -4,4 +4,4 @@ sources:
 experts:
   PitchWriter:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/elevator-pitch/experts/PitchWriter/expert.md
+    path: experts/PitchWriter/expert.md

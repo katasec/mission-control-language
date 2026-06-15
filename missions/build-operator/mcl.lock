@@ -4,10 +4,10 @@ sources:
 experts:
   KubernetesArchitect:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/build-operator/experts/KubernetesArchitect/expert.md
+    path: experts/KubernetesArchitect/expert.md
   PrincipalReviewer:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/build-operator/experts/PrincipalReviewer/expert.md
+    path: experts/PrincipalReviewer/expert.md
   SecurityArchitect:
     source: ./experts
-    path: /Users/ameerdeen/progs/fml/missions/build-operator/experts/SecurityArchitect/expert.md
+    path: experts/SecurityArchitect/expert.md
