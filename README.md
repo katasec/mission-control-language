@@ -1,6 +1,6 @@
 # Mission Control Language (MCL)
 
-A minimal scripting language for composing LLM experts into reliable reasoning pipelines.
+A minimal scripting language for staging LLM experts into reliable reasoning pipelines.
 
 > **Why it exists:** see [docs/why.md](docs/why.md)
 
@@ -36,9 +36,18 @@ mission BuildOperatorDesign(goal, persona) =
 output(BuildOperatorDesign)
 ```
 
-The `|>` operator means progressive refinement — each expert receives the previous expert's
-output and improves or constrains it. This is not function composition; it is sequential
-reasoning with accumulating context.
+Experts execute left to right. Each stage receives the accumulated context and all prior
+outputs, then applies its own reasoning before passing forward.
+
+```
+KubernetesArchitect
+        ↓
+SecurityArchitect
+        ↓
+PrincipalReviewer
+```
+
+The mental model is a pipeline of reviewers, not a call stack.
 
 ---
 
@@ -130,7 +139,7 @@ missions/build-operator/
       expert.md
 ```
 
-Experts can be composed from other experts:
+Experts can be built from nested pipelines:
 
 ```fsharp
 expert KubernetesArchitect =
@@ -149,7 +158,7 @@ via `{{key}}` in its system prompt.
 ```fsharp
 let goal   = "Design a build operator"
 let apiKey = env("OPENAI_API_KEY")              // from environment
-let model  = env("FML_MODEL", "gpt-4o-mini")   // with default
+let model  = env("MCL_MODEL", "gpt-4o-mini")   // with default
 ```
 
 `with` overrides context for a single step only:
@@ -269,7 +278,7 @@ These are injected by the runtime and available to every expert. They cannot be 
 ## Repository structure
 
 ```
-forge-mission-language/
+mission-control-language/
   src/
     ForgeMission.Core/    # parser (ANTLR4), AST, pipeline runner, expert resolution
     ForgeMission.Cli/     # CLI — mcl init / run / validate / list / expert
