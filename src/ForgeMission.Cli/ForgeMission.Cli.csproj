@@ -9,7 +9,7 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.7.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.9" />
     <PackageReference Include="Katasec.OciClient" Version="0.1.0" />
-    <ProjectReference Include="../../../oai-server-dotnet/src/Katasec.OaiServer/Katasec.OaiServer.csproj" />
+    <PackageReference Include="Katasec.OaiServer" Version="0.1.2" />
     <PackageReference Include="Spectre.Console" Version="0.49.1" />
   </ItemGroup>
 
