@@ -664,10 +664,11 @@ static Command BuildAgentStartCommand()
         try { config = AgentConfigLoader.Load(agentFileFull); }
         catch (Exception ex) { Die($"Cannot read agent.yaml: {ex.Message}"); return; }
 
+        const string forgeImage = "ghcr.io/katasec/forge:latest";
+
         var prereqs = new[]
         {
-            DockerPrereqChecker.CheckDockerCli(),
-            DockerPrereqChecker.CheckDockerDaemon(),
+            await DockerPrereqChecker.CheckDockerAsync(),
             DockerPrereqChecker.CheckPort(config.Port),
             DockerPrereqChecker.CheckFileExists(agentFileFull, "agent.yaml"),
         };
@@ -678,10 +679,10 @@ static Command BuildAgentStartCommand()
             return;
         }
 
-        if (!await DockerCli.IsImagePresentAsync("forge:local"))
+        if (!await DockerCli.IsImagePresentAsync(forgeImage))
         {
-            AnsiConsole.MarkupLine("[yellow]Building forge:local image...[/]");
-            await DockerCli.BuildImageAsync("forge:local", ".");
+            AnsiConsole.MarkupLine($"[yellow]Pulling {forgeImage}...[/]");
+            await DockerCli.PullImageAsync(forgeImage);
         }
 
         await DockerCli.EnsureNetworkAsync("forge-net");
@@ -695,13 +696,15 @@ static Command BuildAgentStartCommand()
         }
 
         var cwd = Directory.GetCurrentDirectory();
-        var envArgs = BuildEnvArgs("MCL_API_KEY", "MCL_MODEL", "MCL_PROVIDER", "MCL_ENDPOINT");
-
-        var runArgs = $"-d --name {containerName} --network forge-net -p {config.Port}:{config.Port} " +
-                      $"-v {cwd}:/workspace {envArgs} " +
-                      $"forge:local serve /workspace/agent.yaml";
-
-        await DockerCli.StartContainerAsync(runArgs);
+        await DockerCli.RunContainerAsync(
+            name:          containerName,
+            image:         forgeImage,
+            cmd:           ["serve", "/workspace/agent.yaml"],
+            env:           BuildEnvArray("MCL_API_KEY", "MCL_MODEL", "MCL_PROVIDER", "MCL_ENDPOINT"),
+            binds:         [$"{cwd}:/workspace"],
+            hostPort:      config.Port,
+            containerPort: config.Port,
+            network:       "forge-net");
 
         AnsiConsole.MarkupLine($"[green]✓[/] Agent [bold]{config.Id}[/] started");
         AnsiConsole.MarkupLine($"  Endpoint : http://localhost:{config.Port}/v1");
@@ -778,10 +781,11 @@ static Command BuildWebuiStartCommand()
         try { config = AgentConfigLoader.Load(agentFileFull); }
         catch (Exception ex) { Die($"Cannot read agent.yaml: {ex.Message}"); return; }
 
+        const string webuiImage = "ghcr.io/open-webui/open-webui:main";
+
         var prereqs = new[]
         {
-            DockerPrereqChecker.CheckDockerCli(),
-            DockerPrereqChecker.CheckDockerDaemon(),
+            await DockerPrereqChecker.CheckDockerAsync(),
             DockerPrereqChecker.CheckFileExists(agentFileFull, "agent.yaml"),
         };
 
@@ -811,14 +815,21 @@ static Command BuildWebuiStartCommand()
             return;
         }
 
-        AnsiConsole.MarkupLine("[grey]Pulling open-webui image (first run may take a minute)...[/]");
+        if (!await DockerCli.IsImagePresentAsync(webuiImage))
+        {
+            AnsiConsole.MarkupLine("[grey]Pulling open-webui image (first run may take a minute)...[/]");
+            await DockerCli.PullImageAsync(webuiImage);
+        }
 
-        var runArgs = $"-d --name open-webui --network forge-net -p {webuiPort}:8080 " +
-                      $"-v open-webui-data:/app/backend/data " +
-                      $"-e OPENAI_API_BASE_URL={agentUrl} -e OPENAI_API_KEY=forge " +
-                      $"ghcr.io/open-webui/open-webui:main";
-
-        await DockerCli.StartContainerAsync(runArgs);
+        await DockerCli.RunContainerAsync(
+            name:          "open-webui",
+            image:         webuiImage,
+            cmd:           [],
+            env:           [$"OPENAI_API_BASE_URL={agentUrl}", "OPENAI_API_KEY=forge"],
+            binds:         ["open-webui-data:/app/backend/data"],
+            hostPort:      webuiPort,
+            containerPort: 8080,
+            network:       "forge-net");
 
         AnsiConsole.MarkupLine("[green]✓[/] Open WebUI started");
         AnsiConsole.MarkupLine($"  URL      : http://localhost:{webuiPort}");
@@ -845,7 +856,9 @@ static Command BuildWebuiStopCommand()
 // ---------------------------------------------------------------------------
 // Docker helpers
 
-static string BuildEnvArgs(params string[] vars) =>
-    string.Join(" ", vars
-        .Where(v => Environment.GetEnvironmentVariable(v) is not null)
-        .Select(v => $"-e {v}"));
+static string[] BuildEnvArray(params string[] vars) =>
+    vars
+        .Select(v => (Name: v, Value: Environment.GetEnvironmentVariable(v)))
+        .Where(x => x.Value is not null)
+        .Select(x => $"{x.Name}={x.Value}")
+        .ToArray();

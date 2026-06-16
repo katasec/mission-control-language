@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: write   # create tags, releases, upload assets
-  packages: read    # pull Katasec.OciClient from nuget.pkg.github.com/katasec
+  packages: write   # pull from nuget.pkg.github.com/katasec + push to ghcr.io
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -90,7 +90,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. All binaries attached — mark the release as ready to review ───────────
+  # ── 3. Build and push forge Docker image to ghcr.io ──────────────────────────
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download linux binary from release
+        run: |
+          gh release download v${{ github.event.inputs.version }} \
+            --pattern forge-linux-x64 \
+            --dir .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/katasec/forge:latest
+            ghcr.io/katasec/forge:${{ github.event.inputs.version }}
+
+  # ── 4. All binaries + image ready — draft release is open for review ─────────
   #
   # The release stays as a draft. Go to GitHub → Releases → Edit → Publish
   # once you've reviewed the attached binaries and release notes.

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Spectre.Console;
@@ -7,23 +6,12 @@ namespace ForgeMission.Cli.Docker;
 
 public static class DockerPrereqChecker
 {
-    public static PrereqCheck CheckDockerCli()
+    public static async Task<PrereqCheck> CheckDockerAsync()
     {
-        var (exitCode, stdout) = RunProcess("docker", "--version");
-        if (exitCode == 0)
-        {
-            var detail = stdout.Split('\n')[0].Trim();
-            return new PrereqCheck("Docker CLI", PrereqStatus.Pass, detail);
-        }
-        return new PrereqCheck("Docker CLI", PrereqStatus.Fail, "not found — install Docker Desktop");
-    }
-
-    public static PrereqCheck CheckDockerDaemon()
-    {
-        var (exitCode, _) = RunProcess("docker", "info");
-        if (exitCode == 0)
-            return new PrereqCheck("Docker daemon", PrereqStatus.Pass, "running");
-        return new PrereqCheck("Docker daemon", PrereqStatus.Fail, "not running — start Docker Desktop");
+        var (ok, detail) = await DockerCli.GetVersionAsync();
+        return ok
+            ? new PrereqCheck("Docker", PrereqStatus.Pass, detail)
+            : new PrereqCheck("Docker", PrereqStatus.Fail, detail);
     }
 
     public static PrereqCheck CheckPort(int port)
@@ -64,9 +52,7 @@ public static class DockerPrereqChecker
         foreach (var check in checks)
         {
             if (failed)
-            {
                 results.Add(check with { Status = PrereqStatus.Skipped, Detail = "–" });
-            }
             else
             {
                 results.Add(check);
@@ -93,26 +79,5 @@ public static class DockerPrereqChecker
             AnsiConsole.MarkupLine("[red]Prerequisites not met. Cannot continue.[/]");
 
         return !failed;
-    }
-
-    internal static (int ExitCode, string Stdout) RunProcess(string file, string args)
-    {
-        var psi = new ProcessStartInfo(file, args)
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError  = true,
-            UseShellExecute        = false,
-        };
-        try
-        {
-            using var p = Process.Start(psi)!;
-            var stdout = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
-            return (p.ExitCode, stdout);
-        }
-        catch (Exception)
-        {
-            return (-1, string.Empty);
-        }
     }
 }
