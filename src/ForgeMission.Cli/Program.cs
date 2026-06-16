@@ -495,7 +495,15 @@ static Command BuildServeCommand()
         Console.Error.WriteLine($"  mission : {missionPath}");
         Console.Error.WriteLine($"  endpoint: POST /v1/chat/completions");
 
-        await app.RunAsync();
+        try
+        {
+            await app.RunAsync();
+        }
+        catch (IOException ex) when (ex.Message.Contains("address already in use", StringComparison.OrdinalIgnoreCase)
+                                  || ex.InnerException is System.Net.Sockets.SocketException { SocketErrorCode: System.Net.Sockets.SocketError.AddressAlreadyInUse })
+        {
+            Die($"Port {config.Port} is already in use. Stop the existing process or change the port in agent.yaml.");
+        }
     });
 
     return cmd;
