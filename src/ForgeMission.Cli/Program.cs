@@ -879,3 +879,4 @@ static string[] BuildEnvArray(params string[] vars) =>
         .Where(x => x.Value is not null)
         .Select(x => $"{x.Name}={x.Value}")
         .ToArray();
+
