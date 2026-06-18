@@ -4,11 +4,15 @@
 
 ## Purpose
 
-Six open design questions must be resolved before Phase 25 implementation begins.
+Nine open design questions must be resolved before Phase 25 implementation begins.
 Each question is listed below with context. Work through them one by one, record
 the decision, and mark each as Resolved before starting Phase 25 Spoke 1.
 
 No code changes in this phase — decisions and documentation only.
+
+**Background reading:** [`docs/design/research.md`](../design/research.md) maps
+academic literature (Self-Refine, Reflexion, Multi-Agent Debate, Constitutional AI,
+MoE routing) to each decision below. Read it before the discussion session.
 
 ---
 

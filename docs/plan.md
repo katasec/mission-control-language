@@ -48,6 +48,7 @@
 | [Language Design](design/language.md) | Grammar, syntax decisions, primitives, capitalisation rationale |
 | [Architecture](design/architecture.md) | Components, boundaries, dependency flow |
 | [Interaction Modes & Classifier-Router Pattern](design/interaction-modes.md) | Human-AI collaboration modes, classifier as HAProxy, SDLC meta-mission, `when {}` conditional step primitive |
+| [Research Foundations](design/research.md) | Academic literature mapped to MCL design decisions — Self-Refine, Reflexion, Multi-Agent Debate, Constitutional AI, MoE routing, MoA |
 | [MAF Research](design/maf.md) | Microsoft Agent Framework 1.0 spike findings |
 | [Methodology](design/methodology.md) | The broader engineering approach MCL fits into |
 | [Why MCL exists](why.md) | Origin, core thesis, methodology, thinking models |
