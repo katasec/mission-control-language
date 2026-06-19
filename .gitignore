@@ -2,3 +2,10 @@ runs/
 src/**/bin/
 src/**/obj/
 .fms/
+
+# macOS
+.DS_Store
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user

@@ -1,0 +1,3 @@
+mission: ../../missions/loop-demo/mission.mcl
+port: 8080
+id: loop-demo-v1
