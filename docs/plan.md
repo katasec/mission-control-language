@@ -37,7 +37,7 @@
 
 | Topic | Description |
 |-------|-------------|
-| Mission Composition | Missions usable as steps in other missions — explicit parameter binding, resolution order update, OCI mission publishing. Design decided in pre-flight Decision 11; needs a dedicated implementation phase. |
+| Mission Composition | Missions usable as steps in other missions — explicit parameter binding, resolution order update, OCI mission publishing. Design decided in pre-flight Decision 11; needs a dedicated implementation phase. Planned reference example: [SDLC Meta-Mission](design/sdlc-meta-mission.md). |
 | Multi-Agent Debate (`debate {}` block) | Round orchestration, per-round context summarisation, cross-agent output wiring. Deferred from Phase 25; needs a dedicated phase. Research-backed default: rounds: 3, warn beyond 5. |
 | Skills and Tools | Review hub/spoke architecture for expert-level tool-calling support (function calls, MCP tools, shell commands). Decide scope, grammar extension, and AOT-safe dispatch before committing to an implementation phase. |
 | Parallel steps runtime model | Decide whether parallel steps use Task.WhenAll (simple) or a channel-based streaming approach (better for token streaming). Consider cancellation on first failure. |
@@ -52,6 +52,7 @@
 | [Standard Library](design/stdlib.md) | Definition of what qualifies as a stdlib expert — four gates, current members, worked examples |
 | [Architecture](design/architecture.md) | Components, boundaries, dependency flow |
 | [Interaction Modes & Classifier-Router Pattern](design/interaction-modes.md) | Human-AI collaboration modes, classifier as HAProxy, SDLC meta-mission, `when {}` conditional step primitive |
+| [SDLC Meta-Mission](design/sdlc-meta-mission.md) | Planned reference example — mission composition + debate{} + routing in one file; feature gap analysis and build order |
 | [Research Foundations](design/research.md) | Academic literature mapped to MCL design decisions — Self-Refine, Reflexion, Multi-Agent Debate, Constitutional AI, MoE routing, MoA |
 | [MAF Research](design/maf.md) | Microsoft Agent Framework 1.0 spike findings |
 | [Methodology](design/methodology.md) | The broader engineering approach MCL fits into |
