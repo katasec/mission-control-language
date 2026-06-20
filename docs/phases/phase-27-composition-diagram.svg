@@ -1,0 +1,148 @@
+<svg viewBox="0 0 720 520" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace, 'Cascadia Code', monospace" font-size="11">
+  <title>Phase 27 — Mission Composition Layers</title>
+  <desc>Three-layer composition: project-assistant base, software-project-assistant and product-owner-assistant both compose it via when(else)</desc>
+
+  <!-- Background -->
+  <rect width="720" height="520" fill="#f8f8f8"/>
+
+  <!-- Layer labels -->
+  <text x="16" y="36" fill="#888" font-size="10" font-weight="600" letter-spacing="1">LAYER 1 — GENERIC</text>
+  <text x="16" y="200" fill="#888" font-size="10" font-weight="600" letter-spacing="1">LAYER 2 — DOMAIN</text>
+  <text x="16" y="380" fill="#888" font-size="10" font-weight="600" letter-spacing="1">LAYER 3 — RUNNER</text>
+
+  <!-- Dividers -->
+  <line x1="16" y1="180" x2="704" y2="180" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="16" y1="360" x2="704" y2="360" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ===== LAYER 1: project-assistant ===== -->
+  <rect x="180" y="46" width="360" height="118" rx="6" fill="#ebebeb" stroke="#ccc" stroke-width="1.5"/>
+  <text x="360" y="66" text-anchor="middle" fill="#111" font-weight="700" font-size="12">project-assistant</text>
+  <text x="360" y="82" text-anchor="middle" fill="#555" font-size="10">generic — works for any project</text>
+
+  <!-- Pipeline row -->
+  <g transform="translate(200, 95)">
+    <rect x="0" y="0" width="66" height="28" rx="4" fill="#d0d8fd" stroke="#4a6cf7" stroke-width="1"/>
+    <text x="33" y="18" text-anchor="middle" fill="#4a6cf7" font-weight="600" font-size="9.5">Classifier</text>
+    <text x="74" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="86" y="0" width="52" height="28" rx="4" fill="#e0e0e0" stroke="#bbb" stroke-width="1"/>
+    <text x="112" y="18" text-anchor="middle" fill="#444" font-size="9">Status</text>
+    <text x="145" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="155" y="0" width="44" height="28" rx="4" fill="#e0e0e0" stroke="#bbb" stroke-width="1"/>
+    <text x="177" y="18" text-anchor="middle" fill="#444" font-size="9">Next</text>
+    <text x="206" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="215" y="0" width="50" height="28" rx="4" fill="#e0e0e0" stroke="#bbb" stroke-width="1"/>
+    <text x="240" y="18" text-anchor="middle" fill="#444" font-size="9">Handoff</text>
+    <text x="272" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="280" y="0" width="58" height="28" rx="4" fill="#e0e0e0" stroke="#bbb" stroke-width="1"/>
+    <text x="309" y="18" text-anchor="middle" fill="#444" font-size="9">DocUpdater</text>
+  </g>
+
+  <!-- when() labels -->
+  <g transform="translate(200, 128)" fill="#999" font-size="8">
+    <text x="112" text-anchor="middle">"status"</text>
+    <text x="177" text-anchor="middle">"next"</text>
+    <text x="240" text-anchor="middle">"handoff"</text>
+    <text x="309" text-anchor="middle">"document"</text>
+  </g>
+
+  <!-- ===== LAYER 2 LEFT: software-project-assistant ===== -->
+  <rect x="16" y="192" width="330" height="148" rx="6" fill="#ebebeb" stroke="#ccc" stroke-width="1.5"/>
+  <text x="181" y="212" text-anchor="middle" fill="#111" font-weight="700" font-size="12">software-project-assistant</text>
+  <text x="181" y="228" text-anchor="middle" fill="#555" font-size="10">extends with architect + developer modes</text>
+
+  <g transform="translate(30, 242)">
+    <rect x="0" y="0" width="66" height="28" rx="4" fill="#d0d8fd" stroke="#4a6cf7" stroke-width="1"/>
+    <text x="33" y="18" text-anchor="middle" fill="#4a6cf7" font-weight="600" font-size="9.5">Classifier</text>
+    <text x="74" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="82" y="0" width="68" height="28" rx="4" fill="#e8f4e8" stroke="#6abf69" stroke-width="1"/>
+    <text x="116" y="18" text-anchor="middle" fill="#2e7d32" font-size="9">Architect</text>
+    <text x="157" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="165" y="0" width="68" height="28" rx="4" fill="#e8f4e8" stroke="#6abf69" stroke-width="1"/>
+    <text x="199" y="18" text-anchor="middle" fill="#2e7d32" font-size="9">Developer</text>
+    <text x="240" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="248" y="0" width="66" height="28" rx="4" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="281" y="15" text-anchor="middle" fill="#e65100" font-size="8.5" font-weight="700">project-</text>
+    <text x="281" y="25" text-anchor="middle" fill="#e65100" font-size="8.5" font-weight="700">assistant</text>
+  </g>
+  <g transform="translate(30, 275)" fill="#999" font-size="8">
+    <text x="116" text-anchor="middle">"arch"</text>
+    <text x="199" text-anchor="middle">"dev"</text>
+    <text x="281" text-anchor="middle">when(else)</text>
+  </g>
+  <text x="181" y="318" text-anchor="middle" fill="#777" font-size="9" font-style="italic">ArchitectMode + DevelopmentMode are sub-missions with loop(2)</text>
+
+  <!-- ===== LAYER 2 RIGHT: product-owner-assistant ===== -->
+  <rect x="374" y="192" width="330" height="148" rx="6" fill="#ebebeb" stroke="#ccc" stroke-width="1.5"/>
+  <text x="539" y="212" text-anchor="middle" fill="#111" font-weight="700" font-size="12">product-owner-assistant</text>
+  <text x="539" y="228" text-anchor="middle" fill="#555" font-size="10">extends with PO-specific experts</text>
+
+  <g transform="translate(386, 242)">
+    <rect x="0" y="0" width="66" height="28" rx="4" fill="#d0d8fd" stroke="#4a6cf7" stroke-width="1"/>
+    <text x="33" y="18" text-anchor="middle" fill="#4a6cf7" font-weight="600" font-size="9.5">Classifier</text>
+    <text x="74" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="82" y="0" width="60" height="28" rx="4" fill="#fce4ec" stroke="#e91e63" stroke-width="1"/>
+    <text x="112" y="18" text-anchor="middle" fill="#880e4f" font-size="9">Stories</text>
+    <text x="149" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="157" y="0" width="60" height="28" rx="4" fill="#fce4ec" stroke="#e91e63" stroke-width="1"/>
+    <text x="187" y="18" text-anchor="middle" fill="#880e4f" font-size="9">Backlog</text>
+    <text x="224" y="18" text-anchor="middle" fill="#999" font-size="12">→</text>
+    <rect x="232" y="0" width="66" height="28" rx="4" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="265" y="15" text-anchor="middle" fill="#e65100" font-size="8.5" font-weight="700">project-</text>
+    <text x="265" y="25" text-anchor="middle" fill="#e65100" font-size="8.5" font-weight="700">assistant</text>
+  </g>
+  <g transform="translate(386, 275)" fill="#999" font-size="8">
+    <text x="112" text-anchor="middle">"story"</text>
+    <text x="187" text-anchor="middle">"backlog"</text>
+    <text x="265" text-anchor="middle">when(else)</text>
+  </g>
+  <text x="539" y="318" text-anchor="middle" fill="#777" font-size="9" font-style="italic">RequirementsAnalyst + BacklogPrioritizer + UserStoryWriter</text>
+
+  <!-- Composition arrows Layer 1 → Layer 2 -->
+  <line x1="360" y1="164" x2="230" y2="192" stroke="#f9a825" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="360" y1="164" x2="490" y2="192" stroke="#f9a825" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ===== LAYER 3: run.sh wrappers ===== -->
+  <rect x="16" y="372" width="213" height="96" rx="6" fill="#ebebeb" stroke="#ccc" stroke-width="1.5"/>
+  <text x="122" y="392" text-anchor="middle" fill="#111" font-weight="700" font-size="11">forge-assistant.sh</text>
+  <text x="122" y="408" text-anchor="middle" fill="#666" font-size="9">injects plan.md + phases</text>
+  <text x="122" y="426" text-anchor="middle" fill="#444" font-size="9">forge run --var request="$1"</text>
+  <text x="122" y="441" text-anchor="middle" fill="#444" font-size="9">  --var plan="$(cat plan.md)"</text>
+  <text x="122" y="456" text-anchor="middle" fill="#444" font-size="9">  --var phases="$(ls phases/)"</text>
+
+  <rect x="253" y="372" width="213" height="96" rx="6" fill="#ebebeb" stroke="#ccc" stroke-width="1.5"/>
+  <text x="359" y="392" text-anchor="middle" fill="#111" font-weight="700" font-size="11">sw-assistant.sh</text>
+  <text x="359" y="408" text-anchor="middle" fill="#666" font-size="9">also injects codebase context</text>
+  <text x="359" y="426" text-anchor="middle" fill="#444" font-size="9">forge run --var request="$1"</text>
+  <text x="359" y="441" text-anchor="middle" fill="#444" font-size="9">  --var plan="$(cat plan.md)"</text>
+  <text x="359" y="456" text-anchor="middle" fill="#444" font-size="9">  --var codebase="$(git log...)"</text>
+
+  <rect x="490" y="372" width="213" height="96" rx="6" fill="#ebebeb" stroke="#ccc" stroke-width="1.5"/>
+  <text x="597" y="392" text-anchor="middle" fill="#111" font-weight="700" font-size="11">po-assistant.sh</text>
+  <text x="597" y="408" text-anchor="middle" fill="#666" font-size="9">also injects backlog context</text>
+  <text x="597" y="426" text-anchor="middle" fill="#444" font-size="9">forge run --var request="$1"</text>
+  <text x="597" y="441" text-anchor="middle" fill="#444" font-size="9">  --var plan="$(cat plan.md)"</text>
+  <text x="597" y="456" text-anchor="middle" fill="#444" font-size="9">  --var backlog="$(cat backlog.md)"</text>
+
+  <!-- Arrows Layer 2 → Layer 3 -->
+  <line x1="181" y1="340" x2="122" y2="372" stroke="#bbb" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="181" y1="340" x2="359" y2="372" stroke="#bbb" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="539" y1="340" x2="597" y2="372" stroke="#bbb" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Legend -->
+  <rect x="550" y="48" width="148" height="100" rx="5" fill="#ebebeb" stroke="#ccc" stroke-width="1"/>
+  <text x="624" y="65" text-anchor="middle" fill="#555" font-size="9" font-weight="600">LEGEND</text>
+  <rect x="562" y="73" width="12" height="12" rx="2" fill="#d0d8fd" stroke="#4a6cf7" stroke-width="1"/>
+  <text x="580" y="83" fill="#444" font-size="9">Classifier (stdlib)</text>
+  <rect x="562" y="91" width="12" height="12" rx="2" fill="#e8f4e8" stroke="#6abf69" stroke-width="1"/>
+  <text x="580" y="101" fill="#444" font-size="9">Domain expert</text>
+  <rect x="562" y="109" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <text x="580" y="119" fill="#444" font-size="9">Composed mission</text>
+  <line x1="562" y1="127" x2="574" y2="134" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="580" y="136" fill="#444" font-size="9">Composition link</text>
+
+  <defs>
+    <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#aaa"/>
+    </marker>
+  </defs>
+</svg>

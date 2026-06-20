@@ -30,60 +30,7 @@ Actual LLM  (OpenAI / Anthropic / Ollama)
 
 ## Composition diagram
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  LAYER 1 — GENERIC                                                          │
-│                                                                             │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │  project-assistant                                                   │   │
-│  │  generic — works for any project                                     │   │
-│  │                                                                      │   │
-│  │  [Classifier] → [StatusReporter]  → [NextStepAdvisor]               │   │
-│  │                   "status"            "next"                         │   │
-│  │               → [HandoffGenerator] → [DocUpdater]  → [GeneralAdvisor│   │
-│  │                   "handoff"           "document"      when(else)     │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-└────────────────────────────┬────────────────────────────────────────────────┘
-                             │ composed as a step (when(else) in both)
-              ┌──────────────┴───────────────┐
-              ▼                              ▼
-┌─────────────────────────┐    ┌─────────────────────────────┐
-│  LAYER 2 — DOMAIN       │    │  LAYER 2 — DOMAIN           │
-│                         │    │                             │
-│  software-project-      │    │  product-owner-             │
-│  assistant              │    │  assistant                  │
-│                         │    │                             │
-│  [Classifier]           │    │  [Classifier]               │
-│  → [ArchitectMode]      │    │  → [UserStoryWriter]        │
-│    "architecture"       │    │    "story"                  │
-│  → [DevelopmentMode]    │    │  → [BacklogPrioritizer]     │
-│    "development"        │    │    "backlog"                │
-│  → [project-assistant]  │    │  → [project-assistant]      │
-│    when(else)           │    │    when(else)               │
-│                         │    │                             │
-│  ArchitectMode loop(2): │    │                             │
-│    Architect            │    │                             │
-│    → Reviewer           │    │                             │
-│    → Documenter         │    │                             │
-│    → QualityJudge       │    │                             │
-└────────────┬────────────┘    └──────────────┬──────────────┘
-             │                                │
-             ▼                                ▼
-┌─────────────────────────┐    ┌──────────────────────────────┐
-│  LAYER 3 — RUNNER       │    │  LAYER 3 — RUNNER            │
-│                         │    │                              │
-│  sw-assistant.sh        │    │  po-assistant.sh             │
-│  forge run              │    │  forge run                   │
-│    --var request="$1"   │    │    --var request="$1"        │
-│    --var plan=...       │    │    --var plan=...            │
-│    --var codebase=...   │    │    --var backlog=...         │
-└─────────────────────────┘    └──────────────────────────────┘
-
-Legend:
-  [Classifier]          stdlib expert — routes by output keyword
-  [NamedExpert]         domain expert (green in diagram)
-  [project-assistant]   composed mission as a step (dashed border in diagram)
-```
+![Phase 27 composition layers](phase-27-composition-diagram.svg)
 
 ## MCL mockup
 
