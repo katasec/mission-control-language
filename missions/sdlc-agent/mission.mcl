@@ -1,0 +1,31 @@
+// SDLC Agent — mission composition showcase
+//
+// Three independently runnable sub-missions, composed by a routing top-level.
+// Run a sub-mission directly:  forge run --mission DesignMode
+// Run the full agent:          forge run --mission SDLCAgent
+
+let input = "Design a rate-limiting middleware for a REST API"
+
+// Sub-mission 1: iterative design with quality gate
+mission DesignMode(input) loop(2) = {
+    Architect
+    -> CriticalReviewer
+    -> Synthesiser
+    -> QualityJudge
+}
+
+// Sub-mission 2: implementation planning
+mission TaskMode(input) = {
+    Developer
+    -> Tester
+}
+
+// Top-level: classifier routes to the right sub-mission
+mission SDLCAgent(input) = {
+    Classifier
+    -> DesignMode(input: input) when(mode: "design")
+    -> TaskMode(input: input)   when(mode: "task")
+    -> Planner                  when(else)
+}
+
+output(SDLCAgent)

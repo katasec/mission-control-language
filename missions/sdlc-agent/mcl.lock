@@ -1,0 +1,34 @@
+version: 1
+experts:
+  Architect:
+    source: experts
+    path: experts/Architect/expert.md
+    hash: f90192b73447900e8b4b9aa1fdb6321e29918272060f0d73a2ad22cb7d60c5d5
+  Classifier:
+    source: experts
+    path: experts/Classifier/expert.md
+    hash: 1d0694d60c8e10c8173fd4ee643b8927c2e8a362196a3f1f06c096be6954eabf
+  CriticalReviewer:
+    source: experts
+    path: experts/CriticalReviewer/expert.md
+    hash: a76413b76dfa69e599a7dc7bfaa99ab8a374a03374b8dd6a120de093b3ee4095
+  Developer:
+    source: experts
+    path: experts/Developer/expert.md
+    hash: 339bf4fa068e7df525586ceeac8fe737f6425f90e57a340858b42b2a62cf4be6
+  Planner:
+    source: experts
+    path: experts/Planner/expert.md
+    hash: fc51e34589f0420c8372d1c65291548fa63f7f2ac8cf42ec089b8cc7547b522b
+  QualityJudge:
+    source: experts
+    path: experts/QualityJudge/expert.md
+    hash: 968d27088efc87e48e4d4f9eb3f77ccfa3fdd63c162f47a279673e45125273b0
+  Synthesiser:
+    source: experts
+    path: experts/Synthesiser/expert.md
+    hash: 36a162fa063682bc440cf035caa46d0d0e9ed5357e34012ad8b4e4ffc572866f
+  Tester:
+    source: experts
+    path: experts/Tester/expert.md
+    hash: 77754582de11b511c6b239e4f118dc50ac79b0e55bc51b7a3aaf7162e2005eb7

@@ -1,0 +1,10 @@
+[providers.default]
+provider = "openai"
+model    = env("MCL_MODEL", "gpt-4o-mini")
+apiKey   = env("MCL_API_KEY")
+
+# To use Anthropic instead, swap the block above with:
+# [providers.default]
+# provider = "anthropic"
+# model    = env("MCL_MODEL", "claude-sonnet-4-6")
+# apiKey   = env("ANTHROPIC_API_KEY")

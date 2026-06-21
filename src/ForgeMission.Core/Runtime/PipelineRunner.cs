@@ -85,7 +85,7 @@ public class PipelineRunner
                     var snapshot = new Dictionary<string, object>(context, StringComparer.Ordinal);
                     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     var tasks = parallel.Steps
-                        .Select(step => ExecuteParallelStepAsync(step, experts, snapshot, linkedCts))
+                        .Select(step => ExecuteParallelStepAsync(step, ast, experts, snapshot, options, linkedCts))
                         .ToArray();
 
                     try
@@ -133,7 +133,7 @@ public class PipelineRunner
                         if (anyGuardedStepMatched) continue;
                     }
 
-                    failReason = await ExecuteStepAsync(step, experts, context, options, ct);
+                    failReason = await ExecuteStepAsync(step, ast, experts, context, options, ct);
                     if (failReason is not null) break;
                 }
             }
@@ -159,11 +159,37 @@ public class PipelineRunner
 
     private async Task<string?> ExecuteStepAsync(
         Step step,
+        Program ast,
         Dictionary<string, ExpertDefinition> experts,
         Dictionary<string, object> context,
         PipelineRunOptions options,
         CancellationToken ct)
     {
+        // Sub-mission: step name matches a declared mission → recurse.
+        var subMission = ast.Declarations
+            .OfType<MissionDeclaration>()
+            .FirstOrDefault(m => m.Name == step.ExpertName);
+
+        if (subMission is not null)
+        {
+            var childVars = step.Context.ToDictionary(
+                b => b.Key,
+                b => ContextBuilder.ResolveBindingValue(b.Value, context),
+                StringComparer.Ordinal);
+
+            if (options.StepWriter is { } msw)
+                await msw.WriteLineAsync($"→ {step.ExpertName} (mission)...");
+
+            var subResult = await RunAsync(ast, experts,
+                new PipelineRunOptions(step.ExpertName, childVars, options.StepWriter, options.ContentWriter), ct);
+
+            context["output"] = subResult.Text;
+
+            return subResult.Status == MissionStatus.Fail
+                ? $"[{step.ExpertName}] {subResult.FailReason ?? "sub-mission failed"}"
+                : null;
+        }
+
         if (!experts.TryGetValue(step.ExpertName, out var expert))
             throw new InvalidOperationException(
                 $"Expert '{step.ExpertName}' not found. " +
@@ -213,10 +239,39 @@ public class PipelineRunner
 
     private async Task<(string? failReason, string namedKey, string outputText)> ExecuteParallelStepAsync(
         Step step,
+        Program ast,
         Dictionary<string, ExpertDefinition> experts,
         Dictionary<string, object> baseContext,
+        PipelineRunOptions options,
         CancellationTokenSource cts)
     {
+        var namedKey = $"{step.ExpertName}.output";
+
+        // Sub-mission in parallel block → recurse with isolated child context.
+        var subMission = ast.Declarations
+            .OfType<MissionDeclaration>()
+            .FirstOrDefault(m => m.Name == step.ExpertName);
+
+        if (subMission is not null)
+        {
+            var childVars = step.Context.ToDictionary(
+                b => b.Key,
+                b => ContextBuilder.ResolveBindingValue(b.Value, baseContext),
+                StringComparer.Ordinal);
+
+            var subResult = await RunAsync(ast, experts,
+                new PipelineRunOptions(step.ExpertName, childVars, options.StepWriter, options.ContentWriter),
+                cts.Token);
+
+            if (subResult.Status == MissionStatus.Fail)
+            {
+                cts.Cancel();
+                return ($"[{step.ExpertName}] {subResult.FailReason ?? "sub-mission failed"}", namedKey, subResult.Text);
+            }
+
+            return (null, namedKey, subResult.Text);
+        }
+
         if (!experts.TryGetValue(step.ExpertName, out var expert))
             throw new InvalidOperationException(
                 $"Expert '{step.ExpertName}' not found. " +
@@ -233,7 +288,6 @@ public class PipelineRunner
             "rule" => new RuleExpertRunner(),
             _      => ResolveRunner(step.Using)
         };
-        var namedKey = $"{step.ExpertName}.output";
 
         var envelope = await runner.RunAsync(expert, localContext, cts.Token);
 

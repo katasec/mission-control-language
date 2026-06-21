@@ -40,7 +40,7 @@
 
 | Topic | Description |
 |-------|-------------|
-| Mission Composition | Missions usable as steps in other missions — explicit parameter binding, resolution order update, OCI mission publishing. Design decided in pre-flight Decision 11; needs a dedicated implementation phase. Planned reference example: [SDLC Meta-Mission](design/sdlc-meta-mission.md). Blocking dependency for Phase 27 composed version. |
+| ~~Mission Composition~~ | Missions usable as steps in other missions — explicit parameter binding, isolated child context, failure propagation, arbitrary depth. `PipelineRunner` recursively dispatches when a step name matches a `MissionDeclaration`. Reference example: `missions/sdlc-agent/` — Classifier routes to `DesignMode` (loop+judge) or `TaskMode` sub-missions. 10 new tests. | Done |
 | Multi-Agent Debate (`debate {}` block) | Round orchestration, per-round context summarisation, cross-agent output wiring. Deferred from Phase 25; needs a dedicated phase. Research-backed default: rounds: 3, warn beyond 5. |
 | Skills and Tools | Review hub/spoke architecture for expert-level tool-calling support (function calls, MCP tools, shell commands). Decide scope, grammar extension, and AOT-safe dispatch before committing to an implementation phase. |
 | Parallel steps runtime model | Decide whether parallel steps use Task.WhenAll (simple) or a channel-based streaming approach (better for token streaming). Consider cancellation on first failure. |
