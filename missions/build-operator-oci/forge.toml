@@ -1,0 +1,9 @@
+[experts]
+KubernetesArchitect = "ghcr.io/katasec/forge-kubernetes-architect@0.1.0"
+SecurityArchitect   = "ghcr.io/katasec/forge-security-architect@0.1.0"
+PrincipalReviewer   = "ghcr.io/katasec/forge-principal-reviewer@0.1.0"
+
+[providers.default]
+provider = "openai"
+model    = env("MCL_MODEL", "gpt-4o-mini")
+apiKey   = env("MCL_API_KEY")

@@ -8,10 +8,6 @@
 // In Phase 25 the parallel block runs sequentially under the hood.
 // Phase 21 will add actual concurrent execution.
 
-let provider = env("MCL_PROVIDER", "openai")
-let apiKey   = env("MCL_API_KEY")
-let model    = env("MCL_MODEL", "gpt-4o-mini")
-
 let proposal = "We should rewrite our monolithic Rails application as microservices over the next 18 months."
 
 mission EvaluateProposal(proposal) = {

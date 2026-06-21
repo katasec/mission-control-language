@@ -7,11 +7,7 @@
 //
 // Try changing `request` to see different branches activate.
 
-let provider = env("MCL_PROVIDER", "openai")
-let apiKey   = env("MCL_API_KEY")
-let model    = env("MCL_MODEL", "gpt-4o-mini")
-
-let request  = "How should I structure the controllers in my Kubernetes operator?"
+let request = "How should I structure the controllers in my Kubernetes operator?"
 
 mission RouteRequest(request) = {
     RequestClassifier                           // outputs: "architecture", "code", "operations"

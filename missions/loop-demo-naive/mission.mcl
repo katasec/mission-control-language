@@ -3,12 +3,7 @@
 // Run: make demo-naive  (forge run)
 
 
-// LLM provider — override via MCL_PROVIDER, MCL_API_KEY, MCL_MODEL, MCL_ENDPOINT
-let provider = env("MCL_PROVIDER", "openai")
-let apiKey   = env("MCL_API_KEY")
-let model    = env("MCL_MODEL", "gpt-4o-mini")
-
-let topic    = "why the sky is blue"
+let topic = "why the sky is blue"
 
 mission NaiveAnswer(topic) = {
     ContextOverloaded   // one shot — whatever comes out, no retry

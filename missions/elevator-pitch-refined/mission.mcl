@@ -3,12 +3,7 @@
 // Compare with elevator-pitch for the difference composition makes.
 
 
-// LLM provider — override via MCL_PROVIDER, MCL_API_KEY, MCL_MODEL, MCL_ENDPOINT
-let provider = env("MCL_PROVIDER", "openai")
-let apiKey   = env("MCL_API_KEY")
-let model    = env("MCL_MODEL", "gpt-4o-mini")
-
-let product  = "an app that turns voice memos into structured tasks"
+let product = "an app that turns voice memos into structured tasks"
 
 mission RefinedPitch(product) = {
     PitchDrafter    // writes the initial pitch

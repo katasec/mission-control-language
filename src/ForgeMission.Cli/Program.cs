@@ -432,21 +432,32 @@ static Command BuildServeCommand()
         try { seedContext = ContextBuilder.Seed(ast, new Dictionary<string, string>()); }
         catch (InvalidOperationException ex) { Die(ex.Message); return; }
 
-        if (!seedContext.TryGetValue("apiKey", out var apiKeyObj) || string.IsNullOrWhiteSpace(apiKeyObj?.ToString()))
+        ForgeManifest? serveManifest = null;
+        try { serveManifest = ForgeTomlReader.TryRead(missionPath); }
+        catch (ForgeTomlException ex) { Die(ex.Message); return; }
+
+        var serveProfile = serveManifest?.Providers.GetValueOrDefault("default");
+
+        var serveApiKey  = GetContextString(seedContext, "apiKey")  ?? serveProfile?.ApiKey;
+        var serveModel   = GetContextString(seedContext, "model")   ?? serveProfile?.Model;
+        var provider     = GetContextString(seedContext, "provider") ?? serveProfile?.Provider ?? "openai";
+        var endpoint     = GetContextString(seedContext, "endpoint") ?? serveProfile?.Endpoint ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(serveApiKey))
         {
-            Die("Mission must declare an API key: let apiKey = env(\"MCL_API_KEY\")");
+            Die("No API key found. Set 'let apiKey = env(\"MCL_API_KEY\")' in the mission or add [providers.default] to forge.toml.");
             return;
         }
-        if (!seedContext.TryGetValue("model", out var modelObj) || string.IsNullOrWhiteSpace(modelObj?.ToString()))
+        if (string.IsNullOrWhiteSpace(serveModel))
         {
-            Die("Mission must declare a model: let model = env(\"MCL_MODEL\", \"gpt-4o-mini\")");
+            Die("No model found. Set 'let model = env(\"MCL_MODEL\", \"gpt-4o-mini\")' in the mission or add [providers.default] to forge.toml.");
             return;
         }
 
-        var provider = seedContext.TryGetValue("provider", out var pObj) ? pObj.ToString()! : "openai";
-        var endpoint = seedContext.TryGetValue("endpoint", out var eObj) ? eObj.ToString()! : string.Empty;
+        var apiKeyObj = (object)serveApiKey;
+        var modelObj  = (object)serveModel;
 
-        var runner = TryBuildRunner(provider, apiKeyObj.ToString()!, modelObj.ToString()!, endpoint);
+        var runner = TryBuildRunner(provider, serveApiKey, serveModel, endpoint);
         if (runner is null) return;
 
         var missionClient = new MissionChatClient(ast, expertDefs, runner);

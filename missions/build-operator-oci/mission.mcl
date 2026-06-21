@@ -1,11 +1,6 @@
 // Build Operator Design — OCI edition
-// OCI expert sourcing moves to forge.toml in Phase 25 Spoke 2.
-// This mission currently uses the same local experts as build-operator.
-// forge.toml will declare: KubernetesArchitect = "ghcr.io/katasec/forge-kubernetes-architect@1.0"
-
-let provider = env("MCL_PROVIDER", "openai")
-let apiKey   = env("MCL_API_KEY")
-let model    = env("MCL_MODEL", "gpt-4o-mini")
+// Experts are pulled from OCI registries declared in forge.toml.
+// Run 'forge init' to populate ~/.forge/experts/ and generate mcl.lock.
 
 let goal    = "Design a production-grade K8s build operator"
 let persona = "Principal SRE, Tekton specialist"
