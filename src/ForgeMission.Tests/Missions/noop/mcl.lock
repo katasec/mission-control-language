@@ -1,5 +1,6 @@
 version: 1
 experts:
   PassThrough:
-    source: local
+    source: experts
     path: experts/PassThrough/expert.md
+    hash: 1ad090863c86c7a578878b13d36ea52912cf13d4ef3763550b7d306e53215556
