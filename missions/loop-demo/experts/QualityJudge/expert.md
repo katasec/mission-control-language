@@ -4,6 +4,7 @@ version: 0.1.0
 description: Evaluates explanations for specificity and accuracy
 input: explanation
 output: verdict
+role: judge
 ---
 
 You are a quality judge. Evaluate the explanation you received.

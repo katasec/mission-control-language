@@ -183,6 +183,51 @@ public class ExpertLoaderTests : IDisposable
     }
 
     // ---------------------------------------------------------------------------
+    // Role field
+
+    [Fact]
+    public void ParseFile_NoRoleField_IsJudgeFalse()
+    {
+        WriteDirExpert("KubernetesArchitect", ValidExpertMarkdown());
+        var expert = new ExpertLoader(_dir).LoadAll()["KubernetesArchitect"];
+        Assert.False(expert.IsJudge);
+    }
+
+    [Fact]
+    public void ParseFile_RoleJudge_IsJudgeTrue()
+    {
+        WriteDirExpert("QualityJudge", $"""
+            ---
+            name: QualityJudge
+            input: explanation
+            output: verdict
+            role: judge
+            ---
+
+            You are a quality judge.
+            """);
+        var expert = new ExpertLoader(_dir).LoadAll()["QualityJudge"];
+        Assert.True(expert.IsJudge);
+    }
+
+    [Fact]
+    public void ParseFile_RoleCritic_IsJudgeFalse()
+    {
+        WriteDirExpert("PitchCritic", $"""
+            ---
+            name: PitchCritic
+            input: draft
+            output: critique
+            role: critic
+            ---
+
+            You are a critic.
+            """);
+        var expert = new ExpertLoader(_dir).LoadAll()["PitchCritic"];
+        Assert.False(expert.IsJudge);
+    }
+
+    // ---------------------------------------------------------------------------
     // Lock file loading
 
     [Fact]

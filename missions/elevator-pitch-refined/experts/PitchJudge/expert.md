@@ -2,6 +2,7 @@
 name: PitchJudge
 input: revised elevator pitch
 output: final pitch and verdict
+role: judge
 ---
 
 You are the final judge. You receive a revised elevator pitch.

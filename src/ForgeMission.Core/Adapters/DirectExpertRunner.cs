@@ -12,13 +12,21 @@ public class DirectExpertRunner(IChatClient chatClient) : IExpertRunner
     // and a TypeInfoResolver — required for AOT's GetResponseAsync<T>.
     private static readonly JsonSerializerOptions _jsonOptions = StepEnvelopeContext.Default.Options;
 
-    private const string StreamingJsonInstruction = """
+    // Appended to system prompts in streaming mode (structured output not available for streaming).
+    private const string JudgeStreamingInstruction = """
 
 
 Respond with this exact JSON format and nothing else:
 {"text": "<your complete response>", "status": "pass"}
 Or on failure:
 {"text": "<brief summary>", "status": "fail", "reason": "<which criterion failed>"}
+""";
+
+    private const string CriticStreamingInstruction = """
+
+
+Respond with this exact JSON format and nothing else — status must always be "pass":
+{"text": "<your complete response>", "status": "pass"}
 """;
 
     public async Task<StepEnvelope> RunAsync(
@@ -33,7 +41,10 @@ Or on failure:
             new(ChatRole.User, userMessage)
         };
         var response = await chatClient.GetResponseAsync<StepEnvelope>(messages, _jsonOptions, cancellationToken: ct);
-        return response.Result;
+        var envelope = response.Result;
+
+        // Non-judge experts always continue the pipeline — enforce pass regardless of LLM output.
+        return expert.IsJudge ? envelope : envelope with { Status = "pass", Reason = null };
     }
 
     public async IAsyncEnumerable<string> StreamAsync(
@@ -41,10 +52,11 @@ Or on failure:
         Dictionary<string, object> context,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
+        var instruction = expert.IsJudge ? JudgeStreamingInstruction : CriticStreamingInstruction;
         var (userMessage, systemPrompt) = BuildMessages(expert, context);
         var messages = new List<ChatMessage>
         {
-            new(ChatRole.System, systemPrompt + StreamingJsonInstruction),
+            new(ChatRole.System, systemPrompt + instruction),
             new(ChatRole.User, userMessage)
         };
         await foreach (var update in chatClient.GetStreamingResponseAsync(messages, cancellationToken: ct))

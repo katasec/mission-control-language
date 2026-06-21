@@ -115,7 +115,7 @@ public class ExpertLoader(string expertsDirectory)
         if (string.IsNullOrWhiteSpace(meta.Output))
             throw new ExpertLoadException($"Missing required frontmatter field 'output' in {Path.GetFileName(path)}");
 
-        return new ExpertDefinition(meta.Name, meta.Input, meta.Output, body.Trim());
+        return new ExpertDefinition(meta.Name, meta.Input, meta.Output, body.Trim(), meta.Role);
     }
 
     private static (string Frontmatter, string Body) SplitFrontmatter(string path, string content)
@@ -145,5 +145,6 @@ public class ExpertLoader(string expertsDirectory)
         public string Name   { get; set; } = "";
         public string Input  { get; set; } = "";
         public string Output { get; set; } = "";
+        public string Role   { get; set; } = "";
     }
 }

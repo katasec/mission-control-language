@@ -3,7 +3,7 @@ experts:
   PitchCritic:
     source: experts
     path: experts/PitchCritic/expert.md
-    hash: a55a4bc3b117342f73cb9b3eab40cc4365ee4d515e50f6640058c0f9e6678dea
+    hash: fdafe257dc4b6b2f34a720641facc9c27e8de92eee1a3e90d526dd8d42b35ec9
   PitchDrafter:
     source: experts
     path: experts/PitchDrafter/expert.md
@@ -11,7 +11,7 @@ experts:
   PitchJudge:
     source: experts
     path: experts/PitchJudge/expert.md
-    hash: 8d7288e9c196fbd9c970a15be53e5bfe7e18bb70c670f6eb00b3bfed48ab2815
+    hash: 17bed8dd14d9eb5002bc01c893ec812f7cdcd041bc4c6fcec32341fb9089295a
   PitchReviser:
     source: experts
     path: experts/PitchReviser/expert.md
