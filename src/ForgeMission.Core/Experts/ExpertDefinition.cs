@@ -7,8 +7,11 @@ public record ExpertDefinition(
     string SystemPrompt,
     string Role     = "",
     string Kind     = "llm",
-    string Endpoint = "")
+    string Endpoint = "",
+    string Check    = "",
+    string OnFail   = "")
 {
     public bool IsJudge => Role.Equals("judge", StringComparison.OrdinalIgnoreCase);
     public bool IsHttp  => Kind.Equals("http",  StringComparison.OrdinalIgnoreCase);
+    public bool IsRule  => Kind.Equals("rule",  StringComparison.OrdinalIgnoreCase);
 }

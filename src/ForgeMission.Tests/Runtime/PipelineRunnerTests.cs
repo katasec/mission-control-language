@@ -632,6 +632,55 @@ public class PipelineRunnerTests
         Assert.Equal("Output from FactChecker", synthCtx["FactChecker.output"].ToString());
     }
 
+    // ── loop feedback (kind:rule / kind:judge) ────────────────────────────────
+
+    [Fact]
+    public async Task LoopFeedback_PropagatedFromRuleExpertToNextIteration()
+    {
+        // Simulate the pattern: Drafter → WordCheck (kind:rule)
+        // First attempt: WordCheck writes feedback to context["feedback"] and returns fail.
+        // Second attempt: Drafter sees context["feedback"] from prior attempt.
+        var ast = MclParser.Parse("""
+            mission Draft loop(3) = {
+                Drafter
+                -> WordCheck
+            }
+            """);
+
+        var feedbackSeenByDrafter = new List<string?>();
+        var attempt = 0;
+
+        var stub = new StubExpertRunner((name, ctx) =>
+        {
+            if (name == "Drafter")
+            {
+                feedbackSeenByDrafter.Add(
+                    ctx.TryGetValue("feedback", out var fb) ? fb?.ToString() : null);
+            }
+
+            if (name == "WordCheck")
+            {
+                attempt++;
+                if (attempt == 1)
+                {
+                    // Simulate RuleExpertRunner behaviour: write feedback then fail.
+                    ctx["feedback"] = "Write at least 50 words.";
+                    return new StepEnvelope("short output", "fail", "Write at least 50 words.");
+                }
+            }
+            return new StepEnvelope($"Output from {name}");
+        });
+
+        var result = await new PipelineRunner(stub)
+            .RunAsync(ast, Experts("Drafter", "WordCheck"), new PipelineRunOptions("Draft"));
+
+        Assert.Equal(MissionStatus.Pass, result.Status);
+        // First attempt: no feedback yet.
+        Assert.Null(feedbackSeenByDrafter[0]);
+        // Second attempt: feedback propagated from first attempt's rule failure.
+        Assert.Equal("Write at least 50 words.", feedbackSeenByDrafter[1]);
+    }
+
     [Fact]
     public async Task ParallelBlock_OneFails_PipelineFails()
     {

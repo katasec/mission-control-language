@@ -43,6 +43,7 @@ public class PipelineRunner
 
         var maxLoops = mission.MaxLoops;
         MissionResult? lastResult = null;
+        string? loopFeedback = null;
 
         for (var attempt = 1; attempt <= maxLoops; attempt++)
         {
@@ -54,6 +55,8 @@ public class PipelineRunner
             var context = ContextBuilder.Seed(ast, options.Vars);
             context["attempt"]   = attempt.ToString();
             context["max_loops"] = maxLoops.ToString();
+            if (loopFeedback is not null)
+                context["feedback"] = loopFeedback;
 
             string? failReason = null;
 
@@ -139,6 +142,10 @@ public class PipelineRunner
                 throw new InvalidOperationException(
                     "No when() guard matched and no when(else) branch exists in the pipeline.");
 
+            // Carry feedback written by rule/judge experts into the next loop iteration.
+            if (context.TryGetValue("feedback", out var fb))
+                loopFeedback = fb?.ToString();
+
             var text = context.TryGetValue("output", out var last) ? last.ToString()! : string.Empty;
 
             if (failReason is null)
@@ -168,6 +175,7 @@ public class PipelineRunner
         var runner = expert.Kind switch
         {
             "http" => (IExpertRunner)new HttpExpertRunner(),
+            "rule" => new RuleExpertRunner(),
             _      => ResolveRunner(step.Using)
         };
 
@@ -222,6 +230,7 @@ public class PipelineRunner
         var runner = expert.Kind switch
         {
             "http" => (IExpertRunner)new HttpExpertRunner(),
+            "rule" => new RuleExpertRunner(),
             _      => ResolveRunner(step.Using)
         };
         var namedKey = $"{step.ExpertName}.output";
