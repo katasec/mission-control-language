@@ -1,30 +1,71 @@
 # Mission Control Language (MCL)
 
-**Expert** = reusable intelligence  
-**Mission** = codified thinking model  
-**Agent**   = endpoint / runtime facade
-
-That is the architecture. Everything else follows from it.
+**MCL is a language for codifying how to think, not just what to ask.**
 
 ---
 
-## What MCL is
+## The problem
 
-MCL is a language for codifying thinking models.
+Anyone who works seriously with AI develops reasoning patterns.
 
-Not a workflow engine. Not a prompt template system. Not an agent framework.
+Not just prompts — patterns. Sequences of lenses applied to a problem in a deliberate order: generate, then critique, then revise, then judge. Or: classify, then route, then execute. Or: architect, then harden, then sign off.
 
-Most AI tooling focuses on *what* to ask. MCL focuses on *how to think* — and keeps that separate from *who does the thinking*.
+These patterns get encoded somewhere. Instruction files. Skill definitions. Internal playbooks. Prompt libraries. They all attempt to answer the same question:
 
-Experts supply the intelligence. Missions supply the thinking model that directs it. These are separate, composable concerns — and that separation is what makes complex reasoning reproducible.
+> *How should this problem be thought through?*
+
+But they share the same weaknesses:
+
+- buried in prose, not structure — intent is invisible, only output is visible
+- not composable — patterns cannot be named, reused, or combined
+- not reviewable — a collaborator cannot inspect the reasoning approach, only the result
+- not transferable — tied to a session, a tool, or a person
+- rebuilt repeatedly — accumulated lessons don't survive the context window
+
+The industry optimises prompts. The real asset is the reasoning pattern behind the prompt.
+
+---
+
+## The insight
+
+Experienced practitioners don't solve hard problems with a single prompt. They apply repeatable reasoning techniques:
+
+```
+Generate → Critique → Revise → Judge
+Architect → Security Review → Principal Review
+Debate → Synthesis
+Classify → Route → Execute
+Generate → Verify → Refine
+```
+
+These are not prompts. These are thinking models.
+
+MCL turns thinking models into reusable software artifacts.
+
+---
+
+## A first example
+
+```fsharp
+mission RefinedPitch(product) loop(3) = {
+    PitchDrafter
+    -> PitchCritic
+    -> PitchReviser
+    -> PitchJudge
+}
+```
+
+This is Self-Refine — a known reasoning architecture — expressed declaratively. The pipeline drafts, critiques, revises, and judges, retrying up to three times until the judge passes. The mission is the asset, not the prompt.
+
+Compare [`missions/elevator-pitch/`](missions/elevator-pitch/) (one expert, one pass) with [`missions/elevator-pitch-refined/`](missions/elevator-pitch-refined/) (four experts in sequence). Same product, different thinking model — the difference is the mission.
 
 ---
 
 ## The three concepts
 
-### Expert
+### Expert — *who performs the work*
 
-An Expert is a reusable intelligence package — a markdown file with a YAML frontmatter header and a system prompt. Experts encapsulate knowledge, methodology, review criteria, and domain expertise. They are first-class artifacts, not inline prompt strings.
+An Expert is a reusable intelligence package: a markdown file with a YAML frontmatter header and a system prompt. Experts encapsulate knowledge, methodology, review criteria, and domain expertise. They are first-class artifacts, not inline prompt strings.
 
 ```markdown
 ---
@@ -41,17 +82,11 @@ Produce a concrete architecture covering CRD design, controller structure, RBAC,
 and operational concerns.
 ```
 
-Local experts live at `./experts/<Name>/expert.md`. OCI-distributed experts are declared in `forge.toml` and pulled into `~/.forge/experts/` by `forge init`.
+Local experts live at `./experts/<Name>/expert.md`. OCI-distributed experts are declared in `forge.toml` and pulled by `forge init`.
 
-An Expert answers: **Who performs this work?**
+### Mission — *how should this problem be reasoned about*
 
----
-
-### Mission
-
-A Mission is a codified thinking model.
-
-A mission makes explicit *how* a problem should be reasoned through — which experts engage, in what order, and how their outputs build on each other. It is the structure of thought, written down.
+A Mission is a codified thinking model. It makes explicit which experts engage, in what order, and how their outputs build on each other. It is the structure of thought, written down.
 
 ```fsharp
 mission BuildOperatorDesign(goal, persona) = {
@@ -61,80 +96,38 @@ mission BuildOperatorDesign(goal, persona) = {
 }
 ```
 
-The mental model is a chain of expertise, not a call stack:
+Each stage receives the accumulated context and all prior outputs, then applies its domain expertise before passing forward. Missions are composable — a mission can be used as a step in another mission.
 
-```
-KubernetesArchitect   ← drafts the design
-        ↓
-SecurityArchitect     ← hardens it
-        ↓
-PrincipalReviewer     ← signs off
-```
+### Agent — *how is the capability consumed*
 
-Each stage receives the accumulated context and all prior outputs, then applies its domain expertise before passing forward.
-
-Missions are composable — a mission can be used as a step in another mission:
-
-```fsharp
-mission FullDevelopmentCycle(goal) = {
-    RequirementsAnalyst
-    -> CodeReview(codebase: goal)    // CodeReview is itself a mission
-    -> DeploymentPlanner
-}
-```
-
-To see composition in action, compare [`missions/elevator-pitch/`](missions/elevator-pitch/) (one expert, one pass) with [`missions/elevator-pitch-refined/`](missions/elevator-pitch-refined/) (four experts in sequence). Same product, different thinking model — the difference is the mission.
-
-A Mission answers: **How should this problem be thought through?**
+An Agent is a runtime endpoint. It exposes one mission behind a conversational interface or HTTP API — one mission, one agent, one endpoint.
 
 ---
 
-### Agent
+## Expert kinds — heterogeneous reasoning substrates
 
-An Agent is a runtime endpoint.
+Different reasoning tasks require different substrates. Not all cognition should be delegated to a language model.
 
-An agent exposes one mission behind a conversational interface — VS Code, Open WebUI, Claude Code, or any OpenAI-compatible client. One mission per file, one mission per agent, one agent per endpoint.
+| Kind | Substrate | When to use |
+|------|-----------|-------------|
+| `llm` | Language model | Generation, reasoning, extraction |
+| `rule` | Deterministic evaluator | Hard invariants — certainty, not probability |
+| `onnx` | Trained ML model | Statistical scoring, classification |
+| `json_extract` | Structured parser | Bridging LLM output into typed context keys |
+| `http` | External service | Existing microservices, scoring APIs |
 
-An Agent answers: **How does a user consume this capability?**
+Rules enforce invariants. Language models perform reasoning. This separates certainty from probability.
+
+A pipeline is not constrained to one substrate. A language model can extract signals, a rule gate can verify structure, a trained ML model can score — all in the same mission:
+
+```
+LLMAnalyst → ExtractFeatures → Scorer → LLMInterpreter
+  (llm)       (json_extract)   (onnx)       (llm)
+```
+
+MCL is neurosymbolic orchestration expressed declaratively.
 
 ---
-
-## The two-file model
-
-```
-missions/build-operator/
-  mission.mcl     ← thinking model — reasoning and domain variables only
-  forge.toml      ← manifest — experts, provider profiles, OCI sources
-  mcl.lock        ← resolved hashes (generated by forge init, never hand-edited)
-```
-
-`mission.mcl` is a pure reasoning artifact. It is readable without knowing anything about the infrastructure running it. Infrastructure — which LLM, which API key, which experts came from OCI — lives in `forge.toml`.
-
----
-
-## forge.toml
-
-Provider configuration and OCI expert sources live in `forge.toml`, not in the mission file.
-
-```toml
-# Expert sources — OCI refs pulled by `forge init`
-[experts]
-KubernetesArchitect = "ghcr.io/katasec/forge-kubernetes-architect@0.1.0"
-
-# Default provider — used by all steps without `using`
-[providers.default]
-provider = "openai"
-model    = env("MCL_MODEL", "gpt-4o-mini")
-apiKey   = env("MCL_API_KEY")
-
-# Named profile — selected per step with `using architect`
-[providers.architect]
-provider = "anthropic"
-model    = "claude-opus-4-8"
-apiKey   = env("ANTHROPIC_API_KEY")
-```
-
-Supported providers: `openai`, `anthropic`, `azure`, `ollama`. Run `forge provider scaffold <name>` to generate a starter block for any of them.
 
 ## Language primitives
 
@@ -146,6 +139,34 @@ Supported providers: `openai`, `anthropic`, `azure`, `ollama`. Run `forge provid
 | `loop(N)` | Quality convergence — reruns the pipeline until quality passes, up to N times |
 | `using` | Provider selection — which `forge.toml` profile a step uses |
 | Mission as step | Composition — a mission used as a step in another mission's pipeline |
+
+---
+
+## Reasoning patterns as assets
+
+MCL is not about individual prompts. It is about packaging accumulated experience.
+
+The [`missions/concepts/`](missions/concepts/) folder contains proven reasoning architectures — not examples, but reusable thinking models ready to adopt and adapt:
+
+| Pattern | What it encodes |
+|---------|----------------|
+| [Self Refine](missions/concepts/self-refine/) | Iterative quality convergence — draft, critique, revise, judge |
+| [Debate](missions/concepts/debate/) | Adversarial reasoning across positions → synthesis |
+| [Constitutional AI](missions/concepts/constitutional-ai/) | Principle-guided self-correction |
+| [Hallucination Reduction](missions/concepts/hallucination-reduction/) | Cross-verification before commitment |
+| [Verifiable Reasoning](missions/concepts/verifiable-reasoning/) | Deterministic checks alongside LLM reasoning |
+| [Mixture of Agents](missions/concepts/mixture-of-agents/) | Parallel specialists → synthesiser |
+| [Hybrid LLM + ML](missions/concepts/hybrid-llm-ml/) | Neural reasoning + classical ML scoring in one pipeline |
+
+Each pattern is named, runnable, and versioned. Because experts are OCI artifacts, reasoning patterns can be published and pulled like packages:
+
+```
+ghcr.io/org/self-refine@1.0
+ghcr.io/org/debate@1.0
+ghcr.io/org/cis-audit@2.1
+```
+
+OCI becomes a package manager for reasoning techniques. `forge init` is dependency resolution for thinking models.
 
 ---
 
@@ -165,8 +186,6 @@ mission BuildOperatorDesign(goal, persona) = {
 
 output(BuildOperatorDesign)
 ```
-
-Local experts live at `./experts/<Name>/expert.md`. OCI-distributed experts and provider profiles are declared in `forge.toml`.
 
 See [`missions/build-operator/`](missions/build-operator/) for a working version of this mission.
 
@@ -190,7 +209,7 @@ Produce a concrete architecture covering CRD design, controller structure,
 RBAC, and operational concerns.
 ```
 
-`{{key}}` placeholders are interpolated from the context bag before the step runs. Local experts live at `./experts/<Name>/expert.md`.
+`{{key}}` placeholders are interpolated from the context bag before the step runs.
 
 ---
 
@@ -205,14 +224,60 @@ mission RefinedPitch(product) loop(3) = {
 }
 ```
 
-The runtime reruns the full pipeline on failure, up to the declared limit. The last step's pass/fail status controls the loop. Platform-managed feedback injection: on each retry, the runtime prepends a structured critique to the first expert's context — no developer action required.
+The runtime reruns the full pipeline on failure, up to the declared limit. The last step's pass/fail status controls the loop. On each retry, the runtime prepends structured critique to the first expert's context — no developer action required.
 
 | Variable | Value |
 |----------|-------|
-| `{{attempt}}` | Current attempt number, 1-based. |
-| `{{max_loops}}` | Declared loop cap. |
+| `{{attempt}}` | Current attempt number, 1-based |
+| `{{max_loops}}` | Declared loop cap |
+| `{{feedback}}` | Failure message from the prior attempt's judge or rule gate |
 
-See [`missions/loop-demo/`](missions/loop-demo/) for a working loop with a deliberately bad first-attempt expert and a quality judge. Compare with [`missions/loop-demo-naive/`](missions/loop-demo-naive/) — the same question, single-shot, no retry — to see what the loop adds.
+See [`missions/loop-demo/`](missions/loop-demo/) and compare with [`missions/loop-demo-naive/`](missions/loop-demo-naive/) — same question, no retry — to see what the loop adds.
+
+---
+
+## Deterministic rule gates
+
+Not every check needs a language model. `kind: rule` evaluates a declarative expression against the prior step's output — in-process, zero latency, zero tokens.
+
+```markdown
+---
+name: WordCountGate
+kind: rule
+check: word_count >= 50 and markdown_has_heading
+onFail: Response too short and missing a heading. Expand to at least 50 words with a ## heading.
+---
+```
+
+On failure, `onFail` is written to `{{feedback}}` and injected into the next loop iteration automatically.
+
+```fsharp
+mission Draft(topic) loop(3) = {
+    Drafter
+    -> WordCountGate    // kind: rule — instant, no LLM call
+}
+```
+
+**Available evaluators:**
+
+| Evaluator | Example |
+|-----------|---------|
+| `word_count op N` | `word_count >= 50` |
+| `char_count op N` | `char_count < 500` |
+| `line_count op N` | `line_count >= 3` |
+| `sentence_count op N` | `sentence_count >= 2` |
+| `contains "text"` | `contains "## Summary"` |
+| `starts_with "text"` | `starts_with "{"` |
+| `ends_with "text"` | `ends_with "}"` |
+| `no_match "pattern"` | `no_match "TODO\|FIXME"` |
+| `contains_pattern "pattern"` | `contains_pattern "\d{4}-\d{2}-\d{2}"` |
+| `json_parseable` | `json_parseable` |
+| `xml_parseable` | `xml_parseable` |
+| `markdown_has_heading` | `markdown_has_heading` |
+
+Multiple clauses joined with `and` must all pass.
+
+See [`missions/rule-gate-demo/`](missions/rule-gate-demo/) for a working example.
 
 ---
 
@@ -230,9 +295,9 @@ mission Analysis(input) = {
 }
 ```
 
-All experts in a `parallel {}` block run concurrently. Each expert's output is available downstream as `{{ExpertName}}` — e.g. `{{Summariser}}`, `{{FactChecker}}`. If any expert fails, the whole block fails immediately.
+All experts in a `parallel {}` block run concurrently. Each expert's output is available downstream as `{{ExpertName}}`. If any expert fails, the whole block fails immediately.
 
-See [`missions/parallel-synthesis/`](missions/parallel-synthesis/) — three independent analysts (business, technical, risk) evaluate a proposal in parallel, then a Synthesiser consolidates their views into a single go/no-go recommendation.
+See [`missions/parallel-synthesis/`](missions/parallel-synthesis/) — three independent analysts evaluate a proposal in parallel, then a Synthesiser consolidates their views into a single go/no-go recommendation.
 
 ---
 
@@ -248,33 +313,15 @@ mission SDLCAgent(input) = {
 }
 ```
 
-`when(key: "value")` guards a step — it runs only if the context bag matches. `when(else)` is the default branch. Hard error if nothing matches and no `when(else)` is present.
+`when(key: "value")` guards a step — it runs only if the context bag matches. `when(else)` is the default branch. `Classifier` is a stdlib expert — ships embedded in the binary, always available, no declaration needed.
 
-`Classifier` is a stdlib expert — ships embedded in the binary, always available, no declaration needed. It inspects input and emits the routing signal that `when()` reads.
-
-See [`missions/when-routing/`](missions/when-routing/) — a `RequestClassifier` reads a software engineering question and outputs a routing keyword (`architecture`, `code`, or `operations`). Each specialist runs only when its keyword matches. `GeneralAdvisor` handles anything ambiguous via `when(else)`.
-
----
-
-## Provider profiles
-
-Per-step provider override with `using`:
-
-```fsharp
-mission BuildOperatorDesign(goal) = {
-    KubernetesArchitect using architect
-    -> SecurityArchitect
-    -> PrincipalReviewer(style: "terse") using fast
-}
-```
-
-`using <profile>` selects a named profile from `forge.toml`. All steps without `using` use the `default` profile. Domain context `(key: value)` and provider selection `using` are orthogonal — both, either, or neither may appear on any step.
+See [`missions/when-routing/`](missions/when-routing/) for a working example.
 
 ---
 
 ## Mission composition
 
-A mission is an expert at the interface level — it takes input and produces output. The caller never knows or cares whether a step is a single LLM call or a full sub-pipeline. No new syntax required.
+A mission is an expert at the interface level — it takes input and produces output. The caller never knows whether a step is a single LLM call or a full sub-pipeline.
 
 ```fsharp
 mission DesignMode(input) loop(2) = {
@@ -297,78 +344,115 @@ mission SDLCAgent(input) = {
 }
 ```
 
-`DesignMode` and `TaskMode` are independently runnable missions. `SDLCAgent` composes them behind a routing layer — the routing logic and the reasoning logic stay in separate, independently testable units.
+`DesignMode` and `TaskMode` are independently runnable missions. `SDLCAgent` composes them behind a routing layer — routing logic and reasoning logic stay in separate, independently testable units.
 
-Key properties:
-- **Explicit binding only** — `DesignMode(input: input)` maps the caller's context into the child. Parent runtime state never leaks into the sub-mission.
-- **Failure propagates** — a failing sub-mission fails the parent step immediately, surfacing the inner reason.
-- **`loop(N)` inside sub-missions** retries independently of the parent loop.
-- **Arbitrarily deep** — missions compose into missions with no depth limit.
-
-Run a sub-mission directly: `forge run --mission DesignMode`
-
-See [`missions/sdlc-agent/`](missions/sdlc-agent/) — the full example above, runnable today.
+See [`missions/sdlc-agent/`](missions/sdlc-agent/) for a working example.
 
 ---
 
-## Deterministic expert gates (`kind: rule`)
+## Distribution
 
-Not every check needs an LLM. `kind: rule` evaluates a declarative expression against the prior step's output — in-process, zero latency, zero tokens.
+Reasoning artifacts should be reusable, reproducible, and versioned.
 
-```markdown
----
-name: WordCountGate
-kind: rule
-check: word_count >= 50 and markdown_has_heading
-onFail: Response too short and missing a heading. Expand to at least 50 words with a ## heading.
----
+```
+missions/build-operator/
+  mission.mcl     ← thinking model — reasoning and domain variables only
+  forge.toml      ← manifest — experts, provider profiles, OCI sources
+  mcl.lock        ← resolved hashes (generated by forge init, never hand-edited)
 ```
 
-On failure, `onFail` is written to `{{feedback}}` and injected into the next loop iteration automatically. The drafter reads it and self-corrects — no plumbing required.
+`mission.mcl` is a pure reasoning artifact. It is readable without knowing anything about the infrastructure running it. Infrastructure — which model, which API key, which experts came from OCI — lives in `forge.toml`.
+
+```toml
+# Expert sources — OCI refs pulled by forge init
+[experts]
+KubernetesArchitect = "ghcr.io/katasec/forge-kubernetes-architect@0.1.0"
+
+# Default provider
+[providers.default]
+provider = "openai"
+model    = env("MCL_MODEL", "gpt-4o-mini")
+apiKey   = env("MCL_API_KEY")
+
+# Named profile — selected per step with `using`
+[providers.architect]
+provider = "anthropic"
+model    = "claude-opus-4-8"
+apiKey   = env("ANTHROPIC_API_KEY")
+```
+
+Supported providers: `openai`, `anthropic`, `azure`, `ollama`. Run `forge provider scaffold <name>` to generate a starter block.
+
+---
+
+## Execution
+
+```bash
+forge init                                    # resolve experts, write mcl.lock
+forge validate                                # parse and validate the mission file
+forge run                                     # run the mission
+forge run --steps                             # stream each expert's output live
+forge run --var goal="Redesign for ARM64"     # override a let binding at runtime
+forge clean                                   # purge ~/.forge/experts cache
+forge login ghcr.io --token <pat>            # save registry credentials
+forge list experts                           # list local experts
+forge provider list                          # list supported providers
+forge provider scaffold <name>               # print a ready-to-paste forge.toml block
+```
+
+Output routing:
+
+```bash
+forge run                        # stdout
+forge run > report.md            # redirect
+forge run | pbcopy               # pipe
+```
+
+Or declare the destination in the mission file:
 
 ```fsharp
-mission Draft(topic) loop(3) = {
-    Drafter        // sees {{feedback}} from prior attempt
-    -> WordCountGate  // kind:rule — instant, no LLM call
-}
+output(BuildOperatorDesign)                 // stdout (default)
+output(BuildOperatorDesign, "./report.md")  // write to file
 ```
 
-**Available evaluators:**
-
-| Evaluator | Form | Example |
-|-----------|------|---------|
-| `word_count` | `word_count op N` | `word_count >= 50` |
-| `char_count` | `char_count op N` | `char_count < 500` |
-| `line_count` | `line_count op N` | `line_count >= 3` |
-| `sentence_count` | `sentence_count op N` | `sentence_count >= 2` |
-| `contains` | `contains "text"` | `contains "## Summary"` |
-| `starts_with` | `starts_with "text"` | `starts_with "{"` |
-| `ends_with` | `ends_with "text"` | `ends_with "}"` |
-| `no_match` | `no_match "pattern"` | `no_match "TODO\|FIXME"` |
-| `contains_pattern` | `contains_pattern "pattern"` | `contains_pattern "\d{4}-\d{2}-\d{2}"` |
-| `json_parseable` | `json_parseable` | `json_parseable` |
-| `xml_parseable` | `xml_parseable` | `xml_parseable` |
-| `markdown_has_heading` | `markdown_has_heading` | `markdown_has_heading` |
-
-Multiple clauses joined with `and` must all pass.
-
-See [`missions/rule-gate-demo/`](missions/rule-gate-demo/) for a working example.
+Status messages always go to stderr and never pollute the output stream.
 
 ---
 
-## HTTP expert kind (`kind: http`)
+## Interoperability — forge serve
 
-Experts can delegate to an external service. The context bag is POSTed as JSON; the service returns a `StepEnvelope` (`{"text": "...", "status": "pass"}`).
+A mission can be exposed as a service.
 
-```markdown
----
-name: Scorer
-kind: http
-endpoint: https://api.example.com/score
----
+```bash
+forge serve                   # reads agent.yaml in current directory
+forge serve path/to/agent.yaml
 ```
 
-Useful for calling existing microservices, scoring models, or any non-LLM check that lives outside the pipeline binary.
+`forge serve` exposes the pipeline as an endpoint conforming to the OpenAI wire protocol — the de facto integration standard for AI services. Any client or framework that already speaks this format can call a forge mission with no migration cost and no new SDK.
+
+```python
+# Python — call a forge mission like any other OAI-compatible service
+import requests
+
+response = requests.post(
+    "http://localhost:8080/v1/chat/completions",
+    json={
+        "model": "debate",
+        "messages": [{"role": "user", "content": question}],
+    },
+)
+```
+
+The reasoning pipeline — ONNX models, rule gates, multi-expert composition — is invisible to the consumer. They call an endpoint.
+
+See [`examples/python/`](examples/python/) for a working client against the Debate mission.
+
+```bash
+forge agent start --agent-file <path>     # start agent container (Docker)
+forge agent stop  --agent-file <path>     # stop agent container
+forge webui start --agent-file <path>     # start Open WebUI connected to agent
+forge webui stop                          # stop Open WebUI
+```
 
 ---
 
@@ -386,13 +470,11 @@ You are the final judge. If the pitch is unclear, too long, or contains jargon �
 declare failure and state which criterion was missed.
 ```
 
-This is an explicit opt-in. Critics and reviewers that find issues always pass their output downstream — they never stop the pipeline. Only a judge can halt execution.
+Critics and reviewers that find issues always pass their output downstream — they never stop the pipeline. Only a judge can halt execution.
 
 ---
 
 ## Reserved context variables
-
-Injected by the runtime. Cannot be overridden.
 
 | Variable | Value |
 |----------|-------|
@@ -400,34 +482,7 @@ Injected by the runtime. Cannot be overridden.
 | `{{attempt}}` | Current loop iteration, 1-based. Always `1` without `loop`. |
 | `{{max_loops}}` | Declared loop cap. Always `1` without `loop`. |
 | `{{ExpertName}}` | Output from a named step in a `parallel {}` block. |
-| `{{feedback}}` | Failure message from the prior loop attempt's judge or rule gate. Empty string on attempt 1. Reference it in any drafter prompt to self-correct on retry. |
-
----
-
-## CLI
-
-```bash
-forge init                                     // resolve experts, write mcl.lock
-forge validate                                 // parse and validate the mission file
-forge run                                      // run the mission
-forge run --steps                              // stream each expert's output live
-forge run --var goal="Redesign for ARM64"      // override a let binding at runtime
-forge clean                                    // purge ~/.forge/experts cache
-forge login ghcr.io --token <pat>             // save registry credentials
-forge list experts                            // list local experts
-
-forge provider list                           // list supported providers
-forge provider scaffold <name>                // print a ready-to-paste forge.toml block
-
-forge serve                                   // expose the mission as an OpenAI-compatible endpoint
-
-forge agent start --agent-file <path>         // start agent container (Docker)
-forge agent stop  --agent-file <path>         // stop agent container
-forge webui start --agent-file <path>         // start Open WebUI connected to agent
-forge webui stop                              // stop Open WebUI
-```
-
-`forge run` reads `mission.mcl`, `forge.toml`, and `mcl.lock` from the current directory. Run `forge init` first to generate `mcl.lock`.
+| `{{feedback}}` | Failure message from the prior loop attempt's judge or rule gate. Empty on attempt 1. |
 
 ---
 
@@ -435,21 +490,19 @@ forge webui stop                              // stop Open WebUI
 
 | Mission | What it demonstrates |
 |---------|---------------------|
-| [`elevator-pitch`](missions/elevator-pitch/) | Single expert, single step — the minimum viable mission |
-| [`elevator-pitch-refined`](missions/elevator-pitch-refined/) | Sequential `->` composition — draft, critique, revise, judge |
+| [`elevator-pitch`](missions/elevator-pitch/) | Single expert — minimum viable mission |
+| [`elevator-pitch-refined`](missions/elevator-pitch-refined/) | Sequential composition — draft → critique → revise → judge |
 | [`build-operator`](missions/build-operator/) | Named params `(key: value)` — per-step context overrides |
 | [`loop-demo`](missions/loop-demo/) | `loop(N)` — quality convergence with automatic retry |
-| [`loop-demo-naive`](missions/loop-demo-naive/) | Same question as loop-demo, no retry — shows the contrast |
-| [`when-routing`](missions/when-routing/) | `when(output: "x")` — classifier routes to the right specialist |
+| [`loop-demo-naive`](missions/loop-demo-naive/) | Same question, no retry — shows the contrast |
+| [`when-routing`](missions/when-routing/) | `when()` — classifier routes to the right specialist |
 | [`parallel-synthesis`](missions/parallel-synthesis/) | `parallel {}` — three independent analysts, one synthesiser |
-| [`rule-gate-demo`](missions/rule-gate-demo/) | `kind: rule` — deterministic word-count gate with loop feedback |
-| [`sdlc-agent`](missions/sdlc-agent/) | Mission composition — Classifier routes to `DesignMode` or `TaskMode` sub-missions |
+| [`rule-gate-demo`](missions/rule-gate-demo/) | `kind: rule` — deterministic gate with loop feedback |
+| [`sdlc-agent`](missions/sdlc-agent/) | Mission composition — sub-missions as steps |
 
 ---
 
 ## Quick start
-
-Clone the repo and run one of the example missions:
 
 ```bash
 export MCL_API_KEY=sk-...   # OpenAI key (default provider in all examples)
@@ -460,7 +513,7 @@ forge validate              # parse and validate
 forge run                   # single expert, single pass — simplest possible mission
 ```
 
-For a fuller example — sequential composition with adversarial review:
+For sequential composition with adversarial review:
 
 ```bash
 cd missions/elevator-pitch-refined
@@ -470,54 +523,30 @@ forge init && forge run     # drafter → critic → reviser → judge
 Or try the showcase missions:
 
 ```bash
-cd missions/when-routing        # conditional routing via when()
+cd missions/when-routing        # conditional routing
 cd missions/parallel-synthesis  # parallel experts + synthesiser
 cd missions/loop-demo           # quality-convergence loop with retry
 cd missions/rule-gate-demo      # deterministic rule gate + loop feedback
 cd missions/sdlc-agent          # mission composition — sub-missions as steps
-forge init && forge run         # same command for all of them
+forge init && forge run
 ```
 
 Provider and model are configured in each mission's `forge.toml`. To switch to Anthropic, swap the `[providers.default]` block — the commented alternative is already in each example file.
 
 ---
 
-## Output routing
+## Why MCL exists
 
-```bash
-forge run                        # stdout
-forge run > report.md            # redirect
-forge run | pbcopy               # pipe
-```
+Six months of real-world usage across production debugging, infrastructure automation, Kubernetes operations, and software development across multiple stacks.
 
-Declare the destination in the mission file to make it explicit:
+Every single time, getting reliable output from a language model required the same manual work: decompose the problem, identify the relevant reasoning lenses, sequence them deliberately, and structure the handoff between them. That process was always implicit — rebuilt from scratch each session, buried in ad-hoc prompts and trial and error.
 
-```fsharp
-output(BuildOperatorDesign)                 // stdout (default)
-output(BuildOperatorDesign, "./report.md")  // write to file
-```
+The accumulated lesson: a single general-purpose prompt asks the model to architect, review, challenge, and conclude simultaneously. That is where reliability breaks down. Decomposed reasoning — each lens doing one thing well, in sequence — produces measurably better output.
 
-Status messages always go to stderr and never pollute the output stream.
+MCL is the codification of that process. It makes the reasoning structure explicit, named, composable, and reviewable.
+
+The value is not the prompt. The value is the lesson. MCL exists to make those lessons reusable.
 
 ---
 
-## Mission Control
-
-MCL is the language. Mission Control is the operating environment around it.
-
-Thinking models only work if the context they operate on stays coherent. Mission Control addresses a deeper problem: **context entropy** — the degradation of LLM effectiveness as monolithic context accumulates over long-running work.
-
-Mission Control's answer is hub/spoke knowledge organisation:
-
-```
-plan.md   ←  hub (index of intent and decisions)
-    ├── phase-11.md
-    ├── phase-12.md
-    └── architecture.md
-```
-
-The plan acts as an index. Individual tasks and decisions live in focused spoke documents. This keeps context targeted and reasoning precise — regardless of how much work has accumulated.
-
----
-
-> Why MCL exists: [docs/why.md](docs/why.md)
+> Full origin story and methodology: [docs/why.md](docs/why.md)
