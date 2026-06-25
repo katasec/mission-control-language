@@ -1,24 +1,26 @@
 """
-Talk to a forge-served mission from Python.
+Talk to a forge-served mission from Python using the official OpenAI SDK.
 
 Start the server first:
     forge serve missions/concepts/debate/agent.yaml
 
 Then run this script:
-    pip install requests
+    pip install openai
     python examples/python/client.py
 """
 
-import requests
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="forge",
+    base_url="http://localhost:8080/v1",
+)
 
 question = "Can large language models truly reason, or are they sophisticated pattern matchers?"
 
-response = requests.post(
-    "http://localhost:8080/v1/chat/completions",
-    json={
-        "model": "debate",
-        "messages": [{"role": "user", "content": question}],
-    },
+response = client.responses.create(
+    model="debate",
+    input=question,
 )
-response.raise_for_status()
-print(response.json()["choices"][0]["message"]["content"])
+
+print(response.output_text)
