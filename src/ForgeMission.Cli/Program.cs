@@ -167,7 +167,7 @@ static Command BuildRunCommand()
         catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
         catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
 
-        if (!TryValidate(ast, expertDefs, contractWarningsAreErrors: true)) return;
+        if (!TryValidate(ast, expertDefs, contractErrorsAreFatal: true)) return;
 
         Dictionary<string, object> seedContext;
         try { seedContext = ContextBuilder.Seed(ast, parsedVars); }
@@ -583,30 +583,15 @@ static Dictionary<string, ExpertDefinition>? TryLoadExperts(string expertsDir)
 }
 
 static bool TryValidate(MclProgram ast, Dictionary<string, ExpertDefinition> experts,
-    bool contractWarningsAreErrors = false)
+    bool contractErrorsAreFatal = false)
 {
-    var contractWarnings = new StringWriter();
     try
     {
-        ExpertLoader.Validate(ast, experts, contractWarnings);
+        ExpertLoader.Validate(ast, experts, Console.Error, contractErrorsAreFatal);
+        return true;
     }
-    catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); Environment.Exit(1); return false; }
-
-    var warnings = contractWarnings.ToString();
-    if (string.IsNullOrEmpty(warnings)) return true;
-
-    if (contractWarningsAreErrors)
-    {
-        Console.Error.WriteLine(BoldRed("Contract validation failed — fix these before running:"));
-        Console.Error.WriteLine();
-        foreach (var line in warnings.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-            Console.Error.WriteLine($"  {BoldRed("error")}{Bold(": " + line.Replace("warning ", ""))}");
-        Console.Error.WriteLine();
-        return false;
-    }
-
-    Console.Error.Write(warnings);
-    return true;
+    catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); return false; }
+    catch (ExpertLoadException ex)          { ReportExpertDiagnostic(ex); return false; }
 }
 
 // Builds the full runner dictionary from forge.toml profiles.

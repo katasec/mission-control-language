@@ -73,7 +73,7 @@ public class ExpertLoader(string expertsDirectory)
     }
 
     public static void Validate(Program ast, Dictionary<string, ExpertDefinition> experts,
-        TextWriter? warnings = null)
+        TextWriter? warnings = null, bool contractErrorsAreFatal = false)
     {
         var missionNames = ast.Declarations
             .OfType<MissionDeclaration>()
@@ -102,19 +102,27 @@ public class ExpertLoader(string expertsDirectory)
                 $"Missing expert definitions for: {string.Join(", ", missing)}. " +
                 "Each expert must have a matching markdown file in the experts directory.");
 
+        var contractIssues = ast.Declarations
+            .OfType<MissionDeclaration>()
+            .SelectMany(m => ValidateContextKeys(m, experts))
+            .ToList();
+
+        if (contractIssues.Count == 0) return;
+
+        if (contractErrorsAreFatal)
+            throw new AggregateExpertLoadException(contractIssues);
+
         if (warnings is not null)
-        {
-            foreach (var mission in ast.Declarations.OfType<MissionDeclaration>())
-                ValidateContextKeys(mission, experts, warnings);
-        }
+            foreach (var issue in contractIssues)
+                warnings.WriteLine($"warning {issue.Message}");
     }
 
-    // Walk the pipeline accumulating declared outputKeys; warn when a step's inputKeys
-    // reference a key that no upstream step has declared, or with a mismatched type.
-    private static void ValidateContextKeys(
+    // Walk the pipeline accumulating declared outputKeys; emit diagnostics when a step's
+    // inputKeys reference a key that no upstream step has declared, or with a mismatched type.
+    // Diagnostics point at the offending key line inside the expert's expert.md file.
+    private static IEnumerable<ExpertLoadException> ValidateContextKeys(
         MissionDeclaration mission,
-        Dictionary<string, ExpertDefinition> experts,
-        TextWriter warnings)
+        Dictionary<string, ExpertDefinition> experts)
     {
         // Seed with the standard runtime keys every pipeline starts with.
         var available = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -140,19 +148,26 @@ public class ExpertLoader(string expertsDirectory)
                 // Check inputKeys against what's available upstream.
                 if (expert.InputKeys is { } inputKeys)
                 {
+                    var expertFile = Path.Combine(expert.ExpertDirectory, "expert.md");
+                    var frontmatter = ReadFrontmatter(expertFile);
+
                     foreach (var (key, declaredType) in inputKeys)
                     {
                         if (!available.TryGetValue(key, out var upstreamType))
                         {
-                            warnings.WriteLine(
-                                $"warning MCL011: expert '{step.ExpertName}' in mission '{mission.Name}' " +
-                                $"declares inputKey '{key}: {declaredType}' but no upstream expert declares this outputKey.");
+                            var (line, col, endCol) = FindKeyInBlock(frontmatter, "inputKeys", key, expertFile);
+                            yield return new ExpertLoadException(
+                                $"MCL011: expert '{step.ExpertName}' in mission '{mission.Name}' " +
+                                $"declares inputKey '{key}: {declaredType}' but no upstream expert declares this outputKey.",
+                                expertFile, line, col, endCol);
                         }
                         else if (!string.Equals(upstreamType, declaredType, StringComparison.OrdinalIgnoreCase))
                         {
-                            warnings.WriteLine(
-                                $"warning MCL012: expert '{step.ExpertName}' in mission '{mission.Name}' " +
-                                $"expects '{key}: {declaredType}' but upstream declares '{key}: {upstreamType}'.");
+                            var (line, col, endCol) = FindKeyInBlock(frontmatter, "inputKeys", key, expertFile);
+                            yield return new ExpertLoadException(
+                                $"MCL012: expert '{step.ExpertName}' in mission '{mission.Name}' " +
+                                $"expects '{key}: {declaredType}' but upstream declares '{key}: {upstreamType}'.",
+                                expertFile, line, col, endCol);
                         }
                     }
                 }
@@ -165,6 +180,44 @@ public class ExpertLoader(string expertsDirectory)
                 }
             }
         }
+    }
+
+    // Read just the frontmatter block from an expert.md, returning (text, startLine).
+    private static (string text, int startLine) ReadFrontmatter(string path)
+    {
+        if (!File.Exists(path)) return ("", 1);
+        var lines = File.ReadAllLines(path);
+        int close = -1;
+        for (int i = 1; i < lines.Length; i++)
+            if (lines[i].Trim() == "---") { close = i; break; }
+        if (close < 0) return ("", 1);
+        return (string.Join('\n', lines[1..close]), 2);
+    }
+
+    // Find a specific key under a YAML block heading (e.g. key under "inputKeys:").
+    // Returns (absolute line, col, endCol) suitable for ExpertLoadException.
+    private static (int line, int col, int endCol) FindKeyInBlock(
+        (string text, int startLine) frontmatter, string blockName, string keyName, string filePath)
+    {
+        var lines = frontmatter.text.Split('\n');
+        bool inBlock = false;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var trimmed = lines[i].TrimStart();
+            if (trimmed.StartsWith(blockName + ":", StringComparison.Ordinal)) { inBlock = true; continue; }
+            if (inBlock)
+            {
+                // Leave the block when we hit a non-indented line that isn't this key.
+                if (lines[i].Length > 0 && lines[i][0] != ' ' && lines[i][0] != '\t') inBlock = false;
+                else if (trimmed.StartsWith(keyName + ":", StringComparison.Ordinal))
+                {
+                    var col = lines[i].Length - trimmed.Length;
+                    return (frontmatter.startLine + i, col, col + keyName.Length);
+                }
+            }
+        }
+        // Fall back to pointing at the inputKeys: heading itself.
+        return FindField(frontmatter.text, blockName, frontmatter.startLine);
     }
 
     private static IEnumerable<string> GetStepNames(Pipeline pipeline)
