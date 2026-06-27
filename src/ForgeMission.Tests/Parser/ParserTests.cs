@@ -241,6 +241,73 @@ public class ParserTests
         Assert.IsType<ElseWhen>(steps[4].Step.When);
     }
 
+    [Theory]
+    [InlineData(">",  CompOp.Gt,  0.8)]
+    [InlineData("<",  CompOp.Lt,  0.5)]
+    [InlineData(">=", CompOp.Gte, 0.75)]
+    [InlineData("<=", CompOp.Lte, 0.9)]
+    [InlineData("==", CompOp.Eq,  1.0)]
+    public void WhenClause_NumericCompare_ParsesCorrectly(string op, CompOp expectedOp, double threshold)
+    {
+        var source = $$"""
+            mission Score = {
+                Scorer
+                -> HighPath when(score {{op}} {{threshold.ToString(System.Globalization.CultureInfo.InvariantCulture)}})
+                -> LowPath  when(else)
+            }
+            """;
+
+        var result  = MclParser.Parse(source);
+        var mission = Assert.Single(result.Declarations) as MissionDeclaration;
+        var steps   = mission!.Pipeline.Elements.OfType<StepElement>().ToList();
+        var guard   = Assert.IsType<NumericCompareWhen>(steps[1].Step.When);
+        Assert.Equal("score",       guard.Key);
+        Assert.Equal(expectedOp,    guard.Op);
+        Assert.Equal(threshold,     guard.Threshold);
+    }
+
+    [Fact]
+    public void WhenClause_NumericCompare_IntLiteral_ParsesCorrectly()
+    {
+        var source = """
+            mission Demo = {
+                Scorer
+                -> Pass when(score >= 7)
+            }
+            """;
+
+        var result  = MclParser.Parse(source);
+        var mission = Assert.Single(result.Declarations) as MissionDeclaration;
+        var step    = mission!.Pipeline.Elements.OfType<StepElement>().Last().Step;
+        var guard   = Assert.IsType<NumericCompareWhen>(step.When);
+        Assert.Equal(7.0, guard.Threshold);
+    }
+
+    [Fact]
+    public void WhenClause_NumericCompare_UnderscoreKey_ParsesCorrectly()
+    {
+        var source = """
+            mission Audit = {
+                RiskScorer
+                -> HighRiskAnalyst when(risk_score >= 0.6)
+                -> LowRiskSummary  when(risk_score < 0.6)
+            }
+            """;
+
+        var result  = MclParser.Parse(source);
+        var mission = Assert.Single(result.Declarations) as MissionDeclaration;
+        var steps   = mission!.Pipeline.Elements.OfType<StepElement>().ToList();
+
+        var high = Assert.IsType<NumericCompareWhen>(steps[1].Step.When);
+        Assert.Equal("risk_score", high.Key);
+        Assert.Equal(CompOp.Gte,   high.Op);
+        Assert.Equal(0.6,          high.Threshold);
+
+        var low = Assert.IsType<NumericCompareWhen>(steps[2].Step.When);
+        Assert.Equal("risk_score", low.Key);
+        Assert.Equal(CompOp.Lt,    low.Op);
+    }
+
     // ── loop(N) ───────────────────────────────────────────────────────────────
 
     [Fact]
@@ -379,6 +446,22 @@ public class ParserTests
         // Old no-braces form is now invalid
         var source = "mission BuildOperator = KubernetesArchitect";
         Assert.Throws<ParseException>(() => MclParser.Parse(source));
+    }
+
+    [Fact]
+    public void DebateBlock_ThrowsNotImplementedParseException()
+    {
+        var source = """
+            mission Demo = {
+                debate(rounds: 3) {
+                    ExpertA
+                    ExpertB
+                }
+            }
+            """;
+        var ex = Assert.Throws<ParseException>(() => MclParser.Parse(source));
+        Assert.Contains("debate {} is not yet implemented", ex.Message);
+        Assert.Contains("parallel {}", ex.Message);
     }
 
     // ── Comments ──────────────────────────────────────────────────────────────

@@ -2,6 +2,8 @@
 name: LLMInterpreter
 input: ML-scored quality signals and the original text
 output: a plain-language interpretation of the quality assessment with specific improvement suggestions
+inputKeys:
+  communication_quality: float
 ---
 
 You have scored a piece of professional communication using a trained ML model.

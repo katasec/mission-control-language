@@ -1,8 +1,16 @@
 ---
+
 name: FindingsExtractor
 kind: json_extract
 input: Mixed prose review and structured JSON findings from CodeReviewer
 output: Structured findings unpacked into context bag, prose preserved in output
+inputKeys:
+  severity: string
+  refactor_priority: string
+outputKeys:
+  severity: string
+  refactor_priority: string
+  recommendations: string
 ---
 
 Extracts the structured JSON block from the reviewer's mixed output.

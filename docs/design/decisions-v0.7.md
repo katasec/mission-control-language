@@ -126,28 +126,35 @@ engineer away the preamble. When mixed output is intentional (chain-of-thought r
 
 ---
 
-## 7. `MclContext` deferred to Phase 33
+## 7. Typed context bag — optional annotations, static analysis only
 
-**Question raised:** should MCL introduce an `MclContext` type analogous to ASP.NET
-Core's `HttpContext` — a single structured object instead of a `Dictionary<string, object>`?
+**Question raised:** the context bag is `Dictionary<string, object>` with no schema.
+Experts that share context keys are coupled by convention — nothing prevents a type
+mismatch between what one expert writes and what the next expects.
 
-**Decision:** Deferred. Document the design, implement only when one of three triggers fires:
-1. The parallel execution collision bug actually occurs in a real pipeline
-2. A cross-cutting concern (audit, telemetry, security) needs structured runtime metadata
-3. Phase 31 (Forge Runtime Platform) requires it for capability routing
+**Decision:** Implement optional `outputKeys`/`inputKeys` annotations in expert frontmatter.
+`forge validate` cross-checks these statically and emits warnings (MCL011 for missing
+upstream key, MCL012 for type mismatch). The context bag remains untyped at runtime —
+these are static analysis hints, not enforcement.
 
-**Why deferred:** The OWIN argument holds. The power of the middleware pattern is that
-the context is shapeless — any middleware can read and write any key without coupling to
-the host's type system. Introducing a typed `MclContext` too early forces a decision about
-what belongs in "user state" vs "runtime metadata" before real usage reveals the right split.
+**Why not runtime enforcement:** The OWIN argument holds for the bag itself. Shapeless
+context is a feature — it lets any expert read any key without coupling to the host's
+type system. Runtime type enforcement would require wrapping every context write, add
+overhead on every step, and fail loudly on perfectly valid pipelines where types coerce
+naturally (e.g. an exec expert writing `"0.85"` that a downstream `when()` reads as float).
 
-**The right split when it arrives:**
-- `State: Dictionary<string, object>` — user-domain data (same as today)
-- `Runtime: MissionRuntime` — structured metadata (attempt number, mission name, step trace)
+**What the annotations buy:** `forge validate` can tell you, before running, that
+`RiskScorer` expects `encryption_score: float` but no upstream expert declares it.
+The `.mcl` file plus annotated experts now show both topology AND data contract.
 
-`State` must stay shapeless (OWIN argument). `Runtime` is the only new thing.
+**Remaining gap (Phase 33):** A full `MclContext` with a `Runtime` metadata half
+(attempt number, step trace, mission name) is still deferred. The right split is:
+- `State: Dictionary<string, object>` — user-domain data, stays shapeless
+- `Runtime: MissionRuntime` — structured metadata for audit and observability
 
-See `docs/phases/phase-33-mcl-context.md` for the full design.
+**External review condition:** "Becomes urgent the moment you have more than one team
+writing experts independently." Annotations address inspectability now. Runtime
+enforcement deferred until first external contributor.
 
 ---
 
@@ -173,3 +180,84 @@ error: Step 'VerdictExtractor' failed: json_extract (VerdictExtractor): output c
 **Why:** The user needs to know which step failed and why in MCL terms. They do not
 need to know which .NET type threw or at which byte offset the JSON parser failed.
 Stack traces are for `--verbose` and bug reports, not for normal operation.
+
+---
+
+## 9. `parallel {}` failure model — fail-fast with no `allow_failure` option
+
+**Question:** Should `parallel {}` support a `partial {}` or `allow_failure: true` variant
+that collects as many results as possible before continuing, rather than cancelling on the
+first failure?
+
+**Decision:** No. `parallel {}` is always fail-fast. All steps must succeed for the block
+to continue. No `allow_failure` or `partial {}` variant will be added to the grammar.
+
+**Why:** The primary use of `parallel {}` in MCL is the synthesis pattern: gather N
+independent perspectives, then a Synthesiser reads all of them. If one expert fails, the
+Synthesiser has an incomplete picture. Proceeding with partial results silently degrades the
+synthesis quality without signalling that anything went wrong — the Synthesiser has no way
+to know one input is missing.
+
+The correct solution for gather-and-summarise-partial-results is to make each branch
+always succeed and write a pass/fail value to the context bag (via `kind:exec` or
+`kind:rule`), then let the LLM reason about the values including the failures. This keeps
+the failure visible in the reasoning chain.
+
+**Compliance audit pattern:** `kind:exec` control checks write `encryption_check: pass/fail`
+to context rather than failing the pipeline. The LLM analyst reads all values and reports
+on failures. This is more useful than stopping the audit on the first failed control.
+
+**Pike:** errgroup semantics — if any goroutine fails, the group fails. Partial results
+are caller confusion.
+**Anders:** a `partial {}` keyword would introduce a third execution mode with different
+semantics. Three modes (sequential, parallel, partial-parallel) is two more than needed.
+
+---
+
+## 10. Sub-mission failure propagation — defined behaviour, not implicit
+
+**Behaviour:** When a step in a mission pipeline calls a sub-mission (a step name that
+matches another `mission` declaration in the same `.mcl` file), the sub-mission runs
+to completion including its own `loop(N)` retries. If the sub-mission returns
+`MissionStatus.Fail`, the parent pipeline receives a `failReason` string
+`"[SubMissionName] <sub-mission fail reason>"` and stops at that step — exactly as if
+any other step had failed.
+
+**What does NOT propagate:** The sub-mission's `feedback` context key. The `feedback`
+key is written by `kind:rule` or `role:judge` experts to drive the next retry within
+that mission's own `loop(N)`. It is scoped to the sub-mission and is not injected into
+the parent's context or the parent's next loop iteration.
+
+**Why:** `feedback` is a correction signal for the loop it lives in. The parent mission
+has its own loop and its own feedback cycle. Cross-loop feedback injection would create
+implicit coupling between missions that is invisible from the `.mcl` file. If the parent
+needs the sub-mission's feedback, it should read `output` and decide what to pass
+explicitly via context bindings.
+
+**Example:** In `sdlc-agent/mission.mcl`, `DesignMode` runs its own `loop(2)` with
+`QualityJudge`. If the judge fails on both attempts, `SDLCAgent` sees
+`"[DesignMode] mission failed"` and stops. `SDLCAgent` itself has no `loop()` so there
+is no retry at the outer level.
+
+---
+
+## 11. `runs/` output structure — manually curated, auto-recording deferred
+
+**Current state:** The `runs/` directory is gitignored and populated manually (or by
+future tooling). `PipelineRunOptions.ContentWriter` is stubbed in the runtime but not
+wired to the CLI. `forge run` does not write step-by-step output files today.
+
+**Deferred:** Auto-recording of runs to `runs/<mission>/<attempt>-<Step>.md` with a
+`manifest.json` (mission name, start time, status, expert versions, input params) is a
+planned feature. It requires the `ContentWriter` path to be wired in the CLI, and a
+manifest schema to be defined.
+
+**Why deferred:** The immediate value of MCL is in the reasoning structure and grounding,
+not in run persistence. Auto-recording adds file I/O, a manifest schema to maintain, and
+a `runs/` directory management story (rotation, cleanup). These are real engineering work
+that would distract from the core language and proof missions. The stub is there to keep
+the option open without forcing the design prematurely.
+
+**When to implement:** When the first user asks "how do I audit what happened in a
+past run?" — at that point the need is real and the design choices are informed by
+actual usage patterns.

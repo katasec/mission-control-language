@@ -118,6 +118,13 @@ public interface IMclGrammarVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStringEquals([NotNull] MclGrammarParser.StringEqualsContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>NumericCompare</c>
+	/// labeled alternative in <see cref="MclGrammarParser.whenExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNumericCompare([NotNull] MclGrammarParser.NumericCompareContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ElseExpr</c>
 	/// labeled alternative in <see cref="MclGrammarParser.whenExpr"/>.
 	/// </summary>
@@ -125,11 +132,29 @@ public interface IMclGrammarVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitElseExpr([NotNull] MclGrammarParser.ElseExprContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="MclGrammarParser.compOp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCompOp([NotNull] MclGrammarParser.CompOpContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MclGrammarParser.number"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNumber([NotNull] MclGrammarParser.NumberContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="MclGrammarParser.parallelBlock"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitParallelBlock([NotNull] MclGrammarParser.ParallelBlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MclGrammarParser.debateBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDebateBlock([NotNull] MclGrammarParser.DebateBlockContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MclGrammarParser.binding"/>.
 	/// </summary>

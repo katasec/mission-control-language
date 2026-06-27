@@ -10,12 +10,14 @@ namespace ForgeMission.Core.Resolution;
 // If it doesn't match → the expert was modified since last 'forge init'.
 //
 // Verbose mode logs resolution source + path for each expert to the provided writer.
+// Warnings are always emitted to stderr (independent of verbose flag).
 public static class ExpertResolver
 {
     public static Dictionary<string, ExpertDefinition> ResolveAll(
         LockFile      lockFile,
         string        missionDir,
-        TextWriter?   verbose = null)
+        TextWriter?   verbose  = null,
+        TextWriter?   warnings = null)
     {
         var result = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal);
 
@@ -27,8 +29,27 @@ public static class ExpertResolver
                 throw new ExpertLoadException(
                     $"MCL008 Expert '{name}' not found at '{entry.Path}'. Run 'forge init' to regenerate the lock file.");
 
-            // Hash verification — skip for legacy lock files without a recorded hash
-            if (entry.Hash is { Length: > 0 } expectedHash)
+            // Warn when a local expert shadows a non-local (OCI/cache) entry in the lock file.
+            // Local wins intentionally — but silent shadowing is a reproducibility risk.
+            if (source == "local" && !string.IsNullOrEmpty(entry.Path))
+            {
+                var recorded = ResolveLockPath(entry.Path, missionDir);
+                if (!string.Equals(absPath, recorded, StringComparison.OrdinalIgnoreCase)
+                    && File.Exists(recorded))
+                {
+                    warnings?.WriteLine(
+                        $"warning MCL010: local expert '{name}' shadows the lock-file entry " +
+                        $"({AbbrPath(recorded)}). Local version will be used. " +
+                        $"Run 'forge init' to update the lock file if this is intentional.");
+                }
+            }
+
+            // Hash verification — skip for legacy lock files without a recorded hash.
+            // Also skip when a local expert shadows a non-local entry: the lock hash
+            // is for the non-local version and does not apply to the local override.
+            var isShadowing = source == "local" && !string.IsNullOrEmpty(entry.Path)
+                && !string.Equals(absPath, ResolveLockPath(entry.Path, missionDir), StringComparison.OrdinalIgnoreCase);
+            if (!isShadowing && entry.Hash is { Length: > 0 } expectedHash)
             {
                 var actualHash = LockFileIO.ComputeHash(absPath);
                 if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))

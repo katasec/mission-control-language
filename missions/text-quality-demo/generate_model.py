@@ -51,7 +51,8 @@ model = LogisticRegression(max_iter=1000)
 model.fit(X, y)
 
 initial_type = [("input", FloatTensorType([None, 3]))]
-onnx_model = convert_sklearn(model, initial_types=initial_type)
+onnx_model = convert_sklearn(model, initial_types=initial_type,
+                             options={type(model): {'zipmap': False}})
 
 os.makedirs("models", exist_ok=True)
 output_path = os.path.join("models", "quality-scorer.onnx")

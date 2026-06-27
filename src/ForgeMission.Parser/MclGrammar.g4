@@ -37,6 +37,7 @@ pipeline
 pipelineElement
     : step
     | parallelBlock
+    | debateBlock
     ;
 
 step
@@ -57,11 +58,25 @@ whenClause
 
 whenExpr
     : anyKey COLON STRING    # StringEquals
+    | anyKey compOp number   # NumericCompare
     | ELSE                   # ElseExpr
+    ;
+
+compOp
+    : GTE | LTE | GT | LT | EQEQ
+    ;
+
+number
+    : INT
+    | FLOAT
     ;
 
 parallelBlock
     : PARALLEL LBRACE step+ RBRACE
+    ;
+
+debateBlock
+    : DEBATE LPAREN ROUNDS COLON INT RPAREN LBRACE step+ RBRACE
     ;
 
 binding
@@ -71,7 +86,7 @@ binding
 // anyKey allows keyword tokens to be used as binding/when keys (e.g. when(output: "x"))
 anyKey
     : LOWER_ID
-    | LET | MISSION | LOOP | USING | WHEN | PARALLEL | ENV | OUTPUT
+    | LET | MISSION | LOOP | USING | WHEN | PARALLEL | DEBATE | ROUNDS | ENV | OUTPUT
     ;
 
 value
@@ -94,10 +109,19 @@ USING    : 'using'    ;
 WHEN     : 'when'     ;
 ELSE     : 'else'     ;
 PARALLEL : 'parallel' ;
+DEBATE   : 'debate'   ;
+ROUNDS   : 'rounds'   ;
 ENV      : 'env'      ;
 OUTPUT   : 'output'   ;
 
+GTE      : '>='       ;
+LTE      : '<='       ;
+GT       : '>'        ;
+LT       : '<'        ;
+EQEQ     : '=='       ;
+
 INT      : [0-9]+     ;
+FLOAT    : [0-9]+ '.' [0-9]+ ;
 ARROW    : '->'       ;
 FAT_ARROW: '=>'       ;
 EQUALS   : '='        ;
@@ -113,7 +137,7 @@ UPPER_ID
     ;
 
 LOWER_ID
-    : [a-z][a-zA-Z0-9]*
+    : [a-z][a-zA-Z0-9_]*
     ;
 
 STRING

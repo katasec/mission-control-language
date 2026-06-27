@@ -1,0 +1,23 @@
+// Compliance Audit Mission
+//
+// Proves: kind:exec control scanning, kind:json_extract unpacking,
+// kind:onnx risk scoring, numeric when() routing, and typed context
+// contracts validated by `forge validate`.
+//
+// SETUP:
+//   pip install scikit-learn skl2onnx
+//   python generate_model.py
+//
+// USAGE:
+//   forge run --mission ComplianceAudit --input "path/to/config.yaml"
+
+mission ComplianceAudit(input) = {
+    ControlChecker
+    -> ExtractControls
+    -> RiskScorer
+    -> HighRiskAnalyst   when(risk_score >= 0.6)
+    -> LowRiskSummary    when(risk_score < 0.6)
+    -> ReportWriter
+}
+
+output(ComplianceAudit)

@@ -37,12 +37,15 @@ step            : UPPER_ID contextClause? usingClause? whenClause? ;
 contextClause   : '(' binding (',' binding)* ')' ;
 usingClause     : 'using' LOWER_ID ;
 whenClause      : 'when' '(' whenExpr ')' ;
-whenExpr        : LOWER_ID ':' STRING    # StringEquals
-                | 'else'                 # Else
+whenExpr        : LOWER_ID ':' STRING          # StringEquals
+                | LOWER_ID compOp number       # NumericCompare
+                | 'else'                       # Else
                 ;
+compOp          : '>' | '<' | '>=' | '<=' | '==' ;
+number          : INT | FLOAT ;
 
 parallelBlock   : 'parallel' '{' step+ '}' ;
-debateBlock     : 'debate' '(' 'rounds' ':' NUMBER ')' '{' step+ '}' ;
+debateBlock     : 'debate' '(' 'rounds' ':' NUMBER ')' '{' step+ '}' ;  // reserved — not yet implemented
 
 binding         : LOWER_ID ':' value ;
 value           : STRING | LOWER_ID | NUMBER | envCall ;
@@ -144,9 +147,21 @@ mission HandleRequest(input) = {
 `when(else)` is the default branch. Hard error if nothing matches and no `when(else)` is
 present. Unmatched steps log at `--verbose` only.
 
-**Phase 25:** exact string match only. Richer expressions (`>`, `or`, `contains`) are
-deferred until the typed context bag arrives. Grammar is designed to be extensible:
-new expression types are additive `WhenExpression` subclasses.
+**Numeric comparisons** are supported for routing on grounded numeric outputs (e.g. ONNX
+scores, rule counts):
+
+```fsharp
+mission AuditRoute = {
+    RiskScorer
+    -> EscalatePath when(risk_score >= 0.75)
+    -> RoutinePath  when(else)
+}
+```
+
+Supported operators: `>`, `<`, `>=`, `<=`, `==`. The threshold is a numeric literal
+(integer or float). The context value is coerced to a double at runtime — values written
+as strings by `kind:exec` are parsed automatically. `or`, `and`, and `contains` are
+deferred until the typed context bag arrives.
 
 ### Parallel execution — `parallel {}`
 
@@ -183,7 +198,12 @@ each retry. No developer action required.
 
 Research-backed default: `loop(2)` or `loop(3)`.
 
-### Multi-agent deliberation — `debate {}` *(separate phase)*
+### Multi-agent deliberation — `debate {}` *(not yet implemented — planned for Phase 26+)*
+
+> **`debate {}` is reserved syntax but not yet implemented.** The runtime raises a clear
+> error if you use it: *"debate {} is not yet implemented — use parallel {} for
+> multi-agent fan-out."* Use `parallel {}` today; `debate {}` will be a drop-in
+> extension once multi-round cross-pollination is available.
 
 ```fsharp
 -> debate(rounds: 3) {
@@ -339,6 +359,35 @@ role: judge          # optional — omit for critics, reviewers, drafters
 
 You are a senior Kubernetes architect. ...
 ```
+
+### Typed context key annotations — `outputKeys` / `inputKeys`
+
+Optional annotations that declare what an expert reads from and writes to the context bag.
+`forge validate` cross-checks these across the pipeline and emits warnings (MCL011/MCL012)
+when a declared input key has no upstream source or when types conflict.
+
+```markdown
+---
+name: RiskScorer
+kind: onnx
+model: ./models/risk.onnx
+inputs: [encryption_score, access_score]
+outputKey: risk_score
+threshold: 0.75
+inputKeys:
+  encryption_score: float
+  access_score: float
+outputKeys:
+  risk_score: float
+---
+```
+
+Supported types: `string`, `float`, `int`, `bool`. Annotations are optional — unannotated
+experts are ignored by the type checker. The context bag remains untyped at runtime;
+these are static analysis hints only.
+
+The standard runtime keys (`output`, `feedback`, `max_loops`) are always available
+upstream and do not need to be declared.
 
 ### `role` field
 

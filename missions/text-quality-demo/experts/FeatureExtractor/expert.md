@@ -2,6 +2,10 @@
 name: FeatureExtractor
 input: A passage of text
 output: JSON object with numeric quality features
+outputKeys:
+  word_count: int
+  avg_sentence_length: float
+  vocabulary_richness: float
 ---
 
 Analyse the following text and output ONLY a valid JSON object with exactly these keys:

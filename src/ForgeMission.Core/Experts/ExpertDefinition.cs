@@ -17,7 +17,9 @@ public record ExpertDefinition(
     string Command                     = "",
     IReadOnlyList<string>? Args        = null,
     string Timeout                     = "",
-    string ExpertDirectory             = "")
+    string ExpertDirectory             = "",
+    IReadOnlyDictionary<string, string>? OutputKeys = null,
+    IReadOnlyDictionary<string, string>? InputKeys  = null)
 {
     public bool IsJudge       => Role.Equals("judge",       StringComparison.OrdinalIgnoreCase);
     public bool IsHttp        => Kind.Equals("http",        StringComparison.OrdinalIgnoreCase);

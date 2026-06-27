@@ -40,7 +40,10 @@ public record Step(
 // When guard — abstract so new expression types are additive (Phase 22+)
 public abstract record WhenClause;
 public record StringEqualsWhen(string Key, string Value) : WhenClause;
+public record NumericCompareWhen(string Key, CompOp Op, double Threshold) : WhenClause;
 public record ElseWhen() : WhenClause;
+
+public enum CompOp { Gt, Lt, Gte, Lte, Eq }
 
 // Binding value types
 public abstract record BindingValue;

@@ -1,0 +1,26 @@
+version: 1
+experts:
+  ControlChecker:
+    source: experts
+    path: experts/ControlChecker/expert.md
+    hash: 18cbc0452d5d8deb9faa5876053f82bbdd24a042af860a4c1bf52fe00d54d44a
+  ExtractControls:
+    source: experts
+    path: experts/ExtractControls/expert.md
+    hash: 2a3e3a8d5a5a0cd20647bd5e2440b00dadab30a6b2d364ebf6aaa8b8196b9ee4
+  HighRiskAnalyst:
+    source: experts
+    path: experts/HighRiskAnalyst/expert.md
+    hash: 9120e05668b5a365e3fd4feaff4c7c8b8c61de562fb700844665780fdf46ae4a
+  LowRiskSummary:
+    source: experts
+    path: experts/LowRiskSummary/expert.md
+    hash: 151fb5b3d86e2176d02a8386782cfc01d96689b0c790cd22512964809114895d
+  ReportWriter:
+    source: experts
+    path: experts/ReportWriter/expert.md
+    hash: a791c19df695279df949afa4a59b8636f39ccecf8dfeb88943ca7095629461fd
+  RiskScorer:
+    source: experts
+    path: experts/RiskScorer/expert.md
+    hash: 0bfec88cda7fe139a00cb696d74cbebe5045ad30fd23a246a71e39330cf19894

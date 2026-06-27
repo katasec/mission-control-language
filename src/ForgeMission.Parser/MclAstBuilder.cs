@@ -68,6 +68,10 @@ internal class MclAstBuilder : MclGrammarBaseVisitor<object?>
     {
         if (ctx.step() is { } s)         return new StepElement((Step)Visit(s)!);
         if (ctx.parallelBlock() is { } p) return Visit(p);
+        if (ctx.debateBlock() is { })
+            throw new ParseException(
+                "debate {} is not yet implemented — use parallel {} for multi-agent fan-out. debate is planned for a future release.",
+                ctx.Start.Line, ctx.Start.Column);
         throw new ParseException("Unknown pipeline element", ctx.Start.Line, ctx.Start.Column);
     }
 
@@ -99,6 +103,22 @@ internal class MclAstBuilder : MclGrammarBaseVisitor<object?>
         var key   = ctx.anyKey().GetText();
         var value = StripQuotes(ctx.STRING().GetText());
         return new StringEqualsWhen(key, value);
+    }
+
+    public override object? VisitNumericCompare(MclGrammarParser.NumericCompareContext ctx)
+    {
+        var key       = ctx.anyKey().GetText();
+        var threshold = double.Parse(ctx.number().GetText(), System.Globalization.CultureInfo.InvariantCulture);
+        var op = ctx.compOp().GetText() switch
+        {
+            ">"  => CompOp.Gt,
+            "<"  => CompOp.Lt,
+            ">=" => CompOp.Gte,
+            "<=" => CompOp.Lte,
+            "==" => CompOp.Eq,
+            var s => throw new ParseException($"Unknown comparison operator '{s}'", ctx.Start.Line, ctx.Start.Column)
+        };
+        return new NumericCompareWhen(key, op, threshold);
     }
 
     public override object? VisitElseExpr(MclGrammarParser.ElseExprContext ctx)

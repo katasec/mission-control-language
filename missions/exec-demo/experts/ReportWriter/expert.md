@@ -1,8 +1,13 @@
 ---
+
 name: ReportWriter
 kind: llm
 input: Extracted review fields from FindingsExtractor
 output: Final formatted code review report
+inputKeys:
+  severity: string
+  refactor_priority: string
+  recommendations: string
 ---
 
 You are a technical report writer. Produce a final code review report.

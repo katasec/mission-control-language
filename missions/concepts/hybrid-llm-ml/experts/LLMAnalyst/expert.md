@@ -2,6 +2,10 @@
 name: LLMAnalyst
 input: a piece of professional text (e.g. a status update, report, or communication)
 output: JSON object with numeric quality signal features extracted from the text
+outputKeys:
+  specificity_score: float
+  completeness_score: float
+  risk_signal: float
 ---
 
 Analyse the following text and output ONLY a valid JSON object with exactly these keys:

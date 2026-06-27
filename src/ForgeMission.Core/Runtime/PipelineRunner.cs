@@ -67,7 +67,7 @@ public class PipelineRunner
             var anyGuardedStepMatched = false;
             var hasGuardedSteps       = mission.Pipeline.Elements
                 .OfType<StepElement>()
-                .Any(e => e.Step.When is StringEqualsWhen);
+                .Any(e => e.Step.When is StringEqualsWhen or NumericCompareWhen);
             var hasElseBranch         = mission.Pipeline.Elements
                 .OfType<StepElement>()
                 .Any(e => e.Step.When is ElseWhen);
@@ -128,6 +128,14 @@ public class PipelineRunner
                     {
                         var matched = context.TryGetValue(sw2.Key, out var val)
                                       && val?.ToString() == sw2.Value;
+                        if (!matched) continue;
+                        anyGuardedStepMatched = true;
+                    }
+                    else if (step.When is NumericCompareWhen nw)
+                    {
+                        var matched = context.TryGetValue(nw.Key, out var raw)
+                                      && TryParseDouble(raw, out var actual)
+                                      && EvaluateNumericOp(actual, nw.Op, nw.Threshold);
                         if (!matched) continue;
                         anyGuardedStepMatched = true;
                     }
@@ -316,6 +324,31 @@ public class PipelineRunner
 
         return (null, namedKey, envelope.Text);
     }
+
+    private static bool TryParseDouble(object? value, out double result)
+    {
+        result = 0;
+        return value switch
+        {
+            double d   => (result = d)    == d,
+            float f    => (result = f)    == f,
+            int i      => (result = i)    == i,
+            long l     => (result = l)    == l,
+            string s   => double.TryParse(s, System.Globalization.NumberStyles.Any,
+                              System.Globalization.CultureInfo.InvariantCulture, out result),
+            _          => false
+        };
+    }
+
+    private static bool EvaluateNumericOp(double actual, CompOp op, double threshold) => op switch
+    {
+        CompOp.Gt  => actual >  threshold,
+        CompOp.Lt  => actual <  threshold,
+        CompOp.Gte => actual >= threshold,
+        CompOp.Lte => actual <= threshold,
+        CompOp.Eq  => Math.Abs(actual - threshold) < 1e-10,
+        _          => false
+    };
 
     private static StepEnvelope ParseStreamedEnvelope(string raw)
     {

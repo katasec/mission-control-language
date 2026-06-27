@@ -5,3 +5,5 @@ mission ReviewCode = {
     -> FindingsExtractor
     -> ReportWriter
 }
+
+output(ReviewCode)

@@ -1,8 +1,16 @@
 ---
+
 name: CodeReviewer
 kind: llm
 input: Code snippet and measured metrics
 output: Structured JSON verdict
+inputKeys:
+  total_lines: int
+  function_count: int
+  avg_complexity: float
+outputKeys:
+  severity: string
+  refactor_priority: string
 ---
 
 You are a senior code reviewer. You have been given objective measurements about a code snippet:

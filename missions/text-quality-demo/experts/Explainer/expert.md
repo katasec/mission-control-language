@@ -2,6 +2,11 @@
 name: Explainer
 input: quality_score from ONNX model and original text features
 output: Human-readable explanation of the quality assessment
+inputKeys:
+  word_count: int
+  avg_sentence_length: float
+  vocabulary_richness: float
+  quality_score: float
 ---
 
 You have scored a piece of text using an ML quality model. Here are the results:

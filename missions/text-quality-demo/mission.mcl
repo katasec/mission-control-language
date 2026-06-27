@@ -10,9 +10,7 @@
 // USAGE:
 //   forge run --mission TextQuality --input "Your text here"
 
-let text = "The quick brown fox jumps over the lazy dog. \
-            This sentence is often used to test typefaces. \
-            It contains every letter of the alphabet."
+let text = "The quick brown fox jumps over the lazy dog. This sentence is often used to test typefaces. It contains every letter of the alphabet."
 
 mission TextQuality(text) = {
     FeatureExtractor

@@ -3,3 +3,5 @@ mission AnalyseSentiment = {
     -> VerdictExtractor
     -> SummaryWriter
 }
+
+output(AnalyseSentiment)

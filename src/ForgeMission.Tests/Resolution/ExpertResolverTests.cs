@@ -138,6 +138,58 @@ public class ExpertResolverTests
     }
 
     [Fact]
+    public void LocalExpert_ShadowingCacheEntry_EmitsWarning()
+    {
+        // Two dirs: "cache" holds the OCI version, "mission" holds a local override.
+        var cacheDir   = Directory.CreateTempSubdirectory("forge-cache-").FullName;
+        var missionDir = Directory.CreateTempSubdirectory("forge-mission-").FullName;
+
+        // Write an expert in the cache dir
+        var cacheExpertDir = Path.Combine(cacheDir, "TestExpert");
+        Directory.CreateDirectory(cacheExpertDir);
+        var cachePath = Path.Combine(cacheExpertDir, "expert.md");
+        File.WriteAllText(cachePath, ExpertMd);
+
+        // Write a different local expert with the same name
+        var localExpertDir = Path.Combine(missionDir, "experts", "TestExpert");
+        Directory.CreateDirectory(localExpertDir);
+        File.WriteAllText(Path.Combine(localExpertDir, "expert.md"), ExpertMd.Replace("test expert", "local override"));
+
+        // Lock file points to the cache path
+        var lockFile = new LockFile
+        {
+            Experts =
+            {
+                ["TestExpert"] = new LockFileExpert
+                {
+                    Source = "cache",
+                    Path   = cachePath,
+                    Hash   = LockFileIO.ComputeHash(cachePath),
+                }
+            }
+        };
+
+        var warnings = new StringWriter();
+        ExpertResolver.ResolveAll(lockFile, missionDir, warnings: warnings);
+
+        Assert.Contains("MCL010", warnings.ToString());
+        Assert.Contains("TestExpert", warnings.ToString());
+        Assert.Contains("shadows", warnings.ToString());
+    }
+
+    [Fact]
+    public void LocalExpert_NoShadowing_NoWarning()
+    {
+        var dir      = CreateMissionDir();
+        var lockFile = BuildLockFile(dir);
+        var warnings = new StringWriter();
+
+        ExpertResolver.ResolveAll(lockFile, dir, warnings: warnings);
+
+        Assert.Empty(warnings.ToString());
+    }
+
+    [Fact]
     public void MultipleExperts_AllResolved()
     {
         var dir = Directory.CreateTempSubdirectory("forge-resolver-multi-").FullName;

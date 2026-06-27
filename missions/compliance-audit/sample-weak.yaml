@@ -1,0 +1,19 @@
+# Sample weak configuration — missing most controls.
+# Expected: high risk score, routes to HighRiskAnalyst.
+
+service:
+  name: payment-gateway
+  version: 1.2.0
+
+database:
+  host: db.internal
+  port: 5432
+  # No encryption_at_rest, no TLS mentioned
+
+api:
+  port: 8080
+  # No HTTPS, no TLS config
+
+auth:
+  method: basic
+  # No MFA, no RBAC, no least-privilege

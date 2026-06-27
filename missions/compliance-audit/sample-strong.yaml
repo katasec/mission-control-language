@@ -1,0 +1,41 @@
+# Sample strong configuration — most controls present.
+# Expected: low risk score, routes to LowRiskSummary.
+
+service:
+  name: payment-gateway
+  version: 1.2.0
+
+tls:
+  enabled: true
+  min_version: "1.2"
+  encrypt_at_rest: true
+  kms_key: arn:aws:kms:us-east-1:123456789:key/abc123
+
+database:
+  host: db.internal
+  port: 5432
+  ssl: required
+  encrypt_transit: true
+
+api:
+  port: 443
+  https: true
+
+auth:
+  mfa: required
+  rbac: enabled
+  roles: [admin, operator, viewer]
+  least_privilege: true
+  service_account: svc-payment@project.iam
+
+logging:
+  audit_log: enabled
+  log_retention: 90d
+  cloudwatch: enabled
+  monitor: true
+  alert_on_failure: true
+
+patching:
+  patch_policy: weekly
+  dependabot: enabled
+  version_policy: pin-exact

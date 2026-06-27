@@ -174,6 +174,18 @@ public interface IMclGrammarListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStringEquals([NotNull] MclGrammarParser.StringEqualsContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>NumericCompare</c>
+	/// labeled alternative in <see cref="MclGrammarParser.whenExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNumericCompare([NotNull] MclGrammarParser.NumericCompareContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>NumericCompare</c>
+	/// labeled alternative in <see cref="MclGrammarParser.whenExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNumericCompare([NotNull] MclGrammarParser.NumericCompareContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ElseExpr</c>
 	/// labeled alternative in <see cref="MclGrammarParser.whenExpr"/>.
 	/// </summary>
@@ -186,6 +198,26 @@ public interface IMclGrammarListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitElseExpr([NotNull] MclGrammarParser.ElseExprContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="MclGrammarParser.compOp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCompOp([NotNull] MclGrammarParser.CompOpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="MclGrammarParser.compOp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCompOp([NotNull] MclGrammarParser.CompOpContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="MclGrammarParser.number"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNumber([NotNull] MclGrammarParser.NumberContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="MclGrammarParser.number"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNumber([NotNull] MclGrammarParser.NumberContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="MclGrammarParser.parallelBlock"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -195,6 +227,16 @@ public interface IMclGrammarListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitParallelBlock([NotNull] MclGrammarParser.ParallelBlockContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="MclGrammarParser.debateBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterDebateBlock([NotNull] MclGrammarParser.DebateBlockContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="MclGrammarParser.debateBlock"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitDebateBlock([NotNull] MclGrammarParser.DebateBlockContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="MclGrammarParser.binding"/>.
 	/// </summary>

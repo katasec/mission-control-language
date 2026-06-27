@@ -11,6 +11,7 @@ public class ExpertLoader(string expertsDirectory)
 {
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ExpertFrontmatter))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(List<string>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Dictionary<string, string>))]
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Type preserved via DynamicDependency")]
     private static readonly IDeserializer Yaml = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -71,7 +72,8 @@ public class ExpertLoader(string expertsDirectory)
         return experts;
     }
 
-    public static void Validate(Program ast, Dictionary<string, ExpertDefinition> experts)
+    public static void Validate(Program ast, Dictionary<string, ExpertDefinition> experts,
+        TextWriter? warnings = null)
     {
         var missionNames = ast.Declarations
             .OfType<MissionDeclaration>()
@@ -100,6 +102,69 @@ public class ExpertLoader(string expertsDirectory)
                 $"Missing expert definitions for: {string.Join(", ", missing)}. " +
                 "Each expert must have a matching markdown file in the experts directory.");
 
+        if (warnings is not null)
+        {
+            foreach (var mission in ast.Declarations.OfType<MissionDeclaration>())
+                ValidateContextKeys(mission, experts, warnings);
+        }
+    }
+
+    // Walk the pipeline accumulating declared outputKeys; warn when a step's inputKeys
+    // reference a key that no upstream step has declared, or with a mismatched type.
+    private static void ValidateContextKeys(
+        MissionDeclaration mission,
+        Dictionary<string, ExpertDefinition> experts,
+        TextWriter warnings)
+    {
+        // Seed with the standard runtime keys every pipeline starts with.
+        var available = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["output"]    = "string",
+            ["feedback"]  = "string",
+            ["max_loops"] = "int",
+        };
+
+        foreach (var element in mission.Pipeline.Elements)
+        {
+            var steps = element switch
+            {
+                StepElement se     => (IEnumerable<Step>)[se.Step],
+                ParallelElement pe => pe.Steps,
+                _                  => Enumerable.Empty<Step>()
+            };
+
+            foreach (var step in steps)
+            {
+                if (!experts.TryGetValue(step.ExpertName, out var expert)) continue;
+
+                // Check inputKeys against what's available upstream.
+                if (expert.InputKeys is { } inputKeys)
+                {
+                    foreach (var (key, declaredType) in inputKeys)
+                    {
+                        if (!available.TryGetValue(key, out var upstreamType))
+                        {
+                            warnings.WriteLine(
+                                $"warning MCL011: expert '{step.ExpertName}' in mission '{mission.Name}' " +
+                                $"declares inputKey '{key}: {declaredType}' but no upstream expert declares this outputKey.");
+                        }
+                        else if (!string.Equals(upstreamType, declaredType, StringComparison.OrdinalIgnoreCase))
+                        {
+                            warnings.WriteLine(
+                                $"warning MCL012: expert '{step.ExpertName}' in mission '{mission.Name}' " +
+                                $"expects '{key}: {declaredType}' but upstream declares '{key}: {upstreamType}'.");
+                        }
+                    }
+                }
+
+                // Accumulate this step's outputKeys for downstream steps.
+                if (expert.OutputKeys is { } outputKeys)
+                {
+                    foreach (var (key, type) in outputKeys)
+                        available[key] = type;
+                }
+            }
+        }
     }
 
     private static IEnumerable<string> GetStepNames(Pipeline pipeline)
@@ -184,7 +249,9 @@ public class ExpertLoader(string expertsDirectory)
         return new ExpertDefinition(meta.Name, meta.Input, meta.Output, body.Trim(), meta.Role, meta.Kind,
             meta.Endpoint, meta.Check, meta.OnFail, meta.Model, meta.Inputs, meta.OutputKey, meta.Threshold,
             meta.Command, meta.Args, meta.Timeout,
-            ExpertDirectory: Path.GetDirectoryName(path) ?? "");
+            ExpertDirectory: Path.GetDirectoryName(path) ?? "",
+            OutputKeys: meta.OutputKeys.Count > 0 ? meta.OutputKeys : null,
+            InputKeys:  meta.InputKeys.Count  > 0 ? meta.InputKeys  : null);
     }
 
     // Returns (frontmatter text, body text, 1-based line number of the first frontmatter line in the file).
@@ -245,8 +312,10 @@ public class ExpertLoader(string expertsDirectory)
         public List<string> Inputs    { get; set; } = [];
         public string       OutputKey { get; set; } = "";
         public string       Threshold { get; set; } = "";
-        public string       Command   { get; set; } = "";
-        public List<string> Args      { get; set; } = [];
-        public string       Timeout   { get; set; } = "";
+        public string       Command     { get; set; } = "";
+        public List<string> Args        { get; set; } = [];
+        public string       Timeout     { get; set; } = "";
+        public Dictionary<string, string> OutputKeys { get; set; } = [];
+        public Dictionary<string, string> InputKeys  { get; set; } = [];
     }
 }

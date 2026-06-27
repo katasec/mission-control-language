@@ -10,3 +10,5 @@ mission BuildOperatorDesign(goal, persona) = {
     -> SecurityArchitect            // hardens the design
     -> PrincipalReviewer(style: "terse ADR")  // final sign-off as a terse ADR
 }
+
+output(BuildOperatorDesign)

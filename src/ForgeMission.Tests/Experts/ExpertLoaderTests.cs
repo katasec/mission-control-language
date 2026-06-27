@@ -401,6 +401,105 @@ public class ExpertLoaderTests : IDisposable
         }
         """);
 
+    // ── typed context key validation ──────────────────────────────────────────
+
+    private static string ExpertWithKeys(string name, string? outputKeys = null, string? inputKeys = null)
+    {
+        var lines = new System.Text.StringBuilder();
+        lines.AppendLine($"---");
+        lines.AppendLine($"name: {name}");
+        lines.AppendLine($"input: something");
+        lines.AppendLine($"output: something");
+        if (outputKeys is not null) lines.AppendLine($"outputKeys:\n{outputKeys}");
+        if (inputKeys  is not null) lines.AppendLine($"inputKeys:\n{inputKeys}");
+        lines.AppendLine($"---");
+        lines.AppendLine($"You are {name}.");
+        return lines.ToString();
+    }
+
+    [Fact]
+    public void ContextKeys_MatchingTypes_NoWarning()
+    {
+        WriteDirExpert("StepA", ExpertWithKeys("StepA", outputKeys: "  score: float"));
+        WriteDirExpert("StepB", ExpertWithKeys("StepB", inputKeys:  "  score: float"));
+
+        var ast      = MclParser.Parse("mission M = { StepA -> StepB }");
+        var experts  = new ExpertLoader(_dir).LoadAll();
+        var warnings = new StringWriter();
+
+        ExpertLoader.Validate(ast, experts, warnings);
+
+        Assert.Empty(warnings.ToString());
+    }
+
+    [Fact]
+    public void ContextKeys_TypeMismatch_EmitsWarningMCL012()
+    {
+        WriteDirExpert("StepA", ExpertWithKeys("StepA", outputKeys: "  score: float"));
+        WriteDirExpert("StepB", ExpertWithKeys("StepB", inputKeys:  "  score: string"));
+
+        var ast      = MclParser.Parse("mission M = { StepA -> StepB }");
+        var experts  = new ExpertLoader(_dir).LoadAll();
+        var warnings = new StringWriter();
+
+        ExpertLoader.Validate(ast, experts, warnings);
+
+        Assert.Contains("MCL012", warnings.ToString());
+        Assert.Contains("score", warnings.ToString());
+    }
+
+    [Fact]
+    public void ContextKeys_MissingUpstreamKey_EmitsWarningMCL011()
+    {
+        WriteDirExpert("StepA", ExpertWithKeys("StepA"));
+        WriteDirExpert("StepB", ExpertWithKeys("StepB", inputKeys: "  score: float"));
+
+        var ast      = MclParser.Parse("mission M = { StepA -> StepB }");
+        var experts  = new ExpertLoader(_dir).LoadAll();
+        var warnings = new StringWriter();
+
+        ExpertLoader.Validate(ast, experts, warnings);
+
+        Assert.Contains("MCL011", warnings.ToString());
+        Assert.Contains("score", warnings.ToString());
+    }
+
+    [Fact]
+    public void ContextKeys_NoAnnotations_NoWarning()
+    {
+        WriteDirExpert("StepA", ExpertWithKeys("StepA"));
+        WriteDirExpert("StepB", ExpertWithKeys("StepB"));
+
+        var ast      = MclParser.Parse("mission M = { StepA -> StepB }");
+        var experts  = new ExpertLoader(_dir).LoadAll();
+        var warnings = new StringWriter();
+
+        ExpertLoader.Validate(ast, experts, warnings);
+
+        Assert.Empty(warnings.ToString());
+    }
+
+    [Fact]
+    public void ContextKeys_ParallelBlock_UpstreamKeysAvailable()
+    {
+        WriteDirExpert("StepA",  ExpertWithKeys("StepA",  outputKeys: "  score: float"));
+        WriteDirExpert("StepB",  ExpertWithKeys("StepB",  outputKeys: "  label: string"));
+        WriteDirExpert("StepC",  ExpertWithKeys("StepC",  inputKeys:  "  score: float\n  label: string"));
+
+        var ast = MclParser.Parse("""
+            mission M = {
+                parallel { StepA StepB }
+                -> StepC
+            }
+            """);
+        var experts  = new ExpertLoader(_dir).LoadAll();
+        var warnings = new StringWriter();
+
+        ExpertLoader.Validate(ast, experts, warnings);
+
+        Assert.Empty(warnings.ToString());
+    }
+
     [Fact]
     public void Validate_ExecExpert_PackagedScript_Exists_DoesNotThrow()
     {

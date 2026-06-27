@@ -504,6 +504,74 @@ public class PipelineRunnerTests
                           new PipelineRunOptions("HandleRequest")));
     }
 
+    [Theory]
+    [InlineData(">",  0.9, true)]
+    [InlineData(">",  0.5, false)]
+    [InlineData(">=", 0.8, true)]
+    [InlineData(">=", 0.7, false)]
+    [InlineData("<",  0.5, true)]
+    [InlineData("<",  0.9, false)]
+    [InlineData("<=", 0.8, true)]
+    [InlineData("==", 0.8, true)]
+    [InlineData("==", 0.9, false)]
+    public async Task When_NumericCompare_RoutesCorrectly(string op, double scoreInContext, bool highExpected)
+    {
+        var source = $$"""
+            mission Score = {
+                Scorer
+                -> HighPath when(score {{op}} 0.8)
+                -> LowPath  when(else)
+            }
+            """;
+        var ast = MclParser.Parse(source);
+
+        var stub = new StubExpertRunner((name, ctx) =>
+        {
+            if (name == "Scorer") ctx["score"] = scoreInContext;
+            return new StepEnvelope($"Output from {name}");
+        });
+
+        await new PipelineRunner(stub)
+            .RunAsync(ast, Experts("Scorer", "HighPath", "LowPath"),
+                      new PipelineRunOptions("Score"));
+
+        var calledNames = stub.Calls.Select(c => c.ExpertName).ToList();
+        if (highExpected)
+        {
+            Assert.Contains("HighPath", calledNames);
+            Assert.DoesNotContain("LowPath", calledNames);
+        }
+        else
+        {
+            Assert.DoesNotContain("HighPath", calledNames);
+            Assert.Contains("LowPath", calledNames);
+        }
+    }
+
+    [Fact]
+    public async Task When_NumericCompare_StringValueInContext_ParsedAndMatched()
+    {
+        var ast = MclParser.Parse("""
+            mission Score = {
+                Scorer
+                -> HighPath when(score >= 0.75)
+                -> LowPath  when(else)
+            }
+            """);
+
+        var stub = new StubExpertRunner((name, ctx) =>
+        {
+            if (name == "Scorer") ctx["score"] = "0.9";  // string form, as exec experts produce
+            return new StepEnvelope($"Output from {name}");
+        });
+
+        await new PipelineRunner(stub)
+            .RunAsync(ast, Experts("Scorer", "HighPath", "LowPath"),
+                      new PipelineRunOptions("Score"));
+
+        Assert.Contains("HighPath", stub.Calls.Select(c => c.ExpertName));
+    }
+
     // ── provider profiles (using <profile>) ───────────────────────────────────
 
     [Fact]

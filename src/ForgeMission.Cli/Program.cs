@@ -163,7 +163,7 @@ static Command BuildRunCommand()
         catch (Exception ex) { Die($"Cannot read mcl.lock: {ex.Message}"); return; }
 
         Dictionary<string, ExpertDefinition> expertDefs;
-        try { expertDefs = ExpertResolver.ResolveAll(lockFile, missionDir, verbose ? Console.Error : null); }
+        try { expertDefs = ExpertResolver.ResolveAll(lockFile, missionDir, verbose ? Console.Error : null, Console.Error); }
         catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
         catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
 
@@ -261,7 +261,9 @@ static Command BuildValidateCommand()
         else
         {
             var lockFile   = LockFileIO.Read(lockPath);
-            var expertDefs = ExpertLoader.LoadFromLockFile(lockFile, missionDir);
+            Dictionary<string, ExpertDefinition> expertDefs;
+            try { expertDefs = ExpertResolver.ResolveAll(lockFile, missionDir, warnings: Console.Error); }
+            catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); return; }
             if (TryValidate(ast, expertDefs))
                 Console.WriteLine("OK — mission is valid.");
         }
@@ -582,7 +584,7 @@ static Dictionary<string, ExpertDefinition>? TryLoadExperts(string expertsDir)
 
 static bool TryValidate(MclProgram ast, Dictionary<string, ExpertDefinition> experts)
 {
-    try { ExpertLoader.Validate(ast, experts); return true; }
+    try { ExpertLoader.Validate(ast, experts, Console.Error); return true; }
     catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); Environment.Exit(1); return false; }
 }
 

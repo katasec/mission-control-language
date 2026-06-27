@@ -31,10 +31,18 @@ public class OnnxExpertRunner : IExpertRunner
             NamedOnnxValue.CreateFromTensor("input", tensor)
         };
 
-        using var session = new InferenceSession(expert.Model);
+        var modelPath = Path.IsPathRooted(expert.Model)
+            ? expert.Model
+            : Path.GetFullPath(Path.Combine(expert.ExpertDirectory, expert.Model));
+
+        using var session = new InferenceSession(modelPath);
         using var results = session.Run(ortInputs);
 
-        var score = results.First().AsEnumerable<float>().First();
+        // sklearn ONNX models emit two outputs: label (int64) then probabilities (float[1,2]).
+        // Take the probability for class 1 (the "positive" / high-risk class).
+        var probOutput = results.FirstOrDefault(r => r.Name == "probabilities") ?? results.Last();
+        var probs      = probOutput.AsEnumerable<float>().ToArray();
+        var score      = probs.Length >= 2 ? probs[1] : probs[0];
         context[expert.OutputKey] = (double)score;
 
         var threshold = float.Parse(expert.Threshold);
