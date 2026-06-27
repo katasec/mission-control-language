@@ -164,7 +164,8 @@ static Command BuildRunCommand()
 
         Dictionary<string, ExpertDefinition> expertDefs;
         try { expertDefs = ExpertResolver.ResolveAll(lockFile, missionDir, verbose ? Console.Error : null); }
-        catch (ExpertLoadException ex) { Die(ex.Message); return; }
+        catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
+        catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
 
         if (!TryValidate(ast, expertDefs)) return;
 
@@ -403,7 +404,8 @@ static Command BuildServeCommand()
 
         Dictionary<string, ExpertDefinition> expertDefs;
         try { expertDefs = ExpertLoader.LoadFromLockFile(lockFile, Path.GetDirectoryName(missionPath)!); }
-        catch (ExpertLoadException ex) { Die(ex.Message); return; }
+        catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
+        catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
 
         if (!TryValidate(ast, expertDefs)) return;
 
@@ -524,6 +526,33 @@ static void ReportDiagnostic(string source, string filePath, Diagnostic d)
     e.WriteLine($"{BoldBlue($"{gutter}   |")}");
 }
 
+static void ReportExpertDiagnostic(ExpertLoadException ex)
+{
+    // No file path — fall back to plain Die-style output
+    if (ex.FilePath is null || ex.Line == 0) { Die(ex.Message); return; }
+
+    var source     = File.Exists(ex.FilePath) ? File.ReadAllText(ex.FilePath) : string.Empty;
+    var lines      = source.Split('\n');
+    var sourceLine = ex.Line >= 1 && ex.Line <= lines.Length
+        ? lines[ex.Line - 1].TrimEnd('\r')
+        : string.Empty;
+
+    var lineNumStr = ex.Line.ToString();
+    var gutter     = new string(' ', lineNumStr.Length);
+    var col        = Math.Max(0, ex.Column);
+    var caretLen   = ex.EndColumn > ex.Column ? ex.EndColumn - ex.Column : 1;
+    var carets     = new string('^', caretLen);
+    var spaces     = new string(' ', Math.Min(col, sourceLine.Length));
+
+    var e = Console.Error;
+    e.WriteLine($"{BoldRed("error")}{Bold($": {ex.Message}")}");
+    e.WriteLine($"  {BoldBlue("-->")} {ex.FilePath}:{ex.Line}:{col + 1}");
+    e.WriteLine($"{BoldBlue($"{gutter}   |")}");
+    e.WriteLine($"{BoldBlue($"{lineNumStr}   |")} {sourceLine}");
+    e.WriteLine($"{BoldBlue($"{gutter}   |")} {spaces}{BoldRed(carets)}");
+    e.WriteLine($"{BoldBlue($"{gutter}   |")}");
+}
+
 // ANSI helpers — bold+color when stderr is a terminal and NO_COLOR is unset
 static bool UseAnsi() =>
     !Console.IsErrorRedirected &&
@@ -538,13 +567,14 @@ static Dictionary<string, ExpertDefinition>? TryLoadExperts(string expertsDir)
 {
     if (!Directory.Exists(expertsDir)) { Die($"Experts directory not found: {expertsDir}"); return null; }
     try { return new ExpertLoader(expertsDir).LoadAll(); }
-    catch (ExpertLoadException ex) { Die(ex.Message); return null; }
+    catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return null; }
+    catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); Environment.Exit(1); return null; }
 }
 
 static bool TryValidate(MclProgram ast, Dictionary<string, ExpertDefinition> experts)
 {
     try { ExpertLoader.Validate(ast, experts); return true; }
-    catch (ExpertLoadException ex) { Die(ex.Message); return false; }
+    catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); Environment.Exit(1); return false; }
 }
 
 // Builds the full runner dictionary from forge.toml profiles.

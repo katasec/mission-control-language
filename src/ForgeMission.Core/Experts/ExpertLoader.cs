@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using ForgeMission.Parser;
 using ForgeMission.Core.Resolution;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -8,8 +9,6 @@ namespace ForgeMission.Core.Experts;
 
 public class ExpertLoader(string expertsDirectory)
 {
-    // ExpertFrontmatter is a private POCO directly instantiated here; DynamicDependency
-    // ensures the trimmer keeps it so YamlDotNet's reflection path can find its members.
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ExpertFrontmatter))]
     [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Type preserved via DynamicDependency")]
     private static readonly IDeserializer Yaml = new DeserializerBuilder()
@@ -33,30 +32,40 @@ public class ExpertLoader(string expertsDirectory)
         return experts;
     }
 
-    /// <summary>Load experts from a directory, supporting both directory-per-expert and flat file.</summary>
+    /// <summary>Load experts from a directory, collecting all errors before surfacing them.</summary>
     public Dictionary<string, ExpertDefinition> LoadAll()
     {
         if (!Directory.Exists(expertsDirectory))
             throw new ExpertLoadException($"Experts directory not found: {expertsDirectory}");
 
         var experts = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal);
+        var errors  = new List<ExpertLoadException>();
+
+        void TryLoad(string mdPath)
+        {
+            try
+            {
+                var expert = ParseFile(mdPath);
+                if (!experts.ContainsKey(expert.Name))
+                    experts[expert.Name] = expert;
+            }
+            catch (AggregateExpertLoadException ex) { errors.AddRange(ex.Errors); }
+            catch (ExpertLoadException ex)           { errors.Add(ex); }
+        }
 
         // Directory-per-expert: experts/Name/expert.md
         foreach (var dir in Directory.GetDirectories(expertsDirectory))
         {
             var expertMd = Path.Combine(dir, "expert.md");
-            if (!File.Exists(expertMd)) continue;
-            var expert = ParseFile(expertMd);
-            experts[expert.Name] = expert;
+            if (File.Exists(expertMd)) TryLoad(expertMd);
         }
 
-        // Flat fallback: experts/Name.md (backwards compatibility)
+        // Flat fallback: experts/Name.md
         foreach (var file in Directory.GetFiles(expertsDirectory, "*.md"))
-        {
-            var expert = ParseFile(file);
-            if (!experts.ContainsKey(expert.Name))
-                experts[expert.Name] = expert;
-        }
+            TryLoad(file);
+
+        if (errors.Count > 0)
+            throw new AggregateExpertLoadException(errors);
 
         return experts;
     }
@@ -78,8 +87,6 @@ public class ExpertLoader(string expertsDirectory)
             .SelectMany(m => GetStepNames(m.Pipeline))
             .Distinct(StringComparer.Ordinal);
 
-        // Step is valid if it has a loaded expert file, is a known mission (composition),
-        // or is a mission parameter. OCI/stdlib resolution happens at runtime (Spoke 3).
         var missing = allSteps
             .Where(step => !experts.ContainsKey(step)
                         && !missionNames.Contains(step)
@@ -104,42 +111,77 @@ public class ExpertLoader(string expertsDirectory)
     internal static ExpertDefinition ParseFile(string path)
     {
         var content = File.ReadAllText(path);
-        var (frontmatter, body) = SplitFrontmatter(path, content);
+        var (frontmatter, body, frontmatterStartLine) = SplitFrontmatter(path, content);
 
-        var meta = Yaml.Deserialize<ExpertFrontmatter>(frontmatter);
+        ExpertFrontmatter meta;
+        try
+        {
+            meta = Yaml.Deserialize<ExpertFrontmatter>(frontmatter);
+        }
+        catch (YamlException ex)
+        {
+            var line = frontmatterStartLine + (int)ex.Start.Line - 1;
+            var col  = (int)ex.Start.Column - 1;
+            throw new ExpertLoadException(ex.InnerException?.Message ?? ex.Message, path, line, col);
+        }
+
+        // Collect all semantic errors before surfacing them
+        var errors = new List<ExpertLoadException>();
 
         if (string.IsNullOrWhiteSpace(meta.Name))
-            throw new ExpertLoadException($"Missing required frontmatter field 'name' in {Path.GetFileName(path)}");
+        {
+            var (l, c, ec) = FindField(frontmatter, "name", frontmatterStartLine);
+            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'name' in {Path.GetFileName(path)}", path, l, c, ec));
+        }
         if (string.IsNullOrWhiteSpace(meta.Input))
-            throw new ExpertLoadException($"Missing required frontmatter field 'input' in {Path.GetFileName(path)}");
+        {
+            var (l, c, ec) = FindField(frontmatter, "input", frontmatterStartLine);
+            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'input' in {Path.GetFileName(path)}", path, l, c, ec));
+        }
         if (string.IsNullOrWhiteSpace(meta.Output))
-            throw new ExpertLoadException($"Missing required frontmatter field 'output' in {Path.GetFileName(path)}");
+        {
+            var (l, c, ec) = FindField(frontmatter, "output", frontmatterStartLine);
+            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'output' in {Path.GetFileName(path)}", path, l, c, ec));
+        }
+
+        // Use filename as fallback name in kind messages if name field is missing
+        var expertName = string.IsNullOrWhiteSpace(meta.Name) ? Path.GetFileNameWithoutExtension(path) : meta.Name;
+        var kindLine   = FindField(frontmatter, "kind", frontmatterStartLine);
+
         if (meta.Kind.Equals("http", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(meta.Endpoint))
-            throw new ExpertLoadException($"Expert '{meta.Name}' has kind:http but is missing required field 'endpoint'.");
+            errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:http but is missing required field 'endpoint'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+
         if (meta.Kind.Equals("rule", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(meta.Check))
-            throw new ExpertLoadException($"Expert '{meta.Name}' has kind:rule but is missing required field 'check'.");
+            errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:rule but is missing required field 'check'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+
         if (meta.Kind.Equals("onnx", StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(meta.Model))
-                throw new ExpertLoadException($"Expert '{meta.Name}' has kind:onnx but is missing required field 'model'.");
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'model'.", path, kindLine.line, kindLine.col, kindLine.endCol));
             if (string.IsNullOrWhiteSpace(meta.Inputs))
-                throw new ExpertLoadException($"Expert '{meta.Name}' has kind:onnx but is missing required field 'inputs'.");
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'inputs'.", path, kindLine.line, kindLine.col, kindLine.endCol));
             if (string.IsNullOrWhiteSpace(meta.OutputKey))
-                throw new ExpertLoadException($"Expert '{meta.Name}' has kind:onnx but is missing required field 'outputKey'.");
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'outputKey'.", path, kindLine.line, kindLine.col, kindLine.endCol));
             if (string.IsNullOrWhiteSpace(meta.Threshold))
-                throw new ExpertLoadException($"Expert '{meta.Name}' has kind:onnx but is missing required field 'threshold'.");
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'threshold'.", path, kindLine.line, kindLine.col, kindLine.endCol));
         }
 
-        return new ExpertDefinition(meta.Name, meta.Input, meta.Output, body.Trim(), meta.Role, meta.Kind, meta.Endpoint, meta.Check, meta.OnFail, meta.Model, meta.Inputs, meta.OutputKey, meta.Threshold);
+        if (errors.Count > 0)
+            throw new AggregateExpertLoadException(errors);
+
+        return new ExpertDefinition(meta.Name, meta.Input, meta.Output, body.Trim(), meta.Role, meta.Kind,
+            meta.Endpoint, meta.Check, meta.OnFail, meta.Model, meta.Inputs, meta.OutputKey, meta.Threshold);
     }
 
-    private static (string Frontmatter, string Body) SplitFrontmatter(string path, string content)
+    // Returns (frontmatter text, body text, 1-based line number of the first frontmatter line in the file).
+    private static (string Frontmatter, string Body, int FrontmatterStartLine) SplitFrontmatter(string path, string content)
     {
         const string delimiter = "---";
         var lines = content.Split('\n');
 
         if (lines.Length < 2 || lines[0].Trim() != delimiter)
-            throw new ExpertLoadException($"Missing frontmatter delimiter '---' at start of {Path.GetFileName(path)}");
+            throw new ExpertLoadException(
+                $"Missing frontmatter delimiter '---' at start of {Path.GetFileName(path)}", path, 1, 0, 3);
 
         int closingIndex = -1;
         for (int i = 1; i < lines.Length; i++)
@@ -148,11 +190,31 @@ public class ExpertLoader(string expertsDirectory)
         }
 
         if (closingIndex < 0)
-            throw new ExpertLoadException($"Unclosed frontmatter block in {Path.GetFileName(path)}");
+            throw new ExpertLoadException(
+                $"Unclosed frontmatter block in {Path.GetFileName(path)}", path, 1, 0, 3);
 
         var frontmatter = string.Join('\n', lines[1..closingIndex]);
         var body        = string.Join('\n', lines[(closingIndex + 1)..]);
-        return (frontmatter, body);
+        return (frontmatter, body, FrontmatterStartLine: 2); // line 1 is "---", fields start at line 2
+    }
+
+    // Scans frontmatter text for "fieldName:" and returns its file-absolute line/col span.
+    // When the field is absent, points at the opening "---" delimiter (startLine - 1).
+    private static (int line, int col, int endCol) FindField(string frontmatter, string fieldName, int startLine)
+    {
+        var lines = frontmatter.Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var raw     = lines[i];
+            var trimmed = raw.TrimStart();
+            if (trimmed.StartsWith(fieldName + ":", StringComparison.Ordinal))
+            {
+                var col = raw.Length - trimmed.Length;
+                return (startLine + i, col, col + fieldName.Length);
+            }
+        }
+        // Field not present — point at the opening "---" delimiter
+        return (startLine - 1, 0, 3);
     }
 
     private class ExpertFrontmatter

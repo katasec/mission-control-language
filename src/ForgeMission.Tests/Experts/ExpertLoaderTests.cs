@@ -116,8 +116,8 @@ public class ExpertLoaderTests : IDisposable
     public void LoadAll_MissingFrontmatterField_ThrowsExpertLoadException()
     {
         WriteDirExpert("Bad", "---\nname: Bad\n---\nBody");
-        var ex = Assert.Throws<ExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
-        Assert.Contains("input", ex.Message);
+        var agg = Assert.Throws<AggregateExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
+        Assert.Contains("input", agg.Errors[0].Message);
     }
 
     // ---------------------------------------------------------------------------
@@ -283,8 +283,8 @@ public class ExpertLoaderTests : IDisposable
             kind: http
             ---
             """);
-        var ex = Assert.Throws<ExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
-        Assert.Contains("endpoint", ex.Message);
+        var agg = Assert.Throws<AggregateExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
+        Assert.Contains("endpoint", agg.Errors[0].Message);
     }
 
     // ---------------------------------------------------------------------------
@@ -327,32 +327,32 @@ public class ExpertLoaderTests : IDisposable
     public void OnnxExpert_MissingModel_Throws()
     {
         WriteDirExpert("AnomalyDetector", OnnxExpertMarkdown(model: null));
-        var ex = Assert.Throws<ExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
-        Assert.Contains("model", ex.Message);
+        var agg = Assert.Throws<AggregateExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
+        Assert.Contains("model", agg.Errors[0].Message);
     }
 
     [Fact]
     public void OnnxExpert_MissingInputs_Throws()
     {
         WriteDirExpert("AnomalyDetector", OnnxExpertMarkdown(inputs: null));
-        var ex = Assert.Throws<ExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
-        Assert.Contains("inputs", ex.Message);
+        var agg = Assert.Throws<AggregateExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
+        Assert.Contains("inputs", agg.Errors[0].Message);
     }
 
     [Fact]
     public void OnnxExpert_MissingOutputKey_Throws()
     {
         WriteDirExpert("AnomalyDetector", OnnxExpertMarkdown(outputKey: null));
-        var ex = Assert.Throws<ExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
-        Assert.Contains("outputKey", ex.Message);
+        var agg = Assert.Throws<AggregateExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
+        Assert.Contains("outputKey", agg.Errors[0].Message);
     }
 
     [Fact]
     public void OnnxExpert_MissingThreshold_Throws()
     {
         WriteDirExpert("AnomalyDetector", OnnxExpertMarkdown(threshold: null));
-        var ex = Assert.Throws<ExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
-        Assert.Contains("threshold", ex.Message);
+        var agg = Assert.Throws<AggregateExpertLoadException>(() => new ExpertLoader(_dir).LoadAll());
+        Assert.Contains("threshold", agg.Errors[0].Message);
     }
 
     // ---------------------------------------------------------------------------
