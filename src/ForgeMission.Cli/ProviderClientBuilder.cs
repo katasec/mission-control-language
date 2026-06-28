@@ -9,7 +9,7 @@ using OpenAI;
 
 // Builds an IExpertRunner from a ProviderProfile declared in forge.toml.
 // Lives in CLI (not Core) because it depends on provider-specific packages.
-static class ProviderClientBuilder
+public static class ProviderClientBuilder
 {
     public static IExpertRunner Build(ProviderProfile profile) =>
         new DirectExpertRunner(BuildChatClient(profile));

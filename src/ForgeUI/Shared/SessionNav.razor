@@ -1,0 +1,41 @@
+@inject SessionStore Store
+@implements IDisposable
+
+<div class="session-nav">
+    <div class="session-nav-header">
+        <span class="session-nav-title">Sessions</span>
+        <button class="session-new" @onclick="() => Store.New()" title="New session">+</button>
+    </div>
+
+    <div class="session-list">
+        @foreach (var session in Store.All)
+        {
+            <div class="session-item @(session == Store.Current ? "active" : "")"
+                 @onclick="() => Store.Switch(session)">
+                <div class="session-item-top">
+                    <span class="session-trust">
+                        @if (session.LastTrust?.Verified == true)  { <span class="st-pass">✓</span> }
+                        else if (session.LastTrust?.Verified == false) { <span class="st-fail">✗</span> }
+                        else { <span class="st-none">·</span> }
+                    </span>
+                    <span class="session-title">@Truncate(session.Title, 28)</span>
+                </div>
+                <div class="session-meta">@session.StartedAt.ToLocalTime().ToString("HH:mm")</div>
+            </div>
+        }
+
+        @if (!Store.All.Any())
+        {
+            <div class="session-empty">No past sessions</div>
+        }
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized() => Store.Changed += OnChanged;
+    public void Dispose()                   => Store.Changed -= OnChanged;
+    private void OnChanged()                => InvokeAsync(StateHasChanged);
+
+    private static string Truncate(string s, int max) =>
+        s.Length <= max ? s : s[..max] + "…";
+}

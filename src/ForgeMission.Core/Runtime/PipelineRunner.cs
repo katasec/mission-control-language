@@ -253,6 +253,8 @@ public class PipelineRunner
 
         context["output"] = envelope.Text;
 
+        options.OnStepComplete?.Invoke(step.ExpertName, envelope);
+
         if (envelope.Status == "fail")
             return $"[{step.ExpertName}] {envelope.Reason ?? "step failed"}";
 

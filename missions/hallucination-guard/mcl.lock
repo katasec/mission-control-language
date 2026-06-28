@@ -1,0 +1,14 @@
+version: 1
+experts:
+  Answerer:
+    source: experts
+    path: experts/Answerer/expert.md
+    hash: 8b604e48b9290360bedc64aeca82aae633d6aae710575906e73607aa565bf88d
+  FactChecker:
+    source: experts
+    path: experts/FactChecker/expert.md
+    hash: ed4993e047924e8f05306e1dfcf89f55b54b9f8edd83220141a9682adbb79736
+  Verifier:
+    source: experts
+    path: experts/Verifier/expert.md
+    hash: 50c50c9b303b5842804846555e66123548d1201bb2fddbad597a4081a99ac9f8

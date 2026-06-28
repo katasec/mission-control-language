@@ -1,16 +1,19 @@
 @inject MissionService Mission
+@inject SessionStore Store
+@implements IDisposable
 
 <div class="chat-shell">
     <div class="chat-topbar">
         <span class="chat-title">Forge</span>
-        @if (_messages.Any())
+        @if (Store.Current.Messages.Any())
         {
-            <span class="chat-meta">@_messages.Last().Trace.Count steps · @_messages.Last().Trust?.RetryCount retries</span>
+            var last = Store.Current.Messages.Last();
+            <span class="chat-meta">@last.Trace.Count steps · @(last.Trust?.RetryCount ?? 0) retries</span>
         }
     </div>
 
-    <div class="chat-messages" id="chat-messages">
-        @foreach (var msg in _messages)
+    <div class="chat-messages">
+        @foreach (var msg in Store.Current.Messages)
         {
             <div class="msg-user">@msg.UserText</div>
             <div class="msg-agent">
@@ -20,12 +23,12 @@
                         @if (msg.Trace.Count > 0)
                         {
                             <button class="show-thinking" @onclick="() => ToggleTrace(msg)">
-                                @(_expandedMessages.Contains(msg) ? "hide thinking ▲" : "show thinking ▼")
+                                @(_expanded.Contains(msg) ? "hide thinking ▲" : "show thinking ▼")
                             </button>
                         }
                     </div>
                     <div class="agent-answer">@MarkdownRenderer.Render(msg.AgentText)</div>
-                    <PipelineTrace Events="msg.Trace" ShowTrace="_expandedMessages.Contains(msg)" />
+                    <PipelineTrace Events="msg.Trace" ShowTrace="_expanded.Contains(msg)" />
                 </div>
             </div>
         }
@@ -59,9 +62,12 @@
 @code {
     private string _input = "";
     private bool   _running;
-    private readonly List<ChatMessage>          _messages        = [];
-    private readonly List<PipelineTraceEvent>   _liveTrace       = [];
-    private readonly HashSet<ChatMessage>       _expandedMessages = [];
+    private readonly List<PipelineTraceEvent> _liveTrace = [];
+    private readonly HashSet<ChatMessage>     _expanded  = [];
+
+    protected override void OnInitialized() => Store.Changed += OnStoreChanged;
+    public void Dispose()                   => Store.Changed -= OnStoreChanged;
+    private void OnStoreChanged()           => InvokeAsync(StateHasChanged);
 
     private async Task SendAsync()
     {
@@ -73,7 +79,8 @@
         StateHasChanged();
 
         var result = await Mission.RunAsync(text, OnStep);
-        _messages.Add(result);
+        Store.Current.Messages.Add(result);
+        Store.Save();
         _running = false;
         StateHasChanged();
     }
@@ -86,7 +93,7 @@
 
     private void ToggleTrace(ChatMessage msg)
     {
-        if (!_expandedMessages.Add(msg)) _expandedMessages.Remove(msg);
+        if (!_expanded.Add(msg)) _expanded.Remove(msg);
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
