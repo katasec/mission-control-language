@@ -1,5 +1,12 @@
 # FML — Implementation Plan
 
+> **Current top priority: [Phase 38 — Forge Rooms](phases/phase-38-forge-rooms.md).**
+> This precedes every other phase below. All remaining Design/Todo/Partial phases are
+> sequenced *after* Forge Rooms unless they are a direct dependency of it. Rationale:
+> spectacular reasoning that no one can reach is the same as reasoning that does not
+> exist — Forge Rooms is the surface that makes every capability built in Phases 12–37
+> actually accessible. Full reasoning and decision log in the spoke.
+
 ## Phases
 
 | Phase | Description | Status |
@@ -43,6 +50,8 @@
 | [Phase 33 — MCP Server (`forge mcp`)](phases/phase-33-forge-mcp.md) | `forge mcp <mission.mcl>` starts a stdio MCP server exposing the mission as a single tool. Claude Desktop (and any MCP-aware client) can call the mission directly — no Node.js, no sidecar, no extra runtime. Tool name = mission name; tool parameters = mission `inputs:` schema; tool response = mission output markdown. Uses official Microsoft `ModelContextProtocol` 1.4.0 NuGet (confirmed AOT-clean). Integration point: add one entry to `claude_desktop_config.json` and the mission appears as a native tool in the Claude UI. | Done |
 | [Phase 34 — Forge UI](phases/phase-34-forge-ui.md) | Dedicated UI for MCL missions. Two audiences: non-technical users (verified/unverified trust signal, "how do I know?" disclosure) and developers (full pipeline trace, per-step pass/fail, loop convergence). Existing AI surfaces (Claude Desktop, Copilot, Codex) dissolve MCL's structured reasoning by design — this tension is structural and not fixable. A dedicated UI is the only way the core value proposition (visible trust, not just accuracy) is surfaced to users. Hub + 7 spokes. | Design |
 | [Phase 35 — Forge UI (Blazor Server)](phases/phase-35-forge-ui-blazor.md) | Blazor Server implementation of Phase 34. Shares types directly with `ForgeMission.Core` (`StepEnvelope`, `MissionResult`, `MissionStatus`) — no serialisation boundary. `MissionService` calls `PipelineRunner` directly, no `forge serve` in the path. Thin client (~250KB SignalR stub), real-time trace streaming via `StateHasChanged()`. View models: `ChatMessage`, `PipelineTraceEvent`, `TrustSignal`. Hub + 7 spokes. | Design |
+| [Phase 38 — Forge Rooms (Agents as `@`-addressable members)](phases/phase-38-forge-rooms.md) | **TOP PRIORITY — precedes all other phases.** Native multi-party chat where a Forge Agent (a mission on an endpoint) is `@`-addressable *exactly like an LLM* — same gesture, invisibly better (verified, composed) underneath. Closes the accessibility gap: the engine can do MoE/judge/verify but none of it is reachable from the chat box where people actually live. Tenets: agents are members not tools; pull-never-push ("Computer" model); room-scoped confidentiality; multi-party is the primitive (1:1 = a room of two). Decision log captured: own-a-native-surface (not inject — WhatsApp Groups API gated + linked-device hacks fragile; differentiator degrades most where reach is highest); build the domain + surface, rent domain-agnostic primitives (SignalR, OIDC, Postgres), reuse the Forge engine + Blazor UI; federated sign-in (Google/MS/Apple), invite-driven onboarding; acquisition via shareable verified outputs + share-an-agent. This is Phase 34/35 (Forge UI) growing up. Hub + 9 spokes. | Design |
+| [Phase 37 — Evaluation Harness (`eval`/`dataset`/`report`)](phases/phase-37-eval-harness.md) | Turn "expert composition elevates quality" from a *vibe* into a *number*. Run one or more missions over a `dataset` of inputs, score each output with a `role: judge` (pairwise A/B with position-bias swap, or pointwise against a rubric), and aggregate into a comparison report. Reuses what already ships: judges (Phase 25a), mission composition (Phase 25), parallel fan-out (Phase 21), and the two existing A/B demo pairs (`elevator-pitch` ↔ `elevator-pitch-refined`, `loop-demo-naive` ↔ `loop-demo`). Only the outer loop + aggregation is new. Core fork: in-language `eval` construct (on-thesis, recommended) vs `forge eval` CLI (bootstrap, ships first). Closes the founding hypothesis loop by writing a real result into `docs/findings.md`. Hub + 7 spokes. | Design |
 
 ## Open issues
 
