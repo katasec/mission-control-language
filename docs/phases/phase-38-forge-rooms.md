@@ -244,44 +244,26 @@ one an agent." What gets harder than 1:1 — and must be modelled from day one:
 
 ---
 
-## 11. Hub + Spokes
+## 11. Sub-phases (executable breakdown)
 
-### Spoke 1 — Room/Member domain model
-Rooms as primitive; `Member = Human | Agent`; Agent member references a mission handle. 1:1 as the
-degenerate two-member case. Messages carry a sender. Room = confidentiality boundary.
+This phase is decomposed into **six dependency-ordered sub-phases (38.1–38.6)**, each with its
+own spoke doc and task list. Run them 1→6. The nine "spokes" originally sketched here became
+**tasks redistributed across these sub-phases** — the mapping below ensures nothing was lost.
 
-### Spoke 2 — SignalR realtime layer
-`ChatHub`; SignalR groups map to rooms; broadcast to room members; token-stream agent output into
-the room (reuse the existing per-step streaming from Phase 35).
+| Sub-phase | Covers (original spokes) |
+|---|---|
+| [38.1 Room Foundation](phase-38.1-room-foundation.md) | domain model + SignalR + persistence + minimal client (orig. S1, S2, S9, part of S7) |
+| [38.2 Agent as Member](phase-38.2-agent-as-member.md) | `@mention` → mission, pull-only, room-scoped context, artifact **input** (orig. S4) |
+| [38.3 Trust Surface](phase-38.3-trust-surface.md) | badge/trace/show-thinking in the room, artifact **output** rendering (orig. S5) |
+| [38.4 Identity & Membership](phase-38.4-identity-membership.md) | OIDC + invites + confidentiality + roles (orig. S3) |
+| [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | `@handle` directory + scope + save-as-agent (orig. S6) |
+| [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | shareable verified output + share-an-agent (orig. S8) |
 
-### Spoke 3 — Identity, membership & invites
-OIDC (Google/MS/Apple) via ASP.NET Core external auth. Invite-link flow (tap → sign in → land in
-room). Room membership gates visibility (confidentiality). Provisioner vs consumer roles.
+**Dependency order:** `38.1 → 38.2 → 38.3`, `38.1 → 38.4`, `{38.2, 38.4} → 38.5`,
+`{38.3, 38.5} → 38.6`. Running 38.1…38.6 satisfies "no phase waits on a future phase."
 
-### Spoke 4 — Agent-as-member integration
-`@mention` resolution → invoke the mission via `PipelineRunner`/endpoint with **room-scoped**
-context. **Pull-only:** an incoming human message triggers an agent only if it addresses an agent
-member. Room-scoped context assembly + pruning.
-
-### Spoke 5 — Trust surface in multi-party
-Reuse/extend `ChatMessage`/`PipelineTraceEvent`/`TrustSignal`. Render show-thinking, the trace,
-and the Verified/Unverified badge inside a multi-party list with **sender attribution**.
-
-### Spoke 6 — Agent registry / GAL
-`@handle → mission` resolution; scope (personal/room/shared); **save-as-agent** (promote an ad-hoc
-chain into a named handle); versioning (reuse Phase 11 expert versioning).
-
-### Spoke 7 — Client (extend Blazor)
-Extend the existing UI from a 1:1 session list to: room list, member list, `@`-mention affordance,
-message list with attribution + badge + show-thinking, and **artifact in/out** (upload a PDF, get a
-PDF back).
-
-### Spoke 8 — Acquisition loop
-Shareable verified output (provenance-stamped, screenshot/share-friendly) + share-an-agent link.
-
-### Spoke 9 — Persistence
-EF Core + Postgres schema: rooms, members, messages, traces, registry. STJ/EF mapping AOT-aware
-where it touches Core types.
+**Artifact in/out** (the aunt PDF case, orig. S7) lands in **38.2 (upload as room-scoped input)**
+and **38.3 (render the returned file)** — text-first, files second. There is no Phase 38.7.
 
 ---
 
