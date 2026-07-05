@@ -31,14 +31,23 @@
             @foreach (var msg in _messages)
             {
                 var mine = msg.SenderId == Identity.Current.Id;
+                var isAgent = msg.SenderKind == "agent";
+                var bg = isAgent ? "#ede7f6" : mine ? "#d1e7ff" : "#eee";
                 <div style="margin: 0.4rem 0; text-align: @(mine ? "right" : "left");">
                     <div style="font-size: 0.75rem; color: #888;">
                         @msg.SenderName · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
                     </div>
                     <span style="display: inline-block; padding: 0.4rem 0.7rem; border-radius: 0.6rem;
-                                 background: @(mine ? "#d1e7ff" : "#eee");">
+                                 background: @bg; @(isAgent ? "border: 1px solid #b39ddb;" : "")">
                         @msg.Text
                     </span>
+                </div>
+            }
+
+            @if (_thinkingHandle is not null)
+            {
+                <div style="margin: 0.4rem 0; text-align: left; color: #7e57c2; font-style: italic;">
+                    @_thinkingHandle is thinking…
                 </div>
             }
         </div>
@@ -66,6 +75,7 @@
     private readonly List<RoomMessageDto> _messages = [];
     private string _input = "";
     private bool _denied;
+    private string? _thinkingHandle;
 
     protected override async Task OnInitializedAsync()
     {
@@ -94,6 +104,23 @@
         _hub.On<RoomMessageDto>("ReceiveMessage", message =>
         {
             _messages.Add(message);
+            if (message.SenderKind == "agent")
+                _thinkingHandle = null; // the answer replaces the thinking indicator
+            return InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<Guid, Guid, string>("AgentThinking", (_, _, handle) =>
+        {
+            _thinkingHandle = handle;
+            return InvokeAsync(StateHasChanged);
+        });
+
+        _hub.On<Guid, Guid, string>("AgentFailed", (_, _, handle) =>
+        {
+            _thinkingHandle = null;
+            _messages.Add(new RoomMessageDto(
+                Guid.NewGuid(), RoomId, Guid.Empty, handle, "agent",
+                $"{handle} could not complete this request.", null, DateTimeOffset.UtcNow));
             return InvokeAsync(StateHasChanged);
         });
 

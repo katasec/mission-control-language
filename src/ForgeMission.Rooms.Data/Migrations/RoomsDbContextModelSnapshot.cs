@@ -178,7 +178,7 @@ namespace ForgeMission.Rooms.Data.Migrations
 
                             b1.HasKey("MessageId");
 
-                            b1.ToTable("messages");
+                            b1.ToTable("messages", (string)null);
 
                             b1
                                 .ToJson("payload")
@@ -213,7 +213,7 @@ namespace ForgeMission.Rooms.Data.Migrations
 
                             b1.HasKey("RoomId");
 
-                            b1.ToTable("rooms");
+                            b1.ToTable("rooms", (string)null);
 
                             b1
                                 .ToJson("metadata")

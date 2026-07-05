@@ -1,6 +1,6 @@
 # Phase 38.2 — Agent as Member
 
-> **Status: Todo** · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: Done** · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** 38.1 + existing engine (`PipelineRunner`, Phase 35 `MissionService`,
 > `forge serve`)
 > **Done when:** `@forge/hallucination-guard "which month has an X in the middle"` typed
@@ -13,25 +13,32 @@ result back. **Pull-only** is enforced here (an agent runs only when addressed).
 
 ## Tasks (dependency order)
 
-1. **Agent members.** A `Member` of `Kind: Agent` references an agent handle
-   (`@handle → mission`). Seed one or two built-in agents (e.g.
-   `@forge/hallucination-guard`) into a test room. (Full registry is 38.5; this is a
-   minimal hardcoded map.)
-2. **`@mention` detection + pull gate.** Parse an incoming human message for an addressed
-   agent member; extract target + prompt. **Only invoke if an agent member is addressed** —
-   otherwise the message is just chat (tenet: pull, never push).
-3. **Room-scoped context assembly.** *(Q1 resolved.)* The agent receives the `@`-prompt +
-   a **bounded recent window** — last N messages *or* a token cap, whichever hits first —
-   **room-only**, never cross-room. If the message is a reply (`reply_to`), the referenced
-   message is included/prioritised ("the above"). All senders in the window are visible (human
-   + other agents). N / token-cap is configurable. The room is the confidentiality boundary.
-4. **Invocation bridge.** Map room context → mission inputs; run via `PipelineRunner` /
-   `MissionService` (in-proc reuse) or the mission endpoint.
-5. **Stream back into the room.** Broadcast the mission's streaming output to the room group
-   as an agent message (reuse Phase 35 per-step streaming). Persist the final message.
-6. **Verify.** The hallucination-guard trick question converges (unverified → retry →
-   "none") and appears as an agent message all members see. A non-addressed message triggers
-   no agent run.
+1. ✅ **Agent members.** A `Member` of `Kind: Agent` references an agent handle
+   (`@handle → mission`). Seeder (38.1) already provides `@forge/hallucination-guard`;
+   `AgentCatalog` is the minimal hardcoded `@handle → MissionEntry` map (full registry is 38.5).
+2. ✅ **`@mention` detection + pull gate.** `MentionParser.Detect` (pure domain, in
+   `ForgeMission.Rooms`) parses a human message for an addressed agent member; extracts target +
+   prompt (strips quotes; longest handle wins). **Only invokes if an agent member is addressed** —
+   otherwise it's just chat (tenet: pull, never push). Verified: a non-addressed message produces
+   only the human row, no agent run.
+3. ✅ **Room-scoped context assembly.** *(Q1 resolved.)* `RoomContextAssembler` composes the
+   `@`-prompt + a **bounded recent window** (last N=10, configurable), **room-only** via
+   `IReadStore` keyset pagination. A `reply_to` target is prioritised ("the above"). All senders
+   in the window are visible. The @-prompt is always the explicit question so the transcript
+   never displaces it.
+4. ✅ **Invocation bridge.** `RoomAgentInvoker` maps room context → the mission's input and runs
+   it by **reusing the Phase 35 `MissionService`/`PipelineRunner` untouched** (in-proc).
+5. ✅ **Stream back into the room.** Runs in the background (each invocation independent, Q2) so
+   the sender's hub call returns at once; broadcasts a transient `AgentThinking` indicator, then
+   persists the final agent message (answer + trust/trace **envelope** in the jsonb payload) and
+   broadcasts it via `IHubContext<ChatHub>` to the room group. `reply_to` links back to the
+   triggering message.
+6. ✅ **Verify.** Live: `@forge/hallucination-guard "which month has an X in the middle"` — raw
+   LLM confidently answered "February" (attempt 1) → deterministic Verifier **failed** → loop
+   retried → converged to **"none"** → `verified: true` (retries 1, 4 steps), posted as an agent
+   message all members see. Non-addressed message triggered no run. Envelope persists with pinned
+   lowercase keys (`payload->'agent'->>'verified'` promotion path works). 12 automated tests pass
+   (6 Testcontainers integration + 6 `MentionParser` unit).
 
 ## Notes / resolved
 - Context-scope assembly (task 3) resolves parent **Q1** (see parent §12).

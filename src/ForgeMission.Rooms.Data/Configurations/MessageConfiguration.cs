@@ -39,6 +39,24 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
             p.Property(x => x.V).HasJsonPropertyName("v");
             p.Property(x => x.Kind).HasJsonPropertyName("kind");
             p.Property(x => x.Text).HasJsonPropertyName("text");
+
+            // Agent envelope — nested inside the same jsonb document (no DDL change).
+            // Container + leaf keys pinned lowercase for stable jsonb->column promotion.
+            // The nested navigations' JSON names are set on their own builders (setting
+            // HasJsonPropertyName on the owner is rejected by EF).
+            var agent = p.OwnsOne(x => x.Agent);
+            agent.HasJsonPropertyName("agent");
+            agent.Property(x => x.Handle).HasJsonPropertyName("handle");
+            agent.Property(x => x.Verified).HasJsonPropertyName("verified");
+            agent.Property(x => x.StepCount).HasJsonPropertyName("stepCount");
+            agent.Property(x => x.RetryCount).HasJsonPropertyName("retryCount");
+
+            var trace = agent.OwnsMany(x => x.Trace);
+            trace.HasJsonPropertyName("trace");
+            trace.Property(x => x.ExpertName).HasJsonPropertyName("expertName");
+            trace.Property(x => x.Status).HasJsonPropertyName("status");
+            trace.Property(x => x.Text).HasJsonPropertyName("text");
+            trace.Property(x => x.Attempt).HasJsonPropertyName("attempt");
         });
     }
 }

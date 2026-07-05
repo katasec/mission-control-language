@@ -1,7 +1,9 @@
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
 using ForgeUI.Models;
+using ForgeUI.Services;
 using Microsoft.AspNetCore.SignalR;
+// MentionParser + Mention now live in ForgeMission.Rooms (pure domain, testable).
 
 namespace ForgeUI.Hubs;
 
@@ -12,8 +14,12 @@ namespace ForgeUI.Hubs;
 /// Dev-stub trust model (38.1): the client asserts its member id; every call is
 /// checked against the memberships table, but the assertion itself is unverified
 /// until real identity lands in 38.4.
+///
+/// Pull gate (38.2): after a human message is persisted, if it @-addresses an agent
+/// member of the room, the matching mission is invoked in the background. Non-addressed
+/// messages are just chat (tenet 2 — pull, never push).
 /// </summary>
-public sealed class ChatHub(IReadStore reads, IWriteStore writes) : Hub
+public sealed class ChatHub(IReadStore reads, IWriteStore writes, RoomAgentInvoker invoker) : Hub
 {
     public async Task JoinRoom(Guid roomId, Guid memberId)
     {
@@ -49,7 +55,27 @@ public sealed class ChatHub(IReadStore reads, IWriteStore writes) : Hub
         });
 
         await Clients.Group(GroupName(roomId)).SendAsync("ReceiveMessage", message.ToDto(sender.DisplayName));
+
+        // Pull gate: only a human message can address an agent (no cross-agent orchestration in v1).
+        if (!isAgent)
+            await TryInvokeAgentAsync(roomId, message);
     }
 
-    private static string GroupName(Guid roomId) => $"room:{roomId}";
+    private async Task TryInvokeAgentAsync(Guid roomId, Message humanMessage)
+    {
+        var agents = (await reads.GetRoomMembersAsync(roomId))
+            .Where(m => m.Kind == MemberKind.Agent)
+            .ToList();
+        if (agents.Count == 0)
+            return;
+
+        var mention = MentionParser.Detect(humanMessage.Payload.Text ?? string.Empty, agents.Select(a => a.DisplayName));
+        if (mention is not { } hit)
+            return;
+
+        var agent = agents.First(a => string.Equals(a.DisplayName, hit.Handle, StringComparison.OrdinalIgnoreCase));
+        invoker.Invoke(roomId, agent, hit.Handle, hit.Prompt, replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
+    }
+
+    public static string GroupName(Guid roomId) => $"room:{roomId}";
 }
