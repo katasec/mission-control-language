@@ -18,10 +18,15 @@ that writes no `.mcl` by hand.
    user/room. Autocomplete + disambiguation for similar handles (parent Q3).
 3. **Add/remove agent from a room.** From the registry, add an agent as a room member (the
    "Add @agent" journey step) — provisioner-gated (38.4).
-4. **Save-as-agent.** Capture a live composition (a threaded chain of steps in a room) into a
-   named mission + registry entry at a chosen scope. **Design sub-decision:** does it
-   *snapshot* the exact chain or *parameterise* it? — resolve before building (this is the
-   hardest task).
+4. **Save-as-agent — snapshot (S1 resolved: rigid).** Capture the live chain as a **frozen
+   snapshot**, not a parameterised template. Emit a **mission** where the pipeline shape and each
+   step's instruction are **fixed**, and the **entry input is the sole parameter**. Capture the
+   *structure* — the `->` sequence, each step's model/expert + its instruction (the human's
+   per-step instruction becomes that step's fixed config) — **not** the *data* of the example
+   run. Rationale: deterministic + explainable ("what you tested is what you get"), no
+   inference-from-one-example risk, reuses the mission format. **Parameterise is deferred** — a
+   provisioner can manually add knobs later (it's just a mission), and *auto*-parameterisation
+   routes to the program-synthesis spike.
 5. **Verify.** Compose draft→review live, `/save-as-agent @my-reviewer` (personal scope), add
    it to another room, invoke it; a shared-scope agent is discoverable by others.
 
@@ -29,6 +34,10 @@ that writes no `.mcl` by hand.
 The registry is a **directory of expertise-as-personas** (`@legal-reviewer`,
 `@quran-class-helper`), not a model picker. An agent enters the list by being *saved* at a
 *scope* by a *provisioner* — that is the democratisation unit (one author, many consumers).
+
+**Provider keys (Q5 resolved, v1):** registered/built-in agents use Forge's platform-configured
+provider. BYOK is deferred — when added, keys live encrypted in a secrets store (never in the
+registry jsonb or logs), scoped to the owner, never exposed to consumers.
 
 ## Not in scope
 Public/global marketplace of agents, ratings/trust-of-authors, sharing links (38.6),

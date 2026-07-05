@@ -267,19 +267,20 @@ and **38.3 (render the returned file)** — text-first, files second. There is n
 
 ---
 
-## 12. Open design questions
+## 12. Design questions — resolutions
 
-| # | Question | Notes |
+| # | Question | Resolution |
 |---|---|---|
-| 1 | **Room-scoped context assembly** | How much of the thread does the agent see on invocation, and how is it pruned? Confidentiality + token budget both bear on this. |
-| 2 | **Multiple agents in one room** | Concurrency and ordering when two agents are `@`ed at once; does a judge agent see the others' streaming or only final outputs? |
-| 3 | **`@`-disambiguation** | Two agents with similar handles; autocomplete; typo tolerance. |
-| 4 | **Artifact storage** | Where do uploaded/returned files live (Postgres large objects vs blob store), and how does room-scoped confidentiality apply to them? |
-| 5 | **Provider keys for provisioners** | A provisioner may bring their own model/provider keys; a consumer needs none. Where are keys held, and scoped how? |
-| 6 | **Agent presence / "typing"** | Should a running agent show a presence/"thinking" indicator to the room while the pipeline executes? |
-| 7 | **E2E encryption** | Rooms are the confidentiality boundary in v1; E2E crypto is a later *hardening*. When, and at what cost to server-side trust rendering? |
-| 8 | **Minors in rooms** | Consent/permission model when a room includes children (family use). |
-| 9 | **Mobile** | Web-first for MVP; native mobile deferred. When it lands, reuse vs rebuild the client. |
+| 1 | **Room-scoped context assembly** | **Resolved (v1):** on `@`, the agent receives the `@`-prompt + a **bounded recent window** (last N messages *or* a token cap, whichever hits first), **room-only** (never cross-room). If the message is a reply, the `reply_to` target is included/prioritised ("the above"). All senders in the window are visible (human + other agents). N / token-cap configurable. |
+| 2 | **Multiple agents in one room** | **Resolved (v1):** each `@`-invocation is **independent**; concurrent runs are fine; each agent posts its own attributed message on completion. **No cross-agent awareness in v1** — a judge reading others / live debate is a later feature. |
+| 3 | **`@`-disambiguation** | **Deferred → 38.5** (registry autocomplete + typo tolerance). |
+| 4 | **Artifact storage** | **Resolved:** bytes → **blob store behind an `IArtifactStore` seam** (local volume in dev, S3-compatible later); a **reference** (id/uri/mime/size) in the message payload jsonb; retrieval gated by room membership. Not Postgres large objects. |
+| 5 | **Provider keys for provisioners** | **Resolved (v1):** platform-provided keys (built-in agents use Forge's configured provider). **BYOK deferred** — when added, keys encrypted in a secrets store, **never in jsonb or logs**, scoped to owner, never exposed to consumers. |
+| 6 | **Agent presence / "typing"** | **Deferred (UX polish)** — reuse the progress stream when built. |
+| 7 | **E2E encryption** | **Deferred (later hardening)** — rooms are the boundary in v1 (see §13). |
+| 8 | **Minors in rooms** | **Deferred → 38.4** (consent/permission model in the identity phase). |
+| 9 | **Mobile** | **Out of scope (v1)** — web-first; native mobile post-v1. |
+| S1 | **Save-as-agent: snapshot vs parameterise** | **Resolved: snapshot** (rigid). Freeze the exact chain as a mission — pipeline shape + each step's instruction fixed, **entry input the sole parameter**. Deterministic/explainable, reuses the mission format; auto-parameterise routes to the program-synthesis spike. See 38.5. |
 
 ---
 

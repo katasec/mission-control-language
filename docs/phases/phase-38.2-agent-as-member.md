@@ -20,9 +20,11 @@ result back. **Pull-only** is enforced here (an agent runs only when addressed).
 2. **`@mention` detection + pull gate.** Parse an incoming human message for an addressed
    agent member; extract target + prompt. **Only invoke if an agent member is addressed** —
    otherwise the message is just chat (tenet: pull, never push).
-3. **Room-scoped context assembly.** Gather the relevant room thread as the mission input.
-   Define the v1 scope explicitly (e.g. this room only, last N messages). The room is the
-   confidentiality boundary — no cross-room history.
+3. **Room-scoped context assembly.** *(Q1 resolved.)* The agent receives the `@`-prompt +
+   a **bounded recent window** — last N messages *or* a token cap, whichever hits first —
+   **room-only**, never cross-room. If the message is a reply (`reply_to`), the referenced
+   message is included/prioritised ("the above"). All senders in the window are visible (human
+   + other agents). N / token-cap is configurable. The room is the confidentiality boundary.
 4. **Invocation bridge.** Map room context → mission inputs; run via `PipelineRunner` /
    `MissionService` (in-proc reuse) or the mission endpoint.
 5. **Stream back into the room.** Broadcast the mission's streaming output to the room group
@@ -31,12 +33,16 @@ result back. **Pull-only** is enforced here (an agent runs only when addressed).
    "none") and appears as an agent message all members see. A non-addressed message triggers
    no agent run.
 
-## Notes / open
-- Context-scope assembly (task 3) is Open Question #1 in the parent — start minimal, refine.
-- Artifact input (PDF upload → agent) is a second increment within this phase — text first,
-  then files. Returned-file rendering is in 38.3. (There is no Phase 38.7.)
+## Notes / resolved
+- Context-scope assembly (task 3) resolves parent **Q1** (see parent §12).
+- **Concurrency (Q2 resolved):** each `@`-invocation is independent; concurrent runs are fine,
+  each posts its own attributed message. No cross-agent awareness in v1.
+- **Artifact input (Q4 resolved):** PDF-upload → agent is a second increment — text first, then
+  files. Bytes go to blob storage behind an `IArtifactStore` seam with a **reference** in the
+  message payload jsonb; returned-file rendering is in 38.3. (There is no Phase 38.7.)
 
 ## Not in scope
 Trust badge/trace rendering (38.3 — this phase just produces the agent message + its
-envelope), registry/save-as-agent (38.5), multiple concurrent agents in one room (parent
-Q2).
+envelope), registry/save-as-agent (38.5), and **cross-agent orchestration** (a judge reading
+other agents' outputs / live debate — a later feature). Independent concurrent invocations
+*are* supported here (Q2).
