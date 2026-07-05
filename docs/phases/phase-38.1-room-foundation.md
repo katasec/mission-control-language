@@ -179,7 +179,7 @@ solved now; just don't assume reads and writes share a connection in the abstrac
    columns `Id`, `RoomId`, `SenderId`, `SenderKind`, `Kind`, `ReplyTo`, `CreatedAt` + `Payload`
    (`MessagePayload` POCO → jsonb); `Room.Metadata` (jsonb). **Append-only** messages; sender on
    every message; payloads carry a `v`/`kind` discriminator (see Storage model).
-3. **Persistence + data-access seam.** In `ForgeMission.Rooms.Data`: `RoomsDbContext`, Fluent
+3. ✅ **Persistence + data-access seam.** In `ForgeMission.Rooms.Data`: `RoomsDbContext`, Fluent
    `IEntityTypeConfiguration<T>` (FKs, `UNIQUE` on skeleton, jsonb columns, index
    `messages (room_id, created_at)`), initial migration. `IReadStore`/`IWriteStore` with
    `AsNoTracking()` reads and `(room_id, created_at)` pagination; `ReadConnection`/

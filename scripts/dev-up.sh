@@ -29,7 +29,7 @@ if [ -d "$DATA_PROJECT/Migrations" ]; then
     echo "Installing dotnet-ef tool..."
     dotnet tool install --global dotnet-ef
   fi
-  dotnet ef database update --project "$DATA_PROJECT"
+  dotnet ef database update --project "$DATA_PROJECT" --context RoomsDbContext
 else
   echo "No EF migrations yet — skipping 'dotnet ef database update'."
 fi
