@@ -3,13 +3,16 @@ using Microsoft.EntityFrameworkCore;
 namespace ForgeMission.Rooms.Data;
 
 /// <summary>
-/// Development-only, idempotent seed data: two dev-stub humans (38.1 stub identity),
-/// the built-in @forge/hallucination-guard agent member (38.2's first agent), a demo
-/// room with all three, and a second room (Alice only) to exercise room isolation.
-/// Fixed ids make re-runs no-ops.
+/// Development-only, idempotent seed data: two humans with dev federated identities
+/// (issuer "dev"), the built-in @forge/hallucination-guard agent member, a demo room with
+/// all three (Alice provisioner, Bob consumer), and a second room (Alice only) for the
+/// isolation check. Fixed ids make re-runs no-ops. Dev sign-in maps to these members by
+/// (issuer, subject) through the same provisioning path real OIDC uses.
 /// </summary>
 public static class RoomsSeeder
 {
+    public const string DevIssuer = "dev";
+
     public static readonly Guid AliceId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid BobId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid HallucinationGuardId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -20,29 +23,46 @@ public static class RoomsSeeder
     {
         await using var db = await factory.CreateDbContextAsync(ct);
 
-        await EnsureMemberAsync(db, AliceId, MemberKind.Human, "Alice", ct);
-        await EnsureMemberAsync(db, BobId, MemberKind.Human, "Bob", ct);
-        await EnsureMemberAsync(db, HallucinationGuardId, MemberKind.Agent, "@forge/hallucination-guard", ct);
+        await EnsureHumanAsync(db, AliceId, "Alice", "alice", "alice@dev.local", ct);
+        await EnsureHumanAsync(db, BobId, "Bob", "bob", "bob@dev.local", ct);
+        await EnsureAgentAsync(db, HallucinationGuardId, "@forge/hallucination-guard", ct);
 
         await EnsureRoomAsync(db, DemoRoomId, "Demo Room", "Alice, Bob, and the hallucination guard", ct);
         await EnsureRoomAsync(db, AlicePrivateRoomId, "Alice's Room", "Membership isolation check — Alice only", ct);
 
-        await EnsureMembershipAsync(db, DemoRoomId, AliceId, ct);
-        await EnsureMembershipAsync(db, DemoRoomId, BobId, ct);
-        await EnsureMembershipAsync(db, DemoRoomId, HallucinationGuardId, ct);
-        await EnsureMembershipAsync(db, AlicePrivateRoomId, AliceId, ct);
+        // Alice provisions the demo room; Bob is a consumer.
+        await EnsureMembershipAsync(db, DemoRoomId, AliceId, MembershipRole.Provisioner, ct);
+        await EnsureMembershipAsync(db, DemoRoomId, BobId, MembershipRole.Consumer, ct);
+        await EnsureMembershipAsync(db, DemoRoomId, HallucinationGuardId, MembershipRole.Consumer, ct);
+        await EnsureMembershipAsync(db, AlicePrivateRoomId, AliceId, MembershipRole.Provisioner, ct);
 
         await db.SaveChangesAsync(ct);
     }
 
-    private static async Task EnsureMemberAsync(
-        RoomsDbContext db, Guid id, MemberKind kind, string displayName, CancellationToken ct)
+    private static async Task EnsureHumanAsync(
+        RoomsDbContext db, Guid id, string displayName, string subject, string email, CancellationToken ct)
     {
         if (!await db.Members.AnyAsync(m => m.Id == id, ct))
             db.Members.Add(new Member
             {
                 Id = id,
-                Kind = kind,
+                Kind = MemberKind.Human,
+                DisplayName = displayName,
+                Issuer = DevIssuer,
+                Subject = subject,
+                Email = email,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+    }
+
+    private static async Task EnsureAgentAsync(
+        RoomsDbContext db, Guid id, string displayName, CancellationToken ct)
+    {
+        if (!await db.Members.AnyAsync(m => m.Id == id, ct))
+            db.Members.Add(new Member
+            {
+                Id = id,
+                Kind = MemberKind.Agent,
                 DisplayName = displayName,
                 CreatedAt = DateTimeOffset.UtcNow,
             });
@@ -61,7 +81,7 @@ public static class RoomsSeeder
     }
 
     private static async Task EnsureMembershipAsync(
-        RoomsDbContext db, Guid roomId, Guid memberId, CancellationToken ct)
+        RoomsDbContext db, Guid roomId, Guid memberId, MembershipRole role, CancellationToken ct)
     {
         if (!await db.Memberships.AnyAsync(m => m.RoomId == roomId && m.MemberId == memberId, ct))
             db.Memberships.Add(new RoomMembership
@@ -69,6 +89,7 @@ public static class RoomsSeeder
                 Id = Guid.NewGuid(),
                 RoomId = roomId,
                 MemberId = memberId,
+                Role = role,
                 JoinedAt = DateTimeOffset.UtcNow,
             });
     }

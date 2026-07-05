@@ -1,0 +1,53 @@
+@page "/login"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IConfiguration Config
+@inject IHostEnvironment Env
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
+
+<div class="app-main" style="padding: 3rem; max-width: 460px; margin: 0 auto;">
+    <h2>Sign in to Forge Rooms</h2>
+    <p style="color:#666;">You're invited into rooms — sign in to see them.</p>
+
+    @if (_oidcConfigured)
+    {
+        <a class="chat-send" style="display:inline-block; text-decoration:none; margin-top:0.5rem;"
+           href="@LoginUrl()">Sign in with Microsoft</a>
+        <p style="color:#999; font-size:0.8rem;">Google &amp; Apple sign-in appear on the hosted page.</p>
+    }
+
+    @if (Env.IsDevelopment())
+    {
+        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #eee;">
+            <div style="color:#999; font-size:0.8rem; margin-bottom:0.5rem;">Dev sign-in (local only)</div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <a class="show-thinking" href="@DevUrl("alice")">Alice — provisioner of Demo Room</a>
+                <a class="show-thinking" href="@DevUrl("bob")">Bob — consumer in Demo Room</a>
+                <a class="show-thinking" href="@DevUrl("carol")">Carol — brand-new user (no rooms)</a>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _oidcConfigured;
+    private string? _returnUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _oidcConfigured = !string.IsNullOrWhiteSpace(Config["Oidc:Authority"])
+                          && !string.IsNullOrWhiteSpace(Config["Oidc:ClientId"]);
+
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _returnUrl = q.TryGetValue("returnUrl", out var r) ? r.ToString() : "/rooms";
+
+        // Already signed in? Skip the page.
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated == true)
+            Nav.NavigateTo(_returnUrl!, forceLoad: false);
+    }
+
+    private string LoginUrl() => $"/auth/login?returnUrl={Uri.EscapeDataString(_returnUrl ?? "/rooms")}";
+    private string DevUrl(string user) => $"/auth/dev?user={user}&returnUrl={Uri.EscapeDataString(_returnUrl ?? "/rooms")}";
+}

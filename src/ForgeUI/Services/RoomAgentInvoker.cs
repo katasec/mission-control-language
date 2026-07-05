@@ -1,8 +1,6 @@
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
-using ForgeUI.Hubs;
 using ForgeUI.Models;
-using Microsoft.AspNetCore.SignalR;
 
 namespace ForgeUI.Services;
 
@@ -14,7 +12,7 @@ namespace ForgeUI.Services;
 /// send returns). Pull-only: only ever called when an agent member was addressed.
 /// </summary>
 public sealed class RoomAgentInvoker(
-    IHubContext<ChatHub> hub,
+    RoomBroadcaster broadcaster,
     IReadStore reads,
     IWriteStore writes,
     MissionRegistry registry,
@@ -31,7 +29,6 @@ public sealed class RoomAgentInvoker(
 
     private async Task RunAsync(Guid roomId, Member agent, string handle, string prompt, Guid? replyTo, Guid triggerMessageId)
     {
-        var group = ChatHub.GroupName(roomId);
         using var cts = new CancellationTokenSource(RunTimeout);
         var ct = cts.Token;
 
@@ -40,12 +37,12 @@ public sealed class RoomAgentInvoker(
             if (!catalog.TryResolve(handle, out var mission))
             {
                 logger.LogWarning("No mission bound to {Handle} (room {RoomId})", handle, roomId);
-                await PostAsync(roomId, group, agent, handle, triggerMessageId,
+                await PostAsync(roomId, agent, handle, triggerMessageId,
                     $"No mission is bound to {handle} yet.", verified: false, stepCount: 0, retryCount: 0, trace: [], ct);
                 return;
             }
 
-            await hub.Clients.Group(group).SendAsync("AgentThinking", roomId, agent.Id, handle, ct);
+            await broadcaster.PublishAgentThinkingAsync(roomId, agent.Id, handle);
 
             var memberNames = (await reads.GetRoomMembersAsync(roomId, ct)).ToDictionary(m => m.Id, m => m.DisplayName);
             var goal = await assembler.BuildGoalAsync(roomId, prompt, replyTo, triggerMessageId, memberNames, ct);
@@ -66,7 +63,7 @@ public sealed class RoomAgentInvoker(
                 })
                 .ToList();
 
-            await PostAsync(roomId, group, agent, handle, triggerMessageId,
+            await PostAsync(roomId, agent, handle, triggerMessageId,
                 result.AgentText ?? "(no answer)",
                 verified: result.Trust?.Verified ?? false,
                 stepCount: result.Trust?.StepCount ?? trace.Count,
@@ -78,7 +75,7 @@ public sealed class RoomAgentInvoker(
             logger.LogError(ex, "Agent {Handle} failed in room {RoomId}", handle, roomId);
             try
             {
-                await hub.Clients.Group(group).SendAsync("AgentFailed", roomId, agent.Id, handle, CancellationToken.None);
+                await broadcaster.PublishAgentFailedAsync(roomId, agent.Id, handle);
             }
             catch (Exception broadcastEx)
             {
@@ -88,7 +85,7 @@ public sealed class RoomAgentInvoker(
     }
 
     private async Task PostAsync(
-        Guid roomId, string group, Member agent, string handle, Guid triggerMessageId,
+        Guid roomId, Member agent, string handle, Guid triggerMessageId,
         string text, bool verified, int stepCount, int retryCount, List<AgentStep> trace, CancellationToken ct)
     {
         var message = await writes.AppendMessageAsync(new Message
@@ -113,6 +110,6 @@ public sealed class RoomAgentInvoker(
             },
         }, ct);
 
-        await hub.Clients.Group(group).SendAsync("ReceiveMessage", message.ToDto(agent.DisplayName), ct);
+        await broadcaster.PublishMessageAsync(roomId, message.ToDto(agent.DisplayName));
     }
 }

@@ -14,6 +14,27 @@ public sealed class WriteStore(IDbContextFactory<RoomsDbContext> factory) : IWri
         return member;
     }
 
+    public async Task UpdateMemberProfileAsync(Guid memberId, string displayName, string? email, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var member = await db.Members.SingleOrDefaultAsync(m => m.Id == memberId, ct);
+        if (member is null)
+            return;
+        member.DisplayName = displayName;
+        member.Email = email;
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task<RoomInvite> AddInviteAsync(RoomInvite invite, CancellationToken ct = default)
+    {
+        if (invite.Id == Guid.Empty) invite.Id = Guid.NewGuid();
+        if (invite.CreatedAt == default) invite.CreatedAt = DateTimeOffset.UtcNow;
+        await using var db = await factory.CreateDbContextAsync(ct);
+        db.Invites.Add(invite);
+        await db.SaveChangesAsync(ct);
+        return invite;
+    }
+
     public async Task<Room> AddRoomAsync(Room room, CancellationToken ct = default)
     {
         if (room.Id == Guid.Empty) room.Id = Guid.NewGuid();

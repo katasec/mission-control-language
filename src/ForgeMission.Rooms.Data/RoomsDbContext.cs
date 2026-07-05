@@ -13,6 +13,7 @@ public class RoomsDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<RoomMembership> Memberships => Set<RoomMembership>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<RoomInvite> Invites => Set<RoomInvite>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +21,7 @@ public class RoomsDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.ApplyConfiguration(new RoomConfiguration());
         modelBuilder.ApplyConfiguration(new RoomMembershipConfiguration());
         modelBuilder.ApplyConfiguration(new MessageConfiguration());
+        modelBuilder.ApplyConfiguration(new RoomInviteConfiguration());
     }
 }
 

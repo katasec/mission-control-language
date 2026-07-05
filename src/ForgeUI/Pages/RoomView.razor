@@ -1,21 +1,24 @@
 @page "/rooms/{RoomId:guid}"
+@attribute [Authorize]
 @using ForgeMission.Core.Runtime
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
-@using Microsoft.AspNetCore.SignalR.Client
 @inject IReadStore Reads
-@inject StubIdentity Identity
+@inject CurrentUser Current
+@inject RoomMessageService Messages
+@inject RoomBroadcaster Broadcaster
+@inject InviteService Invites
 @inject NavigationManager Nav
-@implements IAsyncDisposable
+@implements IDisposable
 
 <div class="app-main" style="padding: 1.5rem; max-width: 720px; display: flex; flex-direction: column; height: 100vh;">
-    @if (Identity.Current is null)
+    @if (_me is null)
     {
-        <p><a href="/rooms">Pick a user first</a> — dev-stub identity is per browser session.</p>
+        <p>Loading…</p>
     }
     else if (_denied)
     {
-        <p>@Identity.Current.DisplayName is not a member of this room. <a href="/rooms">Back to rooms</a></p>
+        <p>You are not a member of this room. <a href="/rooms">Back to rooms</a></p>
     }
     else
     {
@@ -25,17 +28,32 @@
             <span style="color: #888; margin-left: 1rem;">
                 @string.Join(" · ", _memberNames.Values)
             </span>
-            <span style="float: right; color: #888;">you: @Identity.Current.DisplayName</span>
+            <span style="float: right; color: #888;">
+                you: @_me.DisplayName@(_isProvisioner ? " (provisioner)" : "")
+            </span>
         </div>
+
+        @if (_isProvisioner)
+        {
+            <div style="padding: 0.4rem 0; font-size: 0.85rem;">
+                <button class="show-thinking" @onclick="CreateInviteAsync">+ create invite link</button>
+                @if (_inviteUrl is not null)
+                {
+                    <span style="margin-left: 0.5rem;">
+                        <input readonly value="@_inviteUrl" style="width: 60%; font-size: 0.8rem;"
+                               @onfocus="SelectAll" />
+                    </span>
+                }
+            </div>
+        }
 
         <div style="flex: 1; overflow-y: auto; padding: 1rem 0;">
             @foreach (var msg in _messages)
             {
-                var mine = msg.SenderId == Identity.Current.Id;
+                var mine = msg.SenderId == _me.Id;
 
                 @if (msg.Trust is { } trust)
                 {
-                    // Agent message — the trust surface (badge + attribution + show-thinking trace).
                     <div style="margin: 0.6rem 0; text-align: left;">
                         <div class="agent-card @(trust.Verified ? "card-verified" : "card-unverified")">
                             <div class="agent-card-header">
@@ -56,7 +74,6 @@
                 }
                 else
                 {
-                    // Human message.
                     var bg = mine ? "#d1e7ff" : "#eee";
                     <div style="margin: 0.4rem 0; text-align: @(mine ? "right" : "left");">
                         <div style="font-size: 0.75rem; color: #888;">
@@ -84,10 +101,7 @@
                    @bind:event="oninput"
                    @onkeydown="OnKeyDown"
                    placeholder="Message @(_room?.Metadata.Name)…" />
-            <button @onclick="SendAsync"
-                    disabled="@(string.IsNullOrWhiteSpace(_input) || _hub is not { State: HubConnectionState.Connected })">
-                Send
-            </button>
+            <button @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
         </div>
     }
 </div>
@@ -95,7 +109,8 @@
 @code {
     [Parameter] public Guid RoomId { get; set; }
 
-    private HubConnection? _hub;
+    private Member? _me;
+    private bool _isProvisioner;
     private Room? _room;
     private Dictionary<Guid, string> _memberNames = [];
     private readonly List<RoomMessageDto> _messages = [];
@@ -103,6 +118,8 @@
     private string _input = "";
     private bool _denied;
     private string? _thinkingHandle;
+    private string? _inviteUrl;
+    private IDisposable? _subscription;
 
     private void ToggleTrace(Guid messageId)
     {
@@ -111,8 +128,7 @@
     }
 
     // Reconstruct the Phase 35 view models from the DTO so the existing trust components
-    // render unchanged (reuse, per 38.3). Verified comes straight from the DTO — it was
-    // already run through the no-false-green guard at mapping time.
+    // render unchanged (38.3). Verified is the guarded value from the mapping.
     private static TrustSignal ToSignal(AgentTrustDto trust)
         => new(trust.Verified, trust.StepCount, trust.RetryCount);
 
@@ -127,70 +143,72 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (Identity.Current is null)
+        _me = await Current.GetMemberAsync();
+        if (_me is null)
             return;
 
-        if (!await Reads.IsMemberAsync(RoomId, Identity.Current.Id))
+        // Membership is the confidentiality boundary — a non-member gets nothing.
+        var membership = await Reads.GetMembershipAsync(RoomId, _me.Id);
+        if (membership is null)
         {
             _denied = true;
             return;
         }
+        _isProvisioner = membership.Role == MembershipRole.Provisioner;
 
         _room = await Reads.GetRoomAsync(RoomId);
         _memberNames = (await Reads.GetRoomMembersAsync(RoomId)).ToDictionary(m => m.Id, m => m.DisplayName);
 
-        // History: recent page via the read store (paginated, oldest-first).
         foreach (var message in await Reads.GetRecentMessagesAsync(RoomId, limit: 50))
             _messages.Add(message.ToDto(_memberNames.GetValueOrDefault(message.SenderId, "unknown")));
 
-        // Live: SignalR group for this room.
-        _hub = new HubConnectionBuilder()
-            .WithUrl(Nav.ToAbsoluteUri("/hubs/chat"))
-            .WithAutomaticReconnect()
-            .Build();
+        // Live delivery — subscribe in-process (this circuit is already authenticated).
+        _subscription = Broadcaster.Subscribe(RoomId, OnRoomEvent);
+    }
 
-        _hub.On<RoomMessageDto>("ReceiveMessage", message =>
+    private Task OnRoomEvent(RoomEvent evt)
+    {
+        switch (evt)
         {
-            _messages.Add(message);
-            if (message.SenderKind == "agent")
-                _thinkingHandle = null; // the answer replaces the thinking indicator
-            return InvokeAsync(StateHasChanged);
-        });
-
-        _hub.On<Guid, Guid, string>("AgentThinking", (_, _, handle) =>
-        {
-            _thinkingHandle = handle;
-            return InvokeAsync(StateHasChanged);
-        });
-
-        _hub.On<Guid, Guid, string>("AgentFailed", (_, _, handle) =>
-        {
-            _thinkingHandle = null;
-            _messages.Add(new RoomMessageDto(
-                Guid.NewGuid(), RoomId, Guid.Empty, handle, "agent",
-                $"{handle} could not complete this request.", null, DateTimeOffset.UtcNow));
-            return InvokeAsync(StateHasChanged);
-        });
-
-        await _hub.StartAsync();
-        await _hub.InvokeAsync("JoinRoom", RoomId, Identity.Current.Id);
+            case MessagePosted posted:
+                _messages.Add(posted.Message);
+                if (posted.Message.SenderKind == "agent")
+                    _thinkingHandle = null;
+                break;
+            case AgentThinking thinking:
+                _thinkingHandle = thinking.Handle;
+                break;
+            case AgentFailed failed:
+                _thinkingHandle = null;
+                _messages.Add(new RoomMessageDto(
+                    Guid.NewGuid(), RoomId, Guid.Empty, failed.Handle, "agent",
+                    $"{failed.Handle} could not complete this request.", null, DateTimeOffset.UtcNow));
+                break;
+        }
+        return InvokeAsync(StateHasChanged);
     }
 
     private async Task SendAsync()
     {
-        if (_hub is null || Identity.Current is null || string.IsNullOrWhiteSpace(_input))
+        if (_me is null || string.IsNullOrWhiteSpace(_input))
             return;
         var text = _input;
         _input = "";
-        await _hub.InvokeAsync("SendMessage", RoomId, Identity.Current.Id, text);
+        await Messages.SendHumanMessageAsync(RoomId, _me, text);
     }
 
     private Task OnKeyDown(KeyboardEventArgs e)
         => e.Key == "Enter" ? SendAsync() : Task.CompletedTask;
 
-    public async ValueTask DisposeAsync()
+    private async Task CreateInviteAsync()
     {
-        if (_hub is not null)
-            await _hub.DisposeAsync();
+        if (_me is null)
+            return;
+        var invite = await Invites.CreateAsync(RoomId, _me, MembershipRole.Consumer, ttl: TimeSpan.FromDays(7));
+        _inviteUrl = Nav.ToAbsoluteUri($"/invite/{invite.Token}").ToString();
     }
+
+    private static void SelectAll() { /* focus selects via readonly input; placeholder for JS-free UX */ }
+
+    public void Dispose() => _subscription?.Dispose();
 }

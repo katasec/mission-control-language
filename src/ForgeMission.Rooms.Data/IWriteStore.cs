@@ -8,7 +8,12 @@ public interface IWriteStore
 {
     Task<Member> AddMemberAsync(Member member, CancellationToken ct = default);
 
+    /// <summary>Refresh mutable profile fields (display name / email) on an existing member.</summary>
+    Task UpdateMemberProfileAsync(Guid memberId, string displayName, string? email, CancellationToken ct = default);
+
     Task<Room> AddRoomAsync(Room room, CancellationToken ct = default);
+
+    Task<RoomInvite> AddInviteAsync(RoomInvite invite, CancellationToken ct = default);
 
     Task<RoomMembership> AddMembershipAsync(RoomMembership membership, CancellationToken ct = default);
 

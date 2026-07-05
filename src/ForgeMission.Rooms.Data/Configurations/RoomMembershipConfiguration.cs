@@ -12,6 +12,10 @@ public sealed class RoomMembershipConfiguration : IEntityTypeConfiguration<RoomM
         b.Property(m => m.Id).HasColumnName("id");
         b.Property(m => m.RoomId).HasColumnName("room_id");
         b.Property(m => m.MemberId).HasColumnName("member_id");
+        b.Property(m => m.Role)
+            .HasColumnName("role")
+            .HasConversion(v => v.ToString().ToLowerInvariant(), s => Enum.Parse<MembershipRole>(s, true))
+            .HasMaxLength(16);
         b.Property(m => m.JoinedAt).HasColumnName("joined_at");
 
         // The confidentiality boundary — DB-enforced, never jsonb.

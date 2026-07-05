@@ -11,6 +11,14 @@ public interface IReadStore
 
     Task<Member?> GetMemberAsync(Guid memberId, CancellationToken ct = default);
 
+    /// <summary>Resolve a member by federated identity key (issuer + subject).</summary>
+    Task<Member?> GetMemberBySubjectAsync(string issuer, string subject, CancellationToken ct = default);
+
+    /// <summary>The membership row (carries the room role), or null if not a member.</summary>
+    Task<RoomMembership?> GetMembershipAsync(Guid roomId, Guid memberId, CancellationToken ct = default);
+
+    Task<RoomInvite?> GetInviteByTokenAsync(string token, CancellationToken ct = default);
+
     Task<IReadOnlyList<Member>> GetMembersAsync(MemberKind kind, CancellationToken ct = default);
 
     Task<IReadOnlyList<Room>> GetRoomsForMemberAsync(Guid memberId, CancellationToken ct = default);

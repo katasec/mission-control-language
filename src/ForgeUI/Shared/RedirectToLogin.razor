@@ -1,0 +1,11 @@
+@inject NavigationManager Nav
+
+@code {
+    // Send an unauthenticated visitor to /login, preserving the intended destination.
+    protected override void OnInitialized()
+    {
+        var returnUrl = Uri.EscapeDataString(
+            "/" + Nav.ToBaseRelativePath(Nav.Uri));
+        Nav.NavigateTo($"/login?returnUrl={returnUrl}", forceLoad: true);
+    }
+}

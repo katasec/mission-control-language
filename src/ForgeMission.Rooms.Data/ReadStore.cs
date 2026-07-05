@@ -16,6 +16,26 @@ public sealed class ReadStore(IDbContextFactory<ReadRoomsDbContext> factory) : I
         return await db.Members.AsNoTracking().SingleOrDefaultAsync(m => m.Id == memberId, ct);
     }
 
+    public async Task<Member?> GetMemberBySubjectAsync(string issuer, string subject, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.Members.AsNoTracking()
+            .SingleOrDefaultAsync(m => m.Issuer == issuer && m.Subject == subject, ct);
+    }
+
+    public async Task<RoomMembership?> GetMembershipAsync(Guid roomId, Guid memberId, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.Memberships.AsNoTracking()
+            .SingleOrDefaultAsync(m => m.RoomId == roomId && m.MemberId == memberId, ct);
+    }
+
+    public async Task<RoomInvite?> GetInviteByTokenAsync(string token, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.Invites.AsNoTracking().SingleOrDefaultAsync(i => i.Token == token, ct);
+    }
+
     public async Task<IReadOnlyList<Member>> GetMembersAsync(MemberKind kind, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);

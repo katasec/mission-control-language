@@ -1,33 +1,32 @@
 @page "/rooms"
+@attribute [Authorize]
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
 @inject IReadStore Reads
-@inject StubIdentity Identity
+@inject CurrentUser Current
 @inject NavigationManager Nav
 
 <div class="app-main" style="padding: 2rem; max-width: 640px;">
-    <h2>Rooms</h2>
-
-    <div style="margin: 1rem 0;">
-        <label>
-            Chatting as:
-            <select value="@(Identity.Current?.Id.ToString() ?? "")" @onchange="OnUserChanged">
-                <option value="" disabled>— pick a dev-stub user —</option>
-                @foreach (var human in _humans)
-                {
-                    <option value="@human.Id">@human.DisplayName</option>
-                }
-            </select>
-        </label>
+    <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <h2>Rooms</h2>
+        @if (_me is not null)
+        {
+            <span style="color:#888; font-size:0.85rem;">
+                @_me.DisplayName (@_me.Email)
+                <form action="/auth/logout" method="post" style="display:inline;">
+                    <button class="show-thinking" type="submit" style="margin-left:0.5rem;">sign out</button>
+                </form>
+            </span>
+        }
     </div>
 
-    @if (Identity.Current is null)
+    @if (_me is null)
     {
-        <p>Select a user to see their rooms. (Dev-stub identity — real sign-in arrives in 38.4.)</p>
+        <p>Loading…</p>
     }
     else if (_rooms.Count == 0)
     {
-        <p>No rooms for @Identity.Current.DisplayName.</p>
+        <p>You're not in any rooms yet. Ask a provisioner for an invite link.</p>
     }
     else
     {
@@ -47,20 +46,13 @@
 </div>
 
 @code {
-    private IReadOnlyList<Member> _humans = [];
+    private Member? _me;
     private IReadOnlyList<Room> _rooms = [];
 
     protected override async Task OnInitializedAsync()
     {
-        _humans = await Reads.GetMembersAsync(MemberKind.Human);
-        if (Identity.Current is not null)
-            _rooms = await Reads.GetRoomsForMemberAsync(Identity.Current.Id);
-    }
-
-    private async Task OnUserChanged(ChangeEventArgs e)
-    {
-        var id = Guid.Parse((string)e.Value!);
-        Identity.Current = _humans.Single(h => h.Id == id);
-        _rooms = await Reads.GetRoomsForMemberAsync(id);
+        _me = await Current.GetMemberAsync();
+        if (_me is not null)
+            _rooms = await Reads.GetRoomsForMemberAsync(_me.Id);
     }
 }
