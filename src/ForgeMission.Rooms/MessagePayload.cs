@@ -49,6 +49,10 @@ public sealed class AgentStep
     public string Status { get; set; } = "pass";
 
     public string? Text { get; set; }
+
+    /// <summary>Why a step failed (the judge's onFail feedback) — drives the retry line.</summary>
+    public string? Reason { get; set; }
+
     public int Attempt { get; set; }
 }
 

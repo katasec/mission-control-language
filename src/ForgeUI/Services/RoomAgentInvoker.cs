@@ -61,6 +61,7 @@ public sealed class RoomAgentInvoker(
                     ExpertName = t.ExpertName,
                     Status = t.Envelope.Status,
                     Text = t.Envelope.Text,
+                    Reason = t.Envelope.Reason,
                     Attempt = t.Attempt,
                 })
                 .ToList();

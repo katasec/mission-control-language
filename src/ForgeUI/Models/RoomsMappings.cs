@@ -13,5 +13,23 @@ public static class RoomsMappings
         message.SenderKind == MemberKind.Agent ? "agent" : "human",
         message.Payload.Text,
         message.ReplyTo,
-        message.CreatedAt);
+        message.CreatedAt,
+        ToTrustDto(message.Payload.Agent));
+
+    private static AgentTrustDto? ToTrustDto(AgentMeta? agent)
+    {
+        if (agent is null)
+            return null;
+
+        return new AgentTrustDto(
+            Handle: agent.Handle,
+            // The single source of truth for green — computed through the guard here so a
+            // false-green can never even reach the wire (38.3 task 5).
+            Verified: TrustIntegrity.IsVerified(agent),
+            StepCount: agent.StepCount,
+            RetryCount: agent.RetryCount,
+            Trace: agent.Trace
+                .Select(s => new AgentTraceStepDto(s.ExpertName, s.Status, s.Text, s.Reason, s.Attempt))
+                .ToList());
+    }
 }

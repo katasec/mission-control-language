@@ -1,4 +1,5 @@
 @page "/rooms/{RoomId:guid}"
+@using ForgeMission.Core.Runtime
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
 @using Microsoft.AspNetCore.SignalR.Client
@@ -31,17 +32,42 @@
             @foreach (var msg in _messages)
             {
                 var mine = msg.SenderId == Identity.Current.Id;
-                var isAgent = msg.SenderKind == "agent";
-                var bg = isAgent ? "#ede7f6" : mine ? "#d1e7ff" : "#eee";
-                <div style="margin: 0.4rem 0; text-align: @(mine ? "right" : "left");">
-                    <div style="font-size: 0.75rem; color: #888;">
-                        @msg.SenderName · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+
+                @if (msg.Trust is { } trust)
+                {
+                    // Agent message — the trust surface (badge + attribution + show-thinking trace).
+                    <div style="margin: 0.6rem 0; text-align: left;">
+                        <div class="agent-card @(trust.Verified ? "card-verified" : "card-unverified")">
+                            <div class="agent-card-header">
+                                <TrustSignalBadge Signal="ToSignal(trust)" />
+                                <span class="mission-label">@msg.SenderName</span>
+                                <span class="chat-meta">@msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</span>
+                                @if (trust.Trace.Count > 0)
+                                {
+                                    <button class="show-thinking" @onclick="() => ToggleTrace(msg.Id)">
+                                        @(_expanded.Contains(msg.Id) ? "hide thinking ▲" : "show thinking ▼")
+                                    </button>
+                                }
+                            </div>
+                            <div class="agent-answer">@msg.Text</div>
+                            <PipelineTrace Events="ToEvents(trust)" ShowTrace="_expanded.Contains(msg.Id)" />
+                        </div>
                     </div>
-                    <span style="display: inline-block; padding: 0.4rem 0.7rem; border-radius: 0.6rem;
-                                 background: @bg; @(isAgent ? "border: 1px solid #b39ddb;" : "")">
-                        @msg.Text
-                    </span>
-                </div>
+                }
+                else
+                {
+                    // Human message.
+                    var bg = mine ? "#d1e7ff" : "#eee";
+                    <div style="margin: 0.4rem 0; text-align: @(mine ? "right" : "left");">
+                        <div style="font-size: 0.75rem; color: #888;">
+                            @msg.SenderName · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+                        </div>
+                        <span style="display: inline-block; padding: 0.4rem 0.7rem; border-radius: 0.6rem;
+                                     background: @bg;">
+                            @msg.Text
+                        </span>
+                    </div>
+                }
             }
 
             @if (_thinkingHandle is not null)
@@ -73,9 +99,31 @@
     private Room? _room;
     private Dictionary<Guid, string> _memberNames = [];
     private readonly List<RoomMessageDto> _messages = [];
+    private readonly HashSet<Guid> _expanded = [];
     private string _input = "";
     private bool _denied;
     private string? _thinkingHandle;
+
+    private void ToggleTrace(Guid messageId)
+    {
+        if (!_expanded.Remove(messageId))
+            _expanded.Add(messageId);
+    }
+
+    // Reconstruct the Phase 35 view models from the DTO so the existing trust components
+    // render unchanged (reuse, per 38.3). Verified comes straight from the DTO — it was
+    // already run through the no-false-green guard at mapping time.
+    private static TrustSignal ToSignal(AgentTrustDto trust)
+        => new(trust.Verified, trust.StepCount, trust.RetryCount);
+
+    private static List<PipelineTraceEvent> ToEvents(AgentTrustDto trust)
+        => trust.Trace
+            .Select(s => new PipelineTraceEvent(
+                s.ExpertName,
+                new StepEnvelope(s.Text ?? string.Empty, s.Status, s.Reason),
+                DateTime.UtcNow,
+                s.Attempt))
+            .ToList();
 
     protected override async Task OnInitializedAsync()
     {
