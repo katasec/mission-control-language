@@ -168,10 +168,12 @@ solved now; just don't assume reads and writes share a connection in the abstrac
 
 ## Tasks (dependency order)
 
-1. **Scaffold — projects + dev environment.** Create `ForgeMission.Rooms` and
+1. ✅ **Scaffold — projects + dev environment.** Create `ForgeMission.Rooms` and
    `ForgeMission.Rooms.Data` (per Project layout); `docker-compose.yml` (postgres:16);
    `scripts/db/init/01-init.sql` (DB + app role), `scripts/dev-up|down|reset.sh`; thin Makefile
    targets. **Done when** `make dev-up` brings up Postgres with the app DB + role present.
+   *Verified: `make dev-up` / `dev-down` / `dev-reset` all pass; `forge_rooms` DB + `forge_app`
+   role present, TCP password auth works, app role has schema CREATE but no CREATEDB/SUPERUSER.*
 2. **Domain model.** In `ForgeMission.Rooms` (POCOs, no EF): `Room`, `Member`
    (`Kind: Human | Agent`), `RoomMembership` (unique `(room_id, member_id)`), `Message` =
    columns `Id`, `RoomId`, `SenderId`, `SenderKind`, `Kind`, `ReplyTo`, `CreatedAt` + `Payload`

@@ -19,7 +19,7 @@ endif
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
 
-.PHONY: help build test install clean demo demo-naive demo-reliable
+.PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset
 .DEFAULT_GOAL := help
 
 help:
@@ -50,6 +50,15 @@ demo-reliable: ## Run the loop demo — retries until quality passes, shows conv
 build-linux: ## Build linux-x64 binary into repo root (needed for docker build)
 	dotnet publish $(CLI) -c Release -r linux-x64 -o . --self-contained
 	@echo "forge-linux-x64 ready"
+
+dev-up: ## Start local dev environment (Postgres + migrations)
+	./scripts/dev-up.sh
+
+dev-down: ## Stop local dev environment (keeps data)
+	./scripts/dev-down.sh
+
+dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
+	./scripts/dev-reset.sh
 
 clean: ## Remove build artefacts (bin/ and obj/)
 	dotnet clean src/

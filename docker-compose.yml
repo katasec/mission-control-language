@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: forge-rooms-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - forge_rooms_pgdata:/var/lib/postgresql/data
+      - ./scripts/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  forge_rooms_pgdata:

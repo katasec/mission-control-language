@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="ForgeMission.Cli/ForgeMission.Cli.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
+  <Project Path="ForgeMission.Rooms.Data/ForgeMission.Rooms.Data.csproj" />
+  <Project Path="ForgeMission.Rooms/ForgeMission.Rooms.csproj" />
   <Project Path="ForgeMission.Tests/ForgeMission.Tests.csproj" />
 </Solution>
