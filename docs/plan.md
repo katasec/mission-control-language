@@ -87,6 +87,7 @@
 | [Interaction Modes & Classifier-Router Pattern](design/interaction-modes.md) | Human-AI collaboration modes, classifier as HAProxy, SDLC meta-mission, `when {}` conditional step primitive |
 | [SDLC Meta-Mission](design/sdlc-meta-mission.md) | Planned reference example — mission composition + debate{} + routing in one file; feature gap analysis and build order |
 | [Research Foundations](design/research.md) | Academic literature mapped to MCL design decisions — Self-Refine, Reflexion, Multi-Agent Debate, Constitutional AI, MoE routing, MoA |
+| [Observability (OTel)](design/observability.md) | Traces/metrics/logs via OpenTelemetry. Three lanes kept distinct (debug/ops vs live UX progress vs durable reporting); one instrumentation point in `PipelineRunner`; instrument-in-Core (BCL `ActivitySource`/`Meter`, AOT-safe) / export-in-host (OTel SDK, non-AOT); versioned telemetry contract; `ILogger<T>` + `[LoggerMessage]` + structured templates, no Serilog. Applies to the engine + Phase 38. |
 | [MAF Research](design/maf.md) | Microsoft Agent Framework 1.0 spike findings |
 | [Methodology](design/methodology.md) | The broader engineering approach MCL fits into |
 | [Why MCL exists](why.md) | Origin, core thesis, methodology, thinking models |
