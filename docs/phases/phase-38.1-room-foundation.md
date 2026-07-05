@@ -174,7 +174,7 @@ solved now; just don't assume reads and writes share a connection in the abstrac
    targets. **Done when** `make dev-up` brings up Postgres with the app DB + role present.
    *Verified: `make dev-up` / `dev-down` / `dev-reset` all pass; `forge_rooms` DB + `forge_app`
    role present, TCP password auth works, app role has schema CREATE but no CREATEDB/SUPERUSER.*
-2. **Domain model.** In `ForgeMission.Rooms` (POCOs, no EF): `Room`, `Member`
+2. ✅ **Domain model.** In `ForgeMission.Rooms` (POCOs, no EF): `Room`, `Member`
    (`Kind: Human | Agent`), `RoomMembership` (unique `(room_id, member_id)`), `Message` =
    columns `Id`, `RoomId`, `SenderId`, `SenderKind`, `Kind`, `ReplyTo`, `CreatedAt` + `Payload`
    (`MessagePayload` POCO → jsonb); `Room.Metadata` (jsonb). **Append-only** messages; sender on
