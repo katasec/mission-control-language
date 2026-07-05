@@ -184,16 +184,22 @@ solved now; just don't assume reads and writes share a connection in the abstrac
    `messages (room_id, created_at)`), initial migration. `IReadStore`/`IWriteStore` with
    `AsNoTracking()` reads and `(room_id, created_at)` pagination; `ReadConnection`/
    `WriteConnection` config slots (same DB initially). `Database.Migrate()` on Development startup.
-4. **SignalR `ChatHub`.** `JoinRoom`/`LeaveRoom` (one SignalR group per room), `SendMessage`;
-   broadcast to the room group only. Hub speaks **DTOs** (`ChatMessage`-style), never entities.
-5. **Send pipeline.** On send → `IWriteStore` append (insert) → broadcast DTO to the room group.
-   On join → `IReadStore` paginated history (recent N).
-6. **Minimal Blazor room view.** Room list, message list (sender attribution), input, hub
-   connection; `entity.ToDto()` mapping. **Dev-stub identity**: selectable/hardcoded current user
-   (replaced in 38.4).
-7. **Verify.** Two browser sessions in one room see each other's messages live; history survives
-   reload; a second room is isolated. **Testcontainers** integration test covers persist +
-   paginated read + membership isolation.
+4. ✅ **SignalR `ChatHub`.** `JoinRoom`/`LeaveRoom` (one SignalR group per room), `SendMessage`;
+   broadcast to the room group only. Hub speaks **DTOs** (`RoomMessageDto`), never entities. Every
+   hub call re-checks `IReadStore.IsMemberAsync` (the client-asserted member id is unverified
+   until 38.4).
+5. ✅ **Send pipeline.** On send → `IWriteStore.AppendMessageAsync` (insert) → broadcast DTO to the
+   room group. On join → `IReadStore.GetRecentMessagesAsync` paginated history (recent N).
+6. ✅ **Minimal Blazor room view.** `RoomList` (member-scoped room list + user picker) and
+   `RoomView` (message list with sender attribution, input, hub connection); `entity.ToDto()`
+   mapping. **Dev-stub identity** (`StubIdentity`, per-circuit): selectable current user (replaced
+   in 38.4). Seeder provides Alice/Bob + `@forge/hallucination-guard` + Demo Room + Alice's Room.
+7. ✅ **Verify.** Live app: Bob sends in Demo Room → persists (jsonb `{"v":1,"kind":"human",…}`)
+   → Alice re-enters and sees it from history → both messages persist → Alice's Room shows zero
+   Demo-Room messages (isolation) and only Alice as a member; Bob's room list has 1 room, Alice's
+   has 2 (membership scoping). **Testcontainers** integration test (6 tests, real Postgres):
+   append+read jsonb roundtrip, pagination oldest-first, room isolation, membership boundary,
+   duplicate-membership UNIQUE rejection, metadata jsonb roundtrip.
 
 ## Not in scope
 Real auth (38.4), agents (38.2), trust rendering (38.3). Artifact upload/rendering is handled

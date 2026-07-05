@@ -10,6 +10,21 @@ public sealed class ReadStore(IDbContextFactory<ReadRoomsDbContext> factory) : I
         return await db.Rooms.AsNoTracking().SingleOrDefaultAsync(r => r.Id == roomId, ct);
     }
 
+    public async Task<Member?> GetMemberAsync(Guid memberId, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.Members.AsNoTracking().SingleOrDefaultAsync(m => m.Id == memberId, ct);
+    }
+
+    public async Task<IReadOnlyList<Member>> GetMembersAsync(MemberKind kind, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.Members.AsNoTracking()
+            .Where(m => m.Kind == kind)
+            .OrderBy(m => m.DisplayName)
+            .ToListAsync(ct);
+    }
+
     public async Task<IReadOnlyList<Room>> GetRoomsForMemberAsync(Guid memberId, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);

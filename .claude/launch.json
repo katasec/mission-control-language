@@ -6,6 +6,16 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "3456", "--directory", "html"],
       "port": 3456
+    },
+    {
+      "name": "forge-ui",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/ForgeUI/ForgeUI.csproj", "--no-launch-profile"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5286"
+      },
+      "port": 5286
     }
   ]
 }

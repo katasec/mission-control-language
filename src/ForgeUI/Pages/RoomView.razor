@@ -1,0 +1,121 @@
+@page "/rooms/{RoomId:guid}"
+@using ForgeMission.Rooms
+@using ForgeMission.Rooms.Data
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IReadStore Reads
+@inject StubIdentity Identity
+@inject NavigationManager Nav
+@implements IAsyncDisposable
+
+<div class="app-main" style="padding: 1.5rem; max-width: 720px; display: flex; flex-direction: column; height: 100vh;">
+    @if (Identity.Current is null)
+    {
+        <p><a href="/rooms">Pick a user first</a> — dev-stub identity is per browser session.</p>
+    }
+    else if (_denied)
+    {
+        <p>@Identity.Current.DisplayName is not a member of this room. <a href="/rooms">Back to rooms</a></p>
+    }
+    else
+    {
+        <div style="border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">
+            <a href="/rooms">← rooms</a>
+            <strong style="margin-left: 1rem;">@(_room?.Metadata.Name ?? "…")</strong>
+            <span style="color: #888; margin-left: 1rem;">
+                @string.Join(" · ", _memberNames.Values)
+            </span>
+            <span style="float: right; color: #888;">you: @Identity.Current.DisplayName</span>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding: 1rem 0;">
+            @foreach (var msg in _messages)
+            {
+                var mine = msg.SenderId == Identity.Current.Id;
+                <div style="margin: 0.4rem 0; text-align: @(mine ? "right" : "left");">
+                    <div style="font-size: 0.75rem; color: #888;">
+                        @msg.SenderName · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+                    </div>
+                    <span style="display: inline-block; padding: 0.4rem 0.7rem; border-radius: 0.6rem;
+                                 background: @(mine ? "#d1e7ff" : "#eee");">
+                        @msg.Text
+                    </span>
+                </div>
+            }
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; padding-top: 0.5rem;">
+            <input style="flex: 1; padding: 0.5rem;"
+                   @bind="_input"
+                   @bind:event="oninput"
+                   @onkeydown="OnKeyDown"
+                   placeholder="Message @(_room?.Metadata.Name)…" />
+            <button @onclick="SendAsync"
+                    disabled="@(string.IsNullOrWhiteSpace(_input) || _hub is not { State: HubConnectionState.Connected })">
+                Send
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid RoomId { get; set; }
+
+    private HubConnection? _hub;
+    private Room? _room;
+    private Dictionary<Guid, string> _memberNames = [];
+    private readonly List<RoomMessageDto> _messages = [];
+    private string _input = "";
+    private bool _denied;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Identity.Current is null)
+            return;
+
+        if (!await Reads.IsMemberAsync(RoomId, Identity.Current.Id))
+        {
+            _denied = true;
+            return;
+        }
+
+        _room = await Reads.GetRoomAsync(RoomId);
+        _memberNames = (await Reads.GetRoomMembersAsync(RoomId)).ToDictionary(m => m.Id, m => m.DisplayName);
+
+        // History: recent page via the read store (paginated, oldest-first).
+        foreach (var message in await Reads.GetRecentMessagesAsync(RoomId, limit: 50))
+            _messages.Add(message.ToDto(_memberNames.GetValueOrDefault(message.SenderId, "unknown")));
+
+        // Live: SignalR group for this room.
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Nav.ToAbsoluteUri("/hubs/chat"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hub.On<RoomMessageDto>("ReceiveMessage", message =>
+        {
+            _messages.Add(message);
+            return InvokeAsync(StateHasChanged);
+        });
+
+        await _hub.StartAsync();
+        await _hub.InvokeAsync("JoinRoom", RoomId, Identity.Current.Id);
+    }
+
+    private async Task SendAsync()
+    {
+        if (_hub is null || Identity.Current is null || string.IsNullOrWhiteSpace(_input))
+            return;
+        var text = _input;
+        _input = "";
+        await _hub.InvokeAsync("SendMessage", RoomId, Identity.Current.Id, text);
+    }
+
+    private Task OnKeyDown(KeyboardEventArgs e)
+        => e.Key == "Enter" ? SendAsync() : Task.CompletedTask;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hub is not null)
+            await _hub.DisposeAsync();
+    }
+}

@@ -1,0 +1,66 @@
+@page "/rooms"
+@using ForgeMission.Rooms
+@using ForgeMission.Rooms.Data
+@inject IReadStore Reads
+@inject StubIdentity Identity
+@inject NavigationManager Nav
+
+<div class="app-main" style="padding: 2rem; max-width: 640px;">
+    <h2>Rooms</h2>
+
+    <div style="margin: 1rem 0;">
+        <label>
+            Chatting as:
+            <select value="@(Identity.Current?.Id.ToString() ?? "")" @onchange="OnUserChanged">
+                <option value="" disabled>— pick a dev-stub user —</option>
+                @foreach (var human in _humans)
+                {
+                    <option value="@human.Id">@human.DisplayName</option>
+                }
+            </select>
+        </label>
+    </div>
+
+    @if (Identity.Current is null)
+    {
+        <p>Select a user to see their rooms. (Dev-stub identity — real sign-in arrives in 38.4.)</p>
+    }
+    else if (_rooms.Count == 0)
+    {
+        <p>No rooms for @Identity.Current.DisplayName.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var room in _rooms)
+            {
+                <li style="margin: 0.5rem 0;">
+                    <a href="/rooms/@room.Id">@room.Metadata.Name</a>
+                    @if (!string.IsNullOrEmpty(room.Metadata.Description))
+                    {
+                        <span style="color: #888;"> — @room.Metadata.Description</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<Member> _humans = [];
+    private IReadOnlyList<Room> _rooms = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _humans = await Reads.GetMembersAsync(MemberKind.Human);
+        if (Identity.Current is not null)
+            _rooms = await Reads.GetRoomsForMemberAsync(Identity.Current.Id);
+    }
+
+    private async Task OnUserChanged(ChangeEventArgs e)
+    {
+        var id = Guid.Parse((string)e.Value!);
+        Identity.Current = _humans.Single(h => h.Id == id);
+        _rooms = await Reads.GetRoomsForMemberAsync(id);
+    }
+}

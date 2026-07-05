@@ -9,6 +9,10 @@ public interface IReadStore
 {
     Task<Room?> GetRoomAsync(Guid roomId, CancellationToken ct = default);
 
+    Task<Member?> GetMemberAsync(Guid memberId, CancellationToken ct = default);
+
+    Task<IReadOnlyList<Member>> GetMembersAsync(MemberKind kind, CancellationToken ct = default);
+
     Task<IReadOnlyList<Room>> GetRoomsForMemberAsync(Guid memberId, CancellationToken ct = default);
 
     Task<IReadOnlyList<Member>> GetRoomMembersAsync(Guid roomId, CancellationToken ct = default);
