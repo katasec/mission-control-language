@@ -1,6 +1,6 @@
 # Phase 38.4 — Identity & Membership
 
-> **Status: Done** (real-OIDC sign-in hop pending Entra credentials) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: Done** (real-OIDC verified live against Entra External ID) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** 38.1 (hardens the multi-user story behind 38.2/38.3)
 > **Done when:** a real person taps an invite link, signs in with Google, and lands inside
 > the room; a non-member is denied both the hub connection and the room history.
@@ -41,16 +41,26 @@ makes room membership the enforced confidentiality boundary (tenet 3).
    Bob (consumer) — no invite button, can chat + @mention (agent converges to ✓ Verified through
    the new broadcaster path); Alice (provisioner) — creates an invite link; Carol (new user) —
    JIT-provisioned, zero rooms, **denied** Demo Room directly (no history), then **tap invite →
-   joined as consumer → in room**. 23 tests pass (17 + 6 new identity/invite). The only unverified
-   step is the real Entra/Google sign-in hop (needs tenant credentials).
+   joined as consumer → in room**. 23 tests pass (17 + 6 new identity/invite).
+   **Real OIDC now verified live** (2026-07-07): a real Microsoft Entra External ID tenant
+   (`forgeids`) was stood up and a real person (`writeameer@gmail.com`) signed up via Email OTP
+   and landed authenticated + JIT-provisioned (member row: issuer `entra-external-id`, real
+   `sub`, email captured). Tested over `https://localhost:7177` (plain http localhost breaks the
+   OIDC correlation cookie).
 
 ## Notes
 Email magic-link fallback is a later add, not this phase. E2E encryption is a future
 hardening (parent Q7) — rooms are the boundary here, enforced server-side.
 
-**To go live with real sign-in:** register an Entra External ID app (external tenant), add
-Google/Apple as identity providers in the tenant, then set `Oidc:Authority`, `Oidc:ClientId`,
-`Oidc:ClientSecret` (env/Key Vault — never committed) and the redirect URI `…/signin-oidc`.
+**The Entra External ID setup is IaC in a separate private repo: `katasec/forge-infra`**
+(`bootstrap/` = the CIAM tenant via Bicep; `dev/200-entra/` = app registration + Email-OTP user
+flow via `az`/Graph scripts — the tenant has no subscription so ARM/Bicep can't reach the
+directory objects). Local app config (`Oidc:Authority`/`ClientId`/`ClientSecret`) lives in
+**ForgeUI user-secrets**, never committed. See memory `project_forge_infra_auth`.
+
+**Follow-ups (not blockers):** display name comes through as "unknown" (the Email-OTP flow
+collects no name attribute → Entra defaults it → the `name` claim); Google/Apple federation;
+a deployed https host + its redirect URI; move the client secret to Key Vault for prod.
 
 ## Not in scope
 Registry/scope (38.5 — scope depends on this phase's identity), sharing (38.6), org/tenant
