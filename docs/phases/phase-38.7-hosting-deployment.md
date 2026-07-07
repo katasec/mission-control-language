@@ -101,16 +101,40 @@ Two issues surfaced only once running behind the platform / in prod config:
   rows = **product data**) and run it in **all** environments at startup, idempotently;
   `StarterRoomService` now self-heals a solo room-of-two created before the member existed.
   **Lesson:** seed data that is product data must run in every env; only Alice/Bob/demo rooms are Dev-only.
+- **Self-heal trigger placement (0.1.4)** — the self-heal lived in `EnsureStarterRoomAsync`, but
+  `RoomList` only called it when `rooms.Count == 0`, so a user who already had the broken room never
+  healed. Fixed to call it **unconditionally** on `/rooms` load (still only creates+redirects for a
+  brand-new user). Verified live in prod logs: self-heal `INSERT INTO memberships` + agent replies.
+- **Display name "unknown" (0.1.5)** — Entra's Email-OTP flow collects no name and sets the `name`
+  claim to the literal `"unknown"`. `ForgeClaims.DisplayName` now treats `"unknown"`/blank as absent
+  and derives the name from the email local-part (capitalized). Existing members auto-heal via
+  `FindOrCreateAsync`'s profile-update on next load; room messages resolve the *current* member name,
+  so past messages relabel too.
 - **Consumer UI pass** — base font 14→16px, larger bubbles/avatars/inputs, wider room column (a
   "font too small" consumer note); tokens in `forge.css`.
+- **Non-issue confirmed:** the `23505 ux_members_issuer_subject` duplicate-key seen in logs is the
+  **already-handled** provisioning race — `FindOrCreateAsync` catches it and re-reads the winner; the
+  stack trace is a logged warning, not a crash.
+
+**How to test without prod auth (OIDC = the user's identity):** run the image's source locally in
+Development (local Postgres + `MCL_API_KEY` pulled from Key Vault at start via a `.claude/launch.json`
+bash-wrapper config — never written to disk) and drive it with the `preview_*` browser tools + the
+dev sign-in (`/auth/dev?user=…`). Reproduce a specific prod DB state against local Postgres with
+`docker exec forge-rooms-postgres psql`. This is how the assistant reply + self-heal were verified
+before shipping.
 
 ## 7. Live state (as of 2026-07-07)
 
 - App: `ca-forge-ui-dev`, single replica (in-proc SignalR `RoomBroadcaster` — scale-out later needs
-  Azure SignalR + a backplane), image **`forge-ui:0.1.3`**.
-- Image tags in ACR: `0.1.0`…`0.1.3` (0.1.0 first live; 0.1.1 forwarded-headers; 0.1.2 assistant
-  seed fix; 0.1.3 assistant + UI).
-- GitHub Actions variables wired in both repos (CI armed).
+  Azure SignalR + a backplane), image **`forge-ui:0.1.5`**. Assistant replies (verified) and real
+  display names confirmed live.
+- Image tags in ACR: `0.1.0`…`0.1.5` — 0.1.0 first live; 0.1.1 forwarded-headers; 0.1.2 essential-
+  agent seed; 0.1.3 seed + UI; 0.1.4 self-heal trigger; 0.1.5 display-name fix.
+- **CI proven end-to-end:** `gh workflow run forge-ui-image.yml -f version=X` builds native amd64 +
+  pushes to ACR via OIDC (GITHUB_TOKEN reads the private feed) — faster than local emulated builds.
+  Steady-state release loop is: commit → run the image workflow → redeploy `dev/500-app` with the new
+  `FORGE_UI_IMAGE` (keep `CUSTOM_DOMAIN` + `CUSTOM_DOMAIN_CERT_ID` set to preserve the HTTPS binding).
+- GitHub Actions variables wired in both repos.
 
 ## 8. Decision log / gotchas (so they are not re-learned)
 
@@ -127,7 +151,10 @@ Two issues surfaced only once running behind the platform / in prod config:
 
 ## 9. Follow-ups (not blocking)
 
-- Display name shows "unknown" — Email-OTP flow collects no name; fall back to the email local-part.
-- Passwordless Postgres (Entra/MI auth).
-- Exercise the CI workflows end-to-end (image tag build; infra dispatch).
-- prod slice / environment protection reviewers; private endpoints for Postgres/KV.
+- **Custom display names** — let users set a name (profile edit), decoupling it from the email.
+- **Passwordless Postgres** (Entra/MI auth) + **private endpoints** for Postgres/KV (VNet-integrate
+  the Container Apps env → drop the public endpoint + the `AllowAllAzureServices` firewall rule).
+- **prod slice** + environment-protection reviewers on the gated infra layers.
+- Exercise the **infra** deploy workflow via dispatch (the image workflow is already proven).
+
+_Done this session: display-name fix (0.1.5), self-heal trigger (0.1.4), CI proven end-to-end._
