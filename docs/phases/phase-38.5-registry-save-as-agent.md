@@ -7,7 +7,9 @@
 
 The discovery + authoring layer — the "Global Address List." Turns the hardcoded agent map
 from 38.2 into a real, scoped directory, and gives non-technical users an authoring on-ramp
-that writes no `.mcl` by hand.
+that writes no `.mcl` by hand. Also fixes the handle/trust/provenance model: **short bare
+handles** for typing, a **visual seal** for trust, and **publisher name in the listing** for
+provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
@@ -29,6 +31,52 @@ that writes no `.mcl` by hand.
    routes to the program-synthesis spike.
 5. **Verify.** Compose draft→review live, `/save-as-agent @my-reviewer` (personal scope), add
    it to another room, invoke it; a shared-scope agent is discoverable by others.
+6. **Handle namespace — bare + globally unique (X model).** Drop the `@forge/` prefix; handles
+   are short bare strings (`@assistant`, `@guard`, `@claude`) in one flat, globally-unique,
+   **claimed** namespace (first-come-first-served). **Reserve official handles** now
+   (`@assistant`, `@guard`, `@claude`, `@openai`, `@grok`) so no one else can claim them. No
+   collision risk while F&F is built-ins only, but reservation is cheap insurance before
+   custom/marketplace (39.5). Collision/impersonation protection is the seal (task 8), not the
+   string.
+7. **Raw-model passthrough agents (`@claude`/`@openai`/`@grok`).** Thin single-expert
+   passthrough missions (the `vanilla` "raw LLM" shape) bound to a provider profile —
+   "generalised experts," addressable because the room addresses *missions*, not experts.
+   `ProviderClientBuilder` already supports `anthropic`/`openai`/`xai`/`ollama`. **Gating
+   change:** `MissionRegistry.LoadAsync` currently overwrites every mission's key with one global
+   key (`src/ForgeUI/Services/MissionRegistry.cs:44-50`, key read from the *first* forge.toml in
+   `Program.cs`) — switch to **per-mission key resolution** so each `forge.toml` resolves its own
+   `env(...)` key (`MCL_API_KEY` / `ANTHROPIC_API_KEY` / `XAI_API_KEY`). Seed as members like
+   `@forge/assistant` (`RoomsSeeder.SeedEssentialAgentsAsync`). On-thesis: raw `@claude` beside
+   verified `@assistant` in one room *is* the "same gesture, invisibly better" demo.
+8. **Two distinct trust seals (no false-green).** (a) **Identity / publisher seal** — *per-agent*,
+   on the handle, X-checkmark style: anti-impersonation ("this is the official `@claude` / a
+   verified publisher"). (b) **Per-response Verified badge** — *per-message*, **already shipped**
+   (38.3 `TrustSignal` / `AgentMeta.Verified` + expandable trace): "this *run* was verified." Keep
+   them visually and semantically **separate** — a raw `@claude` may carry the identity seal while
+   its individual answers get **no** verified badge (unverified by design); that contrast is the
+   product story, and the 38.3 no-false-green guard must hold (never green-check raw output).
+9. **`/agents` directory MVP (slash command).** Lists available agents: **handle · description ·
+   publisher (+ identity seal)**. Data: add `List()` to `AgentCatalog` (`Label`/`Description`
+   already present) + a new `Publisher` field on agent/mission metadata; the per-response side
+   (`AgentMeta.Verified`) already exists. Simplest surface of the GAL — the `@`-autocomplete
+   picker is the richer version later. Scoped to what the addressing user can consume (built-ins
+   only for F&F). The listing does double duty (discovery + provenance) — which is what makes a
+   bare `@` safe: look up who's behind a short handle before trusting it.
+
+## Handle & trust model (added 2026-07-08)
+
+The `@forge/` prefix made one string do three jobs — address, brand, and implied trust — all
+badly (long to type, ambiguous trust, quiet namespacing). Split them:
+- **Handle = addressing only.** Short, bare, globally unique, claimed (X model).
+- **Trust = a visual seal**, not the string. Two seals, different jobs (task 8): identity seal
+  (who you're talking to is legit) vs per-response verified badge (this answer was verified).
+  Forge is unusual in having the second at all — X has only the first.
+- **Provenance = publisher name** in `/agents` (task 9), not the string.
+
+Committing to bare unique handles inherits X's rule: one flat namespace, first-come-first-served,
+seal disambiguates the real `@claude` from an impostor. That implies **handle reservation +
+impersonation protection** once custom/marketplace opens (39.5) — free now, so reserve official
+handles immediately.
 
 ## Notes
 The registry is a **directory of expertise-as-personas** (`@legal-reviewer`,
@@ -41,4 +89,5 @@ registry jsonb or logs), scoped to the owner, never exposed to consumers.
 
 ## Not in scope
 Public/global marketplace of agents, ratings/trust-of-authors, sharing links (38.6),
-billing.
+billing. The **identity-seal mechanism** and the `Publisher` field are in scope; the *process*
+for verifying a publisher at marketplace scale (who earns a seal, how) is deferred.
