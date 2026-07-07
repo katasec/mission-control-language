@@ -12,8 +12,8 @@
 
         @if (_oidcConfigured)
         {
-            <a class="btn btn-primary auth-provider" href="@LoginUrl()">Sign in with Microsoft</a>
-            <p class="auth-note">Google &amp; Apple sign-in appear on the hosted page.</p>
+            <a class="btn btn-primary auth-provider" href="@LoginUrl()">Continue with email</a>
+            <p class="auth-note">We'll email you a one-time code — no password needed.</p>
         }
 
         @if (Env.IsDevelopment())
