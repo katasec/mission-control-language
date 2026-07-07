@@ -29,8 +29,23 @@ public static class ForgeClaims
         => user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("email")?.Value;
 
     public static string DisplayName(ClaimsPrincipal user, string fallback)
-        => user.FindFirst(ClaimTypes.Name)?.Value
-           ?? user.FindFirst("name")?.Value
-           ?? Email(user)
-           ?? fallback;
+    {
+        // Use the name claim only when it's meaningful. Entra's Email-OTP flow collects no name
+        // and defaults the `name` claim to the literal "unknown", so treat that (and blanks) as
+        // absent and fall back to the email's local part (writeameer@gmail.com -> "Writeameer").
+        var name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst("name")?.Value;
+        if (!string.IsNullOrWhiteSpace(name) && !name.Equals("unknown", StringComparison.OrdinalIgnoreCase))
+            return name;
+
+        var email = Email(user);
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var local = email.Split('@')[0];
+            if (!string.IsNullOrWhiteSpace(local))
+                return char.ToUpperInvariant(local[0]) + local[1..];
+            return email;
+        }
+
+        return fallback;
+    }
 }
