@@ -177,8 +177,8 @@ body {
   font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -205,14 +205,14 @@ h2 { font-size: 20px; }
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: 38px;
-  padding: 0 var(--space-4);
+  height: 44px;
+  padding: 0 var(--space-5);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -248,14 +248,14 @@ h2 { font-size: 20px; }
 .btn-link:hover { color: var(--accent); text-decoration: none; }
 
 .field {
-  height: 38px;
-  padding: 0 var(--space-3);
+  height: 44px;
+  padding: 0 var(--space-4);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 .field::placeholder { color: var(--text-subtle); }
@@ -351,12 +351,12 @@ h2 { font-size: 20px; }
 .agent-answer code  { background: var(--surface-sunken); padding: 1px 5px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; }
 
 /* 8. Rooms surface (Phase 38) -------------------------------------------- */
-.room { display: flex; flex-direction: column; height: 100vh; max-width: 820px; margin: 0 auto; width: 100%; }
+.room { display: flex; flex-direction: column; height: 100vh; max-width: 940px; margin: 0 auto; width: 100%; }
 
 .room-header  { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface); }
 .room-back    { font-size: 13px; color: var(--text-muted); }
 .room-back:hover { color: var(--accent); }
-.room-name    { font-size: 15px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.room-name    { font-size: 17px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .room-members { flex: 1; min-width: 0; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .room-you     { margin-left: auto; font-size: 12px; color: var(--text-subtle); flex-shrink: 0; white-space: nowrap; }
 .room-badge   { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: var(--radius-sm); }
@@ -367,17 +367,17 @@ h2 { font-size: 20px; }
 .room-stream  { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
 
 /* A human message: avatar + name/time + bubble. Own messages align right. */
-.room-msg     { display: flex; gap: var(--space-3); max-width: 78%; }
+.room-msg     { display: flex; gap: var(--space-3); max-width: 85%; }
 .room-msg-own { align-self: flex-end; flex-direction: row-reverse; }
 
-.msg-avatar   { flex-shrink: 0; width: 32px; height: 32px; border-radius: var(--radius-pill); background: var(--surface-active); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+.msg-avatar   { flex-shrink: 0; width: 38px; height: 38px; border-radius: var(--radius-pill); background: var(--surface-active); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-transform: uppercase; }
 .room-msg-own .msg-avatar { background: var(--accent-soft); color: var(--accent); }
 
 .msg-body     { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .room-msg-own .msg-body { align-items: flex-end; }
-.msg-meta     { font-size: 11px; color: var(--text-subtle); }
+.msg-meta     { font-size: 12.5px; color: var(--text-subtle); }
 .msg-sender   { font-weight: 600; color: var(--text-muted); }
-.msg-bubble   { display: inline-block; padding: var(--space-2) var(--space-3); border-radius: var(--radius) var(--radius) var(--radius) var(--radius-sm); background: var(--surface); border: 1px solid var(--border); font-size: 14px; color: var(--text); word-break: break-word; }
+.msg-bubble   { display: inline-block; padding: var(--space-3) var(--space-4); border-radius: var(--radius) var(--radius) var(--radius) var(--radius-sm); background: var(--surface); border: 1px solid var(--border); font-size: 15.5px; line-height: 1.5; color: var(--text); word-break: break-word; }
 .msg-bubble-own { border-radius: var(--radius) var(--radius) var(--radius-sm) var(--radius); background: var(--accent-soft); border-color: transparent; }
 
 /* An agent message spans the full column so its trust card can breathe. */
