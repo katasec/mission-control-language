@@ -1,0 +1,20 @@
+# Keep the ForgeUI build context small + deterministic. Only src/ and missions/ are COPY'd by
+# Dockerfile.forgeui; everything below is noise or would bust layer caching.
+**/bin/
+**/obj/
+**/out/
+**/publish/
+**/TestResults/
+.git/
+.github/
+.vs/
+.vscode/
+.idea/
+docs/
+scratchpad/
+*.user
+*.received.*
+# Prebuilt CLI artifacts (root Dockerfile territory, not this image)
+forge-linux-x64
+forge-osx-arm64
+forge-win-arm64.exe

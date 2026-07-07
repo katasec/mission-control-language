@@ -1,0 +1,69 @@
+# syntax=docker/dockerfile:1
+# ForgeUI (Forge Rooms) — Blazor Server host image.
+#
+# NOT Native AOT: this is the .NET 10 ASP.NET web host. The AOT rule in CLAUDE.md is for the
+# `forge` CLI (built by the root Dockerfile), NOT this app. Build context = repo root.
+#
+# ForgeUI -> ForgeMission.Cli depends on PRIVATE GitHub Packages (Katasec.OaiServer/OciClient),
+# so restore needs the repo's nuget.config AND a read:packages token. The token is supplied as a
+# BuildKit SECRET (never written into an image layer):
+#
+#   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
+#   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
+#     -f Dockerfile.forgeui -t forge-ui:local .
+#
+# CI does the same on the runner, then pushes to ACR (see .github/workflows/forge-ui-image.yml).
+
+# ---- build --------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# nuget.config declares the private feed + reads the token from env NUGET_AUTH_TOKEN.
+COPY nuget.config ./
+COPY src/ ./src/
+
+# Restore + publish the Blazor Server host (framework-dependent — the aspnet runtime image
+# supplies the shared framework). The token is mounted as a secret — it exists only for this
+# RUN, never in a layer.
+#
+# PublishAot=false neutralises the AOT/self-contained flag inherited from the referenced `forge`
+# CLI project (ForgeMission.Cli sets PublishAot=true), which otherwise trips NETSDK1151 for a
+# non-self-contained web app. Scoped to THIS build only — the CLI's own AOT publish
+# (`make install` / release workflow, which set a RID) is unaffected.
+RUN --mount=type=secret,id=nuget_token \
+    NUGET_AUTH_TOKEN="$(cat /run/secrets/nuget_token)" \
+    dotnet publish src/ForgeUI/ForgeUI.csproj -c Release -o /app/publish \
+      /p:UseAppHost=false /p:PublishAot=false
+
+# Build a self-contained EF migration bundle for the prod migration step. Prod NEVER
+# auto-migrates (Program.cs runs MigrateAsync only in Development), so dev/500-app runs this
+# bundle as a Container Apps Job. Uses RoomsDbContextDesignTimeFactory — no startup project.
+# The RID-specific restore needs the feed again, so the token is mounted here too.
+RUN --mount=type=secret,id=nuget_token \
+    NUGET_AUTH_TOKEN="$(cat /run/secrets/nuget_token)" \
+    dotnet tool install --global dotnet-ef --version 10.0.9 \
+ && /root/.dotnet/tools/dotnet-ef migrations bundle \
+      --project src/ForgeMission.Rooms.Data \
+      --context RoomsDbContext \
+      --configuration Release \
+      --self-contained -r linux-x64 \
+      --output /app/publish/migrate
+
+# ---- runtime ------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish ./
+
+# Mission files MUST ship in the image: the mission registry and the OpenAI key are read from
+# missions/*/forge.toml at startup via env("MCL_API_KEY") (Program.cs). MissionDir points here
+# (the default ../../missions is wrong under /app). MCL_API_KEY is injected at run time from
+# Key Vault — the image carries no secrets.
+COPY missions/ /app/missions/
+
+ENV ASPNETCORE_URLS=http://+:8080 \
+    ASPNETCORE_ENVIRONMENT=Production \
+    MissionDir=/app/missions \
+    DOTNET_gcServer=0
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "ForgeUI.dll"]
