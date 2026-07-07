@@ -25,7 +25,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -164,13 +164,20 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Self-healing schema + seed data in Development ONLY — never auto-migrate in prod.
-if (app.Environment.IsDevelopment())
+// Self-healing schema + dev test data in Development ONLY — never auto-migrate in prod.
 {
     var factory = app.Services.GetRequiredService<IDbContextFactory<RoomsDbContext>>();
-    await using (var db = await factory.CreateDbContextAsync())
-        await db.Database.MigrateAsync();
-    await RoomsSeeder.SeedAsync(factory);
+    if (app.Environment.IsDevelopment())
+    {
+        await using (var db = await factory.CreateDbContextAsync())
+            await db.Database.MigrateAsync();
+        await RoomsSeeder.SeedAsync(factory);
+    }
+
+    // Essential product data (built-in agent members) in ALL environments — idempotent.
+    // Starter rooms reference the @forge/assistant member, so it must exist in prod too.
+    // Prod schema is created by the migration job before this runs.
+    await RoomsSeeder.SeedEssentialAgentsAsync(factory);
 }
 
 app.UseStaticFiles();

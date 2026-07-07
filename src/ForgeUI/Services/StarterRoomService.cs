@@ -19,7 +19,27 @@ public sealed class StarterRoomService(IReadStore reads, IWriteStore writes)
     {
         var rooms = await reads.GetRoomsForMemberAsync(human.Id, ct);
         if (rooms.Count > 0)
+        {
+            // Self-heal solo "room of two" spaces created before the assistant member existed
+            // (e.g. rooms provisioned in prod before SeedEssentialAgentsAsync): if the user is
+            // alone with no agent, add the assistant so the auto-reply works.
+            foreach (var existing in rooms)
+            {
+                var members = await reads.GetRoomMembersAsync(existing.Id, ct);
+                var soloHuman = members.Count(m => m.Kind == MemberKind.Human) == 1;
+                var hasAgent = members.Any(m => m.Kind == MemberKind.Agent);
+                if (soloHuman && !hasAgent)
+                    await writes.AddMembershipAsync(new RoomMembership
+                    {
+                        Id = Guid.NewGuid(),
+                        RoomId = existing.Id,
+                        MemberId = RoomsSeeder.AssistantId,
+                        Role = MembershipRole.Consumer,
+                        JoinedAt = DateTimeOffset.UtcNow,
+                    }, ct);
+            }
             return null;
+        }
 
         var room = await writes.AddRoomAsync(new Room
         {

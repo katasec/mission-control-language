@@ -22,6 +22,20 @@ public static class RoomsSeeder
     public static readonly Guid DemoRoomId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     public static readonly Guid AlicePrivateRoomId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
+    /// <summary>
+    /// Essential PRODUCT data seeded in EVERY environment (idempotent): the built-in agent
+    /// members that starter rooms reference. Unlike <see cref="SeedAsync"/> (dev test humans +
+    /// demo rooms), these must exist in prod too, or <c>StarterRoomService</c> hits an FK
+    /// violation adding the assistant to a new user's room.
+    /// </summary>
+    public static async Task SeedEssentialAgentsAsync(IDbContextFactory<RoomsDbContext> factory, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        await EnsureAgentAsync(db, HallucinationGuardId, "@forge/hallucination-guard", ct);
+        await EnsureAgentAsync(db, AssistantId, AssistantHandle, ct);
+        await db.SaveChangesAsync(ct);
+    }
+
     public static async Task SeedAsync(IDbContextFactory<RoomsDbContext> factory, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
