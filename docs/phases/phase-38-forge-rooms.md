@@ -1,6 +1,6 @@
 # Phase 38 — Forge Rooms (Agents as `@`-Addressable Members)
 
-> **Status: Design**
+> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5–38.6 next.**
 > **Priority: TOP — this precedes every other phase in `plan.md`.**
 > **Depends on:** Phase 34/35 (Forge UI / Blazor — this *is* their evolution), Phase 25
 > (mission composition), Phase 25a (`role: judge`), Phase 19 (`forge serve` — mission on
@@ -259,12 +259,14 @@ own spoke doc and task list. Run them 1→6. The nine "spokes" originally sketch
 | [38.4a UI Foundation & Onboarding](phase-38.4a-ui-and-onboarding.md) | **Done.** Tokenized design system + dark mode (see [UI Design System](../design/ui-design-system.md)), "gate everything" auth IA + `AccountMenu` + `/playground`, first-run "room of two" onboarding, and the LLM-verified `@forge/assistant` default agent |
 | [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | `@handle` directory + scope + save-as-agent (orig. S6) |
 | [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | shareable verified output + share-an-agent (orig. S8) |
+| [38.7 Hosting & Deployment (Azure)](phase-38.7-hosting-deployment.md) | **Done.** Containerize + version the app, Azure Container Apps + ACR + Key Vault + Postgres via Bicep (`katasec/forge-infra`), passwordless CI/runtime, custom domain `forge.katasec.com` + managed TLS. Live. |
 
 **Dependency order:** `38.1 → 38.2 → 38.3`, `38.1 → 38.4`, `{38.2, 38.4} → 38.5`,
-`{38.3, 38.5} → 38.6`. Running 38.1…38.6 satisfies "no phase waits on a future phase."
+`{38.3, 38.5} → 38.6`. `38.7` (hosting) depends only on a working app (38.1–38.4a) and runs
+orthogonally. Running 38.1…38.6 satisfies "no phase waits on a future phase."
 
-**Artifact in/out** (the aunt PDF case, orig. S7) lands in **38.2 (upload as room-scoped input)**
-and **38.3 (render the returned file)** — text-first, files second. There is no Phase 38.7.
+**Artifact in/out** (the aunt PDF case, orig. S7) is *not* its own phase — it lands in **38.2
+(upload as room-scoped input)** and **38.3 (render the returned file)**; text-first, files second.
 
 ---
 
