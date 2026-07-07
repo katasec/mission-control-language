@@ -13,9 +13,16 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
-1. **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
+> **Progress (2026-07-08):** tasks **1** and **6** done + the design-system seal vocabulary
+> landed (`--seal-official`/`--seal-verified`, `.identity-seal`, doc §5). Remaining: 2, 3, 4, 5,
+> 7, 8, 9.
+
+1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
-   map.
+   map. **Done:** `AgentDescriptor` (pure metadata in `ForgeMission.Rooms`) + `AgentScope` /
+   `IdentitySeal` enums; host-side `AgentRegistry` binds descriptors → `MissionEntry` and adds
+   `TryResolveDescriptor` + `List()`; `AgentCatalog` deleted. Owner/version fields modelled;
+   persistence deferred to task 4. Behaviour unchanged.
 2. **`@handle` resolution.** Resolve a mention to a registry entry, scoped by the addressing
    user/room. Autocomplete + disambiguation for similar handles (parent Q3).
 3. **Add/remove agent from a room.** From the registry, add an agent as a room member (the
@@ -31,13 +38,15 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    routes to the program-synthesis spike.
 5. **Verify.** Compose draft→review live, `/save-as-agent @my-reviewer` (personal scope), add
    it to another room, invoke it; a shared-scope agent is discoverable by others.
-6. **Handle namespace — bare + globally unique (X model).** Drop the `@forge/` prefix; handles
+6. ✅ **Handle namespace — bare + globally unique (X model).** Drop the `@forge/` prefix; handles
    are short bare strings (`@assistant`, `@guard`, `@claude`) in one flat, globally-unique,
    **claimed** namespace (first-come-first-served). **Reserve official handles** now
    (`@assistant`, `@guard`, `@claude`, `@openai`, `@grok`) so no one else can claim them. No
    collision risk while F&F is built-ins only, but reservation is cheap insurance before
    custom/marketplace (39.5). Collision/impersonation protection is the seal (task 8), not the
-   string.
+   string. **Done:** `@forge/hallucination-guard`→`@guard`, `@forge/assistant`→`@assistant`;
+   `ReservedHandles` set + `IsReserved` (the claim 39.5 will enforce); `RoomsSeeder.EnsureAgentAsync`
+   upserts `DisplayName` so pre-existing dev/prod rows self-heal to bare handles on next boot.
 7. **Raw-model passthrough agents (`@claude`/`@openai`/`@grok`).** Thin single-expert
    passthrough missions (the `vanilla` "raw LLM" shape) bound to a provider profile —
    "generalised experts," addressable because the room addresses *missions*, not experts.
