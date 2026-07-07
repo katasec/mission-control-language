@@ -5,7 +5,7 @@
 
 <div class="chat-shell">
     <div class="chat-topbar">
-        <span class="chat-title">Forge</span>
+        <a class="chat-title" href="/rooms" title="Back to rooms">Forge</a>
         <select class="mission-picker"
                 value="@_selectedIndex"
                 @onchange="OnMissionChanged"
@@ -15,11 +15,13 @@
                 <option value="@i">@Registry.Missions[i].Label</option>
             }
         </select>
+        <span class="flex-spacer"></span>
         @if (Store.Current.Messages.Any())
         {
             var last = Store.Current.Messages.Last();
             <span class="chat-meta">@last.Trace.Count steps · @(last.Trust?.RetryCount ?? 0) retries</span>
         }
+        <AccountMenu />
     </div>
 
     <div class="chat-messages">

@@ -15,6 +15,12 @@ public sealed class AgentCatalog
         var guard = registry.Missions.FirstOrDefault(m => m.Label == "Forge");
         if (guard is not null)
             _byHandle["@forge/hallucination-guard"] = guard;
+
+        // @forge/assistant → general assistant whose answers are LLM-verified (label "Assistant").
+        // This is the default agent in every new user's starter room.
+        var assistant = registry.Missions.FirstOrDefault(m => m.Label == "Assistant");
+        if (assistant is not null)
+            _byHandle["@forge/assistant"] = assistant;
     }
 
     public bool TryResolve(string handle, out MissionEntry mission)

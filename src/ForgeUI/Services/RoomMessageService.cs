@@ -40,16 +40,29 @@ public sealed class RoomMessageService(
     // Pull gate (tenet 2): only a human message can address an agent member of the room.
     private async Task TryInvokeAgentAsync(Guid roomId, Message humanMessage, CancellationToken ct)
     {
-        var agents = (await reads.GetRoomMembersAsync(roomId, ct))
-            .Where(m => m.Kind == MemberKind.Agent)
-            .ToList();
+        var members = await reads.GetRoomMembersAsync(roomId, ct);
+        var agents = members.Where(m => m.Kind == MemberKind.Agent).ToList();
         if (agents.Count == 0)
             return;
 
-        if (MentionParser.Detect(humanMessage.Payload.Text ?? string.Empty, agents.Select(a => a.DisplayName)) is not { } hit)
-            return;
+        var text = humanMessage.Payload.Text ?? string.Empty;
 
-        var agent = agents.First(a => string.Equals(a.DisplayName, hit.Handle, StringComparison.OrdinalIgnoreCase));
-        invoker.Invoke(roomId, agent, hit.Handle, hit.Prompt, replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
+        // Explicit @mention always wins.
+        if (MentionParser.Detect(text, agents.Select(a => a.DisplayName)) is { } hit)
+        {
+            var mentioned = agents.First(a => string.Equals(a.DisplayName, hit.Handle, StringComparison.OrdinalIgnoreCase));
+            invoker.Invoke(roomId, mentioned, hit.Handle, hit.Prompt, replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
+            return;
+        }
+
+        // "Room of two" auto-reply: when the room is exactly one human + one agent, the sole
+        // agent answers every message with no @mention needed — a scoped exception to pull-only
+        // that makes a 1:1 room feel like a normal chat. Group rooms still require addressing.
+        var humanCount = members.Count(m => m.Kind == MemberKind.Human);
+        if (agents.Count == 1 && humanCount == 1)
+        {
+            var sole = agents[0];
+            invoker.Invoke(roomId, sole, sole.DisplayName, text.Trim(), replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
+        }
     }
 }

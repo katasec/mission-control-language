@@ -115,8 +115,9 @@ else
 {
     registry = await MissionRegistry.LoadAsync(
     [
-        ("ChatGPT",  "Raw LLM — no verification",                    Path.Combine(missionDir, "vanilla",             "mission.mcl")),
-        ("Forge",    "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
+        ("ChatGPT",   "Raw LLM — no verification",                     Path.Combine(missionDir, "vanilla",             "mission.mcl")),
+        ("Forge",     "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
+        ("Assistant", "General assistant, answers LLM-verified",       Path.Combine(missionDir, "assistant",           "mission.mcl")),
     ],
     apiKey);
 }
@@ -135,6 +136,10 @@ builder.Services.AddSingleton<RoomAgentInvoker>();
 // and the one membership-checked send path shared by both.
 builder.Services.AddSingleton<RoomBroadcaster>();
 builder.Services.AddSingleton<RoomMessageService>();
+
+// Onboarding: give a brand-new user a private "room of two" with @forge/assistant so they
+// land in a usable chat instead of an empty rooms list.
+builder.Services.AddScoped<StarterRoomService>();
 
 var app = builder.Build();
 

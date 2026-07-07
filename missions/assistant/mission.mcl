@@ -1,0 +1,9 @@
+// Forge Assistant — a general assistant whose every answer is independently
+// checked by an LLM verifier before it reaches the user. If the verifier rejects
+// the answer, the assistant revises it (up to the loop limit) using the feedback.
+mission Assistant(goal) loop(2) = {
+    Answerer
+    -> Verifier
+}
+
+output(Assistant)

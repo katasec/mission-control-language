@@ -11,50 +11,58 @@
 @inject NavigationManager Nav
 @implements IDisposable
 
-<div class="app-main" style="padding: 1.5rem; max-width: 720px; display: flex; flex-direction: column; height: 100vh;">
+<div class="room">
     @if (_me is null)
     {
-        <p>Loading…</p>
+        <div class="room-empty">Loading…</div>
     }
     else if (_denied)
     {
-        <p>You are not a member of this room. <a href="/rooms">Back to rooms</a></p>
+        <div class="room-empty">You are not a member of this room. <a href="/rooms">Back to rooms</a></div>
     }
     else
     {
-        <div style="border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">
-            <a href="/rooms">← rooms</a>
-            <strong style="margin-left: 1rem;">@(_room?.Metadata.Name ?? "…")</strong>
-            <span style="color: #888; margin-left: 1rem;">
-                @string.Join(" · ", _memberNames.Values)
-            </span>
-            <span style="float: right; color: #888;">
-                you: @_me.DisplayName@(_isProvisioner ? " (provisioner)" : "")
-            </span>
+        <div class="room-header">
+            <a class="room-back" href="/rooms">← rooms</a>
+            <span class="room-name">@(_room?.Metadata.Name ?? "…")</span>
+            <span class="room-members">@string.Join(" · ", _memberNames.Values)</span>
+            @if (_isProvisioner)
+            {
+                <span class="room-badge">provisioner</span>
+            }
+            <AccountMenu />
         </div>
 
         @if (_isProvisioner)
         {
-            <div style="padding: 0.4rem 0; font-size: 0.85rem;">
-                <button class="show-thinking" @onclick="CreateInviteAsync">+ create invite link</button>
+            <div class="room-invite">
+                <button class="btn-link" @onclick="CreateInviteAsync">+ create invite link</button>
                 @if (_inviteUrl is not null)
                 {
-                    <span style="margin-left: 0.5rem;">
-                        <input readonly value="@_inviteUrl" style="width: 60%; font-size: 0.8rem;"
-                               @onfocus="SelectAll" />
-                    </span>
+                    <input class="invite-field" readonly value="@_inviteUrl" @onfocus="SelectAll" />
                 }
             </div>
         }
 
-        <div style="flex: 1; overflow-y: auto; padding: 1rem 0;">
+        <div class="room-stream">
+            @if (_messages.Count == 0)
+            {
+                <div class="room-hint">
+                    <div class="room-hint-title">This is the start of your conversation.</div>
+                    @if (SoleAgentHandle is { } handle)
+                    {
+                        <div class="room-hint-sub">Send a message and <strong>@handle</strong> will reply — every answer is independently verified before you see it.</div>
+                    }
+                </div>
+            }
+
             @foreach (var msg in _messages)
             {
                 var mine = msg.SenderId == _me.Id;
 
                 @if (msg.Trust is { } trust)
                 {
-                    <div style="margin: 0.6rem 0; text-align: left;">
+                    <div class="room-msg room-msg-agent">
                         <div class="agent-card @(trust.Verified ? "card-verified" : "card-unverified")">
                             <div class="agent-card-header">
                                 <TrustSignalBadge Signal="ToSignal(trust)" />
@@ -74,34 +82,31 @@
                 }
                 else
                 {
-                    var bg = mine ? "#d1e7ff" : "#eee";
-                    <div style="margin: 0.4rem 0; text-align: @(mine ? "right" : "left");">
-                        <div style="font-size: 0.75rem; color: #888;">
-                            @msg.SenderName · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+                    <div class="room-msg @(mine ? "room-msg-own" : "")">
+                        <div class="msg-avatar">@Initial(msg.SenderName)</div>
+                        <div class="msg-body">
+                            <div class="msg-meta">
+                                <span class="msg-sender">@msg.SenderName</span> · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+                            </div>
+                            <div class="msg-bubble @(mine ? "msg-bubble-own" : "")">@msg.Text</div>
                         </div>
-                        <span style="display: inline-block; padding: 0.4rem 0.7rem; border-radius: 0.6rem;
-                                     background: @bg;">
-                            @msg.Text
-                        </span>
                     </div>
                 }
             }
 
             @if (_thinkingHandle is not null)
             {
-                <div style="margin: 0.4rem 0; text-align: left; color: #7e57c2; font-style: italic;">
-                    @_thinkingHandle is thinking…
-                </div>
+                <div class="agent-thinking">@_thinkingHandle is thinking…</div>
             }
         </div>
 
-        <div style="display: flex; gap: 0.5rem; padding-top: 0.5rem;">
-            <input style="flex: 1; padding: 0.5rem;"
+        <div class="room-composer">
+            <input class="field room-input"
                    @bind="_input"
                    @bind:event="oninput"
                    @onkeydown="OnKeyDown"
                    placeholder="Message @(_room?.Metadata.Name)…" />
-            <button @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
+            <button class="btn-primary" @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
         </div>
     }
 </div>
@@ -126,6 +131,14 @@
         if (!_expanded.Remove(messageId))
             _expanded.Add(messageId);
     }
+
+    // First letter of a sender's name, for the avatar circle.
+    private static string Initial(string name)
+        => string.IsNullOrWhiteSpace(name) ? "?" : name.TrimStart()[..1].ToUpperInvariant();
+
+    // Agent members use @handle display names; surface the sole one for the empty-state hint.
+    private string? SoleAgentHandle
+        => _memberNames.Values.FirstOrDefault(n => n.StartsWith('@'));
 
     // Reconstruct the Phase 35 view models from the DTO so the existing trust components
     // render unchanged (38.3). Verified is the guarded value from the mapping.

@@ -1,0 +1,34 @@
+@using ForgeMission.Rooms
+@inject CurrentUser Current
+
+@* Persistent account control — the canonical top-right identity + sign-out.
+   Native <details> dropdown so it needs no JS interop. *@
+@if (_me is not null)
+{
+    <details class="account-menu">
+        <summary class="account-summary">
+            <span class="avatar avatar-sm">@Initial(_me.DisplayName)</span>
+            <span class="account-name">@_me.DisplayName</span>
+            <i class="account-caret">▾</i>
+        </summary>
+        <div class="account-dropdown">
+            <div class="account-identity">
+                <div class="account-identity-name">@_me.DisplayName</div>
+                <div class="account-identity-email">@_me.Email</div>
+            </div>
+            <form action="/auth/logout" method="post">
+                <button class="account-signout" type="submit">Sign out</button>
+            </form>
+        </div>
+    </details>
+}
+
+@code {
+    private Member? _me;
+
+    protected override async Task OnInitializedAsync()
+        => _me = await Current.GetMemberAsync();
+
+    private static string Initial(string name)
+        => string.IsNullOrWhiteSpace(name) ? "?" : name.TrimStart()[..1].ToUpperInvariant();
+}

@@ -5,28 +5,29 @@
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
 
-<div class="app-main" style="padding: 3rem; max-width: 460px; margin: 0 auto;">
-    <h2>Sign in to Forge Rooms</h2>
-    <p style="color:#666;">You're invited into rooms — sign in to see them.</p>
+<div class="auth-shell">
+    <div class="auth-card">
+        <h2 class="auth-title">Sign in to Forge Rooms</h2>
+        <p class="auth-sub">You're invited into rooms — sign in to see them.</p>
 
-    @if (_oidcConfigured)
-    {
-        <a class="chat-send" style="display:inline-block; text-decoration:none; margin-top:0.5rem;"
-           href="@LoginUrl()">Sign in with Microsoft</a>
-        <p style="color:#999; font-size:0.8rem;">Google &amp; Apple sign-in appear on the hosted page.</p>
-    }
+        @if (_oidcConfigured)
+        {
+            <a class="btn btn-primary auth-provider" href="@LoginUrl()">Sign in with Microsoft</a>
+            <p class="auth-note">Google &amp; Apple sign-in appear on the hosted page.</p>
+        }
 
-    @if (Env.IsDevelopment())
-    {
-        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #eee;">
-            <div style="color:#999; font-size:0.8rem; margin-bottom:0.5rem;">Dev sign-in (local only)</div>
-            <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <a class="show-thinking" href="@DevUrl("alice")">Alice — provisioner of Demo Room</a>
-                <a class="show-thinking" href="@DevUrl("bob")">Bob — consumer in Demo Room</a>
-                <a class="show-thinking" href="@DevUrl("carol")">Carol — brand-new user (no rooms)</a>
+        @if (Env.IsDevelopment())
+        {
+            <div class="auth-dev">
+                <div class="auth-dev-label">Dev sign-in (local only)</div>
+                <div class="auth-dev-list">
+                    <a href="@DevUrl("alice")">Alice — provisioner of Demo Room</a>
+                    <a href="@DevUrl("bob")">Bob — consumer in Demo Room</a>
+                    <a href="@DevUrl("carol")">Carol — brand-new user (no rooms)</a>
+                </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
 @code {

@@ -1,0 +1,10 @@
+version: 1
+experts:
+  Answerer:
+    source: experts
+    path: experts/Answerer/expert.md
+    hash: a6b24d4004b794eb46537bf15cdfb07e6b1a5537daf03e73c29139a428e7f813
+  Verifier:
+    source: experts
+    path: experts/Verifier/expert.md
+    hash: 6a61e3e0e9c415e9475e155b358fa285dbbc5b3e5dcae4f2b59fef4e8683a8d2

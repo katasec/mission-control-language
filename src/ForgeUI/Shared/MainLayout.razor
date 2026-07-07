@@ -1,8 +1,7 @@
 @inherits LayoutComponentBase
 
-<div class="app-shell">
-    <SessionNav />
-    <div class="app-main">
-        @Body
-    </div>
-</div>
+@* Thin shell. Each surface composes its own chrome:
+   - /playground owns the Sessions rail (SessionNav)
+   - /rooms + /rooms/{id} are centred surfaces with an AccountMenu in their header
+   - /login is intentionally bare *@
+@Body

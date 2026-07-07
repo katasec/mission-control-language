@@ -1,3 +1,11 @@
 @page "/"
-<PageTitle>Forge UI</PageTitle>
-<Chat />
+@attribute [Authorize]
+@inject NavigationManager Nav
+
+@* Home is gated. Authenticated users land on Rooms; anonymous users are sent to
+   /login by the AuthorizeRouteView (see App.razor → RedirectToLogin). *@
+<PageTitle>Forge</PageTitle>
+
+@code {
+    protected override void OnInitialized() => Nav.NavigateTo("/rooms", replace: true);
+}

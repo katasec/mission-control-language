@@ -256,6 +256,7 @@ own spoke doc and task list. Run them 1→6. The nine "spokes" originally sketch
 | [38.2 Agent as Member](phase-38.2-agent-as-member.md) | `@mention` → mission, pull-only, room-scoped context, artifact **input** (orig. S4) |
 | [38.3 Trust Surface](phase-38.3-trust-surface.md) | badge/trace/show-thinking in the room, artifact **output** rendering (orig. S5) |
 | [38.4 Identity & Membership](phase-38.4-identity-membership.md) | OIDC + invites + confidentiality + roles (orig. S3) |
+| [38.4a UI Foundation & Onboarding](phase-38.4a-ui-and-onboarding.md) | **Done.** Tokenized design system + dark mode (see [UI Design System](../design/ui-design-system.md)), "gate everything" auth IA + `AccountMenu` + `/playground`, first-run "room of two" onboarding, and the LLM-verified `@forge/assistant` default agent |
 | [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | `@handle` directory + scope + save-as-agent (orig. S6) |
 | [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | shareable verified output + share-an-agent (orig. S8) |
 

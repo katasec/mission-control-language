@@ -4,40 +4,36 @@
 @using ForgeMission.Rooms.Data
 @inject IReadStore Reads
 @inject CurrentUser Current
+@inject StarterRoomService Starter
 @inject NavigationManager Nav
 
-<div class="app-main" style="padding: 2rem; max-width: 640px;">
-    <div style="display:flex; justify-content:space-between; align-items:baseline;">
+<div class="page">
+    <div class="page-header">
         <h2>Rooms</h2>
-        @if (_me is not null)
-        {
-            <span style="color:#888; font-size:0.85rem;">
-                @_me.DisplayName (@_me.Email)
-                <form action="/auth/logout" method="post" style="display:inline;">
-                    <button class="show-thinking" type="submit" style="margin-left:0.5rem;">sign out</button>
-                </form>
-            </span>
-        }
+        <div class="header-actions">
+            <a class="btn-link" href="/playground">Mission playground</a>
+            <AccountMenu />
+        </div>
     </div>
 
     @if (_me is null)
     {
-        <p>Loading…</p>
+        <p class="empty-state">Loading…</p>
     }
     else if (_rooms.Count == 0)
     {
-        <p>You're not in any rooms yet. Ask a provisioner for an invite link.</p>
+        <p class="empty-state">You're not in any rooms yet. Ask a provisioner for an invite link.</p>
     }
     else
     {
-        <ul>
+        <ul class="room-list">
             @foreach (var room in _rooms)
             {
-                <li style="margin: 0.5rem 0;">
-                    <a href="/rooms/@room.Id">@room.Metadata.Name</a>
+                <li class="room-list-item">
+                    <a href="/rooms/@room.Id"><span class="room-list-name">@room.Metadata.Name</span></a>
                     @if (!string.IsNullOrEmpty(room.Metadata.Description))
                     {
-                        <span style="color: #888;"> — @room.Metadata.Description</span>
+                        <div class="room-list-desc">@room.Metadata.Description</div>
                     }
                 </li>
             }
@@ -49,10 +45,31 @@
     private Member? _me;
     private IReadOnlyList<Room> _rooms = [];
 
+    private bool _onboardChecked;
+
     protected override async Task OnInitializedAsync()
     {
         _me = await Current.GetMemberAsync();
         if (_me is not null)
             _rooms = await Reads.GetRoomsForMemberAsync(_me.Id);
+    }
+
+    // Onboarding runs once on the interactive circuit (post-prerender), where both DB access and
+    // NavigateTo are reliable. It re-reads rather than trusting _me/_rooms, because OnAfterRender
+    // can fire before OnInitializedAsync's awaits complete, and a prerender NavigateTo after an
+    // await does not redirect.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _onboardChecked)
+            return;
+        _onboardChecked = true;
+
+        var me = await Current.GetMemberAsync();
+        if (me is null)
+            return;
+
+        var rooms = await Reads.GetRoomsForMemberAsync(me.Id);
+        if (rooms.Count == 0 && await Starter.EnsureStarterRoomAsync(me) is { } starterId)
+            Nav.NavigateTo($"/rooms/{starterId}");
     }
 }

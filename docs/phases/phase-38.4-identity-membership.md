@@ -4,6 +4,11 @@
 > **Depends on:** 38.1 (hardens the multi-user story behind 38.2/38.3)
 > **Done when:** a real person taps an invite link, signs in with Google, and lands inside
 > the room; a non-member is denied both the hub connection and the room history.
+>
+> **See also [38.4a — UI Foundation & Onboarding](phase-38.4a-ui-and-onboarding.md):** the
+> "gate everything" auth IA (all routes `[Authorize]`, `/` → `/login`), the persistent
+> `AccountMenu` (sign-out), moving the single-player chat to `/playground`, and first-run
+> onboarding were delivered there on top of this identity work.
 
 **Identity provider:** Microsoft **Entra External ID**, wired as a *standard* OIDC provider
 (no B2C custom policies) so the exit from any one IdP stays cheap. Google/Apple federate
