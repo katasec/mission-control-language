@@ -138,9 +138,10 @@ builder.Services.AddSingleton(registry);
 builder.Services.AddScoped<MissionService>();
 builder.Services.AddScoped<SessionStore>();
 
-// Rooms agent bridge (38.2): resolve @handle → mission, assemble room-scoped context,
-// invoke the mission off the hub call, and stream the result back. All singleton-safe.
-builder.Services.AddSingleton<AgentCatalog>();
+// Rooms agent bridge (38.2/38.5): the @handle directory (GAL) resolves a mention to a mission,
+// then the invoker assembles room-scoped context, runs it off the hub call, and streams the
+// result back. All singleton-safe.
+builder.Services.AddSingleton<AgentRegistry>();
 builder.Services.AddSingleton<RoomContextAssembler>();
 builder.Services.AddSingleton<RoomAgentInvoker>();
 

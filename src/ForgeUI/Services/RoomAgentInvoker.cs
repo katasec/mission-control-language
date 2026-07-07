@@ -16,7 +16,7 @@ public sealed class RoomAgentInvoker(
     IReadStore reads,
     IWriteStore writes,
     MissionRegistry registry,
-    AgentCatalog catalog,
+    AgentRegistry agents,
     RoomContextAssembler assembler,
     ILogger<RoomAgentInvoker> logger)
 {
@@ -34,7 +34,7 @@ public sealed class RoomAgentInvoker(
 
         try
         {
-            if (!catalog.TryResolve(handle, out var mission))
+            if (!agents.TryResolve(handle, out var mission))
             {
                 logger.LogWarning("No mission bound to {Handle} (room {RoomId})", handle, roomId);
                 await PostAsync(roomId, agent, handle, triggerMessageId,
