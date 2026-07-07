@@ -8,6 +8,7 @@
 @inject RoomMessageService Messages
 @inject RoomBroadcaster Broadcaster
 @inject InviteService Invites
+@inject AgentRegistry Agents
 @inject NavigationManager Nav
 @implements IDisposable
 
@@ -67,6 +68,7 @@
                             <div class="agent-card-header">
                                 <TrustSignalBadge Signal="ToSignal(trust)" />
                                 <span class="mission-label">@msg.SenderName</span>
+                                <IdentitySealMark Descriptor="DescriptorFor(msg.SenderName)" />
                                 <span class="chat-meta">@msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</span>
                                 @if (trust.Trace.Count > 0)
                                 {
@@ -139,6 +141,12 @@
     // Agent members use @handle display names; surface the sole one for the empty-state hint.
     private string? SoleAgentHandle
         => _memberNames.Values.FirstOrDefault(n => n.StartsWith('@'));
+
+    // Resolve a sender handle to its registry descriptor for the identity seal (38.5 task 8a).
+    // Agent message SenderName is the member DisplayName == the bare handle; non-agents/unknown
+    // handles resolve to null and render no seal.
+    private AgentDescriptor? DescriptorFor(string handle)
+        => Agents.TryResolveDescriptor(handle, out var d) ? d : null;
 
     // Reconstruct the Phase 35 view models from the DTO so the existing trust components
     // render unchanged (38.3). Verified is the guarded value from the mapping.

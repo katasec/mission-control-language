@@ -1,0 +1,24 @@
+@using ForgeMission.Rooms
+
+@*
+    Per-AGENT identity/publisher seal (38.5 task 8a) — a filled check disc on the handle:
+    gold = Forge official, blue = verified publisher. This is NOT the per-response verified
+    badge (38.3); it answers "who this is," not "was this run verified." See design §5.
+    Renders nothing for IdentitySeal.None so unclaimed handles carry no mark.
+*@
+@if (Descriptor is { Seal: not IdentitySeal.None } d)
+{
+    <span class="identity-seal @CssClass(d.Seal)" title="@Tooltip(d)" aria-label="@Tooltip(d)">✓</span>
+}
+
+@code {
+    [Parameter] public AgentDescriptor? Descriptor { get; set; }
+
+    private static string CssClass(IdentitySeal seal)
+        => seal == IdentitySeal.Official ? "seal-official" : "seal-verified";
+
+    private static string Tooltip(AgentDescriptor d)
+        => d.Seal == IdentitySeal.Official
+            ? $"Official — published by {d.Publisher}"
+            : $"Verified publisher — {d.Publisher}";
+}
