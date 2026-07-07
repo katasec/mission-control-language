@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,17 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
+
+// Behind a TLS-terminating reverse proxy (Azure Container Apps), honor X-Forwarded-Proto so the
+// app knows requests are HTTPS — otherwise OIDC builds http:// redirect URIs (rejected by Entra)
+// and the Secure correlation cookie is dropped. KnownNetworks/Proxies cleared because the proxy
+// hop is inside the managed environment (not a fixed IP we can allow-list).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Rooms persistence — two connection slots (same DB initially; replica later is config).
 var readConnection = builder.Configuration.GetConnectionString("ReadConnection")
@@ -142,6 +154,9 @@ builder.Services.AddSingleton<RoomMessageService>();
 builder.Services.AddScoped<StarterRoomService>();
 
 var app = builder.Build();
+
+// Must run before auth/redirect logic so the forwarded scheme is applied first.
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
