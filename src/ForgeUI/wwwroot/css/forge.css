@@ -55,6 +55,13 @@
   --warning:          #92600a;
   --warning-bg:       #fef8ec;
 
+  /* Identity seals (38.5) — per-AGENT publisher identity, a different claim from the
+     per-response verified badge above. Gold = Forge official, blue = verified publisher.
+     Never green: green means "this run was verified," not "who this is." */
+  --seal-official:    #b7791f;
+  --seal-verified:    #1f74c4;
+  --seal-check:       #ffffff;
+
   /* Radii */
   --radius-sm:        6px;
   --radius:          10px;
@@ -121,6 +128,10 @@
     --warning:        #e0b64e;
     --warning-bg:     #362b13;
 
+    --seal-official:  #e3b341;
+    --seal-verified:  #58a6ff;
+    --seal-check:     #1a1917;
+
     --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow:     0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
     --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.5);
@@ -161,6 +172,10 @@
   --danger-border:  #b53c3c;
   --warning:        #e0b64e;
   --warning-bg:     #362b13;
+
+  --seal-official:  #e3b341;
+  --seal-verified:  #58a6ff;
+  --seal-check:     #1a1917;
 
   --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow:     0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -324,6 +339,15 @@ h2 { font-size: 20px; }
 .verified     { background: var(--success-bg); color: var(--success); }
 .unverified   { background: var(--danger-bg); color: var(--danger); }
 .trust-icon   { font-size: 12px; }
+
+/* Identity / publisher seal (38.5 task 8a) — per-AGENT, sits on the handle. A filled check
+   disc, NOT a pill: gold = Forge official, blue = verified publisher. Kept distinct in shape
+   (disc vs the pill above) and hue (never green) so "who you're talking to is legit" can never
+   be misread as the per-response "this run was verified." A raw @claude may carry this seal
+   while its answers get no .verified badge — that contrast is the product story. */
+.identity-seal  { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: var(--radius-pill); font-size: 9px; font-weight: 800; line-height: 1; color: var(--seal-check); vertical-align: middle; flex-shrink: 0; }
+.seal-official  { background: var(--seal-official); }
+.seal-verified  { background: var(--seal-verified); }
 
 .show-thinking { font-size: 12px; color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 0; margin-left: auto; transition: color var(--transition); }
 .show-thinking:hover { color: var(--accent); }

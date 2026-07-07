@@ -39,7 +39,8 @@ All tokens live in the `:root` block at the top of `forge.css`, grouped and comm
 | Text | `--text`, `--text-muted`, `--text-subtle` | High→low emphasis |
 | Brand | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-contrast` | "Forge ember" — links, mentions, focus, active nav |
 | Ink | `--ink`, `--ink-hover`, `--ink-contrast` | Primary solid buttons |
-| Semantic | `--success{,-bg,-border}`, `--danger{,-bg,-border}`, `--warning{,-bg}` | Verified / unverified / retry |
+| Semantic | `--success{,-bg,-border}`, `--danger{,-bg,-border}`, `--warning{,-bg}` | Verified / unverified / retry (per-**response**) |
+| Seal | `--seal-official` (gold), `--seal-verified` (blue), `--seal-check` | Per-**agent** identity seal — a different claim; see §5 |
 | Radii | `--radius-sm`, `--radius`, `--radius-lg`, `--radius-pill` | Corners |
 | Spacing | `--space-1`…`--space-6` (4→32px) | Padding / gaps |
 | Elevation | `--shadow-sm`, `--shadow`, `--shadow-lg` | Cards / dropdowns |
@@ -88,7 +89,37 @@ belong to.
 
 ---
 
-## 5. Surface map (which CSS styles which screen)
+## 5. Trust surface: two distinct seals (never conflate them)
+
+Trust is the product's core differentiator, so the system carries **two separate trust marks
+that make two different claims.** Collapsing them — especially letting either go green when it
+shouldn't — is the one styling bug that damages the product, not just the polish.
+
+| Mark | Claim | Scope | Vocabulary | Colour |
+|---|---|---|---|---|
+| **Verified badge** | "*this run* was verified" | per-**message** | `.trust-badge` + `.verified`/`.unverified`, `.card-verified` | green `--success` / red `--danger` |
+| **Identity seal** | "*who* this is, is legit" | per-**agent** (on the handle) | `.identity-seal` + `.seal-official`/`.seal-verified` | **gold** `--seal-official` / **blue** `--seal-verified` |
+
+Rules:
+
+- **The identity seal is never green and never red.** Green is reserved for "verified run,"
+  red for "unverified run." A seal borrowing those hues would read as a per-response verdict —
+  the false-green the whole trust surface exists to prevent.
+- **Two seal levels, two hues:** gold = `IdentitySeal.Official` (Forge's own built-ins), blue =
+  `IdentitySeal.Verified` (a verified third-party publisher). `IdentitySeal.None` shows no seal.
+- **Different shapes, on purpose:** the verified badge is a *pill*; the identity seal is a small
+  *filled check disc* on the handle (X-checkmark style). Shape + hue + position keep them from
+  reading as the same thing even though both contain a check.
+- **They are independent.** A raw `@claude` may carry an Official identity seal *and* get **no**
+  verified badge on its answers (unverified by design) — that exact contrast is the product
+  story. Never green-check raw model output.
+
+The domain side is the `IdentitySeal` enum + `AgentDescriptor.Seal` in `ForgeMission.Rooms`;
+the per-response side is `AgentMeta.Verified` (38.3). Keep them separate in markup too.
+
+---
+
+## 6. Surface map (which CSS styles which screen)
 
 | Screen | Route | Key classes |
 |---|---|---|
@@ -96,23 +127,28 @@ belong to.
 | Rooms home | `/rooms` | `.page`, `.page-header`, `.room-list`, `AccountMenu` |
 | A room | `/rooms/{id}` | `.room`, `.room-header`, `.room-stream`, `.room-msg`, `.msg-bubble`, `.agent-card`, `.room-composer`, `.room-hint` |
 | Mission playground | `/playground` | `.app-shell` + `SessionNav` + `Chat` (`.chat-shell`, `.chat-messages`, `.agent-card`) |
-| Trust card / trace | (in rooms + playground) | `.agent-card`, `.trust-badge`, `.verified`/`.unverified`, `.trace-panel` |
+| `/agents` directory (38.5) | (inline in a room) | slash-command output rendered as a listing **in the room stream** (not a route): handle · description · publisher + `.identity-seal`. Reuse room-message layout, not a new `.page`. |
+| Trust card / trace | (in rooms + playground) | per-response: `.agent-card`, `.trust-badge`, `.verified`/`.unverified`, `.trace-panel`; per-agent: `.identity-seal` — see §5 |
 
 ---
 
-## 6. Conventions for new UI
+## 7. Conventions for new UI
 
-- **New page:** add a `.razor` under `Pages/`, gate it with `@attribute [Authorize]` (see §7),
+- **New page:** add a `.razor` under `Pages/`, gate it with `@attribute [Authorize]` (see §8),
   compose from existing primitives, and put any new rules in `forge.css` under the right
   section using tokens. Don't add a scoped `*.razor.css` unless the style is genuinely local.
 - **New agent card / message type:** reuse `.agent-card` + `.trust-badge` so the trust surface
   stays consistent (this is the product's core differentiator — never fake a green ✓).
-- **Icons:** the app currently uses inline text glyphs (✓ ✗ ▾ ←). If you introduce an icon
-  font, add it deliberately — the old `open-iconic` scaffold was deleted on purpose.
+- **Anything showing agent identity:** use `.identity-seal` (gold/blue), **never** the green
+  verified badge, for "who this is." The two trust marks are separate by design — see §5.
+- **Icons:** the app currently uses inline text glyphs (✓ ✗ ▾ ←). The identity seal uses a
+  bold check *inside a filled disc* (`.identity-seal`) so it never collides with the flat `✓`
+  the verified badge owns. If you introduce an icon font, add it deliberately — the old
+  `open-iconic` scaffold was deleted on purpose.
 
 ---
 
-## 7. Auth & information architecture (gate everything)
+## 8. Auth & information architecture (gate everything)
 
 Identity is **required** (WhatsApp-style: participants must be signed in). The IA:
 
@@ -130,7 +166,7 @@ for the full decision log.
 
 ---
 
-## 8. Running it locally (and two gotchas that will bite you)
+## 9. Running it locally (and two gotchas that will bite you)
 
 ```bash
 make dev-up   # Postgres for Rooms
@@ -163,7 +199,7 @@ its own fresh reads — see `Pages/RoomList.razor`.
 
 ---
 
-## 9. What was deliberately deleted
+## 10. What was deliberately deleted
 
 The default Blazor template scaffold was removed so the styling story is honest (one
 stylesheet, no phantom framework): `bootstrap/`, `open-iconic/`, `site.css`, `NavMenu.razor`
