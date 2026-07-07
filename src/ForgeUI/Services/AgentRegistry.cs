@@ -19,10 +19,10 @@ public sealed class AgentRegistry
 
     public AgentRegistry(MissionRegistry registry)
     {
-        // @forge/hallucination-guard → the verify-loop mission (registry label "Forge").
+        // @guard → the verify-loop mission (registry label "Forge").
         Register(registry, new AgentDescriptor
         {
-            Handle      = "@forge/hallucination-guard",
+            Handle      = "@guard",
             Description = "Checks a claim for hallucinations with a deterministic verify loop.",
             Publisher   = "Forge",
             MissionRef  = "Forge",
@@ -31,11 +31,11 @@ public sealed class AgentRegistry
             Reserved    = true,
         });
 
-        // @forge/assistant → general answer verified by an LLM judge (registry label "Assistant").
+        // @assistant → general answer verified by an LLM judge (registry label "Assistant").
         // The default agent dropped into every new user's starter room.
         Register(registry, new AgentDescriptor
         {
-            Handle      = "@forge/assistant",
+            Handle      = "@assistant",
             Description = "General assistant whose answers are verified by an LLM judge.",
             Publisher   = "Forge",
             MissionRef  = "Assistant",

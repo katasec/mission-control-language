@@ -150,7 +150,7 @@ builder.Services.AddSingleton<RoomAgentInvoker>();
 builder.Services.AddSingleton<RoomBroadcaster>();
 builder.Services.AddSingleton<RoomMessageService>();
 
-// Onboarding: give a brand-new user a private "room of two" with @forge/assistant so they
+// Onboarding: give a brand-new user a private "room of two" with @assistant so they
 // land in a usable chat instead of an empty rooms list.
 builder.Services.AddScoped<StarterRoomService>();
 
@@ -176,7 +176,7 @@ if (!app.Environment.IsDevelopment())
     }
 
     // Essential product data (built-in agent members) in ALL environments — idempotent.
-    // Starter rooms reference the @forge/assistant member, so it must exist in prod too.
+    // Starter rooms reference the @assistant member, so it must exist in prod too.
     // Prod schema is created by the migration job before this runs.
     await RoomsSeeder.SeedEssentialAgentsAsync(factory);
 }

@@ -4,7 +4,7 @@ namespace ForgeMission.Rooms.Data;
 
 /// <summary>
 /// Development-only, idempotent seed data: two humans with dev federated identities
-/// (issuer "dev"), the built-in @forge/hallucination-guard agent member, a demo room with
+/// (issuer "dev"), the built-in @guard agent member, a demo room with
 /// all three (Alice provisioner, Bob consumer), and a second room (Alice only) for the
 /// isolation check. Fixed ids make re-runs no-ops. Dev sign-in maps to these members by
 /// (issuer, subject) through the same provisioning path real OIDC uses.
@@ -16,9 +16,11 @@ public static class RoomsSeeder
     public static readonly Guid AliceId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid BobId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid HallucinationGuardId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    // Bare official handle (38.5 task 6), reserved via ReservedHandles.
+    public const string GuardHandle = "@guard";
     // The default general assistant dropped into every new user's starter room (LLM-verified).
     public static readonly Guid AssistantId = Guid.Parse("44444444-4444-4444-4444-444444444444");
-    public const string AssistantHandle = "@forge/assistant";
+    public const string AssistantHandle = "@assistant";
     public static readonly Guid DemoRoomId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     public static readonly Guid AlicePrivateRoomId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
@@ -31,7 +33,7 @@ public static class RoomsSeeder
     public static async Task SeedEssentialAgentsAsync(IDbContextFactory<RoomsDbContext> factory, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
-        await EnsureAgentAsync(db, HallucinationGuardId, "@forge/hallucination-guard", ct);
+        await EnsureAgentAsync(db, HallucinationGuardId, GuardHandle, ct);
         await EnsureAgentAsync(db, AssistantId, AssistantHandle, ct);
         await db.SaveChangesAsync(ct);
     }
@@ -42,7 +44,7 @@ public static class RoomsSeeder
 
         await EnsureHumanAsync(db, AliceId, "Alice", "alice", "alice@dev.local", ct);
         await EnsureHumanAsync(db, BobId, "Bob", "bob", "bob@dev.local", ct);
-        await EnsureAgentAsync(db, HallucinationGuardId, "@forge/hallucination-guard", ct);
+        await EnsureAgentAsync(db, HallucinationGuardId, GuardHandle, ct);
         await EnsureAgentAsync(db, AssistantId, AssistantHandle, ct);
 
         await EnsureRoomAsync(db, DemoRoomId, "Demo Room", "Alice, Bob, and the hallucination guard", ct);
@@ -73,10 +75,16 @@ public static class RoomsSeeder
             });
     }
 
+    // Upsert by fixed id — inserts the built-in agent if missing, and *renames* it if the stored
+    // DisplayName is stale. The rename path self-heals the 38.5-task-6 migration from the old
+    // "@forge/…" handles to bare handles for rows already seeded in dev/prod, since this runs in
+    // every environment. The handle doubles as the agent's addressable name (MentionParser), so
+    // it must equal the registry descriptor's Handle.
     private static async Task EnsureAgentAsync(
         RoomsDbContext db, Guid id, string displayName, CancellationToken ct)
     {
-        if (!await db.Members.AnyAsync(m => m.Id == id, ct))
+        var existing = await db.Members.FirstOrDefaultAsync(m => m.Id == id, ct);
+        if (existing is null)
             db.Members.Add(new Member
             {
                 Id = id,
@@ -84,6 +92,8 @@ public static class RoomsSeeder
                 DisplayName = displayName,
                 CreatedAt = DateTimeOffset.UtcNow,
             });
+        else if (existing.DisplayName != displayName)
+            existing.DisplayName = displayName;
     }
 
     private static async Task EnsureRoomAsync(

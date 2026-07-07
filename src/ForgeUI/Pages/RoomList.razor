@@ -70,7 +70,7 @@
 
         // Always run onboarding: it creates the starter room for a brand-new user AND self-heals
         // an existing solo room-of-two that's missing its agent (e.g. rooms provisioned before the
-        // @forge/assistant member was seeded). Returns a new room id only when one was created.
+        // @assistant member was seeded). Returns a new room id only when one was created.
         if (await Starter.EnsureStarterRoomAsync(me) is { } starterId)
             Nav.NavigateTo($"/rooms/{starterId}");
     }

@@ -27,7 +27,7 @@ public sealed class MessagePayload
 /// <summary>Trust verdict + step trace for an agent message (jsonb, versioned via parent).</summary>
 public sealed class AgentMeta
 {
-    /// <summary>The addressed handle, e.g. "@forge/hallucination-guard".</summary>
+    /// <summary>The addressed handle, e.g. "@guard".</summary>
     public string Handle { get; set; } = string.Empty;
 
     /// <summary>Trust verdict. Stays in jsonb through 38.3 (see storage model); the first
