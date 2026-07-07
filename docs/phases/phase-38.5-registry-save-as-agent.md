@@ -13,9 +13,10 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
-> **Progress (2026-07-08):** tasks **1** and **6** done + the design-system seal vocabulary
-> landed (`--seal-official`/`--seal-verified`, `.identity-seal`, doc §5). Remaining: 2, 3, 4, 5,
-> 7, 8, 9.
+> **Progress (2026-07-08):** tasks **1**, **6**, and **8a** (identity-seal rendering) done + the
+> design-system seal vocabulary landed (`--seal-official`/`--seal-verified`, `.identity-seal`,
+> doc §5). Task 8a verified live: `@guard` shows the green per-response Verified badge *and* the
+> gold identity seal, coexisting without conflation. Remaining: 2, 3, 4, 5, 7, 9.
 
 1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
@@ -57,7 +58,7 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    `env(...)` key (`MCL_API_KEY` / `ANTHROPIC_API_KEY` / `XAI_API_KEY`). Seed as members like
    `@forge/assistant` (`RoomsSeeder.SeedEssentialAgentsAsync`). On-thesis: raw `@claude` beside
    verified `@assistant` in one room *is* the "same gesture, invisibly better" demo.
-8. **Two distinct trust seals (no false-green).** (a) **Identity / publisher seal** — *per-agent*,
+8. ✅ (8a) **Two distinct trust seals (no false-green).** (a) **Identity / publisher seal** — *per-agent*,
    on the handle, X-checkmark style: anti-impersonation ("this is the official `@claude` / a
    verified publisher"). (b) **Per-response Verified badge** — *per-message*, **already shipped**
    (38.3 `TrustSignal` / `AgentMeta.Verified` + expandable trace): "this *run* was verified." Keep
