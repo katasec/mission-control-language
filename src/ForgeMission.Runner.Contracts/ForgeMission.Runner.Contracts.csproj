@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Not AOT: this classlib is shared by the ForgeUI web host (JIT) and the runner web host
+         (JIT). Both are ASP.NET, not the `forge` CLI, so the AOT rule in CLAUDE.md does not apply.
+         STJ source-gen is used anyway for a clean, trim-safe transport contract. -->
+  </PropertyGroup>
+
+</Project>

@@ -1,7 +1,8 @@
+using System.Net.Http.Json;
 using System.Security.Claims;
-using ForgeMission.Core.Manifest;
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
+using ForgeMission.Runner.Contracts;
 using ForgeUI.Hubs;
 using ForgeUI.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -102,34 +103,28 @@ builder.Services.AddScoped<MemberProvisioningService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<InviteService>();
 
-// Resolve API key from env (set MCL_API_KEY in your shell profile).
-var missionDir = builder.Configuration["MissionDir"]
-    ?? Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "missions");
-missionDir = Path.GetFullPath(missionDir);
+// Mission execution moved to the containerised runner (Phase 39.1). The orchestrator no longer
+// loads missions or holds provider keys — it calls the runner over HTTP. RunnerBaseUrl points at
+// the warm runner (ACA); default localhost for `dotnet run` alongside the runner.
+var runnerBaseUrl = builder.Configuration["RunnerBaseUrl"] ?? "http://localhost:5266";
+builder.Services.AddHttpClient<MissionRunnerClient>(c =>
+{
+    c.BaseAddress = new Uri(runnerBaseUrl);
+    c.Timeout     = TimeSpan.FromMinutes(4); // > the runner's 3-min per-run ceiling
+});
 
-// Per-mission key resolution (38.5 task 7): each mission's forge.toml resolves its own env(...)
-// key, so a missing key disables only that provider's agent (LoadAsync skips it) rather than the
-// whole registry. Rooms (38.1) has no LLM in the path, so the host runs regardless.
-var registry = await MissionRegistry.LoadAsync(
-[
-    ("ChatGPT",   "Raw LLM — no verification",                     Path.Combine(missionDir, "vanilla",             "mission.mcl")),
-    ("Forge",     "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
-    ("Assistant", "General assistant, answers LLM-verified",       Path.Combine(missionDir, "assistant",           "mission.mcl")),
-    ("Claude",    "Raw Claude — no verification",                  Path.Combine(missionDir, "claude",              "mission.mcl")),
-    ("Grok",      "Raw Grok (xAI) — no verification",              Path.Combine(missionDir, "grok",                "mission.mcl")),
-]);
-Console.Error.WriteLine(registry.Missions.Count == 0
-    ? "ForgeUI: no missions loaded (no provider keys set) — mission chat disabled; /rooms still available."
-    : $"ForgeUI: loaded {registry.Missions.Count} mission(s): {string.Join(", ", registry.Missions.Select(m => m.Label))}.");
+// Probe the runner for the missions it can actually execute (provider key present) so we bind only
+// the handles whose mission is loadable — the per-mission key behaviour (38.5 task 7) now keyed off
+// the runner. Resilient to boot ordering: retry briefly, then fall back to no agents rather than
+// crash the host (Rooms still work without agents).
+var availableMissionRefs = await ProbeRunnerMissionsAsync(runnerBaseUrl);
+Console.Error.WriteLine(availableMissionRefs.Count == 0
+    ? $"ForgeUI: runner at {runnerBaseUrl} advertised no missions — agents disabled; /rooms still available."
+    : $"ForgeUI: runner advertises {availableMissionRefs.Count} mission(s): {string.Join(", ", availableMissionRefs)}.");
 
-builder.Services.AddSingleton(registry);
-builder.Services.AddScoped<MissionService>();
-builder.Services.AddScoped<SessionStore>();
-
-// Rooms agent bridge (38.2/38.5): the @handle directory (GAL) resolves a mention to a mission,
-// then the invoker assembles room-scoped context, runs it off the hub call, and streams the
-// result back. All singleton-safe.
-builder.Services.AddSingleton<AgentRegistry>();
+// Rooms agent bridge (38.2/38.5): the @handle directory (GAL) resolves a mention to a mission ref,
+// then the invoker assembles room-scoped context and runs it in the runner. All singleton-safe.
+builder.Services.AddSingleton(new AgentRegistry(availableMissionRefs));
 builder.Services.AddSingleton<RoomContextAssembler>();
 builder.Services.AddSingleton<RoomAgentInvoker>();
 // Add/remove an agent from a room (38.5 task 3) — provisioner-gated membership management.
@@ -252,3 +247,26 @@ return;
 
 static string Local(string? returnUrl)
     => !string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith('/') ? returnUrl : "/rooms";
+
+// Ask the runner which missions it can execute (39.1). Retries briefly to tolerate boot ordering,
+// then falls back to an empty set — a runner outage disables agents but never crashes the host.
+static async Task<IReadOnlySet<string>> ProbeRunnerMissionsAsync(string baseUrl)
+{
+    using var http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(5) };
+    for (var attempt = 1; attempt <= 5; attempt++)
+    {
+        try
+        {
+            var missions = await http.GetFromJsonAsync(
+                "/missions", RunContractsContext.Default.IReadOnlyListMissionInfo);
+            if (missions is not null)
+                return missions.Select(m => m.MissionRef).ToHashSet(StringComparer.Ordinal);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ForgeUI: runner probe attempt {attempt}/5 failed: {ex.Message}");
+        }
+        await Task.Delay(TimeSpan.FromSeconds(2));
+    }
+    return new HashSet<string>(StringComparer.Ordinal);
+}

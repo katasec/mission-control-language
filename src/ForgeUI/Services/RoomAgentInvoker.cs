@@ -1,6 +1,7 @@
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
-using ForgeUI.Models;
+using ForgeMission.Runner.Contracts;
+using ForgeUI.Models; // ToDto extension (RoomsMappings)
 
 namespace ForgeUI.Services;
 
@@ -10,12 +11,17 @@ namespace ForgeUI.Services;
 /// each invocation is independent (Q2 — concurrent runs are fine). Broadcasts via
 /// <see cref="IHubContext{ChatHub}"/> (not a hub instance, which is per-call and gone once the
 /// send returns). Pull-only: only ever called when an agent member was addressed.
+/// <para>
+/// Since Phase 39.1 the run itself happens in the containerised runner (<see cref="MissionRunnerClient"/>),
+/// not in-process — the orchestrator assembles context, invokes the runner, and persists/broadcasts
+/// the result. The user-visible surface is unchanged.
+/// </para>
 /// </summary>
 public sealed class RoomAgentInvoker(
     RoomBroadcaster broadcaster,
     IReadStore reads,
     IWriteStore writes,
-    MissionRegistry registry,
+    MissionRunnerClient runner,
     AgentRegistry agents,
     RoomContextAssembler assembler,
     ILogger<RoomAgentInvoker> logger)
@@ -34,20 +40,18 @@ public sealed class RoomAgentInvoker(
 
         try
         {
-            if (!agents.TryResolve(handle, out var mission))
+            // The @handle directory binds to a mission ref (38.5 task 7). VerifiesAnswers gates the
+            // green check: a raw-model passthrough must never be checked even though its no-judge
+            // pipeline reports Pass. The neutral "not verified" chip is derived at render from the
+            // same descriptor flag.
+            if (!agents.TryResolveDescriptor(handle, out var descriptor))
             {
                 logger.LogWarning("No mission bound to {Handle} (room {RoomId})", handle, roomId);
                 await PostAsync(roomId, agent, handle, triggerMessageId,
                     $"No mission is bound to {handle} yet.", verified: false, stepCount: 0, retryCount: 0, trace: [], ct);
                 return;
             }
-
-            // Whether this agent's mission actually verifies (38.5 task 7). A raw-model passthrough
-            // does not — so its answer must never be green-checked, even though the no-judge
-            // pipeline reports Pass. Gate the persisted verdict here; the neutral "not verified"
-            // chip is derived at render from the same descriptor flag.
-            agents.TryResolveDescriptor(handle, out var descriptor);
-            var verifies = descriptor?.VerifiesAnswers ?? false;
+            var verifies = descriptor.VerifiesAnswers;
 
             await broadcaster.PublishAgentThinkingAsync(roomId, agent.Id, handle);
 
@@ -56,25 +60,26 @@ public sealed class RoomAgentInvoker(
 
             logger.LogInformation("Agent {Handle} running in room {RoomId}", handle, roomId);
 
-            // Reuse the Phase 35 engine bridge untouched.
-            var result = await new MissionService(registry).RunAsync(goal, mission, onStep: _ => { }, ct);
+            // Run in the containerised runner (39.1). All built-ins run under the trusted policy;
+            // custom missions get the restricted policy in 39.5.
+            var result = await runner.RunAsync(descriptor.MissionRef, goal, RunPolicy.Trusted, ct);
 
             var trace = result.Trace
                 .Select(t => new AgentStep
                 {
                     ExpertName = t.ExpertName,
-                    Status = t.Envelope.Status,
-                    Text = t.Envelope.Text,
-                    Reason = t.Envelope.Reason,
+                    Status = t.Status,
+                    Text = t.Text,
+                    Reason = t.Reason,
                     Attempt = t.Attempt,
                 })
                 .ToList();
 
             await PostAsync(roomId, agent, handle, triggerMessageId,
-                result.AgentText ?? "(no answer)",
-                verified: verifies && (result.Trust?.Verified ?? false),
-                stepCount: result.Trust?.StepCount ?? trace.Count,
-                retryCount: result.Trust?.RetryCount ?? 0,
+                string.IsNullOrEmpty(result.AgentText) ? "(no answer)" : result.AgentText,
+                verified: verifies && result.Verified,
+                stepCount: result.StepCount,
+                retryCount: result.RetryCount,
                 trace: trace, ct);
         }
         catch (Exception ex)
