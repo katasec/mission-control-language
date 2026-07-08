@@ -169,10 +169,11 @@ before shipping.
   the Container Apps env → drop the public endpoint + the `AllowAllAzureServices` firewall rule).
 - **prod slice** + environment-protection reviewers on the gated infra layers.
 - Exercise the **infra** deploy workflow via dispatch (the image workflow is already proven).
-- **Fold the 38.5 provider keys into IaC (drift fix).** Add `Anthropic-ApiKey` + `Xai-ApiKey` KV
+- **Fold the 38.5 provider keys into IaC (drift fix, dev).** Add `Anthropic-ApiKey` + `Xai-ApiKey` KV
   secret refs + `ANTHROPIC_API_KEY` / `XAI_API_KEY` container env vars to `dev/500-app` Bicep (they
-  were added via `az` this session), and set the two secrets in the **prod** Key Vault before prod
-  ships `@claude`/`@grok`. Until then a `dev/500-app` redeploy reverts them.
+  were added via `az` this session) — clone the existing `mcl-apikey`/`MCL_API_KEY` pair. Until then a
+  `dev/500-app` redeploy reverts them. **Prod out of scope for now** — set the two secrets in the prod
+  vault + apply the same Bicep if/when prod ships `@claude`/`@grok`.
 - **Close the build↔rollout gap.** The `forge-ui-image` workflow builds+pushes but doesn't deploy;
   rollout is a separate `dev/500-app` (or `az containerapp update`) step — easy to forget (it bit us
   this session: "deploy" built `0.1.7` but the app kept serving `0.1.6`). Consider a `deploy-dev`

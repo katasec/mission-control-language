@@ -1,7 +1,7 @@
 # Phase 38 — Forge Rooms (Agents as `@`-Addressable Members)
 
-> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5 accessible surface COMPLETE (tasks 1, 2, 3, 6, 7, 8a, 9 done — registry, @-autocomplete, add/remove agent, bare handles, raw-model agents (@openai/@claude/@grok), identity seal, `/agents`; **save-as-agent tasks 4/5 → 39.5**); **38.6 Acquisition also resequenced → post-Phase 39**. Phase 38's accessible + verified surface is the pre-39 stopping point.**
-> **Priority: TOP — this precedes every other phase in `plan.md`.**
+> **Status: DONE — accessible + verified surface shipped & live on Azure (`https://forge.katasec.com`); 38.5 accessible surface COMPLETE (tasks 1, 2, 3, 6, 7, 8a, 9 done — registry, @-autocomplete, add/remove agent, bare handles, raw-model agents (@openai/@claude/@grok), identity seal, `/agents`; **save-as-agent tasks 4/5 → 39.5**); **38.6 Acquisition also resequenced → post-Phase 39**. Phase 38's accessible + verified surface is the pre-39 stopping point; **Phase 39 is now the active frontier**.**
+> **Priority: shipped — the accessible surface is done; Phase 39 (metered runtime + marketplace) is now top priority in `plan.md`.**
 > **Depends on:** Phase 34/35 (Forge UI / Blazor — this *is* their evolution), Phase 25
 > (mission composition), Phase 25a (`role: judge`), Phase 19 (`forge serve` — mission on
 > an endpoint), Phase 12 (`StepEnvelope` — trace + trust signal).
