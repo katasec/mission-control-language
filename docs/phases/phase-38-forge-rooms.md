@@ -1,6 +1,6 @@
 # Phase 38 — Forge Rooms (Agents as `@`-Addressable Members)
 
-> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5–38.6 next.**
+> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5 in progress (tasks 1, 6, 7, 8a, 9 done — registry, bare handles, raw-model agents, identity seal, `/agents`; tasks 2, 3, 4, 5 remain); 38.6 next.**
 > **Priority: TOP — this precedes every other phase in `plan.md`.**
 > **Depends on:** Phase 34/35 (Forge UI / Blazor — this *is* their evolution), Phase 25
 > (mission composition), Phase 25a (`role: judge`), Phase 19 (`forge serve` — mission on
@@ -252,12 +252,12 @@ own spoke doc and task list. Run them 1→6. The nine "spokes" originally sketch
 
 | Sub-phase | Covers (original spokes) |
 |---|---|
-| [38.1 Room Foundation](phase-38.1-room-foundation.md) | domain model + SignalR + persistence + minimal client (orig. S1, S2, S9, part of S7) |
-| [38.2 Agent as Member](phase-38.2-agent-as-member.md) | `@mention` → mission, pull-only, room-scoped context, artifact **input** (orig. S4) |
-| [38.3 Trust Surface](phase-38.3-trust-surface.md) | badge/trace/show-thinking in the room, artifact **output** rendering (orig. S5) |
-| [38.4 Identity & Membership](phase-38.4-identity-membership.md) | OIDC + invites + confidentiality + roles (orig. S3) |
+| [38.1 Room Foundation](phase-38.1-room-foundation.md) | **Done.** domain model + SignalR + persistence + minimal client (orig. S1, S2, S9, part of S7) |
+| [38.2 Agent as Member](phase-38.2-agent-as-member.md) | **Done.** `@mention` → mission, pull-only, room-scoped context, artifact **input** (orig. S4) |
+| [38.3 Trust Surface](phase-38.3-trust-surface.md) | **Done.** badge/trace/show-thinking in the room, artifact **output** rendering (orig. S5) |
+| [38.4 Identity & Membership](phase-38.4-identity-membership.md) | **Done.** OIDC + invites + confidentiality + roles (orig. S3) — real Entra External ID sign-in verified live |
 | [38.4a UI Foundation & Onboarding](phase-38.4a-ui-and-onboarding.md) | **Done.** Tokenized design system + dark mode (see [UI Design System](../design/ui-design-system.md)), "gate everything" auth IA + `AccountMenu` + `/playground`, first-run "room of two" onboarding, and the LLM-verified `@forge/assistant` default agent |
-| [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | `@handle` directory + scope + save-as-agent (orig. S6) |
+| [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | **In progress.** `@handle` directory + scope + save-as-agent (orig. S6). Done: task 1 (registry model), 6 (bare handles + reserved), 7 (raw `@openai`/`@claude` — identity seal, no false-green), 8a (identity seal render), 9 (`/agents` inline). Remaining: 2 (autocomplete), 3 (add agent to room), 4 (save-as-agent), 5 (verify). |
 | [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | shareable verified output + share-an-agent (orig. S8) |
 | [38.7 Hosting & Deployment (Azure)](phase-38.7-hosting-deployment.md) | **Done.** Containerize + version the app, Azure Container Apps + ACR + Key Vault + Postgres via Bicep (`katasec/forge-infra`), passwordless CI/runtime, custom domain `forge.katasec.com` + managed TLS. Live. |
 
