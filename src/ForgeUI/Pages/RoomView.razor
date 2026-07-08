@@ -54,6 +54,7 @@
                     {
                         <div class="room-hint-sub">Send a message and <strong>@handle</strong> will reply — every answer is independently verified before you see it.</div>
                     }
+                    <div class="room-hint-sub">Type <strong>/agents</strong> to see who you can address.</div>
                 </div>
             }
 
@@ -96,6 +97,27 @@
                 }
             }
 
+            @if (_agentsListing is { } listing)
+            {
+                <div class="agents-directory">
+                    <div class="agents-directory-head">
+                        <span class="agents-directory-title">Agents you can address</span>
+                        <button class="btn-link agents-directory-dismiss" @onclick="() => _agentsListing = null">dismiss</button>
+                    </div>
+                    @foreach (var a in listing)
+                    {
+                        <div class="agents-directory-row">
+                            <div class="agents-directory-line">
+                                <span class="agents-directory-handle">@a.Handle</span>
+                                <IdentitySealMark Descriptor="a" />
+                                <span class="agents-directory-publisher">@a.Publisher</span>
+                            </div>
+                            <div class="agents-directory-desc">@a.Description</div>
+                        </div>
+                    }
+                </div>
+            }
+
             @if (_thinkingHandle is not null)
             {
                 <div class="agent-thinking">@_thinkingHandle is thinking…</div>
@@ -125,6 +147,8 @@
     private string _input = "";
     private bool _denied;
     private string? _thinkingHandle;
+    // Ephemeral /agents directory (38.5 task 9) — a personal, client-side lookup; never posted.
+    private IReadOnlyList<AgentDescriptor>? _agentsListing;
     private string? _inviteUrl;
     private IDisposable? _subscription;
 
@@ -213,7 +237,19 @@
     {
         if (_me is null || string.IsNullOrWhiteSpace(_input))
             return;
-        var text = _input;
+        var text = _input.Trim();
+
+        // Slash commands are handled client-side and never posted to the room (38.5 task 9).
+        // /agents is a personal discovery lookup — ephemeral, only the caller sees it, not
+        // persisted or broadcast. Scoped to what the addressing user can consume (built-ins today).
+        if (string.Equals(text, "/agents", StringComparison.OrdinalIgnoreCase))
+        {
+            _agentsListing = Agents.List();
+            _input = "";
+            return;
+        }
+
+        _agentsListing = null;   // a real message dismisses the ephemeral listing
         _input = "";
         await Messages.SendHumanMessageAsync(RoomId, _me, text);
     }
