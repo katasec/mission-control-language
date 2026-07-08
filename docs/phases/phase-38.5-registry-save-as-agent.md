@@ -1,6 +1,6 @@
 # Phase 38.5 — Registry / GAL + Save-as-Agent
 
-> **Status: In progress** (tasks 1, 3, 6, 7, 8a, 9 done — see progress note below; 2, 4, 5 remain) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: In progress** (tasks 1, 2, 3, 6, 7, 8a, 9 done — see progress note below; 4, 5 remain) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** 38.2 (agents work) + 38.4 (identity — scope needs real owners)
 > **Done when:** you compose a chain live in a room, `/save-as-agent` it, then `@`-address
 > it in a different room and it runs.
@@ -13,13 +13,13 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
-> **Progress (2026-07-08):** tasks **1**, **3**, **6**, **7**, **8a**, and **9** done + the
+> **Progress (2026-07-08):** tasks **1**, **2**, **3**, **6**, **7**, **8a**, and **9** done + the
 > design-system seal vocabulary landed (`--seal-official`/`--seal-verified`, `.identity-seal`,
 > neutral `.not-verified`/`.card-raw`, doc §5). Verified live: raw `@openai` beside verified
 > `@guard` (gold seal on both, `@openai` answers show a neutral "○ Not verified" chip, never
 > green); `/agents` inline; provisioner "+ add agent" adds a registry agent to a room and
 > addressing an absent agent nudges "add it below" instead of the 1:1 auto-reply masking it.
-> Remaining: 2 (autocomplete), 4 (save-as-agent), 5 (verify).
+> Remaining: 4 (save-as-agent), 5 (verify).
 
 1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
@@ -27,8 +27,12 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    `IdentitySeal` enums; host-side `AgentRegistry` binds descriptors → `MissionEntry` and adds
    `TryResolveDescriptor` + `List()`; `AgentCatalog` deleted. Owner/version fields modelled;
    persistence deferred to task 4. Behaviour unchanged.
-2. **`@handle` resolution.** Resolve a mention to a registry entry, scoped by the addressing
-   user/room. Autocomplete + disambiguation for similar handles (parent Q3).
+2. ✅ **`@handle` resolution.** Resolve a mention to a registry entry, scoped by the addressing
+   user/room. Autocomplete + disambiguation for similar handles (parent Q3). **Done:** WhatsApp-style
+   mention picker in `RoomView` — a word-starting `@…` opens a dropdown of the room's agent members,
+   filtered live (prefix-first), each row = avatar · handle · identity seal · description; select via
+   click/Enter (arrows move highlight, Esc closes). Scope = room agents (what you can @-invoke here);
+   non-member discovery stays in `/agents` + "+ add agent". Deeper disambiguation (fuzzy/typo) deferred.
 3. ✅ **Add/remove agent from a room.** From the registry, add an agent as a room member (the
    "Add @agent" journey step) — provisioner-gated (38.4). **Done:** `RoomAgentMembershipService`
    (AddableAgents / AddAgent / RemoveAgent, provisioner-gated) + `IWriteStore.RemoveMembershipAsync`;
