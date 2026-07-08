@@ -97,8 +97,14 @@ shouldn't — is the one styling bug that damages the product, not just the poli
 
 | Mark | Claim | Scope | Vocabulary | Colour |
 |---|---|---|---|---|
-| **Verified badge** | "*this run* was verified" | per-**message** | `.trust-badge` + `.verified`/`.unverified`, `.card-verified` | green `--success` / red `--danger` |
+| **Verified badge** | "*this run* was verified" | per-**message** | `.trust-badge` + `.verified`/`.unverified`/`.not-verified`, `.card-verified`/`.card-unverified`/`.card-raw` | green `--success` / red `--danger` / neutral `--text-subtle` |
 | **Identity seal** | "*who* this is, is legit" | per-**agent** (on the handle) | `.identity-seal` + `.seal-official`/`.seal-verified` | **gold** `--seal-official` / **blue** `--seal-verified` |
+
+The **verified badge** is a *tri-state*: green `✓ Verified` (a verifier ran and passed), red
+`✗ Unverified` (a verifier ran and failed), and neutral grey `○ Not verified` (a **raw-model
+agent** — no verifier exists, so it is neither pass nor fail, 38.5 task 7). Green is earned only
+by real verification; a raw `@claude`/`@openai` gets the neutral chip *and* the gold identity
+seal (`AgentDescriptor.VerifiesAnswers` gates the green). Never render a raw answer green or red.
 
 Rules:
 

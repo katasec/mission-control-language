@@ -13,12 +13,12 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
-> **Progress (2026-07-08):** tasks **1**, **6**, **8a** (identity-seal rendering), and **9**
-> (`/agents` inline directory) done + the design-system seal vocabulary landed
-> (`--seal-official`/`--seal-verified`, `.identity-seal`, doc §5). Verified live: `@guard` shows
-> the green per-response Verified badge *and* the gold identity seal (no conflation); `/agents`
-> lists `@assistant` + `@guard` inline with seals + publisher, without posting a message.
-> Remaining: 2, 3, 4, 5, 7.
+> **Progress (2026-07-08):** tasks **1**, **6**, **7**, **8a**, and **9** done + the design-system
+> seal vocabulary landed (`--seal-official`/`--seal-verified`, `.identity-seal`, neutral
+> `.not-verified`/`.card-raw`, doc §5). Verified live: raw `@openai` sits beside verified
+> `@guard` in one room — both carry the gold identity seal, but `@openai`'s answer shows a neutral
+> "○ Not verified" chip (never green), holding the no-false-green invariant; `/agents` lists the
+> bound agents inline. Remaining: 2, 3, 4, 5.
 
 1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
@@ -50,7 +50,7 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    string. **Done:** `@forge/hallucination-guard`→`@guard`, `@forge/assistant`→`@assistant`;
    `ReservedHandles` set + `IsReserved` (the claim 39.5 will enforce); `RoomsSeeder.EnsureAgentAsync`
    upserts `DisplayName` so pre-existing dev/prod rows self-heal to bare handles on next boot.
-7. **Raw-model passthrough agents (`@claude`/`@openai`/`@grok`).** Thin single-expert
+7. ✅ **Raw-model passthrough agents (`@claude`/`@openai`/`@grok`).** Thin single-expert
    passthrough missions (the `vanilla` "raw LLM" shape) bound to a provider profile —
    "generalised experts," addressable because the room addresses *missions*, not experts.
    `ProviderClientBuilder` already supports `anthropic`/`openai`/`xai`/`ollama`. **Gating
@@ -59,7 +59,12 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    `Program.cs`) — switch to **per-mission key resolution** so each `forge.toml` resolves its own
    `env(...)` key (`MCL_API_KEY` / `ANTHROPIC_API_KEY` / `XAI_API_KEY`). Seed as members like
    `@forge/assistant` (`RoomsSeeder.SeedEssentialAgentsAsync`). On-thesis: raw `@claude` beside
-   verified `@assistant` in one room *is* the "same gesture, invisibly better" demo.
+   verified `@assistant` in one room *is* the "same gesture, invisibly better" demo. **Done:**
+   `LoadAsync` uses each mission's own resolved key (skips providers with no key); `@openai` (→
+   vanilla) + `@claude` (→ new `missions/claude/`, anthropic) registered with
+   `VerifiesAnswers = false`; the green badge is gated on that flag (`RoomAgentInvoker` +
+   `RoomView`) so raw answers show a neutral "○ Not verified" chip, never green — the no-false-green
+   invariant (task 8) extended to raw output. Verified live beside `@guard`.
 8. ✅ (8a) **Two distinct trust seals (no false-green).** (a) **Identity / publisher seal** — *per-agent*,
    on the handle, X-checkmark style: anti-impersonation ("this is the official `@claude` / a
    verified publisher"). (b) **Per-response Verified badge** — *per-message*, **already shipped**
