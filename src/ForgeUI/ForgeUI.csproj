@@ -12,6 +12,7 @@
     <ProjectReference Include="..\ForgeMission.Cli\ForgeMission.Cli.csproj" />
     <ProjectReference Include="..\ForgeMission.Rooms\ForgeMission.Rooms.csproj" />
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
+    <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

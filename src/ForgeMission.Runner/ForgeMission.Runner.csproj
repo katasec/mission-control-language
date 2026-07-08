@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- NOT Native AOT: this is an ASP.NET web host (like ForgeUI), not the `forge` CLI. The AOT
+         rule in CLAUDE.md is scoped to the CLI binary. PublishAot=false neutralises the flag
+         inherited from the referenced ForgeMission.Cli project (which sets PublishAot=true),
+         exactly as Dockerfile.forgeui does for ForgeUI. -->
+    <PublishAot>false</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.Cli\ForgeMission.Cli.csproj" />
+    <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

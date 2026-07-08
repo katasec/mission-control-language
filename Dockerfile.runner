@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1
+# ForgeMission.Runner — stateless, containerised mission runner (Phase 39.1).
+#
+# NOT Native AOT: this is a .NET 10 ASP.NET web host (like ForgeUI). The AOT rule in CLAUDE.md is
+# for the `forge` CLI (root Dockerfile), NOT this app. Build context = repo root.
+#
+# Runner -> ForgeMission.Cli depends on PRIVATE GitHub Packages (Katasec.OaiServer/OciClient), so
+# restore needs the repo's nuget.config AND a read:packages token, supplied as a BuildKit SECRET
+# (never written into an image layer) — same pattern as Dockerfile.forgeui:
+#
+#   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
+#   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
+#     -f Dockerfile.runner -t forge-runner:local .
+
+# ---- build --------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY nuget.config ./
+COPY src/ ./src/
+
+# PublishAot=false neutralises the AOT/self-contained flag inherited from the referenced `forge`
+# CLI project (ForgeMission.Cli sets PublishAot=true), which otherwise trips NETSDK1151 for a
+# non-self-contained web app. Scoped to THIS build only.
+RUN --mount=type=secret,id=nuget_token \
+    NUGET_AUTH_TOKEN="$(cat /run/secrets/nuget_token)" \
+    dotnet publish src/ForgeMission.Runner/ForgeMission.Runner.csproj -c Release -o /app/publish \
+      /p:UseAppHost=false /p:PublishAot=false
+
+# ---- runtime ------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Trusted built-in missions may use kind:exec experts. The hallucination-guard Verifier
+# (@guard) shells out to python3 (stdlib only — see experts/Verifier/verify.py). Provision a
+# minimal python3 so exec steps run under the trusted runner policy. (Custom missions get the
+# 39.5 restricted policy that denies exec entirely, so this stays a built-in/trusted capability.)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app/publish ./
+
+# Missions ship baked into the image (39.1 — no OCI/blob yet). The runner reads each mission's
+# forge.toml at startup; provider keys come from env(...) (MCL_API_KEY / ANTHROPIC_API_KEY /
+# XAI_API_KEY) injected at run time from Key Vault — the image carries no secrets.
+COPY missions/ /app/missions/
+
+ENV ASPNETCORE_URLS=http://+:8080 \
+    ASPNETCORE_ENVIRONMENT=Production \
+    MissionDir=/app/missions \
+    DOTNET_gcServer=0
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "ForgeMission.Runner.dll"]
