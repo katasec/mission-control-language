@@ -66,8 +66,8 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    `@forge/assistant` (`RoomsSeeder.SeedEssentialAgentsAsync`). On-thesis: raw `@claude` beside
    verified `@assistant` in one room *is* the "same gesture, invisibly better" demo. **Done:**
    `LoadAsync` uses each mission's own resolved key (skips providers with no key); `@openai` (→
-   vanilla) + `@claude` (→ new `missions/claude/`, anthropic) registered with
-   `VerifiesAnswers = false`; the green badge is gated on that flag (`RoomAgentInvoker` +
+   vanilla) + `@claude` (→ `missions/claude/`, anthropic) + `@grok` (→ `missions/grok/`, xai;
+   also fixed `ForgeTomlReader` to accept the `xai` provider) registered with `VerifiesAnswers = false`; the green badge is gated on that flag (`RoomAgentInvoker` +
    `RoomView`) so raw answers show a neutral "○ Not verified" chip, never green — the no-false-green
    invariant (task 8) extended to raw output. Verified live beside `@guard`.
 8. ✅ (8a) **Two distinct trust seals (no false-green).** (a) **Identity / publisher seal** — *per-agent*,
