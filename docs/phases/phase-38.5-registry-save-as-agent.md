@@ -1,9 +1,12 @@
 # Phase 38.5 — Registry / GAL + Save-as-Agent
 
-> **Status: In progress** (tasks 1, 2, 3, 6, 7, 8a, 9 done — see progress note below; 4, 5 remain) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: Accessible surface COMPLETE** (tasks 1, 2, 3, 6, 7, 8a, 9 done + live on dev). **Save-as-agent (tasks 4, 5) resequenced → [Phase 39.5](phase-39-metered-runtime-marketplace.md)** — see the resequencing note below. · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** 38.2 (agents work) + 38.4 (identity — scope needs real owners)
-> **Done when:** you compose a chain live in a room, `/save-as-agent` it, then `@`-address
-> it in a different room and it runs.
+> **Done — accessible surface:** the GAL is real and live on dev — bare `@handles`, `@`-autocomplete,
+> add-agent-to-room, `/agents`, identity seals, the raw-model trio (`@openai`/`@claude`/`@grok`).
+> **Save-as-agent** (compose a chain live → `/save-as-agent` → `@`-address it elsewhere) is
+> **resequenced → Phase 39.5** — it is the first *user-authored, persisted, runnable* mission, so it
+> is built on the Phase-39 runtime, not ahead of it (see the resequencing note below).
 
 The discovery + authoring layer — the "Global Address List." Turns the hardcoded agent map
 from 38.2 into a real, scoped directory, and gives non-technical users an authoring on-ramp
@@ -19,7 +22,25 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 > `@guard` (gold seal on both, `@openai` answers show a neutral "○ Not verified" chip, never
 > green); `/agents` inline; provisioner "+ add agent" adds a registry agent to a room and
 > addressing an absent agent nudges "add it below" instead of the 1:1 auto-reply masking it.
-> Remaining: 4 (save-as-agent), 5 (verify).
+> **Remaining: tasks 4 (save-as-agent) + 5 (verify) — resequenced → Phase 39.5** (see note).
+
+### Resequencing — save-as-agent (tasks 4, 5) → Phase 39.5 (decided 2026-07-08)
+
+Tasks 4/5 are the one part of 38.5 that reaches into *runtime* territory: save-as-agent produces the
+first **user-authored, persisted, runnable** mission. Building it before Phase 39 settles would force
+three things Phase 39 is explicitly designed to own — then rework them:
+
+- **Persistence** — a saved agent needs a home; today the registry is in-memory built-ins only. 39.5
+  defines that home (blob storage keyed by user + a real per-user/scoped mission registry).
+- **Execution** — a saved custom mission must *run*; built-ins run **in-process**, but Phase 39's
+  load-bearing rule is **"one uniform containerised path, no in-process path ever"** (in-process-now
+  → containers-later = two paths). Running saved agents in-process now builds the forbidden path.
+- **Trust** — a saved agent is a *custom* mission, exactly what 39's **per-run trust policy** (custom
+  locked-down, restricted to `llm`/`rule` kinds) governs.
+
+So save-as-agent is not a "38.5 UI feature" — it is **the first customer of the Phase 39 runtime**, and
+39.5 already names it ("ties into 38.5 save-as-agent"). The **snapshot design (S1: rigid) stands**; only
+the *build* moves. 38.5's accessible-surface purpose — make the engine reachable — is **complete**.
 
 1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
@@ -39,7 +60,7 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    RoomView "+ add agent" panel. Also fixed a review bug: the 1:1 auto-reply no longer swallows an
    unmatched `@mention` (addressing an absent agent now nudges "add it" instead of silently routing
    to the sole agent).
-4. **Save-as-agent — snapshot (S1 resolved: rigid).** Capture the live chain as a **frozen
+4. ⏸ **Save-as-agent — snapshot (S1 resolved: rigid). → Resequenced to Phase 39.5** (design stands, build moves onto the 39 runtime — see note above). Capture the live chain as a **frozen
    snapshot**, not a parameterised template. Emit a **mission** where the pipeline shape and each
    step's instruction are **fixed**, and the **entry input is the sole parameter**. Capture the
    *structure* — the `->` sequence, each step's model/expert + its instruction (the human's
@@ -48,7 +69,7 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    inference-from-one-example risk, reuses the mission format. **Parameterise is deferred** — a
    provisioner can manually add knobs later (it's just a mission), and *auto*-parameterisation
    routes to the program-synthesis spike.
-5. **Verify.** Compose draft→review live, `/save-as-agent @my-reviewer` (personal scope), add
+5. ⏸ **Verify. → Resequenced to Phase 39.5** (acceptance of task 4). Compose draft→review live, `/save-as-agent @my-reviewer` (personal scope), add
    it to another room, invoke it; a shared-scope agent is discoverable by others.
 6. ✅ **Handle namespace — bare + globally unique (X model).** Drop the `@forge/` prefix; handles
    are short bare strings (`@assistant`, `@guard`, `@claude`) in one flat, globally-unique,

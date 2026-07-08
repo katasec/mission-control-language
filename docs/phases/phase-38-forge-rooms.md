@@ -1,6 +1,6 @@
 # Phase 38 — Forge Rooms (Agents as `@`-Addressable Members)
 
-> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5 in progress (tasks 1, 2, 3, 6, 7, 8a, 9 done — registry, @-autocomplete, add/remove agent, bare handles, raw-model agents (@openai/@claude/@grok), identity seal, `/agents`; tasks 4, 5 remain); 38.6 next.**
+> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5 accessible surface COMPLETE (tasks 1, 2, 3, 6, 7, 8a, 9 done — registry, @-autocomplete, add/remove agent, bare handles, raw-model agents (@openai/@claude/@grok), identity seal, `/agents`; **save-as-agent tasks 4/5 resequenced → 39.5**); 38.6 next.**
 > **Priority: TOP — this precedes every other phase in `plan.md`.**
 > **Depends on:** Phase 34/35 (Forge UI / Blazor — this *is* their evolution), Phase 25
 > (mission composition), Phase 25a (`role: judge`), Phase 19 (`forge serve` — mission on
@@ -257,7 +257,7 @@ own spoke doc and task list. Run them 1→6. The nine "spokes" originally sketch
 | [38.3 Trust Surface](phase-38.3-trust-surface.md) | **Done.** badge/trace/show-thinking in the room, artifact **output** rendering (orig. S5) |
 | [38.4 Identity & Membership](phase-38.4-identity-membership.md) | **Done.** OIDC + invites + confidentiality + roles (orig. S3) — real Entra External ID sign-in verified live |
 | [38.4a UI Foundation & Onboarding](phase-38.4a-ui-and-onboarding.md) | **Done.** Tokenized design system + dark mode (see [UI Design System](../design/ui-design-system.md)), "gate everything" auth IA + `AccountMenu` + `/playground`, first-run "room of two" onboarding, and the LLM-verified `@forge/assistant` default agent |
-| [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | **In progress.** `@handle` directory + scope + save-as-agent (orig. S6). Done: task 1 (registry), 2 (@-autocomplete), 3 (add/remove agent + auto-reply guard), 6 (bare handles), 7 (raw `@openai`/`@claude`/`@grok` — no false-green), 8a (identity seal), 9 (`/agents`). Remaining: 4 (save-as-agent), 5 (verify). |
+| [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | **Accessible surface complete.** `@handle` directory + scope (orig. S6). Done: task 1 (registry), 2 (@-autocomplete), 3 (add/remove agent + auto-reply guard), 6 (bare handles), 7 (raw `@openai`/`@claude`/`@grok` — no false-green), 8a (identity seal), 9 (`/agents`). **Save-as-agent (tasks 4/5) resequenced → 39.5** (first user-authored persisted+runnable mission → build on the 39 runtime). |
 | [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | shareable verified output + share-an-agent (orig. S8) |
 | [38.7 Hosting & Deployment (Azure)](phase-38.7-hosting-deployment.md) | **Done.** Containerize + version the app, Azure Container Apps + ACR + Key Vault + Postgres via Bicep (`katasec/forge-infra`), passwordless CI/runtime, custom domain `forge.katasec.com` + managed TLS. Live. |
 
@@ -283,7 +283,7 @@ orthogonally. Running 38.1…38.6 satisfies "no phase waits on a future phase."
 | 7 | **E2E encryption** | **Deferred (later hardening)** — rooms are the boundary in v1 (see §13). |
 | 8 | **Minors in rooms** | **Deferred → 38.4** (consent/permission model in the identity phase). |
 | 9 | **Mobile** | **Out of scope (v1)** — web-first; native mobile post-v1. |
-| S1 | **Save-as-agent: snapshot vs parameterise** | **Resolved: snapshot** (rigid). Freeze the exact chain as a mission — pipeline shape + each step's instruction fixed, **entry input the sole parameter**. Deterministic/explainable, reuses the mission format; auto-parameterise routes to the program-synthesis spike. See 38.5. |
+| S1 | **Save-as-agent: snapshot vs parameterise** | **Resolved: snapshot** (rigid). Freeze the exact chain as a mission — pipeline shape + each step's instruction fixed, **entry input the sole parameter**. Deterministic/explainable, reuses the mission format; auto-parameterise routes to the program-synthesis spike. See 38.5. **Build resequenced → Phase 39.5 (2026-07-08)**: the snapshot decision stands, but save-as-agent is the first user-authored, persisted, runnable mission, so it is built on the 39 uniform runtime, not ahead of it. |
 
 ---
 
