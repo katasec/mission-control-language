@@ -13,10 +13,12 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
-> **Progress (2026-07-08):** tasks **1**, **6**, and **8a** (identity-seal rendering) done + the
-> design-system seal vocabulary landed (`--seal-official`/`--seal-verified`, `.identity-seal`,
-> doc §5). Task 8a verified live: `@guard` shows the green per-response Verified badge *and* the
-> gold identity seal, coexisting without conflation. Remaining: 2, 3, 4, 5, 7, 9.
+> **Progress (2026-07-08):** tasks **1**, **6**, **8a** (identity-seal rendering), and **9**
+> (`/agents` inline directory) done + the design-system seal vocabulary landed
+> (`--seal-official`/`--seal-verified`, `.identity-seal`, doc §5). Verified live: `@guard` shows
+> the green per-response Verified badge *and* the gold identity seal (no conflation); `/agents`
+> lists `@assistant` + `@guard` inline with seals + publisher, without posting a message.
+> Remaining: 2, 3, 4, 5, 7.
 
 1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
@@ -65,8 +67,10 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    them visually and semantically **separate** — a raw `@claude` may carry the identity seal while
    its individual answers get **no** verified badge (unverified by design); that contrast is the
    product story, and the 38.3 no-false-green guard must hold (never green-check raw output).
-9. **`/agents` directory MVP (slash command).** Lists available agents: **handle · description ·
-   publisher (+ identity seal)**. Data: add `List()` to `AgentCatalog` (`Label`/`Description`
+9. ✅ **`/agents` directory MVP (slash command).** Lists available agents: **handle · description ·
+   publisher (+ identity seal)**. **Done:** `/agents` intercepted client-side in `RoomView`;
+   ephemeral caller-only listing (`AgentRegistry.List()`) rendered inline, not posted/broadcast;
+   rows reuse `IdentitySealMark`. Scope-filtering by user deferred (built-ins all Shared today). Data: add `List()` to `AgentCatalog` (`Label`/`Description`
    already present) + a new `Publisher` field on agent/mission metadata; the per-response side
    (`AgentMeta.Verified`) already exists. Simplest surface of the GAL — the `@`-autocomplete
    picker is the richer version later. Scoped to what the addressing user can consume (built-ins
