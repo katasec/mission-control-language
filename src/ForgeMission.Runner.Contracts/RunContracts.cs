@@ -50,11 +50,14 @@ public sealed record RunTraceStep(
     int     Attempt);
 
 /// <summary>Cost signals the runner emits and the orchestrator prices (39.2). The meter is
-/// <c>tokens + compute-seconds</c>; compute-seconds is wall-clock around the run.</summary>
+/// <c>tokens + compute-seconds</c>; compute-seconds is wall-clock around the run. <see cref="Model"/>
+/// is the mission's default provider model (the runner reports it so the orchestrator can price at
+/// that model's rate); null/empty for exec-only missions with no LLM step.</summary>
 public sealed record RunUsage(
-    long   InputTokens,
-    long   OutputTokens,
-    double ComputeSeconds);
+    long    InputTokens,
+    long    OutputTokens,
+    double  ComputeSeconds,
+    string? Model);
 
 /// <summary>An available mission the runner can execute — returned by <c>GET /missions</c> so the
 /// orchestrator can bind only the handles whose mission is actually loadable (e.g. a provider whose

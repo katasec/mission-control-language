@@ -20,6 +20,7 @@ public static class RoomsDataServiceCollectionExtensions
 
         services.AddSingleton<IReadStore, ReadStore>();
         services.AddSingleton<IWriteStore, WriteStore>();
+        services.AddSingleton<ILedgerStore, LedgerStore>();
         return services;
     }
 }
