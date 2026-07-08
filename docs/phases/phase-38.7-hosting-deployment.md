@@ -132,19 +132,23 @@ before shipping.
 ## 7. Live state (as of 2026-07-08)
 
 - App: `ca-forge-ui-dev`, single replica (in-proc SignalR `RoomBroadcaster` — scale-out later needs
-  Azure SignalR + a backplane), image **`forge-ui:0.1.9`** (revision `--0000008`). Boot log loads
+  Azure SignalR + a backplane), image **`forge-ui:0.1.10`** (revision `--0000009`), FQDN
+  `https://ca-forge-ui-dev.niceground-df7fb252.uaenorth.azurecontainerapps.io`. Boot log loads
   **5 missions**: `ChatGPT, Forge, Assistant, Claude, Grok` — i.e. the 38.5 raw-model trio
-  (`@openai`/`@claude`/`@grok`) all resolve their keys, alongside verified `@guard`/`@assistant`.
-- Image tags in ACR: `0.1.0`…`0.1.9` — `0.1.0` first live; `0.1.1` forwarded-headers; `0.1.2`
+  (`@openai`/`@claude`/`@grok`) all resolve their keys (`MCL_API_KEY`/`ANTHROPIC_API_KEY`/`XAI_API_KEY`),
+  alongside verified `@guard`/`@assistant`. **Phase 38's accessible + verified surface is fully live here.**
+- Image tags in ACR: `0.1.0`…`0.1.10` — `0.1.0` first live; `0.1.1` forwarded-headers; `0.1.2`
   essential-agent seed; `0.1.3` seed + UI; `0.1.4` self-heal trigger; `0.1.5` display-name fix;
   `0.1.6`/`0.1.7` (38.5 registry + bare handles + identity seal + `/agents`); `0.1.8` (38.5 add/remove
-  agent + auto-reply guard); `0.1.9` (38.5 `@grok` + xAI provider fix).
+  agent + auto-reply guard); `0.1.9` (38.5 `@grok` + xAI provider fix); `0.1.10` (38.5 `@`-mention
+  autocomplete). Provider keys `ANTHROPIC_API_KEY`/`XAI_API_KEY` + their KV secrets were `az`-wired
+  (dev), not yet in Bicep — see §9 / plan.md Open issue #3.
 - **CI proven end-to-end:** `gh workflow run forge-ui-image.yml -f version=X` builds native amd64 +
   pushes to ACR via OIDC (GITHUB_TOKEN reads the private feed) — faster than local emulated builds.
   ⚠️ **The image workflow only builds+pushes; it does NOT roll the Container App.** The intended
   release loop is: commit → run the image workflow → **redeploy `dev/500-app`** with the new
   `FORGE_UI_IMAGE` (keep `CUSTOM_DOMAIN` + `CUSTOM_DOMAIN_CERT_ID` set to preserve the HTTPS binding).
-  This session rolled `0.1.7`/`0.1.8`/`0.1.9` via a **manual `az containerapp update`** instead — quick,
+  This session rolled `0.1.7`–`0.1.10` via a **manual `az containerapp update`** instead — quick,
   but it bypasses the Bicep and leaves the running app's image + the new provider secrets/env vars as
   **drift** vs `dev/500-app` (see §9).
 - GitHub Actions variables wired in both repos.
