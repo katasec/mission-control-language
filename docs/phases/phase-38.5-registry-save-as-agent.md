@@ -13,12 +13,13 @@ provenance — three concerns the old `@forge/` prefix was conflating.
 
 ## Tasks (dependency order)
 
-> **Progress (2026-07-08):** tasks **1**, **6**, **7**, **8a**, and **9** done + the design-system
-> seal vocabulary landed (`--seal-official`/`--seal-verified`, `.identity-seal`, neutral
-> `.not-verified`/`.card-raw`, doc §5). Verified live: raw `@openai` sits beside verified
-> `@guard` in one room — both carry the gold identity seal, but `@openai`'s answer shows a neutral
-> "○ Not verified" chip (never green), holding the no-false-green invariant; `/agents` lists the
-> bound agents inline. Remaining: 2, 3, 4, 5.
+> **Progress (2026-07-08):** tasks **1**, **3**, **6**, **7**, **8a**, and **9** done + the
+> design-system seal vocabulary landed (`--seal-official`/`--seal-verified`, `.identity-seal`,
+> neutral `.not-verified`/`.card-raw`, doc §5). Verified live: raw `@openai` beside verified
+> `@guard` (gold seal on both, `@openai` answers show a neutral "○ Not verified" chip, never
+> green); `/agents` inline; provisioner "+ add agent" adds a registry agent to a room and
+> addressing an absent agent nudges "add it below" instead of the 1:1 auto-reply masking it.
+> Remaining: 2 (autocomplete), 4 (save-as-agent), 5 (verify).
 
 1. ✅ **Registry model.** `AgentHandle` → mission (+ endpoint) + **scope** (`personal | room |
    shared`) + owner + version (reuse Phase 11 expert versioning). Replaces 38.2's hardcoded
@@ -28,8 +29,12 @@ provenance — three concerns the old `@forge/` prefix was conflating.
    persistence deferred to task 4. Behaviour unchanged.
 2. **`@handle` resolution.** Resolve a mention to a registry entry, scoped by the addressing
    user/room. Autocomplete + disambiguation for similar handles (parent Q3).
-3. **Add/remove agent from a room.** From the registry, add an agent as a room member (the
-   "Add @agent" journey step) — provisioner-gated (38.4).
+3. ✅ **Add/remove agent from a room.** From the registry, add an agent as a room member (the
+   "Add @agent" journey step) — provisioner-gated (38.4). **Done:** `RoomAgentMembershipService`
+   (AddableAgents / AddAgent / RemoveAgent, provisioner-gated) + `IWriteStore.RemoveMembershipAsync`;
+   RoomView "+ add agent" panel. Also fixed a review bug: the 1:1 auto-reply no longer swallows an
+   unmatched `@mention` (addressing an absent agent now nudges "add it" instead of silently routing
+   to the sole agent).
 4. **Save-as-agent — snapshot (S1 resolved: rigid).** Capture the live chain as a **frozen
    snapshot**, not a parameterised template. Emit a **mission** where the pipeline shape and each
    step's instruction are **fixed**, and the **entry input is the sole parameter**. Capture the
