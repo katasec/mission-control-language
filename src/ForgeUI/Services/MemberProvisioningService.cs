@@ -9,7 +9,8 @@ namespace ForgeUI.Services;
 /// keyed by the stable (issuer, subject). The IdP proves *who* the person is; the Member is
 /// *our* record of them. Authorization (room membership) is separate and DB-enforced.
 /// </summary>
-public sealed class MemberProvisioningService(IReadStore reads, IWriteStore writes, ILogger<MemberProvisioningService> logger)
+public sealed class MemberProvisioningService(
+    IReadStore reads, IWriteStore writes, BillingService billing, ILogger<MemberProvisioningService> logger)
 {
     /// <summary>Resolve (and provision on first sight) the Member for a principal, or null if unauthenticated.</summary>
     public async Task<Member?> ResolveAsync(ClaimsPrincipal? user, CancellationToken ct = default)
@@ -21,6 +22,26 @@ public sealed class MemberProvisioningService(IReadStore reads, IWriteStore writ
     }
 
     public async Task<Member> FindOrCreateAsync(string issuer, string subject, string? email, string displayName, CancellationToken ct = default)
+    {
+        var member = await ResolveOrCreateAsync(issuer, subject, email, displayName, ct);
+
+        // Auto-grant the one-time F&F starting credit (39.2). Idempotent (no-op if already granted),
+        // and run on EVERY resolve — not just first create — so members that pre-date 39.2 self-heal
+        // their starting balance on next sign-in (same pattern as the starter-room self-heal).
+        // Isolated so a billing/ledger hiccup never blocks sign-in.
+        try
+        {
+            await billing.GrantStartingCreditAsync(member.Id, ct);
+        }
+        catch (Exception grantEx)
+        {
+            logger.LogError(grantEx, "Failed to grant starting credit to member {MemberId}", member.Id);
+        }
+
+        return member;
+    }
+
+    private async Task<Member> ResolveOrCreateAsync(string issuer, string subject, string? email, string displayName, CancellationToken ct)
     {
         var existing = await reads.GetMemberBySubjectAsync(issuer, subject, ct);
         if (existing is not null)

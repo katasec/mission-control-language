@@ -74,7 +74,8 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
         var usage = new RunUsage(
             InputTokens:    accumulator.InputTokens,
             OutputTokens:   accumulator.OutputTokens,
-            ComputeSeconds: stopwatch.Elapsed.TotalSeconds);
+            ComputeSeconds: stopwatch.Elapsed.TotalSeconds,
+            Model:          mission.Profile?.Model);
 
         logger.LogInformation(
             "Ran '{MissionRef}' [{Policy}] — verified={Verified} steps={Steps} in {Tokens}+{Out} tok / {Secs:F2}s",

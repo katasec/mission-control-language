@@ -103,6 +103,10 @@ builder.Services.AddScoped<MemberProvisioningService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<InviteService>();
 
+// Metering & billing (39.2): per-user cost-meter + balance ledger. Singleton — stateless over the
+// ledger store; grants on provisioning, checks/debits on each agent run.
+builder.Services.AddSingleton<BillingService>();
+
 // Mission execution moved to the containerised runner (Phase 39.1). The orchestrator no longer
 // loads missions or holds provider keys — it calls the runner over HTTP. RunnerBaseUrl points at
 // the warm runner (ACA); default localhost for `dotnet run` alongside the runner.

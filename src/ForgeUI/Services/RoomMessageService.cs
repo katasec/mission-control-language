@@ -34,12 +34,13 @@ public sealed class RoomMessageService(
 
         await broadcaster.PublishMessageAsync(roomId, message.ToDto(sender.DisplayName));
 
-        await TryInvokeAgentAsync(roomId, message, ct);
+        await TryInvokeAgentAsync(roomId, sender.Id, message, ct);
         return true;
     }
 
     // Pull gate (tenet 2): only a human message can address an agent member of the room.
-    private async Task TryInvokeAgentAsync(Guid roomId, Message humanMessage, CancellationToken ct)
+    // senderId is the invoking human — the agent run's cost is billed to them (39.2).
+    private async Task TryInvokeAgentAsync(Guid roomId, Guid senderId, Message humanMessage, CancellationToken ct)
     {
         var members = await reads.GetRoomMembersAsync(roomId, ct);
         var agents = members.Where(m => m.Kind == MemberKind.Agent).ToList();
@@ -52,7 +53,7 @@ public sealed class RoomMessageService(
         if (MentionParser.Detect(text, agents.Select(a => a.DisplayName)) is { } hit)
         {
             var mentioned = agents.First(a => string.Equals(a.DisplayName, hit.Handle, StringComparison.OrdinalIgnoreCase));
-            invoker.Invoke(roomId, mentioned, hit.Handle, hit.Prompt, replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
+            invoker.Invoke(roomId, senderId, mentioned, hit.Handle, hit.Prompt, replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
             return;
         }
 
@@ -68,7 +69,7 @@ public sealed class RoomMessageService(
         if (agents.Count == 1 && humanCount == 1 && !HasExplicitMention(text))
         {
             var sole = agents[0];
-            invoker.Invoke(roomId, sole, sole.DisplayName, text.Trim(), replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
+            invoker.Invoke(roomId, senderId, sole, sole.DisplayName, text.Trim(), replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
         }
     }
 
