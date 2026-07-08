@@ -73,6 +73,12 @@ dispatch (OIDC); secret-bearing layers gated behind GitHub Environments.
   secret. Recommended hardening: passwordless Postgres (Entra/MI token auth) — deferred (needs an
   Npgsql code change).
 - KV secrets in prod: `Oidc-ClientSecret`, `Mcl-ApiKey`, `ConnectionStrings-Read/WriteConnection`.
+- **Provider keys (38.5 task 7, per-mission).** Each raw-model agent reads its own `env(...)` key:
+  `@openai`→`MCL_API_KEY`, `@claude`→`ANTHROPIC_API_KEY`, `@grok`→`XAI_API_KEY`. On **dev** these
+  map to KV secrets `Mcl-ApiKey` / `Anthropic-ApiKey` / `Xai-ApiKey` via the `id-forge-dev` managed
+  identity. ⚠️ `Anthropic-ApiKey` + `Xai-ApiKey` (and their container secret refs + env vars) were
+  added **manually via `az` (2026-07-08), not yet in the `dev/500-app` Bicep** — a `dev/500-app`
+  redeploy would drop them until the Bicep is updated (see §9). **prod** has neither of these yet.
 
 ## 5. Custom domain & TLS
 
@@ -123,17 +129,24 @@ dev sign-in (`/auth/dev?user=…`). Reproduce a specific prod DB state against l
 `docker exec forge-rooms-postgres psql`. This is how the assistant reply + self-heal were verified
 before shipping.
 
-## 7. Live state (as of 2026-07-07)
+## 7. Live state (as of 2026-07-08)
 
 - App: `ca-forge-ui-dev`, single replica (in-proc SignalR `RoomBroadcaster` — scale-out later needs
-  Azure SignalR + a backplane), image **`forge-ui:0.1.5`**. Assistant replies (verified) and real
-  display names confirmed live.
-- Image tags in ACR: `0.1.0`…`0.1.5` — 0.1.0 first live; 0.1.1 forwarded-headers; 0.1.2 essential-
-  agent seed; 0.1.3 seed + UI; 0.1.4 self-heal trigger; 0.1.5 display-name fix.
+  Azure SignalR + a backplane), image **`forge-ui:0.1.9`** (revision `--0000008`). Boot log loads
+  **5 missions**: `ChatGPT, Forge, Assistant, Claude, Grok` — i.e. the 38.5 raw-model trio
+  (`@openai`/`@claude`/`@grok`) all resolve their keys, alongside verified `@guard`/`@assistant`.
+- Image tags in ACR: `0.1.0`…`0.1.9` — `0.1.0` first live; `0.1.1` forwarded-headers; `0.1.2`
+  essential-agent seed; `0.1.3` seed + UI; `0.1.4` self-heal trigger; `0.1.5` display-name fix;
+  `0.1.6`/`0.1.7` (38.5 registry + bare handles + identity seal + `/agents`); `0.1.8` (38.5 add/remove
+  agent + auto-reply guard); `0.1.9` (38.5 `@grok` + xAI provider fix).
 - **CI proven end-to-end:** `gh workflow run forge-ui-image.yml -f version=X` builds native amd64 +
   pushes to ACR via OIDC (GITHUB_TOKEN reads the private feed) — faster than local emulated builds.
-  Steady-state release loop is: commit → run the image workflow → redeploy `dev/500-app` with the new
+  ⚠️ **The image workflow only builds+pushes; it does NOT roll the Container App.** The intended
+  release loop is: commit → run the image workflow → **redeploy `dev/500-app`** with the new
   `FORGE_UI_IMAGE` (keep `CUSTOM_DOMAIN` + `CUSTOM_DOMAIN_CERT_ID` set to preserve the HTTPS binding).
+  This session rolled `0.1.7`/`0.1.8`/`0.1.9` via a **manual `az containerapp update`** instead — quick,
+  but it bypasses the Bicep and leaves the running app's image + the new provider secrets/env vars as
+  **drift** vs `dev/500-app` (see §9).
 - GitHub Actions variables wired in both repos.
 
 ## 8. Decision log / gotchas (so they are not re-learned)
@@ -156,5 +169,14 @@ before shipping.
   the Container Apps env → drop the public endpoint + the `AllowAllAzureServices` firewall rule).
 - **prod slice** + environment-protection reviewers on the gated infra layers.
 - Exercise the **infra** deploy workflow via dispatch (the image workflow is already proven).
+- **Fold the 38.5 provider keys into IaC (drift fix).** Add `Anthropic-ApiKey` + `Xai-ApiKey` KV
+  secret refs + `ANTHROPIC_API_KEY` / `XAI_API_KEY` container env vars to `dev/500-app` Bicep (they
+  were added via `az` this session), and set the two secrets in the **prod** Key Vault before prod
+  ships `@claude`/`@grok`. Until then a `dev/500-app` redeploy reverts them.
+- **Close the build↔rollout gap.** The `forge-ui-image` workflow builds+pushes but doesn't deploy;
+  rollout is a separate `dev/500-app` (or `az containerapp update`) step — easy to forget (it bit us
+  this session: "deploy" built `0.1.7` but the app kept serving `0.1.6`). Consider a `deploy-dev`
+  step/workflow that builds *and* rolls in one action.
 
-_Done this session: display-name fix (0.1.5), self-heal trigger (0.1.4), CI proven end-to-end._
+_Done this session (2026-07-08): 38.5 registry/handles/seals/`/agents`/add-remove-agent/raw-model
+trio shipped to dev (0.1.6→0.1.9); Anthropic + xAI keys wired (dev, via az)._

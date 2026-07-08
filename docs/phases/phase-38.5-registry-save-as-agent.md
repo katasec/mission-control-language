@@ -1,6 +1,6 @@
 # Phase 38.5 — Registry / GAL + Save-as-Agent
 
-> **Status: Todo** · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: In progress** (tasks 1, 3, 6, 7, 8a, 9 done — see progress note below; 2, 4, 5 remain) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** 38.2 (agents work) + 38.4 (identity — scope needs real owners)
 > **Done when:** you compose a chain live in a room, `/save-as-agent` it, then `@`-address
 > it in a different room and it runs.
