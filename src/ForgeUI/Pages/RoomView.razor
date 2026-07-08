@@ -9,6 +9,7 @@
 @inject RoomBroadcaster Broadcaster
 @inject InviteService Invites
 @inject AgentRegistry Agents
+@inject RoomAgentMembershipService AgentMgmt
 @inject NavigationManager Nav
 @implements IDisposable
 
@@ -38,11 +39,52 @@
         {
             <div class="room-invite">
                 <button class="btn-link" @onclick="CreateInviteAsync">+ create invite link</button>
+                <button class="btn-link" @onclick="ToggleAddAgentAsync">+ add agent</button>
                 @if (_inviteUrl is not null)
                 {
                     <input class="invite-field" readonly value="@_inviteUrl" @onfocus="SelectAll" />
                 }
             </div>
+
+            @if (_showAddAgent)
+            {
+                <div class="agents-directory agent-manage">
+                    <div class="agents-directory-head">
+                        <span class="agents-directory-title">Agents in this room</span>
+                        <button class="btn-link agents-directory-dismiss" @onclick="() => _showAddAgent = false">done</button>
+                    </div>
+                    @foreach (var (id, handle) in RoomAgentMembers())
+                    {
+                        <div class="agents-directory-row">
+                            <div class="agents-directory-line">
+                                <span class="agents-directory-handle">@handle</span>
+                                <IdentitySealMark Descriptor="DescriptorFor(handle)" />
+                                <span class="flex-spacer"></span>
+                                <button class="btn-link btn-sm" @onclick="() => RemoveAgentAsync(id)">remove</button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="agents-directory-title agent-manage-subhead">Add an agent</div>
+                    @if (_addableAgents.Count == 0)
+                    {
+                        <div class="agents-directory-desc">Every available agent is already in this room.</div>
+                    }
+                    @foreach (var d in _addableAgents)
+                    {
+                        <div class="agents-directory-row @(d.Handle == _pendingAddHandle ? "agent-manage-highlight" : "")">
+                            <div class="agents-directory-line">
+                                <span class="agents-directory-handle">@d.Handle</span>
+                                <IdentitySealMark Descriptor="d" />
+                                <span class="agents-directory-publisher">@d.Publisher</span>
+                                <span class="flex-spacer"></span>
+                                <button class="btn-accent btn-sm" @onclick="() => AddAgentAsync(d.Handle)">Add</button>
+                            </div>
+                            <div class="agents-directory-desc">@d.Description</div>
+                        </div>
+                    }
+                </div>
+            }
         }
 
         <div class="room-stream">
@@ -128,6 +170,11 @@
             }
         </div>
 
+        @if (_notice is not null)
+        {
+            <div class="room-notice">@_notice</div>
+        }
+
         <div class="room-composer">
             <input class="field room-input"
                    @bind="_input"
@@ -155,6 +202,11 @@
     private IReadOnlyList<AgentDescriptor>? _agentsListing;
     private string? _inviteUrl;
     private IDisposable? _subscription;
+    // Add-agent panel (38.5 task 3) + the "not in this room" nudge.
+    private bool _showAddAgent;
+    private IReadOnlyList<AgentDescriptor> _addableAgents = [];
+    private string? _pendingAddHandle;
+    private string? _notice;
 
     private void ToggleTrace(Guid messageId)
     {
@@ -253,9 +305,74 @@
             return;
         }
 
+        // Addressing a known agent that isn't a member of this room (38.5 task 3): don't post a
+        // lonely message the auto-reply would swallow — tell the user, and if they can provision,
+        // open the add panel pre-pointed at that agent.
+        if (AddressedAbsentAgent(text) is { } absent)
+        {
+            _notice = _isProvisioner
+                ? $"{absent.Handle} isn't in this room yet — add it below, then message it."
+                : $"{absent.Handle} isn't in this room. Ask a provisioner to add it.";
+            _input = "";
+            if (_isProvisioner)
+            {
+                _pendingAddHandle = absent.Handle;
+                _showAddAgent = true;
+                await LoadAddableAgentsAsync();
+            }
+            return;
+        }
+
         _agentsListing = null;   // a real message dismisses the ephemeral listing
+        _notice = null;
         _input = "";
         await Messages.SendHumanMessageAsync(RoomId, _me, text);
+    }
+
+    // A registry agent whose handle appears in the text but which is NOT a member of this room.
+    private AgentDescriptor? AddressedAbsentAgent(string text)
+    {
+        var present = _memberNames.Values.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return Agents.List().FirstOrDefault(d =>
+            !present.Contains(d.Handle) &&
+            text.Contains(d.Handle, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task ToggleAddAgentAsync()
+    {
+        _showAddAgent = !_showAddAgent;
+        if (_showAddAgent)
+            await LoadAddableAgentsAsync();
+    }
+
+    private async Task LoadAddableAgentsAsync()
+        => _addableAgents = await AgentMgmt.AddableAgentsAsync(RoomId);
+
+    // Agent members currently in the room (id + @handle), for the remove list.
+    private IEnumerable<(Guid Id, string Handle)> RoomAgentMembers()
+        => _memberNames.Where(kv => kv.Value.StartsWith('@')).Select(kv => (kv.Key, kv.Value));
+
+    private async Task RemoveAgentAsync(Guid agentMemberId)
+    {
+        if (_me is null) return;
+        await AgentMgmt.RemoveAgentAsync(RoomId, _me, agentMemberId);
+        await RefreshMembersAsync();
+    }
+
+    private async Task AddAgentAsync(string handle)
+    {
+        if (_me is null) return;
+        await AgentMgmt.AddAgentAsync(RoomId, _me, handle);
+        _pendingAddHandle = null;
+        _notice = null;
+        await RefreshMembersAsync();
+    }
+
+    private async Task RefreshMembersAsync()
+    {
+        _memberNames = (await Reads.GetRoomMembersAsync(RoomId)).ToDictionary(m => m.Id, m => m.DisplayName);
+        await LoadAddableAgentsAsync();
+        StateHasChanged();
     }
 
     private Task OnKeyDown(KeyboardEventArgs e)

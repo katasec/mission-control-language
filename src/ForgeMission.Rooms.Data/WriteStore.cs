@@ -55,6 +55,15 @@ public sealed class WriteStore(IDbContextFactory<RoomsDbContext> factory) : IWri
         return membership;
     }
 
+    public async Task<bool> RemoveMembershipAsync(Guid roomId, Guid memberId, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var deleted = await db.Memberships
+            .Where(m => m.RoomId == roomId && m.MemberId == memberId)
+            .ExecuteDeleteAsync(ct);
+        return deleted > 0;
+    }
+
     public async Task<Message> AppendMessageAsync(Message message, CancellationToken ct = default)
     {
         if (message.Id == Guid.Empty) message.Id = Guid.NewGuid();

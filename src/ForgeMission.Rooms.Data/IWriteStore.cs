@@ -17,6 +17,9 @@ public interface IWriteStore
 
     Task<RoomMembership> AddMembershipAsync(RoomMembership membership, CancellationToken ct = default);
 
+    /// <summary>Remove a membership (e.g. take an agent back out of a room). Returns false if absent.</summary>
+    Task<bool> RemoveMembershipAsync(Guid roomId, Guid memberId, CancellationToken ct = default);
+
     /// <summary>INSERT only — messages are immutable once appended.</summary>
     Task<Message> AppendMessageAsync(Message message, CancellationToken ct = default);
 }

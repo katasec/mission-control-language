@@ -434,6 +434,12 @@ h2 { font-size: 20px; }
 .agents-directory-publisher { font-size: 12px; color: var(--text-subtle); }
 .agents-directory-desc  { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
+/* Add-agent management panel (38.5 task 3) — reuses .agents-directory* */
+.agent-manage-subhead   { display: block; margin-top: var(--space-3); }
+.agent-manage-highlight  { background: var(--accent-soft); border-radius: var(--radius-sm); margin: 0 calc(-1 * var(--space-2)); padding-left: var(--space-2); padding-right: var(--space-2); }
+.btn-sm                  { padding: 2px var(--space-3); height: auto; font-size: 12px; }
+.room-notice            { margin: 0 var(--space-5) var(--space-2); padding: var(--space-2) var(--space-3); font-size: 13px; color: var(--text-muted); background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+
 /* Rooms list */
 .room-list        { list-style: none; display: flex; flex-direction: column; gap: var(--space-2); }
 .room-list-item   { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: var(--space-3) var(--space-4); transition: border-color var(--transition), box-shadow var(--transition); }

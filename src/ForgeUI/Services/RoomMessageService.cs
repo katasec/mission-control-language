@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
 using ForgeUI.Models;
@@ -58,11 +59,22 @@ public sealed class RoomMessageService(
         // "Room of two" auto-reply: when the room is exactly one human + one agent, the sole
         // agent answers every message with no @mention needed — a scoped exception to pull-only
         // that makes a 1:1 room feel like a normal chat. Group rooms still require addressing.
+        //
+        // But only when the sender did NOT explicitly address someone. An unmatched @mention
+        // (e.g. "@openai …" in a room where @openai isn't a member) is a deliberate address to a
+        // non-member — letting the sole agent answer it would falsely look like that agent replied
+        // (the task-7 review bug). Suppress instead; the client nudges the user to add the agent.
         var humanCount = members.Count(m => m.Kind == MemberKind.Human);
-        if (agents.Count == 1 && humanCount == 1)
+        if (agents.Count == 1 && humanCount == 1 && !HasExplicitMention(text))
         {
             var sole = agents[0];
             invoker.Invoke(roomId, sole, sole.DisplayName, text.Trim(), replyTo: humanMessage.ReplyTo, triggerMessageId: humanMessage.Id);
         }
     }
+
+    // A standalone "@handle" token — signals intent to address someone specific. Used only to
+    // decide whether auto-reply should fire, never to resolve the target.
+    private static readonly Regex MentionToken = new(@"(?<![\w@])@[A-Za-z][\w-]*", RegexOptions.Compiled);
+
+    private static bool HasExplicitMention(string text) => MentionToken.IsMatch(text);
 }

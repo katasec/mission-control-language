@@ -131,6 +131,8 @@ builder.Services.AddScoped<SessionStore>();
 builder.Services.AddSingleton<AgentRegistry>();
 builder.Services.AddSingleton<RoomContextAssembler>();
 builder.Services.AddSingleton<RoomAgentInvoker>();
+// Add/remove an agent from a room (38.5 task 3) — provisioner-gated membership management.
+builder.Services.AddSingleton<RoomAgentMembershipService>();
 
 // Room delivery (38.4): in-proc fan-out to the Blazor client + external SignalR clients,
 // and the one membership-checked send path shared by both.
