@@ -23,6 +23,26 @@ public sealed class MemberProvisioningService(
 
     public async Task<Member> FindOrCreateAsync(string issuer, string subject, string? email, string displayName, CancellationToken ct = default)
     {
+        var member = await ResolveOrCreateAsync(issuer, subject, email, displayName, ct);
+
+        // Auto-grant the one-time F&F starting credit (39.2). Idempotent (no-op if already granted),
+        // and run on EVERY resolve — not just first create — so members that pre-date 39.2 self-heal
+        // their starting balance on next sign-in (same pattern as the starter-room self-heal).
+        // Isolated so a billing/ledger hiccup never blocks sign-in.
+        try
+        {
+            await billing.GrantStartingCreditAsync(member.Id, ct);
+        }
+        catch (Exception grantEx)
+        {
+            logger.LogError(grantEx, "Failed to grant starting credit to member {MemberId}", member.Id);
+        }
+
+        return member;
+    }
+
+    private async Task<Member> ResolveOrCreateAsync(string issuer, string subject, string? email, string displayName, CancellationToken ct)
+    {
         var existing = await reads.GetMemberBySubjectAsync(issuer, subject, ct);
         if (existing is not null)
         {
@@ -42,19 +62,6 @@ public sealed class MemberProvisioningService(
                 Email = email,
             }, ct);
             logger.LogInformation("Provisioned member {MemberId} for {Issuer}/{Subject}", created.Id, issuer, subject);
-            // Auto-grant the one-time F&F starting credit (39.2). Idempotent; only the create-winner
-            // reaches here, so the loser of a provisioning race won't double-grant. Isolated so a
-            // billing hiccup never blocks sign-in (member creation already succeeded) — worst case a
-            // rare user starts with no credit and needs a manual top-up. We migrate the ledger before
-            // shipping the app, so this window shouldn't happen in practice.
-            try
-            {
-                await billing.GrantStartingCreditAsync(created.Id, ct);
-            }
-            catch (Exception grantEx)
-            {
-                logger.LogError(grantEx, "Failed to grant starting credit to member {MemberId}", created.Id);
-            }
             return created;
         }
         catch (Exception ex)
