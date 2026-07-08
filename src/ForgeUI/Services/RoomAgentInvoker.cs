@@ -24,16 +24,18 @@ public sealed class RoomAgentInvoker(
     MissionRunnerClient runner,
     AgentRegistry agents,
     RoomContextAssembler assembler,
+    BillingService billing,
     ILogger<RoomAgentInvoker> logger)
 {
     /// <summary>Hard ceiling on a single agent run (retries included).</summary>
     private static readonly TimeSpan RunTimeout = TimeSpan.FromMinutes(3);
 
-    /// <summary>Fire-and-forget: the mission runs off the caller's hub invocation.</summary>
-    public void Invoke(Guid roomId, Member agent, string handle, string prompt, Guid? replyTo, Guid triggerMessageId)
-        => _ = Task.Run(() => RunAsync(roomId, agent, handle, prompt, replyTo, triggerMessageId));
+    /// <summary>Fire-and-forget: the mission runs off the caller's hub invocation.
+    /// <paramref name="senderId"/> is the invoking human — the run's cost is debited to them (39.2).</summary>
+    public void Invoke(Guid roomId, Guid senderId, Member agent, string handle, string prompt, Guid? replyTo, Guid triggerMessageId)
+        => _ = Task.Run(() => RunAsync(roomId, senderId, agent, handle, prompt, replyTo, triggerMessageId));
 
-    private async Task RunAsync(Guid roomId, Member agent, string handle, string prompt, Guid? replyTo, Guid triggerMessageId)
+    private async Task RunAsync(Guid roomId, Guid senderId, Member agent, string handle, string prompt, Guid? replyTo, Guid triggerMessageId)
     {
         using var cts = new CancellationTokenSource(RunTimeout);
         var ct = cts.Token;
@@ -52,6 +54,18 @@ public sealed class RoomAgentInvoker(
                 return;
             }
             var verifies = descriptor.VerifiesAnswers;
+
+            // Balance = cap = meter (39.2): a run is allowed while the invoker's balance is positive.
+            // Check before showing "thinking" so an out-of-credits user gets a clear reply, not a
+            // spinner that fails. Settlement (debit) happens after the run below.
+            if (!await billing.HasCreditAsync(senderId, ct))
+            {
+                logger.LogInformation("Member {MemberId} out of credits — blocking {Handle}", senderId, handle);
+                await PostAsync(roomId, agent, handle, triggerMessageId,
+                    "You're out of credits. Top up to keep running agents.",
+                    verified: false, stepCount: 0, retryCount: 0, trace: [], ct);
+                return;
+            }
 
             await broadcaster.PublishAgentThinkingAsync(roomId, agent.Id, handle);
 
@@ -81,6 +95,18 @@ public sealed class RoomAgentInvoker(
                 stepCount: result.StepCount,
                 retryCount: result.RetryCount,
                 trace: trace, ct);
+
+            // Settle: debit the run's actual cost after it completes (39.2). Charged even when the
+            // answer didn't verify — the provider tokens were still spent (cost-recovery). Best-effort:
+            // a ledger hiccup must not fail an already-delivered answer.
+            try
+            {
+                await billing.SettleRunAsync(senderId, descriptor.MissionRef, result.Usage, ct);
+            }
+            catch (Exception settleEx)
+            {
+                logger.LogError(settleEx, "Failed to settle run cost for member {MemberId} ({Handle})", senderId, handle);
+            }
         }
         catch (Exception ex)
         {

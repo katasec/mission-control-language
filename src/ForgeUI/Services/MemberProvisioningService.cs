@@ -9,7 +9,8 @@ namespace ForgeUI.Services;
 /// keyed by the stable (issuer, subject). The IdP proves *who* the person is; the Member is
 /// *our* record of them. Authorization (room membership) is separate and DB-enforced.
 /// </summary>
-public sealed class MemberProvisioningService(IReadStore reads, IWriteStore writes, ILogger<MemberProvisioningService> logger)
+public sealed class MemberProvisioningService(
+    IReadStore reads, IWriteStore writes, BillingService billing, ILogger<MemberProvisioningService> logger)
 {
     /// <summary>Resolve (and provision on first sight) the Member for a principal, or null if unauthenticated.</summary>
     public async Task<Member?> ResolveAsync(ClaimsPrincipal? user, CancellationToken ct = default)
@@ -41,6 +42,9 @@ public sealed class MemberProvisioningService(IReadStore reads, IWriteStore writ
                 Email = email,
             }, ct);
             logger.LogInformation("Provisioned member {MemberId} for {Issuer}/{Subject}", created.Id, issuer, subject);
+            // Auto-grant the one-time F&F starting credit (39.2). Idempotent; only the create-winner
+            // reaches here, so the loser of a provisioning race won't double-grant.
+            await billing.GrantStartingCreditAsync(created.Id, ct);
             return created;
         }
         catch (Exception ex)
