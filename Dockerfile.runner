@@ -30,6 +30,15 @@ RUN --mount=type=secret,id=nuget_token \
 # ---- runtime ------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+
+# Trusted built-in missions may use kind:exec experts. The hallucination-guard Verifier
+# (@guard) shells out to python3 (stdlib only — see experts/Verifier/verify.py). Provision a
+# minimal python3 so exec steps run under the trusted runner policy. (Custom missions get the
+# 39.5 restricted policy that denies exec entirely, so this stays a built-in/trusted capability.)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 \
+ && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish ./
 
 # Missions ship baked into the image (39.1 — no OCI/blob yet). The runner reads each mission's
