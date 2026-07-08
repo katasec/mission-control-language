@@ -43,8 +43,18 @@ public sealed class MemberProvisioningService(
             }, ct);
             logger.LogInformation("Provisioned member {MemberId} for {Issuer}/{Subject}", created.Id, issuer, subject);
             // Auto-grant the one-time F&F starting credit (39.2). Idempotent; only the create-winner
-            // reaches here, so the loser of a provisioning race won't double-grant.
-            await billing.GrantStartingCreditAsync(created.Id, ct);
+            // reaches here, so the loser of a provisioning race won't double-grant. Isolated so a
+            // billing hiccup never blocks sign-in (member creation already succeeded) — worst case a
+            // rare user starts with no credit and needs a manual top-up. We migrate the ledger before
+            // shipping the app, so this window shouldn't happen in practice.
+            try
+            {
+                await billing.GrantStartingCreditAsync(created.Id, ct);
+            }
+            catch (Exception grantEx)
+            {
+                logger.LogError(grantEx, "Failed to grant starting credit to member {MemberId}", created.Id);
+            }
             return created;
         }
         catch (Exception ex)
