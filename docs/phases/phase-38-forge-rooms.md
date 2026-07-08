@@ -1,6 +1,6 @@
 # Phase 38 — Forge Rooms (Agents as `@`-Addressable Members)
 
-> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5 accessible surface COMPLETE (tasks 1, 2, 3, 6, 7, 8a, 9 done — registry, @-autocomplete, add/remove agent, bare handles, raw-model agents (@openai/@claude/@grok), identity seal, `/agents`; **save-as-agent tasks 4/5 resequenced → 39.5**); 38.6 next.**
+> **Status: In progress — 38.1–38.4a + 38.7 Done (live on Azure at `https://forge.katasec.com`); 38.5 accessible surface COMPLETE (tasks 1, 2, 3, 6, 7, 8a, 9 done — registry, @-autocomplete, add/remove agent, bare handles, raw-model agents (@openai/@claude/@grok), identity seal, `/agents`; **save-as-agent tasks 4/5 → 39.5**); **38.6 Acquisition also resequenced → post-Phase 39**. Phase 38's accessible + verified surface is the pre-39 stopping point.**
 > **Priority: TOP — this precedes every other phase in `plan.md`.**
 > **Depends on:** Phase 34/35 (Forge UI / Blazor — this *is* their evolution), Phase 25
 > (mission composition), Phase 25a (`role: judge`), Phase 19 (`forge serve` — mission on
@@ -258,7 +258,7 @@ own spoke doc and task list. Run them 1→6. The nine "spokes" originally sketch
 | [38.4 Identity & Membership](phase-38.4-identity-membership.md) | **Done.** OIDC + invites + confidentiality + roles (orig. S3) — real Entra External ID sign-in verified live |
 | [38.4a UI Foundation & Onboarding](phase-38.4a-ui-and-onboarding.md) | **Done.** Tokenized design system + dark mode (see [UI Design System](../design/ui-design-system.md)), "gate everything" auth IA + `AccountMenu` + `/playground`, first-run "room of two" onboarding, and the LLM-verified `@forge/assistant` default agent |
 | [38.5 Registry / GAL + Save-as-Agent](phase-38.5-registry-save-as-agent.md) | **Accessible surface complete.** `@handle` directory + scope (orig. S6). Done: task 1 (registry), 2 (@-autocomplete), 3 (add/remove agent + auto-reply guard), 6 (bare handles), 7 (raw `@openai`/`@claude`/`@grok` — no false-green), 8a (identity seal), 9 (`/agents`). **Save-as-agent (tasks 4/5) resequenced → 39.5** (first user-authored persisted+runnable mission → build on the 39 runtime). |
-| [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | shareable verified output + share-an-agent (orig. S8) |
+| [38.6 Acquisition Loop](phase-38.6-acquisition-loop.md) | **Resequenced → post-Phase 39 (2026-07-08).** shareable verified output + share-an-agent (orig. S8) — share-an-agent needs user-authored agents (save-as-agent → 39.5); shareable outputs are a growth loop that should feed the monetized 39 runtime, not the demo. |
 | [38.7 Hosting & Deployment (Azure)](phase-38.7-hosting-deployment.md) | **Done.** Containerize + version the app, Azure Container Apps + ACR + Key Vault + Postgres via Bicep (`katasec/forge-infra`), passwordless CI/runtime, custom domain `forge.katasec.com` + managed TLS. Live. |
 
 **Dependency order:** `38.1 → 38.2 → 38.3`, `38.1 → 38.4`, `{38.2, 38.4} → 38.5`,

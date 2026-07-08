@@ -1,6 +1,6 @@
 # Phase 38.6 — Acquisition Loop
 
-> **Status: Todo** · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: Resequenced → post-Phase 39** (decided 2026-07-08 — see note below) · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** 38.3 (trust surface) + 38.5 (registry / shareable agents)
 > **Done when:** an agent answer can be shared outward carrying its verified badge, and a
 > share-an-agent link lets someone else add that agent to their own room.
@@ -8,6 +8,19 @@
 The growth layer — the deliberate replacement for the in-context injection we *can't* do on
 WhatsApp (parent §5.3). Native-first sacrifices in-surface discovery; this reclaims it by
 making outputs and agents self-propagating.
+
+### Resequencing — Acquisition Loop → post-Phase 39 (decided 2026-07-08)
+
+The growth loop should feed the real product, not the demo. Both halves lean forward into Phase 39:
+
+- **Share-an-agent** is only meaningful once there are *user-authored* agents worth sharing — i.e.
+  **save-as-agent, itself resequenced → 39.5**. Sharing a built-in everyone already has is moot.
+- **Shareable verified outputs** (a public, provenance-stamped read-only projection of a run) is an
+  acquisition mechanism whose value — and whose "publicly expose a stored run" concerns (persistence,
+  permissioning, provenance-at-scale) — align with Phase 39's **metered, multi-tenant runtime**.
+
+So Phase 38 ships its **accessible + verified surface** and stops there; acquisition lands after the
+runtime it is meant to grow. The design below stands; only the *build* moves.
 
 ## Tasks (dependency order)
 
