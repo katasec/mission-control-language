@@ -176,11 +176,28 @@
         }
 
         <div class="room-composer">
+            @if (_mentionMatches.Count > 0)
+            {
+                <div class="mention-menu">
+                    @foreach (var (handle, i) in _mentionMatches.Select((h, i) => (h, i)))
+                    {
+                        <button type="button"
+                                class="mention-item @(i == _mentionIndex ? "mention-active" : "")"
+                                @onclick="() => PickMentionAsync(handle)">
+                            <span class="mention-avatar">@Initial(handle)</span>
+                            <span class="mention-handle">@handle</span>
+                            <IdentitySealMark Descriptor="DescriptorFor(handle)" />
+                            <span class="mention-desc">@(DescriptorFor(handle)?.Description)</span>
+                        </button>
+                    }
+                </div>
+            }
             <input class="field room-input"
-                   @bind="_input"
-                   @bind:event="oninput"
-                   @onkeydown="OnKeyDown"
-                   placeholder="Message @(_room?.Metadata.Name)…" />
+                   value="@_input"
+                   @oninput="OnComposerInput"
+                   @onkeydown="OnComposerKeyDown"
+                   @ref="_inputRef"
+                   placeholder="Message @(_room?.Metadata.Name)… (@@ to mention an agent)" />
             <button class="btn-primary" @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
         </div>
     }
@@ -207,6 +224,11 @@
     private IReadOnlyList<AgentDescriptor> _addableAgents = [];
     private string? _pendingAddHandle;
     private string? _notice;
+    // @-mention autocomplete (38.5 task 2).
+    private ElementReference _inputRef;
+    private string? _mentionQuery;
+    private List<string> _mentionMatches = [];
+    private int _mentionIndex;
 
     private void ToggleTrace(Guid messageId)
     {
@@ -302,6 +324,7 @@
         {
             _agentsListing = Agents.List();
             _input = "";
+            ClearMentions();
             return;
         }
 
@@ -314,6 +337,7 @@
                 ? $"{absent.Handle} isn't in this room yet — add it below, then message it."
                 : $"{absent.Handle} isn't in this room. Ask a provisioner to add it.";
             _input = "";
+            ClearMentions();
             if (_isProvisioner)
             {
                 _pendingAddHandle = absent.Handle;
@@ -326,6 +350,7 @@
         _agentsListing = null;   // a real message dismisses the ephemeral listing
         _notice = null;
         _input = "";
+        ClearMentions();
         await Messages.SendHumanMessageAsync(RoomId, _me, text);
     }
 
@@ -375,8 +400,92 @@
         StateHasChanged();
     }
 
-    private Task OnKeyDown(KeyboardEventArgs e)
-        => e.Key == "Enter" ? SendAsync() : Task.CompletedTask;
+    // --- @-mention autocomplete (38.5 task 2) -------------------------------------------------
+
+    private void OnComposerInput(ChangeEventArgs e)
+    {
+        _input = e.Value?.ToString() ?? string.Empty;
+        RecomputeMentions();
+    }
+
+    // Show the picker when the caret sits inside an "@token" (start-of-word @, no whitespace after),
+    // filtered to the room's addressable agents — matching what you can actually @-invoke here.
+    private void RecomputeMentions()
+    {
+        _mentionQuery = ActiveMentionQuery(_input);
+        if (_mentionQuery is null)
+        {
+            _mentionMatches = [];
+            _mentionIndex = 0;
+            return;
+        }
+
+        var q = _mentionQuery;
+        _mentionMatches = RoomAgentHandles()
+            .Where(h => q.Length == 0
+                        || h[1..].StartsWith(q, StringComparison.OrdinalIgnoreCase)
+                        || h[1..].Contains(q, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(h => h[1..].StartsWith(q, StringComparison.OrdinalIgnoreCase))
+            .ThenBy(h => h, StringComparer.OrdinalIgnoreCase)
+            .Take(6)
+            .ToList();
+        _mentionIndex = 0;
+    }
+
+    // The @-handles addressable in this room = the room's agent members.
+    private IEnumerable<string> RoomAgentHandles()
+        => _memberNames.Values.Where(v => v.StartsWith('@'));
+
+    // The text after the active, word-starting '@' up to the caret (== end of input), or null.
+    private static string? ActiveMentionQuery(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return null;
+        var at = input.LastIndexOf('@');
+        if (at < 0) return null;
+        if (at > 0 && !char.IsWhiteSpace(input[at - 1])) return null; // must start a word
+        var token = input[(at + 1)..];
+        return token.Any(char.IsWhiteSpace) ? null : token;
+    }
+
+    private async Task PickMentionAsync(string handle)
+    {
+        var at = _input.LastIndexOf('@');
+        _input = (at >= 0 ? _input[..at] : _input) + handle + " ";
+        ClearMentions();
+        await _inputRef.FocusAsync();
+    }
+
+    private void ClearMentions()
+    {
+        _mentionMatches = [];
+        _mentionQuery = null;
+        _mentionIndex = 0;
+    }
+
+    private async Task OnComposerKeyDown(KeyboardEventArgs e)
+    {
+        if (_mentionMatches.Count > 0)
+        {
+            switch (e.Key)
+            {
+                case "ArrowDown":
+                    _mentionIndex = (_mentionIndex + 1) % _mentionMatches.Count;
+                    return;
+                case "ArrowUp":
+                    _mentionIndex = (_mentionIndex - 1 + _mentionMatches.Count) % _mentionMatches.Count;
+                    return;
+                case "Enter":
+                    await PickMentionAsync(_mentionMatches[_mentionIndex]);
+                    return;
+                case "Escape":
+                    ClearMentions();
+                    return;
+            }
+        }
+
+        if (e.Key == "Enter")
+            await SendAsync();
+    }
 
     private async Task CreateInviteAsync()
     {
