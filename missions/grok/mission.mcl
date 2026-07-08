@@ -1,0 +1,5 @@
+mission Grok(goal) = {
+    Answerer
+}
+
+output(Grok)

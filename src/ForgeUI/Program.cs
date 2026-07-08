@@ -116,6 +116,7 @@ var registry = await MissionRegistry.LoadAsync(
     ("Forge",     "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
     ("Assistant", "General assistant, answers LLM-verified",       Path.Combine(missionDir, "assistant",           "mission.mcl")),
     ("Claude",    "Raw Claude — no verification",                  Path.Combine(missionDir, "claude",              "mission.mcl")),
+    ("Grok",      "Raw Grok (xAI) — no verification",              Path.Combine(missionDir, "grok",                "mission.mcl")),
 ]);
 Console.Error.WriteLine(registry.Missions.Count == 0
     ? "ForgeUI: no missions loaded (no provider keys set) — mission chat disabled; /rooms still available."

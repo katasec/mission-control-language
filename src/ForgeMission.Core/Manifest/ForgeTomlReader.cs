@@ -95,7 +95,7 @@ public static class ForgeTomlReader
             AssertField(rows, "provider", $"[providers.{name}]", path);
             AssertField(rows, "model",    $"[providers.{name}]", path);
 
-            var knownProviders = new[] { "openai", "anthropic", "azure", "ollama" };
+            var knownProviders = new[] { "openai", "anthropic", "azure", "ollama", "xai" };
             if (!knownProviders.Contains(rows["provider"]))
                 throw new ForgeTomlException(
                     $"[providers.{name}] provider \"{rows["provider"]}\" is not recognised. " +

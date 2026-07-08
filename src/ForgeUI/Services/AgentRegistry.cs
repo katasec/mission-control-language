@@ -75,6 +75,18 @@ public sealed class AgentRegistry
             Reserved        = true,
             VerifiesAnswers = false,
         });
+
+        Register(registry, new AgentDescriptor
+        {
+            Handle          = "@grok",
+            Description     = "Raw Grok (xAI) model — a direct answer, not verified.",
+            Publisher       = "Forge",
+            MissionRef      = "Grok",
+            Scope           = AgentScope.Shared,
+            Seal            = IdentitySeal.Official,
+            Reserved        = true,
+            VerifiesAnswers = false,
+        });
     }
 
     /// <summary>

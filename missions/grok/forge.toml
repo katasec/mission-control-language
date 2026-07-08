@@ -1,0 +1,4 @@
+[providers.default]
+provider = "xai"
+model    = env("MCL_XAI_MODEL", "grok-3-mini")
+apiKey   = env("XAI_API_KEY")
