@@ -64,12 +64,16 @@
 
                 @if (msg.Trust is { } trust)
                 {
+                    var descriptor = DescriptorFor(msg.SenderName);
+                    var verifies = descriptor?.VerifiesAnswers ?? true;
+                    var cardClass = !verifies ? "card-raw" : (trust.Verified ? "card-verified" : "card-unverified");
+
                     <div class="room-msg room-msg-agent">
-                        <div class="agent-card @(trust.Verified ? "card-verified" : "card-unverified")">
+                        <div class="agent-card @cardClass">
                             <div class="agent-card-header">
-                                <TrustSignalBadge Signal="ToSignal(trust)" />
+                                <TrustSignalBadge Signal="ToSignal(trust)" Verifies="verifies" />
                                 <span class="mission-label">@msg.SenderName</span>
-                                <IdentitySealMark Descriptor="DescriptorFor(msg.SenderName)" />
+                                <IdentitySealMark Descriptor="descriptor" />
                                 <span class="chat-meta">@msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</span>
                                 @if (trust.Trace.Count > 0)
                                 {

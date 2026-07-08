@@ -24,8 +24,7 @@ public class MissionRegistry
         Missions = missions;
 
     public static async Task<MissionRegistry> LoadAsync(
-        IEnumerable<(string label, string description, string path)> specs,
-        string apiKey)
+        IEnumerable<(string label, string description, string path)> specs)
     {
         var entries = new List<MissionEntry>();
         foreach (var (label, description, path) in specs)
@@ -40,15 +39,18 @@ public class MissionRegistry
             IExpertRunner runner;
             if (manifest?.Providers?.GetValueOrDefault("default") is { } profile)
             {
-                // Inject the resolved API key so each mission uses the live env value.
-                var effective = new ForgeMission.Core.Manifest.ProviderProfile
+                // Per-mission key resolution (38.5 task 7): ForgeTomlReader already resolved this
+                // mission's own env(...) key (MCL_API_KEY / ANTHROPIC_API_KEY / …). Use the profile
+                // as-is — no single global override — so each provider agent authenticates itself.
+                if (string.IsNullOrWhiteSpace(profile.ApiKey))
                 {
-                    Provider = profile.Provider,
-                    Model    = profile.Model,
-                    ApiKey   = apiKey,
-                    Endpoint = profile.Endpoint,
-                };
-                runner = ProviderClientBuilder.Build(effective);
+                    // No key for this provider (e.g. ANTHROPIC_API_KEY unset) — skip rather than
+                    // register an agent that would fail at call time; its @handle simply won't bind.
+                    Console.Error.WriteLine(
+                        $"ForgeUI: '{label}' has no API key for provider '{profile.Provider}' — skipping.");
+                    continue;
+                }
+                runner = ProviderClientBuilder.Build(profile);
             }
             else
             {

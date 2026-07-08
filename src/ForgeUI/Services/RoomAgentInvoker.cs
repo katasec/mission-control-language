@@ -42,6 +42,13 @@ public sealed class RoomAgentInvoker(
                 return;
             }
 
+            // Whether this agent's mission actually verifies (38.5 task 7). A raw-model passthrough
+            // does not — so its answer must never be green-checked, even though the no-judge
+            // pipeline reports Pass. Gate the persisted verdict here; the neutral "not verified"
+            // chip is derived at render from the same descriptor flag.
+            agents.TryResolveDescriptor(handle, out var descriptor);
+            var verifies = descriptor?.VerifiesAnswers ?? false;
+
             await broadcaster.PublishAgentThinkingAsync(roomId, agent.Id, handle);
 
             var memberNames = (await reads.GetRoomMembersAsync(roomId, ct)).ToDictionary(m => m.Id, m => m.DisplayName);
@@ -65,7 +72,7 @@ public sealed class RoomAgentInvoker(
 
             await PostAsync(roomId, agent, handle, triggerMessageId,
                 result.AgentText ?? "(no answer)",
-                verified: result.Trust?.Verified ?? false,
+                verified: verifies && (result.Trust?.Verified ?? false),
                 stepCount: result.Trust?.StepCount ?? trace.Count,
                 retryCount: result.Trust?.RetryCount ?? 0,
                 trace: trace, ct);

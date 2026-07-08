@@ -72,7 +72,12 @@ public sealed class EssentialAgentSeedTests(PostgresFixture fixture) : IClassFix
         {
             Assert.Equal("@guard", (await db.Members.FindAsync(RoomsSeeder.HallucinationGuardId))!.DisplayName);
             Assert.Equal("@assistant", (await db.Members.FindAsync(RoomsSeeder.AssistantId))!.DisplayName);
-            Assert.Equal(2, await db.Members.CountAsync(m => m.Kind == MemberKind.Agent));
+            // The two pre-existing rows renamed in place (not duplicated); the other essential
+            // agents (@openai, @claude) were inserted once. No handle appears twice.
+            var handles = await db.Members.Where(m => m.Kind == MemberKind.Agent).Select(m => m.DisplayName).ToListAsync();
+            Assert.Equal(handles.Count, handles.Distinct().Count());
+            Assert.Contains("@guard", handles);
+            Assert.Contains("@assistant", handles);
         }
     }
 }

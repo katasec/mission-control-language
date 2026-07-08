@@ -71,6 +71,14 @@ public sealed record AgentDescriptor
     public IdentitySeal Seal { get; init; } = IdentitySeal.None;
 
     /// <summary>
+    /// Whether this agent's mission actually verifies its answers (has a judge / deterministic
+    /// verifier). Gates the green per-response Verified badge (38.5 task 7): raw-model passthrough
+    /// agents set this <c>false</c>, so their answers can never be green-checked no matter what the
+    /// pipeline returns — nothing was verified. Honest default is <c>false</c> (never over-claim).
+    /// </summary>
+    public bool VerifiesAnswers { get; init; }
+
+    /// <summary>
     /// True for official handles reserved before custom/marketplace opens (38.5 task 6) — cheap
     /// insurance against impersonation while the namespace is first-come-first-served.
     /// </summary>

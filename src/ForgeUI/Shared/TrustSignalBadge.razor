@@ -1,11 +1,27 @@
 @if (Signal is not null)
 {
-    <div class="trust-badge @(Signal.Verified ? "verified" : "unverified")">
-        <span class="trust-icon">@(Signal.Verified ? "✓" : "✗")</span>
-        <span class="trust-label">@(Signal.Verified ? "Verified" : "Unverified")</span>
-    </div>
+    @if (!Verifies)
+    {
+        @* Raw-model agent (38.5 task 7): no verification step exists, so this is neither a pass
+           nor a failure — a neutral state, never the green ✓. The gold identity seal beside it
+           still says who the agent is. *@
+        <div class="trust-badge not-verified">
+            <span class="trust-icon">○</span>
+            <span class="trust-label">Not verified</span>
+        </div>
+    }
+    else
+    {
+        <div class="trust-badge @(Signal.Verified ? "verified" : "unverified")">
+            <span class="trust-icon">@(Signal.Verified ? "✓" : "✗")</span>
+            <span class="trust-label">@(Signal.Verified ? "Verified" : "Unverified")</span>
+        </div>
+    }
 }
 
 @code {
     [Parameter] public TrustSignal? Signal { get; set; }
+
+    /// <summary>Whether this agent verifies its answers. False = raw model → neutral chip.</summary>
+    [Parameter] public bool Verifies { get; set; } = true;
 }

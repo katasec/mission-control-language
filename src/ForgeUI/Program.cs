@@ -107,32 +107,19 @@ var missionDir = builder.Configuration["MissionDir"]
     ?? Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "missions");
 missionDir = Path.GetFullPath(missionDir);
 
-// Read key from the first forge.toml that has one, or fall back to empty.
-var apiKey = ForgeTomlReader.TryRead(Path.Combine(missionDir, "hallucination-guard", "mission.mcl"))
-                 ?.Providers?.GetValueOrDefault("default")?.ApiKey
-             ?? string.Empty;
-
-var keyPrefix = apiKey is { Length: > 10 } ? apiKey[..10] + "..." : "(empty)";
-Console.Error.WriteLine($"ForgeUI: API key length = {apiKey.Length}, prefix = {keyPrefix}");
-
-// Rooms (38.1) has no LLM in the path, so a missing key disables mission chat
-// only — it no longer kills the host.
-MissionRegistry registry;
-if (string.IsNullOrWhiteSpace(apiKey))
-{
-    Console.Error.WriteLine("ForgeUI: API key is empty — mission chat disabled (set MCL_API_KEY); /rooms still available.");
-    registry = new MissionRegistry([]);
-}
-else
-{
-    registry = await MissionRegistry.LoadAsync(
-    [
-        ("ChatGPT",   "Raw LLM — no verification",                     Path.Combine(missionDir, "vanilla",             "mission.mcl")),
-        ("Forge",     "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
-        ("Assistant", "General assistant, answers LLM-verified",       Path.Combine(missionDir, "assistant",           "mission.mcl")),
-    ],
-    apiKey);
-}
+// Per-mission key resolution (38.5 task 7): each mission's forge.toml resolves its own env(...)
+// key, so a missing key disables only that provider's agent (LoadAsync skips it) rather than the
+// whole registry. Rooms (38.1) has no LLM in the path, so the host runs regardless.
+var registry = await MissionRegistry.LoadAsync(
+[
+    ("ChatGPT",   "Raw LLM — no verification",                     Path.Combine(missionDir, "vanilla",             "mission.mcl")),
+    ("Forge",     "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
+    ("Assistant", "General assistant, answers LLM-verified",       Path.Combine(missionDir, "assistant",           "mission.mcl")),
+    ("Claude",    "Raw Claude — no verification",                  Path.Combine(missionDir, "claude",              "mission.mcl")),
+]);
+Console.Error.WriteLine(registry.Missions.Count == 0
+    ? "ForgeUI: no missions loaded (no provider keys set) — mission chat disabled; /rooms still available."
+    : $"ForgeUI: loaded {registry.Missions.Count} mission(s): {string.Join(", ", registry.Missions.Select(m => m.Label))}.");
 
 builder.Services.AddSingleton(registry);
 builder.Services.AddScoped<MissionService>();

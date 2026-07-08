@@ -22,26 +22,58 @@ public sealed class AgentRegistry
         // @guard → the verify-loop mission (registry label "Forge").
         Register(registry, new AgentDescriptor
         {
-            Handle      = "@guard",
-            Description = "Checks a claim for hallucinations with a deterministic verify loop.",
-            Publisher   = "Forge",
-            MissionRef  = "Forge",
-            Scope       = AgentScope.Shared,
-            Seal        = IdentitySeal.Official,
-            Reserved    = true,
+            Handle          = "@guard",
+            Description     = "Checks a claim for hallucinations with a deterministic verify loop.",
+            Publisher       = "Forge",
+            MissionRef      = "Forge",
+            Scope           = AgentScope.Shared,
+            Seal            = IdentitySeal.Official,
+            Reserved        = true,
+            VerifiesAnswers = true,
         });
 
         // @assistant → general answer verified by an LLM judge (registry label "Assistant").
         // The default agent dropped into every new user's starter room.
         Register(registry, new AgentDescriptor
         {
-            Handle      = "@assistant",
-            Description = "General assistant whose answers are verified by an LLM judge.",
-            Publisher   = "Forge",
-            MissionRef  = "Assistant",
-            Scope       = AgentScope.Shared,
-            Seal        = IdentitySeal.Official,
-            Reserved    = true,
+            Handle          = "@assistant",
+            Description     = "General assistant whose answers are verified by an LLM judge.",
+            Publisher       = "Forge",
+            MissionRef      = "Assistant",
+            Scope           = AgentScope.Shared,
+            Seal            = IdentitySeal.Official,
+            Reserved        = true,
+            VerifiesAnswers = true,
+        });
+
+        // Raw-model passthrough agents (38.5 task 7): thin single-expert missions bound to a
+        // provider. They carry the Official *identity* seal (they really are Forge's OpenAI/Claude
+        // passthrough) but VerifiesAnswers = false — their answers are never green-checked, because
+        // nothing verifies them. Raw beside verified in one room is the differentiation.
+        // @openai reuses the "ChatGPT" (vanilla) mission; @claude binds the Anthropic mission and
+        // only registers when ANTHROPIC_API_KEY is set (otherwise its mission isn't loaded).
+        Register(registry, new AgentDescriptor
+        {
+            Handle          = "@openai",
+            Description     = "Raw OpenAI model — a direct answer, not verified.",
+            Publisher       = "Forge",
+            MissionRef      = "ChatGPT",
+            Scope           = AgentScope.Shared,
+            Seal            = IdentitySeal.Official,
+            Reserved        = true,
+            VerifiesAnswers = false,
+        });
+
+        Register(registry, new AgentDescriptor
+        {
+            Handle          = "@claude",
+            Description     = "Raw Claude model — a direct answer, not verified.",
+            Publisher       = "Forge",
+            MissionRef      = "Claude",
+            Scope           = AgentScope.Shared,
+            Seal            = IdentitySeal.Official,
+            Reserved        = true,
+            VerifiesAnswers = false,
         });
     }
 

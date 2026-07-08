@@ -330,6 +330,7 @@ h2 { font-size: 20px; }
 .agent-card       { border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm); }
 .card-verified    { border-color: var(--success-border); }
 .card-unverified  { border-color: var(--danger-border); }
+.card-raw         { border-color: var(--border-strong); }   /* raw model — neutral, not a failure */
 .card-running     { border-color: var(--border); }
 
 .agent-card-header { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
@@ -338,6 +339,7 @@ h2 { font-size: 20px; }
 .trust-badge  { display: inline-flex; align-items: center; gap: var(--space-1); font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: var(--radius-pill); }
 .verified     { background: var(--success-bg); color: var(--success); }
 .unverified   { background: var(--danger-bg); color: var(--danger); }
+.not-verified { background: var(--surface-sunken); color: var(--text-subtle); }  /* raw model — neutral, never green */
 .trust-icon   { font-size: 12px; }
 
 /* Identity / publisher seal (38.5 task 8a) — per-AGENT, sits on the handle. A filled check

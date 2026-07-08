@@ -21,6 +21,11 @@ public static class RoomsSeeder
     // The default general assistant dropped into every new user's starter room (LLM-verified).
     public static readonly Guid AssistantId = Guid.Parse("44444444-4444-4444-4444-444444444444");
     public const string AssistantHandle = "@assistant";
+    // Raw-model passthrough agents (38.5 task 7) — official identity, unverified answers.
+    public static readonly Guid OpenAiId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+    public const string OpenAiHandle = "@openai";
+    public static readonly Guid ClaudeId = Guid.Parse("66666666-6666-6666-6666-666666666666");
+    public const string ClaudeHandle = "@claude";
     public static readonly Guid DemoRoomId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     public static readonly Guid AlicePrivateRoomId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
@@ -35,6 +40,8 @@ public static class RoomsSeeder
         await using var db = await factory.CreateDbContextAsync(ct);
         await EnsureAgentAsync(db, HallucinationGuardId, GuardHandle, ct);
         await EnsureAgentAsync(db, AssistantId, AssistantHandle, ct);
+        await EnsureAgentAsync(db, OpenAiId, OpenAiHandle, ct);
+        await EnsureAgentAsync(db, ClaudeId, ClaudeHandle, ct);
         await db.SaveChangesAsync(ct);
     }
 
@@ -46,6 +53,8 @@ public static class RoomsSeeder
         await EnsureHumanAsync(db, BobId, "Bob", "bob", "bob@dev.local", ct);
         await EnsureAgentAsync(db, HallucinationGuardId, GuardHandle, ct);
         await EnsureAgentAsync(db, AssistantId, AssistantHandle, ct);
+        await EnsureAgentAsync(db, OpenAiId, OpenAiHandle, ct);
+        await EnsureAgentAsync(db, ClaudeId, ClaudeHandle, ct);
 
         await EnsureRoomAsync(db, DemoRoomId, "Demo Room", "Alice, Bob, and the hallucination guard", ct);
         await EnsureRoomAsync(db, AlicePrivateRoomId, "Alice's Room", "Membership isolation check — Alice only", ct);
@@ -54,6 +63,8 @@ public static class RoomsSeeder
         await EnsureMembershipAsync(db, DemoRoomId, AliceId, MembershipRole.Provisioner, ct);
         await EnsureMembershipAsync(db, DemoRoomId, BobId, MembershipRole.Consumer, ct);
         await EnsureMembershipAsync(db, DemoRoomId, HallucinationGuardId, MembershipRole.Consumer, ct);
+        // Raw @openai in the demo room — raw beside verified, the task-7 contrast.
+        await EnsureMembershipAsync(db, DemoRoomId, OpenAiId, MembershipRole.Consumer, ct);
         await EnsureMembershipAsync(db, AlicePrivateRoomId, AliceId, MembershipRole.Provisioner, ct);
 
         await db.SaveChangesAsync(ct);
