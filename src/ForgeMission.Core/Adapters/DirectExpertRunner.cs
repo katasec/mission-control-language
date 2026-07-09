@@ -8,9 +8,32 @@ namespace ForgeMission.Core.Adapters;
 
 public class DirectExpertRunner(IChatClient chatClient) : IExpertRunner
 {
-    // StepEnvelopeContext.Default.Options has PropertyNameCaseInsensitive = true
-    // and a TypeInfoResolver — required for AOT's GetResponseAsync<T>.
-    private static readonly JsonSerializerOptions _jsonOptions = StepEnvelopeContext.Default.Options;
+    // Explicit closed schema for structured output. GetResponseAsync<StepEnvelope> auto-derives a
+    // schema from the record, but StepEnvelope.Meta is an open dictionary, which produces an object
+    // without `additionalProperties: false`. Anthropic's structured output rejects that ("For 'object'
+    // type, 'additionalProperties' must be explicitly set to false") while OpenAI tolerates it — so a
+    // hand-written closed schema (text/status/reason only; Meta is never set by the LLM path) is the
+    // only shape both providers accept. All three fields are `required` to satisfy OpenAI strict mode;
+    // `reason` is nullable. The backing JsonDocument is held statically so its JsonElement stays valid.
+    private const string StepEnvelopeSchemaJson = """
+    {
+      "type": "object",
+      "properties": {
+        "text":   { "type": "string" },
+        "status": { "type": "string", "enum": ["pass", "fail"] },
+        "reason": { "type": ["string", "null"] }
+      },
+      "required": ["text", "status", "reason"],
+      "additionalProperties": false
+    }
+    """;
+
+    private static readonly JsonDocument _schemaDoc = JsonDocument.Parse(StepEnvelopeSchemaJson);
+
+    private static readonly ChatResponseFormat _stepFormat = ChatResponseFormat.ForJsonSchema(
+        _schemaDoc.RootElement,
+        schemaName: "step_envelope",
+        schemaDescription: "A step result: the answer text plus a pass/fail status and optional reason.");
 
     // Appended to system prompts in streaming mode (structured output not available for streaming).
     private const string JudgeStreamingInstruction = """
@@ -40,8 +63,23 @@ Respond with this exact JSON format and nothing else — status must always be "
             new(ChatRole.System, systemPrompt),
             new(ChatRole.User, userMessage)
         };
-        var response = await chatClient.GetResponseAsync<StepEnvelope>(messages, _jsonOptions, cancellationToken: ct);
-        var envelope = response.Result;
+        // Non-generic call with an explicit closed schema (see _stepFormat) rather than
+        // GetResponseAsync<StepEnvelope>, whose derived schema is rejected by Anthropic. Deserialize
+        // via the source-gen context (AOT-safe); fall back to the raw text if the model returns
+        // non-JSON for any reason.
+        var options  = new ChatOptions { ResponseFormat = _stepFormat };
+        var response = await chatClient.GetResponseAsync(messages, options, cancellationToken: ct);
+
+        StepEnvelope envelope;
+        try
+        {
+            envelope = JsonSerializer.Deserialize(response.Text, StepEnvelopeContext.Default.StepEnvelope)
+                       ?? new StepEnvelope(response.Text);
+        }
+        catch (JsonException)
+        {
+            envelope = new StepEnvelope(response.Text);
+        }
 
         // Non-judge experts always continue the pipeline — enforce pass regardless of LLM output.
         return expert.IsJudge ? envelope : envelope with { Status = "pass", Reason = null };
