@@ -133,6 +133,8 @@ builder.Services.AddSingleton<RoomContextAssembler>();
 builder.Services.AddSingleton<RoomAgentInvoker>();
 // Add/remove an agent from a room (38.5 task 3) — provisioner-gated membership management.
 builder.Services.AddSingleton<RoomAgentMembershipService>();
+// Provisioner-only room admin (rename) — kept out of the agent-membership service.
+builder.Services.AddSingleton<RoomAdminService>();
 
 // Room delivery (38.4): in-proc fan-out to the Blazor client + external SignalR clients,
 // and the one membership-checked send path shared by both.
@@ -142,6 +144,9 @@ builder.Services.AddSingleton<RoomMessageService>();
 // Onboarding: give a brand-new user a private "room of two" with @assistant so they
 // land in a usable chat instead of an empty rooms list.
 builder.Services.AddScoped<StarterRoomService>();
+
+// User-initiated "+ New room" — name it and pick which agents join up front.
+builder.Services.AddScoped<RoomCreationService>();
 
 var app = builder.Build();
 

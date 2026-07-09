@@ -1,5 +1,3 @@
-@page "/rooms/{RoomId:guid}"
-@attribute [Authorize]
 @using ForgeMission.Core.Runtime
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
@@ -10,82 +8,34 @@
 @inject InviteService Invites
 @inject AgentRegistry Agents
 @inject RoomAgentMembershipService AgentMgmt
+@inject RoomAdminService Admin
 @inject NavigationManager Nav
 @implements IDisposable
 
-<div class="room">
+@* The conversation pane of the rooms shell. A pure component keyed on RoomId — the parent
+   Pages/Rooms shell recreates it on room switch, so init/subscribe/dispose stay per-room. *@
+<div class="convo">
     @if (_me is null)
     {
-        <div class="room-empty">Loading…</div>
+        <div class="convo-empty">Loading…</div>
     }
     else if (_denied)
     {
-        <div class="room-empty">You are not a member of this room. <a href="/rooms">Back to rooms</a></div>
+        <div class="convo-empty">
+            <div class="convo-empty-title">You're not in this room.</div>
+            <div>Ask a provisioner for an invite link.</div>
+        </div>
     }
     else
     {
-        <div class="room-header">
-            <a class="room-back" href="/rooms">← rooms</a>
-            <span class="room-name">@(_room?.Metadata.Name ?? "…")</span>
-            <span class="room-members">@string.Join(" · ", _memberNames.Values)</span>
+        <div class="convo-header">
+            <span class="convo-name">@(_room?.Metadata.Name ?? "…")</span>
+            <button class="convo-members-btn" @onclick="OpenMembersAsync">@MemberCountLabel</button>
             @if (_isProvisioner)
             {
                 <span class="room-badge">provisioner</span>
             }
-            <AccountMenu />
         </div>
-
-        @if (_isProvisioner)
-        {
-            <div class="room-invite">
-                <button class="btn-link" @onclick="CreateInviteAsync">+ create invite link</button>
-                <button class="btn-link" @onclick="ToggleAddAgentAsync">+ add agent</button>
-                @if (_inviteUrl is not null)
-                {
-                    <input class="invite-field" readonly value="@_inviteUrl" @onfocus="SelectAll" />
-                }
-            </div>
-
-            @if (_showAddAgent)
-            {
-                <div class="agents-directory agent-manage">
-                    <div class="agents-directory-head">
-                        <span class="agents-directory-title">Agents in this room</span>
-                        <button class="btn-link agents-directory-dismiss" @onclick="() => _showAddAgent = false">done</button>
-                    </div>
-                    @foreach (var (id, handle) in RoomAgentMembers())
-                    {
-                        <div class="agents-directory-row">
-                            <div class="agents-directory-line">
-                                <span class="agents-directory-handle">@handle</span>
-                                <IdentitySealMark Descriptor="DescriptorFor(handle)" />
-                                <span class="flex-spacer"></span>
-                                <button class="btn-link btn-sm" @onclick="() => RemoveAgentAsync(id)">remove</button>
-                            </div>
-                        </div>
-                    }
-
-                    <div class="agents-directory-title agent-manage-subhead">Add an agent</div>
-                    @if (_addableAgents.Count == 0)
-                    {
-                        <div class="agents-directory-desc">Every available agent is already in this room.</div>
-                    }
-                    @foreach (var d in _addableAgents)
-                    {
-                        <div class="agents-directory-row @(d.Handle == _pendingAddHandle ? "agent-manage-highlight" : "")">
-                            <div class="agents-directory-line">
-                                <span class="agents-directory-handle">@d.Handle</span>
-                                <IdentitySealMark Descriptor="d" />
-                                <span class="agents-directory-publisher">@d.Publisher</span>
-                                <span class="flex-spacer"></span>
-                                <button class="btn-accent btn-sm" @onclick="() => AddAgentAsync(d.Handle)">Add</button>
-                            </div>
-                            <div class="agents-directory-desc">@d.Description</div>
-                        </div>
-                    }
-                </div>
-            }
-        }
 
         <div class="room-stream">
             @if (_messages.Count == 0)
@@ -203,8 +153,129 @@
     }
 </div>
 
+@* Members modal — the room's people + agents in one roster, with rename, add-agent and invite
+   folded in (provisioner-gated). Opened from the header "N members" button or an absent-agent
+   nudge. Floats over the conversation instead of pushing it down. *@
+@if (_showMembers)
+{
+    <div class="modal-backdrop" @onclick="CloseMembers">
+        <div class="modal" @onclick:stopPropagation="true" role="dialog" aria-modal="true">
+            <div class="modal-head">
+                <span class="modal-title">Members</span>
+                <button class="modal-close" @onclick="CloseMembers" aria-label="Close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <label class="field-label">Room name</label>
+                    @if (_isProvisioner)
+                    {
+                        <div class="modal-name-row">
+                            <input class="field" value="@_renameValue" @oninput="OnRenameInput" @onkeydown="OnRenameKeyDown" />
+                            <button class="btn btn-accent btn-sm" @onclick="SaveRenameAsync" disabled="@(!RenameDirty)">Save</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="modal-name-static">@(_room?.Metadata.Name)</div>
+                    }
+                    @if (_room is not null)
+                    {
+                        <div class="modal-name-meta">Created @_room.CreatedAt.ToLocalTime().ToString("d MMM yyyy")</div>
+                    }
+                </div>
+
+                <div>
+                    <span class="manage-label">People</span>
+                    @foreach (var p in RosterHumans())
+                    {
+                        <div class="member-row">
+                            <span class="member-avatar">@Initial(p.Member.DisplayName)</span>
+                            <span class="member-main">
+                                <span class="member-name">@p.Member.DisplayName</span>
+                                @if (_me is not null && p.Member.Id == _me.Id)
+                                {
+                                    <span class="member-you">you</span>
+                                }
+                            </span>
+                            @if (p.Role == MembershipRole.Provisioner)
+                            {
+                                <span class="member-role">provisioner</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <span class="manage-label">Agents</span>
+                    @if (!RosterAgents().Any())
+                    {
+                        <div class="manage-desc">No agents in this room yet.</div>
+                    }
+                    @foreach (var a in RosterAgents())
+                    {
+                        <div class="member-row">
+                            <span class="member-agent-handle">@a.Member.DisplayName</span>
+                            <IdentitySealMark Descriptor="DescriptorFor(a.Member.DisplayName)" />
+                            <span class="flex-spacer"></span>
+                            @if (_isProvisioner)
+                            {
+                                <button class="link-danger" @onclick="() => RemoveAgentAsync(a.Member.Id)">remove</button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (_isProvisioner)
+                {
+                    <div>
+                        <span class="manage-label">Add an agent</span>
+                        @if (_addableAgents.Count == 0)
+                        {
+                            <div class="manage-desc">Every available agent is already in this room.</div>
+                        }
+                        else
+                        {
+                            <div class="agent-pick-list">
+                                @foreach (var d in _addableAgents)
+                                {
+                                    <div class="agent-pick @(d.Handle == _pendingAddHandle ? "checked" : "")">
+                                        <span class="agent-pick-handle">@d.Handle</span>
+                                        <IdentitySealMark Descriptor="d" />
+                                        <span class="agent-pick-desc">@d.Description</span>
+                                        <button class="btn btn-accent btn-sm" @onclick="() => AddAgentAsync(d.Handle)">Add</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div>
+                        <span class="manage-label">Invite people</span>
+                        @if (_inviteUrl is null)
+                        {
+                            <button class="btn" @onclick="CreateInviteAsync">Create invite link</button>
+                        }
+                        else
+                        {
+                            <input class="field field-full" readonly value="@_inviteUrl" @onfocus="SelectAll" />
+                            <div class="manage-desc">Anyone with this link can join (expires in 7 days).</div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-accent" @onclick="CloseMembers">Done</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter] public Guid RoomId { get; set; }
+
+    /// <summary>Raised when the room's name or membership changes, so the parent shell can refresh
+    /// the sidebar (room name + member sublines) without a full reload.</summary>
+    [Parameter] public EventCallback OnRoomChanged { get; set; }
 
     private Member? _me;
     private bool _isProvisioner;
@@ -219,11 +290,28 @@
     private IReadOnlyList<AgentDescriptor>? _agentsListing;
     private string? _inviteUrl;
     private IDisposable? _subscription;
-    // Add-agent panel (38.5 task 3) + the "not in this room" nudge.
-    private bool _showAddAgent;
+    // Members modal (roster + rename + add-agent + invite) and the "not in this room" nudge.
+    private bool _showMembers;
+    private IReadOnlyList<RoomMemberInfo> _roster = [];
     private IReadOnlyList<AgentDescriptor> _addableAgents = [];
     private string? _pendingAddHandle;
+    private string _renameValue = "";
     private string? _notice;
+
+    // Header affordance: "N members" — the click target that opens the roster modal.
+    private string MemberCountLabel => _memberNames.Count == 1 ? "1 member" : $"{_memberNames.Count} members";
+
+    // The rename Save button is live only when the name actually changed and isn't blank.
+    private bool RenameDirty
+        => !string.IsNullOrWhiteSpace(_renameValue)
+           && !string.Equals(_renameValue.Trim(), _room?.Metadata.Name, StringComparison.Ordinal);
+
+    // Roster split — people first, agents second, each alphabetical (WhatsApp-style grouping).
+    private IEnumerable<RoomMemberInfo> RosterHumans()
+        => _roster.Where(r => r.Member.Kind == MemberKind.Human).OrderBy(r => r.Member.DisplayName, StringComparer.OrdinalIgnoreCase);
+
+    private IEnumerable<RoomMemberInfo> RosterAgents()
+        => _roster.Where(r => r.Member.Kind == MemberKind.Agent).OrderBy(r => r.Member.DisplayName, StringComparer.OrdinalIgnoreCase);
     // @-mention autocomplete (38.5 task 2).
     private ElementReference _inputRef;
     private string? _mentionQuery;
@@ -330,7 +418,7 @@
 
         // Addressing a known agent that isn't a member of this room (38.5 task 3): don't post a
         // lonely message the auto-reply would swallow — tell the user, and if they can provision,
-        // open the add panel pre-pointed at that agent.
+        // open the manage-agents modal pre-pointed at that agent.
         if (AddressedAbsentAgent(text) is { } absent)
         {
             _notice = _isProvisioner
@@ -341,8 +429,7 @@
             if (_isProvisioner)
             {
                 _pendingAddHandle = absent.Handle;
-                _showAddAgent = true;
-                await LoadAddableAgentsAsync();
+                await OpenMembersAsync();
             }
             return;
         }
@@ -363,19 +450,26 @@
             text.Contains(d.Handle, StringComparison.OrdinalIgnoreCase));
     }
 
-    private async Task ToggleAddAgentAsync()
+    // Open the members modal: load the roster + addable agents, seed the rename box with the
+    // current name. Leaves _pendingAddHandle untouched so an absent-agent nudge can pre-point it.
+    private async Task OpenMembersAsync()
     {
-        _showAddAgent = !_showAddAgent;
-        if (_showAddAgent)
-            await LoadAddableAgentsAsync();
+        _renameValue = _room?.Metadata.Name ?? "";
+        await RefreshRosterAsync();
+        _showMembers = true;
     }
 
-    private async Task LoadAddableAgentsAsync()
-        => _addableAgents = await AgentMgmt.AddableAgentsAsync(RoomId);
+    private void CloseMembers()
+    {
+        _showMembers = false;
+        _pendingAddHandle = null;
+    }
 
-    // Agent members currently in the room (id + @handle), for the remove list.
-    private IEnumerable<(Guid Id, string Handle)> RoomAgentMembers()
-        => _memberNames.Where(kv => kv.Value.StartsWith('@')).Select(kv => (kv.Key, kv.Value));
+    private async Task RefreshRosterAsync()
+    {
+        _roster = await Reads.GetRoomRosterAsync(RoomId);
+        _addableAgents = await AgentMgmt.AddableAgentsAsync(RoomId);
+    }
 
     private async Task RemoveAgentAsync(Guid agentMemberId)
     {
@@ -393,11 +487,36 @@
         await RefreshMembersAsync();
     }
 
+    // Reload everything membership drives — the header count, mention list, and modal roster —
+    // then nudge the parent shell to refresh the sidebar sublines.
     private async Task RefreshMembersAsync()
     {
         _memberNames = (await Reads.GetRoomMembersAsync(RoomId)).ToDictionary(m => m.Id, m => m.DisplayName);
-        await LoadAddableAgentsAsync();
+        await RefreshRosterAsync();
         StateHasChanged();
+        await OnRoomChanged.InvokeAsync();
+    }
+
+    // --- Rename (provisioner-only) -------------------------------------------------------------
+
+    private void OnRenameInput(ChangeEventArgs e)
+        => _renameValue = e.Value?.ToString() ?? "";
+
+    private async Task OnRenameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && RenameDirty)
+            await SaveRenameAsync();
+    }
+
+    private async Task SaveRenameAsync()
+    {
+        if (_me is null || _room is null || !RenameDirty)
+            return;
+        var name = _renameValue.Trim();
+        if (!await Admin.RenameAsync(RoomId, _me, name))
+            return;
+        _room.Metadata.Name = name;   // reflect in the header + composer placeholder immediately
+        await OnRoomChanged.InvokeAsync();
     }
 
     // --- @-mention autocomplete (38.5 task 2) -------------------------------------------------

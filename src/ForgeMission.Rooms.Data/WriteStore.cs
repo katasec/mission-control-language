@@ -45,6 +45,18 @@ public sealed class WriteStore(IDbContextFactory<RoomsDbContext> factory) : IWri
         return room;
     }
 
+    public async Task<bool> RenameRoomAsync(Guid roomId, string name, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var room = await db.Rooms.SingleOrDefaultAsync(r => r.Id == roomId, ct);
+        if (room is null)
+            return false;
+        // Metadata is an owned ToJson entity — mutating a tracked instance persists the jsonb column.
+        room.Metadata.Name = name;
+        await db.SaveChangesAsync(ct);
+        return true;
+    }
+
     public async Task<RoomMembership> AddMembershipAsync(RoomMembership membership, CancellationToken ct = default)
     {
         if (membership.Id == Guid.Empty) membership.Id = Guid.NewGuid();

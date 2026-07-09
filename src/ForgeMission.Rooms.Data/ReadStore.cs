@@ -65,6 +65,15 @@ public sealed class ReadStore(IDbContextFactory<ReadRoomsDbContext> factory) : I
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<RoomMemberInfo>> GetRoomRosterAsync(Guid roomId, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        return await db.Memberships.AsNoTracking()
+            .Where(ms => ms.RoomId == roomId)
+            .Join(db.Members, ms => ms.MemberId, m => m.Id, (ms, m) => new RoomMemberInfo(m, ms.Role))
+            .ToListAsync(ct);
+    }
+
     public async Task<bool> IsMemberAsync(Guid roomId, Guid memberId, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);

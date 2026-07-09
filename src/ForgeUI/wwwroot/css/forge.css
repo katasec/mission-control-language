@@ -493,6 +493,101 @@ h2 { font-size: 20px; }
 .account-signout { display: block; width: 100%; text-align: left; background: none; border: none; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--text); cursor: pointer; transition: background var(--transition), color var(--transition); }
 .account-signout:hover { background: var(--danger-bg); color: var(--danger); }
 
+/* 11. Rooms shell — persistent two-pane layout (Phase 38.5+) --------------
+   The app is a WhatsApp/Slack-style shell: a persistent rooms sidebar on the
+   left, the active conversation filling the right. Switching rooms is a route
+   change on the same page component, so the list never reloads. */
+.rooms-nav        { width: 288px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
+.rooms-nav-header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-4) var(--space-3); }
+.rooms-nav-title  { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.rooms-new        { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: background var(--transition), border-color var(--transition), color var(--transition); }
+.rooms-new:hover  { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.rooms-new .plus  { font-size: 15px; line-height: 1; }
+
+.rooms-list       { flex: 1; overflow-y: auto; padding: var(--space-2); display: flex; flex-direction: column; gap: 2px; min-height: 0; }
+.rooms-list-empty { padding: var(--space-4); font-size: 12.5px; color: var(--text-subtle); line-height: 1.6; }
+
+.room-item        { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); border-radius: var(--radius); cursor: pointer; transition: background var(--transition); }
+.room-item:hover  { background: var(--surface-hover); text-decoration: none; }
+.room-item.active { background: var(--surface-active); box-shadow: inset 3px 0 0 var(--accent); }
+.room-item-avatar { flex-shrink: 0; width: 40px; height: 40px; border-radius: var(--radius-pill); background: var(--surface-active); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-transform: uppercase; }
+.room-item.active .room-item-avatar { background: var(--accent-soft); color: var(--accent); }
+.room-item-body   { min-width: 0; flex: 1; }
+.room-item-name   { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-item-sub    { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Account control docked at the sidebar foot; its dropdown opens upward from here. */
+.rooms-account    { border-top: 1px solid var(--border); padding: var(--space-2) var(--space-3); }
+.rooms-account .account-menu { width: 100%; }
+.rooms-account .account-menu > summary { width: 100%; border-radius: var(--radius); padding: 6px 10px; }
+.rooms-account .account-name { flex: 1; }
+.rooms-account .account-dropdown { top: auto; bottom: calc(100% + 6px); right: auto; left: 0; }
+
+/* Conversation pane — fills the shell's right side (replaces the old centred .room column). */
+.convo         { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); }
+.convo-header  { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface); }
+.convo-name    { font-size: 16px; font-weight: 600; flex-shrink: 0; }
+.convo-members { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.convo-empty   { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); color: var(--text-muted); text-align: center; padding: var(--space-6); }
+.convo-empty-title { font-size: 16px; font-weight: 600; color: var(--text); }
+
+.icon-btn      { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer; transition: background var(--transition), color var(--transition); flex-shrink: 0; }
+.icon-btn:hover { background: var(--surface-hover); color: var(--text); }
+
+/* 12. Modal overlay — create room / manage agents (Phase 38.5+) -----------
+   Floats over the conversation on a dimmed backdrop instead of pushing the
+   stream down. Dismiss with ✕, Esc, or a backdrop click. */
+.modal-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--text) 34%, transparent); display: flex; align-items: center; justify-content: center; padding: var(--space-5); z-index: 100; }
+.modal          { width: 100%; max-width: 460px; max-height: 86vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.modal-head     { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); }
+.modal-title    { font-size: 17px; font-weight: 600; }
+.modal-close    { width: 28px; height: 28px; border-radius: var(--radius-sm); border: none; background: none; color: var(--text-muted); font-size: 18px; line-height: 1; cursor: pointer; transition: background var(--transition), color var(--transition); }
+.modal-close:hover { background: var(--surface-hover); color: var(--text); }
+.modal-body     { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.modal-foot     { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-5); }
+
+.field-label    { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); margin-bottom: var(--space-2); }
+.field-full     { width: 100%; }
+
+/* Agent picker — a checkable list used by both the create-room and add-agent modals. */
+.agent-pick-list { display: flex; flex-direction: column; gap: var(--space-1); }
+.agent-pick      { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; background: var(--surface); transition: border-color var(--transition), background var(--transition); }
+.agent-pick:hover { background: var(--surface-hover); }
+.agent-pick.checked { border-color: var(--accent); background: var(--accent-soft); }
+.agent-pick-box  { width: 20px; height: 20px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; color: var(--accent-contrast); background: var(--surface); transition: background var(--transition), border-color var(--transition); }
+.agent-pick.checked .agent-pick-box { background: var(--accent); border-color: var(--accent); }
+.agent-pick-handle { font-weight: 600; color: var(--accent); font-size: 14px; }
+.agent-pick-desc { flex: 1; font-size: 12.5px; color: var(--text-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Manage-agents rows (add-agent modal) */
+.manage-label   { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); }
+.manage-row     { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.manage-row:first-of-type { border-top: none; }
+.manage-handle  { font-weight: 600; color: var(--accent); font-size: 14px; }
+.manage-desc    { flex: 1; font-size: 12.5px; color: var(--text-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-danger    { font-size: 13px; color: var(--text-muted); background: none; border: none; cursor: pointer; font-family: inherit; transition: color var(--transition); }
+.link-danger:hover { color: var(--danger); }
+.btn-sm         { height: 28px; padding: 0 12px; font-size: 12px; }
+
+/* Members modal — quiet "N members" header button + roster rows + rename header. */
+.convo-members-btn { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 12.5px; color: var(--text-muted); background: none; border: none; padding: 0; cursor: pointer; text-align: left; transition: color var(--transition); }
+.convo-members-btn:hover { color: var(--accent); }
+.convo-members-btn::after { content: "›"; font-size: 14px; color: var(--text-subtle); }
+
+.modal-name-row { display: flex; gap: var(--space-2); align-items: center; }
+.modal-name-row .field { flex: 1; }
+.modal-name-static { font-size: 17px; font-weight: 600; }
+.modal-name-meta  { font-size: 12px; color: var(--text-subtle); margin-top: 2px; }
+
+.member-row     { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.member-row:first-of-type { border-top: none; }
+.member-avatar  { flex-shrink: 0; width: 34px; height: 34px; border-radius: var(--radius-pill); background: var(--surface-active); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+.member-main    { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-2); }
+.member-name    { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.member-you     { font-size: 12px; color: var(--text-subtle); }
+.member-role    { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); padding: 1px 7px; border-radius: var(--radius-sm); flex-shrink: 0; }
+.member-agent-handle { font-size: 14px; font-weight: 600; color: var(--accent); }
+
 /* 10. Framework error UI ------------------------------------------------- */
 #blazor-error-ui {
   display: none;

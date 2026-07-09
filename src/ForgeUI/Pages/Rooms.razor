@@ -1,0 +1,231 @@
+@page "/rooms"
+@page "/rooms/{RoomId:guid}"
+@attribute [Authorize]
+@using ForgeMission.Rooms
+@using ForgeMission.Rooms.Data
+@inject IReadStore Reads
+@inject CurrentUser Current
+@inject StarterRoomService Starter
+@inject RoomCreationService Creation
+@inject NavigationManager Nav
+
+@* The rooms shell: a persistent sidebar (room list + "+ New room" + account) beside the active
+   conversation. Owns both /rooms and /rooms/{id}, so switching rooms is a route change on this
+   same component — the list stays put and only the keyed conversation pane swaps. *@
+<div class="app-shell">
+    <aside class="rooms-nav">
+        <div class="rooms-nav-header">
+            <span class="rooms-nav-title">Rooms</span>
+            <button class="rooms-new" @onclick="OpenCreate"><span class="plus">+</span> New room</button>
+        </div>
+
+        <div class="rooms-list">
+            @if (_me is null)
+            {
+                <div class="rooms-list-empty">Loading…</div>
+            }
+            else if (_rooms.Count == 0)
+            {
+                <div class="rooms-list-empty">No rooms yet. Create one, or ask a provisioner for an invite link.</div>
+            }
+            else
+            {
+                @foreach (var room in _rooms)
+                {
+                    <a class="room-item @(RoomId == room.Id ? "active" : "")" href="/rooms/@room.Id">
+                        <span class="room-item-avatar">@Initial(room.Metadata.Name)</span>
+                        <span class="room-item-body">
+                            <span class="room-item-name">@room.Metadata.Name</span>
+                            <span class="room-item-sub">@Subline(room.Id)</span>
+                        </span>
+                    </a>
+                }
+            }
+        </div>
+
+        <div class="rooms-account">
+            <AccountMenu />
+        </div>
+    </aside>
+
+    <main class="app-main">
+        @if (RoomId is { } rid)
+        {
+            <RoomConversation RoomId="rid" @key="rid" OnRoomChanged="OnRoomChanged" />
+        }
+        else
+        {
+            <div class="convo">
+                <div class="convo-empty">
+                    <div class="convo-empty-title">Pick a room to open it</div>
+                    <div>Or start a fresh one with <strong>+ New room</strong>.</div>
+                </div>
+            </div>
+        }
+    </main>
+</div>
+
+@* Create-room modal — name it and pick which agents join up front. *@
+@if (_showCreate)
+{
+    <div class="modal-backdrop" @onclick="CloseCreate">
+        <div class="modal" @onclick:stopPropagation="true" role="dialog" aria-modal="true">
+            <div class="modal-head">
+                <span class="modal-title">New room</span>
+                <button class="modal-close" @onclick="CloseCreate" aria-label="Close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <label class="field-label" for="new-room-name">Room name</label>
+                    <input class="field field-full" id="new-room-name"
+                           placeholder="e.g. Research, Family, Standup"
+                           value="@_newName" @oninput="OnNameInput"
+                           @onkeydown="OnNameKeyDown" />
+                </div>
+                @if (_availableAgents.Count > 0)
+                {
+                    <div>
+                        <label class="field-label">Agents to include</label>
+                        <div class="agent-pick-list">
+                            @foreach (var d in _availableAgents)
+                            {
+                                var picked = _picked.Contains(d.Handle);
+                                <div class="agent-pick @(picked ? "checked" : "")" @onclick="() => TogglePick(d.Handle)">
+                                    <span class="agent-pick-box">@(picked ? "✓" : "")</span>
+                                    <span class="agent-pick-handle">@d.Handle</span>
+                                    <IdentitySealMark Descriptor="d" />
+                                    <span class="agent-pick-desc">@d.Description</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-foot">
+                <button class="btn" @onclick="CloseCreate">Cancel</button>
+                <button class="btn btn-accent" @onclick="CreateAsync" disabled="@(string.IsNullOrWhiteSpace(_newName) || _creating)">Create room</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid? RoomId { get; set; }
+
+    private Member? _me;
+    private IReadOnlyList<Room> _rooms = [];
+    private Dictionary<Guid, string> _sublines = [];
+    private bool _onboardChecked;
+
+    // Create-room modal state.
+    private bool _showCreate;
+    private bool _creating;
+    private string _newName = "";
+    private IReadOnlyList<AgentDescriptor> _availableAgents = [];
+    private readonly HashSet<string> _picked = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string Initial(string name)
+        => string.IsNullOrWhiteSpace(name) ? "?" : name.TrimStart()[..1].ToUpperInvariant();
+
+    // Sidebar subline = who you share the room with (agents + other people), so two rooms that
+    // happen to share a name are still told apart by their members.
+    private string Subline(Guid roomId)
+        => _sublines.GetValueOrDefault(roomId, "");
+
+    protected override async Task OnInitializedAsync()
+    {
+        _me = await Current.GetMemberAsync();
+        if (_me is not null)
+            await LoadRoomsAsync();
+    }
+
+    // The conversation raises this after a rename or membership change so the sidebar (room name +
+    // member sublines) stays in sync without a navigation.
+    private async Task OnRoomChanged()
+    {
+        await LoadRoomsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadRoomsAsync()
+    {
+        if (_me is null)
+            return;
+        _rooms = await Reads.GetRoomsForMemberAsync(_me.Id);
+
+        var sublines = new Dictionary<Guid, string>();
+        foreach (var room in _rooms)
+        {
+            var others = (await Reads.GetRoomMembersAsync(room.Id))
+                .Where(m => m.Id != _me.Id)
+                .Select(m => m.DisplayName);
+            sublines[room.Id] = string.Join(" · ", others);
+        }
+        _sublines = sublines;
+    }
+
+    // Onboarding runs once on the interactive circuit (post-prerender), where both DB access and
+    // NavigateTo are reliable. It re-reads rather than trusting _me, because OnAfterRender can fire
+    // before OnInitializedAsync's awaits complete, and a prerender NavigateTo after an await does
+    // not redirect.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _onboardChecked)
+            return;
+        _onboardChecked = true;
+
+        var me = await Current.GetMemberAsync();
+        if (me is null)
+            return;
+
+        // Creates the starter room for a brand-new user AND self-heals a solo room-of-two missing
+        // its agent. Returns a new room id only when one was created.
+        if (await Starter.EnsureStarterRoomAsync(me) is { } starterId)
+        {
+            await LoadRoomsAsync();
+            Nav.NavigateTo($"/rooms/{starterId}");
+        }
+    }
+
+    // --- Create room ---------------------------------------------------------------------------
+
+    private void OpenCreate()
+    {
+        _newName = "";
+        _availableAgents = Creation.AvailableAgents();
+        _picked.Clear();
+        // Default to the verified @assistant, mirroring the starter "room of two".
+        if (_availableAgents.FirstOrDefault(d => d.Handle == RoomsSeeder.AssistantHandle) is { } assistant)
+            _picked.Add(assistant.Handle);
+        _showCreate = true;
+    }
+
+    private void CloseCreate() => _showCreate = false;
+
+    private void TogglePick(string handle)
+    {
+        if (!_picked.Remove(handle))
+            _picked.Add(handle);
+    }
+
+    private void OnNameInput(ChangeEventArgs e)
+        => _newName = e.Value?.ToString() ?? "";
+
+    private async Task OnNameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_newName))
+            await CreateAsync();
+    }
+
+    private async Task CreateAsync()
+    {
+        if (_me is null || _creating || string.IsNullOrWhiteSpace(_newName))
+            return;
+        _creating = true;
+        var newId = await Creation.CreateAsync(_me, _newName, _picked);
+        _showCreate = false;
+        _creating = false;
+        await LoadRoomsAsync();
+        Nav.NavigateTo($"/rooms/{newId}");
+    }
+}

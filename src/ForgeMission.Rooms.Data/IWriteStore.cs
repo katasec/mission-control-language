@@ -13,6 +13,9 @@ public interface IWriteStore
 
     Task<Room> AddRoomAsync(Room room, CancellationToken ct = default);
 
+    /// <summary>Rename a room (updates the jsonb metadata blob). Returns false if the room is absent.</summary>
+    Task<bool> RenameRoomAsync(Guid roomId, string name, CancellationToken ct = default);
+
     Task<RoomInvite> AddInviteAsync(RoomInvite invite, CancellationToken ct = default);
 
     Task<RoomMembership> AddMembershipAsync(RoomMembership membership, CancellationToken ct = default);

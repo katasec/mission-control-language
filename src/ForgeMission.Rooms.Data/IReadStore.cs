@@ -25,6 +25,9 @@ public interface IReadStore
 
     Task<IReadOnlyList<Member>> GetRoomMembersAsync(Guid roomId, CancellationToken ct = default);
 
+    /// <summary>The room's members paired with their role — one read for the members roster.</summary>
+    Task<IReadOnlyList<RoomMemberInfo>> GetRoomRosterAsync(Guid roomId, CancellationToken ct = default);
+
     /// <summary>True iff a membership row exists — the confidentiality check.</summary>
     Task<bool> IsMemberAsync(Guid roomId, Guid memberId, CancellationToken ct = default);
 
