@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.7.0" />
     <PackageReference Include="ModelContextProtocol" Version="1.4.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.9" />
-    <PackageReference Include="Katasec.OciClient" Version="0.1.0" />
+    <PackageReference Include="Katasec.OciClient" Version="0.2.0" />
     <PackageReference Include="Katasec.OaiServer" Version="0.1.4" />
     <PackageReference Include="Spectre.Console" Version="0.49.1" />
   </ItemGroup>
