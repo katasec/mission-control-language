@@ -242,7 +242,7 @@ h2 { font-size: 20px; }
   color: var(--ink-contrast);
 }
 .btn-primary:hover { background: var(--ink-hover); border-color: var(--ink-hover); color: var(--ink-contrast); }
-.btn-primary:disabled { background: var(--border-strong); border-color: var(--border-strong); color: var(--surface); }
+.btn-primary:disabled { background: var(--surface-active); border-color: var(--border-strong); color: var(--text-subtle); }
 
 .btn-accent { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
 .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-contrast); }

@@ -148,7 +148,7 @@
                    @onkeydown="OnComposerKeyDown"
                    @ref="_inputRef"
                    placeholder="Message @(_room?.Metadata.Name)… (@@ to mention an agent)" />
-            <button class="btn-primary" @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
+            <button class="btn btn-primary" @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
         </div>
     }
 </div>
