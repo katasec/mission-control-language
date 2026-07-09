@@ -8,21 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.TypeInfoResolverChain.Insert(0, RunContractsContext.Default));
 
-// Load the baked-in missions once at boot (39.1 — no OCI/blob yet). MissionDir points at the
-// missions/ copied into the image; the operator's provider keys are read from each mission's
-// forge.toml via env(...) at load time (keys live here, not in the orchestrator).
+// Built-in missions are PULLED from the trusted Forge registry by pinned digest (39.4), not loaded
+// from the image — the uniform "everything is pulled" path. MissionDir is the baked-in copy, kept
+// as a resilience fallback if a pull fails. The operator's provider keys are still read from each
+// mission's forge.toml via env(...) at load time (keys live here, not in the orchestrator).
 var missionDir = builder.Configuration["MissionDir"]
     ?? Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "missions");
 missionDir = Path.GetFullPath(missionDir);
 
-var registry = await RunnerRegistry.LoadAsync(
-[
-    ("ChatGPT",   "Raw LLM — no verification",                     Path.Combine(missionDir, "vanilla",              "mission.mcl")),
-    ("Forge",     "LLM + deterministic verifier, retries on fail", Path.Combine(missionDir, "hallucination-guard", "mission.mcl")),
-    ("Assistant", "General assistant, answers LLM-verified",       Path.Combine(missionDir, "assistant",            "mission.mcl")),
-    ("Claude",    "Raw Claude — no verification",                  Path.Combine(missionDir, "claude",               "mission.mcl")),
-    ("Grok",      "Raw Grok (xAI) — no verification",              Path.Combine(missionDir, "grok",                 "mission.mcl")),
-]);
+var specs    = await BuiltinMissions.ResolveAsync(missionDir);
+var registry = await RunnerRegistry.LoadAsync(specs);
 
 Console.Error.WriteLine(registry.All.Count == 0
     ? "Runner: no missions loaded (no provider keys set)."
