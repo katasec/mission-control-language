@@ -16,6 +16,29 @@ Phase 39 converts it into a **metered, containerised, multi-tenant runtime** tha
 what a user runs, and (b) run missions the operator did not write — without ever forking the
 execution or billing path.
 
+## Status & handoff (updated 2026-07-09)
+
+**Groups A + B are DONE and LIVE on `forge.katasec.com`. F&F is shippable; built-ins are OCI-distributed.**
+
+| Sub-phase | Status | Live evidence |
+|---|---|---|
+| **39.1** Containerized runner | ✅ **DONE + LIVE** | `ca-forge-runner-dev` (internal, warm 1 replica); `@guard` runs in-container, green ✓; in-process path removed |
+| **39.2** Cost meter, ledger & credits | ✅ **DONE + LIVE** | micro-USD `ledger_entries`; login `Granted 5000000µ$`, run `Debited 224µ$` (exact cost-recovery). **F&F ships here.** |
+| **39.3** OCI artifact schema (B0) | ✅ **DONE** | `artifactType` discriminator + self-contained bundle in `Katasec.OciClient`; 6 round-trip tests; [oci-artifact-schema.md](../design/oci-artifact-schema.md) |
+| **39.4** OCI mission distribution | ✅ **DONE + LIVE** | runner 0.4.0 pulls all 5 built-ins from `ghcr.io/katasec` by pinned digest (anonymous), runs + meters a pulled mission |
+| **39.5** Custom missions & experts | ⏭️ **NEXT** | not started — see decisions to lock below |
+| **39.6** Public monetization | ⬜ pending | needs Stripe account; tier numbers from 39.2 cost data |
+
+**Decisions locked this session** (beyond the 2026-07-08 core decisions below):
+- **39.2 ledger**: integer **micro-USD** (`bigint`); pricing = **cost-recovery** (provider list price per model, no markup, dated `CostMeter` table + 15µ$/compute-sec); F&F credits = **auto-grant on first sign-in** (self-heals pre-existing members, idempotent).
+- **39.4 distribution**: registry = **`ghcr.io/katasec`** (public packages, anonymous pull); trust = **digest-pin now, cosign deferred to 39.5**.
+
+**Deployed artifacts**: `forge-ui:0.3.0`, `forge-runner:0.4.0` (ACR `crforgeroomsdev`); `Katasec.OciClient` **0.2.1** (GitHub Packages); 5 missions on `ghcr.io/katasec/forge-mission-*:0.1.0` (pinned digests recorded in the `project_forge_mission_marketplace` memory). Deploy = Bicep `500-app` via `az deployment` / `az containerapp update` (az authed locally); image builds via dispatched CI workflows.
+
+**Known non-issue**: `hallucination-guard`'s `verify.py` is a demo verifier hardcoded for the "which month contains X" trick question — `@guard "capital of France"` legitimately shows Unverified. Not a distribution bug; a real general-purpose verifier is future work.
+
+**To start 39.5 (next):** lock its decisions first (like 39.2) — Azure Blob layout for custom experts; per-user mission registry (Postgres, like the ledger); save-as-agent snapshot shape (38.5 S1); how far to take the restricted runner policy (deny `exec`/`http` at the language level + ACA egress restriction); cosign key management (the deferred signing). Then build custom-mission authoring → store → resolve-by-handle → run under the restricted policy.
+
 ## Core decisions (converged 2026-07-08)
 
 These are load-bearing. Later sub-phases assume them.

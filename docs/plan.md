@@ -6,9 +6,11 @@
 > That goal ("spectacular reasoning no one can reach = reasoning that doesn't exist") is **met**. Its
 > two forward-leaning pieces fold into Phase 39: **save-as-agent → 39.5**, **acquisition → post-39**.
 > Phase 39 turns the in-process demo into a **metered, multi-tenant runtime + mission marketplace**.
-> **Group A (39.1 containerized runner + 39.2 cost-meter/ledger) is DONE + live on Azure (2026-07-09)
-> — F&F is now shippable.** Next: Group B (39.3 OCI artifact schema, the publishing gate) or 39.6
-> public monetization (prices/tiers derived from the per-run cost data 39.2 now collects).
+> **Groups A + B are DONE + live on Azure (2026-07-09).** 39.1 (containerized runner) + 39.2
+> (cost-meter/ledger — F&F shippable) + 39.3 (OCI artifact schema) + 39.4 (built-ins pulled from
+> `ghcr.io/katasec` by pinned digest). **Next chronological step: 39.5 (custom missions & experts —
+> blob store, per-user registry, save-as-agent, trust enforcement, cosign).** Then 39.6 (Stripe/tiers,
+> priced from 39.2 cost data). See the [Phase 39 spoke](phases/phase-39-metered-runtime-marketplace.md#status--handoff-updated-2026-07-09) for the current status table + decisions to lock before 39.5.
 
 ## Phases
 
