@@ -188,6 +188,28 @@ before shipping.
   rollout is a separate `dev/500-app` (or `az containerapp update`) step — easy to forget (it bit us
   this session: "deploy" built `0.1.7` but the app kept serving `0.1.6`). Consider a `deploy-dev`
   step/workflow that builds *and* rolls in one action.
+- **Runner OTel: console exporter floods ACA logs.** The runner now emits OpenTelemetry traces
+  (image `0.4.2`) — but the console exporter + AspNetCore instrumentation means every `/health`
+  probe writes a full multi-line span to stdout, so `az containerapp logs` chokes on the volume
+  (large `--tail` returns nothing; small tails work). For durable prod tracing, switch
+  console→**OTLP** (App Insights / Grafana Tempo) when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, and
+  **filter out `/health` + `/missions` probe spans**. Detail: [Observability](../design/observability.md).
 
 _Done this session (2026-07-08): 38.5 registry/handles/seals/`/agents`/add-remove-agent/raw-model
 trio shipped to dev (0.1.6→0.1.9); Anthropic + xAI keys wired (dev, via az)._
+
+_Done session (2026-07-09): **`@claude` fully live end-to-end.** Three stacked causes, all closed:
+(1) provider keys folded into IaC (forge-infra `6fd0fd3`) + vault name reconciled `kv-forge-dev`→
+`kv-forgerooms-dev` across repo (`5e859ec`) — the `kv-forge-dev` typo was hitting a **foreign global
+vault** (`S2S17001`); (2) the Anthropic account had **`$0` org credits** (the real blocker behind
+"could not complete" — funded via Console → Add funds, not a code issue); (3) a **core
+structured-output fix** (`6d5cb39`): `DirectExpertRunner` sent `GetResponseAsync<StepEnvelope>`, whose
+schema includes the open `Meta` dictionary — Anthropic rejects any object without
+`additionalProperties:false` (OpenAI tolerated it, so only `@claude` failed at completion). Now a
+hand-written closed schema (text/status/reason), verified **HTTP 200** against live Anthropic before
+rebuild. Runner `0.4.0`→`0.4.1` (schema fix)→`0.4.2` (OTel). **Non-issue — do not re-investigate:**
+`@openai` once answered "xAI"; the OTel trace shows `server.address: api.openai.com` + model
+`gpt-4o-mini` (correctly routed) — it was the model's own output under room-context, NOT a
+wrong-key/URL bug (couldn't reproduce in 36 local + full-runner-wiring runs; the deployed trace
+settled it). **Security backlog raised:** [Phase 39.7 — Secret Isolation from Execution](phase-39.7-exec-secret-isolation.md)
+(`kind:exec` inherits the runner's env incl. provider keys — fix by construction, not scrubbing)._

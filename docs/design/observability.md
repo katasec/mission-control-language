@@ -4,6 +4,20 @@
 > Rooms** (Phase 38). Wire the *seam* up front; defer the *machinery* (backends, sampling).
 > **Standard:** OpenTelemetry (OTel) — vendor-neutral, .NET-native, three signals: traces,
 > metrics, logs.
+>
+> **Implementation status (2026-07-09):** first tracing lane is **live in the containerized runner**
+> (`ForgeMission.Runner`, image `0.4.2`). Per run it emits: a `mission.run` span (`forge.mission.ref`
+> / `forge.provider` / `gen_ai.request.model`), the `gen_ai.*` span from `UseOpenTelemetry` on the
+> provider `IChatClient` (model + token usage), and the **outbound-HTTP span whose `server.address`
+> is the real provider endpoint** (`api.openai.com` vs `api.x.ai` vs `api.anthropic.com`) — the ground
+> truth for diagnosing a mis-routed `@`-agent. **Cred-safe by design:** HTTP instrumentation records
+> no request headers (no `Authorization`/`x-api-key`) and `EnableSensitiveData` stays off (no
+> prompts/answers/keys in spans) — verified in local + prod traces. Exporter: **console** always on
+> (visible in container logs); **OTLP** self-configures from `OTEL_EXPORTER_OTLP_ENDPOINT`.
+> **Known follow-up:** console + AspNetCore instrumentation makes every `/health` probe emit a span,
+> flooding ACA logs — switch to OTLP + filter `/health`,`/missions` probe spans for durable prod use
+> (see [38.7 §9](../phases/phase-38.7-hosting-deployment.md)). `PipelineRunner` engine-lane
+> instrumentation (below) is still the design target, not yet wired.
 
 ---
 
