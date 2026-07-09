@@ -26,6 +26,7 @@ rootCommand.Add(BuildValidateCommand());
 rootCommand.Add(BuildListCommand());
 rootCommand.Add(BuildExpertCommand());
 rootCommand.Add(BuildLoginCommand());
+rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
 rootCommand.Add(BuildAgentCommand());
@@ -373,6 +374,59 @@ static Command BuildLoginCommand()
         Console.WriteLine($"Credentials saved for {registry}");
 
         await Task.CompletedTask;
+    });
+
+    return cmd;
+}
+
+// ---------------------------------------------------------------------------
+// forge publish — package a mission directory and push it to an OCI registry (39.4)
+
+static Command BuildPublishCommand()
+{
+    var refArg  = new Argument<string>("reference") { Description = "OCI reference, e.g. ghcr.io/katasec/forge-mission-guard:0.1.0" };
+    var dirArg  = new Argument<DirectoryInfo?>("dir") { Description = "Mission directory (default: current dir)", Arity = ArgumentArity.ZeroOrOne };
+    var descOpt = new Option<string?>("--description") { Description = "Human description (annotation)" };
+
+    var cmd = new Command("publish", "Package a mission directory into a self-contained OCI artifact and push it");
+    cmd.Add(refArg);
+    cmd.Add(dirArg);
+    cmd.Add(descOpt);
+
+    cmd.SetAction(async result =>
+    {
+        var reference = result.GetValue(refArg)!;
+        var dir       = result.GetValue(dirArg) ?? new DirectoryInfo(Directory.GetCurrentDirectory());
+        var desc      = result.GetValue(descOpt);
+
+        if (!File.Exists(Path.Combine(dir.FullName, "mission.mcl")))
+        { Die($"No mission.mcl in {dir.FullName} — point at a mission directory."); return; }
+
+        // registry/name:tag  (registry = up to first '/', tag = after the LAST ':').
+        var slash = reference.IndexOf('/');
+        if (slash < 0) { Die($"Invalid reference '{reference}': expected registry/name:tag"); return; }
+        var registry = reference[..slash];
+        var rest     = reference[(slash + 1)..];
+        var colon    = rest.LastIndexOf(':');
+        if (colon < 0) { Die($"Invalid reference '{reference}': expected a :tag"); return; }
+        var name = rest[..colon];
+        var tag  = rest[(colon + 1)..];
+
+        var bundle = MissionBundle.Pack(dir.FullName);
+        var token  = CredentialStore.GetToken(registry);
+        if (string.IsNullOrWhiteSpace(token))
+            Console.Error.WriteLine($"Warning: no credential for {registry} (set FORGE_REGISTRY_TOKEN or 'forge login').");
+
+        var annotations = desc is null
+            ? null
+            : new Dictionary<string, string> { ["org.opencontainers.image.description"] = desc };
+
+        using var client = new OciClient(credential: token);
+        var digest = await client.PushMissionAsync(registry, name, tag, bundle, annotations);
+
+        Console.WriteLine($"Published {registry}/{name}:{tag} ({bundle.Length} bytes)");
+        Console.WriteLine($"Digest:  {digest}");
+        Console.WriteLine($"Pinned:  {registry}/{name}@{digest}");
     });
 
     return cmd;
