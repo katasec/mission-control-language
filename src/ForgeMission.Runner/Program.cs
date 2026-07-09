@@ -1,5 +1,7 @@
 using ForgeMission.Runner;
 using ForgeMission.Runner.Contracts;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,26 @@ var builder = WebApplication.CreateBuilder(args);
 // anything else the host serialises.
 builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.TypeInfoResolverChain.Insert(0, RunContractsContext.Default));
+
+// OpenTelemetry tracing. Captures, per run: the mission-level span (mission ref, provider, model),
+// the gen_ai.* span from the instrumented IChatClient (model + token usage), and the OUTBOUND HTTP
+// span whose `server.address` is the actual provider endpoint (api.openai.com vs api.x.ai) — the
+// ground truth for diagnosing a mis-routed @-agent. Credential safety: HTTP instrumentation does NOT
+// record request headers (so no Authorization / x-api-key), and the chat-client instrumentation
+// leaves EnableSensitiveData off (see MissionRunHandler), so prompts/answers/keys never enter a span.
+// Console exporter is always on for local visibility; the OTLP exporter self-configures from
+// OTEL_EXPORTER_OTLP_ENDPOINT when set (prod), and is a no-op otherwise.
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("forge-runner"))
+    .WithTracing(t =>
+    {
+        t.AddSource(RunnerTelemetry.SourceName)   // mission spans + gen_ai.* (same sourceName)
+         .AddAspNetCoreInstrumentation()          // inbound /run
+         .AddHttpClientInstrumentation()          // outbound provider call → server.address
+         .AddConsoleExporter();
+        if (!string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+            t.AddOtlpExporter();
+    });
 
 // Built-in missions are PULLED from the trusted Forge registry by pinned digest (39.4), not loaded
 // from the image — the uniform "everything is pulled" path. MissionDir is the baked-in copy, kept

@@ -3,6 +3,7 @@ using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Runtime;
 using ForgeMission.Parser;
 using ForgeMission.Runner.Contracts;
+using Microsoft.Extensions.AI;
 
 namespace ForgeMission.Runner;
 
@@ -27,11 +28,31 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
         // restricted policy (deny exec/http, restricted egress) lands in 39.5 with custom missions.
         RunPolicyGate.EnsureAllowed(mission, request.Policy);
 
+        // Mission-level span: non-sensitive attributes (ref, provider, model) so a trace ties the
+        // gen_ai.* + outbound-HTTP child spans to which @-agent ran. No API key is ever tagged.
+        using var runSpan = RunnerTelemetry.Source.StartActivity("mission.run");
+        runSpan?.SetTag("forge.mission.ref", request.MissionRef);
+        runSpan?.SetTag("forge.provider", mission.Profile?.Provider);
+        runSpan?.SetTag("gen_ai.request.model", mission.Profile?.Model);
+
         // Fresh usage-tracked runner per request → isolated token counts under concurrency.
         var accumulator = new UsageAccumulator();
-        IExpertRunner runner = mission.Profile is { } profile
-            ? new DirectExpertRunner(new UsageTrackingChatClient(ProviderClientBuilder.BuildChatClient(profile), accumulator))
-            : new ExecExpertRunner();
+        IExpertRunner runner;
+        if (mission.Profile is { } profile)
+        {
+            // Instrument the provider client for gen_ai.* spans (model + token usage). Sensitive data
+            // stays OFF, so prompts/answers/keys never enter a span. OTel sits closest to the provider
+            // (inside UsageTrackingChatClient) so it observes the real outbound call.
+            var instrumented = ProviderClientBuilder.BuildChatClient(profile)
+                .AsBuilder()
+                .UseOpenTelemetry(sourceName: RunnerTelemetry.SourceName)
+                .Build();
+            runner = new DirectExpertRunner(new UsageTrackingChatClient(instrumented, accumulator));
+        }
+        else
+        {
+            runner = new ExecExpertRunner();
+        }
 
         var trace   = new List<RunTraceStep>();
         var attempt = 1;
