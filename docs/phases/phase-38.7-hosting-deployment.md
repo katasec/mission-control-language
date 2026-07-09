@@ -150,7 +150,8 @@ before shipping.
   `FORGE_UI_IMAGE` (keep `CUSTOM_DOMAIN` + `CUSTOM_DOMAIN_CERT_ID` set to preserve the HTTPS binding).
   This session rolled `0.1.7`–`0.1.10` via a **manual `az containerapp update`** instead — quick,
   but it bypasses the Bicep and leaves the running app's image + the new provider secrets/env vars as
-  **drift** vs `dev/500-app` (see §9).
+  **drift** vs `dev/500-app` (see §9). _Update 2026-07-09: the provider secrets/env drift is resolved
+  (folded into IaC, forge-infra `6fd0fd3`); the image-rollout gap remains open._
 - GitHub Actions variables wired in both repos.
 
 ## 8. Decision log / gotchas (so they are not re-learned)
@@ -173,11 +174,16 @@ before shipping.
   the Container Apps env → drop the public endpoint + the `AllowAllAzureServices` firewall rule).
 - **prod slice** + environment-protection reviewers on the gated infra layers.
 - Exercise the **infra** deploy workflow via dispatch (the image workflow is already proven).
-- **Fold the 38.5 provider keys into IaC (drift fix, dev).** Add `Anthropic-ApiKey` + `Xai-ApiKey` KV
-  secret refs + `ANTHROPIC_API_KEY` / `XAI_API_KEY` container env vars to `dev/500-app` Bicep (they
-  were added via `az` this session) — clone the existing `mcl-apikey`/`MCL_API_KEY` pair. Until then a
-  `dev/500-app` redeploy reverts them. **Prod out of scope for now** — set the two secrets in the prod
-  vault + apply the same Bicep if/when prod ships `@claude`/`@grok`.
+- ~~**Fold the 38.5 provider keys into IaC (drift fix, dev).**~~ **DONE 2026-07-09** (forge-infra
+  `6fd0fd3`). `Anthropic-ApiKey` + `Xai-ApiKey` KV secret refs + `ANTHROPIC_API_KEY` / `XAI_API_KEY`
+  env vars now live in `dev/500-app` Bicep on the **runner** (39.1 moved execution off the app),
+  cloning the `mcl-apikey`/`MCL_API_KEY` pair, and were applied live to `ca-forge-runner-dev`.
+  This *was* the `@claude` "No mission is bound" regression: a later `dev/500-app` redeploy
+  (0.3.0/0.4.0) reverted the manually-`az`-added keys exactly as warned, and post-39.1 they must sit
+  on the runner (not the app) — the runner skips a mission whose provider key is empty, so `Claude`/
+  `Grok` weren't advertised and the handles didn't bind. Now folded into IaC, so a redeploy no longer
+  reverts them. **Prod still out of scope** — set the two secrets in the prod vault + apply the same
+  Bicep if/when prod ships `@claude`/`@grok`.
 - **Close the build↔rollout gap.** The `forge-ui-image` workflow builds+pushes but doesn't deploy;
   rollout is a separate `dev/500-app` (or `az containerapp update`) step — easy to forget (it bit us
   this session: "deploy" built `0.1.7` but the app kept serving `0.1.6`). Consider a `deploy-dev`
