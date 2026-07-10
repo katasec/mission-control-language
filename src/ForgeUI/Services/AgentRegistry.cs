@@ -95,6 +95,23 @@ public sealed class AgentRegistry
             Reserved        = true,
             VerifiesAnswers = false,
         });
+
+        // INTERIM (2026-07-11): @quran-class-helper binds the family-halaqa mission to prove the
+        // artifact-plane UX (38.9). AcceptsArtifacts=true → the orchestrator stages the room's latest
+        // upload as its input. It genuinely verifies (role:judge Verifier), so VerifiesAnswers=true is
+        // honest. Real home = the Phase 39.5 per-user custom registry; move once the UX is reviewed.
+        Register(availableMissionRefs, new AgentDescriptor
+        {
+            Handle           = "@quran-class-helper",
+            Description      = "Edits a slide-deck PDF (remove pages, add a cover) — verified page-for-page.",
+            Publisher        = "Forge",
+            MissionRef       = "FamilyHalaqa",
+            Scope            = AgentScope.Shared,
+            Seal             = IdentitySeal.Official,
+            Reserved         = true,
+            VerifiesAnswers  = true,
+            AcceptsArtifacts = true,
+        });
     }
 
     /// <summary>

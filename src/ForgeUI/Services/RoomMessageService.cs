@@ -14,9 +14,13 @@ namespace ForgeUI.Services;
 public sealed class RoomMessageService(
     IReadStore reads, IWriteStore writes, RoomBroadcaster broadcaster, RoomAgentInvoker invoker)
 {
-    public async Task<bool> SendHumanMessageAsync(Guid roomId, Member sender, string text, CancellationToken ct = default)
+    public async Task<bool> SendHumanMessageAsync(
+        Guid roomId, Member sender, string text,
+        IReadOnlyList<ArtifactRef>? artifacts = null, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        // A message may be text-only or text-plus-file; an empty body with no file is a no-op.
+        var hasArtifacts = artifacts is { Count: > 0 };
+        if (string.IsNullOrWhiteSpace(text) && !hasArtifacts)
             return false;
         if (sender.Kind != MemberKind.Human)
             throw new InvalidOperationException("Only humans send through this path.");
@@ -29,7 +33,12 @@ public sealed class RoomMessageService(
             SenderId = sender.Id,
             SenderKind = MemberKind.Human,
             Kind = MessageKind.Human,
-            Payload = new MessagePayload { Kind = MessagePayloadKinds.Human, Text = text.Trim() },
+            Payload = new MessagePayload
+            {
+                Kind = MessagePayloadKinds.Human,
+                Text = text.Trim(),
+                Artifacts = hasArtifacts ? [.. artifacts!] : [],
+            },
         }, ct);
 
         await broadcaster.PublishMessageAsync(roomId, message.ToDto(sender.DisplayName));

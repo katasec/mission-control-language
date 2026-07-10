@@ -1,6 +1,7 @@
 @using ForgeMission.Core.Runtime
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
+@using Microsoft.AspNetCore.Components.Forms
 @inject IReadStore Reads
 @inject CurrentUser Current
 @inject RoomMessageService Messages
@@ -9,6 +10,7 @@
 @inject AgentRegistry Agents
 @inject RoomAgentMembershipService AgentMgmt
 @inject RoomAdminService Admin
+@inject IArtifactStore Artifacts
 @inject NavigationManager Nav
 @implements IDisposable
 
@@ -75,6 +77,18 @@
                                 }
                             </div>
                             <div class="agent-answer">@msg.Text</div>
+                            @if (msg.Artifacts is { Count: > 0 })
+                            {
+                                <div class="msg-artifacts">
+                                    @foreach (var a in msg.Artifacts)
+                                    {
+                                        <a class="artifact-chip" href="@ArtifactUrl(a)" download>
+                                            📄 <span class="artifact-name">@a.Filename</span>
+                                            <span class="artifact-size">@FormatSize(a.Size)</span>
+                                        </a>
+                                    }
+                                </div>
+                            }
                             <PipelineTrace Events="ToEvents(trust)" ShowTrace="_expanded.Contains(msg.Id)" />
                         </div>
                     </div>
@@ -87,7 +101,22 @@
                             <div class="msg-meta">
                                 <span class="msg-sender">@msg.SenderName</span> · @msg.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
                             </div>
-                            <div class="msg-bubble @(mine ? "msg-bubble-own" : "")">@msg.Text</div>
+                            @if (!string.IsNullOrEmpty(msg.Text))
+                            {
+                                <div class="msg-bubble @(mine ? "msg-bubble-own" : "")">@msg.Text</div>
+                            }
+                            @if (msg.Artifacts is { Count: > 0 })
+                            {
+                                <div class="msg-artifacts">
+                                    @foreach (var a in msg.Artifacts)
+                                    {
+                                        <a class="artifact-chip" href="@ArtifactUrl(a)" download>
+                                            📎 <span class="artifact-name">@a.Filename</span>
+                                            <span class="artifact-size">@FormatSize(a.Size)</span>
+                                        </a>
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -142,13 +171,26 @@
                     }
                 </div>
             }
+            @if (_pendingFile is not null)
+            {
+                <div class="composer-file">
+                    📎 <span class="artifact-name">@_pendingFile.Name</span>
+                    <button type="button" class="btn-link" @onclick="ClearPendingFile" aria-label="Remove file">✕</button>
+                </div>
+            }
+            @if (_uploadError is not null)
+            {
+                <div class="room-notice">@_uploadError</div>
+            }
+            <label class="composer-attach" title="Attach a file">📎<InputFile OnChange="OnFileSelected" /></label>
             <input class="field room-input"
                    value="@_input"
                    @oninput="OnComposerInput"
                    @onkeydown="OnComposerKeyDown"
                    @ref="_inputRef"
                    placeholder="Message @(_room?.Metadata.Name)… (@@ to mention an agent)" />
-            <button class="btn btn-primary" @onclick="SendAsync" disabled="@string.IsNullOrWhiteSpace(_input)">Send</button>
+            <button class="btn btn-primary" @onclick="SendAsync"
+                    disabled="@(string.IsNullOrWhiteSpace(_input) && _pendingFile is null)">Send</button>
         </div>
     }
 </div>
@@ -297,6 +339,10 @@
     private string? _pendingAddHandle;
     private string _renameValue = "";
     private string? _notice;
+    // File upload (38.9): the file staged in the composer, and a friendly rejection message.
+    private IBrowserFile? _pendingFile;
+    private string? _uploadError;
+    private const long MaxUploadBytes = 25L * 1024 * 1024;   // 25 MB ceiling (spec §7)
 
     // Header affordance: "N members" — the click target that opens the roster modal.
     private string MemberCountLabel => _memberNames.Count == 1 ? "1 member" : $"{_memberNames.Count} members";
@@ -401,7 +447,7 @@
 
     private async Task SendAsync()
     {
-        if (_me is null || string.IsNullOrWhiteSpace(_input))
+        if (_me is null || (string.IsNullOrWhiteSpace(_input) && _pendingFile is null))
             return;
         var text = _input.Trim();
 
@@ -436,10 +482,57 @@
 
         _agentsListing = null;   // a real message dismisses the ephemeral listing
         _notice = null;
+
+        // Store an attached file first, so the sent message carries its reference (38.9). Keep the
+        // pending file on failure so the user can retry rather than losing it.
+        IReadOnlyList<ArtifactRef>? artifacts = null;
+        if (_pendingFile is not null)
+        {
+            try
+            {
+                await using var stream = _pendingFile.OpenReadStream(MaxUploadBytes);
+                var stored = await Artifacts.PutAsync(RoomId, _pendingFile.Name, _pendingFile.ContentType, stream);
+                artifacts = [stored];
+            }
+            catch (Exception)
+            {
+                _uploadError = "Upload failed — please try again.";
+                return;
+            }
+            _pendingFile = null;
+            _uploadError = null;
+        }
+
         _input = "";
         ClearMentions();
-        await Messages.SendHumanMessageAsync(RoomId, _me, text);
+        await Messages.SendHumanMessageAsync(RoomId, _me, text, artifacts);
     }
+
+    // --- File upload (38.9) --------------------------------------------------------------------
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _uploadError = null;
+        var file = e.File;
+        if (file.Size > MaxUploadBytes)
+        {
+            _uploadError = $"That file is {file.Size / (1024 * 1024)} MB — the limit is 25 MB.";
+            _pendingFile = null;
+            return;
+        }
+        _pendingFile = file;
+    }
+
+    private void ClearPendingFile()
+    {
+        _pendingFile = null;
+        _uploadError = null;
+    }
+
+    private string ArtifactUrl(ArtifactDto a) => $"/rooms/{RoomId}/artifacts/{a.Id}";
+
+    private static string FormatSize(long bytes)
+        => bytes >= 1024 * 1024 ? $"{bytes / (1024 * 1024.0):0.#} MB" : $"{Math.Max(1, bytes / 1024)} KB";
 
     // A registry agent whose handle appears in the text but which is NOT a member of this room.
     private AgentDescriptor? AddressedAbsentAgent(string text)

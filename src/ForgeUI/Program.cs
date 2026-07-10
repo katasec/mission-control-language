@@ -37,6 +37,13 @@ var writeConnection = builder.Configuration.GetConnectionString("WriteConnection
     ?? throw new InvalidOperationException("ConnectionStrings:WriteConnection is not configured.");
 builder.Services.AddRoomsData(readConnection, writeConnection);
 
+// Room artifacts (38.9) — bytes behind the IArtifactStore seam. Dev = local volume; prod swaps in
+// Azure Blob behind the same seam. Root is configurable (mounted volume in a container); defaults to
+// a folder under the content root for local dev.
+var artifactRoot = builder.Configuration["Artifacts:LocalRoot"]
+    ?? Path.Combine(builder.Environment.ContentRootPath, "artifacts");
+builder.Services.AddArtifactStore(artifactRoot);
+
 // --- Identity (38.4) — federated OIDC via Entra External ID, cookie session ---------------
 // Entra External ID is wired as a *standard* OIDC provider (no B2C custom policies), so the
 // exit from any one IdP stays cheap. Google/Apple are federated *inside* the Entra tenant, so
@@ -245,6 +252,32 @@ app.MapGet("/invite/{token}", async (string token, HttpContext http,
         InviteStatus.Expired => Results.Content("This invite link has expired.", "text/plain"),
         _ => Results.NotFound("Invite not found."),
     };
+});
+
+// Room artifact download (38.9): membership-gated file stream. The URL carries only room + artifact
+// ids; filename/content-type come from what the store persisted (authoritative, never the request).
+// A non-member or missing artifact both yield 404 (OpenAsync returns null) — no existence leak.
+app.MapGet("/rooms/{roomId:guid}/artifacts/{artifactId:guid}", async (
+    Guid roomId, Guid artifactId, HttpContext http,
+    MemberProvisioningService provisioning, IArtifactStore artifacts) =>
+{
+    if (http.User.Identity?.IsAuthenticated != true)
+    {
+        var scheme = oidcConfigured
+            ? OpenIdConnectDefaults.AuthenticationScheme
+            : CookieAuthenticationDefaults.AuthenticationScheme;
+        return Results.Challenge(
+            new AuthenticationProperties { RedirectUri = $"/rooms/{roomId}/artifacts/{artifactId}" }, [scheme]);
+    }
+
+    var member = await provisioning.ResolveAsync(http.User);
+    if (member is null)
+        return Results.Unauthorized();
+
+    var content = await artifacts.OpenAsync(roomId, artifactId, member.Id);
+    return content is null
+        ? Results.NotFound()
+        : Results.File(content.Content, content.ContentType, fileDownloadName: content.Filename);
 });
 
 app.MapBlazorHub();

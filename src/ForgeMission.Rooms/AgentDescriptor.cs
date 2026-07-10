@@ -83,4 +83,11 @@ public sealed record AgentDescriptor
     /// insurance against impersonation while the namespace is first-come-first-served.
     /// </summary>
     public bool Reserved { get; init; }
+
+    /// <summary>
+    /// Whether this agent consumes an uploaded file (38.9). When true the orchestrator stages the
+    /// room's most recent artifact as the run's input; when false (the default) no file is sent, so a
+    /// text agent never receives a stray PDF.
+    /// </summary>
+    public bool AcceptsArtifacts { get; init; }
 }

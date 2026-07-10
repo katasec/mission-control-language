@@ -51,7 +51,7 @@ instruction; the plane fills the vars.
 | D2 | **Storage** | `IArtifactStore` seam — **local volume in dev, Azure Blob in prod.** Bytes in blob; a *reference* (id/filename/mime/size/key) in the message jsonb. Never Postgres large objects. | Rent-a-domain-agnostic-primitive; keeps large binary out of the DB (per the MessagePayload contract). |
 | D3 | **Runner transport** | **Inline base64** in `RunRequest`/`RunResponse` for the first cut. Runner materializes bytes to `/work/input.pdf`, collects `/work/output.pdf` back. | Simplest; keeps the runner **stateless + zero-egress** (a 39.1 invariant). A trimmed PDF is a few MB — fine inline. Blob-by-reference deferred (§6). |
 | D4 | **Reference model** | Extend [MessagePayload](../../src/ForgeMission.Rooms/MessagePayload.cs) with an artifact reference (list). Bytes never in jsonb. | The comment already anticipates exactly this. |
-| D5 | **Var wiring** | The orchestrator stages the uploaded file and sets `source_pdf` / `work_dir` (and `today`) as `RunRequest.Vars`. | This is what makes the user *not* type a path — the whole UX payoff. |
+| D5 | **Var wiring (ownership split)** | **Orchestrator → runner:** the input **bytes** + original filename + `today` (a non-filesystem var) in `RunRequest`. **Runner (after materializing to `/work`):** sets `source_pdf=/work/input.pdf` and `work_dir=/work` into the pipeline vars. | Locked 2026-07-11 (corrects the earlier wording, which had the orchestrator set the paths). With **inline base64** only the runner knows where it wrote the bytes; emitting `/work/...` from the orchestrator would leak the runner's filesystem layout and dent the stateless/zero-egress invariant. The user still types no path — the UX payoff is intact. **Carry (not v1):** a *generic* runner setting *mission-specific* var names (`source_pdf`/`work_dir`) is a wrinkle — long-term the **mission** should declare which var receives the staged-input path. Convention is fine for v1. |
 
 ## 4. The isolation decision (D1) — room-scoped, and why not user-scoped
 
@@ -82,7 +82,7 @@ the artifact's room membership — the same check messages already do — before
 | 2 | **`IArtifactStore`** — `Put(stream, meta) → ref`, `Open(ref, member) → stream` (membership-gated) | new seam in `ForgeMission.Rooms.Data` | Build seam / Rent impl (local volume dev, Azure Blob prod) |
 | 3 | **Artifact reference** — `{id, filename, mime, size, key}` on the message | extend [MessagePayload.cs](../../src/ForgeMission.Rooms/MessagePayload.cs) | Build (jsonb field) |
 | 4 | **Runner transport** — carry bytes in/out (base64), materialize to `/work` | extend [RunContracts.cs](../../src/ForgeMission.Runner.Contracts/RunContracts.cs) + [MissionRunHandler](../../src/ForgeMission.Runner/MissionRunHandler.cs) | Build |
-| 5 | **Var wiring** — stage the file, set `source_pdf` / `work_dir` / `today` | `RoomAgentInvoker` (`ForgeMission.Rooms`) | Build |
+| 5 | **Var wiring** — orchestrator sends bytes + filename + `today`; runner sets `source_pdf` / `work_dir` after materializing (D5) | `RoomAgentInvoker` (`ForgeUI`) + `MissionRunHandler` (`ForgeMission.Runner`) | Build |
 | 6 | **Download** — result message renders a membership-gated download link | RoomConversation.razor + a stream endpoint | Build |
 
 Plus a **runner-image dependency**: the exec step needs `pikepdf` + `reportlab` in the runner image
@@ -90,6 +90,28 @@ Plus a **runner-image dependency**: the exec step needs `pikepdf` + `reportlab` 
 AOT-lib-selection rule: the constraint binds on .NET in the AOT binary, not on `kind:exec` python).
 
 ## 6. How it manifests to the user (the payoff)
+
+**Steps 3–6 — DONE (2026-07-11, compile-verified; live UX is the owner's post-checkpoint drive):**
+`MessagePayload.Artifacts` (ref list, jsonb) + `ArtifactDto` on `RoomMessageDto` (metadata only, no
+bytes over SignalR). `IArtifactStore.OpenAsync` refactored to **authoritative-by-id** — `(roomId,
+artifactId, requester)` with a persisted `.meta` sidecar, so a download's filename/type come from the
+store, never URL params (the reviewer's constraint). `RoomAgentInvoker`: stages the room's latest
+upload → `RunRequest.Input`, sets `today`, stores `RunResponse.Output` → `ArtifactRef` on the reply,
+and derives the human line from the actual result (removed-count, via `ComposeFileReply`) — the ✓ badge
+still flows through the `VerifiesAnswers` gate (no bypass). `AgentDescriptor.AcceptsArtifacts` gates
+whether a file is staged (text agents never get a stray PDF). Upload = `<InputFile>` in
+`RoomConversation.razor` (25 MB ceiling + friendly rejection) with 📎/📄 download chips on messages;
+download = membership-gated `GET /rooms/{roomId}/artifacts/{artifactId}` in `Program.cs`.
+
+**Interim registration (2026-07-11, marked for revision):** `family-halaqa` is registered as a
+**built-in** (`BuiltinMissions`, local-only — `OciRef=null`, loaded from the baked-in copy, not ghcr)
+bound to the handle **`@quran-class-helper`** (`AgentRegistry`, `VerifiesAnswers`+`AcceptsArtifacts`,
+Official seal; seeded agent member; reserved handle) **purely to prove the artifact-plane UX live**.
+This is a documented shortcut — its **real home is the Phase 39.5 per-user custom-mission registry**;
+move it there once the UX is reviewed/refined. All three touch-points carry an `INTERIM (2026-07-11)`
+comment, and a follow-up task tracks the move.
+
+---
 
 All six components collapse into one gesture in the room:
 
@@ -112,8 +134,27 @@ All six components collapse into one gesture in the room:
 
 ## 8. Status & next step
 
-Spec only — **no code written for the plane yet.** The `family-halaqa` mission that consumes it is
-built and verified but currently **untracked** in git. Natural build order once this is approved:
-`IArtifactStore` seam (#2) + runner image deps → runner transport (#4) → var wiring (#5) → upload (#1)
-+ download (#6). Should be linked from [plan.md](../plan.md) and the phase-38 hub when formalized
-(candidate: a Phase 38.9, sibling to [38.8 mobile](../phases/phase-38.8-mobile-access.md)).
+Build order (approved 2026-07-11): `IArtifactStore` seam (#2) + runner image deps → runner transport
+(#4) → var wiring (#5) → upload (#1) + download (#6).
+
+**Step 1 — DONE (2026-07-11):** `IArtifactStore` seam + `ArtifactRef` + a dev `LocalVolumeArtifactStore`
+(membership-gated via `IReadStore.IsMemberAsync`) + `AddArtifactStore` DI, wired in ForgeUI `Program.cs`
+(`Artifacts:LocalRoot`, default under content root). Runner image gains `python3-pikepdf` +
+`python3-reportlab`. Planner now emits `date_display` (cover) + `date_file` (dotted, download name);
+`edit.py` reads `date_display` and carries `output_name` in its result. **Azure Blob impl** is the prod
+swap behind the seam — deferred to the deploy pass (a new class + DI switch, no call-site change).
+*(Design refinement, adopted: the Planner emits ONE canonical ISO `date`; `edit.py` derives both the
+cover display and the dotted filename deterministically — avoids asking the LLM for two agreeing date
+forms. Verified via real `forge run`: LLM → `2026-07-04`, filename → `Family Halaqa 04.07.2026.pdf`.)*
+
+**Step 2 — DONE + verified (2026-07-11):** `RunContracts.cs` gains a PDF-agnostic `RunArtifact`
+(FileName/ContentType/Base64); `RunRequest.Input` + `RunResponse.Output` (both optional, trailing).
+`MissionRunHandler` stages `Input` bytes into a **per-run** work dir (`WORK_ROOT`, not a shared
+`/work` — concurrency-safe), sets `source_pdf`/`work_dir` vars (D5 ownership split), collects
+`{work_dir}/output.pdf` **only on a verified run**, and names it from a step's `output_name` (generic
+key, `ExtractOutputName`) — cleaned up in `finally`. `MissionRunnerClient.RunAsync` carries `vars` +
+`input`. **Verified through the real HTTP contract:** POST `/run` with a 3.2 MB PDF as base64 →
+HTTP 200, `verified=true`, `output.fileName="Family Halaqa 04.07.2026.pdf"`; the returned base64
+decoded **byte-identical** (2 230 655 B, 51 pp) and `verify.py` re-passed on it against the original
+source (no corruption, no false-green). All 216 tests pass. Next: var wiring (#5, `RoomAgentInvoker`)
++ upload/download (#1/#6).

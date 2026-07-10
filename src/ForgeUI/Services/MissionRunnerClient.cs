@@ -12,11 +12,16 @@ namespace ForgeUI.Services;
 /// </summary>
 public sealed class MissionRunnerClient(HttpClient http)
 {
-    /// <summary>Run a mission by its registry ref and return the result + trace + cost signals.</summary>
+    /// <summary>Run a mission by its registry ref and return the result + trace + cost signals.
+    /// <paramref name="vars"/> carries extra pipeline vars (e.g. <c>today</c>); <paramref name="input"/>
+    /// carries an uploaded file inline (38.9) — the runner materializes it and sets the filesystem
+    /// vars itself, so the orchestrator never names a path.</summary>
     public async Task<RunResponse> RunAsync(
-        string missionRef, string goal, string policy, CancellationToken ct = default)
+        string missionRef, string goal, string policy,
+        IReadOnlyDictionary<string, string>? vars = null, RunArtifact? input = null,
+        CancellationToken ct = default)
     {
-        var request  = new RunRequest(missionRef, goal, Vars: null, policy);
+        var request  = new RunRequest(missionRef, goal, vars, policy, input);
         var response = await http.PostAsJsonAsync(
             "/run", request, RunContractsContext.Default.RunRequest, ct);
         response.EnsureSuccessStatusCode();

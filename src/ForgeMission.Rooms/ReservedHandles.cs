@@ -21,6 +21,8 @@ public static class ReservedHandles
         "@claude",
         "@openai",
         "@grok",
+        // INTERIM (2026-07-11): family-halaqa artifact-plane demo (38.9); real home = 39.5 custom registry.
+        "@quran-class-helper",
     };
 
     /// <summary>True if <paramref name="handle"/> is a reserved official handle.</summary>

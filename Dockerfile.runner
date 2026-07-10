@@ -32,11 +32,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 # Trusted built-in missions may use kind:exec experts. The hallucination-guard Verifier
-# (@guard) shells out to python3 (stdlib only — see experts/Verifier/verify.py). Provision a
-# minimal python3 so exec steps run under the trusted runner policy. (Custom missions get the
-# 39.5 restricted policy that denies exec entirely, so this stays a built-in/trusted capability.)
+# (@guard) shells out to python3 (stdlib only — see experts/Verifier/verify.py). The family-halaqa
+# mission (38.9) additionally needs pikepdf + reportlab for lossless PDF surgery + cover generation
+# (experts/Editor/edit.py, experts/Verifier/verify.py). These are exec-subprocess python libs — NOT
+# linked into any AOT binary, so the AOT-lib rule does not apply (feedback_aot_lib_selection). Debian
+# packages (python3-pikepdf/python3-reportlab) avoid pip + PEP-668 entirely. (Custom missions get the
+# 39.5 restricted policy that denies exec, so this stays a built-in/trusted capability.)
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 \
+ && apt-get install -y --no-install-recommends python3 python3-pikepdf python3-reportlab \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/publish ./

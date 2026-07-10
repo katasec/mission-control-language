@@ -15,7 +15,19 @@ public record RoomMessageDto(
     string? Text,
     Guid? ReplyTo,
     DateTimeOffset CreatedAt,
-    AgentTrustDto? Trust = null);
+    AgentTrustDto? Trust = null,
+    IReadOnlyList<ArtifactDto>? Artifacts = null);
+
+/// <summary>
+/// A downloadable file attached to a message (38.9) — metadata only; bytes are fetched on demand
+/// from the membership-gated <c>GET /rooms/{roomId}/artifacts/{id}</c> endpoint. Never carries bytes
+/// across SignalR.
+/// </summary>
+public record ArtifactDto(
+    Guid Id,
+    string Filename,
+    string ContentType,
+    long Size);
 
 /// <summary>
 /// Trust surface for an agent message. <see cref="Verified"/> is already run through the

@@ -7,6 +7,7 @@ stdin : {"output": "<Planner plan JSON>", "source_pdf": "/work/input.pdf", "work
 stdout: {"result": {output_pdf, source_pdf, removed, expected}, "status": "pass"|"fail", "reason": ...}
 """
 import sys, io, json, re
+from datetime import datetime
 
 TITLE    = "Understanding Quran"      # fixed branding
 SUBTITLE = "Weekly Family Halaqa"     # fixed branding
@@ -16,6 +17,21 @@ PRESENTER = "Jain Bint Ameer Batcha"  # fixed presenter (v1: single known presen
 def fail(reason):
     print(json.dumps({"result": "", "status": "fail", "reason": reason}))
     sys.exit(0)  # a clean fail envelope, not a process error (loop feedback handles it)
+
+
+def format_dates(iso):
+    """The Planner emits ONE canonical ISO date ("YYYY-MM-DD"); we derive BOTH downstream forms here,
+    deterministically — the cover display ("4th Jul 2026") and the dotted file stem ("04.07.2026").
+    Keeping formatting in code (not the LLM) removes a class of date-format error. On an unparseable
+    value, degrade to the raw string for the cover and an empty file stem (→ output.pdf fallback)."""
+    try:
+        d = datetime.strptime((iso or "").strip(), "%Y-%m-%d")
+    except ValueError:
+        return ((iso or "").strip() or "(no date)"), ""
+    suffix = "th" if 11 <= d.day % 100 <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(d.day % 10, "th")
+    display = f"{d.day}{suffix} {d.strftime('%b %Y')}"   # 4th Jul 2026
+    dotted  = d.strftime("%d.%m.%Y")                     # 04.07.2026 (zero-padded, DD.MM.YYYY)
+    return display, dotted
 
 
 def extract_json(text):
@@ -67,7 +83,8 @@ def main():
         fail("No source_pdf provided to the editor.")
 
     remove = sorted({int(p) for p in plan.get("remove_pages", [])})
-    date   = str(plan.get("date", "")).strip() or "(no date)"
+    # One canonical ISO date in; both display + dotted-file forms derived deterministically here.
+    date_display, date_file = format_dates(plan.get("date"))
 
     src = pikepdf.open(source_pdf)
     n   = len(src.pages)
@@ -80,16 +97,20 @@ def main():
     w, h = float(box[2]) - float(box[0]), float(box[3]) - float(box[1])
 
     out   = pikepdf.new()
-    cover = pikepdf.open(make_cover(w, h, date))
+    cover = pikepdf.open(make_cover(w, h, date_display))
     out.pages.append(cover.pages[0])
     for i in keep:
         out.pages.append(src.pages[i - 1])
 
-    output_pdf = f"{work_dir.rstrip('/')}/output.pdf"
+    # Fixed-convention output path the runner collects (38.9 §5 #4). The pretty download name is a
+    # separate field the orchestrator uses — the bytes on disk stay at /work/output.pdf.
+    output_pdf  = f"{work_dir.rstrip('/')}/output.pdf"
     out.save(output_pdf)
+    output_name = f"Family Halaqa {date_file}.pdf" if date_file else "output.pdf"
 
     result = {
         "output_pdf": output_pdf,
+        "output_name": output_name,
         "source_pdf": source_pdf,
         "removed": remove,
         "expected": n - len(remove) + 1,

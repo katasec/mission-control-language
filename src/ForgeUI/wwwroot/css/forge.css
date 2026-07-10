@@ -412,8 +412,19 @@ h2 { font-size: 20px; }
 .agent-thinking { align-self: flex-start; display: flex; align-items: center; gap: var(--space-2); font-size: 13px; color: var(--text-muted); font-style: italic; }
 .agent-thinking::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
 
-.room-composer { position: relative; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-4); border-top: 1px solid var(--border); background: var(--surface); }
+.room-composer { position: relative; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-4); border-top: 1px solid var(--border); background: var(--surface); }
 .room-input    { flex: 1; }
+
+/* File upload (38.9) — paperclip attach button, staged-file chip, and download chips on messages */
+.composer-attach { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-pill); cursor: pointer; font-size: 16px; color: var(--text-muted); background: var(--surface-sunken); transition: background var(--transition); flex-shrink: 0; }
+.composer-attach:hover { background: var(--surface-hover); }
+.composer-attach input[type=file] { display: none; }
+.composer-file { position: absolute; bottom: 100%; left: var(--space-5); margin-bottom: var(--space-2); display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-pill); font-size: 13px; color: var(--text); box-shadow: var(--shadow-lg); z-index: 20; }
+.msg-artifacts { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.artifact-chip { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text); text-decoration: none; transition: background var(--transition), border-color var(--transition); }
+.artifact-chip:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.artifact-name { font-weight: 600; }
+.artifact-size { color: var(--text-subtle); font-size: 12px; }
 
 /* @-mention autocomplete (38.5 task 2) — floats above the composer, WhatsApp-style */
 .mention-menu   { position: absolute; bottom: 100%; left: var(--space-5); margin-bottom: var(--space-2); min-width: 260px; max-width: 420px; max-height: 280px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: var(--space-1); z-index: 20; }

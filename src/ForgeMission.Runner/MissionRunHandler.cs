@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Runtime;
 using ForgeMission.Parser;
@@ -16,6 +17,11 @@ namespace ForgeMission.Runner;
 /// </summary>
 internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<MissionRunHandler> logger)
 {
+    /// <summary>Base dir for per-run work folders (38.9 file-in/out). Per-run subdirs keep concurrent
+    /// runs isolated and the runner stateless — nothing survives a run.</summary>
+    private static readonly string WorkRoot =
+        Environment.GetEnvironmentVariable("WORK_ROOT") ?? Path.Combine(Path.GetTempPath(), "forge-work");
+
     public async Task<RunResponse?> RunAsync(RunRequest request, CancellationToken ct)
     {
         if (!registry.TryGet(request.MissionRef, out var mission))
@@ -64,6 +70,22 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
             foreach (var (k, v) in request.Vars)
                 vars[k] = v;
 
+        // File-in staging (38.9, D5 ownership split): materialize the uploaded bytes into a fresh
+        // per-run work dir and expose them to the mission as source_pdf/work_dir. Only the runner
+        // knows this path — the orchestrator sent bytes + filename, never a /work path. Per-run dir
+        // (not a shared /work) so concurrent runs never collide; cleaned up in the finally below.
+        string? workDir = null;
+        if (request.Input is { } input)
+        {
+            workDir = Path.Combine(WorkRoot, "run-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(workDir);
+            var ext       = Path.GetExtension(input.FileName);
+            var inputPath = Path.Combine(workDir, "input" + (string.IsNullOrEmpty(ext) ? ".pdf" : ext));
+            await File.WriteAllBytesAsync(inputPath, Convert.FromBase64String(input.Base64), ct);
+            vars["source_pdf"] = inputPath;
+            vars["work_dir"]   = workDir;
+        }
+
         var options = new PipelineRunOptions(
             decl.Name,
             vars,
@@ -73,43 +95,99 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
                 trace.Add(new RunTraceStep(expertName, envelope.Status, envelope.Text, envelope.Reason, attempt));
             });
 
-        var stopwatch = Stopwatch.StartNew();
-        var result    = await new PipelineRunner(runner).RunAsync(mission.Ast, mission.Experts, options, ct);
-        stopwatch.Stop();
-
-        var verified = result.Status == MissionStatus.Pass;
-
-        string agentText;
-        if (verified)
+        try
         {
-            agentText = trace.LastOrDefault(e => e.ExpertName == "Answerer")?.Text ?? result.Text;
+            var stopwatch = Stopwatch.StartNew();
+            var result    = await new PipelineRunner(runner).RunAsync(mission.Ast, mission.Experts, options, ct);
+            stopwatch.Stop();
+
+            var verified = result.Status == MissionStatus.Pass;
+
+            string agentText;
+            if (verified)
+            {
+                agentText = trace.LastOrDefault(e => e.ExpertName == "Answerer")?.Text ?? result.Text;
+            }
+            else
+            {
+                var lastFailReason = trace.LastOrDefault(e => e.Status == "fail")?.Reason;
+                agentText = string.IsNullOrWhiteSpace(lastFailReason)
+                    ? "Could not verify this answer after multiple attempts."
+                    : $"Could not verify: {lastFailReason}";
+            }
+
+            // File-out collection (38.9): if the mission wrote a file into the work dir, carry it back
+            // inline. Convention {work_dir}/output.pdf; display name from a step's `output_name`
+            // (generic key), else the on-disk name. Only collected on a verified run — an unverified
+            // transformation must not hand back a file that failed the integrity check.
+            RunArtifact? output = null;
+            if (verified && workDir is not null)
+            {
+                var producedPath = Path.Combine(workDir, "output.pdf");
+                if (File.Exists(producedPath))
+                {
+                    var bytes = await File.ReadAllBytesAsync(producedPath, ct);
+                    output = new RunArtifact(
+                        FileName:    ExtractOutputName(trace) ?? "output.pdf",
+                        ContentType: "application/pdf",
+                        Base64:      Convert.ToBase64String(bytes));
+                }
+            }
+
+            var usage = new RunUsage(
+                InputTokens:    accumulator.InputTokens,
+                OutputTokens:   accumulator.OutputTokens,
+                ComputeSeconds: stopwatch.Elapsed.TotalSeconds,
+                Model:          mission.Profile?.Model);
+
+            logger.LogInformation(
+                "Ran '{MissionRef}' [{Policy}] — verified={Verified} steps={Steps} in {Tokens}+{Out} tok / {Secs:F2}s artifact={Artifact}",
+                request.MissionRef, request.Policy, verified, trace.Count,
+                usage.InputTokens, usage.OutputTokens, usage.ComputeSeconds, output?.FileName ?? "none");
+
+            return new RunResponse(
+                AgentText:  agentText,
+                Verified:   verified,
+                StepCount:  trace.Count,
+                RetryCount: result.Attempts - 1,
+                Trace:      trace,
+                Usage:      usage,
+                Output:     output);
         }
-        else
+        finally
         {
-            var lastFailReason = trace.LastOrDefault(e => e.Status == "fail")?.Reason;
-            agentText = string.IsNullOrWhiteSpace(lastFailReason)
-                ? "Could not verify this answer after multiple attempts."
-                : $"Could not verify: {lastFailReason}";
+            // Best-effort cleanup — the runner keeps no per-run state on disk.
+            if (workDir is not null)
+                try { Directory.Delete(workDir, recursive: true); } catch { /* nothing to recover */ }
         }
+    }
 
-        var usage = new RunUsage(
-            InputTokens:    accumulator.InputTokens,
-            OutputTokens:   accumulator.OutputTokens,
-            ComputeSeconds: stopwatch.Elapsed.TotalSeconds,
-            Model:          mission.Profile?.Model);
-
-        logger.LogInformation(
-            "Ran '{MissionRef}' [{Policy}] — verified={Verified} steps={Steps} in {Tokens}+{Out} tok / {Secs:F2}s",
-            request.MissionRef, request.Policy, verified, trace.Count,
-            usage.InputTokens, usage.OutputTokens, usage.ComputeSeconds);
-
-        return new RunResponse(
-            AgentText:  agentText,
-            Verified:   verified,
-            StepCount:  trace.Count,
-            RetryCount: result.Attempts - 1,
-            Trace:      trace,
-            Usage:      usage);
+    /// <summary>
+    /// Pull a download display name from the run trace (38.9). Generic convention: a step that
+    /// produces a downloadable file emits an <c>output_name</c> string in its structured output.
+    /// Scans newest→oldest and ignores steps whose text isn't a JSON object. Null → caller falls
+    /// back to the on-disk name.
+    /// </summary>
+    private static string? ExtractOutputName(IReadOnlyList<RunTraceStep> trace)
+    {
+        for (var i = trace.Count - 1; i >= 0; i--)
+        {
+            var text = trace[i].Text;
+            if (string.IsNullOrWhiteSpace(text)) continue;
+            try
+            {
+                using var doc = JsonDocument.Parse(text);
+                if (doc.RootElement.ValueKind == JsonValueKind.Object
+                    && doc.RootElement.TryGetProperty("output_name", out var n)
+                    && n.ValueKind == JsonValueKind.String)
+                {
+                    var name = n.GetString();
+                    if (!string.IsNullOrWhiteSpace(name)) return name;
+                }
+            }
+            catch (JsonException) { /* step output isn't JSON — skip */ }
+        }
+        return null;
     }
 }
 

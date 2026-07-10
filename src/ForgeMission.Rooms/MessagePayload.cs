@@ -22,6 +22,13 @@ public sealed class MessagePayload
     /// dependency-free — the host maps Core's <c>StepEnvelope</c>/<c>TrustSignal</c> into these.
     /// </summary>
     public AgentMeta? Agent { get; set; }
+
+    /// <summary>
+    /// Room artifacts attached to this message (38.9) — files a human uploaded or a mission produced.
+    /// References only (id/filename/mime/size/key); the bytes live behind <c>IArtifactStore</c>, never
+    /// in jsonb. Retrieval is gated by room membership. Empty for a plain text message.
+    /// </summary>
+    public List<ArtifactRef> Artifacts { get; set; } = [];
 }
 
 /// <summary>Trust verdict + step trace for an agent message (jsonb, versioned via parent).</summary>

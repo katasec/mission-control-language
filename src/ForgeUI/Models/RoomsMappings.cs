@@ -14,7 +14,12 @@ public static class RoomsMappings
         message.Payload.Text,
         message.ReplyTo,
         message.CreatedAt,
-        ToTrustDto(message.Payload.Agent));
+        ToTrustDto(message.Payload.Agent),
+        message.Payload.Artifacts.Count == 0
+            ? null
+            : message.Payload.Artifacts
+                .Select(a => new ArtifactDto(a.Id, a.Filename, a.ContentType, a.Size))
+                .ToList());
 
     private static AgentTrustDto? ToTrustDto(AgentMeta? agent)
     {

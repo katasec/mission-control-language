@@ -8,7 +8,9 @@ namespace ForgeMission.Runner;
 /// only return the exact content behind a digest, so a pull is self-verifying (cosign signatures
 /// land in 39.5 for third-party/custom missions). Published to <c>ghcr.io/katasec</c> 2026-07-09.
 /// </summary>
-internal sealed record BuiltinMission(string Label, string Description, string OciRef, string LocalDir);
+/// <param name="OciRef">The pinned ghcr digest to pull, or <c>null</c> for a <b>local-only</b>
+/// built-in loaded straight from the baked-in copy (no pull, no fallback noise).</param>
+internal sealed record BuiltinMission(string Label, string Description, string? OciRef, string LocalDir);
 
 internal static class BuiltinMissions
 {
@@ -26,6 +28,13 @@ internal static class BuiltinMissions
             $"{Reg}/forge-mission-claude@sha256:5f474a569a40e156218f0f5e2644b753ac3fb6c7bb7f662099826d9d09a93adb",             "claude"),
         new("Grok",      "Raw Grok (xAI) — no verification",
             $"{Reg}/forge-mission-grok@sha256:f60b53ce79dfc23fc0774e9d0af83b1dbe806cf597bd0b6d6288a3ef0944cf6a",               "grok"),
+        // INTERIM (2026-07-11): family-halaqa is registered as a built-in to prove the artifact-plane
+        // UX (38.9) end-to-end. It is NOT published to ghcr — OciRef=null loads it directly from the
+        // baked-in copy (Dockerfile.runner bakes missions/). Real home = the Phase 39.5 per-user custom
+        // registry; move it there once the UX is reviewed/refined. (This is the one local exception; the
+        // other five stay ghcr-pulled by pinned digest.)
+        new("FamilyHalaqa", "Edits a slide-deck PDF (remove pages + cover), verified page-for-page",
+            OciRef: null, "family-halaqa"),
     ];
 
     /// <summary>
@@ -41,6 +50,16 @@ internal static class BuiltinMissions
         foreach (var b in All)
         {
             string dir;
+            // INTERIM (2026-07-11): a local-only built-in (OciRef=null) loads from the baked-in copy
+            // with no pull attempt — avoids a noisy pull-fail→fallback on every boot. See the
+            // FamilyHalaqa note above; real home is the 39.5 custom registry.
+            if (b.OciRef is null)
+            {
+                dir = Path.Combine(bakedInDir, b.LocalDir);
+                Console.Error.WriteLine($"Runner: built-in '{b.Label}' loaded local-only from {dir}");
+                specs.Add((b.Label, b.Description, Path.Combine(dir, "mission.mcl")));
+                continue;
+            }
             try
             {
                 var (cacheDir, status) = await OciMissionPuller.PullAsync(b.OciRef, refresh: false, ct);

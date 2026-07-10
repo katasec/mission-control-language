@@ -17,9 +17,11 @@ The request names slides to remove, as numbers and ranges, possibly in loose Eng
 Output ONLY a JSON object — no prose, no markdown fences — with EXACTLY these keys:
 - "remove_pages": a sorted array of 1-based integer page numbers to remove. Expand every range
   (e.g. "58-62" -> 58,59,60,61,62). Include only numbers the human actually asked to remove.
-- "date": the session date as a display string in the form "4th Jul 2026". If the request states
-  a date, normalize it to that form. If it says "today" or "tomorrow", resolve it against today's
-  date, which is {{today}}. If no date is given, use "{{today}}".
+- "date": the session date in ISO 8601 form "YYYY-MM-DD" (e.g. "2026-07-04"). If the request
+  states a date, normalize it to ISO. If it says "today" or "tomorrow", resolve it against today's
+  date, which is {{today}} (also ISO). If no date is given, use {{today}}. Emit ONLY the ISO date —
+  the cover text ("4th Jul 2026") and the file name are formatted deterministically downstream, so
+  do not produce any other date form.
 
 Request: {{request}}
 

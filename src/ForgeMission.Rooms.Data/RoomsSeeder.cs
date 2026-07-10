@@ -28,6 +28,10 @@ public static class RoomsSeeder
     public const string ClaudeHandle = "@claude";
     public static readonly Guid GrokId = Guid.Parse("77777777-7777-7777-7777-777777777777");
     public const string GrokHandle = "@grok";
+    // INTERIM (2026-07-11): family-halaqa artifact-plane demo agent (38.9). Real home = 39.5 custom
+    // registry; remove this seeded member when the mission moves off the built-in path.
+    public static readonly Guid QuranClassHelperId = Guid.Parse("88888888-8888-8888-8888-888888888888");
+    public const string QuranClassHelperHandle = "@quran-class-helper";
     public static readonly Guid DemoRoomId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     public static readonly Guid AlicePrivateRoomId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
@@ -45,6 +49,7 @@ public static class RoomsSeeder
         await EnsureAgentAsync(db, OpenAiId, OpenAiHandle, ct);
         await EnsureAgentAsync(db, ClaudeId, ClaudeHandle, ct);
         await EnsureAgentAsync(db, GrokId, GrokHandle, ct);
+        await EnsureAgentAsync(db, QuranClassHelperId, QuranClassHelperHandle, ct); // INTERIM (38.9) — see field note
         await db.SaveChangesAsync(ct);
     }
 
@@ -59,6 +64,7 @@ public static class RoomsSeeder
         await EnsureAgentAsync(db, OpenAiId, OpenAiHandle, ct);
         await EnsureAgentAsync(db, ClaudeId, ClaudeHandle, ct);
         await EnsureAgentAsync(db, GrokId, GrokHandle, ct);
+        await EnsureAgentAsync(db, QuranClassHelperId, QuranClassHelperHandle, ct); // INTERIM (38.9)
 
         await EnsureRoomAsync(db, DemoRoomId, "Demo Room", "Alice, Bob, and the hallucination guard", ct);
         await EnsureRoomAsync(db, AlicePrivateRoomId, "Alice's Room", "Membership isolation check — Alice only", ct);
