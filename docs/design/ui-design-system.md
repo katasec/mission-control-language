@@ -127,14 +127,22 @@ the per-response side is `AgentMeta.Verified` (38.3). Keep them separate in mark
 
 ## 6. Surface map (which CSS styles which screen)
 
+Since 2026-07-10 the rooms surface is a **persistent two-pane shell** (`forge-ui:0.3.2`): one page
+component (`Pages/Rooms.razor`) owns both `/rooms` and `/rooms/{id}`, so switching rooms is a route
+change on the same component — the sidebar never reloads. The old separate `RoomList.razor` /
+`RoomView.razor` routes were removed; the conversation lives in `Shared/RoomConversation.razor`
+(keyed on RoomId). See [Phase 38.8 baseline](../phases/phase-38.8-mobile-access.md) for the shipped
+detail + decisions.
+
 | Screen | Route | Key classes |
 |---|---|---|
 | Sign-in gate | `/login` | `.auth-shell`, `.auth-card`, `.btn-primary` |
-| Rooms home | `/rooms` | `.page`, `.page-header`, `.room-list`, `AccountMenu` |
-| A room | `/rooms/{id}` | `.room`, `.room-header`, `.room-stream`, `.room-msg`, `.msg-bubble`, `.agent-card`, `.room-composer`, `.room-hint` |
-| Mission playground | `/playground` | `.app-shell` + `SessionNav` + `Chat` (`.chat-shell`, `.chat-messages`, `.agent-card`) |
+| Rooms shell | `/rooms` + `/rooms/{id}` | `.app-shell` + `.rooms-nav` (sidebar: `.rooms-nav-header`, `.rooms-new`, `.room-item` + member subline, `.rooms-account` → `AccountMenu`) + `.app-main` |
+| Conversation pane | (right pane of the shell) | `.convo`, `.convo-header`, `.convo-name`, `.convo-members-btn` ("N members ›"), `.room-stream`, `.room-msg`, `.msg-bubble`, `.agent-card`, `.room-composer`, `.room-hint`, `.convo-empty` |
+| Create-room modal | (from `.rooms-new`) | `.modal-backdrop`, `.modal`, `.field`, `.agent-pick` (name + pick-agents-up-front) |
+| Members modal | (from `.convo-members-btn`) | `.modal`, rename (`.modal-name-row`), `.member-row` + `.member-role`, agents (`.member-agent-handle` + `.identity-seal` + remove), `.agent-pick` add-agent, invite — consolidates the old inline add-agent panel |
 | `/agents` directory (38.5) | (inline in a room) | slash-command output rendered as a listing **in the room stream** (not a route): handle · description · publisher + `.identity-seal`. Reuse room-message layout, not a new `.page`. |
-| Trust card / trace | (in rooms + playground) | per-response: `.agent-card`, `.trust-badge`, `.verified`/`.unverified`, `.trace-panel`; per-agent: `.identity-seal` — see §5 |
+| Trust card / trace | (in the conversation pane) | per-response: `.agent-card`, `.trust-badge`, `.verified`/`.unverified`, `.trace-panel`; per-agent: `.identity-seal` — see §5 |
 
 ---
 
@@ -211,3 +219,9 @@ The default Blazor template scaffold was removed so the styling story is honest 
 stylesheet, no phantom framework): `bootstrap/`, `open-iconic/`, `site.css`, `NavMenu.razor`
 (+`.css`), `MainLayout.razor.css`. Don't reintroduce them. `Error.cshtml` is self-contained on
 `forge.css`.
+
+Also removed: `RoomList.razor` + `RoomView.razor` (their `/rooms` and `/rooms/{id}` routes were
+absorbed into the single-page two-pane shell `Pages/Rooms.razor`, 2026-07-10) and the earlier
+`/playground` + `Chat.razor` mission playground (retired in Phase 39.1 when execution moved to the
+containerized runner). `MainLayout.razor` is a thin `@Body` passthrough — each surface composes its
+own chrome.
