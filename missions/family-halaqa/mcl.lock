@@ -1,0 +1,14 @@
+version: 1
+experts:
+  Editor:
+    source: experts
+    path: experts/Editor/expert.md
+    hash: d8816e4a6f3504173d4851ae8412073ad9027034a79652a570a39da1b79b1e30
+  Planner:
+    source: experts
+    path: experts/Planner/expert.md
+    hash: 66511cac380ad74c2bd72957fc339e243b9c4ecdd42416bb89f392df8083c261
+  Verifier:
+    source: experts
+    path: experts/Verifier/expert.md
+    hash: 0b6b3d5c1d1b6c34f03a02ff7403f7bc42d68c4376192e3cc9da7296137e8f25
