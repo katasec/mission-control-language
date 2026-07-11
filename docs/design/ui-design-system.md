@@ -162,16 +162,68 @@ detail + decisions.
 
 ---
 
-## 8. Auth & information architecture (gate everything)
+## 8. Responsive & mobile
+
+The app is **mobile-first from Phase 40 on** — people reach the engine on the phone they carry.
+Foundation laid in [`phase-40.1`](../phases/phase-40.1-design-system-foundation.md):
+
+- **Mobile-first authoring (the convention for all new rules).** Base rules target the phone;
+  desktop is layered *up* with `@media (min-width: 720px) { … }`. Do **not** author desktop-first
+  and walk it down. (Existing pre-40 rules are desktop-first and are *not* retrofitted — the
+  convention governs new rules only.)
+- **Two breakpoints, declared once** in `forge.css` §0 as the canonical block. Custom properties
+  **cannot** be used in a `@media` condition, so the pixel values are literals everywhere; the
+  `--bp-*` tokens are JS-interop / documentation aids only:
+  - `--bp-rail: 640px` — rail ↔ bottom-tab-bar flip (40.2)
+  - `--bp-panes: 720px` — rooms master/detail ↔ two-pane flip (40.3)
+
+  (Below 640 = phone → bottom tab bar + single pane; 640–720 = large phone / small tablet;
+  ≥720 = full two-pane. Implementers may collapse to just 720 if 640 proves unnecessary — decide
+  in 40.2/40.3 and keep the decision in that §0 block.)
+- **`100dvh`, not `100vh`,** for full-height shells (`.app-shell`, `.auth-shell`, `.convo`), with a
+  `100vh` fallback line first for old engines. `100vh` ignores the mobile URL bar and hides the
+  composer behind it.
+- **Inputs are ≥ 16px** (`.field`, `.invite-field`). Below 16px, iOS Safari auto-zooms the page on
+  focus. 16px is the base body size, so it reads as intentional, not oversized. The rule is
+  **inputs only** — small labels/metas stay small.
+- **Safe-area insets** are wired via `viewport-fit=cover` (in `_Host.cshtml`) + `--safe-top` /
+  `--safe-bottom` tokens (`env(safe-area-inset-*)`). The composer and bottom tab bar (40.2/40.3)
+  pad with `calc(var(--space-3) + var(--safe-bottom))` so they clear the iOS home indicator.
+- **`prefers-reduced-motion: reduce`** is honoured globally (base section) — the thinking-pulse and
+  all `--transition` hover/focus animations collapse to effectively static.
+
+## 9. Dependency policy (right-sizing vs NIH)
+
+Mirrors [Phase 40 §3.2](../phases/phase-40-forge-ui-shell.md). We hand-roll layout and rent
+domain-agnostic primitives — but never sacrifice UX to dodge a dependency.
+
+- **Platform-first.** Use Blazor's own building blocks (`NavLink`, layouts, `@attribute
+  [Authorize]`) before reaching for anything.
+- **Hand-rolled layout.** The nav rail / bottom tab bar / two-pane shell are plain CSS + `.razor`
+  (flexbox/grid, the §0 breakpoints). No CSS framework, **no npm, no Node, no preprocessor** — the
+  stylesheet is one tokenized `forge.css`.
+- **SVG icon *assets*, not an icon *runtime*.** Inline `<svg>` (or text glyphs) checked into the
+  repo — not an icon font or a JS icon package. See §7.
+- **Named escape hatch: FluentUI-Blazor.** If a genuinely complex interactive control is needed
+  (virtualized lists, rich pickers), reach for FluentUI-Blazor deliberately rather than
+  hand-rolling something worse. Reaching for it is a decision, not a default.
+- **UX is never sacrificed to avoid a library.** If avoiding a dependency means shipping a worse
+  experience, add the dependency — right-sizing, not not-invented-here purity.
+
+---
+
+## 10. Auth & information architecture (gate everything)
 
 Identity is **required** (WhatsApp-style: participants must be signed in). The IA:
 
 - **Every app route is `[Authorize]`.** `/` redirects authed→`/rooms`, anon→`/login` (via
   `App.razor` → `RedirectToLogin`). All the `/auth/*` plumbing (OIDC + dev sign-in) already
   exists.
-- **`MainLayout` is a thin `@Body`.** Each surface composes its own chrome: `/playground` owns
-  the Sessions rail; `/rooms*` are centred pages with an `AccountMenu` in the header; `/login`
-  is bare.
+- **`MainLayout` is a thin `@Body`.** Each surface composes its own chrome: `/rooms*` is the
+  two-pane shell with the account control docked at the sidebar foot; `/login` is bare.
+  > **⚠️ Changing in 40.2.** [Phase 40.2](../phases/phase-40.2-app-navigation-shell.md) rewrites
+  > `MainLayout` into the persistent app shell (nav rail ↔ bottom tab bar; Rooms · Library ·
+  > Account). This "thin `@Body`" description is about to be superseded — update this bullet then.
 - **`AccountMenu` is the persistent identity control**, top-right on every authed surface —
   avatar + name, with sign-out inside. Logged-out, the gate *is* the sign-in affordance.
 
@@ -180,7 +232,7 @@ for the full decision log.
 
 ---
 
-## 9. Running it locally (and two gotchas that will bite you)
+## 11. Running it locally (and two gotchas that will bite you)
 
 ```bash
 make dev-up   # Postgres for Rooms
@@ -213,7 +265,7 @@ its own fresh reads — see `Pages/RoomList.razor`.
 
 ---
 
-## 10. What was deliberately deleted
+## 12. What was deliberately deleted
 
 The default Blazor template scaffold was removed so the styling story is honest (one
 stylesheet, no phantom framework): `bootstrap/`, `open-iconic/`, `site.css`, `NavMenu.razor`

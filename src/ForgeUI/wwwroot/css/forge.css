@@ -7,12 +7,29 @@
    forced with `data-theme="light|dark"` on <html>.
 
    Sections:
-     1. Design tokens (light)         6. Chat surface (Phase 34/35)
-     2. Design tokens (dark)          7. Agent card · trust · trace
-     3. Base / reset                  8. Rooms surface (Phase 38)
-     4. Primitives (button, field)    9. Auth / login
-     5. Layout + sidebar             10. Framework error UI
+     0. Responsive breakpoints        7. Agent card · trust · trace
+     1. Design tokens (light)         8. Rooms surface (Phase 38)
+     2. Design tokens (dark)          9. Auth / login
+     3. Base / reset                 10. Framework error UI
+     4. Primitives (button, field)   11. Rooms shell (two-pane)
+     5. Layout + sidebar             12. Modal overlay
    ========================================================================== */
+
+/* 0. Responsive breakpoints & mobile plumbing ---------------------------- */
+/* Breakpoints — LITERAL px in @media (custom properties CANNOT be used in a media
+   condition). Keep every @media in this file aligned to these two numbers:
+     --bp-rail:  640px   rail ↔ bottom-tab-bar flip (40.2)
+     --bp-panes: 720px   rooms master/detail ↔ two-pane flip (40.3)
+   Mobile-first authoring: base rules target the phone; `@media (min-width: 720px) { … }`
+   layers desktop UP. The --bp-* tokens are JS-interop / documentation aids only. */
+:root {
+  --bp-rail:     640px;
+  --bp-panes:    720px;
+  /* iOS safe-area insets (opted in via viewport-fit=cover in _Host.cshtml). The composer
+     and bottom tab bar in 40.2/40.3 consume these as calc(var(--space-3) + var(--safe-bottom)). */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 
 /* 1. Design tokens — light (default) ------------------------------------- */
 :root {
@@ -186,6 +203,17 @@
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; padding: 0; }
 
+/* Honour the OS "reduce motion" setting — neutralises the pulse keyframe and
+   all --transition hover/focus animations for users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 html, body { height: 100%; }
 
 body {
@@ -270,61 +298,20 @@ h2 { font-size: 20px; }
   background: var(--surface);
   color: var(--text);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px;   /* ≥16px so iOS Safari does not auto-zoom on focus */
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 .field::placeholder { color: var(--text-subtle); }
 .field:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
 
 /* 5. Layout + sidebar ---------------------------------------------------- */
-.app-shell { display: flex; height: 100vh; }
+.app-shell { display: flex; height: 100vh; height: 100dvh; }   /* 100vh fallback, then dvh (respects mobile URL bar) */
 .app-main  { flex: 1; min-width: 0; }
 
 /* Simple centred page (rooms list, login) */
 .page        { padding: var(--space-6); max-width: 720px; margin: 0 auto; width: 100%; }
 .page-narrow { max-width: 480px; }
 .page-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); margin-bottom: var(--space-5); }
-
-.session-nav        { width: 220px; flex-shrink: 0; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; }
-.session-nav-header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
-.session-nav-title  { font-size: 12px; font-weight: 600; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.06em; }
-.session-new        { width: 26px; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: none; cursor: pointer; font-size: 16px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; line-height: 1; transition: background var(--transition), color var(--transition); }
-.session-new:hover  { background: var(--surface-hover); color: var(--text); }
-.session-list       { flex: 1; overflow-y: auto; padding: var(--space-2) 0; }
-.session-item       { padding: var(--space-2) var(--space-4); cursor: pointer; transition: background var(--transition); }
-.session-item:hover { background: var(--surface-hover); }
-.session-item.active { background: var(--surface-active); box-shadow: inset 3px 0 0 var(--accent); }
-.session-item-top   { display: flex; align-items: center; gap: var(--space-2); }
-.session-trust      { flex-shrink: 0; font-size: 13px; }
-.st-pass            { color: var(--success); }
-.st-fail            { color: var(--danger); }
-.st-none            { color: var(--text-subtle); }
-.session-title      { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.session-meta       { font-size: 11px; color: var(--text-subtle); margin-top: 2px; padding-left: 21px; }
-.session-empty      { font-size: 12px; color: var(--text-subtle); padding: var(--space-4); }
-
-/* 6. Chat surface (Phase 34/35) ------------------------------------------ */
-.chat-shell   { display: flex; flex-direction: column; height: 100vh; }
-.chat-topbar  { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface); }
-.chat-title   { font-size: 15px; font-weight: 600; }
-.chat-meta    { font-size: 12px; color: var(--text-muted); margin-left: auto; }
-
-.mission-picker { font-size: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 5px 9px; background: var(--surface); color: var(--text); cursor: pointer; transition: border-color var(--transition); }
-.mission-picker:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
-.mission-label  { font-size: 11px; color: var(--text-muted); background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 8px; white-space: nowrap; }
-
-.chat-messages { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
-
-.msg-user  { align-self: flex-end; background: var(--accent-soft); border: 1px solid transparent; border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg); padding: var(--space-3) var(--space-4); font-size: 14px; max-width: 70%; color: var(--text); }
-.msg-agent { align-self: flex-start; width: 100%; }
-
-.chat-input-row { display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-4); border-top: 1px solid var(--border); background: var(--surface); }
-.chat-input     { flex: 1; height: 38px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 14px; outline: none; transition: border-color var(--transition), box-shadow var(--transition); }
-.chat-input::placeholder { color: var(--text-subtle); }
-.chat-input:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
-.chat-send      { height: 38px; padding: 0 var(--space-5); border-radius: var(--radius-sm); border: 1px solid var(--ink); background: var(--ink); color: var(--ink-contrast); font-size: 14px; font-weight: 500; cursor: pointer; transition: background var(--transition); }
-.chat-send:hover:not(:disabled) { background: var(--ink-hover); }
-.chat-send:disabled { background: var(--border-strong); border-color: var(--border-strong); color: var(--surface); cursor: default; }
 
 /* 7. Agent card · trust · trace ------------------------------------------ */
 .agent-card       { border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm); }
@@ -377,7 +364,9 @@ h2 { font-size: 20px; }
 .agent-answer code  { background: var(--surface-sunken); padding: 1px 5px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; }
 
 /* 8. Rooms surface (Phase 38) -------------------------------------------- */
-.room { display: flex; flex-direction: column; height: 100vh; max-width: 940px; margin: 0 auto; width: 100%; }
+/* Agent-message header bits (relocated from the retired Phase 34/35 chat surface). */
+.mission-label { font-size: 11px; color: var(--text-muted); background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px 8px; white-space: nowrap; }
+.chat-meta     { font-size: 12px; color: var(--text-muted); margin-left: auto; }
 
 .room-header  { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface); }
 .room-back    { font-size: 13px; color: var(--text-muted); }
@@ -388,7 +377,7 @@ h2 { font-size: 20px; }
 .room-badge   { display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); padding: 1px 6px; border-radius: var(--radius-sm); }
 
 .room-invite  { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface-sunken); font-size: 13px; }
-.invite-field { flex: 1; max-width: 420px; height: 32px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted); font-size: 12px; font-family: var(--font-mono); }
+.invite-field { flex: 1; max-width: 420px; height: 36px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted); font-size: 16px; font-family: var(--font-mono); }   /* ≥16px: no iOS focus-zoom */
 
 .room-stream  { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
 
@@ -459,7 +448,7 @@ h2 { font-size: 20px; }
 .empty-state { color: var(--text-muted); padding: var(--space-5) 0; }
 
 /* 9. Auth / login -------------------------------------------------------- */
-.auth-shell  { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--space-5); }
+.auth-shell  { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: var(--space-5); }
 .auth-card   { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: var(--space-6); }
 .auth-title  { font-size: 22px; }
 .auth-sub    { color: var(--text-muted); margin: var(--space-2) 0 var(--space-5); }
@@ -524,7 +513,7 @@ h2 { font-size: 20px; }
 .rooms-account .account-dropdown { top: auto; bottom: calc(100% + 6px); right: auto; left: 0; }
 
 /* Conversation pane — fills the shell's right side (replaces the old centred .room column). */
-.convo         { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg); }
+.convo         { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
 .convo-header  { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface); }
 .convo-name    { font-size: 16px; font-weight: 600; flex-shrink: 0; }
 .convo-members { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -1,6 +1,6 @@
 # Phase 40.1 — Design System Foundation (mobile primitives + conventions)
 
-> **Status: Design** · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
+> **Status: Done** (2026-07-12, verified live on `localhost:5286`) · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
 > **Depends on:** none · **Regression risk:** none (global-safe / additive) ·
 > **Design system:** [UI Design System](../design/ui-design-system.md)
 >
