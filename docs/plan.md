@@ -11,7 +11,9 @@
 > [40.1 foundation](phases/phase-40.1-design-system-foundation.md) ✅ **DONE** →
 > [40.2 nav shell](phases/phase-40.2-app-navigation-shell.md) ✅ **DONE** →
 > [40.3 collapse](phases/phase-40.3-responsive-collapse.md) ✅ **DONE (2026-07-12, verified in-browser)** →
-> **[40.4 PWA](phases/phase-40.4-pwa-shell.md) ← NEXT**.
+> [40.4 PWA](phases/phase-40.4-pwa-shell.md) ✅ **BUILT (2026-07-12)** — installable shell shipped;
+> statically verified, one manual gate left (install + circuit/OIDC smoke-test on the deployed app).
+> **Phase 40 is complete — the next frontier is the runtime track: [39.5](phases/phase-39-metered-runtime-marketplace.md) (custom missions/experts + save-as-agent) or 39.6 (Stripe/tiers).**
 > **40.1** shipped the mobile-correct CSS foundation (`100dvh`, 16px inputs, reduced-motion, safe-area,
 > §0 breakpoints + mobile-first convention). **40.2** shipped the net-new nav layer: `MainLayout` →
 > `NavShell` (left rail ≥640px ↔ bottom tab bar <640px; Rooms · Library · Account) + `.app-content`;

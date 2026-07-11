@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Forge — offline</title>
+  <style>
+    :root { color-scheme: light dark; }
+    html, body {
+      height: 100%; margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #f7f6f3; color: #1c1b19;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #1a1917; color: #ece9e3; }
+    }
+    .wrap {
+      height: 100%; display: flex; align-items: center; justify-content: center;
+      padding: max(24px, env(safe-area-inset-top)) 24px;
+      box-sizing: border-box;
+    }
+    .card { max-width: 22rem; text-align: center; }
+    .mark {
+      width: 64px; height: 64px; margin: 0 auto 1.25rem;
+      display: block; border-radius: 50%;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 .5rem; }
+    p { margin: 0 0 1.5rem; line-height: 1.5; opacity: .75; font-size: .95rem; }
+    button {
+      font: inherit; font-weight: 600; cursor: pointer;
+      color: #fff; background: #c2410c; border: 0;
+      padding: .65rem 1.4rem; border-radius: 999px;
+    }
+    button:hover { background: #9a3412; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <img class="mark" src="/icons/icon-192.png" alt="Forge" width="64" height="64" />
+      <h1>You're offline</h1>
+      <p>Forge is a live workspace — its rooms need a connection. Reconnect and try again.</p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </div>
+</body>
+</html>
