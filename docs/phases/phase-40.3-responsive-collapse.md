@@ -1,6 +1,6 @@
 # Phase 40.3 — Responsive Surface Collapse (Rooms master/detail)
 
-> **Status: Design** · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
+> **Status: DONE (2026-07-12, verified in-browser)** · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
 > **Depends on:** [40.2](phase-40.2-app-navigation-shell.md) · **Absorbs:** [Phase 38.8 Task 1](phase-38.8-mobile-access.md) ·
 > **Regression risk:** contained — this is the **one** existing surface that changes shape, so it is the
 > single place to regression-test.
@@ -103,6 +103,25 @@ master/detail on the phone.
 2. Confirm desktop (≥720) is byte-for-byte the prior two-pane behaviour (regression check — this is the one
    modified surface).
 - **Done when:** all three widths pass and desktop is unregressed.
+
+## Shipped — implementation notes (2026-07-12)
+
+- **Immersive mechanism = cascading `ShellChrome`, not body-class interop.** `MainLayout` owns a
+  `ShellChrome` (in `Models/`, a tiny event-raising holder), cascades it `IsFixed`, and re-renders on
+  its `Changed` event to toggle `.immersive` on `.app-frame`. `Pages/Rooms.razor` sets
+  `Chrome.SetImmersive(RoomId is not null)` in `OnParametersSet` and clears it in `Dispose` (leaving
+  Rooms → Library/Account restores the tab bar). No JS, no reflection — AOT-clean.
+- **Pane collapse is route-driven, zero new width-state.** `.app-shell` gets `at-list`/`at-detail`
+  from `RoomId`; forge.css §14 shows one pane < 720px and both ≥ 720px.
+- **Desktop restore is per-pane native display** (`.rooms-nav`→`flex`, `.app-main`→`block`), not a
+  blanket `flex`, so the ≥720px shell is byte-for-byte the pre-40.3 two-pane (regression-safe).
+- **Two breakpoints stay independent:** rail flips at 640 (40.2), panes at 720 (40.3). In the
+  640–719 band the nav is a rail *and* Rooms is single-pane; opening a room there is still immersive
+  (tab bar/rail hidden < 720) — verified at 716px.
+- **Verified in-browser:** 375 list→tap→immersive detail (nav+tab hidden, back shown, composer
+  safe-area padded)→back→list (tab restored, `.immersive` cleared); create-room modal 327px-contained
+  at 375; 1024 two-pane unregressed (nav 288 + rail 64, back hidden); no horizontal overflow at any
+  width; 0 console errors; clean build.
 
 ## Non-goals
 

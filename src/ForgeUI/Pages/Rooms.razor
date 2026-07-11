@@ -8,11 +8,12 @@
 @inject StarterRoomService Starter
 @inject RoomCreationService Creation
 @inject NavigationManager Nav
+@implements IDisposable
 
 @* The rooms shell: a persistent sidebar (room list + "+ New room" + account) beside the active
    conversation. Owns both /rooms and /rooms/{id}, so switching rooms is a route change on this
    same component — the list stays put and only the keyed conversation pane swaps. *@
-<div class="app-shell">
+<div class="app-shell @(RoomId is null ? "at-list" : "at-detail")">
     <aside class="rooms-nav">
         <div class="rooms-nav-header">
             <span class="rooms-nav-title">Rooms</span>
@@ -108,6 +109,9 @@
 @code {
     [Parameter] public Guid? RoomId { get; set; }
 
+    // Cascaded from MainLayout (40.3): opening a room goes immersive so the phone drops the tab bar.
+    [CascadingParameter] private ShellChrome? Chrome { get; set; }
+
     private Member? _me;
     private IReadOnlyList<Room> _rooms = [];
     private Dictionary<Guid, string> _sublines = [];
@@ -127,6 +131,11 @@
     // happen to share a name are still told apart by their members.
     private string Subline(Guid roomId)
         => _sublines.GetValueOrDefault(roomId, "");
+
+    // Fires on every route change on this component (list ↔ a room), so it's the right hook to keep
+    // the shell's immersive flag in sync with whether a room is open.
+    protected override void OnParametersSet()
+        => Chrome?.SetImmersive(RoomId is not null);
 
     protected override async Task OnInitializedAsync()
     {
@@ -224,4 +233,7 @@
         await LoadRoomsAsync();
         Nav.NavigateTo($"/rooms/{newId}");
     }
+
+    // Leaving Rooms entirely (→ Library/Account) must restore the tab bar.
+    public void Dispose() => Chrome?.SetImmersive(false);
 }

@@ -654,6 +654,41 @@ h2 { font-size: 20px; }
 .account-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
 .account-seam    { color: var(--text-subtle); }   /* a disabled "coming soon" affordance */
 
+/* 14. Rooms responsive collapse (40.3) — master/detail on the phone -------
+   Mobile-first: below the §0 --bp-panes (720px) the rooms shell shows ONE pane at
+   a time, chosen by the route-state class Pages/Rooms.razor sets (.at-list on
+   /rooms, .at-detail on /rooms/{id}). At ≥720px both panes show side-by-side —
+   the unchanged two-pane desktop shell. The base .rooms-nav width here overrides
+   the §11 desktop 288px (later rule, equal specificity). */
+.rooms-nav { width: 100%; }
+.app-shell.at-detail .rooms-nav { display: none; }
+.app-shell.at-list   .app-main  { display: none; }
+
+/* Back-to-rooms control in the conversation header — mobile only (on desktop the
+   list is always visible, so "back" is meaningless). */
+.convo-back { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin-left: calc(-1 * var(--space-2)); border-radius: var(--radius-sm); color: var(--text-muted); flex-shrink: 0; transition: background var(--transition), color var(--transition); }
+.convo-back:hover { background: var(--surface-hover); color: var(--text); text-decoration: none; }
+.convo-back .nav-icon { width: 20px; height: 20px; }
+
+@media (min-width: 720px) {
+  .rooms-nav { width: 288px; }
+  /* Restore each pane to its native display so desktop is byte-for-byte the prior shell. */
+  .app-shell.at-detail .rooms-nav { display: flex; }
+  .app-shell.at-list   .app-main  { display: block; }
+  .convo-back { display: none; }
+}
+
+/* Immersive conversation (task 3): while a room is open on the phone, drop the app
+   tab bar so the composer + iOS home indicator own the screen bottom. The flag is
+   set on .app-frame by MainLayout via the cascaded ShellChrome; gated to < 720px so
+   it's inert on desktop. */
+@media (max-width: 719.98px) {
+  .app-frame.immersive .nav-shell { display: none; }
+  .room-composer { padding-bottom: calc(var(--space-4) + var(--safe-bottom)); }
+  /* Modal near-full-width so it never overflows a 375px viewport. */
+  .modal { max-width: 100%; }
+}
+
 /* 10. Framework error UI ------------------------------------------------- */
 #blazor-error-ui {
   display: none;

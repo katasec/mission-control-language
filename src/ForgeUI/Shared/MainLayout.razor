@@ -1,10 +1,24 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 
 @* The app shell (40.2): persistent primary nav + a content region hosting the active surface.
    `.app-frame` is column-reverse on mobile (content above, bottom tab bar below) and a row on
    desktop (left rail, content right). /login opts out via BareLayout, so this only ever frames an
-   authenticated surface. *@
-<div class="app-frame">
-    <NavShell />
-    <main id="main" class="app-content">@Body</main>
-</div>
+   authenticated surface. The cascaded ShellChrome (40.3) lets a page go immersive — `.immersive`
+   drops the tab bar on the phone when a conversation is open. *@
+<CascadingValue Value="_chrome" IsFixed="true">
+    <div class="app-frame @(_chrome.ImmersiveConversation ? "immersive" : "")">
+        <NavShell />
+        <main id="main" class="app-content">@Body</main>
+    </div>
+</CascadingValue>
+
+@code {
+    private readonly ShellChrome _chrome = new();
+
+    protected override void OnInitialized() => _chrome.Changed += OnChromeChanged;
+
+    private void OnChromeChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => _chrome.Changed -= OnChromeChanged;
+}

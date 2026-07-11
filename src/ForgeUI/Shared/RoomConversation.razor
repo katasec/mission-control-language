@@ -29,6 +29,7 @@
     else
     {
         <div class="convo-header">
+            <a class="convo-back" href="/rooms" aria-label="Back to rooms"><Icon Name="back" /></a>
             <span class="convo-name">@(_room?.Metadata.Name ?? "…")</span>
             <button class="convo-members-btn" @onclick="OpenMembersAsync">@MemberCountLabel</button>
             @if (_isProvisioner)
