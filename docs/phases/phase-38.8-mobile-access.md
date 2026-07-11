@@ -1,6 +1,14 @@
 # Phase 38.8 — Mobile Access (Responsive + PWA)
 
-> **Status: Backlog (raised 2026-07-10)** · **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
+> **Status: ABSORBED into [Phase 40 — App Shell](phase-40-forge-ui-shell.md) (2026-07-12).** This spoke
+> is superseded: **Task 1 (responsive collapse) → [Phase 40.3](phase-40.3-responsive-collapse.md)**,
+> **Task 2 (PWA) → [Phase 40.4](phase-40.4-pwa-shell.md)**. Rationale: the mobile collapse now happens
+> *inside* a net-new multi-surface app shell (nav rail ↔ bottom tab bar), so doing it as part of that
+> shell is more coherent than as a standalone rooms-only change. The design + task detail below remain
+> valid context; execute from the Phase 40 spokes. The **baseline** section (the shipped `0.3.2` two-pane
+> shell) is still the starting point for 40.3.
+>
+> **Parent:** [Phase 38 — Forge Rooms](phase-38-forge-rooms.md)
 > **Depends on:** the two-pane rooms shell (shipped `forge-ui:0.3.2`, 2026-07-10)
 > **Done when:** a person can open Forge Rooms on a phone from an invite link, use it comfortably
 > (list ⇄ conversation, not a squished desktop layout), and — optionally — add it to their home

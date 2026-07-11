@@ -5,6 +5,16 @@
 MCL is a declarative pipeline language where `.mcl` files compose AI experts into
 structured workflows. The CLI binary is `forge`. Runtime is .NET 10 Native AOT.
 
+## Planning docs (hub/spoke)
+
+`docs/plan.md` is the authoritative index. Every feature is a **phase**: a hub
+`docs/phases/phase-N-<slug>.md` (vision, locked decisions, dependency-ordered spoke
+list) plus spokes `docs/phases/phase-N.M-<slug>.md` (design → chronological tasks with
+file paths, real APIs, and a "Done when", written so an agent can execute from the doc
+alone). When we design a new feature: create the hub + spokes, then update `plan.md`'s
+top pointer + phases index. Cross-cutting design lives in `docs/design/`. Match the
+depth and format of the latest existing phase docs.
+
 ## AOT-first: standing rules for all new code
 
 **Every change must remain Native AOT-safe.** The binary is published with
