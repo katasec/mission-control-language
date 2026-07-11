@@ -129,15 +129,31 @@ HTTPS (`https://localhost:7177`) — only relevant for the 40.4 PWA install/logi
    `CUSTOM_DOMAIN_CERT_ID`; dropping them on a redeploy breaks the HTTPS binding. The managed cert can't
    be created in a single Bicep pass (hostname-first + circular) — it's a one-time out-of-band CLI step
    already done for dev.
-4. **Provider keys live on the runner, not the app** (post-39.1). `@claude`/`@grok`/`@openai` bind only
+   ⚠️ **The `infra.yml` `500-app` dispatch does NOT pass these** — its env block sets only
+   `CAE_ENV_ID / ACR_LOGIN_SERVER / FORGE_UI_IMAGE / FORGE_RUNNER_IMAGE / APP_MI_ID / KEY_VAULT_URI /
+   OIDC_*`, and `forge-infra` has **no** `CUSTOM_DOMAIN`/`CUSTOM_DOMAIN_CERT_ID` GitHub vars. So a
+   `500-app` GHA redeploy would resolve `customDomain=''` → **strip `forge.katasec.com`** (SniEnabled →
+   removed). The workflow has never actually been run (no run history). **Until it's fixed** (add the two
+   vars + wire them into the 500-app env block), roll ForgeUI via the quick `az containerapp update`
+   below — image-only, it preserves the domain/ingress/secrets. Verified 2026-07-12 rolling to 0.3.4.
+4. **Rolling ForgeUI in practice (2026-07-12, verified).** `az containerapp update -n ca-forge-ui-dev
+   -g rg-forge-dev --subscription 174c6cc1-faef-4e40-91f4-1bef3a703153 --image
+   crforgeroomsdev.azurecr.io/forge-ui:X.Y.Z` — creates a new revision (Single mode → 100% traffic),
+   custom domain untouched. **The app pins an explicit tag (not `dev-latest`), so it does NOT auto-pull**
+   on image push — the roll is always a deliberate step. After rolling, **bump the `FORGE_UI_IMAGE`
+   GitHub var** (`gh variable set FORGE_UI_IMAGE -R katasec/forge-infra --body "forge-ui:X.Y.Z"`) so the
+   Bicep source-of-truth matches and the next `500-app` deploy won't silently revert it.
+   Gotcha: `az account list` may **not list** the workforce sub `174c6cc1…` (it's in a different tenant),
+   but `--subscription 174c6cc1…` on any command works once you've `az login`'d to that tenant.
+5. **Provider keys live on the runner, not the app** (post-39.1). `@claude`/`@grok`/`@openai` bind only
    when the runner has their key; a mission whose key is empty simply isn't advertised. Keys are in
    `dev/500-app` Bicep on `ca-forge-runner-dev` (folded into IaC 2026-07-09).
-5. **Single replica.** `RoomBroadcaster` SignalR is in-proc, so `ca-forge-ui-dev` runs one replica.
+6. **Single replica.** `RoomBroadcaster` SignalR is in-proc, so `ca-forge-ui-dev` runs one replica.
    Scale-out later needs Azure SignalR + a backplane.
-6. **Secrets only via Key Vault** (`kv-forgerooms-dev`). No secret value is committed; Bicep uses KV
+7. **Secrets only via Key Vault** (`kv-forgerooms-dev`). No secret value is committed; Bicep uses KV
    references. Passwordless throughout (CI = OIDC federation, runtime = managed identity). The image
    itself carries no runtime secrets — they're injected at run time.
-7. **DB migrations** run as the `dev/500-app` EF migration job (Dev seeds Alice/Bob/demo rooms;
+8. **DB migrations** run as the `dev/500-app` EF migration job (Dev seeds Alice/Bob/demo rooms;
    **essential built-in agent rows are product data seeded in every env** — 38.7 §6). Phase 40 needs no
    migration (no schema change).
 

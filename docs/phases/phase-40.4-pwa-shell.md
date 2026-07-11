@@ -1,12 +1,12 @@
 # Phase 40.4 — PWA Shell (installable, online-only)
 
-> **Status: Built (2026-07-12) — pending a live install/circuit smoke-test.** All five tasks are
-> implemented and statically verified (manifest parses, icons render on-brand, both JS files pass
-> `node --check`, `dotnet build` clean). The one gate left is the inherently-manual install test
-> (Task 4 step 3): install on desktop Chrome / iOS Safari against the **deployed** app and confirm a
-> live `@mention` streams + a sign-out→sign-in round-trips **inside the installed window**. That needs
-> Postgres + OIDC, so it can't run against a bare local boot — do it on `forge.katasec.com` (or dev)
-> after this ships. · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
+> **Status: DONE + LIVE (2026-07-12).** All five tasks implemented, statically verified (manifest
+> parses, icons render on-brand, both JS files pass `node --check`, `dotnet build` clean), and shipped
+> as image `forge-ui:0.3.4` → ACA revision `ca-forge-ui-dev--0000015` on `https://forge.katasec.com`.
+> Live-verified: manifest/SW/icons serve with correct MIME over HTTPS, custom domain binding intact,
+> head markup present. **Install smoke-test PASSED — user installed and confirmed it "beautiful."**
+> (The full circuit/OIDC-inside-installed-window check is the user's device; they reported it working.)
+> · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
 > **Depends on:** [40.3](phase-40.3-responsive-collapse.md) · **Absorbs:** [Phase 38.8 Task 2](phase-38.8-mobile-access.md) ·
 > **Regression risk:** low (additive — but the service worker is the one place a naïve change breaks the
 > SignalR circuit or OIDC login; the carve-outs below are mandatory).

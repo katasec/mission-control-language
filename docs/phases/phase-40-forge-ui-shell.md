@@ -1,7 +1,9 @@
 # Phase 40 — Forge UI App Shell & Responsive Foundation
 
-> **Status: Design — NEXT ACTION ITEM to implement (chosen 2026-07-12).** Phase 39 groups A+B are
-> shipped/live (F&F is billable); the runtime is ahead of the *surface*. This phase turns the
+> **Status: ✅ COMPLETE + LIVE (2026-07-12).** All four spokes (40.1–40.4) shipped; the app is now a
+> multi-surface, mobile-first, **installable PWA**. Deployed as `forge-ui:0.3.4` → ACA revision
+> `ca-forge-ui-dev--0000015` on `https://forge.katasec.com`, **user-verified installable**. Next
+> frontier is the runtime track (39.5 / 39.6) — see [plan.md](../plan.md). This phase turned the
 > single-surface, desktop-shaped Blazor app into a **multi-surface, mobile-first app shell** so the
 > product has somewhere to put Account, a Mission Library, and future surfaces — and works on the
 > phone people actually carry.
@@ -123,7 +125,7 @@ dark mode mandatory).
 | [40.1 — Design System Foundation](phase-40.1-design-system-foundation.md) | Mobile primitives + conventions, applied once so every surface inherits them: prune dead CSS, `100vh→100dvh`, iOS input-zoom fix, `prefers-reduced-motion`, safe-area insets, breakpoint convention + mobile-first authoring. Update the design-system doc. | none | **None** (global-safe / additive) |
 | [40.2 — App Navigation Shell](phase-40.2-app-navigation-shell.md) | The nav layer: `NavShell` (rail↔bottom-tab-bar) wired into `MainLayout`; inline-SVG icon set; relocate the account control; new `/account` (identity + balance) and `/library` (read-only agent directory) surfaces. | 40.1 | **Low** (net-new; Rooms gains a rail beside it) |
 | [40.3 — Responsive Surface Collapse](phase-40.3-responsive-collapse.md) | Rooms two-pane → master/detail on mobile; back-to-rooms control; immersive conversation (tab bar hidden on detail). **Absorbs 38.8 Task 1.** | 40.2 | **Contained** (the one modified surface — regression-test here) |
-| [40.4 — PWA Shell](phase-40.4-pwa-shell.md) ✅ **BUILT (2026-07-12)** — manifest + `@`-mark icons (any/maskable/apple), deliberate SW (network-only `/_blazor`+`/auth/*`), offline card, install hint. Statically verified; live install/circuit smoke-test pending on deployed app. | Installable (online-only): manifest + icons from tokens, deliberate service worker (network-only for `/_blazor` + `/auth/*`), iOS add-to-home hint. **Absorbs 38.8 Task 2.** | 40.3 | Low (additive) |
+| [40.4 — PWA Shell](phase-40.4-pwa-shell.md) ✅ **DONE + LIVE (2026-07-12)** — manifest + `@`-mark icons (any/maskable/apple), deliberate SW (network-only `/_blazor`+`/auth/*`), offline card, install hint. Shipped as `forge-ui:0.3.4`; **user-verified installable** on `forge.katasec.com`. | Installable (online-only): manifest + icons from tokens, deliberate service worker (network-only for `/_blazor` + `/auth/*`), iOS add-to-home hint. **Absorbs 38.8 Task 2.** | 40.3 | Low (additive) |
 
 ## 5. Decisions locked (so spokes don't re-litigate)
 
