@@ -1,6 +1,10 @@
 @inherits LayoutComponentBase
 
-@* Thin shell. Each surface composes its own chrome:
-   - /rooms + /rooms/{id} are centred surfaces with an AccountMenu in their header
-   - /login is intentionally bare *@
-@Body
+@* The app shell (40.2): persistent primary nav + a content region hosting the active surface.
+   `.app-frame` is column-reverse on mobile (content above, bottom tab bar below) and a row on
+   desktop (left rail, content right). /login opts out via BareLayout, so this only ever frames an
+   authenticated surface. *@
+<div class="app-frame">
+    <NavShell />
+    <main id="main" class="app-content">@Body</main>
+</div>

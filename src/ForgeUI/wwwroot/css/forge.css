@@ -577,6 +577,83 @@ h2 { font-size: 20px; }
 .member-role    { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft); padding: 1px 7px; border-radius: var(--radius-sm); flex-shrink: 0; }
 .member-agent-handle { font-size: 14px; font-weight: 600; color: var(--accent); }
 
+/* 13. App nav shell (40.2) — bottom tab bar (mobile) ↔ left rail (≥640) ----
+   Mobile-first: the base rules are the phone bottom bar; the @media (min-width:640px)
+   block (the §0 --bp-rail number) flips to the desktop rail. The tab bar is kept IN
+   FLOW (not position:fixed) inside a column-reverse frame, so a scrolling content
+   region can never hide behind it and the composer/home-indicator stay clear. */
+
+/* Frame = content + nav. Column-reverse puts content above the bottom bar on mobile. */
+.app-frame   { display: flex; flex-direction: column-reverse; height: 100vh; height: 100dvh; min-height: 0; }
+.app-content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* The full-height rooms shell fits the content region exactly — its own 100dvh would
+   otherwise overshoot the frame once the nav takes its slice. 40.3 reshapes Rooms for mobile. */
+.app-content > .app-shell { height: 100%; }
+
+.nav-shell  { display: flex; flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border); }
+.nav-items  { display: flex; flex: 1; }
+
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 52px;
+  padding: var(--space-2) 0 calc(var(--space-2) + var(--safe-bottom));   /* clear the iOS home indicator */
+  color: var(--text-muted); font-size: 11px; font-weight: 500;
+  text-decoration: none; transition: color var(--transition);
+}
+.nav-item:hover   { color: var(--text); text-decoration: none; }
+.nav-item.active  { color: var(--accent); }   /* NavLink adds .active + aria-current itself */
+.nav-item:focus-visible { outline: none; }
+.nav-item:focus-visible .nav-icon { border-radius: var(--radius-sm); box-shadow: var(--focus-ring); }
+.nav-icon    { width: 22px; height: 22px; }
+.nav-label   { line-height: 1; }
+.nav-account { display: none; }   /* rail-only; on mobile the Account tab is the identity entry point */
+
+@media (min-width: 640px) {
+  .app-frame  { flex-direction: row; }
+  .nav-shell  { flex-direction: column; width: 64px; height: 100dvh; border-top: none; border-right: 1px solid var(--border); }
+  .nav-items  { flex-direction: column; flex: 0 0 auto; padding-top: var(--space-3); }
+  .nav-item   { flex: 0 0 auto; min-height: 0; gap: 4px; padding: var(--space-3) 0; font-size: 10px; }
+  .nav-item.active { box-shadow: inset 3px 0 0 var(--accent); }
+  .nav-account { display: block; margin-top: auto; padding: var(--space-2); border-top: 1px solid var(--border); }
+}
+
+/* Account control docked at the rail foot — compact (avatar only), dropdown opens upward. */
+.nav-account .account-menu { width: 100%; }
+.nav-account .account-menu > summary { justify-content: center; padding: 6px; border-radius: var(--radius); border-color: var(--border); }
+.nav-account .account-name, .nav-account .account-caret { display: none; }
+.nav-account .account-dropdown { top: auto; bottom: calc(100% + 6px); left: 0; right: auto; }
+
+/* Skip-to-content — visually hidden until it takes keyboard focus. */
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 200; padding: var(--space-2) var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--accent); box-shadow: var(--shadow); }
+.skip-link:focus { left: var(--space-3); top: var(--space-3); }
+
+/* Library directory (40.2) — read-only agent list; reuses .agents-directory* row shape. */
+.surface-head    { margin-bottom: var(--space-5); }
+.surface-title   { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.surface-sub     { color: var(--text-muted); font-size: 14px; margin-top: var(--space-1); }
+.surface-note    { margin-top: var(--space-4); font-size: 13px; color: var(--text-subtle); background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4); }
+
+.library-list    { display: flex; flex-direction: column; gap: var(--space-2); }
+.library-row     { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: var(--space-3) var(--space-4); }
+.library-line    { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.library-handle  { font-weight: 600; color: var(--accent); }
+.library-publisher { font-size: 12px; color: var(--text-subtle); }
+.library-desc    { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* Account surface (40.2) — identity card + balance + sign-out + seams for 39.5/39.6. */
+.account-card    { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-sm); padding: var(--space-5); }
+.account-head    { display: flex; align-items: center; gap: var(--space-4); }
+.account-avatar  { width: 56px; height: 56px; font-size: 22px; }
+.account-who-name  { font-size: 18px; font-weight: 600; }
+.account-who-email { font-size: 13px; color: var(--text-muted); }
+.account-balance { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.account-balance-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-subtle); }
+.account-balance-amount { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.account-balance-note { font-size: 12px; color: var(--text-subtle); margin-top: var(--space-1); }
+.account-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.account-seam    { color: var(--text-subtle); }   /* a disabled "coming soon" affordance */
+
 /* 10. Framework error UI ------------------------------------------------- */
 #blazor-error-ui {
   display: none;

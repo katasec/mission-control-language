@@ -8,11 +8,17 @@
 > works on a phone. Built additive-first (nav layer is net-new → no regression surface); the one modified
 > surface (Rooms two-pane → mobile master/detail) is quarantined to [40.3](phases/phase-40.3-responsive-collapse.md).
 > **Absorbs [Phase 38.8](phases/phase-38.8-mobile-access.md)** (responsive → 40.3, PWA → 40.4). Spokes:
-> [40.1 foundation](phases/phase-40.1-design-system-foundation.md) ✅ **DONE (2026-07-12, verified live)** →
-> **[40.2 nav shell](phases/phase-40.2-app-navigation-shell.md) ← NEXT** → [40.3 collapse](phases/phase-40.3-responsive-collapse.md)
-> → [40.4 PWA](phases/phase-40.4-pwa-shell.md). **40.1 shipped** the mobile-correct CSS foundation
-> (dead-CSS prune, `100dvh`, 16px inputs, reduced-motion, safe-area, §0 breakpoints + mobile-first
-> convention) — all global-safe, no regression; desktop + mobile both verified in-browser.
+> [40.1 foundation](phases/phase-40.1-design-system-foundation.md) ✅ **DONE** →
+> [40.2 nav shell](phases/phase-40.2-app-navigation-shell.md) ✅ **DONE (2026-07-12, verified in-browser)** →
+> **[40.3 collapse](phases/phase-40.3-responsive-collapse.md) ← NEXT** → [40.4 PWA](phases/phase-40.4-pwa-shell.md).
+> **40.1 shipped** the mobile-correct CSS foundation (dead-CSS prune, `100dvh`, 16px inputs, reduced-motion,
+> safe-area, §0 breakpoints + mobile-first convention). **40.2 shipped** the net-new nav layer:
+> `MainLayout` → `NavShell` (left rail ≥640px ↔ bottom tab bar <640px; Rooms · Library · Account) +
+> `.app-content`; `BareLayout` for `/login`; new `/library` (read-only agent directory) and `/account`
+> (identity + $ balance + sign-out) surfaces; account control moved from the rooms sidebar to the rail
+> foot / Account tab. Verified in-browser at desktop + 375px, light + dark, no horizontal overflow.
+> **40.3 next** collapses the Rooms two-pane into a mobile master/detail (the one surface 40.2 left
+> desktop-shaped inside the content region).
 >
 > **Still queued (runtime track): [Phase 39 — Metered Runtime & Marketplace](phases/phase-39-metered-runtime-marketplace.md).**
 > [Phase 38 — Forge Rooms](phases/phase-38-forge-rooms.md) **shipped** its accessible + verified

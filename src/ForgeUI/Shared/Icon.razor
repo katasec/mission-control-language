@@ -1,0 +1,39 @@
+@*
+    Inline SVG nav glyphs (40.2 task 1) — paths copied from Lucide (MIT). No icon font, no
+    package: an <Icon Name="rooms" /> renders a theme-aware SVG that inherits currentColor, so it
+    tints with whatever text token its container uses. Sized via CSS (.nav-icon), default 22px.
+*@
+<svg class="nav-icon @Class" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+     aria-hidden="true" focusable="false">
+    @switch (Name)
+    {
+        case "rooms":
+            <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z" />
+            <path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1" />
+            break;
+        case "library":
+            <path d="m16 6 4 14" />
+            <path d="M12 6v14" />
+            <path d="M8 8v12" />
+            <path d="M4 4v16" />
+            break;
+        case "account":
+            <circle cx="12" cy="12" r="10" />
+            <path d="M18 20a6 6 0 0 0-12 0" />
+            <circle cx="12" cy="10" r="4" />
+            break;
+        case "back":
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
+            break;
+    }
+</svg>
+
+@code {
+    /// <summary>Glyph name: rooms | library | account | back.</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+
+    /// <summary>Extra CSS classes to merge onto the svg.</summary>
+    [Parameter] public string? Class { get; set; }
+}

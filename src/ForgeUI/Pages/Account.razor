@@ -1,0 +1,66 @@
+@page "/account"
+@attribute [Authorize]
+@using ForgeMission.Rooms
+@inject CurrentUser Current
+@inject BillingService Billing
+
+@* Account surface (40.2 task 6) — real identity + prepaid balance + sign-out. Balance is a comped
+   friends-&-family credit today (39.2 ledger). Top-up (39.6) and My agents (39.5) are labelled
+   seams only — no backend stubbed. *@
+<PageTitle>Account · Forge</PageTitle>
+
+<div class="page page-narrow">
+    <header class="surface-head">
+        <h1 class="surface-title">Account</h1>
+    </header>
+
+    @if (_me is null)
+    {
+        <p class="empty-state">Loading…</p>
+    }
+    else
+    {
+        <div class="account-card">
+            <div class="account-head">
+                <span class="avatar account-avatar">@Initial(_me.DisplayName)</span>
+                <div>
+                    <div class="account-who-name">@_me.DisplayName</div>
+                    <div class="account-who-email">@_me.Email</div>
+                </div>
+            </div>
+
+            <div class="account-balance">
+                <div>
+                    <div class="account-balance-label">Balance</div>
+                    <div class="account-balance-note">Comped friends-&amp;-family credit</div>
+                </div>
+                <div class="account-balance-amount">@FormatUsd(_balanceMicro)</div>
+            </div>
+
+            <div class="account-actions">
+                <button class="btn account-seam" disabled title="Coming soon">Top up</button>
+                <button class="btn account-seam" disabled title="Coming soon">My agents</button>
+                <form action="/auth/logout" method="post">
+                    <button class="btn" type="submit">Sign out</button>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private Member? _me;
+    private long _balanceMicro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _me = await Current.GetMemberAsync();
+        if (_me is not null)
+            _balanceMicro = await Billing.GetBalanceMicroUsdAsync(_me.Id);
+    }
+
+    private static string FormatUsd(long micro) => $"${micro / 1_000_000m:0.00}";
+
+    private static string Initial(string name)
+        => string.IsNullOrWhiteSpace(name) ? "?" : name.TrimStart()[..1].ToUpperInvariant();
+}

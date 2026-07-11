@@ -80,8 +80,14 @@ Use these before inventing new classes.
 - **Account control:** `.account-menu` — a native `<details>` dropdown (no JS) rendered by the
   `AccountMenu` component; avatar + name summary, identity + sign-out in the panel.
 - **Avatars:** `.avatar` + size modifier `.avatar-sm`; initial-in-a-circle.
-- **Layout helpers:** `.app-shell`/`.app-main` (sidebar + main), `.page`/`.page-narrow`
-  (centred surfaces), `.flex-spacer`, `.header-actions`.
+- **Primary nav (40.2):** `.nav-shell` — the `NavShell` component; a bottom tab bar < 640px, a
+  slim left rail ≥ 640px. Items are `NavLink`s (`.nav-item` + `.nav-icon`/`.nav-label`); the active
+  surface is marked by NavLink's own `.active` (ember text / inset accent bar). Glyphs come from the
+  `Icon` component (inline Lucide SVG, `currentColor`). `.skip-link` is the first focusable element.
+- **Layout helpers:** `.app-frame`/`.app-content` (nav shell + content region — the `MainLayout`),
+  `.app-shell`/`.app-main` (rooms sidebar + main), `.page`/`.page-narrow` (centred surfaces),
+  `.surface-head`/`.surface-title`/`.surface-sub` (Library/Account headers), `.flex-spacer`,
+  `.header-actions`.
 
 `forge.css` is organised into numbered sections (tokens → base → primitives → layout → chat →
 agent card/trust/trace → rooms → auth → framework error UI). Add new rules to the section they
@@ -134,10 +140,18 @@ change on the same component — the sidebar never reloads. The old separate `Ro
 (keyed on RoomId). See [Phase 38.8 baseline](../phases/phase-38.8-mobile-access.md) for the shipped
 detail + decisions.
 
+Since 40.2 every authed surface renders inside the **app shell** (`MainLayout` = `NavShell` +
+`.app-content`): a bottom tab bar < 640px / left rail ≥ 640px switching **Rooms · Library ·
+Account**. `/login` opts out via `BareLayout` (chromeless). The account control moved from the rooms
+sidebar foot to the **rail foot** (desktop); on mobile it lives behind the **Account tab**.
+
 | Screen | Route | Key classes |
 |---|---|---|
-| Sign-in gate | `/login` | `.auth-shell`, `.auth-card`, `.btn-primary` |
-| Rooms shell | `/rooms` + `/rooms/{id}` | `.app-shell` + `.rooms-nav` (sidebar: `.rooms-nav-header`, `.rooms-new`, `.room-item` + member subline, `.rooms-account` → `AccountMenu`) + `.app-main` |
+| App shell (all authed) | (frames every route below) | `.app-frame` → `NavShell` (`.nav-shell`, `.nav-item`) + `.app-content` (`@Body`) |
+| Sign-in gate | `/login` | `BareLayout` (no nav) · `.auth-shell`, `.auth-card`, `.btn-primary` |
+| Rooms shell | `/rooms` + `/rooms/{id}` | `.app-shell` + `.rooms-nav` (sidebar: `.rooms-nav-header`, `.rooms-new`, `.room-item` + member subline) + `.app-main` — account control now lives in the rail, not the sidebar |
+| Library | `/library` | `.page`, `.surface-head`, `.library-list`/`.library-row` + `.identity-seal` (read-only agent directory) |
+| Account | `/account` | `.page-narrow`, `.account-card`, `.account-head`, `.account-balance`, `.btn` sign-out |
 | Conversation pane | (right pane of the shell) | `.convo`, `.convo-header`, `.convo-name`, `.convo-members-btn` ("N members ›"), `.room-stream`, `.room-msg`, `.msg-bubble`, `.agent-card`, `.room-composer`, `.room-hint`, `.convo-empty` |
 | Create-room modal | (from `.rooms-new`) | `.modal-backdrop`, `.modal`, `.field`, `.agent-pick` (name + pick-agents-up-front) |
 | Members modal | (from `.convo-members-btn`) | `.modal`, rename (`.modal-name-row`), `.member-row` + `.member-role`, agents (`.member-agent-handle` + `.identity-seal` + remove), `.agent-pick` add-agent, invite — consolidates the old inline add-agent panel |
@@ -219,13 +233,13 @@ Identity is **required** (WhatsApp-style: participants must be signed in). The I
 - **Every app route is `[Authorize]`.** `/` redirects authed→`/rooms`, anon→`/login` (via
   `App.razor` → `RedirectToLogin`). All the `/auth/*` plumbing (OIDC + dev sign-in) already
   exists.
-- **`MainLayout` is a thin `@Body`.** Each surface composes its own chrome: `/rooms*` is the
-  two-pane shell with the account control docked at the sidebar foot; `/login` is bare.
-  > **⚠️ Changing in 40.2.** [Phase 40.2](../phases/phase-40.2-app-navigation-shell.md) rewrites
-  > `MainLayout` into the persistent app shell (nav rail ↔ bottom tab bar; Rooms · Library ·
-  > Account). This "thin `@Body`" description is about to be superseded — update this bullet then.
-- **`AccountMenu` is the persistent identity control**, top-right on every authed surface —
-  avatar + name, with sign-out inside. Logged-out, the gate *is* the sign-in affordance.
+- **`MainLayout` is the app shell (40.2).** It renders `NavShell` (nav rail ≥ 640px ↔ bottom tab
+  bar < 640px; Rooms · Library · Account) + an `.app-content` region hosting `@Body`. `/login` opts
+  out via **`BareLayout`** (chromeless) so the shell never frames a logged-out visitor.
+- **`AccountMenu` is the persistent identity control** — docked at the **rail foot** on desktop
+  (compact avatar; identity + sign-out in its dropdown). On mobile it lives behind the **Account
+  tab** (`/account`), which also carries balance + sign-out. Logged-out, the gate *is* the sign-in
+  affordance.
 
 See the spoke [`phase-38.4a-ui-and-onboarding.md`](../phases/phase-38.4a-ui-and-onboarding.md)
 for the full decision log.
@@ -275,5 +289,5 @@ stylesheet, no phantom framework): `bootstrap/`, `open-iconic/`, `site.css`, `Na
 Also removed: `RoomList.razor` + `RoomView.razor` (their `/rooms` and `/rooms/{id}` routes were
 absorbed into the single-page two-pane shell `Pages/Rooms.razor`, 2026-07-10) and the earlier
 `/playground` + `Chat.razor` mission playground (retired in Phase 39.1 when execution moved to the
-containerized runner). `MainLayout.razor` is a thin `@Body` passthrough — each surface composes its
-own chrome.
+containerized runner). Since 40.2 `MainLayout.razor` is the app shell (`NavShell` + `.app-content`),
+not a bare `@Body`; `/login` uses the chromeless `BareLayout`.

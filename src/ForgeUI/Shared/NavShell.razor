@@ -1,0 +1,30 @@
+@*
+    Primary app navigation (40.2) — the persistent surface switcher.
+      • < 640px: a fixed bottom tab bar (icon-over-label), one tab per surface.
+      • ≥ 640px: a slim left rail (icon-first column) with the account control docked at its foot.
+    NavLink applies `.active` + aria-current="page" itself; /rooms uses prefix match so /rooms/{id}
+    keeps Rooms lit. The account dropdown is rail-only — on mobile the Account tab is the entry point.
+*@
+<nav class="nav-shell" aria-label="Primary">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="nav-items">
+        <NavLink class="nav-item" href="rooms" Match="NavLinkMatch.Prefix">
+            <Icon Name="rooms" />
+            <span class="nav-label">Rooms</span>
+        </NavLink>
+        <NavLink class="nav-item" href="library" Match="NavLinkMatch.All">
+            <Icon Name="library" />
+            <span class="nav-label">Library</span>
+        </NavLink>
+        <NavLink class="nav-item" href="account" Match="NavLinkMatch.All">
+            <Icon Name="account" />
+            <span class="nav-label">Account</span>
+        </NavLink>
+    </div>
+
+    @* Desktop rail only (hidden < 640px, where the Account tab covers identity + sign-out). *@
+    <div class="nav-account">
+        <AccountMenu />
+    </div>
+</nav>

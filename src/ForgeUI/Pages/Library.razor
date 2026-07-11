@@ -1,0 +1,39 @@
+@page "/library"
+@attribute [Authorize]
+@using ForgeMission.Rooms
+@inject AgentRegistry Registry
+
+@* Read-only agent directory (40.2 task 5). Lists the built-in agents you can @@mention in any
+   room, each carrying its identity seal (gold = Forge official, blue = verified publisher) — never
+   the green per-response verified badge (design §5). User-authored missions arrive with 39.5. *@
+<PageTitle>Library · Forge</PageTitle>
+
+<div class="page">
+    <header class="surface-head">
+        <h1 class="surface-title">Library</h1>
+        <p class="surface-sub">Agents you can @@mention in any room.</p>
+    </header>
+
+    <div class="library-list">
+        @foreach (var d in _agents)
+        {
+            <div class="library-row">
+                <div class="library-line">
+                    <span class="library-handle">@d.Handle</span>
+                    <IdentitySealMark Descriptor="d" />
+                    <span class="library-publisher">@d.Publisher</span>
+                </div>
+                <div class="library-desc">@d.Description</div>
+            </div>
+        }
+    </div>
+
+    <p class="surface-note">Your own saved agents will appear here soon — save-as-agent arrives in a
+        later release.</p>
+</div>
+
+@code {
+    private IReadOnlyList<AgentDescriptor> _agents = [];
+
+    protected override void OnInitialized() => _agents = Registry.List();
+}

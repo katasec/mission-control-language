@@ -1,6 +1,6 @@
 # Phase 40.2 — App Navigation Shell (rail ↔ bottom tab bar)
 
-> **Status: Design** · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
+> **Status: DONE (2026-07-12, verified in-browser)** · **Parent:** [Phase 40 — App Shell](phase-40-forge-ui-shell.md) ·
 > **Depends on:** [40.1](phase-40.1-design-system-foundation.md) · **Regression risk:** low (net-new nav;
 > Rooms gains a rail beside it, its internals unchanged until [40.3](phase-40.3-responsive-collapse.md))
 >
