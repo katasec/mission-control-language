@@ -1,4 +1,7 @@
+# Answering provider (classifier + answers). Search backend is separate + implicitly Grok (Scout),
+# resolved from XAI_API_KEY by the runner. Default bumped grok-3-mini → grok-4.5 (the verified model;
+# the old fast-mini line is retiring). Provider-scoped MCL_XAI_MODEL avoids the generic MCL_MODEL clash.
 [providers.default]
 provider = "xai"
-model    = env("MCL_XAI_MODEL", "grok-3-mini")
+model    = env("MCL_XAI_MODEL", "grok-4.5")
 apiKey   = env("XAI_API_KEY")

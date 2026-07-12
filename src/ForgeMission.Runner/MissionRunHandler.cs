@@ -73,8 +73,11 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
                 trace.Add(new RunTraceStep(expertName, envelope.Status, envelope.Text, envelope.Reason, attempt));
             });
 
+        // kind:search backend (Phase 41.2) — implicitly Grok, built from the runner's XAI_API_KEY operator
+        // env var (null if unset ⇒ missions without kind:search are unaffected). Same seam as the CLI.
         var stopwatch = Stopwatch.StartNew();
-        var result    = await new PipelineRunner(runner).RunAsync(mission.Ast, mission.Experts, options, ct);
+        var result    = await new PipelineRunner(runner, webSearch: ProviderClientBuilder.BuildWebSearch())
+            .RunAsync(mission.Ast, mission.Experts, options, ct);
         stopwatch.Stop();
 
         var verified = result.Status == MissionStatus.Pass;

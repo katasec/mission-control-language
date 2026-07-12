@@ -1,5 +1,14 @@
+// @grok — raw Grok, now search-fronted (Phase 41.2). Every question is classified; ones needing
+// live/current data trigger a Grok web search that grounds the answer, everything else passes straight
+// through. Pure MCL: classify -> json_extract -> kind:search (when needed) -> answer, gated on a stable
+// search_needed flag + when(else). The answering model and the search backend are both Grok.
+
 mission Grok(goal) = {
-    Answerer
+    SearchRouter                                        // llm — emits {"search_needed":…,"search_query":…}
+    -> ExtractRoute                                     // json_extract — publishes search_needed + search_query
+    -> WebSearch(query: search_query) when(search_needed: "yes")   // kind: search — publishes search_results
+    -> GroundedAnswer when(search_needed: "yes")        // llm — answers using {{search_results}}
+    -> DirectAnswer   when(else)                        // llm — fast passthrough, {{goal}} only
 }
 
 output(Grok)
