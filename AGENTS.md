@@ -106,6 +106,7 @@ MAF is an internal implementation detail. It must not appear above the adapter l
 - **Lowercase keywords** (`mission`, `expert`). These are part of the language, not user-defined names.
 - **No business logic in the CLI.** The CLI wires up dependencies and delegates to Core. Nothing else.
 - **MAF stays behind `IExpertRunner`.** The parser, AST, pipeline runner, and CLI must have zero knowledge of MAF.
+- **Progressive Disclosure — code reveals intent in layers.** Outline-first files, small named functions, top-down ordering, early returns over nesting, isolated side effects, explicit error handling, zero warnings, no speculative abstractions. Full rules in [docs/design/code-style.md](docs/design/code-style.md).
 - **Report results straight — no cliffhangers.** State what is done and proven, then stop. Do not end a wrap-up with a manufactured "one thing left" / "the only unverified atom is…" hedge to look thorough or to invite another turn. If something is genuinely outstanding, name it once as a plain fact — not as a teaser. Never pad a summary to fill space or burn tokens.
 
 ---
