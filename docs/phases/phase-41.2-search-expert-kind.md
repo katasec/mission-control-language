@@ -1,6 +1,14 @@
 # Phase 41.2 — `kind: search` expert + search-fronted vanilla missions
 
-> **Status: ✅ WORKING via `forge run` — VERIFIED LIVE (2026-07-12)** on branch `phase-41.1-grok-web-search`.
+> **Status: ✅ LIVE ON `@grok` IN ROOMS (2026-07-12).** Tasks 1–6 done. `@grok` at `forge.katasec.com` is now
+> search-fronted — deployed as **`forge-runner:0.5.0`** (rev `ca-forge-runner-dev--0000008`, tag
+> `forge-runner-v0.5.0`); prod runner logs confirm it pulled the search-fronted Grok mission
+> (`forge-mission-grok@sha256:be0d12b2…`) and `loaded … Grok`. No forge-ui change/redeploy (the `@grok`
+> handle→`"Grok"` binding is unchanged; `VerifiesAnswers=false` ⇒ no false-green). Runner-client timeout is
+> 4 min, comfortably over the ~40–60s search path. **Remaining: Task 7** (roll the same template to
+> `openai`/`claude`/`assistant`). Below is the pre-deploy record.
+>
+> **Was: ✅ WORKING via `forge run` — VERIFIED (2026-07-12)** on branch `phase-41.1-grok-web-search`.
 > **Tasks 1–5 DONE.** The native `kind: search` primitive (`SearchExpertRunner`), dispatch + `IWebSearch`
 > ctor-injection in `PipelineRunner` (both switches), CLI wiring (`ProviderClientBuilder.BuildWebSearch()`
 > at both `forge run` sites), and the real on-disk mission `missions/websearch` all built. **Proven two ways:**

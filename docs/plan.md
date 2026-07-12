@@ -15,9 +15,11 @@
 > ✅ works via `forge run`** — native `kind: search` primitive + pure-MCL classify→search→answer mission
 > (`missions/websearch`), verified live both branches, stub e2e + full suite green. Settled design: the
 > context is an **untyped bag; consumers deserialize** (OWIN `AppFunc` model) — no typed output contract, no
-> language change. **NEXT STEP: wire the room path** — `IWebSearch` into `ForgeMission.Runner`'s
-> `MissionRunHandler` so `@`-mentioning an agent searches (Task 6), then roll the template out to the other
-> vanilla missions (Task 7). Everything is on branch `phase-41.1-grok-web-search` (unmerged). OpenAI/Tavily/
+> language change. **✅ LIVE: `@grok` is search-fronted in Rooms** — deployed `forge-runner:0.5.0`
+> (rev `--0000008`, tag `forge-runner-v0.5.0`) to `ca-forge-runner-dev`; prod logs confirm the search-fronted
+> Grok mission (`forge-mission-grok@sha256:be0d12b2`) loaded. No forge-ui redeploy (handle binding unchanged,
+> no false-green). **NEXT STEP: Task 7** — roll the classify→search→answer template to `openai`/`claude`/
+> `assistant`. Everything is on branch `phase-41.1-grok-web-search` (unmerged; deployed from tag). OpenAI/Tavily/
 > Exa/`x_search` remain additive later (41.3–41.5).
 >
 > **Runtime track (still queued): [Phase 39.5](phases/phase-39-metered-runtime-marketplace.md)
