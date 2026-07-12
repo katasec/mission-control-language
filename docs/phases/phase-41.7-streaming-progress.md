@@ -1,10 +1,11 @@
 # Phase 41.7 — Streaming search progress + timeout hardening
 
-> **Status: Step-level streaming spine BUILT + DEPLOYED — 2026-07-12.** Tasks 1, 3, 4, 5, 6 (step-level)
-> done, locally verified, and **live on `forge.katasec.com`** (`forge-runner:0.6.0` rev `--0000009`,
-> `forge-ui:0.4.0` rev `--0000016`). **Task 2 (Grok SSE sub-search adapter) deferred** per the spec's own
-> ship-order. One manual gate remains: eyeball the live `@grok` chips in a room (see below).
-> See [Progress](#progress-2026-07-12) below. · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
+> **Status: Step-level streaming spine DONE + LIVE-VERIFIED — 2026-07-12.** Tasks 1, 3, 4, 5, 6 (step-level)
+> done and **verified live end-to-end on `forge.katasec.com`** (`@grok` World-Cup query → live chip → grounded
+> answer; 71s round-trip, member debited). Deployed: `forge-runner:0.6.0` rev `--0000009`, `forge-ui:0.4.1`
+> rev `--0000017` (0.4.1 = chip-animation follow-up). **Task 2 (Grok SSE sub-search adapter) deferred** per
+> the spec's own ship-order. See [Progress](#progress-2026-07-12) below.
+> · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
 > **Depends on:** [41.2](phase-41.2-search-expert-kind.md) (`@grok` live) · **Revisits:** the 39.1 runner
 > transport decision (synchronous HTTP → streaming). · **Code style:** all new code follows
 > [Progressive Disclosure](../design/code-style.md) (outline-first, small named functions, zero warnings).
@@ -165,10 +166,18 @@ independent of any Grok-specific work.
 - Deploy order honoured: **runner first** (endpoint exists) **then UI** (consumer). Backward-compatible —
   the runner kept the buffered `/run`, so no hard cutover window.
 
-**Manual gate remaining (the spec's Done-when eyeball):** log into `forge.katasec.com`, `@grok` a
-current-events question in a room, and confirm the pending bubble shows live chips ("Searching the web…")
-instead of a frozen spinner, then the grounded answer. Everything up to this — both revisions healthy, agents
-bound, `/run/stream` serving — is verified; this last step is a human/browser action with real OIDC.
+**Done-when CLEARED — live end-to-end verified (2026-07-12):** `@grok "When is the next World Cup game?"`
+in a room showed the live "Searching the web" chip on the pending bubble, then the grounded answer. Runner
+log: `POST /run/stream — 200 — application/x-ndjson 71260ms`; ForgeUI log: run completed, member
+`Debited 14571µ$ — Grok 4841+140 tok / 71.23s / grok-4.5`. So the full round-trip (stream → progress chip →
+grounded answer → billing) works in prod. The frozen-spinner problem is gone.
+
+**Follow-up fix — chip animation (`forge-ui:0.4.1`, rev `--0000017`):** the first live run exposed that the
+step-start label, though correct, was *visually* static — a ~71s search step sat on "Searching the web…"
+with only a 6px opacity-pulse, so it still read as frozen. Fixed: strip the trailing "…" from labels + append
+staggered bouncing dots (markup-based CSS, verified rendering mid-bounce in the browser preview). Note the
+**~71s** search latency: narrating *inside* that one long step is exactly what Task 2 (Grok SSE) adds; until
+then the animated dots carry the "still working" signal.
 
 **Deferred:**
 - **Task 2 — Grok SSE sub-search adapter** (the "Searched web: N results" sub-lines). Deferred per the

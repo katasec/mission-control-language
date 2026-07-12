@@ -23,12 +23,13 @@
 > NDJSON `POST /run/stream` (Channel + 15s heartbeat, buffered `/run` kept for the CLI) → `MissionRunnerClient`
 > consumes with `ResponseHeadersRead` → `RoomAgentInvoker` relays over SignalR → transient "Searching the web…"
 > chip on the pending bubble. Reuse designed in at the `IWebSearch` seam (`WebSearchProgress` +
-> `SearchStreamAsync` default method) so OpenAI/Claude progress rides the same rails. **Deployed:
-> `forge-runner:0.6.0` (rev `--0000009`) + `forge-ui:0.4.0` (rev `--0000016`)** — both healthy, 5 missions
-> incl. Grok, `forge.katasec.com` up. Verified: unit test on the `classify→search→answer` start sequence,
-> live `curl` of the NDJSON stream (chunked + terminal event), suite 220 pass / 0 warnings. **Manual gate:
-> eyeball live `@grok` chips in a room.** **Deferred (spec's ship order): Task 2 — Grok SSE sub-search adapter**
-> (the "Searched web: N results" sub-lines). **NEXT: Task 2, then Task 7** (roll the search-front template to
+> `SearchStreamAsync` default method) so OpenAI/Claude progress rides the same rails. **Deployed +
+> LIVE-VERIFIED: `forge-runner:0.6.0` (rev `--0000009`) + `forge-ui:0.4.1` (rev `--0000017`)** — `@grok`
+> World-Cup query showed the live chip → grounded answer (71s round-trip, member debited); 0.4.1 = chip
+> animation follow-up (a static label over ~71s read as frozen → staggered bouncing dots). Verified: unit test
+> on the `classify→search→answer` start sequence, live NDJSON stream, live room round-trip, suite 220 pass / 0
+> warnings. **Deferred (spec's ship order): Task 2 — Grok SSE sub-search adapter** (narrates *inside* the ~71s
+> search: "Searched web: N results"). **NEXT: Task 2, then Task 7** (roll the search-front template to
 > `openai`/`claude`/`assistant`). All on branch
 > `phase-41.1-grok-web-search` (unmerged; deployed from tag). **New code follows
 > [Progressive Disclosure](design/code-style.md).** OpenAI/Tavily/
