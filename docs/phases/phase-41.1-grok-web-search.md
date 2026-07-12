@@ -1,8 +1,19 @@
 # Phase 41.1 — Grok web_search POC (`ForgeMission.Scout`)
 
-> **Status: Design → building** (2026-07-12) · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
+> **Status: ✅ BUILT + VERIFIED LIVE (2026-07-12)** on branch `phase-41.1-grok-web-search`. `ForgeMission.Scout`
+> builds AOT-clean (0 warnings); the key-gated integration test
+> `GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer` **passed against the real
+> xAI Responses API** (41s) — `GrokWebSearch` returned a synthesized 3-bullet summary of Mario Nawfal's
+> latest YouTube uploads + 3 source URLs, each `SourceRef.Provider == "grok"`. The "no real-time data"
+> wall bare handles hit in Rooms is broken. · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
 > **Depends on:** none (standalone library + smoke test) · **Regression risk:** none (net-new project) ·
 > **AOT rules:** [CLAUDE.md](../../CLAUDE.md) §"AOT-first".
+>
+> **Files:** `src/ForgeMission.Scout/{IWebSearch.cs, Grok/GrokWire.cs, Grok/GrokWebSearch.cs}` +
+> project added to `ForgeMission.slnx`; test `src/ForgeMission.Tests/Scout/GrokWebSearchIntegrationTests.cs`
+> (+ Scout project-ref in `ForgeMission.Tests.csproj`). All 6 tasks done. **Next:** 41.2 (MCL wiring) or a
+> raw-API backend (41.3). Run the test with `XAI_API_KEY` set (pwsh `$PROFILE` has it):
+> `dotnet test --filter FullyQualifiedName~GrokWebSearchIntegrationTests`.
 >
 > **Done when:** `ForgeMission.Scout` builds AOT-clean, and a standalone smoke test calls
 > `GrokWebSearch.SearchAsync("summarize the latest news from Mario Nawfal's YouTube channel")` and prints
@@ -23,10 +34,20 @@ MCL mission wiring (that's 41.2), no second backend. Scoped so an agent can buil
   `HttpClient` POST** with a hand-built body + STJ source-gen. Different path from chat — that's fine.
 - **Auth/model:** `XAI_API_KEY` env var; model `grok-4.5` (or `grok-4.5` alias). Endpoint base
   `https://api.x.ai/v1`.
-- **One wire detail to confirm before finalizing DTOs (Task 1):** the exact endpoint
-  (`/v1/chat/completions` vs a `/v1/responses`-style endpoint), where the tool config nests, and where
-  citations/annotations land in the response. Behavior + field *names* are verified; the exact JSON
-  envelope is the one thing to pin from the live API reference rather than assume.
+- **Exact wire envelope — VERIFIED LIVE 2026-07-12** (a real `grok-4.5` + `web_search` call, HTTP 200):
+  - **Endpoint:** `POST https://api.x.ai/v1/responses` — the **Responses API** (`input`, *not* chat
+    `messages`). This is a different endpoint/shape from the OpenAI-compatible chat path `ProviderClientBuilder` uses.
+  - **Request:** `{ "model": "grok-4.5", "input": [ {"role":"user","content":"…"} ], "tools": [ {"type":"web_search"} ] }`.
+    Domain scoping nests in the tool: `{"type":"web_search","filters":{"allowed_domains":[…]}}`.
+  - **Response:** top-level `output` is an **array of typed items** — `reasoning`, `web_search_call`, and
+    one final `message`. The answer + citations are on the **`message`** item:
+    `output[i].type=="message"` → `content[]` where `content[j].type=="output_text"` → **`text`** (the
+    synthesized answer, contains inline `[[1]](url)` markers) + **`annotations[]`**, each
+    `{"type":"url_citation","url":"…","start_index":N,"end_index":N,"title":"1"}` (title = numeric label,
+    no page content — as expected for an answer engine). `web_search_call.action` carries `query` +
+    consulted `sources[]` (URLs). `usage` = `{input_tokens, output_tokens, total_tokens, cost_in_usd_ticks, …}`.
+  - **Mapping:** `Answer` ← concat of `output_text.text` across message items; `Sources` ← the message
+    `annotations[]` (`url_citation` → `SourceRef(url, title, "grok")`), de-duped by URL.
 
 ## Tasks (chronological)
 

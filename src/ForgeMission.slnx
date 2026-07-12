@@ -4,5 +4,6 @@
   <Project Path="ForgeMission.Rooms.Data/ForgeMission.Rooms.Data.csproj" />
   <Project Path="ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj" />
   <Project Path="ForgeMission.Rooms/ForgeMission.Rooms.csproj" />
+  <Project Path="ForgeMission.Scout/ForgeMission.Scout.csproj" />
   <Project Path="ForgeMission.Tests/ForgeMission.Tests.csproj" />
 </Solution>

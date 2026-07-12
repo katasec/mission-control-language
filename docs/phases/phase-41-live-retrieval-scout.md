@@ -100,7 +100,7 @@ byproduct of forced synthesis, reasoning-only, snippet-depth) > Grok (no raw at 
 | Spoke | Scope | Status |
 |---|---|---|
 | **[41.1 — Grok web_search POC](phase-41.1-grok-web-search.md)** | `ForgeMission.Scout` project + `IWebSearch` + `GrokWebSearch` (grok-4.5, `web_search` tool, direct HTTP + STJ, source-tagged results) + a smoke test that summarizes YouTube news. **The build now.** | **Design → building** |
-| 41.2 — MCL integration | Wire Scout into a mission — decide `kind: search` expert vs a tool on the `llm` expert vs an `IChatClient` decorator. Design deferred until the POC exists. | Planned |
+| **[41.2 — `kind: search` expert + search-fronted vanilla missions](phase-41.2-search-expert-kind.md)** | New native `kind: search` primitive (an `IExpertRunner` wrapping `IWebSearch`) + a **pure-MCL** *classify → conditionally-search → answer* front-end on the vanilla missions, so every agent gains transparent, gated live-search (search backend implicitly Grok). Uses `when()` guards on a stable `search_needed` key + `when(else)`. | **Design (spec written)** |
 | 41.3 — Raw-API backend (Tavily/Exa) | The backend that actually exercises "raw → MCL synthesizes"; proves the interface spans both families. | Planned |
 | 41.4 — Grok `x_search` (X access) | The X walled-garden answer-engine, handle + date scoped. Second backend. | Planned |
 | 41.5 — OpenAI backend | `web_search` + raw `web_search_call.results`; fills both `Answer` and `Sources`. | Planned |
