@@ -1,7 +1,9 @@
 # Phase 41.7 — Streaming search progress + timeout hardening
 
-> **Status: Step-level streaming spine BUILT — 2026-07-12.** Tasks 1, 3, 4, 5, 6 (step-level) done +
-> locally verified; **Task 2 (Grok SSE sub-search adapter) deferred** per the spec's own ship-order.
+> **Status: Step-level streaming spine BUILT + DEPLOYED — 2026-07-12.** Tasks 1, 3, 4, 5, 6 (step-level)
+> done, locally verified, and **live on `forge.katasec.com`** (`forge-runner:0.6.0` rev `--0000009`,
+> `forge-ui:0.4.0` rev `--0000016`). **Task 2 (Grok SSE sub-search adapter) deferred** per the spec's own
+> ship-order. One manual gate remains: eyeball the live `@grok` chips in a room (see below).
 > See [Progress](#progress-2026-07-12) below. · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
 > **Depends on:** [41.2](phase-41.2-search-expert-kind.md) (`@grok` live) · **Revisits:** the 39.1 runner
 > transport decision (synchronous HTTP → streaming). · **Code style:** all new code follows
@@ -153,13 +155,25 @@ independent of any Grok-specific work.
   `Transfer-Encoding: chunked`, terminal `{"Type":"error",…}` event; buffered `/run` still returns 404 for
   an unknown mission (CLI contract intact). All projects build with **zero warnings**.
 
-**Not done / deferred:**
+**Deployed (2026-07-12):**
+- `forge-runner:0.6.0` (git tag `forge-runner-v0.6.0`, ACA rev `ca-forge-runner-dev--0000009`) — boot log
+  confirms `loaded 5 mission(s): …, Grok` + `Now listening`; the new `POST /run/stream` endpoint is serving.
+- `forge-ui:0.4.0` (git tag `forge-ui-v0.4.0`, ACA rev `ca-forge-ui-dev--0000016`) — boot log confirms
+  `runner advertises 5 mission(s): …, Grok`; `https://forge.katasec.com` → 302 (login), custom domain intact.
+- `forge-infra` GH vars bumped to match (`FORGE_RUNNER_IMAGE=forge-runner:0.6.0`, `FORGE_UI_IMAGE=forge-ui:0.4.0`)
+  so a future `500-app` Bicep deploy won't revert the roll.
+- Deploy order honoured: **runner first** (endpoint exists) **then UI** (consumer). Backward-compatible —
+  the runner kept the buffered `/run`, so no hard cutover window.
+
+**Manual gate remaining (the spec's Done-when eyeball):** log into `forge.katasec.com`, `@grok` a
+current-events question in a room, and confirm the pending bubble shows live chips ("Searching the web…")
+instead of a frozen spinner, then the grounded answer. Everything up to this — both revisions healthy, agents
+bound, `/run/stream` serving — is verified; this last step is a human/browser action with real OIDC.
+
+**Deferred:**
 - **Task 2 — Grok SSE sub-search adapter** (the "Searched web: N results" sub-lines). Deferred per the
   spec's ship order; `WebSearchProgress` + `SearchStreamAsync` are in place as its landing seam. When built,
   it threads `WebSearchProgress` from the `kind:search` step → a runner sub-progress event over the same rails.
-- **Deploy-gated live proof:** the room-path end-to-end (`@grok <current-events>` showing live chips at
-  forge.katasec.com) needs `XAI_API_KEY` + a deploy, which is the spec's Done-when manual gate. The spine is
-  built and wired; the remaining step is deploying `forge-runner` + `forge-ui` and running one live search.
 
 **Timeout chain (Task 6 audit):**
 | Hop | Limit | After 41.7 |
