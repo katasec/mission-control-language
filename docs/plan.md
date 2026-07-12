@@ -23,13 +23,14 @@
 > NDJSON `POST /run/stream` (Channel + 15s heartbeat, buffered `/run` kept for the CLI) → `MissionRunnerClient`
 > consumes with `ResponseHeadersRead` → `RoomAgentInvoker` relays over SignalR → transient "Searching the web…"
 > chip on the pending bubble. Reuse designed in at the `IWebSearch` seam (`WebSearchProgress` +
-> `SearchStreamAsync` default method) so OpenAI/Claude progress rides the same rails. **Deployed +
-> LIVE-VERIFIED: `forge-runner:0.6.0` (rev `--0000009`) + `forge-ui:0.4.1` (rev `--0000017`)** — `@grok`
-> World-Cup query showed the live chip → grounded answer (71s round-trip, member debited); 0.4.1 = chip
-> animation follow-up (a static label over ~71s read as frozen → staggered bouncing dots). Verified: unit test
-> on the `classify→search→answer` start sequence, live NDJSON stream, live room round-trip, suite 220 pass / 0
-> warnings. **Deferred (spec's ship order): Task 2 — Grok SSE sub-search adapter** (narrates *inside* the ~71s
-> search: "Searched web: N results"). **NEXT: Task 2, then Task 7** (roll the search-front template to
+> `SearchStreamAsync` default method) so OpenAI/Claude progress rides the same rails. **ALL TASKS DONE +
+> DEPLOYED — `forge-runner:0.7.0` (rev `--0000010`) + `forge-ui:0.4.2` (rev `--0000018`).** Step-level spine
+> live-verified (`@grok` World-Cup query → chip → grounded answer, 71s, debited); chip animation added (0.4.1);
+> **Task 2 (Grok SSE sub-search) DONE + live-verified** — narrates *inside* the ~71s search ("Searching: …·
+> N results", "Reading fifa.com"). Seam corrected: progress-aware `SearchAsync(request, IProgress<…>, ct)`
+> (one call, result + sub-search reports; never re-runs the search), replacing the two-search
+> `SearchStreamAsync`. Verified: fixture parse of real captured SSE, live streaming integration (22s),
+> suite 222 pass / 0 warnings. **NEXT: Task 7** (roll the search-front template to
 > `openai`/`claude`/`assistant`). All on branch
 > `phase-41.1-grok-web-search` (unmerged; deployed from tag). **New code follows
 > [Progressive Disclosure](design/code-style.md).** OpenAI/Tavily/
