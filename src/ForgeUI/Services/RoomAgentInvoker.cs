@@ -127,21 +127,32 @@ public sealed class RoomAgentInvoker(
         }
     }
 
-    // Map an engine step kind to a human progress label. Provider-agnostic — the runner emits neutral
-    // kinds (41.7) and the label lives here so every backend and mission shares it. Unknown kinds fall
+    // Map a progress event to a human label. Provider-agnostic — the runner emits neutral kinds (41.7)
+    // and the label lives here so every backend and mission shares it. Two families: engine step kinds
+    // (step-start) and search sub-steps (Task 2, carrying a query/host + hit count). Unknown kinds fall
     // back to a generic "Working" rather than leaking an internal name. No trailing "…": the room appends
     // animated dots so a long step (a ~70s search) visibly stays alive instead of reading as frozen.
     private static string ProgressLabel(RunProgress p) => p.Kind switch
     {
-        "search"       => "Searching the web",
-        "llm"          => "Thinking",
-        "json_extract" => "Routing",
-        "http"         => "Fetching",
-        "exec"         => "Running",
-        "rule"         => "Checking",
-        "onnx"         => "Classifying",
-        _              => "Working",
+        // Sub-search narration inside the kind:search step (Task 2) — the detail is the payoff.
+        "searching_web" => p.Detail is { Length: > 0 } q ? $"Searching: “{Trim(q)}”{Count(p.ResultCount)}" : "Searching the web",
+        "searching_x"   => p.Detail is { Length: > 0 } q ? $"Searching X: “{Trim(q)}”{Count(p.ResultCount)}" : "Searching X",
+        "reading"       => p.Detail is { Length: > 0 } h ? $"Reading {h}" : "Reading a page",
+        "results"       => p.ResultCount is int n ? $"Found {n} result{(n == 1 ? "" : "s")}" : "Reviewing results",
+        // Engine step-start kinds.
+        "search"        => "Searching the web",
+        "llm"           => "Thinking",
+        "json_extract"  => "Routing",
+        "http"          => "Fetching",
+        "exec"          => "Running",
+        "rule"          => "Checking",
+        "onnx"          => "Classifying",
+        _               => "Working",
     };
+
+    // Keep a search-query chip to a legible length (queries can run long).
+    private static string Trim(string s) => s.Length <= 48 ? s : s[..47] + "…";
+    private static string Count(int? n) => n is int c and > 0 ? $" · {c} result{(c == 1 ? "" : "s")}" : "";
 
     private async Task PostAsync(
         Guid roomId, Member agent, string handle, Guid triggerMessageId,

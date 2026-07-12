@@ -13,6 +13,7 @@ internal sealed class GrokRequest
     [JsonPropertyName("model")] public required string Model { get; init; }
     [JsonPropertyName("input")] public required IReadOnlyList<GrokInputMessage> Input { get; init; }
     [JsonPropertyName("tools")] public required IReadOnlyList<GrokTool> Tools { get; init; }
+    [JsonPropertyName("stream")] public bool? Stream { get; init; }   // omitted when null ⇒ buffered path unaffected
 }
 
 internal sealed class GrokInputMessage
@@ -71,6 +72,39 @@ internal sealed class GrokUsage
     [JsonPropertyName("total_tokens")] public int TotalTokens { get; init; }
 }
 
+// ---- Streaming (SSE) events — verified live 2026-07-12 -------------------------------------------
+// Each `data:` line is one JSON object with a `type` == the SSE event name. Scout needs only two:
+//   • "response.output_item.done" carrying item.type=="web_search_call" — the item's completed `action`
+//     narrates one sub-search (search: query + sources[]; open_page: url) → WebSearchProgress.
+//   • "response.completed" — carries the full final `response` (same shape as GrokResponse) → the result,
+//     so the streaming path reuses the buffered Map() for the answer + citations.
+
+internal sealed class GrokStreamEvent
+{
+    [JsonPropertyName("type")] public string? Type { get; init; }
+    [JsonPropertyName("item")] public GrokStreamItem? Item { get; init; }       // on output_item.*
+    [JsonPropertyName("response")] public GrokResponse? Response { get; init; } // on response.completed
+}
+
+internal sealed class GrokStreamItem
+{
+    [JsonPropertyName("type")] public string? Type { get; init; }              // "web_search_call"
+    [JsonPropertyName("action")] public GrokSearchAction? Action { get; init; }
+}
+
+internal sealed class GrokSearchAction
+{
+    [JsonPropertyName("type")] public string? Type { get; init; }              // "search" | "open_page"
+    [JsonPropertyName("query")] public string? Query { get; init; }            // on "search"
+    [JsonPropertyName("url")] public string? Url { get; init; }                // on "open_page"
+    [JsonPropertyName("sources")] public List<GrokActionSource>? Sources { get; init; }
+}
+
+internal sealed class GrokActionSource
+{
+    [JsonPropertyName("url")] public string? Url { get; init; }
+}
+
 // ---- STJ source-gen context (AOT-safe; no bare JsonSerializerOptions per CLAUDE.md) --------------
 
 [JsonSourceGenerationOptions(
@@ -78,4 +112,5 @@ internal sealed class GrokUsage
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(GrokRequest))]
 [JsonSerializable(typeof(GrokResponse))]
+[JsonSerializable(typeof(GrokStreamEvent))]
 internal partial class GrokJsonContext : JsonSerializerContext;

@@ -34,4 +34,30 @@ public class GrokWebSearchIntegrationTests
             Assert.False(string.IsNullOrWhiteSpace(s.Url));
         });
     }
+
+    // Phase 41.7 Task 2: the streaming path against the REAL xAI SSE stream — proves sub-search progress
+    // events flow (not just the trimmed fixture in GrokWebSearchStreamTests) AND the grounded result still
+    // comes back from one call. A current-events query guarantees the server-side search loop runs.
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult()
+    {
+        Skip.If(string.IsNullOrWhiteSpace(ApiKey), "XAI_API_KEY not set — skipping integration test");
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) };
+        var search = new GrokWebSearch(http, ApiKey!);
+
+        var events = new List<WebSearchProgress>();
+        var progress = new Progress<WebSearchProgress>(events.Add);
+
+        var result = await search.SearchAsync(
+            new WebSearchRequest("What is the top technology news story today?"), progress);
+
+        // At least one real sub-search was narrated, and every event maps to a known neutral kind.
+        Assert.NotEmpty(events);
+        Assert.All(events, e => Assert.Contains(e.Kind, new[] { "searching_web", "searching_x", "reading", "results" }));
+        // And the grounded result still arrives from the same streaming call.
+        Assert.Equal("grok", result.Provider);
+        Assert.False(string.IsNullOrWhiteSpace(result.Answer));
+    }
 }

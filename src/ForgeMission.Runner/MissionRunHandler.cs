@@ -142,7 +142,10 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
                 trace.Add(new RunTraceStep(expertName, envelope.Status, envelope.Text, envelope.Reason, attempt));
             },
             // Step-start → transient progress (41.7). No-op for the buffered path (onProgress null).
-            OnStepStart: (expertName, kind) => onProgress?.Invoke(new RunProgress(expertName, kind)));
+            OnStepStart: (expertName, kind) => onProgress?.Invoke(new RunProgress(expertName, kind)),
+            // Sub-search narration from the kind:search step (41.7 Task 2) — Grok's per-query loop.
+            OnSearchProgress: sp => onProgress?.Invoke(
+                new RunProgress("WebSearch", sp.Kind, sp.Detail, sp.ResultCount)));
 
         // kind:search backend (Phase 41.2) — implicitly Grok, built from the runner's XAI_API_KEY operator
         // env var (null if unset ⇒ missions without kind:search are unaffected). Same seam as the CLI.

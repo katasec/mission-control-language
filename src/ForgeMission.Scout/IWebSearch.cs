@@ -11,21 +11,16 @@ public interface IWebSearch
     Task<WebSearchResult> SearchAsync(WebSearchRequest request, CancellationToken ct = default);
 
     /// <summary>
-    /// Optional streaming variant (Phase 41.7): narrate a backend's server-side search loop as
-    /// provider-neutral <see cref="WebSearchProgress"/> events while it runs. Answer-engines (Grok,
-    /// OpenAI) map their native <c>web_search_call</c> stream here; raw search APIs (Tavily/Exa) have
-    /// no loop to narrate and inherit the default — <b>no events</b>. Callers still fetch the grounded
-    /// result from <see cref="SearchAsync"/>; this channel is progress only.
+    /// Progress-aware search (Phase 41.7): reports a backend's server-side sub-search steps via
+    /// <paramref name="progress"/> as they happen, and returns the <b>same</b> grounded result — one
+    /// call, never re-runs the (slow) search. Answer-engines (Grok, OpenAI) map their native
+    /// <c>web_search_call</c> stream onto <see cref="WebSearchProgress"/>; raw search APIs (Tavily/Exa)
+    /// have no server-side loop to narrate and inherit the default, which delegates to the plain
+    /// <see cref="SearchAsync(WebSearchRequest, CancellationToken)"/> and reports nothing.
     /// </summary>
-    IAsyncEnumerable<WebSearchProgress> SearchStreamAsync(WebSearchRequest request, CancellationToken ct = default)
-        => NoProgress();
-
-    /// <summary>Default: a backend that can't narrate emits nothing (the interface still satisfies).</summary>
-    private static async IAsyncEnumerable<WebSearchProgress> NoProgress()
-    {
-        await Task.CompletedTask;
-        yield break;
-    }
+    Task<WebSearchResult> SearchAsync(
+        WebSearchRequest request, IProgress<WebSearchProgress>? progress, CancellationToken ct = default)
+        => SearchAsync(request, ct);
 }
 
 /// <summary>
@@ -34,10 +29,13 @@ public interface IWebSearch
 /// Grok/OpenAI map their SSE <c>web_search_call</c> actions onto this; the transport + UI consume it
 /// unchanged whatever the backend. <see cref="Kind"/> is the coarse phase (a small closed vocabulary);
 /// <see cref="Detail"/> and <see cref="ResultCount"/> are best-effort colour when the backend reports it.
+/// <para>Verified against xAI's streaming Responses API (2026-07-12): a <c>web_search_call</c>'s completed
+/// <c>action</c> is either <c>search</c> (→ <c>Detail</c>=query, <c>ResultCount</c>=#sources) or
+/// <c>open_page</c> (→ <c>Kind</c>="reading", <c>Detail</c>=host).</para>
 /// </summary>
 public sealed record WebSearchProgress(
     string  Kind,          // "searching_web" | "searching_x" | "reading" | "results"
-    string? Detail = null, // the query being searched, or a URL being read
+    string? Detail = null, // the query being searched, or a URL/host being read
     int?    ResultCount = null);
 
 /// <summary>What to search for, provider-neutrally. POC exposes a query + optional domain scoping.</summary>

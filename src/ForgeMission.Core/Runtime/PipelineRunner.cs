@@ -228,7 +228,8 @@ public class PipelineRunner
             "search"       => new SearchExpertRunner(_webSearch
                                   ?? throw new InvalidOperationException(
                                       "kind: search requires a configured IWebSearch (Scout). " +
-                                      "Pass one to the PipelineRunner constructor.")),
+                                      "Pass one to the PipelineRunner constructor."),
+                                  options.OnSearchProgress),
             _              => ResolveRunner(step.Using)
         };
 
@@ -331,7 +332,8 @@ public class PipelineRunner
             "search"       => new SearchExpertRunner(_webSearch
                                   ?? throw new InvalidOperationException(
                                       "kind: search requires a configured IWebSearch (Scout). " +
-                                      "Pass one to the PipelineRunner constructor.")),
+                                      "Pass one to the PipelineRunner constructor."),
+                                  options.OnSearchProgress),
             _              => ResolveRunner(step.Using)
         };
 

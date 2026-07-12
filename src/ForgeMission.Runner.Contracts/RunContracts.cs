@@ -72,10 +72,20 @@ public sealed record RunStreamEvent(
     RunResponse?  Result   = null,    // set when Type == "result"
     string?       Error    = null);   // set when Type == "error"
 
-/// <summary>A step-start progress event, provider-agnostic (Phase 41.7). <see cref="Kind"/> is the
-/// engine expert kind (<c>llm</c>/<c>search</c>/<c>json_extract</c>/…); the orchestrator maps it to a
-/// human label ("Searching the web…"). Carries no answer text — progress is transient, not durable.</summary>
-public sealed record RunProgress(string ExpertName, string Kind);
+/// <summary>
+/// A progress event, provider-agnostic (Phase 41.7). Two shapes share this record, distinguished by
+/// <see cref="Kind"/>:
+/// <list type="bullet">
+/// <item><b>Step-start</b> — <see cref="Kind"/> is the engine expert kind (<c>llm</c>/<c>search</c>/
+/// <c>json_extract</c>/…); <see cref="Detail"/>/<see cref="ResultCount"/> null.</item>
+/// <item><b>Sub-search</b> (Task 2) — <see cref="Kind"/> is <c>searching_web</c>/<c>reading</c>/… from a
+/// search backend's loop; <see cref="Detail"/> is the query or host, <see cref="ResultCount"/> the hit
+/// count when known.</item>
+/// </list>
+/// The orchestrator maps <see cref="Kind"/> + detail to a human label. Carries no answer text — progress
+/// is transient, not durable.
+/// </summary>
+public sealed record RunProgress(string ExpertName, string Kind, string? Detail = null, int? ResultCount = null);
 
 /// <summary>An available mission the runner can execute — returned by <c>GET /missions</c> so the
 /// orchestrator can bind only the handles whose mission is actually loadable (e.g. a provider whose
