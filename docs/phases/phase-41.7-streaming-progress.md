@@ -1,6 +1,8 @@
 # Phase 41.7 — Streaming search progress + timeout hardening
 
-> **Status: Design (spec written, not built) — 2026-07-12.** · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
+> **Status: Step-level streaming spine BUILT — 2026-07-12.** Tasks 1, 3, 4, 5, 6 (step-level) done +
+> locally verified; **Task 2 (Grok SSE sub-search adapter) deferred** per the spec's own ship-order.
+> See [Progress](#progress-2026-07-12) below. · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
 > **Depends on:** [41.2](phase-41.2-search-expert-kind.md) (`@grok` live) · **Revisits:** the 39.1 runner
 > transport decision (synchronous HTTP → streaming). · **Code style:** all new code follows
 > [Progressive Disclosure](../design/code-style.md) (outline-first, small named functions, zero warnings).
@@ -117,6 +119,55 @@ Enumerate and verify every timeout in the chain, and confirm streaming removes t
 Streaming keeps bytes flowing so idle reaping can't fire; total duration stays bounded by the max request
 timeout (heartbeat/keep-alive events if a gap can exceed it). **Done when:** a long search completes in a
 room with no timeout, and the timeout chain is documented.
+
+## Progress (2026-07-12)
+
+The **provider-agnostic step-level streaming spine** is built end-to-end and locally verified. This is
+the 80/20 the spec called out as landable first: it removes the frozen spinner and hardens the timeout,
+independent of any Grok-specific work.
+
+**Built:**
+- **Task 1** — `WebSearchProgress` record + default `IWebSearch.SearchStreamAsync` (yields nothing) in
+  [src/ForgeMission.Scout/IWebSearch.cs](../../src/ForgeMission.Scout/IWebSearch.cs). Provider-neutral shape
+  ready for the Grok adapter; existing backends compile unchanged (default interface method).
+- **Engine hook** — `PipelineRunOptions.OnStepStart(expertName, kind)` fired *before* each step runs in
+  [PipelineRunner.cs](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs), so "Searching the web…" lands
+  *during* the ~40s search, not after. Provider- and mission-agnostic.
+- **Task 3** — streaming runner leg. `RunStreamEvent`/`RunProgress` in
+  [RunContracts.cs](../../src/ForgeMission.Runner.Contracts/RunContracts.cs); `MissionRunHandler` refactored
+  into a shared `ExecuteAsync` core + `RunStreamAsync` (Channel + 15s heartbeat); new `POST /run/stream`
+  NDJSON endpoint (per-event flush). Buffered `POST /run` kept verbatim for the CLI.
+- **Task 4** — `MissionRunnerClient.RunStreamAsync` consumes the NDJSON with
+  `HttpCompletionOption.ResponseHeadersRead` (body stays a live stream); `RoomAgentInvoker` relays each
+  progress event over the broadcaster with a kind→label map.
+- **Task 5** — `RoomBroadcaster.PublishAgentProgressAsync` + `AgentProgress` event; `RoomConversation.razor`
+  renders the transient label on the pending bubble (`@handle Searching the web…`), cleared on answer/fail.
+- **Task 6** — 15s heartbeat keeps bytes flowing across the search step's server-side silence; the client
+  reads with `ResponseHeadersRead` so `HttpClient.Timeout` guards only connect+headers, and the stream body
+  is bounded by `RoomAgentInvoker`'s 3-min run CTS. Timeout chain documented below.
+
+**Verified locally (network-free where possible):**
+- Engine spine: unit test `OnStepStart_FiresPerBeginningStep_InOrder_WithKind` asserts the exact
+  `classify → route → search → answer` start sequence with kinds (taken branch only). Suite 220 pass / 0 fail.
+- Transport: booted the runner and `curl -N POST /run/stream` → `Content-Type: application/x-ndjson`,
+  `Transfer-Encoding: chunked`, terminal `{"Type":"error",…}` event; buffered `/run` still returns 404 for
+  an unknown mission (CLI contract intact). All projects build with **zero warnings**.
+
+**Not done / deferred:**
+- **Task 2 — Grok SSE sub-search adapter** (the "Searched web: N results" sub-lines). Deferred per the
+  spec's ship order; `WebSearchProgress` + `SearchStreamAsync` are in place as its landing seam. When built,
+  it threads `WebSearchProgress` from the `kind:search` step → a runner sub-progress event over the same rails.
+- **Deploy-gated live proof:** the room-path end-to-end (`@grok <current-events>` showing live chips at
+  forge.katasec.com) needs `XAI_API_KEY` + a deploy, which is the spec's Done-when manual gate. The spine is
+  built and wired; the remaining step is deploying `forge-runner` + `forge-ui` and running one live search.
+
+**Timeout chain (Task 6 audit):**
+| Hop | Limit | After 41.7 |
+|---|---|---|
+| ACA HTTP ingress (`ca-forge-runner-dev`) | ~240s request | idle can't fire — heartbeat every 15s keeps bytes flowing; confirm total-request ceiling ≥ worst-case search on deploy |
+| `MissionRunnerClient` HttpClient | 4 min | with `ResponseHeadersRead`, guards only connect+headers; body read is unbounded by it |
+| `RoomAgentInvoker` run CTS | 3 min | the real end-to-end ceiling on a single run (bounds the stream body) |
+| SignalR keep-alive (browser leg) | default | unchanged; the room connection already long-lived (38.1) |
 
 ## Design decisions & caveats
 - **Progress lives at the same seam as the result** (`IWebSearch`) → OpenAI/Claude search progress "just

@@ -232,6 +232,8 @@ public class PipelineRunner
             _              => ResolveRunner(step.Using)
         };
 
+        options.OnStepStart?.Invoke(step.ExpertName, expert.Kind);
+
         if (options.StepWriter is { } sw)
             await sw.WriteLineAsync($"→ {step.ExpertName}...");
 

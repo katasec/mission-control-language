@@ -18,11 +18,17 @@
 > language change. **✅ LIVE: `@grok` is search-fronted in Rooms** — deployed `forge-runner:0.5.0`
 > (rev `--0000008`, tag `forge-runner-v0.5.0`) to `ca-forge-runner-dev`; prod logs confirm the search-fronted
 > Grok mission (`forge-mission-grok@sha256:be0d12b2`) loaded. No forge-ui redeploy (handle binding unchanged,
-> no false-green). **NEXT STEP (recommended): [41.7 — streaming search progress + timeout hardening](phases/phase-41.7-streaming-progress.md)**
-> — the ~40–60s search shows a frozen spinner today; stream live progress ("Searching → Answering") over the
-> existing SignalR via **HTTP streaming** on the runner leg (no gRPC), with reuse designed in at the
-> `IWebSearch` seam so OpenAI/Claude progress rides the same rails. Also fixes the idle-timeout risk. Then
-> **Task 7** (roll the search-front template to `openai`/`claude`/`assistant`). All on branch
+> no false-green). **[41.7 — streaming search progress + timeout hardening](phases/phase-41.7-streaming-progress.md)
+> ✅ step-level streaming spine BUILT + locally verified** (2026-07-12): engine `OnStepStart` hook → runner
+> NDJSON `POST /run/stream` (Channel + 15s heartbeat, buffered `/run` kept for the CLI) → `MissionRunnerClient`
+> consumes with `ResponseHeadersRead` → `RoomAgentInvoker` relays over SignalR → transient "Searching the web…"
+> chip on the pending bubble. Reuse designed in at the `IWebSearch` seam (`WebSearchProgress` +
+> `SearchStreamAsync` default method) so OpenAI/Claude progress rides the same rails. Verified: unit test on
+> the `classify→search→answer` start sequence, live `curl` of the NDJSON stream (chunked + terminal event),
+> suite 220 pass / 0 warnings. **Deferred (spec's ship order): Task 2 — Grok SSE sub-search adapter** (the
+> "Searched web: N results" sub-lines). **Deploy-gated: the live room proof at forge.katasec.com** (needs
+> XAI_API_KEY + a `forge-runner`/`forge-ui` redeploy). **NEXT: deploy 41.7, then Task 2, then Task 7**
+> (roll the search-front template to `openai`/`claude`/`assistant`). All on branch
 > `phase-41.1-grok-web-search` (unmerged; deployed from tag). **New code follows
 > [Progressive Disclosure](design/code-style.md).** OpenAI/Tavily/
 > Exa/`x_search` remain additive later (41.3–41.5).

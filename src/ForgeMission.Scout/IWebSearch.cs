@@ -9,7 +9,36 @@ namespace Scout;
 public interface IWebSearch
 {
     Task<WebSearchResult> SearchAsync(WebSearchRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Optional streaming variant (Phase 41.7): narrate a backend's server-side search loop as
+    /// provider-neutral <see cref="WebSearchProgress"/> events while it runs. Answer-engines (Grok,
+    /// OpenAI) map their native <c>web_search_call</c> stream here; raw search APIs (Tavily/Exa) have
+    /// no loop to narrate and inherit the default — <b>no events</b>. Callers still fetch the grounded
+    /// result from <see cref="SearchAsync"/>; this channel is progress only.
+    /// </summary>
+    IAsyncEnumerable<WebSearchProgress> SearchStreamAsync(WebSearchRequest request, CancellationToken ct = default)
+        => NoProgress();
+
+    /// <summary>Default: a backend that can't narrate emits nothing (the interface still satisfies).</summary>
+    private static async IAsyncEnumerable<WebSearchProgress> NoProgress()
+    {
+        await Task.CompletedTask;
+        yield break;
+    }
 }
+
+/// <summary>
+/// A provider-neutral progress event from a backend's search loop — the streaming parallel of
+/// <see cref="WebSearchResult"/>: a shape every backend <i>fills</i>, never a backend's wire type.
+/// Grok/OpenAI map their SSE <c>web_search_call</c> actions onto this; the transport + UI consume it
+/// unchanged whatever the backend. <see cref="Kind"/> is the coarse phase (a small closed vocabulary);
+/// <see cref="Detail"/> and <see cref="ResultCount"/> are best-effort colour when the backend reports it.
+/// </summary>
+public sealed record WebSearchProgress(
+    string  Kind,          // "searching_web" | "searching_x" | "reading" | "results"
+    string? Detail = null, // the query being searched, or a URL being read
+    int?    ResultCount = null);
 
 /// <summary>What to search for, provider-neutrally. POC exposes a query + optional domain scoping.</summary>
 public sealed record WebSearchRequest(

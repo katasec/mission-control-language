@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using ForgeMission.Runner.Contracts;
 
 namespace ForgeUI.Services;
@@ -24,6 +25,52 @@ public sealed class MissionRunnerClient(HttpClient http)
         return await response.Content.ReadFromJsonAsync(
                    RunContractsContext.Default.RunResponse, ct)
                ?? throw new InvalidOperationException("Runner returned an empty run response.");
+    }
+
+    /// <summary>
+    /// Streaming run (Phase 41.7): consume the runner's NDJSON <c>/run/stream</c>, invoking
+    /// <paramref name="onProgress"/> as each step begins, and return the terminal result. Reading with
+    /// <see cref="HttpCompletionOption.ResponseHeadersRead"/> keeps the body a live stream (the socket
+    /// stays fed, so the run can't die on an idle timeout). A terminal <c>error</c> event surfaces as an
+    /// exception — the same failure path as the buffered call.
+    /// </summary>
+    public async Task<RunResponse> RunStreamAsync(
+        string missionRef, string goal, string policy,
+        Func<RunProgress, Task> onProgress, CancellationToken ct = default)
+    {
+        var request = new RunRequest(missionRef, goal, Vars: null, policy);
+        using var httpReq = new HttpRequestMessage(HttpMethod.Post, "/run/stream")
+        {
+            Content = JsonContent.Create(request, RunContractsContext.Default.RunRequest),
+        };
+
+        using var response = await http.SendAsync(httpReq, HttpCompletionOption.ResponseHeadersRead, ct);
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream);
+
+        RunResponse? result = null;
+        while (await reader.ReadLineAsync(ct) is { } line)
+        {
+            if (line.Length == 0) continue;
+            var evt = JsonSerializer.Deserialize(line, RunContractsContext.Default.RunStreamEvent);
+            switch (evt?.Type)
+            {
+                case "progress" when evt.Progress is not null:
+                    await onProgress(evt.Progress);
+                    break;
+                case "result":
+                    result = evt.Result;
+                    break;
+                case "error":
+                    throw new InvalidOperationException(evt.Error ?? "The runner reported an error.");
+                case "heartbeat":
+                    break; // keep-alive only — nothing to relay
+            }
+        }
+
+        return result ?? throw new InvalidOperationException("Runner stream ended without a result.");
     }
 
     /// <summary>Missions the runner can actually execute (provider key present) — used at boot to

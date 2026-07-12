@@ -74,9 +74,14 @@ public sealed class RoomAgentInvoker(
 
             logger.LogInformation("Agent {Handle} running in room {RoomId}", handle, roomId);
 
-            // Run in the containerised runner (39.1). All built-ins run under the trusted policy;
+            // Run in the containerised runner (39.1), streaming progress (41.7): each step-start
+            // becomes a transient "Searching the web…" chip on the pending bubble, so a 40–60s search
+            // shows life instead of a frozen spinner. All built-ins run under the trusted policy;
             // custom missions get the restricted policy in 39.5.
-            var result = await runner.RunAsync(descriptor.MissionRef, goal, RunPolicy.Trusted, ct);
+            var result = await runner.RunStreamAsync(
+                descriptor.MissionRef, goal, RunPolicy.Trusted,
+                onProgress: p => broadcaster.PublishAgentProgressAsync(roomId, agent.Id, handle, ProgressLabel(p)),
+                ct);
 
             var trace = result.Trace
                 .Select(t => new AgentStep
@@ -121,6 +126,21 @@ public sealed class RoomAgentInvoker(
             }
         }
     }
+
+    // Map an engine step kind to a human progress label. Provider-agnostic — the runner emits neutral
+    // kinds (41.7) and the label lives here so every backend and mission shares it. Unknown kinds fall
+    // back to a generic "Working…" rather than leaking an internal name.
+    private static string ProgressLabel(RunProgress p) => p.Kind switch
+    {
+        "search"       => "Searching the web…",
+        "llm"          => "Thinking…",
+        "json_extract" => "Routing…",
+        "http"         => "Fetching…",
+        "exec"         => "Running…",
+        "rule"         => "Checking…",
+        "onnx"         => "Classifying…",
+        _              => "Working…",
+    };
 
     private async Task PostAsync(
         Guid roomId, Member agent, string handle, Guid triggerMessageId,

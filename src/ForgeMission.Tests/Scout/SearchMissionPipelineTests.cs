@@ -95,6 +95,29 @@ public class SearchMissionPipelineTests
         Assert.Equal("DIRECT", result.Text);                            // when(else) answered
     }
 
+    // Phase 41.7: OnStepStart fires as each step BEGINS, in pipeline order, carrying the expert kind —
+    // the engine-level progress signal the room turns into "Searching the web…". Fires before the step
+    // runs (so the search chip shows *during* the ~40s search, not after), and only for taken branches.
+    [Fact]
+    public async Task OnStepStart_FiresPerBeginningStep_InOrder_WithKind()
+    {
+        var ast = MclParser.Parse(MissionMcl);
+        var web = new StubWebSearch();
+        var llm = LlmStub("""{"search_needed":"yes","search_query":"world cup today"}""");
+        var starts = new List<(string Expert, string Kind)>();
+
+        await new PipelineRunner(llm, webSearch: web)
+            .RunAsync(ast, Experts(), new PipelineRunOptions("SearchAgent",
+                new Dictionary<string, string> { ["goal"] = "who plays in the world cup today?" },
+                OnStepStart: (expert, kind) => starts.Add((expert, kind))));
+
+        // The search branch: classify → route → search → grounded answer. DirectAnswer's when(else)
+        // never fires, so no start for it — progress narrates only the path actually taken.
+        Assert.Equal(
+            [("SearchRouter", "llm"), ("ExtractRoute", "json_extract"), ("WebSearch", "search"), ("GroundedAnswer", "llm")],
+            starts);
+    }
+
     // Unit-level: the primitive publishes results + sources into context and returns the answer text.
     [Fact]
     public async Task SearchExpertRunner_PublishesResultsAndSourcesIntoContext()
