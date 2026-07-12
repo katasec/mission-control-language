@@ -109,6 +109,40 @@ Two ways:
   mention, confirm a verified ✓ reply. That exercises the full app → runner → provider round-trip +
   the cost meter/ledger.
 
+## Local dev environment — shell + provider keys (read this before running anything locally)
+
+> **The maintainer's default shell is PowerShell (`pwsh`), and all provider keys are already exported
+> in the pwsh environment.** You do **not** need to ask for keys or set them up — they exist. But there
+> is one trap that will silently waste your time (it wasted a local runner boot on 2026-07-12):
+
+**The keys live in pwsh, and an agent's `bash` tool does NOT inherit them.** Most agent harnesses run
+Bash commands in a `bash` shell seeded from the bash profile — which never sees pwsh's exported vars. So
+`echo $XAI_API_KEY` from a Bash tool prints empty, the runner loads **0 missions** ("no API key for
+provider … — skipping"), and a local `@grok`/search run can't work — even though the key is right there.
+
+Keys present in the pwsh environment (as of 2026-07-12):
+
+| Env var | Used by |
+|---|---|
+| `XAI_API_KEY` / `GROK_API_KEY` | `@grok` + Scout web search (Phase 41) |
+| `OPENAI_API_KEY` | `@openai` / OpenAI-provider missions |
+| `CLAUDE_API_KEY` | `@claude` / Anthropic-provider missions (note: the code reads `MCL_API_KEY` per mission `forge.toml`; this is the raw Anthropic key) |
+| `MCL_API_KEY` | the default provider key a mission's `forge.toml` resolves via `env("MCL_API_KEY")` |
+| `GOOGLE_SEARCH_API_KEY` | Google Programmable Search (future raw-search backend, 41.3) |
+
+**To use a key from a Bash tool, pull it from pwsh** (this loads the pwsh profile, so the exports are
+present; the `2>/dev/null | tail -1` drops the profile's Azure-module warning banner):
+
+```bash
+export XAI_API_KEY="$(pwsh -NoLogo -Command 'Write-Output $env:XAI_API_KEY' 2>/dev/null | tail -1)"
+# then, e.g., boot the runner with a real key so it actually loads the Grok/search mission:
+XAI_API_KEY="$XAI_API_KEY" MissionDir="$(pwd)/missions" \
+  dotnet run --project src/ForgeMission.Runner/ForgeMission.Runner.csproj
+```
+
+(If you're issuing commands *in* pwsh directly, the vars are just there — `$env:XAI_API_KEY` — no export
+dance needed. The dance is only for a `bash`-backed tool.)
+
 ## Test before you ship (no prod auth needed)
 
 Phase 40 is UI work — verify locally against the browser preview tooling **before** cutting an image.

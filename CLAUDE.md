@@ -83,6 +83,22 @@ make demo-naive   # end-to-end smoke test (forces a full rebuild)
 On macOS the AOT linker needs Homebrew's OpenSSL and brotli on the library path;
 `LinkerArg` entries in `Cli.csproj` handle this automatically.
 
+## Local dev environment — shell + provider keys
+
+The maintainer's default shell is **PowerShell (`pwsh`)**, and **all provider keys are already
+exported in the pwsh environment** — `XAI_API_KEY`, `GROK_API_KEY`, `OPENAI_API_KEY`, `CLAUDE_API_KEY`,
+`MCL_API_KEY`, `GOOGLE_SEARCH_API_KEY`. You do not need to ask for keys; they exist.
+
+**Trap:** an agent's `bash` tool does **not** inherit pwsh's exports, so `echo $XAI_API_KEY` from Bash
+prints empty and a locally-booted runner loads **0 missions** ("no API key … — skipping"). To use a key
+from a Bash command, pull it from pwsh first:
+
+```bash
+export XAI_API_KEY="$(pwsh -NoLogo -Command 'Write-Output $env:XAI_API_KEY' 2>/dev/null | tail -1)"
+```
+
+Full table + the local-runner recipe: [docs/design/deploy.md → Local dev environment](docs/design/deploy.md#local-dev-environment--shell--provider-keys-read-this-before-running-anything-locally).
+
 ## Release workflow
 
 Releases are cut via GitHub Actions (`workflow_dispatch`):
