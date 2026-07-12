@@ -1,0 +1,6 @@
+# The answering provider (classifier + answers). The SEARCH backend is separate and implicitly
+# Grok (Scout), resolved from XAI_API_KEY by the CLI — independent of this provider block.
+[providers.default]
+provider = "xai"
+model    = "grok-4.5"
+apiKey   = env("XAI_API_KEY")

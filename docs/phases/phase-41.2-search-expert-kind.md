@@ -1,7 +1,16 @@
 # Phase 41.2 — `kind: search` expert + search-fronted vanilla missions
 
-> **Status: Design (2026-07-12)** · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
-> **Depends on:** [41.1](phase-41.1-grok-web-search.md) (`ForgeMission.Scout` / `IWebSearch` — ✅ built) ·
+> **Status: ✅ WORKING via `forge run` — VERIFIED LIVE (2026-07-12)** on branch `phase-41.1-grok-web-search`.
+> **Tasks 1–5 DONE.** The native `kind: search` primitive (`SearchExpertRunner`), dispatch + `IWebSearch`
+> ctor-injection in `PipelineRunner` (both switches), CLI wiring (`ProviderClientBuilder.BuildWebSearch()`
+> at both `forge run` sites), and the real on-disk mission `missions/websearch` all built. **Proven two ways:**
+> (1) **stub-backed e2e pipeline test** — `SearchMissionPipelineTests`, 3 tests, 52ms, **no network**, CI-enforced;
+> (2) **live `forge run`** both branches — a Mario-Nawfal-headlines query routed classify→`kind:search`(real
+> Grok)→grounded answer with sources; a static "capital of France" query took the `when(else)` passthrough with
+> **no** search call (`--steps` trace confirms). **Full suite: 219 passed / 5 skipped / 0 failed** (no regression).
+> **Remaining:** Task 6 (room path — wire `IWebSearch` into `ForgeMission.Runner`'s `MissionRunHandler`, then
+> deploy + verify in a room), Task 7 (roll the template out to `grok/openai/claude/assistant`). · **Parent:**
+> [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) · **Depends on:** [41.1](phase-41.1-grok-web-search.md) (✅) ·
 > **AOT rules:** [CLAUDE.md](../../CLAUDE.md) §"AOT-first".
 >
 > **Done when:** a new native `kind: search` expert (an `IExpertRunner` wrapping Scout's `IWebSearch`)
@@ -155,6 +164,19 @@ commit; keep `vanilla` as the reference.
   every future kind, too.
 - **Pure-MCL front-end, one native primitive.** Control flow (classify/gate/answer) is declared in the
   `.mcl`; `kind: search` is a language primitive like `llm`/`exec`. No runner middleware, no C# orchestration.
+- **The context is an untyped bag; consumers deserialize (settled 2026-07-12).** `IExpertRunner.RunAsync(…,
+  Dictionary<string,object> context, …)` **is** the OWIN `AppFunc = Func<IDictionary<string,object>, Task>`
+  shape — an expert is middleware over a shared, untyped environment bag. A producer writes whatever
+  keys/shape its backend yielded (Grok: a self-citing answer string + structured `Sources` on the
+  `WebSearchResult` object); the **consumer that reads a key knows the shape upfront and deserializes
+  accordingly** — the runtime never mediates shape. Consequence: writing multiple keys into the bag is the
+  *native operation*, **not** a language change; and there is deliberately **no typed output contract** (you
+  can't type infinitely many provider shapes — Grok vs Tavily vs OpenAI all differ). So `SearchExpertRunner`
+  simply fills the bag; `outputKey`/`inputs` frontmatter is optional convenience, not an enforced contract.
+  Both Go (`v.(T)` assertion) and TypeScript (`unknown`→narrow) force this exact discipline at the boundary,
+  so it is the blessed pattern, not a shortcut. Future guardrail (not now): namespace keys per kind (OWIN's
+  `owin.` prefix) once the flat bag gets crowded. **No refactor of `SearchExpertRunner` needed** — its
+  current bag-filling behaviour already matches this model.
 - **Guard on a stable key, not `output`.** Steps overwrite `output`; `search_needed` is set once and never
   rewritten, so both the `WebSearch` and `GroundedAnswer` guards evaluate correctly. `when(else)` is
   mandatory (avoids the no-guard-match throw).

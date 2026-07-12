@@ -27,4 +27,5 @@ public record ExpertDefinition(
     public bool IsOnnx        => Kind.Equals("onnx",        StringComparison.OrdinalIgnoreCase);
     public bool IsJsonExtract => Kind.Equals("json_extract",StringComparison.OrdinalIgnoreCase);
     public bool IsExec        => Kind.Equals("exec",        StringComparison.OrdinalIgnoreCase);
+    public bool IsSearch      => Kind.Equals("search",      StringComparison.OrdinalIgnoreCase);
 }

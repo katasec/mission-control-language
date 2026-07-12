@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />
+    <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
   </ItemGroup>
 
   <ItemGroup>
