@@ -26,7 +26,7 @@ execution or billing path.
 | **39.2** Cost meter, ledger & credits | ✅ **DONE + LIVE** | micro-USD `ledger_entries`; login `Granted 5000000µ$`, run `Debited 224µ$` (exact cost-recovery). **F&F ships here.** |
 | **39.3** OCI artifact schema (B0) | ✅ **DONE** | `artifactType` discriminator + self-contained bundle in `Katasec.OciClient`; 6 round-trip tests; [oci-artifact-schema.md](../design/oci-artifact-schema.md) |
 | **39.4** OCI mission distribution | ✅ **DONE + LIVE** | runner 0.4.0 pulls all 5 built-ins from `ghcr.io/katasec` by pinned digest (anonymous), runs + meters a pulled mission |
-| **39.5** Custom missions & experts | ⏭️ **NEXT** | not started — see decisions to lock below |
+| **39.5** Custom missions & experts | ⏭️ **NEXT** | not started — **design brainstormed 2026-07-12** (author/consumer lens, chat-native authoring, Library try-bench). Recommended lean-first slice: **39.5a Library try-bench**. See the [39.5 design brainstorm](#395--design-brainstorm-2026-07-12-not-yet-built) + decisions to lock below |
 | **39.6** Public monetization | ⬜ pending | needs Stripe account; tier numbers from 39.2 cost data |
 
 **Decisions locked this session** (beyond the 2026-07-08 core decisions below):
@@ -37,7 +37,7 @@ execution or billing path.
 
 **Known non-issue**: `hallucination-guard`'s `verify.py` is a demo verifier hardcoded for the "which month contains X" trick question — `@guard "capital of France"` legitimately shows Unverified. Not a distribution bug; a real general-purpose verifier is future work.
 
-**To start 39.5 (next):** lock its decisions first (like 39.2) — Azure Blob layout for custom experts; per-user mission registry (Postgres, like the ledger); save-as-agent snapshot shape (38.5 S1); how far to take the restricted runner policy (deny `exec`/`http` at the language level + ACA egress restriction); cosign key management (the deferred signing). Then build custom-mission authoring → store → resolve-by-handle → run under the restricted policy.
+**To start 39.5 (next):** two entry points. **(a) Lean-first — 39.5a Library try-bench** (recommended): give the existing read-only Library page a verb — "Try" on built-ins (trivial, no new trust surface), then "Add from OCI" paste → on-demand pull + turn on the deferred `RunPolicyGate` (reject `exec`/`http`) + restricted run + meter. Buys arbitrary-pull + policy-enforcement (both needed by full 39.5) with **no blob/registry/persistence**. It's the author's pre-gift validation bench, not the consumer surface. **(b) Full 39.5** — lock decisions first (like 39.2): Azure Blob layout for custom experts; per-user mission registry (Postgres, like the ledger); save-as-agent snapshot shape (38.5 S1, confirmed rigid = consumer trust); gift target / frozen-vs-living / personal-vs-global-handle (proposed: scope = namespace boundary) / default-verifier nudge; restricted runner policy depth; cosign key management. Then build custom-mission authoring → store → resolve-by-handle → run restricted. **Full design + rationale: [39.5 design brainstorm](#395--design-brainstorm-2026-07-12-not-yet-built).**
 
 ## Core decisions (converged 2026-07-08)
 
@@ -136,6 +136,113 @@ These are load-bearing. Later sub-phases assume them.
   policy (restricted egress).
   *Done when:* a user authors a custom mission, it is stored + resolved by handle, and it runs under the
   restricted policy with a custom expert pulled from blob.
+
+#### 39.5 — design brainstorm (2026-07-12, not yet built)
+
+Framing session for save-as-agent + the consuming surface. No code; decisions/direction below.
+Three in-chat mockups were produced as reference (two-pane author surface; expert-prose edit;
+Library try-bench) — concepts, not committed assets.
+
+**The core structure — authors and consumers (Ameer's reframe).** Save-as-agent is **how someone
+who can instruct an LLM packages that ability for someone who can't, and hands it over as a
+person-to-person gift.** This is normal — every home has the one tech person; chef resources have
+authors and consumers. It is *not* "democratizing authoring": the author still needs the skill
+(prompt craft, knowing to add a check step, knowing failure modes). What it actually collapses is
+**distribution, not authoring** — the niece could already write the `.mcl` by hand; what was hard was
+files/CLI/"how does my aunt reach it?". Forge Rooms already solved reach (the aunt's whole
+experience — room-of-two, `@`-address, verified badge — is **built + live**). So save-as-agent's real
+delta is: **author builds in the same room the consumer lives in, on the consumer's real inputs, and
+the result is instantly reachable.** Value = **supply onto an already-proven consumer surface** (low
+risk — the scary question "will a non-technical person use an `@`-agent for real work?" was answered
+*yes, live*, by the halaqa case). The **family/team relational gift is the near end**; the public
+marketplace is the far-end generalization, not the point.
+
+**Consequences that fall out of the author/consumer lens:**
+- **Rigid snapshot (S1) is right — because rigidity is the consumer's trust.** "What the author tested
+  is what you get." The consumer wants no knobs; they want the thing their author made. This *upgrades*
+  the S1 rationale from "safe to build" to "a consumer guarantee."
+- **Instruction vs. data maps exactly onto author vs. consumer.** The author freezes the instruction
+  (their expertise); the consumer supplies only the entry input. The earlier "over-specific" worry
+  dissolves — specialization *for a person* is the deliverable, not a bug.
+- **Two trust regimes.** Relational (social — "my daughter made it," the cryptographic seal barely
+  matters) vs. anonymous (marketplace — the seal is load-bearing). Save-as-agent **starts relational**;
+  the atomic unit is author→known-consumer, not publish-to-bazaar.
+- **The consumer can't judge output → the agent must carry the author's judgment.** Default to
+  including a **verify step** (the `@assistant` Answerer→Verifier shape) — the verifier is the author's
+  standard standing in when they're not in the room. Caveat: a *general* verifier doesn't exist yet
+  (LLM-as-judge is weak; `@guard`'s `verify.py` is a demo). So verify **raises confidence, does not
+  guarantee** — do not sell the consumer certainty we can't ship.
+- **Saving = taking on a support role.** The consumer can't fix/tweak/debug; they return to the author.
+  Rigid snapshot makes this cleaner (one responsible person, no consumer-side edits) but real. Lifecycle
+  (re-save, version, notify) is a design surface, not one-shot.
+
+**Authoring surface — chat-native, NOT a coding/Replit IDE.** Rejected a Replit-style IDE: it
+re-adds the exact friction (files, editor, a separate place) Rooms removes, and raises the author skill
+floor. Replit lowers the floor for people who still *code*; Forge's move is people who *converse*. The
+one Replit virtue that matters (live iterate-and-see) the room **already gives free** — `@mention`,
+see output, adjust, retry: the room *is* the run-loop. Shape = **two panes**: left = chat iteration
+(messy, dead-ends fine); right = the **agent taking shape**. The loop flips from "human assembles
+steps" to **converse → LLM drafts the mission → human curates in plain language → gift**; the human is
+an **editor/approver, never an assembler** (this is what the deliberately-small, LLM-translatable
+language buys). Capture is **not transcript-scraping** (live authoring is messy) — the right pane is
+the explicit-assembly artifact; the LLM generates, the human curates.
+
+**The language structure dictates the surface (grounded in the grammar + missions/).** A mission is
+`mission.mcl` (tiny **wiring** only — the `->` sequence, `loop(N)`, `when`, `parallel`, `using`; see
+`MclGrammar.g4`) **plus** the substance, which lives in the **expert markdown** (YAML frontmatter +
+a **prose system prompt** — e.g. `missions/assistant/experts/Verifier/expert.md` *is* the four PASS
+criteria in English). So a one-line step card hides the exact thing an author edits. Corrected surface
+= **three strata, each with the right affordance**:
+  1. **Pipeline (`.mcl`)** — skeleton. Small, glanceable, rarely touched; the few structural edits
+     (reorder, add a check step, `loop(N)` = "retry up to N times") are **direct-manipulation**, not
+     text (the grammar is small enough that a handful of controls cover it).
+  2. **`llm` expert** — the 90% case. Card **expands to its editable system-prompt body** (a prose
+     textarea). Authoring = *writing English*, not code. Frontmatter (`kind`, `role`) demotes to quiet
+     LLM-set chips; the human never types them.
+  3. **`rule`** = prose + one structured line (`check: word_count >= 50`); **`exec`** = the escape
+     hatch (references a `verify.py`) — **walled off**: visible but "advanced · CLI only," read-only in
+     the warm surface.
+  This stratification **is the same line three times**: `llm` (pure prose) = generatable = safe under
+  the custom policy = warmly editable; `exec` = real code = can't be safely auto-generated = the
+  escape hatch. **The language's smallness and the trust boundary are one decision** — the surface
+  inherits it for free.
+
+**39.5a — Library try-bench (lean consuming slice; recommended to do first).** Pivot: defer full
+authoring; ship the **simplest consuming surface** by giving the existing Library page a verb.
+`src/ForgeUI/Pages/Library.razor` already lists agents read-only (handle, seal, publisher, desc via
+`AgentRegistry.List()`) — it's the consuming skeleton, missing the ability to *do* anything.
+  - **Increment 1 — "Try" on built-ins (trivial, do now).** A run box per row → existing
+    `MissionRunnerClient` → runner `POST /run` → render with the existing `PipelineTrace` /
+    `TrustSignalBadge`. **Zero new trust work** (built-ins = trusted). Turns Library from a directory
+    into a testable directory in an afternoon; highest value-per-effort.
+  - **Increment 2 — "Add from OCI" paste (small, but trips the trust wire).** Pasting an arbitrary
+    `ghcr.io/…@sha256:…` is literally *the first mission the operator didn't write* (the 39.5 trigger).
+    Thin slice: give `OciMissionPuller` an **on-demand pull-this-ref** path (today it's fed the
+    hardcoded `BuiltinMissions` list); **classify + gate at pull** — if it declares `exec`/`http`,
+    refuse ("needs advanced permissions") — **this is where the `RunPolicyGate` hook (built in 39.1,
+    enforcement deferred) finally turns on**; run under the **restricted** policy; it **meters** like any
+    run (39.2 ledger debits — a test isn't free, F&F credits cover it). **No blob, no per-user
+    registry, no handle claim, no persistence** — a *transient* test of a pulled ref (cached, not
+    owned). Buys the two things 39.5 genuinely needs (arbitrary-pull + policy-gate enforcing) while
+    skipping the whole authoring/persistence stack.
+  - **Two honest flags:** (1) a transient test is a **dead-end** — paste → run → works → *now what?*
+    The natural next click ("add to a room") needs the registry = full 39.5. Honest as a *validation
+    bench*, thin as a destination. (2) **No aunt will paste `…@sha256:…`** — so Library-with-OCI is
+    **not the consumer surface; it's the author's pre-gift validation bench** (`forge publish` (CLI,
+    exists) → paste ref → run → confirm → *then* gift). A coherent missing step, not the aunt's screen.
+
+**Open decisions to lock before building 39.5 authoring (refined this session):**
+- **Gift target** for "save & gift to…" — pick-a-person / drop-in-a-room / share-link? This is where
+  distribution actually happens and is the least-designed part. Design it as the *endpoint from day
+  one*, not personal-save-with-sharing-bolted-on.
+- **Frozen vs. living** — when the author later tweaks the agent, does the consumer's copy update or is
+  it a fork? (The maintenance/support edge.)
+- **Personal handle vs. globally-unique bare handle** (38.5 locked bare + FCFS-global; 39.5 save is
+  personal — they collide). Proposed resolution: **personal agents don't claim the global namespace**;
+  they resolve only in the author's own rooms; **promote-to-shared is the moment a global bare handle
+  is claimed** → *scope becomes the namespace boundary*.
+- **Default-verifier nudge** — offer to wrap the captured chain in a check step so it's "verified for
+  whoever you give it to."
 
 ### Group C — Public monetization (same meter; pricing as policy)
 

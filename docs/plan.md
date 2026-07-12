@@ -3,7 +3,12 @@
 > **NEXT ACTION ITEM to implement: the runtime track — [Phase 39.5](phases/phase-39-metered-runtime-marketplace.md)
 > (custom missions & experts — blob store, per-user registry, save-as-agent, trust/cosign) or
 > [39.6](phases/phase-39-metered-runtime-marketplace.md) (Stripe/tiers, priced off 39.2 cost data).**
-> Lock the 39.5 decisions (see the [Phase 39 status table](phases/phase-39-metered-runtime-marketplace.md#status--handoff-updated-2026-07-09)) before building.
+> **39.5 was design-brainstormed 2026-07-12** (author/consumer lens; chat-native authoring, NOT a coding IDE;
+> the language's smallness = the trust boundary = the editable surface). **Recommended lean-first slice:
+> [39.5a — Library try-bench](phases/phase-39-metered-runtime-marketplace.md#395--design-brainstorm-2026-07-12-not-yet-built)**
+> — give the read-only Library page a verb ("Try" on built-ins, then "Add from OCI" paste that turns on the
+> deferred policy gate), no blob/registry/persistence. Then lock the full-39.5 decisions (gift target,
+> frozen-vs-living, personal-vs-global handle, default-verifier) before the authoring build.
 >
 > **[Phase 40 — Forge UI App Shell](phases/phase-40-forge-ui-shell.md) is ✅ COMPLETE + LIVE (2026-07-12).**
 > The app is now a multi-surface, mobile-first, **installable PWA**. All four spokes shipped:
