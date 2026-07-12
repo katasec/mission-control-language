@@ -129,17 +129,18 @@ public sealed class RoomAgentInvoker(
 
     // Map an engine step kind to a human progress label. Provider-agnostic — the runner emits neutral
     // kinds (41.7) and the label lives here so every backend and mission shares it. Unknown kinds fall
-    // back to a generic "Working…" rather than leaking an internal name.
+    // back to a generic "Working" rather than leaking an internal name. No trailing "…": the room appends
+    // animated dots so a long step (a ~70s search) visibly stays alive instead of reading as frozen.
     private static string ProgressLabel(RunProgress p) => p.Kind switch
     {
-        "search"       => "Searching the web…",
-        "llm"          => "Thinking…",
-        "json_extract" => "Routing…",
-        "http"         => "Fetching…",
-        "exec"         => "Running…",
-        "rule"         => "Checking…",
-        "onnx"         => "Classifying…",
-        _              => "Working…",
+        "search"       => "Searching the web",
+        "llm"          => "Thinking",
+        "json_extract" => "Routing",
+        "http"         => "Fetching",
+        "exec"         => "Running",
+        "rule"         => "Checking",
+        "onnx"         => "Classifying",
+        _              => "Working",
     };
 
     private async Task PostAsync(

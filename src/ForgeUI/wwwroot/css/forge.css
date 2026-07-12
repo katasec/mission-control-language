@@ -401,6 +401,15 @@ h2 { font-size: 20px; }
 .agent-thinking { align-self: flex-start; display: flex; align-items: center; gap: var(--space-2); font-size: 13px; color: var(--text-muted); font-style: italic; }
 .agent-thinking::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
 
+/* Animated trailing dots — a long step (a ~70s search) has no sub-progress to narrate (Task 2), so the
+   dots carry the "still working" signal on their own. Markup-based (not animated `content`) for reliable
+   playback across browsers; staggered bounce reads unmistakably as active. */
+.thinking-dots { display: inline-flex; align-items: flex-end; gap: 3px; margin-left: 1px; }
+.thinking-dots span { width: 4px; height: 4px; border-radius: var(--radius-pill); background: currentColor; opacity: .35; animation: thinking-bounce 1.3s ease-in-out infinite; }
+.thinking-dots span:nth-child(2) { animation-delay: .18s; }
+.thinking-dots span:nth-child(3) { animation-delay: .36s; }
+@keyframes thinking-bounce { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
+
 .room-composer { position: relative; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-4); border-top: 1px solid var(--border); background: var(--surface); }
 .room-input    { flex: 1; }
 

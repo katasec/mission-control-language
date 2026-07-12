@@ -117,7 +117,10 @@
 
             @if (_thinkingHandle is not null)
             {
-                <div class="agent-thinking">@_thinkingHandle @(_progressLabel ?? "is thinking…")</div>
+                <div class="agent-thinking">
+                    <span>@_thinkingHandle @(_progressLabel ?? "is thinking")</span>
+                    <span class="thinking-dots"><span></span><span></span><span></span></span>
+                </div>
             }
         </div>
 
