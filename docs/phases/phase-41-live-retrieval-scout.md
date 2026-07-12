@@ -105,6 +105,7 @@ byproduct of forced synthesis, reasoning-only, snippet-depth) > Grok (no raw at 
 | 41.4 — Grok `x_search` (X access) | The X walled-garden answer-engine, handle + date scoped. Second backend. | Planned |
 | 41.5 — OpenAI backend | `web_search` + raw `web_search_call.results`; fills both `Answer` and `Sources`. | Planned |
 | 41.6 — Hosted impartiality ratings | Populate `SourceRef.ImpartialityRating` from a managed per-domain table. | Planned |
+| **[41.7 — Streaming search progress + timeout hardening](phase-41.7-streaming-progress.md)** | Stream live progress ("Classifying → Searching → Answering", + sub-search lines) to the room instead of a 40–60s frozen spinner, and defeat idle-timeouts — via **HTTP streaming** on the runner leg (revisits 39.1 sync-HTTP) + the existing **SignalR** browser leg (**no gRPC**). Reuse designed in at the `IWebSearch` seam (provider-neutral `WebSearchProgress`), so OpenAI/Claude progress rides the same rails; step-level progress is engine-level (`OnStepComplete`) → reusable for every mission. | **Design — recommended next build** (UX/timeout blocker) |
 
 ## 6. Out of scope (POC)
 

@@ -5,6 +5,14 @@
 MCL is a declarative pipeline language where `.mcl` files compose AI experts into
 structured workflows. The CLI binary is `forge`. Runtime is .NET 10 Native AOT.
 
+## Code style — Progressive Disclosure (applies to all new code)
+
+New code follows **[docs/design/code-style.md](docs/design/code-style.md)** — the governing
+principle is **Progressive Disclosure**: code reveals intent in layers (*what* at the top, *how*
+one level deeper). Outline-first files, small named functions, top-down ordering, early returns
+over nesting, isolated side effects, explicit error handling, **zero warnings**, no speculative
+abstractions. Read it before writing non-trivial code; match the surrounding file's idioms.
+
 ## Planning docs (hub/spoke)
 
 `docs/plan.md` is the authoritative index. Every feature is a **phase**: a hub
