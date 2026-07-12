@@ -1,10 +1,9 @@
 # Phase 41.7 — Streaming search progress + timeout hardening
 
-> **Status: Step-level streaming spine DONE + LIVE-VERIFIED — 2026-07-12.** Tasks 1, 3, 4, 5, 6 (step-level)
-> done and **verified live end-to-end on `forge.katasec.com`** (`@grok` World-Cup query → live chip → grounded
-> answer; 71s round-trip, member debited). Deployed: `forge-runner:0.6.0` rev `--0000009`, `forge-ui:0.4.1`
-> rev `--0000017` (0.4.1 = chip-animation follow-up). **Task 2 (Grok SSE sub-search adapter) deferred** per
-> the spec's own ship-order. See [Progress](#progress-2026-07-12) below.
+> **Status: ALL TASKS DONE — 2026-07-12.** Step-level spine (Tasks 1, 3, 4, 5, 6) live-verified on
+> `forge.katasec.com`; **Task 2 (Grok SSE sub-search adapter) now built + verified live** (real xAI stream →
+> sub-search chips → grounded result, one call). Deployed: `forge-runner:0.6.0`→(pending `0.7.0`),
+> `forge-ui:0.4.1`→(pending `0.4.2`). See [Progress](#progress-2026-07-12) and [Task 2](#task-2-done) below.
 > · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
 > **Depends on:** [41.2](phase-41.2-search-expert-kind.md) (`@grok` live) · **Revisits:** the 39.1 runner
 > transport decision (synchronous HTTP → streaming). · **Code style:** all new code follows
@@ -179,10 +178,28 @@ staggered bouncing dots (markup-based CSS, verified rendering mid-bounce in the 
 **~71s** search latency: narrating *inside* that one long step is exactly what Task 2 (Grok SSE) adds; until
 then the animated dots carry the "still working" signal.
 
-**Deferred:**
-- **Task 2 — Grok SSE sub-search adapter** (the "Searched web: N results" sub-lines). Deferred per the
-  spec's ship order; `WebSearchProgress` + `SearchStreamAsync` are in place as its landing seam. When built,
-  it threads `WebSearchProgress` from the `kind:search` step → a runner sub-progress event over the same rails.
+<a id="task-2-done"></a>
+**Task 2 — Grok SSE sub-search adapter — DONE (2026-07-12).** The `kind:search` step was one opaque ~71s
+block; now Grok's server-side search loop streams as live sub-search chips ("Searching: …· N results",
+"Reading fifa.com").
+- **Seam correction:** the specced `SearchStreamAsync` (progress-only, result from a *separate* `SearchAsync`)
+  would re-run the ~71s search twice. Replaced with a **progress-aware overload** —
+  `SearchAsync(request, IProgress<WebSearchProgress>?, ct)` — that returns the result *and* reports
+  sub-searches from **one** call. Backends that can't narrate inherit the default (delegates to buffered
+  `SearchAsync`, reports nothing) — so Tavily/Exa/etc. need no special-casing.
+- **Grok mapping (verified against live SSE, event shapes captured):** `stream:true` on the Responses API;
+  each `web_search_call` item's completed `action` on `response.output_item.done` → `WebSearchProgress`
+  (`search`→query+#sources, `open_page`→host); terminal `response.completed` carries the full final response,
+  so answer+citations **reuse the buffered `Map()`**. Verified all 498 real data-lines are valid JSON (no
+  `[DONE]` sentinel) so the parser can't choke.
+- **Threading:** `PipelineRunOptions.OnSearchProgress` → `SearchExpertRunner` (wraps it in a **synchronous**
+  `IProgress` so events stay ordered, not `Progress<T>`) → `RunProgress{Detail,ResultCount}` over
+  `/run/stream` → orchestrator `ProgressLabel` gained `searching_web`/`searching_x`/`reading`/`results` cases.
+- **Verified:** fixture test parses real captured SSE (2 sub-searches → grounded result) + buffered-path
+  guard; **live** streaming integration test (gated on `XAI_API_KEY`) passed in 22s — real sub-searches
+  narrated, result returned. Suite 222 pass / 0 warnings.
+- **Note:** the search step still takes ~71s (11 sub-searches in the World-Cup run) — but now those 71s are
+  *narrated*, which is the point.
 
 **Timeout chain (Task 6 audit):**
 | Hop | Limit | After 41.7 |
