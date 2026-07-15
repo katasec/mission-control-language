@@ -242,10 +242,14 @@ Never sell mandatory quality on an opt-in door. (Full surface support matrix in 
 4. **Quality contract per door** (§4): base-URL enforces (CLI/IDE, build first); MCP is opt-in best-effort
    (desktop, build last). Match a mission's contract to a door's guarantee.
 5. **Re-entrancy is the one hard seam, and it carries `①→④`.** One user turn = N+1 calls (each tool
-   round-trip is a fresh request). Gate on the last message: **user text ⇒ run the full mission (enrich
-   once + start the tool loop); `tool_result` ⇒ resume the terminal expert only.** State lives behind an
-   **injectable store** — in-process locally, shared (Rooms PG / cache) in cloud. Get it right in ①; ④
-   swaps the store.
+   round-trip is a fresh request). The gate is **not binary** — the runtime understands **three segments**
+   ([42.3](phase-42.3-tool-capable-enriching-responder.md)): **pre-agent** (enrich) runs only on a user-text
+   turn; **agent** (terminal expert) runs on every call; **post-agent** (verify/judge/repair) runs **iff the
+   agent terminates without a tool call** — and may **re-enter** the agent segment on a repair loop. *(A
+   naive binary gate silently kills `Verify` in every agentic flow — caught in external design review
+   2026-07-15.)* The pre-agent output is carried across continuations by a **content-addressed cache**
+   (key = hash of the conversation prefix), behind an **injectable store** — in-process locally, shared
+   (Rooms PG / cache) in cloud. Get it right in ①; ④ swaps the store.
 6. **Platform key + capped free credits = the friction-killer.** The hosted runner calls providers with
    *our* keys server-side, metered against the user's balance — so the user needs **no provider account**.
    Reuse Phase 39 ledger/billing/credit-grant verbatim; the cap (~$5) is the abuse bound.

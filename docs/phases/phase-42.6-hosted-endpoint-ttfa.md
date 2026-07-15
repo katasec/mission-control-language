@@ -27,10 +27,11 @@
 - **OCI catalog is live (39.4):** built-in missions pulled from `ghcr.io/katasec` by pinned digest,
   public/anonymous. `@websearch`, `@guard`, `@debate`, etc. resolve here — hosted routing maps a mission
   handle → the catalog artifact the runner loads.
-- **The re-entrancy store (42.3) needs a *shared* implementation in cloud.** ACA may run >1 replica or
-  scale to zero, so a tool loop's later calls can hit a different replica. If 42.3 used
-  reconstruct-from-request (strategy a), this is a non-issue. If it used the session store (strategy b), the
-  store must be **shared** (Rooms Postgres / a cache), swapped in via the `ISessionStore` seam.
+- **The 42.3 enrichment cache needs a *shared* implementation in cloud.** ACA may run >1 replica or scale to
+  zero, so a tool loop's later calls can land on a different replica than the one that ran the pre-agent
+  segment. The content-addressed key (hash of the conversation prefix) is replica-independent by design —
+  but the **store** behind it must be shared (Rooms Postgres / a cache), swapped in via the `ISessionStore`
+  seam. Miss ⇒ re-run pre-agent.
 - **Provider keys are ours, server-side.** The hosted runner already has provider keys (`MCL_API_KEY`,
   `XAI_API_KEY`, …) in its ACA config; the user's platform key never carries a provider key. The mapping is:
   platform key → user + balance; provider keys → the runner's own env.
@@ -49,11 +50,18 @@ Claude Code ──/v1/messages + Bearer <platform key>──▶ forge.katasec.co
    └─ RETURN : grounded, cited answer  (+ balance header)
 ```
 
-**Routing scheme — key→mission.** Two shapes; pick in design review:
-- **Path/subdomain:** `forge.katasec.com/@websearch/v1/messages` (mission in the URL). Explicit,
-  cache-friendly, easy to demo. **Recommendation.**
-- **Header/model-field:** one base URL, mission chosen by the `model` field or a header. Fewer URLs, but the
-  `model` field is also what the client sends as its model id — collision risk.
+**Routing — the key identifies the *principal*, the path identifies the *mission*.** (Framing corrected in
+external design review: it is **not** "key→mission" — that conflated two independent resolutions.)
+
+```
+platform key        → principal (user + account + balance)
+mission handle/path → mission artifact (OCI)
+principal + mission → authorization + billing policy
+```
+
+**Path-based, decided:** `forge.katasec.com/m/websearch/v1/messages`. Explicit, cache-friendly, easy to
+demo, and it keeps the `model` field free — overloading `model` to select a mission collides with the model
+id the client legitimately sends. The CLI keeps exposing the friendly `@websearch`.
 
 `forge claude @websearch` (42.2, hosted mode) sets `ANTHROPIC_BASE_URL=https://forge.katasec.com/@websearch`
 and the platform key as the token.
@@ -72,10 +80,16 @@ Phase 39.5/39.7).
    balance)`; 401 on bad/revoked key.
 2. **Routing:** map handle (path segment, recommended) → OCI catalog mission the runner loads; 404 on
    unknown handle.
-3. **Wrap the run in Phase-39 billing:** balance-check (402 if short) → run → debit. Return balance in a
-   response header. Reuse `BillingService` + `UsageTrackingChatClient` unchanged.
-4. **Shared re-entrancy store** (only if 42.3 chose strategy b): implement `ISessionStore` over Rooms
-   Postgres / cache; wire into the hosted app.
+3. **Wrap the run in Phase-39 billing — and close the spend hole.** Reuse `BillingService` +
+   `UsageTrackingChatClient`, but **balance-check → run → debit is not a strict ceiling**: cost is unknown
+   until after, and **concurrent requests all pass the check before any debit lands**. Add
+   **transactional credit reservation** (reserve an estimated max pre-run, settle actual after) or hard
+   per-request spend/token caps + free-tier concurrency limits. **This also fixes a live Phase 39 hole** —
+   the current check-then-debit path is already in production. Return balance in a response header; 402 when
+   short.
+4. **Shared enrichment cache:** implement the 42.3 content-addressed store (`ISessionStore` seam) over Rooms
+   Postgres / a cache — ACA may run >1 replica or scale to zero, so a continuation can land on a different
+   replica than the turn that enriched. Cache miss ⇒ re-run pre-agent (never answer ungrounded).
 5. **`forge missions`** command → hosted catalog list. **`forge claude`/`forge try` hosted mode** →
    `@handle` resolves to the hosted URL + platform key.
 6. **Deploy to `forge.katasec.com`** (ACA), custom domain/HTTPS intact; verify the **headline demo** live:

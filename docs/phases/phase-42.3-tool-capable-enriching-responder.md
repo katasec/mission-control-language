@@ -14,8 +14,9 @@
 > **Done when:** the real `claude` CLI, pointed at a local `forge serve` fronting a mission with a
 > tool-capable terminal expert, completes a **multi-tool task** (e.g. "read X, edit Y, run tests") — every
 > `tool_use` round-trips correctly, the mission's enrichment (e.g. a retrieval/guard step) runs **exactly
-> once per user turn** (not per tool round-trip), and a final verified answer returns. Proven by an
-> integration test that drives a real (or faithfully mocked) tool loop and asserts enrich-once.
+> once per user turn** (not per tool round-trip), the **post-agent `Verify` segment runs exactly once on the
+> final continuation**, and a verified answer returns. Proven by an integration test that drives a real (or
+> faithfully mocked) tool loop and asserts **both** enrich-once **and** verify-runs.
 
 ## The mental model (locked)
 
@@ -25,11 +26,49 @@ One user turn is **N+1 requests**, because every tool round-trip is a fresh `POS
 call 1   last message = USER text     → enrich (retrieval/guard) ONCE, run terminal expert, it asks Read(x)  → reply tool_use
 call 2   last message = tool_result   → RESUME the terminal expert (skip enrich) → asks Edit(y)              → reply tool_use
 call 3   last message = tool_result   → RESUME → asks Bash(tests)                                            → reply tool_use
-call 4   last message = tool_result   → RESUME → done                                                        → reply final text
+call 4   last message = tool_result   → RESUME → no more tools → run VERIFY → reply final text
 ```
 
 The mission is the responder; the tool-capable terminal expert is the loop hub; enrichment scaffolds
 *around* it. See the hub [§3](phase-42-forge-cloud.md) diagram.
+
+### The three-segment execution model (the gate is NOT binary)
+
+A mission is `Enrich → TerminalExpert → Verify`. The naive gate — *"user text ⇒ full mission;
+`tool_result` ⇒ terminal expert only"* — **is wrong, and silently breaks verification**: the final answer
+emerges on a **continuation** call (call 4 above, last message = `tool_result`), so a
+terminal-expert-only continuation would **never run `Verify`**. The whole post-agent segment dies the
+moment tools are involved. The runtime must therefore understand **three segments**:
+
+| Segment | Contains | Runs when |
+|---|---|---|
+| **pre-agent** | enrich: retrieval · classify · guard | **only** when the last message is **user text** (once per user turn) |
+| **agent** | the tool-capable terminal expert | **every** call (fresh or resumed) |
+| **post-agent** | verify · judge · format · repair | **only** when the agent segment terminates **without** a tool call |
+
+The rule, stated once and precisely:
+
+```
+ANY call:
+  last msg = user text    → run PRE-AGENT (enrich)          [once per user turn]
+  last msg = tool_result  → skip pre-agent
+
+  always → run / resume the AGENT segment (terminal expert, with tools)
+      ├─ emits tool_use    → return it IMMEDIATELY · skip post-agent
+      └─ emits final text  → run POST-AGENT (verify/judge/repair) → return verified answer
+```
+
+So **post-agent runs iff the terminal expert terminates without a tool call** — which may be call 1 (no
+tools needed) or call N.
+
+**Subtlety — the segments are not strictly linear.** If `Verify` **fails** and the mission has a
+repair/retry loop, the post-agent segment may **re-enter the agent segment**, which can emit a *new*
+`tool_use` → returned to the client → the loop continues. Implement this as a re-entrant loop, **not** a
+one-way pipeline, or a failed verification will dead-end instead of repairing.
+
+> **Attribution:** this defect (post-agent verification never firing in an agentic flow) was caught in an
+> external design review of the Phase 42 docs, 2026-07-15. The original spec's binary gate would have
+> shipped a mission whose `Verify` step was dead code whenever tools were in play.
 
 ## Context an implementer needs (verified against the code 2026-07-15)
 
@@ -73,34 +112,53 @@ The mission is the responder; the tool-capable terminal expert is the loop hub; 
   tool-capable. (Convention, documented; optionally a `role: agent` / `tool_capable: true` frontmatter flag
   to mark it explicitly.)
 
-### 3. The re-entrancy gate (enrich once, resume the expert)
+### 3. The re-entrancy gate + carrying the enrichment across continuations
 
-The gate keys off the **last message**:
+**Detection helper** on the parsed request: `IsToolContinuation(request)` ⇒ the last content block is a
+`tool_result`. This single branch drives the three-segment model above — and note today's
+`LastUserMessage` would feed a `tool_result` in as the goal (nonsense), so this **replaces** that logic on
+the Anthropic wire.
+
+**The tool transcript is free; the enrichment is not.** Every request carries the full history including
+prior `tool_use`/`tool_result`, so resuming the agent segment needs no server state. The *only* thing not
+in the request is the **pre-agent output** (retrieved context, guard verdict) — and it must survive to
+call N or the answer loses its grounding.
+
+**Rejected — stash it in the conversation.** The tempting "emit the enrichment as a synthetic context block
+so the client round-trips it back" **does not survive contact with real clients**: there is no
+client-round-tripped *hidden* channel in the Anthropic/Responses wires, and anywhere it *would* round-trip
+(an assistant turn) is **user-visible** — the user watches their agent emit a wall of retrieved context.
+Do not build this without proving the round-trip against the real `claude`/`codex` CLIs first; a mock host
+will happily preserve server-injected content that a real client drops.
+
+**Chosen — a content-addressed enrichment cache.**
 
 ```
-last message role/type:
-  user text     → NEW TURN     → run the FULL mission: enrich (retrieval/guard) → terminal expert(with tools)
-  tool_result   → CONTINUATION → run ONLY the terminal expert, seeded with the tool transcript
+key   = hash(conversation prefix up to and including the last USER message)
+value = the pre-agent output (retrieved context, guard verdict, classify flags)
 ```
 
-- **State carry:** two viable strategies; pick per the store decision below.
-  - **(a) Reconstruct-from-request (preferred, stateless):** every request carries the full history
-    including prior `tool_use`/`tool_result`, so the tool transcript is free. The only thing *not* in the
-    request is the enrichment output (e.g. retrieved context). Stash the enrichment result **into the
-    conversation** on call 1 (e.g. as a synthetic system/context block the mission emitted), so subsequent
-    calls re-derive it from the request with no server state. Cleanest for multi-replica cloud.
-  - **(b) Session store:** key by `X-Session-Id` (or a hash of the conversation prefix), store the
-    enrichment output + any loop state in `ISessionStore`, reload on continuation. Simpler to reason about;
-    needs a **shared** store in cloud (see 42.6). Use the existing `ISessionStore` seam so local = in-proc,
-    cloud = swapped implementation.
-- **Detection helper** on the parsed request: `IsToolContinuation(request)` ⇒ last content block is a
-  `tool_result`. This is the single branch that makes enrich-once correct — today's `LastUserMessage` would
-  feed a `tool_result` as the goal (nonsense), so this replaces that logic on the Anthropic wire.
+- On a **new user turn**: run pre-agent → store under the key.
+- On a **continuation**: the prefix is unchanged ⇒ **same key** ⇒ cache hit ⇒ enrichment recovered without
+  re-running it.
+- **No client cooperation, no session header, nothing user-visible.** The client stays stateless; the
+  server derives identity from content it already sent.
+- **Multi-replica safe** when the cache is shared — local = in-proc/`LocalFileSessionStore`, cloud = shared
+  (Rooms PG / cache) via the existing **`ISessionStore` seam**. This is the seam 42.6 swaps; keep it
+  injectable.
+- Cache miss (eviction, cold replica) must **degrade correctly**: re-run pre-agent rather than answer
+  ungrounded. Correctness first, cost second.
+
+**Idempotency.** A network retry can resubmit the same `tool_result`. The content-addressed key makes the
+*enrichment* naturally idempotent (same prefix → same value), but the **agent segment is not**: re-running
+the terminal expert is a fresh non-deterministic LLM call that costs money and may emit a *different* tool
+call. Derive a continuation identity (conversation id + turn + `tool_use_id` + sequence) and either replay
+the prior response or reject the duplicate. **Left explicitly open — decide in design review** (see
+Out of scope / Open questions).
 
 > **Why not pause the pipeline:** re-entrancy is achieved by **re-running with the gate**, not by suspending
-> a C# coroutine. On a continuation we run *only* the terminal expert (a cheap single-expert pass) with the
-> accumulated transcript — the expensive enrichment is skipped by the gate. This keeps the runtime stateless
-> and cloud-scalable.
+> a C# coroutine. On a continuation we skip the pre-agent segment and resume only the agent segment (a cheap
+> single-expert pass) with the accumulated transcript. This keeps the runtime stateless and cloud-scalable.
 
 ## Tasks (chronological)
 
@@ -113,17 +171,30 @@ last message role/type:
    right `stop_reason`; keep text path intact.
 4. **`MissionChatClient` tool-capable terminal expert:** forward `ChatOptions.Tools` to the terminal expert
    only; return `FunctionCallContent` verbatim when the model calls a tool.
-5. **The re-entrancy gate:** implement `IsToolContinuation`-driven branching — new turn runs the full
-   mission, continuation runs only the terminal expert. Implement strategy (a) reconstruct-from-request as
-   the default; wire `ISessionStore` into `AnthropicServer.Build` as the (b) fallback seam.
-6. **Integration test:** drive a real `claude` tool loop (or a faithful mock host that executes tool calls)
-   against `forge serve` fronting a mission whose enrichment step **increments a counter / logs once** —
-   assert the counter is `1` across an N-tool task (enrich-once), and that Read/Edit/Bash round-trip.
-7. **Suite green, zero warnings.** Publish/bump `Katasec.AnthropicServer` if consumed via NuGet.
+5. **The three-segment executor:** implement `IsToolContinuation`-driven branching per the model above —
+   pre-agent only on user-text turns; agent segment always; **post-agent iff the agent terminates without a
+   tool call**; post-agent may **re-enter** the agent segment (repair loop), so build it re-entrant, not a
+   one-way pipeline.
+6. **Content-addressed enrichment cache:** key = hash(conversation prefix through the last user message);
+   store the pre-agent output behind the **`ISessionStore` seam** (in-proc local, shared in cloud — 42.6
+   swaps it). Cache miss ⇒ re-run pre-agent (never answer ungrounded).
+7. **Integration test — two assertions, both load-bearing:**
+   (a) **enrich-once** — drive a real `claude` tool loop (or a faithful mock host that executes tool calls)
+   against `forge serve` fronting a mission whose enrichment step **increments a counter**; assert the
+   counter is `1` across an N-tool task, and that Read/Edit/Bash round-trip.
+   (b) **verify-runs** — assert the **post-agent segment executes exactly once, on the final continuation**
+   (the regression this spoke exists to prevent: `Verify` silently never firing when tools are in play).
+   Add a repair-loop case: a failing `Verify` re-enters the agent segment and can emit a new `tool_use`.
+8. **Suite green, zero warnings.** Publish/bump `Katasec.AnthropicServer` if consumed via NuGet.
 
-## Out of scope
+## Out of scope / open questions
 
-- The Responses-wire (`/v1/responses`) version of this seam — **42.7** (reuses tasks 1's neutral layer).
-- Hosting, multi-replica shared store selection — **42.6** (this spoke leaves the store *injectable*; 42.6
-  picks the cloud implementation).
+- The Responses-wire (`/v1/responses`) version of this seam — **42.7** (reuses task 1's neutral layer).
+- Hosting, multi-replica shared cache implementation — **42.6** (this spoke leaves the store *injectable*).
 - MCP door (no tool round-trip needed there — the host owns the loop) — **42.8**.
+- **OPEN — continuation idempotency.** A retried `tool_result` re-runs the agent segment: a fresh
+  non-deterministic LLM call that costs money and may emit a *different* tool call. Decide in design review:
+  derive a continuation identity (conversation + turn + `tool_use_id` + sequence) and **replay** the prior
+  response, or **reject** the duplicate.
+- **OPEN — prove the client round-trip before relying on any in-conversation state.** Test against the real
+  `claude`/`codex` CLIs, not a mock (a mock preserves server-injected content that a real client drops).

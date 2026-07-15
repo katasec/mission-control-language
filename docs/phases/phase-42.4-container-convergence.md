@@ -47,8 +47,17 @@ wire; default = both). This is a small refactor because both `Map` methods alrea
 
 **Metering wrapped in cloud only.** Locally the image runs the mission with the developer's own provider
 keys, unmetered. In cloud, the *same* image is fronted by the Phase-39 `UsageTrackingChatClient` + billing
-(the wrapper lives at the hosting layer, 42.6 — not baked into the image). The image is identical; the
-*environment* adds metering.
+(the wrapper lives at the hosting layer, 42.6 — not baked into the image).
+
+**The invariant, stated honestly (sharpened in external design review, 2026-07-15):**
+
+> **The same mission-execution and wire implementation runs locally and in the cloud.**
+
+That is the defensible claim — **not** "everything is identical." The full request *stacks* legitimately
+differ: cloud adds authentication, billing, provider credentials, network policy, persistent state, rate
+limiting, scale-out and observability. Claiming byte-identical environments would be false and would
+invite someone to "fix" the differences that are supposed to exist. **Same execution core; different
+surrounding stack.**
 
 ## Tasks (chronological)
 

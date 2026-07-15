@@ -44,11 +44,25 @@ forge login
 
 **Platform key properties:**
 - opaque, long-lived, **revocable**, scoped to the user; not a provider key.
-- resolvable server-side (42.6) to `(userId, balance)` — either a signed token (JWT with userId, validated
-  without a DB hit) or an opaque token looked up in a `platform_keys` table. **Design-review call**;
-  recommendation: opaque + table (trivially revocable, no rotation headaches).
-- **abuse bound = the credit cap** (~$5 free). Debit-after-run (39.2) enforces it; no runaway spend on our
+- **Format (decided — external design review, 2026-07-15): `fg_live_<identifier>_<secret>`.** A visible
+  prefix (support-friendly, greppable in leaked logs, scannable by secret-scanners), a lookup identifier,
+  and a random secret. **Store only a keyed hash of the secret** — never plaintext. This gives safe lookup,
+  individual revocation, and a survivable DB compromise.
+- **Opaque + table, not JWT.** A JWT avoids a lookup but makes immediate revocation, leak response, rotation,
+  scope changes, suspension, and credit-status checks all harder — and we need account state on the request
+  path for billing anyway, so the lookup isn't a saving.
+- resolvable server-side (42.6) to `(userId, balance)`.
+
+**Abuse bound — and the hole to fix.** The credit cap (~$5) is the *intended* bound, but
+**balance-check-then-debit-after-run is not a strict ceiling**:
+- a request whose cost exceeds the remaining balance still runs (cost is unknown until after), and
+- **concurrent requests all pass the balance check before any debit lands** → unbounded overspend on *our*
   provider keys.
+
+**This is a live Phase 39 hole, not just a Phase 42 design issue** — the check-then-debit path is already in
+production. Fix requires one of: **transactional credit reservation** (reserve an estimated max pre-run,
+settle after), conservative pre-authorization, hard per-request spend/token caps, serialized spend per
+account, or low concurrency limits on the free tier. **Decide in design review** — see 42.6 task list.
 
 **Auxiliary commands:**
 - `forge whoami` → show signed-in user + balance (reads local key + a `/me` call).

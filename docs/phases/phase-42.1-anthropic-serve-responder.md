@@ -55,19 +55,32 @@ var app = config.Wire == "anthropic"
 (Keep the OpenAI default so nothing regresses. 42.4 later makes one image serve *both* at once; here we
 just need the Anthropic path reachable.)
 
-**B. Full-conversation handoff in `MissionChatClient`.** The mission must see the running conversation, not
-one turn. Fold the transcript into the goal param. Minimal, dependency-free approach:
+**B. A neutral *structured* conversation model in the context bag.** The mission must see the running
+conversation, not one turn — **but do not flatten it to a role-tagged string.**
 
-- Replace `LastUserMessage` with a `Transcript(messages)` that renders the prior turns + the latest user
-  message into a single string the mission's first param receives (role-tagged, e.g. `User: …` / `Assistant:
-  …`, latest turn last). Keep the last user message as the *primary* signal but append the context.
-- Gate behind an option so 42.3's re-entrancy logic can later replace this: a `ConversationMode`
-  (`LastTurn` | `FullTranscript`, default `FullTranscript` for the Anthropic wire).
+```csharp
+context["conversation"] = <structured message collection>   // roles, tool_use/tool_result, parts
+context["goal"]         = <latest user intent>              // what {{goal}} binds to today
+context["system"]       = <effective system instructions>
+```
 
-> **Why fold-into-goal and not a typed history contract:** per the Phase 41 settled design, the mission
-> context is an **untyped bag; the consumer deserializes** (OWIN model). No language change, no typed
-> message contract — the transcript is just a bigger goal string the mission's `{{goal}}` (or a named
-> `{{history}}`) can reference.
+- Replace `LastUserMessage` with a mapping that populates all three keys. `{{goal}}` keeps working exactly
+  as it does today (no mission rewrite), while the structure stays *available* to any step that wants it.
+- Keep `LastTurn` behaviour for the OpenAI path so existing `forge serve` users don't regress.
+
+> **Why structured, not a flattened transcript (decision, 2026-07-15 — external design review).** The first
+> draft folded the history into one role-tagged goal string, justified by Phase 41's settled *"context is an
+> untyped bag; the consumer deserializes"* (OWIN) principle. That justification was wrong: **the bag can hold
+> structure.** Untyped ≠ stringly-typed. Flattening destroys what 42.3 immediately needs and what the wire
+> already gives us for free:
+> - system messages lose first-class semantics; **tool calls and tool results become prose**
+> - multimodal parts have nowhere to go
+> - role boundaries — and therefore **prompt-injection boundaries** — get fuzzy
+> - provider behaviour diverges from what the client actually sent
+>
+> Decisive: **[42.3](phase-42.3-tool-capable-enriching-responder.md) needs the structured tool history
+> anyway.** Flattening here means building the structure twice and migrating off the string contract.
+> No MCL language change, no typed message contract in the grammar — the *bag* just carries real objects.
 
 ## Tasks (chronological)
 
@@ -77,9 +90,11 @@ one turn. Fold the transcript into the goal param. Minimal, dependency-free appr
 2. **Add `Wire` to `AgentConfig`** + document it in the `agent.yaml` examples. Default `"openai"`.
 3. **Branch `BuildServeCommand`** on `config.Wire` to pick `AnthropicServer.Build` vs `OaiServer.Build`.
    Update the startup banner to print the served endpoint(s).
-4. **Full-conversation handoff in `MissionChatClient`:** add `ConversationMode`; implement `Transcript(...)`;
-   default the Anthropic path to `FullTranscript`. Preserve `LastTurn` behaviour for the OpenAI path (no
-   regression to existing `forge serve` users).
+4. **Neutral structured conversation in `MissionChatClient`:** populate `context["conversation"]` (structured
+   messages — roles, parts, and the `tool_use`/`tool_result` shapes 42.3 will need), `context["goal"]`
+   (latest user intent — `{{goal}}` binds unchanged), `context["system"]`. **Do not flatten to a
+   role-tagged string.** Preserve `LastTurn` behaviour for the OpenAI path (no regression to existing
+   `forge serve` users).
 5. **Extend `ClaudeCodeTests`** with a variant that starts a real `forge serve` (Anthropic wire) over a
    throwaway mission and drives the live `claude` CLI through it — asserting a **two-turn** exchange where
    turn 2 depends on turn 1 (proves full-history handoff). Keep it a `SkippableFact` gated on keys + `claude`
