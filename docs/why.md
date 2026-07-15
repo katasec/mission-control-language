@@ -26,6 +26,60 @@ previous output as input.
 
 **A mission is a reasoning structure, not an execution plan.**
 
+## What MCL is — a reliability framework, not an agent framework
+
+The objective is not:
+
+> Make the model smarter.
+
+The objective is:
+
+> **Make intelligent systems more predictable.**
+
+Models are already remarkably capable. The failure is that we ask them to operate as complete
+*systems* when they are *components* within one.
+
+Infrastructure engineering learned this already. Reliable systems did not emerge because individual
+servers became perfect. They emerged because we learned to compose, orchestrate, verify, recover,
+observe and govern **imperfect** components. **Reliability was never a component property — it is a
+system property.**
+
+That is why better models do not obsolete this layer. A better model is a better *component*; it does
+not make a system predictable. Capability improves; reliability must still be engineered.
+
+Read through that lens, MCL's parts are not features — they are answers to specific reliability failures:
+
+- **Expertise is not reusable** → *experts*
+- **Reasoning patterns are trapped in prompts** → *missions*
+- **Retrieval is optional — the model decides, and it decides wrong when it is confidently stale**
+  → *structural enrichment* (classify → retrieve → answer, in-path and mandatory)
+- **Verification is optional** → *judges, `kind: rule`, `kind: exec` gates*
+- **Context disappears; long-running work loses continuity** → *session continuity* (see below)
+- **Behaviour drifts as models change** → *the eval harness* — measure the floor, detect the drift
+- **Good reasoning cannot be distributed** → *OCI-distributed missions and experts*
+- **Reasoning is unreachable unless you adopt a framework** → *Forge Cloud* — access via the tools
+  people already use
+
+Most of the market works on two things: better models, and better agent experiences (coding agents,
+desktops, TUIs, workbenches). Both are valuable. Very little effort goes into **codifying and
+distributing the reasoning architectures themselves.**
+
+So the question MCL asks is not *"which model should I use?"* but:
+
+> **Which reasoning architecture should I use?**
+
+That is a different abstraction layer:
+
+```
+OCI         distributes software artifacts
+Terraform   distributes infrastructure definitions
+Kubernetes  distributes desired state
+MCL         distributes reasoning architectures
+```
+
+Experts become reusable intelligence assets. Missions become reusable reasoning structures. Agents
+become deployment targets. Forge becomes the distribution and execution layer.
+
 ## Why explicit reasoning structures matter
 
 Most AI tooling expresses reasoning through prompts, markdown instructions, YAML, or agent
@@ -48,7 +102,7 @@ MCL does not stand alone. It is one layer in a deliberate engineering approach t
 3. **Atomic task generation** — per phase, generate tasks in sequential dependency order so each can be executed and tested before the next begins.
 4. **Narrow execution** — by the time an agent executes, the work is so well-prescribed that there is little room for drift.
 5. **Oversight** — an architect agent reviews the work of the executing agent and enforces quality gates.
-6. **Session continuity** — agent performance degrades as context fills. Sessions are treated as bounded units with structured handoffs.
+6. **Session continuity (SCP — Session Continuity Protocol)** — agent performance degrades as context fills. Sessions are treated as bounded units with structured handoffs: reconcile the work into the plan docs, make "what's next" unambiguous, commit, hand off. *Practised today as a protocol, not yet codified as a framework primitive — a candidate expert/mission once the basics settle.*
 
 MCL addresses the reasoning structure layer: giving agents a clear, reviewable definition of
 how to approach a problem.
