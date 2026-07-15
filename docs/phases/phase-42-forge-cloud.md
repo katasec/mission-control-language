@@ -1,13 +1,17 @@
-# Phase 42 — Forge Cloud: the mission *is* the smarter model, behind one URL
+# Phase 42 — Forge Cloud: **access to the tech**
 
-> **Status: Design (2026-07-15).** Turn forge's mission runtime into a **hosted, metered, multi-agent-
-> frontable inference platform** — *"your smarter model behind one URL."* An MCL mission (structured
-> reasoning: classify → live-search → answer, guardrails, judge loops) is exposed over the wire protocols
-> real coding agents already speak, so any of them — Claude Code, Codex — can point at a forge mission
-> with a one-line base-URL change and get answers a naked SOTA model **structurally cannot** give. First
-> local + open source (the quality guarantee, proven against the real `claude` CLI), then the *same
-> container* hosted on Azure with a platform key + free credits so a new user reaches the "aha" in **2–3
-> commands, no provider account required.**
+> **Status: Design (2026-07-15).** **This phase is about one thing: how a consumer actually gets MCL into
+> their hands and their workflow.** Everything in it — the wire doors, `forge claude`, the container, the
+> platform key, MCP — is an **access decision**. Hosting, metering and billing are *means*, never the point:
+> hosting exists because it is the lowest-setup way to reach the tech; metering exists only so free access
+> is affordable. **When a decision trades access against monetization, elegance, or scope — access wins.**
+>
+> Concretely: an MCL mission (structured reasoning — classify → live-search → answer, guardrails, judge
+> loops) is exposed over the wire protocols coding agents **already speak**, so Claude Code / Codex reach it
+> with a one-line base-URL change and get answers a naked SOTA model **structurally cannot** give — **no new
+> tool to learn, no SDK, no migration.** First local + open source (where the quality guarantee is real,
+> proven against the real `claude` CLI), then the *same container* hosted with a platform key + free credits
+> so a newcomer reaches the "aha" in **2–3 commands with no provider account at all.**
 >
 > **Parent:** consumes [Phase 39 — Metered Runtime & Marketplace](phase-39-metered-runtime-marketplace.md)
 > (runner container, `UsageTrackingChatClient`, `CostMeter`, per-user ledger, OCI catalog — **all live**) ·
@@ -22,6 +26,36 @@
 > on local Docker and on Azure Container Apps.
 
 ---
+
+## 0. Why this phase exists — reach *is* the product
+
+**"Spectacular reasoning no one can reach = reasoning that doesn't exist."** That was
+[Phase 38](phase-38-forge-rooms.md)'s founding line, and Phase 42 is the same sentence applied one layer
+out: 38 delivered access *via chat rooms*; **42 delivers access *via the tools people already use*.** Same
+principle, wider radius.
+
+It is also the missing half of MCL's accessibility thesis. The Terraform parallel only works if **both**
+halves land:
+
+| | Terraform | MCL |
+|---|---|---|
+| **Authoring** accessible | HCL — declare infra instead of scripting it | the `.mcl` language — declare reasoning instead of wiring it |
+| **Consumption** accessible | registry + providers — *consumers ≫ authors* | **Phase 42** — the doors + OCI catalog + zero-setup hosted access |
+
+An accessibility thesis that only solves *authoring* is half a thesis: the average engineer still can't wire
+classical ML + LLMs + symbolic gates together, and if reaching the result requires adopting a framework,
+learning an SDK, or holding provider keys, **the reach problem just moved.** Phase 42 removes every
+remaining barrier between a person and the tech:
+
+| Barrier | Removed by |
+|---|---|
+| "I'd have to adopt your framework" | **three doors** — it speaks the protocol your agent already speaks (§3) |
+| "I'd have to wire it up" | **`forge claude`** — one command (42.2) |
+| "I'd have to run infrastructure" | **the container, local ≡ cloud** (42.4) — or don't run it at all (42.6) |
+| "I'd need provider accounts and keys" | **platform key + free credits** (42.5) — metering is just the affordability guardrail |
+| "My tool is OAuth-walled (desktop)" | **MCP** (42.8) — opt-in, honestly scoped (§4) |
+
+Every spoke below is one of those barriers falling. That is the whole phase.
 
 ## 1. The dream, UX-first — "time to first *awesome*"
 
