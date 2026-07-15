@@ -34,6 +34,11 @@ public sealed class RoomBroadcaster(IHubContext<ChatHub> hub)
     public Task PublishAgentThinkingAsync(Guid roomId, Guid agentId, string handle)
         => PublishAsync(roomId, new AgentThinking(agentId, handle), "AgentThinking", roomId, agentId, handle);
 
+    /// <summary>Transient step-progress on the pending agent bubble (41.7): a live label like
+    /// "Searching the web…" that replaces the frozen spinner. Not persisted — only the final message is.</summary>
+    public Task PublishAgentProgressAsync(Guid roomId, Guid agentId, string handle, string label)
+        => PublishAsync(roomId, new AgentProgress(agentId, handle, label), "AgentProgress", roomId, agentId, handle, label);
+
     public Task PublishAgentFailedAsync(Guid roomId, Guid agentId, string handle)
         => PublishAsync(roomId, new AgentFailed(agentId, handle), "AgentFailed", roomId, agentId, handle);
 
@@ -63,4 +68,5 @@ public sealed class RoomBroadcaster(IHubContext<ChatHub> hub)
 public abstract record RoomEvent;
 public sealed record MessagePosted(RoomMessageDto Message) : RoomEvent;
 public sealed record AgentThinking(Guid AgentId, string Handle) : RoomEvent;
+public sealed record AgentProgress(Guid AgentId, string Handle, string Label) : RoomEvent;
 public sealed record AgentFailed(Guid AgentId, string Handle) : RoomEvent;

@@ -1,0 +1,14 @@
+// Search-fronted vanilla agent (Phase 41.2) — every question is classified; only ones needing
+// live/current data trigger a web search (implicitly Grok), which grounds the answer. Everything
+// else passes straight through to a direct answer. Pure MCL: one classify step, one json_extract,
+// one kind:search step, and two answer branches gated by a stable `search_needed` flag + when(else).
+
+mission SearchAgent(goal) = {
+    SearchRouter                                        // llm — emits {"search_needed":…,"search_query":…}
+    -> ExtractRoute                                     // json_extract — publishes search_needed + search_query
+    -> WebSearch(query: search_query) when(search_needed: "yes")   // kind: search — publishes search_results + search_sources
+    -> GroundedAnswer when(search_needed: "yes")        // llm — answers using {{search_results}}
+    -> DirectAnswer   when(else)                        // llm — fast passthrough, {{goal}} only
+}
+
+output(SearchAgent)

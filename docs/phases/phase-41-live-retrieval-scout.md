@@ -100,11 +100,12 @@ byproduct of forced synthesis, reasoning-only, snippet-depth) > Grok (no raw at 
 | Spoke | Scope | Status |
 |---|---|---|
 | **[41.1 — Grok web_search POC](phase-41.1-grok-web-search.md)** | `ForgeMission.Scout` project + `IWebSearch` + `GrokWebSearch` (grok-4.5, `web_search` tool, direct HTTP + STJ, source-tagged results) + a smoke test that summarizes YouTube news. **The build now.** | **Design → building** |
-| 41.2 — MCL integration | Wire Scout into a mission — decide `kind: search` expert vs a tool on the `llm` expert vs an `IChatClient` decorator. Design deferred until the POC exists. | Planned |
+| **[41.2 — `kind: search` expert + search-fronted vanilla missions](phase-41.2-search-expert-kind.md)** | New native `kind: search` primitive (an `IExpertRunner` wrapping `IWebSearch`) + a **pure-MCL** *classify → conditionally-search → answer* front-end on the vanilla missions, so every agent gains transparent, gated live-search (search backend implicitly Grok). Uses `when()` guards on a stable `search_needed` key + `when(else)`. Context = untyped bag, consumer deserializes (OWIN model). | **✅ Works via `forge run` (Tasks 1–5); room path (Task 6) + rollout (Task 7) pending** |
 | 41.3 — Raw-API backend (Tavily/Exa) | The backend that actually exercises "raw → MCL synthesizes"; proves the interface spans both families. | Planned |
 | 41.4 — Grok `x_search` (X access) | The X walled-garden answer-engine, handle + date scoped. Second backend. | Planned |
 | 41.5 — OpenAI backend | `web_search` + raw `web_search_call.results`; fills both `Answer` and `Sources`. | Planned |
 | 41.6 — Hosted impartiality ratings | Populate `SourceRef.ImpartialityRating` from a managed per-domain table. | Planned |
+| **[41.7 — Streaming search progress + timeout hardening](phase-41.7-streaming-progress.md)** | Stream live progress ("Classifying → Searching → Answering", + sub-search lines) to the room instead of a 40–60s frozen spinner, and defeat idle-timeouts — via **HTTP streaming** on the runner leg (revisits 39.1 sync-HTTP) + the existing **SignalR** browser leg (**no gRPC**). Reuse designed in at the `IWebSearch` seam (provider-neutral `WebSearchProgress`), so OpenAI/Claude progress rides the same rails; step-level progress is engine-level (`OnStepComplete`) → reusable for every mission. | **Design — recommended next build** (UX/timeout blocker) |
 
 ## 6. Out of scope (POC)
 

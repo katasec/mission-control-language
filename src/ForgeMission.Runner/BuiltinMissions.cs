@@ -24,8 +24,8 @@ internal static class BuiltinMissions
             $"{Reg}/forge-mission-assistant@sha256:4ba3278af7b9400e28ff20c559a4274b6546c03571e3e248a67ec03eabcddbf9",          "assistant"),
         new("Claude",    "Raw Claude — no verification",
             $"{Reg}/forge-mission-claude@sha256:5f474a569a40e156218f0f5e2644b753ac3fb6c7bb7f662099826d9d09a93adb",             "claude"),
-        new("Grok",      "Raw Grok (xAI) — no verification",
-            $"{Reg}/forge-mission-grok@sha256:f60b53ce79dfc23fc0774e9d0af83b1dbe806cf597bd0b6d6288a3ef0944cf6a",               "grok"),
+        new("Grok",      "Grok with live web search — classifies, searches when current data is needed, grounds the answer (41.2)",
+            $"{Reg}/forge-mission-grok@sha256:be0d12b25aec107d1aa41ec3ae00b084b4773ba4c7dde59b287ed1a027c36cd5",               "grok"),
     ];
 
     /// <summary>

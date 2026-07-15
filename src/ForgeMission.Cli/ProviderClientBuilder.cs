@@ -6,6 +6,8 @@ using ForgeMission.Core.Manifest;
 using ForgeMission.Core.Runtime;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using Scout;
+using Scout.Grok;
 
 // Builds an IExpertRunner from a ProviderProfile declared in forge.toml.
 // Lives in CLI (not Core) because it depends on provider-specific packages.
@@ -13,6 +15,18 @@ public static class ProviderClientBuilder
 {
     public static IExpertRunner Build(ProviderProfile profile) =>
         new DirectExpertRunner(BuildChatClient(profile));
+
+    // Live-retrieval backend for kind:search experts (Phase 41). Implicitly Grok for the POC.
+    // Returns null when no xAI key is present — missions without kind:search are unaffected; a
+    // kind:search step then fails with a clear "IWebSearch not configured" error.
+    private static readonly HttpClient SearchHttpClient = new() { Timeout = TimeSpan.FromMinutes(3) };
+
+    public static IWebSearch? BuildWebSearch()
+    {
+        var key = Environment.GetEnvironmentVariable("XAI_API_KEY")
+                  ?? Environment.GetEnvironmentVariable("GROK_API_KEY");
+        return string.IsNullOrWhiteSpace(key) ? null : new GrokWebSearch(SearchHttpClient, key);
+    }
 
     public static IChatClient BuildChatClient(ProviderProfile profile) =>
         profile.Provider.ToLowerInvariant() switch

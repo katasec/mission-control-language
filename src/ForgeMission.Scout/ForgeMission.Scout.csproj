@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Scout</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- AOT-clean by construction (will be referenced by the AOT `forge` CLI eventually):
+         no reflection, no bare JsonSerializerOptions — STJ source-gen only (see Grok/GrokWire.cs). -->
+  </PropertyGroup>
+
+</Project>

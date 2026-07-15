@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading.Channels;
 using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Runtime;
 using ForgeMission.Parser;
@@ -16,7 +18,74 @@ namespace ForgeMission.Runner;
 /// </summary>
 internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<MissionRunHandler> logger)
 {
-    public async Task<RunResponse?> RunAsync(RunRequest request, CancellationToken ct)
+    /// <summary>Emit a keep-alive if no step-progress event has flowed for this long, so the long
+    /// kind:search step (~40s of server-side silence) can't be reaped by an idle timeout (41.7).</summary>
+    private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(15);
+
+    /// <summary>Buffered run (Phase 39.1) — the non-interactive contract behind <c>POST /run</c>.
+    /// Runs to completion, then returns result + trace + cost. Unchanged for the CLI.</summary>
+    public Task<RunResponse?> RunAsync(RunRequest request, CancellationToken ct)
+        => ExecuteAsync(request, onProgress: null, ct);
+
+    /// <summary>
+    /// Streaming run (Phase 41.7) — the interactive contract behind <c>POST /run/stream</c>. Yields
+    /// <c>progress</c> events as steps begin and <c>heartbeat</c> events across quiet gaps, then a
+    /// terminal <c>result</c> (or <c>error</c>). The run executes on a background task writing into a
+    /// channel; this reader forwards events and injects a heartbeat whenever the channel goes quiet.
+    /// </summary>
+    public async IAsyncEnumerable<RunStreamEvent> RunStreamAsync(
+        RunRequest request, [EnumeratorCancellation] CancellationToken ct)
+    {
+        var channel = Channel.CreateUnbounded<RunStreamEvent>(
+            new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+
+        _ = Task.Run(() => DrainRunIntoChannel(request, channel.Writer, ct), ct);
+
+        var reader = channel.Reader;
+        while (true)
+        {
+            var ready  = reader.WaitToReadAsync(ct).AsTask();
+            var winner = await Task.WhenAny(ready, Task.Delay(HeartbeatInterval, ct)).ConfigureAwait(false);
+            if (winner != ready)
+            {
+                yield return new RunStreamEvent("heartbeat");   // quiet gap → keep the connection warm
+                continue;
+            }
+            if (!await ready.ConfigureAwait(false))
+                break;                                          // channel completed and drained
+            while (reader.TryRead(out var evt))
+                yield return evt;
+        }
+    }
+
+    // Run the mission, mapping each step-start to a progress event and the outcome to a terminal event.
+    // Any failure becomes a single `error` event so the reader always terminates cleanly.
+    private async Task DrainRunIntoChannel(
+        RunRequest request, ChannelWriter<RunStreamEvent> writer, CancellationToken ct)
+    {
+        try
+        {
+            var response = await ExecuteAsync(
+                request,
+                onProgress: p => writer.TryWrite(new RunStreamEvent("progress", Progress: p)),
+                ct);
+
+            writer.TryWrite(response is null
+                ? new RunStreamEvent("error", Error: $"Unknown mission '{request.MissionRef}'.")
+                : new RunStreamEvent("result", Result: response));
+        }
+        catch (Exception ex)
+        {
+            writer.TryWrite(new RunStreamEvent("error", Error: ex.Message));
+        }
+        finally
+        {
+            writer.Complete();
+        }
+    }
+
+    private async Task<RunResponse?> ExecuteAsync(
+        RunRequest request, Action<RunProgress>? onProgress, CancellationToken ct)
     {
         if (!registry.TryGet(request.MissionRef, out var mission))
         {
@@ -71,10 +140,18 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
             {
                 if (envelope.Status == "fail") attempt++;
                 trace.Add(new RunTraceStep(expertName, envelope.Status, envelope.Text, envelope.Reason, attempt));
-            });
+            },
+            // Step-start → transient progress (41.7). No-op for the buffered path (onProgress null).
+            OnStepStart: (expertName, kind) => onProgress?.Invoke(new RunProgress(expertName, kind)),
+            // Sub-search narration from the kind:search step (41.7 Task 2) — Grok's per-query loop.
+            OnSearchProgress: sp => onProgress?.Invoke(
+                new RunProgress("WebSearch", sp.Kind, sp.Detail, sp.ResultCount)));
 
+        // kind:search backend (Phase 41.2) — implicitly Grok, built from the runner's XAI_API_KEY operator
+        // env var (null if unset ⇒ missions without kind:search are unaffected). Same seam as the CLI.
         var stopwatch = Stopwatch.StartNew();
-        var result    = await new PipelineRunner(runner).RunAsync(mission.Ast, mission.Experts, options, ct);
+        var result    = await new PipelineRunner(runner, webSearch: ProviderClientBuilder.BuildWebSearch())
+            .RunAsync(mission.Ast, mission.Experts, options, ct);
         stopwatch.Stop();
 
         var verified = result.Status == MissionStatus.Pass;

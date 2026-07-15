@@ -4,6 +4,7 @@ using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Experts;
 using ForgeMission.Core.Manifest;
 using ForgeMission.Parser;
+using Scout;
 
 namespace ForgeMission.Core.Runtime;
 
@@ -11,16 +12,24 @@ public class PipelineRunner
 {
     private readonly IReadOnlyDictionary<string, IExpertRunner> _runners;
     private readonly ExecutionConfig _execution;
+    // Optional live-retrieval backend for kind:search experts (Scout). Null ⇒ kind:search fails clearly.
+    // Injected here (not on ExecutionConfig, a TOML POCO) because it is a runtime service like _runners.
+    private readonly IWebSearch? _webSearch;
 
-    public PipelineRunner(IReadOnlyDictionary<string, IExpertRunner> runners, ExecutionConfig? execution = null)
+    public PipelineRunner(
+        IReadOnlyDictionary<string, IExpertRunner> runners,
+        ExecutionConfig? execution = null,
+        IWebSearch? webSearch = null)
     {
         _runners   = runners;
         _execution = execution ?? new ExecutionConfig();
+        _webSearch = webSearch;
     }
 
     // Convenience: single default runner — keeps existing tests and callers unchanged.
-    public PipelineRunner(IExpertRunner defaultRunner)
-        : this(new Dictionary<string, IExpertRunner>(StringComparer.Ordinal) { ["default"] = defaultRunner }) { }
+    public PipelineRunner(IExpertRunner defaultRunner, IWebSearch? webSearch = null)
+        : this(new Dictionary<string, IExpertRunner>(StringComparer.Ordinal) { ["default"] = defaultRunner },
+               webSearch: webSearch) { }
 
     private IExpertRunner ResolveRunner(string? profileName)
     {
@@ -216,8 +225,15 @@ public class PipelineRunner
             "onnx"         => new OnnxExpertRunner(),
             "json_extract" => new JsonExtractExpertRunner(),
             "exec"         => new ExecExpertRunner(_execution.DefaultTimeout),
+            "search"       => new SearchExpertRunner(_webSearch
+                                  ?? throw new InvalidOperationException(
+                                      "kind: search requires a configured IWebSearch (Scout). " +
+                                      "Pass one to the PipelineRunner constructor."),
+                                  options.OnSearchProgress),
             _              => ResolveRunner(step.Using)
         };
+
+        options.OnStepStart?.Invoke(step.ExpertName, expert.Kind);
 
         if (options.StepWriter is { } sw)
             await sw.WriteLineAsync($"→ {step.ExpertName}...");
@@ -313,6 +329,11 @@ public class PipelineRunner
             "onnx"         => new OnnxExpertRunner(),
             "json_extract" => new JsonExtractExpertRunner(),
             "exec"         => new ExecExpertRunner(_execution.DefaultTimeout),
+            "search"       => new SearchExpertRunner(_webSearch
+                                  ?? throw new InvalidOperationException(
+                                      "kind: search requires a configured IWebSearch (Scout). " +
+                                      "Pass one to the PipelineRunner constructor."),
+                                  options.OnSearchProgress),
             _              => ResolveRunner(step.Using)
         };
 

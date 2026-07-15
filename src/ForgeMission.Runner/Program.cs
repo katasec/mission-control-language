@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ForgeMission.Runner;
 using ForgeMission.Runner.Contracts;
 using OpenTelemetry.Resources;
@@ -70,6 +71,24 @@ app.MapPost("/run", async (RunRequest request, MissionRunHandler handler, Cancel
     catch (ArgumentException ex) // e.g. an unknown run policy — a malformed caller request
     {
         return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+// The interactive hot path (41.7): stream progress → result as NDJSON so the room shows live
+// progress and continuous bytes defeat idle timeouts. Each line is one RunStreamEvent, flushed
+// immediately. HTTP 200 is committed up front; a run-level failure arrives as a terminal `error`
+// event rather than a status code (the stream has already begun).
+app.MapPost("/run/stream", async (RunRequest request, MissionRunHandler handler, HttpContext ctx) =>
+{
+    ctx.Response.ContentType = "application/x-ndjson";
+    var newline = "\n"u8.ToArray();
+
+    await foreach (var evt in handler.RunStreamAsync(request, ctx.RequestAborted))
+    {
+        var json = JsonSerializer.SerializeToUtf8Bytes(evt, RunContractsContext.Default.RunStreamEvent);
+        await ctx.Response.Body.WriteAsync(json, ctx.RequestAborted);
+        await ctx.Response.Body.WriteAsync(newline, ctx.RequestAborted);
+        await ctx.Response.Body.FlushAsync(ctx.RequestAborted);   // push each event as it happens
     }
 });
 

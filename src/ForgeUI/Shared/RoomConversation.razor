@@ -117,7 +117,10 @@
 
             @if (_thinkingHandle is not null)
             {
-                <div class="agent-thinking">@_thinkingHandle is thinking…</div>
+                <div class="agent-thinking">
+                    <span>@_thinkingHandle @(_progressLabel ?? "is thinking")</span>
+                    <span class="thinking-dots"><span></span><span></span><span></span></span>
+                </div>
             }
         </div>
 
@@ -287,6 +290,9 @@
     private string _input = "";
     private bool _denied;
     private string? _thinkingHandle;
+    // Transient step-progress label on the pending bubble (41.7) — e.g. "Searching the web…". Never
+    // persisted; cleared when the answer (or failure) arrives.
+    private string? _progressLabel;
     // Ephemeral /agents directory (38.5 task 9) — a personal, client-side lookup; never posted.
     private IReadOnlyList<AgentDescriptor>? _agentsListing;
     private string? _inviteUrl;
@@ -385,13 +391,22 @@
             case MessagePosted posted:
                 _messages.Add(posted.Message);
                 if (posted.Message.SenderKind == "agent")
+                {
                     _thinkingHandle = null;
+                    _progressLabel = null;
+                }
                 break;
             case AgentThinking thinking:
                 _thinkingHandle = thinking.Handle;
+                _progressLabel = null;   // reset to the default "is thinking…" until progress flows
+                break;
+            case AgentProgress progress:
+                _thinkingHandle = progress.Handle;
+                _progressLabel = progress.Label;
                 break;
             case AgentFailed failed:
                 _thinkingHandle = null;
+                _progressLabel = null;
                 _messages.Add(new RoomMessageDto(
                     Guid.NewGuid(), RoomId, Guid.Empty, failed.Handle, "agent",
                     $"{failed.Handle} could not complete this request.", null, DateTimeOffset.UtcNow));

@@ -196,7 +196,7 @@ static Command BuildRunCommand()
         MissionResult missionResult;
         try
         {
-            missionResult = await new PipelineRunner(runners, manifest?.Execution).RunAsync(ast, expertDefs, options);
+            missionResult = await new PipelineRunner(runners, manifest?.Execution, ProviderClientBuilder.BuildWebSearch()).RunAsync(ast, expertDefs, options);
         }
         catch (InvalidOperationException ex)
         {
@@ -1174,7 +1174,7 @@ static Command BuildMcpCommand()
                 var runOptions = new PipelineRunOptions(toolName, callVars);
 
                 MissionResult missionResult;
-                try { missionResult = await new PipelineRunner(callRunners, manifest?.Execution).RunAsync(ast, expertDefs, runOptions); }
+                try { missionResult = await new PipelineRunner(callRunners, manifest?.Execution, ProviderClientBuilder.BuildWebSearch()).RunAsync(ast, expertDefs, runOptions); }
                 catch (Exception ex) { return new CallToolResult { Content = [new McpTextContent { Text = ex.Message }], IsError = true }; }
 
                 if (missionResult.Status == MissionStatus.Fail)
