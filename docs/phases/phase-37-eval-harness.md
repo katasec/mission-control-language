@@ -135,6 +135,45 @@ judges are a small addition: an expert whose expert.md rubric compares two
 
 ---
 
+## Cross-model eval mode (the transpose — proves the "standardized floor across models" claim)
+
+The A/B modes above hold the *model* fixed and vary the *mission* (mission-A vs mission-B). The **transpose**
+holds the *mission* fixed and varies the **subject model** — and it is what proves
+[Phase 42](phase-42-forge-cloud.md)'s promise of *"a standardized quality floor across models, including
+local."* It is a small extension of the same machinery, **not new plumbing**: same `EvalRunner` core, same
+judge, same `report()` — you just vary the **provider profile** per run (`forge.toml`) instead of varying
+the mission binding.
+
+```
+eval FloorAcrossModels(product in PitchIdeas) = {
+    subject:  RefinedPitch(product)         // ONE mission, run per model
+    models:   [gpt-4o, claude, llama-8b, local-mistral]   // subject-model sweep
+    baseline: raw(product)                  // the naked model, same input (the floor reference)
+    judge:    QualityJudge                   // pointwise rubric — scores each cell
+}
+report(FloorAcrossModels)
+```
+
+The report emits the two numbers that *are* the promise: **floor-lift** per model (wrapped − raw) and
+**variance-collapse** across models (σ of raw scores vs σ of mission-wrapped scores):
+
+```
+## FloorAcrossModels — RefinedPitch, 20 inputs, 4 subject models
+              raw    wrapped    Δ floor-lift
+  gpt-4o      6.9     8.4       +1.5
+  claude      7.1     8.5       +1.4
+  llama-8b    3.8     7.9       +4.1     ← largest lift where the model is weakest
+  local       4.2     8.0       +3.8
+  variance across models:  raw σ 1.6  →  wrapped σ 0.3      ← the standardized floor
+```
+
+Load-bearing details: the **judge model must be pinned and held constant** across the sweep (else you're
+measuring the judge, not the subjects — see design Q3); a model that **fails to execute the mission's steps**
+(invalid classify JSON, incoherent synthesis) reports as a floor *miss*, not a crash (per-row failure
+isolation, Spoke 3) — which is the useful signal "this model is below the minimum-viable bar for this
+mission." **v1 can ship this as a `--models` flag on the bootstrap CLI runner (Spoke 6)** before the
+in-language `models:` surface lands.
+
 ## Aggregation & report
 
 The harness collects per-input verdicts and produces a summary. Minimum viable
@@ -215,6 +254,7 @@ Write the result into `docs/findings.md` (currently a promissory note referenced
 | 7 | **Cost visibility** | An eval is N × (baseline + candidate + judge×2) LLM calls — easily hundreds. `report()` should surface token/call counts so an author knows the price before running a 200-row dataset. |
 | 8 | **CI gating** | Should `forge eval` return a non-zero exit / threshold assertion (`--min-win-rate 0.7`) so evals can gate a release, guarding against a mission-quality regression? Design after the construct stabilises. |
 | 9 | **Judge rubric drift** | If the judge's expert.md rubric changes, historical scores are no longer comparable. Version the judge (reuse Phase 11 expert versioning) and stamp it into `results.json`. |
+| 10 | **Cross-model eval surface** | The transpose (same mission, sweep subject models — see "Cross-model eval mode") that proves [Phase 42](phase-42-forge-cloud.md)'s floor-across-models claim. Ship as a `--models` flag on the bootstrap CLI (Spoke 6) first; lift to an in-language `models: [...]` clause on `eval` later. Judge model pinned + constant across the sweep (ties to Q3). Report emits floor-lift Δ per model + variance-collapse σ. |
 
 ---
 

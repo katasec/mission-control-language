@@ -100,6 +100,41 @@ structural** — the parts a pasted system prompt genuinely *cannot* replicate:
 hosted is barely better than a system prompt — so we lead with the missions where the delta is *binary*
 (live retrieval), and we never oversell a thin mission as "smarter."
 
+### 2a. A standardized quality *floor* across models — including local
+
+The deeper, more defensible promise than "smarter than a naked SOTA model": because the mission sits
+**in-path** and its structural steps (grounding, rule/exec gates, verification, judge loops, reasoning
+scaffold) are **model-independent**, the mission delivers a **consistent quality *contract* whichever model
+generates the tokens.** It **raises the floor and collapses the variance** across models.
+
+- **Standardize the floor + the behavioral contract, not the ceiling.** The contract — *grounded · cited ·
+  gated · verified · structured* — holds on any model. What it **cannot** equalize is raw capability: a
+  mission adds *structure*, not *IQ*, so peak quality still tracks the base model. Promise the **floor and
+  the guarantees**, never "identical quality."
+- **The lift is *largest* where the model is weakest.** A frontier model already decomposes and hedges
+  implicitly; a small/local model doesn't (it hallucinates more, skips steps), so the same mission catches
+  more and lifts it further. **Marginal value ∝ 1 / base-model-strength** — which is exactly why this
+  matters most for **cheap / local / private** models: you get a *guaranteed base-performance floor on a
+  model you control.*
+- **What that unlocks:** privacy/sovereignty (run the mission container + a local model — e.g. `ollama`,
+  already a supported provider — fully on-prem or offline, data never leaves), cost (~free local inference
+  made trustworthy), and **model-portability** — swap or downshift the engine (cost, availability, outage,
+  next SOTA drop) *without changing the contract the user is promised.* The mission is the durable
+  interface; models commoditize underneath it. **Everyone can call a frontier model — guaranteeing a floor
+  on the model you *own* is unique to the in-path design.**
+- **The honest boundary — minimum-viable-model.** The model must be competent enough to *execute the
+  mission's steps* (valid classify JSON, coherent synthesis, tool-use if agentic). Below that, the structure
+  breaks and there's nothing to lift. **Offline** also changes the grounding *source*: "live web retrieval"
+  needs internet, so fully-offline grounding is retrieval over your *own corpus* (RAG), not the open web —
+  still model-independent grounding, different source.
+- **This is a *measurable* promise, not marketing — and Phase 37 is the instrument.** The
+  [Eval Harness](phase-37-eval-harness.md) proves the floor with a number: run the **same mission** over a
+  dataset across **different subject models** (its cross-model eval mode) and show the **floor rises** and
+  the **variance collapses** vs the raw models. **Phase 42 makes the claim; Phase 37 prints the number.**
+
+Only the **base-URL door carries this** (in-path, mandatory) — the MCP/opt-in door cannot, for the same
+reason it can't carry the anti-hallucination guarantee (§4).
+
 ## 3. The architecture — three doors, one room
 
 One mission runtime; several **wire adapters** in front of it. Each adapter is a *door* into the same
