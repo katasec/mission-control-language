@@ -10,175 +10,8 @@
 | **Spend hole (Ph. 39)** | Known + accepted at F&F scale; Cloudflare rate limit = 42.6 launch gate ([42.6 task 3](phases/phase-42.6-hosted-endpoint-ttfa.md)). |
 | **Standing check** | Bottleneck = **evidence + clients**, not design — [Phase 37 eval harness](phases/phase-37-eval-harness.md) stays the highest-value alternative. |
 
-Depth lives in the phase hubs/spokes. Below is the running log (detail, not priority order).
-
-## Running log
-
-> **[Phase 41 — Live Retrieval (Scout)](phases/phase-41-live-retrieval-scout.md) — a generic
-> capability to reach the live internet and return a provider-neutral, source-attributed shape MCL reasons
-> over** (so a conversation isn't frozen at the model's training cutoff — the "no real-time data" wall in
-> Forge Rooms). Design + POC locked 2026-07-12 after a verify-don't-hallucinate pass over the xAI/OpenAI
-> docs. Key decisions: `IWebSearch` = the single swap point (provider-neutral request/result, no backend
-> types leak); one result shape `{Provider, string? Answer, SourceRef[]}` spans **answer-engines** (Grok/
-> OpenAI — synthesize by design) *and* **raw APIs** (Tavily/Exa — raw hits); **source attribution over
-> source-selection** (tag `Provider`, future hosted per-domain `ImpartialityRating`, don't chase "best
-> source"); **retrieval ≠ reasoning** (raw → *MCL* synthesizes; open web prefers raw, X walled-garden
-> accepts Grok's synthesis because access is the value); AOT via direct `HttpClient` + STJ source-gen (no
-> OpenAI SDK for server-side tools); model `grok-4.5` (no API "auto"). **[41.1](phases/phase-41.1-grok-web-search.md)
-> ✅ built+verified** (`ForgeMission.Scout` lib + `GrokWebSearch`, live test green). **[41.2](phases/phase-41.2-search-expert-kind.md)
-> ✅ works via `forge run`** — native `kind: search` primitive + pure-MCL classify→search→answer mission
-> (`missions/websearch`), verified live both branches, stub e2e + full suite green. Settled design: the
-> context is an **untyped bag; consumers deserialize** (OWIN `AppFunc` model) — no typed output contract, no
-> language change. **✅ LIVE: `@grok` is search-fronted in Rooms** — deployed `forge-runner:0.5.0`
-> (rev `--0000008`, tag `forge-runner-v0.5.0`) to `ca-forge-runner-dev`; prod logs confirm the search-fronted
-> Grok mission (`forge-mission-grok@sha256:be0d12b2`) loaded. No forge-ui redeploy (handle binding unchanged,
-> no false-green). **[41.7 — streaming search progress + timeout hardening](phases/phase-41.7-streaming-progress.md)
-> ✅ step-level streaming spine BUILT + DEPLOYED LIVE** (2026-07-12): engine `OnStepStart` hook → runner
-> NDJSON `POST /run/stream` (Channel + 15s heartbeat, buffered `/run` kept for the CLI) → `MissionRunnerClient`
-> consumes with `ResponseHeadersRead` → `RoomAgentInvoker` relays over SignalR → transient "Searching the web…"
-> chip on the pending bubble. Reuse designed in at the `IWebSearch` seam (`WebSearchProgress` +
-> `SearchStreamAsync` default method) so OpenAI/Claude progress rides the same rails. **ALL TASKS DONE +
-> DEPLOYED — `forge-runner:0.7.0` (rev `--0000010`) + `forge-ui:0.4.2` (rev `--0000018`).** Step-level spine
-> live-verified (`@grok` World-Cup query → chip → grounded answer, 71s, debited); chip animation added (0.4.1);
-> **Task 2 (Grok SSE sub-search) DONE + live-verified** — narrates *inside* the ~71s search ("Searching: …·
-> N results", "Reading fifa.com"). Seam corrected: progress-aware `SearchAsync(request, IProgress<…>, ct)`
-> (one call, result + sub-search reports; never re-runs the search), replacing the two-search
-> `SearchStreamAsync`. Verified: fixture parse of real captured SSE, live streaming integration (22s),
-> suite 222 pass / 0 warnings. **NEXT: Task 7** (roll the search-front template to
-> `openai`/`claude`/`assistant`). All on branch
-> `phase-41.1-grok-web-search` (unmerged; deployed from tag). **New code follows
-> [Progressive Disclosure](design/code-style.md).** OpenAI/Tavily/
-> Exa/`x_search` remain additive later (41.3–41.5).
->
-> **NEXT FRONTIER (designed 2026-07-15): [Phase 42 — Forge Cloud](phases/phase-42-forge-cloud.md) — *access
-> to the tech*.** **The phase is about how a consumer actually gets MCL into their hands and workflow** —
-> every piece (doors, `forge claude`, container, platform key, MCP) is an **access decision**; hosting/metering
-> are *means* (lowest-setup reach; affordable free access), never the point. **Access wins ties.** It is
-> [Phase 38](phases/phase-38-forge-rooms.md)'s *"spectacular reasoning no one can reach = reasoning that
-> doesn't exist"* applied one layer out (38 = access via chat rooms; 42 = access via **the tools people
-> already use**), and the missing half of the Terraform parallel: HCL made *authoring* accessible, the
-> registry made *consumption* accessible — MCL has the language, 42 is the consumption half. Expose an MCL
-> mission (classify→live-search→answer, guardrails, judge loops) over the wire protocols coding agents already
-> speak, so Claude Code / Codex point at it with a one-line base-URL change and get answers a naked SOTA model
-> **structurally can't** give — no SDK, no migration, no framework adoption. Local
-> + OSS first (the quality guarantee, proven vs the real `claude` CLI), then the *same container* hosted on
-> Azure with a **platform key + free credits** → TTF-awesome in 2–3 commands, **no provider account**
-> (`forge login && forge claude @websearch`). **Locked model:** the mission is *always* the responder AND
-> enriches — the LLM is a **tool-capable terminal expert inside the mission** (no responder-vs-agentic fork);
-> **three doors, one room** (`/v1/messages` Claude Code · `/v1/responses` Codex · MCP desktop); **container is
-> the unit, `local ≡ cloud`** (same image, Docker vs ACA); **quality contract per door** — base-URL enforces
-> the anti-hallucination guarantee (CLI/IDE, build first), MCP is opt-in best-effort (desktop, build last).
-> **The one hard seam = re-entrancy** (one user turn = N+1 calls; enrich once on user-text, resume the
-> terminal expert on `tool_result`) — build it right in ①, cloud inherits it. **~80% of the hosting is
-> already live** (Phase 39 runner+meter+ledger+credits+OCI catalog; `Katasec.AnthropicServer` live-verified
-> vs real `claude`; `OaiServer` already serves `/v1/responses`; `forge mcp` stdio shipped). Build order
-> (resequenced 2026-07-16 — launcher AFTER tools, so the user-facing door never ships silent false-successes):
-> [42.1 Anthropic serve](phases/phase-42.1-anthropic-serve-responder.md) → [42.3 tool-capable responder (the seam)](phases/phase-42.3-tool-capable-enriching-responder.md)
-> → [42.2 `forge claude`](phases/phase-42.2-forge-claude-launcher.md) →
-> [42.4 one `/v1` image](phases/phase-42.4-container-convergence.md) → [42.5 platform keys](phases/phase-42.5-platform-identity-keys.md)
-> → [42.6 hosted + TTF-awesome](phases/phase-42.6-hosted-endpoint-ttfa.md) → [42.7 Codex door](phases/phase-42.7-codex-responses-door.md)
-> → [42.8 MCP desktop (last)](phases/phase-42.8-mcp-desktop-door.md).
->
-> **Status: BUILD-READY — design review complete 2026-07-16** (externally reviewed 2026-07-15, one real
-> defect found + fixed). The 2026-07-15 review caught that
-> 42.3's re-entrancy gate was **binary** ("user text ⇒ full mission; `tool_result` ⇒ terminal expert only"),
-> which would have shipped **`Verify` as dead code in every agentic flow** — the final answer emerges on a
-> *continuation*, so the post-agent segment never ran. Now a **three-segment model** (pre-agent enrich once ·
-> agent every call · **post-agent iff the agent terminates without a tool call**, re-entrant for repair loops),
-> with the pre-agent output carried by a **content-addressed cache** (key = hash of the conversation prefix)
-> behind the injectable `ISessionStore` seam — replacing the rejected "stash enrichment in the conversation"
-> idea (no hidden round-trip channel exists; anywhere it would work is user-visible). Also folded in: 42.1
-> keeps a **structured** conversation in the context bag (never a flattened transcript — untyped ≠
-> stringly-typed, and 42.3 needs the tool history anyway); 42.5 key = `fg_live_<id>_<secret>` + keyed hash,
-> opaque-over-JWT; 42.6 routing = **key→principal, path→mission** (`/m/<mission>/v1/...`); 42.4 claims "same
-> mission-execution + wire implementation", not "identical stacks".
->
-> **Spend hole (Phase 39): known + ACCEPTED at F&F scale (decided 2026-07-16).** `balance-check → run →
-> debit` is not a strict ceiling (concurrent requests pass the check inside the ~60s debit window), but the
-> live population is trusted F&F and stop-at-zero bounds accidents to cents — **no hotfix**. Trigger
-> ladder recorded in [42.6](phases/phase-42.6-hosted-endpoint-ttfa.md) task 3: Cloudflare per-IP rate limit
-> = **42.6 launch requirement** (strangers + public endpoint change the threat model); in-app cost/
-> concurrency caps and transactional reservation pre-recorded with triggers. Sybil note in
-> [42.5](phases/phase-42.5-platform-identity-keys.md).
->
-> **✅ DESIGN REVIEW COMPLETE (2026-07-16) — all 5 open questions decided + recorded in the spokes; Phase 42
-> is BUILD-READY.** Centerpiece: a **live wire capture** against the real `claude` CLI (2.1.195) replaced
-> speculation with observation and reshaped the design. Decisions (details in the spokes):
-> 1. **Idempotency (42.3 §4):** build the `P` enrichment cache; **skip `F` replay** — ship a
->    `duplicate_continuation` counter, build the pre-recorded replay design only on evidence.
-> 2. **Client round-trip (42.3):** probed live. Findings: **mission/aux request taxonomy** + middleware
->    pipeline + typed dispatch (§0 — the CLI's title-gen call would have misrouted into a billed mission);
->    **essentials tool allowlist** Read/Edit/Write/Bash (§2 — 57 declared tools incl. the user's Gmail MCP);
->    **goal = last text block** (42.1 — 23.8KB scaffolding vs 106-char prompt); canonicalization proven
->    (`cc_version` varies per call); **no-false-green test rules** (planted content, two test roles);
->    capture harness + sanitized fixtures = 42.3 task 0.
-> 3. **Spend (42.6 task 3):** trigger ladder — freeze-at-zero (live, adequate for F&F) → **Cloudflare
->    per-IP rate limit = 42.6 launch requirement** → in-app cost/concurrency caps → reservation ledger
->    (pre-recorded, paying-users trigger). No hotfix now.
-> 4. **Naming (42.5):** `forge login` = platform sign-in; registry → `forge registry login` (+shim).
-> 5. **Runner ↔ image (42.4):** both — runner IS the image AND `ForgeServe` is a shared, **AOT-clean** core
->    lib (the CLI is AOT; the runner is JIT).
-> **Also resequenced: 42.1 → 42.3 → 42.2** — the launcher ships only when tools round-trip (a tool-less
-> server fails as a *silent false-success*: probed `exit 0` / `subtype: "success"` with the task not done).
->
-> **NEXT STEP: build [42.1](phases/phase-42.1-anthropic-serve-responder.md)** (wire + structured
-> conversation + goal extraction), then 42.3 (the seam), then 42.2. Every spoke now carries its decisions
-> inline — an agent can execute from the docs alone.
->
-> **Framing (locked, [why.md](why.md)):** MCL is a **reliability framework, not an agent framework** — the
-> objective is not "make the model smarter", it's **"make intelligent systems more predictable."** Reliability
-> was never a component property; it's a *system* property — which is why better models don't obsolete this
-> layer (a better model is a better *component*). The question is not "which model?" but **"which reasoning
-> architecture?"** — OCI distributes artifacts, Terraform infra definitions, K8s desired state, **MCL
-> reasoning architectures**.
->
-> **Standing priority check (2026-07-15):** the bottleneck is **not** design — it's **evidence and clients**.
-> Repo is **31 days old** (first commit 2026-06-14) with 42 phases: build velocity is outrunning validation
-> velocity. The highest-value next work is **one number** ([Phase 37](phases/phase-37-eval-harness.md) over the
-> existing A/B pairs — it's also the CI gate, the sales asset, *and* the drift detector for a non-deterministic
-> substrate) and **one real client**. A perfectly-specced 42.3 with zero evidence is still zero evidence.
->
-> **Runtime track (still queued): [Phase 39.5](phases/phase-39-metered-runtime-marketplace.md)
-> (custom missions & experts — blob store, per-user registry, save-as-agent, trust/cosign) or
-> [39.6](phases/phase-39-metered-runtime-marketplace.md) (Stripe/tiers, priced off 39.2 cost data).**
-> **39.5 was design-brainstormed 2026-07-12** (author/consumer lens; chat-native authoring, NOT a coding IDE;
-> the language's smallness = the trust boundary = the editable surface). **Recommended lean-first slice:
-> [39.5a — Library try-bench](phases/phase-39-metered-runtime-marketplace.md#395--design-brainstorm-2026-07-12-not-yet-built)**
-> — give the read-only Library page a verb ("Try" on built-ins, then "Add from OCI" paste that turns on the
-> deferred policy gate), no blob/registry/persistence. Then lock the full-39.5 decisions (gift target,
-> frozen-vs-living, personal-vs-global handle, default-verifier) before the authoring build.
->
-> **[Phase 40 — Forge UI App Shell](phases/phase-40-forge-ui-shell.md) is ✅ COMPLETE + LIVE (2026-07-12).**
-> The app is now a multi-surface, mobile-first, **installable PWA**. All four spokes shipped:
-> [40.1 foundation](phases/phase-40.1-design-system-foundation.md) ✅ →
-> [40.2 nav shell](phases/phase-40.2-app-navigation-shell.md) ✅ →
-> [40.3 collapse](phases/phase-40.3-responsive-collapse.md) ✅ →
-> [40.4 PWA](phases/phase-40.4-pwa-shell.md) ✅. Deployed as image **`forge-ui:0.3.4`** →
-> ACA revision **`ca-forge-ui-dev--0000015`** on **`https://forge.katasec.com`**; manifest/SW/icons serve
-> with correct MIME over HTTPS, custom domain intact, and the **user installed it and confirmed it works**.
-> Persistent nav rail ↔ bottom tab bar (Rooms · Library · Account); Rooms stays default landing.
-> **Absorbed [Phase 38.8](phases/phase-38.8-mobile-access.md)** (responsive → 40.3, PWA → 40.4).
-> **40.1** shipped the mobile-correct CSS foundation (`100dvh`, 16px inputs, reduced-motion, safe-area,
-> §0 breakpoints + mobile-first convention). **40.2** shipped the net-new nav layer: `MainLayout` →
-> `NavShell` (left rail ≥640px ↔ bottom tab bar <640px; Rooms · Library · Account) + `.app-content`;
-> `BareLayout` for `/login`; new `/library` + `/account` surfaces; account control on the rail foot /
-> Account tab. **40.3** collapsed the Rooms two-pane into a mobile master/detail (route-driven
-> `at-list`/`at-detail`, back control, immersive conversation via cascaded `ShellChrome` hiding the tab
-> bar < 720px); desktop two-pane unregressed. All verified in-browser (375/716/1024, no horizontal
-> overflow). **40.4 next** makes the app an installable PWA (manifest + token-derived icons +
-> hand-written network-only service worker) — the last Phase 40 spoke.
->
-> **Still queued (runtime track): [Phase 39 — Metered Runtime & Marketplace](phases/phase-39-metered-runtime-marketplace.md).**
-> [Phase 38 — Forge Rooms](phases/phase-38-forge-rooms.md) **shipped** its accessible + verified
-> surface — agents as `@`-addressable members, verified-vs-raw trust made visible, live on Azure.
-> That goal ("spectacular reasoning no one can reach = reasoning that doesn't exist") is **met**. Its
-> two forward-leaning pieces fold into Phase 39: **save-as-agent → 39.5**, **acquisition → post-39**.
-> Phase 39 turns the in-process demo into a **metered, multi-tenant runtime + mission marketplace**.
-> **Groups A + B are DONE + live on Azure (2026-07-09).** 39.1 (containerized runner) + 39.2
-> (cost-meter/ledger — F&F shippable) + 39.3 (OCI artifact schema) + 39.4 (built-ins pulled from
-> `ghcr.io/katasec` by pinned digest). **Next runtime step: 39.5 (custom missions & experts —
-> blob store, per-user registry, save-as-agent, trust enforcement, cosign).** Then 39.6 (Stripe/tiers,
-> priced from 39.2 cost data). See the [Phase 39 spoke](phases/phase-39-metered-runtime-marketplace.md#status--handoff-updated-2026-07-09) for the current status table + decisions to lock before 39.5.
+This file is a lookup table only — status + pointers. All depth (design, decisions, evidence, tasks)
+lives in the phase hubs/spokes under [phases/](phases/).
 
 ## Phases
 
@@ -246,11 +79,11 @@ Depth lives in the phase hubs/spokes. Below is the running log (detail, not prio
 | &nbsp;&nbsp;↳ [Phase 40.2 — App Navigation Shell](phases/phase-40.2-app-navigation-shell.md) | The net-new nav layer: inline-SVG icon set; `NavShell.razor` (bottom tab bar < 720px ↔ left rail ≥ 720px, `NavLink` for free active-state + `aria-current`, skip-link); rewrite `MainLayout` from thin `@Body` to shell + content region (`BareLayout` for `/login`); **relocate the account control** to the rail foot / Account tab (no longer duplicated in the rooms sidebar); new **`/library`** (read-only agent directory from `AgentRegistry.List()` + identity seals — real content today) and **`/account`** (identity from `CurrentUser` + prepaid balance from `BillingService.GetBalanceMicroUsdAsync`, sign-out; seams left for 39.5 "my agents" / 39.6 "top up"). Rewrites design-system §8 + surface map. **Done when:** nav is present on every authed surface at all widths, active surface marked, `/library` + `/account` show real data. Depends: 40.1. | Design |
 | &nbsp;&nbsp;↳ [Phase 40.3 — Responsive Surface Collapse](phases/phase-40.3-responsive-collapse.md) | The **one** existing surface that reshapes (contained regression risk): collapse Rooms' two-pane into **master/detail** on mobile driven by the existing `/rooms` vs `/rooms/{id}` route (list *or* conversation, not both), a **back-to-rooms** control in the conversation header (mobile only), and an **immersive conversation** (bottom tab bar hidden on the detail view — resolves the "two bottom bars" conflict, WhatsApp-style) with composer safe-area inset. Re-checks modals + mention menu at 375px. Verified at 375/768/1024 + dark; desktop two-pane unregressed. **Absorbs 38.8 Task 1.** **Done when:** comfortable at 375px, one-tap list⇄conversation, no horizontal overflow. Depends: 40.2. | Design |
 | &nbsp;&nbsp;↳ [Phase 40.4 — PWA Shell](phases/phase-40.4-pwa-shell.md) | Installable (**Tier-1, online-only** — Blazor Server is online-by-design, a fit not a compromise): `manifest.webmanifest` + theme/background from `forge.css` token hexes; 192/512/maskable icons; iOS meta + `apple-touch-icon`; a **hand-written deliberate service worker** (~30 lines, no Workbox/npm) that is **network-only for `/_blazor` + `/auth/*`** (the carve-out a naïve SW breaks) and cache-first for the static shell only; iOS "Add to Home Screen" hint (+ optional Android/desktop `beforeinstallprompt`). Verified: standalone launch + a live `@mention` and sign-out/sign-in **inside the installed window** (circuit + OIDC intact). **Absorbs 38.8 Task 2.** **Done when:** installable on Android/desktop + iOS, launches standalone, circuit + login still work installed. Depends: 40.3. | **✅ DONE + LIVE** (`forge-ui:0.3.4`, install user-verified) |
-| [Phase 41 — Live Retrieval (Scout)](phases/phase-41-live-retrieval-scout.md) | **Design + POC (2026-07-12).** A generic capability to **reach the live internet and return a provider-neutral, source-attributed shape MCL reasons over** — breaking the "no real-time data" wall bare LLM handles hit in Forge Rooms. New library **`ForgeMission.Scout`** built against a single swap point **`IWebSearch`** (callers never touch a backend type). One result shape `{Provider, string? Answer, SourceRef[]}` spans both families verified live: **answer-engines** (Grok/OpenAI — synthesize by design; Grok citations are URL+label only, OpenAI can expose raw via `web_search_call.results`) and **raw search APIs** (Tavily/Exa — raw hits, the only family that cleanly honors "raw → MCL synthesizes"). Load-bearing decisions: **retrieval ≠ reasoning** (synthesis belongs in the chain, not the provider — structured/inspectable/composable/checkable); **source attribution over source-selection** (tag `Provider`, future hosted per-domain `ImpartialityRating`, don't chase "best source"); **synthesis policy per-domain** (open web → raw; X walled-garden → accept Grok's `x_search` synthesis because *access is the value*); AOT via direct `HttpClient` + STJ source-gen (no OpenAI SDK for server-side tools); model **`grok-4.5`** (no API "auto"; `grok-4-fast` line retiring, migrate by 2026-08-15). | **Design → building** |
+| [Phase 41 — Live Retrieval (Scout)](phases/phase-41-live-retrieval-scout.md) | Generic live-internet retrieval (`ForgeMission.Scout`, `IWebSearch` swap point, `kind: search`); `@grok` search-fronted in Rooms + streaming progress. Decisions + status in the hub. | **41.1/41.2/41.7 ✅ LIVE; next = Task 7 (roll template); branch unmerged** |
 | &nbsp;&nbsp;↳ [Phase 41.1 — Grok web_search POC](phases/phase-41.1-grok-web-search.md) | The build now: scaffold `ForgeMission.Scout` (added to `ForgeMission.slnx`, AOT-clean lib) + `IWebSearch`/`WebSearchRequest`/`WebSearchResult`/`SourceRef` (provider-neutral) + STJ source-gen Grok wire DTOs + `GrokWebSearch` (grok-4.5, `web_search` server-side tool, direct `HttpClient` POST, source-tagged results) + a smoke test that summarizes the latest news from Mario Nawfal's YouTube channel. **Grok chosen — empirically best at YouTube-news summarization in hands-on testing.** Task 1 pinned the exact xAI envelope live: **Responses API** `POST /v1/responses` (`input` not `messages`); answer + citations on the `message` item's `output_text.{text, annotations}`. **Done when:** the smoke test prints a synthesized `Answer` + ≥1 `SourceRef` each tagged `Provider="grok"`. Depends: none. | **✅ BUILT + VERIFIED LIVE** (2026-07-12, branch `phase-41.1-grok-web-search`; integration test passed against real xAI) |
 | &nbsp;&nbsp;↳ [Phase 41.2 — `kind: search` expert + search-fronted vanilla missions](phases/phase-41.2-search-expert-kind.md) | Make retrieval a **transparent capability of every vanilla agent** (not a special `@grok` handle). New native **`kind: search`** primitive (an `IExpertRunner` wrapping Scout's `IWebSearch`, dispatched in `PipelineRunner`'s kind-switch like `exec`/`http`) + a **pure-MCL** front-end on the vanilla missions: `SearchRouter (llm) → ExtractRoute (json_extract) → WebSearch (kind:search) when(search_needed) → GroundedAnswer (llm) when(search_needed) → DirectAnswer (llm) when(else)`. Classify → conditionally-search → answer; guards key off a **stable `search_needed`** flag (steps overwrite `output`) + `when(else)` (avoids the no-guard-match throw). Search backend **implicitly Grok** (POC); the *answering* provider is the agent's own (cross-provider retrieval). Caveats recorded: ~41s search latency; search cost currently unmetered (`HttpClient` path bypasses the 39.2 `IChatClient` meter). Context = **untyped bag, consumer deserializes** (OWIN model) — no typed output contract, no language change. Depends: 41.1. | **✅ Works via `forge run` (Tasks 1–5)** — `SearchExpertRunner` + dispatch/ctor-injection + CLI wiring + `missions/websearch`; verified live both branches (search + `when(else)` passthrough), stub e2e (`SearchMissionPipelineTests`) + full suite 219 pass / 0 fail. ****✅ LIVE on `@grok` in Rooms** (`forge-runner:0.5.0`, rev `--0000008`, tag `forge-runner-v0.5.0`; search-fronted Grok mission `@sha256:be0d12b2` pulled in prod). Rollout (Task 7) pending. |
 | &nbsp;&nbsp;↳ [Phase 41.7 — Streaming search progress + timeout hardening](phases/phase-41.7-streaming-progress.md) | **Recommended next build.** The ~40–60s search shows a frozen spinner + is exposed to idle timeouts. Stream live progress ("Classifying → Searching the web → Answering", + Grok-style sub-search lines) to the room, and keep the connection active so it can't be idle-reaped. **No gRPC** — HTTP streaming (NDJSON/SSE / `IAsyncEnumerable`) on the runner→orchestrator leg (revisits the 39.1 sync-HTTP decision) relayed over the **existing SignalR** browser leg. Reuse designed in at the `IWebSearch` seam (provider-neutral `WebSearchProgress` each backend maps into) so OpenAI/Claude search progress rides the same rails; **step-level progress is engine-level** (`OnStepComplete`) → reusable for every multi-step mission, not just search. Ship order: step-level chips first (80/20, provider-agnostic), Grok sub-search adapter second. Depends: 41.2. | **Design (spec written)** |
-| [Phase 42 — Forge Cloud](phases/phase-42-forge-cloud.md) | **Design review COMPLETE 2026-07-16 — all 5 questions decided, live wire capture vs the real `claude` CLI folded in** (mission/aux classifier, essentials tool allowlist, goal = last text block, no-false-green test rules, idempotency counter-first, spend trigger-ladder, `forge login` naming, runner-is-the-image + AOT-clean `ForgeServe`). **Resequenced 42.1 → 42.3 → 42.2. Next: build 42.1.** — **Access to the tech** — how a consumer actually gets MCL into their hands and workflow. Every piece (doors, `forge claude`, container, platform key, MCP) is an **access decision**; hosting/metering are *means*, not the point — **access wins ties**. Phase 38's *"reasoning no one can reach = reasoning that doesn't exist"* one layer out (38 = via chat rooms; 42 = via **the tools people already use**), and the consumption half of the Terraform parallel (HCL made authoring accessible; the registry made consumption accessible). Expose an MCL mission over the wire protocols coding agents already speak (`/v1/messages` Claude Code · `/v1/responses` Codex · MCP desktop) so they point at it with a one-line base-URL change and get answers a naked model **structurally can't** give. Local + OSS first (the quality guarantee, proven vs the real `claude` CLI), then the *same container* hosted on Azure with a **platform key + free credits** → TTF-awesome in 2–3 commands, no provider account. Locked: mission = **tool-capable enriching responder** (LLM is an expert *inside* the mission; no responder-vs-agentic fork); **three doors, one room**; **container is the unit, `local ≡ cloud`**; **quality contract per door** (base-URL enforces the anti-hallucination guarantee → build first; MCP opt-in best-effort → build last). The one hard seam = **re-entrancy** (enrich once per user turn, resume the terminal expert on `tool_result`). ~80% of hosting already live (Phase 39 runner+meter+ledger+credits+OCI; `AnthropicServer` verified vs real `claude`; `OaiServer` already serves `/v1/responses`; `forge mcp` stdio shipped). | **Build-ready (design review complete 2026-07-16)** |
+| [Phase 42 — Forge Cloud](phases/phase-42-forge-cloud.md) | **Access to the tech**: expose MCL missions over the wires coding agents already speak (`/v1/messages` · `/v1/responses` · MCP), local + hosted from one container, platform key + free credits. All decisions in the hub (§5) + spokes. | **Build-ready (design review complete 2026-07-16); next = build 42.1 → 42.3 → 42.2** |
 | &nbsp;&nbsp;↳ [Phase 42.1 — Anthropic `serve` + full-conversation responder](phases/phase-42.1-anthropic-serve-responder.md) | Wire `Katasec.AnthropicServer` into `forge serve` (behind `agent.yaml` `wire:`); make `MissionChatClient` pass the **full conversation** not just the last user message. Chat-with-mission works end-to-end vs the real `claude` CLI (no tools yet). Local, OSS. **Done when:** a two-turn exchange through `forge serve` (Anthropic wire) reflects full history. Depends: none. | Design |
 | &nbsp;&nbsp;↳ [Phase 42.2 — `forge claude` local launcher](phases/phase-42.2-forge-claude-launcher.md) | One command: ephemeral serve (in-proc fast path **+** `--container` for cloud parity) → export `ANTHROPIC_BASE_URL` → `exec claude` → teardown. `forge claude [mission/@handle]`, `--print-env`, `-p`. Reuses the `ClaudeCodeTests` env-wire + `DockerCli` primitives. **Done when:** `forge claude` launches Claude Code already wired, no leftover process/container. Depends: 42.1. | Design |
 | &nbsp;&nbsp;↳ [Phase 42.3 — Tool-capable enriching responder (the seam)](phases/phase-42.3-tool-capable-enriching-responder.md) | **The load-bearing engineering.** Tool round-trip in `AnthropicServer` (accept `tools`, emit `tool_use`, resume on `tool_result`) + **enrich-once / re-entrancy gate** (user-text ⇒ full mission; `tool_result` ⇒ resume terminal expert only) + injectable session store. Makes Claude Code **stay agentic** while the mission is the brain. **Done when:** a real multi-tool `claude` task round-trips + enrichment runs exactly once per turn. Depends: 42.1. | Design |

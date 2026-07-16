@@ -1,6 +1,16 @@
 # Phase 41 — Live Retrieval (Scout): reach the internet, reason in MCL
 
-> **Status: Design + POC in progress (2026-07-12).** A new library, **`ForgeMission.Scout`**, gives the
+> **Status (2026-07-12, moved from plan.md 2026-07-16): 41.1 ✅ · 41.2 ✅ · 41.7 ✅ — LIVE; NEXT = 41.2
+> Task 7** (roll the search-front template to `@openai`/`@claude`/`@assistant`). Deployed:
+> `forge-runner:0.7.0` (rev `--0000010`) + `forge-ui:0.4.2` (rev `--0000018`) on `ca-forge-*-dev`;
+> `@grok` is search-fronted in Rooms (`forge-mission-grok@sha256:be0d12b2`, live-verified: World-Cup query
+> → progress chips → grounded answer, 71s, debited; Grok SSE sub-search narration live). Suite 222 pass /
+> 0 warnings. **All on branch `phase-41.1-grok-web-search` (unmerged; deployed from tag).** Settled design:
+> context = **untyped bag, consumers deserialize** (OWIN `AppFunc` model) — no typed contract, no language
+> change. Standing rule: a `kind` is "done" only when a real mission exercises it e2e through the pipeline.
+> Details per spoke below.
+>
+> A new library, **`ForgeMission.Scout`**, gives the
 > platform a **generic capability to reach the live internet** and return a **provider-neutral shape MCL
 > reasons over** — so a conversation is no longer frozen at the model's training cutoff. Built against a
 > single swap-point interface (`IWebSearch`); **first backend is Grok** (empirically best at
@@ -99,13 +109,13 @@ byproduct of forced synthesis, reasoning-only, snippet-depth) > Grok (no raw at 
 
 | Spoke | Scope | Status |
 |---|---|---|
-| **[41.1 — Grok web_search POC](phase-41.1-grok-web-search.md)** | `ForgeMission.Scout` project + `IWebSearch` + `GrokWebSearch` (grok-4.5, `web_search` tool, direct HTTP + STJ, source-tagged results) + a smoke test that summarizes YouTube news. **The build now.** | **Design → building** |
-| **[41.2 — `kind: search` expert + search-fronted vanilla missions](phase-41.2-search-expert-kind.md)** | New native `kind: search` primitive (an `IExpertRunner` wrapping `IWebSearch`) + a **pure-MCL** *classify → conditionally-search → answer* front-end on the vanilla missions, so every agent gains transparent, gated live-search (search backend implicitly Grok). Uses `when()` guards on a stable `search_needed` key + `when(else)`. Context = untyped bag, consumer deserializes (OWIN model). | **✅ Works via `forge run` (Tasks 1–5); room path (Task 6) + rollout (Task 7) pending** |
+| **[41.1 — Grok web_search POC](phase-41.1-grok-web-search.md)** | `ForgeMission.Scout` project + `IWebSearch` + `GrokWebSearch` (grok-4.5, `web_search` tool, direct HTTP + STJ, source-tagged results) + a smoke test that summarizes YouTube news. | **✅ Built + live-verified (lib + `GrokWebSearch`, live test green)** |
+| **[41.2 — `kind: search` expert + search-fronted vanilla missions](phase-41.2-search-expert-kind.md)** | New native `kind: search` primitive (an `IExpertRunner` wrapping `IWebSearch`) + a **pure-MCL** *classify → conditionally-search → answer* front-end on the vanilla missions, so every agent gains transparent, gated live-search (search backend implicitly Grok). Uses `when()` guards on a stable `search_needed` key + `when(else)`. Context = untyped bag, consumer deserializes (OWIN model). | **✅ LIVE — `@grok` search-fronted in Rooms (Tasks 1–6); Task 7 (roll template to `@openai`/`@claude`/`@assistant`) = NEXT** |
 | 41.3 — Raw-API backend (Tavily/Exa) | The backend that actually exercises "raw → MCL synthesizes"; proves the interface spans both families. | Planned |
 | 41.4 — Grok `x_search` (X access) | The X walled-garden answer-engine, handle + date scoped. Second backend. | Planned |
 | 41.5 — OpenAI backend | `web_search` + raw `web_search_call.results`; fills both `Answer` and `Sources`. | Planned |
 | 41.6 — Hosted impartiality ratings | Populate `SourceRef.ImpartialityRating` from a managed per-domain table. | Planned |
-| **[41.7 — Streaming search progress + timeout hardening](phase-41.7-streaming-progress.md)** | Stream live progress ("Classifying → Searching → Answering", + sub-search lines) to the room instead of a 40–60s frozen spinner, and defeat idle-timeouts — via **HTTP streaming** on the runner leg (revisits 39.1 sync-HTTP) + the existing **SignalR** browser leg (**no gRPC**). Reuse designed in at the `IWebSearch` seam (provider-neutral `WebSearchProgress`), so OpenAI/Claude progress rides the same rails; step-level progress is engine-level (`OnStepComplete`) → reusable for every mission. | **Design — recommended next build** (UX/timeout blocker) |
+| **[41.7 — Streaming search progress + timeout hardening](phase-41.7-streaming-progress.md)** | Stream live progress ("Classifying → Searching → Answering", + sub-search lines) to the room instead of a 40–60s frozen spinner, and defeat idle-timeouts — via **HTTP streaming** on the runner leg (revisits 39.1 sync-HTTP) + the existing **SignalR** browser leg (**no gRPC**). Reuse designed in at the `IWebSearch` seam (provider-neutral `WebSearchProgress`), so OpenAI/Claude progress rides the same rails; step-level progress is engine-level (`OnStepComplete`) → reusable for every mission. | **✅ ALL TASKS DONE + DEPLOYED LIVE** (runner 0.7.0 / ui 0.4.2; incl. Task 2 Grok-SSE sub-search narration) |
 
 ## 6. Out of scope (POC)
 
