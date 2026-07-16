@@ -3,8 +3,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
-    <!-- Interim ProjectReference (42.1) — publish as NuGet + bump when the wire stabilises. -->
-    <ProjectReference Include="..\..\..\oai-server-dotnet\src\Katasec.AnthropicServer\Katasec.AnthropicServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -14,7 +12,8 @@
     <PackageReference Include="ModelContextProtocol" Version="1.4.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.9" />
     <PackageReference Include="Katasec.OciClient" Version="0.2.1" />
-    <PackageReference Include="Katasec.OaiServer" Version="0.1.4" />
+    <PackageReference Include="Katasec.OaiServer" Version="0.1.5" />
+    <PackageReference Include="Katasec.AnthropicServer" Version="0.1.5" />
     <PackageReference Include="Spectre.Console" Version="0.49.1" />
   </ItemGroup>
 

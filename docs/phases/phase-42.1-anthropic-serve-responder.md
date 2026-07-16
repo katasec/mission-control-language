@@ -6,7 +6,8 @@
 > (no OpenAI-path regression). Goal extraction unit-tested against the sanitized 4-block wire fixture
 > (`src/ForgeMission.Tests/Fixtures/anthropic-wire/main-loop-4-block-user.json`, goal = the 106-char prompt).
 > Suite 230 pass / 0 warnings; AOT publish clean. Implementation notes vs the design below:
-> `Katasec.AnthropicServer` 0.1.1 consumed via ProjectReference (NuGet publish deferred); its `BuildChatHistory`
+> `Katasec.AnthropicServer` **0.1.5 published to GitHub Packages** (lockstep with OaiServer, tag `v0.1.5`) and
+> consumed as a `PackageReference` in `ForgeMission.Cli.csproj`; its `BuildChatHistory`
 > now preserves block boundaries (one `AIContent` per block, incl. `tool_use`/`tool_result` shapes) and is public;
 > `HEAD /` answers 200. Context bag carries a `Conversation` object — structured `Messages` for 42.3,
 > transcript via `ToString()` for `{{conversation}}` interpolation.
