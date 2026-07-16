@@ -500,8 +500,18 @@ static Command BuildServeCommand()
         // the OpenAI wire keeps the legacy last-turn behaviour so existing users don't regress.
         var anthropicWire = string.Equals(config.Wire, "anthropic", StringComparison.OrdinalIgnoreCase);
         var missionClient = new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: anthropicWire);
-        var app           = anthropicWire
-            ? AnthropicServer.Build(missionClient, config.Id, config.Port)
+
+        // Aux passthrough (42.3 §0): client housekeeping (title-gen, state-check) is answered by a
+        // plain provider model; the mission never runs — and never bills — for those.
+        IChatClient? auxClient = null;
+        if (anthropicWire && ResolveDefaultProfile(serveManifest, seedContext) is { } auxProfile)
+        {
+            try { auxClient = ProviderClientBuilder.BuildChatClient(auxProfile); }
+            catch { /* aux degrades to the server's canned replies */ }
+        }
+
+        var app = anthropicWire
+            ? AnthropicServer.Build(missionClient, config.Id, config.Port, auxClient)
             : OaiServer.Build(missionClient, config.Id, config.Port);
 
         Console.Error.WriteLine($"forge serve — agent '{config.Id}' listening on http://0.0.0.0:{config.Port}");
@@ -720,6 +730,27 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
     }
 
     return runners;
+}
+
+// The default provider profile, resolved the same way BuildRunners falls back:
+// forge.toml [providers.default] first, then the mission's let-binding context.
+static ProviderProfile? ResolveDefaultProfile(ForgeManifest? manifest, Dictionary<string, object> seedContext)
+{
+    var profile  = manifest?.Providers.GetValueOrDefault("default");
+    var apiKey   = GetContextString(seedContext, "apiKey")   ?? profile?.ApiKey;
+    var model    = GetContextString(seedContext, "model")    ?? profile?.Model;
+    var provider = GetContextString(seedContext, "provider") ?? profile?.Provider ?? "openai";
+    var endpoint = GetContextString(seedContext, "endpoint") ?? profile?.Endpoint ?? string.Empty;
+
+    if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(model)) return null;
+
+    return new ProviderProfile
+    {
+        Provider = provider,
+        Model    = model,
+        ApiKey   = apiKey,
+        Endpoint = string.IsNullOrWhiteSpace(endpoint) ? null : endpoint
+    };
 }
 
 static Dictionary<string, string>? ParseVars(string[] vars)

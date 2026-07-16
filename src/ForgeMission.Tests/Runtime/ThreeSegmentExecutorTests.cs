@@ -134,7 +134,7 @@ public sealed class ThreeSegmentExecutorTests
         new(ChatRole.User, "read the probe file and tell me the magic word"),
         new(ChatRole.Assistant,
             [new FunctionCallContent("toolu_seg_1", "Read", new Dictionary<string, object?> { ["file_path"] = "/tmp/x" })]),
-        new(ChatRole.User,
+        new(ChatRole.Tool,   // BuildChatHistory maps wire tool_results to Tool-role messages
             [new FunctionResultContent("toolu_seg_1", "the magic word is PLATYPUS")]),
     ];
 

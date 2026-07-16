@@ -1,0 +1,11 @@
+let provider = env("MCL_PROVIDER", "openai")
+let apiKey   = env("MCL_API_KEY", "stub")
+let model    = env("MCL_MODEL", "gpt-4o-mini")
+
+mission Agentic(goal) = {
+    Enrich
+    -> Respond
+    -> Verify
+}
+
+output(Agentic)

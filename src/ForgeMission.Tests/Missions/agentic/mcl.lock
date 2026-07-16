@@ -1,0 +1,14 @@
+version: 1
+experts:
+  Enrich:
+    source: experts
+    path: experts/Enrich/expert.md
+    hash: cb402014b6f69e78b6f145a0a497d6bcad88e53d39e25cb7be9d08c5a49b25e4
+  Respond:
+    source: experts
+    path: experts/Respond/expert.md
+    hash: a5c96836a437930070effea7801185049a8d2af4de44adad5b6149f6ca959a50
+  Verify:
+    source: experts
+    path: experts/Verify/expert.md
+    hash: 7f5c6fb1c81b198339e938d4eca0d1f559642e80ccf0fbad5f77454b26b0943a

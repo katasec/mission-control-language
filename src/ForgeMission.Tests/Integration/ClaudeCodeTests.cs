@@ -97,6 +97,68 @@ public sealed class ClaudeCodeTests
     }
 
     // ------------------------------------------------------------------
+    // Live: multi-tool task through forge serve — 42.3's Done-when (AUTHORITATIVE)
+    //
+    // The real claude CLI completes a tool-requiring task against a mission with a
+    // tool-capable agent expert. Pass criterion is PLANTED tool-derived content (a magic
+    // word only reachable by really reading the file) — never the CLI's status fields,
+    // which report protocol success even when the tool loop is broken (probed 2026-07-16).
+    // Also asserts enrich-once (counter file) and verify-runs (VERIFIED stamp).
+    // ------------------------------------------------------------------
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission()
+    {
+        var apiKey = Environment.GetEnvironmentVariable("MCL_API_KEY");
+        Skip.If(string.IsNullOrWhiteSpace(apiKey), "MCL_API_KEY not set");
+        Skip.If(!IsOnPath("claude"),               "'claude' not found on PATH");
+
+        // The plants: content the model cannot know, and an enrich-once counter.
+        var magicWord = $"XYZZY-{Guid.NewGuid():N}";
+        var plant     = Path.Combine(Path.GetTempPath(), $"forge-plant-{Guid.NewGuid():N}.txt");
+        var counter   = Path.Combine(Path.GetTempPath(), $"forge-enrich-{Guid.NewGuid():N}.txt");
+        await File.WriteAllTextAsync(plant, $"the magic word is {magicWord}\n");
+
+        var missionDir = CopyMissionToTemp("agentic");
+        var port       = FindFreePort();
+        await File.WriteAllTextAsync(Path.Combine(missionDir, "agent.yaml"), $"""
+            mission: mission.mcl
+            id: agentic
+            port: {port}
+            wire: anthropic
+            """);
+
+        using var serve = StartForgeServe(missionDir,
+            new Dictionary<string, string> { ["FORGE_ENRICH_COUNTER"] = counter });
+        try
+        {
+            await WaitUntilListeningAsync($"http://localhost:{port}/", timeoutMs: 30_000);
+
+            var (exit, stdout, stderr) = await RunClaudeAsync(
+                prompt:    $"Read the file {plant} and tell me the magic word.",
+                baseUrl:   $"http://localhost:{port}",
+                apiKey:    "dummy-forge-ignores-this",
+                timeoutMs: 180_000,
+                skipPermissions: true);   // -p mode denies file reads outside cwd otherwise
+            Assert.True(exit == 0, $"claude exited {exit}.\nSTDOUT: {stdout}\nSTDERR: {stderr}");
+
+            var reply = JsonDocument.Parse(stdout).RootElement.GetProperty("result").GetString() ?? string.Empty;
+
+            // Planted content — only reachable via a real tool round-trip (no-false-green rule).
+            Assert.Contains(magicWord, reply);
+            // Post-agent ran on the final continuation (the regression this spoke exists to prevent).
+            Assert.Contains("VERIFIED:", reply);
+            // Pre-agent ran exactly once across the whole tool loop.
+            var enrichRuns = (await File.ReadAllLinesAsync(counter)).Length;
+            Assert.Equal(1, enrichRuns);
+        }
+        finally
+        {
+            if (!serve.HasExited) serve.Kill(entireProcessTree: true);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
 
@@ -110,7 +172,7 @@ public sealed class ClaudeCodeTests
         return path;
     }
 
-    private static Process StartForgeServe(string missionDir)
+    private static Process StartForgeServe(string missionDir, IReadOnlyDictionary<string, string>? env = null)
     {
         var psi = new ProcessStartInfo("dotnet", $"\"{ForgeDllPath()}\" serve agent.yaml")
         {
@@ -119,6 +181,8 @@ public sealed class ClaudeCodeTests
             RedirectStandardError  = true,
             UseShellExecute        = false,
         };
+        foreach (var (key, value) in env ?? new Dictionary<string, string>())
+            psi.Environment[key] = value;
         var proc = Process.Start(psi)!;
         proc.OutputDataReceived += (_, _) => { };
         proc.ErrorDataReceived  += (_, _) => { };
@@ -169,10 +233,12 @@ public sealed class ClaudeCodeTests
         string baseUrl,
         string apiKey,
         int timeoutMs,
-        string? resumeSessionId = null)
+        string? resumeSessionId = null,
+        bool skipPermissions = false)
     {
         var resume = resumeSessionId is null ? string.Empty : $"--resume {resumeSessionId} ";
-        var psi = new ProcessStartInfo("claude", $"-p {resume}\"{prompt}\" --output-format json")
+        var perms  = skipPermissions ? "--dangerously-skip-permissions " : string.Empty;
+        var psi = new ProcessStartInfo("claude", $"-p {resume}{perms}\"{prompt}\" --output-format json")
         {
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
