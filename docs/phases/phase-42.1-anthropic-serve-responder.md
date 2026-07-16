@@ -15,6 +15,14 @@
 > works). Verified by extending [`ClaudeCodeTests`](../../src/ForgeMission.Tests/Integration/ClaudeCodeTests.cs)
 > to run through `forge serve` (not just the raw `AnthropicServerFixture`).
 
+> **Sequencing (DECIDED 2026-07-16): this spoke is dev-facing; the user-facing launcher ships AFTER
+> [42.3](phase-42.3-tool-capable-enriching-responder.md).** Probed live (real CLI 2.1.195): the CLI declares
+> its tools on **every** request, and a tool-needing prompt against a tool-less server fails as a **silent
+> false-success** (`exit 0`, `is_error: false`, the model says *"let me check the file"* and stops). Rather
+> than ship that window behind `forge claude` with warnings, the build order is **42.1 → 42.3 → 42.2** —
+> the launcher lands when read/edit/write/bash actually round-trip. This spoke's own verification is
+> tool-free by design (text conversation), so nothing here changes.
+
 ## Context an implementer needs (verified against the code 2026-07-15)
 
 - **`forge serve` today** ([`Program.cs` `BuildServeCommand`](../../src/ForgeMission.Cli/Program.cs)) builds a
@@ -37,6 +45,12 @@
   (`ForgeMission.Cli.csproj`); the test project references **both** `Katasec.OaiServer` and
   `Katasec.AnthropicServer` as `ProjectReference`s. To ship AnthropicServer inside the AOT CLI it must be
   **published as NuGet and bumped**, or (interim) added as a `ProjectReference` to `ForgeMission.Cli`.
+- **Parse permissively — real requests carry fields our docs never mention (wire capture, 2026-07-16).**
+  Observed top-level: `thinking` (`{"type":"adaptive"}` / `"disabled"`), `context_management`,
+  `output_config`, `metadata` (device/account/session ids), `temperature`. 42.1 does nothing with them —
+  but strict deserialization (reject-unknown) would **fail on the first real request**. Ignore unknown
+  fields, never error on them. (The CLI also probes `HEAD /` before first use — handled by the 42.3 §0 aux
+  dispatch; for this spoke just ensure it doesn't 404/500.)
 
 ## Design
 
@@ -82,6 +96,20 @@ context["system"]       = <effective system instructions>
 > anyway.** Flattening here means building the structure twice and migrating off the string contract.
 > No MCL language change, no typed message contract in the grammar — the *bag* just carries real objects.
 
+> **Goal extraction (DECIDED 2026-07-16, from the live wire capture):** `context["goal"]` = the **last text
+> block of the last user message** — never the concatenation. Probed against real traffic (CLI 2.1.195):
+> the last user message carried **four** text blocks — **23,781 chars of `<system-reminder>` scaffolding**
+> (agent types, skills, memory index) followed by the actual **106-char prompt**. Concatenation hands the
+> enrichment experts a wall of harness scaffolding with the request buried at the end: classify takes the
+> wrong branch (the anti-hallucination guarantee silently fails), search queries are poisoned, guards guard
+> the wrong text — all billed. The scaffolding blocks still travel in `context["conversation"]` (legitimate
+> context for the terminal expert); they just must not masquerade as the goal. Corroborating signal, not a
+> dependency: the CLI marks exactly the real-prompt block with `cache_control` (its prompt-cache boundary).
+> Like the 42.3 classifier rules, this is an **observed regularity, versioned by fixture** — re-verify on
+> CLI version bumps. (This also names the mechanism behind the old `ClaudeCodeTests` bypass note —
+> "MissionChatClient … breaks claude CLI's multi-turn internal reasoning" — observed earlier, cause
+> confirmed by the capture.)
+
 ## Tasks (chronological)
 
 1. **Make AnthropicServer consumable by the CLI.** Either publish `Katasec.AnthropicServer` as NuGet + add
@@ -92,9 +120,10 @@ context["system"]       = <effective system instructions>
    Update the startup banner to print the served endpoint(s).
 4. **Neutral structured conversation in `MissionChatClient`:** populate `context["conversation"]` (structured
    messages — roles, parts, and the `tool_use`/`tool_result` shapes 42.3 will need), `context["goal"]`
-   (latest user intent — `{{goal}}` binds unchanged), `context["system"]`. **Do not flatten to a
-   role-tagged string.** Preserve `LastTurn` behaviour for the OpenAI path (no regression to existing
-   `forge serve` users).
+   (**the last text block of the last user message** — the goal-extraction decision above; `{{goal}}` binds
+   unchanged), `context["system"]`. **Do not flatten to a role-tagged string.** Preserve `LastTurn`
+   behaviour for the OpenAI path (no regression to existing `forge serve` users). Unit-test goal extraction
+   against the captured 4-block fixture (scaffolding + prompt), asserting the goal is the 106-char prompt.
 5. **Extend `ClaudeCodeTests`** with a variant that starts a real `forge serve` (Anthropic wire) over a
    throwaway mission and drives the live `claude` CLI through it — asserting a **two-turn** exchange where
    turn 2 depends on turn 1 (proves full-history handoff). Keep it a `SkippableFact` gated on keys + `claude`

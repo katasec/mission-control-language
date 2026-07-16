@@ -15,13 +15,11 @@
 
 ## Context an implementer needs (verified against the code / memory 2026-07-15)
 
-- **Name collision to resolve:** `forge login` **already exists**
-  ([`Program.cs` `BuildLoginCommand`](../../src/ForgeMission.Cli/Program.cs)) but means **OCI-registry
-  credentials → `~/.forge/credentials.json`**. The platform login is a *different* concept (browser OAuth →
-  forge platform key + credits). **Decide in design review:** evolve `forge login` into the platform login
-  (registry creds become a sub-concern) **or** add a distinct `forge auth` / `forge signin`. Recommendation:
-  `forge login` = platform identity (the thing users think of as "log in"); keep registry creds as an
-  internal detail of the same credential store.
+- **Naming (DECIDED 2026-07-16):** `forge login` = **platform sign-in** (browser OAuth → platform key +
+  credits — the thing users mean by "log in"). Today's OCI-registry login
+  ([`Program.cs` `BuildLoginCommand`](../../src/ForgeMission.Cli/Program.cs)) moves to **`forge registry
+  login`**; keep the old invocation working with a deprecation notice for a release. Both write to the same
+  `~/.forge/credentials.json` store (`platform` + registry sections).
 - **Identity + billing exist (Phase 39):** Entra External ID tenant `forgeids`; `BillingService` grants
   credits on first sign-in (the live "Granted 5,000,000 µ$"), does balance-check + debit-after-run against
   per-user `ledger_entries` in Rooms Postgres. **We are issuing a CLI-usable key that maps to this same
@@ -53,16 +51,14 @@ forge login
   path for billing anyway, so the lookup isn't a saving.
 - resolvable server-side (42.6) to `(userId, balance)`.
 
-**Abuse bound — and the hole to fix.** The credit cap (~$5) is the *intended* bound, but
-**balance-check-then-debit-after-run is not a strict ceiling**:
-- a request whose cost exceeds the remaining balance still runs (cost is unknown until after), and
-- **concurrent requests all pass the balance check before any debit lands** → unbounded overspend on *our*
-  provider keys.
+**Abuse bound (DECIDED 2026-07-16 — trigger ladder, see 42.6 task 3).** The credit cap (~$5) plus
+stop-at-zero freeze is the accepted bound at F&F scale; check-then-debit is knowingly not a strict ceiling.
+Before this spoke's keys reach strangers, 42.6 adds an edge rate limit (Cloudflare, config-only); in-app
+cost/concurrency caps and transactional reservation are pre-recorded there with their triggers.
 
-**This is a live Phase 39 hole, not just a Phase 42 design issue** — the check-then-debit path is already in
-production. Fix requires one of: **transactional credit reservation** (reserve an estimated max pre-run,
-settle after), conservative pre-authorization, hard per-request spend/token caps, serialized spend per
-account, or low concurrency limits on the free tier. **Decide in design review** — see 42.6 task list.
+**Sybil note:** the $5 grant is per *identity* — Entra External ID is the choke point. One person creating
+many accounts multiplies free credits; acceptable now, revisit if sign-up abuse ever appears (CAPTCHA /
+verified-email / per-payment-method grant are the usual rungs).
 
 **Auxiliary commands:**
 - `forge whoami` → show signed-in user + balance (reads local key + a `/me` call).
@@ -71,7 +67,9 @@ account, or low concurrency limits on the free tier. **Decide in design review**
 
 ## Tasks (chronological)
 
-1. **Design-review the `forge login` naming** (evolve vs new verb) and the **key format** (JWT vs opaque+table).
+1. ~~Design-review the naming/key format~~ **DECIDED:** `forge login` = platform; registry → `forge registry
+   login` (deprecation shim one release). Key = opaque `fg_live_<id>_<secret>` + keyed hash (already decided
+   2026-07-15). First implementation task: the rename + shim.
 2. **Auth flow in the CLI:** browser/loopback or device-code OAuth against `forgeids`; token exchange →
    platform key. AOT-safe HTTP + STJ (no bare `JsonSerializerOptions`).
 3. **Credential store:** extend `~/.forge/credentials.json` with a `platform` section (key, user, endpoint);

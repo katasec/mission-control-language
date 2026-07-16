@@ -61,7 +61,9 @@ principal + mission → authorization + billing policy
 
 **Path-based, decided:** `forge.katasec.com/m/websearch/v1/messages`. Explicit, cache-friendly, easy to
 demo, and it keeps the `model` field free — overloading `model` to select a mission collides with the model
-id the client legitimately sends. The CLI keeps exposing the friendly `@websearch`.
+id the client legitimately sends. The CLI keeps exposing the friendly `@websearch`. **Live-confirmed
+(wire capture, 2026-07-16):** the real `claude` CLI sends `model: "claude-sonnet-4-6"` on every request —
+model-based routing would have asked us for a mission named after the client's model.
 
 `forge claude @websearch` (42.2, hosted mode) sets `ANTHROPIC_BASE_URL=https://forge.katasec.com/@websearch`
 and the platform key as the token.
@@ -80,13 +82,26 @@ Phase 39.5/39.7).
    balance)`; 401 on bad/revoked key.
 2. **Routing:** map handle (path segment, recommended) → OCI catalog mission the runner loads; 404 on
    unknown handle.
-3. **Wrap the run in Phase-39 billing — and close the spend hole.** Reuse `BillingService` +
-   `UsageTrackingChatClient`, but **balance-check → run → debit is not a strict ceiling**: cost is unknown
-   until after, and **concurrent requests all pass the check before any debit lands**. Add
-   **transactional credit reservation** (reserve an estimated max pre-run, settle actual after) or hard
-   per-request spend/token caps + free-tier concurrency limits. **This also fixes a live Phase 39 hole** —
-   the current check-then-debit path is already in production. Return balance in a response header; 402 when
-   short.
+3. **Wrap the run in Phase-39 billing + the spend-abuse trigger ladder (DECIDED 2026-07-16).** Reuse
+   `BillingService` + `UsageTrackingChatClient` as-is. The known hole: `balance-check → run → debit` is not
+   a strict ceiling — cost is unknown until after, the check-to-debit window is ~60s (a live run took 71s),
+   and concurrent requests all pass `balance > 0` before any debit lands. **Accepted at F&F scale**
+   (trusted population, stop-at-zero freeze bounds accidents to cents). The ladder — each rung built only
+   when its trigger fires:
+   1. **Freeze at zero** — already live ([RoomAgentInvoker](../../src/ForgeUI/Services/RoomAgentInvoker.cs)).
+   2. **Edge rate limit — LAUNCH REQUIREMENT for this spoke** (strangers + public endpoint = new threat
+      model): Cloudflare per-IP rule, pure config, no code. Set generously (e.g. 60/min/IP) — 42.3 tool
+      loops legitimately burst N+1 calls per turn.
+   3. **In-app caps (pre-recorded, build on evidence of expensive-single-run abuse — rate limits see
+      request counts, not dollars):** (a) per-run cost cap — `UsageTrackingChatClient` already accumulates
+      cost mid-run; abort past a configured ceiling (~50,000µ$ ≈ 200× an observed `@guard` run); (b)
+      per-member concurrency cap (e.g. 2 in flight). ~20 lines total.
+   4. **Transactional credit reservation (pre-recorded, trigger = paying users / 39.6):** append
+      `Reservation(−cap)` iff `sum(entries) ≥ cap` (atomic via `pg_advisory_xact_lock(memberId)`); on
+      completion append `Release(+cap)` + `Debit(−actual)`. Balance stays `sum(entries)`; needs a
+      stale-reservation sweeper; also closes the best-effort-debit leak (a swallowed `SettleRunAsync`
+      failure currently makes a run free).
+   Return balance in a response header; 402 when short.
 4. **Shared enrichment cache:** implement the 42.3 content-addressed store (`ISessionStore` seam) over Rooms
    Postgres / a cache — ACA may run >1 replica or scale to zero, so a continuation can land on a different
    replica than the turn that enriched. Cache miss ⇒ re-run pre-agent (never answer ungrounded).

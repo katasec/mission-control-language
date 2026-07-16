@@ -64,11 +64,15 @@ surrounding stack.**
 1. **Merge the two `Build`s into one app.** A `ForgeServe.BuildApp(missionClient, config)` that maps both
    `OaiServer` and `AnthropicServer` routes on one `WebApplication`. `forge serve` uses it (serves both
    wires); confirm AOT publish + no route collision.
-2. **Decide the runner's relationship to the image.** Two options, pick in design review:
-   (a) `ForgeMission.Runner` gains the `/v1` doors (adds `OaiServer`/`AnthropicServer` mapping alongside its
-   `/run` handlers) → the runner image *is* the one image; or (b) extract a shared `ForgeServe` serving core
-   library both `forge serve` and the runner reference. **Recommendation: (a)** — fewer moving parts, the
-   runner already has the mission-loading + Phase-39 hooks.
+2. **Runner ↔ image (DECIDED 2026-07-16): both — they were never alternatives.** (a) is about the
+   *artifact*: `ForgeMission.Runner` gains the `/v1` doors and **is** the one image (it already has
+   mission-loading + the Phase-39 hooks). (b) is about *code sharing*: the wire mapping + request
+   classifier + three-segment executor live in the shared `ForgeServe` core (task 1's `BuildApp` — that
+   lib) referenced by **both** `forge serve` and the runner; without it the two hosts drift, the exact fork
+   this spoke exists to prevent. **Hard constraint:** the runner is JIT (`PublishAot=false`) but `forge
+   serve` ships in the AOT CLI — the shared `ForgeServe` lib must be **AOT-clean** (STJ source-gen for
+   every new tool/wire shape, no bare `JsonSerializerOptions`, CLAUDE.md rules) or it fails at ILC time
+   after the mapping layer is already built. The runner gets AOT-cleanliness for free; the CLI does not.
 3. **`forge claude --container` uses this image** (42.2) — verify a local container serving `/v1/messages`
    drives the real `claude` CLI identically to the in-process path.
 4. **Build/publish the converged image** to `ghcr.io/katasec` (the tag `forge agent start` already pulls),

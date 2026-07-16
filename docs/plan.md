@@ -57,14 +57,16 @@
 > **The one hard seam = re-entrancy** (one user turn = N+1 calls; enrich once on user-text, resume the
 > terminal expert on `tool_result`) — build it right in ①, cloud inherits it. **~80% of the hosting is
 > already live** (Phase 39 runner+meter+ledger+credits+OCI catalog; `Katasec.AnthropicServer` live-verified
-> vs real `claude`; `OaiServer` already serves `/v1/responses`; `forge mcp` stdio shipped). Build order:
-> [42.1 Anthropic serve](phases/phase-42.1-anthropic-serve-responder.md) → [42.2 `forge claude`](phases/phase-42.2-forge-claude-launcher.md)
-> → [42.3 tool-capable responder (the seam)](phases/phase-42.3-tool-capable-enriching-responder.md) →
+> vs real `claude`; `OaiServer` already serves `/v1/responses`; `forge mcp` stdio shipped). Build order
+> (resequenced 2026-07-16 — launcher AFTER tools, so the user-facing door never ships silent false-successes):
+> [42.1 Anthropic serve](phases/phase-42.1-anthropic-serve-responder.md) → [42.3 tool-capable responder (the seam)](phases/phase-42.3-tool-capable-enriching-responder.md)
+> → [42.2 `forge claude`](phases/phase-42.2-forge-claude-launcher.md) →
 > [42.4 one `/v1` image](phases/phase-42.4-container-convergence.md) → [42.5 platform keys](phases/phase-42.5-platform-identity-keys.md)
 > → [42.6 hosted + TTF-awesome](phases/phase-42.6-hosted-endpoint-ttfa.md) → [42.7 Codex door](phases/phase-42.7-codex-responses-door.md)
 > → [42.8 MCP desktop (last)](phases/phase-42.8-mcp-desktop-door.md).
 >
-> **Status: Design — externally reviewed 2026-07-15, one real defect found + fixed.** The review caught that
+> **Status: BUILD-READY — design review complete 2026-07-16** (externally reviewed 2026-07-15, one real
+> defect found + fixed). The 2026-07-15 review caught that
 > 42.3's re-entrancy gate was **binary** ("user text ⇒ full mission; `tool_result` ⇒ terminal expert only"),
 > which would have shipped **`Verify` as dead code in every agentic flow** — the final answer emerges on a
 > *continuation*, so the post-agent segment never ran. Now a **three-segment model** (pre-agent enrich once ·
@@ -77,21 +79,37 @@
 > opaque-over-JWT; 42.6 routing = **key→principal, path→mission** (`/m/<mission>/v1/...`); 42.4 claims "same
 > mission-execution + wire implementation", not "identical stacks".
 >
-> **⚠ LIVE BUG surfaced (Phase 39, in production): `balance-check → run → debit` is NOT a strict spend
-> ceiling** — cost is unknown until after the run, and concurrent requests all pass the check before any
-> debit lands ⇒ unbounded overspend on *our* provider keys. Needs transactional credit reservation / hard
-> per-request caps / free-tier concurrency limits. Tracked in [42.5](phases/phase-42.5-platform-identity-keys.md)
-> + [42.6](phases/phase-42.6-hosted-endpoint-ttfa.md) task 3.
+> **Spend hole (Phase 39): known + ACCEPTED at F&F scale (decided 2026-07-16).** `balance-check → run →
+> debit` is not a strict ceiling (concurrent requests pass the check inside the ~60s debit window), but the
+> live population is trusted F&F and stop-at-zero bounds accidents to cents — **no hotfix**. Trigger
+> ladder recorded in [42.6](phases/phase-42.6-hosted-endpoint-ttfa.md) task 3: Cloudflare per-IP rate limit
+> = **42.6 launch requirement** (strangers + public endpoint change the threat model); in-app cost/
+> concurrency caps and transactional reservation pre-recorded with triggers. Sybil note in
+> [42.5](phases/phase-42.5-platform-identity-keys.md).
 >
-> **NEXT STEP: the Phase 42 design review** — lock these before any code:
-> 1. **Continuation idempotency** (42.3) — a retried `tool_result` re-runs the agent segment: a fresh
->    non-deterministic, billable LLM call that may emit a *different* tool call. Replay the prior response, or
->    reject the duplicate?
-> 2. **Prove the client round-trip** (42.3) — test in-conversation state against the **real** `claude`/`codex`
->    CLIs, never a mock (a mock preserves server-injected content a real client drops).
-> 3. **Spend reservation** (42.5/42.6) — pick the mechanism; it fixes a live Phase 39 hole too.
-> 4. **`forge login` naming** (42.5) — evolve the existing OCI-registry verb vs a new `forge auth`.
-> 5. **Runner ↔ image relationship** (42.4) — runner gains the `/v1` doors vs extract a shared serving-core lib.
+> **✅ DESIGN REVIEW COMPLETE (2026-07-16) — all 5 open questions decided + recorded in the spokes; Phase 42
+> is BUILD-READY.** Centerpiece: a **live wire capture** against the real `claude` CLI (2.1.195) replaced
+> speculation with observation and reshaped the design. Decisions (details in the spokes):
+> 1. **Idempotency (42.3 §4):** build the `P` enrichment cache; **skip `F` replay** — ship a
+>    `duplicate_continuation` counter, build the pre-recorded replay design only on evidence.
+> 2. **Client round-trip (42.3):** probed live. Findings: **mission/aux request taxonomy** + middleware
+>    pipeline + typed dispatch (§0 — the CLI's title-gen call would have misrouted into a billed mission);
+>    **essentials tool allowlist** Read/Edit/Write/Bash (§2 — 57 declared tools incl. the user's Gmail MCP);
+>    **goal = last text block** (42.1 — 23.8KB scaffolding vs 106-char prompt); canonicalization proven
+>    (`cc_version` varies per call); **no-false-green test rules** (planted content, two test roles);
+>    capture harness + sanitized fixtures = 42.3 task 0.
+> 3. **Spend (42.6 task 3):** trigger ladder — freeze-at-zero (live, adequate for F&F) → **Cloudflare
+>    per-IP rate limit = 42.6 launch requirement** → in-app cost/concurrency caps → reservation ledger
+>    (pre-recorded, paying-users trigger). No hotfix now.
+> 4. **Naming (42.5):** `forge login` = platform sign-in; registry → `forge registry login` (+shim).
+> 5. **Runner ↔ image (42.4):** both — runner IS the image AND `ForgeServe` is a shared, **AOT-clean** core
+>    lib (the CLI is AOT; the runner is JIT).
+> **Also resequenced: 42.1 → 42.3 → 42.2** — the launcher ships only when tools round-trip (a tool-less
+> server fails as a *silent false-success*: probed `exit 0` / `subtype: "success"` with the task not done).
+>
+> **NEXT STEP: build [42.1](phases/phase-42.1-anthropic-serve-responder.md)** (wire + structured
+> conversation + goal extraction), then 42.3 (the seam), then 42.2. Every spoke now carries its decisions
+> inline — an agent can execute from the docs alone.
 >
 > **Framing (locked, [why.md](why.md)):** MCL is a **reliability framework, not an agent framework** — the
 > objective is not "make the model smarter", it's **"make intelligent systems more predictable."** Reliability
@@ -218,7 +236,7 @@
 | &nbsp;&nbsp;↳ [Phase 41.1 — Grok web_search POC](phases/phase-41.1-grok-web-search.md) | The build now: scaffold `ForgeMission.Scout` (added to `ForgeMission.slnx`, AOT-clean lib) + `IWebSearch`/`WebSearchRequest`/`WebSearchResult`/`SourceRef` (provider-neutral) + STJ source-gen Grok wire DTOs + `GrokWebSearch` (grok-4.5, `web_search` server-side tool, direct `HttpClient` POST, source-tagged results) + a smoke test that summarizes the latest news from Mario Nawfal's YouTube channel. **Grok chosen — empirically best at YouTube-news summarization in hands-on testing.** Task 1 pinned the exact xAI envelope live: **Responses API** `POST /v1/responses` (`input` not `messages`); answer + citations on the `message` item's `output_text.{text, annotations}`. **Done when:** the smoke test prints a synthesized `Answer` + ≥1 `SourceRef` each tagged `Provider="grok"`. Depends: none. | **✅ BUILT + VERIFIED LIVE** (2026-07-12, branch `phase-41.1-grok-web-search`; integration test passed against real xAI) |
 | &nbsp;&nbsp;↳ [Phase 41.2 — `kind: search` expert + search-fronted vanilla missions](phases/phase-41.2-search-expert-kind.md) | Make retrieval a **transparent capability of every vanilla agent** (not a special `@grok` handle). New native **`kind: search`** primitive (an `IExpertRunner` wrapping Scout's `IWebSearch`, dispatched in `PipelineRunner`'s kind-switch like `exec`/`http`) + a **pure-MCL** front-end on the vanilla missions: `SearchRouter (llm) → ExtractRoute (json_extract) → WebSearch (kind:search) when(search_needed) → GroundedAnswer (llm) when(search_needed) → DirectAnswer (llm) when(else)`. Classify → conditionally-search → answer; guards key off a **stable `search_needed`** flag (steps overwrite `output`) + `when(else)` (avoids the no-guard-match throw). Search backend **implicitly Grok** (POC); the *answering* provider is the agent's own (cross-provider retrieval). Caveats recorded: ~41s search latency; search cost currently unmetered (`HttpClient` path bypasses the 39.2 `IChatClient` meter). Context = **untyped bag, consumer deserializes** (OWIN model) — no typed output contract, no language change. Depends: 41.1. | **✅ Works via `forge run` (Tasks 1–5)** — `SearchExpertRunner` + dispatch/ctor-injection + CLI wiring + `missions/websearch`; verified live both branches (search + `when(else)` passthrough), stub e2e (`SearchMissionPipelineTests`) + full suite 219 pass / 0 fail. ****✅ LIVE on `@grok` in Rooms** (`forge-runner:0.5.0`, rev `--0000008`, tag `forge-runner-v0.5.0`; search-fronted Grok mission `@sha256:be0d12b2` pulled in prod). Rollout (Task 7) pending. |
 | &nbsp;&nbsp;↳ [Phase 41.7 — Streaming search progress + timeout hardening](phases/phase-41.7-streaming-progress.md) | **Recommended next build.** The ~40–60s search shows a frozen spinner + is exposed to idle timeouts. Stream live progress ("Classifying → Searching the web → Answering", + Grok-style sub-search lines) to the room, and keep the connection active so it can't be idle-reaped. **No gRPC** — HTTP streaming (NDJSON/SSE / `IAsyncEnumerable`) on the runner→orchestrator leg (revisits the 39.1 sync-HTTP decision) relayed over the **existing SignalR** browser leg. Reuse designed in at the `IWebSearch` seam (provider-neutral `WebSearchProgress` each backend maps into) so OpenAI/Claude search progress rides the same rails; **step-level progress is engine-level** (`OnStepComplete`) → reusable for every multi-step mission, not just search. Ship order: step-level chips first (80/20, provider-agnostic), Grok sub-search adapter second. Depends: 41.2. | **Design (spec written)** |
-| [Phase 42 — Forge Cloud](phases/phase-42-forge-cloud.md) | **Design — externally reviewed 2026-07-15; one real defect found + fixed** (42.3's binary gate would have shipped `Verify` as dead code in every agentic flow → now a three-segment model + content-addressed enrichment cache). **Next: the design review** — lock continuation idempotency, client round-trip proof, spend reservation, `forge login` naming, runner↔image. **⚠ surfaced a LIVE Phase 39 bug: balance-check→run→debit is not a strict spend ceiling under concurrency.** — **Access to the tech** — how a consumer actually gets MCL into their hands and workflow. Every piece (doors, `forge claude`, container, platform key, MCP) is an **access decision**; hosting/metering are *means*, not the point — **access wins ties**. Phase 38's *"reasoning no one can reach = reasoning that doesn't exist"* one layer out (38 = via chat rooms; 42 = via **the tools people already use**), and the consumption half of the Terraform parallel (HCL made authoring accessible; the registry made consumption accessible). Expose an MCL mission over the wire protocols coding agents already speak (`/v1/messages` Claude Code · `/v1/responses` Codex · MCP desktop) so they point at it with a one-line base-URL change and get answers a naked model **structurally can't** give. Local + OSS first (the quality guarantee, proven vs the real `claude` CLI), then the *same container* hosted on Azure with a **platform key + free credits** → TTF-awesome in 2–3 commands, no provider account. Locked: mission = **tool-capable enriching responder** (LLM is an expert *inside* the mission; no responder-vs-agentic fork); **three doors, one room**; **container is the unit, `local ≡ cloud`**; **quality contract per door** (base-URL enforces the anti-hallucination guarantee → build first; MCP opt-in best-effort → build last). The one hard seam = **re-entrancy** (enrich once per user turn, resume the terminal expert on `tool_result`). ~80% of hosting already live (Phase 39 runner+meter+ledger+credits+OCI; `AnthropicServer` verified vs real `claude`; `OaiServer` already serves `/v1/responses`; `forge mcp` stdio shipped). | **Design — pending review** |
+| [Phase 42 — Forge Cloud](phases/phase-42-forge-cloud.md) | **Design review COMPLETE 2026-07-16 — all 5 questions decided, live wire capture vs the real `claude` CLI folded in** (mission/aux classifier, essentials tool allowlist, goal = last text block, no-false-green test rules, idempotency counter-first, spend trigger-ladder, `forge login` naming, runner-is-the-image + AOT-clean `ForgeServe`). **Resequenced 42.1 → 42.3 → 42.2. Next: build 42.1.** — **Access to the tech** — how a consumer actually gets MCL into their hands and workflow. Every piece (doors, `forge claude`, container, platform key, MCP) is an **access decision**; hosting/metering are *means*, not the point — **access wins ties**. Phase 38's *"reasoning no one can reach = reasoning that doesn't exist"* one layer out (38 = via chat rooms; 42 = via **the tools people already use**), and the consumption half of the Terraform parallel (HCL made authoring accessible; the registry made consumption accessible). Expose an MCL mission over the wire protocols coding agents already speak (`/v1/messages` Claude Code · `/v1/responses` Codex · MCP desktop) so they point at it with a one-line base-URL change and get answers a naked model **structurally can't** give. Local + OSS first (the quality guarantee, proven vs the real `claude` CLI), then the *same container* hosted on Azure with a **platform key + free credits** → TTF-awesome in 2–3 commands, no provider account. Locked: mission = **tool-capable enriching responder** (LLM is an expert *inside* the mission; no responder-vs-agentic fork); **three doors, one room**; **container is the unit, `local ≡ cloud`**; **quality contract per door** (base-URL enforces the anti-hallucination guarantee → build first; MCP opt-in best-effort → build last). The one hard seam = **re-entrancy** (enrich once per user turn, resume the terminal expert on `tool_result`). ~80% of hosting already live (Phase 39 runner+meter+ledger+credits+OCI; `AnthropicServer` verified vs real `claude`; `OaiServer` already serves `/v1/responses`; `forge mcp` stdio shipped). | **Build-ready (design review complete 2026-07-16)** |
 | &nbsp;&nbsp;↳ [Phase 42.1 — Anthropic `serve` + full-conversation responder](phases/phase-42.1-anthropic-serve-responder.md) | Wire `Katasec.AnthropicServer` into `forge serve` (behind `agent.yaml` `wire:`); make `MissionChatClient` pass the **full conversation** not just the last user message. Chat-with-mission works end-to-end vs the real `claude` CLI (no tools yet). Local, OSS. **Done when:** a two-turn exchange through `forge serve` (Anthropic wire) reflects full history. Depends: none. | Design |
 | &nbsp;&nbsp;↳ [Phase 42.2 — `forge claude` local launcher](phases/phase-42.2-forge-claude-launcher.md) | One command: ephemeral serve (in-proc fast path **+** `--container` for cloud parity) → export `ANTHROPIC_BASE_URL` → `exec claude` → teardown. `forge claude [mission/@handle]`, `--print-env`, `-p`. Reuses the `ClaudeCodeTests` env-wire + `DockerCli` primitives. **Done when:** `forge claude` launches Claude Code already wired, no leftover process/container. Depends: 42.1. | Design |
 | &nbsp;&nbsp;↳ [Phase 42.3 — Tool-capable enriching responder (the seam)](phases/phase-42.3-tool-capable-enriching-responder.md) | **The load-bearing engineering.** Tool round-trip in `AnthropicServer` (accept `tools`, emit `tool_use`, resume on `tool_result`) + **enrich-once / re-entrancy gate** (user-text ⇒ full mission; `tool_result` ⇒ resume terminal expert only) + injectable session store. Makes Claude Code **stay agentic** while the mission is the brain. **Done when:** a real multi-tool `claude` task round-trips + enrichment runs exactly once per turn. Depends: 42.1. | Design |

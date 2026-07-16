@@ -1,6 +1,7 @@
 # Phase 42 — Forge Cloud: **access to the tech**
 
-> **Status: Design (2026-07-15).** **This phase is about one thing: how a consumer actually gets MCL into
+> **Status: BUILD-READY (design review complete 2026-07-16; designed 2026-07-15).** **This phase is about
+> one thing: how a consumer actually gets MCL into
 > their hands and their workflow.** Everything in it — the wire doors, `forge claude`, the container, the
 > platform key, MCP — is an **access decision**. Hosting, metering and billing are *means*, never the point:
 > hosting exists because it is the lowest-setup way to reach the tech; metering exists only so free access
@@ -253,15 +254,27 @@ Never sell mandatory quality on an opt-in door. (Full surface support matrix in 
 6. **Platform key + capped free credits = the friction-killer.** The hosted runner calls providers with
    *our* keys server-side, metered against the user's balance — so the user needs **no provider account**.
    Reuse Phase 39 ledger/billing/credit-grant verbatim; the cap (~$5) is the abuse bound.
-7. **Build order:** base-URL first (guarantee + demo) → hosted → Codex door → MCP door.
+7. **Build order:** base-URL first (guarantee + demo) → hosted → Codex door → MCP door. *(Within the
+   base-URL leg, resequenced 2026-07-16: 42.1 → **42.3** → 42.2 — the launcher ships only when tools
+   round-trip.)*
+8. **One middleware pipeline + a request classifier + aux dispatch ahead of the mission (added 2026-07-16,
+   from the live wire capture — [42.3 §0](phase-42.3-tool-capable-enriching-responder.md)).** Every request
+   flows through composed middleware (logging/timestamp locally; cloud registers auth + metering into the
+   **same** pipeline — `local ≡ cloud` structurally). A classifier on **structural metadata** then splits
+   **MISSION requests** (user turn / tool continuation → the segment model) from **AUX requests**
+   (everything the client needs that is not the task: `HEAD /` probes, structured-output calls like Claude
+   Code's title-gen — which would otherwise misroute into a billed full-mission run). Aux requests dispatch
+   **by type to registered handlers** (mux-style; probe → static, title-gen → provider passthrough, unknown
+   structured-output → passthrough default). Composition, not inheritance — the same OWIN `AppFunc`
+   strategy locked in Phase 41.
 
 ## 6. Spokes (dependency-ordered)
 
 | Spoke | Scope | Status |
 |---|---|---|
 | **[42.1 — Anthropic `serve` + full-conversation responder](phase-42.1-anthropic-serve-responder.md)** | Wire `Katasec.AnthropicServer` into `forge serve` (behind `agent.yaml`); make `MissionChatClient` pass the **full conversation** (not just the last user message). Chat-with-mission works end-to-end against the real `claude` CLI (no tools yet). Local, OSS. | Design |
-| **[42.2 — `forge claude` local launcher](phase-42.2-forge-claude-launcher.md)** | One command: ephemeral serve (in-proc fast path **+** `--container` for cloud parity) → export `ANTHROPIC_BASE_URL` → `exec claude` → teardown. `forge claude [mission/@handle]`. The local dev UX. | Design |
-| **[42.3 — Tool-capable enriching responder (the hard seam)](phase-42.3-tool-capable-enriching-responder.md)** | Tool round-trip in `AnthropicServer` (accept `tools`, emit `tool_use`, resume on `tool_result`) + **enrich-once / re-entrancy gate** + injectable session store. Makes Claude Code **stay agentic** while the mission is the brain. **The load-bearing engineering.** | Design |
+| **[42.3 — Tool-capable enriching responder (the hard seam)](phase-42.3-tool-capable-enriching-responder.md)** | Tool round-trip in `AnthropicServer` (accept `tools` — **essentials allowlist** Read/Edit/Write/Bash, emit `tool_use`, resume on `tool_result`) + **enrich-once / re-entrancy gate** + injectable session store. Makes Claude Code **stay agentic** while the mission is the brain. **The load-bearing engineering.** *(Resequenced before 42.2 on 2026-07-16: the launcher must not ship while tool prompts fail as silent false-successes.)* | Design |
+| **[42.2 — `forge claude` local launcher](phase-42.2-forge-claude-launcher.md)** | One command: ephemeral serve (in-proc fast path **+** `--container` for cloud parity) → export `ANTHROPIC_BASE_URL` → `exec claude` → teardown. `forge claude [mission/@handle]`. The local dev UX. **Ships after 42.3** — the user-facing promise waits for working tools. | Design |
 | **[42.4 — Container convergence: one `/v1` image, Docker ≡ ACA](phase-42.4-container-convergence.md)** | Converge `forge serve` and `ForgeMission.Runner` onto **one image** exposing `/v1/messages` + `/v1/responses`, scheduled on local Docker and Azure ACA identically. Phase-39 metering wrapped in cloud only. | Design |
 | **[42.5 — Platform identity & keys](phase-42.5-platform-identity-keys.md)** | `forge login` / `forge auth` → **platform key + free credits** (browser OAuth), stored in `~/.forge`, usable as the bearer token against the hosted `/v1` endpoint. Reuse Phase 39 credit-grant/ledger. (Disambiguate from today's OCI-registry `forge login`.) | Design |
 | **[42.6 — Hosted endpoint + TTF-awesome](phase-42.6-hosted-endpoint-ttfa.md)** | Key→mission routing on `forge.katasec.com` (multi-tenant), metering wrapped, missions on tap via OCI, `forge missions`. **Definition of done = the §1 demo** (`forge login && forge claude @websearch` → cited past-cutoff answer, debited). | Design |

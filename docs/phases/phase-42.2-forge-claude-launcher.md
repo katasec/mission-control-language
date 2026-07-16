@@ -6,12 +6,22 @@
 > the local dev UX — the same gesture that becomes the hosted onboarding in 42.6.
 >
 > **Parent:** [Phase 42 — Forge Cloud](phase-42-forge-cloud.md) · **Depends on:**
-> [42.1](phase-42.1-anthropic-serve-responder.md) (Anthropic `serve`) · **AOT rules:** [CLAUDE.md](../../CLAUDE.md).
+> [42.1](phase-42.1-anthropic-serve-responder.md) (Anthropic `serve`) **and**
+> [42.3](phase-42.3-tool-capable-enriching-responder.md) (tool round-trip — resequenced 2026-07-16) ·
+> **AOT rules:** [CLAUDE.md](../../CLAUDE.md).
 >
 > **Done when:** in a mission directory, `forge claude` launches Claude Code already talking to that mission
 > — no manual env vars, no leftover process/container after the session exits. `forge claude ./mission.mcl`
 > works with no `agent.yaml`. `forge claude --container` runs the mission as a Docker container (cloud
 > parity) instead of in-process.
+
+> **Resequenced (DECIDED 2026-07-16): this spoke ships AFTER [42.3](phase-42.3-tool-capable-enriching-responder.md)**
+> — build order is now **42.1 → 42.3 → 42.2**. The launcher is the user-facing promise ("chat with a
+> mission through Claude Code"), and the live probe showed tool-needing prompts against a tool-less server
+> fail as a **silent false-success** — the majority use case (read/edit/write/bash) would lie green.
+> Shipping that behind `forge claude` with a warning label contradicts the phase's quality-contract
+> framing; instead the launcher lands when tools actually round-trip, and **no interim notice is needed —
+> the degraded window never reaches users.**
 
 ## Context an implementer needs (verified against the code 2026-07-15)
 
