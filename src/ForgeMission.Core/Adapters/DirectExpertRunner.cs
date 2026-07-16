@@ -67,8 +67,29 @@ Respond with this exact JSON format and nothing else — status must always be "
         // GetResponseAsync<StepEnvelope>, whose derived schema is rejected by Anthropic. Deserialize
         // via the source-gen context (AOT-safe); fall back to the raw text if the model returns
         // non-JSON for any reason.
-        var options  = new ChatOptions { ResponseFormat = _stepFormat };
+        var options = new ChatOptions { ResponseFormat = _stepFormat };
+
+        // Tool-capable agent expert (42.3): the PipelineRunner put the client's (allowlist-filtered)
+        // tools in the bag for this step only. Free-form reply instead of the forced envelope —
+        // the model must be able to answer OR call a tool; the raw-text fallback below still applies.
+        if (context.TryGetValue("tools", out var t) && t is IList<AITool> tools)
+        {
+            options.Tools          = tools;
+            options.ResponseFormat = null;
+        }
+
         var response = await chatClient.GetResponseAsync(messages, options, cancellationToken: ct);
+
+        // The model called a tool: hand the calls back through the bag — the pipeline returns them
+        // to the client (which executes) instead of running any further steps.
+        var toolCalls = response.Messages.LastOrDefault()?.Contents.OfType<FunctionCallContent>().ToList();
+        if (toolCalls is { Count: > 0 })
+        {
+            context["tool_calls"] = toolCalls;
+            var text = response.Messages.LastOrDefault()?.Contents
+                .OfType<TextContent>().Select(c => c.Text).FirstOrDefault() ?? string.Empty;
+            return new StepEnvelope(text);
+        }
 
         StepEnvelope envelope;
         try

@@ -155,6 +155,16 @@ public class PipelineRunner
 
                     failReason = await ExecuteStepAsync(step, ast, experts, context, options, ct);
                     if (failReason is not null) break;
+
+                    // Agent expert asked for a tool (42.3): return the tool_use to the client NOW.
+                    // Post-agent steps (verify/judge) run on the final continuation — the request
+                    // whose agent segment terminates without a tool call — never on this one.
+                    if (context.TryGetValue("tool_calls", out var tc)
+                        && tc is IReadOnlyList<Microsoft.Extensions.AI.FunctionCallContent> toolCalls)
+                    {
+                        var toolText = context.TryGetValue("output", out var o) ? o?.ToString() ?? string.Empty : string.Empty;
+                        return new MissionResult(options.MissionName, toolText, MissionStatus.Pass, null, attempt, toolCalls);
+                    }
                 }
             }
 
@@ -238,6 +248,11 @@ public class PipelineRunner
         if (options.StepWriter is { } sw)
             await sw.WriteLineAsync($"→ {step.ExpertName}...");
 
+        // Client tools attach to the agent expert's call only (42.3) — enrichment and
+        // verification experts never see them. Rides the context bag like everything else.
+        if (expert.IsAgent && options.Tools is { Count: > 0 })
+            context["tools"] = options.Tools;
+
         StepEnvelope envelope;
         try
         {
@@ -265,6 +280,10 @@ public class PipelineRunner
         {
             throw new InvalidOperationException(
                 $"Step '{step.ExpertName}' failed: {ex.Message}", ex);
+        }
+        finally
+        {
+            context.Remove("tools");
         }
 
         context["output"] = envelope.Text;

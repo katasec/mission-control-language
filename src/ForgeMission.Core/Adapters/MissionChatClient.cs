@@ -31,13 +31,26 @@ public sealed class MissionChatClient(
         ChatOptions? options = null,
         CancellationToken ct = default)
     {
-        var runOptions = BuildOptions(messages, stepWriter: null, contentWriter: null);
+        var runOptions = BuildOptions(messages, stepWriter: null, contentWriter: null, options);
         var result     = await new PipelineRunner(runner).RunAsync(ast, experts, runOptions, ct);
 
         if (result.Status == MissionStatus.Fail)
             throw new InvalidOperationException($"Mission failed: {result.FailReason}");
 
-        return new ChatResponse([new ChatMessage(ChatRole.Assistant, result.Text)]);
+        return new ChatResponse([BuildReply(result)]);
+    }
+
+    // A tool-calling result carries the FunctionCallContent parts back to the wire verbatim;
+    // a plain result stays a text message.
+    private static ChatMessage BuildReply(MissionResult result)
+    {
+        if (result.ToolCalls is not { Count: > 0 } calls)
+            return new ChatMessage(ChatRole.Assistant, result.Text);
+
+        var contents = new List<AIContent>();
+        if (!string.IsNullOrEmpty(result.Text)) contents.Add(new TextContent(result.Text));
+        contents.AddRange(calls);
+        return new ChatMessage(ChatRole.Assistant, contents);
     }
 
     public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
@@ -80,14 +93,17 @@ public sealed class MissionChatClient(
 
     // -------------------------------------------------------------------------
 
-    private PipelineRunOptions BuildOptions(IEnumerable<ChatMessage> messages, TextWriter? stepWriter, TextWriter? contentWriter)
+    private PipelineRunOptions BuildOptions(
+        IEnumerable<ChatMessage> messages, TextWriter? stepWriter, TextWriter? contentWriter, ChatOptions? chatOptions = null)
     {
         var mission   = ast.Declarations.OfType<MissionDeclaration>().First();
         var paramName = mission.Params.FirstOrDefault() ?? "goal";
         var goal      = fullConversation ? ExtractGoal(messages) : LastUserMessage(messages);
         var vars      = new Dictionary<string, string>(StringComparer.Ordinal) { [paramName] = goal };
         var objects   = fullConversation ? ConversationObjects(messages) : null;
-        return new PipelineRunOptions(mission.Name, vars, stepWriter, contentWriter, ContextObjects: objects);
+        var tools     = fullConversation ? chatOptions?.Tools : null; // agent expert only — see PipelineRunner
+        return new PipelineRunOptions(mission.Name, vars, stepWriter, contentWriter,
+            ContextObjects: objects, Tools: tools);
     }
 
     // The goal is the LAST TEXT BLOCK of the last user message, never the concatenation:

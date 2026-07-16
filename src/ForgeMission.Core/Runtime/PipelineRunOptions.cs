@@ -1,3 +1,4 @@
+using Microsoft.Extensions.AI;
 using Scout;
 
 namespace ForgeMission.Core.Runtime;
@@ -18,4 +19,8 @@ public record PipelineRunOptions(
     Action<WebSearchProgress>? OnSearchProgress = null,
     // Structured objects seeded into the context bag alongside Vars (Phase 42.1) — e.g. the full
     // client Conversation. The bag is untyped but not stringly-typed: real objects go in as-is.
-    IReadOnlyDictionary<string, object>? ContextObjects = null);
+    IReadOnlyDictionary<string, object>? ContextObjects = null,
+    // Client-declared tools (Phase 42.3), already allowlist-filtered at the wire. They attach to
+    // the `role: agent` expert's provider call ONLY; a tool call from it ends the run immediately
+    // (the client executes and continues with a fresh request).
+    IList<AITool>? Tools = null);
