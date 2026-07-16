@@ -84,9 +84,9 @@ confirms the opaque+table decision above.
 1. ~~Design-review the naming/key format~~ **DECIDED:** `forge login` = platform; registry → `forge registry
    login` (deprecation shim one release). Key = opaque `fg_live_<id>_<secret>` + keyed hash (already decided
    2026-07-15). ~~First implementation task: the rename + shim.~~ **✅ DONE 2026-07-17:** `forge registry
-   login` live; `forge login <registry> --token` warns + delegates (remove next release); hint strings +
-   README updated; verified against isolated `$HOME` (both forms write `credentials.json`, shim warns);
-   suite 256 pass.
+   login` live; hint strings + README updated; verified against isolated `$HOME`; suite 256 pass.
+   Deprecation shim built then **removed same day** per Ameer — sole user, no external invocations to
+   protect; `forge login` is purely platform sign-in.
 2. **Auth flow in the CLI:** loopback auth-code + PKCE against `forgeids` (decided above); token exchange →
    platform key. Hand-rolled, AOT-safe HTTP + STJ (no MSAL, no bare `JsonSerializerOptions`).
 3. **Credential store:** extend `~/.forge/credentials.json` with a `platform` section (key, user, endpoint);

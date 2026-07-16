@@ -385,31 +385,12 @@ static Command BuildRegistryLoginCommand()
     return cmd;
 }
 
-// forge login = platform sign-in (loopback + PKCE → platform key). The optional registry
-// argument is a deprecation shim (remove after one release) for the old OCI-registry login,
-// which moved to `forge registry login`.
+// forge login = platform sign-in (loopback + PKCE → platform key).
+// OCI-registry credentials live under `forge registry login`.
 static Command BuildLoginCommand()
 {
-    var registryArg = new Argument<string?>("registry") { Description = "(deprecated) Registry host — use 'forge registry login'", Arity = ArgumentArity.ZeroOrOne };
-    var tokenOpt    = new Option<string?>("--token") { Description = "(deprecated) Credential token — use 'forge registry login'" };
-
     var cmd = new Command("login", "Sign in to Forge (browser) and store a platform key");
-    cmd.Add(registryArg);
-    cmd.Add(tokenOpt);
-
-    cmd.SetAction(async result =>
-    {
-        var registry = result.GetValue(registryArg);
-        if (registry is null) return await PlatformLogin.RunAsync();
-
-        var token = result.GetValue(tokenOpt);
-        if (token is null) { Die("Missing --token. For registry credentials use: forge registry login <registry> --token <PAT>"); return 1; }
-
-        Console.Error.WriteLine("Warning: 'forge login <registry>' is deprecated — use 'forge registry login <registry> --token <PAT>'. This alias will be removed in the next release.");
-        SaveRegistryCredential(registry, token);
-        return 0;
-    });
-
+    cmd.SetAction(async _ => await PlatformLogin.RunAsync());
     return cmd;
 }
 
