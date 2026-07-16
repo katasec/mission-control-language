@@ -89,8 +89,18 @@ confirms the opaque+table decision above.
    protect; `forge login` is purely platform sign-in.
 2. **Auth flow in the CLI:** loopback auth-code + PKCE against `forgeids` (decided above); token exchange →
    platform key. Hand-rolled, AOT-safe HTTP + STJ (no MSAL, no bare `JsonSerializerOptions`).
+   **⏳ CODE-COMPLETE 2026-07-17, live verify blocked on the app registration.** `PlatformLogin.cs`:
+   PKCE pair, free-port `HttpListener` loopback, browser launch, state check, token exchange, id_token
+   claims display; env overrides `FORGE_AUTH_AUTHORITY/CLIENT_ID/SCOPE`. `forge login` (no args) wired.
+   Registry-login deprecation shim built then removed same day (sole user). **Blocked on:** interactive
+   `az login --tenant 79c07ac3-4f45-4ea8-9701-94fd2ef1decd --allow-no-subscriptions` (MFA) → run
+   `forge-infra/dev/200-entra/create-cli-app-registration.sh` (committed, syntax-checked, idempotent:
+   public client + `cli.login` scope on Rooms app + Graph consent grants) → attach via
+   `APP_ID=<cli appId> ./create-user-flow.sh` → paste real ClientId into `PlatformLogin.cs` → live test.
 3. **Credential store:** extend `~/.forge/credentials.json` with a `platform` section (key, user, endpoint);
-   keep registry creds working.
+   keep registry creds working. **✅ DONE 2026-07-17:** `PlatformCredential` + `Get/Save/ClearPlatform` on
+   `CredentialStore` (shared read-modify-write); registry creds verified untouched; suite 256 pass.
+   Save gets wired into the login flow when task 4's exchange endpoint exists.
 4. **Server-side issuance + resolution** (decided above: direct PG + cached lookup): mint the platform key
    on login (issuance endpoint on the forge-ui/Rooms app, which already speaks OIDC to `forgeids` and owns
    `BillingService`); a `platform_keys` table in Rooms PG mapping key-id → hashed secret + user; a shared
