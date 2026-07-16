@@ -22,6 +22,13 @@
 >   `/missions` lists 5, `/v1/messages` (model grok) runs the real mission, `/run/stream` streams
 >   progress + verified result (the Rooms contract). `FORGE_RUNNER_IMAGE` var bumped.
 >
+> **Known gaps / gotchas (2026-07-17):** `@handle + --container` together is the one UNTESTED combo
+> (verified: `.mcl + --container`, `@handle` in-process). Rooms was verified at the wire
+> (`/run/stream` in-container), not click-through the UI. `az containerapp exec` mangles quoted
+> `--command` — feed stdin via `script -q` PTY + base64'd python. Runner ingress is internal-only.
+> `forge agent start` still runs the CLI image (`ghcr.io/katasec/forge:latest` + `serve`) — migrating
+> it to the converged runner image is a small follow-up, not blocking.
+>
 > Original design below.
 
 > **Design (2026-07-15).** Converge the two serving surfaces onto **one container image** that
