@@ -947,11 +947,15 @@ static async Task<(WebApplication App, string MissionPath, bool AnthropicDoor, b
         return null;
     }
 
+    // kind:search backend (41.2) — same seam as `forge run` and the cloud runner; null when
+    // XAI_API_KEY is unset, so missions without kind:search are unaffected.
+    var webSearch = ProviderClientBuilder.BuildWebSearch();
+
     var anthropicDoor = wire is "both" or "anthropic"
-        ? new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: true)
+        ? new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: true, webSearch: webSearch)
         : null;
     var openAiDoor = wire is "both" or "openai"
-        ? new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: false)
+        ? new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: false, webSearch: webSearch)
         : null;
 
     // Aux passthrough (42.3 §0): client housekeeping (title-gen, state-check) is answered by a

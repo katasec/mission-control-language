@@ -2,6 +2,7 @@ using System.Text.Json;
 using ForgeMission.Cli;
 using ForgeMission.Runner;
 using ForgeMission.Runner.Contracts;
+using ForgeMission.Serve;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -54,6 +55,14 @@ var app = builder.Build();
 
 // Liveness/readiness — ACA probes hit this on the warm runner.
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+// The /v1 wire doors (42.4 task 2): the SAME wire mapping `forge serve` hosts locally, over the
+// same mission registry the /run contract executes — this image IS the one artifact. The wire's
+// model field routes to a mission by label; a single-mission registry answers regardless (the
+// `forge claude --container` case). Unmetered until 42.6 wraps the hosting layer.
+ForgeServe.MapWires(app, "forge-runner",
+    anthropicDoor: new MissionDoorClient(registry, fullConversation: true),
+    openAiDoor:    new MissionDoorClient(registry, fullConversation: false));
 
 // The orchestrator binds only handles whose mission is loadable here (e.g. provider key present).
 app.MapGet("/missions", (RunnerRegistry reg) =>

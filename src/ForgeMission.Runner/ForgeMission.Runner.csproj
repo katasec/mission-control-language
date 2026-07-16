@@ -15,6 +15,7 @@
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Cli\ForgeMission.Cli.csproj" />
     <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
+    <ProjectReference Include="..\ForgeMission.Serve\ForgeMission.Serve.csproj" />
   </ItemGroup>
 
   <ItemGroup>

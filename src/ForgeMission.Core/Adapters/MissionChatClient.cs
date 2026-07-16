@@ -6,6 +6,7 @@ using Microsoft.Extensions.AI;
 using ForgeMission.Core.Experts;
 using ForgeMission.Parser;
 using ForgeMission.Core.Runtime;
+using Scout;
 using MclProgram = ForgeMission.Parser.Program;
 
 namespace ForgeMission.Core.Adapters;
@@ -24,7 +25,8 @@ public sealed class MissionChatClient(
     Dictionary<string, ExpertDefinition> experts,
     IExpertRunner runner,
     bool fullConversation = false,
-    IEnrichmentCache? enrichmentCache = null) : IChatClient
+    IEnrichmentCache? enrichmentCache = null,
+    IWebSearch? webSearch = null) : IChatClient
 {
     private readonly IEnrichmentCache _enrichmentCache = enrichmentCache ?? new InMemoryEnrichmentCache();
 
@@ -44,7 +46,7 @@ public sealed class MissionChatClient(
         CancellationToken ct = default)
     {
         var runOptions = await BuildOptionsAsync(messages, stepWriter: null, contentWriter: null, options, ct);
-        var result     = await new PipelineRunner(runner).RunAsync(ast, experts, runOptions, ct);
+        var result     = await new PipelineRunner(runner, webSearch: webSearch).RunAsync(ast, experts, runOptions, ct);
 
         if (result.Status == MissionStatus.Fail)
             throw new InvalidOperationException($"Mission failed: {result.FailReason}");
@@ -80,7 +82,7 @@ public sealed class MissionChatClient(
         {
             try
             {
-                var result = await new PipelineRunner(runner).RunAsync(ast, experts, runOptions, ct);
+                var result = await new PipelineRunner(runner, webSearch: webSearch).RunAsync(ast, experts, runOptions, ct);
                 if (result.Status == MissionStatus.Fail)
                     channel.Writer.TryComplete(
                         new InvalidOperationException($"Mission failed: {result.FailReason}"));
