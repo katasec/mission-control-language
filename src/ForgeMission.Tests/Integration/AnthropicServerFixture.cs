@@ -23,10 +23,11 @@ internal sealed class AnthropicServerFixture : IAsyncDisposable
 
     public static async Task<AnthropicServerFixture> StartAsync(
         IChatClient chatClient,
-        string modelId = "forge")
+        string modelId = "forge",
+        IChatClient? auxClient = null)
     {
         var port    = FindFreePort();
-        var server  = new AnthropicServer(chatClient, modelId);
+        var server  = new AnthropicServer(chatClient, modelId, auxClient);
         var builder = WebApplication.CreateSlimBuilder();
         builder.WebHost.UseSetting("urls", $"http://127.0.0.1:{port}");
         builder.Logging.ClearProviders();

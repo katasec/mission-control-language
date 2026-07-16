@@ -23,4 +23,10 @@ public record PipelineRunOptions(
     // Client-declared tools (Phase 42.3), already allowlist-filtered at the wire. They attach to
     // the `role: agent` expert's provider call ONLY; a tool call from it ends the run immediately
     // (the client executes and continues with a fresh request).
-    IList<AITool>? Tools = null);
+    IList<AITool>? Tools = null,
+    // Tool continuation (42.3 three-segment rule): skip the pre-agent segment and start at the
+    // `role: agent` step — its enrichment context was restored from the cache into Vars.
+    bool StartAtAgent = false,
+    // Fired once per run, just before the agent step, with the string-valued context snapshot —
+    // the caller (MissionChatClient) stores it in the enrichment cache keyed by prefix hash P.
+    Action<IReadOnlyDictionary<string, string>>? OnPreAgentComplete = null);

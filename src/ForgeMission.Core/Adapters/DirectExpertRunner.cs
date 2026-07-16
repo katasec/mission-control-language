@@ -76,6 +76,15 @@ Respond with this exact JSON format and nothing else — status must always be "
         {
             options.Tools          = tools;
             options.ResponseFormat = null;
+
+            // Drive the tool loop on the NATIVE conversation (prior tool_use/tool_result included)
+            // so the provider model can continue its own loop across continuations. The client's
+            // system prompt is replaced by the expert's — the mission is the brain.
+            if (context.TryGetValue("conversation", out var c) && c is Conversation conversation)
+            {
+                messages = [new ChatMessage(ChatRole.System, systemPrompt)];
+                messages.AddRange(conversation.Messages.Where(m => m.Role != ChatRole.System));
+            }
         }
 
         var response = await chatClient.GetResponseAsync(messages, options, cancellationToken: ct);

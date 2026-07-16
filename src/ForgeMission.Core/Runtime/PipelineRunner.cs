@@ -81,9 +81,23 @@ public class PipelineRunner
                 .OfType<StepElement>()
                 .Any(e => e.Step.When is ElseWhen);
 
+            // Tool continuation (42.3): pre-agent already ran on the original user turn and its
+            // outputs were restored from the enrichment cache — resume at the agent step.
+            var skipPreAgent = options.StartAtAgent;
+
             foreach (var element in mission.Pipeline.Elements)
             {
                 ct.ThrowIfCancellationRequested();
+
+                if (skipPreAgent)
+                {
+                    if (element is StepElement pre
+                        && experts.TryGetValue(pre.Step.ExpertName, out var preExpert)
+                        && preExpert.IsAgent)
+                        skipPreAgent = false;   // reached the agent segment — run from here
+                    else
+                        continue;               // pre-agent element: skip (cache restored its outputs)
+                }
 
                 if (element is ParallelElement parallel)
                 {
@@ -248,6 +262,11 @@ public class PipelineRunner
         if (options.StepWriter is { } sw)
             await sw.WriteLineAsync($"→ {step.ExpertName}...");
 
+        // Reached the agent segment on a fresh user turn: hand the caller the pre-agent output
+        // for the enrichment cache (42.3 §3) — continuations restore it instead of re-running.
+        if (expert.IsAgent && !options.StartAtAgent)
+            options.OnPreAgentComplete?.Invoke(StringSnapshot(context));
+
         // Client tools attach to the agent expert's call only (42.3) — enrichment and
         // verification experts never see them. Rides the context bag like everything else.
         if (expert.IsAgent && options.Tools is { Count: > 0 })
@@ -366,6 +385,12 @@ public class PipelineRunner
 
         return (null, namedKey, envelope.Text);
     }
+
+    // The restorable slice of the context bag: string values only. Structured objects
+    // (conversation/system/tools) are re-derived from the request on every call.
+    private static Dictionary<string, string> StringSnapshot(Dictionary<string, object> context)
+        => context.Where(kv => kv.Value is string)
+                  .ToDictionary(kv => kv.Key, kv => (string)kv.Value, StringComparer.Ordinal);
 
     private static bool TryParseDouble(object? value, out double result)
     {
