@@ -1,0 +1,56 @@
+{
+  "model": "claude-sonnet-4-6",
+  "max_tokens": 32000,
+  "system": [
+    {
+      "type": "text",
+      "text": "x-anthropic-billing-header: cc_version=2.1.195.xxx; cc_entrypoint=claude-desktop;"
+    },
+    {
+      "type": "text",
+      "text": "You are a Claude agent, built on Anthropic's Claude Agent SDK."
+    },
+    {
+      "type": "text",
+      "text": "Generate a concise, sentence-case title (3-7 words) that captures the main topic or goal of this coding session. The title should be clear enough that the user recognizes the session in a list. Use sentence case: capitalize only the first word and proper nouns\n[sanitized: 1,190 chars in the live capture \u2014 title-gen task instruction]"
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<session>\nRead the file /var/folders/ab/c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5/T/forge-probe.txt and tell me the magic word.\n</session>\n\nWrite the title in the language the user wrote in, regardless of the language of the examples above."
+        }
+      ]
+    }
+  ],
+  "temperature": 1,
+  "thinking": {
+    "type": "disabled"
+  },
+  "output_config": {
+    "effort": "high",
+    "format": {
+      "type": "json_schema",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "metadata": {
+    "user_id": "user_0000000000000000000000000000000000000000000000000000000000000000_account_00000000-0000-0000-0000-000000000000_session_00000000-0000-0000-0000-000000000000"
+  },
+  "stream": true,
+  "tools": []
+}

@@ -1,0 +1,26 @@
+{
+  "model": "claude-sonnet-4-6",
+  "max_tokens": 1024,
+  "system": [
+    {
+      "type": "text",
+      "text": "x-anthropic-billing-header: cc_version=2.1.195.xxx; cc_entrypoint=claude-desktop;"
+    },
+    {
+      "type": "text",
+      "text": "A user kicked off a Claude Code agent to do a coding task and walked away. Read the tail of what the agent just said and decide which of four states it's in, so the system knows whether to notify the user.\n\nThe classification drives a phone notification: \"blocked\" pings the user to come back; everyt\n[sanitized: 16,195 chars in the live capture \u2014 agent-state classification instruction]"
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Current state: working (for 0m)\nTool calls so far: none\nUser's most recent ask: \"Read the file /var/folders/ab/c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5/T/forge-probe.txt and tell me the magic word.\"\n\nAssistant message tail (last 133 chars):\nI cannot access the file at that path directly. If you can provide the contents of the file, I can help you determine the magic word."
+    }
+  ],
+  "thinking": {
+    "type": "disabled"
+  },
+  "metadata": {
+    "user_id": "user_0000000000000000000000000000000000000000000000000000000000000000_account_00000000-0000-0000-0000-000000000000_session_00000000-0000-0000-0000-000000000000"
+  }
+}

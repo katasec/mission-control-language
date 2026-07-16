@@ -130,7 +130,16 @@ CLASSIFIER           ── structural metadata ONLY, never prompt-text sniffing
 | **probe** (`HEAD /`) | method + path | static `200` — no model involved (the CLI probes before first use) |
 | **title-gen** | `output_config.format` = `{title}` schema + `tools: 0` | **passthrough** to the underlying provider model — a tiny call that returns exactly the schema the CLI demands; sessions get real titles |
 | **unknown structured-output** | `output_config.format` present + `tools: 0`, schema unrecognized | **default = passthrough** — CLI housekeeping we haven't cataloged yet degrades gracefully instead of breaking on canned guesses |
+| **state-check** (agent-state classification) | `thinking: disabled` + `tools: 0` (NO `output_config.format`!) | **passthrough** — see fixture evidence below |
 | *future types (compaction, summaries, …)* | added per capture evidence | each gets its own registered handler |
+
+> **Fixture evidence (2026-07-16 capture, checked in as `aux-state-check.json`):** the CLI's CALL 4 is an
+> agent-state classification call ("read the tail of what the agent said, decide which of four states…") with
+> `tools: 0`, `thinking: disabled`, `max_tokens: 1024`, non-streaming — but **no `output_config.format`**, so
+> the original format-based rule misses it and it would run the full mission. Amended rule (structural only):
+> **`tools: 0` AND `thinking` present-with-`disabled` ⇒ aux.** The `thinking` clause is what protects plain
+> API clients (curl/python/42.1-style callers): they omit the `thinking` field entirely, so they still
+> classify as MISSION. The CLI always sends `thinking` (adaptive on real turns, disabled on housekeeping).
 
 **Naming (decided):** the category is **`aux`** — broad enough for types that aren't housekeeping, defined
 relative to the core (auxiliary *to the mission*), and it avoids "meta", which would collide with the
