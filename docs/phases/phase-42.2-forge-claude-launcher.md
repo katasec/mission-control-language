@@ -33,6 +33,8 @@
 >    `role: agent` terminal expert, so tools never attach (`@chatgpt`/`@grok`/… won't Read/Edit/Bash).
 >    **Follow-up queued:** republish the built-ins with `role: agent` (+ finding-1's explore-first
 >    guidance) and bump the pinned digests in `BuiltinMissions` (now in `ForgeMission.Cli`).
+>    **→ DONE 2026-07-17 (42.4 task 4):** all 5 built-ins republished as 0.2.0, digests re-pinned;
+>    `forge claude @chatgpt -p` live-verified a real Bash tool round-trip.
 > 3. Non-issue: claude's MCP-server approval prompt on first launch is claude's own; MCP tools are
 >    allowlist-filtered and never reach the mission's model regardless of the user's choice.
 >

@@ -1,6 +1,30 @@
 # Phase 42.4 — One `/v1` image: Docker ≡ ACA
 
-> **Status: Design (2026-07-15).** Converge the two serving surfaces onto **one container image** that
+> **Status: DONE (2026-07-17). All 5 tasks live-verified; quick win (role:agent built-ins) folded in.**
+>
+> - **Task 1** — `ForgeMission.Serve` lib: `ForgeServe.BuildApp`/`MapWires` converge both wire servers
+>   onto ONE app (+ `/health`); `forge serve` defaults to BOTH wires (`wire:` is now a disable switch);
+>   AOT publish clean; `ConvergedServeTests` + live curl of every door on one port.
+> - **Task 2** — runner maps the `/v1` doors via `MapWires` next to `/run`/`/run/stream`.
+>   `MissionDoorClient` routes the wire's `model` field to a mission by label (`"grok"`/`"@ChatGPT"`
+>   verified; unknown → clear error); single-mission registry answers regardless (claude CLI case).
+>   Needed Katasec.\*Server **0.1.7** (ModelId propagation, published). Bonus fix: `MissionChatClient`
+>   gained the `IWebSearch` seam — `kind: search` previously hard-failed through every wire door.
+> - **Task 3** — `forge claude --container` runs the runner image in **local-mission mode**
+>   (`MissionFile` env → serve exactly the mounted mission, no built-ins); no more synthesized
+>   agent.yaml / CLI-image fork. Live-verified end-to-end incl. teardown.
+> - **Task 4** — `forge-runner-image.yml` also pushes **public `ghcr.io/katasec/forge-runner`**
+>   (multi-arch: amd64 for ACA, arm64 for Apple-Silicon `--container`; anonymous pull verified).
+>   Quick win: all 5 built-ins republished as `forge-mission-*:0.2.0` with `role: agent` terminal
+>   experts + explore-first guidance; digests re-pinned; `forge claude @chatgpt -p` ran a real Bash
+>   tool round-trip (previously chat-only).
+> - **Task 5** — `ca-forge-runner-dev` rolled to **0.8.0 (rev --0000011)**; on the SAME revision:
+>   `/missions` lists 5, `/v1/messages` (model grok) runs the real mission, `/run/stream` streams
+>   progress + verified result (the Rooms contract). `FORGE_RUNNER_IMAGE` var bumped.
+>
+> Original design below.
+
+> **Design (2026-07-15).** Converge the two serving surfaces onto **one container image** that
 > exposes `/v1/messages` **and** `/v1/responses`, scheduled identically on local Docker and Azure Container
 > Apps. This is what makes `local ≡ cloud` *literally the same artifact* rather than two things that behave
 > alike — and it turns "host it" into scheduling + auth, not a rewrite.
