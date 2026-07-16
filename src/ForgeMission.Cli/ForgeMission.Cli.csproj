@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
+    <!-- Interim ProjectReference (42.1) — publish as NuGet + bump when the wire stabilises. -->
+    <ProjectReference Include="..\..\..\oai-server-dotnet\src\Katasec.AnthropicServer\Katasec.AnthropicServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

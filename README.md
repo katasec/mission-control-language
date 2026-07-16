@@ -430,6 +430,17 @@ forge serve path/to/agent.yaml
 
 `forge serve` exposes the pipeline as an endpoint conforming to the OpenAI wire protocol — the de facto integration standard for AI services. Any client or framework that already speaks this format can call a forge mission with no migration cost and no new SDK.
 
+It can also speak the **Anthropic wire** (`POST /v1/messages`), so Anthropic-native clients — including the `claude` CLI via `ANTHROPIC_BASE_URL` — can point at a forge mission directly. Select the wire in `agent.yaml`:
+
+```yaml
+mission: mission.mcl
+port: 8080
+id: my-agent
+wire: anthropic     # default: openai
+```
+
+On the Anthropic wire the mission receives the **full conversation**, not just the last user message: the context bag gains `conversation` (structured messages — interpolate `{{conversation}}` for a transcript), `system` (effective system instructions), and `goal` (the latest user intent — the last text block of the last user message).
+
 ```python
 # Python — call a forge mission like any other OAI-compatible service
 import requests

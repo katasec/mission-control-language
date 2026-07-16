@@ -1,0 +1,98 @@
+{
+  "model": "claude-sonnet-4-6",
+  "max_tokens": 32000,
+  "system": [
+    {
+      "type": "text",
+      "text": "x-anthropic-billing-header: cc_version=2.1.195.xxx; cc_entrypoint=cli"
+    },
+    {
+      "type": "text",
+      "text": "You are a Claude agent, built on Anthropic's Claude Agent SDK."
+    },
+    {
+      "type": "text",
+      "text": "You are an interactive agent that helps users with software engineering tasks. [sanitized: full CLI system prompt elided \u2014 28k chars in the live capture]",
+      "cache_control": {
+        "type": "ephemeral"
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "<system-reminder>\nAvailable agent types for the Agent tool:\n- claude: Catch-all for any task. (Tools: *)\n- Explore: Read-only search agent.\n[sanitized: 2,238 chars of agent-type scaffolding in the live capture]\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "<system-reminder>\nThe following skills are available for use with the Skill tool:\n- checkpoint: Session-continuity handoff.\n[sanitized: 4,941 chars of skill listings in the live capture]\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "<system-reminder>\nAs you answer the user's questions, you can use the following context:\n# claudeMd\n[sanitized: 16,771 chars of memory/CLAUDE.md context in the live capture]\nIMPORTANT: this context may or may not be relevant to your tasks.\n</system-reminder>"
+        },
+        {
+          "type": "text",
+          "text": "Read the file /var/folders/ab/c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5/T/forge-probe.txt and tell me the magic word.",
+          "cache_control": {
+            "type": "ephemeral"
+          }
+        }
+      ]
+    }
+  ],
+  "temperature": 1,
+  "thinking": {
+    "type": "adaptive"
+  },
+  "context_management": {
+    "edits": [
+      {
+        "type": "clear_thinking_20251015",
+        "keep": "all"
+      }
+    ]
+  },
+  "output_config": {
+    "effort": "high"
+  },
+  "metadata": {
+    "user_id": "user_0000000000000000000000000000000000000000000000000000000000000000_account_00000000-0000-0000-0000-000000000000_session_00000000-0000-0000-0000-000000000000"
+  },
+  "stream": true,
+  "tools": [
+    {
+      "name": "Bash",
+      "description": "Executes a bash command. [sanitized]",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "command"
+        ]
+      }
+    },
+    {
+      "name": "Read",
+      "description": "Reads a file. [sanitized]",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_path"
+        ]
+      }
+    }
+  ]
+}

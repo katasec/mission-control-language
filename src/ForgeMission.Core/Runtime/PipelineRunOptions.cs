@@ -15,4 +15,7 @@ public record PipelineRunOptions(
     // Fired for each sub-search a kind:search backend narrates while a single search step runs (41.7
     // Task 2) — e.g. Grok's per-query web_search_call actions. Fills the long search step with live
     // detail; backends that can't narrate simply never call it.
-    Action<WebSearchProgress>? OnSearchProgress = null);
+    Action<WebSearchProgress>? OnSearchProgress = null,
+    // Structured objects seeded into the context bag alongside Vars (Phase 42.1) — e.g. the full
+    // client Conversation. The bag is untyped but not stringly-typed: real objects go in as-is.
+    IReadOnlyDictionary<string, object>? ContextObjects = null);

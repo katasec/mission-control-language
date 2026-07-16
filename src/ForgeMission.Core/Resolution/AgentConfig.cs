@@ -9,6 +9,8 @@ public class AgentConfig
     public string Mission { get; set; } = "mission.mcl";
     public int    Port    { get; set; } = 8080;
     public string Id      { get; set; } = "forge-agent";
+    // Which API shape to serve: "openai" (/v1/chat/completions) or "anthropic" (/v1/messages).
+    public string Wire    { get; set; } = "openai";
 }
 
 public static class AgentConfigLoader

@@ -42,8 +42,120 @@ public sealed class ClaudeCodeTests
     }
 
     // ------------------------------------------------------------------
+    // Live: Claude Code CLI → REAL `forge serve` (Anthropic wire) → mission (42.1)
+    //
+    // Two turns where turn 2 depends on turn 1 — provable only if the FULL
+    // conversation reaches the mission (context["conversation"]), not just
+    // the last user message. This is 42.1's "Done when".
+    // ------------------------------------------------------------------
+    [SkippableFact]
+    [Trait("Category", "Integration")]
+    public async Task ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire()
+    {
+        var apiKey = Environment.GetEnvironmentVariable("MCL_API_KEY");
+        Skip.If(string.IsNullOrWhiteSpace(apiKey), "MCL_API_KEY not set");
+        Skip.If(!IsOnPath("claude"),               "'claude' not found on PATH");
+
+        var missionDir = CopyMissionToTemp("converse");
+        var port       = FindFreePort();
+        await File.WriteAllTextAsync(Path.Combine(missionDir, "agent.yaml"), $"""
+            mission: mission.mcl
+            id: converse
+            port: {port}
+            wire: anthropic
+            """);
+
+        using var serve = StartForgeServe(missionDir);
+        try
+        {
+            await WaitUntilListeningAsync($"http://localhost:{port}/", timeoutMs: 30_000);
+
+            var (exit1, stdout1, stderr1) = await RunClaudeAsync(
+                prompt:    "Remember this secret word: PLATYPUS. Confirm briefly that you saved it.",
+                baseUrl:   $"http://localhost:{port}",
+                apiKey:    "dummy-forge-ignores-this",
+                timeoutMs: 120_000);
+            Assert.True(exit1 == 0, $"turn 1: claude exited {exit1}.\nSTDOUT: {stdout1}\nSTDERR: {stderr1}");
+            var sessionId = JsonDocument.Parse(stdout1).RootElement.GetProperty("session_id").GetString();
+            Assert.False(string.IsNullOrWhiteSpace(sessionId), "turn 1 returned no session_id");
+
+            var (exit2, stdout2, stderr2) = await RunClaudeAsync(
+                prompt:    "What was the secret word I asked you to remember? Reply with just the word.",
+                baseUrl:   $"http://localhost:{port}",
+                apiKey:    "dummy-forge-ignores-this",
+                timeoutMs: 120_000,
+                resumeSessionId: sessionId);
+            Assert.True(exit2 == 0, $"turn 2: claude exited {exit2}.\nSTDOUT: {stdout2}\nSTDERR: {stderr2}");
+
+            var reply = JsonDocument.Parse(stdout2).RootElement.GetProperty("result").GetString() ?? string.Empty;
+            Assert.Contains("PLATYPUS", reply, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (!serve.HasExited) serve.Kill(entireProcessTree: true);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
+
+    // The CLI's build output, guaranteed fresh by the ReferenceOutputAssembly=false
+    // ProjectReference: swap this test assembly's project segment for the CLI's.
+    private static string ForgeDllPath()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory.Replace("ForgeMission.Tests", "ForgeMission.Cli"), "forge.dll");
+        Assert.True(File.Exists(path), $"forge.dll not found at {path} — build ForgeMission.Cli first");
+        return path;
+    }
+
+    private static Process StartForgeServe(string missionDir)
+    {
+        var psi = new ProcessStartInfo("dotnet", $"\"{ForgeDllPath()}\" serve agent.yaml")
+        {
+            WorkingDirectory       = missionDir,
+            RedirectStandardOutput = true,
+            RedirectStandardError  = true,
+            UseShellExecute        = false,
+        };
+        var proc = Process.Start(psi)!;
+        proc.OutputDataReceived += (_, _) => { };
+        proc.ErrorDataReceived  += (_, _) => { };
+        proc.BeginOutputReadLine();
+        proc.BeginErrorReadLine();
+        return proc;
+    }
+
+    private static async Task WaitUntilListeningAsync(string url, int timeoutMs)
+    {
+        using var http = new HttpClient();
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                var response = await http.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
+                if (response.IsSuccessStatusCode) return;
+            }
+            catch (HttpRequestException) { /* not up yet */ }
+            await Task.Delay(250);
+        }
+        throw new TimeoutException($"forge serve did not start listening at {url} within {timeoutMs}ms");
+    }
+
+    private static string CopyMissionToTemp(string missionName)
+    {
+        var source = Path.Combine(AppContext.BaseDirectory, "Missions", missionName);
+        var target = Path.Combine(Path.GetTempPath(), $"forge-test-{missionName}-{Guid.NewGuid():N}");
+        foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+        {
+            var dest = Path.Combine(target, Path.GetRelativePath(source, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            File.Copy(file, dest);
+        }
+        return target;
+    }
 
     // Direct client preserves the full conversation history so claude CLI's
     // multi-turn internal reasoning (title generation, state tracking, etc.) works.
@@ -56,9 +168,11 @@ public sealed class ClaudeCodeTests
         string prompt,
         string baseUrl,
         string apiKey,
-        int timeoutMs)
+        int timeoutMs,
+        string? resumeSessionId = null)
     {
-        var psi = new ProcessStartInfo("claude", $"-p \"{prompt}\" --output-format json")
+        var resume = resumeSessionId is null ? string.Empty : $"--resume {resumeSessionId} ";
+        var psi = new ProcessStartInfo("claude", $"-p {resume}\"{prompt}\" --output-format json")
         {
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
@@ -78,6 +192,15 @@ public sealed class ClaudeCodeTests
         if (!finished) { proc.Kill(); throw new TimeoutException("claude CLI timed out"); }
 
         return (proc.ExitCode, stdout, stderr);
+    }
+
+    private static int FindFreePort()
+    {
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
     }
 
     private static bool IsOnPath(string binary) =>

@@ -64,7 +64,7 @@ public class PipelineRunner
             if (options.StepWriter is { } sw && maxLoops > 1)
                 await sw.WriteLineAsync($"(attempt {attempt}/{maxLoops})");
 
-            var context = ContextBuilder.Seed(ast, options.Vars);
+            var context = ContextBuilder.Seed(ast, options.Vars, options.ContextObjects);
             context["attempt"]   = attempt.ToString();
             context["max_loops"] = maxLoops.ToString();
             if (loopFeedback is not null)

@@ -24,6 +24,9 @@
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />
     <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
+    <!-- Build-ordering only (42.1): integration tests spawn the REAL `forge serve` from the
+         CLI's own output dir; not compile-referenced (its top-level Program would collide). -->
+    <ProjectReference Include="..\ForgeMission.Cli\ForgeMission.Cli.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\..\..\progs\oai-server-dotnet\src\Katasec.OaiServer\Katasec.OaiServer.csproj" />
     <ProjectReference Include="..\..\..\..\progs\oai-server-dotnet\src\Katasec.AnthropicServer\Katasec.AnthropicServer.csproj" />
   </ItemGroup>
@@ -38,6 +41,7 @@
 
   <ItemGroup>
     <None Include="Missions/**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

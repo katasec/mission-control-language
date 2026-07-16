@@ -6,7 +6,8 @@ public static class ContextBuilder
 {
     public static Dictionary<string, object> Seed(
         Program ast,
-        IReadOnlyDictionary<string, string>? vars = null)
+        IReadOnlyDictionary<string, string>? vars = null,
+        IReadOnlyDictionary<string, object>? objects = null)
     {
         var context = new Dictionary<string, object>(StringComparer.Ordinal);
 
@@ -17,6 +18,10 @@ public static class ContextBuilder
 
         if (vars is not null)
             foreach (var (key, value) in vars)
+                context[key] = value;
+
+        if (objects is not null)
+            foreach (var (key, value) in objects)
                 context[key] = value;
 
         return context;

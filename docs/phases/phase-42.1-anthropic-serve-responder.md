@@ -1,6 +1,17 @@
 # Phase 42.1 — Anthropic `serve` + full-conversation responder
 
-> **Status: Design (2026-07-15).** Make `forge serve` speak the **Anthropic `/v1/messages`** wire (not just
+> **Status: DONE (2026-07-16).** All 6 tasks built and verified. Live evidence: `ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire`
+> (real `claude` CLI → real `forge serve` spawned as a process, Anthropic wire, throwaway `converse` mission —
+> turn 2 recalled a secret word from turn 1, proving full-history handoff) + `ClaudeCode_LiveRoundTrip` still green
+> (no OpenAI-path regression). Goal extraction unit-tested against the sanitized 4-block wire fixture
+> (`src/ForgeMission.Tests/Fixtures/anthropic-wire/main-loop-4-block-user.json`, goal = the 106-char prompt).
+> Suite 230 pass / 0 warnings; AOT publish clean. Implementation notes vs the design below:
+> `Katasec.AnthropicServer` 0.1.1 consumed via ProjectReference (NuGet publish deferred); its `BuildChatHistory`
+> now preserves block boundaries (one `AIContent` per block, incl. `tool_use`/`tool_result` shapes) and is public;
+> `HEAD /` answers 200. Context bag carries a `Conversation` object — structured `Messages` for 42.3,
+> transcript via `ToString()` for `{{conversation}}` interpolation.
+>
+> Original design brief: Make `forge serve` speak the **Anthropic `/v1/messages`** wire (not just
 > the OpenAI shape) so the real `claude` CLI can point at a local forge mission, and make the mission
 > receive the **whole conversation** instead of only the last user message. This is the smallest possible
 > end-to-end slice: *chat with a mission through Claude Code*, no tool-calling yet. Local, open source.

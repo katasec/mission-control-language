@@ -11,6 +11,7 @@ using OpenAI;
 using System.ClientModel;
 using Katasec.OciClient;
 using Katasec.OaiServer;
+using Katasec.AnthropicServer;
 using Spectre.Console;
 using ForgeMission.Cli.Docker;
 using MclProgram = ForgeMission.Parser.Program;
@@ -494,14 +495,28 @@ static Command BuildServeCommand()
             ? dr
             : serveRunners.Values.First();
 
-        var missionClient = new MissionChatClient(ast, expertDefs, defaultRunner);
-        var app           = OaiServer.Build(missionClient, config.Id, config.Port);
+        // Wire selector (42.1): the Anthropic wire hands the mission the FULL conversation
+        // (context["conversation"]/["system"], goal = last text block of the last user message);
+        // the OpenAI wire keeps the legacy last-turn behaviour so existing users don't regress.
+        var anthropicWire = string.Equals(config.Wire, "anthropic", StringComparison.OrdinalIgnoreCase);
+        var missionClient = new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: anthropicWire);
+        var app           = anthropicWire
+            ? AnthropicServer.Build(missionClient, config.Id, config.Port)
+            : OaiServer.Build(missionClient, config.Id, config.Port);
 
         Console.Error.WriteLine($"forge serve — agent '{config.Id}' listening on http://0.0.0.0:{config.Port}");
         Console.Error.WriteLine($"  mission  : {missionPath}");
-        Console.Error.WriteLine($"  endpoints: POST /v1/chat/completions  (chat, streaming)");
-        Console.Error.WriteLine($"             POST /v1/responses          (responses API, streaming)");
-        Console.Error.WriteLine($"             GET  /v1/models");
+        Console.Error.WriteLine($"  wire     : {(anthropicWire ? "anthropic" : "openai")}");
+        if (anthropicWire)
+        {
+            Console.Error.WriteLine($"  endpoints: POST /v1/messages  (messages API, streaming + non-streaming)");
+        }
+        else
+        {
+            Console.Error.WriteLine($"  endpoints: POST /v1/chat/completions  (chat, streaming)");
+            Console.Error.WriteLine($"             POST /v1/responses          (responses API, streaming)");
+            Console.Error.WriteLine($"             GET  /v1/models");
+        }
 
         try
         {
