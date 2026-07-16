@@ -106,6 +106,77 @@ public sealed class ThreeSegmentExecutorTests
     }
 
     // ------------------------------------------------------------------
+    // Repair loop: a failing Verify re-enters the agent segment, which may
+    // emit a NEW tool_use — a re-entrant loop, not a one-way pipeline.
+    // ------------------------------------------------------------------
+    [Fact]
+    public async Task FailingVerify_ReentersAgentSegment_WhichCanEmitANewToolUse()
+    {
+        var repairAst = MclParser.Parse("""
+            mission Task(goal) loop(2) = {
+                Respond
+                -> Verify
+            }
+            output(Task)
+            """);
+        var experts = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal)
+        {
+            ["Respond"] = new("Respond", "any", "text", "RESPOND-PROMPT", Role: "agent"),
+            ["Verify"]  = new("Verify",  "any", "text", "VERIFY-PROMPT",  Role: "judge"),
+        };
+
+        var provider = new RepairLoopClient();
+        var mission  = new MissionChatClient(repairAst, experts, new DirectExpertRunner(provider), fullConversation: true);
+
+        // Continuation: agent answers → Verify FAILS → loop re-enters the agent segment,
+        // which asks for another tool → the tool_use returns to the client.
+        var response = await mission.GetResponseAsync(Continuation(), Tools());
+
+        var call = Assert.Single(response.Messages.Single().Contents.OfType<FunctionCallContent>());
+        Assert.Equal("toolu_repair_1", call.CallId);
+        Assert.Equal(2, provider.AgentCalls);    // re-entered after the failed verification
+        Assert.Equal(1, provider.VerifyCalls);
+    }
+
+    private sealed class RepairLoopClient : IChatClient
+    {
+        public int AgentCalls  { get; private set; }
+        public int VerifyCalls { get; private set; }
+
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken ct = default)
+        {
+            var system = messages.FirstOrDefault(m => m.Role == ChatRole.System)?.Text ?? "";
+
+            if (system.Contains("VERIFY-PROMPT"))
+            {
+                VerifyCalls++;
+                return Task.FromResult(new ChatResponse([new ChatMessage(ChatRole.Assistant,
+                    """{"text": "not grounded", "status": "fail", "reason": "answer lacks a source"}""")]));
+            }
+
+            AgentCalls++;
+            var reply = AgentCalls == 1
+                ? new ChatMessage(ChatRole.Assistant, "ungrounded answer")
+                : new ChatMessage(ChatRole.Assistant,
+                    [new FunctionCallContent("toolu_repair_1", "Read",
+                        new Dictionary<string, object?> { ["file_path"] = "/tmp/source.txt" })]);
+            return Task.FromResult(new ChatResponse([reply]));
+        }
+
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            [EnumeratorCancellation] CancellationToken ct = default)
+        {
+            var response = await GetResponseAsync(messages, options, ct);
+            yield return new ChatResponseUpdate(ChatRole.Assistant, response.Text);
+        }
+
+        public void Dispose() { }
+        public object? GetService(Type serviceType, object? key = null) => null;
+    }
+
+    // ------------------------------------------------------------------
     // Conversation identity (P/F) sanity
     // ------------------------------------------------------------------
     [Fact]

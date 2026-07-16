@@ -1,6 +1,36 @@
 # Phase 42.3 — Tool-capable enriching responder (the load-bearing seam)
 
-> **Status: Design (2026-07-15).** Make the mission a **tool-capable responder that enriches** — so Claude
+> **Status: DONE (2026-07-16).** All 10 tasks (0–9) built and verified — the Done-when passed LIVE:
+> `ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission` drives the real `claude` CLI through a real
+> spawned `forge serve` (Anthropic wire, `agentic` mission Enrich→Respond(`role: agent`)→Verify) — the
+> planted magic word arrived **only** via a real tool round-trip, the answer carries the `VERIFIED:` stamp
+> (post-agent ran on the final continuation), and the enrich counter file reads exactly 1. CI role:
+> `MockClaudeHostTests` (mock host that EXECUTES Read calls; chained two-hop plant) gates every commit.
+> Unit rails: `ThreeSegmentExecutorTests` (enrich-once, verify-on-final-continuation, cache-miss
+> regrounding, repair-loop re-entry emitting a new `tool_use`, P/F hash sanity, duplicate counter),
+> `RequestClassifierTests` (fixture-regression + HTTP dispatch), `ToolMappingTests`, `AnthropicServerToolTests`
+> (wire-level tool_use non-streaming + SSE). Suites: MCL 255 pass / oai-server 28 pass, zero warnings.
+>
+> **Implementation notes vs the design below (deviations + live findings):**
+> - **Agent marker:** `role: agent` frontmatter (Phase 25a `role: judge` precedent) — explicit opt-in, not
+>   last-step convention. Tools attach to that expert's provider call only; PipelineRunner short-circuits on
+>   its tool call; `MissionResult.ToolCalls` carries `FunctionCallContent` to the wire.
+> - **Enrichment cache seam:** OaiServer's `ISessionStore` is OaiMessage-typed (wrong shape) — the cache got
+>   its own neutral seam `IEnrichmentCache` (+ `InMemoryEnrichmentCache`, TTL + bounded) in ForgeMission.Core;
+>   42.6 swaps in a shared store.
+> - **Classifier rule amended from fixture evidence** (aux-state-check.json): `tools: 0` + `thinking: disabled`
+>   ⇒ aux housekeeping — the CLI's state-check call has NO `output_config.format`. Plain API clients omit
+>   `thinking` entirely and stay Mission.
+> - **Live finding (task 8): tool_result role mapping** — the Anthropic wire packs `tool_result` into USER
+>   messages; providers 400 unless they arrive as TOOL-role messages. `BuildChatHistory` splits them out.
+> - **Live finding: `claude -p` denies file tools by default** — the authoritative test passes
+>   `--dangerously-skip-permissions`; 42.2's launcher UX should surface this.
+> - **`duplicate_continuation` observed value: 0 in all live runs** (counter fires only in the synthetic
+>   duplicate test). Per §4: the machinery was not warranted — replay stays unbuilt.
+> - `forge serve` wires an aux passthrough `IChatClient` from the default provider profile; without one,
+>   aux gets canned replies (never the mission). `Katasec.AnthropicServer` 0.1.6 published (lockstep 0.1.6).
+>
+> Original design brief (2026-07-15): Make the mission a **tool-capable responder that enriches** — so Claude
 > Code stays a *real coding agent* (Read/Edit/Bash) while the mission remains the brain. The LLM lives
 > *inside* the mission as a **tool-capable terminal expert**; the mission enriches (retrieval, guards) once
 > per user turn, the expert drives the tool loop with the client, then the mission verifies. This is the
