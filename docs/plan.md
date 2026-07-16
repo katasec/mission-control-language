@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Build [42.4 — container convergence](phases/phase-42.4-container-convergence.md)** (one `/v1` image, Docker ≡ ACA — also unblocks `forge claude --container` verification), or jump to [42.5/42.6](phases/phase-42.5-platform-identity-keys.md) (hosted). |
+| **NEXT STEP** | **Build [42.4 — container convergence](phases/phase-42.4-container-convergence.md)** (one `/v1` image, Docker ≡ ACA — also unblocks `forge claude --container` verification), or jump to [42.5/42.6](phases/phase-42.5-platform-identity-keys.md) (hosted). Quick win queued: republish built-ins with `role: agent` so `@grok`/`@chatgpt` are agentic through `forge claude` ([42.2 dogfood findings](phases/phase-42.2-forge-claude-launcher.md)). |
 | **Phase 42 — Forge Cloud** | **42.1 ✅ + 42.3 ✅ + 42.2 ✅ DONE 2026-07-16** — the local leg is complete: `forge claude [@handle\|.mcl] [-p …]` serves the mission (Anthropic wire, tools round-trip) and launches wired claude, one command, verified live incl. the AOT binary. `--container` awaits 42.4's image. [Hub](phases/phase-42-forge-cloud.md). |
 | **Phase 41 — Scout** | Live (`forge-runner:0.7.0` / `forge-ui:0.4.2`). Remaining: Task 7 (search-front `@openai`/`@claude`/`@assistant`). Branch `phase-41.1-grok-web-search` unmerged. |
 | **Spend hole (Ph. 39)** | Known + accepted at F&F scale; Cloudflare rate limit = 42.6 launch gate ([42.6 task 3](phases/phase-42.6-hosted-endpoint-ttfa.md)). |

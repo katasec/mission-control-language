@@ -19,6 +19,23 @@
 > predates `wire: anthropic`, so live verification lands with [42.4](phase-42.4-container-convergence.md)'s
 > image publish.** Suite 255 pass, zero warnings, AOT publish clean.
 >
+> **Interactive dogfood findings (2026-07-16, first real `forge claude` session against the `agentic`
+> mission):**
+> 1. **Environment-awareness trade-off (known, accepted for now).** The mission's expert prompt REPLACES
+>    the client's system prompt (mission-is-the-brain, 42.3 §2) — which is where Claude Code normally gets
+>    cwd/file-tree context. Asked to "read enrich.py", gpt-4o-mini guessed 7 wrong paths via real tool
+>    round-trips, then returned a **verified-honest "not found"** (the right failure mode — no
+>    hallucination). Remedies, cheapest first: (a) explore-first prompt guidance in the agent expert ("if a
+>    path isn't where you expect, use Bash ls/rg before concluding; never guess more than twice"); (b) an
+>    env-aware Enrich step (`kind: exec` pwd/ls — very MCL); (c) extract just the environment block from
+>    the client's system prompt. Also: a stronger model (gpt-4o / Claude) explores unprompted.
+> 2. **Built-in catalog missions are chat-only through `forge claude`** — they predate 42.3 and lack a
+>    `role: agent` terminal expert, so tools never attach (`@chatgpt`/`@grok`/… won't Read/Edit/Bash).
+>    **Follow-up queued:** republish the built-ins with `role: agent` (+ finding-1's explore-first
+>    guidance) and bump the pinned digests in `BuiltinMissions` (now in `ForgeMission.Cli`).
+> 3. Non-issue: claude's MCP-server approval prompt on first launch is claude's own; MCP tools are
+>    allowlist-filtered and never reach the mission's model regardless of the user's choice.
+>
 > Original design brief (2026-07-15): Collapse *serve + env-export + launch Claude Code + teardown* into one
 > command. `forge claude` spins the mission (in-process by default for speed, or `--container` for exact
 > cloud parity), points the real `claude` CLI at it via `ANTHROPIC_BASE_URL`, and cleans up on exit. This is
