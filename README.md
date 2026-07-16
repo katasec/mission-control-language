@@ -394,7 +394,7 @@ forge run                                     # run the mission
 forge run --steps                             # stream each expert's output live
 forge run --var goal="Redesign for ARM64"     # override a let binding at runtime
 forge clean                                   # purge ~/.forge/experts cache
-forge login ghcr.io --token <pat>            # save registry credentials
+forge registry login ghcr.io --token <pat>   # save registry credentials
 forge list experts                           # list local experts
 forge provider list                          # list supported providers
 forge provider scaffold <name>               # print a ready-to-paste forge.toml block

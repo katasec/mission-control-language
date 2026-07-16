@@ -29,7 +29,8 @@ rootCommand.Add(BuildRunCommand());
 rootCommand.Add(BuildValidateCommand());
 rootCommand.Add(BuildListCommand());
 rootCommand.Add(BuildExpertCommand());
-rootCommand.Add(BuildLoginCommand());
+rootCommand.Add(BuildRegistryCommand());
+rootCommand.Add(BuildLoginShimCommand());
 rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
@@ -105,7 +106,7 @@ static Command BuildInitCommand()
                 {
                     Console.Error.WriteLine($"  ✗ {name,-30} failed   {ociRef}");
                     Console.Error.WriteLine($"    {ex.Message}");
-                    Console.Error.WriteLine("    Run 'forge login <registry> --token <PAT>' if this is an auth error.");
+                    Console.Error.WriteLine("    Run 'forge registry login <registry> --token <PAT>' if this is an auth error.");
                     Die($"MCL011 OCI pull failed for '{name}'.");
                     return;
                 }
@@ -361,9 +362,17 @@ static Command BuildExpertCommand()
 }
 
 // ---------------------------------------------------------------------------
-// forge login
+// forge registry login  (42.5: OCI-registry credentials move under `forge registry`;
+// the top-level `forge login` becomes platform sign-in)
 
-static Command BuildLoginCommand()
+static Command BuildRegistryCommand()
+{
+    var cmd = new Command("registry", "OCI registry operations");
+    cmd.Add(BuildRegistryLoginCommand());
+    return cmd;
+}
+
+static Command BuildRegistryLoginCommand()
 {
     var registryArg = new Argument<string>("registry") { Description = "Registry host (e.g. ghcr.io)" };
     var tokenOpt    = new Option<string>("--token") { Description = "Credential token (e.g. GitHub PAT)" };
@@ -372,18 +381,34 @@ static Command BuildLoginCommand()
     cmd.Add(registryArg);
     cmd.Add(tokenOpt);
 
-    cmd.SetAction(async result =>
+    cmd.SetAction(result => SaveRegistryCredential(result.GetValue(registryArg)!, result.GetValue(tokenOpt)!));
+    return cmd;
+}
+
+// Deprecation shim (remove after one release): `forge login <registry> --token <PAT>` still
+// works but warns. Once removed, `forge login` is purely platform sign-in (42.5 task 2).
+static Command BuildLoginShimCommand()
+{
+    var registryArg = new Argument<string>("registry") { Description = "Registry host (e.g. ghcr.io)" };
+    var tokenOpt    = new Option<string>("--token") { Description = "Credential token (e.g. GitHub PAT)" };
+
+    var cmd = new Command("login", "(deprecated for registries — use 'forge registry login')");
+    cmd.Add(registryArg);
+    cmd.Add(tokenOpt);
+
+    cmd.SetAction(result =>
     {
-        var registry = result.GetValue(registryArg)!;
-        var token    = result.GetValue(tokenOpt)!;
-
-        CredentialStore.SaveToken(registry, token);
-        Console.WriteLine($"Credentials saved for {registry}");
-
-        await Task.CompletedTask;
+        Console.Error.WriteLine("Warning: 'forge login <registry>' is deprecated — use 'forge registry login <registry> --token <PAT>'. This alias will be removed in the next release.");
+        SaveRegistryCredential(result.GetValue(registryArg)!, result.GetValue(tokenOpt)!);
     });
 
     return cmd;
+}
+
+static void SaveRegistryCredential(string registry, string token)
+{
+    CredentialStore.SaveToken(registry, token);
+    Console.WriteLine($"Credentials saved for {registry}");
 }
 
 // ---------------------------------------------------------------------------
@@ -422,7 +447,7 @@ static Command BuildPublishCommand()
         var bundle = MissionBundle.Pack(dir.FullName);
         var token  = CredentialStore.GetToken(registry);
         if (string.IsNullOrWhiteSpace(token))
-            Console.Error.WriteLine($"Warning: no credential for {registry} (set FORGE_REGISTRY_TOKEN or 'forge login').");
+            Console.Error.WriteLine($"Warning: no credential for {registry} (set FORGE_REGISTRY_TOKEN or 'forge registry login').");
 
         var annotations = desc is null
             ? null

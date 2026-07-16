@@ -1,6 +1,6 @@
 # Phase 42.5 — Platform identity & keys
 
-> **Status: Design (2026-07-15).** Give a user a **platform key + free credits** in one command, so they can
+> **Status: In build (2026-07-17; designed 2026-07-15, all decisions locked).** Give a user a **platform key + free credits** in one command, so they can
 > point a coding agent at a hosted forge mission with **no provider account**. The hosted runner calls
 > providers with *our* keys server-side, metered against the user's balance. This is the friction-killer
 > behind the TTF-awesome demo.
@@ -60,6 +60,20 @@ cost/concurrency caps and transactional reservation are pre-recorded there with 
 many accounts multiplies free credits; acceptable now, revisit if sign-up abuse ever appears (CAPTCHA /
 verified-email / per-payment-method grant are the usual rungs).
 
+**Auth flow (DECIDED 2026-07-17): loopback + PKCE.** Auth-code + PKCE public client with a localhost
+redirect — browser pops, user signs in, CLI catches the redirect. Hand-rolled over raw HTTP + STJ (no MSAL)
+per the AOT-first rule: one localhost listener + two token calls. Device-code flow (headless/SSH) deferred
+until someone needs it — Entra External ID (CIAM) device-code support needs verification anyway.
+
+**Key resolution on the request path (DECIDED 2026-07-17): direct PG + cached lookup.** The runner
+validates platform keys by querying Rooms Postgres directly (`platform_keys` + balance) through a shared
+lookup lib, with a short in-process cache (~30–60 s TTL). Prior art: this is the tier-1 pattern (early
+Stripe, single-product SaaS) and we have exactly one data-plane service sitting next to the DB in ACA.
+Revocation propagates within the cache TTL — the same guarantee Kong's key-auth gives. Known non-breaking
+evolution if data-plane services multiply: the shared lib becomes a resolve endpoint / `ext_authz`-style
+filter (Kong, Envoy, AWS API Gateway pattern). Supabase's JWT→opaque-key reversal (2024–25) independently
+confirms the opaque+table decision above.
+
 **Auxiliary commands:**
 - `forge whoami` → show signed-in user + balance (reads local key + a `/me` call).
 - `forge logout` → clear the local platform key.
@@ -69,13 +83,18 @@ verified-email / per-payment-method grant are the usual rungs).
 
 1. ~~Design-review the naming/key format~~ **DECIDED:** `forge login` = platform; registry → `forge registry
    login` (deprecation shim one release). Key = opaque `fg_live_<id>_<secret>` + keyed hash (already decided
-   2026-07-15). First implementation task: the rename + shim.
-2. **Auth flow in the CLI:** browser/loopback or device-code OAuth against `forgeids`; token exchange →
-   platform key. AOT-safe HTTP + STJ (no bare `JsonSerializerOptions`).
+   2026-07-15). ~~First implementation task: the rename + shim.~~ **✅ DONE 2026-07-17:** `forge registry
+   login` live; `forge login <registry> --token` warns + delegates (remove next release); hint strings +
+   README updated; verified against isolated `$HOME` (both forms write `credentials.json`, shim warns);
+   suite 256 pass.
+2. **Auth flow in the CLI:** loopback auth-code + PKCE against `forgeids` (decided above); token exchange →
+   platform key. Hand-rolled, AOT-safe HTTP + STJ (no MSAL, no bare `JsonSerializerOptions`).
 3. **Credential store:** extend `~/.forge/credentials.json` with a `platform` section (key, user, endpoint);
    keep registry creds working.
-4. **Server-side issuance + resolution** (in the hosting layer, shared with 42.6): mint the platform key on
-   login; a `platform_keys` table (or JWT signer) mapping key → user; a `/me` endpoint returning user +
+4. **Server-side issuance + resolution** (decided above: direct PG + cached lookup): mint the platform key
+   on login (issuance endpoint on the forge-ui/Rooms app, which already speaks OIDC to `forgeids` and owns
+   `BillingService`); a `platform_keys` table in Rooms PG mapping key-id → hashed secret + user; a shared
+   lookup lib (hash + resolve + cache) the runner uses on the request path; a `/me` endpoint returning user +
    balance. Reuse the Phase-39 credit-grant on first login (idempotent).
 5. **`forge whoami` / `forge logout`.**
 6. **Revocation path** (admin/user can revoke a key) + test: a revoked key is rejected by the hosted endpoint.
