@@ -775,52 +775,46 @@ static async Task<bool> EnsureInitializedAsync(string missionPath)
     return exit == 0 && File.Exists(lockPath);
 }
 
-// --container: the same image the cloud runs, as an EPHEMERAL auto-named container —
-// started and torn down within this command (unlike the persistent `forge agent start`).
+// --container: the EXACT image the cloud runs (the converged /v1 runner, 42.4) as an EPHEMERAL
+// auto-named container — started and torn down within this command (unlike the persistent
+// `forge agent start`). MissionFile env selects the runner's local-mission mode (serve exactly
+// the mounted mission, no built-ins); no agent.yaml is synthesized.
 static async Task<Func<Task>?> StartMissionContainerAsync(AgentConfig config, string missionPath, int hostPort)
 {
-    const string forgeImage = "ghcr.io/katasec/forge:latest";
+    const string runnerImage = "ghcr.io/katasec/forge-runner:latest";
 
     var docker = await DockerPrereqChecker.CheckDockerAsync();
     if (!DockerPrereqChecker.RunAndPrint([docker])) return null;
 
-    if (!await DockerCli.IsImagePresentAsync(forgeImage))
+    if (!await DockerCli.IsImagePresentAsync(runnerImage))
     {
-        AnsiConsole.MarkupLine($"[yellow]Pulling {forgeImage}...[/]");
-        await DockerCli.PullImageAsync(forgeImage);
+        AnsiConsole.MarkupLine($"[yellow]Pulling {runnerImage}...[/]");
+        await DockerCli.PullImageAsync(runnerImage);
     }
     await DockerCli.EnsureNetworkAsync("forge-net");
 
-    // Synthesize an ephemeral agent.yaml next to the mission so relative paths resolve
-    // inside the /workspace mount; removed on teardown.
-    var missionDir    = Path.GetDirectoryName(missionPath)!;
-    var workspaceRoot = FindGitRoot(missionDir) ?? missionDir;
-    var synthYaml     = Path.Combine(missionDir, ".forge-claude.agent.yaml");
-    await File.WriteAllTextAsync(synthYaml, $"""
-        mission: {Path.GetFileName(missionPath)}
-        id: {config.Id}
-        port: {config.Port}
-        wire: anthropic
-        """);
-    var yamlInWorkspace = "/workspace/" + Path.GetRelativePath(workspaceRoot, synthYaml).Replace('\\', '/');
+    var missionDir         = Path.GetDirectoryName(missionPath)!;
+    var workspaceRoot      = FindGitRoot(missionDir) ?? missionDir;
+    var missionInWorkspace = "/workspace/" + Path.GetRelativePath(workspaceRoot, missionPath).Replace('\\', '/');
 
     var containerName = $"forge-claude-{Guid.NewGuid():N}"[..20];
     await DockerCli.RunContainerAsync(
         name:          containerName,
-        image:         forgeImage,
-        cmd:           ["serve", yamlInWorkspace],
-        env:           [.. BuildEnvArray("MCL_API_KEY", "MCL_MODEL", "MCL_PROVIDER", "MCL_ENDPOINT"),
-                        "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1"],
+        image:         runnerImage,
+        cmd:           [],   // the image's entrypoint IS the runner; config rides in env
+        // Forward the full provider-key table (docs/design/deploy.md) — the mounted mission's
+        // forge.toml names whichever env(...) keys it wants, exactly as the in-process path
+        // sees them.
+        env:           [.. BuildEnvArray("MCL_API_KEY", "MCL_MODEL", "MCL_PROVIDER", "MCL_ENDPOINT",
+                                         "OPENAI_API_KEY", "CLAUDE_API_KEY", "XAI_API_KEY",
+                                         "GROK_API_KEY", "GOOGLE_SEARCH_API_KEY"),
+                        $"MissionFile={missionInWorkspace}"],
         binds:         [$"{workspaceRoot}:/workspace"],
         hostPort:      hostPort,
         containerPort: config.Port,
         network:       "forge-net");
 
-    return async () =>
-    {
-        await DockerCli.StopAndRemoveAsync(containerName);
-        File.Delete(synthYaml);
-    };
+    return async () => await DockerCli.StopAndRemoveAsync(containerName);
 }
 
 static async Task<bool> WaitUntilHealthyAsync(string baseUrl, int timeoutMs)

@@ -33,15 +33,29 @@ builder.Services.AddOpenTelemetry()
             t.AddOtlpExporter();
     });
 
-// Built-in missions are PULLED from the trusted Forge registry by pinned digest (39.4), not loaded
-// from the image — the uniform "everything is pulled" path. MissionDir is the baked-in copy, kept
-// as a resilience fallback if a pull fails. The operator's provider keys are still read from each
-// mission's forge.toml via env(...) at load time (keys live here, not in the orchestrator).
-var missionDir = builder.Configuration["MissionDir"]
-    ?? Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "missions");
-missionDir = Path.GetFullPath(missionDir);
+// Local-mission mode (42.4 task 3): `forge claude --container` mounts the workspace and points
+// MissionFile at ONE mission — serve exactly that, no built-ins, so the /v1 doors' single-
+// mission fallback holds regardless of the model id the wire client sends.
+//
+// Otherwise: built-in missions are PULLED from the trusted Forge registry by pinned digest
+// (39.4), not loaded from the image — the uniform "everything is pulled" path. MissionDir is
+// the baked-in copy, kept as a resilience fallback if a pull fails. The operator's provider
+// keys are still read from each mission's forge.toml via env(...) at load time (keys live
+// here, not in the orchestrator).
+List<(string label, string description, string path)> specs;
+if (builder.Configuration["MissionFile"] is { Length: > 0 } missionFile)
+{
+    var missionPath = Path.GetFullPath(missionFile);
+    var label       = Path.GetFileName(Path.GetDirectoryName(missionPath)) ?? "mission";
+    specs = [(label, "local mission", missionPath)];
+}
+else
+{
+    var missionDir = builder.Configuration["MissionDir"]
+        ?? Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "missions");
+    specs = await BuiltinMissions.ResolveAsync(Path.GetFullPath(missionDir));
+}
 
-var specs    = await BuiltinMissions.ResolveAsync(missionDir);
 var registry = await RunnerRegistry.LoadAsync(specs);
 
 Console.Error.WriteLine(registry.All.Count == 0
