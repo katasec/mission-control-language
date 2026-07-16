@@ -10,8 +10,7 @@ using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
 using Katasec.OciClient;
-using Katasec.OaiServer;
-using Katasec.AnthropicServer;
+using ForgeMission.Serve;
 using Microsoft.AspNetCore.Builder;
 using Spectre.Console;
 using ForgeMission.Cli;
@@ -462,21 +461,21 @@ static Command BuildServeCommand()
         catch (Exception ex) { Die($"Cannot read agent.yaml: {ex.Message}"); return; }
 
         var built = await TryBuildMissionServerAsync(config, agentFile.DirectoryName!);
-        if (built is not var (app, missionPath, anthropicWire)) return;
+        if (built is not var (app, missionPath, anthropicDoor, openAiDoor)) return;
 
         Console.Error.WriteLine($"forge serve — agent '{config.Id}' listening on http://0.0.0.0:{config.Port}");
         Console.Error.WriteLine($"  mission  : {missionPath}");
-        Console.Error.WriteLine($"  wire     : {(anthropicWire ? "anthropic" : "openai")}");
-        if (anthropicWire)
+        Console.Error.WriteLine($"  wire     : {(anthropicDoor && openAiDoor ? "anthropic + openai" : anthropicDoor ? "anthropic" : "openai")}");
+        Console.Error.WriteLine($"  endpoints:");
+        if (anthropicDoor)
+            Console.Error.WriteLine($"    POST /v1/messages          (messages API, streaming + non-streaming)");
+        if (openAiDoor)
         {
-            Console.Error.WriteLine($"  endpoints: POST /v1/messages  (messages API, streaming + non-streaming)");
+            Console.Error.WriteLine($"    POST /v1/chat/completions  (chat, streaming)");
+            Console.Error.WriteLine($"    POST /v1/responses         (responses API, streaming)");
+            Console.Error.WriteLine($"    GET  /v1/models");
         }
-        else
-        {
-            Console.Error.WriteLine($"  endpoints: POST /v1/chat/completions  (chat, streaming)");
-            Console.Error.WriteLine($"             POST /v1/responses          (responses API, streaming)");
-            Console.Error.WriteLine($"             GET  /v1/models");
-        }
+        Console.Error.WriteLine($"    GET  /health");
 
         try
         {
@@ -548,7 +547,7 @@ static Command BuildClaudeCommand()
         else
         {
             var built = await TryBuildMissionServerAsync(config, Path.GetDirectoryName(missionPath)!);
-            if (built is not var (app, _, _)) return;
+            if (built is not var (app, _, _, _)) return;
             await app.StartAsync();
             teardown = async () => await app.StopAsync();
             mode     = "in-process";
@@ -625,7 +624,7 @@ static Command BuildConnectVsCodeCommand()
 
         var config = new AgentConfig { Mission = missionPath, Port = port, Id = missionName, Wire = "anthropic" };
         var built  = await TryBuildMissionServerAsync(config, Path.GetDirectoryName(missionPath)!);
-        if (built is not var (app, _, _)) return;
+        if (built is not var (app, _, _, _)) return;
 
         Console.Error.WriteLine($"✓ mission   {missionName,-15} {missionPath}");
         Console.Error.WriteLine($"✓ endpoint  /v1/messages    {baseUrl}");
@@ -894,7 +893,7 @@ static bool IsOnPath(string binary) =>
 // Loads the mission behind an AgentConfig and builds the wire server, ready to start.
 // Shared by `forge serve` (blocking RunAsync) and `forge claude` (background StartAsync).
 // Returns null after reporting the error (Die) — callers just return.
-static async Task<(WebApplication App, string MissionPath, bool AnthropicWire)?> TryBuildMissionServerAsync(
+static async Task<(WebApplication App, string MissionPath, bool AnthropicDoor, bool OpenAiDoor)?> TryBuildMissionServerAsync(
     AgentConfig config, string agentDir)
 {
     var missionPath = Path.GetFullPath(Path.Combine(agentDir, config.Mission));
@@ -935,26 +934,38 @@ static async Task<(WebApplication App, string MissionPath, bool AnthropicWire)?>
         ? dr
         : runners.Values.First();
 
-    // Wire selector (42.1): the Anthropic wire hands the mission the FULL conversation
-    // (context["conversation"]/["system"], goal = last text block of the last user message);
-    // the OpenAI wire keeps the legacy last-turn behaviour so existing users don't regress.
-    var anthropicWire = string.Equals(config.Wire, "anthropic", StringComparison.OrdinalIgnoreCase);
-    var missionClient = new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: anthropicWire);
+    // Wire doors (42.4): ONE app serves every enabled wire — `wire:` in agent.yaml is now a
+    // disable switch ("anthropic" / "openai" limits to that door; default = both). Each door
+    // gets its own MissionChatClient over the same mission core: the Anthropic wire hands the
+    // mission the FULL conversation (context["conversation"]/["system"], goal = last text block
+    // of the last user message); the OpenAI wire keeps the legacy last-turn behaviour so
+    // existing users don't regress (42.1 decision, unchanged).
+    var wire = string.IsNullOrWhiteSpace(config.Wire) ? "both" : config.Wire.Trim().ToLowerInvariant();
+    if (wire is not ("both" or "anthropic" or "openai"))
+    {
+        Die($"Unknown wire '{config.Wire}' in agent.yaml — use \"both\", \"anthropic\", or \"openai\".");
+        return null;
+    }
+
+    var anthropicDoor = wire is "both" or "anthropic"
+        ? new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: true)
+        : null;
+    var openAiDoor = wire is "both" or "openai"
+        ? new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: false)
+        : null;
 
     // Aux passthrough (42.3 §0): client housekeeping (title-gen, state-check) is answered by a
     // plain provider model; the mission never runs — and never bills — for those.
     IChatClient? auxClient = null;
-    if (anthropicWire && ResolveDefaultProfile(manifest, seedContext) is { } auxProfile)
+    if (anthropicDoor is not null && ResolveDefaultProfile(manifest, seedContext) is { } auxProfile)
     {
         try { auxClient = ProviderClientBuilder.BuildChatClient(auxProfile); }
         catch { /* aux degrades to the server's canned replies */ }
     }
 
-    var app = anthropicWire
-        ? AnthropicServer.Build(missionClient, config.Id, config.Port, auxClient)
-        : OaiServer.Build(missionClient, config.Id, config.Port);
+    var app = ForgeServe.BuildApp(config.Id, config.Port, anthropicDoor, openAiDoor, auxClient);
 
-    return (app, missionPath, anthropicWire);
+    return (app, missionPath, anthropicDoor is not null, openAiDoor is not null);
 }
 
 // ---------------------------------------------------------------------------
