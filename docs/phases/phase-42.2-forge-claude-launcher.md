@@ -1,6 +1,25 @@
 # Phase 42.2 — `forge claude` local launcher
 
-> **Status: Design (2026-07-15).** Collapse *serve + env-export + launch Claude Code + teardown* into one
+> **Status: DONE (2026-07-16) — one caveat: `--container` implemented but not live-verifiable until 42.4
+> publishes a wire-capable image.** Live evidence, all against the real `claude` CLI:
+> - `ForgeClaude_OneShotPrompt_AnswersAndTearsDown` (SkippableFact, task 6): `forge claude -p` in a
+>   lone-.mcl dir → answered + **no orphan server** (banner port probed closed after exit). 7s.
+> - `forge claude @chatgpt -p "Say exactly: forge works"` — the hub §1 gesture — verified live TWICE:
+>   dev build and the **installed native AOT binary** (`~/.local/bin/forge`): OCI pull by pinned digest →
+>   silent init → in-proc serve → wired claude → answer → teardown.
+> - `--print-env` emits the export lines and keeps serving until Ctrl-C (smoke-verified).
+>
+> Implementation notes: `TryBuildMissionServerAsync` extracted from `BuildServeCommand` (task 1 — serve
+> blocks with RunAsync, claude backgrounds with StartAsync); `BuiltinMissions` catalog MOVED
+> Runner → Cli (the Runner already referenced the Cli; the catalog lives beside `OciMissionPuller`);
+> **System.CommandLine gotcha:** `@handle` args require disabling response-file token replacement
+> (`ParserConfiguration.ResponseFileTokenReplacer = null`) or `@x` parses as "read args from file x".
+> `--container` (task 3) synthesizes an ephemeral `.forge-claude.agent.yaml` in the workspace, runs an
+> auto-named `forge-claude-<rand>` container, removes both on teardown — **but `ghcr.io/katasec/forge:latest`
+> predates `wire: anthropic`, so live verification lands with [42.4](phase-42.4-container-convergence.md)'s
+> image publish.** Suite 255 pass, zero warnings, AOT publish clean.
+>
+> Original design brief (2026-07-15): Collapse *serve + env-export + launch Claude Code + teardown* into one
 > command. `forge claude` spins the mission (in-process by default for speed, or `--container` for exact
 > cloud parity), points the real `claude` CLI at it via `ANTHROPIC_BASE_URL`, and cleans up on exit. This is
 > the local dev UX — the same gesture that becomes the hosted onboarding in 42.6.

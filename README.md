@@ -441,6 +441,21 @@ wire: anthropic     # default: openai
 
 On the Anthropic wire the mission receives the **full conversation**, not just the last user message: the context bag gains `conversation` (structured messages — interpolate `{{conversation}}` for a transcript), `system` (effective system instructions), and `goal` (the latest user intent — the last text block of the last user message).
 
+### forge claude — Claude Code fronted by a mission, one command
+
+```bash
+forge claude                    # serve the mission in cwd + launch claude wired to it
+forge claude ./mission.mcl      # explicit mission file (agent.yaml not required)
+forge claude @grok              # pull a built-in mission from the catalog and front it
+forge claude -p "one-shot"      # pass a prompt straight through to claude
+forge claude --print-env        # just serve + print the export lines (wire tools by hand)
+forge claude --container        # run the mission as the cloud container (parity mode)
+```
+
+`forge claude` picks an ephemeral port, serves the mission on the Anthropic wire in-process, launches the real `claude` CLI with `ANTHROPIC_BASE_URL` pointed at it, and tears everything down when claude exits. Claude Code **stays a real coding agent** — Read/Edit/Write/Bash round-trip through the mission, which enriches once per user turn and verifies the final answer.
+
+Redirectable surfaces: **CLI** (this command), **VS Code** (`claudeCode.environmentVariables` — use `--print-env`), **JetBrains** (shell env). The Claude **desktop app** is OAuth-only and cannot be redirected this way.
+
 ```python
 # Python — call a forge mission like any other OAI-compatible service
 import requests

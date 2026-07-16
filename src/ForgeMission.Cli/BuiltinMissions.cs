@@ -1,6 +1,4 @@
-using ForgeMission.Cli;
-
-namespace ForgeMission.Runner;
+namespace ForgeMission.Cli;
 
 /// <summary>
 /// The built-in missions and the immutable <c>@sha256</c> digests they are pinned to on the trusted
@@ -8,9 +6,9 @@ namespace ForgeMission.Runner;
 /// only return the exact content behind a digest, so a pull is self-verifying (cosign signatures
 /// land in 39.5 for third-party/custom missions). Published to <c>ghcr.io/katasec</c> 2026-07-09.
 /// </summary>
-internal sealed record BuiltinMission(string Label, string Description, string OciRef, string LocalDir);
+public sealed record BuiltinMission(string Label, string Description, string OciRef, string LocalDir);
 
-internal static class BuiltinMissions
+public static class BuiltinMissions
 {
     private const string Reg = "ghcr.io/katasec";
 

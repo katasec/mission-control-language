@@ -12,8 +12,11 @@ using System.ClientModel;
 using Katasec.OciClient;
 using Katasec.OaiServer;
 using Katasec.AnthropicServer;
+using Microsoft.AspNetCore.Builder;
 using Spectre.Console;
+using ForgeMission.Cli;
 using ForgeMission.Cli.Docker;
+using System.Diagnostics;
 using MclProgram = ForgeMission.Parser.Program;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -30,12 +33,14 @@ rootCommand.Add(BuildLoginCommand());
 rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
+rootCommand.Add(BuildClaudeCommand());
 rootCommand.Add(BuildAgentCommand());
 rootCommand.Add(BuildWebuiCommand());
 rootCommand.Add(BuildProviderCommand());
 rootCommand.Add(BuildMcpCommand());
 
-return await rootCommand.Parse(args).InvokeAsync();
+// No @file response-file expansion — @handles (forge claude @websearch) are arguments.
+return await rootCommand.Parse(args, new ParserConfiguration { ResponseFileTokenReplacer = null }).InvokeAsync();
 
 // ---------------------------------------------------------------------------
 // fms init
@@ -454,65 +459,8 @@ static Command BuildServeCommand()
         try { config = AgentConfigLoader.Load(agentFile.FullName); }
         catch (Exception ex) { Die($"Cannot read agent.yaml: {ex.Message}"); return; }
 
-        var agentDir    = agentFile.DirectoryName!;
-        var missionPath = Path.GetFullPath(Path.Combine(agentDir, config.Mission));
-        var lockPath    = Path.Combine(Path.GetDirectoryName(missionPath)!, "mcl.lock");
-
-        if (!File.Exists(missionPath)) { Die($"Mission file not found: {missionPath}"); return; }
-        if (!File.Exists(lockPath))    { Die("MCL007 Mission not initialised — run 'forge init' first."); return; }
-
-        var source = await TryReadFile(missionPath);
-        if (source is null) return;
-
-        var ast = TryParse(source, missionPath);
-        if (ast is null) return;
-
-        // OCI expert validation moved to forge.toml (Spoke 2).
-
-        LockFile lockFile;
-        try { lockFile = LockFileIO.Read(lockPath); }
-        catch (Exception ex) { Die($"Cannot read mcl.lock: {ex.Message}"); return; }
-
-        Dictionary<string, ExpertDefinition> expertDefs;
-        try { expertDefs = ExpertLoader.LoadFromLockFile(lockFile, Path.GetDirectoryName(missionPath)!); }
-        catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
-        catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
-
-        if (!TryValidate(ast, expertDefs)) return;
-
-        Dictionary<string, object> seedContext;
-        try { seedContext = ContextBuilder.Seed(ast, new Dictionary<string, string>()); }
-        catch (InvalidOperationException ex) { Die(ex.Message); return; }
-
-        ForgeManifest? serveManifest = null;
-        try { serveManifest = ForgeTomlReader.TryRead(missionPath); }
-        catch (ForgeTomlException ex) { Die(ex.Message); return; }
-
-        var serveRunners = BuildRunners(serveManifest, seedContext);
-        if (serveRunners is null) return;
-
-        var defaultRunner = serveRunners.TryGetValue("default", out var dr)
-            ? dr
-            : serveRunners.Values.First();
-
-        // Wire selector (42.1): the Anthropic wire hands the mission the FULL conversation
-        // (context["conversation"]/["system"], goal = last text block of the last user message);
-        // the OpenAI wire keeps the legacy last-turn behaviour so existing users don't regress.
-        var anthropicWire = string.Equals(config.Wire, "anthropic", StringComparison.OrdinalIgnoreCase);
-        var missionClient = new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: anthropicWire);
-
-        // Aux passthrough (42.3 §0): client housekeeping (title-gen, state-check) is answered by a
-        // plain provider model; the mission never runs — and never bills — for those.
-        IChatClient? auxClient = null;
-        if (anthropicWire && ResolveDefaultProfile(serveManifest, seedContext) is { } auxProfile)
-        {
-            try { auxClient = ProviderClientBuilder.BuildChatClient(auxProfile); }
-            catch { /* aux degrades to the server's canned replies */ }
-        }
-
-        var app = anthropicWire
-            ? AnthropicServer.Build(missionClient, config.Id, config.Port, auxClient)
-            : OaiServer.Build(missionClient, config.Id, config.Port);
+        var built = await TryBuildMissionServerAsync(config, agentFile.DirectoryName!);
+        if (built is not var (app, missionPath, anthropicWire)) return;
 
         Console.Error.WriteLine($"forge serve — agent '{config.Id}' listening on http://0.0.0.0:{config.Port}");
         Console.Error.WriteLine($"  mission  : {missionPath}");
@@ -540,6 +488,346 @@ static Command BuildServeCommand()
     });
 
     return cmd;
+}
+
+// ---------------------------------------------------------------------------
+// forge claude — one command: serve the mission (Anthropic wire) + launch Claude Code
+// wired to it + tear down on exit (Phase 42.2). In-process by default for speed;
+// --container runs the same image the cloud runs for exact parity.
+
+static Command BuildClaudeCommand()
+{
+    var targetArg    = new Argument<string?>("target") { Description = "Mission: a .mcl path, an @handle (built-in), or empty (agent.yaml / lone .mcl in cwd)", Arity = ArgumentArity.ZeroOrOne };
+    var containerOpt = new Option<bool>("--container")   { Description = "Run the mission as a Docker container (cloud parity) instead of in-process" };
+    var portOpt      = new Option<int?>("--port")        { Description = "Pin the port instead of picking an ephemeral one" };
+    var printEnvOpt  = new Option<bool>("--print-env")   { Description = "Print the export lines and keep serving (wire other tools by hand); Ctrl-C stops" };
+    var promptOpt    = new Option<string?>("-p", "--prompt") { Description = "One-shot prompt passed straight through to claude" };
+
+    var cmd = new Command("claude", "Launch Claude Code talking to a forge mission");
+    cmd.Add(targetArg);
+    cmd.Add(containerOpt);
+    cmd.Add(portOpt);
+    cmd.Add(printEnvOpt);
+    cmd.Add(promptOpt);
+    cmd.TreatUnmatchedTokensAsErrors = false;   // anything after the options is forwarded to claude
+
+    cmd.SetAction(async result =>
+    {
+        var printEnv = result.GetValue(printEnvOpt);
+        if (!printEnv && !IsOnPath("claude"))
+        {
+            Die("claude CLI not found on PATH.\nInstall it first: npm install -g @anthropic-ai/claude-code  (https://claude.com/claude-code)");
+            return;
+        }
+
+        var resolved = await ResolveClaudeTargetAsync(result.GetValue(targetArg));
+        if (resolved is not var (missionPath, missionName)) return;
+
+        if (!await EnsureInitializedAsync(missionPath)) return;
+
+        var port = result.GetValue(portOpt) ?? FindFreePort();
+        var config = new AgentConfig
+        {
+            Mission = missionPath,
+            Port    = result.GetValue(containerOpt) ? 8080 : port,   // container listens on 8080 inside
+            Id      = missionName,
+            Wire    = "anthropic",
+        };
+
+        Func<Task> teardown;
+        string mode;
+        if (result.GetValue(containerOpt))
+        {
+            var started = await StartMissionContainerAsync(config, missionPath, hostPort: port);
+            if (started is null) return;
+            teardown = started;
+            mode     = "container";
+        }
+        else
+        {
+            var built = await TryBuildMissionServerAsync(config, Path.GetDirectoryName(missionPath)!);
+            if (built is not var (app, _, _)) return;
+            await app.StartAsync();
+            teardown = async () => await app.StopAsync();
+            mode     = "in-process";
+        }
+
+        var baseUrl = $"http://127.0.0.1:{port}";
+        try
+        {
+            if (!await WaitUntilHealthyAsync(baseUrl, timeoutMs: 60_000))
+            {
+                Die($"Mission endpoint did not become healthy at {baseUrl}.");
+                return;
+            }
+
+            Console.Error.WriteLine($"✓ mission   {missionName,-15} {missionPath}");
+            Console.Error.WriteLine($"✓ endpoint  /v1/messages    {baseUrl}   ({mode})");
+            Console.Error.WriteLine($"✓ wired     ANTHROPIC_BASE_URL → forge");
+
+            if (printEnv)
+            {
+                Console.WriteLine($"export ANTHROPIC_BASE_URL={baseUrl}");
+                Console.WriteLine("export ANTHROPIC_API_KEY=forge-local");
+                Console.Error.WriteLine("↳ serving until Ctrl-C…");
+                await WaitForCtrlCAsync();
+                return;
+            }
+
+            Console.Error.WriteLine("↳ launching claude…");
+            Environment.ExitCode = await RunWiredClaudeAsync(
+                baseUrl, result.GetValue(promptOpt), result.UnmatchedTokens);
+        }
+        finally
+        {
+            await teardown();
+        }
+    });
+
+    return cmd;
+}
+
+// target → (absolute mission path, mission name). @handle pulls the built-in from the
+// OCI catalog by pinned digest; a path uses that file; empty means agent.yaml or the
+// lone .mcl in the current directory.
+static async Task<(string MissionPath, string MissionName)?> ResolveClaudeTargetAsync(string? target)
+{
+    if (target is { } t && t.StartsWith('@'))
+    {
+        var handle  = t[1..];
+        var builtin = BuiltinMissions.All.FirstOrDefault(
+            b => b.Label.Equals(handle, StringComparison.OrdinalIgnoreCase));
+        if (builtin is null)
+        {
+            Die($"Unknown built-in mission '{t}'. Available: {string.Join(", ", BuiltinMissions.All.Select(b => "@" + b.Label.ToLowerInvariant()))}");
+            return null;
+        }
+        Console.Error.WriteLine($"↳ pulling {t} from the mission catalog…");
+        var (dir, status) = await OciMissionPuller.PullAsync(builtin.OciRef, refresh: false);
+        Console.Error.WriteLine($"✓ {t} {status}");
+        return (Path.Combine(dir, "mission.mcl"), builtin.Label.ToLowerInvariant());
+    }
+
+    if (target is { } path)
+    {
+        var full = Path.GetFullPath(path);
+        if (!File.Exists(full)) { Die($"Mission file not found: {full}"); return null; }
+        return (full, Path.GetFileNameWithoutExtension(full) is "mission" or ""
+            ? new DirectoryInfo(Path.GetDirectoryName(full)!).Name
+            : Path.GetFileNameWithoutExtension(full));
+    }
+
+    var agentYaml = Path.GetFullPath("agent.yaml");
+    if (File.Exists(agentYaml))
+    {
+        try
+        {
+            var config = AgentConfigLoader.Load(agentYaml);
+            return (Path.GetFullPath(Path.Combine(Path.GetDirectoryName(agentYaml)!, config.Mission)), config.Id);
+        }
+        catch (Exception ex) { Die($"Cannot read agent.yaml: {ex.Message}"); return null; }
+    }
+
+    var candidates = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.mcl");
+    if (candidates.Length == 1)
+        return (candidates[0], new DirectoryInfo(Directory.GetCurrentDirectory()).Name);
+
+    Die(candidates.Length == 0
+        ? "No mission found. Pass a .mcl path, an @handle, or run from a directory with a mission."
+        : "Multiple .mcl files here — pass the one you mean: forge claude ./<mission>.mcl");
+    return null;
+}
+
+// Missing mcl.lock ⇒ run `forge init` silently (local experts resolve without network).
+static async Task<bool> EnsureInitializedAsync(string missionPath)
+{
+    var lockPath = Path.Combine(Path.GetDirectoryName(missionPath)!, "mcl.lock");
+    if (File.Exists(lockPath)) return true;
+
+    Console.Error.WriteLine("↳ initialising mission (forge init)…");
+    var exit = await BuildInitCommand().Parse([missionPath]).InvokeAsync();
+    return exit == 0 && File.Exists(lockPath);
+}
+
+// --container: the same image the cloud runs, as an EPHEMERAL auto-named container —
+// started and torn down within this command (unlike the persistent `forge agent start`).
+static async Task<Func<Task>?> StartMissionContainerAsync(AgentConfig config, string missionPath, int hostPort)
+{
+    const string forgeImage = "ghcr.io/katasec/forge:latest";
+
+    var docker = await DockerPrereqChecker.CheckDockerAsync();
+    if (!DockerPrereqChecker.RunAndPrint([docker])) return null;
+
+    if (!await DockerCli.IsImagePresentAsync(forgeImage))
+    {
+        AnsiConsole.MarkupLine($"[yellow]Pulling {forgeImage}...[/]");
+        await DockerCli.PullImageAsync(forgeImage);
+    }
+    await DockerCli.EnsureNetworkAsync("forge-net");
+
+    // Synthesize an ephemeral agent.yaml next to the mission so relative paths resolve
+    // inside the /workspace mount; removed on teardown.
+    var missionDir    = Path.GetDirectoryName(missionPath)!;
+    var workspaceRoot = FindGitRoot(missionDir) ?? missionDir;
+    var synthYaml     = Path.Combine(missionDir, ".forge-claude.agent.yaml");
+    await File.WriteAllTextAsync(synthYaml, $"""
+        mission: {Path.GetFileName(missionPath)}
+        id: {config.Id}
+        port: {config.Port}
+        wire: anthropic
+        """);
+    var yamlInWorkspace = "/workspace/" + Path.GetRelativePath(workspaceRoot, synthYaml).Replace('\\', '/');
+
+    var containerName = $"forge-claude-{Guid.NewGuid():N}"[..20];
+    await DockerCli.RunContainerAsync(
+        name:          containerName,
+        image:         forgeImage,
+        cmd:           ["serve", yamlInWorkspace],
+        env:           [.. BuildEnvArray("MCL_API_KEY", "MCL_MODEL", "MCL_PROVIDER", "MCL_ENDPOINT"),
+                        "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1"],
+        binds:         [$"{workspaceRoot}:/workspace"],
+        hostPort:      hostPort,
+        containerPort: config.Port,
+        network:       "forge-net");
+
+    return async () =>
+    {
+        await DockerCli.StopAndRemoveAsync(containerName);
+        File.Delete(synthYaml);
+    };
+}
+
+static async Task<bool> WaitUntilHealthyAsync(string baseUrl, int timeoutMs)
+{
+    using var http = new HttpClient();
+    var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+    while (DateTime.UtcNow < deadline)
+    {
+        try
+        {
+            var response = await http.SendAsync(new HttpRequestMessage(HttpMethod.Head, baseUrl + "/"));
+            if (response.IsSuccessStatusCode) return true;
+        }
+        catch (HttpRequestException) { /* not up yet */ }
+        await Task.Delay(250);
+    }
+    return false;
+}
+
+// Launch claude with the redirect env, stdio inherited (fully interactive), and
+// forward -p plus any unparsed tokens. Returns claude's exit code.
+static async Task<int> RunWiredClaudeAsync(string baseUrl, string? prompt, IReadOnlyList<string> passthrough)
+{
+    var psi = new ProcessStartInfo("claude") { UseShellExecute = false };
+    if (prompt is not null) { psi.ArgumentList.Add("-p"); psi.ArgumentList.Add(prompt); }
+    foreach (var token in passthrough) psi.ArgumentList.Add(token);
+
+    psi.Environment["ANTHROPIC_BASE_URL"] = baseUrl;
+    psi.Environment["ANTHROPIC_API_KEY"]  = "forge-local";   // forge ignores the value
+
+    // Ctrl-C goes to the whole foreground group: claude handles it and exits; forge
+    // must survive the signal so teardown still runs.
+    Console.CancelKeyPress += Survive;
+    try
+    {
+        using var proc = Process.Start(psi)!;
+        await proc.WaitForExitAsync();
+        return proc.ExitCode;
+    }
+    finally
+    {
+        Console.CancelKeyPress -= Survive;
+    }
+
+    static void Survive(object? _, ConsoleCancelEventArgs e) => e.Cancel = true;
+}
+
+static async Task WaitForCtrlCAsync()
+{
+    var stopped = new TaskCompletionSource();
+    Console.CancelKeyPress += (_, e) => { e.Cancel = true; stopped.TrySetResult(); };
+    await stopped.Task;
+}
+
+static int FindFreePort()
+{
+    var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+    listener.Start();
+    var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+    listener.Stop();
+    return port;
+}
+
+static bool IsOnPath(string binary) =>
+    (Environment.GetEnvironmentVariable("PATH") ?? string.Empty)
+        .Split(Path.PathSeparator)
+        .Any(dir => File.Exists(Path.Combine(dir, binary))
+                 || File.Exists(Path.Combine(dir, binary + ".exe")));
+
+// Loads the mission behind an AgentConfig and builds the wire server, ready to start.
+// Shared by `forge serve` (blocking RunAsync) and `forge claude` (background StartAsync).
+// Returns null after reporting the error (Die) — callers just return.
+static async Task<(WebApplication App, string MissionPath, bool AnthropicWire)?> TryBuildMissionServerAsync(
+    AgentConfig config, string agentDir)
+{
+    var missionPath = Path.GetFullPath(Path.Combine(agentDir, config.Mission));
+    var lockPath    = Path.Combine(Path.GetDirectoryName(missionPath)!, "mcl.lock");
+
+    if (!File.Exists(missionPath)) { Die($"Mission file not found: {missionPath}"); return null; }
+    if (!File.Exists(lockPath))    { Die("MCL007 Mission not initialised — run 'forge init' first."); return null; }
+
+    var source = await TryReadFile(missionPath);
+    if (source is null) return null;
+
+    var ast = TryParse(source, missionPath);
+    if (ast is null) return null;
+
+    LockFile lockFile;
+    try { lockFile = LockFileIO.Read(lockPath); }
+    catch (Exception ex) { Die($"Cannot read mcl.lock: {ex.Message}"); return null; }
+
+    Dictionary<string, ExpertDefinition> expertDefs;
+    try { expertDefs = ExpertLoader.LoadFromLockFile(lockFile, Path.GetDirectoryName(missionPath)!); }
+    catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return null; }
+    catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return null; }
+
+    if (!TryValidate(ast, expertDefs)) return null;
+
+    Dictionary<string, object> seedContext;
+    try { seedContext = ContextBuilder.Seed(ast, new Dictionary<string, string>()); }
+    catch (InvalidOperationException ex) { Die(ex.Message); return null; }
+
+    ForgeManifest? manifest = null;
+    try { manifest = ForgeTomlReader.TryRead(missionPath); }
+    catch (ForgeTomlException ex) { Die(ex.Message); return null; }
+
+    var runners = BuildRunners(manifest, seedContext);
+    if (runners is null) return null;
+
+    var defaultRunner = runners.TryGetValue("default", out var dr)
+        ? dr
+        : runners.Values.First();
+
+    // Wire selector (42.1): the Anthropic wire hands the mission the FULL conversation
+    // (context["conversation"]/["system"], goal = last text block of the last user message);
+    // the OpenAI wire keeps the legacy last-turn behaviour so existing users don't regress.
+    var anthropicWire = string.Equals(config.Wire, "anthropic", StringComparison.OrdinalIgnoreCase);
+    var missionClient = new MissionChatClient(ast, expertDefs, defaultRunner, fullConversation: anthropicWire);
+
+    // Aux passthrough (42.3 §0): client housekeeping (title-gen, state-check) is answered by a
+    // plain provider model; the mission never runs — and never bills — for those.
+    IChatClient? auxClient = null;
+    if (anthropicWire && ResolveDefaultProfile(manifest, seedContext) is { } auxProfile)
+    {
+        try { auxClient = ProviderClientBuilder.BuildChatClient(auxProfile); }
+        catch { /* aux degrades to the server's canned replies */ }
+    }
+
+    var app = anthropicWire
+        ? AnthropicServer.Build(missionClient, config.Id, config.Port, auxClient)
+        : OaiServer.Build(missionClient, config.Id, config.Port);
+
+    return (app, missionPath, anthropicWire);
 }
 
 // ---------------------------------------------------------------------------

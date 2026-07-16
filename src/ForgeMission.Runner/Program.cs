@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ForgeMission.Cli;
 using ForgeMission.Runner;
 using ForgeMission.Runner.Contracts;
 using OpenTelemetry.Resources;
