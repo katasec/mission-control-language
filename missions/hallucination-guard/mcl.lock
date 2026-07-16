@@ -3,7 +3,7 @@ experts:
   Answerer:
     source: experts
     path: experts/Answerer/expert.md
-    hash: a60fbed45690f8f4df09c281872e415837c2554077c3178c266d307e5ed7b785
+    hash: 05720174715689b75e1b6de069074868fc388ea693e6120688c9a555ace69687
   Verifier:
     source: experts
     path: experts/Verifier/expert.md

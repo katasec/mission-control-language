@@ -1,8 +1,9 @@
 ---
 name: GroundedAnswer
 kind: llm
+role: agent
 input: goal + search_results + search_sources
-output: an answer grounded in the live web results
+output: an answer grounded in the live web results, or a tool call for the client to execute
 ---
 
 Answer the question using the live web-search results below. Prefer the results over your own prior

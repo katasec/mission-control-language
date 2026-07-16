@@ -4,7 +4,7 @@ namespace ForgeMission.Cli;
 /// The built-in missions and the immutable <c>@sha256</c> digests they are pinned to on the trusted
 /// Forge registry (Phase 39.4). Digest-pinning IS the trust boundary for built-ins: the registry can
 /// only return the exact content behind a digest, so a pull is self-verifying (cosign signatures
-/// land in 39.5 for third-party/custom missions). Published to <c>ghcr.io/katasec</c> 2026-07-09.
+/// land in 39.5 for third-party/custom missions). Published to <c>ghcr.io/katasec</c> 2026-07-09; republished 0.2.0 with role:agent terminal experts (42.4 quick win) 2026-07-17.
 /// </summary>
 public sealed record BuiltinMission(string Label, string Description, string OciRef, string LocalDir);
 
@@ -15,15 +15,15 @@ public static class BuiltinMissions
     public static readonly IReadOnlyList<BuiltinMission> All =
     [
         new("ChatGPT",   "Raw LLM — no verification",
-            $"{Reg}/forge-mission-vanilla@sha256:aa9852074a4b196dc153e3e495b4087954d76522635430b75ae3844c50e86bd1",             "vanilla"),
+            $"{Reg}/forge-mission-vanilla@sha256:9663e05847676da28191f09459ce45671d624221d2d9b329ff0770cb9621dc46",             "vanilla"),
         new("Forge",     "LLM + deterministic verifier, retries on fail",
-            $"{Reg}/forge-mission-hallucination-guard@sha256:5854bebc975b7f81d0d03430089d69396153fb1dd5665e214364c026f4001414", "hallucination-guard"),
+            $"{Reg}/forge-mission-hallucination-guard@sha256:ece5dc79e12086c50745c62e2d299402dcc452b27e0181fd4445f8082bf9bb81", "hallucination-guard"),
         new("Assistant", "General assistant, answers LLM-verified",
-            $"{Reg}/forge-mission-assistant@sha256:4ba3278af7b9400e28ff20c559a4274b6546c03571e3e248a67ec03eabcddbf9",          "assistant"),
+            $"{Reg}/forge-mission-assistant@sha256:03749f67d10fe3ed9672f96afa2a138f7f89403d070a806139e946a10e62624c",          "assistant"),
         new("Claude",    "Raw Claude — no verification",
-            $"{Reg}/forge-mission-claude@sha256:5f474a569a40e156218f0f5e2644b753ac3fb6c7bb7f662099826d9d09a93adb",             "claude"),
+            $"{Reg}/forge-mission-claude@sha256:9aafb6d2ed23616ebe8b6460012f36df0d81d12f588e341cb830d33e77e77aca",             "claude"),
         new("Grok",      "Grok with live web search — classifies, searches when current data is needed, grounds the answer (41.2)",
-            $"{Reg}/forge-mission-grok@sha256:be0d12b25aec107d1aa41ec3ae00b084b4773ba4c7dde59b287ed1a027c36cd5",               "grok"),
+            $"{Reg}/forge-mission-grok@sha256:a18d65a6a0891f82684a01e8e038b5653cac06673ff6ded556bcbd4448dba585",               "grok"),
     ];
 
     /// <summary>
