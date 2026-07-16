@@ -1,6 +1,20 @@
-# FML — Implementation Plan
+# MCL — Implementation Plan
 
-> **NOW BUILDING: [Phase 41 — Live Retrieval (Scout)](phases/phase-41-live-retrieval-scout.md) — a generic
+## Now (2026-07-16)
+
+| | |
+|---|---|
+| **NEXT STEP** | **Build [42.1 — Anthropic serve + full-conversation responder](phases/phase-42.1-anthropic-serve-responder.md)**, then 42.3 (the seam) → 42.2 (launcher). |
+| **Phase 42 — Forge Cloud** | **BUILD-READY.** Design review complete 2026-07-16 — all 5 questions decided; live wire capture vs the real `claude` CLI folded into the spokes. [Hub](phases/phase-42-forge-cloud.md). |
+| **Phase 41 — Scout** | Live (`forge-runner:0.7.0` / `forge-ui:0.4.2`). Remaining: Task 7 (search-front `@openai`/`@claude`/`@assistant`). Branch `phase-41.1-grok-web-search` unmerged. |
+| **Spend hole (Ph. 39)** | Known + accepted at F&F scale; Cloudflare rate limit = 42.6 launch gate ([42.6 task 3](phases/phase-42.6-hosted-endpoint-ttfa.md)). |
+| **Standing check** | Bottleneck = **evidence + clients**, not design — [Phase 37 eval harness](phases/phase-37-eval-harness.md) stays the highest-value alternative. |
+
+Depth lives in the phase hubs/spokes. Below is the running log (detail, not priority order).
+
+## Running log
+
+> **[Phase 41 — Live Retrieval (Scout)](phases/phase-41-live-retrieval-scout.md) — a generic
 > capability to reach the live internet and return a provider-neutral, source-attributed shape MCL reasons
 > over** (so a conversation isn't frozen at the model's training cutoff — the "no real-time data" wall in
 > Forge Rooms). Design + POC locked 2026-07-12 after a verify-don't-hallucinate pass over the xAI/OpenAI
