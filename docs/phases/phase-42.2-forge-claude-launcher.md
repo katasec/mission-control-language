@@ -36,6 +36,16 @@
 > 3. Non-issue: claude's MCP-server approval prompt on first launch is claude's own; MCP tools are
 >    allowlist-filtered and never reach the mission's model regardless of the user's choice.
 >
+> **Addendum (2026-07-16, same session): `forge connect vscode` shipped** — the extension-wiring gesture
+> from the hub §7 surface matrix, prompted by the VSCodium question. The Claude Code EXTENSION is a GUI
+> process that never sees shell env; the sanctioned wire is `claudeCode.environmentVariables` in the
+> **workspace** `.vscode/settings.json` — which VS Code **and VSCodium** both read, so one write covers
+> both editors. `forge connect vscode [target] [--port 8787]` writes/merges the key (JSONC guard: files
+> containing comments are never rewritten — a paste-ready snippet is printed instead) and serves the
+> mission on the pinned port until Ctrl-C. Smoke-verified live: fresh write + serve + HEAD 200, merge
+> preserving existing keys, and the comment-protection path leaving the file untouched. Extension-side
+> caveat recorded: VSCodium ships Open VSX — the Claude Code extension may need a manual `.vsix` install.
+>
 > Original design brief (2026-07-15): Collapse *serve + env-export + launch Claude Code + teardown* into one
 > command. `forge claude` spins the mission (in-process by default for speed, or `--container` for exact
 > cloud parity), points the real `claude` CLI at it via `ANTHROPIC_BASE_URL`, and cleans up on exit. This is

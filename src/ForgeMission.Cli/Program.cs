@@ -17,6 +17,7 @@ using Spectre.Console;
 using ForgeMission.Cli;
 using ForgeMission.Cli.Docker;
 using System.Diagnostics;
+using System.Text.Json;
 using MclProgram = ForgeMission.Parser.Program;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -34,6 +35,7 @@ rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
 rootCommand.Add(BuildClaudeCommand());
+rootCommand.Add(BuildConnectCommand());
 rootCommand.Add(BuildAgentCommand());
 rootCommand.Add(BuildWebuiCommand());
 rootCommand.Add(BuildProviderCommand());
@@ -585,6 +587,131 @@ static Command BuildClaudeCommand()
     });
 
     return cmd;
+}
+
+// ---------------------------------------------------------------------------
+// forge connect vscode — wire the Claude Code EXTENSION (VS Code / VSCodium) to a
+// mission. The extension is a GUI process that never sees shell env, so the sanctioned
+// gesture is the claudeCode.environmentVariables key in the workspace settings — which
+// BOTH editors read, so one write covers VS Code and VSCodium alike. A pinned port
+// (default 8787) because the extension cannot chase ephemeral ones.
+
+static Command BuildConnectCommand()
+{
+    var connectCmd = new Command("connect", "Wire an editor's Claude Code extension to a forge mission");
+    connectCmd.Add(BuildConnectVsCodeCommand());
+    return connectCmd;
+}
+
+static Command BuildConnectVsCodeCommand()
+{
+    var targetArg = new Argument<string?>("target") { Description = "Mission: a .mcl path, an @handle (built-in), or empty (agent.yaml / lone .mcl in cwd)", Arity = ArgumentArity.ZeroOrOne };
+    var portOpt   = new Option<int>("--port") { Description = "Port to serve on and write into the settings (default 8787)", DefaultValueFactory = _ => 8787 };
+
+    var cmd = new Command("vscode", "Write .vscode/settings.json and serve the mission (also covers VSCodium)");
+    cmd.Add(targetArg);
+    cmd.Add(portOpt);
+
+    cmd.SetAction(async result =>
+    {
+        var resolved = await ResolveClaudeTargetAsync(result.GetValue(targetArg));
+        if (resolved is not var (missionPath, missionName)) return;
+
+        if (!await EnsureInitializedAsync(missionPath)) return;
+
+        var port    = result.GetValue(portOpt);
+        var baseUrl = $"http://127.0.0.1:{port}";
+        if (!TryWriteVsCodeSettings(Directory.GetCurrentDirectory(), baseUrl)) return;
+
+        var config = new AgentConfig { Mission = missionPath, Port = port, Id = missionName, Wire = "anthropic" };
+        var built  = await TryBuildMissionServerAsync(config, Path.GetDirectoryName(missionPath)!);
+        if (built is not var (app, _, _)) return;
+
+        Console.Error.WriteLine($"✓ mission   {missionName,-15} {missionPath}");
+        Console.Error.WriteLine($"✓ endpoint  /v1/messages    {baseUrl}");
+        Console.Error.WriteLine($"✓ settings  .vscode/settings.json → claudeCode.environmentVariables");
+        Console.Error.WriteLine($"↳ open VS Code / VSCodium in this folder — the Claude Code extension now talks to the mission.");
+        Console.Error.WriteLine($"  Serving until Ctrl-C (settings persist; rerun this command to reconnect).");
+
+        try { await app.RunAsync(); }
+        catch (IOException ex) when (ex.Message.Contains("address already in use", StringComparison.OrdinalIgnoreCase)
+                                  || ex.InnerException is System.Net.Sockets.SocketException { SocketErrorCode: System.Net.Sockets.SocketError.AddressAlreadyInUse })
+        {
+            Die($"Port {port} is already in use. Pass a different --port (and rerun so the settings match).");
+        }
+    });
+
+    return cmd;
+}
+
+// Merge claudeCode.environmentVariables into the workspace settings. settings.json is
+// JSONC (comments allowed) and a DOM rewrite would destroy comments — so: create freely
+// when absent; merge when comment-free; otherwise print the snippet instead of clobbering.
+static bool TryWriteVsCodeSettings(string workspaceDir, string baseUrl)
+{
+    var settingsDir  = Path.Combine(workspaceDir, ".vscode");
+    var settingsPath = Path.Combine(settingsDir, "settings.json");
+
+    var envNode = new System.Text.Json.Nodes.JsonObject
+    {
+        ["ANTHROPIC_BASE_URL"] = baseUrl,
+        ["ANTHROPIC_API_KEY"]  = "forge-local",
+    };
+
+    System.Text.Json.Nodes.JsonObject root;
+    if (!File.Exists(settingsPath))
+    {
+        root = [];
+    }
+    else
+    {
+        var raw = File.ReadAllText(settingsPath);
+        if (HasJsoncComments(raw))
+        {
+            Console.Error.WriteLine($"{settingsPath} contains comments, which a rewrite would lose.");
+            Console.Error.WriteLine("Add this key yourself, then rerun with the same --port:\n");
+            Console.Error.WriteLine($$"""
+                "claudeCode.environmentVariables": {
+                  "ANTHROPIC_BASE_URL": "{{baseUrl}}",
+                  "ANTHROPIC_API_KEY": "forge-local"
+                }
+                """);
+            return false;
+        }
+        try
+        {
+            root = System.Text.Json.Nodes.JsonNode.Parse(raw,
+                documentOptions: new JsonDocumentOptions { AllowTrailingCommas = true })
+                as System.Text.Json.Nodes.JsonObject ?? [];
+        }
+        catch (JsonException ex) { Die($"Cannot parse {settingsPath}: {ex.Message}"); return false; }
+    }
+
+    root["claudeCode.environmentVariables"] = envNode;
+
+    Directory.CreateDirectory(settingsDir);
+    using var stream = File.Create(settingsPath);
+    using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
+    root.WriteTo(writer);
+    return true;
+}
+
+// Cheap comment detection outside string literals — good enough to protect user JSONC.
+static bool HasJsoncComments(string raw)
+{
+    var inString = false;
+    for (var i = 0; i < raw.Length - 1; i++)
+    {
+        var c = raw[i];
+        if (inString)
+        {
+            if (c == '\\') i++;
+            else if (c == '"') inString = false;
+        }
+        else if (c == '"') inString = true;
+        else if (c == '/' && (raw[i + 1] == '/' || raw[i + 1] == '*')) return true;
+    }
+    return false;
 }
 
 // target → (absolute mission path, mission name). @handle pulls the built-in from the

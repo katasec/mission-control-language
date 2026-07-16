@@ -454,7 +454,18 @@ forge claude --container        # run the mission as the cloud container (parity
 
 `forge claude` picks an ephemeral port, serves the mission on the Anthropic wire in-process, launches the real `claude` CLI with `ANTHROPIC_BASE_URL` pointed at it, and tears everything down when claude exits. Claude Code **stays a real coding agent** — Read/Edit/Write/Bash round-trip through the mission, which enriches once per user turn and verifies the final answer.
 
-Redirectable surfaces: **CLI** (this command), **VS Code** (`claudeCode.environmentVariables` — use `--print-env`), **JetBrains** (shell env). The Claude **desktop app** is OAuth-only and cannot be redirected this way.
+### forge connect vscode — wire the Claude Code extension (VS Code & VSCodium)
+
+The extension is a GUI process that never sees shell env, so it is wired via workspace settings — which both VS Code **and VSCodium** read:
+
+```bash
+forge connect vscode              # write .vscode/settings.json + serve on :8787 until Ctrl-C
+forge connect vscode @grok --port 9000
+```
+
+Writes `claudeCode.environmentVariables` into `.vscode/settings.json` (merging with existing keys; files containing comments are never rewritten — you get a paste-ready snippet instead), then serves the mission on the pinned port. Open the editor in that folder and the extension talks to the mission. Settings persist across sessions; rerun the command to reconnect.
+
+Redirectable surfaces: **CLI** (`forge claude`), **VS Code / VSCodium extension** (`forge connect vscode`), **JetBrains** (shell env in the integrated terminal). The Claude **desktop app** is OAuth-only and cannot be redirected this way.
 
 ```python
 # Python — call a forge mission like any other OAI-compatible service
