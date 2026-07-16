@@ -30,7 +30,7 @@ rootCommand.Add(BuildValidateCommand());
 rootCommand.Add(BuildListCommand());
 rootCommand.Add(BuildExpertCommand());
 rootCommand.Add(BuildRegistryCommand());
-rootCommand.Add(BuildLoginShimCommand());
+rootCommand.Add(BuildLoginCommand());
 rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
@@ -385,21 +385,29 @@ static Command BuildRegistryLoginCommand()
     return cmd;
 }
 
-// Deprecation shim (remove after one release): `forge login <registry> --token <PAT>` still
-// works but warns. Once removed, `forge login` is purely platform sign-in (42.5 task 2).
-static Command BuildLoginShimCommand()
+// forge login = platform sign-in (loopback + PKCE → platform key). The optional registry
+// argument is a deprecation shim (remove after one release) for the old OCI-registry login,
+// which moved to `forge registry login`.
+static Command BuildLoginCommand()
 {
-    var registryArg = new Argument<string>("registry") { Description = "Registry host (e.g. ghcr.io)" };
-    var tokenOpt    = new Option<string>("--token") { Description = "Credential token (e.g. GitHub PAT)" };
+    var registryArg = new Argument<string?>("registry") { Description = "(deprecated) Registry host — use 'forge registry login'", Arity = ArgumentArity.ZeroOrOne };
+    var tokenOpt    = new Option<string?>("--token") { Description = "(deprecated) Credential token — use 'forge registry login'" };
 
-    var cmd = new Command("login", "(deprecated for registries — use 'forge registry login')");
+    var cmd = new Command("login", "Sign in to Forge (browser) and store a platform key");
     cmd.Add(registryArg);
     cmd.Add(tokenOpt);
 
-    cmd.SetAction(result =>
+    cmd.SetAction(async result =>
     {
+        var registry = result.GetValue(registryArg);
+        if (registry is null) return await PlatformLogin.RunAsync();
+
+        var token = result.GetValue(tokenOpt);
+        if (token is null) { Die("Missing --token. For registry credentials use: forge registry login <registry> --token <PAT>"); return 1; }
+
         Console.Error.WriteLine("Warning: 'forge login <registry>' is deprecated — use 'forge registry login <registry> --token <PAT>'. This alias will be removed in the next release.");
-        SaveRegistryCredential(result.GetValue(registryArg)!, result.GetValue(tokenOpt)!);
+        SaveRegistryCredential(registry, token);
+        return 0;
     });
 
     return cmd;
