@@ -1,6 +1,8 @@
 # Phase 42.5 — Platform identity & keys
 
-> **Status: In build (2026-07-17; designed 2026-07-15, all decisions locked).** Give a user a **platform key + free credits** in one command, so they can
+> **Status: In build (2026-07-17).** T1 ✅ · **T2 ✅ LIVE** (`forge login` verified end-to-end) ·
+> T3 ✅ · **T4 server side: ① issuance + ② table built & tested** (not yet live-e2e) · ③ lookup lib
+> and ④ `/me` next · T5/T6 after. Give a user a **platform key + free credits** in one command, so they can
 > point a coding agent at a hosted forge mission with **no provider account**. The hosted runner calls
 > providers with *our* keys server-side, metered against the user's balance. This is the friction-killer
 > behind the TTF-awesome demo.
@@ -74,6 +76,34 @@ evolution if data-plane services multiply: the shared lib becomes a resolve endp
 filter (Kong, Envoy, AWS API Gateway pattern). Supabase's JWT→opaque-key reversal (2024–25) independently
 confirms the opaque+table decision above.
 
+**Identity keying — `oid`, not `sub` (DECIDED 2026-07-17, cross-checked w/ external review).**
+The domain already has the right shape: `Member` **is** the "ForgeUser" — `Member.Id` (Guid) is the
+domain PK that all business data references (`LedgerEntry.MemberId`, `PlatformKey.MemberId`, rooms,
+memberships), and `(Issuer, Subject)` is the external identity mapping. The only change: for the
+Entra issuer, the external subject is now **`oid`** (the tenant-stable object id, identical across
+every app/client) instead of **`sub`** (which is *pairwise per client* — the web app is a
+confidential client, the CLI a public client, so the same human would otherwise resolve to two
+Members with two `$5` grants). `ForgeClaims.TryGetIdentity` prefers `oid`, falls back to
+`sub`/NameIdentifier for the dev sign-in path (no `oid`). **No new abstraction, no RBAC/claims/policy
+engine** — authorization stays ownership-based (`resource.MemberId == currentMemberId`); principals/
+roles are deliberately deferred until collaboration scenarios exist. Existing dev accounts
+re-provision on next sign-in (accepted, F&F scale). *Not* NIH: we lean fully on Entra for identity
+(`oid` is Entra's canonical id); the opaque platform key is a separate compatibility bridge for
+static-bearer tools, not a reimplementation of auth.
+
+**Two planes, no RPC hop (DECIDED 2026-07-17).** Issuance (①) + `/me` (④) are handlers on the
+existing **control plane** (`ca-forge-ui-dev`, which already owns OIDC + `BillingService` + Rooms PG).
+The **data plane** (`ca-forge-runner-dev`) gets ③ as a *library*, not a service — it reads Rooms PG
+directly (cached), so there is no per-request `ext_authz` call between the two. Kept split on the
+39.1 trust boundary (the runner executes untrusted mission code; identity/billing must not live in
+that process). Collapsing them is explicitly rejected.
+
+**Storage seam (DECIDED 2026-07-17 — see [persistence.md](../design/persistence.md)).** `platform_keys`
+ships on EF/Postgres now, fronted by `IPlatformKeyStore`, so the long-planned move to Azure Table
+Storage is a one-line DI swap. `platform_keys` is the **first** table earmarked for that move (pure
+key→value lookup by `key_id`; no joins/aggregation). The ledger's balance stays in Postgres (`SUM`
+aggregation), and the request path composes the two stores — so the key half can migrate on its own.
+
 **Auxiliary commands:**
 - `forge whoami` → show signed-in user + balance (reads local key + a `/me` call).
 - `forge logout` → clear the local platform key.
@@ -88,26 +118,46 @@ confirms the opaque+table decision above.
    Deprecation shim built then **removed same day** per Ameer — sole user, no external invocations to
    protect; `forge login` is purely platform sign-in.
 2. **Auth flow in the CLI:** loopback auth-code + PKCE against `forgeids` (decided above); token exchange →
-   platform key. Hand-rolled, AOT-safe HTTP + STJ (no MSAL, no bare `JsonSerializerOptions`).
-   **⏳ CODE-COMPLETE 2026-07-17, live verify blocked on the app registration.** `PlatformLogin.cs`:
-   PKCE pair, free-port `HttpListener` loopback, browser launch, state check, token exchange, id_token
-   claims display; env overrides `FORGE_AUTH_AUTHORITY/CLIENT_ID/SCOPE`. `forge login` (no args) wired.
-   Registry-login deprecation shim built then removed same day (sole user). **Blocked on:** interactive
-   `az login --tenant 79c07ac3-4f45-4ea8-9701-94fd2ef1decd --allow-no-subscriptions` (MFA) → run
-   `forge-infra/dev/200-entra/create-cli-app-registration.sh` (committed, syntax-checked, idempotent:
-   public client + `cli.login` scope on Rooms app + Graph consent grants) → attach via
-   `APP_ID=<cli appId> ./create-user-flow.sh` → paste real ClientId into `PlatformLogin.cs` → live test.
+   Entra tokens. Hand-rolled, AOT-safe HTTP + STJ (no MSAL, no bare `JsonSerializerOptions`).
+   **✅ DONE + LIVE 2026-07-17.** `PlatformLogin.cs`: PKCE pair, free-port `HttpListener` loopback,
+   browser launch, state check, token exchange, id_token claims display; env overrides
+   `FORGE_AUTH_AUTHORITY/CLIENT_ID/SCOPE`. App registration created in `forgeids` (CLI public client
+   `33595d97-0296-4868-9217-dfab35faa314`, `create-cli-app-registration.sh` + `create-user-flow.sh`),
+   real ClientId + Rooms API scope (`api://4f8a95d6-…/cli.login`) baked in so the access token is
+   minted for the Rooms audience the issuance endpoint validates. Live-verified: `forge login` →
+   browser Email-OTP → loopback redirect → token exchange → `✓ signed in as writeameer@gmail.com`,
+   exit 0. **Still pending:** wire the login flow to POST the access token to `/platform/keys` (T4 ①)
+   and persist the returned `fg_live_…` via `CredentialStore` (T3) — the CLI→issuance join.
 3. **Credential store:** extend `~/.forge/credentials.json` with a `platform` section (key, user, endpoint);
    keep registry creds working. **✅ DONE 2026-07-17:** `PlatformCredential` + `Get/Save/ClearPlatform` on
    `CredentialStore` (shared read-modify-write); registry creds verified untouched; suite 256 pass.
    Save gets wired into the login flow when task 4's exchange endpoint exists.
-4. **Server-side issuance + resolution** (decided above: direct PG + cached lookup): mint the platform key
-   on login (issuance endpoint on the forge-ui/Rooms app, which already speaks OIDC to `forgeids` and owns
-   `BillingService`); a `platform_keys` table in Rooms PG mapping key-id → hashed secret + user; a shared
-   lookup lib (hash + resolve + cache) the runner uses on the request path; a `/me` endpoint returning user +
-   balance. Reuse the Phase-39 credit-grant on first login (idempotent).
+4. **Server-side issuance + resolution** (direct PG + cached lookup). Broken into four pieces (①–④):
+   - **② `platform_keys` table + `IPlatformKeyStore`. ✅ DONE 2026-07-17.** `PlatformKey` entity
+     (`key_id` PK → `secret_hash`, `member_id` FK→members cascade, `created_at`, `revoked_at`) +
+     snake_case config + `DbSet` + `AddPlatformKeys` migration. `IPlatformKeyStore`
+     (Save/ResolveByKeyId/Revoke) + EF impl behind it (the Table-Storage seam). `PlatformKeyMinting`
+     (shared): `fg_live_<keyId>_<secret>` hex format, HMAC-SHA256 keyed hash, constant-time verify,
+     TryParse. Tested: 14 pass (pure round-trip/verify/reject + store Save/Resolve/Revoke through real
+     Postgres, exercising the migration).
+   - **① Issuance endpoint `POST /platform/keys`. ✅ BUILT + TESTED 2026-07-17 (not yet live-e2e).**
+     On ForgeUI: a second JWT-bearer scheme (`PlatformKeyBearer`) validates the CLI's Entra access
+     token (authority = `forgeids`, audience = Rooms App ID URI, requires `cli.login` scope), stamps
+     the same `forge_iss` the OIDC path stamps → `MemberProvisioningService.ResolveAsync` (provisions
+     on `oid` + reuses the 39.2 grant, both idempotent) → mint key → `SaveAsync` the hash → return the
+     plaintext token once + email + balance. Builds clean, zero warnings. **Live-verify gated on** the
+     CLI wiring (T2 tail) + a ForgeUI deploy.
+   - **③ Shared lookup lib (request path). ⬜ NEXT.** Runner references `Rooms.Data` (it is
+     `PublishAot=false`, so EF is fine), resolves a presented `fg_live_…`: `TryParse` → `ResolveByKeyId`
+     → `PlatformKeyMinting.Verify` the secret → check `revoked_at` → `ILedgerStore` balance → return
+     `(memberId, balance)` runtime execution context, behind a ~30–60 s in-process cache. Shared HMAC
+     key via config (`PlatformKeys:HmacKey`) on both ForgeUI and the runner.
+   - **④ `/me` endpoint. ⬜ AFTER ③.** Returns user + balance. Authenticated by the **platform key**
+     (via ③), *not* the Entra bearer — `whoami` runs later carrying only the stored key.
 5. **`forge whoami` / `forge logout`.**
-6. **Revocation path** (admin/user can revoke a key) + test: a revoked key is rejected by the hosted endpoint.
+6. **Revocation path** (admin/user can revoke a key) + test: a revoked key is rejected by the hosted
+   endpoint. (`IPlatformKeyStore.RevokeAsync` + the ③ `revoked_at` check already exist; T6 adds the
+   admin/user trigger + the hosted-endpoint rejection test.)
 
 ## Out of scope
 
