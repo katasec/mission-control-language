@@ -183,9 +183,23 @@ aggregation), and the request path composes the two stores — so the key half c
   identity are correct. Fixes: add optional `email`/`name` claims to the access token in the CLI/Rooms
   app registration (forge-infra), or accept the self-heal — a web sign-in (id_token *has* email) updates
   the same member (keyed on `oid`).
-- **Not yet deployed.** ①/③/④ are live against a *local* ForgeUI; the deployed `ca-forge-ui-dev` still
-  runs the pre-42.5 image. Deploy + `PlatformKeys:HmacKey` in prod config are needed before the hosted
-  `forge login` works (and must match the runner's HMAC key for 42.6).
+## Deploy follow-ups (backlog — surfaced 2026-07-17 deploying 42.5)
+
+These are infra-hardening tasks in `katasec/forge-infra`, tracked here (not in that repo's README).
+Both are low priority — the deploy works today; these make it clean/repeatable.
+
+1. **Codify the KV Secrets Officer role for the deployer in bicep.** `kv-forgerooms-dev` is RBAC-mode;
+   a human setting secrets (e.g. `PlatformKeys-HmacKey`) needs **Key Vault Secrets Officer** on the
+   vault — currently granted by hand (`az role assignment create`). Add it as a
+   `Microsoft.Authorization/roleAssignments` in `dev/100-base` so a fresh clone needs no manual grant.
+2. **Add required reviewers to the `500-app`/`300-data` GitHub environments (low priority — doesn't
+   matter yet).** They have none, so the `gate` job in `infra.yml` runs straight through and a
+   `workflow_dispatch` deploy is *unapproved*. Fine for solo dev; add reviewers when a real approval
+   gate is wanted, else the `gate` job is decorative.
+
+*(Done during this deploy, for reference: the CI 500-app path was repaired — OIDC `gate`/`deploy` split
+so the branch-scoped fed cred matches, custom-domain vars passed so the SNI binding survives, and a
+migration-job start+wait step added. See the forge-infra `infra.yml` history.)*
 
 5. **`forge whoami` / `forge logout`. ✅ DONE + LIVE 2026-07-17.** `whoami` reads the stored key, calls
    `GET <endpoint>/me`, prints `Signed in as <email> · $X.XX credit · <endpoint>` (falls back to the
