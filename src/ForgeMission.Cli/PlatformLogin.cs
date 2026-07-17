@@ -75,6 +75,64 @@ public static class PlatformLogin
         return 0;
     }
 
+    // --- forge whoami / forge logout (T5) -------------------------------------------------------
+
+    // Show the signed-in user + live balance (reads the stored key, calls /me on its endpoint).
+    public static async Task<int> WhoAmIAsync()
+    {
+        var platform = CredentialStore.GetPlatform();
+        if (platform is null || string.IsNullOrEmpty(platform.Key))
+        {
+            Console.Error.WriteLine("Not signed in. Run `forge login`.");
+            return 1;
+        }
+
+        var me = await FetchMeAsync(platform.Endpoint, platform.Key);
+        if (me is null) return 1;
+
+        Console.WriteLine($"Signed in as {me.Email ?? platform.User}");
+        Console.WriteLine($"  {FormatBalance(me.BalanceMicroUsd)} credit · {platform.Endpoint}");
+        return 0;
+    }
+
+    // Clear the stored platform key.
+    public static int Logout()
+    {
+        if (CredentialStore.GetPlatform() is null)
+        {
+            Console.WriteLine("Not signed in.");
+            return 0;
+        }
+
+        CredentialStore.ClearPlatform();
+        Console.WriteLine("Signed out — platform key removed from ~/.forge.");
+        return 0;
+    }
+
+    private static async Task<MeResponse?> FetchMeAsync(string endpoint, string key)
+    {
+        var baseUrl = endpoint.TrimEnd('/');
+        using var req = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/me");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+
+        using var resp = await Http.SendAsync(req);
+        if (resp.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            Console.Error.WriteLine("Your platform key is no longer valid (expired or revoked). Run `forge login`.");
+            return null;
+        }
+
+        var json = await resp.Content.ReadAsStringAsync();
+        if (!resp.IsSuccessStatusCode)
+        {
+            Console.Error.WriteLine($"whoami failed ({(int)resp.StatusCode}) at {baseUrl}/me: {json}");
+            return null;
+        }
+
+        try { return JsonSerializer.Deserialize(json, PlatformLoginJsonContext.Default.MeResponse); }
+        catch (JsonException) { Console.Error.WriteLine("whoami returned an unreadable response."); return null; }
+    }
+
     // Exchange the validated Entra access token for a long-lived platform key (fg_live_…).
     private static async Task<IssueKeyResponse?> IssuePlatformKeyAsync(string accessToken)
     {
@@ -275,7 +333,16 @@ internal sealed class IssueKeyResponse
     [JsonPropertyName("balanceMicroUsd")] public long BalanceMicroUsd { get; set; }
 }
 
+// Response from GET /me (ForgeUI), camelCase on the wire.
+internal sealed class MeResponse
+{
+    [JsonPropertyName("email")] public string? Email { get; set; }
+    [JsonPropertyName("displayName")] public string? DisplayName { get; set; }
+    [JsonPropertyName("balanceMicroUsd")] public long BalanceMicroUsd { get; set; }
+}
+
 [JsonSerializable(typeof(TokenResponse))]
 [JsonSerializable(typeof(IdTokenClaims))]
 [JsonSerializable(typeof(IssueKeyResponse))]
+[JsonSerializable(typeof(MeResponse))]
 internal partial class PlatformLoginJsonContext : JsonSerializerContext { }

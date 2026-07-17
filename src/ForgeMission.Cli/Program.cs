@@ -31,6 +31,8 @@ rootCommand.Add(BuildListCommand());
 rootCommand.Add(BuildExpertCommand());
 rootCommand.Add(BuildRegistryCommand());
 rootCommand.Add(BuildLoginCommand());
+rootCommand.Add(BuildWhoamiCommand());
+rootCommand.Add(BuildLogoutCommand());
 rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
@@ -391,6 +393,20 @@ static Command BuildLoginCommand()
 {
     var cmd = new Command("login", "Sign in to Forge (browser) and store a platform key");
     cmd.SetAction(async _ => await PlatformLogin.RunAsync());
+    return cmd;
+}
+
+static Command BuildWhoamiCommand()
+{
+    var cmd = new Command("whoami", "Show the signed-in Forge user and credit balance");
+    cmd.SetAction(async _ => await PlatformLogin.WhoAmIAsync());
+    return cmd;
+}
+
+static Command BuildLogoutCommand()
+{
+    var cmd = new Command("logout", "Sign out of Forge (remove the stored platform key)");
+    cmd.SetAction(_ => PlatformLogin.Logout());
     return cmd;
 }
 
