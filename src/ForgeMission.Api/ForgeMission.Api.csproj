@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Tier-1 API gateway (42.6). Built AOT-*clean* from day one — slim builder, no reflection,
+         no runtime JsonSerializerOptions, Npgsql (not EF) via ForgeMission.Billing. PublishAot is
+         flipped on as a fast-follow once the endpoint works end-to-end (the macOS OpenSSL/brotli
+         linker dance shouldn't block the demo's critical path — see the spoke's AOT sequencing). -->
+    <PublishAot>false</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Auth + billing bounded context (platform-key resolve, balance check, debit) — AOT-clean. -->
+    <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
+  </ItemGroup>
+
+</Project>

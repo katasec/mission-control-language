@@ -220,6 +220,18 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
    Architecture). Thin gateway only: auth, route, meter, forward — no mission logic. No DB except the scoped
    `authbilling_db`. This is the public `/v1` edge from here on; the runner's own `/v1` doors stay internal
    (and back local `forge serve` / `--container`).
+   - **✅ FOUNDATION DONE (2026-07-18).** New [`ForgeMission.Api`](../../src/ForgeMission.Api/) slim host:
+     `/health` + [`WireProxy`](../../src/ForgeMission.Api/WireProxy.cs) — a hand-rolled (no YARP) streaming
+     reverse-proxy of `/v1/{**rest}` → the runner (`RunnerBaseUrl`), forwarding both verbs with
+     `ResponseHeadersRead` + `DisableBuffering` so SSE relays as it arrives; hop-by-hop headers stripped both
+     ways. References only the AOT-clean `ForgeMission.Billing` (auth/billing wraps land in tasks 4–6).
+     `PublishAot` stays off for now per the AOT-sequencing note (flip as a fast-follow). Added to the slnx.
+   - **Verified locally (two-service):** booted the runner (single-mission mode) behind ForgeAPI and drove
+     `POST /v1/messages` through the gateway → runner → real provider. Clean **HTTP 200** with a full
+     Anthropic `msg_…` body relayed (elevator-pitch via OpenAI, 3.9s), and the error path also relays (a
+     mission-internal 500 flows back verbatim). Gateway forwards + streams; mission outcome is orthogonal.
+   - **Deferred to their tasks:** per-handle path prefix `/m/{handle}` selecting the mission (task 5); auth
+     middleware (task 4); metering/debit off the wire tail (task 6). The relay itself stays dumb.
 4. **Auth middleware (on `ForgeAPI`).** Validate the platform key (42.5, via `ForgeMission.Billing`) on every
    `/v1/*` request → attach `(userId, balance)`; 401 on bad/revoked key.
 5. **Routing (on `ForgeAPI`).** Map handle (path segment `/@handle`, recommended) → OCI catalog mission the
