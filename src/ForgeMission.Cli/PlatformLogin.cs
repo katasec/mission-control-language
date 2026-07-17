@@ -22,11 +22,13 @@ public static class PlatformLogin
 
     private static string ClientId =>
         Environment.GetEnvironmentVariable("FORGE_AUTH_CLIENT_ID")
-        ?? "PENDING-CLI-APP-REGISTRATION"; // filled in once forge-infra/dev/200-entra/create-cli-app-registration.sh has run
+        ?? "33595d97-0296-4868-9217-dfab35faa314"; // Forge CLI (dev) public client — forge-infra/dev/200-entra/create-cli-app-registration.sh
 
+    // Request an access token for the Rooms app's cli.login scope (the issuance endpoint
+    // validates this bearer), alongside the reserved OIDC scopes for id_token + refresh.
     private static string Scope =>
         Environment.GetEnvironmentVariable("FORGE_AUTH_SCOPE")
-        ?? "openid profile email offline_access";
+        ?? "api://4f8a95d6-2d41-416c-a1b9-9177ddec1227/cli.login openid profile email offline_access";
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
