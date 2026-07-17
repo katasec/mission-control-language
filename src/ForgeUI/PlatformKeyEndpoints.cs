@@ -34,8 +34,11 @@ public static class PlatformKeyEndpoints
         var roomsAppId = config["PlatformKeys:RoomsAppId"] ?? "4f8a95d6-2d41-416c-a1b9-9177ddec1227";
         // CIAM quirk (verified live): the friendly-host authority (`forgeids.ciamlogin.com`) issues
         // tokens whose `iss` uses the tenant-GUID host (`<tenantId>.ciamlogin.com`), so the metadata
-        // issuer doesn't match. Accept both forms explicitly, keyed off the authority's tenant id.
-        var tenantId = authority?.TrimEnd('/').Split('/').LastOrDefault() ?? "";
+        // issuer doesn't match. Accept that form explicitly. Pull the tenant id out of the authority
+        // by finding the GUID segment — robust whether or not the authority ends in `/v2.0` (prod does,
+        // local dev doesn't).
+        var tenantId = (authority ?? "").Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .LastOrDefault(p => Guid.TryParse(p, out _)) ?? "";
 
         auth.AddJwtBearer(BearerScheme, options =>
         {
@@ -44,7 +47,6 @@ public static class PlatformKeyEndpoints
             options.TokenValidationParameters.ValidIssuers =
             [
                 $"https://{tenantId}.ciamlogin.com/{tenantId}/v2.0",
-                $"{authority?.TrimEnd('/')}/v2.0",
             ];
             options.MapInboundClaims = false; // keep raw `oid` / `scp` claim names
             options.Events = new JwtBearerEvents
