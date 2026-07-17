@@ -1,6 +1,6 @@
 using ForgeMission.Runner.Contracts;
 
-namespace ForgeUI.Services;
+namespace ForgeMission.Billing;
 
 /// <summary>
 /// Prices a run's emitted signals (<c>tokens + compute-seconds</c>) into micro-USD (39.2). Decision:

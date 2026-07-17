@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
+using ForgeMission.Billing;
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
 using ForgeMission.Runner.Contracts;
@@ -116,7 +117,13 @@ builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<InviteService>();
 
 // Metering & billing (39.2): per-user cost-meter + balance ledger. Singleton — stateless over the
-// ledger store; grants on provisioning, checks/debits on each agent run.
+// ledger store; grants on provisioning, checks/debits on each agent run. Policy is bound from config
+// here (the lib stays free of the config binder so it can be AOT — 42.6).
+builder.Services.AddSingleton(new BillingOptions
+{
+    StartingCreditMicroUsd =
+        builder.Configuration.GetValue<long?>("Billing:StartingCreditMicroUsd") ?? 5_000_000L,
+});
 builder.Services.AddSingleton<BillingService>();
 
 // Mission execution moved to the containerised runner (Phase 39.1). The orchestrator no longer

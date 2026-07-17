@@ -1,4 +1,4 @@
-namespace ForgeMission.Rooms.Data;
+namespace ForgeMission.Billing;
 
 /// <summary>What a <see cref="LedgerEntry"/> represents. F&amp;F (39.2) uses <see cref="Grant"/>
 /// (comped starting credit) and <see cref="Debit"/> (a run's actual cost). <see cref="Topup"/> is

@@ -174,11 +174,20 @@ Helm-over-OCI).
 Tasks 1–3 are the **foundation** the re-architecture adds (the split, the DB, the new service); 4–5 are the
 original auth + routing; 6+ are billing, cache, CLI, and deploy.
 
-1. **`ForgeMission.Billing` lib (foundation).** Extract `CostMeter` + a ledger-facing `BillingService`
-   (balance-check / debit / grant) from [ForgeUI/Services](../../src/ForgeUI/Services/) into a new AOT-clean
-   project. Depends only on an `ILedgerStore` abstraction + POCOs — no reflection, no runtime
+1. **`ForgeMission.Billing` lib (foundation). ✅ DONE (2026-07-18).** Extract `CostMeter` + a ledger-facing
+   `BillingService` (balance-check / debit / grant) from [ForgeUI/Services](../../src/ForgeUI/Services/) into a
+   new AOT-clean project. Depends only on an `ILedgerStore` abstraction + POCOs — no reflection, no runtime
    `JsonSerializerOptions`. **Referenced by both `ForgeUI` and `ForgeAPI`** (one meter, not two). Done when
    the room path (`RoomAgentInvoker`) still bills identically through the lib.
+   - **Shipped:** new [`ForgeMission.Billing`](../../src/ForgeMission.Billing/) project (`IsAotCompatible=true`,
+     builds 0 warnings) holding the moved `LedgerEntry`/`LedgerEntryKind` POCOs, the `ILedgerStore` interface,
+     `CostMeter`, and `BillingService`. `IConfiguration` swapped for an injected `BillingOptions` record so the
+     lib carries no config-binder reflection (host binds it from config at startup). `Rooms.Data` keeps the EF
+     `LedgerStore : ILedgerStore` impl + `LedgerEntryConfiguration` and now references Billing; `ForgeUI` +
+     tests re-pointed via `using ForgeMission.Billing`. Added to `ForgeMission.slnx`.
+   - **Verified:** solution + `ForgeUI` build clean; the 11 `Ledger`/`PlatformKeyResolver` tests pass against a
+     real Postgres container — the room billing path (append / balance-as-`SUM` / idempotent grant) is
+     byte-identical through the extracted lib. Next: Task 2 (`authbilling_db` split).
 2. **`authbilling_db` split (foundation).** Move `platform_keys` + `ledger_entries` into a **separate
    database on the same Postgres server** (see the [infra checklist](#infra-checklist-katasecforge-infra)).
    `ForgeAPI` accesses them via **raw Npgsql** (`IPlatformKeyStore` / `ILedgerStore` implementations, no EF)

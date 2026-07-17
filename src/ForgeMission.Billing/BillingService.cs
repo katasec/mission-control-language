@@ -1,7 +1,7 @@
-using ForgeMission.Rooms.Data;
 using ForgeMission.Runner.Contracts;
+using Microsoft.Extensions.Logging;
 
-namespace ForgeUI.Services;
+namespace ForgeMission.Billing;
 
 /// <summary>
 /// The orchestrator's billing seam (39.2): grant credits, check balance before a run, and debit the
@@ -12,12 +12,10 @@ namespace ForgeUI.Services;
 /// </summary>
 public sealed class BillingService(
     ILedgerStore ledger,
-    IConfiguration config,
+    BillingOptions options,
     ILogger<BillingService> logger)
 {
-    /// <summary>One-time comped starting balance for a new user, in micro-USD. Default $5.</summary>
-    private long StartingCreditMicroUsd =>
-        config.GetValue<long?>("Billing:StartingCreditMicroUsd") ?? 5_000_000L;
+    private long StartingCreditMicroUsd => options.StartingCreditMicroUsd;
 
     public Task<long> GetBalanceMicroUsdAsync(Guid memberId, CancellationToken ct = default) =>
         ledger.GetBalanceMicroUsdAsync(memberId, ct);
