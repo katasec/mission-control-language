@@ -208,6 +208,45 @@ ACA. The local in-process server (`forge serve`) is only for fast test-before-co
 local ≡ ④ cloud` because it is literally the same binary in the same container** — parity is a property,
 not a discipline.
 
+## 3a. Deployment topology — the north star (locked 2026-07-18)
+
+§3 is the *logical* architecture (doors → one room). This is the *physical* one: how those doors are
+deployed so a public, mission-executing endpoint can't become a data-exfiltration path. Surfaced while
+designing [42.6](phase-42.6-hosted-endpoint-ttfa.md); it governs every hosted spoke from here.
+
+![Phase 42 north-star tiering](phase-42-north-star-tiers.svg)
+
+**The target: classic three tiers, adjacent-only.** `CDN → tier 1 (presentation) → tier 2 (app) → tier 3
+(data)`, where each tier may talk **only to its neighbour** (enforced by network policy — Cilium / NSG /
+ACA ingress), and **tier 1 never reaches tier 3.**
+
+1. **`ForgeUI` and `ForgeAPI` are split** — two tier-1 surfaces, not one. They have genuinely different
+   profiles: `ForgeUI` is stateful (SignalR circuits, room state — a WhatsApp-group surface), OIDC-cookie
+   auth, human/browser, latency-tolerant; **`ForgeAPI`** is stateless request/response, **platform-key**
+   auth, machine clients (Claude Code / Codex), bursty and latency-sensitive. Welding `/v1` onto the Blazor
+   app would fuse two things that want to scale, deploy, and fail independently. `ForgeAPI` is the
+   client-facing `/v1` edge; **42.6 auth + routing land here** — not on `ForgeUI`, not on the runner.
+2. **The runner stays internal — no public IP, no DB creds.** It executes missions (and shells out via
+   `kind: exec`), so it is the highest-value compromise target; it must never hold a route to the ledger.
+   It is reached only from tier 1 over the internal `/run` contract, and its only secrets are the provider
+   keys it genuinely needs to make provider calls.
+3. **One datastore per bounded context** (`rooms_db`, `authbilling_db`, …). Auth/billing shares nothing
+   with chat messages except a `userId`; `userId` is the cross-context contract (no cross-DB foreign keys).
+   Splitting per context now — while data is tiny — is cheap; untangling one conflated DB later is not.
+4. **`ForgeAPI` is an AOT target.** It is the best AOT candidate in the stack (stateless + scale-to-zero →
+   the cold-start/footprint win is real product value). Keep it AOT-clean by construction — `CreateSlimBuilder`
+   + JSON source-gen (house rules) and **raw Npgsql, not EF Core**, for `authbilling` (EF Core is the one
+   real AOT blocker, and the tiny two-table auth/billing schema makes Npgsql trivial). `rooms_db` keeps its
+   EF context on the non-AOT `ForgeUI`, where it belongs.
+
+**The demo cut is a two-way door.** For the F&F demo we collapse the tier-2 auth/billing service *inline*:
+`ForgeAPI` embeds a `ForgeMission.Billing` lib in-process against a **scoped** `authbilling_db` (keys +
+ledger only — bounded blast radius; the runner still holds *nothing*). Every north-star seam is pre-cut —
+`ForgeAPI` is already its own service, billing is already behind an interface, `authbilling_db` is already a
+separate database — so the extraction to the strict north star is *move the box, swap the in-proc call for
+an HTTP client*: **no data migration, no client-visible change.** Full detail + the reversible-door diagram
+live in the [42.6 spoke](phase-42.6-hosted-endpoint-ttfa.md).
+
 ## 4. The quality contract per door — why base-URL first, MCP last
 
 The doors don't just differ in *reach* — they differ in **what quality we can honestly promise**, because
@@ -270,6 +309,14 @@ Never sell mandatory quality on an opt-in door. (Full surface support matrix in 
    **by type to registered handlers** (mux-style; probe → static, title-gen → provider passthrough, unknown
    structured-output → passthrough default). Composition, not inheritance — the same OWIN `AppFunc`
    strategy locked in Phase 41.
+9. **Three-tier, adjacent-only topology; `ForgeUI` ≠ `ForgeAPI`; runner internal; DB per context; `ForgeAPI`
+   AOT (added 2026-07-18 — §3a).** The hosted deploy shape is `CDN → tier 1 → tier 2 → tier 3`, tier 1 never
+   touching tier 3. `ForgeAPI` (stateless, platform-key, machine clients) is a **separate** tier-1 surface
+   from `ForgeUI` (stateful, OIDC, browser) and is where 42.6 auth + routing live. The runner stays internal
+   (no public IP, no DB creds), reached over `/run`. Auth/billing is its **own bounded context** — a
+   `ForgeMission.Billing` lib over a separate `authbilling_db` — never conflated with `rooms_db`. `ForgeAPI`
+   is built AOT-clean (Npgsql, not EF Core). **Demo cut** collapses the tier-2 auth/billing service inline in
+   `ForgeAPI`, but as a two-way door (every seam pre-cut; extraction needs no data migration).
 
 ## 6. Spokes (dependency-ordered)
 

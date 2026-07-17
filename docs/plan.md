@@ -1,10 +1,10 @@
 # MCL — Implementation Plan
 
-## Now (2026-07-17)
+## Now (2026-07-18)
 
 | | |
 |---|---|
-| **NEXT STEP** | **42.5 ✅ DEPLOYED + LIVE** ([spoke](phases/phase-42.5-platform-identity-keys.md)) — platform key + free credits in one command; `forge login`/`whoami` verified vs `https://forge.katasec.com` (`ca-forge-ui-dev` on `forge-ui:0.5.0`). Remaining: **T6** (revocation trigger) + 2 low-pri deploy follow-ups (in spoke). **Next: [42.6](phases/phase-42.6-hosted-endpoint-ttfa.md)** — hosted metered `/v1` (runner already has the HMAC). **42.6 client-facing UX now LOCKED** (2026-07-17 — verbs `forge exec`/`forge claude`, stream+trust-footer, curated-index discovery, first-run nudge; see spoke "UX decisions") → **build-ready**; start at spoke tasks 1–2 (auth middleware + routing). User manual: ON HOLD, slot after 42.6. |
+| **NEXT STEP** | **[42.6](phases/phase-42.6-hosted-endpoint-ttfa.md)** — hosted metered `/v1`, **build-ready** (re-architected 2026-07-18 → [north-star tiering](phases/phase-42-forge-cloud.md#3a-deployment-topology--the-north-star-locked-2026-07-18); build order + infra checklist in the spoke). **[42.5](phases/phase-42.5-platform-identity-keys.md) ✅ live** (remaining T6 in its spoke). User manual: ON HOLD, after 42.6. |
 | **Phase 42 — Forge Cloud** | **42.1–42.4 ✅ DONE (42.4 on 2026-07-17)** — local leg complete AND converged: `forge claude [@handle\|.mcl] [-p …]` one command, live-verified; `forge connect vscode` wires the extension; **42.4: one `/v1` image** — `ForgeServe` core serves both wires in `forge serve`/`claude` AND the runner (`/v1` doors + model→mission routing, Katasec.\*Server 0.1.7); `forge claude --container` runs the public multi-arch `ghcr.io/katasec/forge-runner` image in local-mission mode; built-ins republished 0.2.0 with `role: agent` (@chatgpt runs real tool round-trips — 42.2 quick win done); `ca-forge-runner-dev` on 0.8.0 with `/v1` + `/run/stream` verified on one revision. [Hub](phases/phase-42-forge-cloud.md) · [42.4](phases/phase-42.4-container-convergence.md). |
 | **Phase 41 — Scout** | Live (`forge-runner:0.7.0` / `forge-ui:0.4.2`). Remaining: Task 7 (search-front `@openai`/`@claude`/`@assistant`). Branch `phase-41.1-grok-web-search` unmerged. |
 | **Spend hole (Ph. 39)** | Known + accepted at F&F scale; Cloudflare rate limit = 42.6 launch gate ([42.6 task 3](phases/phase-42.6-hosted-endpoint-ttfa.md)). |

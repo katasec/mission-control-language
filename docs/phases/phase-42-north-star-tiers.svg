@@ -1,0 +1,82 @@
+<svg viewBox="0 0 680 404" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <title>Phase 42 — north-star tiering (target topology)</title>
+  <desc>CDN feeds tier 1 presentation (ForgeUI and ForgeAPI), which talks only to tier 2 app services (rooms, auth+billing, runner), which each own a separate tier 3 datastore. Tier 1 never reaches tier 3.</desc>
+
+  <rect width="680" height="404" fill="#ffffff"/>
+  <text x="40" y="26" fill="#333333" font-size="14" font-weight="600">Forge — north-star tiering  ·  CDN → tier 1 → tier 2 → tier 3, adjacent-only</text>
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#8a8880" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <g>
+    <rect x="250" y="44" width="180" height="34" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.8"/>
+    <text x="340" y="60" text-anchor="middle" fill="#444441" font-size="13" font-weight="500">CDN</text>
+    <text x="340" y="73" text-anchor="middle" fill="#5F5E5A" font-size="11">TLS · WAF · rate limit</text>
+  </g>
+
+  <line x1="40" y1="98" x2="640" y2="98" stroke="#cfcdc4" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="44" y="113" fill="#8a8880" font-size="11">tier 1 · presentation · internet-facing</text>
+  <g>
+    <rect x="120" y="120" width="200" height="54" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+    <text x="220" y="144" text-anchor="middle" fill="#085041" font-size="13" font-weight="500">ForgeUI</text>
+    <text x="220" y="161" text-anchor="middle" fill="#0F6E56" font-size="11">rooms · browser · OIDC</text>
+  </g>
+  <g>
+    <rect x="360" y="120" width="200" height="54" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+    <text x="460" y="144" text-anchor="middle" fill="#085041" font-size="13" font-weight="500">ForgeAPI</text>
+    <text x="460" y="161" text-anchor="middle" fill="#0F6E56" font-size="11">/v1 · CLI · platform key</text>
+  </g>
+
+  <line x1="40" y1="192" x2="640" y2="192" stroke="#cfcdc4" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="44" y="207" fill="#8a8880" font-size="11">tier 2 · app · internal only</text>
+  <text x="636" y="207" text-anchor="end" fill="#8a8880" font-size="11">adjacent tiers only</text>
+  <g>
+    <rect x="50" y="214" width="150" height="54" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+    <text x="125" y="238" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="500">Rooms service</text>
+    <text x="125" y="255" text-anchor="middle" fill="#534AB7" font-size="11">chat domain</text>
+  </g>
+  <g>
+    <rect x="214" y="214" width="190" height="54" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+    <text x="309" y="238" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="500">Auth + billing</text>
+    <text x="309" y="255" text-anchor="middle" fill="#534AB7" font-size="11">resolve · check · debit</text>
+  </g>
+  <g>
+    <rect x="418" y="214" width="196" height="54" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/>
+    <text x="516" y="238" text-anchor="middle" fill="#3C3489" font-size="13" font-weight="500">Runner</text>
+    <text x="516" y="255" text-anchor="middle" fill="#534AB7" font-size="11">mission exec · provider keys</text>
+  </g>
+
+  <line x1="40" y1="286" x2="640" y2="286" stroke="#cfcdc4" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="44" y="301" fill="#8a8880" font-size="11">tier 3 · data · one store per context</text>
+  <text x="636" y="301" text-anchor="end" fill="#8a8880" font-size="11">no tier-1 access</text>
+  <g>
+    <rect x="50" y="308" width="150" height="54" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.8"/>
+    <text x="125" y="332" text-anchor="middle" fill="#444441" font-size="13" font-weight="500">Rooms DB</text>
+    <text x="125" y="349" text-anchor="middle" fill="#5F5E5A" font-size="11">messages · members</text>
+  </g>
+  <g>
+    <rect x="214" y="308" width="190" height="54" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.8"/>
+    <text x="309" y="332" text-anchor="middle" fill="#444441" font-size="13" font-weight="500">Auth + billing DB</text>
+    <text x="309" y="349" text-anchor="middle" fill="#5F5E5A" font-size="11">identity · keys · ledger</text>
+  </g>
+  <g>
+    <rect x="418" y="308" width="196" height="54" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.8"/>
+    <text x="516" y="332" text-anchor="middle" fill="#444441" font-size="13" font-weight="500">Cache + blob</text>
+    <text x="516" y="349" text-anchor="middle" fill="#5F5E5A" font-size="11">enrichment · missions</text>
+  </g>
+
+  <line x1="305" y1="78" x2="225" y2="120" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="375" y1="78" x2="455" y2="120" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="210" y1="174" x2="135" y2="214" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="228" y1="174" x2="295" y2="214" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="452" y1="174" x2="322" y2="214" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="468" y1="174" x2="510" y2="214" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="125" y1="268" x2="125" y2="308" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="309" y1="268" x2="309" y2="308" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+  <line x1="516" y1="268" x2="516" y2="308" stroke="#8a8880" stroke-width="1.4" marker-end="url(#arr)"/>
+
+  <text x="340" y="386" text-anchor="middle" fill="#8a8880" font-size="11">arrows cross only between adjacent tiers — tier 1 never reaches tier 3 (Cilium / NSG policy)</text>
+</svg>

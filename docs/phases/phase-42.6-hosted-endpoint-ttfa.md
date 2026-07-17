@@ -1,9 +1,17 @@
 # Phase 42.6 — Hosted endpoint + time-to-first-awesome
 
-> **Status: Design (2026-07-15).** The payoff spoke. Expose the converged `/v1` image on
-> `forge.katasec.com` as a **multi-tenant hosted endpoint**: a request carrying a platform key is
-> authenticated, **routed key→mission**, run, **metered**, and debited. Definition of done **is the demo** —
-> a stranger reaches a cited, past-cutoff answer through their own Claude Code in 2–3 commands.
+> **Status: Design (2026-07-15; re-architected 2026-07-18).** The payoff spoke. Expose the hosted `/v1`
+> endpoint on `forge.katasec.com` as a **multi-tenant** surface: a request carrying a platform key is
+> authenticated, **routed to a mission by path**, run on the internal runner, **metered**, and debited.
+> Definition of done **is the demo** — a stranger reaches a cited, past-cutoff answer through their own
+> Claude Code in 2–3 commands.
+>
+> **Re-architected 2026-07-18 (see [Architecture](#architecture-re-architected-2026-07-18) below).** The
+> earlier design put the public `/v1` on the runner reading Postgres directly. Rejected: a public,
+> mission-executing process (`kind: exec` shells out) must not hold DB creds. New shape follows the
+> [Phase 42 north-star tiering](phase-42-forge-cloud.md#3a-deployment-topology--the-north-star-locked-2026-07-18):
+> a **dedicated `ForgeAPI`** (tier 1) terminates auth + routing; the **runner stays internal** (`/run`, no
+> DB); **auth/billing is its own bounded context** (`ForgeMission.Billing` over a separate `authbilling_db`).
 >
 > **Parent:** [Phase 42 — Forge Cloud](phase-42-forge-cloud.md) · **Depends on:**
 > [42.3](phase-42.3-tool-capable-enriching-responder.md) (agentic seam), [42.4](phase-42.4-container-convergence.md)
@@ -36,17 +44,64 @@
   `XAI_API_KEY`, …) in its ACA config; the user's platform key never carries a provider key. The mapping is:
   platform key → user + balance; provider keys → the runner's own env.
 
+## Architecture (re-architected 2026-07-18)
+
+Follows the [north-star tiering](phase-42-forge-cloud.md#3a-deployment-topology--the-north-star-locked-2026-07-18)
+(`CDN → tier 1 → tier 2 → tier 3`, adjacent-only). Two load-bearing calls, both driven by *"assume the
+public endpoint is hostile"*:
+
+- **`ForgeAPI` is a dedicated tier-1 service, separate from `ForgeUI`.** Stateless, platform-key auth,
+  machine clients (Claude Code / Codex), bursty — a different animal from the stateful OIDC/browser rooms
+  app. **42.6 auth + routing land on `ForgeAPI`**, not on `ForgeUI`, not on the runner.
+- **The runner never faces the internet and never holds DB creds.** It executes missions (and shells out
+  via `kind: exec`) → highest-value compromise target. `ForgeAPI` is its only ingress.
+
+**`ForgeAPI` is, in pattern terms, an API gateway** (edge auth, routing, rate-limit, usage metering +
+billing, reverse-proxy — an *API-monetization* gateway specifically). Keep it that: cross-cutting edge
+concerns only, **no mission/business logic** (the runner stays the brain). North-star is the textbook shape
+— a **stateless** gateway calling a tier-2 auth/billing service (token introspection + metering); the demo
+cut's in-proc `authbilling_db` is the reversible compromise. Because it's a standard pattern, swapping in
+APIM / Envoy / Kong at scale is a recognized migration, not a rewrite.
+
+**Relay = pass-through `/v1`, not `/run` (decided 2026-07-18).** An agentic turn (`forge claude`) is **N+1
+requests**: the runner emits `tool_use`, but the tool runs on the *client's* machine, so control returns to
+Claude Code and comes back as a fresh `tool_result` request that resumes the turn (the 42.3 re-entrancy
+seam). The internal `/run` contract is a single RPC — it can't hand control back to the client mid-turn, so
+it carries `forge exec` (one-shot) but **not** `forge claude`'s tool loop. So `ForgeAPI` **reverse-proxies
+the `/v1` wire** (streaming SSE included) to the runner's existing door for **both** verbs — one relay;
+provider keys + the tool loop stay on the runner; `ForgeAPI` skims `usage` off the wire response to debit.
+`/run` stays the rooms-internal path (`RoomAgentInvoker`), untouched.
+
+**Auth/billing is its own bounded context.** A new AOT-clean `ForgeMission.Billing` lib (`CostMeter` +
+ledger-facing `BillingService`, moved out of `ForgeUI/Services`) over a **separate `authbilling_db`** — a
+second database on the *same* Postgres server as `rooms_db`, sharing nothing but `userId`. `ForgeAPI`
+reaches it with **raw Npgsql, not EF Core** (EF is the one real AOT blocker; the two-table schema —
+`platform_keys` + `ledger_entries` — makes Npgsql trivial and keeps `ForgeAPI` an AOT target). `rooms_db`
+keeps its EF context on the non-AOT `ForgeUI`.
+
+**The demo cut is a two-way door.** For F&F we collapse the tier-2 auth/billing service *inline*: `ForgeAPI`
+calls `ForgeMission.Billing` in-process against the scoped `authbilling_db` (keys + ledger only; the runner
+still holds nothing). Every north-star seam is pre-cut, so extraction later is *move the box + swap the
+in-proc call for an HTTP client* — **no data migration, no client-visible change.**
+
+![Phase 42.6 demo cut — reversible door](phase-42.6-demo-cut-door.svg)
+
+> **AOT sequencing:** build `ForgeAPI` AOT-*clean* from day one (slim builder + JSON source-gen + Npgsql —
+> cheap when greenfield), but flip `PublishAot=true` as a **fast-follow after the endpoint works
+> end-to-end** — the macOS OpenSSL/brotli linker dance + linux-x64 cross-compile shouldn't block the demo's
+> critical path. Staying AOT-clean keeps the flip a switch, not a rewrite.
+
 ## Design
 
 **Request path (one hosted turn):**
 ```
-Claude Code ──/v1/messages + Bearer <platform key>──▶ forge.katasec.com (ACA)
-   ├─ AUTH   : resolve platform key → (userId, balance)         [42.5]
-   ├─ ROUTE  : URL/handle → mission  (/@websearch or a header)   [OCI catalog]
-   ├─ BALANCE: reject 402 if insufficient                        [BillingService]
-   ├─ RUN    : converged /v1 image · mission · UsageTrackingChatClient   [42.4 + 39]
-   │            └─ Scout live retrieval → 🌐   ·   enrich-once/tool loop  [41 + 42.3]
-   ├─ DEBIT  : ledger_entries -= cost                            [BillingService]
+Claude Code ──/v1/messages + Bearer <platform key>──▶ ForgeAPI (tier 1, forge.katasec.com)
+   ├─ AUTH   : resolve platform key → (userId, balance)         [42.5 · ForgeMission.Billing]
+   ├─ ROUTE  : path /@handle → mission                          [OCI catalog]
+   ├─ BALANCE: reject 402 if insufficient                       [ForgeMission.Billing]
+   ├─ RELAY  : reverse-proxy /v1 wire → internal runner's door · mission · UsageTrackingChatClient  [runner, tier 2 + 39]
+   │            └─ Scout live retrieval → 🌐   ·   enrich-once / N+1 tool loop  [41 + 42.3]
+   ├─ DEBIT  : full-mission usage (runner) on wire tail → authbilling_db ledger_entries -= cost   [ForgeMission.Billing]
    └─ RETURN : grounded, cited answer  (+ balance header)
 ```
 
@@ -116,14 +171,39 @@ Helm-over-OCI).
 
 ## Tasks (chronological)
 
-1. **Auth middleware:** validate the platform key (42.5) on every `/v1/*` request → attach `(userId,
-   balance)`; 401 on bad/revoked key.
-2. **Routing:** map handle (path segment, recommended) → OCI catalog mission the runner loads; 404 on
+Tasks 1–3 are the **foundation** the re-architecture adds (the split, the DB, the new service); 4–5 are the
+original auth + routing; 6+ are billing, cache, CLI, and deploy.
+
+1. **`ForgeMission.Billing` lib (foundation).** Extract `CostMeter` + a ledger-facing `BillingService`
+   (balance-check / debit / grant) from [ForgeUI/Services](../../src/ForgeUI/Services/) into a new AOT-clean
+   project. Depends only on an `ILedgerStore` abstraction + POCOs — no reflection, no runtime
+   `JsonSerializerOptions`. **Referenced by both `ForgeUI` and `ForgeAPI`** (one meter, not two). Done when
+   the room path (`RoomAgentInvoker`) still bills identically through the lib.
+2. **`authbilling_db` split (foundation).** Move `platform_keys` + `ledger_entries` into a **separate
+   database on the same Postgres server** (see the [infra checklist](#infra-checklist-katasecforge-infra)).
+   `ForgeAPI` accesses them via **raw Npgsql** (`IPlatformKeyStore` / `ILedgerStore` implementations, no EF)
+   so it stays an AOT target. Bootstrap schema with idempotent `CREATE TABLE IF NOT EXISTS` at startup (no
+   EF migrations on this DB). `userId` is the only cross-context link to `rooms_db` — no cross-DB FK. Migrate
+   the tiny existing F&F ledger/keys (copy or fresh start).
+3. **`ForgeMission.Api` service (foundation) — the API-gateway tier.** New tier-1 minimal-API host —
+   `WebApplication.CreateSlimBuilder` + JSON source-gen, AOT-clean. Health probe; a **streaming reverse-proxy**
+   of the `/v1` wire to the runner's internal door (SSE pass-through; **not** `/run` — see the relay note in
+   Architecture). Thin gateway only: auth, route, meter, forward — no mission logic. No DB except the scoped
+   `authbilling_db`. This is the public `/v1` edge from here on; the runner's own `/v1` doors stay internal
+   (and back local `forge serve` / `--container`).
+4. **Auth middleware (on `ForgeAPI`).** Validate the platform key (42.5, via `ForgeMission.Billing`) on every
+   `/v1/*` request → attach `(userId, balance)`; 401 on bad/revoked key.
+5. **Routing (on `ForgeAPI`).** Map handle (path segment `/@handle`, recommended) → OCI catalog mission the
+   runner loads → reverse-proxy the `/v1` turn to the runner's door with that mission selected; 404 on
    unknown handle.
-3. **Wrap the run in Phase-39 billing + the spend-abuse trigger ladder (DECIDED 2026-07-16).** Reuse
-   `BillingService` + `UsageTrackingChatClient` as-is. The known hole: `balance-check → run → debit` is not
-   a strict ceiling — cost is unknown until after, the check-to-debit window is ~60s (a live run took 71s),
-   and concurrent requests all pass `balance > 0` before any debit lands. **Accepted at F&F scale**
+6. **Wrap the run in billing + the spend-abuse trigger ladder (DECIDED 2026-07-16).** Reuse
+   `ForgeMission.Billing` + `UsageTrackingChatClient` as-is. **Metering source (2026-07-18):** debit from the
+   runner's `UsageTrackingChatClient`, which sees the **whole** mission (classify + search + synth + judge) —
+   surfaced to `ForgeAPI` on the wire tail (an HTTP trailer or a final `forge-usage` SSE event). **Do not**
+   debit from the client-facing Anthropic `usage` block — it counts only the terminal segment and under-bills.
+   The known hole: `balance-check → run → debit` is
+   not a strict ceiling — cost is unknown until after, the check-to-debit window is ~60s (a live run took
+   71s), and concurrent requests all pass `balance > 0` before any debit lands. **Accepted at F&F scale**
    (trusted population, stop-at-zero freeze bounds accidents to cents). The ladder — each rung built only
    when its trigger fires:
    1. **Freeze at zero** — already live ([RoomAgentInvoker](../../src/ForgeUI/Services/RoomAgentInvoker.cs)).
@@ -140,16 +220,36 @@ Helm-over-OCI).
       stale-reservation sweeper; also closes the best-effort-debit leak (a swallowed `SettleRunAsync`
       failure currently makes a run free).
    Return balance in a response header; 402 when short.
-4. **Shared enrichment cache:** implement the 42.3 content-addressed store (`ISessionStore` seam) over Rooms
-   Postgres / a cache — ACA may run >1 replica or scale to zero, so a continuation can land on a different
-   replica than the turn that enriched. Cache miss ⇒ re-run pre-agent (never answer ungrounded).
-5. **`forge missions`** command → hosted catalog list. **`forge claude`/`forge try` hosted mode** →
-   `@handle` resolves to the hosted URL + platform key.
-6. **Deploy to `forge.katasec.com`** (ACA), custom domain/HTTPS intact; verify the **headline demo** live:
-   `forge login && forge claude @websearch` → cited past-cutoff answer, ledger debited, balance shown.
+7. **Shared enrichment cache:** implement the 42.3 content-addressed store (`ISessionStore` seam) over a
+   shared cache — ACA may run >1 replica or scale to zero, so a continuation can land on a different replica
+   than the turn that enriched. Cache miss ⇒ re-run pre-agent (never answer ungrounded). Lives with the app
+   tier, not `authbilling_db` (a run-continuation cache, not billing data).
+8. **CLI hosted mode:** **`forge exec @handle "<prompt>"`** (one-shot, stream + trust footer — the
+   top-of-funnel awesome moment) and **`forge claude @handle`** (agentic) both resolve `@handle` → the hosted
+   `ForgeAPI` URL + platform key. **`forge missions`** → reads the curated catalog index (not the raw OCI
+   registry — see [UX decision 3](#ux-decisions-2026-07-17)).
+9. **Deploy + verify the headline demo** (details in the checklist below). `forge login && forge exec
+   @websearch "<past-cutoff question>"` → cited answer, ledger debited; and `forge claude @websearch` agentic.
    Verify the **anti-hallucination guarantee**: a stale-fact question triggers the classify→search path (not
    a confident-wrong answer).
-7. **`forge codex @websearch`** against the same endpoint once 42.7 lands (`/v1/responses` door).
+10. **`forge codex @websearch`** against the same endpoint once 42.7 lands (`/v1/responses` door).
+
+### Infra checklist (`katasec/forge-infra`)
+
+The re-architecture adds infra, sequenced with the tasks above. All in the layered Bicep (`dev/*`); redeploy
+the relevant layer (see [deploy.md](../design/deploy.md)).
+
+- [ ] **`authbilling_db`** — one `Microsoft.DBforPostgreSQL/flexibleServers/databases` child on the existing
+      `psql-forge-dev` server (same instance → no new server cost, no new firewall/VNet rules). *(Task 2.)*
+- [ ] **KV secret + env** — an `AuthBillingConnection` string (same host/creds as rooms, `Database=authbilling_db`)
+      → Key Vault → `ForgeAPI` env. Dedicated secret so it can rotate/relocate independently. *(Task 2.)*
+- [ ] **Table bootstrap** — since `authbilling` uses raw Npgsql (no EF migrations), create `platform_keys` +
+      `ledger_entries` via idempotent startup SQL or a one-shot deploy script. *(Task 2.)*
+- [ ] **`ca-forge-api-dev` container app** — new tier-1 ACA app for `ForgeAPI`: ingress, custom domain/HTTPS
+      on `forge.katasec.com`, network access to `psql-forge-dev` and to the internal runner. *(Task 3 / 9.)*
+- [ ] **Cloudflare per-IP rate limit** — pure config, **launch gate** (public endpoint + strangers). *(Task 6.)*
+- [ ] **Tier network policy** (north-star direction) — restrict runner ingress to `ForgeAPI`/`ForgeUI` only;
+      keep the runner off public ingress. *(Hardening; not a demo blocker.)*
 
 ## Out of scope
 
