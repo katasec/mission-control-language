@@ -280,10 +280,15 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
 The re-architecture adds infra, sequenced with the tasks above. All in the layered Bicep (`dev/*`); redeploy
 the relevant layer (see [deploy.md](../design/deploy.md)).
 
-- [ ] **`authbilling_db`** — one `Microsoft.DBforPostgreSQL/flexibleServers/databases` child on the existing
-      `psql-forge-dev` server (same instance → no new server cost, no new firewall/VNet rules). *(Task 2.)*
-- [ ] **KV secret + env** — an `AuthBillingConnection` string (same host/creds as rooms, `Database=authbilling_db`)
-      → Key Vault → `ForgeAPI` env. Dedicated secret so it can rotate/relocate independently. *(Task 2.)*
+- [x] **`authbilling_db`** — ✅ authored in Bicep (`forge-infra` `5e1cb2a`): `authBillingDb`, a second
+      `flexibleServers/databases` child on `psql-forge-dev` (same instance → no new server cost, no new
+      firewall/VNet rules). **⚠️ not yet deployed** — `dev/300-data` is a held, secret-bearing layer;
+      redeploy it (admin password re-supplied) to create the DB in Azure. *(Task 2.)*
+- [x] **KV secret** — ✅ authored (`forge-infra` `5e1cb2a`): `ConnectionStrings-AuthBillingConnection`
+      (same host/creds as rooms, `Database=authbilling_db`), a dedicated secret so it can rotate/relocate
+      independently. Surfaces as `ConnectionStrings:AuthBillingConnection`. **env wiring → ForgeAPI** happens
+      when `ca-forge-api-dev` is authored (below); ForgeUI derives it from `WriteConnection` meanwhile.
+      Applied on the same `dev/300-data` redeploy. *(Task 2.)*
 - [x] **Table bootstrap** — ✅ handled in-app: `AuthBillingSchema.EnsureCreatedAsync` runs idempotent
       `CREATE TABLE IF NOT EXISTS` at host startup (ForgeUI today, ForgeAPI later). Infra only needs to
       create the **database** (item 1); tables self-provision. *(Task 2.)*
