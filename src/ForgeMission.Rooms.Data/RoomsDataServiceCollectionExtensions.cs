@@ -21,6 +21,7 @@ public static class RoomsDataServiceCollectionExtensions
         services.AddSingleton<IReadStore, ReadStore>();
         services.AddSingleton<IWriteStore, WriteStore>();
         services.AddSingleton<ILedgerStore, LedgerStore>();
+        services.AddSingleton<IPlatformKeyStore, PlatformKeyStore>();
         return services;
     }
 }

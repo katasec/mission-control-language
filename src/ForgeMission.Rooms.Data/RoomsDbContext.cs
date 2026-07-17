@@ -15,6 +15,7 @@ public class RoomsDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<RoomInvite> Invites => Set<RoomInvite>();
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
+    public DbSet<PlatformKey> PlatformKeys => Set<PlatformKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,6 +25,7 @@ public class RoomsDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.ApplyConfiguration(new MessageConfiguration());
         modelBuilder.ApplyConfiguration(new RoomInviteConfiguration());
         modelBuilder.ApplyConfiguration(new LedgerEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new PlatformKeyConfiguration());
     }
 }
 
