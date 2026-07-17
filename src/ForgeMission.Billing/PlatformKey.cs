@@ -1,4 +1,4 @@
-namespace ForgeMission.Rooms.Data;
+namespace ForgeMission.Billing;
 
 /// <summary>
 /// A platform key (42.5): the opaque bearer token a signed-in user points a coding agent at the

@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
-using ForgeMission.Billing;
 
-namespace ForgeMission.Rooms.Data;
+namespace ForgeMission.Billing;
 
 /// <summary>
 /// Runtime execution context for a resolved platform key (42.5 ③): who the caller is and what they
@@ -32,8 +31,8 @@ public interface IPlatformKeyResolver
 
 /// <summary>
 /// The request-path lookup lib (42.5 ③). Composes <see cref="IPlatformKeyStore"/> (key → member)
-/// and <see cref="ILedgerStore"/> (member → balance) behind a short in-process cache. Runs in the
-/// runner (data plane); reading Rooms Postgres directly avoids an RPC hop to the control plane.
+/// and <see cref="ILedgerStore"/> (member → balance) behind a short in-process cache. In cloud (42.6)
+/// it runs on ForgeAPI's auth edge over <c>authbilling_db</c>; the composition is store-agnostic.
 ///
 /// A cache hit still verifies the presented secret against the cached hash — the cache holds the
 /// hash, never the secret — so a stolen key-id without the secret never resolves.

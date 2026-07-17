@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ForgeMission.Rooms.Data;
+namespace ForgeMission.Billing;
 
 /// <summary>
 /// Format, mint, and verify platform keys (42.5). Shared by the issuer (ForgeUI, ①) and the
-/// request-path resolver (runner lookup lib, ③) so both agree on the wire format and the hash.
+/// request-path resolver (③) so both agree on the wire format and the hash.
 ///
 /// Wire format: <c>fg_live_&lt;keyId&gt;_&lt;secret&gt;</c> — a support-friendly prefix, a lookup
 /// <c>keyId</c>, and a random secret. Both segments are lowercase hex (no underscores), so the
