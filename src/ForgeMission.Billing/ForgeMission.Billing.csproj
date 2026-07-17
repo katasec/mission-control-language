@@ -16,6 +16,9 @@
     <!-- Abstractions only — ILogger/DI have no reflection surface, unlike the config binder. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+    <!-- Raw ADO.NET Postgres for the authbilling_db stores (no EF) — Npgsql is AOT-compatible,
+         so ForgeAPI can stay an AOT target. -->
+    <PackageReference Include="Npgsql" Version="10.0.3" />
   </ItemGroup>
 
 </Project>

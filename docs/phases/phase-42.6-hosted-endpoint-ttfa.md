@@ -194,6 +194,26 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
    so it stays an AOT target. Bootstrap schema with idempotent `CREATE TABLE IF NOT EXISTS` at startup (no
    EF migrations on this DB). `userId` is the only cross-context link to `rooms_db` — no cross-DB FK. Migrate
    the tiny existing F&F ledger/keys (copy or fresh start).
+   - **✅ DONE (2026-07-18, full split — decided w/ Ameer).** `ForgeMission.Billing` now owns the whole
+     billing bounded context: `PlatformKey`/`LedgerEntry` POCOs + `IPlatformKeyStore`/`ILedgerStore` +
+     `PlatformKeyMinting`/`PlatformKeyResolver`, plus raw-Npgsql [`NpgsqlLedgerStore`](../../src/ForgeMission.Billing/NpgsqlLedgerStore.cs)
+     / [`NpgsqlPlatformKeyStore`](../../src/ForgeMission.Billing/NpgsqlPlatformKeyStore.cs), idempotent
+     [`AuthBillingSchema.EnsureCreatedAsync`](../../src/ForgeMission.Billing/AuthBillingSchema.cs), and an
+     `AddAuthBilling(connString)` DI extension. **rooms_db cut over:** EF `LedgerStore`/`PlatformKeyStore` +
+     configs + DbSets deleted; a `DropLedgerAndPlatformKeysFromRooms` migration drops both tables (Down fully
+     recreates → reversible). **ForgeUI re-pointed** to `authbilling_db` (`ConnectionStrings:AuthBillingConnection`,
+     else derived from `WriteConnection` with `Database=authbilling_db`); bootstraps the schema on every boot
+     in all envs. **One meter, one ledger** — the room path and the coming hosted `/v1` both bill against it.
+   - **Data migration = fresh start (no copy):** `MemberProvisioningService` calls the idempotent
+     `GrantStartingCredit` on every login, so an empty `authbilling_db` self-heals — existing F&F members get
+     re-granted 5,000,000µ$ on next sign-in. Acceptable at F&F scale; a copy is optional and unneeded.
+   - **⚠️ prerequisite:** the app bootstraps *tables*, not the *database* — `authbilling_db` must exist on the
+     server first (infra checklist item 1 / a local `CREATE DATABASE authbilling_db`), else ForgeUI fails to
+     start on the missing-DB connection.
+   - **Verified:** solution + ForgeUI build clean (Billing is `IsAotCompatible`, 0 warnings incl. Npgsql);
+     the full 61-test Rooms suite passes, with the 25 ledger/platform-key/resolver tests now exercising the
+     **raw-Npgsql stores against real Postgres** (caught + fixed the `SUM(bigint)→numeric` cast). Next: Task 3
+     (`ForgeMission.Api` gateway).
 3. **`ForgeMission.Api` service (foundation) — the API-gateway tier.** New tier-1 minimal-API host —
    `WebApplication.CreateSlimBuilder` + JSON source-gen, AOT-clean. Health probe; a **streaming reverse-proxy**
    of the `/v1` wire to the runner's internal door (SSE pass-through; **not** `/run` — see the relay note in
@@ -252,8 +272,9 @@ the relevant layer (see [deploy.md](../design/deploy.md)).
       `psql-forge-dev` server (same instance → no new server cost, no new firewall/VNet rules). *(Task 2.)*
 - [ ] **KV secret + env** — an `AuthBillingConnection` string (same host/creds as rooms, `Database=authbilling_db`)
       → Key Vault → `ForgeAPI` env. Dedicated secret so it can rotate/relocate independently. *(Task 2.)*
-- [ ] **Table bootstrap** — since `authbilling` uses raw Npgsql (no EF migrations), create `platform_keys` +
-      `ledger_entries` via idempotent startup SQL or a one-shot deploy script. *(Task 2.)*
+- [x] **Table bootstrap** — ✅ handled in-app: `AuthBillingSchema.EnsureCreatedAsync` runs idempotent
+      `CREATE TABLE IF NOT EXISTS` at host startup (ForgeUI today, ForgeAPI later). Infra only needs to
+      create the **database** (item 1); tables self-provision. *(Task 2.)*
 - [ ] **`ca-forge-api-dev` container app** — new tier-1 ACA app for `ForgeAPI`: ingress, custom domain/HTTPS
       on `forge.katasec.com`, network access to `psql-forge-dev` and to the internal runner. *(Task 3 / 9.)*
 - [ ] **Cloudflare per-IP rate limit** — pure config, **launch gate** (public endpoint + strangers). *(Task 6.)*

@@ -1,4 +1,3 @@
-using ForgeMission.Billing;
 using ForgeMission.Rooms.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,8 +14,8 @@ public class RoomsDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<RoomMembership> Memberships => Set<RoomMembership>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<RoomInvite> Invites => Set<RoomInvite>();
-    public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
-    public DbSet<PlatformKey> PlatformKeys => Set<PlatformKey>();
+    // ledger_entries + platform_keys moved to the authbilling_db billing context (42.6); no longer
+    // EF-mapped here. See ForgeMission.Billing (raw-Npgsql stores + AuthBillingSchema).
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,8 +24,6 @@ public class RoomsDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.ApplyConfiguration(new RoomMembershipConfiguration());
         modelBuilder.ApplyConfiguration(new MessageConfiguration());
         modelBuilder.ApplyConfiguration(new RoomInviteConfiguration());
-        modelBuilder.ApplyConfiguration(new LedgerEntryConfiguration());
-        modelBuilder.ApplyConfiguration(new PlatformKeyConfiguration());
     }
 }
 

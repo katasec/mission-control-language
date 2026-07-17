@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using ForgeMission.Billing;
 using ForgeMission.Rooms;
+using Npgsql;
 using ForgeMission.Rooms.Data;
 using ForgeMission.Runner.Contracts;
 using ForgeUI;
@@ -38,6 +39,18 @@ var readConnection = builder.Configuration.GetConnectionString("ReadConnection")
 var writeConnection = builder.Configuration.GetConnectionString("WriteConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:WriteConnection is not configured.");
 builder.Services.AddRoomsData(readConnection, writeConnection);
+
+// Billing bounded context (39.2 + 42.6) — its own authbilling_db holding platform_keys +
+// ledger_entries, accessed via raw-Npgsql stores (AOT-clean so ForgeAPI reuses it verbatim). Same
+// Postgres server as rooms_db by default; member_id is the only cross-context link (no cross-DB FK).
+// One meter, one ledger — the room path here and the hosted /v1 path both bill against it.
+var authBillingConnection = builder.Configuration.GetConnectionString("AuthBillingConnection")
+    ?? new NpgsqlConnectionStringBuilder(writeConnection) { Database = "authbilling_db" }.ConnectionString;
+builder.Services.AddAuthBilling(authBillingConnection, new BillingOptions
+{
+    StartingCreditMicroUsd =
+        builder.Configuration.GetValue<long?>("Billing:StartingCreditMicroUsd") ?? 5_000_000L,
+});
 
 // Platform-key resolver (42.5 ③) — backs GET /me (and the runner's request path at 42.6).
 // HMAC key is shared with the issuance endpoint so verify succeeds.
@@ -116,16 +129,6 @@ builder.Services.AddScoped<MemberProvisioningService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<InviteService>();
 
-// Metering & billing (39.2): per-user cost-meter + balance ledger. Singleton — stateless over the
-// ledger store; grants on provisioning, checks/debits on each agent run. Policy is bound from config
-// here (the lib stays free of the config binder so it can be AOT — 42.6).
-builder.Services.AddSingleton(new BillingOptions
-{
-    StartingCreditMicroUsd =
-        builder.Configuration.GetValue<long?>("Billing:StartingCreditMicroUsd") ?? 5_000_000L,
-});
-builder.Services.AddSingleton<BillingService>();
-
 // Mission execution moved to the containerised runner (Phase 39.1). The orchestrator no longer
 // loads missions or holds provider keys — it calls the runner over HTTP. RunnerBaseUrl points at
 // the warm runner (ACA); default localhost for `dotnet run` alongside the runner.
@@ -192,6 +195,10 @@ if (!app.Environment.IsDevelopment())
     // Starter rooms reference the @assistant member, so it must exist in prod too.
     // Prod schema is created by the migration job before this runs.
     await RoomsSeeder.SeedEssentialAgentsAsync(factory);
+
+    // Bootstrap the authbilling_db schema in ALL environments (42.6). By design this DB has no EF
+    // migration job — the two-table schema is idempotent CREATE TABLE IF NOT EXISTS, cheap every boot.
+    await AuthBillingSchema.EnsureCreatedAsync(app.Services.GetRequiredService<NpgsqlDataSource>());
 }
 
 app.UseStaticFiles();

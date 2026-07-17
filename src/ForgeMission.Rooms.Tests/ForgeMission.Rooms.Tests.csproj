@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
+    <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
   </ItemGroup>
 
 </Project>
