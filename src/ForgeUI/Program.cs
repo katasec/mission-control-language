@@ -3,6 +3,7 @@ using System.Security.Claims;
 using ForgeMission.Rooms;
 using ForgeMission.Rooms.Data;
 using ForgeMission.Runner.Contracts;
+using ForgeUI;
 using ForgeUI.Hubs;
 using ForgeUI.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -93,6 +94,10 @@ if (oidcConfigured)
             },
         };
     });
+
+    // Platform-key issuance (42.5 ①): a second scheme validating the CLI's Entra access token.
+    // Only when OIDC is configured — local dev has no real token issuer.
+    auth.AddPlatformKeyBearer(builder.Configuration);
 }
 
 builder.Services.AddAuthorization();
@@ -247,6 +252,7 @@ app.MapGet("/invite/{token}", async (string token, HttpContext http,
     };
 });
 
+app.MapPlatformKeys(); // 42.5 ①: POST /platform/keys (Entra-bearer issuance)
 app.MapBlazorHub();
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapFallbackToPage("/_Host");

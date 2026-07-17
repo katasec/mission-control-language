@@ -12,13 +12,24 @@ public static class ForgeClaims
     /// <summary>Explicit issuer claim we stamp at sign-in (scheme-agnostic).</summary>
     public const string Issuer = "forge_iss";
 
+    // Entra's immutable, per-tenant user id (`oid`). It is identical across every app and client
+    // in the tenant, so the web session (confidential client) and the CLI platform key (public
+    // client) resolve to the SAME member — unlike `sub`, which is pairwise per client (42.5).
+    // The OIDC handler maps `oid` to the WS-Fed URI; raw JWTs keep it as `oid`.
+    private const string ObjectIdUri = "http://schemas.microsoft.com/identity/claims/objectidentifier";
+
     public static (string Issuer, string Subject)? TryGetIdentity(ClaimsPrincipal? user)
     {
         if (user?.Identity?.IsAuthenticated != true)
             return null;
 
         var issuer = user.FindFirst(Issuer)?.Value;
-        var subject = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst("sub")?.Value;
+        // Prefer `oid` (stable across clients); fall back to sub/NameIdentifier for the dev
+        // sign-in path, which has no object id.
+        var subject = user.FindFirst("oid")?.Value
+            ?? user.FindFirst(ObjectIdUri)?.Value
+            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? user.FindFirst("sub")?.Value;
 
         return string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(subject)
             ? null
