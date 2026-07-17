@@ -38,6 +38,13 @@ var writeConnection = builder.Configuration.GetConnectionString("WriteConnection
     ?? throw new InvalidOperationException("ConnectionStrings:WriteConnection is not configured.");
 builder.Services.AddRoomsData(readConnection, writeConnection);
 
+// Platform-key resolver (42.5 ③) — backs GET /me (and the runner's request path at 42.6).
+// HMAC key is shared with the issuance endpoint so verify succeeds.
+builder.Services.AddPlatformKeyResolver(new PlatformKeyResolverOptions
+{
+    HmacKey = PlatformKeyEndpoints.HmacKey(builder.Configuration),
+});
+
 // --- Identity (38.4) — federated OIDC via Entra External ID, cookie session ---------------
 // Entra External ID is wired as a *standard* OIDC provider (no B2C custom policies), so the
 // exit from any one IdP stays cheap. Google/Apple are federated *inside* the Entra tenant, so

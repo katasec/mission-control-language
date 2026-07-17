@@ -52,11 +52,16 @@ public static class PlatformKeyEndpoints
 
     public static void MapPlatformKeys(this WebApplication app)
     {
+        // ① Issuance — authenticated by the CLI's Entra access token.
         app.MapPost("/platform/keys", IssueAsync)
             .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute
             {
                 AuthenticationSchemes = BearerScheme,
             });
+
+        // ④ Account query — authenticated by the platform key itself (resolved via ③), not the
+        // Entra bearer: `whoami` runs later carrying only the stored key.
+        app.MapGet("/me", MeAsync);
     }
 
     // --- handler ------------------------------------------------------------------------------
@@ -94,6 +99,31 @@ public static class PlatformKeyEndpoints
         return Results.Ok(new IssueResponse(minted.Token, member.Email, balance));
     }
 
+    // --- /me (④) ------------------------------------------------------------------------------
+
+    private static async Task<IResult> MeAsync(
+        HttpContext http,
+        IPlatformKeyResolver resolver,
+        IReadStore reads,
+        CancellationToken ct)
+    {
+        var token = BearerToken(http);
+        var ctx = token is null ? null : await resolver.ResolveAsync(token, ct);
+        if (ctx is null)
+            return Results.Unauthorized();
+
+        var member = await reads.GetMemberAsync(ctx.MemberId, ct);
+        return Results.Ok(new MeResponse(member?.Email, member?.DisplayName, ctx.BalanceMicroUsd));
+    }
+
+    private static string? BearerToken(HttpContext http)
+    {
+        var header = http.Request.Headers.Authorization.ToString();
+        return header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+            ? header["Bearer ".Length..].Trim()
+            : null;
+    }
+
     // --- helpers ------------------------------------------------------------------------------
 
     private static bool HasScope(ClaimsPrincipal user, string scope)
@@ -103,8 +133,10 @@ public static class PlatformKeyEndpoints
         return scp is not null && scp.Split(' ').Contains(scope);
     }
 
-    private static string HmacKey(IConfiguration config) =>
+    /// <summary>Shared server key for the platform-key HMAC — issuer and resolver must agree.</summary>
+    internal static string HmacKey(IConfiguration config) =>
         config["PlatformKeys:HmacKey"] ?? HmacKeyDevDefault;
 
     private sealed record IssueResponse(string Key, string? Email, long BalanceMicroUsd);
+    private sealed record MeResponse(string? Email, string? DisplayName, long BalanceMicroUsd);
 }
