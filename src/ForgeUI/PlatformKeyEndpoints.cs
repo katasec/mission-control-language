@@ -28,13 +28,24 @@ public static class PlatformKeyEndpoints
     public static void AddPlatformKeyBearer(this AuthenticationBuilder auth, IConfiguration config)
     {
         var authority = config["Oidc:Authority"];
-        // The CLI requests `api://<roomsAppId>/cli.login`, so the token's audience is the App ID URI.
-        var audience = config["PlatformKeys:Audience"] ?? "api://4f8a95d6-2d41-416c-a1b9-9177ddec1227";
+        // The CLI requests `api://<roomsAppId>/cli.login`. Entra v2 access tokens carry `aud` as the
+        // bare app-id GUID (verified live), but older/other configs use the `api://` App ID URI — accept
+        // both so the audience check is robust to either form.
+        var roomsAppId = config["PlatformKeys:RoomsAppId"] ?? "4f8a95d6-2d41-416c-a1b9-9177ddec1227";
+        // CIAM quirk (verified live): the friendly-host authority (`forgeids.ciamlogin.com`) issues
+        // tokens whose `iss` uses the tenant-GUID host (`<tenantId>.ciamlogin.com`), so the metadata
+        // issuer doesn't match. Accept both forms explicitly, keyed off the authority's tenant id.
+        var tenantId = authority?.TrimEnd('/').Split('/').LastOrDefault() ?? "";
 
         auth.AddJwtBearer(BearerScheme, options =>
         {
             options.Authority = authority;
-            options.Audience = audience;
+            options.TokenValidationParameters.ValidAudiences = [roomsAppId, $"api://{roomsAppId}"];
+            options.TokenValidationParameters.ValidIssuers =
+            [
+                $"https://{tenantId}.ciamlogin.com/{tenantId}/v2.0",
+                $"{authority?.TrimEnd('/')}/v2.0",
+            ];
             options.MapInboundClaims = false; // keep raw `oid` / `scp` claim names
             options.Events = new JwtBearerEvents
             {

@@ -1,11 +1,13 @@
 using System.Buffers.Text;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ForgeMission.Core.Resolution;
 
 namespace ForgeMission.Cli;
 
@@ -30,6 +32,12 @@ public static class PlatformLogin
         Environment.GetEnvironmentVariable("FORGE_AUTH_SCOPE")
         ?? "api://4f8a95d6-2d41-416c-a1b9-9177ddec1227/cli.login openid profile email offline_access";
 
+    // Base URL of the platform that issues the key (the forge-ui control plane). Override for local
+    // dev against a locally-run ForgeUI.
+    private static string PlatformEndpoint =>
+        Environment.GetEnvironmentVariable("FORGE_PLATFORM_ENDPOINT")?.TrimEnd('/')
+        ?? "https://forge.katasec.com";
+
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     public static async Task<int> RunAsync()
@@ -48,12 +56,51 @@ public static class PlatformLogin
         if (code is null) return 1;
 
         var tokens = await ExchangeCodeAsync(code, verifier, redirectUri);
-        if (tokens is null) return 1;
+        if (tokens is null || string.IsNullOrEmpty(tokens.AccessToken)) return 1;
 
-        Console.WriteLine($"✓ signed in as {ReadUserLabel(tokens.IdToken)}");
-        // 42.5 task 3 stores the credential; task 4 exchanges it for a platform key.
+        // Exchange the Entra access token for a platform key (issuance endpoint on the control plane).
+        var issued = await IssuePlatformKeyAsync(tokens.AccessToken);
+        if (issued is null) return 1;
+
+        var user = issued.Email ?? ReadUserLabel(tokens.IdToken);
+        CredentialStore.SavePlatform(new PlatformCredential
+        {
+            Key = issued.Key,
+            User = user,
+            Endpoint = PlatformEndpoint,
+        });
+
+        Console.WriteLine($"✓ signed in as {user}");
+        Console.WriteLine($"  {FormatBalance(issued.BalanceMicroUsd)} credit · key stored in ~/.forge");
         return 0;
     }
+
+    // Exchange the validated Entra access token for a long-lived platform key (fg_live_…).
+    private static async Task<IssueKeyResponse?> IssuePlatformKeyAsync(string accessToken)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"{PlatformEndpoint}/platform/keys");
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var resp = await Http.SendAsync(req);
+        var json = await resp.Content.ReadAsStringAsync();
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            Console.Error.WriteLine($"Key issuance failed ({(int)resp.StatusCode}) at {PlatformEndpoint}/platform/keys: {json}");
+            var wwwAuth = resp.Headers.WwwAuthenticate.ToString();
+            if (!string.IsNullOrEmpty(wwwAuth)) Console.Error.WriteLine($"  WWW-Authenticate: {wwwAuth}");
+            return null;
+        }
+
+        try { return JsonSerializer.Deserialize(json, PlatformLoginJsonContext.Default.IssueKeyResponse); }
+        catch (JsonException)
+        {
+            Console.Error.WriteLine("Key issuance returned an unreadable response.");
+            return null;
+        }
+    }
+
+    private static string FormatBalance(long microUsd) => $"${microUsd / 1_000_000.0:0.00}";
 
     // --- PKCE -----------------------------------------------------------------------------
 
@@ -220,6 +267,15 @@ internal sealed class IdTokenClaims
     [JsonPropertyName("sub")] public string? Sub { get; set; }
 }
 
+// Response from the issuance endpoint (ForgeUI POST /platform/keys), camelCase on the wire.
+internal sealed class IssueKeyResponse
+{
+    [JsonPropertyName("key")] public string Key { get; set; } = "";
+    [JsonPropertyName("email")] public string? Email { get; set; }
+    [JsonPropertyName("balanceMicroUsd")] public long BalanceMicroUsd { get; set; }
+}
+
 [JsonSerializable(typeof(TokenResponse))]
 [JsonSerializable(typeof(IdTokenClaims))]
+[JsonSerializable(typeof(IssueKeyResponse))]
 internal partial class PlatformLoginJsonContext : JsonSerializerContext { }
