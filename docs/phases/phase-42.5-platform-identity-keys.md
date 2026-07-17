@@ -1,10 +1,10 @@
 # Phase 42.5 — Platform identity & keys
 
-> **Status: In build (2026-07-17).** T1 ✅ · **T2 ✅ LIVE** (`forge login` verified end-to-end) ·
-> T3 ✅ · **T4 server side ①②③④ all built & tested** (①/④ not yet live-e2e; ③ has 7 clock-driven
-> tests; ② has store+migration tests) · **remaining for T4:** the CLI→issuance wiring (login POSTs the
-> token + stores the key) for live e2e · T5 whoami/logout · T6 revocation trigger. Give a user a
-> **platform key + free credits** in one command, so they can
+> **Status: In build (2026-07-17).** T1 ✅ · T2 ✅ · T3 ✅ · **T4 ①②③④ DONE + LIVE e2e** — the whole
+> chain verified: `forge login` → issuance → keyed-hash store → `~/.forge` → resolver → `/me`
+> (`✓ signed in as writeameer@gmail.com · $5.00 credit`; `/me` 200 balance 5000000; bogus key 401;
+> `platform_keys` row active). **Remaining for 42.5:** T5 whoami/logout, T6 revocation trigger, and two
+> polish items (see Known gaps). Give a user a **platform key + free credits** in one command, so they can
 > point a coding agent at a hosted forge mission with **no provider account**. The hosted runner calls
 > providers with *our* keys server-side, metered against the user's balance. This is the friction-killer
 > behind the TTF-awesome demo.
@@ -142,13 +142,16 @@ aggregation), and the request path composes the two stores — so the key half c
      (shared): `fg_live_<keyId>_<secret>` hex format, HMAC-SHA256 keyed hash, constant-time verify,
      TryParse. Tested: 14 pass (pure round-trip/verify/reject + store Save/Resolve/Revoke through real
      Postgres, exercising the migration).
-   - **① Issuance endpoint `POST /platform/keys`. ✅ BUILT + TESTED 2026-07-17 (not yet live-e2e).**
+   - **① Issuance endpoint `POST /platform/keys`. ✅ BUILT + LIVE 2026-07-17.**
      On ForgeUI: a second JWT-bearer scheme (`PlatformKeyBearer`) validates the CLI's Entra access
-     token (authority = `forgeids`, audience = Rooms App ID URI, requires `cli.login` scope), stamps
-     the same `forge_iss` the OIDC path stamps → `MemberProvisioningService.ResolveAsync` (provisions
-     on `oid` + reuses the 39.2 grant, both idempotent) → mint key → `SaveAsync` the hash → return the
-     plaintext token once + email + balance. Builds clean, zero warnings. **Live-verify gated on** the
-     CLI wiring (T2 tail) + a ForgeUI deploy.
+     token (authority = `forgeids`, requires `cli.login` scope), stamps the same `forge_iss` the OIDC
+     path stamps → `MemberProvisioningService.ResolveAsync` (provisions on `oid` + reuses the 39.2
+     grant, both idempotent) → mint key → `SaveAsync` the hash → return the plaintext token once +
+     email + balance. **CIAM validation fixes (found live via the WWW-Authenticate reason):** (a)
+     access tokens carry `aud` as the **bare app-id GUID**, not the `api://` URI → `ValidAudiences`
+     accepts both; (b) the friendly-host authority issues tokens whose `iss` uses the
+     **tenant-GUID host** (`<tenantId>.ciamlogin.com`) → `ValidIssuers` accepts both forms, keyed off
+     the authority's tenant id. Live-verified end-to-end (see status header).
    - **③ Shared lookup lib (request path). ✅ BUILT + TESTED 2026-07-17.** `PlatformKeyResolver`
      (Rooms.Data): `TryParse` → `ResolveByKeyId` → `PlatformKeyMinting.Verify` the secret → check
      `revoked_at` → `ILedgerStore` balance → return `PlatformKeyContext(memberId, balance)` (or null
@@ -159,10 +162,30 @@ aggregation), and the request path composes the two stores — so the key half c
      propagate exactly at TTL expiry (clock-driven). **Runner request-path wiring** (project ref +
      DB-at-boot + a platform-key auth handler that rejects/meters) lands with **42.6** — the runner is
      deliberately unmetered until then, so wiring auth without enforcement would be dead code.
-   - **④ `/me` endpoint. ✅ BUILT 2026-07-17 (not yet live-e2e).** `GET /me` on ForgeUI, authenticated
+   - **④ `/me` endpoint. ✅ BUILT + LIVE 2026-07-17.** `GET /me` on ForgeUI, authenticated
      by the **platform key** (via ③), *not* the Entra bearer — reads the Bearer header, resolves →
      `(memberId, balance)`, loads the member, returns `{ email, displayName, balanceMicroUsd }`; 401 on
-     missing/invalid/revoked. Thin glue over the tested resolver; builds clean.
+     missing/invalid/revoked. Live: stored key → 200 balance 5000000; bogus key → 401.
+
+   **CLI→issuance wiring (T2 tail). ✅ DONE + LIVE 2026-07-17.** `forge login` POSTs the access token to
+   `<endpoint>/platform/keys`, persists the returned `fg_live_…` via `CredentialStore.SavePlatform`
+   (T3), prints `signed in as <email> · $X.XX credit · key stored in ~/.forge`. `FORGE_PLATFORM_ENDPOINT`
+   overrides the base (default `forge.katasec.com`); failures surface the WWW-Authenticate reason.
+   Local e2e harness: `docker compose up` (Postgres) + ForgeUI with `ASPNETCORE_ENVIRONMENT=Development`,
+   `Oidc__Authority`/`Oidc__ClientId` = forgeids + Rooms app, `PlatformKeys__HmacKey`, then
+   `FORGE_PLATFORM_ENDPOINT=http://localhost:<port>` on `forge login`.
+
+## Known gaps (2026-07-17)
+
+- **Member profile from the bearer path is bare.** The access token carries no `email`/`name` claims,
+  so a member first provisioned via `forge login` has `email=null` / `displayName=<oid>`. Balance +
+  identity are correct. Fixes: add optional `email`/`name` claims to the access token in the CLI/Rooms
+  app registration (forge-infra), or accept the self-heal — a web sign-in (id_token *has* email) updates
+  the same member (keyed on `oid`).
+- **Not yet deployed.** ①/③/④ are live against a *local* ForgeUI; the deployed `ca-forge-ui-dev` still
+  runs the pre-42.5 image. Deploy + `PlatformKeys:HmacKey` in prod config are needed before the hosted
+  `forge login` works (and must match the runner's HMAC key for 42.6).
+
 5. **`forge whoami` / `forge logout`.**
 6. **Revocation path** (admin/user can revoke a key) + test: a revoked key is rejected by the hosted
    endpoint. (`IPlatformKeyStore.RevokeAsync` + the ③ `revoked_at` check already exist; T6 adds the
