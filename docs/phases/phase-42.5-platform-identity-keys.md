@@ -1,8 +1,10 @@
 # Phase 42.5 — Platform identity & keys
 
 > **Status: In build (2026-07-17).** T1 ✅ · **T2 ✅ LIVE** (`forge login` verified end-to-end) ·
-> T3 ✅ · **T4 server side: ① issuance + ② table built & tested** (not yet live-e2e) · ③ lookup lib
-> and ④ `/me` next · T5/T6 after. Give a user a **platform key + free credits** in one command, so they can
+> T3 ✅ · **T4 server side ①②③④ all built & tested** (①/④ not yet live-e2e; ③ has 7 clock-driven
+> tests; ② has store+migration tests) · **remaining for T4:** the CLI→issuance wiring (login POSTs the
+> token + stores the key) for live e2e · T5 whoami/logout · T6 revocation trigger. Give a user a
+> **platform key + free credits** in one command, so they can
 > point a coding agent at a hosted forge mission with **no provider account**. The hosted runner calls
 > providers with *our* keys server-side, metered against the user's balance. This is the friction-killer
 > behind the TTF-awesome demo.
@@ -147,13 +149,20 @@ aggregation), and the request path composes the two stores — so the key half c
      on `oid` + reuses the 39.2 grant, both idempotent) → mint key → `SaveAsync` the hash → return the
      plaintext token once + email + balance. Builds clean, zero warnings. **Live-verify gated on** the
      CLI wiring (T2 tail) + a ForgeUI deploy.
-   - **③ Shared lookup lib (request path). ⬜ NEXT.** Runner references `Rooms.Data` (it is
-     `PublishAot=false`, so EF is fine), resolves a presented `fg_live_…`: `TryParse` → `ResolveByKeyId`
-     → `PlatformKeyMinting.Verify` the secret → check `revoked_at` → `ILedgerStore` balance → return
-     `(memberId, balance)` runtime execution context, behind a ~30–60 s in-process cache. Shared HMAC
-     key via config (`PlatformKeys:HmacKey`) on both ForgeUI and the runner.
-   - **④ `/me` endpoint. ⬜ AFTER ③.** Returns user + balance. Authenticated by the **platform key**
-     (via ③), *not* the Entra bearer — `whoami` runs later carrying only the stored key.
+   - **③ Shared lookup lib (request path). ✅ BUILT + TESTED 2026-07-17.** `PlatformKeyResolver`
+     (Rooms.Data): `TryParse` → `ResolveByKeyId` → `PlatformKeyMinting.Verify` the secret → check
+     `revoked_at` → `ILedgerStore` balance → return `PlatformKeyContext(memberId, balance)` (or null
+     for malformed/unknown/wrong-secret/revoked), behind a ~30–60 s in-process cache (a cache hit
+     still verifies the secret against the cached *hash* — never caches the secret; injectable clock).
+     `AddPlatformKeyResolver` DI helper; shared HMAC key via `PlatformKeys:HmacKey`. Tests: 7 pass —
+     valid resolve, malformed/unknown/wrong-secret → null, and revocation + balance change both
+     propagate exactly at TTL expiry (clock-driven). **Runner request-path wiring** (project ref +
+     DB-at-boot + a platform-key auth handler that rejects/meters) lands with **42.6** — the runner is
+     deliberately unmetered until then, so wiring auth without enforcement would be dead code.
+   - **④ `/me` endpoint. ✅ BUILT 2026-07-17 (not yet live-e2e).** `GET /me` on ForgeUI, authenticated
+     by the **platform key** (via ③), *not* the Entra bearer — reads the Bearer header, resolves →
+     `(memberId, balance)`, loads the member, returns `{ email, displayName, balanceMicroUsd }`; 401 on
+     missing/invalid/revoked. Thin glue over the tested resolver; builds clean.
 5. **`forge whoami` / `forge logout`.**
 6. **Revocation path** (admin/user can revoke a key) + test: a revoked key is rejected by the hosted
    endpoint. (`IPlatformKeyStore.RevokeAsync` + the ③ `revoked_at` check already exist; T6 adds the
