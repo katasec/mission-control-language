@@ -76,6 +76,44 @@ Phase 39.5/39.7).
 **`forge missions`** — list the on-tap OCI catalog (name + one-line value), so the user can discover
 `@websearch` etc. A `/missions` probe already exists on the runner.
 
+## UX decisions (2026-07-17)
+
+The client-facing shape of the demo, worked through against prior art (NuGet, PowerShellGet, winget,
+Helm-over-OCI).
+
+1. **Verbs — `forge exec` (one-shot) vs `forge claude` (agentic), one endpoint.**
+   `forge exec @handle "<prompt>"` = fire-and-forget: run the mission once, stream the answer, exit —
+   the top-of-funnel awesome moment. `forge claude @handle` = the full agentic Claude Code session
+   pointed at the same hosted mission. Two verbs because the intents differ (one-shot Q&A vs
+   Claude-doing-work); same hosted `/v1` underneath. `<prompt>` is the mission's primary/free-text input
+   (structured `inputs:` surface later via `--input key=value`). (`exec` overlaps `kind: exec` in name
+   only — as a CLI verb "execute this mission" it's unambiguous.)
+
+2. **Output — stream + a trust footer, cost pulled on demand.** Stream the answer token-by-token, then a
+   single footer line: **grounded/verified badge · source count** (`--sources` expands to URLs).
+   **No cost/balance printed per call** — that's pull-not-push (real services don't shove spend at you
+   every request); balance is on demand via `forge whoami`. The footer carries the *trust* signal (MCL's
+   thesis), not the receipt.
+
+3. **Discovery — `forge missions` reads a curated index, NOT the raw OCI registry.** Sharp constraint
+   from Helm-over-OCI: **OCI registries can't be listed/searched** (`GET /v2/_catalog` is optional and
+   ghcr.io/most public registries gate or disable it — this is why `helm search` doesn't work on OCI
+   registries). OCI stays the **distribution** layer (pull by digest, already done); **discovery is a
+   separate index.** For 42.6 (built-in catalog): a small **curated catalog index** the default source
+   serves (`@handle · version · one-line · verified`), which `forge missions` reads. Later (user missions,
+   39.5) that index grows into a search service (the forge equivalent of nuget.org search / Artifact Hub).
+   **Handles namespace like Helm's `repo/chart`:** `@katasec/websearch` fully-qualified, `@websearch`
+   resolves from the default/priority source. **Sources are a registered, extensible concept** (à la
+   nuget.config sources / `Register-PSResourceRepository` / `winget source add` / `helm repo add`) with
+   per-source **trust + priority** — build the single default public source now, leave the seam (it's the
+   marketplace on-ramp). Verified tick reuses the **38.5 identity seal / publisher**.
+
+4. **First-run delight — steer the first `exec` to a past-cutoff question.** The undeniable grounded-vs-
+   naked delta comes from a **past-training-cutoff** query (a naked model *can't* know; `@websearch`
+   answers with live citations — a reasoning trap is weaker, a good naked model gets it too). So on a
+   successful `forge login`, **print one suggested command** — a current-events "what shipped in X this
+   week?" style prompt — so the awesome moment is the literal next thing the user can paste.
+
 ## Tasks (chronological)
 
 1. **Auth middleware:** validate the platform key (42.5) on every `/v1/*` request → attach `(userId,
