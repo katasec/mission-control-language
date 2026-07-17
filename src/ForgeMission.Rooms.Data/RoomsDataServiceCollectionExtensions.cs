@@ -24,4 +24,17 @@ public static class RoomsDataServiceCollectionExtensions
         services.AddSingleton<IPlatformKeyStore, PlatformKeyStore>();
         return services;
     }
+
+    /// <summary>
+    /// Wires the request-path platform-key resolver (42.5 ③) — used by the runner to resolve a
+    /// presented <c>fg_live_…</c> token to its member + balance. Needs <see cref="AddRoomsData"/>
+    /// (for the key + ledger stores). The HMAC key must match the issuer's <c>PlatformKeys:HmacKey</c>.
+    /// </summary>
+    public static IServiceCollection AddPlatformKeyResolver(
+        this IServiceCollection services, PlatformKeyResolverOptions options)
+    {
+        services.AddSingleton(options);
+        services.AddSingleton<IPlatformKeyResolver, PlatformKeyResolver>();
+        return services;
+    }
 }
