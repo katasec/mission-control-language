@@ -1,10 +1,11 @@
 # Phase 42.5 — Platform identity & keys
 
-> **Status: In build (2026-07-17).** T1 ✅ · T2 ✅ · T3 ✅ · **T4 ①②③④ DONE + LIVE e2e** — the whole
-> chain verified: `forge login` → issuance → keyed-hash store → `~/.forge` → resolver → `/me`
-> (`✓ signed in as writeameer@gmail.com · $5.00 credit`; `/me` 200 balance 5000000; bogus key 401;
-> `platform_keys` row active). **Remaining for 42.5:** T5 whoami/logout, T6 revocation trigger, and two
-> polish items (see Known gaps). Give a user a **platform key + free credits** in one command, so they can
+> **Status: DEPLOYED + LIVE IN PROD (2026-07-17).** T1–T5 ✅. `ca-forge-ui-dev` on `forge-ui:0.5.0`;
+> `forge login` / `whoami` verified end-to-end against **`https://forge.katasec.com`**
+> (`✓ signed in · $5.00 credit`, exit 0). The migration created `platform_keys` in prod PG; the shared
+> HMAC lives in KV wired to both ForgeUI + the runner; the `forge.katasec.com` SNI binding was preserved.
+> **Remaining for 42.5: T6 (revocation trigger) only**, plus one polish item (bearer-path member profile,
+> see Known gaps). Give a user a **platform key + free credits** in one command, so they can
 > point a coding agent at a hosted forge mission with **no provider account**. The hosted runner calls
 > providers with *our* keys server-side, metered against the user's balance. This is the friction-killer
 > behind the TTF-awesome demo.
@@ -186,7 +187,11 @@ aggregation), and the request path composes the two stores — so the key half c
   runs the pre-42.5 image. Deploy + `PlatformKeys:HmacKey` in prod config are needed before the hosted
   `forge login` works (and must match the runner's HMAC key for 42.6).
 
-5. **`forge whoami` / `forge logout`.**
+5. **`forge whoami` / `forge logout`. ✅ DONE + LIVE 2026-07-17.** `whoami` reads the stored key, calls
+   `GET <endpoint>/me`, prints `Signed in as <email> · $X.XX credit · <endpoint>` (falls back to the
+   stored user label when `/me` email is null — the bearer-path gap), exits 1 when not signed in or the
+   key is rejected. `logout` clears the platform section of `~/.forge`. Live: whoami → `$5.00 credit`
+   (exit 0) → logout → whoami → `Not signed in` (exit 1).
 6. **Revocation path** (admin/user can revoke a key) + test: a revoked key is rejected by the hosted
    endpoint. (`IPlatformKeyStore.RevokeAsync` + the ③ `revoked_at` check already exist; T6 adds the
    admin/user trigger + the hosted-endpoint rejection test.)
