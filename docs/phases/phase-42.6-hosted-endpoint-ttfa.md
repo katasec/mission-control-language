@@ -298,6 +298,38 @@ the relevant layer (see [deploy.md](../design/deploy.md)).
 - [ ] **Tier network policy** (north-star direction) — restrict runner ingress to `ForgeAPI`/`ForgeUI` only;
       keep the runner off public ingress. *(Hardening; not a demo blocker.)*
 
+## ⚠️ PROD-CRITICAL follow-up — investigate the migration job wiping the DB (2026-07-18)
+
+**Status: OPEN — must resolve before any higher-env (`stg`/`prod`) `500-app` deploy.** During the
+`authbilling_db` infra work, the dev `forge_rooms` database was **wiped** (all rooms/members/messages
+gone, confirmed by sign-in). This is a **standing landmine**: the culprit runs on *every* `500-app`
+deploy in *every* environment.
+
+**What we know (evidence, not yet root-caused):**
+- The `500-app` deploy runs a pre-deploy migration job `caj-forge-migrate-dev` whose container entrypoint
+  is **`/app/migrate --connection $(CONNECTION_WRITE)`** (image `forge-ui:0.5.0`; see
+  [forge-infra `dev/500-app/main.bicep`](https://github.com/katasec/forge-infra/blob/main/dev/500-app/main.bicep) job template).
+  We redeployed `500-app` (twice) to recover the site from a credential rotation; the data was gone afterward.
+- **Ruled out:** the password rotation (changes a credential, never drops data); the 42.6
+  `DropLedgerAndPlatformKeysFromRooms` migration (exists only in unbuilt local code, **not** in `0.5.0`).
+- **Prime suspect:** the `/app/migrate` entrypoint itself. If it does `EnsureDeleted()`+`EnsureCreated()`
+  (or drops/recreates schema) instead of an additive EF `Database.Migrate()`, a routine deploy wipes the
+  DB. **A plain `Migrate()` on an already-applied image is a no-op and would NOT wipe** — so if data is
+  gone, the entrypoint is likely destructive (or something else is; that's the investigation).
+
+**Investigation TODO:**
+1. Find `/app/migrate`'s source in this repo (the migrate tool/entrypoint + its Dockerfile `CMD`). Determine
+   exactly what it runs: additive `Migrate()`, or a destructive `EnsureDeleted`/`EnsureCreated`/drop-recreate.
+2. Confirm the wipe mechanism (correlate job-run timestamps with the data loss; read the job execution logs —
+   needs `containerApps` read).
+3. **Guard it:** migrate must be idempotent + non-destructive; never drop a populated table; gate any
+   destructive reset behind an explicit opt-in flag that is **off in stg/prod**; consider a row-count/backup
+   pre-check that aborts if the target DB is non-empty and the plan is destructive.
+
+**Learning (why this matters):** verify a migration entrypoint's semantics **before** running it against any
+populated DB; the `500-app` migration-job step is a recurring risk on every deploy, not a one-off. Dev data
+loss is cheap; the same deploy against prod is not.
+
 ## Out of scope
 
 - Authoring/publishing user missions (only built-in catalog here) — Phase 39.5.
