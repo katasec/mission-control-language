@@ -298,12 +298,19 @@ the relevant layer (see [deploy.md](../design/deploy.md)).
 - [ ] **Tier network policy** (north-star direction) — restrict runner ingress to `ForgeAPI`/`ForgeUI` only;
       keep the runner off public ingress. *(Hardening; not a demo blocker.)*
 
-## ⚠️ PROD-CRITICAL follow-up — investigate the migration job wiping the DB (2026-07-18)
+## Migration-job DB-wipe — DEFUSED (2026-07-18); optional post-dream investigation
 
-**Status: OPEN — must resolve before any higher-env (`stg`/`prod`) `500-app` deploy.** During the
-`authbilling_db` infra work, the dev `forge_rooms` database was **wiped** (all rooms/members/messages
-gone, confirmed by sign-in). This is a **standing landmine**: the culprit runs on *every* `500-app`
-deploy in *every* environment.
+**Status: DEFUSED — no live data-drop path remains; NOT a deploy gate.** During the `authbilling_db`
+infra work the dev `forge_rooms` DB was wiped (all rooms/members/messages gone, confirmed by sign-in).
+Both mechanisms are now disabled:
+- the two `DropTable` calls in [`DropLedgerAndPlatformKeysFromRooms`](../../src/ForgeMission.Rooms.Data/Migrations/20260717233324_DropLedgerAndPlatformKeysFromRooms.cs)
+  `Up()` are **commented out** (the cutover to `authbilling_db` never needed them — the stale forge_rooms
+  tables are harmless if left in place);
+- the **auto-run migrate step** in [`forge-infra` `.github/workflows/infra.yml`](https://github.com/katasec/forge-infra/blob/main/.github/workflows/infra.yml)
+  (`500-app` → start `caj-forge-migrate-dev`) is **commented out** — migrations are now run deliberately
+  (you-triggered), not on every deploy.
+
+The remaining items below are **optional cleanup/hardening for post-dream**, no longer a blocker:
 
 **What we know (evidence, not yet root-caused):**
 - The `500-app` deploy runs a pre-deploy migration job `caj-forge-migrate-dev` whose container entrypoint

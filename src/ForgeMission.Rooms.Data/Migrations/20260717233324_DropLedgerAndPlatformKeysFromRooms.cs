@@ -11,11 +11,14 @@ namespace ForgeMission.Rooms.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ledger_entries");
-
-            migrationBuilder.DropTable(
-                name: "platform_keys");
+            // DISABLED (42.6): these DropTable calls would delete live billing data if this migration
+            // ever runs against a populated forge_rooms via the /app/migrate job. The cutover to
+            // authbilling_db does NOT require dropping the old tables — ForgeUI reads billing from
+            // authbilling_db regardless, so the stale forge_rooms tables are harmless if left in place.
+            // Re-enable ONLY as a deliberate, backed-up cleanup — never as an auto-running deploy step.
+            // See docs/phases/phase-42.6 → "PROD-CRITICAL follow-up".
+            // migrationBuilder.DropTable(name: "ledger_entries");
+            // migrationBuilder.DropTable(name: "platform_keys");
         }
 
         /// <inheritdoc />
