@@ -33,6 +33,7 @@ rootCommand.Add(BuildRegistryCommand());
 rootCommand.Add(BuildLoginCommand());
 rootCommand.Add(BuildWhoamiCommand());
 rootCommand.Add(BuildLogoutCommand());
+rootCommand.Add(BuildExecCommand());
 rootCommand.Add(BuildPublishCommand());
 rootCommand.Add(BuildCleanCommand());
 rootCommand.Add(BuildServeCommand());
@@ -407,6 +408,21 @@ static Command BuildLogoutCommand()
 {
     var cmd = new Command("logout", "Sign out of Forge (remove the stored platform key)");
     cmd.SetAction(_ => PlatformLogin.Logout());
+    return cmd;
+}
+
+// forge exec — the one-shot hosted-mission command (42.6 task 8).
+static Command BuildExecCommand()
+{
+    var targetArg = new Argument<string>("target") { Description = "Mission handle, e.g. @websearch" };
+    var promptArg = new Argument<string>("prompt") { Description = "The mission's free-text input" };
+
+    var cmd = new Command("exec", "Run a hosted mission once and print the answer");
+    cmd.Add(targetArg);
+    cmd.Add(promptArg);
+
+    cmd.SetAction(async result =>
+        await ForgeExec.RunAsync(result.GetValue(targetArg)!, result.GetValue(promptArg)!));
     return cmd;
 }
 
