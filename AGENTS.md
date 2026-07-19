@@ -1,62 +1,124 @@
-# AGENTS.md — Operating Instructions for FML
+# AGENTS.md — Operating Instructions for MCL
 
 This file tells you how to work on this repository. Read it before doing anything else.
+It is the canonical file — `CLAUDE.md` is a symlink to this one, so Claude Code (which
+auto-loads `CLAUDE.md`) and any other AGENTS.md-reading tool see the same instructions.
 
 ---
 
 ## What this project is
 
-Forge Mission Language (FML) is a minimal language for expressing structured reasoning through the composition of experts. Three primitives: `mission`, `expert`, `|>`. See [README.md](README.md) for the full picture and [docs/design/language.md](docs/design/language.md) for the grammar and syntax decisions.
+MCL (Mission Control Language) is a declarative pipeline language where `.mcl` files compose AI
+experts into structured workflows. The CLI binary is `forge`. Runtime is .NET 10 Native AOT.
+Composition operator is `->` (not `|>` — that was replaced in Phase 25). See
+[README.md](README.md) for the full picture and [docs/design/language.md](docs/design/language.md)
+for the grammar and syntax decisions.
 
 ---
 
 ## How to orient at the start of a session
 
-1. Read this file
-2. Read [docs/plan.md](docs/plan.md) — the hub. It tells you what phases exist, which are done, and which are active
-3. Read the spoke doc for the current phase — linked from `docs/plan.md` — to see which tasks are done and which are next
-4. Read [docs/design/architecture.md](docs/design/architecture.md) if you need to understand component boundaries
+1. Read this file.
+2. Read [docs/plan.md](docs/plan.md) — the hub. It's a **light table of contents**: links + a
+   one-line status per phase, nothing more. It tells you what phases exist, which are done, and
+   which are active.
+3. Read the spoke doc for the current phase — linked from `docs/plan.md` — for the actual detail:
+   design, decisions, task status.
+4. Read [docs/design/architecture.md](docs/design/architecture.md) if you need component
+   boundaries, or another `docs/design/*.md` file if the task touches that area.
 
 Do not load everything at once. Start from the hub and follow links only when the task requires it.
 
 ---
 
-## How work is structured
+## Documentation strategy — hub/spoke, TOC + detail
 
-Work follows a strict methodology. Do not deviate from it.
+`docs/plan.md` is the **authoritative index and nothing else** — links plus at most a one-line
+status per phase. All depth (architecture, decisions, task breakdowns, evidence, gotchas) lives in
+the linked docs it points to, never inlined into `plan.md` itself:
 
-### Design first
-All design decisions are captured in `docs/design/` before implementation begins. If something is unclear, check there first. If it is not documented, raise it before implementing.
+- **Hub** — `docs/plan.md`. Active items + status, kept small enough to scan every time it loads.
+- **Spokes** — `docs/phases/phase-N-<slug>.md` (vision, locked decisions, dependency-ordered task
+  list) and `docs/phases/phase-N.M-<slug>.md` (design → chronological tasks with file paths, real
+  APIs, and a "Done when" — written so an agent can execute from the doc alone).
+- **Cross-cutting design** — `docs/design/*.md` (architecture, language grammar, code style, deploy
+  runbook, etc.) — things that aren't tied to one phase.
 
-### Phases
-Work is broken into phases. Each phase has a spoke document in `docs/phases/`. Phases must be completed in order — each phase produces something independently testable before the next begins.
+When designing a new feature: create the hub + spokes, then update `plan.md`'s top pointer + phases
+index. If a `plan.md` cell grows past 1–2 lines or starts explaining *how* rather than linking to
+where the *how* lives, that content belongs in the spoke, not the hub.
 
-### Tasks
-Each phase doc contains a task table with statuses. Tasks within a phase must be done in the order listed — they are in sequential dependency order.
-
-### Completion conditions
-Each phase doc defines a completion condition. Do not mark a phase Done in `docs/plan.md` until that condition is met.
+**Status honesty matters more than the format.** "Done" means verified — a test result, a live log
+line, a deployed artifact confirmed by a real check — not "written" or "code merged." A doc that
+says a database is deployed because the Bicep was authored, when the DB was never actually applied,
+is worse than no doc at all — it actively misleads the next agent into skipping verification.
 
 ---
 
-## How to update status
+## Agent memory — scratch space, not storage
 
-When you start a task, update its status in the phase spoke doc from `Not Started` to `In Progress`.
+Agent memory (`project_*.md` files under the session's memory directory) is **not durable**. The
+[`/checkpoint` skill](#checkpoint-skill) deletes every `project_*.md` file at the end of each
+session it runs in — after folding anything real (a design decision, a status fact, a gotcha) into
+the hub/spoke or an appropriate `docs/design/*.md` file first. Nothing project-shaped should be
+treated as safely stored in memory long-term; if it matters past this session, it needs to be in a
+doc before the session ends, not left for memory to carry forward.
 
-When you complete a task, update it to `Done`.
+This does **not** apply to `feedback_*.md` / `reference_*.md` memory — working-style preferences
+and cross-project facts that have no doc home by design. Those persist normally.
 
-When all tasks in a phase are done and the completion condition is met:
-- Update the phase spoke doc with a `## Result` section summarising what was built and test outcomes
-- Update `docs/plan.md` to mark the phase `Done`
-- Commit and push
+---
 
-Status values: `Not Started` | `In Progress` | `Done`
+## Session continuity protocol
+
+Agent performance degrades as context fills, so a session is treated as a bounded unit of work with
+a clean handoff — a fresh agent, or the user just asking **"what's next?"**, should be able to
+resume at full capacity from the hub/spoke docs alone, with nothing lost. In order, at the end of a
+session:
+
+1. Reconcile everything done/decided/discovered this session into the hub + spoke — status,
+   evidence, decisions, gotchas, deployed artifact versions.
+2. Fold durable agent-memory facts into the hub/spoke (see above), then let them be deleted.
+3. Make **"what's next"** unambiguous in the hub's top so a fresh agent can resume from the plan
+   alone.
+4. Verify tests pass. Don't hand off with known-failing tests undocumented.
+5. Commit + push **everything, across every touched repo** (this may span more than one repo).
+   End on 0 uncommitted / 0 unpushed per repo. Never an empty commit.
+
+---
+
+## Checkpoint skill
+
+The `/checkpoint` skill (`~/.claude/skills/checkpoint/SKILL.md`) is what actually runs the session
+continuity protocol above — it's the executable form of it, not a separate idea. Invoke it at
+session end, before a context reset, or whenever asked to "checkpoint" / "save everything" /
+"session continuity" / "handoff" / "capture our work". It's idempotent: running it again with
+nothing changed is a safe no-op.
+
+---
+
+## How work is structured
+
+### Design first
+Design decisions are captured in `docs/design/` or the relevant phase spoke before implementation.
+If something is unclear, check there first. If it's not documented, raise it before implementing.
+
+### Phases and tasks
+Work is broken into phases, each with a spoke document in `docs/phases/`. Phases have a
+dependency-ordered spoke list; spokes have a chronological task list. Don't skip ahead of declared
+dependencies.
+
+### Completion conditions
+Each phase/spoke doc defines a "Done when" condition. Don't mark it done in `docs/plan.md` until
+that condition is actually met and verified — not just implemented.
 
 ---
 
 ## How to run the build and tests
 
 ```bash
+make install              # native AOT publish → ~/.local/bin/forge (osx-arm64)
+make demo-naive           # end-to-end smoke test (forces a full rebuild)
 dotnet build src/ForgeMission.slnx
 dotnet test src/ForgeMission.slnx
 ```
@@ -65,124 +127,151 @@ All tests must pass before marking any task complete. Never mark a task done if 
 
 ---
 
-## Project structure
+## AOT-first — standing rules for all new code
 
+**Every change must remain Native AOT-safe.** The `forge` CLI binary publishes with
+`<PublishAot>true</PublishAot>`. Violations cause ILC (IL Compiler) warnings or runtime crashes.
+
+This binds on code compiled into the AOT binary (CLI, and the runner/host where they share Core).
+It does **not** bind on `kind: exec` subprocess tooling — a python script run out-of-process is
+never linked into the AOT image, so pick those libraries on merit (correctness/licensing), not
+AOT-compatibility. This is a selection criterion for any new .NET package, not just a code pattern:
+favor AOT-compatible libraries wherever possible, and surface the tradeoff before adopting one
+that isn't clean, rather than silently taking on suppressions.
+
+### JSON / STJ
+
+**Never** use `new JsonSerializerOptions { ... }` at runtime in AOT code — a bare
+`JsonSerializerOptions` without a `TypeInfoResolver` crashes under AOT. Use STJ source generation:
+
+```csharp
+[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
+[JsonSerializable(typeof(MyType))]
+internal partial class MyTypeContext : JsonSerializerContext { }
 ```
-README.md               — what FML is and why it exists
-AGENTS.md               — this file
-docs/
-  plan.md               — hub: phase list with statuses and links
-  design/               — design decisions (language, architecture, MAF research, methodology)
-  phases/               — one spoke per phase with task lists and statuses
-src/
-  ForgeMission.Core/    — parser, expert loader, pipeline runner, MAF adapter
-  ForgeMission.Cli/     — CLI entry point
-  ForgeMission.Tests/   — xUnit tests
-missions/               — example missions (build-operator added in Phase 6)
-runs/                   — gitignored, output of fml run
+
+Pass `MyTypeContext.Default.Options` wherever `JsonSerializerOptions` is needed. For
+`IChatClient.GetResponseAsync<T>`, always pass the source-gen options:
+
+```csharp
+var response = await chatClient.GetResponseAsync<T>(messages, MyTypeContext.Default.Options, cancellationToken: ct);
 ```
+
+### YAML (YamlDotNet)
+
+YamlDotNet uses reflection internally. Preserve any POCO that flows through `ISerializer`/
+`IDeserializer` with:
+
+```csharp
+[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(MyPoco))]
+[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Type preserved via DynamicDependency")]
+private static readonly IDeserializer Deserializer = new DeserializerBuilder()
+    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+    .IgnoreUnmatchedProperties()
+    .Build();
+```
+
+### Reflection / dynamic dispatch
+
+Avoid `Type.GetType(string)`, `Activator.CreateInstance`, or `Assembly.GetTypes()`. Prefer
+`IChatClient` (`Microsoft.Extensions.AI`) — it is AOT-safe by design.
+
+### Warning suppression (already in Cli.csproj)
+
+```xml
+<IlcSuppressWarnings>IL3050</IlcSuppressWarnings>
+<NoWarn>$(NoWarn);IL3050;IL2104;IL3053</NoWarn>
+```
+
+These cover YamlDotNet assembly-level warnings. Do **not** add new suppressions without a
+`[DynamicDependency]` or a concrete explanation.
 
 ---
 
-## Architecture — the short version
+## Local dev environment — shell + provider keys
 
-```
-CLI
- └→ Pipeline Runner
-      └→ Parser           (pure C#, no dependencies)
-      └→ Expert Loader    (resolves markdown files)
-      └→ IExpertRunner
-           └→ MAF Adapter (only file that touches Microsoft Agent Framework)
-```
+The maintainer's default shell is **PowerShell (`pwsh`)**, and all provider keys are already
+exported there — you do not need to ask for keys, they exist. Full detail (which keys, the
+Bash-doesn't-inherit-pwsh trap, the pull-through-pwsh recipe) is in
+[docs/design/deploy.md → Local dev environment](docs/design/deploy.md#local-dev-environment--shell--provider-keys-read-this-before-running-anything-locally)
+— not duplicated here.
 
-MAF is an internal implementation detail. It must not appear above the adapter layer. See [docs/design/architecture.md](docs/design/architecture.md) for full detail.
+---
+
+## Release workflow
+
+Releases are cut via GitHub Actions (`workflow_dispatch`):
+1. Enter the version (e.g. `0.1.3`) in the Actions UI.
+2. The workflow tags the commit, opens a draft release, and attaches
+   `forge-osx-arm64`, `forge-linux-x64`, and `forge-win-arm64.exe`.
+3. Review the draft on GitHub, then publish.
+
+Semver: patch bump for bug fixes and backwards-compatible changes; minor for new user-visible
+language features; major for breaking `.mcl` syntax changes.
+
+---
+
+## Supported providers
+
+`ProviderClientBuilder` in `src/ForgeMission.Cli/ProviderClientBuilder.cs` maps the `provider`
+field in `forge.toml` to an `IChatClient`. Adding a new provider is a single switch case + one
+private method — no new packages needed for OpenAI-compatible APIs.
+
+| `provider` value | API | SDK used |
+|---|---|---|
+| `openai` / `azure` | OpenAI / Azure OpenAI | `OpenAI` NuGet |
+| `anthropic` | Anthropic Claude | `Anthropic` NuGet |
+| `ollama` | Ollama (local) | `OpenAI` NuGet (pointed at localhost) |
+| `xai` | xAI Grok | `OpenAI` NuGet (pointed at api.x.ai/v1) |
+
+**Adding a new OpenAI-compatible provider** (e.g. Groq, Together, Mistral):
+1. Add a case to the switch in `ProviderClientBuilder.cs`.
+2. Add a private method pointing `OpenAIClientOptions.Endpoint` at the provider's base URL.
+3. No new NuGet packages required.
 
 ---
 
 ## Conventions
 
 - **No Co-Authored-By lines in commits.** Commits are attributed to the repo owner only.
-- **PascalCase for expert and mission names.** Enforced by the parser — lowercase identifiers are a parse error.
-- **Lowercase keywords** (`mission`, `expert`). These are part of the language, not user-defined names.
-- **No business logic in the CLI.** The CLI wires up dependencies and delegates to Core. Nothing else.
-- **MAF stays behind `IExpertRunner`.** The parser, AST, pipeline runner, and CLI must have zero knowledge of MAF.
-- **Progressive Disclosure — code reveals intent in layers.** Outline-first files, small named functions, top-down ordering, early returns over nesting, isolated side effects, explicit error handling, zero warnings, no speculative abstractions. Full rules in [docs/design/code-style.md](docs/design/code-style.md).
-- **Report results straight — no cliffhangers.** State what is done and proven, then stop. Do not end a wrap-up with a manufactured "one thing left" / "the only unverified atom is…" hedge to look thorough or to invite another turn. If something is genuinely outstanding, name it once as a plain fact — not as a teaser. Never pad a summary to fill space or burn tokens.
+- **PascalCase for expert and mission names, camelCase for variables/parameters, lowercase
+  keywords** (`mission`, `loop`, `when`, `using`, `parallel`, `let`, `env`). Enforced by the parser
+  — wrong case is a parse error.
+- **Runtime and data keys are `snake_case`** — reserved runtime keys (`output`, `feedback`,
+  `max_loops`) and any key produced by `exec`/`onnx`/`json_extract` steps.
+- **No business logic in the CLI.** The CLI wires up dependencies and delegates to Core.
+- **`IExpertRunner` is the only interface** between the CLI and the AI provider. Keep it free of
+  provider-specific types.
+- **Language files use the `.mcl` extension**, binary is `forge`. Expert markdown files live under
+  `experts/<ExpertName>/expert.md`. Lock file is `mcl.lock` (relative paths, generated by
+  `forge init`). Reserved context variables: `apiKey`, `model`, `provider`, `endpoint`.
+- **Progressive Disclosure — code reveals intent in layers.** Outline-first files, small named
+  functions, top-down ordering, early returns over nesting, isolated side effects, explicit error
+  handling, zero warnings, no speculative abstractions. Full rules in
+  [docs/design/code-style.md](docs/design/code-style.md).
+- **Report results straight — no cliffhangers.** State what is done and proven, then stop. Don't
+  end a wrap-up with a manufactured "one thing left" hedge to look thorough or invite another turn.
+  A genuine limitation is one plain line, not a teaser.
+- **Never claim "deployed" or "verified" without a named observation** — a command output, a test
+  result, a live log line. An untested inference gets stated as an inference, not a fact. This
+  applies doubly to Azure/infra permission claims: a 403 on one API says nothing about a different
+  API — verify each capability by trying it.
 
 ---
 
-## During a session — capturing learnings
+## Project structure
 
-As you work, you will encounter design decisions, implementation surprises, failed approaches, and useful discoveries. These must not stay only in your context — they must be written down before the session ends.
-
-**Where to write them:**
-
-| What | Where |
-|------|-------|
-| New or revised design decisions | Relevant file in `docs/design/` |
-| Implementation notes for a phase (e.g. a package behaved unexpectedly) | `## Notes` section of the relevant phase spoke doc |
-| A decision that affects the overall plan | `docs/plan.md` — add a `## Notes` section if needed |
-| A failure or dead end worth remembering | The phase spoke doc under a `## Dead Ends` section |
-
-Write these incrementally as they happen, not as a batch at the end. If your context fills and you cannot finish the session, the docs must be current enough for a fresh agent to continue without losing anything.
-
----
-
-## At the end of a session — session continuity protocol
-
-Agent performance degrades as context fills. Sessions are intentionally bounded. At the end of every session you must do the following, in order:
-
-### 1. Flush learnings to docs
-
-- Write any new design decisions, notes, or dead ends to the appropriate docs (see above)
-- Commit and push
-
-### 2. Update hub and spokes
-
-- Mark all completed tasks `Done` in the phase spoke doc
-- Add a `## Result` section to the phase spoke doc if the phase is complete
-- Update `docs/plan.md` to reflect the current phase status
-- Commit and push
-
-### 3. Verify tests pass
-
-```bash
-dotnet test src/ForgeMission.slnx
 ```
-
-Do not hand off if tests are failing. Fix them first or document exactly why they are failing and what is needed to fix them.
-
-### 4. Generate a handoff prompt
-
-Create a handoff prompt that a fresh agent can paste into a new session to rehydrate context and continue without being briefed from scratch.
-
-The handoff prompt must be a single copyable code block at the end of your response, in this format:
-
-~~~
+README.md               — what MCL is and why it exists
+AGENTS.md                — this file (canonical; CLAUDE.md symlinks here)
+docs/
+  plan.md                — hub: light TOC, phase list with statuses and links
+  design/                — cross-cutting design decisions (language, architecture, deploy, code-style, ...)
+  phases/                — one hub + spokes per phase, task lists and statuses
+src/
+  ForgeMission.Core/      — parser, expert loader, pipeline runner
+  ForgeMission.Cli/       — CLI entry point (forge)
+  ForgeMission.*.Tests/   — test projects
+missions/                — example + built-in missions
+runs/                    — gitignored, output of `forge run`
 ```
-You are continuing work on the Forge Mission Language (FML) project.
-
-Repository: ~/progs/fml
-Start by reading AGENTS.md, then docs/plan.md, then the spoke doc for the current phase.
-
-Current state:
-- Phases complete: [list them]
-- Current phase: [phase name and number]
-- Last task completed: [task description]
-- Next task: [task description]
-
-Key context from this session:
-- [Any design decision made that is not yet in the docs]
-- [Any in-progress work that is partially done]
-- [Any known issues or blockers]
-- [Anything else a fresh agent needs to know to continue without asking]
-
-All tests are passing / [describe failing tests if any].
-
-Pick up from [next task] and continue following the methodology in AGENTS.md.
-```
-~~~
-
-The handoff prompt is not a summary for the human — it is a machine-readable orientation for the next agent. Write it to be consumed, not read. Be specific and complete.
-
-Leave the hub small and current. Leave the handoff prompt ready to copy.

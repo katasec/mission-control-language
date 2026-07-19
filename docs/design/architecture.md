@@ -149,6 +149,9 @@ class PipelineRunner
 Depends only on `IExpertRunner`. No provider-specific types.
 
 **Testable in isolation:** unit tests with stub `IExpertRunner` implementations returning canned envelopes.
+**Known gap:** `kind: onnx` has no integration test that loads a real ONNX model from
+`missions/*/models/` and runs it through the full runner chain — unit tests alone won't catch a
+model shape mismatch (this bit the compliance-audit mission twice during manual testing).
 
 ---
 

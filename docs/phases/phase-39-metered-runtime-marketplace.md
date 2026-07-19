@@ -64,6 +64,12 @@ These are load-bearing. Later sub-phases assume them.
    layer on top** — pay-per-use / subscription / both run off it. The cap is what lets a **flat** price
    survive a **variable** cost. Tiers do double duty: **more usage + more capability**. Cap numbers and
    tier prices are set from **F&F cost data**, not guessed.
+   **Why not pure pay-per-use for everyone:** a meter visibly ticking down suppresses exploratory
+   usage — the exact behavior F&F exists to collect. Mitigate with generous free credits during
+   preview (shielding early users from meter-anxiety) while still recording real cost against the
+   same ledger underneath, so the willingness-to-pay data comes out clean once tiers go live. The
+   F&F credit grant and the eventual paid tiers are the same object at different maturity, not two
+   systems.
 8. **Runner = stateless pure compute.** Input: mission ref + goal + vars. Output: result + trace +
    token counts + compute-seconds. **No DB, no secrets, egress-restricted** (LLM provider + OCI registry
    only). The orchestrator (ForgeUI) stays the owner of identity, DB, broadcast, persistence, and the

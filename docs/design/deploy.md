@@ -1,126 +1,111 @@
 # Forge — Deploy Runbook
 
 > **Audience:** anyone (human or agent) shipping a change to the hosted Forge app. This is the
-> **operational how-to**. For the *why* (infra design, credential posture, the decision log of how it
-> was stood up), see [Phase 38.7 — Hosting & Deployment](../phases/phase-38.7-hosting-deployment.md);
-> this doc is the runbook that sits on top of it.
+> **single authoritative deploy doc** — every other doc/memory that touches deployment should link
+> here instead of re-describing the flow, so the steps don't drift into copies that disagree.
+>
+> For the *why* (infra design, credential posture, stand-up history), see
+> [Phase 38.7 — Hosting & Deployment](../phases/phase-38.7-hosting-deployment.md); this doc is the
+> operational how-to that sits on top of it.
 
-## TL;DR — ship a change
+## TL;DR — ship a ForgeUI change
 
-1. **Commit + push** to `main`.
-2. **Build + push the image** via GitHub Actions (OIDC → ACR, native amd64):
-   - ForgeUI change → `gh workflow run forge-ui-image.yml -f version=X.Y.Z`
-   - Runner change → `gh workflow run forge-runner-image.yml -f version=X.Y.Z`
-   - (or push a git tag `forge-ui-vX.Y.Z` / `forge-runner-vX.Y.Z` — same effect.)
-3. **Roll the Container App** onto the new image — **this is a separate step the build does NOT do**
-   (see [Gotcha 1](#gotchas)). Preferred: redeploy the `dev/500-app` Bicep layer with the new image
-   version. Quick: `az containerapp update` (creates drift — see gotcha).
-4. **Verify live** — boot log, FQDN, a real `@mention`.
+1. **Commit + push** to `main` in this repo.
+2. **Tag + push a release** to build the image via CI:
+   ```bash
+   git tag forge-ui-v0.6.0
+   git push origin forge-ui-v0.6.0
+   ```
+3. **Deploy it** — commands live in `forge-infra`, not duplicated here:
+   ```bash
+   cd /Users/ameerdeen/progs/forge-infra
+   make 500-app-deploy-image VERSION=0.6.0
+   ```
+4. **Verify live** (see [Verify live](#verify-live) below).
 
-**For Phase 40 (all ForgeUI, no runner change): only step 2's `forge-ui-image.yml` + step 3's roll of
-`ca-forge-ui-dev` are needed.**
+The full command set (bump-only, what-if preview, runner image, migration job, firewall access) is
+**owned by [`forge-infra/README.md`](https://github.com/katasec/forge-infra/blob/main/README.md)** —
+that repo has the Makefile, so its README can't drift from the commands the way a copy in a second
+repo would. Read it before deploying; don't rely on a paraphrase here.
 
 ## Topology
 
-Two container images, one registry, two Container Apps in one managed environment, fronted by a custom
-domain. All in Azure subscription (workforce), region **uaenorth**, resource group `rg-forge-dev`.
+Two container images, one registry, two Container Apps in one managed environment, fronted by a
+custom domain. All in Azure subscription (workforce), region **uaenorth**, resource group
+`rg-forge-dev`.
 
 ```
- mission-control-language (this repo)          katasec/forge-infra (IaC)
-   src/ForgeUI ──► Dockerfile.forgeui             dev/100-base   RG · Log Analytics · ACR · Key Vault · app MI
-   src/ForgeMission.Runner ──► Dockerfile.runner  dev/150-ci     passwordless CI identity (GitHub OIDC)
-        │                                         dev/300-data   Postgres Flexible Server → conn strings to KV
-        │  gh workflow run *-image.yml            dev/400-appenv Container Apps env  cae-forge-dev
-        ▼  (OIDC → ACR, amd64)                    dev/500-app    the Container Apps + EF migration job + domain
-   ACR  crforgeroomsdev.azurecr.io
+ mission-control-language (this repo)          katasec/forge-infra (IaC, layered Bicep + Makefile)
+   src/ForgeUI ──► Dockerfile.forgeui             dev/100-base    RG · Log Analytics · ACR · Key Vault · app MI
+   src/ForgeMission.Runner ──► Dockerfile.runner  dev/150-ci      passwordless CI identity (GitHub OIDC)
+        │                                         dev/200-entra   app registration (manual, no Bicep)
+        │  git tag forge-ui-vX.Y.Z                dev/300-data    Postgres Flexible Server + authbilling_db
+        │  (CI: OIDC → ACR, native amd64)         dev/400-appenv  Container Apps env  cae-forge-dev
+        ▼                                         dev/450-migrate Manual migration job definition
+   ACR  crforgeroomsdev.azurecr.io                dev/500-app     ForgeUI + runner Container Apps + domain
      forge-ui:X.Y.Z          ─────────────►  ca-forge-ui-dev    (orchestrator: identity, DB, SignalR, UI)
      forge-runner:X.Y.Z      ─────────────►  ca-forge-runner-dev (stateless mission execution, provider keys)
                                                      │
    Key Vault kv-forgerooms-dev  (only secret store)  │  managed identity id-forge-dev pulls ACR + reads KV
-   Postgres  psql-forge-dev     (Rooms + ledger)     ▼
+   Postgres  psql-forge-dev                          ▼    (forge_rooms + authbilling_db, same server)
                                             https://forge.katasec.com  (managed TLS, SNI)
 ```
 
-- **`ca-forge-ui-dev`** — the orchestrator: OIDC identity, Postgres (Rooms + `ledger_entries`),
-  SignalR (`RoomBroadcaster`, in-proc → **single replica**), all UI. **Phase 40 ships here.**
+- **`ca-forge-ui-dev`** — the orchestrator: OIDC identity, Postgres (`forge_rooms`), SignalR
+  (`RoomBroadcaster`, in-proc → **single replica**), all UI.
 - **`ca-forge-runner-dev`** — stateless mission execution (Phase 39.1). Holds the **provider keys**
   (`MCL_API_KEY`/`ANTHROPIC_API_KEY`/`XAI_API_KEY`); the orchestrator holds none. Internal ingress,
-  warm (`minReplicas ≥ 1`). Only rebuild/roll this for a runner or mission-execution change.
-- **One live environment today (dev), fronted by `forge.katasec.com`.** A separate prod slice is a
+  warm (`minReplicas ≥ 1`).
+- **`authbilling_db`** — a second database on the *same* Postgres server (`psql-forge-dev`), a
+  separate bounded context for `platform_keys` + `ledger_entries` (Phase 42.6). ForgeUI reads/writes
+  it via `ConnectionStrings__AuthBillingConnection`, wired explicitly in `dev/500-app`'s Bicep — not
+  derived from `WriteConnection` anymore.
+- **DB migrations are a separate deliberate step**, not coupled to an app deploy: `dev/450-migrate`
+  defines the job, `dev/500-app` never runs it automatically. See `forge-infra/README.md`.
+- **One live environment today (dev)**, fronted by `forge.katasec.com`. A separate prod slice is a
   documented follow-up (38.7 §9), not yet stood up.
 
 ## Which image for which change
 
-| You changed… | Rebuild | Roll |
+| You changed… | Rebuild (this repo) | Deploy (forge-infra) |
 |---|---|---|
-| `src/ForgeUI` (rooms, nav shell, pages, orchestrator) — **incl. all of Phase 40** | `forge-ui-image.yml` | `ca-forge-ui-dev` |
-| `src/ForgeMission.Runner`, mission execution, provider-key wiring, `missions/` baked into the runner | `forge-runner-image.yml` | `ca-forge-runner-dev` |
-| Infra (new secret, env var, scaling, domain, Postgres) | — (Bicep) | redeploy the relevant `dev/*` layer in `katasec/forge-infra` |
+| `src/ForgeUI` (rooms, nav shell, pages, orchestrator) | `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` | `make 500-app-deploy-image VERSION=X.Y.Z` |
+| `src/ForgeMission.Runner`, mission execution, provider-key wiring, `missions/` baked into the runner | `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app` |
+| Infra (new secret, env var, scaling, domain, Postgres, a new `authbilling_db`-style DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
+| An EF migration needs to actually run | image already has `/app/migrate` baked in | `make 450-migrate` (updates the job definition only) then start the job — a separate, deliberate operator action |
 | The `forge` **CLI binary** (unrelated to hosting) | `release.yml` (osx/linux/win artifacts) | n/a — not a container |
 
-## The three steps in detail
-
-### 1 — Build + push the image (GitHub Actions)
-
-Both image workflows ([`forge-ui-image.yml`](../../.github/workflows/forge-ui-image.yml),
-[`forge-runner-image.yml`](../../.github/workflows/forge-runner-image.yml)) are identical in posture:
-
-- **Trigger:** a git tag (`forge-ui-vX.Y.Z` / `forge-runner-vX.Y.Z`) **or** `workflow_dispatch` with a
-  `version` input. Dispatch is the usual path: `gh workflow run forge-ui-image.yml -f version=0.4.0`.
-- **What it does:** `buildx` → push to ACR. Azure auth is **GitHub → Azure OIDC federation** (no stored
-  cloud secret); ACR push via the CI managed identity's `AcrPush` (no registry password). The private
-  GitHub Packages feed token is a **BuildKit secret** (never in an image layer), sourced from
-  `GITHUB_TOKEN`.
-- **Output tags:** `X.Y.Z` + `sha-<sha>` + `dev-latest` on `crforgeroomsdev.azurecr.io/forge-ui` (or
-  `/forge-runner`).
-- **Runs native amd64** on the GitHub runner — required (see Gotcha 2) and faster than a local emulated
-  build.
-- Requires the GitHub Actions **variables** `AZURE_CI_CLIENT_ID`, `AZURE_TENANT_ID`,
-  `AZURE_SUBSCRIPTION_ID`, `ACR_NAME`, `ACR_LOGIN_SERVER` (already wired in this repo).
-
-### 2 — Roll the Container App onto the new image
-
-**The image workflow does NOT deploy** — the running app keeps serving the old image until you roll it.
-Two ways:
-
-- **Preferred — redeploy the Bicep (keeps IaC the source of truth):** in `katasec/forge-infra`, redeploy
-  `dev/500-app` with the new `FORGE_UI_IMAGE=…:X.Y.Z` (and keep `CUSTOM_DOMAIN` +
-  `CUSTOM_DOMAIN_CERT_ID` set, so the HTTPS binding is preserved — see Gotcha 3). This is the release
-  loop of record.
-- **Quick — direct update (creates drift):**
-  ```bash
-  az containerapp update -n ca-forge-ui-dev -g rg-forge-dev \
-    --image crforgeroomsdev.azurecr.io/forge-ui:X.Y.Z
-  ```
-  Fast, but it bypasses Bicep, so the running image no longer matches `dev/500-app`. If you use this,
-  land the same version in the Bicep afterward, or the next `dev/500-app` deploy silently reverts it.
-  (This exact class of drift caused the `@claude` "No mission is bound" regression — 38.7 §9.)
-
-### 3 — Verify live
+## Verify live
 
 - **Boot log** confirms wiring: ForgeUI logs `runner advertises N mission(s): …`; the runner logs the
-  loaded missions. A healthy dev boot loads **5**: `ChatGPT, Forge, Assistant, Claude, Grok`.
+  loaded missions.
   ```bash
   az containerapp logs show -n ca-forge-ui-dev -g rg-forge-dev --tail 50
   ```
-  ⚠️ The runner floods stdout with per-`/health` OTel spans (image ≥ 0.4.2) — large `--tail` on
-  `ca-forge-runner-dev` may return nothing; use a small tail (38.7 §9).
+  This requires `Microsoft.App/containerApps/*/action` on your Azure identity — not everyone has it by
+  default; don't assume a permission denial here generalizes to other Azure APIs (Key Vault reads and
+  `az deployment group create` are governed separately and may still work).
+- **DB check**, when a migration/schema change is in play — connect to the relevant database directly
+  rather than inferring state from Bicep or code:
+  ```bash
+  make 300-data-operator-ip           # (forge-infra) opens the Postgres firewall to your current IP
+  psql "host=psql-forge-dev.postgres.database.azure.com port=5432 dbname=<db> user=forge_admin sslmode=require"
+  ```
 - **Smoke test** `https://forge.katasec.com`: sign in, open a room, send a `@guard` or `@assistant`
-  mention, confirm a verified ✓ reply. That exercises the full app → runner → provider round-trip +
-  the cost meter/ledger.
+  mention, confirm a verified ✓ reply.
 
 ## Local dev environment — shell + provider keys (read this before running anything locally)
 
 > **The maintainer's default shell is PowerShell (`pwsh`), and all provider keys are already exported
 > in the pwsh environment.** You do **not** need to ask for keys or set them up — they exist. But there
-> is one trap that will silently waste your time (it wasted a local runner boot on 2026-07-12):
+> is one trap that will silently waste your time:
 
 **The keys live in pwsh, and an agent's `bash` tool does NOT inherit them.** Most agent harnesses run
 Bash commands in a `bash` shell seeded from the bash profile — which never sees pwsh's exported vars. So
 `echo $XAI_API_KEY` from a Bash tool prints empty, the runner loads **0 missions** ("no API key for
 provider … — skipping"), and a local `@grok`/search run can't work — even though the key is right there.
 
-Keys present in the pwsh environment (as of 2026-07-12):
+Keys present in the pwsh environment:
 
 | Env var | Used by |
 |---|---|
@@ -145,55 +130,60 @@ dance needed. The dance is only for a `bash`-backed tool.)
 
 ## Test before you ship (no prod auth needed)
 
-Phase 40 is UI work — verify locally against the browser preview tooling **before** cutting an image.
-Full loop + gotchas: [Phase 40 hub §6](../phases/phase-40-forge-ui-shell.md#6-building-running--verifying-locally)
-and [UI Design System §9](ui-design-system.md#9-running-it-locally-and-two-gotchas-that-will-bite-you).
-In short: `preview_start forge-ui` (config in [`.claude/launch.json`](../../.claude/launch.json), HTTP
+Verify locally against the browser preview tooling **before** cutting an image. Full loop + gotchas:
+[Phase 40 hub §6](../phases/phase-40-forge-ui-shell.md#6-building-running--verifying-locally) and
+[UI Design System §9](ui-design-system.md#9-running-it-locally-and-two-gotchas-that-will-bite-you). In
+short: `preview_start forge-ui` (config in [`.claude/launch.json`](../../.claude/launch.json), HTTP
 `:5286`), dev sign-in `/auth/dev?user=alice`, verify at 375/768/1024 + dark. Real OIDC login needs
-HTTPS (`https://localhost:7177`) — only relevant for the 40.4 PWA install/login test.
+HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login test.
 
 ## Gotchas
 
-1. **Build ≠ deploy.** The image workflow builds + pushes only; rolling the Container App is a separate
-   step (see step 2). Forgetting it means "I deployed" but the app still serves the old image. An open
-   follow-up (38.7 §9) is a `deploy-dev` action that builds *and* rolls in one.
-2. **amd64 only.** Container Apps rejects `linux/arm64`. GitHub runners are amd64 (CI is fine); a **local**
-   `docker buildx` on Apple Silicon must pass `--platform linux/amd64`.
-3. **Preserve the custom-domain cert params on redeploy.** `dev/500-app` takes `CUSTOM_DOMAIN` +
-   `CUSTOM_DOMAIN_CERT_ID`; dropping them on a redeploy breaks the HTTPS binding. The managed cert can't
-   be created in a single Bicep pass (hostname-first + circular) — it's a one-time out-of-band CLI step
-   already done for dev.
-   ⚠️ **The `infra.yml` `500-app` dispatch does NOT pass these** — its env block sets only
-   `CAE_ENV_ID / ACR_LOGIN_SERVER / FORGE_UI_IMAGE / FORGE_RUNNER_IMAGE / APP_MI_ID / KEY_VAULT_URI /
-   OIDC_*`, and `forge-infra` has **no** `CUSTOM_DOMAIN`/`CUSTOM_DOMAIN_CERT_ID` GitHub vars. So a
-   `500-app` GHA redeploy would resolve `customDomain=''` → **strip `forge.katasec.com`** (SniEnabled →
-   removed). The workflow has never actually been run (no run history). **Until it's fixed** (add the two
-   vars + wire them into the 500-app env block), roll ForgeUI via the quick `az containerapp update`
-   below — image-only, it preserves the domain/ingress/secrets. Verified 2026-07-12 rolling to 0.3.4.
-4. **Rolling ForgeUI in practice (2026-07-12, verified).** `az containerapp update -n ca-forge-ui-dev
-   -g rg-forge-dev --subscription 174c6cc1-faef-4e40-91f4-1bef3a703153 --image
-   crforgeroomsdev.azurecr.io/forge-ui:X.Y.Z` — creates a new revision (Single mode → 100% traffic),
-   custom domain untouched. **The app pins an explicit tag (not `dev-latest`), so it does NOT auto-pull**
-   on image push — the roll is always a deliberate step. After rolling, **bump the `FORGE_UI_IMAGE`
-   GitHub var** (`gh variable set FORGE_UI_IMAGE -R katasec/forge-infra --body "forge-ui:X.Y.Z"`) so the
-   Bicep source-of-truth matches and the next `500-app` deploy won't silently revert it.
-   Gotcha: `az account list` may **not list** the workforce sub `174c6cc1…` (it's in a different tenant),
-   but `--subscription 174c6cc1…` on any command works once you've `az login`'d to that tenant.
-5. **Provider keys live on the runner, not the app** (post-39.1). `@claude`/`@grok`/`@openai` bind only
-   when the runner has their key; a mission whose key is empty simply isn't advertised. Keys are in
-   `dev/500-app` Bicep on `ca-forge-runner-dev` (folded into IaC 2026-07-09).
-6. **Single replica.** `RoomBroadcaster` SignalR is in-proc, so `ca-forge-ui-dev` runs one replica.
+1. **Build ≠ deploy.** Tagging/pushing builds and publishes the image only; you still have to run the
+   `forge-infra` deploy step. Forgetting it means "I shipped" but the app still serves the old image —
+   this is exactly how `authbilling_db` sat empty in prod for a day after the code merged (2026-07-18/19).
+2. **amd64 only.** Container Apps rejects `linux/arm64`. CI runners are amd64 (fine by default); a
+   **local** `docker buildx` on Apple Silicon must pass `--platform linux/amd64`.
+3. **Single replica.** `RoomBroadcaster` SignalR is in-proc, so `ca-forge-ui-dev` runs one replica.
    Scale-out later needs Azure SignalR + a backplane.
-7. **Secrets only via Key Vault** (`kv-forgerooms-dev`). No secret value is committed; Bicep uses KV
+4. **Secrets only via Key Vault** (`kv-forgerooms-dev`). No secret value is committed; Bicep uses KV
    references. Passwordless throughout (CI = OIDC federation, runtime = managed identity). The image
    itself carries no runtime secrets — they're injected at run time.
-8. **DB migrations** run as the `dev/500-app` EF migration job (Dev seeds Alice/Bob/demo rooms;
-   **essential built-in agent rows are product data seeded in every env** — 38.7 §6). Phase 40 needs no
-   migration (no schema change).
+5. **DB migrations never run automatically.** `dev/450-migrate` is a manual-trigger-only job, separate
+   from `dev/500-app` — an app deploy alone never touches schema. (An earlier coupled version of this
+   caused a dev DB wipe in 2026-07-18; see [Phase 42.6](../phases/phase-42.6-hosted-endpoint-ttfa.md).)
+6. **Provider keys live on the runner, not the app.** `@claude`/`@grok`/`@openai` bind only when the
+   runner has their key; a mission whose key is empty simply isn't advertised.
+7. **Don't infer Azure permissions from one denied call.** A 403 on one API (e.g. ACA log reads) says
+   nothing about a different API (Key Vault, `az deployment group create`, role assignment reads) —
+   verify each capability by trying it, not by reasoning from another one's error.
+
+## Bicep authoring gotchas (forge-infra)
+
+Hard-won errors from standing up `forge-infra`'s Bicep layers — not deploy-flow issues, but ones
+that'll burn an hour if hit cold while editing any layer.
+
+1. **BCP258.** A `.bicepparam` must assign every required param; you can't supplement it with
+   `-p key=val` on the command line. Use `readEnvironmentVariable('VAR')` inside the param file and
+   export the var at deploy time — keeps IDs/secrets out of the repo without a hybrid param source.
+2. **`enablePurgeProtection` rejects `false`.** Key Vault's Bicep resource errors if you pass it
+   literally — emit `true` or omit the property entirely (`condition ? true : null`).
+3. **Key Vault names are global**, not scoped to your subscription — `kv-forge-dev` was already
+   taken by someone else, hence `kv-forgerooms-dev`.
+4. **Contributor's role-definition GUID is `b24988ac-6180-42a0-ab88-20f7382dd24c`.** Don't hardcode
+   a remembered role ID for any built-in role — confirm via `az role definition list --name "<Role>"`
+   first; a wrong GUID fails silently different ways depending on the API.
+5. **Concurrent federated-credential writes on one managed identity are rejected.** If a Bicep
+   template creates more than one `federatedIdentityCredentials` child under the same identity,
+   chain them with `dependsOn` — parallel creation 409s.
 
 ## Reference
 
+- **Deploy commands (source of truth):** `forge-infra/README.md` — Makefile targets, layer list,
+  image-update recipe.
 - Infra design, credential posture, full stand-up history + decision log →
   [Phase 38.7 — Hosting & Deployment](../phases/phase-38.7-hosting-deployment.md).
+- Current authbilling_db / hosted-`/v1` work → [Phase 42.6](../phases/phase-42.6-hosted-endpoint-ttfa.md).
 - Observability / OTel exporter follow-up → [Observability](observability.md).
-- IaC repo: `katasec/forge-infra` (layered Bicep + `.github/workflows/infra.yml`).
+- IaC repo: `katasec/forge-infra` (layered Bicep + Makefile; `.github/workflows/infra.yml` for PR
+  validation + selected manual deploys).

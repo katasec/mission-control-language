@@ -301,6 +301,12 @@ no ambiguity.
 
 Both identifier conventions are enforced by the grammar. Wrong case is a parse error.
 
+**Runtime and data keys are `snake_case`**, not covered by the grammar-enforced table above because
+they're not language identifiers — they're map keys. Reserved runtime keys (`output`, `feedback`,
+`max_loops`, `attempt`) and any user-domain key produced by an `exec`/`onnx`/`json_extract` step's
+output are all `snake_case` by convention. This has always been true in practice; stating it here
+makes it an explicit contract rather than something inferred from example missions.
+
 ## Variables and context
 
 ### `let` bindings

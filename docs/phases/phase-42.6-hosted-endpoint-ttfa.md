@@ -473,6 +473,12 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
      middleware (task 4); metering/debit off the wire tail (task 6). The relay itself stays dumb.
 4. **Auth middleware (on `ForgeAPI`).** Validate the platform key (42.5, via `ForgeMission.Billing`) on every
    `/v1/*` request → attach `(userId, balance)`; 401 on bad/revoked key.
+   - **✅ DONE (2026-07-19, commit `da977ff`).** [`PlatformKeyAuthFilter`](../../src/ForgeMission.Api/PlatformKeyAuth.cs)
+     resolves the Bearer token via the shared `authbilling_db` resolver, stashes `PlatformKeyContext`
+     on `HttpContext.Items` for tasks 5/6 to read, 401 on missing/invalid/revoked. `ApiJsonContext`
+     added for the gateway's own AOT-clean JSON responses. 4 unit tests pass
+     ([`PlatformKeyAuthFilterTests`](../../src/ForgeMission.Rooms.Tests/Api/PlatformKeyAuthFilterTests.cs)).
+     Wired onto `/v1/{**rest}` via `.AddEndpointFilter<PlatformKeyAuthFilter>()` in `Program.cs`.
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
    - **5a — API A, mission invocation (build first).** Implement `ExecuteMission` / `SearchMissions` /
@@ -550,13 +556,11 @@ the relevant layer (see [deploy.md](../design/deploy.md)).
       env** (`ConnectionStrings__AuthBillingConnection` → `connection-authbilling` secret ref, applied via
       `forge-infra`'s `dev/500-app/main.bicep`) — no longer derived from `WriteConnection`. ForgeAPI gets the
       same wiring once `ca-forge-api-dev` is authored (below). *(Task 2.)*
-- [ ] **Table bootstrap** — code is in place (`AuthBillingSchema.EnsureCreatedAsync`, idempotent
-      `CREATE TABLE IF NOT EXISTS` at host startup) but **not yet triggered live**. Confirmed via direct
-      `psql` against `authbilling_db` (2026-07-19): **zero tables exist**. The `500-app` env wiring is
-      applied, but the deployed image (`forge-ui:0.5.0`) predates commit `6546151` (the `authbilling_db`
-      split) and never calls this path. Unblocks once a ForgeUI image built from `6546151`+ is tagged,
-      pushed, and deployed via `make 500-app-deploy-image VERSION=<x>` — re-verify with `\dt` after. *(Task 2,
-      remaining step.)*
+- [x] **Table bootstrap** — ✅ **verified live (2026-07-19)**: `AuthBillingSchema.EnsureCreatedAsync`
+      (idempotent `CREATE TABLE IF NOT EXISTS` at host startup) ran on `forge-ui:0.6.0`'s first boot.
+      Confirmed via direct `psql` against `authbilling_db`: `platform_keys` and `ledger_entries` both
+      exist, owned by `forge_admin`. Full loop: [Deploy Runbook](../design/deploy.md) TL;DR (tag → CI
+      build → `make 500-app-deploy-image`) → confirmed with `\dt` after. *(Task 2, DONE.)*
 - [ ] **`ca-forge-api-dev` container app** — new tier-1 ACA app for `ForgeAPI`: **external** ingress
       (the runner stays internal), network access to `psql-forge-dev` and to the internal runner.
       **Hostname DECIDED 2026-07-18 (Ameer): a dedicated subdomain `api.forge.katasec.com`**, not a
@@ -589,10 +593,15 @@ Both mechanisms are now disabled:
 
 The remaining items below are **optional cleanup/hardening for post-dream**, no longer a blocker:
 
+> **Structural fix since applied:** the migration job (`caj-forge-migrate-dev`) has been moved out of
+> `dev/500-app` into its own layer, `dev/450-migrate` — an app deploy can no longer touch the job at
+> all, deliberate or not. See [Deploy Runbook](../design/deploy.md). The forensic narrative below is
+> historical (as of 2026-07-18, when the job still lived in `500-app`) — kept for the investigation
+> record, not as a description of the current layer structure.
+
 **What we know (evidence, not yet root-caused):**
-- The `500-app` deploy runs a pre-deploy migration job `caj-forge-migrate-dev` whose container entrypoint
-  is **`/app/migrate --connection $(CONNECTION_WRITE)`** (image `forge-ui:0.5.0`; see
-  [forge-infra `dev/500-app/main.bicep`](https://github.com/katasec/forge-infra/blob/main/dev/500-app/main.bicep) job template).
+- At the time, the `500-app` deploy defined a pre-deploy migration job `caj-forge-migrate-dev` whose
+  container entrypoint was **`/app/migrate --connection $(CONNECTION_WRITE)`** (image `forge-ui:0.5.0`).
   We redeployed `500-app` (twice) to recover the site from a credential rotation; the data was gone afterward.
 - **Ruled out:** the password rotation (changes a credential, never drops data); the 42.6
   `DropLedgerAndPlatformKeysFromRooms` migration (exists only in unbuilt local code, **not** in `0.5.0`).

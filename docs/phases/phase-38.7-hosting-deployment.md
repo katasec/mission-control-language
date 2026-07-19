@@ -46,18 +46,15 @@ root) from the CLI's root `Dockerfile`.
 
 ## 3. Azure infrastructure (Bicep — `forge-infra`)
 
-Layered, numbered by deploy order; each layer is `main.bicep` + `main.bicepparam` + `README.md`.
+Layered, numbered by deploy order; each layer is `main.bicep` + `main.bicepparam` + `README.md`, run
+via Makefile targets (`make <layer>`).
 
-| Layer | Contents | Notes |
-|---|---|---|
-| `dev/100-base` | RG `rg-forge-dev`, Log Analytics, ACR `crforgeroomsdev`, **empty** Key Vault `kv-forgerooms-dev` (RBAC), app MI `id-forge-dev` + AcrPull/Secrets-User roles | Human-run once (role assignments) |
-| `dev/150-ci` | Passwordless CI identity `id-forge-ci-dev` (user-assigned MI + GitHub OIDC federated creds) + Contributor/RBAC-Admin/AcrPush | Human-run once |
-| `dev/400-appenv` | Container Apps managed environment `cae-forge-dev` | Base infra |
-| `dev/300-data` | Postgres Flexible Server `psql-forge-dev` → connection strings to KV | Secret-bearing |
-| `dev/500-app` | Container App `ca-forge-ui-dev` + EF migration job + custom domain binding | The app |
+> **Layer list, current deploy flow, and commands live in one place:**
+> [Deploy Runbook](../design/deploy.md), which defers to `forge-infra/README.md` (the repo with the
+> Makefile) as the actual source of truth for commands — not duplicated here to avoid the two copies
+> drifting apart.
 
-Region **uaenorth**, workforce subscription. `.github/workflows/infra.yml` deploys a layer per
-dispatch (OIDC); secret-bearing layers gated behind GitHub Environments.
+Region **uaenorth**, workforce subscription.
 
 ## 4. Secrets & credential posture
 

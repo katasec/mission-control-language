@@ -61,7 +61,26 @@ hardening (parent Q7) — rooms are the boundary here, enforced server-side.
 (`bootstrap/` = the CIAM tenant via Bicep; `dev/200-entra/` = app registration + Email-OTP user
 flow via `az`/Graph scripts — the tenant has no subscription so ARM/Bicep can't reach the
 directory objects). Local app config (`Oidc:Authority`/`ClientId`/`ClientSecret`) lives in
-**ForgeUI user-secrets**, never committed. See memory `project_forge_infra_auth`.
+**ForgeUI user-secrets**, never committed.
+
+**Two tenant contexts, by design:** Azure infra (RG/Key Vault/Postgres/Container Apps) lives in the
+**workforce** subscription/tenant; the *identity objects* (users, app registrations, user flows) live
+in the separate **`forgeids`** tenant, which has **no subscription**. Manage directory objects with
+`az login --tenant <forgeids-tenant-id> --allow-no-subscriptions` — the normal subscription-scoped
+login can't reach them.
+
+**Bicep/Graph setup gotchas (bootstrap + `dev/200-entra`):**
+- `ciamDirectories` SKU must be **`Base`** (tier A0) — `Standard` is the classic-B2C SKU and gets
+  rejected for an External ID (CIAM) tenant.
+- External ID **user flows are beta Graph** (`authenticationEventsFlows`) and aren't exposed by the
+  Bicep Graph extension — script them via `az rest`, not a Bicep resource.
+- The app registration **can't be attached to the user flow at flow-create time** (rejected as
+  "invalid app id") — attach it in a separate POST to
+  `.../conditions/applications/includeApplications` afterward, and the app needs a **service
+  principal** (`az ad sp create`) to be attachable at all.
+- A plain `az` CLI token typically lacks `IdentityProvider.Read.All` (reading `identityProviders`
+  403s), even though the flow-write scope works — a dedicated Graph service principal is the correct
+  path once this needs to run from CI rather than an interactive login.
 
 **Follow-ups (not blockers):** display name comes through as "unknown" (the Email-OTP flow
 collects no name attribute → Entra defaults it → the `name` claim); Google/Apple federation;

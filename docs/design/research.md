@@ -236,6 +236,31 @@ is the minimum viable implementation; Option C is the most principled.
 - [AlphaGeometry: An Olympiad-level AI system for geometry (DeepMind, Nature 2024)](https://deepmind.google/discover/blog/alphageometry-an-olympiad-level-ai-system-for-geometry/)
 - [AlphaGeometry 2 / AlphaProof (DeepMind, 2025)](https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/)
 
+### Program synthesis / self-programming agents
+
+*Design idea — not started.* AlphaCode-style program synthesis suggests a "god spike" for MCL: a
+`DynamicGuard` meta-mission where an LLM writes both the `.mcl` pipeline and a `verify.py` tailored
+to the user's specific question at runtime, then executes what it wrote.
+
+```
+mission DynamicGuard(goal) = {
+    MissionPlanner    ← LLM: reads goal, emits mission.mcl + verify.py
+    -> MissionRunner  ← kind:exec: runs forge run on the generated mission
+}
+```
+
+**Why it would matter:** today every mission is static — a verifier hand-coded for "which month
+contains X" can't verify a question about strawberries. Program synthesis makes the verification
+logic question-aware without hand-coding a new mission per domain, and would be a live demo of both
+the Symbolic Grounding and Verifiable Step-by-Step Reasoning concept missions (Phase 30, spokes 7–8).
+The MCL-specific angle vs. plain AlphaCode: the generated artifact is a declared, auditable pipeline,
+not an opaque tool call.
+
+**Open design questions:** how `MissionPlanner` emits structured output the runner can consume
+(likely a JSON envelope with `mcl` + `verifier_script` fields); whether the generated `.mcl` needs to
+persist or is ephemeral per-request; and sandboxing the generated `verify.py` — the `kind: exec`
+`wasm`/`hyperlight` backends (deferred, Phase 32) are the likely answer once this is picked up.
+
 ### Industry overviews
 - [What Are Compound AI Systems? — IBM](https://www.ibm.com/think/topics/compound-ai-systems)
 - [What are Compound AI Systems? — Databricks](https://www.databricks.com/blog/what-are-compound-ai-systems)
