@@ -267,7 +267,14 @@ public sealed class ResponseError
     public Dictionary<string, string>? Meta { get; set; }
 }
 
-[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
+// camelCase to match the framework's own default for the other four endpoints (minimal API's
+// result-writer uses ASP.NET's ConfigureHttpJsonOptions default, camelCase) — ExecuteMission's
+// manual JsonSerializer.SerializeToUtf8Bytes calls bypass that writer, so without this the wire
+// was inconsistent: ExecuteMissionResponse came back PascalCase while GetAccount/SearchMissions/
+// GetMission/GetRun came back camelCase. Caught while building the CLI client against the real
+// deployed wire (2026-07-19) — case-insensitive on read regardless, but the emitted case must be
+// one consistent thing for a hand-written client not to special-case per endpoint.
+[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(ExecuteMission))]
 [JsonSerializable(typeof(ExecuteMissionResponse))]
 [JsonSerializable(typeof(MissionRunEvent))]
