@@ -1,0 +1,34 @@
+# syntax=docker/dockerfile:1
+# ForgeMission.Api ("ForgeAPI") — the tier-1 API gateway for the hosted /v1 + API-A endpoints (42.6).
+#
+# NOT Native AOT here: PublishAot is flipped on as a fast-follow once the endpoint works end-to-end
+# (see ForgeMission.Api.csproj's own comment) — this build stays a normal JIT ASP.NET host, same
+# shape as Dockerfile.runner/Dockerfile.forgeui. Build context = repo root.
+#
+# Unlike the runner/forgeui, ForgeAPI's dependency tree (ForgeMission.Billing -> Runner.Contracts)
+# pulls no private GitHub Packages, so no NUGET_AUTH_TOKEN build secret is needed here.
+#
+#   docker buildx build -f Dockerfile.forgeapi -t forge-api:local .
+
+# ---- build --------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY nuget.config ./
+COPY src/ ./src/
+
+RUN dotnet publish src/ForgeMission.Api/ForgeMission.Api.csproj -c Release -o /app/publish \
+      /p:UseAppHost=false /p:PublishAot=false
+
+# ---- runtime ------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app/publish ./
+
+ENV ASPNETCORE_URLS=http://+:8080 \
+    ASPNETCORE_ENVIRONMENT=Production \
+    DOTNET_gcServer=0
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "ForgeMission.Api.dll"]
