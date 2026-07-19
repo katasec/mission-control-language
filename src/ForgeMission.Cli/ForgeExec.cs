@@ -8,9 +8,10 @@ using ForgeMission.Core.Resolution;
 namespace ForgeMission.Cli;
 
 // forge exec (42.6 task 8): the one-shot top-of-funnel command — run a hosted mission once, stream
-// the answer, exit. Sends the ExecuteMission message (API A) to ForgeAPI with the stored platform
-// key. Message-based, not URL-shaped (M1/M2): the handle is a field on the request body, never a
-// route segment. ClientToken is auto-generated per call (M7) so a retry never double-debits.
+// live progress + the answer, exit. Sends the ExecuteMission message (API A) to ForgeAPI with the
+// stored platform key. Message-based, not URL-shaped (M1/M2): the handle is a field on the request
+// body, never a route segment. ClientToken is auto-generated per call (M7) so a retry never
+// double-debits.
 public static class ForgeExec
 {
     // Same override convention as PlatformLogin's endpoints (FORGE_PLATFORM_ENDPOINT etc.) — the
@@ -20,7 +21,7 @@ public static class ForgeExec
         Environment.GetEnvironmentVariable("FORGE_API_ENDPOINT")?.TrimEnd('/')
         ?? "https://api.forge.katasec.com";
 
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(3) };
+    private static readonly HttpClient Http = new() { Timeout = Timeout.InfiniteTimeSpan };
 
     public static async Task<int> RunAsync(string target, string prompt)
     {
@@ -38,7 +39,7 @@ public static class ForgeExec
             ClientToken = Guid.NewGuid().ToString("N"),
             Mission = mission,
             Input = prompt,
-            Stream = false,
+            Stream = true,
         };
 
         using var req = new HttpRequestMessage(HttpMethod.Post, $"{ApiEndpoint}/api/ExecuteMission")
@@ -50,7 +51,7 @@ public static class ForgeExec
         HttpResponseMessage resp;
         try
         {
-            resp = await Http.SendAsync(req);
+            resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
@@ -64,22 +65,46 @@ public static class ForgeExec
             return 1;
         }
 
-        var body = await resp.Content.ReadAsStringAsync();
-        ExecuteMissionResponseDto? result;
-        try
+        if (!resp.IsSuccessStatusCode)
         {
-            result = JsonSerializer.Deserialize(body, ForgeExecJsonContext.Default.ExecuteMissionResponseDto);
-        }
-        catch (JsonException)
-        {
-            Console.Error.WriteLine($"exec failed ({(int)resp.StatusCode}) — unreadable response from {ApiEndpoint}: {body}");
+            var errBody = await resp.Content.ReadAsStringAsync();
+            Console.Error.WriteLine($"exec failed ({(int)resp.StatusCode}): {errBody}");
             return 1;
         }
 
-        if (result is null || result.ResponseStatus?.ErrorCode is { Length: > 0 } errorCode)
+        var progress = new ProgressLine();
+        ExecuteMissionResponseDto? result = null;
+
+        await using var stream = await resp.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+        while (await reader.ReadLineAsync() is { } line)
         {
-            var message = result?.ResponseStatus?.Message ?? body;
-            Console.Error.WriteLine($"exec failed [{result?.ResponseStatus?.ErrorCode ?? "Unknown"}]: {message}");
+            if (line.Length == 0) continue;
+            MissionRunEventDto? evt;
+            try { evt = JsonSerializer.Deserialize(line, ForgeExecJsonContext.Default.MissionRunEventDto); }
+            catch (JsonException) { continue; } // a malformed line shouldn't kill an otherwise-good stream
+
+            switch (evt?.Type)
+            {
+                case "progress" when evt.Progress is not null:
+                    progress.Update(Label(evt.Progress));
+                    break;
+                case "result" or "error":
+                    result = evt.Result;
+                    break;
+            }
+        }
+        progress.Clear();
+
+        if (result is null)
+        {
+            Console.Error.WriteLine("exec failed: the stream ended without a result.");
+            return 1;
+        }
+
+        if (result.ResponseStatus?.ErrorCode is { Length: > 0 })
+        {
+            Console.Error.WriteLine($"exec failed [{result.ResponseStatus.ErrorCode}]: {result.ResponseStatus.Message}");
             return 1;
         }
 
@@ -100,6 +125,56 @@ public static class ForgeExec
         return result.Sources is { Count: > 0 }
             ? $"{badge} · {result.Sources.Count} source(s) (--sources to expand)"
             : badge;
+    }
+
+    // Same human-label mapping as ForgeUI's RoomAgentInvoker.ProgressLabel — kept in sync by hand
+    // (a shared-lib extraction wasn't worth it for one small pure function used by two hosts on
+    // different sides of the AOT boundary). Provider-agnostic: the runner emits neutral kinds (41.7).
+    private static string Label(MissionProgressDto p) => p.Kind switch
+    {
+        "searching_web" => p.Detail is { Length: > 0 } q ? $"Searching: “{Trim(q)}”{Count(p.ResultCount)}" : "Searching the web",
+        "searching_x"   => p.Detail is { Length: > 0 } q ? $"Searching X: “{Trim(q)}”{Count(p.ResultCount)}" : "Searching X",
+        "reading"       => p.Detail is { Length: > 0 } h ? $"Reading {h}" : "Reading a page",
+        "results"       => p.ResultCount is int n ? $"Found {n} result{(n == 1 ? "" : "s")}" : "Reviewing results",
+        "search"        => "Searching the web",
+        "llm"           => "Thinking",
+        "json_extract"  => "Routing",
+        "http"          => "Fetching",
+        "exec"          => "Running",
+        "rule"          => "Checking",
+        "onnx"          => "Classifying",
+        _               => "Working",
+    };
+
+    private static string Trim(string s) => s.Length <= 48 ? s : s[..47] + "…";
+    private static string Count(int? n) => n is int c and > 0 ? $" · {c} result{(c == 1 ? "" : "s")}" : "";
+
+    // Live-updating status line on a tty (carriage-return overwrite); falls back to one line per
+    // change when stdout is redirected/piped, since \r is meaningless (and noisy) there.
+    private sealed class ProgressLine
+    {
+        private int _lastLength;
+        private readonly bool _interactive = !Console.IsOutputRedirected;
+
+        public void Update(string label)
+        {
+            if (_interactive)
+            {
+                var padded = label.PadRight(_lastLength);
+                Console.Write($"\r{padded}");
+                _lastLength = label.Length;
+            }
+            else
+            {
+                Console.Error.WriteLine($"… {label}");
+            }
+        }
+
+        public void Clear()
+        {
+            if (_interactive && _lastLength > 0)
+                Console.Write($"\r{new string(' ', _lastLength)}\r");
+        }
     }
 }
 
@@ -141,7 +216,25 @@ internal sealed class ResponseStatusDto
     public string? Message { get; set; }
 }
 
+// M10: streaming form. Type is progress | heartbeat | result | error.
+internal sealed class MissionRunEventDto
+{
+    public string Type { get; set; } = "";
+    public string RunId { get; set; } = "";
+    public MissionProgressDto? Progress { get; set; }
+    public ExecuteMissionResponseDto? Result { get; set; }
+}
+
+internal sealed class MissionProgressDto
+{
+    public string ExpertName { get; set; } = "";
+    public string Kind { get; set; } = "";
+    public string? Detail { get; set; }
+    public int? ResultCount { get; set; }
+}
+
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(ExecuteMissionRequest))]
 [JsonSerializable(typeof(ExecuteMissionResponseDto))]
+[JsonSerializable(typeof(MissionRunEventDto))]
 internal partial class ForgeExecJsonContext : JsonSerializerContext { }
