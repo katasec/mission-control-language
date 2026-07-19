@@ -249,12 +249,10 @@ killed, scratch files deleted).
 citations from the model, same as today's Grok/Rooms behaviour; `MissionSource[]` plumbing is
 additive future work.
 
-**Not exercised by the smoke test:** the streaming (`Stream: true`) response path — implemented
-(NDJSON `MissionRunEvent` sequence via the same channel-based pattern as the runner's own
-`RunStreamAsync`) and covered by the non-streaming code path sharing `RunCoreAsync`, but not
-separately live-tested end-to-end (a second real paid search run wasn't worth the spend once the
-buffered path proved the resolve→run→debit chain correct). Worth a quick live check before or during
-task 8 (CLI hosted mode), since `forge exec`'s "stream the answer" UX decision depends on it.
+**Streaming path — later live-verified for real (see the next section below), not exercised by this
+initial smoke test.** At the time this section was written, the streaming (`Stream: true`) response
+path was implemented but only unit/integration-tested, not live-hit end to end — closed out properly
+once `forge exec` grew progress streaming (below).
 
 ## Task 5a/8/9 — deployed live + `forge exec` headline demo verified (2026-07-19)
 
@@ -339,6 +337,46 @@ re-tested). Full test suite still green after all changes: 338 passed, 0 failed.
 task 5b (API B chat-wire adapter — the aux-call classifier problem, not started), task 7 (shared
 enrichment cache, needed for 5b's multi-replica correctness), and the `forge claude @handle`/
 `forge missions` halves of task 8.
+
+## Task 8 — pwsh `@`-argument gotcha + progress streaming (2026-07-19, same session)
+
+Two more real issues found and closed testing `forge exec` in the maintainer's actual daily shell,
+not just bash.
+
+**`forge exec @websearch "..."` fails in pwsh** — `Required argument missing for command: 'exec'.`
+Root-caused by directly reproducing in pwsh (`pwsh -NoLogo -Command 'forge exec @websearch "..."'`):
+pwsh mangles an unquoted leading `@` on a native command's arguments before the process ever sees
+it — not a forge bug. `forge exec websearch "..."` (no `@`) and `forge exec "@websearch" "..."`
+(quoted) both work; the CLI already stripped a leading `@` if present, so the fix was purely
+documentation — changed `forge exec --help`'s argument description to lead with the `@`-less form,
+and recorded the gotcha in [deploy.md](../design/deploy.md#pwsh-mangles-an-unquoted-leading--on-native-command-arguments)
+next to the existing pwsh env-var note. Verified fixed directly in pwsh after the change.
+
+**Progress streaming, live-verified for real** (closing the gap flagged in the section above):
+switched `forge exec` to `Stream: true`, consuming the NDJSON `MissionRunEvent` sequence and
+printing step progress as it happens — reused ForgeUI's `RoomAgentInvoker.ProgressLabel` mapping
+verbatim (by hand, not a shared reference — `ForgeUI`/`ForgeAPI` are non-AOT, the CLI is AOT) so the
+language matches other surfaces ("Thinking", "Searching: *query*", "Reading *host*", …). Live output
+during a real run:
+```
+… Thinking
+… Routing
+… Searching the web
+… Searching: "Claude API updates shipped this week" · 9 results
+… Reading platform.claude.com
+...
+<answer>
+✓ verified
+```
+Ledger debited again for real: `4,981,843 → 4,919,082 µ$` (a bigger run — more sub-searches/pages
+than the earlier buffered-mode test, consistent with the visible extra work in the progress log, not
+a pricing bug). Full suite green after (338/0); one `ClaudeCodeTests` failure during a *concurrent*
+full-suite run reproduced as a clean pass in isolation and on immediate rerun — confirmed transient
+(many local servers churning this session), not a regression.
+
+**Still open, unchanged:** `forge-mission-websearch`'s GHCR package is still private (needs the
+manual visibility flip described above); task 5b/7 and the `forge claude`/`forge missions` halves of
+task 8 are still not started.
 
 ## What the message-based redesign (2026-07-18) supersedes
 

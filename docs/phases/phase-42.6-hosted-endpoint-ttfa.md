@@ -553,8 +553,8 @@ table is the lookup; don't load the companion file unless you need the *how*, no
 | 5b | API B, chat-wire adapter | Sequenced after 5a — not started | below |
 | 6 | Billing wrap + spend-abuse trigger ladder | Rung 1 (balance-check + debit) live via 5a; rungs 2–4 still deferred by design | below |
 | 7 | Shared enrichment cache | Design decided; 5b-only, not started | below |
-| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | **`forge exec` half DONE + live-verified (2026-07-19)** — `forge claude @handle` hosted mode and `forge missions` not started | below |
-| 9 | Deploy + verify the headline demo | **One-shot half DONE (2026-07-19)** — `forge exec @websearch "what shipped in the Claude API this week?"` verified live: grounded, dated, source-cited answer, correct ledger debit. Agentic half (`forge claude @websearch`) blocked on 5b. | below |
+| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | **`forge exec` half DONE + live-verified (2026-07-19)**, incl. live progress streaming — `forge claude @handle` hosted mode and `forge missions` not started | below |
+| 9 | Deploy + verify the headline demo | **One-shot half DONE (2026-07-19)** — `forge exec websearch "what shipped in the Claude API this week?"` verified live: grounded, dated, source-cited answer, correct ledger debit, live step progress shown during the search. Agentic half (`forge claude @websearch`) blocked on 5b. | below |
 | 10 | `forge codex @websearch` | Blocked on 42.7 | below |
 
 5a is next per `docs/plan.md`. Tasks 1–3 are the foundation the re-architecture added; 4–5 are auth +
@@ -562,15 +562,16 @@ routing; 6+ are billing, cache, CLI, and deploy.
 
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
-   - **5a — API A, mission invocation.** ✅ **Built + locally verified live (2026-07-19)** — on branch
-     `phase-42.6-task-5a-mission-invocation`, not yet merged/deployed. All 5 message endpoints
-     implemented on `ForgeAPI`; `websearch` published to `ghcr.io/katasec` and wired into
-     `BuiltinMissions.All`; 12 new tests + full suite pass (338/0); a real local smoke test
-     round-tripped `ExecuteMission` against `@websearch` with a correct ledger debit. Two small
-     doc gaps (no `Principal` type, `ErrorCode.RunNotFound` missing from the closed set) resolved
-     inline, not re-opened as design questions. Streaming (`Stream: true`) is implemented but not yet
-     live-tested — flagged before task 8. Full build narrative + evidence: [completed doc → Task 5a
-     build + local verification](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--build--local-verification-2026-07-19).
+   - **5a — API A, mission invocation.** ✅ **Built, deployed, and live-verified (2026-07-19)** — on
+     branch `phase-42.6-task-5a-mission-invocation`, not yet merged to `main`. All 5 message
+     endpoints implemented and running live on `ForgeAPI` at `api.forge.katasec.com`; `websearch`
+     published + wired into `BuiltinMissions.All` and the live runner; 12 new tests + full suite pass
+     (338/0). Both the buffered and streaming (`Stream: true`) response paths are live-verified via
+     the real `forge exec` command, not just locally simulated. Two small doc gaps (no `Principal`
+     type, `ErrorCode.RunNotFound` missing from the closed set) resolved inline, not re-opened as
+     design questions. Full build + deploy narrative: [completed doc → Task 5a build + local
+     verification](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--build--local-verification-2026-07-19)
+     and [→ Task 5a/8/9 deployed live](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a89--deployed-live--forge-exec-headline-demo-verified-2026-07-19).
    - **5b — API B, chat-wire adapter.** `/m/{handle}/v1/*` → the runner's `/v1` door. Needs (i) a
      mission-selection mechanism for the spec-bound wire (the `model` field carries the client's real model
      id, not a handle) and (ii) an **aux-call policy** — the wire capture shows Claude Code firing
