@@ -53,6 +53,34 @@ line, a deployed artifact confirmed by a real check — not "written" or "code m
 says a database is deployed because the Bicep was authored, when the DB was never actually applied,
 is worse than no doc at all — it actively misleads the next agent into skipping verification.
 
+### Spoke shape — lookup table, not narrative; completed work moves out
+
+A spoke's active body should read as a **lookup table**: what's done (one line + evidence pointer),
+what's blocked and why, what's next. Not a chronological log of everything that happened while
+building it. The point is to minimize what has to be loaded and re-derived from — a wall of
+narrative is exactly what produces the failure this rule set keeps naming: a status or decision that
+*reads* settled because it's mixed in with a hundred other lines, when it was never actually closed
+out.
+
+**When a task, investigation, or decision is genuinely done and verified**, move its narrative
+detail out of the spoke into a sibling `phase-N[.M]-<slug>_completed.md`, and leave a one-line
+pointer in the active spoke (`Task 4 — done, see phase-42.6-hosted-endpoint-ttfa_completed.md#task-4`).
+This is not archival for its own sake — it means a fresh agent (or session) doesn't load
+already-resolved history into context by default, and doesn't have to read 600 lines to find the ~50
+that are still open. Move to `_completed`:
+- Finished, verified tasks — keep the one-line status + evidence pointer in the active spoke; the
+  full build narrative (what was tried, gotchas, verification detail) goes in `_completed`.
+- Resolved investigations/incidents (a bug that's fixed, a DB-wipe root-caused and structurally
+  prevented) — the postmortem narrative goes in `_completed`; the active spoke keeps only "fixed,
+  see `_completed` for the investigation" if it's even still relevant to mention.
+- Superseded design sections — once a redesign is itself the current truth, the old design's
+  writeup (kept today as "what this supersedes") goes in `_completed`, not the active doc.
+
+**Stays in the active spoke, never moves to `_completed`:** anything a *future, not-yet-done* task
+depends on — locked decisions, type/DTO definitions still being built against, the "Done when"
+condition, open gaps blocking the next task. A completed task's evidence can move out; the design it
+was built on cannot, if later tasks still reference it.
+
 ---
 
 ## Agent memory — scratch space, not storage
@@ -256,6 +284,15 @@ private method — no new packages needed for OpenAI-compatible APIs.
   result, a live log line. An untested inference gets stated as an inference, not a fact. This
   applies doubly to Azure/infra permission claims: a 403 on one API says nothing about a different
   API — verify each capability by trying it.
+- **"Build" and "design" are different labels — don't mark a task build-ready until its dependent
+  types/decisions actually resolve, not just look decided.** A task can read as implementation-ready
+  (named classes, a service signature, a concrete flow) while still depending on an undefined
+  response type, a dangling "see note below" that was never written, or a field left over from a
+  decision that got reversed elsewhere in the same doc. A future agent reading "(build first)" will
+  go straight to code and improvise the gaps rather than stop — which produces code that looks
+  decided when it wasn't, the same failure this whole rule set exists to prevent, just moved from
+  docs into code. Before marking anything build-ready: check every type/response shape it references
+  is actually defined in the doc, not just named.
 
 ---
 

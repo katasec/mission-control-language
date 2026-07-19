@@ -211,6 +211,19 @@ So:
 | Handle means | *which mission to run* | *which mission backs this "model"* |
 | Client | `forge exec`, SDKs, MQ later | Claude Code / Codex |
 
+**Explicit consequence — the mission handle is NOT in a URL for both APIs, and that split is forced, not
+chosen:**
+- **API A** (`forge exec @websearch`) — Forge owns both the client (`forge` CLI) and the server. The
+  client can send `Mission` as a data field on an `ExecuteMission` message (M2). No URL ever carries the
+  handle. This is the "message-based, not REST" design — see the invariants table above.
+- **API B** (`forge claude @websearch`) — the caller is the **real, unmodified `claude` CLI**, an
+  external client bound to the Anthropic wire spec. It cannot be taught to send a `Mission` field; it
+  doesn't know MCL exists, and only understands `ANTHROPIC_BASE_URL` + the standard request shape. So
+  the handle is baked into the base URL instead: `forge claude @websearch` sets
+  `ANTHROPIC_BASE_URL=https://forge.katasec.com/@websearch` (see the routing decision below,
+  `/m/{handle}/v1/*`). This is **not** a design preference — it's the only channel a spec-bound external
+  client leaves available.
+
 **Framing: one message, two transports.** API B is not a second API — it is a **spec-bound adapter** that
 maps a wire we don't control onto the same underlying operation, with 42.3's classifier deciding whether a
 given call invokes a mission at all. API A below is the contract.
@@ -342,6 +355,22 @@ public sealed class GetMission { public int Version; public string Mission; }   
 public sealed class GetAccount { public int Version; }  // → GetAccountResponse  (`forge whoami`)
 public sealed class GetRun     { public int Version; public string RunId; }     // → GetRunResponse (M6)
 
+// PROPOSED (2026-07-19, not yet reviewed/decided — the two response types 5a needs and didn't have):
+public sealed class GetAccountResponse
+{
+    public string  MemberId        { get; set; }
+    public string?  Email          { get; set; }
+    public long    BalanceMicroUsd { get; set; }
+    public ResponseStatus ResponseStatus { get; set; }
+}
+public sealed class GetRunResponse
+{
+    public string RunId   { get; set; }
+    public string Status  { get; set; }                  // running | completed | failed
+    public ExecuteMissionResponse? Result { get; set; }   // populated when Status == completed
+    public ResponseStatus ResponseStatus { get; set; }    // e.g. RunNotFound
+}
+
 // ---------- Shared ----------
 public sealed class ResponseStatus                      // our POCO, not ServiceStack's
 {
@@ -400,94 +429,52 @@ it can land after the demo without breaking clients.
 
 ### What this supersedes
 
-- **The "mission-selection mechanism" decision is void.** The header-vs-rewrite-`model` problem was
-  manufactured by putting the handle in a URL; `RunRequest.MissionRef` was always a field. The runner
-  needed no change — only the gateway framing did.
-- **Task 5 splits** into 5a (mission invocation, API A) and 5b (chat-wire adapter, API B + aux-call policy).
-- **Task 6's metering source is simpler on 5a**: the terminal `result` message already carries full-mission
-  `RunUsage`. The HTTP-trailer / `forge-usage`-SSE invention is only needed for 5b.
-- **Task 7 (shared enrichment cache) is 5b-only** — one-shot invocation has no tool loop or re-entrancy.
+Historical — what the message-based redesign voided from the earlier URL-shaped design. See
+[completed doc → "What the message-based redesign supersedes"](phase-42.6-hosted-endpoint-ttfa_completed.md#what-the-message-based-redesign-2026-07-18-supersedes).
 
-## Tasks (chronological)
+## Tasks — status
 
-Tasks 1–3 are the **foundation** the re-architecture adds (the split, the DB, the new service); 4–5 are the
-original auth + routing; 6+ are billing, cache, CLI, and deploy.
+Full build narrative, evidence, and resolved investigations for done work live in
+[phase-42.6-hosted-endpoint-ttfa_completed.md](phase-42.6-hosted-endpoint-ttfa_completed.md) — this
+table is the lookup; don't load the companion file unless you need the *how*, not just the *what*.
 
-1. **`ForgeMission.Billing` lib (foundation). ✅ DONE (2026-07-18).** Extract `CostMeter` + a ledger-facing
-   `BillingService` (balance-check / debit / grant) from [ForgeUI/Services](../../src/ForgeUI/Services/) into a
-   new AOT-clean project. Depends only on an `ILedgerStore` abstraction + POCOs — no reflection, no runtime
-   `JsonSerializerOptions`. **Referenced by both `ForgeUI` and `ForgeAPI`** (one meter, not two). Done when
-   the room path (`RoomAgentInvoker`) still bills identically through the lib.
-   - **Shipped:** new [`ForgeMission.Billing`](../../src/ForgeMission.Billing/) project (`IsAotCompatible=true`,
-     builds 0 warnings) holding the moved `LedgerEntry`/`LedgerEntryKind` POCOs, the `ILedgerStore` interface,
-     `CostMeter`, and `BillingService`. `IConfiguration` swapped for an injected `BillingOptions` record so the
-     lib carries no config-binder reflection (host binds it from config at startup). `Rooms.Data` keeps the EF
-     `LedgerStore : ILedgerStore` impl + `LedgerEntryConfiguration` and now references Billing; `ForgeUI` +
-     tests re-pointed via `using ForgeMission.Billing`. Added to `ForgeMission.slnx`.
-   - **Verified:** solution + `ForgeUI` build clean; the 11 `Ledger`/`PlatformKeyResolver` tests pass against a
-     real Postgres container — the room billing path (append / balance-as-`SUM` / idempotent grant) is
-     byte-identical through the extracted lib. Next: Task 2 (`authbilling_db` split).
-2. **`authbilling_db` split (foundation).** Move `platform_keys` + `ledger_entries` into a **separate
-   database on the same Postgres server** (see the [infra checklist](#infra-checklist-katasecforge-infra)).
-   `ForgeAPI` accesses them via **raw Npgsql** (`IPlatformKeyStore` / `ILedgerStore` implementations, no EF)
-   so it stays an AOT target. Bootstrap schema with idempotent `CREATE TABLE IF NOT EXISTS` at startup (no
-   EF migrations on this DB). `userId` is the only cross-context link to `rooms_db` — no cross-DB FK. Migrate
-   the tiny existing F&F ledger/keys (copy or fresh start).
-   - **✅ DONE (2026-07-18, full split — decided w/ Ameer).** `ForgeMission.Billing` now owns the whole
-     billing bounded context: `PlatformKey`/`LedgerEntry` POCOs + `IPlatformKeyStore`/`ILedgerStore` +
-     `PlatformKeyMinting`/`PlatformKeyResolver`, plus raw-Npgsql [`NpgsqlLedgerStore`](../../src/ForgeMission.Billing/NpgsqlLedgerStore.cs)
-     / [`NpgsqlPlatformKeyStore`](../../src/ForgeMission.Billing/NpgsqlPlatformKeyStore.cs), idempotent
-     [`AuthBillingSchema.EnsureCreatedAsync`](../../src/ForgeMission.Billing/AuthBillingSchema.cs), and an
-     `AddAuthBilling(connString)` DI extension. **rooms_db cut over:** EF `LedgerStore`/`PlatformKeyStore` +
-     configs + DbSets deleted; a `DropLedgerAndPlatformKeysFromRooms` migration drops both tables (Down fully
-     recreates → reversible). **ForgeUI re-pointed** to `authbilling_db` (`ConnectionStrings:AuthBillingConnection`,
-     else derived from `WriteConnection` with `Database=authbilling_db`); bootstraps the schema on every boot
-     in all envs. **One meter, one ledger** — the room path and the coming hosted `/v1` both bill against it.
-   - **Data migration = fresh start (no copy):** `MemberProvisioningService` calls the idempotent
-     `GrantStartingCredit` on every login, so an empty `authbilling_db` self-heals — existing F&F members get
-     re-granted 5,000,000µ$ on next sign-in. Acceptable at F&F scale; a copy is optional and unneeded.
-   - **⚠️ prerequisite:** the app bootstraps *tables*, not the *database* — `authbilling_db` must exist on the
-     server first (infra checklist item 1 / a local `CREATE DATABASE authbilling_db`), else ForgeUI fails to
-     start on the missing-DB connection.
-   - **Verified:** solution + ForgeUI build clean (Billing is `IsAotCompatible`, 0 warnings incl. Npgsql);
-     the full 61-test Rooms suite passes, with the 25 ledger/platform-key/resolver tests now exercising the
-     **raw-Npgsql stores against real Postgres** (caught + fixed the `SUM(bigint)→numeric` cast). Next: Task 3
-     (`ForgeMission.Api` gateway).
-3. **`ForgeMission.Api` service (foundation) — the API-gateway tier.** New tier-1 minimal-API host —
-   `WebApplication.CreateSlimBuilder` + JSON source-gen, AOT-clean. Health probe; a **streaming reverse-proxy**
-   of the `/v1` wire to the runner's internal door (SSE pass-through; **not** `/run` — see the relay note in
-   Architecture). Thin gateway only: auth, route, meter, forward — no mission logic. No DB except the scoped
-   `authbilling_db`. This is the public `/v1` edge from here on; the runner's own `/v1` doors stay internal
-   (and back local `forge serve` / `--container`).
-   - **✅ FOUNDATION DONE (2026-07-18).** New [`ForgeMission.Api`](../../src/ForgeMission.Api/) slim host:
-     `/health` + [`WireProxy`](../../src/ForgeMission.Api/WireProxy.cs) — a hand-rolled (no YARP) streaming
-     reverse-proxy of `/v1/{**rest}` → the runner (`RunnerBaseUrl`), forwarding both verbs with
-     `ResponseHeadersRead` + `DisableBuffering` so SSE relays as it arrives; hop-by-hop headers stripped both
-     ways. References only the AOT-clean `ForgeMission.Billing` (auth/billing wraps land in tasks 4–6).
-     `PublishAot` stays off for now per the AOT-sequencing note (flip as a fast-follow). Added to the slnx.
-   - **Verified locally (two-service):** booted the runner (single-mission mode) behind ForgeAPI and drove
-     `POST /v1/messages` through the gateway → runner → real provider. Clean **HTTP 200** with a full
-     Anthropic `msg_…` body relayed (elevator-pitch via OpenAI, 3.9s), and the error path also relays (a
-     mission-internal 500 flows back verbatim). Gateway forwards + streams; mission outcome is orthogonal.
-   - **Deferred to their tasks:** per-handle path prefix `/m/{handle}` selecting the mission (task 5); auth
-     middleware (task 4); metering/debit off the wire tail (task 6). The relay itself stays dumb.
-4. **Auth middleware (on `ForgeAPI`).** Validate the platform key (42.5, via `ForgeMission.Billing`) on every
-   `/v1/*` request → attach `(userId, balance)`; 401 on bad/revoked key.
-   - **✅ DONE (2026-07-19, commit `da977ff`).** [`PlatformKeyAuthFilter`](../../src/ForgeMission.Api/PlatformKeyAuth.cs)
-     resolves the Bearer token via the shared `authbilling_db` resolver, stashes `PlatformKeyContext`
-     on `HttpContext.Items` for tasks 5/6 to read, 401 on missing/invalid/revoked. `ApiJsonContext`
-     added for the gateway's own AOT-clean JSON responses. 4 unit tests pass
-     ([`PlatformKeyAuthFilterTests`](../../src/ForgeMission.Rooms.Tests/Api/PlatformKeyAuthFilterTests.cs)).
-     Wired onto `/v1/{**rest}` via `.AddEndpointFilter<PlatformKeyAuthFilter>()` in `Program.cs`.
+| # | Task | Status | Detail |
+|---|---|---|---|
+| 1 | `ForgeMission.Billing` lib (foundation) | ✅ DONE (2026-07-18) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-1--forgemissionbilling-lib-foundation) |
+| 2 | `authbilling_db` split (foundation) | ✅ DONE + LIVE (2026-07-19) — code, DB, KV secret, tables all confirmed live | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-2--authbilling_db-split-foundation) |
+| 3 | `ForgeMission.Api` service (foundation, gateway tier) | ✅ FOUNDATION DONE (2026-07-18) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-3--forgemissionapi-service-foundation--the-api-gateway-tier) |
+| 4 | Auth middleware on `ForgeAPI` | ✅ DONE (2026-07-19, commit `da977ff`) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-4--auth-middleware-on-forgeapi) |
+| 5a | API A, mission invocation | ⚠️ **BLOCKED — 3 open design gaps**, not build-ready | below |
+| 5b | API B, chat-wire adapter | Sequenced after 5a | below |
+| 6 | Billing wrap + spend-abuse trigger ladder | Design decided; build with 5a | below |
+| 7 | Shared enrichment cache | Design decided; 5b-only | below |
+| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | Not started | below |
+| 9 | Deploy + verify the headline demo | Not started (== phase done-when) | below |
+| 10 | `forge codex @websearch` | Blocked on 42.7 | below |
+
+5a is next per `docs/plan.md`. Tasks 1–3 are the foundation the re-architecture added; 4–5 are auth +
+routing; 6+ are billing, cache, CLI, and deploy.
+
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
-   - **5a — API A, mission invocation (build first).** Implement `ExecuteMission` / `SearchMissions` /
-     `GetAccount` / `GetRun` as message endpoints on `ForgeAPI`, with the service signature
-     `Execute(ExecuteMission, Principal)` (M5). Resolve `msg.Mission` → catalog entry → the runner's
-     existing `POST /run/stream`; server sets `missionRef` + `policy` (M9). Map the runner's
-     `RunStreamEvent` sequence to `MissionRunEvent` and the terminal `ExecuteMissionResponse`. Lifecycle
-     (`deprecated` warning / `retired` refusal, no debit) per the table above. **The old
-     header-vs-rewrite-`model` problem does not arise** — `RunRequest.MissionRef` is already a field.
+   - **5a — API A, mission invocation.** ⚠️ **NOT build-ready — design gaps still open (found
+     2026-07-19, re-reading the "decided" design surfaced these; don't start implementation until
+     they're closed):**
+     1. `GetRunResponse` / `GetAccountResponse` — **PROPOSED shapes added below** (2026-07-19, in "The
+        messages"), not yet reviewed/decided. Confirm or revise before building against them.
+     2. `MissionSource // NEW — see gap note below` points at a gap note that does not exist in
+        this doc — lost or never written. Needs Ameer, not inference.
+     3. `MissionSummary.Lifecycle` / `SupersededBy` / `SunsetAt`, and the `deprecated`/`retired`
+        lifecycle handling referenced below, are **cut from scope** (decided 2026-07-19 — no second
+        consumer exists yet to protect from a breaking mission change; revisit when one does). The
+        DTO and this task description both still reference it and need updating together.
+
+     Once those are closed, implement `ExecuteMission` / `SearchMissions` / `GetAccount` / `GetRun` as
+     message endpoints on `ForgeAPI`, with the service signature `Execute(ExecuteMission, Principal)`
+     (M5). Resolve `msg.Mission` → catalog entry → the runner's existing `POST /run/stream`; server
+     sets `missionRef` + `policy` (M9). Map the runner's `RunStreamEvent` sequence to `MissionRunEvent`
+     and the terminal `ExecuteMissionResponse`. **The old header-vs-rewrite-`model` problem does not
+     arise** — `RunRequest.MissionRef` is already a field.
    - **5b — API B, chat-wire adapter.** `/m/{handle}/v1/*` → the runner's `/v1` door. Needs (i) a
      mission-selection mechanism for the spec-bound wire (the `model` field carries the client's real model
      id, not a handle) and (ii) an **aux-call policy** — the wire capture shows Claude Code firing
@@ -546,21 +533,8 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
 The re-architecture adds infra, sequenced with the tasks above. All in the layered Bicep (`dev/*`); redeploy
 the relevant layer (see [deploy.md](../design/deploy.md)).
 
-- [x] **`authbilling_db`** — ✅ **deployed and verified live (2026-07-19)**: `authBillingDb`, a second
-      `flexibleServers/databases` child on `psql-forge-dev` (same instance → no new server cost, no new
-      firewall/VNet rules). Confirmed live via direct `psql` connection through the operator-IP firewall
-      rule (`make 300-data-operator-ip` in `forge-infra`). *(Task 2.)*
-- [x] **KV secret** — ✅ **deployed and verified live (2026-07-19)**: `ConnectionStrings-AuthBillingConnection`
-      (same host/creds as rooms, `Database=authbilling_db`), a dedicated secret so it can rotate/relocate
-      independently. Surfaces as `ConnectionStrings:AuthBillingConnection`. **Wired into ForgeUI's `500-app`
-      env** (`ConnectionStrings__AuthBillingConnection` → `connection-authbilling` secret ref, applied via
-      `forge-infra`'s `dev/500-app/main.bicep`) — no longer derived from `WriteConnection`. ForgeAPI gets the
-      same wiring once `ca-forge-api-dev` is authored (below). *(Task 2.)*
-- [x] **Table bootstrap** — ✅ **verified live (2026-07-19)**: `AuthBillingSchema.EnsureCreatedAsync`
-      (idempotent `CREATE TABLE IF NOT EXISTS` at host startup) ran on `forge-ui:0.6.0`'s first boot.
-      Confirmed via direct `psql` against `authbilling_db`: `platform_keys` and `ledger_entries` both
-      exist, owned by `forge_admin`. Full loop: [Deploy Runbook](../design/deploy.md) TL;DR (tag → CI
-      build → `make 500-app-deploy-image`) → confirmed with `\dt` after. *(Task 2, DONE.)*
+- [x] **`authbilling_db`, KV secret, table bootstrap** — ✅ deployed and verified live (2026-07-19). Full
+      evidence in the [completed doc, Task 2](phase-42.6-hosted-endpoint-ttfa_completed.md#task-2--authbilling_db-split-foundation).
 - [ ] **`ca-forge-api-dev` container app** — new tier-1 ACA app for `ForgeAPI`: **external** ingress
       (the runner stays internal), network access to `psql-forge-dev` and to the internal runner.
       **Hostname DECIDED 2026-07-18 (Ameer): a dedicated subdomain `api.forge.katasec.com`**, not a
@@ -575,53 +549,20 @@ the relevant layer (see [deploy.md](../design/deploy.md)).
       rebind `SniEnabled`. (Same out-of-band cert dance as `500-app`; see its README.) *(Task 3 / 9.)*
 - [~] **Edge per-IP rate limit** — **DEFERRED 2026-07-18 (not a launch gate, not implemented).** No CDN/WAF
       tier exists today (`forge.katasec.com` → `ca-forge-ui-dev` directly), so this is not config-only.
-      See [task 6 rung 2](#tasks-chronological). *(Task 6.)*
+      See task 6, rung 2, below. *(Task 6.)*
 - [ ] **Tier network policy** (north-star direction) — restrict runner ingress to `ForgeAPI`/`ForgeUI` only;
       keep the runner off public ingress. *(Hardening; not a demo blocker.)*
 
 ## Migration-job DB-wipe — DEFUSED (2026-07-18); optional post-dream investigation
 
-**Status: DEFUSED — no live data-drop path remains; NOT a deploy gate.** During the `authbilling_db`
-infra work the dev `forge_rooms` DB was wiped (all rooms/members/messages gone, confirmed by sign-in).
-Both mechanisms are now disabled:
-- the two `DropTable` calls in [`DropLedgerAndPlatformKeysFromRooms`](../../src/ForgeMission.Rooms.Data/Migrations/20260717233324_DropLedgerAndPlatformKeysFromRooms.cs)
-  `Up()` are **commented out** (the cutover to `authbilling_db` never needed them — the stale forge_rooms
-  tables are harmless if left in place);
-- the **auto-run migrate step** in [`forge-infra` `.github/workflows/infra.yml`](https://github.com/katasec/forge-infra/blob/main/.github/workflows/infra.yml)
-  (`500-app` → start `caj-forge-migrate-dev`) is **commented out** — migrations are now run deliberately
-  (you-triggered), not on every deploy.
+**Closed — not a deploy gate, not something to re-investigate unless the symptom recurs.** Full
+incident narrative, root-cause investigation, and the standing lesson:
+[completed doc → "Migration-job DB-wipe"](phase-42.6-hosted-endpoint-ttfa_completed.md#migration-job-db-wipe--defused-2026-07-18-structurally-fixed-2026-07-19).
 
-The remaining items below are **optional cleanup/hardening for post-dream**, no longer a blocker:
-
-> **Structural fix since applied:** the migration job (`caj-forge-migrate-dev`) has been moved out of
-> `dev/500-app` into its own layer, `dev/450-migrate` — an app deploy can no longer touch the job at
-> all, deliberate or not. See [Deploy Runbook](../design/deploy.md). The forensic narrative below is
-> historical (as of 2026-07-18, when the job still lived in `500-app`) — kept for the investigation
-> record, not as a description of the current layer structure.
-
-**What we know (evidence, not yet root-caused):**
-- At the time, the `500-app` deploy defined a pre-deploy migration job `caj-forge-migrate-dev` whose
-  container entrypoint was **`/app/migrate --connection $(CONNECTION_WRITE)`** (image `forge-ui:0.5.0`).
-  We redeployed `500-app` (twice) to recover the site from a credential rotation; the data was gone afterward.
-- **Ruled out:** the password rotation (changes a credential, never drops data); the 42.6
-  `DropLedgerAndPlatformKeysFromRooms` migration (exists only in unbuilt local code, **not** in `0.5.0`).
-- **Prime suspect:** the `/app/migrate` entrypoint itself. If it does `EnsureDeleted()`+`EnsureCreated()`
-  (or drops/recreates schema) instead of an additive EF `Database.Migrate()`, a routine deploy wipes the
-  DB. **A plain `Migrate()` on an already-applied image is a no-op and would NOT wipe** — so if data is
-  gone, the entrypoint is likely destructive (or something else is; that's the investigation).
-
-**Investigation TODO:**
-1. Find `/app/migrate`'s source in this repo (the migrate tool/entrypoint + its Dockerfile `CMD`). Determine
-   exactly what it runs: additive `Migrate()`, or a destructive `EnsureDeleted`/`EnsureCreated`/drop-recreate.
-2. Confirm the wipe mechanism (correlate job-run timestamps with the data loss; read the job execution logs —
-   needs `containerApps` read).
-3. **Guard it:** migrate must be idempotent + non-destructive; never drop a populated table; gate any
-   destructive reset behind an explicit opt-in flag that is **off in stg/prod**; consider a row-count/backup
-   pre-check that aborts if the target DB is non-empty and the plan is destructive.
-
-**Learning (why this matters):** verify a migration entrypoint's semantics **before** running it against any
-populated DB; the `500-app` migration-job step is a recurring risk on every deploy, not a one-off. Dev data
-loss is cheap; the same deploy against prod is not.
+One-line summary: a dev-DB wipe during the `authbilling_db` infra work (2026-07-18) traced to a
+migration job coupled into the `500-app` deploy manifest. Immediate fix disabled the two live drop
+paths; structural fix (2026-07-19) moved the job into its own layer, `dev/450-migrate`, so an app
+deploy can no longer touch it at all.
 
 ## Out of scope
 
