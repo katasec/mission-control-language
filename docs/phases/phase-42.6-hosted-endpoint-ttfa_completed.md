@@ -256,6 +256,90 @@ separately live-tested end-to-end (a second real paid search run wasn't worth th
 buffered path proved the resolve→run→debit chain correct). Worth a quick live check before or during
 task 8 (CLI hosted mode), since `forge exec`'s "stream the answer" UX decision depends on it.
 
+## Task 5a/8/9 — deployed live + `forge exec` headline demo verified (2026-07-19)
+
+Same session as the build above, continued through to a live deploy and the actual one-shot half of
+the phase's done-when demo — not just local verification.
+
+**Infra stood up (`forge-infra`, mostly authored by Codex, deployed/verified this session):**
+- `dev/550-api` — new layer, `ca-forge-api-dev` (external ingress, `RunnerBaseUrl` + KV secret refs
+  for `ConnectionStrings-AuthBillingConnection`/`PlatformKeys-HmacKey`). Bootstrapped on a public
+  placeholder image, then pointed at the real one.
+- `Dockerfile.forgeapi` (mission-control-language) — JIT ASP.NET, same shape as
+  `Dockerfile.runner`/`Dockerfile.forgeui`; simpler than the runner's because `ForgeMission.Api`'s
+  dependency tree (`Billing` → `Runner.Contracts`) pulls no private GitHub Packages, so no
+  `NUGET_AUTH_TOKEN` build secret is needed.
+- Built + pushed `crforgeroomsdev.azurecr.io/forge-api:0.1.0` → `0.1.1`, deployed via
+  `make 550-api-what-if` → `make 550-api` each time (clean, scoped diffs both times — verified
+  before deploying, not assumed).
+- Custom domain `api.forge.katasec.com` bound: TXT `asuid.api.forge` added at the registrar,
+  `az containerapp hostname add/bind --validation-method CNAME` (same pattern as `forge.katasec.com`
+  in `dev/500-app`), managed cert issued in a few minutes (faster than Azure's own "up to 20 min"
+  warning). Recorded `customDomain`/`customDomainCertificateId` in `main.bicepparam` and redeployed
+  so a future `make 550-api` reapplies the binding instead of dropping it.
+- Live-verified at every step via direct `curl`/`az containerapp show`/log inspection, not inferred
+  from deploy success — `/health` 200, `/api/GetAccount`+`/api/SearchMissions` correctly 401 without
+  a key, container env vars confirmed as KV `secretRef`s not plaintext.
+
+**Bug caught while building the CLI client, fixed before it shipped:** `ExecuteMissionResponse`/
+`MissionRunEvent` were serialized via a manual `JsonSerializer.SerializeToUtf8Bytes` call that
+bypassed `ConfigureHttpJsonOptions`' camelCase default — so `ExecuteMission` came back PascalCase
+while `GetAccount`/`SearchMissions`/`GetMission`/`GetRun` came back camelCase (framework-serialized).
+Added `PropertyNamingPolicy = CamelCase` to `MessagesJsonContext`, verified locally (scratch Postgres
++ ForgeAPI, no runner needed — triggered the `MissionNotFound` path to inspect casing without a real
+search call), then rebuilt/pushed/redeployed as `forge-api:0.1.1`.
+
+**`forge exec` (task 8, one-shot half) built and live-verified:** `src/ForgeMission.Cli/ForgeExec.cs`
+— sends `ExecuteMission` to `ForgeAPI` with the stored platform key (`CredentialStore.GetPlatform()`),
+auto-generates `ClientToken` per call (M7), prints the answer + a verified/unverified trust footer
+(no cost/balance inline, per the UX decision — `forge whoami` is the pull). Client-side DTOs are
+local to the CLI, not a shared reference to `ForgeMission.Api` — deliberate: `ForgeAPI` is a non-AOT
+server project and the `forge` CLI is AOT, so the dependency direction must not exist.
+`FORGE_API_ENDPOINT` env var override added alongside the existing `FORGE_PLATFORM_ENDPOINT`
+convention (`PlatformLogin.cs`) — different hosts (issuer vs. gateway), so one var can't cover both.
+
+**Deploy gap found and closed:** `forge exec @websearch` initially failed `MissionNotFound` even
+though the code was correct — the live `ca-forge-runner-dev` was still running an older image built
+*before* `websearch` was added to `BuiltinMissions.All` on this branch, so it had never advertised
+the mission at all. Not a code bug — a missed deploy step (the runner is a separate image/layer
+`dev/500-app` shares with `ca-forge-ui-dev`, never touched by the `550-api` work above). Fixed:
+built + pushed `forge-runner:0.9.0` with the `BuiltinMissions.cs` change, bumped `runnerImage` in
+`dev/500-app/main.bicepparam`, `make 500-app-what-if` → `make 500-app` (clean 2-resource diff:
+runner image bump + a benign `RunnerBaseUrl` env-var expression refresh on `ca-forge-ui-dev`, same
+Bicep template). Confirmed via live boot log: `"loaded 6 mission(s): ChatGPT, Forge, Assistant,
+Claude, Grok, WebSearch."` `ca-forge-api-dev`'s in-memory catalog is built once at boot from a
+runner probe, so it also needed a restart (`az containerapp revision restart`) to pick up the
+now-available mission — confirmed via `SearchMissions` returning the `websearch` entry.
+
+**Second gap found, not yet closed (doesn't block the demo):** the runner log showed
+`"pull failed for 'WebSearch' (... 401 Unauthorized) — falling back to baked-in
+/app/missions/websearch"`. `forge-mission-websearch` defaulted to a **private** GHCR package on
+publish, unlike its 5 public siblings (confirmed: `gh api .../packages/container/forge-mission-grok`
+→ `public`; `.../forge-mission-websearch` → `private`). The mission still loaded (via the image's
+baked-in fallback copy — functionally fine), but the intended anonymous-OCI-pull path is broken for
+this one built-in. Attempted to fix via `gh api --method PATCH .../packages/container/...
+-f visibility=public` — **404, current token scope (`write:packages`) is insufficient** for an
+org-owned package's visibility; needs a manual fix via the GitHub web UI
+(`github.com/orgs/katasec/packages/container/forge-mission-websearch/settings` → Danger Zone →
+Change visibility → Public) or a token with org package-admin rights.
+
+**Headline demo, one-shot half — verified live, real spend:**
+```
+$ forge exec @websearch "what shipped in the Claude API this week?"
+<dated, source-attributed answer citing July 2026 Claude API release notes>
+✓ verified
+```
+Ledger debited for real: `4,993,713 → 4,981,843 µ$` on the signed-in user's actual account (the
+`~/.forge` cached platform key from an earlier `forge login` turned out to still be valid — an
+earlier claim in this session that it was "stale" was wrong, based on one 401 that was actually a
+transient blip right after a `550-api` redeploy, not a genuinely invalid key; corrected once
+re-tested). Full test suite still green after all changes: 338 passed, 0 failed.
+
+**What's still not done for the *full* phase done-when** (both verbs required, not either/or):
+task 5b (API B chat-wire adapter — the aux-call classifier problem, not started), task 7 (shared
+enrichment cache, needed for 5b's multi-replica correctness), and the `forge claude @handle`/
+`forge missions` halves of task 8.
+
 ## What the message-based redesign (2026-07-18) supersedes
 
 - **The "mission-selection mechanism" decision is void.** The header-vs-rewrite-`model` problem was

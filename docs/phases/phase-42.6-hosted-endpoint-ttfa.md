@@ -549,12 +549,12 @@ table is the lookup; don't load the companion file unless you need the *how*, no
 | 2 | `authbilling_db` split (foundation) | ✅ DONE + LIVE (2026-07-19) — code, DB, KV secret, tables all confirmed live | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-2--authbilling_db-split-foundation) |
 | 3 | `ForgeMission.Api` service (foundation, gateway tier) | ✅ FOUNDATION DONE (2026-07-18) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-3--forgemissionapi-service-foundation--the-api-gateway-tier) |
 | 4 | Auth middleware on `ForgeAPI` | ✅ DONE (2026-07-19, commit `da977ff`) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-4--auth-middleware-on-forgeapi) |
-| 5a | API A, mission invocation | ✅ **BUILT + LOCALLY VERIFIED LIVE (2026-07-19)** — `ExecuteMission`/`SearchMissions`/`GetMission`/`GetAccount`/`GetRun` implemented on `ForgeAPI`, `websearch` published to ghcr.io/katasec, 12 new tests pass (338 total, 0 fail), full local smoke test round-tripped a real `@websearch` run with a correct ledger debit. Not yet deployed to Azure (task 9). | below |
-| 5b | API B, chat-wire adapter | Sequenced after 5a | below |
-| 6 | Billing wrap + spend-abuse trigger ladder | Design decided; build with 5a | below |
-| 7 | Shared enrichment cache | Design decided; 5b-only | below |
-| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | Not started | below |
-| 9 | Deploy + verify the headline demo | Not started (== phase done-when) | below |
+| 5a | API A, mission invocation | ✅ **DEPLOYED + LIVE-VERIFIED (2026-07-19)** — `ExecuteMission`/`SearchMissions`/`GetMission`/`GetAccount`/`GetRun` on `ForgeAPI`, live at `api.forge.katasec.com` (`ca-forge-api-dev`, custom domain + managed cert bound). `websearch` published to ghcr.io/katasec (⚠ defaulted to a **private** GHCR package, unlike its 5 public siblings — needs a manual visibility flip, see below) and wired into the live runner (`forge-runner:0.9.0`). 338 tests pass. | below |
+| 5b | API B, chat-wire adapter | Sequenced after 5a — not started | below |
+| 6 | Billing wrap + spend-abuse trigger ladder | Rung 1 (balance-check + debit) live via 5a; rungs 2–4 still deferred by design | below |
+| 7 | Shared enrichment cache | Design decided; 5b-only, not started | below |
+| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | **`forge exec` half DONE + live-verified (2026-07-19)** — `forge claude @handle` hosted mode and `forge missions` not started | below |
+| 9 | Deploy + verify the headline demo | **One-shot half DONE (2026-07-19)** — `forge exec @websearch "what shipped in the Claude API this week?"` verified live: grounded, dated, source-cited answer, correct ledger debit. Agentic half (`forge claude @websearch`) blocked on 5b. | below |
 | 10 | `forge codex @websearch` | Blocked on 42.7 | below |
 
 5a is next per `docs/plan.md`. Tasks 1–3 are the foundation the re-architecture added; 4–5 are auth +
