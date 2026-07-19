@@ -239,6 +239,28 @@ language features; major for breaking `.mcl` syntax changes.
 
 ---
 
+## Deploying the hosted app (forge-infra) — separate from the release workflow above
+
+The CLI binary release above (GitHub Releases) is **not** how the hosted app (ForgeUI, ForgeAPI,
+the runner) reaches Azure. That is a **separate repo, `katasec/forge-infra`** (layered Bicep +
+Makefile, checked out at `~/progs/forge-infra`), and every deploy goes through it.
+
+- **Only use the `make` targets** (`100-base`, `150-ci`, `300-data`, `400-appenv`, `450-migrate`,
+  `500-app`, `500-app-bump-image`, `500-app-deploy-image`) — never raw `az deployment` commands or
+  a hand-rolled script. Layer order and full command reference are
+  `forge-infra/README.md`'s job, not duplicated here.
+- **Run `make <layer>-what-if` before any secret-bearing or app-layer deploy** (`300-data`,
+  `500-app`) — no exceptions.
+- **Deploying a migration job definition and starting a migration are two separate deliberate
+  steps** — `make 450-migrate` only updates the job definition, it never runs it. This split is
+  the structural fix for a prior dev-DB-wipe incident (see
+  [phase-42.6 completed doc](docs/phases/phase-42.6-hosted-endpoint-ttfa_completed.md#migration-job-db-wipe--defused-2026-07-18-structurally-fixed-2026-07-19))
+  — do not re-couple them.
+- Topology, gotchas, and the full command reference: [Deploy Runbook](docs/design/deploy.md),
+  which itself defers to `forge-infra/README.md` as the source of truth for commands.
+
+---
+
 ## Supported providers
 
 `ProviderClientBuilder` in `src/ForgeMission.Cli/ProviderClientBuilder.cs` maps the `provider`
