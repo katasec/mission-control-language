@@ -135,6 +135,60 @@ Ameer field-by-field across every message DTO — 5a moved from blocked to build
    plainly instead of describing behavior that isn't built. `SearchMissions.IncludeDeprecated` (now dead
    with nothing to filter) dropped too.
 
+## Task 5a — pre-build design lock (second pass, found + resolved 2026-07-19)
+
+**Context:** immediately before writing any 5a code, walked every open server-side question in the
+wire design with Ameer — six gaps where the DTOs were locked but *how the server resolves them* was
+not. All six closed in one session; decisions + rationale below so a fresh agent never re-asks them.
+Concrete interfaces landed in the active spoke's ["Mission
+resolution"](phase-42.6-hosted-endpoint-ttfa.md#mission-resolution--handlepublisherversion--catalogrun-storage-decided-2026-07-19-pre-build-design-lock)
+section — this is the narrative, that's the reference.
+
+1. **Catalog metadata for `SearchMissions`/`GetMission` (Publisher/Version/Verified)** — the runner's
+   `GET /missions` only returns `{MissionRef, Description}`; `ForgeUI.AgentRegistry` has the rest but
+   is in-process and unreachable from `ForgeAPI`. **Decided:** a small static catalog behind a new
+   `IMissionCatalog` interface, in-memory today, DB-swappable later — same repository-seam shape as
+   `ILedgerStore`/`IPlatformKeyStore`. Not a shared lib with `ForgeUI` (more scope than needed today);
+   not skipped (the endpoints are in this task's declared scope).
+2. **`@websearch` doesn't exist in the runner's catalog** — not in `BuiltinMissions.All`, never
+   published to `ghcr.io/katasec`, despite being the headline demo's handle throughout this doc.
+   `missions/websearch/mission.mcl` already exists and is near-identical to the published "Grok"
+   mission. **Decided:** publish it for real — add to `BuiltinMissions.All`, push to `ghcr.io/katasec`
+   by digest, exactly like the other 5 built-ins. This is a build step of 5a, not deferred.
+3. **`GetRun` (M6) has no storage** — `authbilling_db` has only `platform_keys` + `ledger_entries`,
+   nothing for runs. **Decided:** `IRunStore` interface (opaque `runId` → serializable record,
+   key-value shaped rather than SQL-shaped on purpose), in-memory/short-TTL today. Ameer's explicit
+   long-term target is **blob storage**, not Postgres — the interface is generic enough to swap to
+   disk, DB, or blob without a redesign.
+4. **`ClientToken` idempotency (M7) has no schema support** — `LedgerEntry`/`ledger_entries` has no
+   idempotency-key column at all. **Decided:** add a nullable `ClientToken` column + unique index via
+   the existing idempotent `AuthBillingSchema.EnsureCreatedAsync` bootstrap (no EF migration —
+   consistent with how task 2 already bootstraps this DB); `BillingService.SettleRunAsync` checks for
+   an existing entry with the same token before appending a new debit.
+5. **`GetAccountResponse.Email` has no data source** — email lives only in `rooms_db`; task 2's own
+   rule forbids `ForgeAPI`/`authbilling_db` reaching across (`userId` is the only cross-context link,
+   no cross-DB FK). **Decided:** `null` for now (`forge whoami` shows `MemberId`); a future internal
+   service call (`ForgeUI` exposing an internal member-lookup endpoint) is the documented path to a
+   real email later — explicitly not a cross-DB query, which would violate the bounded-context rule.
+6. **`Mission` field parsing** — DTO examples showed publisher/version-qualified handles
+   (`"katasec/websearch"`, `"websearch@2"`) with no parser, no version axis, and no publisher registry
+   anywhere in the code. Resolved in three parts, worked through with Ameer:
+   - **Case-insensitivity:** handles are lowercased on parse.
+   - **Version:** a *separate* `MissionVersion` field was added to `ExecuteMission` and `GetMission`
+     (not a `@version` suffix baked into the `Mission` string) — `null` means latest/currently-pinned.
+     Deliberately named `MissionVersion`, not `Version`, because `Version` already means the *protocol*
+     version (M3) on the same DTO; conflating the two was caught and avoided before it shipped.
+   - **Publisher:** Docker-style default-namespace resolution — `MissionHandle.Parse` splits on `/`;
+     an absent publisher defaults to `"forge"` (the brand identity, deliberately **not** `"katasec"`,
+     which is the OCI *registry* namespace — a distribution detail this session chose to keep separate
+     from the publisher concept, avoiding conflating "where it's hosted" with "who published it").
+     Implicit and explicit-default resolve through **one lookup path**, not a fork — proven by a test
+     asserting `Resolve("websearch") == Resolve("forge/websearch")`. An unrecognized publisher fails
+     closed (`MissionNotFound`); it never falls through to a name-only match. This makes the
+     publisher-prefix feature (multiple real publishers) a Bezos two-way door: `MissionHandle`/
+     `IMissionCatalog` never change, only `StaticMissionCatalog`'s single hardcoded entry list gets
+     replaced by a real registry later.
+
 ## What the message-based redesign (2026-07-18) supersedes
 
 - **The "mission-selection mechanism" decision is void.** The header-vs-rewrite-`model` problem was
