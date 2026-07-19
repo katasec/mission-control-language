@@ -18,13 +18,21 @@
 > (one image), [42.5](phase-42.5-platform-identity-keys.md) (platform keys) · **Consumes:** Phase 39
 > metering/billing (live), Phase 39.4 OCI catalog (live) · **AOT rules:** [CLAUDE.md](../../CLAUDE.md).
 >
-> **Done when (== the phase's headline demo):**
+> **Done when (== the phase's headline demo). BOTH verbs must work (decided 2026-07-18, Ameer)** — this is
+> not an either/or, so **5a and 5b are both in scope**:
 > ```
+> # one-shot (API A · task 5a) — the top-of-funnel awesome moment
+> forge login && forge exec @websearch "what shipped in the Claude API this week?"
+>   → grounded, source-cited answer  ·  debited N µ$ against free credits
+>
+> # agentic (API B · task 5b) — Claude Code with the mission as its brain
 > forge login && forge claude @websearch
 >   > "what shipped in the Claude API this week?"
 >   → grounded, source-cited answer  ·  debited N µ$ against free credits
 > ```
-> against `forge.katasec.com`, with **no Anthropic/OpenAI account** on the user's side.
+> against the hosted endpoint (`api.forge.katasec.com` — see the subdomain decision in the
+> [infra checklist](#infra-checklist-katasecforge-infra)), with **no Anthropic/OpenAI account** on the
+> user's side.
 
 ## Context an implementer needs (verified 2026-07-15)
 
@@ -120,6 +128,12 @@ id the client legitimately sends. The CLI keeps exposing the friendly `@websearc
 (wire capture, 2026-07-16):** the real `claude` CLI sends `model: "claude-sonnet-4-6"` on every request —
 model-based routing would have asked us for a mission named after the client's model.
 
+> ⚠️ **Superseded for the forge-native API by [API design — message-based](#api-design--message-based-decided-2026-07-18)
+> (2026-07-18).** The paragraph above remains correct **only** for the spec-bound Anthropic wire (API B),
+> whose `/v1/messages` suffix the client mandates. For Forge's own API (API A) the mission handle is a
+> **field in the message, never a route segment** — a mission in a URL is permanent public API surface that
+> can never be retired. See the locked invariants below.
+
 `forge claude @websearch` (42.2, hosted mode) sets `ANTHROPIC_BASE_URL=https://forge.katasec.com/@websearch`
 and the platform key as the token.
 
@@ -168,6 +182,231 @@ Helm-over-OCI).
    answers with live citations — a reasoning trap is weaker, a good naked model gets it too). So on a
    successful `forge login`, **print one suggested command** — a current-events "what shipped in X this
    week?" style prompt — so the awesome moment is the literal next thing the user can paste.
+
+## API design — message-based (DECIDED 2026-07-18)
+
+> **This section is authoritative for Forge's own API and supersedes the URL-shaped routing sketch in
+> [Design](#design).** It was reached by design review with Ameer against ServiceStack's
+> [message-based API design](https://docs.servicestack.net/design-message-based-apis) and
+> [versioning](https://docs.servicestack.net/versioning) guidance.
+
+### The discovery: these are two different APIs, not one
+
+The spoke previously said `forge exec` and `forge claude` ride the "same hosted `/v1` underneath." Wire
+capture disproves the premise. In one real Claude Code run the CLI issued **three different kinds** of
+request to the same endpoint ([Fixtures/anthropic-wire](../../src/ForgeMission.Tests/Fixtures/anthropic-wire/)):
+`main-loop-tools.json` (the real agentic turn), `aux-title-gen.json` ("generate a 3–7 word session title"),
+and `aux-state-check.json` ("classify which of four agent states"). If `@websearch` simply hangs off
+`/m/websearch/v1/messages`, **Claude Code's title-generation call runs the full websearch mission** —
+classify → search → synthesize → judge, ~40–60 s and a real debit — to name a session. That is what 42.3's
+classifier + enrich-once gate exists to prevent.
+
+So:
+
+| | **API A — mission invocation** | **API B — chat wire** |
+|---|---|---|
+| Who owns the shape | **we do** | Anthropic/OpenAI spec (we don't) |
+| Unit of work | 1 call = 1 run | many calls/turn; only *some* should run a mission |
+| Billing | debit per call | debit per **mission run**, not per HTTP call |
+| Handle means | *which mission to run* | *which mission backs this "model"* |
+| Client | `forge exec`, SDKs, MQ later | Claude Code / Codex |
+
+**Framing: one message, two transports.** API B is not a second API — it is a **spec-bound adapter** that
+maps a wire we don't control onto the same underlying operation, with 42.3's classifier deciding whether a
+given call invokes a mission at all. API A below is the contract.
+
+### Why message-based (and not URL-shaped)
+
+A mission handle in the URL welds two axes that change at completely different rates: the **API contract**
+(how you invoke *any* mission — should be near-immutable) and the **mission catalog** (which missions exist
+— the fastest-changing thing here, and after 39.5 it is *users* publishing into it, not us). URL-shaped
+identity makes **every mission ever published permanent public API surface**: a route to document, secure,
+rate-limit, and never GC because someone's script still calls it. We would not even control the
+proliferation.
+
+Message-shaped, `ExecuteMission` is **one operation forever** and the catalog is data flowing through it.
+
+> **An alias can be retired; a contract cannot.** Pretty routes may exist as *non-authoritative sugar*, but
+> the moment a client is told the URL **is** the contract, that mission is load-bearing forever.
+
+**We adopt the ServiceStack *philosophy*, not the dependency.** ServiceStack is not an AOT target and would
+be a large dep; `ForgeMission.Api` stays a slim minimal-API host with hand-written DTOs + STJ source-gen
+(per [CLAUDE.md](../../CLAUDE.md)). `ResponseStatus` below is our own POCO, not `ServiceStack.Interfaces`.
+
+### Locked invariants
+
+| # | Invariant | Why |
+|---|---|---|
+| **M1** | **The message is the contract; routes are non-authoritative aliases.** | A DTO is populatable from route, query, form, or body in any format — the URL is one input channel, not the contract. |
+| **M2** | **Mission identity is data (a field), never a route segment.** | Retiring a mission must never orphan a URL. |
+| **M3** | **No versioned URLs.** Every request DTO carries `int Version`. Evolve **additively**: never change an existing property's type (add a new one and infer from the old), never make new properties mandatory. A genuinely breaking change becomes a **new named message**, not `/v2/`. | Parallel per-version types force parallel implementations — a massive DRY violation. One implementation serves all versions by reading whichever fields the client populated. |
+| **M4** | **Always a coarse-grained Response DTO carrying `ResponseStatus`.** Errors travel **in the message**, not only as HTTP status. | Adding fields later never breaks older clients; and status codes don't exist over a bus. |
+| **M5** | **No transport-derived state in service implementations** — `Execute(ExecuteMission msg, Principal principal)`. | There is no `HttpContext` over a service bus. The task-4 auth filter stays an **HTTP adapter**; it resolves the principal and *passes it in*. |
+| **M6** | **`RunId` — every run is addressable independently of the connection that started it.** | The seam that makes async / `ReplyTo` / polling execution possible. Without it a run exists only as an HTTP response body. |
+| **M7** | **`RequestId` — client-supplied idempotency key; the debit path is idempotent against it.** | Buses are **at-least-once**; redelivery is normal and a run **debits a real ledger**. Cheap now, breaking to retrofit. |
+| **M8** | **Usage + balance are fields in the response message.** HTTP headers are an optional projection. | Headers don't survive a transport change. |
+| **M9** | **The server owns `missionRef` and `policy`; never client-supplied.** | `policy: "trusted"` unlocks `kind: exec` + loose egress — a client-set policy is straight privilege escalation. |
+| **M10** | **Streaming is a sequence of messages.** NDJSON/SSE is a framing detail. | `RunStreamEvent(progress\|heartbeat\|result\|error)` is already exactly this. |
+
+**Long-term intent (Ameer, 2026-07-18):** these invariants exist so the hosted API can later move onto a
+**service bus** as a *different transport over an intact contract*, rather than a rewrite. M5/M6/M7 are the
+three that are cheap today and breaking to retrofit.
+
+### The messages
+
+Naming follows the Amazon/ServiceStack convention — verb-named operation + `XResponse`, so a caller can
+infer the response type without consulting docs. `Get*` = one by key; `Search*` = filtered many.
+
+```csharp
+// ---------- Execute (the core operation) ----------
+public sealed class ExecuteMission                      // → ExecuteMissionResponse
+{
+    public int    Version   { get; set; }               // M3. 0 == pre-versioning client
+    public string RequestId { get; set; }               // M7. client-supplied dedupe key
+    public string Mission   { get; set; }               // "websearch" | "katasec/websearch" | "websearch@2"
+    public string Input     { get; set; }               // primary free-text input (→ runner's Goal)
+    public Dictionary<string,string>? Inputs { get; set; }  // structured mission inputs
+    public bool   Stream    { get; set; }               // M10. a message property, not an Accept header
+}
+
+public sealed class ExecuteMissionResponse
+{
+    public string RunId          { get; set; }          // M6
+    public string Mission        { get; set; }          // RESOLVED handle (echo what actually ran)
+    public string MissionVersion { get; set; }          // resolved version/OCI digest
+    public string Answer         { get; set; }
+    public bool   Verified       { get; set; }
+    public List<MissionSource>    Sources { get; set; }
+    public List<MissionTraceStep> Trace   { get; set; }
+    public MissionUsage Usage           { get; set; }
+    public long         BalanceMicroUsd { get; set; }   // M8
+    public ResponseStatus ResponseStatus { get; set; }  // M4
+}
+
+public sealed class MissionUsage
+{
+    public long   InputTokens    { get; set; }
+    public long   OutputTokens   { get; set; }
+    public double ComputeSeconds { get; set; }
+    public string Model          { get; set; }
+    public long   CostMicroUsd   { get; set; }
+}
+
+public sealed class MissionTraceStep                    // mirrors the engine envelope
+{
+    public string Expert { get; set; } public string Status { get; set; }
+    public string? Text  { get; set; } public string? Reason { get; set; }
+    public int    Attempt { get; set; }
+}
+
+public sealed class MissionSource                       // NEW — see gap note below
+{
+    public string Url { get; set; } public string? Title { get; set; } public string? Provider { get; set; }
+}
+
+// ---------- Streaming form (M10) ----------
+public sealed class MissionRunEvent
+{
+    public string Type  { get; set; }                   // progress | heartbeat | result | error
+    public string RunId { get; set; }
+    public MissionProgress?         Progress { get; set; }
+    public ExecuteMissionResponse?  Result   { get; set; }   // terminal
+    public ResponseStatus?          ResponseStatus { get; set; }
+}
+
+// ---------- Catalog ----------
+public sealed class SearchMissions                      // → SearchMissionsResponse   (`forge missions`)
+{
+    public int Version { get; set; }
+    public string? Query { get; set; } public string? Publisher { get; set; }
+    public bool IncludeDeprecated { get; set; }
+}
+public sealed class SearchMissionsResponse
+{
+    public List<MissionSummary> Results { get; set; }
+    public ResponseStatus ResponseStatus { get; set; }
+}
+public sealed class MissionSummary
+{
+    public string Mission { get; set; } public string Description { get; set; }
+    public string Publisher { get; set; } public string Version { get; set; }
+    public bool   Verified  { get; set; }               // 38.5 identity seal
+    public string Lifecycle { get; set; }               // active | deprecated | retired
+    public string? SupersededBy { get; set; }
+    public DateTimeOffset? SunsetAt { get; set; }
+}
+
+public sealed class GetMission { public int Version; public string Mission; }   // → GetMissionResponse
+
+// ---------- Account / run ----------
+public sealed class GetAccount { public int Version; }  // → GetAccountResponse  (`forge whoami`)
+public sealed class GetRun     { public int Version; public string RunId; }     // → GetRunResponse (M6)
+
+// ---------- Shared ----------
+public sealed class ResponseStatus                      // our POCO, not ServiceStack's
+{
+    public string? ErrorCode { get; set; } public string? Message { get; set; }
+    public Dictionary<string,string>? Meta { get; set; }
+    public List<ResponseWarning>? Warnings { get; set; }
+}
+```
+
+### Mission lifecycle — expressed in the message, not the routing table
+
+Because the handle is data (M2), lifecycle is **catalog state surfaced in the response**:
+
+| State | Behaviour |
+|---|---|
+| `active` | runs; no warning |
+| `deprecated` | **runs normally**, plus a `ResponseStatus.Warnings[]` entry `MissionDeprecated` with `meta.supersededBy` / `meta.sunsetAt` |
+| `retired` | **does not run, is not debited**; `ResponseStatus.ErrorCode = MissionRetired`, `meta.supersededBy` names the replacement |
+| unknown | `MissionNotFound` |
+
+```json
+{ "runId": "run_01H…", "answer": "…", "verified": true,
+  "responseStatus": { "warnings": [{
+      "errorCode": "MissionDeprecated",
+      "message": "@websearch is deprecated; use @research.",
+      "meta": { "supersededBy": "research", "sunsetAt": "2026-12-01" } }]}}
+```
+
+HTTP's `Deprecation`/`Sunset` headers are per-endpoint, weak, and vanish the moment the operation rides a
+bus. In-message survives the transport and is actionable programmatically.
+
+**Error codes (transport-independent, authoritative):** `MissionNotFound` · `MissionRetired` ·
+`InsufficientCredit` · `Unauthenticated` · `InvalidInput` · `PolicyViolation` · `RunFailed`.
+The HTTP adapter *projects* these to 404 / 410 / 402 / 401 / 400 / 403 / 500 as a convenience — the
+**message is authoritative**.
+
+### Transport mapping (today: HTTP)
+
+```
+POST /api/ExecuteMission     ← the contract (message name is the endpoint)
+POST /api/SearchMissions
+POST /api/GetAccount
+POST /m/{mission}/run        ← OPTIONAL alias, non-authoritative sugar (M1). May 410 freely.
+```
+
+API B keeps its spec-mandated shape (`{base}/v1/messages`, where the client appends `/v1/...`), and is
+implemented as an adapter over the same service — **not** a parallel implementation.
+
+### Known gap: sources are not in the runner contract yet
+
+[`RunResponse`](../../src/ForgeMission.Runner.Contracts/) carries `AgentText, Verified, StepCount,
+RetryCount, Trace, Usage` — **no structured citations**. Today "source-cited" means whatever URLs the model
+wrote inline in prose. `MissionSource[]` above is the target shape; plumbing it from Scout's `SourceRef`
+through the runner contract is required for a real trust footer (`--sources`) and is **additive** (M4), so
+it can land after the demo without breaking clients.
+
+### What this supersedes
+
+- **The "mission-selection mechanism" decision is void.** The header-vs-rewrite-`model` problem was
+  manufactured by putting the handle in a URL; `RunRequest.MissionRef` was always a field. The runner
+  needed no change — only the gateway framing did.
+- **Task 5 splits** into 5a (mission invocation, API A) and 5b (chat-wire adapter, API B + aux-call policy).
+- **Task 6's metering source is simpler on 5a**: the terminal `result` message already carries full-mission
+  `RunUsage`. The HTTP-trailer / `forge-usage`-SSE invention is only needed for 5b.
+- **Task 7 (shared enrichment cache) is 5b-only** — one-shot invocation has no tool loop or re-entrancy.
 
 ## Tasks (chronological)
 
@@ -234,9 +473,20 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
      middleware (task 4); metering/debit off the wire tail (task 6). The relay itself stays dumb.
 4. **Auth middleware (on `ForgeAPI`).** Validate the platform key (42.5, via `ForgeMission.Billing`) on every
    `/v1/*` request → attach `(userId, balance)`; 401 on bad/revoked key.
-5. **Routing (on `ForgeAPI`).** Map handle (path segment `/@handle`, recommended) → OCI catalog mission the
-   runner loads → reverse-proxy the `/v1` turn to the runner's door with that mission selected; 404 on
-   unknown handle.
+5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
+   The single "map handle → mission" task was written assuming one API; it is two.
+   - **5a — API A, mission invocation (build first).** Implement `ExecuteMission` / `SearchMissions` /
+     `GetAccount` / `GetRun` as message endpoints on `ForgeAPI`, with the service signature
+     `Execute(ExecuteMission, Principal)` (M5). Resolve `msg.Mission` → catalog entry → the runner's
+     existing `POST /run/stream`; server sets `missionRef` + `policy` (M9). Map the runner's
+     `RunStreamEvent` sequence to `MissionRunEvent` and the terminal `ExecuteMissionResponse`. Lifecycle
+     (`deprecated` warning / `retired` refusal, no debit) per the table above. **The old
+     header-vs-rewrite-`model` problem does not arise** — `RunRequest.MissionRef` is already a field.
+   - **5b — API B, chat-wire adapter.** `/m/{handle}/v1/*` → the runner's `/v1` door. Needs (i) a
+     mission-selection mechanism for the spec-bound wire (the `model` field carries the client's real model
+     id, not a handle) and (ii) an **aux-call policy** — the wire capture shows Claude Code firing
+     title-gen and agent-state-check calls at the same endpoint, which must NOT each run a full mission.
+     Depends on 42.3's classifier. **Sequenced after 5a.**
 6. **Wrap the run in billing + the spend-abuse trigger ladder (DECIDED 2026-07-16).** Reuse
    `ForgeMission.Billing` + `UsageTrackingChatClient` as-is. **Metering source (2026-07-18):** debit from the
    runner's `UsageTrackingChatClient`, which sees the **whole** mission (classify + search + synth + judge) —
@@ -248,9 +498,15 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
    (trusted population, stop-at-zero freeze bounds accidents to cents). The ladder — each rung built only
    when its trigger fires:
    1. **Freeze at zero** — already live ([RoomAgentInvoker](../../src/ForgeUI/Services/RoomAgentInvoker.cs)).
-   2. **Edge rate limit — LAUNCH REQUIREMENT for this spoke** (strangers + public endpoint = new threat
-      model): Cloudflare per-IP rule, pure config, no code. Set generously (e.g. 60/min/IP) — 42.3 tool
-      loops legitimately burst N+1 calls per turn.
+   2. **Edge rate limit — DEFERRED (decided 2026-07-18, Ameer). No longer a launch gate; not implemented
+      for this spoke.** Consistent with the ladder's own rule (build a rung when its trigger fires) — at
+      F&F scale, with a trusted population and stop-at-zero freeze, the trigger has not fired.
+      ⚠️ **Two corrections to the original premise:** (a) there is **no Cloudflare (or Front Door) in the
+      stack** — `forge.katasec.com` is bound *directly* to `ca-forge-ui-dev` via an ACA managed cert, so
+      this was never "pure config, no code"; it would require introducing an edge tier first. (b) ACA has
+      no built-in per-IP limiting, so the realistic options if/when the trigger fires are: an app-level
+      per-IP limiter in `ForgeAPI`, Azure Front Door + WAF, or adding Cloudflare. Set generously when
+      built (e.g. 60/min/IP) — 42.3 tool loops legitimately burst N+1 calls per turn.
    3. **In-app caps (pre-recorded, build on evidence of expensive-single-run abuse — rate limits see
       request counts, not dollars):** (a) per-run cost cap — `UsageTrackingChatClient` already accumulates
       cost mid-run; abort past a configured ceiling (~50,000µ$ ≈ 200× an observed `@guard` run); (b)
@@ -269,6 +525,10 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
    top-of-funnel awesome moment) and **`forge claude @handle`** (agentic) both resolve `@handle` → the hosted
    `ForgeAPI` URL + platform key. **`forge missions`** → reads the curated catalog index (not the raw OCI
    registry — see [UX decision 3](#ux-decisions-2026-07-17)).
+   - **Message-based (2026-07-18):** the CLI sends `ExecuteMission` / `SearchMissions` / `GetAccount`
+     messages — `@handle` is the `Mission` **field**, not a URL segment (M1/M2). It must set `RequestId`
+     (M7) and surface `ResponseStatus` warnings, so a `MissionDeprecated` notice reaches the user and a
+     retried invocation never double-debits. `forge whoami` = `GetAccount`.
 9. **Deploy + verify the headline demo** (details in the checklist below). `forge login && forge exec
    @websearch "<past-cutoff question>"` → cited answer, ledger debited; and `forge claude @websearch` agentic.
    Verify the **anti-hallucination guarantee**: a stale-fact question triggers the classify→search path (not
@@ -280,21 +540,38 @@ original auth + routing; 6+ are billing, cache, CLI, and deploy.
 The re-architecture adds infra, sequenced with the tasks above. All in the layered Bicep (`dev/*`); redeploy
 the relevant layer (see [deploy.md](../design/deploy.md)).
 
-- [x] **`authbilling_db`** — ✅ authored in Bicep (`forge-infra` `5e1cb2a`): `authBillingDb`, a second
+- [x] **`authbilling_db`** — ✅ **deployed and verified live (2026-07-19)**: `authBillingDb`, a second
       `flexibleServers/databases` child on `psql-forge-dev` (same instance → no new server cost, no new
-      firewall/VNet rules). **⚠️ not yet deployed** — `dev/300-data` is a held, secret-bearing layer;
-      redeploy it (admin password re-supplied) to create the DB in Azure. *(Task 2.)*
-- [x] **KV secret** — ✅ authored (`forge-infra` `5e1cb2a`): `ConnectionStrings-AuthBillingConnection`
+      firewall/VNet rules). Confirmed live via direct `psql` connection through the operator-IP firewall
+      rule (`make 300-data-operator-ip` in `forge-infra`). *(Task 2.)*
+- [x] **KV secret** — ✅ **deployed and verified live (2026-07-19)**: `ConnectionStrings-AuthBillingConnection`
       (same host/creds as rooms, `Database=authbilling_db`), a dedicated secret so it can rotate/relocate
-      independently. Surfaces as `ConnectionStrings:AuthBillingConnection`. **env wiring → ForgeAPI** happens
-      when `ca-forge-api-dev` is authored (below); ForgeUI derives it from `WriteConnection` meanwhile.
-      Applied on the same `dev/300-data` redeploy. *(Task 2.)*
-- [x] **Table bootstrap** — ✅ handled in-app: `AuthBillingSchema.EnsureCreatedAsync` runs idempotent
-      `CREATE TABLE IF NOT EXISTS` at host startup (ForgeUI today, ForgeAPI later). Infra only needs to
-      create the **database** (item 1); tables self-provision. *(Task 2.)*
-- [ ] **`ca-forge-api-dev` container app** — new tier-1 ACA app for `ForgeAPI`: ingress, custom domain/HTTPS
-      on `forge.katasec.com`, network access to `psql-forge-dev` and to the internal runner. *(Task 3 / 9.)*
-- [ ] **Cloudflare per-IP rate limit** — pure config, **launch gate** (public endpoint + strangers). *(Task 6.)*
+      independently. Surfaces as `ConnectionStrings:AuthBillingConnection`. **Wired into ForgeUI's `500-app`
+      env** (`ConnectionStrings__AuthBillingConnection` → `connection-authbilling` secret ref, applied via
+      `forge-infra`'s `dev/500-app/main.bicep`) — no longer derived from `WriteConnection`. ForgeAPI gets the
+      same wiring once `ca-forge-api-dev` is authored (below). *(Task 2.)*
+- [ ] **Table bootstrap** — code is in place (`AuthBillingSchema.EnsureCreatedAsync`, idempotent
+      `CREATE TABLE IF NOT EXISTS` at host startup) but **not yet triggered live**. Confirmed via direct
+      `psql` against `authbilling_db` (2026-07-19): **zero tables exist**. The `500-app` env wiring is
+      applied, but the deployed image (`forge-ui:0.5.0`) predates commit `6546151` (the `authbilling_db`
+      split) and never calls this path. Unblocks once a ForgeUI image built from `6546151`+ is tagged,
+      pushed, and deployed via `make 500-app-deploy-image VERSION=<x>` — re-verify with `\dt` after. *(Task 2,
+      remaining step.)*
+- [ ] **`ca-forge-api-dev` container app** — new tier-1 ACA app for `ForgeAPI`: **external** ingress
+      (the runner stays internal), network access to `psql-forge-dev` and to the internal runner.
+      **Hostname DECIDED 2026-07-18 (Ameer): a dedicated subdomain `api.forge.katasec.com`**, not a
+      path-split of `forge.katasec.com` — that host is bound *directly* to `ca-forge-ui-dev`, and splitting
+      it would require introducing a front proxy (Front Door/Cloudflare) purely for routing. A subdomain
+      keeps the tier separation clean and costs one CNAME.
+      **DNS (registrar):** `CNAME api → ca-forge-api-dev.niceground-df7fb252.uaenorth.azurecontainerapps.io`
+      — every app in `cae-forge-dev` shares that suffix (verify against `ca-forge-ui-dev`'s live FQDN).
+      The CNAME can be created before the app exists. **Then, after the app is created:** read
+      `az containerapp show -n ca-forge-api-dev -g rg-forge-dev --query properties.customDomainVerificationId`
+      → add `TXT asuid.api = <that id>` → bind the hostname (TLS-disabled) → create the managed cert →
+      rebind `SniEnabled`. (Same out-of-band cert dance as `500-app`; see its README.) *(Task 3 / 9.)*
+- [~] **Edge per-IP rate limit** — **DEFERRED 2026-07-18 (not a launch gate, not implemented).** No CDN/WAF
+      tier exists today (`forge.katasec.com` → `ca-forge-ui-dev` directly), so this is not config-only.
+      See [task 6 rung 2](#tasks-chronological). *(Task 6.)*
 - [ ] **Tier network policy** (north-star direction) — restrict runner ingress to `ForgeAPI`/`ForgeUI` only;
       keep the runner off public ingress. *(Hardening; not a demo blocker.)*
 

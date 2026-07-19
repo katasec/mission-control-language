@@ -26,6 +26,14 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
     <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
+    <!-- ForgeAPI gateway (42.6) — its edge auth filter is unit-tested here alongside the other
+         platform-key tests (no DB; a fake resolver). -->
+    <ProjectReference Include="..\ForgeMission.Api\ForgeMission.Api.csproj" />
+  </ItemGroup>
+
+  <!-- The auth-filter test constructs a DefaultHttpContext / EndpointFilterInvocationContext. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>
