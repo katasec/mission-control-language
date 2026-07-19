@@ -1,19 +1,23 @@
+using System.Net.Http.Json;
 using ForgeMission.Api;
 using ForgeMission.Billing;
+using ForgeMission.Runner.Contracts;
 
 // ForgeAPI — the tier-1 API-gateway edge for the hosted /v1 endpoint (Phase 42.6). Terminates the
-// public wire on forge.katasec.com, authenticates the platform key, and (as tasks land) routes a
-// handle → mission, meters, and reverse-proxies to the internal runner. The runner never faces the
-// internet and holds no DB creds; this gateway is its only ingress.
-//
-// Slice so far: health + a streaming /v1 pass-through (task 3) behind platform-key auth (task 4).
-// Per-handle routing (task 5) and billing (task 6) wrap the relay next.
+// public wire on forge.katasec.com, authenticates the platform key, and routes a handle → mission
+// (task 5a, API A — message-based ExecuteMission/SearchMissions/GetMission/GetAccount/GetRun),
+// meters, and reverse-proxies the spec-bound chat wire (API B, 5b) to the internal runner. The
+// runner never faces the internet and holds no DB creds; this gateway is its only ingress.
 var builder = WebApplication.CreateSlimBuilder(args);
 
-// Source-gen JSON for the gateway's own responses (AOT-clean — relayed /v1 bodies pass through as
-// opaque byte streams and are never deserialized here).
+// Source-gen JSON for the gateway's own responses (AOT-clean). Relayed /v1 bodies (API B) still pass
+// through as opaque byte streams and are never deserialized here; API A's messages (task 5a) are the
+// only bodies this host actually (de)serializes.
 builder.Services.ConfigureHttpJsonOptions(o =>
-    o.SerializerOptions.TypeInfoResolverChain.Insert(0, ApiJsonContext.Default));
+{
+    o.SerializerOptions.TypeInfoResolverChain.Insert(0, ApiJsonContext.Default);
+    o.SerializerOptions.TypeInfoResolverChain.Insert(1, MessagesJsonContext.Default);
+});
 
 // The internal runner's base address — same convention ForgeUI uses. In cloud this is the runner's
 // private ACA ingress; locally, the `dotnet run` runner port.
@@ -38,7 +42,27 @@ builder.Services.AddPlatformKeyResolver(new PlatformKeyResolverOptions
     HmacKey = builder.Configuration["PlatformKeys:HmacKey"] ?? "dev-platform-key-hmac-do-not-use-in-prod",
 });
 
+// The built-in catalog (task 5a) — a hardcoded entry list filtered against the runner's live
+// GET /missions at boot, same precedent AgentRegistry (ForgeUI) already sets: a mission whose
+// backing ref the runner doesn't currently advertise (e.g. a missing provider key) simply doesn't
+// resolve rather than 500ing.
+var availableMissionRefs = await ProbeRunnerMissionsAsync(runnerBaseUrl);
+Console.Error.WriteLine(availableMissionRefs.Count == 0
+    ? $"ForgeAPI: runner at {runnerBaseUrl} advertised no missions — the catalog will resolve nothing."
+    : $"ForgeAPI: runner advertises {availableMissionRefs.Count} mission(s): {string.Join(", ", availableMissionRefs)}.");
+builder.Services.AddSingleton<IMissionCatalog>(new StaticMissionCatalog(availableMissionRefs));
+
+// GetRun storage (M6) — in-memory today; blob storage is the target shape (see IRunStore's doc).
+builder.Services.AddSingleton<IRunStore, InMemoryRunStore>();
+
+builder.Services.AddSingleton<MissionExecutionService>();
+
 var app = builder.Build();
+
+// Idempotent schema bootstrap (CREATE TABLE IF NOT EXISTS, incl. task 5a's client_token column) —
+// ForgeAPI owns authbilling_db reads/writes directly and must not depend on ForgeUI having booted
+// first to create the tables. Cheap and safe on every boot, same call ForgeUI's Program.cs makes.
+await AuthBillingSchema.EnsureCreatedAsync(app.Services.GetRequiredService<Npgsql.NpgsqlDataSource>());
 
 app.MapGet("/health", (RequestDelegate)(ctx =>
 {
@@ -46,8 +70,11 @@ app.MapGet("/health", (RequestDelegate)(ctx =>
     return ctx.Response.WriteAsync("""{"status":"ok"}""", ctx.RequestAborted);
 }));
 
-// Pass-through the whole /v1 wire (Anthropic /v1/messages + OpenAI /v1/chat|responses|models) to the
-// runner's internal door, behind platform-key auth (task 4). Task 5 puts a /m/{handle} prefix in
+// API A — mission invocation (task 5a): ExecuteMission/SearchMissions/GetMission/GetAccount/GetRun.
+app.MapMissionEndpoints();
+
+// API B — pass-through the whole /v1 wire (Anthropic /v1/messages + OpenAI /v1/chat|responses|models)
+// to the runner's internal door, behind platform-key auth (task 4). 5b puts a /m/{handle} prefix in
 // front to select the mission.
 app.Map("/v1/{**rest}", async (HttpContext ctx, IHttpClientFactory clients) =>
 {
@@ -57,3 +84,26 @@ app.Map("/v1/{**rest}", async (HttpContext ctx, IHttpClientFactory clients) =>
 .AddEndpointFilter<PlatformKeyAuthFilter>();
 
 app.Run();
+
+// Same retry-probe shape as ForgeUI's Program.cs (ProbeRunnerMissionsAsync) — the runner may still be
+// starting when this gateway boots, so a few attempts with a short backoff ride out that race.
+static async Task<IReadOnlySet<string>> ProbeRunnerMissionsAsync(string baseUrl)
+{
+    using var http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(5) };
+    for (var attempt = 1; attempt <= 5; attempt++)
+    {
+        try
+        {
+            var missions = await http.GetFromJsonAsync(
+                "/missions", RunContractsContext.Default.IReadOnlyListMissionInfo);
+            if (missions is not null)
+                return missions.Select(m => m.MissionRef).ToHashSet(StringComparer.Ordinal);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ForgeAPI: runner probe attempt {attempt}/5 failed: {ex.Message}");
+        }
+        await Task.Delay(TimeSpan.FromSeconds(2));
+    }
+    return new HashSet<string>();
+}

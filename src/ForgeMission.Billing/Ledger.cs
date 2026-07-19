@@ -33,5 +33,10 @@ public sealed class LedgerEntry
     public long?           OutputTokens   { get; set; }
     public double?         ComputeSeconds { get; set; }
 
+    /// <summary>M7 idempotency key (EC2 <c>ClientToken</c> pattern) — a retry of the same run reuses
+    /// this value so <see cref="BillingService.SettleRunAsync"/> can detect and skip a double debit.
+    /// Null for entries that predate 42.6 task 5a or don't need idempotency (grants/topups).</summary>
+    public string?         ClientToken    { get; set; }
+
     public DateTimeOffset  CreatedAt      { get; set; }
 }

@@ -549,7 +549,7 @@ table is the lookup; don't load the companion file unless you need the *how*, no
 | 2 | `authbilling_db` split (foundation) | ✅ DONE + LIVE (2026-07-19) — code, DB, KV secret, tables all confirmed live | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-2--authbilling_db-split-foundation) |
 | 3 | `ForgeMission.Api` service (foundation, gateway tier) | ✅ FOUNDATION DONE (2026-07-18) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-3--forgemissionapi-service-foundation--the-api-gateway-tier) |
 | 4 | Auth middleware on `ForgeAPI` | ✅ DONE (2026-07-19, commit `da977ff`) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-4--auth-middleware-on-forgeapi) |
-| 5a | API A, mission invocation | ✅ **DESIGN LOCKED, build-ready (2026-07-19)** — 2 review passes done (wire DTOs, then server-side resolution); no open questions | below |
+| 5a | API A, mission invocation | ✅ **BUILT + LOCALLY VERIFIED LIVE (2026-07-19)** — `ExecuteMission`/`SearchMissions`/`GetMission`/`GetAccount`/`GetRun` implemented on `ForgeAPI`, `websearch` published to ghcr.io/katasec, 12 new tests pass (338 total, 0 fail), full local smoke test round-tripped a real `@websearch` run with a correct ledger debit. Not yet deployed to Azure (task 9). | below |
 | 5b | API B, chat-wire adapter | Sequenced after 5a | below |
 | 6 | Billing wrap + spend-abuse trigger ladder | Design decided; build with 5a | below |
 | 7 | Shared enrichment cache | Design decided; 5b-only | below |
@@ -562,27 +562,15 @@ routing; 6+ are billing, cache, CLI, and deploy.
 
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
-   - **5a — API A, mission invocation.** ✅ **Design locked, build-ready (2026-07-19)** — two review
-     passes done before any code was written: (1) wire-DTO review (3 gaps, resolved — narrative:
-     [completed doc → Task 5a](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--design-gap-review-found--resolved-2026-07-19));
-     (2) server-side resolution design (6 gaps — catalog metadata, `@websearch` not published, `GetRun`
-     storage, `ClientToken` idempotency, `Email` source, handle/publisher/version parsing — resolved,
-     narrative: [completed doc → Task 5a pre-build design
-     lock](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--pre-build-design-lock-second-pass-found--resolved-2026-07-19)).
-     **No further design questions should be open — build directly from this doc.** Final wire DTO
-     shapes are in "The messages" above; server-side resolution design (`MissionHandle`,
-     `IMissionCatalog`, `IRunStore`, the `ClientToken` column) is in ["Mission
-     resolution"](#mission-resolution--handlepublisherversion--catalogrun-storage-decided-2026-07-19-pre-build-design-lock)
-     above.
-
-     Implement `ExecuteMission` / `SearchMissions` / `GetMission` / `GetAccount` / `GetRun` as
-     message endpoints on `ForgeAPI`, with the service signature `Execute(ExecuteMission, Principal)`
-     (M5). Resolve `msg.Mission` (+ `MissionVersion`) via `IMissionCatalog` → `CatalogEntry.MissionRef`
-     → the runner's existing `POST /run/stream`; server sets `missionRef` + `policy` (M9). Map the
-     runner's `RunStreamEvent` sequence to `MissionRunEvent` and the terminal `ExecuteMissionResponse`.
-     **The old header-vs-rewrite-`model` problem does not arise** — `RunRequest.MissionRef` is already
-     a field. Also part of this build step: publish `websearch` to the OCI registry (see "Mission
-     resolution" above) and add the `ClientToken` column to `ledger_entries`.
+   - **5a — API A, mission invocation.** ✅ **Built + locally verified live (2026-07-19)** — on branch
+     `phase-42.6-task-5a-mission-invocation`, not yet merged/deployed. All 5 message endpoints
+     implemented on `ForgeAPI`; `websearch` published to `ghcr.io/katasec` and wired into
+     `BuiltinMissions.All`; 12 new tests + full suite pass (338/0); a real local smoke test
+     round-tripped `ExecuteMission` against `@websearch` with a correct ledger debit. Two small
+     doc gaps (no `Principal` type, `ErrorCode.RunNotFound` missing from the closed set) resolved
+     inline, not re-opened as design questions. Streaming (`Stream: true`) is implemented but not yet
+     live-tested — flagged before task 8. Full build narrative + evidence: [completed doc → Task 5a
+     build + local verification](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--build--local-verification-2026-07-19).
    - **5b — API B, chat-wire adapter.** `/m/{handle}/v1/*` → the runner's `/v1` door. Needs (i) a
      mission-selection mechanism for the spec-bound wire (the `model` field carries the client's real model
      id, not a handle) and (ii) an **aux-call policy** — the wire capture shows Claude Code firing

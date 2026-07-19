@@ -26,6 +26,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
         var connection = _container.GetConnectionString();
         var services = new ServiceCollection();
+        services.AddLogging(); // BillingService (and anything else DI-activated) takes an ILogger<T>
         services.AddRoomsData(connection, connection);
         // Billing (ledger + platform keys) lives in its own authbilling_db in prod; here it shares the
         // one container DB — the table names are distinct, so the raw-Npgsql stores coexist with the EF

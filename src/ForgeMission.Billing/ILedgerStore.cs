@@ -20,4 +20,8 @@ public interface ILedgerStore
     /// <summary>True if the member already has an entry of this kind — used to keep the one-time
     /// starting grant idempotent.</summary>
     Task<bool> HasEntryOfKindAsync(Guid memberId, LedgerEntryKind kind, CancellationToken ct = default);
+
+    /// <summary>The entry previously appended with this <see cref="LedgerEntry.ClientToken"/>, if
+    /// any — M7 idempotency lookup so a retried run can return the prior debit instead of a new one.</summary>
+    Task<LedgerEntry?> FindByClientTokenAsync(string clientToken, CancellationToken ct = default);
 }

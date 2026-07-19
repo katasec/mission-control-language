@@ -42,10 +42,27 @@ public sealed class BillingService(
             "Granted starting credit {MicroUsd}µ$ to member {MemberId}", StartingCreditMicroUsd, memberId);
     }
 
-    /// <summary>Debit a completed run's actual cost. Returns the debited amount (micro-USD).</summary>
+    /// <summary>Debit a completed run's actual cost. Returns the debited amount (micro-USD).
+    /// <paramref name="clientToken"/> is the M7 idempotency key (42.6 task 5a) — when present and a
+    /// prior entry with the same token already exists, that entry's amount is returned instead of
+    /// appending a second debit (buses/HTTP retries are at-least-once). Null preserves the original
+    /// always-append behaviour for callers that don't carry a client token (e.g. Rooms).</summary>
     public async Task<long> SettleRunAsync(
-        Guid memberId, string missionRef, RunUsage usage, CancellationToken ct = default)
+        Guid memberId, string missionRef, RunUsage usage, CancellationToken ct = default,
+        string? clientToken = null)
     {
+        if (clientToken is { Length: > 0 })
+        {
+            var existing = await ledger.FindByClientTokenAsync(clientToken, ct);
+            if (existing is not null)
+            {
+                logger.LogInformation(
+                    "SettleRunAsync retried with known ClientToken {ClientToken} — returning prior debit {Cost}µ$, not double-charging.",
+                    clientToken, -existing.AmountMicroUsd);
+                return -existing.AmountMicroUsd;
+            }
+        }
+
         if (usage.Model is { Length: > 0 } && !CostMeter.IsKnownModel(usage.Model))
             logger.LogWarning(
                 "No pricing rate for model '{Model}' — charged at fallback rate; add it to CostMeter.",
@@ -65,6 +82,7 @@ public sealed class BillingService(
             InputTokens    = usage.InputTokens,
             OutputTokens   = usage.OutputTokens,
             ComputeSeconds = usage.ComputeSeconds,
+            ClientToken    = clientToken,
         }, ct);
 
         logger.LogInformation(

@@ -27,8 +27,8 @@ public sealed class NpgsqlLedgerStore(NpgsqlDataSource dataSource) : ILedgerStor
         await using var cmd = dataSource.CreateCommand("""
             INSERT INTO ledger_entries
                 (id, member_id, amount_micro_usd, kind, description,
-                 mission_ref, model, input_tokens, output_tokens, compute_seconds, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                 mission_ref, model, input_tokens, output_tokens, compute_seconds, client_token, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             """);
         var p = cmd.Parameters;
         p.Add(new NpgsqlParameter { Value = entry.Id });
@@ -41,6 +41,7 @@ public sealed class NpgsqlLedgerStore(NpgsqlDataSource dataSource) : ILedgerStor
         p.Add(Nullable(entry.InputTokens));
         p.Add(Nullable(entry.OutputTokens));
         p.Add(Nullable(entry.ComputeSeconds));
+        p.Add(Nullable(entry.ClientToken));
         p.Add(new NpgsqlParameter { Value = entry.CreatedAt });
         await cmd.ExecuteNonQueryAsync(ct);
     }
@@ -54,7 +55,36 @@ public sealed class NpgsqlLedgerStore(NpgsqlDataSource dataSource) : ILedgerStor
         return (bool)(await cmd.ExecuteScalarAsync(ct) ?? false);
     }
 
+    public async Task<LedgerEntry?> FindByClientTokenAsync(string clientToken, CancellationToken ct = default)
+    {
+        await using var cmd = dataSource.CreateCommand("""
+            SELECT id, member_id, amount_micro_usd, kind, description,
+                   mission_ref, model, input_tokens, output_tokens, compute_seconds, client_token, created_at
+            FROM ledger_entries WHERE client_token = $1
+            """);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = clientToken });
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        if (!await reader.ReadAsync(ct)) return null;
+
+        return new LedgerEntry
+        {
+            Id             = reader.GetGuid(0),
+            MemberId       = reader.GetGuid(1),
+            AmountMicroUsd = reader.GetInt64(2),
+            Kind           = KindFromDb(reader.GetString(3)),
+            Description    = reader.IsDBNull(4) ? null : reader.GetString(4),
+            MissionRef     = reader.IsDBNull(5) ? null : reader.GetString(5),
+            Model          = reader.IsDBNull(6) ? null : reader.GetString(6),
+            InputTokens    = reader.IsDBNull(7) ? null : reader.GetInt64(7),
+            OutputTokens   = reader.IsDBNull(8) ? null : reader.GetInt64(8),
+            ComputeSeconds = reader.IsDBNull(9) ? null : reader.GetDouble(9),
+            ClientToken    = reader.IsDBNull(10) ? null : reader.GetString(10),
+            CreatedAt      = reader.GetFieldValue<DateTimeOffset>(11),
+        };
+    }
+
     private static string KindToDb(LedgerEntryKind kind) => kind.ToString().ToLowerInvariant();
+    private static LedgerEntryKind KindFromDb(string kind) => Enum.Parse<LedgerEntryKind>(kind, ignoreCase: true);
 
     // Positional params can't infer type from DBNull alone, so nullable columns carry an explicit type.
     private static NpgsqlParameter Nullable(string? value) =>

@@ -189,6 +189,73 @@ section — this is the narrative, that's the reference.
      `IMissionCatalog` never change, only `StaticMissionCatalog`'s single hardcoded entry list gets
      replaced by a real registry later.
 
+## Task 5a — build + local verification (2026-07-19)
+
+Built directly from the design-lock above with no further design questions raised, on branch
+`phase-42.6-task-5a-mission-invocation`. Two small gaps surfaced during the build that weren't
+design decisions so much as omissions in the locked doc — resolved inline rather than re-opening
+design review:
+
+- **`Principal` (M5).** No such type existed. Decision: reuse `ForgeMission.Billing.PlatformKeyContext`
+  (`MemberId`, `BalanceMicroUsd`) directly as the principal passed into message handlers — it already
+  is exactly the HTTP-adapter-resolved value M5 describes; introducing a second, identical type would
+  have been pure ceremony.
+- **`ErrorCode.RunNotFound`.** The locked authoritative error-code list (six codes) didn't separately
+  name a GetRun-not-found code, but `GetRunResponse`'s own doc comment said "e.g. RunNotFound" — an
+  evident oversight, not a decision to overload `RunFailed` (a 500) onto a 404 case. Added as an
+  eighth code, same additive precedent `MissionNotFound` already set.
+- **`ForgeAPI` never called `AuthBillingSchema.EnsureCreatedAsync`** — only `ForgeUI` did. Since
+  ForgeAPI now reads/writes `authbilling_db` directly (task 5a), it must not depend on ForgeUI having
+  booted first to create the tables. Added the same idempotent bootstrap call ForgeUI's `Program.cs`
+  already makes.
+
+**Files added:** `src/ForgeMission.Api/{Messages,MissionCatalog,MissionExecutionService,MissionEndpoints,RunStore}.cs`.
+**Files changed:** `src/ForgeMission.Api/Program.cs` (catalog/store wiring + endpoint mapping + schema
+bootstrap); `src/ForgeMission.Billing/{AuthBillingSchema,BillingService,ILedgerStore,Ledger,NpgsqlLedgerStore}.cs`
+(the `client_token` column + unique index, `LedgerEntry.ClientToken`, `ILedgerStore.FindByClientTokenAsync`,
+`BillingService.SettleRunAsync`'s idempotency check); `src/ForgeMission.Cli/BuiltinMissions.cs` (new
+`WebSearch` entry, pinned digest below).
+
+**`websearch` published for real:** `ghcr.io/katasec/forge-mission-websearch:0.1.0`, pinned digest
+`sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d` — pushed via `forge publish`
+using a `gh auth token`-bridged registry credential (see
+[deploy.md → OCI registry credentials](../design/deploy.md#oci-registry-ghcrio-publish-credentials--gh-cli-is-already-authenticated)).
+Runner-verified: `GET /missions` lists `WebSearch` after a real pull from ghcr.io.
+
+**Tests (12 new, `src/ForgeMission.Rooms.Tests/Api/`):** `MissionHandleTests` (parse equivalence,
+whitespace, lowercasing), `StaticMissionCatalogTests` (implicit/explicit publisher equivalence,
+unrecognized-publisher fails closed, unavailable-mission-ref doesn't resolve, search filtering),
+`BillingServiceClientTokenTests` (real Postgres — retried `ClientToken` returns the prior debit
+without charging again, distinct tokens both debit, null token preserves original always-debit
+behaviour), `MissionExecutionServiceTests` (real Postgres billing + stubbed runner HTTP client —
+resolve/run/debit end-to-end, `MissionNotFound`, `InsufficientCredit` without ever calling the
+runner, cross-call `ClientToken` idempotency). Also fixed `PostgresFixture` — it never registered
+`ILogging`, so any DI-activated type taking an `ILogger<T>` (i.e. `BillingService` itself) failed to
+resolve; no existing test had hit this because none resolved `BillingService` directly. Full suite:
+**338 passed, 0 failed, 10 skipped** (pre-existing live-integration tests, unrelated).
+
+**Live local smoke test** (real Postgres container, real runner, real `ForgeAPI`, real xAI call —
+not mocked): minted a platform key + $5 grant directly against a scratch `authbilling_db`, ran
+`POST /api/ExecuteMission` for `{"mission":"websearch","input":"What did Anthropic announce this
+week?"}` against the running stack. Result: `Verified: true`, real cited web-search answer,
+`Usage.CostMicroUsd: 12390`, balance `5,000,000 → 4,987,610` (exact match), run round-tripped
+`GET /api/GetRun` correctly, `GetAccount`/`SearchMissions`/`GetMission` (success + fail-closed) and
+the no-auth-token 401 path all verified. Torn down cleanly after (containers removed, processes
+killed, scratch files deleted).
+
+**Known gap carried forward, not fixed here (unchanged from the design doc):**
+`ExecuteMissionResponse.Sources` stays empty — the runner contract has no structured citations yet
+(see "Known gap" in the main spoke). The live smoke test's answer text contains inline `[[1]]`-style
+citations from the model, same as today's Grok/Rooms behaviour; `MissionSource[]` plumbing is
+additive future work.
+
+**Not exercised by the smoke test:** the streaming (`Stream: true`) response path — implemented
+(NDJSON `MissionRunEvent` sequence via the same channel-based pattern as the runner's own
+`RunStreamAsync`) and covered by the non-streaming code path sharing `RunCoreAsync`, but not
+separately live-tested end-to-end (a second real paid search run wasn't worth the spend once the
+buffered path proved the resolve→run→debit chain correct). Worth a quick live check before or during
+task 8 (CLI hosted mode), since `forge exec`'s "stream the answer" UX decision depends on it.
+
 ## What the message-based redesign (2026-07-18) supersedes
 
 - **The "mission-selection mechanism" decision is void.** The header-vs-rewrite-`model` problem was

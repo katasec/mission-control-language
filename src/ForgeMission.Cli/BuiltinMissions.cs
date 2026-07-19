@@ -24,6 +24,8 @@ public static class BuiltinMissions
             $"{Reg}/forge-mission-claude@sha256:9aafb6d2ed23616ebe8b6460012f36df0d81d12f588e341cb830d33e77e77aca",             "claude"),
         new("Grok",      "Grok with live web search — classifies, searches when current data is needed, grounds the answer (41.2)",
             $"{Reg}/forge-mission-grok@sha256:a18d65a6a0891f82684a01e8e038b5653cac06673ff6ded556bcbd4448dba585",               "grok"),
+        new("WebSearch", "Grounded, source-cited answers via live web search — classifies, searches when current data is needed (42.6 @websearch)",
+            $"{Reg}/forge-mission-websearch@sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d",         "websearch"),
     ];
 
     /// <summary>
