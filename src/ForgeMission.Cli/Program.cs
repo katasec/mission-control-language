@@ -411,10 +411,15 @@ static Command BuildLogoutCommand()
     return cmd;
 }
 
-// forge exec — the one-shot hosted-mission command (42.6 task 8).
+// forge exec — the one-shot hosted-mission command (42.6 task 8). The `@` prefix on a handle is
+// optional (ForgeExec.RunAsync strips it if present) — deliberately, because pwsh (the maintainer's
+// default shell, see AGENTS.md) mangles an unquoted leading `@` before it reaches a native process
+// ("Required argument missing", not a forge bug — confirmed 2026-07-19: `@websearch` fails in pwsh,
+// `"@websearch"` or bare `websearch` both work). Documented as the plain form so pwsh users aren't
+// steered into the gotcha; bash/zsh users can still type `@handle` fine.
 static Command BuildExecCommand()
 {
-    var targetArg = new Argument<string>("target") { Description = "Mission handle, e.g. @websearch" };
+    var targetArg = new Argument<string>("target") { Description = "Mission handle, e.g. websearch (an optional leading @ is also accepted, but quote it in pwsh: \"@websearch\")" };
     var promptArg = new Argument<string>("prompt") { Description = "The mission's free-text input" };
 
     var cmd = new Command("exec", "Run a hosted mission once and print the answer");
