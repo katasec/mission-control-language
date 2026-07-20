@@ -15,6 +15,9 @@ namespace ForgeMission.Cli;
 // double-debits.
 public static class ForgeExec
 {
+    internal const long MaxInputDownloadBytes = 100L * 1024L * 1024L;
+    private static readonly TimeSpan InputDownloadTimeout = TimeSpan.FromSeconds(30);
+
     // Same override convention as PlatformLogin's endpoints (FORGE_PLATFORM_ENDPOINT etc.) — the
     // platform-key issuer (ForgeUI) and the mission-invocation gateway (ForgeAPI) are different
     // hosts, so this needs its own var rather than reusing PlatformCredential.Endpoint.
@@ -151,6 +154,25 @@ public static class ForgeExec
 
     private static async Task<MissionArtifactDto?> UploadInputAsync(string path, string platformKey)
     {
+        if (IsHttpUrl(path, out var uri))
+        {
+            var download = await DownloadUrlInputAsync(uri);
+            if (download is null) return null;
+
+            try
+            {
+                return await UploadLocalInputAsync(
+                    download.Path,
+                    download.FileName,
+                    download.ContentTypeHint,
+                    platformKey);
+            }
+            finally
+            {
+                download.Dispose();
+            }
+        }
+
         if (!File.Exists(path))
         {
             Console.Error.WriteLine($"input file not found: {path}");
@@ -158,10 +180,96 @@ public static class ForgeExec
         }
 
         var fullPath = Path.GetFullPath(path);
+        return await UploadLocalInputAsync(fullPath, Path.GetFileName(fullPath), contentTypeHint: null, platformKey);
+    }
+
+    private static async Task<DownloadedInput?> DownloadUrlInputAsync(Uri uri)
+    {
+        using var cts = new CancellationTokenSource(InputDownloadTimeout);
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, uri);
+            using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            if (!resp.IsSuccessStatusCode)
+            {
+                Console.Error.WriteLine($"input download failed ({(int)resp.StatusCode}): {uri}");
+                return null;
+            }
+
+            if (resp.Content.Headers.ContentLength is > MaxInputDownloadBytes)
+            {
+                Console.Error.WriteLine($"input download too large: max {FormatBytes(MaxInputDownloadBytes)}");
+                return null;
+            }
+
+            var responseUri = resp.RequestMessage?.RequestUri;
+            var responseContentType = resp.Content.Headers.ContentType?.MediaType;
+            var fileName = InferDownloadFileName(uri, responseUri, responseContentType);
+            var contentType = ContentTypeForDownload(fileName, responseContentType);
+
+            var tempDir = Directory.CreateTempSubdirectory("forge-input-").FullName;
+            var tempPath = Path.Combine(tempDir, fileName);
+            try
+            {
+                await using var input = await resp.Content.ReadAsStreamAsync(cts.Token);
+                await using var output = File.Create(tempPath);
+                await CopyWithLimitAsync(input, output, MaxInputDownloadBytes, cts.Token);
+            }
+            catch
+            {
+                Directory.Delete(tempDir, recursive: true);
+                throw;
+            }
+
+            return new DownloadedInput(tempPath, fileName, contentType, tempDir);
+        }
+        catch (TaskCanceledException)
+        {
+            Console.Error.WriteLine($"input download timed out after {InputDownloadTimeout.TotalSeconds:0} seconds: {uri}");
+            return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.Error.WriteLine($"input download failed: {ex.Message}");
+            return null;
+        }
+        catch (IOException ex)
+        {
+            var message = ex.Message.StartsWith("input download too large:", StringComparison.Ordinal)
+                ? ex.Message
+                : $"input download failed: {ex.Message}";
+            Console.Error.WriteLine(message);
+            return null;
+        }
+    }
+
+    private static async Task CopyWithLimitAsync(Stream input, Stream output, long maxBytes, CancellationToken ct)
+    {
+        var buffer = new byte[81920];
+        long total = 0;
+        while (true)
+        {
+            var read = await input.ReadAsync(buffer, ct);
+            if (read == 0) break;
+
+            total += read;
+            if (total > maxBytes)
+                throw new IOException($"input download too large: max {FormatBytes(maxBytes)}");
+
+            await output.WriteAsync(buffer.AsMemory(0, read), ct);
+        }
+    }
+
+    private static async Task<MissionArtifactDto?> UploadLocalInputAsync(
+        string fullPath,
+        string artifactName,
+        string? contentTypeHint,
+        string platformKey)
+    {
         var sha256 = await Sha256Async(fullPath);
         await using var file = File.OpenRead(fullPath);
         using var content = new StreamContent(file);
-        content.Headers.ContentType = new MediaTypeHeaderValue(ContentTypeFor(fullPath));
+        content.Headers.ContentType = new MediaTypeHeaderValue(contentTypeHint ?? ContentTypeFor(artifactName));
         content.Headers.ContentLength = file.Length;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, $"{ApiEndpoint}/api/UploadArtifact")
@@ -169,7 +277,7 @@ public static class ForgeExec
             Content = content,
         };
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", platformKey);
-        req.Headers.Add("X-Forge-Artifact-Name", Path.GetFileName(fullPath));
+        req.Headers.Add("X-Forge-Artifact-Name", artifactName);
         req.Headers.Add("X-Forge-Artifact-Sha256", sha256);
         req.Headers.Add("X-Forge-Artifact-Client-Token", Guid.NewGuid().ToString("N"));
 
@@ -284,14 +392,27 @@ public static class ForgeExec
         return Convert.ToHexStringLower(await SHA256.HashDataAsync(stream));
     }
 
-    private static string InferOutputPath(string inputPath, string? mode, MissionArtifactDto artifact)
+    internal static bool IsHttpUrl(string inputPath, out Uri uri) =>
+        Uri.TryCreate(inputPath, UriKind.Absolute, out uri!)
+        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+
+    internal static string InferOutputPath(string inputPath, string? mode, MissionArtifactDto artifact)
     {
-        var dir = Path.GetDirectoryName(inputPath);
-        var stem = Path.GetFileNameWithoutExtension(inputPath);
-        var inputExt = Path.GetExtension(inputPath).ToLowerInvariant();
+        var outputSource = InputPathForOutputInference(inputPath);
+        var dir = Path.GetDirectoryName(outputSource);
+        var stem = Path.GetFileNameWithoutExtension(outputSource);
+        var inputExt = Path.GetExtension(outputSource).ToLowerInvariant();
         var ext = ExtensionFor(mode, artifact);
         var suffix = inputExt == ".pdf" && ext == ".pdf" ? ".ocr" : "";
         return Path.Combine(dir ?? "", $"{stem}{suffix}{ext}");
+    }
+
+    internal static string InputPathForOutputInference(string inputPath)
+    {
+        if (!IsHttpUrl(inputPath, out var uri)) return inputPath;
+
+        var fileName = FileNameFromUri(uri);
+        return string.IsNullOrWhiteSpace(fileName) ? "download" : fileName;
     }
 
     private static string ExtensionFor(string? mode, MissionArtifactDto artifact)
@@ -303,7 +424,7 @@ public static class ForgeExec
         return ".txt";
     }
 
-    private static string ContentTypeFor(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    internal static string ContentTypeFor(string path) => Path.GetExtension(path).ToLowerInvariant() switch
     {
         ".txt" => "text/plain",
         ".pdf" => "application/pdf",
@@ -312,6 +433,66 @@ public static class ForgeExec
         ".jpg" or ".jpeg" => "image/jpeg",
         _ => "application/octet-stream",
     };
+
+    internal static string InferDownloadFileName(Uri originalUri, Uri? responseUri, string? responseContentType)
+    {
+        var fileName = FileNameFromUri(originalUri);
+        if (string.IsNullOrWhiteSpace(fileName) && responseUri is not null)
+            fileName = FileNameFromUri(responseUri);
+
+        if (!string.IsNullOrWhiteSpace(fileName))
+            return fileName;
+
+        var extension = ExtensionForContentType(responseContentType);
+        return "download" + extension;
+    }
+
+    internal static string ContentTypeForDownload(string fileName, string? responseContentType)
+    {
+        var contentType = ContentTypeFor(fileName);
+        return contentType == "application/octet-stream" && !string.IsNullOrWhiteSpace(responseContentType)
+            ? responseContentType
+            : contentType;
+    }
+
+    private static string FileNameFromUri(Uri uri)
+    {
+        var fileName = Path.GetFileName(uri.LocalPath);
+        if (string.IsNullOrWhiteSpace(fileName)) return "";
+        if (string.IsNullOrWhiteSpace(Path.GetExtension(fileName))) return "";
+
+        foreach (var invalid in Path.GetInvalidFileNameChars())
+            fileName = fileName.Replace(invalid, '_');
+        return fileName;
+    }
+
+    private static string ExtensionForContentType(string? contentType) => contentType?.ToLowerInvariant() switch
+    {
+        "text/plain" => ".txt",
+        "application/pdf" => ".pdf",
+        "application/json" => ".json",
+        "image/png" => ".png",
+        "image/jpeg" => ".jpg",
+        _ => ".bin",
+    };
+
+    private static string FormatBytes(long bytes) =>
+        bytes % (1024 * 1024) == 0
+            ? $"{bytes / (1024 * 1024)} MB"
+            : $"{bytes} bytes";
+
+    private sealed record DownloadedInput(
+        string Path,
+        string FileName,
+        string ContentTypeHint,
+        string TempDir) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (Directory.Exists(TempDir))
+                Directory.Delete(TempDir, recursive: true);
+        }
+    }
 
     // Live-updating status line on a tty (carriage-return overwrite); falls back to one line per
     // change when stdout is redirected/piped, since \r is meaningless (and noisy) there.

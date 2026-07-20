@@ -113,6 +113,13 @@ Created: ./scan.ocr.pdf
 ✓ searchable PDF · 1 page · 42 regions · avg confidence 0.96
 ```
 
+`--input` accepts a URL as well as a local path — same output, so the demo command is
+copy-pasteable against a public blob URL instead of requiring a file on disk:
+
+```bash
+forge exec ocr --input https://mydemosa.blob.core.windows.net/samples/scan.jpg
+```
+
 Structured extraction remains an ordinary downstream mission behavior:
 
 ```bash
@@ -339,6 +346,48 @@ Exec experts may write internal scratch files anywhere under `FORGE_WORK_DIR`, b
 artifacts only from `FORGE_OUTPUT_DIR`. Stdout remains for structured JSON summary/status, not
 binary payloads. No hardcoded paths in mission tooling.
 
+## Task 10 — URL input source (CLI-only)
+
+**Why:** a copy-pasteable demo command beats "find a file on disk" — point `--input` at a public
+blob URL (or any HTTP(S) source) and get the same result as a local file.
+
+**Locked decision: the fetch happens in the CLI process, never server-side.** `ForgeAPI`/the runner
+never fetch a URL on the caller's behalf — that would be a server-side SSRF surface (internal IPs,
+cloud metadata endpoints, redirect chains all need blocking, none of which exists today). The CLI
+fetching a URL is the same trust boundary as a user running `curl` on their own machine, so this
+stays entirely client-side and the server never sees anything but bytes it already validates via
+the existing capability check (Manifest Capability Metadata, below). No new attack surface, no new
+endpoint.
+
+Design, in `ForgeExec.UploadInputAsync` (`src/ForgeMission.Cli/ForgeExec.cs`):
+
+- Detect a URL: `Uri.TryCreate(inputPath, UriKind.Absolute, out var uri) && uri.Scheme is "http" or
+  "https"`. Anything else is treated as a local path exactly as today.
+- Download to a temp file first, then fall through to the **same** local-file code path (sha256,
+  content-type inference, upload) — no branching past the initial byte source, so the existing
+  upload/validate/stage logic is untouched.
+- Filename: `Path.GetFileName(uri.LocalPath)`; fall back to a generic name if the URL has no
+  filename segment (e.g. a bare API endpoint or a redirect target).
+- Content type: keep the existing extension-based `ContentTypeFor(path)` heuristic on the inferred
+  filename first; fall back to the HTTP response's `Content-Type` header only if the extension is
+  unknown. This is a hint, not a security boundary — the server-side capability check (Task 2)
+  validates content-type independently regardless of what the client claims.
+- Guard the download itself (separate from the existing 100 MB server-side cap): a reasonable
+  request timeout and a client-side max-download-size check, so a bad or oversized URL fails fast
+  with a clear CLI error instead of hanging or silently buffering.
+- `InferOutputPath` switches to `uri.LocalPath`'s filename when the input is a URL, so output naming
+  stays sane (`scan.jpg` → `scan.txt`), not the raw URL string.
+
+**Done:** `forge exec ocr --input https://tesseract-ocr.github.io/tessdoc/images/eurotext.png --out
+/private/tmp/forge-url-ocr-url.txt` and the equivalent local-file run wrote identical 419-byte
+OCR text artifacts (`sha256=fbb373b86280fbaf9e671ab39c9ea7b3787b5c032b7002fb39396d57b8516184`),
+both `✓ verified`. The original example Azure blob URL was checked but returned `403 The specified
+account is disabled`, so the live proof used a public HTTPS PNG from the official Tesseract docs.
+
+| # | Task | Status | Done when |
+|---|---|---|---|
+| 10 | URL input source for `forge exec` | Done live | CLI downloads an `http(s)://` `--input` client-side, uploads through the existing local-file path unchanged; live-verified against a public HTTPS OCR image with byte-identical local-file output. |
+
 ## Manifest Capability Metadata
 
 Artifact capabilities live in the mission package manifest (`forge.toml`), not in `mission.mcl`
@@ -436,6 +485,8 @@ impossible:
   OCR usage justifies the package/model weight.
 - GHA-inspired `FORGE_*` staging contract.
 - Generic artifact capability metadata in `missions/ocr/forge.toml`.
+- URL input (Task 10) fetches client-side (CLI), never server-side — no SSRF surface, no new
+  endpoint, no allowlist infra needed.
 
 ## Non-Goals
 
