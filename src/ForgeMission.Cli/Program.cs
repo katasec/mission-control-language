@@ -790,9 +790,23 @@ static async Task<(string MissionPath, string MissionName)?> ResolveClaudeTarget
             Die($"Unknown built-in mission '{t}'. Available: {string.Join(", ", BuiltinMissions.All.Select(b => "@" + b.Label.ToLowerInvariant()))}");
             return null;
         }
-        Console.Error.WriteLine($"↳ pulling {t} from the mission catalog…");
-        var (dir, status) = await OciMissionPuller.PullAsync(builtin.OciRef, refresh: false);
-        Console.Error.WriteLine($"✓ {t} {status}");
+        string dir;
+        if (builtin.OciRef is null)
+        {
+            dir = Path.GetFullPath(Path.Combine("missions", builtin.LocalDir));
+            if (!Directory.Exists(dir))
+            {
+                Die($"Built-in mission '{t}' is not published to the mission catalog yet.");
+                return null;
+            }
+            Console.Error.WriteLine($"✓ {t} local baked-in");
+        }
+        else
+        {
+            Console.Error.WriteLine($"↳ pulling {t} from the mission catalog…");
+            (dir, var status) = await OciMissionPuller.PullAsync(builtin.OciRef, refresh: false);
+            Console.Error.WriteLine($"✓ {t} {status}");
+        }
         return (Path.Combine(dir, "mission.mcl"), builtin.Label.ToLowerInvariant());
     }
 

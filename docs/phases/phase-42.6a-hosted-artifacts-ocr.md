@@ -1,7 +1,7 @@
 # Phase 42.6a — Hosted artifacts + OCR demo
 
-> **Status: Local artifact pipeline implemented + tested (2026-07-20); hosted deploy and real
-> PaddleOCR remain.** Inserted before the hosted `forge claude @websearch` adapter because 42.6's
+> **Status: Local artifact pipeline implemented + tested (2026-07-20); hosted deploy and
+> Tesseract-backed OCR verification remain.** Inserted before the hosted `forge claude @websearch` adapter because 42.6's
 > one-shot API has already proven the hosted path, and binary artifacts are the next useful
 > capability unlocked by `forge exec`: upload a file, run a mission once, and receive a produced
 > file back.
@@ -57,8 +57,8 @@ What exists now:
   collects output artifacts from `FORGE_OUTPUT_DIR`.
 - `forge exec ocr --input ...` and `forge exec ocr --mode=pdf --input ...` have CLI-side artifact
   upload/download/output-path inference.
-- `missions/ocr` is a deterministic placeholder mission that writes text/PDF artifacts; real
-  PaddleOCR integration is still pending.
+- `missions/ocr` writes text/PDF artifacts. It uses Tesseract when the runner image provides it and
+  falls back to deterministic placeholder output in local environments without OCR tools.
 - `docs/design/room-artifacts.md` describes a room artifact plane, but the current `src/` tree has
   no base64 artifact DTOs. Treat that doc as design/history for room artifacts, not as this shipped
   one-shot binary channel.
@@ -351,9 +351,12 @@ consume typed capabilities rather than scraping TOML strings.
 
 ## OCR Mission Design
 
-Use one hosted `kind: exec` mission first. PaddleOCR/PP-OCRv6 is a practical default because it is a
-full OCR pipeline: detection + recognition, with deployable CPU/ONNX paths. TrOCR remains a useful
-recognizer for cropped text, but it is not the default for messy documents.
+Use one hosted `kind: exec` mission first. For the existing multi-arch runner, the first real OCR
+engine is **Tesseract**: classical ML, CPU-only, apt-packaged on amd64/arm64, and small enough to
+bake into the shared runner without adding a dedicated OCR image. PaddleOCR/PP-OCRv6 remains the
+likely upgrade if this becomes more than a demo: it is a fuller document OCR pipeline, but its
+PaddlePaddle runtime/model packaging is heavier and better suited to a dedicated scale-to-zero OCR
+runner if/when usage justifies that extra infra.
 
 Initial mission:
 
@@ -362,7 +365,7 @@ missions/ocr/
   forge.toml
   mission.mcl
   experts/Ocr/expert.md          kind: exec
-  tools/ocr.py
+  experts/Ocr/ocr.py
 ```
 
 First implementation can use Python in the runner image. This does not violate AOT because
@@ -374,7 +377,8 @@ Model/runtime choices:
   routing. YAGNI until real usage justifies it.
 - Use small test images for the demo. If OCR proves useful and image size/runtime becomes painful,
   split to a dedicated scale-to-zero OCR runner later.
-- Bake only the minimum OCR dependencies/model assets needed for the first demo.
+- Bake only the minimum OCR dependencies needed for the first demo (`tesseract-ocr`,
+  `poppler-utils` for PDF-to-image text extraction).
 - Do not download models on every request.
 - CPU-first. GPU declarations are a later `resources:` concern.
 
@@ -387,9 +391,9 @@ Model/runtime choices:
 | 3 | Add `ForgeAPI` artifact store seam | Done locally | Filesystem `IArtifactStore` tested for metadata, owner isolation, and declared 100 MB cap; full suite green 2026-07-20. |
 | 4 | Add upload/download HTTP projections | Done locally | `UploadArtifact`/`GetArtifact` endpoints and CLI raw upload/download client path implemented; hosted auth smoke still covered by task 9. |
 | 5 | Extend runner contract + GHA-style staging | Done locally | Runner receives input artifact metadata, stages bytes under `FORGE_WORK_DIR/inputs`, sets `FORGE_*` env vars + MCL context vars, and cleans up after the run. |
-| 6 | Extend output artifact collection | Done locally | Deterministic artifact path tested through `MissionExecutionService`; CLI writes returned artifacts to disk; placeholder OCR script produced `.txt` and `.pdf` in `/private/tmp`. |
-| 7 | Build hosted OCR mission (`mode=text`) | Not started | `forge exec ocr --input ./scan.jpg` writes inferred `./scan.txt` against hosted dev. |
-| 8 | Build hosted OCR mission (`mode=pdf`) | Not started | `forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf` writes a searchable PDF against hosted dev. |
+| 6 | Extend output artifact collection | Done locally | Deterministic artifact path tested through `MissionExecutionService`; CLI writes returned artifacts to disk; local script fallback produced `.txt` and `.pdf` in `/private/tmp`. |
+| 7 | Build hosted OCR mission (`mode=text`) | Ready for hosted verify | `Dockerfile.runner` installs Tesseract; `forge exec ocr --input ./scan.jpg` still needs hosted dev verification to prove inferred `./scan.txt`. |
+| 8 | Build hosted OCR mission (`mode=pdf`) | Ready for hosted verify | `Dockerfile.runner` installs Tesseract; `forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf` still needs hosted dev verification. |
 | 9 | Deploy and verify | Not started | Live run on `api.forge.katasec.com`, real debit, progress shown, input/output bytes verified by sha256. |
 
 ## Open Decisions
@@ -403,6 +407,8 @@ impossible:
 - 100 MB max upload, no chunking.
 - One `ocr` mission; `mode=text` default, `mode=pdf` explicit.
 - Existing runner only, no dedicated OCR runner/pool.
+- Tesseract-first for the shared-runner demo; PaddleOCR remains a later dedicated-runner upgrade if
+  OCR usage justifies the package/model weight.
 - GHA-inspired `FORGE_*` staging contract.
 - Generic artifact capability metadata in `missions/ocr/forge.toml`.
 

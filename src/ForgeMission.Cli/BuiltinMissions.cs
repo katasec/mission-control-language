@@ -6,7 +6,7 @@ namespace ForgeMission.Cli;
 /// only return the exact content behind a digest, so a pull is self-verifying (cosign signatures
 /// land in 39.5 for third-party/custom missions). Published to <c>ghcr.io/katasec</c> 2026-07-09; republished 0.2.0 with role:agent terminal experts (42.4 quick win) 2026-07-17.
 /// </summary>
-public sealed record BuiltinMission(string Label, string Description, string OciRef, string LocalDir);
+public sealed record BuiltinMission(string Label, string Description, string? OciRef, string LocalDir);
 
 public static class BuiltinMissions
 {
@@ -27,7 +27,7 @@ public static class BuiltinMissions
         new("WebSearch", "Grounded, source-cited answers via live web search — classifies, searches when current data is needed (42.6 @websearch)",
             $"{Reg}/forge-mission-websearch@sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d",         "websearch"),
         new("Ocr",       "Deterministic OCR artifact demo — accepts an uploaded image/PDF and returns text or PDF output (42.6a)",
-            $"{Reg}/forge-mission-ocr@sha256:0000000000000000000000000000000000000000000000000000000000000000",               "ocr"),
+            null,                                                                                                                "ocr"),
     ];
 
     /// <summary>
@@ -43,6 +43,14 @@ public static class BuiltinMissions
         foreach (var b in All)
         {
             string dir;
+            if (b.OciRef is null)
+            {
+                dir = Path.Combine(bakedInDir, b.LocalDir);
+                Console.Error.WriteLine($"Runner: built-in '{b.Label}' uses baked-in mission {dir}");
+                specs.Add((b.Label, b.Description, Path.Combine(dir, "mission.mcl")));
+                continue;
+            }
+
             try
             {
                 var (cacheDir, status) = await OciMissionPuller.PullAsync(b.OciRef, refresh: false, ct);
