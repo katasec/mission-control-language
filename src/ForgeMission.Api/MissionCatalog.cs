@@ -1,3 +1,5 @@
+using ForgeMission.Runner.Contracts;
+
 namespace ForgeMission.Api;
 
 /// <summary>
@@ -33,7 +35,13 @@ public interface IMissionCatalog
 }
 
 public sealed record CatalogEntry(
-    string Handle, string Description, string Publisher, string Version, bool Verified, string MissionRef);
+    string Handle,
+    string Description,
+    string Publisher,
+    string Version,
+    bool Verified,
+    string MissionRef,
+    MissionArtifactCapabilities? ArtifactCapabilities);
 
 /// <summary>
 /// Today's only <see cref="IMissionCatalog"/> implementation: a hardcoded entry list filtered
@@ -56,31 +64,36 @@ public sealed class StaticMissionCatalog : IMissionCatalog
 {
     private readonly List<CatalogEntry> _entries = [];
 
-    /// <param name="availableMissionRefs">Mission refs the runner can execute (from GET /missions).
+    /// <param name="availableMissions">Missions the runner can execute (from GET /missions).
     /// An entry whose ref is absent is skipped, so its handle simply won't resolve.</param>
-    public StaticMissionCatalog(IReadOnlySet<string> availableMissionRefs)
+    public StaticMissionCatalog(IReadOnlyList<MissionInfo> availableMissions)
     {
-        Register(availableMissionRefs, new CatalogEntry(
+        Register(availableMissions, new CatalogEntry(
             Handle: "websearch",
             Description: "Grounded, source-cited answers via live web search — classifies, searches when current data is needed.",
             Publisher: IMissionCatalog.DefaultPublisher,
             Version: "0.1.0",
             Verified: true,
-            MissionRef: "WebSearch"));
+            MissionRef: "WebSearch",
+            ArtifactCapabilities: null));
 
-        Register(availableMissionRefs, new CatalogEntry(
+        Register(availableMissions, new CatalogEntry(
             Handle: "ocr",
             Description: "Deterministic OCR artifact demo — accepts an uploaded image/PDF and returns text or PDF output.",
             Publisher: IMissionCatalog.DefaultPublisher,
             Version: "0.1.0",
             Verified: true,
-            MissionRef: "Ocr"));
+            MissionRef: "Ocr",
+            ArtifactCapabilities: null));
     }
 
-    private void Register(IReadOnlySet<string> availableMissionRefs, CatalogEntry entry)
+    private void Register(IReadOnlyList<MissionInfo> availableMissions, CatalogEntry entry)
     {
-        if (availableMissionRefs.Contains(entry.MissionRef))
-            _entries.Add(entry);
+        var mission = availableMissions.FirstOrDefault(m =>
+            string.Equals(m.MissionRef, entry.MissionRef, StringComparison.Ordinal));
+        if (mission is null) return;
+
+        _entries.Add(entry with { ArtifactCapabilities = mission.ArtifactCapabilities });
     }
 
     public Task<CatalogEntry?> ResolveAsync(MissionHandle handle, string? version, CancellationToken ct)

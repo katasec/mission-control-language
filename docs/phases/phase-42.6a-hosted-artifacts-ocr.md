@@ -249,6 +249,9 @@ public interface IArtifactStore
 
     Task<ArtifactRead?> OpenAsync(
         string artifactId, PlatformKeyContext owner, CancellationToken ct);
+
+    Task DeleteAsync(
+        string artifactId, PlatformKeyContext owner, CancellationToken ct);
 }
 ```
 
@@ -267,6 +270,11 @@ Access rules:
 - Artifacts are **ephemeral run scratch only**. Uploaded input bytes live only long enough for the
   run; produced output bytes live only long enough for the CLI to fetch and save them. No user-facing
   retention guarantee, no document library.
+- `GetArtifact` downloads are single-serve: after a completed response copy, ForgeAPI deletes the
+  API artifact record/file and later reads return not-found semantics.
+- Known demo limitation: an artifact that is never downloaded can remain in ephemeral scratch until
+  the process/container dies. A durable backend needs an explicit TTL/sweeper before this becomes
+  product storage.
 
 ## Runner Contract
 

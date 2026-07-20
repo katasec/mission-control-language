@@ -11,5 +11,5 @@ outputKeys:
   summary: string
 ---
 
-Writes a deterministic placeholder OCR artifact for the hosted artifact bridge demo. The real
-PaddleOCR implementation will replace the script while keeping the same file staging contract.
+Writes text or PDF OCR output with Tesseract through the hosted artifact bridge. Local placeholder
+output is available only when FORGE_OCR_ALLOW_PLACEHOLDER=1 is explicitly set.

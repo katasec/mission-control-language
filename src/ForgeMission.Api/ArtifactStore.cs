@@ -8,6 +8,8 @@ namespace ForgeMission.Api;
 /// Ephemeral artifact scratch for API A. This is run I/O, not document storage: callers upload
 /// bytes, a mission consumes them, and produced bytes are downloaded by id. The store authorizes by
 /// artifact id + platform-key principal; unknown and wrong-owner reads both return null.
+/// Downloads are single-serve: <c>GetArtifact</c> deletes after a completed response copy. Artifacts
+/// that are never downloaded still leak until a future retention backend/sweeper lands.
 /// </summary>
 public interface IArtifactStore
 {
@@ -18,6 +20,8 @@ public interface IArtifactStore
         CancellationToken ct);
 
     Task<ArtifactRead?> OpenAsync(string artifactId, PlatformKeyContext owner, CancellationToken ct);
+
+    Task DeleteAsync(string artifactId, PlatformKeyContext owner, CancellationToken ct);
 }
 
 public sealed record ArtifactWriteRequest(
@@ -88,6 +92,17 @@ public sealed class FileArtifactStore(IConfiguration configuration) : IArtifactS
 
         Stream stream = File.OpenRead(stored.Path);
         return Task.FromResult<ArtifactRead?>(new ArtifactRead(stored.Artifact, stream));
+    }
+
+    public Task DeleteAsync(string artifactId, PlatformKeyContext owner, CancellationToken ct)
+    {
+        if (!_artifacts.TryGetValue(artifactId, out var stored) || stored.Owner != owner.MemberId)
+            return Task.CompletedTask;
+
+        _artifacts.TryRemove(artifactId, out _);
+        if (File.Exists(stored.Path))
+            File.Delete(stored.Path);
+        return Task.CompletedTask;
     }
 
     private static async Task<(long Size, string Sha256)> WriteAndHashAsync(

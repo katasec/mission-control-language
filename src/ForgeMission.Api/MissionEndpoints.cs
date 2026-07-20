@@ -30,7 +30,18 @@ public static class MissionEndpoints
 
         if (!msg.Stream)
         {
-            var response = await svc.ExecuteAsync(msg, principal, ctx.RequestAborted);
+            ExecuteMissionResponse response;
+            try
+            {
+                response = await svc.ExecuteAsync(msg, principal, ctx.RequestAborted);
+            }
+            catch
+            {
+                response = new ExecuteMissionResponse
+                {
+                    ResponseStatus = ResponseStatus.Fail(ErrorCode.RunFailed, "The mission run failed."),
+                };
+            }
             ctx.Response.StatusCode = HttpStatus(response.ResponseStatus);
             ctx.Response.ContentType = "application/json";
             var json = JsonSerializer.SerializeToUtf8Bytes(response, MessagesJsonContext.Default.ExecuteMissionResponse);
@@ -135,6 +146,7 @@ public static class MissionEndpoints
         ctx.Response.Headers["X-Forge-Artifact-Sha256"] = read.Artifact.Sha256;
         ctx.Response.Headers["X-Forge-Artifact-Size"] = read.Artifact.Size.ToString();
         await read.Content.CopyToAsync(ctx.Response.Body, ctx.RequestAborted);
+        await artifacts.DeleteAsync(msg.ArtifactId, principal, ctx.RequestAborted);
     }
 
     private static async Task<SearchMissionsResponse> SearchMissionsAsync(

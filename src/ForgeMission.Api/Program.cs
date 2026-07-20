@@ -46,11 +46,11 @@ builder.Services.AddPlatformKeyResolver(new PlatformKeyResolverOptions
 // GET /missions at boot, same precedent AgentRegistry (ForgeUI) already sets: a mission whose
 // backing ref the runner doesn't currently advertise (e.g. a missing provider key) simply doesn't
 // resolve rather than 500ing.
-var availableMissionRefs = await ProbeRunnerMissionsAsync(runnerBaseUrl);
-Console.Error.WriteLine(availableMissionRefs.Count == 0
+var availableMissions = await ProbeRunnerMissionsAsync(runnerBaseUrl);
+Console.Error.WriteLine(availableMissions.Count == 0
     ? $"ForgeAPI: runner at {runnerBaseUrl} advertised no missions — the catalog will resolve nothing."
-    : $"ForgeAPI: runner advertises {availableMissionRefs.Count} mission(s): {string.Join(", ", availableMissionRefs)}.");
-builder.Services.AddSingleton<IMissionCatalog>(new StaticMissionCatalog(availableMissionRefs));
+    : $"ForgeAPI: runner advertises {availableMissions.Count} mission(s): {string.Join(", ", availableMissions.Select(m => m.MissionRef))}.");
+builder.Services.AddSingleton<IMissionCatalog>(new StaticMissionCatalog(availableMissions));
 
 // GetRun storage (M6) — in-memory today; blob storage is the target shape (see IRunStore's doc).
 builder.Services.AddSingleton<IRunStore, InMemoryRunStore>();
@@ -88,7 +88,7 @@ app.Run();
 
 // Same retry-probe shape as ForgeUI's Program.cs (ProbeRunnerMissionsAsync) — the runner may still be
 // starting when this gateway boots, so a few attempts with a short backoff ride out that race.
-static async Task<IReadOnlySet<string>> ProbeRunnerMissionsAsync(string baseUrl)
+static async Task<IReadOnlyList<MissionInfo>> ProbeRunnerMissionsAsync(string baseUrl)
 {
     using var http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(5) };
     for (var attempt = 1; attempt <= 5; attempt++)
@@ -98,7 +98,7 @@ static async Task<IReadOnlySet<string>> ProbeRunnerMissionsAsync(string baseUrl)
             var missions = await http.GetFromJsonAsync(
                 "/missions", RunContractsContext.Default.IReadOnlyListMissionInfo);
             if (missions is not null)
-                return missions.Select(m => m.MissionRef).ToHashSet(StringComparer.Ordinal);
+                return missions;
         }
         catch (Exception ex)
         {
@@ -106,5 +106,5 @@ static async Task<IReadOnlySet<string>> ProbeRunnerMissionsAsync(string baseUrl)
         }
         await Task.Delay(TimeSpan.FromSeconds(2));
     }
-    return new HashSet<string>();
+    return [];
 }
