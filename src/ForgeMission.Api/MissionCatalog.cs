@@ -85,6 +85,15 @@ public sealed class StaticMissionCatalog : IMissionCatalog
             Verified: true,
             MissionRef: "Ocr",
             ArtifactCapabilities: null));
+
+        Register(availableMissions, new CatalogEntry(
+            Handle: "summarize",
+            Description: "OCR + verified LLM synthesis — accepts an uploaded image/PDF and returns a grounded summary.",
+            Publisher: IMissionCatalog.DefaultPublisher,
+            Version: "0.1.0",
+            Verified: true,
+            MissionRef: "Summarize",
+            ArtifactCapabilities: null));
     }
 
     private void Register(IReadOnlyList<MissionInfo> availableMissions, CatalogEntry entry)

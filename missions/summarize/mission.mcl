@@ -1,0 +1,9 @@
+// Forge Summarize — extract text from an uploaded document/image, synthesize a concise
+// grounded summary, then verify that the summary is supported by the extracted source text.
+mission Summarize(goal) loop(2) = {
+    Extract
+    -> Answerer
+    -> Verifier
+}
+
+output(Summarize)

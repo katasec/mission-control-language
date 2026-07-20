@@ -1,0 +1,16 @@
+[providers.default]
+provider = "openai"
+model    = env("MCL_MODEL", "gpt-4o-mini")
+apiKey   = env("MCL_API_KEY")
+
+[execution]
+backend        = "process"
+defaultTimeout = "30s"
+
+[capabilities.artifacts.inputs.source]
+content_types = [
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+]
+max_size_mb = 100

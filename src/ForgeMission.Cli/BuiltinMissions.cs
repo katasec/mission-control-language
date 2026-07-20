@@ -28,6 +28,8 @@ public static class BuiltinMissions
             $"{Reg}/forge-mission-websearch@sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d",         "websearch"),
         new("Ocr",       "Deterministic OCR artifact demo — accepts an uploaded image/PDF and returns text or PDF output (42.6a)",
             null,                                                                                                                "ocr"),
+        new("Summarize", "OCR + verified LLM synthesis — accepts an uploaded image/PDF and returns a grounded summary (42.6a)",
+            null,                                                                                                                "summarize"),
     ];
 
     /// <summary>
