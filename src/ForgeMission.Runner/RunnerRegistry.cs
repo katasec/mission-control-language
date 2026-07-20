@@ -1,6 +1,7 @@
 using ForgeMission.Core.Experts;
 using ForgeMission.Core.Manifest;
 using ForgeMission.Core.Resolution;
+using ForgeMission.Runner.Contracts;
 using ForgeMission.Parser;
 using MclProgram = ForgeMission.Parser.Program;
 
