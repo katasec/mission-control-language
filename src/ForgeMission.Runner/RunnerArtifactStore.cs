@@ -8,6 +8,7 @@ internal interface IRunnerArtifactStore
 {
     Task<RunArtifact> SaveAsync(RunArtifactWriteRequest request, Stream content, CancellationToken ct);
     Task<RunnerArtifactRead?> OpenAsync(string artifactId, CancellationToken ct);
+    Task DeleteAsync(string artifactId, CancellationToken ct);
 }
 
 internal sealed record RunArtifactWriteRequest(
@@ -78,6 +79,16 @@ internal sealed class RunnerArtifactStore(IConfiguration configuration) : IRunne
 
         Stream stream = File.OpenRead(stored.Path);
         return Task.FromResult<RunnerArtifactRead?>(new RunnerArtifactRead(stored.Artifact, stream));
+    }
+
+    public Task DeleteAsync(string artifactId, CancellationToken ct)
+    {
+        if (!_artifacts.TryRemove(artifactId, out var stored))
+            return Task.CompletedTask;
+
+        if (File.Exists(stored.Path))
+            File.Delete(stored.Path);
+        return Task.CompletedTask;
     }
 
     private static async Task<(long Size, string Sha256)> WriteAndHashAsync(

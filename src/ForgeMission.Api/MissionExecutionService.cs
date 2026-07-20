@@ -108,12 +108,18 @@ public sealed class MissionExecutionService(
             inputArtifacts = await CopyInputsToRunnerAsync(
                 msg.InputArtifactIds,
                 principal,
+                entry,
                 runner,
                 ct);
         }
         catch (ArtifactException ex)
         {
             return Fail(runId, ex.ErrorCode, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Input artifact staging failed for mission '{Mission}'", msg.Mission);
+            return Fail(runId, ErrorCode.RunFailed, "The mission run failed.");
         }
 
         // M9: the server owns missionRef + policy, never the client. Built-in catalog entries always
@@ -137,16 +143,30 @@ public sealed class MissionExecutionService(
             return Fail(runId, ErrorCode.RunFailed, "The mission run failed.");
         }
 
-        var outputArtifacts = await CopyOutputsFromRunnerAsync(
-            result.OutputArtifacts,
-            principal,
-            runner,
-            ct);
-
         // M7: idempotent against msg.ClientToken — a retry of the same call returns the prior debit.
         var cost = await billing.SettleRunAsync(
             principal.MemberId, entry.MissionRef, result.Usage, ct, msg.ClientToken);
         var balance = await billing.GetBalanceMicroUsdAsync(principal.MemberId, ct);
+
+        List<MissionArtifact> outputArtifacts;
+        try
+        {
+            outputArtifacts = await CopyOutputsFromRunnerAsync(
+                result.OutputArtifacts,
+                principal,
+                runner,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Output artifact copy failed for mission '{MissionRef}'", entry.MissionRef);
+            return Fail(
+                runId,
+                ErrorCode.RunFailed,
+                "The mission run failed.",
+                MapUsage(result.Usage, cost),
+                balance);
+        }
 
         var response = new ExecuteMissionResponse
         {
@@ -167,14 +187,7 @@ public sealed class MissionExecutionService(
                 Reason = t.Reason,
                 Attempt = t.Attempt,
             }).ToList(),
-            Usage = new MissionUsage
-            {
-                InputTokens = result.Usage.InputTokens,
-                OutputTokens = result.Usage.OutputTokens,
-                ComputeSeconds = result.Usage.ComputeSeconds,
-                Model = result.Usage.Model,
-                CostMicroUsd = cost,
-            },
+            Usage = MapUsage(result.Usage, cost),
             BalanceMicroUsd = balance,
             ResponseStatus = ResponseStatus.Ok(),
         };
@@ -183,10 +196,26 @@ public sealed class MissionExecutionService(
         return response;
     }
 
-    private static ExecuteMissionResponse Fail(string runId, string errorCode, string message) => new()
+    private static ExecuteMissionResponse Fail(
+        string runId,
+        string errorCode,
+        string message,
+        MissionUsage? usage = null,
+        long balanceMicroUsd = 0) => new()
     {
         RunId = runId,
+        Usage = usage ?? new MissionUsage(),
+        BalanceMicroUsd = balanceMicroUsd,
         ResponseStatus = ResponseStatus.Fail(errorCode, message),
+    };
+
+    private static MissionUsage MapUsage(RunUsage usage, long costMicroUsd) => new()
+    {
+        InputTokens = usage.InputTokens,
+        OutputTokens = usage.OutputTokens,
+        ComputeSeconds = usage.ComputeSeconds,
+        Model = usage.Model,
+        CostMicroUsd = costMicroUsd,
     };
 
     private static string NewRunId() => Guid.NewGuid().ToString("N");
@@ -202,21 +231,63 @@ public sealed class MissionExecutionService(
     private async Task<IReadOnlyList<RunArtifact>?> CopyInputsToRunnerAsync(
         List<string>? artifactIds,
         PlatformKeyContext principal,
+        CatalogEntry entry,
         HttpClient runner,
         CancellationToken ct)
     {
         if (artifactIds is not { Count: > 0 }) return null;
 
-        var copied = new List<RunArtifact>();
-        foreach (var artifactId in artifactIds)
+        var inputs = new List<ArtifactRead>();
+        try
         {
-            await using var input = await artifacts.OpenAsync(artifactId, principal, ct)
-                ?? throw new ArtifactException(ErrorCode.ArtifactNotFound, $"Artifact '{artifactId}' was not found.");
+            foreach (var artifactId in artifactIds)
+            {
+                var input = await artifacts.OpenAsync(artifactId, principal, ct)
+                    ?? throw new ArtifactException(ErrorCode.ArtifactNotFound, $"Artifact '{artifactId}' was not found.");
+                inputs.Add(input);
+            }
 
-            copied.Add(await UploadToRunnerAsync(runner, input.Artifact, input.Content, ct));
+            ValidateInputArtifactCapabilities(inputs.Select(i => i.Artifact), entry.ArtifactCapabilities);
+
+            var copied = new List<RunArtifact>();
+            foreach (var input in inputs)
+                copied.Add(await UploadToRunnerAsync(runner, input.Artifact, input.Content, ct));
+
+            return copied;
         }
+        finally
+        {
+            foreach (var input in inputs)
+                await input.DisposeAsync();
+        }
+    }
 
-        return copied;
+    private static void ValidateInputArtifactCapabilities(
+        IEnumerable<MissionArtifact> inputArtifacts,
+        MissionArtifactCapabilities? capabilities)
+    {
+        if (capabilities?.Inputs is not { Count: > 0 } inputs) return;
+
+        foreach (var artifact in inputArtifacts)
+        {
+            var match = inputs.FirstOrDefault(i => IsAllowed(artifact, i));
+            if (match is not null) continue;
+
+            var allowedTypes = string.Join(", ", inputs.SelectMany(i => i.ContentTypes).Distinct(StringComparer.OrdinalIgnoreCase));
+            var maxSizeMb = inputs.Max(i => i.MaxSizeMb);
+            throw new ArtifactException(
+                ErrorCode.InvalidInput,
+                $"Artifact '{artifact.Name}' is not allowed for this mission. " +
+                $"Allowed content types: {allowedTypes}; max size: {maxSizeMb} MB.");
+        }
+    }
+
+    private static bool IsAllowed(MissionArtifact artifact, MissionArtifactInputCapability input)
+    {
+        var contentTypeOk = input.ContentTypes.Any(t =>
+            string.Equals(t, artifact.ContentType, StringComparison.OrdinalIgnoreCase));
+        var maxBytes = input.MaxSizeMb * 1024L * 1024L;
+        return contentTypeOk && artifact.Size <= maxBytes;
     }
 
     private static async Task<RunArtifact> UploadToRunnerAsync(
@@ -270,9 +341,27 @@ public sealed class MissionExecutionService(
                 principal,
                 ct);
             copied.Add(saved.Artifact);
+            await DeleteRunnerArtifactAsync(runner, output.Id, ct);
         }
 
         return copied;
+    }
+
+    private async Task DeleteRunnerArtifactAsync(HttpClient runner, string artifactId, CancellationToken ct)
+    {
+        try
+        {
+            using var response = await runner.DeleteAsync($"/artifacts/{artifactId}", ct);
+            if (!response.IsSuccessStatusCode)
+                logger.LogWarning(
+                    "Runner artifact cleanup returned {StatusCode} for artifact '{ArtifactId}'",
+                    response.StatusCode,
+                    artifactId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Runner artifact cleanup failed for artifact '{ArtifactId}'", artifactId);
+        }
     }
 
     /// <summary>Consume the runner's NDJSON <c>/run/stream</c> — same client-side pattern as

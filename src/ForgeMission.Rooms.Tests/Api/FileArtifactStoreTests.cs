@@ -59,6 +59,49 @@ public sealed class FileArtifactStoreTests
     }
 
     [Fact]
+    public async Task Delete_removes_artifact_for_owner_and_is_idempotent()
+    {
+        var root = NewRoot();
+        var store = NewStore(root);
+        var owner = new PlatformKeyContext(Guid.NewGuid(), BalanceMicroUsd: 1);
+
+        var saved = await store.SaveAsync(
+            new ArtifactWriteRequest("scan.jpg", "image/jpeg", "", ArtifactRole.Input, DeclaredSize: 1),
+            new MemoryStream([1]),
+            owner,
+            CancellationToken.None);
+
+        await store.DeleteAsync(saved.Artifact.Id, owner, CancellationToken.None);
+        await store.DeleteAsync(saved.Artifact.Id, owner, CancellationToken.None);
+
+        var read = await store.OpenAsync(saved.Artifact.Id, owner, CancellationToken.None);
+        Assert.Null(read);
+        Directory.Delete(root, recursive: true);
+    }
+
+    [Fact]
+    public async Task Delete_wrong_owner_does_not_remove_artifact()
+    {
+        var root = NewRoot();
+        var store = NewStore(root);
+        var owner = new PlatformKeyContext(Guid.NewGuid(), BalanceMicroUsd: 1);
+        var otherOwner = new PlatformKeyContext(Guid.NewGuid(), BalanceMicroUsd: 1);
+
+        var saved = await store.SaveAsync(
+            new ArtifactWriteRequest("scan.jpg", "image/jpeg", "", ArtifactRole.Input, DeclaredSize: 1),
+            new MemoryStream([1]),
+            owner,
+            CancellationToken.None);
+
+        await store.DeleteAsync(saved.Artifact.Id, otherOwner, CancellationToken.None);
+
+        await using var read = await store.OpenAsync(saved.Artifact.Id, owner, CancellationToken.None);
+        Assert.NotNull(read);
+        Directory.Delete(root, recursive: true);
+    }
+
+
+    [Fact]
     public async Task Save_rejects_declared_size_above_limit()
     {
         var store = NewStore(NewRoot());

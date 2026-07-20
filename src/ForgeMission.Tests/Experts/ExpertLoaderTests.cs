@@ -182,6 +182,64 @@ public class ExpertLoaderTests : IDisposable
         Assert.Null(ex);
     }
 
+    [Fact]
+    public void Validate_SelfReferencingMission_ThrowsCircularReference()
+    {
+        var ast = MclParser.Parse("""
+            mission X = {
+                X
+            }
+            """);
+
+        var ex = Assert.Throws<ExpertLoadException>(() =>
+            ExpertLoader.Validate(ast, [], missionFilePath: "mission.mcl"));
+
+        Assert.Contains("Circular mission reference: 'X' -> 'X'", ex.Message);
+        Assert.Equal("mission.mcl", ex.FilePath);
+        Assert.True(ex.Line > 0);
+    }
+
+    [Fact]
+    public void Validate_MultiMissionCycle_ThrowsCircularReference()
+    {
+        var ast = MclParser.Parse("""
+            mission A = {
+                B
+            }
+
+            mission B = {
+                A
+            }
+            """);
+
+        var ex = Assert.Throws<ExpertLoadException>(() =>
+            ExpertLoader.Validate(ast, [], missionFilePath: "mission.mcl"));
+
+        Assert.Contains("Circular mission reference: 'A' -> 'B' -> 'A'", ex.Message);
+        Assert.Equal("mission.mcl", ex.FilePath);
+    }
+
+    [Fact]
+    public void Validate_AcyclicSubMission_DoesNotThrow()
+    {
+        var ast = MclParser.Parse("""
+            mission A = {
+                B
+            }
+
+            mission B = {
+                SomeExpert
+            }
+            """);
+
+        WriteDirExpert("SomeExpert", ValidExpertMarkdown("SomeExpert", "input", "output"));
+        var experts = new ExpertLoader(_dir).LoadAll();
+
+        var ex = Record.Exception(() => ExpertLoader.Validate(ast, experts));
+
+        Assert.Null(ex);
+    }
+
     // ---------------------------------------------------------------------------
     // Role field
 

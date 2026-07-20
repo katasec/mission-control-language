@@ -103,7 +103,18 @@ public sealed record RunProgress(string ExpertName, string Kind, string? Detail 
 /// <summary>An available mission the runner can execute — returned by <c>GET /missions</c> so the
 /// orchestrator can bind only the handles whose mission is actually loadable (e.g. a provider whose
 /// key is set on the runner).</summary>
-public sealed record MissionInfo(string MissionRef, string Description);
+public sealed record MissionInfo(
+    string MissionRef,
+    string Description,
+    MissionArtifactCapabilities? ArtifactCapabilities = null);
+
+public sealed record MissionArtifactCapabilities(
+    IReadOnlyList<MissionArtifactInputCapability> Inputs);
+
+public sealed record MissionArtifactInputCapability(
+    string Name,
+    IReadOnlyList<string> ContentTypes,
+    int MaxSizeMb);
 
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(RunRequest))]
@@ -112,4 +123,6 @@ public sealed record MissionInfo(string MissionRef, string Description);
 [JsonSerializable(typeof(RunStreamEvent))]
 [JsonSerializable(typeof(IReadOnlyList<MissionInfo>))]
 [JsonSerializable(typeof(MissionInfo))]
+[JsonSerializable(typeof(MissionArtifactCapabilities))]
+[JsonSerializable(typeof(MissionArtifactInputCapability))]
 public partial class RunContractsContext : JsonSerializerContext { }

@@ -81,7 +81,7 @@ ForgeServe.MapWires(app, "forge-runner",
 
 // The orchestrator binds only handles whose mission is loadable here (e.g. provider key present).
 app.MapGet("/missions", (RunnerRegistry reg) =>
-    reg.All.Select(m => new MissionInfo(m.Label, m.Description)).ToList());
+    reg.All.Select(m => new MissionInfo(m.Label, m.Description, m.ArtifactCapabilities)).ToList());
 
 // Internal raw-byte artifact scratch. ForgeAPI copies public uploads here immediately before a run,
 // and copies produced outputs back afterward. Bytes stay off the JSON run contract.
@@ -121,6 +121,12 @@ app.MapGet("/artifacts/{id}", async (string id, HttpContext ctx, IRunnerArtifact
     ctx.Response.Headers["X-Forge-Artifact-Sha256"] = read.Artifact.Sha256;
     await read.Content.CopyToAsync(ctx.Response.Body, ctx.RequestAborted);
     return Results.Empty;
+});
+
+app.MapDelete("/artifacts/{id}", async (string id, HttpContext ctx, IRunnerArtifactStore artifacts) =>
+{
+    await artifacts.DeleteAsync(id, ctx.RequestAborted);
+    return Results.NoContent();
 });
 
 // The one hot path: run a mission, return result + trace + cost signals.

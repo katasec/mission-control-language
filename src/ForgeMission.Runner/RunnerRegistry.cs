@@ -17,7 +17,8 @@ internal sealed record RunnerMission(
     string                               Description,
     MclProgram                           Ast,
     Dictionary<string, ExpertDefinition> Experts,
-    ProviderProfile?                     Profile);
+    ProviderProfile?                     Profile,
+    MissionArtifactCapabilities?         ArtifactCapabilities);
 
 /// <summary>
 /// The runner's own mission registry, loaded once at boot from the missions baked into the image
@@ -55,6 +56,23 @@ internal sealed class RunnerRegistry
             var ast      = MclParser.Parse(source);
             var lockFile = LockFileIO.Read(Path.Combine(dir, "mcl.lock"));
             var experts  = ExpertResolver.ResolveAll(lockFile, dir, verbose: null, warnings: Console.Error);
+            try
+            {
+                // Future request-time/custom mission load paths must also validate before registration;
+                // PipelineRunner intentionally has no runtime mission-recursion depth guard.
+                ExpertLoader.Validate(ast, experts, Console.Error, contractErrorsAreFatal: true, path);
+            }
+            catch (AggregateExpertLoadException ex)
+            {
+                foreach (var error in ex.Errors)
+                    Console.Error.WriteLine($"Runner: '{label}' validation failed: {error.Message}");
+                continue;
+            }
+            catch (ExpertLoadException ex)
+            {
+                Console.Error.WriteLine($"Runner: '{label}' validation failed: {ex.Message}");
+                continue;
+            }
             var manifest = ForgeTomlReader.TryRead(path);
 
             ProviderProfile? profile = null;
@@ -75,9 +93,29 @@ internal sealed class RunnerRegistry
                 Console.Error.WriteLine($"Runner: no forge.toml for '{label}' — LLM steps won't work.");
             }
 
-            byLabel[label] = new RunnerMission(label, description, ast, experts, profile);
+            byLabel[label] = new RunnerMission(
+                label,
+                description,
+                ast,
+                experts,
+                profile,
+                ToContractCapabilities(manifest?.Capabilities.Artifacts));
         }
 
         return new RunnerRegistry(byLabel);
+    }
+
+    private static MissionArtifactCapabilities? ToContractCapabilities(ArtifactCapabilities? artifacts)
+    {
+        if (artifacts is null || artifacts.Inputs.Count == 0)
+            return null;
+
+        return new MissionArtifactCapabilities(
+            artifacts.Inputs
+                .Select(i => new MissionArtifactInputCapability(
+                    i.Key,
+                    i.Value.ContentTypes,
+                    i.Value.MaxSizeMb))
+                .ToList());
     }
 }

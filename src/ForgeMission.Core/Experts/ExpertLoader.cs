@@ -72,13 +72,18 @@ public class ExpertLoader(string expertsDirectory)
         return experts;
     }
 
-    public static void Validate(Program ast, Dictionary<string, ExpertDefinition> experts,
-        TextWriter? warnings = null, bool contractErrorsAreFatal = false)
+    public static void Validate(
+        Program ast,
+        Dictionary<string, ExpertDefinition> experts,
+        TextWriter? warnings = null,
+        bool contractErrorsAreFatal = false,
+        string? missionFilePath = null)
     {
-        var missionNames = ast.Declarations
+        var missionsByName = ast.Declarations
             .OfType<MissionDeclaration>()
-            .Select(m => m.Name)
-            .ToHashSet(StringComparer.Ordinal);
+            .ToDictionary(m => m.Name, StringComparer.Ordinal);
+
+        var missionNames = missionsByName.Keys.ToHashSet(StringComparer.Ordinal);
 
         var missionParams = ast.Declarations
             .OfType<MissionDeclaration>()
@@ -102,6 +107,8 @@ public class ExpertLoader(string expertsDirectory)
                 $"Missing expert definitions for: {string.Join(", ", missing)}. " +
                 "Each expert must have a matching markdown file in the experts directory.");
 
+        ValidateMissionReferenceCycles(missionsByName, missionFilePath);
+
         var contractIssues = ast.Declarations
             .OfType<MissionDeclaration>()
             .SelectMany(m => ValidateContextKeys(m, experts))
@@ -116,6 +123,83 @@ public class ExpertLoader(string expertsDirectory)
             foreach (var issue in contractIssues)
                 warnings.WriteLine($"warning {issue.Message}");
     }
+
+    private static void ValidateMissionReferenceCycles(
+        Dictionary<string, MissionDeclaration> missionsByName,
+        string? missionFilePath)
+    {
+        var graph = BuildMissionReferenceGraph(missionsByName);
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        var inStack = new HashSet<string>(StringComparer.Ordinal);
+        var stack = new List<string>();
+
+        foreach (var missionName in missionsByName.Keys)
+            if (!visited.Contains(missionName))
+                Visit(missionName);
+
+        void Visit(string missionName)
+        {
+            visited.Add(missionName);
+            inStack.Add(missionName);
+            stack.Add(missionName);
+
+            foreach (var edge in graph.GetValueOrDefault(missionName, []))
+            {
+                if (!visited.Contains(edge.ToMission))
+                {
+                    Visit(edge.ToMission);
+                    continue;
+                }
+
+                if (!inStack.Contains(edge.ToMission)) continue;
+
+                var cycle = CyclePath(stack, edge.ToMission);
+                var message = $"Circular mission reference: {FormatCycle(cycle)}";
+                var span = edge.Step.Span;
+                throw new ExpertLoadException(
+                    message,
+                    missionFilePath,
+                    span?.StartLine ?? 0,
+                    span?.StartCol ?? 0,
+                    span?.EndCol ?? -1);
+            }
+
+            stack.RemoveAt(stack.Count - 1);
+            inStack.Remove(missionName);
+        }
+    }
+
+    private static Dictionary<string, List<MissionReferenceEdge>> BuildMissionReferenceGraph(
+        Dictionary<string, MissionDeclaration> missionsByName)
+    {
+        var graph = new Dictionary<string, List<MissionReferenceEdge>>(StringComparer.Ordinal);
+        foreach (var mission in missionsByName.Values)
+        {
+            foreach (var step in GetSteps(mission.Pipeline))
+            {
+                if (!missionsByName.ContainsKey(step.ExpertName)) continue;
+
+                if (!graph.TryGetValue(mission.Name, out var edges))
+                {
+                    edges = [];
+                    graph[mission.Name] = edges;
+                }
+                edges.Add(new MissionReferenceEdge(mission.Name, step.ExpertName, step));
+            }
+        }
+        return graph;
+    }
+
+    private static List<string> CyclePath(List<string> stack, string repeatedMission)
+    {
+        var start = stack.FindIndex(m => string.Equals(m, repeatedMission, StringComparison.Ordinal));
+        var cycle = stack[start..].ToList();
+        cycle.Add(repeatedMission);
+        return cycle;
+    }
+
+    private static string FormatCycle(List<string> cycle) =>
+        string.Join(" -> ", cycle.Select(m => $"'{m}'"));
 
     // Walk the pipeline accumulating declared outputKeys; emit diagnostics when a step's
     // inputKeys reference a key that no upstream step has declared, or with a mismatched type.
@@ -221,12 +305,17 @@ public class ExpertLoader(string expertsDirectory)
     }
 
     private static IEnumerable<string> GetStepNames(Pipeline pipeline)
+        => GetSteps(pipeline).Select(s => s.ExpertName);
+
+    private static IEnumerable<Step> GetSteps(Pipeline pipeline)
         => pipeline.Elements.SelectMany(e => e switch
         {
-            StepElement se     => (IEnumerable<string>)[se.Step.ExpertName],
-            ParallelElement pe => pe.Steps.Select(s => s.ExpertName),
-            _                  => Enumerable.Empty<string>()
+            StepElement se     => (IEnumerable<Step>)[se.Step],
+            ParallelElement pe => pe.Steps,
+            _                  => Enumerable.Empty<Step>()
         });
+
+    private sealed record MissionReferenceEdge(string FromMission, string ToMission, Step Step);
 
     internal static ExpertDefinition ParseFile(string path)
     {

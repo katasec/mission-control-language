@@ -42,7 +42,17 @@ def safe_stem(path: Path) -> str:
 
 def run_ocr(source: Path, output_dir: Path, stem: str, digest: str, mode: str) -> str:
     if shutil.which("tesseract") is None:
-        return write_placeholder(source, output_dir, stem, digest, mode)
+        if os.environ.get("FORGE_OCR_ALLOW_PLACEHOLDER") == "1":
+            print(
+                "warning: FORGE_OCR_ALLOW_PLACEHOLDER=1; using placeholder OCR output because tesseract is not on PATH",
+                file=sys.stderr,
+            )
+            return write_placeholder(source, output_dir, stem, digest, mode)
+
+        raise OcrToolError(
+            "tesseract is not installed or not on PATH. "
+            "Set FORGE_OCR_ALLOW_PLACEHOLDER=1 only for local placeholder testing."
+        )
 
     if mode == "text":
         text = extract_text(source)

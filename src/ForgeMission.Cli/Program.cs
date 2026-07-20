@@ -184,7 +184,7 @@ static Command BuildRunCommand()
         catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
         catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
 
-        if (!TryValidate(ast, expertDefs, contractErrorsAreFatal: true)) return;
+        if (!TryValidate(ast, expertDefs, contractErrorsAreFatal: true, mission.FullName)) return;
 
         Dictionary<string, object> seedContext;
         try { seedContext = ContextBuilder.Seed(ast, parsedVars); }
@@ -272,7 +272,7 @@ static Command BuildValidateCommand()
         {
             var expertDefs = TryLoadExperts(Path.Combine(missionDir, SourceResolver.DefaultExpertsDir));
             if (expertDefs is null) return;
-            if (TryValidate(ast, expertDefs))
+            if (TryValidate(ast, expertDefs, missionFilePath: mission.FullName))
                 Console.WriteLine("OK — mission is valid.");
         }
         else
@@ -281,7 +281,7 @@ static Command BuildValidateCommand()
             Dictionary<string, ExpertDefinition> expertDefs;
             try { expertDefs = ExpertResolver.ResolveAll(lockFile, missionDir, warnings: Console.Error); }
             catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); return; }
-            if (TryValidate(ast, expertDefs))
+            if (TryValidate(ast, expertDefs, missionFilePath: mission.FullName))
                 Console.WriteLine("OK — mission is valid.");
         }
     });
@@ -987,7 +987,7 @@ static async Task<(WebApplication App, string MissionPath, bool AnthropicDoor, b
     catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return null; }
     catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return null; }
 
-    if (!TryValidate(ast, expertDefs)) return null;
+    if (!TryValidate(ast, expertDefs, missionFilePath: missionPath)) return null;
 
     Dictionary<string, object> seedContext;
     try { seedContext = ContextBuilder.Seed(ast, new Dictionary<string, string>()); }
@@ -1166,12 +1166,15 @@ static Dictionary<string, ExpertDefinition>? TryLoadExperts(string expertsDir)
     catch (ExpertLoadException ex) { ReportExpertDiagnostic(ex); Environment.Exit(1); return null; }
 }
 
-static bool TryValidate(MclProgram ast, Dictionary<string, ExpertDefinition> experts,
-    bool contractErrorsAreFatal = false)
+static bool TryValidate(
+    MclProgram ast,
+    Dictionary<string, ExpertDefinition> experts,
+    bool contractErrorsAreFatal = false,
+    string? missionFilePath = null)
 {
     try
     {
-        ExpertLoader.Validate(ast, experts, Console.Error, contractErrorsAreFatal);
+        ExpertLoader.Validate(ast, experts, Console.Error, contractErrorsAreFatal, missionFilePath);
         return true;
     }
     catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); return false; }
@@ -1659,7 +1662,7 @@ static Command BuildMcpCommand()
         catch (AggregateExpertLoadException ex) { foreach (var e in ex.Errors) ReportExpertDiagnostic(e); Environment.Exit(1); return; }
         catch (ExpertLoadException ex)           { ReportExpertDiagnostic(ex); Environment.Exit(1); return; }
 
-        if (!TryValidate(ast, expertDefs, contractErrorsAreFatal: true)) return;
+        if (!TryValidate(ast, expertDefs, contractErrorsAreFatal: true, mission.FullName)) return;
 
         var firstMission = ast.Declarations.OfType<MissionDeclaration>().FirstOrDefault();
         if (firstMission is null) { Die("No mission declaration found in mission file."); return; }

@@ -1,4 +1,5 @@
 using ForgeMission.Api;
+using ForgeMission.Runner.Contracts;
 
 namespace ForgeMission.Rooms.Tests;
 
@@ -12,7 +13,7 @@ namespace ForgeMission.Rooms.Tests;
 public sealed class StaticMissionCatalogTests
 {
     private static StaticMissionCatalog CatalogWith(params string[] availableMissionRefs) =>
-        new(availableMissionRefs.ToHashSet(StringComparer.Ordinal));
+        new(availableMissionRefs.Select(r => new MissionInfo(r, Description: r)).ToList());
 
     [Fact]
     public async Task Bare_and_explicit_default_publisher_handles_resolve_identically()
