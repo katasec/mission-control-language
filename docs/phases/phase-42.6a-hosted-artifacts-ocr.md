@@ -58,9 +58,10 @@ What exists now:
   upload/download/output-path inference.
 - `missions/ocr` writes text/PDF artifacts. It uses Tesseract when the runner image provides it and
   falls back to deterministic placeholder output in local environments without OCR tools.
-- Hosted dev is deployed with `crforgeroomsdev.azurecr.io/forge-api:0.2.0` and
-  `crforgeroomsdev.azurecr.io/forge-runner:0.10.1`. Runner `0.10.1` includes the OCR mission
-  recursion fix (`mission Ocr` now runs expert `OcrExec`, not a same-named sub-mission).
+- Hosted dev is deployed with `crforgeroomsdev.azurecr.io/forge-api:0.2.1` and
+  `crforgeroomsdev.azurecr.io/forge-runner:0.10.4`. Runner `0.10.1` includes the OCR mission
+  recursion fix (`mission Ocr` now runs expert `OcrExec`, not a same-named sub-mission); runner
+  `0.10.4` adds the baked-in `Summarize` mission and a PDF-sized `Extract` timeout.
 - `docs/design/room-artifacts.md` describes a room artifact plane, but the current `src/` tree has
   no base64 artifact DTOs. Treat that doc as design/history for room artifacts, not as this shipped
   one-shot binary channel.
@@ -81,6 +82,17 @@ Verified against hosted dev on 2026-07-20:
   `Debited 12µ$ ... Ocr 0+0 tok / 0.79s`; `GetArtifact` returned `200 53602 application/pdf`.
 - Runner log for both runs: `Ran 'Ocr' [trusted] — verified=True steps=1`, and startup advertised
   `loaded 7 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr`.
+- `forge exec summarize --input
+  https://www.rochester.edu/ORPA/_assets/pdf/compl_ConsultingAgreementTemplate.pdf` returned a
+  grounded contract summary with `✓ verified`. The sample PDF was fetched client-side from a public
+  HTTPS URL, uploaded as `application/pdf` with 28,264 bytes, and summarized by
+  `Extract -> Answerer -> Verifier`.
+- Runner evidence for `summarize`: startup advertised
+  `loaded 8 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr, Summarize`; run
+  log: `Ran 'Summarize' [trusted] — verified=True steps=3 in 9989+503 tok / 113.70s`.
+- API evidence for `summarize`: `UploadArtifact` returned `200` for `application/pdf 28264`;
+  `ExecuteMission` returned `200 application/x-ndjson`; billing log:
+  `Debited 3506µ$ ... Summarize 9989+503 tok / 113.70s / gpt-4o-mini`.
 
 ## UX
 
@@ -387,6 +399,87 @@ account is disabled`, so the live proof used a public HTTPS PNG from the officia
 | # | Task | Status | Done when |
 |---|---|---|---|
 | 10 | URL input source for `forge exec` | Done live | CLI downloads an `http(s)://` `--input` client-side, uploads through the existing local-file path unchanged; live-verified against a public HTTPS OCR image with byte-identical local-file output. |
+
+## Task 11 — `@summarize`: OCR + verified LLM synthesis
+
+**Why:** `@ocr` demos raw extraction; this demos the thing people actually want — hand it a
+document, get back a trustworthy synthesis of it. Motivating story: legal teams dumping
+contracts into a generic chat tool for synthesis today, with no verification step and no
+audit trail. MCL's whole thesis is "verified answer, not just an LLM guess" — this mission is
+the one-command proof of that against a real, messy document instead of a chat prompt.
+
+**Reuses almost everything already built:** URL/local `--input` (Task 10), artifact
+upload/staging, PDF-via-`pdftoppm` extraction (existing `@ocr` mission), hosted billing. The
+only new pipeline piece is an LLM synthesis + verification stage on top of the extracted text.
+
+**Locked precedent to build from — don't design this from scratch, adapt it:**
+`missions/assistant/mission.mcl` already ships exactly this pattern —
+
+```
+mission Assistant(goal) loop(2) = {
+    Answerer
+    -> Verifier
+}
+output(Assistant)
+```
+
+with `Verifier` a `role: judge`, `kind: llm` expert that either fails with a reason (triggering
+a loop retry with feedback) or passes, echoing the answer verbatim. `MissionRunHandler.
+BuildAgentText` (`src/ForgeMission.Runner/MissionRunHandler.cs`) picks the verified answer text
+from **a step literally named `Answerer`** — so the new mission's synthesis step should be
+named `Answerer` to get the same "Verified" badge treatment as every other vanilla agent, not
+a bespoke output path.
+
+**The one real gap to close:** today's `OcrExec` (`missions/ocr/experts/Ocr/ocr.py`) returns a
+short metadata line as its JSON `summary` (`OCR for X; sha256=...; chars=N`), not the full
+extracted text — that's correct for `@ocr`'s own CLI footer and must not change, since it's a
+shipped, live-verified demo. This new mission needs the **full extracted text** available in
+context for `Answerer` to read via `{{...}}` templating. Proposed shape (confirm/counter-
+propose): a sibling exec expert for this mission's own package that does the same
+tesseract/`pdftoppm` extraction but returns the full text as its output — whether that's a
+small duplicated script or a shared extraction path is an open call; the missions-packaging
+model (self-contained `missions/<name>/experts/<Expert>/` directories) may or may not make
+sharing clean, and whoever's closer to that packaging code should call it.
+
+**Proposed pipeline** (confirm/counter-propose, same as above):
+
+```
+mission Summarize(goal) loop(2) = {
+    Extract          // kind: exec — OCR/PDF extraction, full text as output (the new piece)
+    -> Answerer       // kind: llm — synthesizes a summary from {{output}}
+    -> Verifier       // role: judge, kind: llm — grounding check against the source text
+}
+output(Summarize)
+```
+
+**Verifier's job** is narrower than Assistant's general-purpose fact-check: it should check the
+summary doesn't state a figure, date, party name, or clause that isn't actually present in the
+extracted source text (a grounding check, not a general truthfulness check — there's no
+external ground truth to check a document summary against besides the document itself).
+
+**Mission handle:** `summarize`, not `contract-summary` — a capability noun, matching `ocr`/
+`websearch`, not a use-case noun; the legal-contract framing is the demo's motivating story, not
+the mission's scope. Reuses the OCR mission's `[capabilities.artifacts.inputs.source]` shape
+(image/jpeg, image/png, application/pdf; 100 MB) in `forge.toml`, plus a `[providers.default]`
+block for the LLM steps (same shape as `missions/assistant/forge.toml`).
+
+**Non-goal for this pass:** no chunking/map-reduce for very long documents — a single-pass
+prompt is fine for a demo-sized contract; a genuinely long document (hundreds of pages) would
+need that later, but it's out of scope now.
+
+**Done when:**
+
+```
+forge login
+forge exec summarize --input <public-sample-contract-pdf-url>
+```
+
+returns a synthesized, verified summary of a real sample contract found on the public internet
+— live-verified, `✓ verified` badge, debited.
+
+| # | Task | Status | Done when |
+|---|---|---|---|
+| 11 | `@summarize` — OCR + verified LLM synthesis | Done live | `Extract -> Answerer -> Verifier` pipeline live-verified against the public Rochester consulting-agreement PDF; `✓ verified`, debited 3506µ$, runner verified 3 steps. |
 
 ## Manifest Capability Metadata
 

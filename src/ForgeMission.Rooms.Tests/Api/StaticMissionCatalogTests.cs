@@ -88,4 +88,15 @@ public sealed class StaticMissionCatalogTests
         Assert.NotNull(result);
         Assert.Equal("Ocr", result.MissionRef);
     }
+
+    [Fact]
+    public async Task Summarize_resolves_when_runner_advertises_backing_mission_ref()
+    {
+        var catalog = CatalogWith("Summarize");
+
+        var result = await catalog.ResolveAsync(MissionHandle.Parse("summarize"), version: null, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Summarize", result.MissionRef);
+    }
 }
