@@ -1,5 +1,5 @@
 ---
-name: Ocr
+name: OcrExec
 kind: exec
 command: python3
 args: [./ocr.py]
