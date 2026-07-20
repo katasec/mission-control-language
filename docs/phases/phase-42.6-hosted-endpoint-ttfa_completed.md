@@ -189,6 +189,195 @@ section — this is the narrative, that's the reference.
      `IMissionCatalog` never change, only `StaticMissionCatalog`'s single hardcoded entry list gets
      replaced by a real registry later.
 
+## Task 5a — build + local verification (2026-07-19)
+
+Built directly from the design-lock above with no further design questions raised, on branch
+`phase-42.6-task-5a-mission-invocation`. Two small gaps surfaced during the build that weren't
+design decisions so much as omissions in the locked doc — resolved inline rather than re-opening
+design review:
+
+- **`Principal` (M5).** No such type existed. Decision: reuse `ForgeMission.Billing.PlatformKeyContext`
+  (`MemberId`, `BalanceMicroUsd`) directly as the principal passed into message handlers — it already
+  is exactly the HTTP-adapter-resolved value M5 describes; introducing a second, identical type would
+  have been pure ceremony.
+- **`ErrorCode.RunNotFound`.** The locked authoritative error-code list (six codes) didn't separately
+  name a GetRun-not-found code, but `GetRunResponse`'s own doc comment said "e.g. RunNotFound" — an
+  evident oversight, not a decision to overload `RunFailed` (a 500) onto a 404 case. Added as an
+  eighth code, same additive precedent `MissionNotFound` already set.
+- **`ForgeAPI` never called `AuthBillingSchema.EnsureCreatedAsync`** — only `ForgeUI` did. Since
+  ForgeAPI now reads/writes `authbilling_db` directly (task 5a), it must not depend on ForgeUI having
+  booted first to create the tables. Added the same idempotent bootstrap call ForgeUI's `Program.cs`
+  already makes.
+
+**Files added:** `src/ForgeMission.Api/{Messages,MissionCatalog,MissionExecutionService,MissionEndpoints,RunStore}.cs`.
+**Files changed:** `src/ForgeMission.Api/Program.cs` (catalog/store wiring + endpoint mapping + schema
+bootstrap); `src/ForgeMission.Billing/{AuthBillingSchema,BillingService,ILedgerStore,Ledger,NpgsqlLedgerStore}.cs`
+(the `client_token` column + unique index, `LedgerEntry.ClientToken`, `ILedgerStore.FindByClientTokenAsync`,
+`BillingService.SettleRunAsync`'s idempotency check); `src/ForgeMission.Cli/BuiltinMissions.cs` (new
+`WebSearch` entry, pinned digest below).
+
+**`websearch` published for real:** `ghcr.io/katasec/forge-mission-websearch:0.1.0`, pinned digest
+`sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d` — pushed via `forge publish`
+using a `gh auth token`-bridged registry credential (see
+[deploy.md → OCI registry credentials](../design/deploy.md#oci-registry-ghcrio-publish-credentials--gh-cli-is-already-authenticated)).
+Runner-verified: `GET /missions` lists `WebSearch` after a real pull from ghcr.io.
+
+**Tests (12 new, `src/ForgeMission.Rooms.Tests/Api/`):** `MissionHandleTests` (parse equivalence,
+whitespace, lowercasing), `StaticMissionCatalogTests` (implicit/explicit publisher equivalence,
+unrecognized-publisher fails closed, unavailable-mission-ref doesn't resolve, search filtering),
+`BillingServiceClientTokenTests` (real Postgres — retried `ClientToken` returns the prior debit
+without charging again, distinct tokens both debit, null token preserves original always-debit
+behaviour), `MissionExecutionServiceTests` (real Postgres billing + stubbed runner HTTP client —
+resolve/run/debit end-to-end, `MissionNotFound`, `InsufficientCredit` without ever calling the
+runner, cross-call `ClientToken` idempotency). Also fixed `PostgresFixture` — it never registered
+`ILogging`, so any DI-activated type taking an `ILogger<T>` (i.e. `BillingService` itself) failed to
+resolve; no existing test had hit this because none resolved `BillingService` directly. Full suite:
+**338 passed, 0 failed, 10 skipped** (pre-existing live-integration tests, unrelated).
+
+**Live local smoke test** (real Postgres container, real runner, real `ForgeAPI`, real xAI call —
+not mocked): minted a platform key + $5 grant directly against a scratch `authbilling_db`, ran
+`POST /api/ExecuteMission` for `{"mission":"websearch","input":"What did Anthropic announce this
+week?"}` against the running stack. Result: `Verified: true`, real cited web-search answer,
+`Usage.CostMicroUsd: 12390`, balance `5,000,000 → 4,987,610` (exact match), run round-tripped
+`GET /api/GetRun` correctly, `GetAccount`/`SearchMissions`/`GetMission` (success + fail-closed) and
+the no-auth-token 401 path all verified. Torn down cleanly after (containers removed, processes
+killed, scratch files deleted).
+
+**Known gap carried forward, not fixed here (unchanged from the design doc):**
+`ExecuteMissionResponse.Sources` stays empty — the runner contract has no structured citations yet
+(see "Known gap" in the main spoke). The live smoke test's answer text contains inline `[[1]]`-style
+citations from the model, same as today's Grok/Rooms behaviour; `MissionSource[]` plumbing is
+additive future work.
+
+**Streaming path — later live-verified for real (see the next section below), not exercised by this
+initial smoke test.** At the time this section was written, the streaming (`Stream: true`) response
+path was implemented but only unit/integration-tested, not live-hit end to end — closed out properly
+once `forge exec` grew progress streaming (below).
+
+## Task 5a/8/9 — deployed live + `forge exec` headline demo verified (2026-07-19)
+
+Same session as the build above, continued through to a live deploy and the actual one-shot half of
+the phase's done-when demo — not just local verification.
+
+**Infra stood up (`forge-infra`, mostly authored by Codex, deployed/verified this session):**
+- `dev/550-api` — new layer, `ca-forge-api-dev` (external ingress, `RunnerBaseUrl` + KV secret refs
+  for `ConnectionStrings-AuthBillingConnection`/`PlatformKeys-HmacKey`). Bootstrapped on a public
+  placeholder image, then pointed at the real one.
+- `Dockerfile.forgeapi` (mission-control-language) — JIT ASP.NET, same shape as
+  `Dockerfile.runner`/`Dockerfile.forgeui`; simpler than the runner's because `ForgeMission.Api`'s
+  dependency tree (`Billing` → `Runner.Contracts`) pulls no private GitHub Packages, so no
+  `NUGET_AUTH_TOKEN` build secret is needed.
+- Built + pushed `crforgeroomsdev.azurecr.io/forge-api:0.1.0` → `0.1.1`, deployed via
+  `make 550-api-what-if` → `make 550-api` each time (clean, scoped diffs both times — verified
+  before deploying, not assumed).
+- Custom domain `api.forge.katasec.com` bound: TXT `asuid.api.forge` added at the registrar,
+  `az containerapp hostname add/bind --validation-method CNAME` (same pattern as `forge.katasec.com`
+  in `dev/500-app`), managed cert issued in a few minutes (faster than Azure's own "up to 20 min"
+  warning). Recorded `customDomain`/`customDomainCertificateId` in `main.bicepparam` and redeployed
+  so a future `make 550-api` reapplies the binding instead of dropping it.
+- Live-verified at every step via direct `curl`/`az containerapp show`/log inspection, not inferred
+  from deploy success — `/health` 200, `/api/GetAccount`+`/api/SearchMissions` correctly 401 without
+  a key, container env vars confirmed as KV `secretRef`s not plaintext.
+
+**Bug caught while building the CLI client, fixed before it shipped:** `ExecuteMissionResponse`/
+`MissionRunEvent` were serialized via a manual `JsonSerializer.SerializeToUtf8Bytes` call that
+bypassed `ConfigureHttpJsonOptions`' camelCase default — so `ExecuteMission` came back PascalCase
+while `GetAccount`/`SearchMissions`/`GetMission`/`GetRun` came back camelCase (framework-serialized).
+Added `PropertyNamingPolicy = CamelCase` to `MessagesJsonContext`, verified locally (scratch Postgres
++ ForgeAPI, no runner needed — triggered the `MissionNotFound` path to inspect casing without a real
+search call), then rebuilt/pushed/redeployed as `forge-api:0.1.1`.
+
+**`forge exec` (task 8, one-shot half) built and live-verified:** `src/ForgeMission.Cli/ForgeExec.cs`
+— sends `ExecuteMission` to `ForgeAPI` with the stored platform key (`CredentialStore.GetPlatform()`),
+auto-generates `ClientToken` per call (M7), prints the answer + a verified/unverified trust footer
+(no cost/balance inline, per the UX decision — `forge whoami` is the pull). Client-side DTOs are
+local to the CLI, not a shared reference to `ForgeMission.Api` — deliberate: `ForgeAPI` is a non-AOT
+server project and the `forge` CLI is AOT, so the dependency direction must not exist.
+`FORGE_API_ENDPOINT` env var override added alongside the existing `FORGE_PLATFORM_ENDPOINT`
+convention (`PlatformLogin.cs`) — different hosts (issuer vs. gateway), so one var can't cover both.
+
+**Deploy gap found and closed:** `forge exec @websearch` initially failed `MissionNotFound` even
+though the code was correct — the live `ca-forge-runner-dev` was still running an older image built
+*before* `websearch` was added to `BuiltinMissions.All` on this branch, so it had never advertised
+the mission at all. Not a code bug — a missed deploy step (the runner is a separate image/layer
+`dev/500-app` shares with `ca-forge-ui-dev`, never touched by the `550-api` work above). Fixed:
+built + pushed `forge-runner:0.9.0` with the `BuiltinMissions.cs` change, bumped `runnerImage` in
+`dev/500-app/main.bicepparam`, `make 500-app-what-if` → `make 500-app` (clean 2-resource diff:
+runner image bump + a benign `RunnerBaseUrl` env-var expression refresh on `ca-forge-ui-dev`, same
+Bicep template). Confirmed via live boot log: `"loaded 6 mission(s): ChatGPT, Forge, Assistant,
+Claude, Grok, WebSearch."` `ca-forge-api-dev`'s in-memory catalog is built once at boot from a
+runner probe, so it also needed a restart (`az containerapp revision restart`) to pick up the
+now-available mission — confirmed via `SearchMissions` returning the `websearch` entry.
+
+**Second gap found, not yet closed (doesn't block the demo):** the runner log showed
+`"pull failed for 'WebSearch' (... 401 Unauthorized) — falling back to baked-in
+/app/missions/websearch"`. `forge-mission-websearch` defaulted to a **private** GHCR package on
+publish, unlike its 5 public siblings (confirmed: `gh api .../packages/container/forge-mission-grok`
+→ `public`; `.../forge-mission-websearch` → `private`). The mission still loaded (via the image's
+baked-in fallback copy — functionally fine), but the intended anonymous-OCI-pull path is broken for
+this one built-in. Attempted to fix via `gh api --method PATCH .../packages/container/...
+-f visibility=public` — **404, current token scope (`write:packages`) is insufficient** for an
+org-owned package's visibility; needs a manual fix via the GitHub web UI
+(`github.com/orgs/katasec/packages/container/forge-mission-websearch/settings` → Danger Zone →
+Change visibility → Public) or a token with org package-admin rights.
+
+**Headline demo, one-shot half — verified live, real spend:**
+```
+$ forge exec @websearch "what shipped in the Claude API this week?"
+<dated, source-attributed answer citing July 2026 Claude API release notes>
+✓ verified
+```
+Ledger debited for real: `4,993,713 → 4,981,843 µ$` on the signed-in user's actual account (the
+`~/.forge` cached platform key from an earlier `forge login` turned out to still be valid — an
+earlier claim in this session that it was "stale" was wrong, based on one 401 that was actually a
+transient blip right after a `550-api` redeploy, not a genuinely invalid key; corrected once
+re-tested). Full test suite still green after all changes: 338 passed, 0 failed.
+
+**What's still not done for the *full* phase done-when** (both verbs required, not either/or):
+task 5b (API B chat-wire adapter — the aux-call classifier problem, not started), task 7 (shared
+enrichment cache, needed for 5b's multi-replica correctness), and the `forge claude @handle`/
+`forge missions` halves of task 8.
+
+## Task 8 — pwsh `@`-argument gotcha + progress streaming (2026-07-19, same session)
+
+Two more real issues found and closed testing `forge exec` in the maintainer's actual daily shell,
+not just bash.
+
+**`forge exec @websearch "..."` fails in pwsh** — `Required argument missing for command: 'exec'.`
+Root-caused by directly reproducing in pwsh (`pwsh -NoLogo -Command 'forge exec @websearch "..."'`):
+pwsh mangles an unquoted leading `@` on a native command's arguments before the process ever sees
+it — not a forge bug. `forge exec websearch "..."` (no `@`) and `forge exec "@websearch" "..."`
+(quoted) both work; the CLI already stripped a leading `@` if present, so the fix was purely
+documentation — changed `forge exec --help`'s argument description to lead with the `@`-less form,
+and recorded the gotcha in [deploy.md](../design/deploy.md#pwsh-mangles-an-unquoted-leading--on-native-command-arguments)
+next to the existing pwsh env-var note. Verified fixed directly in pwsh after the change.
+
+**Progress streaming, live-verified for real** (closing the gap flagged in the section above):
+switched `forge exec` to `Stream: true`, consuming the NDJSON `MissionRunEvent` sequence and
+printing step progress as it happens — reused ForgeUI's `RoomAgentInvoker.ProgressLabel` mapping
+verbatim (by hand, not a shared reference — `ForgeUI`/`ForgeAPI` are non-AOT, the CLI is AOT) so the
+language matches other surfaces ("Thinking", "Searching: *query*", "Reading *host*", …). Live output
+during a real run:
+```
+… Thinking
+… Routing
+… Searching the web
+… Searching: "Claude API updates shipped this week" · 9 results
+… Reading platform.claude.com
+...
+<answer>
+✓ verified
+```
+Ledger debited again for real: `4,981,843 → 4,919,082 µ$` (a bigger run — more sub-searches/pages
+than the earlier buffered-mode test, consistent with the visible extra work in the progress log, not
+a pricing bug). Full suite green after (338/0); one `ClaudeCodeTests` failure during a *concurrent*
+full-suite run reproduced as a clean pass in isolation and on immediate rerun — confirmed transient
+(many local servers churning this session), not a regression.
+
+**Still open, unchanged:** `forge-mission-websearch`'s GHCR package is still private (needs the
+manual visibility flip described above); task 5b/7 and the `forge claude`/`forge missions` halves of
+task 8 are still not started.
+
 ## What the message-based redesign (2026-07-18) supersedes
 
 - **The "mission-selection mechanism" decision is void.** The header-vs-rewrite-`model` problem was

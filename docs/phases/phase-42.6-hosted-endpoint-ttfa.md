@@ -549,12 +549,12 @@ table is the lookup; don't load the companion file unless you need the *how*, no
 | 2 | `authbilling_db` split (foundation) | ✅ DONE + LIVE (2026-07-19) — code, DB, KV secret, tables all confirmed live | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-2--authbilling_db-split-foundation) |
 | 3 | `ForgeMission.Api` service (foundation, gateway tier) | ✅ FOUNDATION DONE (2026-07-18) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-3--forgemissionapi-service-foundation--the-api-gateway-tier) |
 | 4 | Auth middleware on `ForgeAPI` | ✅ DONE (2026-07-19, commit `da977ff`) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-4--auth-middleware-on-forgeapi) |
-| 5a | API A, mission invocation | ✅ **DESIGN LOCKED, build-ready (2026-07-19)** — 2 review passes done (wire DTOs, then server-side resolution); no open questions | below |
-| 5b | API B, chat-wire adapter | Sequenced after 5a | below |
-| 6 | Billing wrap + spend-abuse trigger ladder | Design decided; build with 5a | below |
-| 7 | Shared enrichment cache | Design decided; 5b-only | below |
-| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | Not started | below |
-| 9 | Deploy + verify the headline demo | Not started (== phase done-when) | below |
+| 5a | API A, mission invocation | ✅ **DEPLOYED + LIVE-VERIFIED (2026-07-19)** — `ExecuteMission`/`SearchMissions`/`GetMission`/`GetAccount`/`GetRun` on `ForgeAPI`, live at `api.forge.katasec.com` (`ca-forge-api-dev`, custom domain + managed cert bound). `websearch` published to ghcr.io/katasec (⚠ defaulted to a **private** GHCR package, unlike its 5 public siblings — needs a manual visibility flip, see below) and wired into the live runner (`forge-runner:0.9.0`). 338 tests pass. | below |
+| 5b | API B, chat-wire adapter | Sequenced after 5a — not started | below |
+| 6 | Billing wrap + spend-abuse trigger ladder | Rung 1 (balance-check + debit) live via 5a; rungs 2–4 still deferred by design | below |
+| 7 | Shared enrichment cache | Design decided; 5b-only, not started | below |
+| 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | **`forge exec` half DONE + live-verified (2026-07-19)**, incl. live progress streaming — `forge claude @handle` hosted mode and `forge missions` not started | below |
+| 9 | Deploy + verify the headline demo | **One-shot half DONE (2026-07-19)** — `forge exec websearch "what shipped in the Claude API this week?"` verified live: grounded, dated, source-cited answer, correct ledger debit, live step progress shown during the search. Agentic half (`forge claude @websearch`) blocked on 5b. | below |
 | 10 | `forge codex @websearch` | Blocked on 42.7 | below |
 
 5a is next per `docs/plan.md`. Tasks 1–3 are the foundation the re-architecture added; 4–5 are auth +
@@ -562,27 +562,16 @@ routing; 6+ are billing, cache, CLI, and deploy.
 
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
-   - **5a — API A, mission invocation.** ✅ **Design locked, build-ready (2026-07-19)** — two review
-     passes done before any code was written: (1) wire-DTO review (3 gaps, resolved — narrative:
-     [completed doc → Task 5a](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--design-gap-review-found--resolved-2026-07-19));
-     (2) server-side resolution design (6 gaps — catalog metadata, `@websearch` not published, `GetRun`
-     storage, `ClientToken` idempotency, `Email` source, handle/publisher/version parsing — resolved,
-     narrative: [completed doc → Task 5a pre-build design
-     lock](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--pre-build-design-lock-second-pass-found--resolved-2026-07-19)).
-     **No further design questions should be open — build directly from this doc.** Final wire DTO
-     shapes are in "The messages" above; server-side resolution design (`MissionHandle`,
-     `IMissionCatalog`, `IRunStore`, the `ClientToken` column) is in ["Mission
-     resolution"](#mission-resolution--handlepublisherversion--catalogrun-storage-decided-2026-07-19-pre-build-design-lock)
-     above.
-
-     Implement `ExecuteMission` / `SearchMissions` / `GetMission` / `GetAccount` / `GetRun` as
-     message endpoints on `ForgeAPI`, with the service signature `Execute(ExecuteMission, Principal)`
-     (M5). Resolve `msg.Mission` (+ `MissionVersion`) via `IMissionCatalog` → `CatalogEntry.MissionRef`
-     → the runner's existing `POST /run/stream`; server sets `missionRef` + `policy` (M9). Map the
-     runner's `RunStreamEvent` sequence to `MissionRunEvent` and the terminal `ExecuteMissionResponse`.
-     **The old header-vs-rewrite-`model` problem does not arise** — `RunRequest.MissionRef` is already
-     a field. Also part of this build step: publish `websearch` to the OCI registry (see "Mission
-     resolution" above) and add the `ClientToken` column to `ledger_entries`.
+   - **5a — API A, mission invocation.** ✅ **Built, deployed, and live-verified (2026-07-19)** — on
+     branch `phase-42.6-task-5a-mission-invocation`, not yet merged to `main`. All 5 message
+     endpoints implemented and running live on `ForgeAPI` at `api.forge.katasec.com`; `websearch`
+     published + wired into `BuiltinMissions.All` and the live runner; 12 new tests + full suite pass
+     (338/0). Both the buffered and streaming (`Stream: true`) response paths are live-verified via
+     the real `forge exec` command, not just locally simulated. Two small doc gaps (no `Principal`
+     type, `ErrorCode.RunNotFound` missing from the closed set) resolved inline, not re-opened as
+     design questions. Full build + deploy narrative: [completed doc → Task 5a build + local
+     verification](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a--build--local-verification-2026-07-19)
+     and [→ Task 5a/8/9 deployed live](phase-42.6-hosted-endpoint-ttfa_completed.md#task-5a89--deployed-live--forge-exec-headline-demo-verified-2026-07-19).
    - **5b — API B, chat-wire adapter.** `/m/{handle}/v1/*` → the runner's `/v1` door. Needs (i) a
      mission-selection mechanism for the spec-bound wire (the `model` field carries the client's real model
      id, not a handle) and (ii) an **aux-call policy** — the wire capture shows Claude Code firing
