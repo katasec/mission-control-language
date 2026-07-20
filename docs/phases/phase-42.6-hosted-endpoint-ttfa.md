@@ -562,9 +562,10 @@ routing; 6+ are billing, cache, CLI, and deploy.
 
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
-   - **5a — API A, mission invocation.** ✅ **Built, deployed, and live-verified (2026-07-19)** — on
-     branch `phase-42.6-task-5a-mission-invocation`, not yet merged to `main`. All 5 message
-     endpoints implemented and running live on `ForgeAPI` at `api.forge.katasec.com`; `websearch`
+   - **5a — API A, mission invocation.** ✅ **Built, deployed, live-verified, and merged (2026-07-19,
+     [PR #2](https://github.com/katasec/mission-control-language/pull/2), branch deleted after
+     merge)**. All 5 message endpoints implemented and running live on `ForgeAPI` at
+     `api.forge.katasec.com`; `websearch`
      published + wired into `BuiltinMissions.All` and the live runner; 12 new tests + full suite pass
      (338/0). Both the buffered and streaming (`Stream: true`) response paths are live-verified via
      the real `forge exec` command, not just locally simulated. Two small doc gaps (no `Principal`
