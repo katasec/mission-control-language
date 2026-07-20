@@ -3,6 +3,7 @@ name: Extract
 kind: exec
 command: python3
 args: [./extract.py]
+timeout: 120s
 inputs: [source_file]
 outputKey: source_text
 input: uploaded image or PDF staged by the hosted artifact bridge
