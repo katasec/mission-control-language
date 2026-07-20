@@ -58,9 +58,10 @@ What exists now:
   upload/download/output-path inference.
 - `missions/ocr` writes text/PDF artifacts. It uses Tesseract when the runner image provides it and
   falls back to deterministic placeholder output in local environments without OCR tools.
-- Hosted dev is deployed with `crforgeroomsdev.azurecr.io/forge-api:0.2.0` and
-  `crforgeroomsdev.azurecr.io/forge-runner:0.10.1`. Runner `0.10.1` includes the OCR mission
-  recursion fix (`mission Ocr` now runs expert `OcrExec`, not a same-named sub-mission).
+- Hosted dev is deployed with `crforgeroomsdev.azurecr.io/forge-api:0.2.1` and
+  `crforgeroomsdev.azurecr.io/forge-runner:0.10.4`. Runner `0.10.1` includes the OCR mission
+  recursion fix (`mission Ocr` now runs expert `OcrExec`, not a same-named sub-mission); runner
+  `0.10.4` adds the baked-in `Summarize` mission and a PDF-sized `Extract` timeout.
 - `docs/design/room-artifacts.md` describes a room artifact plane, but the current `src/` tree has
   no base64 artifact DTOs. Treat that doc as design/history for room artifacts, not as this shipped
   one-shot binary channel.
@@ -81,6 +82,17 @@ Verified against hosted dev on 2026-07-20:
   `Debited 12µ$ ... Ocr 0+0 tok / 0.79s`; `GetArtifact` returned `200 53602 application/pdf`.
 - Runner log for both runs: `Ran 'Ocr' [trusted] — verified=True steps=1`, and startup advertised
   `loaded 7 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr`.
+- `forge exec summarize --input
+  https://www.rochester.edu/ORPA/_assets/pdf/compl_ConsultingAgreementTemplate.pdf` returned a
+  grounded contract summary with `✓ verified`. The sample PDF was fetched client-side from a public
+  HTTPS URL, uploaded as `application/pdf` with 28,264 bytes, and summarized by
+  `Extract -> Answerer -> Verifier`.
+- Runner evidence for `summarize`: startup advertised
+  `loaded 8 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr, Summarize`; run
+  log: `Ran 'Summarize' [trusted] — verified=True steps=3 in 9989+503 tok / 113.70s`.
+- API evidence for `summarize`: `UploadArtifact` returned `200` for `application/pdf 28264`;
+  `ExecuteMission` returned `200 application/x-ndjson`; billing log:
+  `Debited 3506µ$ ... Summarize 9989+503 tok / 113.70s / gpt-4o-mini`.
 
 ## UX
 
@@ -467,7 +479,7 @@ returns a synthesized, verified summary of a real sample contract found on the p
 
 | # | Task | Status | Done when |
 |---|---|---|---|
-| 11 | `@summarize` — OCR + verified LLM synthesis | Design | `Extract -> Answerer -> Verifier` pipeline live-verified against a real public sample contract PDF; `✓ verified` badge on a grounded summary. |
+| 11 | `@summarize` — OCR + verified LLM synthesis | Done live | `Extract -> Answerer -> Verifier` pipeline live-verified against the public Rochester consulting-agreement PDF; `✓ verified`, debited 3506µ$, runner verified 3 steps. |
 
 ## Manifest Capability Metadata
 
