@@ -1,7 +1,6 @@
 # Phase 42.6a — Hosted artifacts + OCR demo
 
-> **Status: Local artifact pipeline implemented + tested (2026-07-20); hosted deploy and
-> Tesseract-backed OCR verification remain.** Inserted before the hosted `forge claude @websearch` adapter because 42.6's
+> **Status: Done and live on hosted dev (2026-07-20).** Inserted before the hosted `forge claude @websearch` adapter because 42.6's
 > one-shot API has already proven the hosted path, and binary artifacts are the next useful
 > capability unlocked by `forge exec`: upload a file, run a mission once, and receive a produced
 > file back.
@@ -59,11 +58,29 @@ What exists now:
   upload/download/output-path inference.
 - `missions/ocr` writes text/PDF artifacts. It uses Tesseract when the runner image provides it and
   falls back to deterministic placeholder output in local environments without OCR tools.
+- Hosted dev is deployed with `crforgeroomsdev.azurecr.io/forge-api:0.2.0` and
+  `crforgeroomsdev.azurecr.io/forge-runner:0.10.1`. Runner `0.10.1` includes the OCR mission
+  recursion fix (`mission Ocr` now runs expert `OcrExec`, not a same-named sub-mission).
 - `docs/design/room-artifacts.md` describes a room artifact plane, but the current `src/` tree has
   no base64 artifact DTOs. Treat that doc as design/history for room artifacts, not as this shipped
   one-shot binary channel.
 - `MessagePayload` already records the important storage invariant: large binary belongs in blob
   storage, never jsonb.
+
+## Live Evidence
+
+Verified against hosted dev on 2026-07-20:
+
+- `forge exec ocr --input /private/tmp/forge-ocr-scan.jpg --out /private/tmp/forge-ocr-output.txt`
+  wrote a 60-byte ASCII text artifact containing `FORGE OCR LIVE TEST`, `Invoice 12345 total
+  67.89`, and `July 20 2026`; API log: `Debited 14µ$ ... Ocr 0+0 tok / 0.90s`; `GetArtifact`
+  returned `200 60 text/plain`.
+- `forge exec ocr --mode=pdf --input /private/tmp/forge-ocr-scan.jpg --out
+  /private/tmp/forge-ocr-output.pdf` wrote a 52 KB one-page PDF
+  (`sha256=4bb5eba9caeb845243c5f04b1e625ba004051f2b2b003da6d514e88b03059b29`); API log:
+  `Debited 12µ$ ... Ocr 0+0 tok / 0.79s`; `GetArtifact` returned `200 53602 application/pdf`.
+- Runner log for both runs: `Ran 'Ocr' [trusted] — verified=True steps=1`, and startup advertised
+  `loaded 7 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr`.
 
 ## UX
 
@@ -392,9 +409,9 @@ Model/runtime choices:
 | 4 | Add upload/download HTTP projections | Done locally | `UploadArtifact`/`GetArtifact` endpoints and CLI raw upload/download client path implemented; hosted auth smoke still covered by task 9. |
 | 5 | Extend runner contract + GHA-style staging | Done locally | Runner receives input artifact metadata, stages bytes under `FORGE_WORK_DIR/inputs`, sets `FORGE_*` env vars + MCL context vars, and cleans up after the run. |
 | 6 | Extend output artifact collection | Done locally | Deterministic artifact path tested through `MissionExecutionService`; CLI writes returned artifacts to disk; local script fallback produced `.txt` and `.pdf` in `/private/tmp`. |
-| 7 | Build hosted OCR mission (`mode=text`) | Ready for hosted verify | `Dockerfile.runner` installs Tesseract; `forge exec ocr --input ./scan.jpg` still needs hosted dev verification to prove inferred `./scan.txt`. |
-| 8 | Build hosted OCR mission (`mode=pdf`) | Ready for hosted verify | `Dockerfile.runner` installs Tesseract; `forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf` still needs hosted dev verification. |
-| 9 | Deploy and verify | Not started | Live run on `api.forge.katasec.com`, real debit, progress shown, input/output bytes verified by sha256. |
+| 7 | Build hosted OCR mission (`mode=text`) | Done live | Hosted run wrote `/private/tmp/forge-ocr-output.txt` as `text/plain`; API debited 14µ$; runner verified one `Ocr` step. |
+| 8 | Build hosted OCR mission (`mode=pdf`) | Done live | Hosted run wrote `/private/tmp/forge-ocr-output.pdf` as `application/pdf`; API debited 12µ$; runner verified one `Ocr` step. |
+| 9 | Deploy and verify | Done live | `forge-api:0.2.0` + `forge-runner:0.10.1` deployed; `UploadArtifact`/`ExecuteMission`/`GetArtifact` all returned 200; binary output traveled via `GetArtifact`, not answer JSON. |
 
 ## Open Decisions
 
