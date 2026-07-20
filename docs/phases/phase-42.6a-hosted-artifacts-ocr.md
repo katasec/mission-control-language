@@ -1,168 +1,64 @@
 # Phase 42.6a — Hosted artifacts + OCR demo
 
-> **Status: Done and live on hosted dev (2026-07-20).** Inserted before the hosted `forge claude @websearch` adapter because 42.6's
-> one-shot API has already proven the hosted path, and binary artifacts are the next useful
-> capability unlocked by `forge exec`: upload a file, run a mission once, and receive a produced
-> file back.
+> **Status: DONE + LIVE (2026-07-20).** Hosted dev runs `crforgeroomsdev.azurecr.io/forge-api:0.2.1`
+> + `crforgeroomsdev.azurecr.io/forge-runner:0.10.4`. Full build narrative, live evidence, and
+> task-by-task design detail: [completed doc](phase-42.6a-hosted-artifacts-ocr_completed.md).
 >
 > **Parent:** [Phase 42 — Forge Cloud](phase-42-forge-cloud.md) · **Depends on:**
-> [42.6](phase-42.6-hosted-endpoint-ttfa.md) task 5a (`ExecuteMission`, streaming progress,
-> platform-key billing live). **Sequences before:** 42.6 task 5b (`forge claude @websearch`
-> hosted chat-wire adapter). **AOT rules:** [AGENTS.md](../../AGENTS.md).
+> [42.6](phase-42.6-hosted-endpoint-ttfa.md) task 5a. **Sequenced before:** 42.6 task 5b
+> (`forge claude @websearch` hosted chat-wire adapter). **AOT rules:** [AGENTS.md](../../AGENTS.md).
 >
-> **Done when:** a signed-in user can run both:
+> **Done when (met):**
 > ```
-> forge exec ocr --input ./scan.jpg
->   → ./scan.txt written to disk, debited, no provider account
->
-> forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf
->   → searchable PDF written to disk, debited, no provider account
+> forge exec ocr --input <path-or-url>
+> forge exec ocr --mode=pdf --input <path-or-url> --out ./scan.ocr.pdf
+> forge exec summarize --input <path-or-url>
 > ```
-> against the hosted endpoint, with progress streaming, a 100 MB upload cap enforced, and
-> no binary bytes embedded in answer text, jsonb, or base64 JSON.
+> all run against the hosted endpoint with progress streaming, a 100 MB upload cap, artifact
+> capability validation, and no binary bytes embedded in answer text/jsonb/base64 JSON.
 
-## Why This Exists
+## What shipped
 
-`websearch` proved the hosted one-shot shape:
+- A first-class binary-artifact channel on the message-based hosted API (`UploadArtifact`,
+  `GetArtifact`, additive `ExecuteMission`/`ExecuteMissionResponse` fields) — see **API Design**
+  below for the still-current contract.
+- **`@ocr`** — deterministic OCR demo: upload an image/PDF, get back extracted text or a searchable
+  PDF (`--mode=text|pdf`).
+- **`@summarize`** — OCR + verified LLM synthesis: upload a document, get back a grounded summary
+  with a `✓ verified` badge (`Extract -> Answerer -> Verifier` pipeline).
+- **URL input**: `--input` accepts an `http(s)://` URL as well as a local path on both missions —
+  fetched client-side in the CLI, never server-side.
+- Per-mission artifact capability validation (content-type/size) enforced before anything reaches
+  the runner.
+- Single-serve `GetArtifact` downloads (deleted after a completed response copy) and best-effort
+  runner-side cleanup after each artifact is copied to the API — bounds ephemeral-scratch growth
+  without a retention/TTL system.
 
-```bash
-forge exec websearch "what shipped in the Claude API this week?"
-```
+## Patterns established here (reuse these, don't re-derive)
 
-OCR is the next natural proof because it is a **file-native one-shot capability**. A user does not
-want a chat session; they want to hand Forge an image/PDF and get back text or a searchable PDF.
-That makes it the right forcing function for first-class artifacts:
-
-```bash
-forge exec ocr --input ./invoice.png
-forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf
-```
-
-The goal is not "PaddleOCR integration" by itself. The goal is proving the hosted API can carry
-real binary inputs and outputs while preserving the message-based API: contracts carry ids and
-metadata; raw bytes travel on an authenticated byte projection.
-
-## Current State
-
-What exists now:
-
-- `ForgeAPI` API A is message-based JSON/NDJSON only:
-  `ExecuteMission`, `SearchMissions`, `GetMission`, `GetAccount`, `GetRun`.
-- Streaming is already correctly modeled as a sequence of `MissionRunEvent` messages.
-- `UploadArtifact` and `GetArtifact` are message-name HTTP projections for raw bytes.
-- `ExecuteMission` accepts `InputArtifactIds`; `ExecuteMissionResponse` returns artifact metadata.
-- The runner contract carries `RunArtifact` inputs/outputs without embedding bytes in JSON.
-- The runner stages inputs under per-run scratch, exports `FORGE_*` env vars to `kind: exec`, and
-  collects output artifacts from `FORGE_OUTPUT_DIR`.
-- `forge exec ocr --input ...` and `forge exec ocr --mode=pdf --input ...` have CLI-side artifact
-  upload/download/output-path inference.
-- `missions/ocr` writes text/PDF artifacts. It uses Tesseract when the runner image provides it and
-  falls back to deterministic placeholder output in local environments without OCR tools.
-- Hosted dev is deployed with `crforgeroomsdev.azurecr.io/forge-api:0.2.1` and
-  `crforgeroomsdev.azurecr.io/forge-runner:0.10.4`. Runner `0.10.1` includes the OCR mission
-  recursion fix (`mission Ocr` now runs expert `OcrExec`, not a same-named sub-mission); runner
-  `0.10.4` adds the baked-in `Summarize` mission and a PDF-sized `Extract` timeout.
-- `docs/design/room-artifacts.md` describes a room artifact plane, but the current `src/` tree has
-  no base64 artifact DTOs. Treat that doc as design/history for room artifacts, not as this shipped
-  one-shot binary channel.
-- `MessagePayload` already records the important storage invariant: large binary belongs in blob
-  storage, never jsonb.
-
-## Live Evidence
-
-Verified against hosted dev on 2026-07-20:
-
-- `forge exec ocr --input /private/tmp/forge-ocr-scan.jpg --out /private/tmp/forge-ocr-output.txt`
-  wrote a 60-byte ASCII text artifact containing `FORGE OCR LIVE TEST`, `Invoice 12345 total
-  67.89`, and `July 20 2026`; API log: `Debited 14µ$ ... Ocr 0+0 tok / 0.90s`; `GetArtifact`
-  returned `200 60 text/plain`.
-- `forge exec ocr --mode=pdf --input /private/tmp/forge-ocr-scan.jpg --out
-  /private/tmp/forge-ocr-output.pdf` wrote a 52 KB one-page PDF
-  (`sha256=4bb5eba9caeb845243c5f04b1e625ba004051f2b2b003da6d514e88b03059b29`); API log:
-  `Debited 12µ$ ... Ocr 0+0 tok / 0.79s`; `GetArtifact` returned `200 53602 application/pdf`.
-- Runner log for both runs: `Ran 'Ocr' [trusted] — verified=True steps=1`, and startup advertised
-  `loaded 7 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr`.
-- `forge exec summarize --input
-  https://www.rochester.edu/ORPA/_assets/pdf/compl_ConsultingAgreementTemplate.pdf` returned a
-  grounded contract summary with `✓ verified`. The sample PDF was fetched client-side from a public
-  HTTPS URL, uploaded as `application/pdf` with 28,264 bytes, and summarized by
-  `Extract -> Answerer -> Verifier`.
-- Runner evidence for `summarize`: startup advertised
-  `loaded 8 mission(s): ChatGPT, Forge, Assistant, Claude, Grok, WebSearch, Ocr, Summarize`; run
-  log: `Ran 'Summarize' [trusted] — verified=True steps=3 in 9989+503 tok / 113.70s`.
-- API evidence for `summarize`: `UploadArtifact` returned `200` for `application/pdf 28264`;
-  `ExecuteMission` returned `200 application/x-ndjson`; billing log:
-  `Debited 3506µ$ ... Summarize 9989+503 tok / 113.70s / gpt-4o-mini`.
-
-## UX
-
-Text extraction (`mode=text`, the default):
-
-```bash
-$ forge exec ocr --input ./invoice.png
-… Uploading invoice.png
-… Loading OCR model
-… Detecting text
-… Recognizing 34 text regions
-… Assembling reading order
-
-Created: ./invoice.txt
-
-✓ extracted · 34 regions · avg confidence 0.97
-```
-
-Searchable PDF:
-
-```bash
-$ forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf
-… Uploading scan.jpg
-… Loading OCR model
-… Detecting text
-… Building searchable PDF
-
-Created: ./scan.ocr.pdf
-
-✓ searchable PDF · 1 page · 42 regions · avg confidence 0.96
-```
-
-`--input` accepts a URL as well as a local path — same output, so the demo command is
-copy-pasteable against a public blob URL instead of requiring a file on disk:
-
-```bash
-forge exec ocr --input https://mydemosa.blob.core.windows.net/samples/scan.jpg
-```
-
-Structured extraction remains an ordinary downstream mission behavior:
-
-```bash
-forge exec ocr --mode=text --input ./invoice.png "extract vendor, invoice number, due date, and total"
-```
-
-The natural primary input is the file path; the optional prompt is an instruction layered on top.
-`mode=text` is the default because OCR most naturally means text extraction. `mode=pdf` is explicit
-because it creates a searchable PDF.
-
-Output path inference:
-
-| Input | Mode | Inferred output |
-|---|---|---|
-| `scan.jpg` | `text` | `scan.txt` |
-| `scan.jpg` | `pdf` | `scan.pdf` |
-| `scan.pdf` | `text` | `scan.txt` |
-| `scan.pdf` | `pdf` | `scan.ocr.pdf` |
-
-`--out` always wins.
+- **A step named exactly `Answerer` gets the "Verified" badge.** `MissionRunHandler.
+  BuildAgentText` (`src/ForgeMission.Runner/MissionRunHandler.cs`) picks the verified answer text
+  from a step literally named `Answerer` — any mission wanting the standard verified-answer
+  treatment (not a bespoke output path) must name its answer-producing step that.
+- **URL input is always fetched client-side, never server-side.** ForgeAPI/the runner must never
+  fetch a caller-supplied URL — that's an SSRF surface (internal IPs, metadata endpoints, redirect
+  chains). The CLI fetching a URL is the same trust boundary as the user running `curl` themselves.
+- **A new hosted mission needs two hardcoded registrations, not just a mission directory:**
+  `src/ForgeMission.Cli/BuiltinMissions.cs` (`BuiltinMissions.All` — so the runner discovers the
+  package) and `src/ForgeMission.Api/MissionCatalog.cs` (`StaticMissionCatalog`'s constructor — so
+  ForgeAPI resolves the handle). Both are independently required.
+- **Mission packages are self-contained; small script duplication beats cross-package sharing.**
+  `missions/<name>/experts/<Expert>/` is the unit of packaging — `@summarize`'s `Extract` expert
+  duplicates `@ocr`'s Tesseract/`pdftoppm` extraction logic rather than sharing it, deliberately.
+- **`kind: exec` timeout is per-expert, not just mission-wide** (`timeout:` in `expert.md`
+  frontmatter) — needed when one step (e.g. multi-page PDF OCR) genuinely takes longer than the
+  rest of the pipeline.
 
 ## API Design
 
-Keep the existing message-based invariants from 42.6:
-
-- The message is the contract; routes are HTTP projections.
-- Mission identity stays data, not a route segment.
-- Binary bytes are not stuffed into `Answer`, jsonb, or long-lived JSON fields.
-- Streaming remains a sequence of messages; artifact events carry metadata, not whole PDFs.
-
-Additive message shapes:
+Message-based invariants (from 42.6): the message is the contract, routes are HTTP projections;
+mission identity is data, never a route segment; binary bytes never enter `Answer`/jsonb/JSON;
+streaming is a sequence of messages, artifact events carry metadata only.
 
 ```csharp
 public sealed class UploadArtifact                  // -> UploadArtifactResponse
@@ -173,18 +69,6 @@ public sealed class UploadArtifact                  // -> UploadArtifactResponse
     public string ContentType { get; set; }
     public long Size { get; set; }
     public string Sha256 { get; set; }
-}
-
-public sealed class UploadArtifactResponse
-{
-    public MissionArtifact Artifact { get; set; }
-    public ResponseStatus ResponseStatus { get; set; }
-}
-
-public sealed class GetArtifact                     // -> raw-byte HTTP projection + metadata headers
-{
-    public int Version { get; set; }
-    public string ArtifactId { get; set; }
 }
 
 public sealed class MissionArtifact
@@ -198,308 +82,58 @@ public sealed class MissionArtifact
 }
 ```
 
-Extend existing messages additively:
+`ExecuteMission` carries `InputArtifactIds`; `ExecuteMissionResponse` carries `Artifacts`;
+`MissionRunEvent` carries an optional `Artifact` for the streaming form.
 
-```csharp
-public sealed class ExecuteMission
-{
-    // existing fields...
-    public List<string>? InputArtifactIds { get; set; }
-}
-
-public sealed class ExecuteMissionResponse
-{
-    // existing fields...
-    public List<MissionArtifact> Artifacts { get; set; }
-}
-
-public sealed class MissionRunEvent
-{
-    // existing fields...
-    public MissionArtifact? Artifact { get; set; }  // Type == "artifact"
-}
-```
-
-HTTP transport mapping:
+HTTP transport:
 
 ```text
-POST /api/UploadArtifact    raw byte body + metadata headers
+POST /api/UploadArtifact    raw byte body + metadata headers (X-Forge-Artifact-Name/Sha256/…)
 POST /api/GetArtifact       message-authenticated raw byte response
 POST /api/ExecuteMission    existing; references uploaded artifacts by id
 ```
 
-Locked upload shape:
-
-```text
-POST /api/UploadArtifact
-Authorization: Bearer <platform-key>
-Content-Type: <file content type, or application/octet-stream>
-X-Forge-Artifact-Name: scan.jpg
-X-Forge-Artifact-Sha256: ...
-X-Forge-Artifact-Client-Token: ...
-<body = raw bytes>
-```
-
-No multipart and no base64 for the first build. This is AOT-friendly for the CLI:
-`FileStream` -> `StreamContent` -> `HttpClient`; only the JSON response uses STJ source generation.
-
-Downloads also keep message names authoritative:
-
-```text
-POST /api/GetArtifact
-Authorization: Bearer <platform-key>
-Content-Type: application/json
-<body = { "version": 1, "artifactId": "art_..." }>
-```
-
-The response body is raw bytes with metadata headers (`Content-Type`, `Content-Disposition`,
-`X-Forge-Artifact-Sha256`, `X-Forge-Artifact-Size`). A pretty `GET /artifacts/{id}` can exist later
-as non-authoritative sugar, but not as the contract.
+No multipart, no base64 — `FileStream` → `StreamContent` → `HttpClient`; only JSON responses use
+STJ source generation.
 
 ## Storage
-
-Introduce an `IArtifactStore` seam in `ForgeMission.Api`:
 
 ```csharp
 public interface IArtifactStore
 {
-    Task<MissionArtifact> SaveAsync(
-        ArtifactWriteRequest request, Stream content, PlatformKeyContext owner, CancellationToken ct);
-
-    Task<ArtifactRead?> OpenAsync(
-        string artifactId, PlatformKeyContext owner, CancellationToken ct);
-
-    Task DeleteAsync(
-        string artifactId, PlatformKeyContext owner, CancellationToken ct);
+    Task<MissionArtifact> SaveAsync(ArtifactWriteRequest request, Stream content, PlatformKeyContext owner, CancellationToken ct);
+    Task<ArtifactRead?> OpenAsync(string artifactId, PlatformKeyContext owner, CancellationToken ct);
+    Task DeleteAsync(string artifactId, PlatformKeyContext owner, CancellationToken ct);
 }
 ```
 
-Implementation sequence:
-
-1. Local filesystem store for tests/dev, rooted under configured temp storage.
-2. Hosted dev may use the same ephemeral filesystem scratch for the demo if one ForgeAPI replica
-   handles upload/execute/download. Azure Blob is the follow-up if live topology needs cross-replica
-   handoff before marking the phase robust.
-
-Access rules:
-
-- Artifacts are owned by the platform-key principal.
-- Unknown or unauthorized artifact ids return not-found semantics; do not leak existence.
-- Enforce a 100 MB upload cap before reading unbounded content.
-- Artifacts are **ephemeral run scratch only**. Uploaded input bytes live only long enough for the
-  run; produced output bytes live only long enough for the CLI to fetch and save them. No user-facing
-  retention guarantee, no document library.
-- `GetArtifact` downloads are single-serve: after a completed response copy, ForgeAPI deletes the
-  API artifact record/file and later reads return not-found semantics.
-- Known demo limitation: an artifact that is never downloaded can remain in ephemeral scratch until
-  the process/container dies. A durable backend needs an explicit TTL/sweeper before this becomes
-  product storage.
+Filesystem-backed today (rooted under configured temp storage); the interface is the swap point for
+blob storage later. Access rules: artifacts owned by the platform-key principal; unknown/unauthorized
+ids return not-found semantics (no existence leak); 100 MB cap enforced before reading unbounded
+content; `GetArtifact` downloads are single-serve. **Known limitation:** an artifact that's never
+downloaded still leaks until the process/container dies — a durable backend needs an explicit
+TTL/sweeper before this becomes product storage, not a demo.
 
 ## Runner Contract
 
-Extend `ForgeMission.Runner.Contracts` additively:
-
 ```csharp
-public sealed record RunArtifact(
-    string Id,
-    string Name,
-    string ContentType,
-    long Size,
-    string Sha256,
-    string Role);
-
-public sealed record RunRequest(
-    string MissionRef,
-    string Goal,
-    IReadOnlyDictionary<string, string>? Vars,
-    string Policy,
-    IReadOnlyList<RunArtifact>? InputArtifacts);
-
-public sealed record RunResponse(
-    string AgentText,
-    bool Verified,
-    int StepCount,
-    int RetryCount,
-    IReadOnlyList<RunTraceStep> Trace,
-    RunUsage Usage,
-    IReadOnlyList<RunArtifact>? OutputArtifacts);
+public sealed record RunArtifact(string Id, string Name, string ContentType, long Size, string Sha256, string Role);
+public sealed record RunRequest(string MissionRef, string Goal, IReadOnlyDictionary<string,string>? Vars, string Policy, IReadOnlyList<RunArtifact>? InputArtifacts);
+public sealed record RunResponse(string AgentText, bool Verified, int StepCount, int RetryCount, IReadOnlyList<RunTraceStep> Trace, RunUsage Usage, IReadOnlyList<RunArtifact>? OutputArtifacts);
 ```
 
-The runner stages input artifacts into a per-run working directory using a GitHub Actions-inspired
-contract:
-
-```text
-FORGE_WORK_DIR/
-  inputs/
-  outputs/
-```
-
-Environment variables passed to `kind: exec`:
-
-```text
-FORGE_WORK_DIR
-FORGE_INPUT_DIR
-FORGE_OUTPUT_DIR
-FORGE_SOURCE_FILE
-FORGE_MODE
-```
-
-Matching MCL context vars:
-
-```text
-work_dir
-input_dir
-output_dir
-source_file
-mode
-```
-
-Exec experts may write internal scratch files anywhere under `FORGE_WORK_DIR`, but Forge collects
-artifacts only from `FORGE_OUTPUT_DIR`. Stdout remains for structured JSON summary/status, not
-binary payloads. No hardcoded paths in mission tooling.
-
-## Task 10 — URL input source (CLI-only)
-
-**Why:** a copy-pasteable demo command beats "find a file on disk" — point `--input` at a public
-blob URL (or any HTTP(S) source) and get the same result as a local file.
-
-**Locked decision: the fetch happens in the CLI process, never server-side.** `ForgeAPI`/the runner
-never fetch a URL on the caller's behalf — that would be a server-side SSRF surface (internal IPs,
-cloud metadata endpoints, redirect chains all need blocking, none of which exists today). The CLI
-fetching a URL is the same trust boundary as a user running `curl` on their own machine, so this
-stays entirely client-side and the server never sees anything but bytes it already validates via
-the existing capability check (Manifest Capability Metadata, below). No new attack surface, no new
-endpoint.
-
-Design, in `ForgeExec.UploadInputAsync` (`src/ForgeMission.Cli/ForgeExec.cs`):
-
-- Detect a URL: `Uri.TryCreate(inputPath, UriKind.Absolute, out var uri) && uri.Scheme is "http" or
-  "https"`. Anything else is treated as a local path exactly as today.
-- Download to a temp file first, then fall through to the **same** local-file code path (sha256,
-  content-type inference, upload) — no branching past the initial byte source, so the existing
-  upload/validate/stage logic is untouched.
-- Filename: `Path.GetFileName(uri.LocalPath)`; fall back to a generic name if the URL has no
-  filename segment (e.g. a bare API endpoint or a redirect target).
-- Content type: keep the existing extension-based `ContentTypeFor(path)` heuristic on the inferred
-  filename first; fall back to the HTTP response's `Content-Type` header only if the extension is
-  unknown. This is a hint, not a security boundary — the server-side capability check (Task 2)
-  validates content-type independently regardless of what the client claims.
-- Guard the download itself (separate from the existing 100 MB server-side cap): a reasonable
-  request timeout and a client-side max-download-size check, so a bad or oversized URL fails fast
-  with a clear CLI error instead of hanging or silently buffering.
-- `InferOutputPath` switches to `uri.LocalPath`'s filename when the input is a URL, so output naming
-  stays sane (`scan.jpg` → `scan.txt`), not the raw URL string.
-
-**Done:** `forge exec ocr --input https://tesseract-ocr.github.io/tessdoc/images/eurotext.png --out
-/private/tmp/forge-url-ocr-url.txt` and the equivalent local-file run wrote identical 419-byte
-OCR text artifacts (`sha256=fbb373b86280fbaf9e671ab39c9ea7b3787b5c032b7002fb39396d57b8516184`),
-both `✓ verified`. The original example Azure blob URL was checked but returned `403 The specified
-account is disabled`, so the live proof used a public HTTPS PNG from the official Tesseract docs.
-
-| # | Task | Status | Done when |
-|---|---|---|---|
-| 10 | URL input source for `forge exec` | Done live | CLI downloads an `http(s)://` `--input` client-side, uploads through the existing local-file path unchanged; live-verified against a public HTTPS OCR image with byte-identical local-file output. |
-
-## Task 11 — `@summarize`: OCR + verified LLM synthesis
-
-**Why:** `@ocr` demos raw extraction; this demos the thing people actually want — hand it a
-document, get back a trustworthy synthesis of it. Motivating story: legal teams dumping
-contracts into a generic chat tool for synthesis today, with no verification step and no
-audit trail. MCL's whole thesis is "verified answer, not just an LLM guess" — this mission is
-the one-command proof of that against a real, messy document instead of a chat prompt.
-
-**Reuses almost everything already built:** URL/local `--input` (Task 10), artifact
-upload/staging, PDF-via-`pdftoppm` extraction (existing `@ocr` mission), hosted billing. The
-only new pipeline piece is an LLM synthesis + verification stage on top of the extracted text.
-
-**Locked precedent to build from — don't design this from scratch, adapt it:**
-`missions/assistant/mission.mcl` already ships exactly this pattern —
-
-```
-mission Assistant(goal) loop(2) = {
-    Answerer
-    -> Verifier
-}
-output(Assistant)
-```
-
-with `Verifier` a `role: judge`, `kind: llm` expert that either fails with a reason (triggering
-a loop retry with feedback) or passes, echoing the answer verbatim. `MissionRunHandler.
-BuildAgentText` (`src/ForgeMission.Runner/MissionRunHandler.cs`) picks the verified answer text
-from **a step literally named `Answerer`** — so the new mission's synthesis step should be
-named `Answerer` to get the same "Verified" badge treatment as every other vanilla agent, not
-a bespoke output path.
-
-**The one real gap to close:** today's `OcrExec` (`missions/ocr/experts/Ocr/ocr.py`) returns a
-short metadata line as its JSON `summary` (`OCR for X; sha256=...; chars=N`), not the full
-extracted text — that's correct for `@ocr`'s own CLI footer and must not change, since it's a
-shipped, live-verified demo. This new mission needs the **full extracted text** available in
-context for `Answerer` to read via `{{...}}` templating. Proposed shape (confirm/counter-
-propose): a sibling exec expert for this mission's own package that does the same
-tesseract/`pdftoppm` extraction but returns the full text as its output — whether that's a
-small duplicated script or a shared extraction path is an open call; the missions-packaging
-model (self-contained `missions/<name>/experts/<Expert>/` directories) may or may not make
-sharing clean, and whoever's closer to that packaging code should call it.
-
-**Proposed pipeline** (confirm/counter-propose, same as above):
-
-```
-mission Summarize(goal) loop(2) = {
-    Extract          // kind: exec — OCR/PDF extraction, full text as output (the new piece)
-    -> Answerer       // kind: llm — synthesizes a summary from {{output}}
-    -> Verifier       // role: judge, kind: llm — grounding check against the source text
-}
-output(Summarize)
-```
-
-**Verifier's job** is narrower than Assistant's general-purpose fact-check: it should check the
-summary doesn't state a figure, date, party name, or clause that isn't actually present in the
-extracted source text (a grounding check, not a general truthfulness check — there's no
-external ground truth to check a document summary against besides the document itself).
-
-**Mission handle:** `summarize`, not `contract-summary` — a capability noun, matching `ocr`/
-`websearch`, not a use-case noun; the legal-contract framing is the demo's motivating story, not
-the mission's scope. Reuses the OCR mission's `[capabilities.artifacts.inputs.source]` shape
-(image/jpeg, image/png, application/pdf; 100 MB) in `forge.toml`, plus a `[providers.default]`
-block for the LLM steps (same shape as `missions/assistant/forge.toml`).
-
-**Non-goal for this pass:** no chunking/map-reduce for very long documents — a single-pass
-prompt is fine for a demo-sized contract; a genuinely long document (hundreds of pages) would
-need that later, but it's out of scope now.
-
-**Done when:**
-
-```
-forge login
-forge exec summarize --input <public-sample-contract-pdf-url>
-```
-
-returns a synthesized, verified summary of a real sample contract found on the public internet
-— live-verified, `✓ verified` badge, debited.
-
-| # | Task | Status | Done when |
-|---|---|---|---|
-| 11 | `@summarize` — OCR + verified LLM synthesis | Done live | `Extract -> Answerer -> Verifier` pipeline live-verified against the public Rochester consulting-agreement PDF; `✓ verified`, debited 3506µ$, runner verified 3 steps. |
+GHA-inspired per-run staging: `FORGE_WORK_DIR/{inputs,outputs}/`. Env vars passed to `kind: exec`:
+`FORGE_WORK_DIR`, `FORGE_INPUT_DIR`, `FORGE_OUTPUT_DIR`, `FORGE_SOURCE_FILE`, `FORGE_MODE`. Matching
+MCL context vars: `work_dir`, `input_dir`, `output_dir`, `source_file`, `mode`. Forge collects
+output artifacts only from `FORGE_OUTPUT_DIR`; stdout is JSON status only, never binary.
 
 ## Manifest Capability Metadata
 
-Artifact capabilities live in the mission package manifest (`forge.toml`), not in `mission.mcl`
-and not in expert frontmatter. The `.mcl` file stays pure pipeline structure; `forge.toml`
-describes package/catalog/runtime capability metadata.
-
-OCR manifest shape:
+Artifact capabilities live in `forge.toml`, not `mission.mcl` or expert frontmatter:
 
 ```toml
-[mission]
-name = "ocr"
-description = "Extract text from images and PDFs, or produce a searchable PDF."
-
 [capabilities.artifacts.inputs.source]
-content_types = [
-  "image/jpeg",
-  "image/png",
-  "application/pdf",
-]
+content_types = ["image/jpeg", "image/png", "application/pdf"]
 max_size_mb = 100
 
 [capabilities.artifacts.modes.text]
@@ -512,79 +146,53 @@ output_content_type = "application/pdf"
 output_extension = ".pdf"
 ```
 
-This requires manifest-reader work, not MCL grammar/parser work. Keep it SRP-shaped:
-`ForgeManifest.Capabilities` owns the typed metadata; `ForgeTomlReader` parses it; CLI/catalog
-consume typed capabilities rather than scraping TOML strings.
+`ForgeManifest.Capabilities` owns the typed metadata; `ForgeTomlReader` parses it; ForgeAPI enforces
+input content-type/size against it (via the runner's `GET /missions` → `StaticMissionCatalog`)
+before any upload reaches the runner.
 
-## OCR Mission Design
+## Output path inference (`@ocr`)
 
-Use one hosted `kind: exec` mission first. For the existing multi-arch runner, the first real OCR
-engine is **Tesseract**: classical ML, CPU-only, apt-packaged on amd64/arm64, and small enough to
-bake into the shared runner without adding a dedicated OCR image. PaddleOCR/PP-OCRv6 remains the
-likely upgrade if this becomes more than a demo: it is a fuller document OCR pipeline, but its
-PaddlePaddle runtime/model packaging is heavier and better suited to a dedicated scale-to-zero OCR
-runner if/when usage justifies that extra infra.
+| Input | Mode | Inferred output |
+|---|---|---|
+| `scan.jpg` | `text` | `scan.txt` |
+| `scan.jpg` | `pdf` | `scan.pdf` |
+| `scan.pdf` | `text` | `scan.txt` |
+| `scan.pdf` | `pdf` | `scan.ocr.pdf` |
 
-Initial mission:
-
-```text
-missions/ocr/
-  forge.toml
-  mission.mcl
-  experts/Ocr/expert.md          kind: exec
-  experts/Ocr/ocr.py
-```
-
-First implementation can use Python in the runner image. This does not violate AOT because
-`kind: exec` tooling runs out-of-process and is not linked into the .NET binary.
-
-Model/runtime choices:
-
-- Use the existing runner for 42.6a. No dedicated OCR runner, no runner pool, no multi-runner
-  routing. YAGNI until real usage justifies it.
-- Use small test images for the demo. If OCR proves useful and image size/runtime becomes painful,
-  split to a dedicated scale-to-zero OCR runner later.
-- Bake only the minimum OCR dependencies needed for the first demo (`tesseract-ocr`,
-  `poppler-utils` for PDF-to-image text extraction).
-- Do not download models on every request.
-- CPU-first. GPU declarations are a later `resources:` concern.
+`--out` always wins. URL inputs use the inferred filename (from the URL path or content-type), never
+the raw URL string, for this table's "Input" column.
 
 ## Tasks
 
 | # | Task | Status | Done when |
 |---|---|---|---|
-| 1 | Lock artifact message contract | Done locally | `UploadArtifact`, `GetArtifact`, `MissionArtifact`, and Execute/Run additive fields implemented in `Messages.cs` + runner contracts; full suite green 2026-07-20. |
-| 2 | Add manifest capability metadata | Done locally | `ForgeManifest.Capabilities` + `ForgeTomlReader` parse `capabilities.artifacts` with tests; no MCL grammar changes; full suite green 2026-07-20. |
-| 3 | Add `ForgeAPI` artifact store seam | Done locally | Filesystem `IArtifactStore` tested for metadata, owner isolation, and declared 100 MB cap; full suite green 2026-07-20. |
-| 4 | Add upload/download HTTP projections | Done locally | `UploadArtifact`/`GetArtifact` endpoints and CLI raw upload/download client path implemented; hosted auth smoke still covered by task 9. |
-| 5 | Extend runner contract + GHA-style staging | Done locally | Runner receives input artifact metadata, stages bytes under `FORGE_WORK_DIR/inputs`, sets `FORGE_*` env vars + MCL context vars, and cleans up after the run. |
-| 6 | Extend output artifact collection | Done locally | Deterministic artifact path tested through `MissionExecutionService`; CLI writes returned artifacts to disk; local script fallback produced `.txt` and `.pdf` in `/private/tmp`. |
-| 7 | Build hosted OCR mission (`mode=text`) | Done live | Hosted run wrote `/private/tmp/forge-ocr-output.txt` as `text/plain`; API debited 14µ$; runner verified one `Ocr` step. |
-| 8 | Build hosted OCR mission (`mode=pdf`) | Done live | Hosted run wrote `/private/tmp/forge-ocr-output.pdf` as `application/pdf`; API debited 12µ$; runner verified one `Ocr` step. |
-| 9 | Deploy and verify | Done live | `forge-api:0.2.0` + `forge-runner:0.10.1` deployed; `UploadArtifact`/`ExecuteMission`/`GetArtifact` all returned 200; binary output traveled via `GetArtifact`, not answer JSON. |
+| 1 | Lock artifact message contract | Done locally | `UploadArtifact`, `GetArtifact`, `MissionArtifact`, and Execute/Run additive fields implemented; full suite green. |
+| 2 | Add manifest capability metadata | Done locally | `ForgeManifest.Capabilities` + `ForgeTomlReader` parse `capabilities.artifacts` with tests; no MCL grammar changes. |
+| 3 | Add `ForgeAPI` artifact store seam | Done locally | Filesystem `IArtifactStore` tested for metadata, owner isolation, declared 100 MB cap. |
+| 4 | Add upload/download HTTP projections | Done locally | `UploadArtifact`/`GetArtifact` endpoints + CLI raw upload/download client path implemented. |
+| 5 | Extend runner contract + GHA-style staging | Done locally | Runner stages input artifacts, sets `FORGE_*` env vars + MCL context vars, cleans up after the run. |
+| 6 | Extend output artifact collection | Done locally | Deterministic artifact path tested through `MissionExecutionService`; CLI writes returned artifacts to disk. |
+| 7 | Build hosted OCR mission (`mode=text`) | Done live | Hosted run wrote a `text/plain` artifact; debited; runner verified one `Ocr` step. |
+| 8 | Build hosted OCR mission (`mode=pdf`) | Done live | Hosted run wrote an `application/pdf` artifact; debited; runner verified one `Ocr` step. |
+| 9 | Deploy and verify | Done live | `forge-api`/`forge-runner` deployed; `UploadArtifact`/`ExecuteMission`/`GetArtifact` all 200; binary traveled via `GetArtifact`, not answer JSON. |
+| 10 | URL input source for `forge exec` | Done live | CLI downloads an `http(s)://` `--input` client-side, uploads through the existing local-file path unchanged; byte-identical output vs. local-file run. Shipped in CLI `v0.9.0`. |
+| 11 | `@summarize` — OCR + verified LLM synthesis | Done live | `Extract -> Answerer -> Verifier` pipeline live-verified against a real public contract PDF; `✓ verified`, debited. Merged via PR #4. |
+
+Full evidence, rationale, and per-task design narrative: [completed doc](phase-42.6a-hosted-artifacts-ocr_completed.md).
 
 ## Open Decisions
 
-All launch-shaping decisions are locked above. Reopen only if implementation proves a locked choice
-impossible:
+All launch-shaping decisions are locked; reopen only if implementation proves one impossible:
 
-- Raw byte upload, no multipart/base64.
-- Message-name endpoints (`UploadArtifact`, `GetArtifact`).
-- Ephemeral run scratch only, no retention promise.
-- 100 MB max upload, no chunking.
-- One `ocr` mission; `mode=text` default, `mode=pdf` explicit.
-- Existing runner only, no dedicated OCR runner/pool.
-- Tesseract-first for the shared-runner demo; PaddleOCR remains a later dedicated-runner upgrade if
-  OCR usage justifies the package/model weight.
-- GHA-inspired `FORGE_*` staging contract.
-- Generic artifact capability metadata in `missions/ocr/forge.toml`.
-- URL input (Task 10) fetches client-side (CLI), never server-side — no SSRF surface, no new
-  endpoint, no allowlist infra needed.
+- Raw byte upload, no multipart/base64. Message-name endpoints (`UploadArtifact`, `GetArtifact`).
+- Ephemeral run scratch only, no retention promise. 100 MB max upload, no chunking.
+- Tesseract-first; PaddleOCR remains a later dedicated-runner upgrade if usage justifies the weight.
+- URL input fetches client-side (CLI), never server-side — no SSRF surface, no allowlist infra.
 
 ## Non-Goals
 
-- No `forge claude` hosted adapter work here; that remains 42.6 task 5b.
+- No `forge claude` hosted adapter work here; that's 42.6 task 5b.
 - No long-term document management or user file library.
-- No user-authored arbitrary OCR missions.
-- No GPU scheduling.
-- No base64 artifact storage in Postgres/jsonb.
+- No user-authored arbitrary OCR/summarize missions.
+- No GPU scheduling. No base64 artifact storage in Postgres/jsonb.
+- No chunking/map-reduce for long documents in `@summarize`.
