@@ -38,6 +38,7 @@ custom domain. All in Azure subscription (workforce), region **uaenorth**, resou
  mission-control-language (this repo)          katasec/forge-infra (IaC, layered Bicep + Makefile)
    src/ForgeUI ──► Dockerfile.forgeui             dev/100-base    RG · Log Analytics · ACR · Key Vault · app MI
    src/ForgeMission.Runner ──► Dockerfile.runner  dev/150-ci      passwordless CI identity (GitHub OIDC)
+   src/ForgeMission.Api ──► Dockerfile.forgeapi
         │                                         dev/200-entra   app registration (manual, no Bicep)
         │  git tag forge-ui-vX.Y.Z                dev/300-data    Postgres Flexible Server + authbilling_db
         │  (CI: OIDC → ACR, native amd64)         dev/400-appenv  Container Apps env  cae-forge-dev
@@ -71,6 +72,7 @@ custom domain. All in Azure subscription (workforce), region **uaenorth**, resou
 |---|---|---|
 | `src/ForgeUI` (rooms, nav shell, pages, orchestrator) | `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` | `make 500-app-deploy-image VERSION=X.Y.Z` |
 | `src/ForgeMission.Runner`, mission execution, provider-key wiring, `missions/` baked into the runner | `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app` |
+| `src/ForgeMission.Api`, hosted API-A messages/endpoints/billing gateway | `git tag forge-api-vX.Y.Z && git push origin forge-api-vX.Y.Z` | bump `image` in `dev/550-api/main.bicepparam`, `make 550-api` |
 | Infra (new secret, env var, scaling, domain, Postgres, a new `authbilling_db`-style DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
 | An EF migration needs to actually run | image already has `/app/migrate` baked in | `make 450-migrate` (updates the job definition only) then start the job — a separate, deliberate operator action |
 | The `forge` **CLI binary** (unrelated to hosting) | `release.yml` (osx/linux/win artifacts) | n/a — not a container |
