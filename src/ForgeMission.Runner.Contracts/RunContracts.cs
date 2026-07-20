@@ -17,7 +17,9 @@ public sealed record RunRequest(
     // Extra pipeline vars beyond the mission's first parameter (reserved; usually empty).
     IReadOnlyDictionary<string, string>? Vars,
     // Per-run trust policy hook (39.1: always RunPolicy.Trusted for built-ins).
-    string Policy);
+    string Policy,
+    // Input artifacts already copied into the runner's ephemeral scratch store by the orchestrator.
+    IReadOnlyList<RunArtifact>? InputArtifacts = null);
 
 /// <summary>Trust policy carried per run. 39.1 sets every built-in to <see cref="Trusted"/>;
 /// <see cref="Restricted"/> is the locked-down profile custom missions get in 39.5.</summary>
@@ -39,7 +41,18 @@ public sealed record RunResponse(
     int                        StepCount,
     int                        RetryCount,
     IReadOnlyList<RunTraceStep> Trace,
-    RunUsage                   Usage);
+    RunUsage                   Usage,
+    IReadOnlyList<RunArtifact>? OutputArtifacts = null);
+
+/// <summary>Artifact metadata passed on the internal runner wire. Bytes travel through raw-byte
+/// upload/download projections, never through this JSON contract.</summary>
+public sealed record RunArtifact(
+    string Id,
+    string Name,
+    string ContentType,
+    long Size,
+    string Sha256,
+    string Role);
 
 /// <summary>One expert step in the run trace, mirrored from the engine's envelope.</summary>
 public sealed record RunTraceStep(
@@ -95,6 +108,7 @@ public sealed record MissionInfo(string MissionRef, string Description);
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(RunRequest))]
 [JsonSerializable(typeof(RunResponse))]
+[JsonSerializable(typeof(RunArtifact))]
 [JsonSerializable(typeof(RunStreamEvent))]
 [JsonSerializable(typeof(IReadOnlyList<MissionInfo>))]
 [JsonSerializable(typeof(MissionInfo))]

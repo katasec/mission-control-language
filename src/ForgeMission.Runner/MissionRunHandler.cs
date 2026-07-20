@@ -16,7 +16,10 @@ namespace ForgeMission.Runner;
 /// Stateless — one instance is fine for the whole (concurrent) process; per-run state lives in
 /// locals and a per-run <see cref="UsageAccumulator"/>.
 /// </summary>
-internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<MissionRunHandler> logger)
+internal sealed class MissionRunHandler(
+    RunnerRegistry registry,
+    IRunnerArtifactStore artifacts,
+    ILogger<MissionRunHandler> logger)
 {
     /// <summary>Emit a keep-alive if no step-progress event has flowed for this long, so the long
     /// kind:search step (~40s of server-side silence) can't be reaped by an idle timeout (41.7).</summary>
@@ -97,6 +100,8 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
         // restricted policy (deny exec/http, restricted egress) lands in 39.5 with custom missions.
         RunPolicyGate.EnsureAllowed(mission, request.Policy);
 
+        using var workspace = await RunWorkspace.CreateAsync(request.InputArtifacts, artifacts, ct);
+
         // Mission-level span: non-sensitive attributes (ref, provider, model) so a trace ties the
         // gen_ai.* + outbound-HTTP child spans to which @-agent ran. No API key is ever tagged.
         using var runSpan = RunnerTelemetry.Source.StartActivity("mission.run");
@@ -104,34 +109,14 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
         runSpan?.SetTag("forge.provider", mission.Profile?.Provider);
         runSpan?.SetTag("gen_ai.request.model", mission.Profile?.Model);
 
-        // Fresh usage-tracked runner per request → isolated token counts under concurrency.
         var accumulator = new UsageAccumulator();
-        IExpertRunner runner;
-        if (mission.Profile is { } profile)
-        {
-            // Instrument the provider client for gen_ai.* spans (model + token usage). Sensitive data
-            // stays OFF, so prompts/answers/keys never enter a span. OTel sits closest to the provider
-            // (inside UsageTrackingChatClient) so it observes the real outbound call.
-            var instrumented = ProviderClientBuilder.BuildChatClient(profile)
-                .AsBuilder()
-                .UseOpenTelemetry(sourceName: RunnerTelemetry.SourceName)
-                .Build();
-            runner = new DirectExpertRunner(new UsageTrackingChatClient(instrumented, accumulator));
-        }
-        else
-        {
-            runner = new ExecExpertRunner();
-        }
+        var runner = BuildRunner(mission, accumulator);
 
         var trace   = new List<RunTraceStep>();
         var attempt = 1;
 
-        var decl      = mission.Ast.Declarations.OfType<MissionDeclaration>().First();
-        var paramName = decl.Params.FirstOrDefault() ?? "goal";
-        var vars      = new Dictionary<string, string>(StringComparer.Ordinal) { [paramName] = request.Goal };
-        if (request.Vars is not null)
-            foreach (var (k, v) in request.Vars)
-                vars[k] = v;
+        var decl = mission.Ast.Declarations.OfType<MissionDeclaration>().First();
+        var vars = BuildVars(request, decl, workspace);
 
         var options = new PipelineRunOptions(
             decl.Name,
@@ -154,26 +139,16 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
             .RunAsync(mission.Ast, mission.Experts, options, ct);
         stopwatch.Stop();
 
-        var verified = result.Status == MissionStatus.Pass;
-
-        string agentText;
-        if (verified)
-        {
-            agentText = trace.LastOrDefault(e => e.ExpertName == "Answerer")?.Text ?? result.Text;
-        }
-        else
-        {
-            var lastFailReason = trace.LastOrDefault(e => e.Status == "fail")?.Reason;
-            agentText = string.IsNullOrWhiteSpace(lastFailReason)
-                ? "Could not verify this answer after multiple attempts."
-                : $"Could not verify: {lastFailReason}";
-        }
+        var verified  = result.Status == MissionStatus.Pass;
+        var agentText = BuildAgentText(verified, trace, result);
 
         var usage = new RunUsage(
             InputTokens:    accumulator.InputTokens,
             OutputTokens:   accumulator.OutputTokens,
             ComputeSeconds: stopwatch.Elapsed.TotalSeconds,
             Model:          mission.Profile?.Model);
+
+        var outputs = await workspace.CollectOutputsAsync(artifacts, ct);
 
         logger.LogInformation(
             "Ran '{MissionRef}' [{Policy}] — verified={Verified} steps={Steps} in {Tokens}+{Out} tok / {Secs:F2}s",
@@ -186,8 +161,157 @@ internal sealed class MissionRunHandler(RunnerRegistry registry, ILogger<Mission
             StepCount:  trace.Count,
             RetryCount: result.Attempts - 1,
             Trace:      trace,
-            Usage:      usage);
+            Usage:      usage,
+            OutputArtifacts: outputs);
     }
+
+    private static IExpertRunner BuildRunner(RunnerMission mission, UsageAccumulator accumulator)
+    {
+        if (mission.Profile is not { } profile)
+            return new ExecExpertRunner();
+
+        // Fresh usage-tracked runner per request → isolated token counts under concurrency.
+        var instrumented = ProviderClientBuilder.BuildChatClient(profile)
+            .AsBuilder()
+            .UseOpenTelemetry(sourceName: RunnerTelemetry.SourceName)
+            .Build();
+        return new DirectExpertRunner(new UsageTrackingChatClient(instrumented, accumulator));
+    }
+
+    private static Dictionary<string, string> BuildVars(
+        RunRequest request,
+        MissionDeclaration decl,
+        RunWorkspace workspace)
+    {
+        var paramName = decl.Params.FirstOrDefault() ?? "goal";
+        var vars = new Dictionary<string, string>(StringComparer.Ordinal) { [paramName] = request.Goal };
+        if (request.Vars is not null)
+            foreach (var (k, v) in request.Vars)
+                vars[k] = v;
+        foreach (var (k, v) in workspace.ContextVars)
+            vars[k] = v;
+        if (vars.TryGetValue("mode", out var mode))
+            vars["FORGE_MODE"] = mode;
+        return vars;
+    }
+
+    private static string BuildAgentText(bool verified, List<RunTraceStep> trace, MissionResult result)
+    {
+        if (verified)
+            return trace.LastOrDefault(e => e.ExpertName == "Answerer")?.Text ?? result.Text;
+
+        var lastFailReason = trace.LastOrDefault(e => e.Status == "fail")?.Reason;
+        if (string.IsNullOrWhiteSpace(lastFailReason))
+        {
+            return "Could not verify this answer after multiple attempts.";
+        }
+
+        return $"Could not verify: {lastFailReason}";
+    }
+}
+
+internal sealed class RunWorkspace : IDisposable
+{
+    private RunWorkspace(string root, Dictionary<string, string> contextVars)
+    {
+        Root = root;
+        ContextVars = contextVars;
+    }
+
+    public string Root { get; }
+    public Dictionary<string, string> ContextVars { get; }
+
+    public static async Task<RunWorkspace> CreateAsync(
+        IReadOnlyList<RunArtifact>? inputArtifacts,
+        IRunnerArtifactStore artifacts,
+        CancellationToken ct)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "forge-run", Guid.NewGuid().ToString("N"));
+        var inputDir = Path.Combine(root, "inputs");
+        var outputDir = Path.Combine(root, "outputs");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
+
+        var vars = BaseVars(root, inputDir, outputDir);
+        if (inputArtifacts is { Count: > 0 })
+            await StageInputsAsync(inputArtifacts, artifacts, inputDir, vars, ct);
+
+        return new RunWorkspace(root, vars);
+    }
+
+    public async Task<IReadOnlyList<RunArtifact>> CollectOutputsAsync(
+        IRunnerArtifactStore artifacts,
+        CancellationToken ct)
+    {
+        var outputDir = ContextVars["output_dir"];
+        var outputs = new List<RunArtifact>();
+        foreach (var file in Directory.EnumerateFiles(outputDir, "*", SearchOption.TopDirectoryOnly))
+        {
+            await using var stream = File.OpenRead(file);
+            outputs.Add(await artifacts.SaveAsync(
+                new RunArtifactWriteRequest(
+                    Name: Path.GetFileName(file),
+                    ContentType: ContentTypeFor(file),
+                    Sha256: "",
+                    Role: "output",
+                    DeclaredSize: stream.Length),
+                stream,
+                ct));
+        }
+        return outputs;
+    }
+
+    public void Dispose()
+    {
+        try { if (Directory.Exists(Root)) Directory.Delete(Root, recursive: true); }
+        catch { /* best-effort scratch cleanup */ }
+    }
+
+    private static Dictionary<string, string> BaseVars(string root, string inputDir, string outputDir) => new(StringComparer.Ordinal)
+    {
+        ["work_dir"] = root,
+        ["input_dir"] = inputDir,
+        ["output_dir"] = outputDir,
+        ["FORGE_WORK_DIR"] = root,
+        ["FORGE_INPUT_DIR"] = inputDir,
+        ["FORGE_OUTPUT_DIR"] = outputDir,
+    };
+
+    private static async Task StageInputsAsync(
+        IReadOnlyList<RunArtifact> inputArtifacts,
+        IRunnerArtifactStore artifacts,
+        string inputDir,
+        Dictionary<string, string> vars,
+        CancellationToken ct)
+    {
+        for (var i = 0; i < inputArtifacts.Count; i++)
+        {
+            var artifact = inputArtifacts[i];
+            await using var read = await artifacts.OpenAsync(artifact.Id, ct)
+                ?? throw new InvalidOperationException($"Input artifact '{artifact.Id}' was not found in runner scratch.");
+
+            var path = Path.Combine(inputDir, Path.GetFileName(artifact.Name));
+            await using var file = File.Create(path);
+            await read.Content.CopyToAsync(file, ct);
+
+            vars[$"input_artifact_{i}"] = path;
+            if (i == 0)
+            {
+                vars["source_file"] = path;
+                vars["FORGE_SOURCE_FILE"] = path;
+            }
+        }
+    }
+
+    private static string ContentTypeFor(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".txt" => "text/plain",
+        ".pdf" => "application/pdf",
+        ".json" => "application/json",
+        ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg",
+        _ => "application/octet-stream",
+    };
 }
 
 /// <summary>

@@ -54,6 +54,7 @@ builder.Services.AddSingleton<IMissionCatalog>(new StaticMissionCatalog(availabl
 
 // GetRun storage (M6) — in-memory today; blob storage is the target shape (see IRunStore's doc).
 builder.Services.AddSingleton<IRunStore, InMemoryRunStore>();
+builder.Services.AddSingleton<IArtifactStore, FileArtifactStore>();
 
 builder.Services.AddSingleton<MissionExecutionService>();
 

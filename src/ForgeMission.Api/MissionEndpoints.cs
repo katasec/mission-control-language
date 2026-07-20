@@ -13,6 +13,8 @@ public static class MissionEndpoints
 {
     public static void MapMissionEndpoints(this WebApplication app)
     {
+        app.MapPost("/api/UploadArtifact", UploadArtifactAsync).AddEndpointFilter<PlatformKeyAuthFilter>();
+        app.MapPost("/api/GetArtifact", GetArtifactAsync).AddEndpointFilter<PlatformKeyAuthFilter>();
         app.MapPost("/api/ExecuteMission", ExecuteMissionAsync).AddEndpointFilter<PlatformKeyAuthFilter>();
         app.MapPost("/api/SearchMissions", SearchMissionsAsync).AddEndpointFilter<PlatformKeyAuthFilter>();
         app.MapPost("/api/GetMission", GetMissionAsync).AddEndpointFilter<PlatformKeyAuthFilter>();
@@ -47,6 +49,92 @@ public static class MissionEndpoints
             await ctx.Response.Body.WriteAsync(newline, ctx.RequestAborted);
             await ctx.Response.Body.FlushAsync(ctx.RequestAborted);
         }
+    }
+
+    private static async Task UploadArtifactAsync(HttpContext ctx, IArtifactStore artifacts)
+    {
+        var principal = PlatformKeyAuthFilter.Principal(ctx)!;
+        var message = UploadMessage(ctx);
+        if (string.IsNullOrWhiteSpace(message.Name))
+        {
+            await WriteUploadJsonAsync(ctx,
+                new UploadArtifactResponse
+                {
+                    ResponseStatus = ResponseStatus.Fail(ErrorCode.InvalidInput, "X-Forge-Artifact-Name is required."),
+                },
+                StatusCodes.Status400BadRequest);
+            return;
+        }
+
+        ArtifactSaveResult saved;
+        try
+        {
+            saved = await artifacts.SaveAsync(
+                new ArtifactWriteRequest(
+                    message.Name,
+                    message.ContentType,
+                    message.Sha256,
+                    ArtifactRole.Input,
+                    message.Size > 0 ? message.Size : null),
+                ctx.Request.Body,
+                principal,
+                ctx.RequestAborted);
+        }
+        catch (ArtifactTooLargeException ex)
+        {
+            await WriteUploadJsonAsync(ctx,
+                new UploadArtifactResponse
+                {
+                    ResponseStatus = ResponseStatus.Fail(ErrorCode.InvalidInput, ex.Message),
+                },
+                StatusCodes.Status400BadRequest);
+            return;
+        }
+
+        if (!saved.Sha256Matched)
+        {
+            await WriteUploadJsonAsync(ctx,
+                new UploadArtifactResponse
+                {
+                    ResponseStatus = ResponseStatus.Fail(ErrorCode.InvalidInput, "Uploaded bytes did not match X-Forge-Artifact-Sha256."),
+                },
+                StatusCodes.Status400BadRequest);
+            return;
+        }
+
+        await WriteUploadJsonAsync(ctx,
+            new UploadArtifactResponse { Artifact = saved.Artifact, ResponseStatus = ResponseStatus.Ok() },
+            StatusCodes.Status200OK);
+    }
+
+    private static async Task GetArtifactAsync(
+        HttpContext ctx, GetArtifact msg, IArtifactStore artifacts)
+    {
+        var principal = PlatformKeyAuthFilter.Principal(ctx)!;
+        if (string.IsNullOrWhiteSpace(msg.ArtifactId))
+        {
+            await WriteStatusJsonAsync(ctx,
+                new ResponseStatus { ErrorCode = ErrorCode.InvalidInput, Message = "ArtifactId is required." },
+                StatusCodes.Status400BadRequest);
+            return;
+        }
+
+        await using var read = await artifacts.OpenAsync(msg.ArtifactId, principal, ctx.RequestAborted);
+        if (read is null)
+        {
+            await WriteStatusJsonAsync(ctx,
+                ResponseStatus.Fail(ErrorCode.ArtifactNotFound, $"Artifact '{msg.ArtifactId}' was not found."),
+                StatusCodes.Status404NotFound);
+            return;
+        }
+
+        ctx.Response.StatusCode = StatusCodes.Status200OK;
+        ctx.Response.ContentType = read.Artifact.ContentType;
+        ctx.Response.ContentLength = read.Artifact.Size;
+        ctx.Response.Headers.ContentDisposition = $"attachment; filename=\"{read.Artifact.Name}\"";
+        ctx.Response.Headers["X-Forge-Artifact-Sha256"] = read.Artifact.Sha256;
+        ctx.Response.Headers["X-Forge-Artifact-Size"] = read.Artifact.Size.ToString();
+        await read.Content.CopyToAsync(ctx.Response.Body, ctx.RequestAborted);
     }
 
     private static async Task<SearchMissionsResponse> SearchMissionsAsync(
@@ -136,11 +224,40 @@ public static class MissionEndpoints
     private static int HttpStatus(ResponseStatus status) => status.ErrorCode switch
     {
         null or "" => StatusCodes.Status200OK,
-        ErrorCode.MissionNotFound or ErrorCode.RunNotFound => StatusCodes.Status404NotFound,
+        ErrorCode.MissionNotFound or ErrorCode.RunNotFound or ErrorCode.ArtifactNotFound => StatusCodes.Status404NotFound,
         ErrorCode.InsufficientCredit => StatusCodes.Status402PaymentRequired,
         ErrorCode.Unauthenticated => StatusCodes.Status401Unauthorized,
         ErrorCode.InvalidInput => StatusCodes.Status400BadRequest,
         ErrorCode.PolicyViolation => StatusCodes.Status403Forbidden,
         _ => StatusCodes.Status500InternalServerError,
     };
+
+    private static UploadArtifact UploadMessage(HttpContext ctx) => new()
+    {
+        Version = 1,
+        ClientToken = Header(ctx, "X-Forge-Artifact-Client-Token"),
+        Name = Header(ctx, "X-Forge-Artifact-Name"),
+        ContentType = ctx.Request.ContentType ?? "application/octet-stream",
+        Size = ctx.Request.ContentLength ?? 0,
+        Sha256 = Header(ctx, "X-Forge-Artifact-Sha256"),
+    };
+
+    private static string Header(HttpContext ctx, string name) =>
+        ctx.Request.Headers.TryGetValue(name, out var value) ? value.ToString() : "";
+
+    private static async Task WriteUploadJsonAsync(HttpContext ctx, UploadArtifactResponse value, int statusCode)
+    {
+        ctx.Response.StatusCode = statusCode;
+        ctx.Response.ContentType = "application/json";
+        var json = JsonSerializer.SerializeToUtf8Bytes(value, MessagesJsonContext.Default.UploadArtifactResponse);
+        await ctx.Response.Body.WriteAsync(json, ctx.RequestAborted);
+    }
+
+    private static async Task WriteStatusJsonAsync(HttpContext ctx, ResponseStatus value, int statusCode)
+    {
+        ctx.Response.StatusCode = statusCode;
+        ctx.Response.ContentType = "application/json";
+        var json = JsonSerializer.SerializeToUtf8Bytes(value, MessagesJsonContext.Default.ResponseStatus);
+        await ctx.Response.Body.WriteAsync(json, ctx.RequestAborted);
+    }
 }

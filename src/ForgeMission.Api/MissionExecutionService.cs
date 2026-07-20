@@ -23,6 +23,7 @@ namespace ForgeMission.Api;
 public sealed class MissionExecutionService(
     IMissionCatalog catalog,
     IRunStore runStore,
+    IArtifactStore artifacts,
     IHttpClientFactory httpClientFactory,
     BillingService billing,
     ILogger<MissionExecutionService> logger)
@@ -89,8 +90,8 @@ public sealed class MissionExecutionService(
     {
         if (string.IsNullOrWhiteSpace(msg.Mission))
             return Fail(runId, ErrorCode.InvalidInput, "Mission is required.");
-        if (string.IsNullOrWhiteSpace(msg.Input))
-            return Fail(runId, ErrorCode.InvalidInput, "Input is required.");
+        if (string.IsNullOrWhiteSpace(msg.Input) && msg.InputArtifactIds is not { Count: > 0 })
+            return Fail(runId, ErrorCode.InvalidInput, "Input or InputArtifactIds is required.");
 
         var handle = MissionHandle.Parse(msg.Mission);
         var entry = await catalog.ResolveAsync(handle, msg.MissionVersion, ct);
@@ -100,12 +101,31 @@ public sealed class MissionExecutionService(
         if (!await billing.HasCreditAsync(principal.MemberId, ct))
             return Fail(runId, ErrorCode.InsufficientCredit, "Insufficient credit — top up to keep running missions.");
 
+        var runner = httpClientFactory.CreateClient("runner");
+        IReadOnlyList<RunArtifact>? inputArtifacts;
+        try
+        {
+            inputArtifacts = await CopyInputsToRunnerAsync(
+                msg.InputArtifactIds,
+                principal,
+                runner,
+                ct);
+        }
+        catch (ArtifactException ex)
+        {
+            return Fail(runId, ex.ErrorCode, ex.Message);
+        }
+
         // M9: the server owns missionRef + policy, never the client. Built-in catalog entries always
         // run trusted (same precedent RoomAgentInvoker sets); a locked-down policy for custom/user
         // missions is Phase 39.5 scope, not 5a's.
-        var request = new RunRequest(entry.MissionRef, msg.Input, Vars: null, RunPolicy.Trusted);
+        var request = new RunRequest(
+            entry.MissionRef,
+            msg.Input,
+            Vars: msg.Inputs,
+            RunPolicy.Trusted,
+            InputArtifacts: inputArtifacts);
 
-        var runner = httpClientFactory.CreateClient("runner");
         RunResponse result;
         try
         {
@@ -116,6 +136,12 @@ public sealed class MissionExecutionService(
             logger.LogError(ex, "Run failed for mission '{MissionRef}'", entry.MissionRef);
             return Fail(runId, ErrorCode.RunFailed, "The mission run failed.");
         }
+
+        var outputArtifacts = await CopyOutputsFromRunnerAsync(
+            result.OutputArtifacts,
+            principal,
+            runner,
+            ct);
 
         // M7: idempotent against msg.ClientToken — a retry of the same call returns the prior debit.
         var cost = await billing.SettleRunAsync(
@@ -132,6 +158,7 @@ public sealed class MissionExecutionService(
             // Known gap (see phase-42.6 spoke): the runner contract carries no structured citations
             // yet — Sources stays empty until that lands. Additive (M4), so it can land post-demo.
             Sources = [],
+            Artifacts = outputArtifacts,
             Trace = result.Trace.Select(t => new MissionTraceStep
             {
                 Expert = t.ExpertName,
@@ -172,6 +199,82 @@ public sealed class MissionExecutionService(
         ResultCount = p.ResultCount,
     };
 
+    private async Task<IReadOnlyList<RunArtifact>?> CopyInputsToRunnerAsync(
+        List<string>? artifactIds,
+        PlatformKeyContext principal,
+        HttpClient runner,
+        CancellationToken ct)
+    {
+        if (artifactIds is not { Count: > 0 }) return null;
+
+        var copied = new List<RunArtifact>();
+        foreach (var artifactId in artifactIds)
+        {
+            await using var input = await artifacts.OpenAsync(artifactId, principal, ct)
+                ?? throw new ArtifactException(ErrorCode.ArtifactNotFound, $"Artifact '{artifactId}' was not found.");
+
+            copied.Add(await UploadToRunnerAsync(runner, input.Artifact, input.Content, ct));
+        }
+
+        return copied;
+    }
+
+    private static async Task<RunArtifact> UploadToRunnerAsync(
+        HttpClient runner,
+        MissionArtifact artifact,
+        Stream content,
+        CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/artifacts/upload")
+        {
+            Content = new StreamContent(content),
+        };
+        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(artifact.ContentType);
+        request.Content.Headers.ContentLength = artifact.Size;
+        request.Headers.Add("X-Forge-Artifact-Name", artifact.Name);
+        request.Headers.Add("X-Forge-Artifact-Sha256", artifact.Sha256);
+        request.Headers.Add("X-Forge-Artifact-Role", artifact.Role);
+
+        using var response = await runner.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        response.EnsureSuccessStatusCode();
+
+        var uploaded = await response.Content.ReadFromJsonAsync(
+            RunContractsContext.Default.RunArtifact,
+            ct);
+        return uploaded ?? throw new InvalidOperationException("Runner artifact upload returned no metadata.");
+    }
+
+    private async Task<List<MissionArtifact>> CopyOutputsFromRunnerAsync(
+        IReadOnlyList<RunArtifact>? outputArtifacts,
+        PlatformKeyContext principal,
+        HttpClient runner,
+        CancellationToken ct)
+    {
+        var copied = new List<MissionArtifact>();
+        if (outputArtifacts is not { Count: > 0 }) return copied;
+
+        foreach (var output in outputArtifacts)
+        {
+            using var response = await runner.GetAsync($"/artifacts/{output.Id}", HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(ct);
+            var saved = await artifacts.SaveAsync(
+                new ArtifactWriteRequest(
+                    output.Name,
+                    output.ContentType,
+                    output.Sha256,
+                    ArtifactRole.Output,
+                    output.Size),
+                stream,
+                principal,
+                ct);
+            copied.Add(saved.Artifact);
+        }
+
+        return copied;
+    }
+
     /// <summary>Consume the runner's NDJSON <c>/run/stream</c> — same client-side pattern as
     /// ForgeUI's <c>MissionRunnerClient.RunStreamAsync</c> (a different project; not shared, since
     /// ForgeAPI must not depend on ForgeUI).</summary>
@@ -211,4 +314,9 @@ public sealed class MissionExecutionService(
 
         return result ?? throw new InvalidOperationException("Runner stream ended without a result.");
     }
+}
+
+file sealed class ArtifactException(string errorCode, string message) : Exception(message)
+{
+    public string ErrorCode { get; } = errorCode;
 }

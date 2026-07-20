@@ -128,4 +128,29 @@ public class ExecExpertRunnerTests : IDisposable
         Assert.Equal("pass", envelope.Status);
         Assert.Equal("ok",   envelope.Text);
     }
+
+    [Fact]
+    public async Task RunAsync_ForwardsForgeEnvironmentVariables()
+    {
+        var outputDir = Path.Combine(_dir, "outputs");
+        Directory.CreateDirectory(outputDir);
+        var script = Script(
+            "import os,json\n" +
+            "out=os.environ['FORGE_OUTPUT_DIR']\n" +
+            "open(os.path.join(out, 'proof.txt'), 'w').write('artifact proof')\n" +
+            "print(json.dumps({'result':'wrote proof'}))\n");
+        var runner  = new ExecExpertRunner();
+        var expert  = ExecExpert(script);
+        var context = new Dictionary<string, object>
+        {
+            ["input"] = "x",
+            ["FORGE_OUTPUT_DIR"] = outputDir,
+        };
+
+        var envelope = await runner.RunAsync(expert, context);
+
+        Assert.Equal("pass", envelope.Status);
+        Assert.Equal("wrote proof", envelope.Text);
+        Assert.Equal("artifact proof", File.ReadAllText(Path.Combine(outputDir, "proof.txt")));
+    }
 }

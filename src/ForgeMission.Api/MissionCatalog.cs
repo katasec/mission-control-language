@@ -67,6 +67,14 @@ public sealed class StaticMissionCatalog : IMissionCatalog
             Version: "0.1.0",
             Verified: true,
             MissionRef: "WebSearch"));
+
+        Register(availableMissionRefs, new CatalogEntry(
+            Handle: "ocr",
+            Description: "Deterministic OCR artifact demo — accepts an uploaded image/PDF and returns text or PDF output.",
+            Publisher: IMissionCatalog.DefaultPublisher,
+            Version: "0.1.0",
+            Verified: true,
+            MissionRef: "Ocr"));
     }
 
     private void Register(IReadOnlySet<string> availableMissionRefs, CatalogEntry entry)

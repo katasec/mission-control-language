@@ -26,6 +26,8 @@ public static class BuiltinMissions
             $"{Reg}/forge-mission-grok@sha256:a18d65a6a0891f82684a01e8e038b5653cac06673ff6ded556bcbd4448dba585",               "grok"),
         new("WebSearch", "Grounded, source-cited answers via live web search — classifies, searches when current data is needed (42.6 @websearch)",
             $"{Reg}/forge-mission-websearch@sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d",         "websearch"),
+        new("Ocr",       "Deterministic OCR artifact demo — accepts an uploaded image/PDF and returns text or PDF output (42.6a)",
+            $"{Reg}/forge-mission-ocr@sha256:0000000000000000000000000000000000000000000000000000000000000000",               "ocr"),
     ];
 
     /// <summary>

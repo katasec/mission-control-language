@@ -420,14 +420,25 @@ static Command BuildLogoutCommand()
 static Command BuildExecCommand()
 {
     var targetArg = new Argument<string>("target") { Description = "Mission handle, e.g. websearch (an optional leading @ is also accepted, but quote it in pwsh: \"@websearch\")" };
-    var promptArg = new Argument<string>("prompt") { Description = "The mission's free-text input" };
+    var promptArg = new Argument<string?>("prompt") { Description = "The mission's free-text input", Arity = ArgumentArity.ZeroOrOne };
+    var inputOpt = new Option<string?>("--input") { Description = "Upload a file as the mission's input artifact" };
+    var modeOpt = new Option<string?>("--mode") { Description = "Mission output mode, e.g. text or pdf" };
+    var outOpt = new Option<string?>("--out") { Description = "Write the first returned artifact to this path" };
 
     var cmd = new Command("exec", "Run a hosted mission once and print the answer");
     cmd.Add(targetArg);
     cmd.Add(promptArg);
+    cmd.Add(inputOpt);
+    cmd.Add(modeOpt);
+    cmd.Add(outOpt);
 
     cmd.SetAction(async result =>
-        await ForgeExec.RunAsync(result.GetValue(targetArg)!, result.GetValue(promptArg)!));
+        await ForgeExec.RunAsync(
+            result.GetValue(targetArg)!,
+            result.GetValue(promptArg),
+            result.GetValue(inputOpt),
+            result.GetValue(modeOpt),
+            result.GetValue(outOpt)));
     return cmd;
 }
 
@@ -1768,4 +1779,3 @@ file sealed class JsonSchema(Dictionary<string, JsonSchemaProperty> properties, 
 
     private static string EscapeJson(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 }
-

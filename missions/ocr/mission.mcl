@@ -1,0 +1,5 @@
+mission Ocr = {
+    Ocr
+}
+
+output(Ocr)

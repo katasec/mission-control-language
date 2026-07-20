@@ -550,15 +550,16 @@ table is the lookup; don't load the companion file unless you need the *how*, no
 | 3 | `ForgeMission.Api` service (foundation, gateway tier) | ✅ FOUNDATION DONE (2026-07-18) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-3--forgemissionapi-service-foundation--the-api-gateway-tier) |
 | 4 | Auth middleware on `ForgeAPI` | ✅ DONE (2026-07-19, commit `da977ff`) | [completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#task-4--auth-middleware-on-forgeapi) |
 | 5a | API A, mission invocation | ✅ **DEPLOYED + LIVE-VERIFIED (2026-07-19)** — `ExecuteMission`/`SearchMissions`/`GetMission`/`GetAccount`/`GetRun` on `ForgeAPI`, live at `api.forge.katasec.com` (`ca-forge-api-dev`, custom domain + managed cert bound). `websearch` published to ghcr.io/katasec (⚠ defaulted to a **private** GHCR package, unlike its 5 public siblings — needs a manual visibility flip, see below) and wired into the live runner (`forge-runner:0.9.0`). 338 tests pass. | below |
-| 5b | API B, chat-wire adapter | Sequenced after 5a — not started | below |
+| 5b | API B, chat-wire adapter | Sequenced after [42.6a hosted artifacts + OCR demo](phase-42.6a-hosted-artifacts-ocr.md) — not started | below |
 | 6 | Billing wrap + spend-abuse trigger ladder | Rung 1 (balance-check + debit) live via 5a; rungs 2–4 still deferred by design | below |
 | 7 | Shared enrichment cache | Design decided; 5b-only, not started | below |
 | 8 | CLI hosted mode (`forge exec`/`forge claude`/`forge missions`) | **`forge exec` half DONE + live-verified (2026-07-19)**, incl. live progress streaming — `forge claude @handle` hosted mode and `forge missions` not started | below |
 | 9 | Deploy + verify the headline demo | **One-shot half DONE (2026-07-19)** — `forge exec websearch "what shipped in the Claude API this week?"` verified live: grounded, dated, source-cited answer, correct ledger debit, live step progress shown during the search. Agentic half (`forge claude @websearch`) blocked on 5b. | below |
 | 10 | `forge codex @websearch` | Blocked on 42.7 | below |
 
-5a is next per `docs/plan.md`. Tasks 1–3 are the foundation the re-architecture added; 4–5 are auth +
-routing; 6+ are billing, cache, CLI, and deploy.
+42.6a is next per `docs/plan.md`; return here for task 5b after the hosted artifact/OCR one-shot
+demo is done. Tasks 1–3 are the foundation the re-architecture added; 4–5 are auth + routing; 6+
+are billing, cache, CLI, and deploy.
 
 5. **Routing — SPLIT (2026-07-18, see [API design](#api-design--message-based-decided-2026-07-18)).**
    The single "map handle → mission" task was written assuming one API; it is two.
@@ -577,7 +578,7 @@ routing; 6+ are billing, cache, CLI, and deploy.
      mission-selection mechanism for the spec-bound wire (the `model` field carries the client's real model
      id, not a handle) and (ii) an **aux-call policy** — the wire capture shows Claude Code firing
      title-gen and agent-state-check calls at the same endpoint, which must NOT each run a full mission.
-     Depends on 42.3's classifier. **Sequenced after 5a.**
+     Depends on 42.3's classifier. **Sequenced after 42.6a.**
 6. **Wrap the run in billing + the spend-abuse trigger ladder (DECIDED 2026-07-16).** Reuse
    `ForgeMission.Billing` + `UsageTrackingChatClient` as-is. **Metering source (2026-07-18):** debit from the
    runner's `UsageTrackingChatClient`, which sees the **whole** mission (classify + search + synth + judge) —

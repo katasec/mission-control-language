@@ -76,4 +76,15 @@ public sealed class StaticMissionCatalogTests
         var rightPublisher = await catalog.SearchAsync(query: null, publisher: "forge", CancellationToken.None);
         Assert.Single(rightPublisher);
     }
+
+    [Fact]
+    public async Task Ocr_resolves_when_runner_advertises_backing_mission_ref()
+    {
+        var catalog = CatalogWith("Ocr");
+
+        var result = await catalog.ResolveAsync(MissionHandle.Parse("ocr"), version: null, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.Equal("Ocr", result.MissionRef);
+    }
 }

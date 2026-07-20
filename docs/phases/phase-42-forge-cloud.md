@@ -3,7 +3,8 @@
 > **Status: IN BUILD — 42.1 ✅ + 42.3 ✅ + 42.2 ✅ DONE 2026-07-16 (all live-verified vs the real `claude`
 > CLI; the LOCAL leg of the phase is complete). 42.4 (one image) DONE 2026-07-17 — Docker ≡ ACA is
 > real (`--container` runs the published runner image; dev ACA serves the same `/v1` doors).
-> Next: 42.5/42.6 (hosted).** (Design review complete 2026-07-16; designed 2026-07-15.) **This phase is about
+> Next: finish 42.6a hosted deploy + real OCR verification, then 42.6 task 5b (`forge claude @websearch` hosted).**
+> (Design review complete 2026-07-16; designed 2026-07-15.) **This phase is about
 > one thing: how a consumer actually gets MCL into
 > their hands and their workflow.** Everything in it — the wire doors, `forge claude`, the container, the
 > platform key, MCP — is an **access decision**. Hosting, metering and billing are *means*, never the point:
@@ -328,6 +329,7 @@ Never sell mandatory quality on an opt-in door. (Full surface support matrix in 
 | **[42.4 — Container convergence: one `/v1` image, Docker ≡ ACA](phase-42.4-container-convergence.md)** | Converge `forge serve` and `ForgeMission.Runner` onto **one image** exposing `/v1/messages` + `/v1/responses`, scheduled on local Docker and Azure ACA identically. Phase-39 metering wrapped in cloud only. | **Done** (2026-07-17 — `ForgeServe` core; runner `/v1` doors + model routing; public multi-arch ghcr image drives `--container`; dev ACA on 0.8.0; built-ins 0.2.0 `role: agent`) |
 | **[42.5 — Platform identity & keys](phase-42.5-platform-identity-keys.md)** | `forge login` / `forge auth` → **platform key + free credits** (browser OAuth), stored in `~/.forge`, usable as the bearer token against the hosted `/v1` endpoint. Reuse Phase 39 credit-grant/ledger. (Disambiguate from today's OCI-registry `forge login`.) | Design |
 | **[42.6 — Hosted endpoint + TTF-awesome](phase-42.6-hosted-endpoint-ttfa.md)** | Key→mission routing on `forge.katasec.com` (multi-tenant), metering wrapped, missions on tap via OCI, `forge missions`. **Definition of done = the §1 demo** (`forge login && forge claude @websearch` → cited past-cutoff answer, debited). | Design |
+| **[42.6a — Hosted artifacts + OCR demo](phase-42.6a-hosted-artifacts-ocr.md)** | First-class hosted artifact upload/download for message-based API A, proven by `forge exec ocr --input ./scan.jpg` and `forge exec ocr --mode=pdf --input ./scan.jpg --out ./scan.ocr.pdf`; sequenced before hosted `forge claude`. | Local artifact pipeline implemented + tested; hosted deploy/PaddleOCR pending |
 | **[42.7 — Codex door (`/v1/responses`)](phase-42.7-codex-responses-door.md)** | Function-call round-trip on the Responses wire (`function_call` / `function_call_output`), reusing the 42.3 re-entrancy seam; `forge codex` launcher (env-var wire, platform-key bearer, no ChatGPT login). | Design |
 | **[42.8 — MCP desktop door (opt-in, later)](phase-42.8-mcp-desktop-door.md)** | Remote MCP (HTTP transport + platform-key auth) over the hosted catalog, each mission a **named tool**; reaches Claude Desktop / ChatGPT / Cursor. **Honestly scoped to explicit-intent missions — not the anti-hallucination guarantee.** | Design |
 

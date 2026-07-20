@@ -274,4 +274,81 @@ public class ForgeTomlReaderTests
 
         Assert.Throws<ForgeTomlException>(() => ForgeTomlReader.TryRead(path));
     }
+
+    [Fact]
+    public void ArtifactCapabilities_ParsedCorrectly()
+    {
+        var path = WriteTempManifest("""
+            [capabilities.artifacts.inputs.source]
+            content_types = [
+              "image/jpeg",
+              "image/png",
+              "application/pdf",
+            ]
+            max_size_mb = 100
+
+            [capabilities.artifacts.modes.text]
+            output_content_type = "text/plain"
+            output_extension = ".txt"
+            default = true
+
+            [capabilities.artifacts.modes.pdf]
+            output_content_type = "application/pdf"
+            output_extension = ".pdf"
+            """);
+
+        var manifest = ForgeTomlReader.TryRead(path);
+
+        Assert.NotNull(manifest);
+
+        var source = manifest.Capabilities.Artifacts.Inputs["source"];
+        Assert.Equal(["image/jpeg", "image/png", "application/pdf"], source.ContentTypes);
+        Assert.Equal(100, source.MaxSizeMb);
+
+        var text = manifest.Capabilities.Artifacts.Modes["text"];
+        Assert.Equal("text/plain", text.OutputContentType);
+        Assert.Equal(".txt", text.OutputExtension);
+        Assert.True(text.Default);
+
+        var pdf = manifest.Capabilities.Artifacts.Modes["pdf"];
+        Assert.Equal("application/pdf", pdf.OutputContentType);
+        Assert.Equal(".pdf", pdf.OutputExtension);
+        Assert.False(pdf.Default);
+    }
+
+    [Fact]
+    public void ArtifactCapabilities_DefaultsToEmpty_WhenAbsent()
+    {
+        var path = WriteTempManifest("");
+
+        var manifest = ForgeTomlReader.TryRead(path);
+
+        Assert.NotNull(manifest);
+        Assert.Empty(manifest.Capabilities.Artifacts.Inputs);
+        Assert.Empty(manifest.Capabilities.Artifacts.Modes);
+    }
+
+    [Fact]
+    public void ArtifactInput_MissingContentTypes_Throws()
+    {
+        var path = WriteTempManifest("""
+            [capabilities.artifacts.inputs.source]
+            max_size_mb = 100
+            """);
+
+        Assert.Throws<ForgeTomlException>(() => ForgeTomlReader.TryRead(path));
+    }
+
+    [Fact]
+    public void ArtifactMode_UnknownField_Throws()
+    {
+        var path = WriteTempManifest("""
+            [capabilities.artifacts.modes.text]
+            output_content_type = "text/plain"
+            output_extension = ".txt"
+            cost_hint = "cheap"
+            """);
+
+        Assert.Throws<ForgeTomlException>(() => ForgeTomlReader.TryRead(path));
+    }
 }

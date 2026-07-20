@@ -33,6 +33,9 @@ public sealed class ExecuteMission
     /// <summary>Structured mission inputs (future — most missions read only <see cref="Input"/> today).</summary>
     public Dictionary<string, string>? Inputs { get; set; }
 
+    /// <summary>Uploaded input artifact ids to stage for this run.</summary>
+    public List<string>? InputArtifactIds { get; set; }
+
     /// <summary>M10. A message property, not an Accept header.</summary>
     public bool Stream { get; set; }
 }
@@ -52,6 +55,7 @@ public sealed class ExecuteMissionResponse
     public bool Verified { get; set; }
     public List<MissionSource> Sources { get; set; } = [];
     public List<MissionTraceStep> Trace { get; set; } = [];
+    public List<MissionArtifact> Artifacts { get; set; } = [];
     public MissionUsage Usage { get; set; } = new();
 
     /// <summary>M8 — usage/balance travel as response fields; an HTTP header is only a projection.</summary>
@@ -92,6 +96,46 @@ public sealed class MissionSource
     public double? ImpartialityRating { get; set; }
 }
 
+// ---------- Artifacts ----------
+
+public sealed class UploadArtifact
+{
+    public int Version { get; set; }
+    public string ClientToken { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string ContentType { get; set; } = "";
+    public long Size { get; set; }
+    public string Sha256 { get; set; } = "";
+}
+
+public sealed class UploadArtifactResponse
+{
+    public MissionArtifact? Artifact { get; set; }
+    public ResponseStatus ResponseStatus { get; set; } = new();
+}
+
+public sealed class GetArtifact
+{
+    public int Version { get; set; }
+    public string ArtifactId { get; set; } = "";
+}
+
+public sealed class MissionArtifact
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string ContentType { get; set; } = "";
+    public long Size { get; set; }
+    public string Sha256 { get; set; } = "";
+    public string Role { get; set; } = "";
+}
+
+public static class ArtifactRole
+{
+    public const string Input = "input";
+    public const string Output = "output";
+}
+
 // ---------- Streaming form (M10) ----------
 
 public sealed class MissionRunEvent
@@ -103,6 +147,7 @@ public sealed class MissionRunEvent
 
     /// <summary>Terminal — set only on the final "result" event.</summary>
     public ExecuteMissionResponse? Result { get; set; }
+    public MissionArtifact? Artifact { get; set; }
     public ResponseStatus? ResponseStatus { get; set; }
 }
 
@@ -229,6 +274,7 @@ public static class ErrorCode
     public const string Unauthenticated = "Unauthenticated";
     public const string InvalidInput = "InvalidInput";
     public const string PolicyViolation = "PolicyViolation";
+    public const string ArtifactNotFound = "ArtifactNotFound";
     public const string RunFailed = "RunFailed";
 }
 
@@ -278,6 +324,10 @@ public sealed class ResponseError
 [JsonSerializable(typeof(ExecuteMission))]
 [JsonSerializable(typeof(ExecuteMissionResponse))]
 [JsonSerializable(typeof(MissionRunEvent))]
+[JsonSerializable(typeof(UploadArtifact))]
+[JsonSerializable(typeof(UploadArtifactResponse))]
+[JsonSerializable(typeof(GetArtifact))]
+[JsonSerializable(typeof(MissionArtifact))]
 [JsonSerializable(typeof(SearchMissions))]
 [JsonSerializable(typeof(SearchMissionsResponse))]
 [JsonSerializable(typeof(GetMission))]
@@ -286,4 +336,5 @@ public sealed class ResponseError
 [JsonSerializable(typeof(GetAccountResponse))]
 [JsonSerializable(typeof(GetRun))]
 [JsonSerializable(typeof(GetRunResponse))]
+[JsonSerializable(typeof(ResponseStatus))]
 internal partial class MessagesJsonContext : JsonSerializerContext;

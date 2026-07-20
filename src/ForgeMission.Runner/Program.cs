@@ -64,6 +64,7 @@ Console.Error.WriteLine(registry.All.Count == 0
 
 builder.Services.AddSingleton(registry);
 builder.Services.AddSingleton<MissionRunHandler>();
+builder.Services.AddSingleton<IRunnerArtifactStore, RunnerArtifactStore>();
 
 var app = builder.Build();
 
@@ -81,6 +82,46 @@ ForgeServe.MapWires(app, "forge-runner",
 // The orchestrator binds only handles whose mission is loadable here (e.g. provider key present).
 app.MapGet("/missions", (RunnerRegistry reg) =>
     reg.All.Select(m => new MissionInfo(m.Label, m.Description)).ToList());
+
+// Internal raw-byte artifact scratch. ForgeAPI copies public uploads here immediately before a run,
+// and copies produced outputs back afterward. Bytes stay off the JSON run contract.
+app.MapPost("/artifacts/upload", async (HttpContext ctx, IRunnerArtifactStore artifacts) =>
+{
+    try
+    {
+        var artifact = await artifacts.SaveAsync(
+            new RunArtifactWriteRequest(
+                Name: Header(ctx, "X-Forge-Artifact-Name"),
+                ContentType: ctx.Request.ContentType ?? "application/octet-stream",
+                Sha256: Header(ctx, "X-Forge-Artifact-Sha256"),
+                Role: Header(ctx, "X-Forge-Artifact-Role"),
+                DeclaredSize: ctx.Request.ContentLength),
+            ctx.Request.Body,
+            ctx.RequestAborted);
+        return Results.Json(artifact, RunContractsContext.Default.RunArtifact);
+    }
+    catch (ArtifactTooLargeException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+});
+
+app.MapGet("/artifacts/{id}", async (string id, HttpContext ctx, IRunnerArtifactStore artifacts) =>
+{
+    await using var read = await artifacts.OpenAsync(id, ctx.RequestAborted);
+    if (read is null) return Results.NotFound();
+
+    ctx.Response.ContentType = read.Artifact.ContentType;
+    ctx.Response.ContentLength = read.Artifact.Size;
+    ctx.Response.Headers["X-Forge-Artifact-Name"] = read.Artifact.Name;
+    ctx.Response.Headers["X-Forge-Artifact-Sha256"] = read.Artifact.Sha256;
+    await read.Content.CopyToAsync(ctx.Response.Body, ctx.RequestAborted);
+    return Results.Empty;
+});
 
 // The one hot path: run a mission, return result + trace + cost signals.
 app.MapPost("/run", async (RunRequest request, MissionRunHandler handler, CancellationToken ct) =>
@@ -117,3 +158,6 @@ app.MapPost("/run/stream", async (RunRequest request, MissionRunHandler handler,
 });
 
 app.Run();
+
+static string Header(HttpContext ctx, string name) =>
+    ctx.Request.Headers.TryGetValue(name, out var value) ? value.ToString() : "";

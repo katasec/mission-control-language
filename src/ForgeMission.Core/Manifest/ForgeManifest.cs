@@ -13,6 +13,9 @@ public sealed class ForgeManifest
 
     // [execution] section — operator-level config for kind:exec experts.
     public ExecutionConfig Execution { get; init; } = new();
+
+    // [capabilities.*] sections — package/catalog/runtime capability metadata.
+    public CapabilityConfig Capabilities { get; init; } = new();
 }
 
 public sealed class ExecutionConfig
@@ -31,4 +34,31 @@ public sealed class ProviderProfile
     public string Model     { get; init; } = "";
     public string? ApiKey   { get; init; }
     public string? Endpoint { get; init; }
+}
+
+public sealed class CapabilityConfig
+{
+    public ArtifactCapabilities Artifacts { get; init; } = new();
+}
+
+public sealed class ArtifactCapabilities
+{
+    public IReadOnlyDictionary<string, ArtifactInputCapability> Inputs { get; init; }
+        = new Dictionary<string, ArtifactInputCapability>();
+
+    public IReadOnlyDictionary<string, ArtifactModeCapability> Modes { get; init; }
+        = new Dictionary<string, ArtifactModeCapability>();
+}
+
+public sealed class ArtifactInputCapability
+{
+    public IReadOnlyList<string> ContentTypes { get; init; } = [];
+    public int MaxSizeMb { get; init; }
+}
+
+public sealed class ArtifactModeCapability
+{
+    public string OutputContentType { get; init; } = "";
+    public string OutputExtension   { get; init; } = "";
+    public bool Default             { get; init; }
 }

@@ -38,8 +38,11 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
     private static IHttpClientFactory RunnerFactory(HttpMessageHandler handler) =>
         new StubHttpClientFactory(new HttpClient(handler) { BaseAddress = new Uri("http://runner.test") });
 
-    private MissionExecutionService NewService(IMissionCatalog catalog, HttpMessageHandler handler) =>
-        new(catalog, new InMemoryRunStore(), RunnerFactory(handler), Billing,
+    private MissionExecutionService NewService(
+        IMissionCatalog catalog,
+        HttpMessageHandler handler,
+        IArtifactStore? artifacts = null) =>
+        new(catalog, new InMemoryRunStore(), artifacts ?? new StubArtifactStore(), RunnerFactory(handler), Billing,
             NullLogger<MissionExecutionService>.Instance);
 
     [Fact]
@@ -139,6 +142,48 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
         Assert.Equal(startingBalance - first.Usage.CostMicroUsd, await Billing.GetBalanceMicroUsdAsync(member.Id));
     }
 
+    [Fact]
+    public async Task Execute_copies_runner_output_artifacts_into_api_artifact_store()
+    {
+        var member = await NewMemberAsync();
+        await Billing.GrantStartingCreditAsync(member.Id);
+        var startingBalance = await Billing.GetBalanceMicroUsdAsync(member.Id);
+
+        var runnerArtifact = new RunArtifact(
+            Id: "runner-art-1",
+            Name: "proof.txt",
+            ContentType: "text/plain",
+            Size: "artifact proof"u8.ToArray().Length,
+            Sha256: "",
+            Role: "output");
+        var runnerResult = new RunResponse(
+            AgentText: "Created proof.txt",
+            Verified: true,
+            StepCount: 1,
+            RetryCount: 0,
+            Trace: [],
+            Usage: new RunUsage(InputTokens: 0, OutputTokens: 0, ComputeSeconds: 0.1, Model: null),
+            OutputArtifacts: [runnerArtifact]);
+
+        var store = new StubArtifactStore();
+        var svc = NewService(
+            Catalog("WebSearch"),
+            new StubRunnerHandler([new RunStreamEvent("result", Result: runnerResult)])
+            {
+                ArtifactBytes = "artifact proof"u8.ToArray(),
+            },
+            store);
+        var msg = new ExecuteMission { Mission = "websearch", Input = "make proof", ClientToken = $"tok-{Guid.NewGuid():N}" };
+
+        var response = await svc.ExecuteAsync(msg, new PlatformKeyContext(member.Id, startingBalance), CancellationToken.None);
+
+        var artifact = Assert.Single(response.Artifacts);
+        Assert.Equal("proof.txt", artifact.Name);
+        Assert.Equal("text/plain", artifact.ContentType);
+        Assert.Equal("output", artifact.Role);
+        Assert.Equal("artifact proof", store.ReadText(artifact.Id, member.Id));
+    }
+
     // --- harness ------------------------------------------------------------------------------
 
     private sealed class StubHttpClientFactory(HttpClient client) : IHttpClientFactory
@@ -146,14 +191,62 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
         public HttpClient CreateClient(string name) => client;
     }
 
+    private sealed class StubArtifactStore : IArtifactStore
+    {
+        private readonly Dictionary<string, (Guid Owner, MissionArtifact Artifact, byte[] Bytes)> _store = [];
+
+        public async Task<ArtifactSaveResult> SaveAsync(
+            ArtifactWriteRequest request,
+            Stream content,
+            PlatformKeyContext owner,
+            CancellationToken ct)
+        {
+            using var ms = new MemoryStream();
+            await content.CopyToAsync(ms, ct);
+            var id = $"art-{Guid.NewGuid():N}";
+            var artifact = new MissionArtifact
+            {
+                Id = id,
+                Name = request.Name,
+                ContentType = request.ContentType,
+                Size = ms.Length,
+                Sha256 = request.Sha256,
+                Role = request.Role,
+            };
+            _store[id] = (owner.MemberId, artifact, ms.ToArray());
+            return new ArtifactSaveResult(artifact, Sha256Matched: true);
+        }
+
+        public Task<ArtifactRead?> OpenAsync(string artifactId, PlatformKeyContext owner, CancellationToken ct) =>
+            Task.FromResult<ArtifactRead?>(null);
+
+        public string ReadText(string artifactId, Guid owner)
+        {
+            var entry = _store[artifactId];
+            Assert.Equal(owner, entry.Owner);
+            return Encoding.UTF8.GetString(entry.Bytes);
+        }
+    }
+
     private sealed class StubRunnerHandler(IReadOnlyList<RunStreamEvent> events) : HttpMessageHandler
     {
         public bool ThrowIfCalled { get; init; }
+        public byte[]? ArtifactBytes { get; init; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             if (ThrowIfCalled)
                 throw new InvalidOperationException("The runner must not be called when the credit check fails.");
+
+            if (request.RequestUri?.AbsolutePath.StartsWith("/artifacts/", StringComparison.Ordinal) == true)
+            {
+                var artifactResponse = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(ArtifactBytes ?? []),
+                };
+                artifactResponse.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+                return Task.FromResult(artifactResponse);
+            }
 
             var sb = new StringBuilder();
             foreach (var evt in events)

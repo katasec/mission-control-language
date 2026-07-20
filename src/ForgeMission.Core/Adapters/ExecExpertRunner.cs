@@ -32,6 +32,7 @@ public class ExecExpertRunner(string defaultTimeout = "30s") : IExpertRunner
         };
         foreach (var arg in expert.Args ?? [])
             psi.ArgumentList.Add(arg);
+        AddForgeEnvironment(psi, context);
 
         using var process = new Process { StartInfo = psi };
 
@@ -139,7 +140,16 @@ public class ExecExpertRunner(string defaultTimeout = "30s") : IExpertRunner
         return sb.ToString();
     }
 
-private static TimeSpan ParseTimeout(string timeout)
+    private static void AddForgeEnvironment(ProcessStartInfo psi, Dictionary<string, object> context)
+    {
+        foreach (var (key, value) in context)
+        {
+            if (!key.StartsWith("FORGE_", StringComparison.Ordinal)) continue;
+            psi.Environment[key] = value?.ToString() ?? "";
+        }
+    }
+
+    private static TimeSpan ParseTimeout(string timeout)
     {
         if (string.IsNullOrWhiteSpace(timeout))
             return TimeSpan.FromSeconds(30);
