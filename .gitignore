@@ -9,3 +9,6 @@ src/**/obj/
 # JetBrains Rider
 .idea/
 *.DotSettings.user
+
+# Visual Studio
+.vs/
