@@ -95,3 +95,10 @@ pointing here.
   inline in the vanilla shell, or stay hidden until 43.4's richer surface exists — decide in 43.3.
 - Exact iteration cadence/exit criteria for 43.4 — "feels right" needs at least a rough rubric
   before that spoke starts, or it never converges.
+- **Longer-term aspiration (not scoped to any spoke yet, 2026-07-26):** the user wants to eventually
+  eliminate the manual copy-paste cycle currently used to hand work between Claude (architect/
+  reviewer) and Codex (implementor) during this project's own build process — one surface instead.
+  Forge Desktop's "missions attach instead of models" thesis is the natural candidate for that
+  eventual tool (Forge Desktop itself, or a mission built on it), but this is explicitly a future
+  idea, not a current task — revisit if/when Forge Desktop's multi-agent orchestration capabilities
+  mature enough to make it concrete.
