@@ -87,13 +87,28 @@ public interface IWorkspace
     // no aliasing (matches Claude Agent SDK's additionalDirectories / Codex's writable_roots).
     IReadOnlyList<string> Roots { get; }
 
-    Task<bool>   ExistsAsync(string path, CancellationToken ct = default);
-    Task<string> ReadFileAsync(string path, CancellationToken ct = default);
-    Task         WriteFileAsync(string path, string content, CancellationToken ct = default);
+    // Synchronous confinement check — same Try-pattern shape as today's WorkspaceGuard.TryResolve,
+    // extended to check against ALL of Roots instead of one. Tool executors call this FIRST,
+    // exactly as they call WorkspaceGuard.TryResolve today, and pass the resolved path to the
+    // three methods below. A path escape is always a clean returned error here, never an
+    // exception — added 2026-07-25 after implementation review surfaced that Exists/Read/Write
+    // had no defined error channel for confinement failures in the first draft of this interface.
+    bool TryResolvePath(string path, out string resolved, out string? error);
 
-    // workingDir null => Roots[0]. Not every future backend has attached compute; an
-    // implementation without it returns ToolExecutionResult.Error(...) here — same graceful
-    // discipline as a path-escape violation, never a throw.
+    // All three take an ALREADY-RESOLVED path from TryResolvePath above, not a raw user-supplied
+    // one. "Not found" stays a plain false/exception-free result (ExistsAsync first, same as
+    // today's File.Exists check); only genuine OS-level IO failures (locked file, permission
+    // denied) are exceptions, caught by the tool executor exactly as it catches
+    // IOException/UnauthorizedAccessException today.
+    Task<bool>   ExistsAsync(string resolvedPath, CancellationToken ct = default);
+    Task<string> ReadFileAsync(string resolvedPath, CancellationToken ct = default);
+    Task         WriteFileAsync(string resolvedPath, string content, CancellationToken ct = default);
+
+    // workingDir null => Roots[0]; if supplied, resolve it through TryResolvePath the same way —
+    // Bash's command content stays unrestricted (locked decision), but its cwd must not become a
+    // confinement escape hatch. Not every future backend has attached compute; an implementation
+    // without it returns ToolExecutionResult.Error(...) here — same graceful discipline as a
+    // path-escape violation, never a throw.
     Task<ToolExecutionResult> ExecuteAsync(string command, string? workingDir = null, CancellationToken ct = default);
 }
 ```
@@ -106,7 +121,11 @@ public interface IWorkspace
 [`WriteToolExecutor`](../../src/ForgeMission.Core/Tools/WriteToolExecutor.cs), and the
 `ProcessStartInfo` logic currently inline in
 [`BashToolExecutor`](../../src/ForgeMission.Core/Tools/BashToolExecutor.cs) (including its existing
-timeout/full-environment-inheritance behavior, unchanged).
+full-environment-inheritance behavior, unchanged). **The timeout constructor parameter moves with
+it** — `BashToolExecutor`'s own `timeout` constructor param goes away; `LocalDiskWorkspace` gains
+the optional `timeout` param instead (default 5 minutes, unchanged value), since it now owns the
+process it spawns. Tests that need a short timeout construct
+`new LocalDiskWorkspace(root, timeout: TimeSpan.FromMilliseconds(300))`.
 
 ## Deferred — documented, not build-ready, no task numbers below
 
@@ -144,9 +163,12 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
 4. Revise `ReadToolExecutor`/`EditToolExecutor`/`WriteToolExecutor`/`BashToolExecutor`'s
    `ExecuteAsync` signature: `(arguments, workspaceRoot: string, ct)` →
    `(arguments, workspace: IWorkspace, ct)`, calling into `IWorkspace` instead of `System.IO`/
-   `Process` directly. Tool-specific semantics (Edit's exact-match-replace-with-uniqueness-check,
-   Read's offset/limit slicing) stay exactly as they are today, unchanged — only the I/O source
-   moves.
+   `Process` directly. `Read`/`Edit`/`Write` call `workspace.TryResolvePath` first (same as they
+   call `WorkspaceGuard.TryResolve` today) and pass the resolved path to `Exists`/`Read`/
+   `WriteFileAsync`. `Bash` resolves `workingDir` the same way if supplied, erroring gracefully
+   (never throwing) if it escapes every root. Tool-specific semantics (Edit's
+   exact-match-replace-with-uniqueness-check, Read's offset/limit slicing) stay exactly as they are
+   today, unchanged — only the I/O source moves.
 5. Update `IToolExecutor.ExecuteAsync` and `ToolExecutorRegistry.ExecuteAsync` the same way —
    `workspaceRoot: string` → `workspace: IWorkspace`.
 6. Update `AgenticSession`'s constructor: `workspaceRoot: string` → `workspace: IWorkspace`.
