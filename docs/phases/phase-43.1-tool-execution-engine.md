@@ -17,29 +17,44 @@ project, **`Katasec.AITools`** (only depends on `Microsoft.Extensions.AI.Abstrac
 `Microsoft.AspNetCore.App` `FrameworkReference`, so it's safe for the AOT desktop binary to
 reference). Both `Katasec.AnthropicServer.ToolMapping` (the wire relay) and `ForgeMission.Core`'s
 `AgentToolDeclarations` (Forge Desktop's own originator) now construct the same
-`Katasec.AITools.DeclaredTool` class instead of two independently hand-rolled copies. Wired via a
-plain relative `ProjectReference` across the sibling checkout (`~/progs/oai-server-dotnet` next to
-`~/progs/mission-control-language`) — the same pattern `ForgeMission.Tests.csproj` already used for
-`Katasec.AnthropicServer`/`Katasec.OaiServer`. No NuGet publish needed for this development-time
-wiring; `Katasec.AITools` ships at `0.1.0`, unpublished, until a consumer outside these two repos
-needs it as a real package.
+`Katasec.AITools.DeclaredTool` class instead of two independently hand-rolled copies.
 
-**Verified** (13/13 assertions, standalone runner — `ForgeMission.Tests.csproj`'s normal `dotnet
-test` path is blocked by a pre-existing, unrelated `NUGET_AUTH_TOKEN`/private-feed auth gap,
-confirmed present on a clean `main` via `git stash` before any of this work started):
-- `AgentToolDeclarations.All` = exactly `Bash`/`Edit`/`Read`/`Write`, `Edit`'s schema matches this
-  session's own Edit contract (`old_string`/`new_string`/`replace_all`, `file_path`+`old_string`+
-  `new_string` required), `Bash`'s schema is trimmed to `command` only.
-- All four throw `NotSupportedException` on direct `InvokeAsync` (declaration-only, never executed
-  server-side or by the declaration object itself).
-- Re-ran `ToolMappingTests`' own assertions against the refactored `ToolMapping`/`DeclaredTool` (28
-  captured tools → filters to exactly the 4 essentials, never forwards `mcp__*`, relays the real
-  captured `Bash` schema verbatim, still throws on invoke) — **no regression from the extraction.**
-- `oai-server-dotnet`'s own 28-test suite (`Katasec.OaiServer.Tests`) still green after the refactor.
+**Published, not just wired locally.** `Katasec.AITools` (alongside `Katasec.OaiServer` and
+`Katasec.AnthropicServer`, lockstep-versioned per this repo's convention) shipped as **`0.1.8`** on
+`nuget.pkg.github.com/katasec` via `oai-server-dotnet`'s `publish.yml` (added it to the pack step —
+it didn't exist there before this session). `ForgeMission.Core.csproj` references it as a real
+`PackageReference`, **not** the sibling-checkout `ProjectReference` used during development —
+verified by clearing the local NuGet cache and rebuilding `ForgeMission.Core` standalone: it
+resolves the package and builds clean with zero touch on `oai-server-dotnet`'s source. This matters
+because the sibling-path `ProjectReference` (matching `ForgeMission.Tests`' own dev-only pattern)
+would have silently required anyone building `ForgeMission.Core` — CI, a fresh clone, another
+developer — to also have `oai-server-dotnet` checked out at an exact relative path, which is fine
+for a test project but wrong for a project other things actually ship.
 
-**Not committed in either repo** — both `mission-control-language` and `oai-server-dotnet` have
-uncommitted changes from this work; left for review before committing (the latter is a
-separately-published package repo).
+Note: GitHub Packages' NuGet registry requires an access token for **all** restores, public
+repo/package or not (confirmed against GitHub's own docs — this isn't an npm-registry-style
+public/anonymous option, and there's no visibility setting that removes it). Any machine building
+this repo needs `NUGET_AUTH_TOKEN` set to a token with `read:packages` scope (`$env:NUGET_AUTH_TOKEN
+= (gh auth token)` after `gh auth refresh -s read:packages`, or a dedicated PAT).
+
+**Verified**, twice over:
+- Standalone runner (13/13: `AgentToolDeclarations.All` = exactly `Bash`/`Edit`/`Read`/`Write`,
+  `Edit`'s schema matches this session's own Edit contract, `Bash` trimmed to `command` only, all
+  four throw `NotSupportedException` on direct `InvokeAsync`, and `ToolMappingTests`' own assertions
+  re-run clean against the refactored `ToolMapping`/`DeclaredTool` — no regression from the
+  extraction) — built while `ForgeMission.Tests`' normal `dotnet test` path was still blocked by a
+  (since-fixed) `NUGET_AUTH_TOKEN` gap.
+- **Then for real**, once the token gap was fixed: `dotnet test` through the actual test project —
+  all 15 (8 `ToolMappingTests` + 7 `AgentToolDeclarationsTests`) pass. Confirmed 7 unrelated
+  `ExecExpertRunnerTests` failures (Windows/POSIX subprocess exit-code mismatch, exit `9009`) are
+  pre-existing — zero diff on that code across this entire session (`git diff --stat` against the
+  pre-session commit) — not a regression from any of this.
+- `oai-server-dotnet`'s own 28-test suite (`Katasec.OaiServer.Tests`) green after the refactor.
+
+**Committed and pushed in both repos** — `mission-control-language`
+([3d3e503](https://github.com/katasec/mission-control-language/commit/3d3e503) + the
+`PackageReference` follow-up) and `oai-server-dotnet`
+([165041f](https://github.com/katasec/oai-server-dotnet/commit/165041f)), both on `main`.
 
 ## Locked decisions (2026-07-25 design session)
 
