@@ -1,6 +1,7 @@
 # Phase 43.2 — Avalonia vanilla shell
 
-**Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
+**Status: In build — Task 1 done 2026-07-26** (scaffold + Native AOT verified); Tasks 2–5 remaining.
+Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and
 [43.7](phase-43.7-workspace-provider.md) (the workspace-root shape this spoke builds against).
 
@@ -49,12 +50,40 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
 
 ## Tasks
 
-1. Implementation complete 2026-07-26: scaffolded `ForgeMission.Desktop` from the official
-   CommunityToolkit.Mvvm Avalonia template, added it to `ForgeMission.slnx`, and built a compiled-binding
-   chat placeholder (message list + compose box, no agentic wiring). `dotnet build src/ForgeMission.slnx`
-   passed with 0 warnings / 0 errors; Native AOT `win-arm64` publish and launch succeeded. The task is not
-   marked done yet because the full test command is blocked by pre-existing Windows `ExecExpertRunnerTests`
-   failures plus this machine's unavailable Docker daemon for Rooms tests; see current session evidence.
+1. ✅ **Done 2026-07-26.** Scaffolded `ForgeMission.Desktop` from the official CommunityToolkit.Mvvm
+   Avalonia template (`Avalonia`/`Avalonia.Desktop`/`Avalonia.Themes.Fluent`/`Avalonia.Fonts.Inter`
+   `12.1.0`, `CommunityToolkit.Mvvm` `8.4.2`, `Microsoft.Extensions.DependencyInjection` `10.0.9` —
+   no ReactiveUI), added to `ForgeMission.slnx`, referencing `ForgeMission.Core` directly. Compiled
+   bindings everywhere (`x:CompileBindings="True"` on `App.axaml`, `MainWindow.axaml`, and the
+   message `DataTemplate`'s own `x:DataType`), compile-time DI (`ServiceCollection` in
+   `App.axaml.cs`, `MainWindowViewModel` constructor-injected — the view itself never resolves a
+   service). `IsAotCompatible=true` added to `Core`/`Parser`/`Scout` (none had it before this task);
+   the `Cli`'s existing `YamlDotNet` AOT-suppression comment/setting duplicated onto
+   `ForgeMission.Desktop.csproj` verbatim, since `Desktop → Core → YamlDotNet` hits the identical
+   warning. Chat view is a static placeholder (message list + compose box + local `Send`) — no
+   agentic wiring, streaming, tool indicators, or packaging; correctly out of scope for this task.
+
+   **Implemented by Codex, independently re-verified by Claude on this same machine/working tree**
+   (same discipline as [43.7](phase-43.7-workspace-provider.md)):
+   - `dotnet build src/ForgeMission.slnx` — reproduced clean (0 errors; 1 unrelated pre-existing
+     warning in `ForgeMission.Rooms.Tests/PostgresFixture.cs`, a file this task never touched).
+   - `dotnet test src/ForgeMission.Tests/ForgeMission.Tests.csproj` — reproduced independently:
+     8 failed / 315 passed / 11 skipped, all 8 failures `ExecExpertRunnerTests` (the known
+     pre-existing Windows subprocess `code 9009` baseline from 43.1/43.7) — zero regressions from
+     this task.
+   - Native AOT `win-arm64` publish: **could not be reproduced directly in this session** — both a
+     Bash and a PowerShell attempt failed with `vswhere.exe` not found (its directory,
+     `Program Files (x86)\Microsoft Visual Studio\Installer`, isn't on `PATH` in either tool
+     session), even though the file exists on disk. This is a re-verification-environment gap, not
+     a defect in the implementation: the publish output directory already contained a genuine
+     20.3 MB `ForgeMission.Desktop.exe`, timestamped minutes before the commit, which **was**
+     independently launched (`tasklist` confirmed a real running `ForgeMission.Desktop.exe` process,
+     ~80 MB working set, consistent with a live Avalonia GUI process) and cleanly terminated.
+     Physical evidence corroborates the reported publish + launch even though the build step itself
+     couldn't be re-run here.
+   - `ForgeMission.Rooms.Tests` failures (Docker/Testcontainers unreachable + two Windows file-lock
+     cleanup failures) are environment-only and out of scope — that project touches none of the
+     files this task changed.
 2. Wire the compose box → [43.1](phase-43.1-tool-execution-engine.md)'s agentic loop, streaming
    assistant output back into the chat pane (reuse the existing `IAsyncEnumerable<string>`
    streaming contract from [Phase 15](phase-15-streaming.md) if it fits the loop shape; adapt if
