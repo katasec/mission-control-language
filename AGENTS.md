@@ -123,6 +123,16 @@ session end, before a context reset, or whenever asked to "checkpoint" / "save e
 "session continuity" / "handoff" / "capture our work". It's idempotent: running it again with
 nothing changed is a safe no-op.
 
+**Self-install on a fresh machine.** Skills live in `~/.claude/skills/` — a per-machine, user-level
+location, not something `git clone` brings with it. This repo carries its own copy at
+[`skills/checkpoint/SKILL.md`](skills/checkpoint/SKILL.md) specifically so a new clone (a new
+laptop, a fresh CI box) can self-install it. Before the first `/checkpoint` invocation in a
+session, check whether `~/.claude/skills/checkpoint/SKILL.md` exists; if it doesn't, copy this
+repo's `skills/checkpoint/SKILL.md` there (create the directory if needed), tell the user you did
+so, then proceed. Keep the two copies in sync — if you ever edit the live skill at
+`~/.claude/skills/checkpoint/SKILL.md`, copy the change back into `skills/checkpoint/SKILL.md` in
+this repo (and vice versa) so the repo copy doesn't drift stale.
+
 ---
 
 ## How work is structured
