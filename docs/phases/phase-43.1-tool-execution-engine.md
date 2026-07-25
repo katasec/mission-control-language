@@ -310,4 +310,10 @@ involved.
 **✅ Met, 2026-07-25** — `AgenticSessionTests` (task 4) proves exactly this: `AgenticSession` runs a
 `role: agent` mission through `Read`/`Edit`/`Bash` tool round-trips with real filesystem/subprocess
 execution, no `claude` CLI, no `forge serve`, no `IEnrichmentCache`/`ConversationHash`. Phase 43.1
-is complete; next up is [Phase 43.2 — Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md).
+is complete.
+
+**Forward note:** `workspaceRoot: string` here is a reasonable MVP for this spoke's stated scope
+(one local folder), not the final shape — [43.7](phase-43.7-workspace-provider.md) revises it into
+a provider seam before [43.2](phase-43.2-avalonia-vanilla-shell.md)'s shell builds around the
+narrower assumption. This spoke's "Done when" stays met as written; 43.7 is new scope, not a gap
+here.

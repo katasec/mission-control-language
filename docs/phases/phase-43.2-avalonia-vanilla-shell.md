@@ -1,7 +1,8 @@
 # Phase 43.2 — Avalonia vanilla shell
 
 **Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
-[43.1](phase-43.1-tool-execution-engine.md).
+[43.1](phase-43.1-tool-execution-engine.md) and
+[43.7](phase-43.7-workspace-provider.md) (the workspace-root shape this spoke builds against).
 
 ## Design
 
@@ -22,9 +23,11 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
 - New Avalonia project, `ForgeMission.Desktop` (or similar), referencing `ForgeMission.Core`
   directly (in-process — no `forge serve` hop for v1; revisit only if a browser/hosted surface
   needs to share the same backend later).
-- Workspace root = whatever directory the user opens the app against (parallels VS Code's
-  "open folder" model) — this becomes the confinement root for [43.1](phase-43.1-tool-execution-engine.md)'s
-  `Read`/`Edit`/`Write`.
+- Workspace root = whatever directory the user opens the app against, constructed as a
+  [43.7](phase-43.7-workspace-provider.md) local-disk provider (not a bare string) and passed into
+  [43.1](phase-43.1-tool-execution-engine.md)'s `AgenticSession`. Multi-root ("Add folder") is a
+  43.7 open question, not decided here — this spoke can ship single-root as long as it's built
+  against 43.7's interface, not a hardcoded path.
 - AOT: decide per [AGENTS.md](../../AGENTS.md#aot-first--standing-rules-for-all-new-code) whether
   the desktop app itself is Native-AOT-published (smaller/faster startup) or JIT (matches the
   `ForgeMission.Runner`/`ForgeUI` precedent of not fighting Avalonia's AOT maturity if it's not

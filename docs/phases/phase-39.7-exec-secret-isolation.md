@@ -97,6 +97,19 @@ single SDK call, and never sets it as a process env var — so there is no ambie
 today `ForgeTomlReader.ResolveValue` reads `Environment.GetEnvironmentVariable`), but it's the true
 "secrets aren't ambient" state.
 
+## Relationship to Phase 43.7
+
+[43.7](phase-43.7-workspace-provider.md) (Forge Desktop's workspace-provider abstraction, raised
+2026-07-25) independently arrived at the same mechanism this spoke's Option B describes — swap
+where a `kind: exec`-shaped child process actually runs — while designing a process-host capability
+for `AgenticSession`'s `Bash` tool. **The interface shape may end up shared; the timeline and
+motivation do not.** 43.7 is scoped to Forge Desktop (single local user, `Bash` locked as
+unrestricted-by-design — no multi-tenant risk) and is not attempting to solve this spoke's
+empty-env/secret-isolation requirement. If 43.7 ships a process-host interface first, treat it as a
+candidate shape to implement Option B against, not as this spoke already being closed — Option
+A (empty-env spawn) and `RunPolicyGate` enforcement remain the actual blocking work here,
+independent of 43.7's progress.
+
 ## Relationship to Phase 39.5
 
 39.5 already lists "restrict custom missions to `llm`/`rule` kinds (deny `exec`/`http`) + locked-down
