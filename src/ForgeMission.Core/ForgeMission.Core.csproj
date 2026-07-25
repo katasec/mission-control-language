@@ -10,6 +10,10 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />
     <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
+    <!-- Sibling checkout — same cross-repo pattern ForgeMission.Tests already uses for
+         Katasec.AnthropicServer/OaiServer. Katasec.AITools has zero ASP.NET coupling
+         (unlike AnthropicServer's FrameworkReference), so it's safe for the AOT binary. -->
+    <ProjectReference Include="..\..\..\oai-server-dotnet\src\Katasec.AITools\Katasec.AITools.csproj" />
   </ItemGroup>
 
   <ItemGroup>
