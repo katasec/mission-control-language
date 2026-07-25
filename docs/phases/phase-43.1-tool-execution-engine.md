@@ -1,6 +1,7 @@
 # Phase 43.1 — Tool-execution engine
 
-**Status: In build — task 1 done 2026-07-25.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+**Status: In build — tasks 1–2 done 2026-07-25, task 3 (`AgenticSession`) next.** Part of
+[Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Task 1 — done (2026-07-25)
 
@@ -52,11 +53,57 @@ this repo needs `NUGET_AUTH_TOKEN` set to a token with `read:packages` scope (`$
 - `oai-server-dotnet`'s own 28-test suite (`Katasec.OaiServer.Tests`) green after the refactor.
 
 **Committed and pushed in both repos** — `mission-control-language`
-([3d3e503](https://github.com/katasec/mission-control-language/commit/3d3e503) + the
+([3d3e503](https://github.com/katasec/mission-control-language/commit/3d3e503),
+[bcc7f78](https://github.com/katasec/mission-control-language/commit/bcc7f78) for the
 `PackageReference` follow-up) and `oai-server-dotnet`
 ([165041f](https://github.com/katasec/oai-server-dotnet/commit/165041f)), both on `main`.
 
-## Locked decisions (2026-07-25 design session)
+## Task 2 — done (2026-07-25)
+
+The tool-executor registry: [ToolExecutorRegistry.cs](../../src/ForgeMission.Core/Tools/ToolExecutorRegistry.cs)
+dispatches a `FunctionCallContent` by `.Name` to one of four executors — `ReadToolExecutor` /
+`EditToolExecutor` / `WriteToolExecutor` / `BashToolExecutor`, each in its own file, mirroring the
+`expert.Kind switch` convention as a name-keyed dictionary lookup instead of an inline switch (the
+tool set may grow). An unknown tool name returns a graceful `ToolExecutionResult.Error`, never a
+throw — same discipline as path violations.
+
+**`WorkspaceGuard`** ([WorkspaceGuard.cs](../../src/ForgeMission.Core/Tools/WorkspaceGuard.cs)) is
+the path-confinement primitive `Read`/`Edit`/`Write` share: resolves a requested path against the
+workspace root, following symlinks on every *existing* ancestor (not just the leaf — so a
+not-yet-created file under a symlinked parent still resolves through the real target first), then
+checks the result stays inside the root via a trailing-separator boundary check (not a naive
+`StartsWith`, which would wrongly admit a sibling directory like `root-evil` that merely shares
+`root` as a string prefix). Comparison is `Ordinal` on Linux, `OrdinalIgnoreCase` on
+Windows/macOS — matches each platform's actual filesystem case-sensitivity rather than picking one
+universally (a case-insensitive check on a case-sensitive filesystem could let a differently-cased
+sibling path pass as "inside" the root).
+
+**`Edit`** matches the locked contract exactly: exact-string replacement, counts occurrences,
+errors (without touching the file) if `old_string` isn't unique unless `replace_all` is set, errors
+if the file doesn't exist rather than creating one (points the caller at `Write` instead).
+
+**`Bash`** is unrestricted (locked decision) — no allowlist, no confirmation, and deliberately
+*no* environment scrubbing/allowlisting code, because there's nothing to scrub: the provider key is
+never a process env var anywhere in Forge Desktop, so full parent-environment inheritance is safe
+by construction, not by omission. Only new safety net: a default 5-minute hang timeout (a runaway
+or interactively-blocked command would otherwise stall the agentic loop forever) — this is
+hang-prevention, not a command restriction, and doesn't conflict with "unrestricted."
+
+**Verified — 30 new tests, real filesystem/subprocess operations, no mocks** (matches this
+codebase's existing preference: `ExecExpertRunnerTests` spawns real processes, `ToolMappingTests`
+uses real captured fixtures): 29 pass, 1 gracefully skipped
+(`Symlink_PointingOutsideRoot_Rejected` — this machine has no Developer Mode/elevated privileges for
+`CreateSymbolicLink`, exactly the case `[SkippableFact]` exists for, same pattern already used in
+`ClaudeCodeTests`/`DirectExpertRunnerIntegrationTests`). Covers: path escape via `..`, an absolute
+path outside root, the `root`/`root-evil` string-prefix trap, symlink escape (when creatable),
+unique vs. non-unique `Edit` matches (with a file-untouched assertion on the rejected case), `Bash`
+non-zero exit, `Bash` timeout, dispatch-by-name through the registry using a real
+`FunctionCallContent`, and an unknown-tool-name graceful error. Full suite: 308 pass / 7 pre-existing
+unrelated failures (`ExecExpertRunnerTests`, confirmed zero-diff on that code all session) / 11
+skipped — zero regressions from before this task (279→308 passed, exactly +29; 10→11 skipped,
+exactly +1).
+
+**Committed and pushed** to `mission-control-language`, `main`.
 
 ## Locked decisions (2026-07-25 design session)
 
@@ -174,9 +221,10 @@ What's new:
 1. ✅ **Done 2026-07-25.** Hand-write the `Read`/`Edit`/`Write`/`Bash` `AITool` declarations (JSON
    schema per tool, no reflection-based generation — AOT constraint, see locked decisions). See
    "Task 1 — done" above for evidence.
-2. Implement the tool-executor registry: one class per tool, name-keyed dispatch (mirrors the
-   `expert.Kind switch` convention), `Read`/`Edit`/`Write` with path confinement + symlink
-   resolution, `Bash` unrestricted with full environment inheritance.
+2. ✅ **Done 2026-07-25.** Implement the tool-executor registry: one class per tool, name-keyed
+   dispatch (mirrors the `expert.Kind switch` convention), `Read`/`Edit`/`Write` with path
+   confinement + symlink resolution, `Bash` unrestricted with full environment inheritance. See
+   "Task 2 — done" below for evidence.
 3. Build `AgenticSession` wrapping `PipelineRunner`: `StartAtAgent`-driven loop, in-memory
    `Conversation` growth (append tool_use + tool_result each iteration), optional approval hook
    (`Func<FunctionCallContent, Task<bool>>` or equivalent) defaulting to auto-approve.
