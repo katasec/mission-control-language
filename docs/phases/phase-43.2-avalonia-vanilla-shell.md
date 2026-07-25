@@ -28,15 +28,32 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
   [43.1](phase-43.1-tool-execution-engine.md)'s `AgenticSession`. Multi-root ("Add folder") is a
   43.7 open question, not decided here — this spoke can ship single-root as long as it's built
   against 43.7's interface, not a hardcoded path.
-- AOT: decide per [AGENTS.md](../../AGENTS.md#aot-first--standing-rules-for-all-new-code) whether
-  the desktop app itself is Native-AOT-published (smaller/faster startup) or JIT (matches the
-  `ForgeMission.Runner`/`ForgeUI` precedent of not fighting Avalonia's AOT maturity if it's not
-  fully there yet — check current Avalonia AOT support before committing).
+- **Native AOT — locked 2026-07-25.** Confirmed against
+  [Avalonia's own Native AOT deployment guide](https://docs.avaloniaui.net/docs/deployment/native-aot):
+  does not reduce UI/UX design options (full styling/theming/animation/Skia rendering all work),
+  only constrains *how* the app is wired — same AOT-first discipline [AGENTS.md](../../AGENTS.md#aot-first--standing-rules-for-all-new-code)
+  already mandates elsewhere in this repo, not a new burden:
+  - Compiled bindings (`x:CompileBindings="True"`), not reflection bindings.
+  - **CommunityToolkit.Mvvm, not ReactiveUI** — ReactiveUI's expression-tree/reflection-heavy
+    bindings have documented AOT friction; Avalonia's own official template ships a
+    CommunityToolkit.Mvvm variant for this reason.
+  - No runtime-loaded/dynamic XAML, static resources, assets as embedded resources. Worth
+    remembering for [43.4](phase-43.4-ide-trace-surface.md)'s dockable-panel workbench later if it
+    ever wants user-customizable layouts loaded from disk — not a v1 concern.
+  - Compile-time DI (register view models at startup), not reflection-based service location.
+  - Third-party Avalonia controls need AOT vetting case-by-case; first-party `Avalonia.Controls` is
+    fine. Matches this repo's existing "right-size deps" bias (Phase 40.1 design-system doc).
+  - Design-time XAML preview/hot-reload is limited under AOT — a dev-workflow cost only, mitigated
+    by developing in JIT/Debug (fast inner loop, hot reload works) and only AOT-publishing the
+    release binary, same split .NET already does generally.
 
 ## Tasks
 
 1. Scaffold `ForgeMission.Desktop` (Avalonia project, added to `ForgeMission.slnx`), minimal
-   window + chat view, referencing `ForgeMission.Core`.
+   window + chat view, referencing `ForgeMission.Core`. Native AOT from the start: `<PublishAot>true</PublishAot>`
+   on `ForgeMission.Desktop` itself, `<IsAotCompatible>true</IsAotCompatible>` on every project it
+   references (matches `ForgeMission.Cli`'s existing AOT setup) — use the CommunityToolkit.Mvvm
+   Avalonia template, not the ReactiveUI one.
 2. Wire the compose box → [43.1](phase-43.1-tool-execution-engine.md)'s agentic loop, streaming
    assistant output back into the chat pane (reuse the existing `IAsyncEnumerable<string>`
    streaming contract from [Phase 15](phase-15-streaming.md) if it fits the loop shape; adapt if
