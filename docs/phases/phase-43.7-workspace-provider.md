@@ -1,9 +1,22 @@
 # Phase 43.7 — Workspace provider abstraction
 
-**Status: Design — decisions + interface locked, build-ready.** Part of
+**Status: Done 2026-07-25 — implementation verified.** Part of
 [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Revises
 [43.1](phase-43.1-tool-execution-engine.md)'s `workspaceRoot: string` shape before
 [43.2](phase-43.2-avalonia-vanilla-shell.md)'s shell builds around it.
+
+**Evidence:** implemented by Codex (ChatGPT/Codex Desktop), design-reviewed and independently
+re-verified on this same machine/working tree by Claude before sign-off — both runs agree on the
+number that matters (zero new failures). `dotnet build src/ForgeMission.slnx` succeeded with 0
+warnings (confirmed independently). Focused
+`dotnet test src/ForgeMission.Tests/ForgeMission.Tests.csproj --filter
+"FullyQualifiedName~ForgeMission.Tests.Tools|FullyQualifiedName~ForgeMission.Tests.Runtime.AgenticSessionTests"`:
+37 passed / 0 failed / 1 skipped (confirmed independently, exact match). Full
+`dotnet test src/ForgeMission.Tests/ForgeMission.Tests.csproj`: 334 total, 8 failed in both runs —
+confirmed by name to be the identical pre-existing Windows `ExecExpertRunnerTests` `code 9009`
+subprocess baseline, zero new regressions. Passed/skipped split varies slightly by machine (315
+passed / 11 skipped independently vs. 319 / 7 as implemented) — benign `SkippableFact`
+environment-gating (e.g. symlink-creation permission), not a discrepancy in the code.
 
 ## Why this exists
 
@@ -85,6 +98,8 @@ public interface IWorkspace
 {
     // Confinement boundary. A resolved path is valid if it falls under ANY entry — flat list,
     // no aliasing (matches Claude Agent SDK's additionalDirectories / Codex's writable_roots).
+    // Relative paths resolve against Roots[0] (the primary root); absolute paths may target any
+    // configured root, matching Claude Agent SDK's primary-directory + additionalDirectories model.
     IReadOnlyList<string> Roots { get; }
 
     // Synchronous confinement check — same Try-pattern shape as today's WorkspaceGuard.TryResolve,
@@ -150,17 +165,17 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
 
 ## Tasks
 
-1. Define `IWorkspace` — new file
+1. ✅ **Done 2026-07-25.** Define `IWorkspace` — new file
    [src/ForgeMission.Core/Tools/IWorkspace.cs](../../src/ForgeMission.Core/Tools/IWorkspace.cs) (does
    not exist yet), exact shape above. Reuses the existing `ToolExecutionResult` type from
    [IToolExecutor.cs](../../src/ForgeMission.Core/Tools/IToolExecutor.cs) — no new result type.
-2. Implement `LocalDiskWorkspace` — new file, absorbing `WorkspaceGuard`'s confinement logic
+2. ✅ **Done 2026-07-25.** Implement `LocalDiskWorkspace` — new file, absorbing `WorkspaceGuard`'s confinement logic
    (extended to "inside ANY of `Roots`"), the three executors' `File.*` calls, and
    `BashToolExecutor`'s `ProcessStartInfo` logic (unrestricted execution, full environment
    inheritance, 5-minute default timeout — all unchanged from 43.1, just relocated).
-3. Extend `WorkspaceGuard.TryResolve` (or fold directly into `LocalDiskWorkspace`, whichever reads
+3. ✅ **Done 2026-07-25.** Extend `WorkspaceGuard.TryResolve` (or fold directly into `LocalDiskWorkspace`, whichever reads
    better once written) to check against a list of roots instead of exactly one.
-4. Revise `ReadToolExecutor`/`EditToolExecutor`/`WriteToolExecutor`/`BashToolExecutor`'s
+4. ✅ **Done 2026-07-25.** Revise `ReadToolExecutor`/`EditToolExecutor`/`WriteToolExecutor`/`BashToolExecutor`'s
    `ExecuteAsync` signature: `(arguments, workspaceRoot: string, ct)` →
    `(arguments, workspace: IWorkspace, ct)`, calling into `IWorkspace` instead of `System.IO`/
    `Process` directly. `Read`/`Edit`/`Write` call `workspace.TryResolvePath` first (same as they
@@ -169,15 +184,23 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
    (never throwing) if it escapes every root. Tool-specific semantics (Edit's
    exact-match-replace-with-uniqueness-check, Read's offset/limit slicing) stay exactly as they are
    today, unchanged — only the I/O source moves.
-5. Update `IToolExecutor.ExecuteAsync` and `ToolExecutorRegistry.ExecuteAsync` the same way —
+5. ✅ **Done 2026-07-25.** Update `IToolExecutor.ExecuteAsync` and `ToolExecutorRegistry.ExecuteAsync` the same way —
    `workspaceRoot: string` → `workspace: IWorkspace`.
-6. Update `AgenticSession`'s constructor: `workspaceRoot: string` → `workspace: IWorkspace`.
-7. Update all existing tests (`WorkspaceGuardTests`, `ReadToolExecutorTests`,
+6. ✅ **Done 2026-07-25.** Update `AgenticSession`'s constructor: `workspaceRoot: string` → `workspace: IWorkspace`.
+7. ✅ **Done 2026-07-25.** Update all existing tests (`WorkspaceGuardTests`, `ReadToolExecutorTests`,
    `EditToolExecutorTests`, `WriteToolExecutorTests`, `BashToolExecutorTests`,
    `ToolExecutorRegistryTests`, `AgenticSessionTests`) to construct a `LocalDiskWorkspace` instead of
    passing a bare temp-dir string — same real-filesystem, no-mocks discipline as 43.1.
-8. New multi-root regression test: two temp roots, confirm a path under either resolves and a path
+8. ✅ **Done 2026-07-25.** New multi-root regression test: two temp roots, confirm a path under either resolves and a path
    outside both is rejected — the one behavior this revision actually adds over 43.1.
+9. ✅ **Done 2026-07-25 (review follow-up).** Implementation review found `TryResolve`'s relative-path
+   resolution was silently primary-root-only (structurally could never reach `Roots[1..N]`) — untested
+   and undocumented as such. Fixed by making it an explicit, tested decision instead of an accidental
+   one: a code comment directly above the join in
+   [`WorkspaceGuard.TryResolve`](../../src/ForgeMission.Core/Tools/WorkspaceGuard.cs:38-40) states
+   relative paths always resolve against `Roots[0]` by design (matches Claude Agent SDK's primary
+   directory + `additionalDirectories` asymmetry); `WorkspaceGuardTests.RelativePath_AlwaysResolvesAgainstFirstRoot`
+   proves it doesn't silently resolve into a same-named file under a non-primary root.
 
 ## Done when
 
@@ -186,3 +209,6 @@ directly; `LocalDiskWorkspace` is the sole real implementation; a path under any
 roots resolves correctly and a path outside all of them is rejected (test-verified); full suite
 passes with the same real-filesystem/subprocess, no-mocks discipline as 43.1.
 `ContainerWorkspace` is explicitly out of scope for this "Done when" — see "Deferred" above.
+
+**✅ Met 2026-07-25.** Full suite caveat: the same pre-existing Windows `ExecExpertRunnerTests`
+subprocess failures remain; no tool/workspace/`AgenticSession` failures were introduced.

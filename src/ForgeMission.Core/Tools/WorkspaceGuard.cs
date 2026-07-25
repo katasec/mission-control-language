@@ -12,7 +12,14 @@ public static class WorkspaceGuard
     private static readonly StringComparison PathComparison =
         OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
-    public static bool TryResolve(string workspaceRoot, string requestedPath, out string resolved, out string? error)
+    public static bool TryResolve(string workspaceRoot, string requestedPath, out string resolved, out string? error) =>
+        TryResolve([workspaceRoot], requestedPath, out resolved, out error);
+
+    public static bool TryResolve(
+        IReadOnlyList<string> workspaceRoots,
+        string requestedPath,
+        out string resolved,
+        out string? error)
     {
         resolved = "";
 
@@ -22,15 +29,24 @@ public static class WorkspaceGuard
             return false;
         }
 
-        var rootFull = RealPath(Path.GetFullPath(workspaceRoot));
+        if (workspaceRoots.Count == 0)
+        {
+            error = "At least one workspace root is required.";
+            return false;
+        }
+
+        var rootFull = RealPath(Path.GetFullPath(workspaceRoots[0]));
+        // Relative paths always resolve against Roots[0] (the primary root) by design; absolute
+        // paths may target any configured root, matching Claude Agent SDK's additionalDirectories.
         var candidate = Path.IsPathRooted(requestedPath)
             ? requestedPath
             : Path.Combine(rootFull, requestedPath);
         var full = RealPath(Path.GetFullPath(candidate));
 
-        if (!IsInsideRoot(full, rootFull))
+        var roots = workspaceRoots.Select(root => RealPath(Path.GetFullPath(root))).ToList();
+        if (!roots.Any(root => IsInsideRoot(full, root)))
         {
-            error = $"'{requestedPath}' resolves outside the workspace root ({workspaceRoot})";
+            error = $"'{requestedPath}' resolves outside the workspace roots";
             return false;
         }
 
@@ -51,7 +67,7 @@ public static class WorkspaceGuard
     // directory can't be used to escape confinement, even for a path that doesn't exist yet
     // (Write creating a brand-new file under a symlinked parent still resolves through the real
     // target first).
-    private static string RealPath(string fullPath)
+    internal static string RealPath(string fullPath)
     {
         if (File.Exists(fullPath))
             return ResolveLink(new FileInfo(fullPath)) ?? fullPath;

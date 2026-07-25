@@ -15,8 +15,8 @@ public sealed class ToolExecutorRegistry
     public static IReadOnlyList<IToolExecutor> Default() =>
         [new ReadToolExecutor(), new EditToolExecutor(), new WriteToolExecutor(), new BashToolExecutor()];
 
-    public Task<ToolExecutionResult> ExecuteAsync(FunctionCallContent call, string workspaceRoot, CancellationToken ct = default)
+    public Task<ToolExecutionResult> ExecuteAsync(FunctionCallContent call, IWorkspace workspace, CancellationToken ct = default)
         => _executors.TryGetValue(call.Name, out var executor)
-            ? executor.ExecuteAsync(call.Arguments, workspaceRoot, ct)
+            ? executor.ExecuteAsync(call.Arguments, workspace, ct)
             : Task.FromResult(ToolExecutionResult.Error($"Unknown tool: {call.Name}"));
 }

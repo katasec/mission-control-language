@@ -5,6 +5,9 @@ namespace ForgeMission.Tests.Tools;
 public sealed class BashToolExecutorTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("forge-bash-").FullName;
+    private readonly IWorkspace _workspace;
+
+    public BashToolExecutorTests() => _workspace = new LocalDiskWorkspace(_root);
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
@@ -12,7 +15,7 @@ public sealed class BashToolExecutorTests : IDisposable
     public async Task RunsCommand_ReturnsStdout()
     {
         var tool   = new BashToolExecutor();
-        var result = await tool.ExecuteAsync(Args(("command", "echo hello")), _root);
+        var result = await tool.ExecuteAsync(Args(("command", "echo hello")), _workspace);
 
         Assert.False(result.IsError);
         Assert.Contains("hello", result.Content);
@@ -23,7 +26,7 @@ public sealed class BashToolExecutorTests : IDisposable
     {
         var tool   = new BashToolExecutor();
         var exit3  = OperatingSystem.IsWindows() ? "exit 3" : "exit 3";
-        var result = await tool.ExecuteAsync(Args(("command", exit3)), _root);
+        var result = await tool.ExecuteAsync(Args(("command", exit3)), _workspace);
 
         Assert.True(result.IsError);
         Assert.Contains("exited with code 3", result.Content);
@@ -36,7 +39,7 @@ public sealed class BashToolExecutorTests : IDisposable
         var tool = new BashToolExecutor();
         var command = OperatingSystem.IsWindows() ? "dir /b" : "ls";
 
-        var result = await tool.ExecuteAsync(Args(("command", command)), _root);
+        var result = await tool.ExecuteAsync(Args(("command", command)), _workspace);
 
         Assert.Contains("marker.txt", result.Content);
     }
@@ -45,17 +48,18 @@ public sealed class BashToolExecutorTests : IDisposable
     public async Task MissingCommand_ReturnsError()
     {
         var tool   = new BashToolExecutor();
-        var result = await tool.ExecuteAsync(Args(), _root);
+        var result = await tool.ExecuteAsync(Args(), _workspace);
         Assert.True(result.IsError);
     }
 
     [Fact]
     public async Task LongRunningCommand_TimesOut()
     {
-        var tool    = new BashToolExecutor(timeout: TimeSpan.FromMilliseconds(300));
+        var workspace = new LocalDiskWorkspace(_root, timeout: TimeSpan.FromMilliseconds(300));
+        var tool    = new BashToolExecutor();
         var sleep6s = OperatingSystem.IsWindows() ? "ping -n 7 127.0.0.1" : "sleep 6";
 
-        var result = await tool.ExecuteAsync(Args(("command", sleep6s)), _root);
+        var result = await tool.ExecuteAsync(Args(("command", sleep6s)), workspace);
 
         Assert.True(result.IsError);
         Assert.Contains("timed out", result.Content, StringComparison.OrdinalIgnoreCase);

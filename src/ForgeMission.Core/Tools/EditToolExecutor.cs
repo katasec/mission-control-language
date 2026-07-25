@@ -8,7 +8,7 @@ public sealed class EditToolExecutor : IToolExecutor
     public string Name => "Edit";
 
     public async Task<ToolExecutionResult> ExecuteAsync(
-        IDictionary<string, object?>? arguments, string workspaceRoot, CancellationToken ct = default)
+        IDictionary<string, object?>? arguments, IWorkspace workspace, CancellationToken ct = default)
     {
         if (!ToolArguments.TryGetString(arguments, "file_path", out var filePath))
             return ToolExecutionResult.Error("file_path is required");
@@ -22,15 +22,15 @@ public sealed class EditToolExecutor : IToolExecutor
 
         var replaceAll = ToolArguments.GetBool(arguments, "replace_all");
 
-        if (!WorkspaceGuard.TryResolve(workspaceRoot, filePath, out var resolved, out var pathError))
+        if (!workspace.TryResolvePath(filePath, out var resolved, out var pathError))
             return ToolExecutionResult.Error(pathError!);
 
-        if (!File.Exists(resolved))
+        if (!await workspace.ExistsAsync(resolved, ct))
             return ToolExecutionResult.Error($"File not found: {filePath}. Use Write to create a new file.");
 
         try
         {
-            var content = await File.ReadAllTextAsync(resolved, ct);
+            var content = await workspace.ReadFileAsync(resolved, ct);
             var occurrences = CountOccurrences(content, oldString);
 
             if (occurrences == 0)
@@ -44,7 +44,7 @@ public sealed class EditToolExecutor : IToolExecutor
                 ? content.Replace(oldString, newString)
                 : ReplaceFirst(content, oldString, newString);
 
-            await File.WriteAllTextAsync(resolved, updated, ct);
+            await workspace.WriteFileAsync(resolved, updated, ct);
             return new ToolExecutionResult(replaceAll
                 ? $"Edited {filePath} ({occurrences} replacements)"
                 : $"Edited {filePath}");

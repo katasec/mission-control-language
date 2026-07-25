@@ -8,7 +8,7 @@ public interface IToolExecutor
 
     Task<ToolExecutionResult> ExecuteAsync(
         IDictionary<string, object?>? arguments,
-        string workspaceRoot,
+        IWorkspace workspace,
         CancellationToken ct = default);
 }
 
