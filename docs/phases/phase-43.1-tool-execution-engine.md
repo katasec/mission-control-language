@@ -1,6 +1,6 @@
 # Phase 43.1 — Tool-execution engine
 
-**Status: In build — tasks 1–2 done 2026-07-25, task 3 (`AgenticSession`) next.** Part of
+**Status: All 4 tasks done 2026-07-25 — spoke's "Done when" met.** Part of
 [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Task 1 — done (2026-07-25)
@@ -102,6 +102,71 @@ non-zero exit, `Bash` timeout, dispatch-by-name through the registry using a rea
 unrelated failures (`ExecExpertRunnerTests`, confirmed zero-diff on that code all session) / 11
 skipped — zero regressions from before this task (279→308 passed, exactly +29; 10→11 skipped,
 exactly +1).
+
+**Committed and pushed** to `mission-control-language`, `main`.
+
+## Task 3 — done (2026-07-25)
+
+[AgenticSession.cs](../../src/ForgeMission.Core/Runtime/AgenticSession.cs) — the loop the whole
+spoke was building toward. Constructor takes `ast`, `experts`, `pipelineRunner`, `workspaceRoot`
+(bound once per session — see "workspace-root ownership" below), an optional `ToolExecutorRegistry`
+(defaults to `ToolExecutorRegistry.Default()`), and an optional approval hook (defaults to
+auto-approve).
+
+`RunAsync(PipelineRunOptions options, ct)`: overlays `Tools = AgentToolDeclarations.All` onto the
+caller's options (so the caller can still pass `StepWriter`/`OnStepComplete`/etc. through
+untouched — 43.2's shell will use these), calls `pipelineRunner.RunAsync` once. If
+`MissionResult.ToolCalls` is empty, returns immediately (plain non-agentic mission, or the agent
+answered directly). Otherwise seeds an in-memory `List<ChatMessage>` starting with the **externally
+visible** goal message (`ChatRole.User`, the mission's first param value) — not the pre-agent
+segment's internal enrichment chain, which the model never saw as "the user" — then loops: for each
+`FunctionCallContent`, calls the approval hook, executes via the registry (or synthesizes a denial
+`ToolExecutionResult.Error` if the hook returns `false`), appends the assistant `tool_use` message
+and a `ChatRole.Tool` message carrying the `FunctionResultContent`s, and calls
+`pipelineRunner.RunAsync` again with `StartAtAgent = true` and `ContextObjects = { conversation }`.
+Repeats until a turn returns no tool calls.
+
+**Two open decisions resolved** (both engineering-judgment calls, not product decisions — resolved
+from the existing code rather than raised to the user):
+- **Approval-hook signature: `Func<FunctionCallContent, CancellationToken, Task<bool>>`**, invoked
+  once per call (not once per batch) — matches "invoked before each tool executes" in the locked
+  decisions below, and the `CancellationToken` lets a future human-in-the-loop UI (43.5) cancel an
+  indefinite wait rather than block forever. A `false` result never throws or silently skips — it
+  synthesizes a denial `FunctionResultContent` ("Tool call denied by the user.") so the model sees
+  the outcome and can adjust, verified by
+  `ApprovalHookDenies_ToolNeverExecutes_ModelSeesDenial` (task 4).
+- **`workspaceRoot`: `AgenticSession` constructor parameter.** It's bound once per session (the
+  folder 43.2's shell has open), not a per-call value — belongs alongside the other session-scoped
+  dependencies (`ast`, `experts`, `pipelineRunner`), not threaded through `PipelineRunOptions` on
+  every call.
+
+Calls `PipelineRunner.RunAsync` directly, not `MissionChatClient` — no `IEnrichmentCache`/
+`ConversationHash` involved anywhere in this file, exactly as designed.
+
+## Task 4 — done (2026-07-25)
+
+[AgenticSessionTests.cs](../../src/ForgeMission.Tests/Runtime/AgenticSessionTests.cs) — 3 tests,
+**no mocked tool execution**: the model is scripted (as every LLM-facing test in this codebase
+already scripts the LLM), but `Read`/`Edit`/`Bash` run for real against a real temp-directory
+workspace. Pass criterion is planted, tool-derived content flowing into the final answer text
+(no-false-green discipline, same standard as 42.3) — never a bare status field.
+- `SingleToolCall_ReadsPlantedFile_AnswersWithItsContent` — one round-trip: agent calls `Read` on a
+  planted file, final answer contains the planted marker text. 2 model calls (ask for tool, then
+  answer).
+- `MultiToolCall_EditThenBash_ChainsAcrossTwoContinuations` — the multi-tool case: `Edit` a planted
+  file, then `Bash`-cat it back, exercising the loop across **two** continuations (not one). 3 model
+  calls. Asserts both the final answer text AND the on-disk file content, so the Edit is proven to
+  have actually landed, not just echoed by the scripted model.
+- `ApprovalHookDenies_ToolNeverExecutes_ModelSeesDenial` — a hook returning `false` never touches
+  the planted file (asserted: its content is absent from the result) and the model's final answer
+  reflects the denial.
+
+**Verified:** all 3 new tests pass in isolation. Full suite: **310 pass / 8 fail / 11 skipped, 329
+total.** The 8 failures are 100% `ExecExpertRunnerTests` (confirmed **zero `git diff` on that test
+file or `ExecExpertRunner.cs` across this entire session**, and confirmed **not flaky** — reran that
+file alone twice, 8/8 failed both times, same "exited with code 9009" signature as before) — the
+pre-existing Windows subprocess issue (no `python3`/`bash` on this machine) called out in task 2's
+evidence, not a regression from `AgenticSession`.
 
 **Committed and pushed** to `mission-control-language`, `main`.
 
@@ -225,21 +290,15 @@ What's new:
    dispatch (mirrors the `expert.Kind switch` convention), `Read`/`Edit`/`Write` with path
    confinement + symlink resolution, `Bash` unrestricted with full environment inheritance. See
    "Task 2 — done" below for evidence.
-3. Build `AgenticSession` wrapping `PipelineRunner`: `StartAtAgent`-driven loop, in-memory
-   `Conversation` growth (append tool_use + tool_result each iteration), optional approval hook
-   (`Func<FunctionCallContent, Task<bool>>` or equivalent) defaulting to auto-approve.
-   **Two open decisions to lock before writing this — not build-ready as written:**
-   - The approval-hook signature is still "`Func<FunctionCallContent, Task<bool>>` **or
-     equivalent**" — not actually pinned. Needs a real signature before the constructor can be
-     written.
-   - Where `AgenticSession` gets the **workspace root** from is undecided — constructor
-     parameter, passed per call, something else? `ToolExecutorRegistry.ExecuteAsync` and all four
-     executors already take `workspaceRoot` as a parameter; nothing yet says who owns that value
-     or how it flows in from 43.2 (the desktop shell that opens the folder).
-4. Wire a minimal smoke test: a mission with a `role: agent` expert that must read a file to answer
-   correctly (same no-false-green discipline as 42.3 — pass criterion is planted tool-derived
-   content, never a status field). Add a multi-tool case (Edit then Bash, chained plant) to exercise
-   the loop across more than one round-trip.
+3. ✅ **Done 2026-07-25.** Build `AgenticSession` wrapping `PipelineRunner`: `StartAtAgent`-driven
+   loop, in-memory `Conversation` growth (append tool_use + tool_result each iteration), approval
+   hook (`Func<FunctionCallContent, CancellationToken, Task<bool>>`) defaulting to auto-approve. See
+   "Task 3 — done" above for evidence, including resolution of the two decisions this task was
+   blocked on.
+4. ✅ **Done 2026-07-25.** Wire a minimal smoke test: a mission with a `role: agent` expert that must
+   read a file to answer correctly (same no-false-green discipline as 42.3 — pass criterion is
+   planted tool-derived content, never a status field). Add a multi-tool case (Edit then Bash,
+   chained plant) to exercise the loop across more than one round-trip. See "Task 4 — done" above.
 
 ## Done when
 
@@ -247,3 +306,8 @@ A mission with a tool-capable agent expert runs end-to-end **without** the real 
 `forge serve` in the path — `AgenticSession` executes `Read`/`Edit`/`Write`/`Bash` itself and
 produces a verified result, driven directly from `ForgeMission.Core`, no cache/hash machinery
 involved.
+
+**✅ Met, 2026-07-25** — `AgenticSessionTests` (task 4) proves exactly this: `AgenticSession` runs a
+`role: agent` mission through `Read`/`Edit`/`Bash` tool round-trips with real filesystem/subprocess
+execution, no `claude` CLI, no `forge serve`, no `IEnrichmentCache`/`ConversationHash`. Phase 43.1
+is complete; next up is [Phase 43.2 — Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md).
