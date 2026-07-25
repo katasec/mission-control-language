@@ -309,6 +309,11 @@ private method — no new packages needed for OpenAI-compatible APIs.
   functions, top-down ordering, early returns over nesting, isolated side effects, explicit error
   handling, zero warnings, no speculative abstractions. Full rules in
   [docs/design/code-style.md](docs/design/code-style.md).
+- **Match response shape to what's asked — verbosity is a defect, not thoroughness.** Answer scoped
+  questions directly and stop; lead multi-point answers with a compact table (one row per
+  independent idea, not per sentence); merge issue→response / request→open-question pairs into one
+  row instead of padding row count. Full rules in
+  [docs/design/collaboration-style.md](docs/design/collaboration-style.md).
 - **Report results straight — no cliffhangers.** State what is done and proven, then stop. Don't
   end a wrap-up with a manufactured "one thing left" hedge to look thorough or invite another turn.
   A genuine limitation is one plain line, not a teaser.
