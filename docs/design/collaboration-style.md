@@ -22,6 +22,9 @@ being longer; it's thorough when nothing needed is missing and nothing unneeded 
   inline, e.g. "Issue → Response"). Padding a table to look thorough is the same mistake as a prose
   wall, just reformatted.
 - **When in doubt, cut.** Trim before sending rather than after being asked to.
+- **Never reference a phase/spoke number bare — always pair it with its short description.** "43.2"
+  means nothing on its own across a session or a hub with 40+ phases; "43.2 — Avalonia vanilla
+  shell" does. Applies whenever a phase number is said or written, not just when first introduced.
 
 ---
 
