@@ -7,6 +7,8 @@ public class ForgeCredentials
 {
     public Dictionary<string, RegistryCredential> Credentials { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    public Dictionary<string, ProviderCredential> Providers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Platform sign-in (42.5): the forge platform key + who/where it came from.</summary>
     public PlatformCredential? Platform { get; set; }
 }
@@ -14,6 +16,11 @@ public class ForgeCredentials
 public class RegistryCredential
 {
     public string Token { get; set; } = "";
+}
+
+public class ProviderCredential
+{
+    public string ApiKey { get; set; } = "";
 }
 
 public class PlatformCredential
@@ -31,6 +38,7 @@ public class PlatformCredential
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(ForgeCredentials))]
 [JsonSerializable(typeof(RegistryCredential))]
+[JsonSerializable(typeof(ProviderCredential))]
 [JsonSerializable(typeof(PlatformCredential))]
 internal partial class CredentialsJsonContext : JsonSerializerContext { }
 
@@ -63,6 +71,27 @@ public static class CredentialStore
 
     public static void SaveToken(string registry, string token) =>
         Mutate(creds => creds.Credentials[registry] = new RegistryCredential { Token = token });
+
+    // --- Provider credential (Forge Desktop) ----------------------------------------------
+
+    public static ProviderCredential? GetProvider(string provider)
+    {
+        if (!File.Exists(CredentialsPath)) return null;
+
+        try
+        {
+            var json = File.ReadAllText(CredentialsPath);
+            var creds = JsonSerializer.Deserialize(json, CredentialsJsonContext.Default.ForgeCredentials);
+            if (creds?.Providers.TryGetValue(provider, out var credential) == true)
+                return string.IsNullOrWhiteSpace(credential.ApiKey) ? null : credential;
+        }
+        catch { /* corrupt credentials file — treat as missing */ }
+
+        return null;
+    }
+
+    public static void SaveProvider(string provider, string apiKey) =>
+        Mutate(creds => creds.Providers[provider] = new ProviderCredential { ApiKey = apiKey });
 
     // --- Platform credential (42.5) --------------------------------------------------------
 

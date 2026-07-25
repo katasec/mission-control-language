@@ -120,18 +120,46 @@ Respond with this exact JSON format and nothing else — status must always be "
         Dictionary<string, object> context,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var instruction = expert.IsJudge ? JudgeStreamingInstruction : CriticStreamingInstruction;
         var (userMessage, systemPrompt) = BuildMessages(expert, context);
         var messages = new List<ChatMessage>
         {
-            new(ChatRole.System, systemPrompt + instruction),
+            new(ChatRole.System, systemPrompt),
             new(ChatRole.User, userMessage)
         };
-        await foreach (var update in chatClient.GetStreamingResponseAsync(messages, cancellationToken: ct))
+
+        var options = new ChatOptions();
+        IList<AITool>? tools = null;
+        var toolMode = context.TryGetValue("tools", out var t) && (tools = t as IList<AITool>) is not null;
+        if (toolMode)
         {
+            options.Tools = tools;
+
+            if (context.TryGetValue("conversation", out var c) && c is Conversation conversation)
+            {
+                messages = [new ChatMessage(ChatRole.System, systemPrompt)];
+                messages.AddRange(conversation.Messages.Where(m => m.Role != ChatRole.System));
+            }
+        }
+        else
+        {
+            var instruction = expert.IsJudge ? JudgeStreamingInstruction : CriticStreamingInstruction;
+            messages[0] = new ChatMessage(ChatRole.System, systemPrompt + instruction);
+        }
+
+        var updates = new List<ChatResponseUpdate>();
+        await foreach (var update in chatClient.GetStreamingResponseAsync(messages, options, ct))
+        {
+            updates.Add(update);
             if (!string.IsNullOrEmpty(update.Text))
                 yield return update.Text;
         }
+
+        if (!toolMode) yield break;
+
+        var response = ChatResponseExtensions.ToChatResponse(updates);
+        var toolCalls = response.Messages.LastOrDefault()?.Contents.OfType<FunctionCallContent>().ToList();
+        if (toolCalls is { Count: > 0 })
+            context["tool_calls"] = toolCalls;
     }
 
     private static (string userMessage, string systemPrompt) BuildMessages(

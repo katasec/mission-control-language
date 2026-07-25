@@ -1,6 +1,7 @@
 # Phase 43.2 — Avalonia vanilla shell
 
-**Status: In build — Task 1 done 2026-07-26** (scaffold + Native AOT verified); Tasks 2–5 remaining.
+**Status: In build — Tasks 1–2 done 2026-07-26** (scaffold, AOT, agentic streaming, and streamed
+tool-call loop verified); Tasks 3–5 remaining.
 Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and
 [43.7](phase-43.7-workspace-provider.md) (the workspace-root shape this spoke builds against).
@@ -84,10 +85,27 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
    - `ForgeMission.Rooms.Tests` failures (Docker/Testcontainers unreachable + two Windows file-lock
      cleanup failures) are environment-only and out of scope — that project touches none of the
      files this task changed.
-2. Wire the compose box → [43.1](phase-43.1-tool-execution-engine.md)'s agentic loop, streaming
-   assistant output back into the chat pane (reuse the existing `IAsyncEnumerable<string>`
-   streaming contract from [Phase 15](phase-15-streaming.md) if it fits the loop shape; adapt if
-   not).
+2. ✅ **Done 2026-07-26.** Compose now opens a user-selected local workspace through Avalonia's
+   `TopLevel.StorageProvider.OpenFolderPickerAsync`, then runs the bundled `missions/vanilla` mission
+   through a fresh `AgenticSession` per Send. A new Core `IChatClientFactory` is the sole provider-client
+   seam; Desktop registers the OpenAI-only `LocalKeyChatClientFactory`, which reads
+   `~/.forge/credentials.json`'s `providers.openai.apiKey` via the AOT-safe `CredentialStore` source-gen
+   path and never reads `ProviderProfile.ApiKey` or a provider-key environment variable. The compose box
+   remains disabled until a folder is open; each Send is deliberately one-shot (prior visible messages are
+   not mission context).
+
+   Streaming uses `ContentWriter`, not `StepWriter`: the existing `MissionChatClient` precedent proves
+   it carries only raw response chunks. While wiring it, a latent Core bug was fixed surgically in
+   `DirectExpertRunner.StreamAsync`: tool-mode streaming now passes `ChatOptions.Tools`, rebuilds native
+   conversation turns, skips the JSON-envelope instruction, buffers SDK updates while yielding text live,
+   and uses the public `ChatResponseExtensions.ToChatResponse` aggregator before writing the existing
+   `context["tool_calls"]` key. No `PipelineRunner` change was needed because it already extracts that
+   key generically. `VanillaMissionSessionFactoryTests.StreamingToolCall_ReadsPlantedFile_StreamsFinalAnswer`
+   verifies a streamed tool call, real local Read execution, and streamed continuation: 1 passed / 0 failed.
+   The previously stale vanilla `mcl.lock` hash was regenerated with `forge init` so the normal expert-lock
+   check can resolve the bundled mission. Build and Native AOT `win-arm64` publish both passed; the full
+   suite remains blocked only by the known 8 Windows `ExecExpertRunnerTests` failures and this machine's
+   unavailable Docker/Testcontainers Rooms-test environment.
 3. Tool-call indicators — minimal inline rendering when a tool executes mid-turn (no need for a
    full diff view yet — that's 43.4's code pane).
 4. Package for macOS (dev-signed is fine locally; defer notarization) and Windows (win-arm64,

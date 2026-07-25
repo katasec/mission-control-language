@@ -1,8 +1,19 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace ForgeMission.Desktop.ViewModels;
 
-public sealed class ChatMessageViewModel(string sender, string text)
+public sealed partial class ChatMessageViewModel : ObservableObject
 {
-    public string Sender { get; } = sender;
+    public ChatMessageViewModel(string sender, string text)
+    {
+        Sender = sender;
+        Text = text;
+    }
 
-    public string Text { get; } = text;
+    public string Sender { get; }
+
+    [ObservableProperty]
+    public partial string Text { get; set; }
+
+    public void Append(string value) => Text += value;
 }

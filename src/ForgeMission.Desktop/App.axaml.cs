@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using ForgeMission.Core.Runtime;
+using ForgeMission.Desktop.Services;
 using ForgeMission.Desktop.ViewModels;
 using ForgeMission.Desktop.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +32,9 @@ public partial class App : Application
     private static ServiceProvider ConfigureServices()
     {
         var serviceCollection = new ServiceCollection();
-        serviceCollection.AddSingleton(static _ => new MainWindowViewModel());
+        serviceCollection.AddSingleton<IChatClientFactory, LocalKeyChatClientFactory>();
+        serviceCollection.AddSingleton<VanillaMissionSessionFactory>();
+        serviceCollection.AddSingleton<MainWindowViewModel>();
         return serviceCollection.BuildServiceProvider();
     }
 }
