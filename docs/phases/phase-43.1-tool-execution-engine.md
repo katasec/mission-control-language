@@ -228,6 +228,14 @@ What's new:
 3. Build `AgenticSession` wrapping `PipelineRunner`: `StartAtAgent`-driven loop, in-memory
    `Conversation` growth (append tool_use + tool_result each iteration), optional approval hook
    (`Func<FunctionCallContent, Task<bool>>` or equivalent) defaulting to auto-approve.
+   **Two open decisions to lock before writing this — not build-ready as written:**
+   - The approval-hook signature is still "`Func<FunctionCallContent, Task<bool>>` **or
+     equivalent**" — not actually pinned. Needs a real signature before the constructor can be
+     written.
+   - Where `AgenticSession` gets the **workspace root** from is undecided — constructor
+     parameter, passed per call, something else? `ToolExecutorRegistry.ExecuteAsync` and all four
+     executors already take `workspaceRoot` as a parameter; nothing yet says who owns that value
+     or how it flows in from 43.2 (the desktop shell that opens the folder).
 4. Wire a minimal smoke test: a mission with a `role: agent` expert that must read a file to answer
    correctly (same no-false-green discipline as 42.3 — pass criterion is planted tool-derived
    content, never a status field). Add a multi-tool case (Edit then Bash, chained plant) to exercise
