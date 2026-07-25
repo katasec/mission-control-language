@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ForgeMission.Desktop.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DesignWidth="800"
+        d:DesignHeight="450"
+        x:Class="ForgeMission.Desktop.Views.MainWindow"
+        x:CompileBindings="True"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Forge">
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto" RowSpacing="16">
+        <TextBlock FontSize="20" FontWeight="SemiBold" Text="Forge" />
+
+        <Border Grid.Row="1" BorderBrush="{DynamicResource ThemeControlLowBrush}" BorderThickness="1" Padding="12">
+            <ListBox ItemsSource="{Binding Messages}" BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChatMessageViewModel">
+                        <StackPanel Margin="0,0,0,12" Spacing="4">
+                            <TextBlock FontWeight="SemiBold" Text="{Binding Sender}" />
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <TextBox PlaceholderText="Describe what you want to build" Text="{Binding ComposeText}" />
+            <Button Grid.Column="1" Command="{Binding SendCommand}" Content="Send" />
+        </Grid>
+    </Grid>
+</Window>

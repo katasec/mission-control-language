@@ -49,11 +49,12 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
 
 ## Tasks
 
-1. Scaffold `ForgeMission.Desktop` (Avalonia project, added to `ForgeMission.slnx`), minimal
-   window + chat view, referencing `ForgeMission.Core`. Native AOT from the start: `<PublishAot>true</PublishAot>`
-   on `ForgeMission.Desktop` itself, `<IsAotCompatible>true</IsAotCompatible>` on every project it
-   references (matches `ForgeMission.Cli`'s existing AOT setup) — use the CommunityToolkit.Mvvm
-   Avalonia template, not the ReactiveUI one.
+1. Implementation complete 2026-07-26: scaffolded `ForgeMission.Desktop` from the official
+   CommunityToolkit.Mvvm Avalonia template, added it to `ForgeMission.slnx`, and built a compiled-binding
+   chat placeholder (message list + compose box, no agentic wiring). `dotnet build src/ForgeMission.slnx`
+   passed with 0 warnings / 0 errors; Native AOT `win-arm64` publish and launch succeeded. The task is not
+   marked done yet because the full test command is blocked by pre-existing Windows `ExecExpertRunnerTests`
+   failures plus this machine's unavailable Docker daemon for Rooms tests; see current session evidence.
 2. Wire the compose box → [43.1](phase-43.1-tool-execution-engine.md)'s agentic loop, streaming
    assistant output back into the chat pane (reuse the existing `IAsyncEnumerable<string>`
    streaming contract from [Phase 15](phase-15-streaming.md) if it fits the loop shape; adapt if
