@@ -105,7 +105,29 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
    The previously stale vanilla `mcl.lock` hash was regenerated with `forge init` so the normal expert-lock
    check can resolve the bundled mission. Build and Native AOT `win-arm64` publish both passed; the full
    suite remains blocked only by the known 8 Windows `ExecExpertRunnerTests` failures and this machine's
-   unavailable Docker/Testcontainers Rooms-test environment.
+   unavailable Docker/Testcontainers Rooms-test environment. **No real live provider call was exercised**
+   — the automated test uses a scripted `IChatClient` (same discipline as 43.1's `AgenticSessionTests`);
+   an actual OpenAI round-trip requires a real key in `~/.forge/credentials.json`, not present on this
+   machine.
+
+   **Implemented by Codex, independently re-verified by Claude on this same machine/working tree**
+   (same discipline as Task 1 and [43.7](phase-43.7-workspace-provider.md)):
+   - Reviewed `DirectExpertRunner.StreamAsync` directly — confirms the accumulate-then-
+     `ChatResponseExtensions.ToChatResponse(updates)`-once approach was used exactly as corrected during
+     review (the initially-proposed `ProcessUpdate` method was verified via .NET reflection against the
+     actual installed `Microsoft.Extensions.AI.Abstractions` 10.7.0 DLL to be `internal`, not callable
+     across the assembly boundary — this build uses the public alternative instead).
+   - `dotnet build src/ForgeMission.slnx` — reproduced clean (0 errors; same 1 unrelated pre-existing
+     `PostgresFixture.cs` warning as Task 1).
+   - `dotnet test ... --filter "VanillaMissionSessionFactoryTests|AgenticSessionTests"` — reproduced
+     independently: 4 passed / 0 failed (the new streamed tool-call test plus 43.1's original 3).
+   - `dotnet test src/ForgeMission.Tests/ForgeMission.Tests.csproj` — reproduced independently: 8 failed /
+     316 passed / 11 skipped, 335 total — exactly the established baseline (334 total in Task 1's
+     independent run) plus one net-new passing test, zero regressions.
+   - Native AOT `win-arm64` publish: same re-verification-environment gap as Task 1 (`vswhere.exe`'s
+     directory still not on `PATH` in this session) — not reproduced directly, but the publish output
+     directory contained a genuine 40 MB `ForgeMission.Desktop.exe` timestamped minutes before the
+     commit, independently launched (confirmed running, ~91 MB working set) and cleanly terminated.
 3. Tool-call indicators — minimal inline rendering when a tool executes mid-turn (no need for a
    full diff view yet — that's 43.4's code pane).
 4. Package for macOS (dev-signed is fine locally; defer notarization) and Windows (win-arm64,
