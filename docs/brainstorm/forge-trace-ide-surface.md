@@ -1,5 +1,13 @@
 # Brainstorm: an IDE surface for AI-workflow collaboration (`forge trace`)
 
+**Promoted 2026-07-25 into [Phase 43.4 — IDE trace surface](../phases/phase-43.4-ide-trace-surface.md),**
+part of [Phase 43 — Forge Desktop](../phases/phase-43-forge-desktop.md). That doc is now canonical
+— it carries the full content below plus the decisions made since (Avalonia, not the platform
+mockups explored here). This file is kept for the image assets and historical record only; don't
+build from it.
+
+---
+
 **Status: conceptual only — not decided, not scoped as a phase.** Captured from a design
 conversation on 2026-07-20. If this gets picked up, split it into a proper phase hub/spoke per
 `AGENTS.md`; don't build directly from this doc.

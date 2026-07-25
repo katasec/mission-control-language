@@ -1,5 +1,12 @@
 # Brainstorm: human-in-the-loop steps in MCL missions
 
+**Promoted 2026-07-25 into [Phase 43.5 — Human-in-the-loop](../phases/phase-43.5-human-in-the-loop.md),**
+part of [Phase 43 — Forge Desktop](../phases/phase-43-forge-desktop.md). That doc is now canonical
+— it carries the full content below plus a Forge-Desktop-scoped task list. This file is kept for
+historical record only; don't build from it.
+
+---
+
 **Status: conceptual only — not decided, not scoped as a phase.** Captured from a design
 conversation on 2026-07-20. If this gets picked up, split it into a proper phase hub/spoke
 per `AGENTS.md`; don't build directly from this doc.
