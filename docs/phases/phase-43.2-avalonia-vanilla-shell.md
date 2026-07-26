@@ -161,6 +161,14 @@ same action.
 - The top-right "Open Folder" button and the dead placeholder text are removed outright, no
   replacement fixture. After a folder opens, the `+` menu remains in the composer for adding more
   later — nothing new appears in the header.
+- **Addendum (gap found during handoff review, 2026-07-26):** the existing `WorkspaceLabel` row
+  (`MainWindow.axaml:24`, today shows "No folder open" / the open path) was missed in the after
+  mockup, which only depicts the pre-folder-open state. Resolution: while no workspace is open,
+  this row is empty/collapsed — "No folder open" is redundant with the chat pane's own "No folder
+  open yet" text and shouldn't say the same thing twice. Once a folder *is* open, the row shows the
+  path in small muted text (no border, no background) beneath the header — this is real information
+  the user needs on an ongoing basis (which folder they're in), not chrome, so it earns its place
+  under the Norman feedback check even though nothing else in the header persists.
 
 **Gate check:**
 - *Rams — as little design as possible:* one entry point (the `+` menu) instead of two. Pass.
