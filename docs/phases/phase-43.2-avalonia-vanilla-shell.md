@@ -2,7 +2,8 @@
 
 **Status: In build — Tasks 1–3 done 2026-07-26** (scaffold, AOT, agentic streaming, streamed
 tool-call loop, tool-call indicators, and a folder-open affordance fix found during Task 2 review —
-all independently re-verified); Tasks 4–5 remaining.
+all independently re-verified); Tasks 4–6 remaining (visual identity skin added 2026-07-27,
+ahead of packaging/dogfood).
 Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and
 [43.7](phase-43.7-workspace-provider.md) (the workspace-root shape this spoke builds against).
@@ -133,9 +134,21 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
    mid-turn (no full diff view — that's 43.4's code pane). Built to the design below; see
    [Task 3 design](#task-3-design-tool-call-indicators) for the mockups/spec and verification
    evidence.
-4. Package for macOS (dev-signed is fine locally; defer notarization) and Windows (win-arm64,
+4. **Added 2026-07-27.** Apply the visual identity system — skin only, not a restructure. Draft the
+   Avalonia token catalogue per
+   [Visual identity direction](../design/desktop-interaction-principles.md#visual-identity-direction-decided-2026-07-27)
+   (mirrors `forge.css`'s groups: surfaces, lines, text, accent, radii, spacing, elevation) as
+   `DynamicResource` brushes, then reskin the existing Tasks 1–3 controls (composer, `+` flyout,
+   message list, tool-call indicator rows, workspace label) to use them in place of stock
+   `FluentTheme` defaults. Explicitly **out of scope**: changing the chat-bubbles-and-compose-box
+   layout shape itself — that restructure stays [43.4](phase-43.4-ide-trace-surface.md)'s job. Run
+   the [Cooper/Rams/Norman gate](../design/desktop-interaction-principles.md#the-assessment-gate--what-would-cooper-do-what-would-rams-do-what-would-norman-do)
+   before implementation (mock the reskinned state, note the answers here), and use `avalonia_devtools`
+   (DevTools MCP) to screenshot/verify the live result against the mock per the design-first
+   process's step 6.
+5. Package for macOS (dev-signed is fine locally; defer notarization) and Windows (win-arm64,
    matching the existing release RID).
-5. Dogfood checkpoint: run a real multi-tool coding task end-to-end in the shell on Mac.
+6. Dogfood checkpoint: run a real multi-tool coding task end-to-end in the shell on Mac.
 
 ### Design note: folder-open affordance fix
 

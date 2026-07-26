@@ -69,7 +69,7 @@ pointing here.
 |---|---|---|---|
 | [43.1 — Tool-execution engine](phase-43.1-tool-execution-engine.md) | Forge executes `Read`/`Edit`/`Write`/`Bash` itself; agentic loop (`AgenticSession`, in-memory, no cache) inside `ForgeMission.Core`, replacing client-side execution. | None (builds on existing `FunctionCallContent`/`MissionResult.ToolCalls` plumbing from [42.3](phase-42.3-tool-capable-enriching-responder.md)) | **✅ DONE 2026-07-25** — all 4 tasks, end-to-end verified, no mocks |
 | [43.7 — Workspace provider abstraction](phase-43.7-workspace-provider.md) | Revises 43.1's `workspaceRoot: string` into one `IWorkspace` interface (`LocalDiskWorkspace` v1; container backend documented, deferred) before 43.2 builds a shell around the narrower assumption. Cross-references [39.7](phase-39.7-exec-secret-isolation.md) (shares the interface shape, not the timeline). | 43.1 | **✅ DONE 2026-07-25** — implemented by Codex, design + build reviewed and independently re-verified by Claude |
-| [43.2 — Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md) | The familiar coding-agent chat UI (Claude Code/Codex-shaped), native Mac + Windows from one Avalonia codebase, talking to Core. | 43.1, 43.7 | **In build** — Tasks 1–3 done 2026-07-26; Tasks 4–5 (packaging, dogfood) remaining |
+| [43.2 — Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md) | The familiar coding-agent chat UI (Claude Code/Codex-shaped), native Mac + Windows from one Avalonia codebase, talking to Core. | 43.1, 43.7 | **In build** — Tasks 1–3 done 2026-07-26; Tasks 4–6 (visual identity skin, packaging, dogfood) remaining |
 | [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as the flagship; decide intermediate-role-switch visibility. | 43.2 | Design |
 | [43.4 — IDE trace surface (iterative)](phase-43.4-ide-trace-surface.md) | Evolve the vanilla shell toward the debugger-style workbench (outline/thread/gate/code-pane, dockable panels) from the forge-trace brainstorm. Explicitly a mockup-iterate-refine loop, not a fixed deliverable. | 43.3 | Design — iteration not started |
 | [43.5 — Human-in-the-loop (suspend/resume)](phase-43.5-human-in-the-loop.md) | `kind: human` pipeline step + `Suspended` `StepEnvelope` outcome + resume-at-step-N — the mechanical prerequisite for 43.4's "Gate" concept and for approval-gated missions generally. | None (parallel-buildable with 43.1–43.3; blocks only 43.4's Gate feature) | Design |
@@ -95,6 +95,19 @@ pointing here.
   inline in the vanilla shell, or stay hidden until 43.4's richer surface exists — decide in 43.3.
 - Exact iteration cadence/exit criteria for 43.4 — "feels right" needs at least a rough rubric
   before that spoke starts, or it never converges.
+- **Design gate scope, refined 2026-07-27:** the Cooper/Rams/Norman assessment gate and the
+  visual-identity direction (both in
+  [desktop-interaction-principles.md](../design/desktop-interaction-principles.md)) were adopted
+  after 43.2's vanilla shell was already in build, but they split into two different retroactivity
+  answers, not one:
+  - **Structural/Cooper concerns (chat-bubbles-and-compose-box shape) do not retrofit 43.2.** It
+    stays the "familiar coding-agent chat UI" placeholder by design (Phase 43's
+    "meet-people-where-they-are, then evolve" sequencing above) — that restructure is
+    [43.4](phase-43.4-ide-trace-surface.md)'s job.
+  - **Visual identity (theming/skin) does retrofit 43.2**, as its new
+    [Task 4](phase-43.2-avalonia-vanilla-shell.md) — 43.2 is the actual surface that looks bad
+    today, so it's the right trigger for "first spoke to need real theming," added ahead of
+    Task 4/5's original packaging/dogfood (now 5/6).
 - **Longer-term aspiration (not scoped to any spoke yet, 2026-07-26):** the user wants to eventually
   eliminate the manual copy-paste cycle currently used to hand work between Claude (architect/
   reviewer) and Codex (implementor) during this project's own build process — one surface instead.
