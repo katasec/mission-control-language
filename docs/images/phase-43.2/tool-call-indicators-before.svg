@@ -1,0 +1,21 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Before: no tool-call visibility</title>
+<desc>A chat transcript where the user asks for a file edit and the assistant bubble jumps straight to the final answer with no indication that any tool ran in between.</desc>
+<rect x="0.5" y="0.5" width="399" height="299" rx="10" fill="#ffffff" stroke="#d9d7d0"/>
+
+<!-- user bubble -->
+<rect x="140" y="16" width="244" height="40" rx="10" fill="#e6f1fb"/>
+<text x="262" y="40" font-family="Segoe UI, sans-serif" font-size="11.5" fill="#0c447c" text-anchor="middle">Add a header comment to Foo.cs</text>
+
+<!-- assistant bubble -->
+<rect x="16" y="72" width="280" height="90" rx="10" fill="#f1efe8"/>
+<text x="34" y="100" font-family="Segoe UI, sans-serif" font-size="12" fill="#2c2c2a">Done — I added the header</text>
+<text x="34" y="118" font-family="Segoe UI, sans-serif" font-size="12" fill="#2c2c2a">comment to Foo.cs.</text>
+
+<!-- annotation -->
+<rect x="30" y="136" width="252" height="1" stroke="#e24b4a" stroke-dasharray="3,3"/>
+<circle cx="296" cy="80" r="9" fill="#fcebeb" stroke="#e24b4a"/>
+<text x="296" y="84" font-family="Segoe UI, sans-serif" font-size="11" fill="#a32d2d" text-anchor="middle">1</text>
+<text x="16" y="200" font-family="Segoe UI, sans-serif" font-size="11" fill="#a32d2d">1. Nothing shown while the Read/Edit tool calls actually ran —</text>
+<text x="16" y="216" font-family="Segoe UI, sans-serif" font-size="11" fill="#a32d2d">the file changed with no visible trace in the transcript.</text>
+</svg>

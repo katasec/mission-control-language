@@ -1,7 +1,9 @@
 # Phase 43.2 — Avalonia vanilla shell
 
 **Status: In build — Tasks 1–2 done 2026-07-26** (scaffold, AOT, agentic streaming, and streamed
-tool-call loop verified); Tasks 3–5 remaining.
+tool-call loop verified); Tasks 3–5 remaining. Task 3 and a folder-open affordance fix (found during
+review of Task 2) are now **designed** — see the two design notes below — implementation not yet
+started.
 Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and
 [43.7](phase-43.7-workspace-provider.md) (the workspace-root shape this spoke builds against).
@@ -133,6 +135,86 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
 4. Package for macOS (dev-signed is fine locally; defer notarization) and Windows (win-arm64,
    matching the existing release RID).
 5. Dogfood checkpoint: run a real multi-tool coding task end-to-end in the shell on Mac.
+
+### Design note: folder-open affordance fix
+
+**Identified during review, 2026-07-26 — designed, not yet implemented.** Task 2 shipped the
+open-folder flow working, but it violates two of the
+[Desktop Interaction Principles](../design/desktop-interaction-principles.md) this doc prompted:
+a top-right "Open Folder" button that never recedes once a folder is open, and a placeholder
+("Open a folder to begin") styled like a clickable link that does nothing when clicked — the real
+trigger is the separate button. Compared directly against Claude Desktop's `+`-menu pattern for the
+same action.
+
+| Before | After |
+|---|---|
+| ![Before: persistent chrome, dead placeholder text](../images/phase-43.2/folder-open-before.svg) | ![After: progressive disclosure via the composer's + menu](../images/phase-43.2/folder-open-after.svg) |
+
+**Component spec (after):**
+- Composer gains a leading `+` icon button (36×36, outline style) opening a flyout menu anchored to
+  itself, with two items: **Add folder** (calls the existing Task-2 `OpenFolderPickerAsync` path,
+  unchanged) and **Attach files** (no feature behind it yet — omit the item entirely rather than
+  ship a dead menu entry; add it back when file-attach exists).
+- Compose textbox placeholder reads "Add a folder to start" while no workspace is open, reverting
+  to "Describe what you want to build" once one is. Send button stays visible but disabled (as
+  today) rather than removed, so the layout doesn't jump when a folder opens.
+- The top-right "Open Folder" button and the dead placeholder text are removed outright, no
+  replacement fixture. After a folder opens, the `+` menu remains in the composer for adding more
+  later — nothing new appears in the header.
+
+**Gate check:**
+- *Rams — as little design as possible:* one entry point (the `+` menu) instead of two. Pass.
+- *Rams — long-lasting:* the `+` menu is the same slot [43.3](phase-43.3-mission-attach-point.md)
+  and later attach-style features can extend, rather than a bespoke button needing its own future
+  redesign.
+- *Norman — signifier check:* "No folder open yet" is plain muted text, not link-styled — nothing
+  implies it's clickable. Pass.
+- *Norman — mapping check:* `+` menu in the composer matches the pattern from Claude Desktop /
+  Slack / iMessage users already know. Pass.
+
+**Status:** designed 2026-07-26. Implementation not started — open whether it lands as its own
+quick pass or bundled with Task 3's composer changes below.
+
+### Task 3 design: tool-call indicators
+
+**Designed 2026-07-26, before implementation**, per the
+[design-first process](../design/desktop-interaction-principles.md#design-first-process-for-ui-facing-tasks).
+Today (post Task 2) a tool call executes silently — the assistant bubble shows only the final
+answer, with no trace that a `Read`/`Edit`/`Bash` call happened in between. For a coding-agent
+surface that's a trust gap, not just a cosmetic one: the whole point of this app is that it edits
+real files, and the user currently has no way to see that happening turn-by-turn.
+
+| Before | After |
+|---|---|
+| ![Before: no visibility into tool calls](../images/phase-43.2/tool-call-indicators-before.svg) | ![After: quiet inline indicator rows, done vs. running](../images/phase-43.2/tool-call-indicators-after.svg) |
+
+**Component spec:**
+- One indicator row per tool call, rendered inline inside the assistant message, in the exact order
+  the calls happened — not batched at the end. No card, no border, no background of its own; it's a
+  quiet text row that inherits the assistant bubble's surface (matches the minimal-chrome gate).
+- Two states only, no third "queued" state needed for v1:
+  - **Running** — a small pending glyph (dashed/spinner-style circle) + present-participle verb +
+    target, muted color: `Editing Bar.cs…`.
+  - **Done** — a small check glyph + past-tense verb + target, same muted color: `Read Foo.cs`.
+- Copy pattern by tool, sentence case, no trailing punctuation except the running state's ellipsis:
+  `Read`/`Reading`, `Edit`/`Editing`, `Write`/`Writing`, `Run`/`Running` (for `Bash`, target = the
+  command, truncated if long).
+- No click target, no expandable output in this task — that's explicitly deferred to
+  [43.4](phase-43.4-ide-trace-surface.md)'s code pane. These rows are informational only.
+- Font size one step below the message body text (secondary/caption scale) so they read as
+  metadata, not content.
+
+**Gate check:**
+- *Rams — thorough:* both running and done states are designed up front, not just the happy-path
+  "done" state.
+- *Rams — as little design as possible:* no card/border/diff view — a single muted text row per
+  call, deferring anything richer to 43.4.
+- *Norman — feedback check:* the user sees, in real time, that a specific file is being read or
+  edited — directly closes the "no visibility" gap in the before state.
+- *Norman — signifier check:* rows are static text with no hover/click affordance, since they aren't
+  interactive yet — no false promise of a click target.
+
+**Status:** designed, not yet implemented — this is the actual Task 3 build target.
 
 ## Done when
 

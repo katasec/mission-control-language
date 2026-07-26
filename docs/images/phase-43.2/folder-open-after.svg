@@ -1,0 +1,31 @@
+<svg viewBox="0 0 400 420" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>After: folder-open flow using progressive disclosure</title>
+<desc>Forge window with no persistent folder button. A plus icon button in the composer opens a small menu with "Add folder" and "Attach files"; once a folder is open the menu and its trigger recede and only the composer remains.</desc>
+<rect x="0.5" y="0.5" width="399" height="419" rx="10" fill="#ffffff" stroke="#d9d7d0"/>
+
+<!-- header -->
+<line x1="0" y1="52" x2="400" y2="52" stroke="#e6e4dd"/>
+<text x="18" y="33" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="#1a1a18">Forge</text>
+
+<!-- content -->
+<text x="200" y="180" font-family="Segoe UI, sans-serif" font-size="13" fill="#888780" text-anchor="middle">No folder open yet</text>
+
+<!-- popup menu -->
+<rect x="18" y="238" width="162" height="66" rx="8" fill="#ffffff" stroke="#d9d7d0"/>
+<rect x="22" y="242" width="154" height="28" rx="6" fill="#f1efe8"/>
+<rect x="32" y="250" width="14" height="12" rx="2" fill="none" stroke="#5f5e5a"/>
+<text x="54" y="260" font-family="Segoe UI, sans-serif" font-size="12" fill="#1a1a18">Add folder</text>
+<text x="54" y="292" font-family="Segoe UI, sans-serif" font-size="12" fill="#888780">Attach files</text>
+
+<!-- composer -->
+<line x1="0" y1="344" x2="400" y2="344" stroke="#e6e4dd"/>
+<rect x="18" y="364" width="36" height="36" rx="6" fill="#ffffff" stroke="#185fa5" stroke-width="1.5"/>
+<text x="36" y="388" font-family="Segoe UI, sans-serif" font-size="16" fill="#185fa5" text-anchor="middle">+</text>
+<rect x="62" y="364" width="254" height="36" rx="6" fill="#ffffff" stroke="#d9d7d0"/>
+<text x="78" y="387" font-family="Segoe UI, sans-serif" font-size="12" fill="#b4b2a9">Add a folder to start</text>
+<rect x="326" y="364" width="56" height="36" rx="6" fill="#ffffff" stroke="#d9d7d0" opacity="0.5"/>
+
+<!-- annotation -->
+<circle cx="36" cy="352" r="9" fill="#eaf3de" stroke="#639922"/>
+<text x="36" y="356" font-family="Segoe UI, sans-serif" font-size="11" fill="#3b6d11" text-anchor="middle">1</text>
+</svg>
