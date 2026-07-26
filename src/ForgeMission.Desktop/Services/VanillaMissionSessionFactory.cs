@@ -12,7 +12,9 @@ public sealed class VanillaMissionSessionFactory(IChatClientFactory chatClients)
 {
     private static readonly string MissionDirectory = Path.Combine(AppContext.BaseDirectory, "missions", "vanilla");
 
-    public VanillaMissionSession Create(LocalDiskWorkspace workspace)
+    public VanillaMissionSession Create(
+        LocalDiskWorkspace workspace,
+        Func<ToolCallNotification, CancellationToken, Task>? notifyToolCall = null)
     {
         var missionPath = Path.Combine(MissionDirectory, "mission.mcl");
         if (!File.Exists(missionPath))
@@ -34,7 +36,9 @@ public sealed class VanillaMissionSessionFactory(IChatClientFactory chatClients)
         var mission = ast.Declarations.OfType<MissionDeclaration>().FirstOrDefault()
             ?? throw new InvalidOperationException("Bundled vanilla mission has no mission declaration.");
         var pipelineRunner = new PipelineRunner(runners, manifest.Execution);
-        return new VanillaMissionSession(new AgenticSession(ast, experts, pipelineRunner, workspace), mission.Name);
+        return new VanillaMissionSession(
+            new AgenticSession(ast, experts, pipelineRunner, workspace, notifyToolCall: notifyToolCall),
+            mission.Name);
     }
 }
 

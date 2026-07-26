@@ -18,7 +18,8 @@ public sealed class AgenticSession(
     PipelineRunner pipelineRunner,
     IWorkspace workspace,
     ToolExecutorRegistry? toolExecutors = null,
-    Func<FunctionCallContent, CancellationToken, Task<bool>>? approveToolCall = null)
+    Func<FunctionCallContent, CancellationToken, Task<bool>>? approveToolCall = null,
+    Func<ToolCallNotification, CancellationToken, Task>? notifyToolCall = null)
 {
     private readonly ToolExecutorRegistry _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
 
@@ -27,6 +28,9 @@ public sealed class AgenticSession(
     // tool calls individually within the same turn.
     private readonly Func<FunctionCallContent, CancellationToken, Task<bool>> _approveToolCall =
         approveToolCall ?? ((_, _) => Task.FromResult(true));
+
+    private readonly Func<ToolCallNotification, CancellationToken, Task> _notifyToolCall =
+        notifyToolCall ?? ((_, _) => Task.CompletedTask);
 
     public async Task<MissionResult> RunAsync(PipelineRunOptions options, CancellationToken ct = default)
     {
@@ -49,9 +53,11 @@ public sealed class AgenticSession(
                 ct.ThrowIfCancellationRequested();
 
                 var approved   = await _approveToolCall(call, ct);
+                await _notifyToolCall(new ToolCallNotification(call, ToolCallNotificationState.Running), ct);
                 var toolResult = approved
                     ? await _toolExecutors.ExecuteAsync(call, workspace, ct)
                     : ToolExecutionResult.Error("Tool call denied by the user.");
+                await _notifyToolCall(new ToolCallNotification(call, ToolCallNotificationState.Done, toolResult), ct);
 
                 resultContents.Add(new FunctionResultContent(call.CallId, toolResult.Content));
             }

@@ -21,7 +21,14 @@ public sealed class VanillaMissionSessionFactoryTests : IDisposable
 
         var client = new ScriptedStreamingToolClient(filePath);
         var factory = new VanillaMissionSessionFactory(new ScriptedChatClientFactory(client));
-        var session = factory.Create(new LocalDiskWorkspace(workspacePath));
+        var notifications = new List<ToolCallNotification>();
+        var session = factory.Create(
+            new LocalDiskWorkspace(workspacePath),
+            (notification, _) =>
+            {
+                notifications.Add(notification);
+                return Task.CompletedTask;
+            });
         using var streamed = new StringWriter();
 
         var result = await session.AgenticSession.RunAsync(new PipelineRunOptions(
@@ -35,6 +42,22 @@ public sealed class VanillaMissionSessionFactoryTests : IDisposable
         Assert.Equal(2, client.CallCount);
         Assert.All(client.ToolCounts, count => Assert.NotEqual(0, count));
         Assert.Equal("streamed marker: NOVA-43", await File.ReadAllTextAsync(filePath));
+        Assert.Collection(
+            notifications,
+            notification =>
+            {
+                Assert.Equal(ToolCallNotificationState.Running, notification.State);
+                Assert.Equal("Read", notification.Call.Name);
+                Assert.Null(notification.Result);
+            },
+            notification =>
+            {
+                Assert.Equal(ToolCallNotificationState.Done, notification.State);
+                Assert.Equal("Read", notification.Call.Name);
+                Assert.NotNull(notification.Result);
+                Assert.False(notification.Result!.IsError);
+                Assert.Equal("streamed marker: NOVA-43", notification.Result.Content);
+            });
     }
 
     private sealed class ScriptedChatClientFactory(IChatClient client) : IChatClientFactory

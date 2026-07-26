@@ -1,9 +1,8 @@
 # Phase 43.2 — Avalonia vanilla shell
 
-**Status: In build — Tasks 1–2 done 2026-07-26** (scaffold, AOT, agentic streaming, and streamed
-tool-call loop verified); Tasks 3–5 remaining. Task 3 and a folder-open affordance fix (found during
-review of Task 2) are now **designed** — see the two design notes below — implementation not yet
-started.
+**Status: In build — Tasks 1–3 done 2026-07-26** (scaffold, AOT, agentic streaming, streamed
+tool-call loop, tool-call indicators, and a folder-open affordance fix found during Task 2 review —
+all independently re-verified); Tasks 4–5 remaining.
 Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and
 [43.7](phase-43.7-workspace-provider.md) (the workspace-root shape this spoke builds against).
@@ -130,8 +129,10 @@ this spoke can ship with a single hardcoded mission to prove the shell itself).
      directory still not on `PATH` in this session) — not reproduced directly, but the publish output
      directory contained a genuine 40 MB `ForgeMission.Desktop.exe` timestamped minutes before the
      commit, independently launched (confirmed running, ~91 MB working set) and cleanly terminated.
-3. Tool-call indicators — minimal inline rendering when a tool executes mid-turn (no need for a
-   full diff view yet — that's 43.4's code pane).
+3. ✅ **Done 2026-07-26.** Tool-call indicators — minimal inline rendering when a tool executes
+   mid-turn (no full diff view — that's 43.4's code pane). Built to the design below; see
+   [Task 3 design](#task-3-design-tool-call-indicators) for the mockups/spec and verification
+   evidence.
 4. Package for macOS (dev-signed is fine locally; defer notarization) and Windows (win-arm64,
    matching the existing release RID).
 5. Dogfood checkpoint: run a real multi-tool coding task end-to-end in the shell on Mac.
@@ -180,8 +181,16 @@ same action.
 - *Norman — mapping check:* `+` menu in the composer matches the pattern from Claude Desktop /
   Slack / iMessage users already know. Pass.
 
-**Status:** designed 2026-07-26. Implementation not started — open whether it lands as its own
-quick pass or bundled with Task 3's composer changes below.
+**Status:** ✅ **Done 2026-07-26** — implemented by Codex bundled with Task 3 (both touch the
+composer), design-reviewed and independently re-verified by Claude on this same machine/working
+tree (same discipline as Tasks 1–2 and [43.7](phase-43.7-workspace-provider.md)). `MainWindow.axaml`
+now has a leading 36x36 `+` button with a `MenuFlyout` (`Add folder` only — `Attach files` correctly
+omitted), the top-right button and dead placeholder text are gone, and the composer placeholder
+switches on `IsWorkspaceOpen`. The `WorkspaceLabel` gap found during handoff review is closed:
+`IsWorkspaceLabelVisible` requires both an open workspace and a non-empty label, so the row is
+collapsed pre-open and shows the muted path post-open — verified by reading the actual XAML/VM diff
+against this spec line by line, not just the summary. See the [Task 3](#task-3-design-tool-call-indicators)
+verification evidence below for the shared build/test/publish run (same commands cover both).
 
 ### Task 3 design: tool-call indicators
 
@@ -222,7 +231,47 @@ real files, and the user currently has no way to see that happening turn-by-turn
 - *Norman — signifier check:* rows are static text with no hover/click affordance, since they aren't
   interactive yet — no false promise of a click target.
 
-**Status:** designed, not yet implemented — this is the actual Task 3 build target.
+**Status:** ✅ **Done 2026-07-26.**
+
+**Implemented by Codex, independently re-verified by Claude on this same machine/working tree**
+(same discipline as Tasks 1–2 and [43.7](phase-43.7-workspace-provider.md)):
+- Reviewed the actual diff, not just the summary: `AgenticSession.cs` gained a
+  `Func<ToolCallNotification, CancellationToken, Task>` callback firing `Running` (post-approval,
+  pre-execute) then `Done` (post-execute, carrying the `ToolExecutionResult`) — mirrors the existing
+  `_approveToolCall` seam exactly, no unrelated surgery. `ToolCallIndicatorViewModel`'s copy mapping
+  matches the spec exactly (`Reading …`/`Read`, `Editing …`/`Edited`, `Writing …`/`Wrote`,
+  `Running …`/`Ran`), with an `Using`/`Used` fallback for unlisted tools (reasonable, not spec'd
+  either way) and an 80-char truncation on the target, matching the "truncated if long" requirement
+  for `Bash`.
+- `dotnet build src/ForgeMission.slnx` — reproduced clean: 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Tests/ForgeMission.Tests.csproj --filter "VanillaMissionSessionFactoryTests|AgenticSessionTests"` —
+  reproduced independently: 4 passed / 0 failed. The new
+  `VanillaMissionSessionFactoryTests` assertion isn't a smoke test — it asserts notification order
+  (`Running` before `Done`), tool name, and that `Result` is `null` on `Running` and populated
+  (non-error, correct content) on `Done`, around the existing real-`Read`-execution scripted path.
+- `dotnet test src/ForgeMission.Tests/ForgeMission.Tests.csproj` — reproduced independently:
+  8 failed / 316 passed / 11 skipped, 335 total. The 8 failures are the identical established
+  `ExecExpertRunnerTests` Windows baseline (confirmed by running that filter alone: same 8 test
+  names, same code-9009 cause) — zero regressions. Passed/skipped counts differ from Codex's report
+  (320/7 there vs. 316/11 here); the delta is fully inside live-integration tests gated on
+  credentials/Docker/the real `claude` CLI not present in this session (`ForgeClaude_OneShotPrompt…`,
+  `DirectExpertRunnerIntegrationTests…RealLlm…`, `GrokWebSearchIntegrationTests…RealGrok…`, etc.) —
+  an environment difference between sessions, not a functional discrepancy; none of it touches the
+  new code, which the focused filter above already covers cleanly.
+- Native AOT `win-arm64` publish: **reproduced directly in this session** (unlike Tasks 1–2, where
+  a `vswhere.exe` PATH gap blocked the publish step itself here) — `dotnet publish
+  src/ForgeMission.Desktop/ForgeMission.Desktop.csproj -c Release -r win-arm64` completed with only
+  a non-fatal `vswhere.exe not recognized` warning, producing a genuine 40 MB
+  `ForgeMission.Desktop.exe` timestamped at build time. Independently launched (confirmed running
+  via `tasklist`, pid 33092, ~82 MB working set — matches Codex's reported ~82.5 MB) and cleanly
+  terminated.
+- **Not independently verified:** the actual rendered UI (the `+` flyout opening, the indicator rows
+  appearing live, the workspace label showing/hiding) — there's no tool available here to screenshot
+  a native Avalonia window (only browser tabs are screenshot-capable). Verification of the visual
+  behavior rests on reading the XAML/ViewModel diff against the component spec line by line, not a
+  rendered screenshot. Same gap Codex itself flagged ("did not manually interact with the folder
+  picker/flyout in the GUI"). Worth a manual look next time the app is opened interactively, but not
+  blocking sign-off given the logic-level diff review.
 
 ## Done when
 

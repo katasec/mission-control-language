@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ForgeMission.Core.Runtime;
@@ -13,24 +14,33 @@ public partial class MainWindowViewModel(VanillaMissionSessionFactory sessionFac
 {
     private LocalDiskWorkspace? workspace;
 
-    public ObservableCollection<ChatMessageViewModel> Messages { get; } =
-    [
-        new("Forge", "Open a folder to begin."),
-    ];
+    public ObservableCollection<ChatMessageViewModel> Messages { get; } = [];
 
     [ObservableProperty]
     public partial string ComposeText { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyPropertyChangedFor(nameof(ComposePlaceholder))]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceClosed))]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceLabelVisible))]
     public partial bool IsWorkspaceOpen { get; set; }
 
     [ObservableProperty]
-    public partial string WorkspaceLabel { get; set; } = "No folder open";
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceLabelVisible))]
+    public partial string WorkspaceLabel { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     public partial bool IsSending { get; set; }
+
+    public string ComposePlaceholder => IsWorkspaceOpen
+        ? "Describe what you want to build"
+        : "Add a folder to start";
+
+    public bool IsWorkspaceClosed => !IsWorkspaceOpen;
+
+    public bool IsWorkspaceLabelVisible => IsWorkspaceOpen && !string.IsNullOrWhiteSpace(WorkspaceLabel);
 
     private bool CanSend() => IsWorkspaceOpen && !IsSending && !string.IsNullOrWhiteSpace(ComposeText);
 
@@ -71,7 +81,9 @@ public partial class MainWindowViewModel(VanillaMissionSessionFactory sessionFac
         try
         {
             // Each Send is a fresh one-shot run. Visible earlier messages are not mission context.
-            var session = sessionFactory.Create(workspace);
+            var session = sessionFactory.Create(
+                workspace,
+                (notification, ct) => UpdateToolCallAsync(assistantMessage, notification, ct));
             var result = await session.AgenticSession.RunAsync(new PipelineRunOptions(
                 session.MissionName,
                 new Dictionary<string, string> { ["goal"] = goal },
@@ -89,5 +101,20 @@ public partial class MainWindowViewModel(VanillaMissionSessionFactory sessionFac
         {
             IsSending = false;
         }
+    }
+
+    private static Task UpdateToolCallAsync(
+        ChatMessageViewModel message,
+        ToolCallNotification notification,
+        CancellationToken ct)
+    {
+        return Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            ct.ThrowIfCancellationRequested();
+            if (notification.State == ToolCallNotificationState.Running)
+                message.StartToolCall(notification.Call);
+            else
+                message.FinishToolCall(notification.Call);
+        }).GetTask();
     }
 }

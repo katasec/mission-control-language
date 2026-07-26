@@ -13,34 +13,68 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="Forge">
     <Grid Margin="24" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <Grid>
             <TextBlock FontSize="20" FontWeight="SemiBold" Text="Forge" />
-            <Button Grid.Column="1"
-                    Command="{Binding OpenFolderCommand}"
-                    CommandParameter="{Binding ElementName=RootWindow}"
-                    Content="Open Folder" />
         </Grid>
 
-        <TextBlock Grid.Row="1" Foreground="{DynamicResource ThemeForegroundLowBrush}" Text="{Binding WorkspaceLabel}" />
+        <TextBlock Grid.Row="1"
+                   FontSize="12"
+                   Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                   IsVisible="{Binding IsWorkspaceLabelVisible}"
+                   Text="{Binding WorkspaceLabel}" />
 
         <Border Grid.Row="2" BorderBrush="{DynamicResource ThemeControlLowBrush}" BorderThickness="1" Padding="12">
-            <ListBox ItemsSource="{Binding Messages}" BorderThickness="0">
-                <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ChatMessageViewModel">
-                        <StackPanel Margin="0,0,0,12" Spacing="4">
-                            <TextBlock FontWeight="SemiBold" Text="{Binding Sender}" />
-                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            <Grid>
+                <TextBlock Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                           IsVisible="{Binding IsWorkspaceClosed}"
+                           Text="No folder open yet" />
+                <ListBox ItemsSource="{Binding Messages}" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ChatMessageViewModel">
+                            <StackPanel Margin="0,0,0,12" Spacing="4">
+                                <TextBlock FontWeight="SemiBold" Text="{Binding Sender}" />
+                                <ItemsControl ItemsSource="{Binding ToolCalls}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ToolCallIndicatorViewModel">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock FontSize="12"
+                                                           Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                                                           Text="{Binding Glyph}" />
+                                                <TextBlock FontSize="12"
+                                                           Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                                                           Text="{Binding Text}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
         </Border>
 
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <Button Width="36"
+                    Height="36"
+                    BorderBrush="{DynamicResource ThemeControlLowBrush}"
+                    BorderThickness="1"
+                    Content="+">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuItem Header="Add folder"
+                                  Command="{Binding OpenFolderCommand}"
+                                  CommandParameter="{Binding ElementName=RootWindow}" />
+                    </MenuFlyout>
+                </Button.Flyout>
+            </Button>
             <TextBox IsEnabled="{Binding IsWorkspaceOpen}"
-                     PlaceholderText="Describe what you want to build"
+                     Grid.Column="1"
+                     PlaceholderText="{Binding ComposePlaceholder}"
                      Text="{Binding ComposeText}" />
-            <Button Grid.Column="1" Command="{Binding SendCommand}" Content="Send" />
+            <Button Grid.Column="2" Command="{Binding SendCommand}" Content="Send" />
         </Grid>
     </Grid>
 </Window>
