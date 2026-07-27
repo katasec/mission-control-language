@@ -1,0 +1,111 @@
+# Claude ↔ Codex Workflow — Design/Implementation Handoff
+
+**Governing principle: design finishes before implementation starts, so a handed-off task runs
+start-to-finish, unblocked.** The underlying rule lives in
+[AGENTS.md → Design first](../../AGENTS.md#design-first); this doc is the mechanics of handing a
+finished design to Codex and getting back verified, working code.
+
+---
+
+## Roles
+
+- **Claude** — architect, designer, reviewer. Finishes the design docs, writes the task assignment,
+  reviews Codex's implementation plan before approving it, and reviews Codex's completion summary
+  before approving the task as done.
+- **Codex** — implementer. Never writes or modifies code without an explicitly approved plan.
+  Always replies to a task assignment with a plan first, and to a finished implementation with a
+  completion summary Claude can review.
+
+**If you are Codex reading this because you just opened this repo:** this is your role. Wait for a
+task assignment from Claude before doing anything else — do not start implementing on your own
+initiative, even if a gap looks obvious.
+
+---
+
+## The loop
+
+1. Claude finishes the design (per AGENTS.md's Design first rule — no open architecture questions)
+   and sends Codex a task assignment using the template below.
+2. Codex replies with an implementation plan only — no code yet.
+3. Claude reviews the plan. If it's wrong, incomplete, or exposes a design gap, Claude sends
+   corrections and Codex revises (repeat until approved). A plan that surfaces an unresolved design
+   question goes back to design — it is never silently implemented around.
+4. Once Claude approves, Codex implements.
+5. Codex delivers a completion summary using the template below.
+6. Claude reviews the summary against the task's "Done when" condition before marking the task
+   done. Verification means a named check (test result, command output, a live run) — matching
+   AGENTS.md's status-honesty rule — not "looks complete."
+
+---
+
+## Task assignment template (Claude → Codex)
+
+Copy/paste and fill in the bracketed parts. Point at docs rather than restating their content, so
+there is exactly one place each decision can drift out of date.
+
+```
+TASK ASSIGNMENT
+
+Role: implementer. Do not write or modify any code until I approve your plan.
+
+Read first (do not summarize these back to me):
+- AGENTS.md
+- docs/plan.md
+- [docs/phases/phase-N.M-<slug>.md]
+- [docs/design/<relevant>.md]
+
+Task:
+[1-3 sentences: what to build, scoped to one task from the spoke's task list]
+
+Done when:
+[the "Done when" condition from the spoke, or "see spoke doc, task N"]
+
+Constraints:
+[anything task-specific not already covered by AGENTS.md or the spoke - keep
+ this short, or omit the section]
+
+Next step:
+Reply with an implementation plan only: files you will touch or create, your
+approach, sequencing, and any assumption or open question not already answered
+in the docs above. Wait for my explicit approval before implementing.
+```
+
+---
+
+## Completion summary template (Codex → Claude)
+
+```
+IMPLEMENTATION SUMMARY
+
+Task: [one line, matches the assignment]
+
+What changed:
+[files touched/created, one line each]
+
+Verification:
+[the actual check performed - test run output, command output, a live check -
+ not "should work"]
+
+Done when - met?
+[yes/no against the spoke's "Done when" condition, with the evidence above]
+
+Deviations from the approved plan:
+[none, or what changed and why]
+
+Open questions / follow-ups:
+[none, or what's left - do not claim the task is done if this section
+ describes something the "Done when" condition actually requires]
+```
+
+---
+
+## Notes
+
+- This protocol is per-task, not per-session — a phase gets one assignment per task from its
+  spoke's task list, not one assignment for the whole spoke.
+- The templates are copy/paste-shaped for a human relaying between two chat surfaces; nothing here
+  assumes Claude and Codex are wired together programmatically.
+- Scope: this doc governs Claude/Codex handoff mechanics only. General design-before-implementation
+  policy lives in [AGENTS.md → Design first](../../AGENTS.md#design-first); general response-shape
+  conventions (independent of who's implementing) live in
+  [collaboration-style.md](collaboration-style.md).
