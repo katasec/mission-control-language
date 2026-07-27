@@ -13,7 +13,11 @@ public sealed class LocalDiskWorkspace : IWorkspace
 
     public LocalDiskWorkspace(IEnumerable<string> roots, TimeSpan? timeout = null)
     {
-        Roots = roots.Select(root => WorkspaceGuard.RealPath(Path.GetFullPath(root))).ToList();
+        Roots = roots.Select(root =>
+        {
+            var fullRoot = Path.GetFullPath(root);
+            return WorkspaceGuard.RealPath(fullRoot, fullRoot);
+        }).ToList();
         if (Roots.Count == 0)
             throw new ArgumentException("At least one workspace root is required.", nameof(roots));
 

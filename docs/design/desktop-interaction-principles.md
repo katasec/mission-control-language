@@ -1,11 +1,15 @@
 # Desktop Interaction Principles — Forge Desktop
 
-> **Audience:** anyone (human or agent) designing or building `ForgeMission.Desktop` (Avalonia).
-> Distinct from [ui-design-system.md](ui-design-system.md), which is CSS-token/theming guidance for
-> the Blazor web app (`ForgeUI`) — Avalonia has no CSS, so those tokens don't apply verbatim, but
-> [Visual identity direction](#visual-identity-direction-decided-2026-07-27) below ports the same
-> token *concept* into Avalonia resources. This doc's main subject is still *interaction design*
-> (what appears, when, and why), not visual tokens.
+> **Audience:** anyone (human or agent) designing or building Forge Desktop's client. **Framework
+> note (2026-07-27):** Forge Desktop's UI framework pivoted from Avalonia to a web-rendered client
+> (Electron shell, or a browser tab for `forge webui`) built on Blazor Server — see
+> [forge-desktop-client-runtime.md](forge-desktop-client-runtime.md) for the architecture and why.
+> The interaction principles below are framework-agnostic and carry over unchanged; the
+> Avalonia-specific tooling section further down does not and has been replaced. Distinct from
+> [ui-design-system.md](ui-design-system.md), which is the CSS-token/theming guidance for `forge.css`
+> — under the Electron/Blazor Server client that doc's tokens now apply **directly**, with no porting
+> step (unlike Avalonia, which had no CSS and needed its tokens re-expressed as XAML resources). This
+> doc's main subject is still *interaction design* (what appears, when, and why), not visual tokens.
 
 ## Why this doc exists
 
@@ -97,7 +101,15 @@ Running the Asylum*):
 - **Constraint check** — are invalid actions prevented or hidden (e.g. a disabled compose box before
   a folder is open) rather than present but silently failing?
 
-## Visual identity direction (decided 2026-07-27)
+## Visual identity direction (decided 2026-07-27, superseded 2026-07-27 by the Electron pivot)
+
+> **Historical — kept for reference, not current guidance.** This direction targeted Avalonia
+> specifically (porting `forge.css` tokens into XAML `DynamicResource` brushes) and was abandoned,
+> unimplemented, the same day it was written, when Forge Desktop's client pivoted to Electron/Blazor
+> Server (see [forge-desktop-client-runtime.md](forge-desktop-client-runtime.md)). Under that client,
+> `forge.css` tokens apply **directly** — there is no porting step, no Avalonia resource catalogue to
+> draft. Full detail on the abandoned Avalonia Task 4 is preserved in
+> [phase-43.2-avalonia-vanilla-shell_completed.md](../phases/phase-43.2-avalonia-vanilla-shell_completed.md#task-4-design-visual-identity-skin).
 
 Forge Desktop currently runs stock Avalonia `FluentTheme` with zero customization
 ([App.axaml:7](../../src/ForgeMission.Desktop/App.axaml)) — every control renders in Avalonia's
@@ -126,7 +138,7 @@ default gray. Direction agreed, not yet implemented (blocked on no active UI tas
 ## Design-first process for UI-facing tasks
 
 Per [AGENTS.md's "Design first"](../../AGENTS.md#design-first) rule, this is how that applies to
-anything touching `ForgeMission.Desktop`'s UI, before any XAML is written:
+anything touching Forge Desktop's UI, before any markup is written:
 
 1. **Mock it.** Hand-author a flat SVG wireframe (box/text only — no photographic content) for the
    proposed state. If reworking an existing flow, add a **before** SVG next to the **after** one so
@@ -145,36 +157,43 @@ anything touching `ForgeMission.Desktop`'s UI, before any XAML is written:
 5. **Get sign-off** before implementation starts. Embed everything in the relevant phase spoke
    under the task it belongs to — never a standalone design doc per task; the spoke stays the one
    place a fresh agent looks.
-6. **Verify against the running app, not just the diff.** Once implemented, use DevTools MCP (see
-   below) to screenshot/inspect the live app and compare against the mockup from step 1 — closes
-   the gap [43.2 itself hit](../phases/phase-43.2-avalonia-vanilla-shell.md): "no tool available
-   here to screenshot a native Avalonia window," verification resting on reading the XAML diff
-   alone. Not required for non-visual changes.
+6. **Verify against the running app, not just the diff.** Once implemented, use Claude's existing
+   browser tooling (Chrome DevTools Protocol) to screenshot/inspect the live app and compare against
+   the mockup from step 1. Not required for non-visual changes.
 
-## AI-assisted design & verification tooling (added 2026-07-27)
+## AI-assisted design & verification tooling (updated 2026-07-27 — this is the reason for the pivot)
 
-Two Avalonia-provided MCP servers are registered (user scope, so available in every project):
+For a web-rendered UI (Electron's local Blazor Server host, or `forge webui`'s browser tab), Claude's
+existing browser tooling — the Chrome DevTools Protocol integration already available in this
+environment — gives live screenshot and DOM/element inspection against the actually-running app,
+with:
 
-- **`avalonia_devtools`** (DevTools MCP, part of the paid Avalonia Plus tier, $17/mo) — attaches to
-  a *running* Forge Desktop process (Debug builds only — needs
-  `AvaloniaUI.DiagnosticsSupport` referenced and `.WithDeveloperTools()` called, see
-  [Program.cs](../../src/ForgeMission.Desktop/Program.cs)) or to a XAML file in isolation via the
-  previewer. Gives live screenshot, visual-tree inspection, property read/write, and input
-  simulation — this is what closes the "let Claude see the app" gap named above.
-- **`avalonia-docs`** (Build MCP, free, remote, no license) — searches Avalonia's docs live and
-  loads idiomatic coding rules, so theming/control work doesn't rely on training-data guesses about
-  Avalonia APIs.
+- **Zero setup** — no CLI tool install, no license key, no per-client MCP registration.
+- **No license** — no paid tier, no forever-subscription risk to weigh.
+- **No per-machine configuration** — it works the same on any machine this environment runs in,
+  with no "fresh machine setup gotchas" list to maintain.
+
+This is, concretely, **the reason the Electron/Blazor Server pivot happened**: the prior Avalonia
+setup needed a paid DevTools MCP tier, a per-machine license key, and hit a multi-day saga (a broken
+system `PATH` entry from the .NET SDK installer, per-AI-client license/env registration gaps,
+stale-process-needs-restart gotchas) before it worked at all, across both Claude Code and Codex. A
+web-rendered client sidesteps all of that by construction — any browser-automatable surface already
+gets this verification path for free.
 
 **What this doesn't cover:** automated visual-regression enforcement (render-and-diff against a
-reference image, running unattended in CI on every build/PR). DevTools MCP is interactive-only —
-nothing calls it unless a session (human or agent) actively asks. Building real CI-level enforcement
-would still need something like `Avalonia.Headless` render-to-bitmap + a diff step wired into the
-build. **Deferred deliberately** — not worth the setup cost unless mockup-drift becomes a recurring
-problem; revisit if it does.
+reference image, running unattended in CI on every build/PR). Browser tooling here is
+interactive-only — nothing calls it unless a session (human or agent) actively asks. Building real
+CI-level enforcement would still need a headless-render + diff step wired into the build.
+**Deferred deliberately** — not worth the setup cost unless mockup-drift becomes a recurring problem;
+revisit if it does.
 
 ## Worked examples
 
-- [43.2 — folder-open UX fix](../phases/phase-43.2-avalonia-vanilla-shell.md#design-note-folder-open-affordance-fix) —
+Both examples below were built under the now-shelved Avalonia shell; the design reasoning (the
+gate, progressive disclosure, honest affordances) is unchanged, only the framework they were applied
+in.
+
+- [43.2 (Avalonia) — folder-open UX fix](../phases/phase-43.2-avalonia-vanilla-shell_completed.md#design-note-folder-open-affordance-fix) —
   the case that prompted this doc.
-- [43.2 — Task 3, tool-call indicators](../phases/phase-43.2-avalonia-vanilla-shell.md#task-3-design-tool-call-indicators) —
+- [43.2 (Avalonia) — Task 3, tool-call indicators](../phases/phase-43.2-avalonia-vanilla-shell_completed.md#task-3-design-tool-call-indicators) —
   first case of the process applied to new (not reworked) UI, before implementation.
