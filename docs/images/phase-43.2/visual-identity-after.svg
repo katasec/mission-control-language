@@ -1,0 +1,24 @@
+<svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>After: Forge ember visual identity</title>
+  <desc>Forge Desktop's unchanged chat layout using Forge ember colors, surfaces, muted metadata, an ember Send button, and an ember-accented plus flyout.</desc>
+  <rect x="0.5" y="0.5" width="799" height="459" rx="10" fill="#f7f6f3" stroke="#e6e4dd"/>
+  <text x="28" y="42" font-family="Segoe UI, sans-serif" font-size="20" font-weight="600" fill="#1c1b19">Forge</text>
+  <line x1="24" y1="60" x2="776" y2="60" stroke="#e6e4dd"/>
+  <text x="28" y="86" font-family="Segoe UI, sans-serif" font-size="12" fill="#6b6862">/Users/ada/forge-demo</text>
+  <rect x="24" y="104" width="752" height="264" rx="10" fill="#ffffff" stroke="#e6e4dd"/>
+  <text x="44" y="138" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#1c1b19">You</text>
+  <text x="44" y="162" font-family="Segoe UI, sans-serif" font-size="14" fill="#1c1b19">Add a header comment to Foo.cs</text>
+  <text x="44" y="210" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#1c1b19">Forge</text>
+  <text x="48" y="234" font-family="Segoe UI, sans-serif" font-size="12" fill="#6b6862">✓ Read Foo.cs</text>
+  <text x="48" y="256" font-family="Segoe UI, sans-serif" font-size="12" fill="#6b6862">◌ Editing Bar.cs…</text>
+  <text x="44" y="288" font-family="Segoe UI, sans-serif" font-size="14" fill="#1c1b19">I added the header comment and am updating Bar.cs.</text>
+  <rect x="24" y="392" width="36" height="36" rx="6" fill="#ffffff" stroke="#d5d2c8"/>
+  <text x="42" y="416" font-family="Segoe UI, sans-serif" font-size="18" fill="#c2410c" text-anchor="middle">+</text>
+  <rect x="70" y="392" width="602" height="36" rx="6" fill="#ffffff" stroke="#d5d2c8"/>
+  <text x="84" y="415" font-family="Segoe UI, sans-serif" font-size="13" fill="#9a968d">Describe what you want to build</text>
+  <rect x="682" y="392" width="94" height="36" rx="6" fill="#c2410c" stroke="#c2410c"/>
+  <text x="729" y="415" font-family="Segoe UI, sans-serif" font-size="13" fill="#ffffff" text-anchor="middle">Send</text>
+  <rect x="24" y="314" width="166" height="64" rx="10" fill="#ffffff" stroke="#e6e4dd"/>
+  <rect x="28" y="318" width="158" height="28" rx="6" fill="#fbeee6"/>
+  <text x="42" y="338" font-family="Segoe UI, sans-serif" font-size="13" fill="#c2410c">Add folder</text>
+</svg>
