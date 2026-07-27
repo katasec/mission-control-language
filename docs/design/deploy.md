@@ -130,6 +130,16 @@ XAI_API_KEY="$XAI_API_KEY" MissionDir="$(pwd)/missions" \
 (If you're issuing commands *in* pwsh directly, the vars are just there — `$env:XAI_API_KEY` — no export
 dance needed. The dance is only for a `bash`-backed tool.)
 
+### Bash tool can hang indefinitely, not just miss env vars (confirmed 2026-07-27)
+
+Beyond the missing-env-vars trap above: in at least one agent session, **every** `bash`-tool
+command hung indefinitely and timed out — including a bare `echo`, and with sandboxing explicitly
+disabled. The shell profile appears to launch an interactive `pwsh` session (full startup banner +
+prompt visible in the captured output) that never actually runs the passed command, rather than a
+plain non-interactive shell. Piping through `pwsh -NoLogo -Command "..."` explicitly did not avoid
+it either. Root cause not fixed — if a session hits this, don't retry in a loop (diagnosed already);
+hand any needed shell/git commands to the user to run themselves.
+
 ### pwsh mangles an unquoted leading `@` on native-command arguments
 
 Confirmed 2026-07-19: `forge exec @websearch "..."` fails in pwsh with a confusing "Required argument

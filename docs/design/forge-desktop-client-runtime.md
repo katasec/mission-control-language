@@ -103,14 +103,30 @@ window vs. a browser tab).
 
 ## Architecture decision — orchestration loop lives in the Client Runtime (2026-07-27)
 
-**Resolved.** The Client Runtime owns `AgenticSession`
-([43.1](../phases/phase-43.1-tool-execution-engine.md)). The Mission Runtime is reached as a remote
-`IChatClient` over `/v1` — the same object 43.1 already built, just pointed at a network call
-instead of a local in-process client. The Client Runtime plays exactly the role the real Claude
-Code CLI already plays against `forge claude` today: send the accumulated message history, get back
-either a final answer or one `tool_use`, execute it via `IWorkspace`/`ToolExecutorRegistry`, append
-the result, send again. The Mission Runtime's `/v1` endpoint never drives more than one turn per
-HTTP call.
+**Resolved.** The Client Runtime owns the tool-call orchestration loop. It plays exactly the role
+the real Claude Code CLI already plays against `forge claude` today: send the accumulated message
+history to the Mission Runtime's `/v1/messages`, get back either a final answer or one `tool_use`,
+execute it via `IWorkspace`/`ToolExecutorRegistry`, append the result, send again. The Mission
+Runtime's `/v1` endpoint never drives more than one turn per HTTP call.
+
+**Correction (same day, before any implementation depended on the imprecise version below): this
+is not `AgenticSession` pointed at a network call.**
+[43.1](../phases/phase-43.1-tool-execution-engine.md)'s `AgenticSession` calls
+`PipelineRunner.RunAsync` directly, in-process, against a locally-held `ast`/`experts`/`IChatClient`
+— that shape assumes Client and Mission are the same undifferentiated process, exactly the old
+Avalonia assumption this doc's intro already retired. Under the Client Runtime / Mission Runtime
+split, the mission's `ast`/`experts`/provider key belong to the Mission Runtime, wherever it runs —
+the Client Runtime no longer holds any of them locally. So the Client Runtime needs a **new, small
+loop-driving component** (naming left to
+[43.2](../phases/phase-43.2-electron-forge-desktop-shell.md) Task 2) that owns the growing
+conversation history and talks to `/v1/messages` over HTTP — not a revised `AgenticSession`. What
+**is** reused verbatim from 43.1 is its tool-execution machinery
+(`ToolExecutorRegistry`/`AgentToolDeclarations`) and [43.7](../phases/phase-43.7-workspace-provider.md)'s
+`IWorkspace` — neither cares whether the model turn that produced a `tool_use` came from a local
+`PipelineRunner` call or a remote `/v1` response, so both plug into the new component unchanged.
+`AgenticSession` itself is untouched by this decision — it remains exactly what 43.1 built, the
+in-process loop a **Mission Runtime host** (`forge serve`, the Runner, or a future fully-local
+single-process mode) can use; the Client Runtime never calls it.
 
 Reasoning:
 - **Reachability.** The Client Runtime always initiates the HTTP call. If the Mission Runtime drove

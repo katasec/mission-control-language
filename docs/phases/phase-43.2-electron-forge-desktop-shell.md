@@ -1,7 +1,7 @@
 # Phase 43.2 — Electron Forge Desktop shell
 
-**Status: Design — architecture question resolved 2026-07-27 (see below); implementation not
-started, next up is Task 1 (scaffold).** Replaces
+**Status: In build — Task 1 (scaffold) done 2026-07-27, live-verified; next up is Task 2 (wire the
+Mission Runtime connection).** Replaces
 [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md) (shelved — see that
 doc for why). Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and [43.7](phase-43.7-workspace-provider.md), both done
@@ -45,22 +45,65 @@ as it was scoped under Avalonia.
 
 ## Tasks
 
-1. **Scaffold the Electron app + local Blazor Server Client Runtime host.** New project (naming TBD
-   at implementation time — mirrors the old `ForgeMission.Desktop` naming precedent), Blazor Server
-   host referencing `ForgeMission.Core`/`ForgeMission.Cli`'s shared pieces directly (no
-   serialization boundary), Electron shell pointing a native window at the local host's URL. Wire
-   the "Add folder" flow onto [43.7](phase-43.7-workspace-provider.md)'s `IWorkspace` — this is the
-   direct Electron equivalent of the shelved spoke's Task 1+2 folder-picker work, this time via a
-   browser-native file/folder picker (or an Electron `dialog` API call) instead of Avalonia's
-   `StorageProvider`.
+1. ✅ **Done 2026-07-27 — implemented by Codex, design-reviewed and independently re-verified by
+   Claude (direct source read, not just the completion summary) before sign-off.** New project
+   `src/ForgeMission.ClientRuntime/` (JIT `Microsoft.NET.Sdk.Web`, no AOT — distinct from the
+   shelved `ForgeMission.Desktop`, which stays untouched in `src/ForgeMission.slnx`), referencing
+   `ForgeMission.Core` directly (no serialization boundary). `Program.cs` binds an ephemeral
+   loopback port (`http://127.0.0.1:0`) and exposes `/ready`; on startup prints
+   `FORGE_CLIENT_RUNTIME_URL=<url>`. Electron's `main.cjs` spawns the host via `dotnet run` (dev
+   scaffold only — packaging deferred), waits for that line, confirms `/ready`, then opens a
+   `BrowserWindow` with `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`;
+   `preload.cjs` exposes exactly one narrow API (`forgeDesktop.pickFolder`) via `contextBridge`.
+   "Add folder" in `Pages/Index.razor` calls that API, hands the result to
+   `Services/WorkspaceState.cs`, which constructs a [43.7](phase-43.7-workspace-provider.md)
+   `LocalDiskWorkspace` and renders `"Workspace: {root}"` — live-verified end to end (screenshot
+   after picking a real directory showed `Workspace: /Users/ameerdeen/progs/stuff`), not just the
+   real-temp-directory unit test (`WorkspaceStateTests`) that covers the construction logic in
+   isolation. `forge.css` linked directly from `ForgeUI`'s `wwwroot` (no copy/fork). `dotnet build`:
+   0 warnings/errors; `dotnet test`: 423 passed / 6 skipped / 0 failed (same pre-existing
+   environment-gated skips as 43.7's baseline, no new failures); `npm audit`: 0 vulnerabilities. No
+   Mission Runtime/`AgenticSession`/streaming/tool-execution wiring — correctly out of scope, that's
+   Task 2.
 2. **Wire the Mission Runtime connection**, local Docker `/v1` image as the default dev target
    (hosted `forge.katasec.com` as the alternate target, same code path). Real streaming + tool
    round-trip, reusing [42.3](phase-42.3-tool-capable-enriching-responder.md)'s mechanism as-is.
    **Architecture question resolved 2026-07-27** — the orchestration loop lives in the Client
-   Runtime; `AgenticSession` ([43.1](phase-43.1-tool-execution-engine.md)) treats the Mission
-   Runtime as a remote `IChatClient` over `/v1`. Full reasoning in
+   Runtime, as a **new** lightweight loop component (not a revised `AgenticSession` — see the
+   design doc's correction) that holds conversation history and calls `/v1/messages` over HTTP,
+   executing `tool_use` responses locally via [43.1](phase-43.1-tool-execution-engine.md)'s
+   `ToolExecutorRegistry`/`AgentToolDeclarations` and [43.7](phase-43.7-workspace-provider.md)'s
+   `IWorkspace`, both reused verbatim. `AgenticSession` itself is untouched — it stays the
+   in-process loop a Mission Runtime host uses, not something the Client Runtime calls. Full
+   reasoning in
    [the design doc](../design/forge-desktop-client-runtime.md#architecture-decision--orchestration-loop-lives-in-the-client-runtime-2026-07-27).
    Build to that decision — no remaining architecture choice in this task.
+
+   **Pre-handoff clarity items (raised 2026-07-27, not yet resolved).** The architecture question
+   above needed a same-day correction once checked against 43.1's actual code (see the design doc's
+   correction) — these six were surfaced by the same scrutiny and must be resolved or verified
+   before Task 2's assignment is written, not discovered by Codex mid-build:
+   1. **Docker sequencing.** Local Docker `/v1` (this task's default dev target) means launching a
+      real container — separate work from the core HTTP loop. Leaning toward: state Docker as the
+      end goal, let Codex's plan propose build order (e.g. `forge serve` first, Docker layered in
+      after) rather than mandating it in Done-when — not yet confirmed with the user.
+   2. **`DockerCli` reuse feasibility.** `forge claude --container`'s container-launch logic
+      ([`DockerCli`](../../src/ForgeMission.Cli/Docker/DockerCli.cs)) lives in `ForgeMission.Cli`, a
+      different project than `ForgeMission.ClientRuntime`. Unchecked whether it's cleanly
+      referenceable or needs porting/extracting.
+   3. **Provider key sourcing for local Docker.** The local Mission Runtime container needs a real
+      provider key. [deploy.md](../design/deploy.md#local-dev-environment--shell--provider-keys-read-this-before-running-anything-locally)
+      already documents a live gotcha (keys live in the maintainer's `pwsh` env, not inherited by a
+      `bash`-backed tool) — unclear whether `ClientRuntime` reads the same shell env or needs its
+      own config/keychain path.
+   4. **Hosted vs. local target selection.** Unclear whether Task 2 needs an actual UI/config toggle
+      between `forge.katasec.com` and local Docker, or whether proving one target is enough for this
+      task.
+   5. **Streaming shape.** "Real streaming" is asserted as a requirement but the actual `/v1` wire
+      streaming shape (SSE, chunked, etc.) hasn't been confirmed, nor whether it's ever been
+      consumed by a non-CLI HTTP client before.
+   6. **Minimal UI scope for Task 2 vs. Task 3.** Task 3 owns visual polish, but Task 2 needs some
+      functional prompt input + response/tool-activity display to be testable. Line not yet drawn.
 3. **Tool-call indicators + basic visual polish**, using `forge.css` tokens directly — no XAML
    translation tax this time, since the surface is HTML/CSS natively. Mirrors the shelved spoke's
    Task 3 (indicator rows: running vs. done, muted metadata styling, per-tool copy) and folder-open

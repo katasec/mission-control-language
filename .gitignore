@@ -12,3 +12,6 @@ src/**/obj/
 
 # Visual Studio
 .vs/
+
+# Electron
+node_modules/

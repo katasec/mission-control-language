@@ -1,0 +1,13 @@
+{
+  "name": "forge-client-runtime-shell",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Electron shell for the local Forge Blazor Client Runtime.",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^43.2.0"
+  }
+}

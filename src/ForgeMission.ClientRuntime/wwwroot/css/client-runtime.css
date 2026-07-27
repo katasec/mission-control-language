@@ -1,0 +1,22 @@
+.client-runtime-shell {
+  min-height: 100vh;
+  padding: var(--space-5);
+}
+
+.client-runtime-header {
+  margin-bottom: var(--space-5);
+}
+
+.client-runtime-header h1 {
+  margin: 0;
+}
+
+.client-runtime-header p,
+.client-runtime-status {
+  color: var(--text-muted);
+}
+
+.client-runtime-main {
+  display: grid;
+  gap: var(--space-3);
+}

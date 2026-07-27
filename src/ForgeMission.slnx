@@ -2,6 +2,7 @@
   <Project Path="ForgeMission.Api/ForgeMission.Api.csproj" />
   <Project Path="ForgeMission.Billing/ForgeMission.Billing.csproj" />
   <Project Path="ForgeMission.Cli/ForgeMission.Cli.csproj" />
+  <Project Path="ForgeMission.ClientRuntime/ForgeMission.ClientRuntime.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
   <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
   <Project Path="ForgeMission.Rooms.Data/ForgeMission.Rooms.Data.csproj" />

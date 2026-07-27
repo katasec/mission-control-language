@@ -1,0 +1,37 @@
+@page "/"
+@inject IJSRuntime JavaScript
+@inject WorkspaceState WorkspaceState
+
+<section class="client-runtime-shell">
+    <header class="client-runtime-header">
+        <h1>Forge</h1>
+        <p>Local Client Runtime</p>
+    </header>
+
+    <main class="client-runtime-main">
+        <button class="btn btn-primary" @onclick="OpenFolderAsync">Add folder</button>
+
+        @if (_status is not null)
+        {
+            <p class="client-runtime-status" role="status">@_status</p>
+        }
+    </main>
+</section>
+
+@code {
+    private string? _status;
+
+    private async Task OpenFolderAsync()
+    {
+        var path = await JavaScript.InvokeAsync<string?>("forgeDesktop.pickFolder");
+        if (path is null)
+        {
+            _status = "No folder selected.";
+            return;
+        }
+
+        WorkspaceState.OpenFolder(path);
+        _status = $"Workspace: {WorkspaceState.Root}";
+        Console.WriteLine(_status);
+    }
+}
