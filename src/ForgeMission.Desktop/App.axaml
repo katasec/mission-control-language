@@ -3,6 +3,70 @@
              x:Class="ForgeMission.Desktop.App"
              x:CompileBindings="True"
              RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="ForgeBgBrush" Color="#f7f6f3" />
+                    <SolidColorBrush x:Key="ForgeSurfaceSunkenBrush" Color="#efeee9" />
+                    <SolidColorBrush x:Key="ForgeSurfaceBrush" Color="#ffffff" />
+                    <SolidColorBrush x:Key="ForgeSurfaceHoverBrush" Color="#f3f2ec" />
+                    <SolidColorBrush x:Key="ForgeSurfaceActiveBrush" Color="#ecebe4" />
+                    <SolidColorBrush x:Key="ForgeBorderBrush" Color="#e6e4dd" />
+                    <SolidColorBrush x:Key="ForgeBorderStrongBrush" Color="#d5d2c8" />
+                    <SolidColorBrush x:Key="ForgeTextBrush" Color="#1c1b19" />
+                    <SolidColorBrush x:Key="ForgeTextMutedBrush" Color="#6b6862" />
+                    <SolidColorBrush x:Key="ForgeTextSubtleBrush" Color="#9a968d" />
+                    <SolidColorBrush x:Key="ForgeAccentBrush" Color="#c2410c" />
+                    <SolidColorBrush x:Key="ForgeAccentHoverBrush" Color="#9a3412" />
+                    <SolidColorBrush x:Key="ForgeAccentSoftBrush" Color="#fbeee6" />
+                    <SolidColorBrush x:Key="ForgeAccentContrastBrush" Color="#ffffff" />
+                    <CornerRadius x:Key="ForgeRadiusSmall">6</CornerRadius>
+                    <CornerRadius x:Key="ForgeRadius">10</CornerRadius>
+                    <CornerRadius x:Key="ForgeRadiusLarge">14</CornerRadius>
+                    <CornerRadius x:Key="ForgeRadiusPill">999</CornerRadius>
+                    <Thickness x:Key="ForgeSpace1">4</Thickness>
+                    <Thickness x:Key="ForgeSpace2">8</Thickness>
+                    <Thickness x:Key="ForgeSpace3">12</Thickness>
+                    <Thickness x:Key="ForgeSpace4">16</Thickness>
+                    <Thickness x:Key="ForgeSpace5">24</Thickness>
+                    <Thickness x:Key="ForgeSpace6">32</Thickness>
+                    <BoxShadows x:Key="ForgeShadowSmall">0 1 2 rgba(20, 18, 15, 0.05)</BoxShadows>
+                    <BoxShadows x:Key="ForgeShadow">0 1 3 rgba(20, 18, 15, 0.07), 0 4 12 rgba(20, 18, 15, 0.05)</BoxShadows>
+                    <BoxShadows x:Key="ForgeShadowLarge">0 8 30 rgba(20, 18, 15, 0.12)</BoxShadows>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="ForgeBgBrush" Color="#1a1917" />
+                    <SolidColorBrush x:Key="ForgeSurfaceSunkenBrush" Color="#201f1c" />
+                    <SolidColorBrush x:Key="ForgeSurfaceBrush" Color="#262523" />
+                    <SolidColorBrush x:Key="ForgeSurfaceHoverBrush" Color="#2f2d2a" />
+                    <SolidColorBrush x:Key="ForgeSurfaceActiveBrush" Color="#37342f" />
+                    <SolidColorBrush x:Key="ForgeBorderBrush" Color="#35332e" />
+                    <SolidColorBrush x:Key="ForgeBorderStrongBrush" Color="#47443d" />
+                    <SolidColorBrush x:Key="ForgeTextBrush" Color="#ece9e3" />
+                    <SolidColorBrush x:Key="ForgeTextMutedBrush" Color="#a8a49a" />
+                    <SolidColorBrush x:Key="ForgeTextSubtleBrush" Color="#77736a" />
+                    <SolidColorBrush x:Key="ForgeAccentBrush" Color="#f97316" />
+                    <SolidColorBrush x:Key="ForgeAccentHoverBrush" Color="#fb8c3c" />
+                    <SolidColorBrush x:Key="ForgeAccentSoftBrush" Color="#3a2417" />
+                    <SolidColorBrush x:Key="ForgeAccentContrastBrush" Color="#1a1917" />
+                    <CornerRadius x:Key="ForgeRadiusSmall">6</CornerRadius>
+                    <CornerRadius x:Key="ForgeRadius">10</CornerRadius>
+                    <CornerRadius x:Key="ForgeRadiusLarge">14</CornerRadius>
+                    <CornerRadius x:Key="ForgeRadiusPill">999</CornerRadius>
+                    <Thickness x:Key="ForgeSpace1">4</Thickness>
+                    <Thickness x:Key="ForgeSpace2">8</Thickness>
+                    <Thickness x:Key="ForgeSpace3">12</Thickness>
+                    <Thickness x:Key="ForgeSpace4">16</Thickness>
+                    <Thickness x:Key="ForgeSpace5">24</Thickness>
+                    <Thickness x:Key="ForgeSpace6">32</Thickness>
+                    <BoxShadows x:Key="ForgeShadowSmall">0 1 2 rgba(0, 0, 0, 0.3)</BoxShadows>
+                    <BoxShadows x:Key="ForgeShadow">0 1 3 rgba(0, 0, 0, 0.35), 0 4 12 rgba(0, 0, 0, 0.3)</BoxShadows>
+                    <BoxShadows x:Key="ForgeShadowLarge">0 8 30 rgba(0, 0, 0, 0.5)</BoxShadows>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>

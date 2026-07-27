@@ -96,8 +96,12 @@ view.
 ## Cross-platform exploration already done (validated the concept, not the final tech)
 
 Static HTML/CSS mockups (not working code) were built and rendered to PNG to validate the concept
-visually before committing to a platform — all superseded by the Avalonia decision in the
-[Phase 43 hub](phase-43-forge-desktop.md), kept here as visual reference for the iteration loop:
+visually before committing to a platform — superseded at the time by the since-shelved Avalonia
+decision (see [Phase 43 hub](phase-43-forge-desktop.md)), and now, after the 2026-07-27 pivot back
+to a web-rendered client (Electron/Blazor Server — see
+[forge-desktop-client-runtime.md](../design/forge-desktop-client-runtime.md)), closer in spirit to
+the actual build tech again. Kept here as visual reference for the iteration loop, not as working
+code:
 
 - **Web-console concept** — outline/BRD · code diff · anchored thread, collapsible panes borrowed
   from VS/Xcode auto-hide. ![Web-console concept](../brainstorm/images/web-console-concept.png)
@@ -118,8 +122,10 @@ a historical note, not a starting point.
 
 ## Iteration approach for this spoke
 
-1. Build a rough Avalonia mockup of the dockable workbench (outline + thread + code pane, no gate
-   logic yet) inside the [43.2](phase-43.2-avalonia-vanilla-shell.md) shell.
+1. Build a rough mockup of the dockable workbench (outline + thread + code pane, no gate logic yet)
+   inside the [43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md)
+   (formerly the now-shelved [Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md) — see
+   that doc for why).
 2. Run a real SDLC mission session through it, evaluate against the debugger-concept table above —
    does each row actually map cleanly in the built UI, or does the analogy break somewhere real
    usage reveals?

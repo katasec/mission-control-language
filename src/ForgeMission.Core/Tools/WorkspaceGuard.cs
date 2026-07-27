@@ -35,16 +35,19 @@ public static class WorkspaceGuard
             return false;
         }
 
-        var rootFull = RealPath(Path.GetFullPath(workspaceRoots[0]));
+        var roots = workspaceRoots.Select(Path.GetFullPath).ToList();
+        var rootFull = roots[0];
         // Relative paths always resolve against Roots[0] (the primary root) by design; absolute
         // paths may target any configured root, matching Claude Agent SDK's additionalDirectories.
         var candidate = Path.IsPathRooted(requestedPath)
             ? requestedPath
             : Path.Combine(rootFull, requestedPath);
-        var full = RealPath(Path.GetFullPath(candidate));
+        var candidateFull = Path.GetFullPath(candidate);
+        var containingRoot = roots.FirstOrDefault(root => IsInsideRoot(candidateFull, root));
+        var full = RealPath(candidateFull, containingRoot);
 
-        var roots = workspaceRoots.Select(root => RealPath(Path.GetFullPath(root))).ToList();
-        if (!roots.Any(root => IsInsideRoot(full, root)))
+        var resolvedRoots = roots.Select(root => RealPath(root, root)).ToList();
+        if (!resolvedRoots.Any(root => IsInsideRoot(full, root)))
         {
             error = $"'{requestedPath}' resolves outside the workspace roots";
             return false;
@@ -67,18 +70,27 @@ public static class WorkspaceGuard
     // directory can't be used to escape confinement, even for a path that doesn't exist yet
     // (Write creating a brand-new file under a symlinked parent still resolves through the real
     // target first).
-    internal static string RealPath(string fullPath)
+    internal static string RealPath(string fullPath, string? stopAt = null)
     {
         if (File.Exists(fullPath))
-            return ResolveLink(new FileInfo(fullPath)) ?? fullPath;
+        {
+            var linkTarget = ResolveLink(new FileInfo(fullPath));
+            if (linkTarget is not null) return linkTarget;
+        }
         if (Directory.Exists(fullPath))
-            return ResolveLink(new DirectoryInfo(fullPath)) ?? fullPath;
+        {
+            var linkTarget = ResolveLink(new DirectoryInfo(fullPath));
+            if (linkTarget is not null) return linkTarget;
+        }
+
+        if (stopAt is not null && fullPath.Equals(stopAt, PathComparison))
+            return fullPath;
 
         var parent = Path.GetDirectoryName(fullPath);
         if (string.IsNullOrEmpty(parent) || parent == fullPath)
             return fullPath; // hit a filesystem root — nothing left to resolve
 
-        return Path.Combine(RealPath(parent), Path.GetFileName(fullPath));
+        return Path.Combine(RealPath(parent, stopAt), Path.GetFileName(fullPath));
     }
 
     private static string? ResolveLink(FileSystemInfo info) => info.ResolveLinkTarget(returnFinalTarget: true)?.FullName;

@@ -1,11 +1,13 @@
 # Phase 43.3 — Mission-as-attach-point
 
 **Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
-[43.2](phase-43.2-avalonia-vanilla-shell.md).
+[43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md) (formerly the
+now-shelved [Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md) — see that doc for why).
 
 ## Design
 
-Replace the vanilla shell's hardcoded single mission (43.2 task 5) with a real picker in the same
+Replace the vanilla shell's hardcoded single mission (43.2's scaffold/Mission-Runtime-wiring tasks)
+with a real picker in the same
 UI slot a model dropdown occupies — attaching a **mission** instead of a model. This is the direct
 generalization of [Phase 38.5](phase-38.5-registry-save-as-agent.md)'s raw-model passthrough
 pattern (`@claude`/`@openai` as thin `vanilla`-shape missions,

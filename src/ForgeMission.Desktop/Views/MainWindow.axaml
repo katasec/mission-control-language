@@ -11,44 +11,108 @@
         x:CompileBindings="True"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Forge">
-    <Grid Margin="24" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
+        Title="Forge"
+        Background="{DynamicResource ForgeBgBrush}"
+        Foreground="{DynamicResource ForgeTextBrush}">
+    <Window.Styles>
+        <Style Selector="Button.forge-outline">
+            <Setter Property="Background" Value="{DynamicResource ForgeSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ForgeBorderStrongBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ForgeRadiusSmall}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForgeAccentBrush}" />
+            <Setter Property="Padding" Value="{DynamicResource ForgeSpace2}" />
+        </Style>
+        <Style Selector="Button.forge-outline:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ForgeAccentSoftBrush}" />
+        </Style>
+        <Style Selector="Button.forge-send">
+            <Setter Property="Background" Value="{DynamicResource ForgeAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ForgeAccentBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ForgeRadiusSmall}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForgeAccentContrastBrush}" />
+            <Setter Property="Padding" Value="{DynamicResource ForgeSpace3}" />
+        </Style>
+        <Style Selector="Button.forge-send:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ForgeAccentHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ForgeAccentHoverBrush}" />
+        </Style>
+        <Style Selector="Button.forge-send:disabled">
+            <Setter Property="Background" Value="{DynamicResource ForgeSurfaceSunkenBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ForgeBorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForgeTextSubtleBrush}" />
+        </Style>
+        <Style Selector="TextBox.forge-composer">
+            <Setter Property="Background" Value="{DynamicResource ForgeSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ForgeBorderStrongBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ForgeRadiusSmall}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForgeTextBrush}" />
+            <Setter Property="Padding" Value="{DynamicResource ForgeSpace2}" />
+        </Style>
+        <Style Selector="MenuFlyoutPresenter">
+            <Setter Property="Background" Value="{DynamicResource ForgeSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ForgeBorderBrush}" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ForgeRadius}" />
+        </Style>
+        <Style Selector="MenuFlyoutPresenter /template/ ContentPresenter">
+            <Setter Property="BoxShadow" Value="{DynamicResource ForgeShadow}" />
+        </Style>
+        <Style Selector="MenuItem.forge-add-folder:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ForgeAccentSoftBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ForgeAccentBrush}" />
+        </Style>
+    </Window.Styles>
+    <Grid Margin="{DynamicResource ForgeSpace5}" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
         <Grid>
-            <TextBlock FontSize="20" FontWeight="SemiBold" Text="Forge" />
+            <TextBlock FontSize="20"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource ForgeTextBrush}"
+                       Text="Forge" />
         </Grid>
 
         <TextBlock Grid.Row="1"
                    FontSize="12"
-                   Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                   Foreground="{DynamicResource ForgeTextMutedBrush}"
                    IsVisible="{Binding IsWorkspaceLabelVisible}"
                    Text="{Binding WorkspaceLabel}" />
 
-        <Border Grid.Row="2" BorderBrush="{DynamicResource ThemeControlLowBrush}" BorderThickness="1" Padding="12">
+        <Border Grid.Row="2"
+                Background="{DynamicResource ForgeSurfaceBrush}"
+                BorderBrush="{DynamicResource ForgeBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{DynamicResource ForgeRadius}"
+                Padding="{DynamicResource ForgeSpace3}">
             <Grid>
-                <TextBlock Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                <TextBlock Foreground="{DynamicResource ForgeTextMutedBrush}"
                            IsVisible="{Binding IsWorkspaceClosed}"
                            Text="No folder open yet" />
-                <ListBox ItemsSource="{Binding Messages}" BorderThickness="0">
+                <ListBox Background="{DynamicResource ForgeSurfaceBrush}" ItemsSource="{Binding Messages}" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:ChatMessageViewModel">
                             <StackPanel Margin="0,0,0,12" Spacing="4">
-                                <TextBlock FontWeight="SemiBold" Text="{Binding Sender}" />
+                                <TextBlock FontWeight="SemiBold"
+                                           Foreground="{DynamicResource ForgeTextBrush}"
+                                           Text="{Binding Sender}" />
                                 <ItemsControl ItemsSource="{Binding ToolCalls}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:ToolCallIndicatorViewModel">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <TextBlock FontSize="12"
-                                                           Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                                                           Foreground="{DynamicResource ForgeTextMutedBrush}"
                                                            Text="{Binding Glyph}" />
                                                 <TextBlock FontSize="12"
-                                                           Foreground="{DynamicResource ThemeForegroundLowBrush}"
+                                                           Foreground="{DynamicResource ForgeTextMutedBrush}"
                                                            Text="{Binding Text}"
                                                            TextWrapping="Wrap" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                                <TextBlock Foreground="{DynamicResource ForgeTextBrush}"
+                                           Text="{Binding Text}"
+                                           TextWrapping="Wrap" />
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -59,22 +123,26 @@
         <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
             <Button Width="36"
                     Height="36"
-                    BorderBrush="{DynamicResource ThemeControlLowBrush}"
-                    BorderThickness="1"
+                    Classes="forge-outline"
                     Content="+">
                 <Button.Flyout>
                     <MenuFlyout>
-                        <MenuItem Header="Add folder"
+                        <MenuItem Classes="forge-add-folder"
+                                  Header="Add folder"
                                   Command="{Binding OpenFolderCommand}"
                                   CommandParameter="{Binding ElementName=RootWindow}" />
                     </MenuFlyout>
                 </Button.Flyout>
             </Button>
-            <TextBox IsEnabled="{Binding IsWorkspaceOpen}"
+            <TextBox Classes="forge-composer"
+                     IsEnabled="{Binding IsWorkspaceOpen}"
                      Grid.Column="1"
                      PlaceholderText="{Binding ComposePlaceholder}"
                      Text="{Binding ComposeText}" />
-            <Button Grid.Column="2" Command="{Binding SendCommand}" Content="Send" />
+            <Button Grid.Column="2"
+                    Classes="forge-send"
+                    Command="{Binding SendCommand}"
+                    Content="Send" />
         </Grid>
     </Grid>
 </Window>
