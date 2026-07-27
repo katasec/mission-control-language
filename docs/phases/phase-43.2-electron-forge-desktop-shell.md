@@ -1,6 +1,7 @@
 # Phase 43.2 — Electron Forge Desktop shell
 
-**Status: Design — not started (2026-07-27).** Replaces
+**Status: Design — architecture question resolved 2026-07-27 (see below); implementation not
+started, next up is Task 1 (scaffold).** Replaces
 [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md) (shelved — see that
 doc for why). Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and [43.7](phase-43.7-workspace-provider.md), both done
@@ -55,11 +56,11 @@ as it was scoped under Avalonia.
 2. **Wire the Mission Runtime connection**, local Docker `/v1` image as the default dev target
    (hosted `forge.katasec.com` as the alternate target, same code path). Real streaming + tool
    round-trip, reusing [42.3](phase-42.3-tool-capable-enriching-responder.md)'s mechanism as-is.
-   **Resolve the open architecture question from
-   [the design doc](../design/forge-desktop-client-runtime.md#open-architecture-question--not-resolved-here)
-   as part of this task** — decide whether `AgenticSession`/tool-call orchestration lives in the
-   Client Runtime or the Mission Runtime, record the decision and reasoning here (not just in code),
-   and build to it. Do not defer this silently past this task.
+   **Architecture question resolved 2026-07-27** — the orchestration loop lives in the Client
+   Runtime; `AgenticSession` ([43.1](phase-43.1-tool-execution-engine.md)) treats the Mission
+   Runtime as a remote `IChatClient` over `/v1`. Full reasoning in
+   [the design doc](../design/forge-desktop-client-runtime.md#architecture-decision--orchestration-loop-lives-in-the-client-runtime-2026-07-27).
+   Build to that decision — no remaining architecture choice in this task.
 3. **Tool-call indicators + basic visual polish**, using `forge.css` tokens directly — no XAML
    translation tax this time, since the surface is HTML/CSS natively. Mirrors the shelved spoke's
    Task 3 (indicator rows: running vs. done, muted metadata styling, per-tool copy) and folder-open
@@ -80,8 +81,10 @@ tooling), not just a code diff.
 
 ## Open questions
 
-- The tool-orchestration-loop location (client vs. server) — must be resolved in Task 2, see above;
-  not listed as deferred here on purpose.
+- ~~The tool-orchestration-loop location (client vs. server)~~ — resolved 2026-07-27, see Task 2 and
+  the [design doc](../design/forge-desktop-client-runtime.md#architecture-decision--orchestration-loop-lives-in-the-client-runtime-2026-07-27).
+  A server-owned alternative was considered and deliberately deferred — see that doc's "Future
+  consideration" section, not repeated here.
 - Whether the Electron shell and `forge webui`'s browser-tab path share literally one build artifact
   or two thin wrappers over one Blazor Server project — decide once Task 1 scaffolding exists.
 - Windows/Linux validation cadence for the Electron shell — likely lighter-weight than Avalonia's

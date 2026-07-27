@@ -101,22 +101,67 @@ Runtime** — same Blazor Server host, same `IWorkspace`/`ToolExecutorRegistry`,
 to whichever Mission Runtime is configured. The only difference is the chrome around it (a native
 window vs. a browser tab).
 
-## Open architecture question — NOT resolved here
+## Architecture decision — orchestration loop lives in the Client Runtime (2026-07-27)
 
-**Where does the tool-call orchestration loop (deciding what to call next) live?**
+**Resolved.** The Client Runtime owns `AgenticSession`
+([43.1](../phases/phase-43.1-tool-execution-engine.md)). The Mission Runtime is reached as a remote
+`IChatClient` over `/v1` — the same object 43.1 already built, just pointed at a network call
+instead of a local in-process client. The Client Runtime plays exactly the role the real Claude
+Code CLI already plays against `forge claude` today: send the accumulated message history, get back
+either a final answer or one `tool_use`, execute it via `IWorkspace`/`ToolExecutorRegistry`, append
+the result, send again. The Mission Runtime's `/v1` endpoint never drives more than one turn per
+HTTP call.
 
-The original Avalonia build had the Client hold `AgenticSession` in-process — no `forge serve` hop
-was a locked [43.2](../phases/phase-43.2-avalonia-vanilla-shell_completed.md) decision at the time,
-made when Client and Mission were one undifferentiated process.
+Reasoning:
+- **Reachability.** The Client Runtime always initiates the HTTP call. If the Mission Runtime drove
+  the loop, it would need to call back into the Client mid-response to run a tool — infeasible for
+  the hosted target (`forge.katasec.com` can't reach into a user's home network) without a new
+  persistent push channel.
+- **No new invention.** [42.3](../phases/phase-42.3-tool-capable-enriching-responder.md)'s
+  mechanism is a synchronous request/response wire contract, reused verbatim by this decision. A
+  server-driven loop would require re-architecting it.
+- **Identical code path regardless of brain.** A stateless-per-call HTTP contract behaves the same
+  whether the Mission Runtime is hosted cloud or local Docker — no reachability asymmetry between
+  the two targets.
+- **Matches this doc's own framing above** — "it plays exactly the role Claude Code CLI already
+  plays today against `forge claude`."
 
-Under the Client Runtime / Mission Runtime split above, that assumption no longer obviously holds:
-the orchestration loop *could* stay client-side (the Client Runtime keeps `AgenticSession`, and the
-Mission Runtime is just an `IChatClient` swapped in over the wire), or it could move server-side
-(the Mission Runtime owns `AgenticSession`, and the Client Runtime becomes a thinner tool-executing
-peer that only responds to `tool_use` requests over the wire — much closer to how Claude Code CLI
-itself relates to `forge claude` today).
+**Mechanical detail — session store vs. conversation history.** The Mission Runtime's session
+store ([42.3](../phases/phase-42.3-tool-capable-enriching-responder.md)'s enrich-once gate) stays
+what it already is: an internal optimization so the Mission Runtime doesn't re-run full mission
+enrichment on every tool-result follow-up call. It is **not** a replacement for the Client Runtime
+resending conversation history. The Client Runtime's `AgenticSession` still owns and resends the
+growing message list on every call, exactly like the Anthropic wire always has.
 
-**This is stated as an open design question, not a decided fact.** It is
-[43.2](../phases/phase-43.2-electron-forge-desktop-shell.md) Task 2's job to resolve it as part of
-wiring the Mission Runtime connection — whoever picks up that task must decide and record the
-answer there, not silently default to one shape or the other.
+## Future consideration — server-owned orchestration loop (deferred, not scheduled)
+
+Flagged during the 2026-07-27 design discussion above, deliberately not pursued now: too much open
+scope relative to any concrete near-term value. Captured here so it isn't silently lost, and so it
+isn't re-litigated from scratch if it resurfaces.
+
+A server-owned loop would replace `/v1`'s request/response contract with a persistent channel
+(client-initiated WebSocket/SignalR — the same primitive
+[Rooms](../phases/phase-38.1-room-foundation.md) already uses, so this is not fundamentally blocked
+by reachability the way a synchronous mid-response callback would be). The Mission Runtime would
+drive the full multi-tool-call arc itself, pushing "execute this" events down the channel and
+awaiting results, and the Client Runtime would become a pure reactor with no loop logic of its own.
+
+Who'd actually want it, if ever built:
+- **Thin future clients** (a VS Code extension, mobile companion, CI sandbox) that want to execute
+  tools without reimplementing `AgenticSession`'s conversation bookkeeping and continuation logic.
+- **Centralized limits/policy** — max-tool-calls-per-turn, timeouts, abuse prevention enforced once
+  in the Mission Runtime instead of trusted to every client, more relevant once
+  [Phase 39](../phases/phase-39-metered-runtime-marketplace.md)'s hosted multi-tenant surface has
+  clients Forge doesn't control.
+- **Unified trace/metering granularity** — one server-side view of a whole multi-tool-call task
+  instead of N stitched-together `/v1` calls, which
+  [43.4](../phases/phase-43.4-ide-trace-surface.md)'s planned debugger surface would want eventually.
+- **Mission-language reach** — if a mission ever wants to itself bound or react to the tool-call
+  loop (e.g. hand off to a different expert after N rounds), that requires the loop to be visible to
+  the mission runtime, not opaque client code the mission never sees.
+
+Not mutually exclusive with today's decision — if built, it would most naturally show up as a
+*second* Mission Runtime entry point (the WebSocket channel) serving thin clients, coexisting with
+today's `/v1` HTTP endpoint, which keeps serving fat clients (real `claude` CLI, this project's own
+Client Runtime) exactly as it does today. No trigger condition is set; revisit only if a concrete
+thin-client or centralized-policy need actually shows up.
