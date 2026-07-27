@@ -16,9 +16,10 @@ retained in
 [phase-43.2-avalonia-vanilla-shell_completed.md](phase-43.2-avalonia-vanilla-shell_completed.md).
 
 **What's abandoned:** Task 4 (apply the visual identity/design-system skin) was in progress when the
-pivot decision was made and was never finished. The in-flight implementation lives, unmerged, on
-branch `codex/phase-43.2-task-4-visual-identity` — left alone deliberately, not deleted, not
-merged, kept for reference only.
+pivot decision was made and was never finished. The in-flight implementation was on branch
+`codex/phase-43.2-task-4-visual-identity`, merged into `main` via PR 2026-07-27 alongside this
+doc-update pass — kept for historical reference only, not because the Avalonia UI code is active;
+it's dead/superseded code sitting inert in history, same as the rest of this shelved spoke.
 
 **Not shelved:** [43.1 — Tool-execution engine](phase-43.1-tool-execution-engine.md) and
 [43.7 — Workspace provider abstraction](phase-43.7-workspace-provider.md) are framework-agnostic

@@ -152,9 +152,9 @@ this spoke shipped with a single hardcoded mission to prove the shell itself).
    process's step 6. **This is the task that surfaced the structural DevTools-MCP problem that
    ended up motivating the whole Electron pivot** (see
    [forge-desktop-client-runtime.md](../design/forge-desktop-client-runtime.md)) — it was never
-   completed, and never will be under Avalonia. The in-flight implementation lives, unmerged, on
-   branch `codex/phase-43.2-task-4-visual-identity`. Left alone deliberately: not deleted, not
-   merged.
+   completed, and never will be under Avalonia. The in-flight implementation was on branch
+   `codex/phase-43.2-task-4-visual-identity`, merged into `main` via PR 2026-07-27 for historical
+   reference alongside this doc-update pass — the code itself remains dead/superseded, not active.
 
 ### Task 4 design: visual identity skin
 
