@@ -1,7 +1,9 @@
 # Phase 43.2 — Electron Forge Desktop shell
 
-**Status: In build — Task 1 (scaffold) done 2026-07-27, live-verified; next up is Task 2 (wire the
-Mission Runtime connection).** Replaces
+**Status: In build — Task 1 (scaffold) done 2026-07-27, live-verified, merged to `main`. Task 2's
+six pre-handoff clarity items resolved 2026-07-27 (see Task 2 below); Task 2 split into 2a (HTTP
+loop, in-process) and 2b (Docker packaging) — next up is drafting Codex's Task 2a assignment.**
+Replaces
 [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md) (shelved — see that
 doc for why). Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.1](phase-43.1-tool-execution-engine.md) and [43.7](phase-43.7-workspace-provider.md), both done
@@ -77,33 +79,72 @@ as it was scoped under Avalonia.
    in-process loop a Mission Runtime host uses, not something the Client Runtime calls. Full
    reasoning in
    [the design doc](../design/forge-desktop-client-runtime.md#architecture-decision--orchestration-loop-lives-in-the-client-runtime-2026-07-27).
-   Build to that decision — no remaining architecture choice in this task.
 
-   **Pre-handoff clarity items (raised 2026-07-27, not yet resolved).** The architecture question
-   above needed a same-day correction once checked against 43.1's actual code (see the design doc's
-   correction) — these six were surfaced by the same scrutiny and must be resolved or verified
-   before Task 2's assignment is written, not discovered by Codex mid-build:
-   1. **Docker sequencing.** Local Docker `/v1` (this task's default dev target) means launching a
-      real container — separate work from the core HTTP loop. Leaning toward: state Docker as the
-      end goal, let Codex's plan propose build order (e.g. `forge serve` first, Docker layered in
-      after) rather than mandating it in Done-when — not yet confirmed with the user.
-   2. **`DockerCli` reuse feasibility.** `forge claude --container`'s container-launch logic
-      ([`DockerCli`](../../src/ForgeMission.Cli/Docker/DockerCli.cs)) lives in `ForgeMission.Cli`, a
-      different project than `ForgeMission.ClientRuntime`. Unchecked whether it's cleanly
-      referenceable or needs porting/extracting.
-   3. **Provider key sourcing for local Docker.** The local Mission Runtime container needs a real
-      provider key. [deploy.md](../design/deploy.md#local-dev-environment--shell--provider-keys-read-this-before-running-anything-locally)
-      already documents a live gotcha (keys live in the maintainer's `pwsh` env, not inherited by a
-      `bash`-backed tool) — unclear whether `ClientRuntime` reads the same shell env or needs its
-      own config/keychain path.
-   4. **Hosted vs. local target selection.** Unclear whether Task 2 needs an actual UI/config toggle
-      between `forge.katasec.com` and local Docker, or whether proving one target is enough for this
-      task.
-   5. **Streaming shape.** "Real streaming" is asserted as a requirement but the actual `/v1` wire
-      streaming shape (SSE, chunked, etc.) hasn't been confirmed, nor whether it's ever been
-      consumed by a non-CLI HTTP client before.
-   6. **Minimal UI scope for Task 2 vs. Task 3.** Task 3 owns visual polish, but Task 2 needs some
-      functional prompt input + response/tool-activity display to be testable. Line not yet drawn.
+   **Split into two sub-tasks (resolved 2026-07-27, after verifying all six pre-handoff items
+   below against real code and walking each decision past the user)** — proving the HTTP loop and
+   proving containerized packaging are separate concerns and should not be one task:
+
+   - **Task 2a — HTTP loop correctness, in-process.** Build the new loop component and prove it
+     against an **in-process** `AnthropicServer` host — no subprocess, no Docker. Reuse the exact
+     pattern [`AnthropicServerFixture`](../../src/ForgeMission.Tests/Integration/AnthropicServerFixture.cs)
+     already uses (`WebApplication.CreateSlimBuilder()` bound to a free loopback port via
+     `app.StartAsync()`), which `AnthropicServerToolTests.cs` and `MockClaudeHostTests.cs` already
+     drive with a plain `HttpClient` — i.e. non-CLI HTTP consumption of `/v1/messages`, both
+     non-streaming and SSE, is proven prior art, not new ground. The Mission Runtime base URL is a
+     **config value from the start** (not hardcoded) — since the loop's HTTP behavior is invariant
+     regardless of target (confirmed below), taking it as config costs nothing and avoids a later
+     rework. Minimal UI to make this testable: a plain unstyled prompt input, plain-text response
+     area, plain tool-call log lines — enough to satisfy Done-when, no `forge.css` styling (that
+     stays Task 3). **Done when:** a real prompt round-trips through the in-process host and
+     executes at least one real tool call (file read/edit), visible in the unstyled UI.
+   - **Task 2b — containerized packaging.** Wire the *same, already-proven* loop component against
+     the real local Docker `/v1` container (`ghcr.io/katasec/forge-runner`), launched the way
+     `forge claude --container` already does it: `DockerCli.RunContainerAsync` port-maps the
+     container's fixed internal port to a free host port, and the caller just does plain HTTP to
+     `http://127.0.0.1:{hostPort}/v1/messages` ([Program.cs:591](../../src/ForgeMission.Cli/Program.cs),
+     [:618](../../src/ForgeMission.Cli/Program.cs)) — **no protocol difference from 2a's in-process
+     target**, only the base URL config value changes. Two things Task 2b must land, resolved
+     2026-07-27:
+     - **`DockerCli` reuse** — extract [`DockerCli`](../../src/ForgeMission.Cli/Docker/DockerCli.cs)
+       + `DockerPrereqChecker`/`PrereqCheck` (`src/ForgeMission.Cli/Docker/`) into a new shared
+       project referenced by both `ForgeMission.Cli` and `ForgeMission.ClientRuntime`. `DockerCli`
+       itself has zero CLI-specific dependencies (Spectre.Console/System.CommandLine live in
+       `Program.cs`, not `DockerCli.cs`), so this is a mechanical move — a direct project reference
+       to `ForgeMission.Cli` was rejected because it would drag that project's full AOT/Spectre/
+       System.CommandLine/Anthropic dependency tree into a Blazor Server web project.
+     - **Provider key sourcing — known gap, not yet a locked mechanism.** `forge claude --container`
+       sources keys via `BuildEnvArray` ([Program.cs:1757](../../src/ForgeMission.Cli/Program.cs)),
+       which is just `Environment.GetEnvironmentVariable` on whatever process env `forge` itself
+       inherited — works today only because the maintainer launches `forge` from `pwsh`, which
+       already has the keys exported (same gotcha
+       [deploy.md](../design/deploy.md#local-dev-environment--shell--provider-keys-read-this-before-running-anything-locally)
+       documents for Bash tools). `ForgeMission.ClientRuntime` is spawned by Electron's `main.cjs`
+       via `dotnet run`; if Electron itself is launched from Finder/dock rather than a terminal, it
+       has no such inherited keys. **Codex's plan for Task 2b must name a concrete mechanism**
+       (e.g. a config/dotenv file `ClientRuntime` reads itself, an in-app prompt, a keychain) — this
+       is explicitly not resolved by "read the same env vars forge does," which will silently fail
+       for most launch paths.
+     - **Done when:** the identical prompt/tool-call flow from 2a works against the real Docker
+       target, only the base URL config value differs, no change to the loop component itself.
+     - Hosted (`forge.katasec.com`) stays unproven after Task 2 — the config-value base URL leaves
+       the door open, but proving it is a later task (it carries its own auth/billing questions,
+       Phase 42.5/42.6), not part of this Done-when.
+
+   **Pre-handoff clarity items — all six resolved 2026-07-27**, verified against real source (not
+   assumed) and confirmed with the user one at a time, folded into Task 2a/2b above. Kept here as a
+   short log rather than restated in full:
+   1. Docker sequencing → split into 2a (in-process, no Docker) / 2b (Docker) above.
+   2. `DockerCli` reuse → extract into a shared project (2b above).
+   3. Provider key sourcing → confirmed real gap; mechanism deliberately left for Codex's 2b plan to
+      name, not pre-decided here.
+   4. Hosted vs. local target selection → base URL is a config value from Task 2a onward (no fork,
+      since the wire is target-invariant); only local Docker needs to work for Task 2's Done-when.
+   5. Streaming shape → confirmed real SSE (`text/event-stream`) but not token-level — the current
+      `AnthropicServer` awaits the full response, then emits it as one start/delta/stop triple per
+      content block (`AnthropicServer.cs:219-221` in `oai-server-dotnet`); non-CLI `HttpClient`
+      consumption already proven by existing tests (see Task 2a above).
+   6. Minimal UI scope → Task 2 (2a) builds bare-bones/unstyled elements sufficient for Done-when;
+      Task 3 applies `forge.css` styling and indicator treatment on top, not from scratch.
 3. **Tool-call indicators + basic visual polish**, using `forge.css` tokens directly — no XAML
    translation tax this time, since the surface is HTML/CSS natively. Mirrors the shelved spoke's
    Task 3 (indicator rows: running vs. done, muted metadata styling, per-tool copy) and folder-open
