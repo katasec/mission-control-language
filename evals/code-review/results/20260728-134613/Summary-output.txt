@@ -1,0 +1,16 @@
+Proposed repair: preserve the added dry-run guard in `internal/invoice/service.go`:
+
+```go
+if dryRun {
+    continue
+}
+```
+
+This skips `RecordAudit` for invoices during dry runs, preventing audit entries or subsequent non-dry-run side effects while still allowing the invoice evaluation/result collection to proceed.
+
+Validation commands:
+- `go test ./...`
+- Optionally, run the focused invoice tests (for example, `go test ./internal/invoice -run Expire -v`) and verify that dry-run execution does not record audits, while normal execution still does.
+- Run `go vet ./...` if part of the repository’s standard checks.
+
+Remaining risk: the patch assumes all mutation-related work after this point is correctly guarded by the `continue`. If additional side effects occur before this guard, dry-run behavior may still be incomplete; tests should cover both dry-run and normal expiration paths, including repository errors and mixed invoice batches.

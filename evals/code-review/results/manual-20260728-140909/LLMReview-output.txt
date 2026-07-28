@@ -1,0 +1,29 @@
+*** Begin Patch
+*** Update File: cmd/ledgerctl/main.go
+@@
+ 	if *dryRun {
+-		if len(expired) == 0 {
+-			fmt.Fprintln(stdout, "nothing would expire")
+-			return 0
+-		}
+ 		fmt.Fprintf(stdout, "would expire %d %s\n", len(expired), invoiceNoun(len(expired)))
+ 		return 0
+ 	}
+*** Update File: internal/invoice/service.go
+@@
+-		if err := s.repository.RecordAudit(ctx, audit.Entry{
+-			Kind:        "invoice.expired",
+-			InvoiceID:   invoices[i].ID,
+-			OccurredAt:  s.now(),
+-		}); err != nil {
+-			return nil, err
++		if !dryRun {
++			if err := s.repository.RecordAudit(ctx, audit.Entry{
++				Kind:        "invoice.expired",
++				InvoiceID:   invoices[i].ID,
++				OccurredAt:  s.now(),
++			}); err != nil {
++				return nil, err
++			}
+ 		}
+*** End Patch

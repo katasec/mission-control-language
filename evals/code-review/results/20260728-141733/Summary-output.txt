@@ -1,0 +1,8 @@
+Proposed repair: preserve the patch so dry-run always emits the uniform count-based message, including when no invoices qualify: `would expire 0 invoices`. It removes the special-case `nothing would expire` branch while retaining successful exit status and existing error handling.
+
+Validation commands:
+- `go test ./...`
+- `go test ./cmd/ledgerctl/...`
+- Run the CLI dry-run paths for zero, one, and multiple expirations and verify singular/plural wording and exit codes.
+
+Remaining risk: existing tests, scripts, or documentation may depend on the old `nothing would expire` output and will need updating. The patch assumes `invoiceNoun(0)` correctly returns the plural form.

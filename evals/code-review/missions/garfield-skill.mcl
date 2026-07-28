@@ -1,0 +1,7 @@
+let case_id = "contained-dry-run"
+
+mission GarfieldSkill(case_id) = {
+    GarfieldCoordinator
+}
+
+output(GarfieldSkill)

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using ForgeMission.Core.Adapters;
@@ -225,7 +226,7 @@ public class PipelineRunner
                 await msw.WriteLineAsync($"→ {step.ExpertName} (mission)...");
 
             var subResult = await RunAsync(ast, experts,
-                new PipelineRunOptions(step.ExpertName, childVars, options.StepWriter, options.ContentWriter), ct);
+                options with { MissionName = step.ExpertName, Vars = childVars, ParentStep = step.ExpertName }, ct);
 
             context["output"] = subResult.Text;
 
@@ -257,7 +258,9 @@ public class PipelineRunner
             _              => ResolveRunner(step.Using)
         };
 
-        options.OnStepStart?.Invoke(step.ExpertName, expert.Kind);
+        NotifyStepStart(options, step.ExpertName, expert.Kind);
+        var stopwatch = Stopwatch.StartNew();
+        var stepUsage = new UsageAccumulator();
 
         if (options.StepWriter is { } sw)
             await sw.WriteLineAsync($"→ {step.ExpertName}...");
@@ -275,24 +278,27 @@ public class PipelineRunner
         StepEnvelope envelope;
         try
         {
-            if (options.StepWriter is not null || options.ContentWriter is not null)
+            using (UsageAccumulator.BeginStep(stepUsage))
             {
-                var sb = new StringBuilder();
-                await foreach (var chunk in runner.StreamAsync(expert, context, ct))
+                if (options.StepWriter is not null || options.ContentWriter is not null)
                 {
-                    if (options.StepWriter is { } sw2)
-                        await sw2.WriteAsync(chunk);
-                    if (options.ContentWriter is { } cw)
-                        await cw.WriteAsync(chunk);
-                    sb.Append(chunk);
+                    var sb = new StringBuilder();
+                    await foreach (var chunk in runner.StreamAsync(expert, context, ct))
+                    {
+                        if (options.StepWriter is { } sw2)
+                            await sw2.WriteAsync(chunk);
+                        if (options.ContentWriter is { } cw)
+                            await cw.WriteAsync(chunk);
+                        sb.Append(chunk);
+                    }
+                    if (options.StepWriter is { } sw3)
+                        await sw3.WriteLineAsync("\n");
+                    envelope = ParseStreamedEnvelope(sb.ToString());
                 }
-                if (options.StepWriter is { } sw3)
-                    await sw3.WriteLineAsync("\n");
-                envelope = ParseStreamedEnvelope(sb.ToString());
-            }
-            else
-            {
-                envelope = await runner.RunAsync(expert, context, ct);
+                else
+                {
+                    envelope = await runner.RunAsync(expert, context, ct);
+                }
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -307,7 +313,8 @@ public class PipelineRunner
 
         context["output"] = envelope.Text;
 
-        options.OnStepComplete?.Invoke(step.ExpertName, envelope);
+        stopwatch.Stop();
+        NotifyStepComplete(options, step, expert, envelope, stepUsage, stopwatch.ElapsedMilliseconds);
 
         if (envelope.Status == "fail")
             return $"[{step.ExpertName}] {envelope.Reason ?? "step failed"}";
@@ -338,8 +345,7 @@ public class PipelineRunner
                 StringComparer.Ordinal);
 
             var subResult = await RunAsync(ast, experts,
-                new PipelineRunOptions(step.ExpertName, childVars, options.StepWriter, options.ContentWriter),
-                cts.Token);
+                options with { MissionName = step.ExpertName, Vars = childVars, ParentStep = step.ExpertName }, cts.Token);
 
             if (subResult.Status == MissionStatus.Fail)
             {
@@ -375,7 +381,14 @@ public class PipelineRunner
             _              => ResolveRunner(step.Using)
         };
 
-        var envelope = await runner.RunAsync(expert, localContext, cts.Token);
+        NotifyStepStart(options, step.ExpertName, expert.Kind);
+        var stopwatch = Stopwatch.StartNew();
+        var stepUsage = new UsageAccumulator();
+        StepEnvelope envelope;
+        using (UsageAccumulator.BeginStep(stepUsage))
+            envelope = await runner.RunAsync(expert, localContext, cts.Token);
+        stopwatch.Stop();
+        NotifyStepComplete(options, step, expert, envelope, stepUsage, stopwatch.ElapsedMilliseconds);
 
         if (envelope.Status == "fail")
         {
@@ -385,6 +398,56 @@ public class PipelineRunner
 
         return (null, namedKey, envelope.Text);
     }
+
+    private static StepMeasurement BuildMeasurement(
+        Step step,
+        ExpertDefinition expert,
+        StepEnvelope envelope,
+        PipelineRunOptions options,
+        UsageAccumulator usage,
+        long durationMs)
+    {
+        var execUsage = envelope.Meta is not null && envelope.Meta.TryGetValue("usage", out var raw)
+            ? raw
+            : default;
+        var input = execUsage.ValueKind == System.Text.Json.JsonValueKind.Undefined
+            ? usage.InputTokens : ReadUsage(execUsage, "inputTokens");
+        var cached = execUsage.ValueKind == System.Text.Json.JsonValueKind.Undefined
+            ? usage.CachedInputTokens : ReadUsage(execUsage, "cachedInputTokens");
+        var output = execUsage.ValueKind == System.Text.Json.JsonValueKind.Undefined
+            ? usage.OutputTokens : ReadUsage(execUsage, "outputTokens");
+        var reasoning = execUsage.ValueKind == System.Text.Json.JsonValueKind.Undefined
+            ? usage.ReasoningOutputTokens : ReadUsage(execUsage, "reasoningOutputTokens");
+
+        return new StepMeasurement(
+            step.ExpertName, options.ParentStep, expert.Kind, expert.Model is { Length: > 0 } ? expert.Model : options.Model,
+            expert.Role, input, cached, output, reasoning, input + output, durationMs,
+            execUsage.ValueKind == System.Text.Json.JsonValueKind.Undefined ? null : ReadNullableUsage(execUsage, "toolDurationMs"),
+            envelope.Status);
+    }
+
+    private static void NotifyStepStart(PipelineRunOptions options, string name, string kind)
+    {
+        lock (options)
+            options.OnStepStart?.Invoke(name, kind);
+    }
+
+    private static void NotifyStepComplete(
+        PipelineRunOptions options, Step step, ExpertDefinition expert, StepEnvelope envelope,
+        UsageAccumulator usage, long durationMs)
+    {
+        lock (options)
+        {
+            options.OnStepComplete?.Invoke(step.ExpertName, envelope);
+            options.OnStepMeasured?.Invoke(BuildMeasurement(step, expert, envelope, options, usage, durationMs));
+        }
+    }
+
+    private static long ReadUsage(System.Text.Json.JsonElement usage, string name)
+        => usage.TryGetProperty(name, out var value) && value.TryGetInt64(out var result) ? result : 0;
+
+    private static long? ReadNullableUsage(System.Text.Json.JsonElement usage, string name)
+        => usage.TryGetProperty(name, out var value) && value.TryGetInt64(out var result) ? result : null;
 
     // The restorable slice of the context bag: string values only. Structured objects
     // (conversation/system/tools) are re-derived from the request on every call.

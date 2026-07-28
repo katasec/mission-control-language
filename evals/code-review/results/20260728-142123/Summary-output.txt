@@ -1,0 +1,11 @@
+Proposed repair preserved:
+- In dry-run mode, do not mutate invoice status and do not write audit entries; only report `would expire N invoice(s)` (including zero).
+- In normal mode, set each invoice to `StatusExpired`, save it, and record the `invoice.expired` audit entry.
+
+Validation commands:
+- `gofmt -w cmd/ledgerctl/main.go internal/invoice/service.go`
+- `git diff --check`
+- `go test ./...`
+- Add or run targeted tests covering dry-run behavior, zero matching invoices, normal expiration persistence, audit creation, and repository errors.
+
+Remaining risk: expiration and audit recording are still separate operations. If saving succeeds but audit recording fails, the invoice may be expired without an audit entry; transactional persistence or retry/idempotency handling may be needed if atomicity is required. The patch itself was not executed in this review.

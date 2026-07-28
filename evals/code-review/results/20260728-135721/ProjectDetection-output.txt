@@ -1,0 +1,1 @@
+Go module; validate with go test ./..., go vet ./..., go run ./tools/generate -check

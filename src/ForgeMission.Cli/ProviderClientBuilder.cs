@@ -13,8 +13,10 @@ using Scout.Grok;
 // Lives in CLI (not Core) because it depends on provider-specific packages.
 public static class ProviderClientBuilder
 {
-    public static IExpertRunner Build(ProviderProfile profile) =>
-        new DirectExpertRunner(BuildChatClient(profile));
+    public static IExpertRunner Build(ProviderProfile profile, UsageAccumulator? usage = null) =>
+        new DirectExpertRunner(usage is null
+            ? BuildChatClient(profile)
+            : new UsageTrackingChatClient(BuildChatClient(profile), usage));
 
     // Live-retrieval backend for kind:search experts (Phase 41). Implicitly Grok for the POC.
     // Returns null when no xAI key is present — missions without kind:search are unaffected; a

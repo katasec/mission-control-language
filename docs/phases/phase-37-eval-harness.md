@@ -239,6 +239,67 @@ Run `PitchComparison` (20 inputs) and `LoopVsNaive` over the two existing A/B pa
 Write the result into `docs/findings.md` (currently a promissory note referenced by
 `why.md`). This closes the loop on the founding hypothesis with actual data.
 
+### Spoke 8 — Step-observation contract (parallel-safe per-step measurement)
+**Build-ready — required by [Phase 37.1](phase-37.1-code-review-reasoning-budget.md)
+before that pilot's report can be produced; independent of Spokes 1–2 (no
+grammar dependency).**
+
+Today, `PipelineRunOptions` ([PipelineRunOptions.cs](../../src/ForgeMission.Core/Runtime/PipelineRunOptions.cs))
+exposes `OnStepStart(expertName, kind)` and `OnStepComplete(expertName, StepEnvelope)`,
+invoked only from `PipelineRunner`'s serial step path
+([PipelineRunner.cs:260,310](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs)) —
+`ExecuteParallelStepAsync` invokes neither. Usage is tracked by a single
+mission-wide `UsageAccumulator` ([UsageTrackingChatClient.cs](../../src/ForgeMission.Core/Adapters/UsageTrackingChatClient.cs)),
+with no per-step attribution.
+
+**Contract to add** (extends the existing callback seam — not a new mechanism):
+
+```
+public sealed record StepMeasurement(
+    string StepName,
+    string? ParentStep,
+    string Kind,           // "llm" | "exec" | "http" | "rule" | "onnx" | "json_extract" | "search"
+    string? Model,
+    string? Role,
+    long    InputTokens,
+    long    CachedInputTokens,
+    long    OutputTokens,
+    long    ReasoningOutputTokens,
+    long    TotalTokens,
+    long    DurationMs,
+    long?   ToolDurationMs,
+    string  Status);        // "pass" | "fail" | "blocked"
+```
+
+Field set is adopted directly from the `AgentUsage` dataclass in
+[garfield_bench/models.py](https://github.com/adamhjk/garfield-extension/blob/main/benchmarking/src/garfield_bench/models.py)
+(renamed to MCL conventions) — a proven schema for this exact measurement
+problem, not invented here.
+
+Requirements:
+- Fire for every step, serial **and parallel** — extend `ExecuteParallelStepAsync`
+  to invoke the same callback(s) `ExecuteStepAsync` does.
+- Recursive sub-missions (mission-as-step, Phase 25) must forward the parent's
+  `PipelineRunOptions` callbacks, not construct fresh ones that drop them.
+- Per-step token attribution must not rely on before/after snapshots of the
+  shared `UsageAccumulator` — that is ambiguous once steps run concurrently.
+  Give each step (or each step's `IChatClient` decoration) its own accumulator
+  instance, scoped to that step's calls only.
+- `kind:exec` steps: extend `ExecExpertRunner` to read an optional `usage`
+  object off the script's stdout JSON (alongside the existing required
+  `outputKey`) and fold it into that step's `StepMeasurement` — this is how
+  a `kind:exec` script that calls a provider API directly (outside Forge's
+  `IChatClient`) reports its own usage back into the same pipeline.
+- `MissionRunHandler` wires `PipelineRunOptions.OnStepComplete` today
+  ([MissionRunHandler.cs:124](../../src/ForgeMission.Core/../ForgeMission.Runner/MissionRunHandler.cs)) —
+  extend that wiring, preserving the existing UI-progress use case
+  (`OnStepStart` → `RunProgress`), do not replace it.
+
+Done when: a mission with a `parallel` step and a `kind:exec` step both
+produce complete `StepMeasurement` records, verified by a unit test asserting
+non-zero, correctly-attributed tokens/duration per step (not just a mission-
+wide total).
+
 ---
 
 ## Design questions (unresolved)

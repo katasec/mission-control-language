@@ -1,0 +1,5 @@
+cycle=1 input_tokens=1786 cached_input_tokens=0 output_tokens=639 cost_usd=$0.005620 elapsed_ms=14974 outcome=error: patch failed: internal/invoice/service.go:24
+cycle=2 input_tokens=4067 cached_input_tokens=0 output_tokens=1139 cost_usd=$0.010901 elapsed_ms=18208 outcome=error: patch failed: internal/invoice/service.go:24
+cycle=3 input_tokens=6344 cached_input_tokens=0 output_tokens=1639 cost_usd=$0.016178 elapsed_ms=21687 outcome=error: patch failed: internal/invoice/service.go:24
+cycle=4 input_tokens=8621 cached_input_tokens=2274 output_tokens=2147 cost_usd=$0.019456 elapsed_ms=27837 outcome=error: patch failed: internal/invoice/service.go:24
+cycle=5 input_tokens=10898 cached_input_tokens=4548 output_tokens=2651 cost_usd=$0.022711 elapsed_ms=31417 outcome=error: patch failed: internal/invoice/service.go:24

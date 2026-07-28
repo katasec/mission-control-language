@@ -1,0 +1,14 @@
+Running mission 'CodeReview'...
+error: mission failed — [Validator] go test -overlay=/Users/ameerdeen/progs/mission-control-language/evals/code-review/.workspaces/code-review/.contained-dry-run-overlay.json ./... failed:
+ok  	example.com/ledgerlite/cmd/ledgerctl	(cached)
+?   	example.com/ledgerlite/generated	[no test files]
+ok  	example.com/ledgerlite/internal/api	(cached)
+?   	example.com/ledgerlite/internal/audit	[no test files]
+--- FAIL: TestHiddenDryRunWritesNoAuditEvent (0.00s)
+    dry_run_hidden_test.go:24: dry-run audit entries = 1, want 0
+FAIL
+FAIL	example.com/ledgerlite/internal/invoice	0.581s
+ok  	example.com/ledgerlite/internal/payment	(cached)
+ok  	example.com/ledgerlite/internal/store	(cached)
+?   	example.com/ledgerlite/tools/generate	[no test files]
+FAIL

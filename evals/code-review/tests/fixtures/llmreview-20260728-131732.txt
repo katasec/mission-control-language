@@ -1,0 +1,26 @@
+diff --git a/internal/invoice/service.go b/internal/invoice/service.go
+index 70923a2..f4a2d1c 100644
+--- a/internal/invoice/service.go
++++ b/internal/invoice/service.go
+@@ -29,10 +29,12 @@ func (s *Service) Expire(ctx context.Context, before time.Time, dryRun bool) ([]Invoice, error) {
+		if !dryRun {
+			if err := s.repository.SaveInvoice(ctx, invoices[i]); err != nil {
+				return nil, err
+			}
+-		}
+-		if err := s.repository.RecordAudit(ctx, audit.Entry{
+-			Kind:        "invoice.expired",
+-			InvoiceID:   invoices[i].ID,
+-			OccurredAt:  s.now(),
+-		}); err != nil {
+-			return nil, err
++			if err := s.repository.RecordAudit(ctx, audit.Entry{
++				Kind:        "invoice.expired",
++				InvoiceID:   invoices[i].ID,
++				OccurredAt:  s.now(),
++			}); err != nil {
++				return nil, err
++			}
+		}
+	}
+*** End Patch

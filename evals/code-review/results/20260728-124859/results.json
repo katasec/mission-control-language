@@ -1,0 +1,252 @@
+{
+  "run_id": "20260728-124859",
+  "CodeReview": {
+    "exit_code": 1,
+    "duration_ms": 6726,
+    "measurements": [
+      {
+        "StepName": "GitDiff",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 189,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "RepositoryInventory",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 63,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "FileFiltering",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 65,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "LanguageDetection",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 58,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "ProjectDetection",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 58,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "ContextConstruction",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 68,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "LLMReview",
+        "ParentStep": null,
+        "Kind": "llm",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 3434,
+        "CachedInputTokens": 0,
+        "OutputTokens": 409,
+        "ReasoningOutputTokens": 111,
+        "TotalTokens": 3843,
+        "DurationMs": 4126,
+        "ToolDurationMs": null,
+        "Status": "pass"
+      },
+      {
+        "StepName": "ApplyFix",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 73,
+        "ToolDurationMs": null,
+        "Status": "fail"
+      }
+    ],
+    "grade": {
+      "passed": false,
+      "commands": [
+        {
+          "command": [
+            "go",
+            "test",
+            "./..."
+          ],
+          "exit_code": 0,
+          "duration_ms": 177,
+          "stdout": "ok  \texample.com/ledgerlite/cmd/ledgerctl\t(cached)\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\nok  \texample.com/ledgerlite/internal/invoice\t(cached)\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "vet",
+            "./..."
+          ],
+          "exit_code": 0,
+          "duration_ms": 182,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "run",
+            "./tools/generate",
+            "-check"
+          ],
+          "exit_code": 0,
+          "duration_ms": 536,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "test",
+            "-overlay=/Users/ameerdeen/progs/mission-control-language/evals/code-review/results/20260728-124859/CodeReview-overlay.json",
+            "./..."
+          ],
+          "exit_code": 1,
+          "duration_ms": 1382,
+          "stdout": "--- FAIL: TestHiddenDryRunZeroMatchOutput (0.00s)\n    dry_run_hidden_test.go:28: stdout = \"nothing would expire\\n\"\nFAIL\nFAIL\texample.com/ledgerlite/cmd/ledgerctl\t1.118s\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\n--- FAIL: TestHiddenDryRunWritesNoAuditEvent (0.00s)\n    dry_run_hidden_test.go:24: dry-run audit entries = 1, want 0\nFAIL\nFAIL\texample.com/ledgerlite/internal/invoice\t0.670s\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]\nFAIL\n",
+          "stderr": ""
+        }
+      ]
+    }
+  },
+  "GarfieldSkill": {
+    "exit_code": 1,
+    "duration_ms": 31503,
+    "measurements": [
+      {
+        "StepName": "GarfieldCoordinator",
+        "ParentStep": null,
+        "Kind": "exec",
+        "Model": "gpt-5.6-luna",
+        "Role": "",
+        "InputTokens": 0,
+        "CachedInputTokens": 0,
+        "OutputTokens": 0,
+        "ReasoningOutputTokens": 0,
+        "TotalTokens": 0,
+        "DurationMs": 30032,
+        "ToolDurationMs": null,
+        "Status": "fail"
+      }
+    ],
+    "grade": {
+      "passed": false,
+      "commands": [
+        {
+          "command": [
+            "go",
+            "test",
+            "./..."
+          ],
+          "exit_code": 0,
+          "duration_ms": 188,
+          "stdout": "ok  \texample.com/ledgerlite/cmd/ledgerctl\t(cached)\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\nok  \texample.com/ledgerlite/internal/invoice\t(cached)\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]\n",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "vet",
+            "./..."
+          ],
+          "exit_code": 0,
+          "duration_ms": 193,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "run",
+            "./tools/generate",
+            "-check"
+          ],
+          "exit_code": 0,
+          "duration_ms": 764,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "go",
+            "test",
+            "-overlay=/Users/ameerdeen/progs/mission-control-language/evals/code-review/results/20260728-124859/GarfieldSkill-overlay.json",
+            "./..."
+          ],
+          "exit_code": 1,
+          "duration_ms": 1212,
+          "stdout": "--- FAIL: TestHiddenDryRunZeroMatchOutput (0.00s)\n    dry_run_hidden_test.go:28: stdout = \"nothing would expire\\n\"\nFAIL\nFAIL\texample.com/ledgerlite/cmd/ledgerctl\t0.475s\n?   \texample.com/ledgerlite/generated\t[no test files]\nok  \texample.com/ledgerlite/internal/api\t(cached)\n?   \texample.com/ledgerlite/internal/audit\t[no test files]\n--- FAIL: TestHiddenDryRunWritesNoAuditEvent (0.00s)\n    dry_run_hidden_test.go:24: dry-run audit entries = 1, want 0\nFAIL\nFAIL\texample.com/ledgerlite/internal/invoice\t0.940s\nok  \texample.com/ledgerlite/internal/payment\t(cached)\nok  \texample.com/ledgerlite/internal/store\t(cached)\n?   \texample.com/ledgerlite/tools/generate\t[no test files]\nFAIL\n",
+          "stderr": ""
+        }
+      ]
+    }
+  }
+}

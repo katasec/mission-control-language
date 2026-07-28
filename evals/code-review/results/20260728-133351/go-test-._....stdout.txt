@@ -1,0 +1,9 @@
+FAIL	example.com/ledgerlite/cmd/ledgerctl [build failed]
+?   	example.com/ledgerlite/generated	[no test files]
+FAIL	example.com/ledgerlite/internal/api [build failed]
+?   	example.com/ledgerlite/internal/audit	[no test files]
+FAIL	example.com/ledgerlite/internal/invoice [build failed]
+FAIL	example.com/ledgerlite/internal/payment [build failed]
+FAIL	example.com/ledgerlite/internal/store [build failed]
+?   	example.com/ledgerlite/tools/generate	[no test files]
+FAIL

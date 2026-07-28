@@ -1,0 +1,13 @@
+go test -overlay=/Users/ameerdeen/progs/mission-control-language/evals/code-review/.workspaces/code-review/.contained-dry-run-overlay.json ./... failed:
+--- FAIL: TestHiddenDryRunZeroMatchOutput (0.00s)
+    dry_run_hidden_test.go:28: stdout = "nothing would expire\n"
+FAIL
+FAIL	example.com/ledgerlite/cmd/ledgerctl	0.549s
+?   	example.com/ledgerlite/generated	[no test files]
+ok  	example.com/ledgerlite/internal/api	(cached)
+?   	example.com/ledgerlite/internal/audit	[no test files]
+ok  	example.com/ledgerlite/internal/invoice	(cached)
+ok  	example.com/ledgerlite/internal/payment	(cached)
+ok  	example.com/ledgerlite/internal/store	(cached)
+?   	example.com/ledgerlite/tools/generate	[no test files]
+FAIL

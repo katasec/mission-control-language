@@ -134,6 +134,7 @@ static Command BuildRunCommand()
     var missionArg  = new Argument<FileInfo?>("mission") { Description = "Path to the .mcl mission file (default: mission.mcl)", Arity = ArgumentArity.ZeroOrOne };
     var stepsOpt    = new Option<bool>("--steps")   { Description = "Stream each expert's output to stderr as the pipeline runs" };
     var verboseOpt  = new Option<bool>("--verbose") { Description = "Print expert resolution source for each step before running" };
+    var measurementsOpt = new Option<string?>("--measurements-file") { Description = "Write step measurements as JSON to this path" };
     var varOpt      = new Option<string[]>("--var")
     {
         Description = "Set a context variable as key=value (repeatable, overrides let bindings)",
@@ -145,6 +146,7 @@ static Command BuildRunCommand()
     cmd.Add(missionArg);
     cmd.Add(stepsOpt);
     cmd.Add(verboseOpt);
+    cmd.Add(measurementsOpt);
     cmd.Add(varOpt);
 
     cmd.SetAction(async result =>
@@ -152,6 +154,7 @@ static Command BuildRunCommand()
         var mission    = ResolveMission(result.GetValue(missionArg));
         var showSteps  = result.GetValue(stepsOpt);
         var verbose    = result.GetValue(verboseOpt);
+        var measurementsFile = result.GetValue(measurementsOpt);
         var vars       = result.GetValue(varOpt) ?? [];
         var missionDir = mission.DirectoryName!;
 
@@ -191,16 +194,28 @@ static Command BuildRunCommand()
         catch (InvalidOperationException ex) { Die(ex.Message); return; }
 
         // Build runner per profile from forge.toml; fall back to let-binding config for "default".
-        var runners = BuildRunners(manifest, seedContext);
+        var runUsage = new UsageAccumulator();
+        var runners = BuildRunners(manifest, seedContext, runUsage);
         if (runners is null) return;
 
         var firstMission = ast.Declarations.OfType<MissionDeclaration>().FirstOrDefault();
         if (firstMission is null) { Die("No mission declaration found in mission file."); return; }
 
+        var measurements = new List<StepMeasurement>();
+        var defaultModel = manifest?.Providers.TryGetValue("default", out var profile) == true ? profile.Model : null;
+        var stepOutputDirectory = measurementsFile is null ? null : Path.GetDirectoryName(Path.GetFullPath(measurementsFile));
         var options = new PipelineRunOptions(
             firstMission.Name,
             parsedVars,
-            showSteps ? Console.Error : null);
+            showSteps ? Console.Error : null,
+            OnStepComplete: (stepName, envelope) =>
+            {
+                if (stepOutputDirectory is null) return;
+                Directory.CreateDirectory(stepOutputDirectory);
+                File.WriteAllText(Path.Combine(stepOutputDirectory, $"{Path.GetFileName(stepName)}-output.txt"), envelope.Text);
+            },
+            OnStepMeasured: measurements.Add,
+            Model: defaultModel);
 
         Console.Error.WriteLine($"Running mission '{firstMission.Name}'...");
 
@@ -211,8 +226,23 @@ static Command BuildRunCommand()
         }
         catch (InvalidOperationException ex)
         {
+            if (measurementsFile is not null)
+            {
+                var directory = Path.GetDirectoryName(Path.GetFullPath(measurementsFile));
+                if (directory is not null) Directory.CreateDirectory(directory);
+                await using var stream = File.Create(measurementsFile);
+                await JsonSerializer.SerializeAsync(stream, measurements, RunMeasurementsJsonContext.Default.ListStepMeasurement);
+            }
             Die(ex.Message);
             return;
+        }
+
+        if (measurementsFile is not null)
+        {
+            var directory = Path.GetDirectoryName(Path.GetFullPath(measurementsFile));
+            if (directory is not null) Directory.CreateDirectory(directory);
+            await using var stream = File.Create(measurementsFile);
+            await JsonSerializer.SerializeAsync(stream, measurements, RunMeasurementsJsonContext.Default.ListStepMeasurement);
         }
 
         if (missionResult.Status == MissionStatus.Fail)
@@ -1185,7 +1215,8 @@ static bool TryValidate(
 // Falls back to let-binding context for the "default" runner if no forge.toml.
 static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
     ForgeManifest? manifest,
-    Dictionary<string, object> seedContext)
+    Dictionary<string, object> seedContext,
+    UsageAccumulator? usage = null)
 {
     var runners = new Dictionary<string, IExpertRunner>(StringComparer.Ordinal);
 
@@ -1194,7 +1225,7 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
     {
         foreach (var (name, profile) in profiles)
         {
-            try { runners[name] = ProviderClientBuilder.Build(profile); }
+            try { runners[name] = ProviderClientBuilder.Build(profile, usage); }
             catch (Exception ex) { Die($"Cannot initialise provider profile '{name}': {ex.Message}"); return null; }
         }
     }
@@ -1227,7 +1258,7 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
                 Model    = model,
                 ApiKey   = apiKey,
                 Endpoint = string.IsNullOrWhiteSpace(endpoint) ? null : endpoint
-            });
+            }, usage);
         }
         catch (Exception ex) { Die($"Cannot initialise default provider: {ex.Message}"); return null; }
     }

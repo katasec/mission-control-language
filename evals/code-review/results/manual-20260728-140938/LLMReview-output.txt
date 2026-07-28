@@ -1,0 +1,42 @@
+diff --git a/cmd/ledgerctl/main.go b/cmd/ledgerctl/main.go
+index 96f4fa4..0000000 100644
+--- a/cmd/ledgerctl/main.go
++++ b/cmd/ledgerctl/main.go
+@@ -38,11 +38,7 @@ func run(args []string, stdout, stderr io.Writer, expirer invoiceExpirer) int {
+ 		return 1
+ 	}
+ 	if *dryRun {
+-		if len(expired) == 0 {
+-			fmt.Fprintln(stdout, "nothing would expire")
+-			return 0
+-		}
+ 		fmt.Fprintf(stdout, "would expire %d %s\n", len(expired), invoiceNoun(len(expired)))
+ 		return 0
+ 	}
+ diff --git a/internal/invoice/service.go b/internal/invoice/service.go
+index 70923a2..0000000 100644
+--- a/internal/invoice/service.go
++++ b/internal/invoice/service.go
+@@ -29,10 +29,12 @@ func (s *Service) Expire(ctx context.Context, before time.Time, dryRun bool) ([]Invoice, error) {
+ 			if err := s.repository.SaveInvoice(ctx, invoices[i]); err != nil {
+ 				return nil, err
+ 			}
+ 		}
+-		if err := s.repository.RecordAudit(ctx, audit.Entry{
+-			Kind:        "invoice.expired",
+-			InvoiceID:   invoices[i].ID,
+-			OccurredAt:  s.now(),
+-		}); err != nil {
+-			return nil, err
++		if !dryRun {
++			if err := s.repository.RecordAudit(ctx, audit.Entry{
++				Kind:       "invoice.expired",
++				InvoiceID:  invoices[i].ID,
++				OccurredAt: s.now(),
++			}); err != nil {
++				return nil, err
++			}
+ 		}
+ 	}
+ 	return invoices, nil
+ }

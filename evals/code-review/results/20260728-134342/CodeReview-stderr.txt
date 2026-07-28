@@ -1,0 +1,6 @@
+error: Expert 'Validator' has kind:exec but is missing required field 'inputs'.
+  --> /Users/ameerdeen/progs/mission-control-language/evals/code-review/missions/experts/Validator/expert.md:4:1
+    |
+4   | kind: exec
+    | ^^^^
+    |

@@ -9,6 +9,7 @@ public record PipelineRunOptions(
     TextWriter? StepWriter = null,
     TextWriter? ContentWriter = null,
     Action<string, StepEnvelope>? OnStepComplete = null,
+    Action<StepMeasurement>? OnStepMeasured = null,
     // Fired when a step BEGINS, with (expertName, kind). The engine-level progress signal (Phase
     // 41.7): it lands before a long-running step (e.g. kind:search) so a consumer can show "Searching
     // the web…" while it runs, not a frozen spinner. Provider-agnostic — every mission benefits.
@@ -29,4 +30,6 @@ public record PipelineRunOptions(
     bool StartAtAgent = false,
     // Fired once per run, just before the agent step, with the string-valued context snapshot —
     // the caller (MissionChatClient) stores it in the enrichment cache keyed by prefix hash P.
-    Action<IReadOnlyDictionary<string, string>>? OnPreAgentComplete = null);
+    Action<IReadOnlyDictionary<string, string>>? OnPreAgentComplete = null,
+    string? ParentStep = null,
+    string? Model = null);

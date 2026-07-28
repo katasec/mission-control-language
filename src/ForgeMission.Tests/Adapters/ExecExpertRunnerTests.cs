@@ -35,6 +35,10 @@ public class ExecExpertRunnerTests : IDisposable
     }
 
     [SkippableFact]
+    public void ParseTimeout_Hours_ReturnsFourHours()
+        => Assert.Equal(TimeSpan.FromHours(4), ExecExpertRunner.ParseTimeout("4h"));
+
+    [SkippableFact]
     public async Task RunAsync_ValidScript_WritesOutputKeyToContext()
     {
         var script = Script("import sys,json\nd=json.load(sys.stdin)\nprint(json.dumps({'result':d['input']}))\n");

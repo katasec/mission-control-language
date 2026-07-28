@@ -1,0 +1,16 @@
+diff --git a/cmd/ledgerctl/main.go b/cmd/ledgerctl/main.go
+--- a/cmd/ledgerctl/main.go
++++ b/cmd/ledgerctl/main.go
+@@ -38,11 +38,7 @@ func run(args []string, stdout, stderr io.Writer, expirer invoiceExpirer) int {
+ 		fmt.Fprintf(stderr, "expire invoices: %v\n", err)
+ 		return 1
+ 	}
+ 	if *dryRun {
+-		if len(expired) == 0 {
+-			fmt.Fprintln(stdout, "nothing would expire")
+-			return 0
+-		}
+ 		fmt.Fprintf(stdout, "would expire %d %s\n", len(expired), invoiceNoun(len(expired)))
+ 		return 0
+ 	}
+*** End Patch

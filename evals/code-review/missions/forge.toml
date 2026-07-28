@@ -1,0 +1,4 @@
+[providers.default]
+provider = "openai"
+model = "gpt-5.6-luna"
+apiKey = env("OPENAI_API_KEY")

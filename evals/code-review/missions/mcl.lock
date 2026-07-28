@@ -1,0 +1,46 @@
+version: 1
+experts:
+  ApplyFix:
+    source: experts
+    path: experts/ApplyFix/expert.md
+    hash: 4320636fb7492209101695c585e5dc111405d26932b07e24f6ed2c2ef2075bd4
+  ContextConstruction:
+    source: experts
+    path: experts/ContextConstruction/expert.md
+    hash: ccf05f195c0d3f42da06250a1c0f415bffeea767b356d131cd32150208a6726c
+  FileFiltering:
+    source: experts
+    path: experts/FileFiltering/expert.md
+    hash: 98db850e8d45653bec397a03766463c0f7c681c56fe27b424b3b7de08a403c65
+  GarfieldCoordinator:
+    source: experts
+    path: experts/GarfieldCoordinator/expert.md
+    hash: d6db39c5fec7397e84fc54667b01467713d37a1bd82e9797bbd068156f18aebc
+  GitDiff:
+    source: experts
+    path: experts/GitDiff/expert.md
+    hash: 4799cb1554c1a27fda508b6ba641641e1593b64554e54d7279fd1a91c1901e51
+  LanguageDetection:
+    source: experts
+    path: experts/LanguageDetection/expert.md
+    hash: 023c0c3fddc52cd83421d250df8f27fd61f69376b2af0f1f2e74062fd4601c09
+  LLMReview:
+    source: experts
+    path: experts/LLMReview/expert.md
+    hash: b84e89f20bad2f0448b011618412280f2ce8aa571707c82625bb4b3505868c24
+  ProjectDetection:
+    source: experts
+    path: experts/ProjectDetection/expert.md
+    hash: 3ccf4b933b82bdb87ceb5012de944de8b7ffa625b64731a21bb3b5cb82ec78dc
+  RepositoryInventory:
+    source: experts
+    path: experts/RepositoryInventory/expert.md
+    hash: 4354ae808eff2a3992accfedfe6f5f051e9694fe3e885e5eeeb32659a11f6ad8
+  Summary:
+    source: experts
+    path: experts/Summary/expert.md
+    hash: a8bb8bcd4fd5ab8a03e405c4411b609e7dcffad612e83955c2b9a9d2fbada19d
+  Validator:
+    source: experts
+    path: experts/Validator/expert.md
+    hash: d3c7a1dd9e52a85fcabcc540b97f955c7290a8868eac700767538ac8ad0da2a8

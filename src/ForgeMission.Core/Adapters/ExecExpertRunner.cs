@@ -104,7 +104,11 @@ public class ExecExpertRunner(string defaultTimeout = "30s") : IExpertRunner
             context["feedback"] = feedback;
         }
 
-        return new StepEnvelope(outputText, status ?? "pass", reason);
+        var meta = root.TryGetProperty("usage", out var usage)
+            ? new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["usage"] = usage.Clone() }
+            : null;
+
+        return new StepEnvelope(outputText, status ?? "pass", reason, meta);
     }
 
     public async IAsyncEnumerable<string> StreamAsync(
@@ -149,7 +153,7 @@ public class ExecExpertRunner(string defaultTimeout = "30s") : IExpertRunner
         }
     }
 
-    private static TimeSpan ParseTimeout(string timeout)
+    internal static TimeSpan ParseTimeout(string timeout)
     {
         if (string.IsNullOrWhiteSpace(timeout))
             return TimeSpan.FromSeconds(30);
@@ -159,6 +163,9 @@ public class ExecExpertRunner(string defaultTimeout = "30s") : IExpertRunner
 
         if (timeout.EndsWith('m') && int.TryParse(timeout[..^1], out var mins))
             return TimeSpan.FromMinutes(mins);
+
+        if (timeout.EndsWith('h') && int.TryParse(timeout[..^1], out var hours))
+            return TimeSpan.FromHours(hours);
 
         return TimeSpan.FromSeconds(30);
     }
