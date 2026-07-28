@@ -1,8 +1,0 @@
-Proposed repair: apply the provided minimal patch in `internal/invoice/service.go` by moving `RecordAudit` inside the existing `if !dryRun` block. This prevents dry runs from recording `invoice.expired` audit events while preserving non-dry-run save, audit, output, and exit behavior.
-
-Validation command:
-```bash
-go test ./...
-```
-
-Remaining risk: aggregate tests may not explicitly verify that dry-run performs neither persistence nor auditing. A targeted dry-run test with repository mocks would provide additional coverage, but no broader code changes are required.

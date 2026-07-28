@@ -1,3 +1,0 @@
-# example.com/ledgerlite/internal/invoice
-internal/invoice/service.go:35:4: unknown field InvoiceID in struct literal of type audit.Entry
-internal/invoice/service.go:36:4: unknown field OccurredAt in struct literal of type audit.Entry

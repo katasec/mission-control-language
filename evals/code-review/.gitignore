@@ -1,3 +1,5 @@
 .workspaces/
+.upstream/
+results/
 __pycache__/
 *.pyc

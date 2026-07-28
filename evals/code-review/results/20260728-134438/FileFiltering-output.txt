@@ -1,4 +1,0 @@
- M cmd/ledgerctl/main.go
- M cmd/ledgerctl/main_test.go
- M internal/invoice/service.go
- M internal/invoice/service_test.go

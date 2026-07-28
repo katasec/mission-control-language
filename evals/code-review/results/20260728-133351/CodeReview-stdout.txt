@@ -1,8 +1,0 @@
-Proposed repair: check `dryRun` before changing invoice state, leaving dry-run results untouched. For normal execution, set each invoice to `StatusExpired`, persist it with `SaveInvoice`, and record an `invoice.expired` audit entry using `s.now()`. The patch returns the invoices after processing and propagates persistence or audit errors. Preserve the functional changes, but remove the obsolete commented-out implementation before merging.
-
-Validation commands:
-- `gofmt -w internal/invoice/service.go`
-- `go test ./...`
-- Run or add focused tests covering dry-run immutability, successful save/audit recording, and save/audit failures.
-
-Remaining risk: save and audit operations are not transactional; a later failure can leave earlier invoices expired or leave an invoice saved without its audit entry. Consider repository-level transaction support if those operations must be atomic.

@@ -1,3 +1,0 @@
-Running mission 'CodeReview'...
-error: mission failed — [ApplyFix] error: patch failed: internal/invoice/service.go:24
-error: internal/invoice/service.go: patch does not apply

@@ -1,3 +1,0 @@
-cycle=1 input_tokens=95 cached_input_tokens=0 output_tokens=791 cost_usd=$0.004841 elapsed_ms=10663
-cycle=2 input_tokens=190 cached_input_tokens=0 output_tokens=1513 cost_usd=$0.009268 elapsed_ms=22041
-cycle=3 input_tokens=285 cached_input_tokens=0 output_tokens=1962 cost_usd=$0.012057 elapsed_ms=28568

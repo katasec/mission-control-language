@@ -1,2 +1,0 @@
-$0.02 fuse tripped after 4 cycles: error: patch failed: internal/invoice/service.go:24
-error: internal/invoice/service.go: patch does not apply
