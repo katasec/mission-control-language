@@ -5,6 +5,7 @@
   <Project Path="ForgeMission.ClientRuntime/ForgeMission.ClientRuntime.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
   <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
+  <Project Path="ForgeMission.Docker/ForgeMission.Docker.csproj" />
   <Project Path="ForgeMission.Rooms.Data/ForgeMission.Rooms.Data.csproj" />
   <Project Path="ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj" />
   <Project Path="ForgeMission.Rooms/ForgeMission.Rooms.csproj" />

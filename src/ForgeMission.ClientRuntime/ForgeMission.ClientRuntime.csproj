@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.Docker\ForgeMission.Docker.csproj" />
   </ItemGroup>
 
   <ItemGroup>

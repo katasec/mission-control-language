@@ -15,11 +15,14 @@ internal sealed class Program
         builder.Services.AddRazorPages();
         builder.Services.AddServerSideBlazor();
         var initialWorkspaceRoot = builder.Configuration["Workspace:InitialRoot"];
+        await using var dockerMissionRuntime = await StartDockerMissionRuntimeAsync(builder);
+        var missionRuntimeBaseUrl = dockerMissionRuntime?.BaseUrl
+            ?? builder.Configuration["MissionRuntime:BaseUrl"]
+            ?? "http://127.0.0.1:8080/";
         builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
         builder.Services.AddHttpClient<MissionRuntimeSession>(client =>
         {
-            var configuredUrl = builder.Configuration["MissionRuntime:BaseUrl"] ?? "http://127.0.0.1:8080/";
-            client.BaseAddress = new Uri(configuredUrl, UriKind.Absolute);
+            client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
         });
 
         var app = builder.Build();
@@ -46,5 +49,14 @@ internal sealed class Program
         });
 
         await app.RunAsync();
+    }
+
+    private static async Task<DockerMissionRuntime?> StartDockerMissionRuntimeAsync(WebApplicationBuilder builder)
+    {
+        var mode = builder.Configuration["MissionRuntime:Mode"] ?? "docker";
+        if (!mode.Equals("docker", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return await DockerMissionRuntime.StartAsync(builder.Configuration, builder.Environment.ContentRootPath);
     }
 }

@@ -113,6 +113,14 @@ session:
 5. Commit + push **everything, across every touched repo** (this may span more than one repo).
    End on 0 uncommitted / 0 unpushed per repo. Never an empty commit.
 
+## Branch isolation
+
+Start every implementation task on a new `codex/` branch before writing code or task documentation.
+Do not work directly on `main`: an isolated branch keeps incomplete work from contaminating the
+known-good baseline and contains regression risk until the task has been reviewed and merged. Reuse
+an existing branch only when explicitly continuing the same unfinished task; otherwise create a new,
+task-named branch from the current intended base.
+
 ---
 
 ## Checkpoint skill

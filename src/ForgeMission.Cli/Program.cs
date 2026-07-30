@@ -14,7 +14,7 @@ using ForgeMission.Serve;
 using Microsoft.AspNetCore.Builder;
 using Spectre.Console;
 using ForgeMission.Cli;
-using ForgeMission.Cli.Docker;
+using ForgeMission.Docker;
 using System.Diagnostics;
 using System.Text.Json;
 using MclProgram = ForgeMission.Parser.Program;
@@ -860,7 +860,7 @@ static async Task<Func<Task>?> StartMissionContainerAsync(AgentConfig config, st
     const string runnerImage = "ghcr.io/katasec/forge-runner:latest";
 
     var docker = await DockerPrereqChecker.CheckDockerAsync();
-    if (!DockerPrereqChecker.RunAndPrint([docker])) return null;
+    if (!RunAndPrintPrereqs([docker])) return null;
 
     if (!await DockerCli.IsImagePresentAsync(runnerImage))
     {
@@ -1341,7 +1341,7 @@ static Command BuildAgentStartCommand()
             DockerPrereqChecker.CheckFileExists(agentFileFull, "agent.yaml"),
         };
 
-        if (!DockerPrereqChecker.RunAndPrint(prereqs))
+        if (!RunAndPrintPrereqs(prereqs))
         {
             Environment.Exit(1);
             return;
@@ -1463,7 +1463,7 @@ static Command BuildWebuiStartCommand()
             DockerPrereqChecker.CheckFileExists(agentFileFull, "agent.yaml"),
         };
 
-        if (!DockerPrereqChecker.RunAndPrint(prereqs))
+        if (!RunAndPrintPrereqs(prereqs))
         {
             Environment.Exit(1);
             return;
@@ -1760,6 +1760,38 @@ static string[] BuildEnvArray(params string[] vars) =>
         .Where(x => x.Value is not null)
         .Select(x => $"{x.Name}={x.Value}")
         .ToArray();
+
+static bool RunAndPrintPrereqs(IEnumerable<PrereqCheck> checks)
+{
+    var results = DockerPrereqChecker.Evaluate(checks);
+    AnsiConsole.MarkupLine("\n [bold]Checking prerequisites...[/]\n");
+
+    var table = new Table();
+    table.AddColumn("Requirement");
+    table.AddColumn("Status");
+    table.AddColumn("Detail");
+    table.Border(TableBorder.Simple);
+
+    foreach (var result in results)
+    {
+        var (statusMarkup, detailMarkup) = result.Status switch
+        {
+            PrereqStatus.Pass    => ("[green]✓ pass[/]", result.Detail),
+            PrereqStatus.Fail    => ("[red]✗ fail[/]", result.Detail),
+            PrereqStatus.Skipped => ("[grey]– skip[/]", "[grey]–[/]"),
+            _                    => ("?", result.Detail)
+        };
+        table.AddRow(result.Label, statusMarkup, detailMarkup);
+    }
+
+    AnsiConsole.Write(table);
+
+    var passed = results.All(result => result.Status != PrereqStatus.Fail);
+    if (!passed)
+        AnsiConsole.MarkupLine("[red]Prerequisites not met. Cannot continue.[/]");
+
+    return passed;
+}
 
 // ---------------------------------------------------------------------------
 // MCP helpers — must be after all top-level statements

@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ForgeMission.Cli.Docker;
+namespace ForgeMission.Docker;
 
 // ── STJ source-gen context ─────────────────────────────────────────────────
 

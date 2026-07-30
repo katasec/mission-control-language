@@ -1,4 +1,4 @@
-namespace ForgeMission.Cli.Docker;
+namespace ForgeMission.Docker;
 
 public enum PrereqStatus { Pass, Fail, Skipped }
 

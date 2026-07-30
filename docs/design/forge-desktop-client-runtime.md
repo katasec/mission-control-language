@@ -79,6 +79,27 @@ dependency (see redefinition below) — it's retained because it's the mechanism
    Docker Mission Runtime + local Client Runtime, no network egress required beyond whatever
    provider key the local container is configured with.
 
+## Local Docker provider keys
+
+The Client Runtime, not Electron's parent process, owns provider-key loading for the local Docker
+Mission Runtime. It reads a local dotenv file at
+`Environment.SpecialFolder.ApplicationData/Forge/provider.env` (on macOS,
+`~/Library/Application Support/Forge/provider.env`) and forwards only the established provider and
+model allow-list to the runner container. For the Task 2b `missions/vanilla` proof, the minimal
+file is:
+
+```dotenv
+MCL_API_KEY=<your OpenAI key>
+```
+
+The same file may contain `MCL_MODEL`, `MCL_PROVIDER`, `MCL_ENDPOINT`, `OPENAI_API_KEY`,
+`CLAUDE_API_KEY`, `XAI_API_KEY`, `GROK_API_KEY`, and `GOOGLE_SEARCH_API_KEY` for other local
+missions. The file is user-local, never committed, and must be created with user-only permissions.
+An absent file or absent required key is a startup error before Docker is started; the Client Runtime
+does not fall back to inherited provider-key environment variables. This is intentional: macOS apps
+started by Finder or the Dock do not inherit a terminal's `pwsh` key exports, while the user-local
+file is available to either launch path.
+
 ## Metering (orthogonal to this split)
 
 [Phase 39](../phases/phase-39-metered-runtime-marketplace.md)'s metered ledger wraps the **hosted**

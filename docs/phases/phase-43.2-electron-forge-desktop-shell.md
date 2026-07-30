@@ -118,18 +118,15 @@ as it was scoped under Avalonia.
        `Program.cs`, not `DockerCli.cs`), so this is a mechanical move — a direct project reference
        to `ForgeMission.Cli` was rejected because it would drag that project's full AOT/Spectre/
        System.CommandLine/Anthropic dependency tree into a Blazor Server web project.
-     - **Provider key sourcing — known gap, not yet a locked mechanism.** `forge claude --container`
-       sources keys via `BuildEnvArray` ([Program.cs:1757](../../src/ForgeMission.Cli/Program.cs)),
-       which is just `Environment.GetEnvironmentVariable` on whatever process env `forge` itself
-       inherited — works today only because the maintainer launches `forge` from `pwsh`, which
-       already has the keys exported (same gotcha
-       [deploy.md](../design/deploy.md#local-dev-environment--shell--provider-keys-read-this-before-running-anything-locally)
-       documents for Bash tools). `ForgeMission.ClientRuntime` is spawned by Electron's `main.cjs`
-       via `dotnet run`; if Electron itself is launched from Finder/dock rather than a terminal, it
-       has no such inherited keys. **Codex's plan for Task 2b must name a concrete mechanism**
-       (e.g. a config/dotenv file `ClientRuntime` reads itself, an in-app prompt, a keychain) — this
-       is explicitly not resolved by "read the same env vars forge does," which will silently fail
-       for most launch paths.
+     - **Provider key sourcing — locked for Task 2b (2026-07-30).** The Client Runtime reads its
+       own allow-listed dotenv file at `Environment.SpecialFolder.ApplicationData/Forge/provider.env`
+       (macOS: `~/Library/Application Support/Forge/provider.env`) and forwards those values to the
+       Docker container. `MCL_API_KEY` is sufficient for `missions/vanilla`; the file can also carry
+       the established provider/model override names. It does **not** read provider keys from the
+       Electron or `dotnet` process environment, so a Finder/Dock launch has the same key source as
+       a terminal launch. Missing keys fail before the container starts, with the file path and
+       required variable named. Full rationale and format live in the
+       [Client Runtime design](../design/forge-desktop-client-runtime.md#local-docker-provider-keys).
      - **Done when:** the identical prompt/tool-call flow from 2a works against the real Docker
        target, only the base URL config value differs, no change to the loop component itself.
      - Hosted (`forge.katasec.com`) stays unproven after Task 2 — the config-value base URL leaves
@@ -141,8 +138,7 @@ as it was scoped under Avalonia.
    short log rather than restated in full:
    1. Docker sequencing → split into 2a (in-process, no Docker) / 2b (Docker) above.
    2. `DockerCli` reuse → extract into a shared project (2b above).
-   3. Provider key sourcing → confirmed real gap; mechanism deliberately left for Codex's 2b plan to
-      name, not pre-decided here.
+   3. Provider key sourcing → locked for Task 2b as the Client Runtime-owned dotenv file above.
    4. Hosted vs. local target selection → base URL is a config value from Task 2a onward (no fork,
       since the wire is target-invariant); only local Docker needs to work for Task 2's Done-when.
    5. Streaming shape → confirmed real SSE (`text/event-stream`) but not token-level — the current
