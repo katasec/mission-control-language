@@ -1,0 +1,4 @@
+mission: mission.mcl
+port: 8080
+id: vanilla
+wire: anthropic

@@ -1,6 +1,8 @@
 @page "/"
 @inject IJSRuntime JavaScript
+@inject MissionRuntimeSession MissionRuntime
 @inject WorkspaceState WorkspaceState
+@using ForgeMission.Core.Runtime
 
 <section class="client-runtime-shell">
     <header class="client-runtime-header">
@@ -11,6 +13,40 @@
     <main class="client-runtime-main">
         <button class="btn btn-primary" @onclick="OpenFolderAsync">Add folder</button>
 
+        @if (WorkspaceState.Root is { } root)
+        {
+            <p>Workspace: @root</p>
+        }
+
+        <div>
+            <label for="prompt">Prompt</label>
+            <textarea id="prompt" @bind="_prompt" rows="4"></textarea>
+            <button @onclick="SendPromptAsync" disabled="@(_sending || WorkspaceState.Workspace is null)">
+                @(_sending ? "Sending…" : "Send")
+            </button>
+        </div>
+
+        @if (_toolLog.Count > 0)
+        {
+            <section aria-label="Tool calls">
+                <h2>Tool calls</h2>
+                <ul>
+                    @foreach (var entry in _toolLog)
+                    {
+                        <li>@entry</li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (_response is not null)
+        {
+            <section aria-label="Response">
+                <h2>Response</h2>
+                <pre>@_response</pre>
+            </section>
+        }
+
         @if (_status is not null)
         {
             <p class="client-runtime-status" role="status">@_status</p>
@@ -19,7 +55,11 @@
 </section>
 
 @code {
+    private readonly List<string> _toolLog = [];
+    private string _prompt = string.Empty;
+    private string? _response;
     private string? _status;
+    private bool _sending;
 
     private async Task OpenFolderAsync()
     {
@@ -34,4 +74,47 @@
         _status = $"Workspace: {WorkspaceState.Root}";
         Console.WriteLine(_status);
     }
+
+    private async Task SendPromptAsync()
+    {
+        if (WorkspaceState.Workspace is not { } workspace || string.IsNullOrWhiteSpace(_prompt))
+            return;
+
+        _sending = true;
+        _response = string.Empty;
+        _toolLog.Clear();
+        _status = null;
+
+        try
+        {
+            await MissionRuntime.SendAsync(_prompt, workspace,
+                onTextDelta: text => _ = InvokeAsync(() =>
+                {
+                    _response += text;
+                    StateHasChanged();
+                }),
+                onToolCall: notification => _ = InvokeAsync(() =>
+                {
+                    _toolLog.Add(FormatToolLog(notification));
+                    StateHasChanged();
+                }));
+        }
+        catch (HttpRequestException exception)
+        {
+            _status = exception.Message;
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private static string FormatToolLog(ToolCallNotification notification) => notification.State switch
+    {
+        ToolCallNotificationState.Running => $"Running {notification.Call.Name}",
+        ToolCallNotificationState.Done when notification.Result?.IsError == true =>
+            $"{notification.Call.Name} failed: {notification.Result.Content}",
+        ToolCallNotificationState.Done => $"Finished {notification.Call.Name}",
+        _ => notification.Call.Name,
+    };
 }

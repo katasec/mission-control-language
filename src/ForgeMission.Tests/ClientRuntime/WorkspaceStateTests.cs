@@ -18,5 +18,14 @@ public sealed class WorkspaceStateTests : IDisposable
         Assert.Equal(root, workspace.Roots[0]);
     }
 
+    [Fact]
+    public void Constructor_OpensConfiguredInitialRoot()
+    {
+        var state = new WorkspaceState(root);
+
+        var workspace = Assert.IsType<LocalDiskWorkspace>(state.Workspace);
+        Assert.Equal(root, workspace.Roots[0]);
+    }
+
     public void Dispose() => Directory.Delete(root, recursive: true);
 }

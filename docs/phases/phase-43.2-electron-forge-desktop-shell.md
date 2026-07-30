@@ -1,8 +1,7 @@
 # Phase 43.2 — Electron Forge Desktop shell
 
-**Status: In build — Task 1 (scaffold) done 2026-07-27, live-verified, merged to `main`. Task 2's
-six pre-handoff clarity items resolved 2026-07-27 (see Task 2 below); Task 2 split into 2a (HTTP
-loop, in-process) and 2b (Docker packaging) — next up is drafting Codex's Task 2a assignment.**
+**Status: In build — Task 1 (scaffold) done 2026-07-27, live-verified, merged to `main`. Task 2a
+(HTTP loop) done 2026-07-30, live-verified; see [completed evidence](phase-43.2-electron-forge-desktop-shell_completed.md#task-2a--http-tool-loop-2026-07-30). Next: design and assign Task 2b (Docker packaging), including its non-terminal provider-key mechanism.**
 Replaces
 [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md) (shelved — see that
 doc for why). Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
@@ -67,9 +66,10 @@ as it was scoped under Avalonia.
    environment-gated skips as 43.7's baseline, no new failures); `npm audit`: 0 vulnerabilities. No
    Mission Runtime/`AgenticSession`/streaming/tool-execution wiring — correctly out of scope, that's
    Task 2.
-2. **Wire the Mission Runtime connection**, local Docker `/v1` image as the default dev target
-   (hosted `forge.katasec.com` as the alternate target, same code path). Real streaming + tool
-   round-trip, reusing [42.3](phase-42.3-tool-capable-enriching-responder.md)'s mechanism as-is.
+2. **Wire the Mission Runtime connection** — Task 2a is complete; Task 2b is next. Local Docker
+   `/v1` remains the default dev target for 2b (hosted `forge.katasec.com` as the alternate target,
+   same code path). Real streaming + tool round-trip, reusing
+   [42.3](phase-42.3-tool-capable-enriching-responder.md)'s mechanism as-is.
    **Architecture question resolved 2026-07-27** — the orchestration loop lives in the Client
    Runtime, as a **new** lightweight loop component (not a revised `AgenticSession` — see the
    design doc's correction) that holds conversation history and calls `/v1/messages` over HTTP,
@@ -84,7 +84,8 @@ as it was scoped under Avalonia.
    below against real code and walking each decision past the user)** — proving the HTTP loop and
    proving containerized packaging are separate concerns and should not be one task:
 
-   - **Task 2a — HTTP loop correctness, in-process.** Build the new loop component and prove it
+   - **Task 2a — HTTP loop correctness, in-process. ✅ Done 2026-07-30** — implementation and
+     verification evidence are in the [completed record](phase-43.2-electron-forge-desktop-shell_completed.md#task-2a--http-tool-loop-2026-07-30). Build the new loop component and prove it
      against an **in-process** `AnthropicServer` host — no subprocess, no Docker. Reuse the exact
      pattern [`AnthropicServerFixture`](../../src/ForgeMission.Tests/Integration/AnthropicServerFixture.cs)
      already uses (`WebApplication.CreateSlimBuilder()` bound to a free loopback port via
@@ -97,6 +98,11 @@ as it was scoped under Avalonia.
      area, plain tool-call log lines — enough to satisfy Done-when, no `forge.css` styling (that
      stays Task 3). **Done when:** a real prompt round-trips through the in-process host and
      executes at least one real tool call (file read/edit), visible in the unstyled UI.
+     **Dev-launch decision (2026-07-30):** `make desktop` starts the real local
+     `missions/vanilla` OpenAI Mission Runtime and Electron together; it passes the repository root
+     as `Workspace:InitialRoot`, while leaving the normal folder picker available to change it. The
+     launcher runs in `pwsh` so the existing `MCL_API_KEY` is inherited. No fake/demo Mission Runtime
+     is part of the product or its development path.
    - **Task 2b — containerized packaging.** Wire the *same, already-proven* loop component against
      the real local Docker `/v1` container (`ghcr.io/katasec/forge-runner`), launched the way
      `forge claude --container` already does it: `DockerCli.RunContainerAsync` port-maps the
