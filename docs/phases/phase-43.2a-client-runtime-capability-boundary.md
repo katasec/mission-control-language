@@ -116,7 +116,7 @@ its `/v1/messages` requests.
    container-owned storage before start. A mission OCI artifact/image is the strongest distribution
    story for consumers, but adds packaging/pull/version-selection work. Which should 43.2a build
    first?
-2. **May an author run a mission whose source is inside the opened workspace?** If yes, a mission-
+2. **May an author run a mission whose source is inside the opened workspace?** If yes, the Client
    Runtime can copy only the mission package into the container, so the brain can read the copy but
    not the workspace. If no, authored missions need a separate project/package location before they
    can be run. Which author workflow is intended for v1?
