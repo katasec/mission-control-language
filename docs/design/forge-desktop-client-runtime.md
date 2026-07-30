@@ -66,6 +66,32 @@ the role Claude Code CLI already plays today against `forge claude`: execute wha
 locally, POST results back. **This reuses 42.3's already-shipped mechanism; it is not a new
 invention.**
 
+## Capability boundary — the Client Runtime is the hands (locked 2026-07-30)
+
+The opened folder, local filesystem and local process execution belong **only** to the Client
+Runtime. The Mission Runtime is the brain: it owns mission interpretation, experts, provider/model
+calls, and deciding whether to return final text or request a declared tool. It never receives a
+general mount of the user's opened workspace, regardless of whether it is hosted or a local Docker
+container.
+
+The only information crossing from hands to brain is deliberate protocol input:
+
+- conversation messages and `tool_result` values over `/v1/messages`;
+- an explicit mission package/source selected for the brain to execute; and
+- future explicit artifacts the Client Runtime chooses to upload or relay (for example, an OCR
+  file), never an implicit filesystem path with ambient access.
+
+The only instruction crossing from brain to hands is a `/v1` response: final text or a declared
+tool request. The Client Runtime executes that request through its existing `IWorkspace` and
+`ToolExecutorRegistry`, then sends the result back. Thus Docker and cloud remain target-invariant
+for the loop: the URL changes, not the loop component or local-tool authority.
+
+The Task 2b Docker proof intentionally established the wire and lifecycle first, but its current
+repository bind mount is not compliant with this boundary. [43.2a — Client Runtime capability
+boundary](../phases/phase-43.2a-client-runtime-capability-boundary.md) is the next design and
+implementation gate; it selects an explicit mission-delivery mechanism, removes that mount, and
+adds regression evidence before the Docker path is called architecture-complete.
+
 ## Why Docker is retained (parity, not legacy)
 
 Docker's presence in this design is **not** a holdover from `forge webui`'s old Open WebUI
