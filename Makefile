@@ -19,7 +19,7 @@ endif
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
 
-.PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset
+.PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset desktop
 .DEFAULT_GOAL := help
 
 help:
@@ -59,6 +59,9 @@ dev-down: ## Stop local dev environment (keeps data)
 
 dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
 	./scripts/dev-reset.sh
+
+desktop: ## Launch Electron with the real vanilla OpenAI Mission Runtime
+	pwsh -File scripts/desktop.ps1
 
 clean: ## Remove build artefacts (bin/ and obj/)
 	dotnet clean src/

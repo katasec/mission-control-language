@@ -14,7 +14,13 @@ internal sealed class Program
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Services.AddRazorPages();
         builder.Services.AddServerSideBlazor();
-        builder.Services.AddScoped<WorkspaceState>();
+        var initialWorkspaceRoot = builder.Configuration["Workspace:InitialRoot"];
+        builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
+        builder.Services.AddHttpClient<MissionRuntimeSession>(client =>
+        {
+            var configuredUrl = builder.Configuration["MissionRuntime:BaseUrl"] ?? "http://127.0.0.1:8080/";
+            client.BaseAddress = new Uri(configuredUrl, UriKind.Absolute);
+        });
 
         var app = builder.Build();
         var forgeUiWebRoot = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "ForgeUI", "wwwroot"));
