@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Formats.Tar;
 using ForgeMission.Docker;
 using Microsoft.Extensions.Configuration;
 
@@ -11,6 +12,9 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
 {
     private const string RunnerImage = "ghcr.io/katasec/forge-runner:latest";
     private const int RunnerPort = 8080;
+    private const string ContainerMissionParent = "/tmp";
+    private const string ContainerMissionDirectory = "forge-mission";
+    private const string ContainerMissionFile = "/tmp/forge-mission/mission.mcl";
 
     public string BaseUrl => $"http://127.0.0.1:{hostPort}/";
 
@@ -19,18 +23,14 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
         string contentRoot,
         CancellationToken ct = default)
     {
-        var repositoryRoot = Path.GetFullPath(configuration["MissionRuntime:Docker:RepositoryRoot"]
-            ?? Path.Combine(contentRoot, "..", ".."));
         var missionFile = Path.GetFullPath(configuration["MissionRuntime:Docker:MissionFile"]
-            ?? Path.Combine(repositoryRoot, "missions", "vanilla", "mission.mcl"));
+            ?? Path.Combine(contentRoot, "..", "..", "missions", "vanilla", "mission.mcl"));
         var providerEnvironment = ProviderEnvironmentFile.Load(configuration["MissionRuntime:Docker:ProviderEnvFile"]);
 
         if (!File.Exists(missionFile))
             throw new InvalidOperationException($"Docker Mission Runtime mission file not found: {missionFile}");
 
-        var relativeMissionPath = Path.GetRelativePath(repositoryRoot, missionFile);
-        if (relativeMissionPath == ".." || relativeMissionPath.StartsWith($"..{Path.DirectorySeparatorChar}"))
-            throw new InvalidOperationException($"Mission file must be inside Docker repository root: {repositoryRoot}");
+        using var missionArchive = MissionArchive.Create(missionFile, ContainerMissionDirectory);
 
         var docker = await DockerPrereqChecker.CheckDockerAsync();
         if (docker.Status == PrereqStatus.Fail)
@@ -45,15 +45,18 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
         var containerName = $"forge-client-{Guid.NewGuid():N}"[..25];
         try
         {
-            await DockerCli.RunContainerAsync(
+            await DockerCli.CreateContainerAsync(
                 name: containerName,
                 image: RunnerImage,
                 cmd: [],
-                env: [.. providerEnvironment, $"MissionFile=/workspace/{relativeMissionPath.Replace('\\', '/')}"] ,
-                binds: [$"{repositoryRoot}:/workspace"],
+                env: [.. providerEnvironment, $"MissionFile={ContainerMissionFile}"],
+                binds: [],
                 hostPort: hostPort,
                 containerPort: RunnerPort,
-                network: "forge-net");
+                network: "forge-net",
+                hostIp: IPAddress.Loopback.ToString());
+            await DockerCli.CopyArchiveToContainerAsync(containerName, ContainerMissionParent, missionArchive, ct);
+            await DockerCli.StartContainerAsync(containerName);
 
             var runtime = new DockerMissionRuntime(containerName, hostPort);
             if (!await runtime.WaitUntilHealthyAsync(ct))
@@ -97,5 +100,43 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();
         return port;
+    }
+}
+
+// Builds the only filesystem input a local Docker brain receives. The archive is created by the
+// Client Runtime and copied through Docker Engine; the runner never gets a host bind mount.
+internal static class MissionArchive
+{
+    public static MemoryStream Create(string missionFile, string containerDirectory)
+    {
+        var missionRoot = Path.GetDirectoryName(missionFile)
+            ?? throw new InvalidOperationException($"Mission file has no parent directory: {missionFile}");
+        var archive = new MemoryStream();
+        using (var writer = new TarWriter(archive, leaveOpen: true))
+            WriteDirectory(writer, missionRoot, missionRoot, containerDirectory);
+
+        archive.Position = 0;
+        return archive;
+    }
+
+    private static void WriteDirectory(TarWriter writer, string missionRoot, string directory, string containerDirectory)
+    {
+        foreach (var path in Directory.EnumerateFileSystemEntries(directory).Order(StringComparer.Ordinal))
+        {
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidOperationException($"Mission package cannot contain a symbolic link: {path}");
+
+            var relativePath = Path.GetRelativePath(missionRoot, path).Replace('\\', '/');
+            var archivePath = $"{containerDirectory}/{relativePath}";
+            if ((attributes & FileAttributes.Directory) != 0)
+            {
+                writer.WriteEntry(new PaxTarEntry(TarEntryType.Directory, archivePath));
+                WriteDirectory(writer, missionRoot, path, containerDirectory);
+                continue;
+            }
+
+            writer.WriteEntry(path, archivePath);
+        }
     }
 }

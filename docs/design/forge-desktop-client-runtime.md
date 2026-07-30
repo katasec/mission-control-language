@@ -86,11 +86,15 @@ tool request. The Client Runtime executes that request through its existing `IWo
 `ToolExecutorRegistry`, then sends the result back. Thus Docker and cloud remain target-invariant
 for the loop: the URL changes, not the loop component or local-tool authority.
 
-The Task 2b Docker proof intentionally established the wire and lifecycle first, but its current
-repository bind mount is not compliant with this boundary. [43.2a — Client Runtime capability
-boundary](../phases/phase-43.2a-client-runtime-capability-boundary.md) is the next design and
-implementation gate; it selects an explicit mission-delivery mechanism, removes that mount, and
-adds regression evidence before the Docker path is called architecture-complete.
+The Task 2b Docker proof intentionally established the wire and lifecycle first. Its repository
+bind mount was replaced in [43.2a — Client Runtime capability
+boundary](../phases/phase-43.2a-client-runtime-capability-boundary.md): the Client Runtime now
+creates the runner stopped, packages the selected mission in memory, uploads it through Docker
+Engine into container-owned storage, then starts it with `MissionFile` pointing at that copy. The
+runner has no host bind, including for the mission source, and its dynamic `/v1` port publishes only
+to `127.0.0.1`. The mission source may be within the opened workspace because only the explicit
+mission archive crosses the boundary. OCI mission artifacts and explicit artifact relay remain
+future work; see the spoke for verification evidence and review status.
 
 ## Why Docker is retained (parity, not legacy)
 

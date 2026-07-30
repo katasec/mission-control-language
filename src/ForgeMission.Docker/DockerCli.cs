@@ -11,7 +11,6 @@ namespace ForgeMission.Docker;
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(DockerContainer[]))]
 [JsonSerializable(typeof(DockerCreateContainerRequest))]
-[JsonSerializable(typeof(DockerCreateContainerResponse))]
 [JsonSerializable(typeof(DockerCreateNetworkRequest))]
 [JsonSerializable(typeof(DockerVersionResponse))]
 [JsonSerializable(typeof(DockerProgressEvent))]
@@ -45,16 +44,11 @@ internal sealed class DockerHostConfig
 
 internal sealed class DockerPortBinding
 {
+    [JsonPropertyName("HostIp")]   public string? HostIp { get; set; }
     [JsonPropertyName("HostPort")] public string HostPort { get; set; } = "";
 }
 
 internal sealed class DockerEmptyObject { }
-
-internal sealed class DockerCreateContainerResponse
-{
-    [JsonPropertyName("Id")]       public string Id       { get; set; } = "";
-    [JsonPropertyName("Warnings")] public string[]? Warnings { get; set; }
-}
 
 internal sealed class DockerCreateNetworkRequest
 {
@@ -220,10 +214,79 @@ public static class DockerCli
         string[] binds,
         int hostPort,
         int containerPort,
-        string network)
+        string network,
+        string? hostIp = null)
+    {
+        await CreateContainerAsync(name, image, cmd, env, binds, hostPort, containerPort, network, hostIp);
+        await StartContainerAsync(name);
+    }
+
+    // A caller that needs to populate container-owned storage before the entrypoint runs creates
+    // first, uploads its archive, then calls StartContainerAsync.
+    public static async Task CreateContainerAsync(
+        string name,
+        string image,
+        string[] cmd,
+        string[] env,
+        string[] binds,
+        int hostPort,
+        int containerPort,
+        string network,
+        string? hostIp = null)
+    {
+        var request = CreateContainerRequest(image, cmd, env, binds, hostPort, containerPort, network, hostIp);
+        var body = JsonSerializer.Serialize(request, DockerJsonContext.Default.DockerCreateContainerRequest);
+        var createResp = await Http.PostAsync(
+            $"/v1.47/containers/create?name={name}",
+            new StringContent(body, Encoding.UTF8, "application/json"));
+
+        if (!createResp.IsSuccessStatusCode)
+        {
+            var err = await createResp.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to create container '{name}': {err}");
+        }
+    }
+
+    public static async Task CopyArchiveToContainerAsync(
+        string name,
+        string destinationPath,
+        Stream archive,
+        CancellationToken ct = default)
+    {
+        using var content = new StreamContent(archive);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-tar");
+        var response = await Http.PutAsync(
+            $"/v1.47/containers/{Uri.EscapeDataString(name)}/archive?path={Uri.EscapeDataString(destinationPath)}",
+            content,
+            ct);
+        if (response.IsSuccessStatusCode) return;
+
+        var error = await response.Content.ReadAsStringAsync(ct);
+        throw new InvalidOperationException($"Failed to copy archive into container '{name}': {error}");
+    }
+
+    public static async Task StartContainerAsync(string name)
+    {
+        var startResp = await Http.PostAsync($"/v1.47/containers/{Uri.EscapeDataString(name)}/start", null);
+        if (!startResp.IsSuccessStatusCode)
+        {
+            var err = await startResp.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to start container '{name}': {err}");
+        }
+    }
+
+    internal static DockerCreateContainerRequest CreateContainerRequest(
+        string image,
+        string[] cmd,
+        string[] env,
+        string[] binds,
+        int hostPort,
+        int containerPort,
+        string network,
+        string? hostIp)
     {
         var portKey = $"{containerPort}/tcp";
-        var request = new DockerCreateContainerRequest
+        return new DockerCreateContainerRequest
         {
             Image = image,
             Cmd   = cmd.Length > 0 ? cmd : null,
@@ -235,33 +298,10 @@ public static class DockerCli
                 NetworkMode = network,
                 PortBindings = new Dictionary<string, DockerPortBinding[]>
                 {
-                    [portKey] = [new DockerPortBinding { HostPort = hostPort.ToString() }]
+                    [portKey] = [new DockerPortBinding { HostIp = hostIp, HostPort = hostPort.ToString() }]
                 }
             }
         };
-
-        var body = JsonSerializer.Serialize(request, DockerJsonContext.Default.DockerCreateContainerRequest);
-        var createResp = await Http.PostAsync(
-            $"/v1.47/containers/create?name={name}",
-            new StringContent(body, Encoding.UTF8, "application/json"));
-
-        if (!createResp.IsSuccessStatusCode)
-        {
-            var err = await createResp.Content.ReadAsStringAsync();
-            throw new InvalidOperationException($"Failed to create container '{name}': {err}");
-        }
-
-        var created = JsonSerializer.Deserialize(
-            await createResp.Content.ReadAsStringAsync(),
-            DockerJsonContext.Default.DockerCreateContainerResponse);
-        var id = created?.Id ?? throw new InvalidOperationException("No container ID in response");
-
-        var startResp = await Http.PostAsync($"/v1.47/containers/{id}/start", null);
-        if (!startResp.IsSuccessStatusCode)
-        {
-            var err = await startResp.Content.ReadAsStringAsync();
-            throw new InvalidOperationException($"Failed to start container '{name}': {err}");
-        }
     }
 
     public static async Task StopAndRemoveAsync(string name)
