@@ -54,13 +54,15 @@ hardened before that path is presented as the intended private/local architectur
 ## Tasks (chronological)
 
 1. **Resolve and record the local mission-delivery contract — design approval required.** Choose
-   one v1 mechanism for presenting an explicitly selected mission to the runner: a read-only
-   selected-mission mount, a Client Runtime-staged immutable bundle, or a mission-containing
-   image/OCI artifact. Define the exact host source, container path, `MissionFile` value, lifecycle,
-   and how `mission.mcl`, `forge.toml`, `mcl.lock`, and local experts resolve. State whether the
-   selected mission may originate inside the opened workspace and what the brain can read in that
-   case. Update the architecture doc and this spoke with the approved choice. **Do not begin Task 2
-   until this is resolved.**
+   one v1 mechanism for presenting an explicitly selected mission to the runner: a Client
+   Runtime-created immutable archive uploaded through the Docker Engine API into container-owned
+   storage before the runner starts, or a mission-containing image/OCI artifact. A host bind mount,
+   including a read-only selected-mission mount, is not an option: Docker is still reading the host
+   filesystem. Define the exact source, container path, `MissionFile` value, lifecycle, and how
+   `mission.mcl`, `forge.toml`, `mcl.lock`, and local experts resolve. State whether the selected
+   mission may originate inside the opened workspace and what the brain can read in that case.
+   Update the architecture doc and this spoke with the approved choice. **Do not begin Task 2 until
+   this is resolved.**
 
 2. **Make Docker port publication loopback-only.** Extend the shared `ForgeMission.Docker`
    Docker-Engine request shape so `RunContainerAsync` can set `HostIp: "127.0.0.1"` for the Client
@@ -80,10 +82,10 @@ hardened before that path is presented as the intended private/local architectur
    container. Confirm no code in the conversation/tool loop branches on Docker versus hosted.
 
 5. **Add boundary regression coverage.** Add unit tests for the Docker create request and the local
-   adapter that prove: no repository/opened-workspace bind is present; the only permitted mount (if
-   Task 1 chooses one) is the explicit mission input and is read-only; `MissionFile` is beneath the
-   approved container location; and the published port has `HostIp` loopback. Add a test that a
-   mission outside the approved delivery scope is rejected before Docker starts.
+   adapter that prove: no host bind is present, including the repository, opened workspace, or
+   selected mission source; `MissionFile` is beneath the approved container location; and the
+   published port has `HostIp` loopback. Add a test that a mission outside the approved delivery
+   scope is rejected before Docker starts.
 
 6. **Run the real integration proof.** With Docker available and real local provider credentials,
    run the unchanged Client Runtime conversation/tool loop against `ghcr.io/katasec/forge-runner`.
@@ -101,22 +103,23 @@ hardened before that path is presented as the intended private/local architectur
 
 Against the real local `ghcr.io/katasec/forge-runner` image, the unchanged Client Runtime loop
 performs the same visible prompt → tool call → final answer flow as the hosted target. `docker
-inspect` shows no bind or other filesystem exposure of the opened workspace, any approved
-mission-only input is constrained as specified in Task 1, and the `/v1` port is bound only to
-loopback. Tests enforce those properties, the full suite passes, and the live evidence identifies
-the Docker container and its `/v1/messages` requests.
+inspect` shows no host bind or other filesystem exposure, the mission exists only through the
+approved explicit-delivery contract, and the `/v1` port is bound only to loopback. Tests enforce
+those properties, the full suite passes, and the live evidence identifies the Docker container and
+its `/v1/messages` requests.
 
 ## Questions requiring product/design decisions
 
-1. **What is the v1 local mission-delivery mechanism?** A read-only mount of only the selected
-   mission folder is the smallest change and keeps author iteration immediate. A staged immutable
-   bundle makes the boundary clearer. A mission OCI artifact/image is the strongest distribution
+1. **What is the v1 local mission-delivery mechanism?** The boundary excludes every host bind,
+   including a read-only mission-folder mount. The practical author workflow is for the Client
+   Runtime to package the selected mission and upload it through the Docker Engine API into
+   container-owned storage before start. A mission OCI artifact/image is the strongest distribution
    story for consumers, but adds packaging/pull/version-selection work. Which should 43.2a build
    first?
 2. **May an author run a mission whose source is inside the opened workspace?** If yes, a mission-
-   only mount/bundle is an explicit handoff, but the brain can read the mission directory itself.
-   If no, authored missions need a separate project/package location before they can be run. Which
-   author workflow is intended for v1?
+   Runtime can copy only the mission package into the container, so the brain can read the copy but
+   not the workspace. If no, authored missions need a separate project/package location before they
+   can be run. Which author workflow is intended for v1?
 3. **What is the first explicit artifact handoff?** The architecture allows the Client Runtime to
    relay selected bytes (such as a file chosen for OCR), but the current chat/tool loop transports
    text tool results only. Should this spoke only establish the boundary and leave an artifact
