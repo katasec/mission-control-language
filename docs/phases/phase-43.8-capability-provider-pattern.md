@@ -1,8 +1,23 @@
 # Phase 43.8 — Capability contracts & Provider pattern
 
-**Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Prerequisite to
-the desktop UI resuming — see [forge-architecture.md](../design/forge-architecture.md) for the
-architecture this spoke builds toward. First in the prerequisite chain: 43.8 → 43.9 → 43.10 → 43.11.
+**Status: Done (2026-08-01).** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+Prerequisite to the desktop UI resuming — see [forge-architecture.md](../design/forge-architecture.md)
+for the architecture this spoke builds toward. First in the prerequisite chain:
+43.8 → [43.9](phase-43.9-client-runtime-authorization.md) → 43.10 → 43.11. **Next: 43.9.**
+
+Implemented on branch `codex/phase-43.8-capability-provider-pattern` (commit `e758f8c`).
+`ICapabilityProvider`/`IFileProvider`/`ITerminalProvider`/`CapabilityRegistry` defined in
+`ForgeMission.Core.Tools` per the placement decision below; `WorkspaceFileProvider`/
+`WorkspaceTerminalProvider` wrap `IWorkspace` with no behavior change; all four tool executors and
+`ToolExecutorRegistry` dispatch through `CapabilityRegistry`; `AgenticSession` and the live
+`MissionRuntimeSession` both consume registry-derived `ToolDeclarations`, and the fixed
+`AgentToolDeclarations.All` constant is gone. Verified independently (not just Codex's summary):
+`dotnet build src/ForgeMission.slnx` clean except one pre-existing, unrelated warning on `main`
+(`PostgreSqlBuilder` obsolete-ctor, `ForgeMission.Rooms.Tests`); `dotnet test src/ForgeMission.slnx`
+— 435 passed / 11 environment-gated skipped / 0 failed, reproduced exactly; `grep IWorkspace` across
+`Tools/*.cs` confirms only the two provider wrappers reference it, no executor does; new
+`CapabilityRegistryTests.ManifestAndToolDeclarations_MatchRegisteredProviders` proves the manifest
+against real registered providers (real `LocalDiskWorkspace`, no mocks).
 
 ## Design
 
