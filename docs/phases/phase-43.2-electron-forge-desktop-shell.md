@@ -173,6 +173,20 @@ as it was scoped under Avalonia.
    points) didn't change with the framework, only how it's verified (browser tooling, not Avalonia
    DevTools MCP — see that doc's updated tooling section).
 
+   **Target mockup (2026-07-31):**
+   ![Task 3 target — forge.css tokens, tool-call indicator, folder-open + menu](../images/phase-43.2/task3-electron-visual-polish-after.png)
+   Real `forge.css` tokens applied to the actual current page (not a redrawn layout): styled header,
+   a `+` composer menu replacing the standalone "Add folder" button, a done tool-call row
+   (`✓ Read README.md`), and the response in a proper card. Also shown: a mission-picker chip
+   (`Vanilla`, with `Claude`/`Grok` as alternatives) in the same visual slot a model picker would
+   occupy — **that piece belongs to [43.3](phase-43.3-mission-attach-point.md)'s scope, not this
+   task's**; it's included in the mockup for a shared visual reference, not as a Task 3 deliverable.
+   Caught and fixed two real CSS bugs (a header/subtitle overlap, a flyout with no closed state) by
+   actually screenshotting the mockup rather than trusting the source — see
+   [verification tooling gotchas](../design/desktop-interaction-principles.md#verified-gotchas-2026-07-31--read-before-re-discovering-these)
+   for the headless-Chrome method used to produce this image and the Electron/`file://`
+   verification-tool limitations it works around.
+
 ## Done when
 
 The Electron app (and, sharing the same Client Runtime, `forge webui` in a browser tab) opens a
