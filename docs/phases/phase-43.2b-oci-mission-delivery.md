@@ -1,8 +1,8 @@
 # Phase 43.2b — OCI mission delivery
 
-> **Status: Implementation locally proven — architecture review and runner-image publish pending
-> (2026-07-31).** The Client Runtime must not package or deploy a mission. It supplies a mission
-> reference; the Mission Runtime resolves and loads that mission itself.
+> **Status: Public runner image published and integration-proven — architecture review and literal
+> Electron UI proof pending (2026-07-31).** The Client Runtime must not package or deploy a mission.
+> It supplies a mission reference; the Mission Runtime resolves and loads that mission itself.
 >
 > **Parent:** [Phase 43 — Forge Desktop](phase-43-forge-desktop.md) · **Depends on:**
 > [43.2a — Client Runtime capability boundary](phase-43.2a-client-runtime-capability-boundary.md) ·
@@ -66,18 +66,21 @@ available; a Client Runtime is the hands that sends messages and executes local 
    Client Runtime Docker request contains `MissionRef`, no `MissionFile`, and no bind. Preserve
    coverage that normal CLI callers retain their existing port behavior.
    ✅ Done 2026-07-31.
-6. **Run the real local proof.** Build a local runner image containing this change, run `make
+6. **Run the real local proof.** Build a runner image containing this change, run `make
    desktop`, and verify prompt → visible local tool call → final answer. Inspect the runner: no
    mounts; loopback-only port; `MissionRef` present; logs show the OCI artifact was pulled/cached
    before the `/v1/messages` requests.
-   ✅ Local-image proof done 2026-07-31. A locally layered runner image logged `mission pulled from
-   ghcr.io/katasec/forge-mission-vanilla@sha256:…`, had `Binds=null`/`Mounts=[]`, and passed the
-   real `Read` tool loop. The public runner image has not yet been published with this code, so
-   re-run the literal `make desktop` proof after image publication.
+   **In progress — public-image integration proof done 2026-07-31; literal Electron UI proof
+   remains.** GitHub Actions run `30594193883` published
+   `ghcr.io/katasec/forge-runner:0.10.5` and updated `:latest` (both resolve to
+   `sha256:2f90bf592f4522f5ecf94ebf772d71740a73ecb3d44a281fba85d45459456f4a`). A Client Runtime
+   started that public image, the real `Read` loop passed, runner logs showed the pinned OCI
+   mission pull and `tool_calls` → `stop`, and inspection reported `Binds=null`/`Mounts=[]` with a
+   loopback-only port. See [completed evidence](phase-43.2b-oci-mission-delivery_completed.md#public-runner-image--real-docker-proof-2026-07-31).
 7. **Reconcile evidence and review.** Move detailed proof to a `_completed` sibling and leave only
    concise status in this active spoke and its hubs. Do not call this done without the architecture
    review.
-   **In progress — implementation evidence is ready; review and runner-image publication remain.**
+   **In progress — evidence reconciled; architecture review remains.**
 
 ## Done when
 
