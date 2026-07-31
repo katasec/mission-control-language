@@ -1,7 +1,10 @@
 # Phase 43.2a — Client Runtime capability boundary: completed implementation record
 
-> **Implementation complete 2026-07-31; architecture review pending.** Active status, invariants,
-> and the remaining review gate stay in the [active spoke](phase-43.2a-client-runtime-capability-boundary.md).
+> **Implementation complete 2026-07-31; superseded by [43.2b](phase-43.2b-oci-mission-delivery.md)
+> before an independent review of this archive approach was needed** — see the
+> [active spoke](phase-43.2a-client-runtime-capability-boundary.md) for why no separate review
+> remains open. This record documents the transitional archive-based mechanism as historical
+> evidence that a host mount is unnecessary, not the retained implementation.
 
 ## Task 1 — approved mission-delivery contract
 

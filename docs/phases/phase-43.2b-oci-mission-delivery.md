@@ -1,9 +1,10 @@
 # Phase 43.2b — OCI mission delivery
 
-> **Status: Public runner image published and integration-proven; architecture-review hardening is
-> implemented and awaiting architect acceptance. Literal Electron UI proof remains pending
-> (2026-07-31).** The Client Runtime must not package or deploy a mission.
-> It supplies a mission reference; the Mission Runtime resolves and loads that mission itself.
+> **Status: DONE (2026-07-31).** Public runner image published and integration-proven, literal
+> Electron UI proof captured live, architecture review completed, and the one gap it found
+> (startup-hardening) is implemented, tested, and architect-accepted — see Tasks 6–8 below. The
+> Client Runtime must not package or deploy a mission. It supplies a mission reference; the Mission
+> Runtime resolves and loads that mission itself.
 >
 > **Parent:** [Phase 43 — Forge Desktop](phase-43-forge-desktop.md) · **Depends on:**
 > [43.2a — Client Runtime capability boundary](phase-43.2a-client-runtime-capability-boundary.md) ·
@@ -71,23 +72,40 @@ available; a Client Runtime is the hands that sends messages and executes local 
    desktop`, and verify prompt → visible local tool call → final answer. Inspect the runner: no
    mounts; loopback-only port; `MissionRef` present; logs show the OCI artifact was pulled/cached
    before the `/v1/messages` requests.
-   **In progress — public-image integration proof done 2026-07-31; literal Electron UI proof
-   remains.** GitHub Actions run `30594193883` published
+   ✅ **Done 2026-07-31.** GitHub Actions run `30594193883` published
    `ghcr.io/katasec/forge-runner:0.10.5` and updated `:latest` (both resolve to
    `sha256:2f90bf592f4522f5ecf94ebf772d71740a73ecb3d44a281fba85d45459456f4a`). A Client Runtime
    started that public image, the real `Read` loop passed, runner logs showed the pinned OCI
    mission pull and `tool_calls` → `stop`, and inspection reported `Binds=null`/`Mounts=[]` with a
-   loopback-only port. See [completed evidence](phase-43.2b-oci-mission-delivery_completed.md#public-runner-image--real-docker-proof-2026-07-31).
+   loopback-only port. **Literal Electron UI proof:** live screenshot of the running `make desktop`
+   app — workspace `/Users/ameerdeen/progs/mission-control-language`, prompt "Read README.md and
+   tell me its first heading.", tool-call log showing `Running Read` → `Finished Read`, and the
+   correct response quoting the real `# Mission Control Language (MCL)` heading. See [completed
+   evidence](phase-43.2b-oci-mission-delivery_completed.md#public-runner-image--real-docker-proof-2026-07-31).
 7. **Reconcile evidence and review.** Move detailed proof to a `_completed` sibling and leave only
    concise status in this active spoke and its hubs. Do not call this done without the architecture
-   review. **Architecture review completed; its startup-hardening findings are implemented and
-   awaiting architect acceptance.**
-8. **Harden the `MissionRef` boot boundary.** A successfully pulled OCI mission that later fails
-   loading (missing `mission.mcl`, validation error, or missing provider key) must exit before
-   `/health`, naming its `MissionRef`; baked-in fallback keeps skip-and-continue semantics. Also
-   disambiguate the per-run wire label, centralize the vanilla reference, and cover the boundary
-   with unit/process tests. **Implementation verified, awaiting architect acceptance — see
-   [startup-hardening evidence](phase-43.2b-oci-mission-delivery_completed.md#startup-hardening-verification-2026-07-31).**
+   review.
+   ✅ **Done 2026-07-31.** Architecture review conducted against the 5 locked decisions above,
+   verified directly against source (not just the completion summary): 4 of 5 matched cleanly; one
+   real gap found against this spoke's own "Done when" — a `MissionRef` that pulls successfully but
+   then fails downstream validation degraded to a silently-empty, still-"healthy" registry instead
+   of a startup failure. Assigned to Codex as a scoped task; see Task 8.
+8. **Harden the `MissionRef` boot boundary** (the fix Task 7's review produced). A successfully
+   pulled OCI mission that later fails loading (missing `mission.mcl`, validation error, or missing
+   provider key) must exit before `/health`, naming its `MissionRef`; the baked-in fallback path
+   keeps its existing skip-and-continue semantics unchanged. Also disambiguates the per-run wire
+   label (`RunRequest.MissionRef` → `MissionLabel`, distinct from this phase's boot-time OCI
+   `MissionRef` — the two are unrelated concepts that shared one name), centralizes the vanilla
+   mission's OCI reference into one embedded resource read by both the CLI and `desktop.ps1`, and
+   adds unit/process-level test coverage for all three.
+   ✅ **Done 2026-07-31, architect-accepted.** Implemented on `codex/phase-43.2b-startup-hardening`
+   (commit `9ad27b5`), matching the approved plan with no unscoped deviations. Architect
+   verification (not just the completion summary): `dotnet build src/ForgeMission.slnx` — 0
+   warnings/errors; `dotnet test` — 434 passed, 11 pre-existing environment-gated skips, 0 failed;
+   `RunnerRegistry.LoadAsync`'s diff read directly, confirming the strict-vs-skip branching is keyed
+   correctly off `requiredMissionRef` and includes a catch-all so any other future failure in that
+   path also surfaces as a named `MissionRef` startup error, not just the three enumerated cases. See
+   [startup-hardening evidence](phase-43.2b-oci-mission-delivery_completed.md#startup-hardening-verification-2026-07-31).
 
 ## Done when
 
@@ -96,3 +114,8 @@ mission from GHCR itself and serves the unchanged Client Runtime tool loop. The 
 host mount, accepts no mutable reference, reports a clear startup failure for invalid/missing
 references, and exposes `/v1` only on loopback. Full tests and a live Docker inspection prove these
 claims.
+
+**Met.** All conditions verified: no host mount / loopback-only (Task 6 Docker inspection), no
+mutable reference (Task 2's digest-pin enforcement), clear startup failure for invalid/missing
+references (Task 8's hardening + process-level `EXIT=134` proof), full test suite passing, live
+Docker inspection and a live Electron UI run both captured as evidence above.

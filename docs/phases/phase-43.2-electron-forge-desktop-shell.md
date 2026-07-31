@@ -1,7 +1,12 @@
 # Phase 43.2 — Electron Forge Desktop shell
 
 **Status: In build — Task 1 (scaffold) done 2026-07-27, live-verified, merged to `main`. Task 2a
-(HTTP loop) done 2026-07-30, live-verified; see [completed evidence](phase-43.2-electron-forge-desktop-shell_completed.md#task-2a--http-tool-loop-2026-07-30). Next: design and assign Task 2b (Docker packaging), including its non-terminal provider-key mechanism.**
+(HTTP loop) done 2026-07-30, live-verified; see [completed evidence](phase-43.2-electron-forge-desktop-shell_completed.md#task-2a--http-tool-loop-2026-07-30). Task 2b (Docker packaging) done
+2026-07-31 — see below; its boundary-hardening follow-on
+([43.2a](phase-43.2a-client-runtime-capability-boundary.md), [43.2b](phase-43.2b-oci-mission-delivery.md))
+is also done. Next: Task 3 (tool-call indicators + `forge.css` visual polish) — the current shell
+still uses plain unstyled HTML elements, by design (Task 2b explicitly deferred styling), and Task 3
+is the only remaining open task in this spoke.**
 Replaces
 [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md) (shelved — see that
 doc for why). Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
@@ -132,6 +137,17 @@ as it was scoped under Avalonia.
      - Hosted (`forge.katasec.com`) stays unproven after Task 2 — the config-value base URL leaves
        the door open, but proving it is a later task (it carries its own auth/billing questions,
        Phase 42.5/42.6), not part of this Done-when.
+     - ✅ **Done 2026-07-31.** Proven against the real `ghcr.io/katasec/forge-runner` image with no
+       change to the loop component — only the base URL config value differed, as designed. The
+       initial proof used a repository bind mount + `MissionFile`, which
+       [43.2a](phase-43.2a-client-runtime-capability-boundary.md) then hardened away (no host mount,
+       loopback-only port) and [43.2b](phase-43.2b-oci-mission-delivery.md) replaced with
+       runner-owned, digest-pinned OCI mission resolution — both now done, including a live Electron
+       UI proof and an architecture review with its one finding fixed and verified. **Note on
+       naming:** this spoke's own "Task 2b" (Docker packaging, above) is a different thing from the
+       sibling phase document **[43.2b](phase-43.2b-oci-mission-delivery.md)** — the former is a
+       task inside this spoke, the latter is its own spoke that took over and hardened what Task 2b
+       started. Full detail lives in those two spokes, not restated here.
 
    **Pre-handoff clarity items — all six resolved 2026-07-27**, verified against real source (not
    assumed) and confirmed with the user one at a time, folded into Task 2a/2b above. Kept here as a
@@ -164,6 +180,11 @@ folder, accepts a prompt, streams a response from the configured Mission Runtime
 one real tool call (file read/edit) visibly, and produces a working result — verified against the
 actually-running app via browser DevTools (Chrome DevTools Protocol through existing browser
 tooling), not just a code diff.
+
+**Met, by Tasks 1–2b (2026-07-31) — this is deliberately the functional bar, not the whole spoke.**
+Task 3 (tool-call indicators + `forge.css` visual polish) is a separate, already-scoped task in this
+same spoke's task list (see its pre-handoff item 6 above) and remains open — this spoke is not fully
+closed until Task 3 also lands.
 
 ## Open questions
 

@@ -108,7 +108,14 @@ picker and cross-target mission identity.
    spoke's `_completed` sibling, leave a one-line verified status here and in the Phase 43 hub, and
    submit the completion summary for architecture review against the outcome above. Do not mark the
    local Docker architecture complete merely because builds or unit tests pass.
-   **In progress — implementation evidence reconciled; architecture review pending.**
+   ✅ **Done — superseded, not separately reviewed.** This spoke's archive-based implementation was
+   itself replaced by [43.2b](phase-43.2b-oci-mission-delivery.md)'s runner-owned OCI resolution
+   before this review step ran (see the status note at the top of this doc), so there is nothing of
+   this spoke's own implementation left to review independently. The boundary properties this spoke
+   locked (no host mount, loopback-only port, Client Runtime never grants workspace access) were
+   re-verified as part of 43.2b's architecture review instead — see
+   [43.2b Task 7](phase-43.2b-oci-mission-delivery.md#tasks-chronological). No separate "architecture
+   review pending" remains open here.
 
 ## Done when
 
