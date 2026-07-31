@@ -1,8 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
-using Spectre.Console;
 
-namespace ForgeMission.Cli.Docker;
+namespace ForgeMission.Docker;
 
 public static class DockerPrereqChecker
 {
@@ -36,16 +35,8 @@ public static class DockerPrereqChecker
         return new PrereqCheck(label, PrereqStatus.Fail, $"{path} not found");
     }
 
-    public static bool RunAndPrint(IEnumerable<PrereqCheck> checks)
+    public static IReadOnlyList<PrereqCheck> Evaluate(IEnumerable<PrereqCheck> checks)
     {
-        AnsiConsole.MarkupLine("\n [bold]Checking prerequisites...[/]\n");
-
-        var table = new Table();
-        table.AddColumn("Requirement");
-        table.AddColumn("Status");
-        table.AddColumn("Detail");
-        table.Border(TableBorder.Simple);
-
         var results = new List<PrereqCheck>();
         bool failed = false;
 
@@ -61,23 +52,6 @@ public static class DockerPrereqChecker
             }
         }
 
-        foreach (var r in results)
-        {
-            var (statusMarkup, detailMarkup) = r.Status switch
-            {
-                PrereqStatus.Pass    => ("[green]✓ pass[/]", r.Detail),
-                PrereqStatus.Fail    => ("[red]✗ fail[/]", r.Detail),
-                PrereqStatus.Skipped => ("[grey]– skip[/]", "[grey]–[/]"),
-                _                    => ("?", r.Detail)
-            };
-            table.AddRow(r.Label, statusMarkup, detailMarkup);
-        }
-
-        AnsiConsole.Write(table);
-
-        if (failed)
-            AnsiConsole.MarkupLine("[red]Prerequisites not met. Cannot continue.[/]");
-
-        return !failed;
+        return results;
     }
 }

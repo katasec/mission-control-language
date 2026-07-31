@@ -12,7 +12,9 @@ namespace ForgeMission.ClientRuntime.Services;
 // The Mission Runtime remains responsible for deciding which tool to call; this class only
 // executes that request against the user's selected workspace and returns its result over the
 // already-established wire contract.
-public sealed class MissionRuntimeSession(HttpClient httpClient, string model = "forge", ToolExecutorRegistry? toolExecutors = null)
+// ChatGPT is the public runner's vanilla built-in label. A MissionRef runner has one loaded mission
+// and therefore ignores this model id through its single-mission fallback.
+public sealed class MissionRuntimeSession(HttpClient httpClient, string model = "ChatGPT", ToolExecutorRegistry? toolExecutors = null)
 {
     private readonly ToolExecutorRegistry _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
     private readonly List<WireMessage> _messages = [];

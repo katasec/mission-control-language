@@ -34,12 +34,16 @@ pointing here.
 The client pivoted from Avalonia to a web-rendered UI (Electron shell, or a plain browser tab for
 `forge webui`) built on Blazor Server, split into a **Client Runtime** (UI + local tool execution —
 the "hands") and a swappable **Mission Runtime** (the "brain," hosted Forge Cloud or a local Docker
-`/v1` image) talking over [Phase 42](phase-42-forge-cloud.md)'s wire protocol. Full rationale (why
-Avalonia was dropped, why Docker is retained, the `forge webui` redefinition, and the still-open
-question of where the tool-orchestration loop lives) is written up in
+`/v1` image) talking over [Phase 42](phase-42-forge-cloud.md)'s wire protocol. The Client Runtime
+is the sole holder of the opened workspace: a brain may receive explicit mission inputs and return
+tool instructions, but it must never receive a general local-workspace mount. Full rationale (why
+Avalonia was dropped, why Docker is retained, the `forge webui` redefinition, and the settled
+client-owned tool loop) is written up in
 [docs/design/forge-desktop-client-runtime.md](../design/forge-desktop-client-runtime.md) — read
 that doc rather than expecting the architecture re-explained here. The active build spoke is
-[43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md); the shelved
+[43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md), with
+[43.2a — Client Runtime capability boundary](phase-43.2a-client-runtime-capability-boundary.md)
+and [43.2b — OCI mission delivery](phase-43.2b-oci-mission-delivery.md) as its next build; the shelved
 Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md).
 
 ## Locked decisions (2026-07-25, UI framework decision superseded 2026-07-27)
@@ -70,9 +74,11 @@ Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-van
   removing the theming-verification tax entirely.
 - **Backend stays `ForgeMission.Core`**, referenced directly by the Blazor Server Client Runtime
   host — no serialization boundary, same reasoning [Phase 35](phase-35-forge-ui-blazor.md) already
-  used for `ForgeUI`. Whether the tool-call orchestration loop itself lives client-side or
-  server-side (Mission Runtime) is an **open question**, not decided — see the design doc's "Open
-  architecture question" and [43.2 (Electron)](phase-43.2-electron-forge-desktop-shell.md) Task 2.
+  used for `ForgeUI`. **The HTTP conversation/tool loop is client-owned and target-invariant:** it
+  calls the configured `/v1/messages` endpoint, executes requested tools locally, and posts each
+  result back; the Mission Runtime handles one model turn per request. The existing Core tool
+  machinery is reused, but `AgenticSession` is not repurposed across the HTTP boundary. See the
+  [Client Runtime design](../design/forge-desktop-client-runtime.md#architecture-decision--orchestration-loop-lives-in-the-client-runtime-2026-07-27).
   AOT-safety rules from [AGENTS.md](../../AGENTS.md#aot-first--standing-rules-for-all-new-code)
   still apply to whichever pieces are AOT-published (the CLI, and any Core-referencing host).
 - **Platform order: Mac first**, Windows/Linux validated periodically. Electron and a browser tab
@@ -91,7 +97,9 @@ Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-van
 | [43.1 — Tool-execution engine](phase-43.1-tool-execution-engine.md) | Forge executes `Read`/`Edit`/`Write`/`Bash` itself; agentic loop (`AgenticSession`, in-memory, no cache) inside `ForgeMission.Core`, replacing client-side execution. Framework-agnostic — unaffected by the Electron pivot. | None (builds on existing `FunctionCallContent`/`MissionResult.ToolCalls` plumbing from [42.3](phase-42.3-tool-capable-enriching-responder.md)) | **✅ DONE 2026-07-25** — all 4 tasks, end-to-end verified, no mocks |
 | [43.7 — Workspace provider abstraction](phase-43.7-workspace-provider.md) | Revises 43.1's `workspaceRoot: string` into one `IWorkspace` interface (`LocalDiskWorkspace` v1; container backend documented, deferred) before 43.2 builds a shell around the narrower assumption. Cross-references [39.7](phase-39.7-exec-secret-isolation.md) (shares the interface shape, not the timeline). Framework-agnostic — unaffected by the Electron pivot. | 43.1 | **✅ DONE 2026-07-25** — implemented by Codex, design + build reviewed and independently re-verified by Claude |
 | ~~43.2 — Avalonia vanilla shell~~ [(shelved)](phase-43.2-avalonia-vanilla-shell.md) | Superseded below. Tasks 1–3 (streaming, real tool execution, indicators) genuinely worked and are preserved as evidence in the [_completed doc](phase-43.2-avalonia-vanilla-shell_completed.md); Task 4 (visual identity) was abandoned mid-flight, merged into `main` via PR 2026-07-27 for historical reference (dead/superseded code, not active). | 43.1, 43.7 | **Shelved 2026-07-27** |
-| [43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md) | The familiar coding-agent chat UI (Claude Code/Codex-shaped), Electron shell (+ browser tab for `forge webui`) over a Blazor Server Client Runtime, talking to a swappable Mission Runtime. Replaces the shelved Avalonia spoke above. | 43.1, 43.7 | Design — not started |
+| [43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md) | The familiar coding-agent chat UI (Claude Code/Codex-shaped), Electron shell (+ browser tab for `forge webui`) over a Blazor Server Client Runtime, talking to a swappable Mission Runtime. Replaces the shelved Avalonia spoke above. | 43.1, 43.7 | Active — Task 1 + 2a live-verified; Task 2b proved against the local Docker `/v1` runtime, pending the boundary hardening in 43.2a |
+| [43.2a — Client Runtime capability boundary](phase-43.2a-client-runtime-capability-boundary.md) | Enforce the hands/brain boundary: Docker and hosted Mission Runtimes receive explicit mission inputs and protocol messages, never the opened local workspace; keep the existing Client Runtime loop target-invariant. | 43.2 Task 2b proof | **Boundary proven; its archive implementation is superseded by 43.2b** |
+| [43.2b — OCI mission delivery](phase-43.2b-oci-mission-delivery.md) | Move mission bootstrap into the Mission Runtime: the Client Runtime supplies a digest-pinned OCI reference; the local runner pulls, validates, caches, and loads it itself. | 43.2a | **Public image + real Docker loop proven; architecture review + literal Electron UI proof pending** |
 | [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as the flagship; decide intermediate-role-switch visibility. Now builds on the Electron shell — vision unchanged. | 43.2 (Electron) | Design |
 | [43.4 — IDE trace surface (iterative)](phase-43.4-ide-trace-surface.md) | Evolve the vanilla shell toward the debugger-style workbench (outline/thread/gate/code-pane, dockable panels) from the forge-trace brainstorm. Explicitly a mockup-iterate-refine loop, not a fixed deliverable. Now builds on the Electron shell — vision unchanged. | 43.3 | Design — iteration not started |
 | [43.5 — Human-in-the-loop (suspend/resume)](phase-43.5-human-in-the-loop.md) | `kind: human` pipeline step + `Suspended` `StepEnvelope` outcome + resume-at-step-N — the mechanical prerequisite for 43.4's "Gate" concept and for approval-gated missions generally. Framework-agnostic (Core-level) — unaffected by the Electron pivot. | None (parallel-buildable with 43.1–43.3; blocks only 43.4's Gate feature) | Design |
@@ -111,11 +119,10 @@ Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-van
 
 ## Open questions / not yet decided
 
-- **Tool-call orchestration loop: client-side vs. server-side (Mission Runtime) — reopened
-  2026-07-27 by the Electron pivot.** See
-  [forge-desktop-client-runtime.md](../design/forge-desktop-client-runtime.md)'s open architecture
-  question; must be resolved in [43.2 (Electron)](phase-43.2-electron-forge-desktop-shell.md) Task
-  2, not deferred silently.
+- **Mission delivery to a local Docker brain.** The invariant is settled — no user-workspace mount —
+  but the first delivery mechanism (read-only selected-mission mount, staged bundle, or a
+  mission-containing image/artifact) is intentionally a decision gate in
+  [43.2a](phase-43.2a-client-runtime-capability-boundary.md), before implementation begins.
 - Whether intermediate mission role-switches (Architect proposes → Critic pushes back) surface
   inline in the vanilla shell, or stay hidden until 43.4's richer surface exists — decide in 43.3.
 - Exact iteration cadence/exit criteria for 43.4 — "feels right" needs at least a rough rubric

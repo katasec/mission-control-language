@@ -4,14 +4,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ForgeMission.Cli.Docker;
+namespace ForgeMission.Docker;
 
 // ── STJ source-gen context ─────────────────────────────────────────────────
 
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(DockerContainer[]))]
 [JsonSerializable(typeof(DockerCreateContainerRequest))]
-[JsonSerializable(typeof(DockerCreateContainerResponse))]
 [JsonSerializable(typeof(DockerCreateNetworkRequest))]
 [JsonSerializable(typeof(DockerVersionResponse))]
 [JsonSerializable(typeof(DockerProgressEvent))]
@@ -45,16 +44,11 @@ internal sealed class DockerHostConfig
 
 internal sealed class DockerPortBinding
 {
+    [JsonPropertyName("HostIp")]   public string? HostIp { get; set; }
     [JsonPropertyName("HostPort")] public string HostPort { get; set; } = "";
 }
 
 internal sealed class DockerEmptyObject { }
-
-internal sealed class DockerCreateContainerResponse
-{
-    [JsonPropertyName("Id")]       public string Id       { get; set; } = "";
-    [JsonPropertyName("Warnings")] public string[]? Warnings { get; set; }
-}
 
 internal sealed class DockerCreateNetworkRequest
 {
@@ -220,26 +214,10 @@ public static class DockerCli
         string[] binds,
         int hostPort,
         int containerPort,
-        string network)
+        string network,
+        string? hostIp = null)
     {
-        var portKey = $"{containerPort}/tcp";
-        var request = new DockerCreateContainerRequest
-        {
-            Image = image,
-            Cmd   = cmd.Length > 0 ? cmd : null,
-            Env   = env.Length  > 0 ? env : null,
-            ExposedPorts = new Dictionary<string, DockerEmptyObject> { [portKey] = new() },
-            HostConfig = new DockerHostConfig
-            {
-                Binds       = binds.Length > 0 ? binds : null,
-                NetworkMode = network,
-                PortBindings = new Dictionary<string, DockerPortBinding[]>
-                {
-                    [portKey] = [new DockerPortBinding { HostPort = hostPort.ToString() }]
-                }
-            }
-        };
-
+        var request = CreateContainerRequest(image, cmd, env, binds, hostPort, containerPort, network, hostIp);
         var body = JsonSerializer.Serialize(request, DockerJsonContext.Default.DockerCreateContainerRequest);
         var createResp = await Http.PostAsync(
             $"/v1.47/containers/create?name={name}",
@@ -251,17 +229,41 @@ public static class DockerCli
             throw new InvalidOperationException($"Failed to create container '{name}': {err}");
         }
 
-        var created = JsonSerializer.Deserialize(
-            await createResp.Content.ReadAsStringAsync(),
-            DockerJsonContext.Default.DockerCreateContainerResponse);
-        var id = created?.Id ?? throw new InvalidOperationException("No container ID in response");
-
-        var startResp = await Http.PostAsync($"/v1.47/containers/{id}/start", null);
+        var startResp = await Http.PostAsync($"/v1.47/containers/{Uri.EscapeDataString(name)}/start", null);
         if (!startResp.IsSuccessStatusCode)
         {
             var err = await startResp.Content.ReadAsStringAsync();
             throw new InvalidOperationException($"Failed to start container '{name}': {err}");
         }
+    }
+
+    internal static DockerCreateContainerRequest CreateContainerRequest(
+        string image,
+        string[] cmd,
+        string[] env,
+        string[] binds,
+        int hostPort,
+        int containerPort,
+        string network,
+        string? hostIp)
+    {
+        var portKey = $"{containerPort}/tcp";
+        return new DockerCreateContainerRequest
+        {
+            Image = image,
+            Cmd   = cmd.Length > 0 ? cmd : null,
+            Env   = env.Length  > 0 ? env : null,
+            ExposedPorts = new Dictionary<string, DockerEmptyObject> { [portKey] = new() },
+            HostConfig = new DockerHostConfig
+            {
+                Binds       = binds.Length > 0 ? binds : null,
+                NetworkMode = network,
+                PortBindings = new Dictionary<string, DockerPortBinding[]>
+                {
+                    [portKey] = [new DockerPortBinding { HostIp = hostIp, HostPort = hostPort.ToString() }]
+                }
+            }
+        };
     }
 
     public static async Task StopAndRemoveAsync(string name)

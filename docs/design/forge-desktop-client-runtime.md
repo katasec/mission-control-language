@@ -66,6 +66,39 @@ the role Claude Code CLI already plays today against `forge claude`: execute wha
 locally, POST results back. **This reuses 42.3's already-shipped mechanism; it is not a new
 invention.**
 
+## Capability boundary — the Client Runtime is the hands (locked 2026-07-30)
+
+The opened folder, local filesystem and local process execution belong **only** to the Client
+Runtime. The Mission Runtime is the brain: it owns mission interpretation, experts, provider/model
+calls, and deciding whether to return final text or request a declared tool. It never receives a
+general mount of the user's opened workspace, regardless of whether it is hosted or a local Docker
+container.
+
+The only information crossing from hands to brain is deliberate protocol input:
+
+- conversation messages and `tool_result` values over `/v1/messages`;
+- an explicit mission package/source selected for the brain to execute; and
+- future explicit artifacts the Client Runtime chooses to upload or relay (for example, an OCR
+  file), never an implicit filesystem path with ambient access.
+
+The only instruction crossing from brain to hands is a `/v1` response: final text or a declared
+tool request. The Client Runtime executes that request through its existing `IWorkspace` and
+`ToolExecutorRegistry`, then sends the result back. Thus Docker and cloud remain target-invariant
+for the loop: the URL changes, not the loop component or local-tool authority.
+
+The Task 2b Docker proof intentionally established the wire and lifecycle first. Its repository
+bind mount was replaced in [43.2a — Client Runtime capability
+boundary](../phases/phase-43.2a-client-runtime-capability-boundary.md): the Client Runtime creates
+no filesystem mount and the runner's `/v1` port publishes only to `127.0.0.1`.
+
+**Mission bootstrap belongs to the Mission Runtime, not the Client Runtime.** Under
+[43.2b — OCI mission delivery](../phases/phase-43.2b-oci-mission-delivery.md), the Client Runtime
+passes only a digest-pinned `MissionRef` when it starts a local runner. The runner pulls, validates,
+caches, and loads that OCI mission from GHCR itself before serving `/v1`. This gives local Docker
+and hosted Forge the same component boundary: clients select a mission reference and execute local
+tools; runtimes own mission availability. An archive-based unpublished-author path and explicit
+artifact relay are separate future work.
+
 ## Why Docker is retained (parity, not legacy)
 
 Docker's presence in this design is **not** a holdover from `forge webui`'s old Open WebUI
@@ -78,6 +111,27 @@ dependency (see redefinition below) — it's retained because it's the mechanism
    `forge.katasec.com` or send code to a hosted provider gets a real, complete offline path: local
    Docker Mission Runtime + local Client Runtime, no network egress required beyond whatever
    provider key the local container is configured with.
+
+## Local Docker provider keys
+
+The Client Runtime, not Electron's parent process, owns provider-key loading for the local Docker
+Mission Runtime. It reads a local dotenv file at
+`Environment.SpecialFolder.ApplicationData/Forge/provider.env` (on macOS,
+`~/Library/Application Support/Forge/provider.env`) and forwards only the established provider and
+model allow-list to the runner container. For the Task 2b `missions/vanilla` proof, the minimal
+file is:
+
+```dotenv
+MCL_API_KEY=<your OpenAI key>
+```
+
+The same file may contain `MCL_MODEL`, `MCL_PROVIDER`, `MCL_ENDPOINT`, `OPENAI_API_KEY`,
+`CLAUDE_API_KEY`, `XAI_API_KEY`, `GROK_API_KEY`, and `GOOGLE_SEARCH_API_KEY` for other local
+missions. The file is user-local, never committed, and must be created with user-only permissions.
+An absent file or absent required key is a startup error before Docker is started; the Client Runtime
+does not fall back to inherited provider-key environment variables. This is intentional: macOS apps
+started by Finder or the Dock do not inherit a terminal's `pwsh` key exports, while the user-local
+file is available to either launch path.
 
 ## Metering (orthogonal to this split)
 
