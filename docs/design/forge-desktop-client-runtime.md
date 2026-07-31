@@ -88,13 +88,16 @@ for the loop: the URL changes, not the loop component or local-tool authority.
 
 The Task 2b Docker proof intentionally established the wire and lifecycle first. Its repository
 bind mount was replaced in [43.2a — Client Runtime capability
-boundary](../phases/phase-43.2a-client-runtime-capability-boundary.md): the Client Runtime now
-creates the runner stopped, packages the selected mission in memory, uploads it through Docker
-Engine into container-owned storage, then starts it with `MissionFile` pointing at that copy. The
-runner has no host bind, including for the mission source, and its dynamic `/v1` port publishes only
-to `127.0.0.1`. The mission source may be within the opened workspace because only the explicit
-mission archive crosses the boundary. OCI mission artifacts and explicit artifact relay remain
-future work; see the spoke for verification evidence and review status.
+boundary](../phases/phase-43.2a-client-runtime-capability-boundary.md): the Client Runtime creates
+no filesystem mount and the runner's `/v1` port publishes only to `127.0.0.1`.
+
+**Mission bootstrap belongs to the Mission Runtime, not the Client Runtime.** Under
+[43.2b — OCI mission delivery](../phases/phase-43.2b-oci-mission-delivery.md), the Client Runtime
+passes only a digest-pinned `MissionRef` when it starts a local runner. The runner pulls, validates,
+caches, and loads that OCI mission from GHCR itself before serving `/v1`. This gives local Docker
+and hosted Forge the same component boundary: clients select a mission reference and execute local
+tools; runtimes own mission availability. An archive-based unpublished-author path and explicit
+artifact relay are separate future work.
 
 ## Why Docker is retained (parity, not legacy)
 

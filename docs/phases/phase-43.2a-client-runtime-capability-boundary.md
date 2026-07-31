@@ -1,9 +1,9 @@
 # Phase 43.2a — Client Runtime capability boundary
 
-> **Status: Implementation complete — architecture review pending (2026-07-31).** Tasks 1–6 are
-> complete with real Docker evidence in the [_completed record](phase-43.2a-client-runtime-capability-boundary_completed.md).
-> The preceding 43.2 Task 2b proof established the real runner's `/v1` conversation/tool loop;
-> this spoke hardens its local-filesystem boundary.
+> **Status: Boundary proven; transient archive implementation superseded (2026-07-31).** The
+> archive-based proof in the [_completed record](phase-43.2a-client-runtime-capability-boundary_completed.md)
+> established that the runner needs no host mount. [43.2b](phase-43.2b-oci-mission-delivery.md)
+> replaces that transitional bootstrap with runner-owned OCI mission resolution before review.
 >
 > **Parent:** [Phase 43 — Forge Desktop](phase-43-forge-desktop.md) · **Depends on:**
 > [43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md) Task 2b ·
@@ -53,12 +53,10 @@ hardened before that path is presented as the intended private/local architectur
 
 ## Task 1 decision — local mission delivery (approved 2026-07-31)
 
-For v1, the Client Runtime packages the selected mission directory into an in-memory tar archive,
-creates the runner container without starting it, and uploads that archive through Docker Engine's
-container archive API into a container-owned directory. It then starts the runner with
-`MissionFile` pointing at the uploaded `mission.mcl`. No host directory is mounted. The selected
-mission may originate inside the opened workspace: the Client Runtime copies only the mission
-package, so the brain can read the copy but cannot discover or read the workspace.
+The archive mechanism was a verified transitional implementation, not the retained normal path.
+[43.2b](phase-43.2b-oci-mission-delivery.md) now makes the runner pull and load its own OCI mission
+from a digest-pinned reference. The lasting decision here is the boundary: no host directory is
+mounted and the brain cannot discover the workspace.
 
 Mission OCI artifacts/images remain the future distribution mechanism for published consumer
 missions. Explicit client-to-brain file/artifact transfer (for example OCR uploads) is a separate
@@ -68,11 +66,8 @@ picker and cross-target mission identity.
 
 ## Tasks (chronological)
 
-1. ✅ **Done 2026-07-31 — approved design.** Package the selected mission directory as an in-memory
-   tar archive, upload it to container-owned storage before start, and set `MissionFile` to that
-   copy. Host binds are prohibited; selected source inside the opened workspace is allowed because
-   only the package bytes cross the boundary. OCI distribution, artifact relay, and the mission
-   picker remain later work as recorded above. [Evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#task-1--approved-mission-delivery-contract).
+1. ✅ **Historical proof 2026-07-31.** The archive upload proved a host mount is unnecessary. It
+   was intentionally replaced before review by 43.2b's runner-owned OCI pull. [Evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#task-1--approved-mission-delivery-contract).
 
 2. **Make Docker port publication loopback-only.** Extend the shared `ForgeMission.Docker`
    Docker-Engine request shape so `RunContainerAsync` can set `HostIp: "127.0.0.1"` for the Client

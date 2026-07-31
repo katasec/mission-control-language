@@ -5,7 +5,8 @@ $electronDir = Join-Path $repoRoot 'src/ForgeMission.ClientRuntime/electron'
 
 # The Client Runtime owns the Docker runner lifecycle and reads provider keys from its own
 # Application Support/Forge/provider.env file, so this launcher never relies on pwsh key exports.
-$env:MISSION_RUNTIME__MODE = 'docker'
+$env:MISSIONRUNTIME__MODE = 'docker'
+$env:MISSIONRUNTIME__DOCKER__MISSIONREF = 'ghcr.io/katasec/forge-mission-vanilla@sha256:9663e05847676da28191f09459ce45671d624221d2d9b329ff0770cb9621dc46'
 $env:WORKSPACE__INITIALROOT = $repoRoot
 
 Push-Location $electronDir

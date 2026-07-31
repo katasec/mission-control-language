@@ -57,6 +57,6 @@ internal sealed class Program
         if (!mode.Equals("docker", StringComparison.OrdinalIgnoreCase))
             return null;
 
-        return await DockerMissionRuntime.StartAsync(builder.Configuration, builder.Environment.ContentRootPath);
+        return await DockerMissionRuntime.StartAsync(builder.Configuration);
     }
 }

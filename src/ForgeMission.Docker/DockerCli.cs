@@ -217,23 +217,6 @@ public static class DockerCli
         string network,
         string? hostIp = null)
     {
-        await CreateContainerAsync(name, image, cmd, env, binds, hostPort, containerPort, network, hostIp);
-        await StartContainerAsync(name);
-    }
-
-    // A caller that needs to populate container-owned storage before the entrypoint runs creates
-    // first, uploads its archive, then calls StartContainerAsync.
-    public static async Task CreateContainerAsync(
-        string name,
-        string image,
-        string[] cmd,
-        string[] env,
-        string[] binds,
-        int hostPort,
-        int containerPort,
-        string network,
-        string? hostIp = null)
-    {
         var request = CreateContainerRequest(image, cmd, env, binds, hostPort, containerPort, network, hostIp);
         var body = JsonSerializer.Serialize(request, DockerJsonContext.Default.DockerCreateContainerRequest);
         var createResp = await Http.PostAsync(
@@ -245,28 +228,7 @@ public static class DockerCli
             var err = await createResp.Content.ReadAsStringAsync();
             throw new InvalidOperationException($"Failed to create container '{name}': {err}");
         }
-    }
 
-    public static async Task CopyArchiveToContainerAsync(
-        string name,
-        string destinationPath,
-        Stream archive,
-        CancellationToken ct = default)
-    {
-        using var content = new StreamContent(archive);
-        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-tar");
-        var response = await Http.PutAsync(
-            $"/v1.47/containers/{Uri.EscapeDataString(name)}/archive?path={Uri.EscapeDataString(destinationPath)}",
-            content,
-            ct);
-        if (response.IsSuccessStatusCode) return;
-
-        var error = await response.Content.ReadAsStringAsync(ct);
-        throw new InvalidOperationException($"Failed to copy archive into container '{name}': {error}");
-    }
-
-    public static async Task StartContainerAsync(string name)
-    {
         var startResp = await Http.PostAsync($"/v1.47/containers/{Uri.EscapeDataString(name)}/start", null);
         if (!startResp.IsSuccessStatusCode)
         {
