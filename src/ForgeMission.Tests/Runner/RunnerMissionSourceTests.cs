@@ -11,6 +11,17 @@ public sealed class MissionSourceSelectionTests
         => MissionSourceSelection.ValidateMissionRef(VanillaRef);
 
     [Fact]
+    public void ValidateMissionRef_RejectsUppercaseDigestHex()
+    {
+        var uppercaseDigest = VanillaRef.Replace("9663", "A663", StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            MissionSourceSelection.ValidateMissionRef(uppercaseDigest));
+
+        Assert.Contains("MissionRef", exception.Message);
+    }
+
+    [Fact]
     public void Create_SelectsOciWithoutAnyFileSource()
     {
         var selection = MissionSourceSelection.Create(VanillaRef, null);

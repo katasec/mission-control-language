@@ -1,7 +1,8 @@
 # Phase 43.2b — OCI mission delivery
 
-> **Status: Public runner image published and integration-proven — architecture review and literal
-> Electron UI proof pending (2026-07-31).** The Client Runtime must not package or deploy a mission.
+> **Status: Public runner image published and integration-proven; architecture-review hardening is
+> implemented and awaiting architect acceptance. Literal Electron UI proof remains pending
+> (2026-07-31).** The Client Runtime must not package or deploy a mission.
 > It supplies a mission reference; the Mission Runtime resolves and loads that mission itself.
 >
 > **Parent:** [Phase 43 — Forge Desktop](phase-43-forge-desktop.md) · **Depends on:**
@@ -79,8 +80,14 @@ available; a Client Runtime is the hands that sends messages and executes local 
    loopback-only port. See [completed evidence](phase-43.2b-oci-mission-delivery_completed.md#public-runner-image--real-docker-proof-2026-07-31).
 7. **Reconcile evidence and review.** Move detailed proof to a `_completed` sibling and leave only
    concise status in this active spoke and its hubs. Do not call this done without the architecture
-   review.
-   **In progress — evidence reconciled; architecture review remains.**
+   review. **Architecture review completed; its startup-hardening findings are implemented and
+   awaiting architect acceptance.**
+8. **Harden the `MissionRef` boot boundary.** A successfully pulled OCI mission that later fails
+   loading (missing `mission.mcl`, validation error, or missing provider key) must exit before
+   `/health`, naming its `MissionRef`; baked-in fallback keeps skip-and-continue semantics. Also
+   disambiguate the per-run wire label, centralize the vanilla reference, and cover the boundary
+   with unit/process tests. **Implementation verified, awaiting architect acceptance — see
+   [startup-hardening evidence](phase-43.2b-oci-mission-delivery_completed.md#startup-hardening-verification-2026-07-31).**
 
 ## Done when
 

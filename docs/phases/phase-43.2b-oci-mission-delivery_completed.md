@@ -33,3 +33,24 @@ Runner observations:
 The ephemeral Client Runtime and its `forge-client-03aea6fb95e2` container were shut down after the
 test. The remaining Task 6 evidence is the literal Electron `make desktop` visual flow; it is kept
 open in the active spoke along with architecture review.
+
+## Startup hardening verification (2026-07-31)
+
+The runner first pulled the public, pinned vanilla mission into a fresh temporary Forge cache and
+reported healthy. Then only the cached `mission.mcl` was changed to reference a nonexistent expert;
+the OCI artifact was not repulled. A second runner startup proved that a post-pull validation error
+is fatal rather than producing an empty, healthy registry:
+
+```text
+EXIT=134
+HEALTH=unavailable
+Runner: mission cached from ghcr.io/katasec/forge-mission-vanilla@sha256:9663…dc46
+Unhandled exception. System.InvalidOperationException: MissionRef
+'ghcr.io/katasec/forge-mission-vanilla@sha256:9663…dc46' failed to load:
+'katasec/forge-mission-vanilla' validation failed: Missing expert definitions for: MissingExpert.
+```
+
+`dotnet build src/ForgeMission.slnx` completed with 0 warnings and 0 errors. `dotnet test
+src/ForgeMission.slnx --no-build` passed 434 tests (11 explicitly environment-gated integrations
+skipped): the new runner-registry test covers this strict post-pull path, and Client Runtime and
+reference-validation tests cover the early missing-reference guard and uppercase digest rejection.
