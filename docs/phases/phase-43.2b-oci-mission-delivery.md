@@ -1,9 +1,11 @@
 # Phase 43.2b — OCI mission delivery
 
-> **Status: DONE (2026-07-31).** Public runner image published and integration-proven, literal
-> Electron UI proof captured live, architecture review completed, and the one gap it found
-> (startup-hardening) is implemented, tested, and architect-accepted — see Tasks 6–8 below. The
-> Client Runtime must not package or deploy a mission. It supplies a mission reference; the Mission
+> **Status: DONE (2026-07-31), merged to `main`.** Public runner image published and
+> integration-proven, literal Electron UI proof captured live, architecture review completed, and
+> the one gap it found (startup-hardening) is implemented, tested, architect-accepted, and merged
+> via [PR #8](https://github.com/katasec/mission-control-language/pull/8) (merge commit `46d8bb7`)
+> — see Tasks 6–8 below. The Client Runtime must not package or deploy a mission. It supplies a
+> mission reference; the Mission
 > Runtime resolves and loads that mission itself.
 >
 > **Parent:** [Phase 43 — Forge Desktop](phase-43-forge-desktop.md) · **Depends on:**
@@ -98,8 +100,10 @@ available; a Client Runtime is the hands that sends messages and executes local 
    `MissionRef` — the two are unrelated concepts that shared one name), centralizes the vanilla
    mission's OCI reference into one embedded resource read by both the CLI and `desktop.ps1`, and
    adds unit/process-level test coverage for all three.
-   ✅ **Done 2026-07-31, architect-accepted.** Implemented on `codex/phase-43.2b-startup-hardening`
-   (commit `9ad27b5`), matching the approved plan with no unscoped deviations. Architect
+   ✅ **Done 2026-07-31, architect-accepted, merged to `main`.** Implemented on
+   `codex/phase-43.2b-startup-hardening` (commit `9ad27b5`), matching the approved plan with no
+   unscoped deviations. Merged into `main` via [PR #8](https://github.com/katasec/mission-control-language/pull/8)
+   (merge commit `46d8bb7`). Architect
    verification (not just the completion summary): `dotnet build src/ForgeMission.slnx` — 0
    warnings/errors; `dotnet test` — 434 passed, 11 pre-existing environment-gated skips, 0 failed;
    `RunnerRegistry.LoadAsync`'s diff read directly, confirming the strict-vs-skip branching is keyed
