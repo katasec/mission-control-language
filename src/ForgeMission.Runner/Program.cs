@@ -35,9 +35,12 @@ builder.Services.AddOpenTelemetry()
 
 // MissionRef is the normal component boundary: the runner owns OCI pull/cache/load and the
 // client supplies only a pinned reference. MissionFile remains for the legacy CLI container path.
+var missionRef = builder.Configuration["MissionRef"];
 var specs = await RunnerMissionSource.ResolveAsync(builder.Configuration);
 
-var registry = await RunnerRegistry.LoadAsync(specs);
+var registry = await RunnerRegistry.LoadAsync(
+    specs,
+    requiredMissionRef: string.IsNullOrWhiteSpace(missionRef) ? null : missionRef);
 
 Console.Error.WriteLine(registry.All.Count == 0
     ? "Runner: no missions loaded (no provider keys set)."
@@ -117,7 +120,7 @@ app.MapPost("/run", async (RunRequest request, MissionRunHandler handler, Cancel
     {
         var response = await handler.RunAsync(request, ct);
         return response is null
-            ? Results.NotFound(new { error = $"Unknown mission '{request.MissionRef}'." })
+            ? Results.NotFound(new { error = $"Unknown mission '{request.MissionLabel}'." })
             : Results.Ok(response);
     }
     catch (ArgumentException ex) // e.g. an unknown run policy — a malformed caller request

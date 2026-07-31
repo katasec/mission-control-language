@@ -15,7 +15,7 @@ public static class BuiltinMissions
     public static readonly IReadOnlyList<BuiltinMission> All =
     [
         new("ChatGPT",   "Raw LLM — no verification",
-            $"{Reg}/forge-mission-vanilla@sha256:9663e05847676da28191f09459ce45671d624221d2d9b329ff0770cb9621dc46",             "vanilla"),
+            BuiltinMissionReferences.Vanilla,                                                                                          "vanilla"),
         new("Forge",     "LLM + deterministic verifier, retries on fail",
             $"{Reg}/forge-mission-hallucination-guard@sha256:ece5dc79e12086c50745c62e2d299402dcc452b27e0181fd4445f8082bf9bb81", "hallucination-guard"),
         new("Assistant", "General assistant, answers LLM-verified",

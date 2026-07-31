@@ -1,5 +1,6 @@
 using ForgeMission.ClientRuntime.Services;
 using ForgeMission.Core.Tools;
+using Microsoft.Extensions.Configuration;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
@@ -7,6 +8,17 @@ namespace ForgeMission.Tests.ClientRuntime;
 // provider-independent; Task 2b invokes this with the ephemeral runner started by the Client Runtime.
 public sealed class DockerMissionRuntimeTests
 {
+    [Fact]
+    public async Task StartAsync_MissingMissionRef_FailsBeforeProviderFileOrDocker()
+    {
+        var configuration = new ConfigurationBuilder().Build();
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            DockerMissionRuntime.StartAsync(configuration));
+
+        Assert.Equal("Docker Mission Runtime needs MissionRuntime:Docker:MissionRef.", exception.Message);
+    }
+
     [SkippableFact]
     [Trait("Category", "Integration")]
     public async Task SendAsync_RealDockerRunner_ExecutesReadAndReturnsTheHeading()

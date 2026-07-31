@@ -41,9 +41,10 @@ RUN apt-get update \
 
 COPY --from=build /app/publish ./
 
-# Missions ship baked into the image (39.1 — no OCI/blob yet). The runner reads each mission's
-# forge.toml at startup; provider keys come from env(...) (MCL_API_KEY / ANTHROPIC_API_KEY /
-# XAI_API_KEY) injected at run time from Key Vault — the image carries no secrets.
+# With MissionRef the runner pulls its selected OCI mission at startup; MissionFile is the legacy
+# explicit-file path. With neither, it resolves the baked-in mission fallback below. Provider keys
+# come from env(...) (MCL_API_KEY / ANTHROPIC_API_KEY / XAI_API_KEY) injected at run time from Key
+# Vault — the image carries no secrets.
 COPY missions/ /app/missions/
 
 ENV ASPNETCORE_URLS=http://+:8080 \

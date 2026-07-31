@@ -22,8 +22,8 @@ internal sealed record RunnerMission(
     MissionArtifactCapabilities?         ArtifactCapabilities);
 
 /// <summary>
-/// The runner's own mission registry, loaded once at boot from the missions baked into the image
-/// (39.1 — no OCI/blob yet). Mirrors <c>ForgeUI.Services.MissionRegistry.LoadAsync</c>, including
+/// The runner's own mission registry, loaded once at boot from explicit or baked-in mission sources.
+/// Mirrors <c>ForgeUI.Services.MissionRegistry.LoadAsync</c>, including
 /// the per-mission key gate: a mission whose provider has no API key is skipped, so <c>GET
 /// /missions</c> never advertises it and the orchestrator won't bind its handle (preserving the
 /// "@claude only appears when ANTHROPIC_API_KEY is set" behaviour, now that keys live here).
@@ -40,7 +40,8 @@ internal sealed class RunnerRegistry
         _byLabel.TryGetValue(missionRef, out mission!);
 
     public static async Task<RunnerRegistry> LoadAsync(
-        IEnumerable<(string label, string description, string path)> specs)
+        IEnumerable<(string label, string description, string path)> specs,
+        string? requiredMissionRef = null)
     {
         var byLabel = new Dictionary<string, RunnerMission>(StringComparer.Ordinal);
 
@@ -48,63 +49,90 @@ internal sealed class RunnerRegistry
         {
             if (!File.Exists(path))
             {
+                if (requiredMissionRef is not null)
+                    throw MissionRefStartupFailure(requiredMissionRef, $"mission file not found at {path}");
+
                 Console.Error.WriteLine($"Runner: mission file not found for '{label}' at {path} — skipping.");
                 continue;
             }
 
-            var dir      = Path.GetDirectoryName(Path.GetFullPath(path))!;
-            var source   = await File.ReadAllTextAsync(path);
-            var ast      = MclParser.Parse(source);
-            var lockFile = LockFileIO.Read(Path.Combine(dir, "mcl.lock"));
-            var experts  = ExpertResolver.ResolveAll(lockFile, dir, verbose: null, warnings: Console.Error);
             try
             {
-                // Future request-time/custom mission load paths must also validate before registration;
-                // PipelineRunner intentionally has no runtime mission-recursion depth guard.
-                ExpertLoader.Validate(ast, experts, Console.Error, contractErrorsAreFatal: true, path);
-            }
-            catch (AggregateExpertLoadException ex)
-            {
-                foreach (var error in ex.Errors)
-                    Console.Error.WriteLine($"Runner: '{label}' validation failed: {error.Message}");
-                continue;
-            }
-            catch (ExpertLoadException ex)
-            {
-                Console.Error.WriteLine($"Runner: '{label}' validation failed: {ex.Message}");
-                continue;
-            }
-            var manifest = ForgeTomlReader.TryRead(path);
-
-            ProviderProfile? profile = null;
-            if (manifest?.Providers?.GetValueOrDefault("default") is { } p)
-            {
-                if (string.IsNullOrWhiteSpace(p.ApiKey))
+                var dir      = Path.GetDirectoryName(Path.GetFullPath(path))!;
+                var source   = await File.ReadAllTextAsync(path);
+                var ast      = MclParser.Parse(source);
+                var lockFile = LockFileIO.Read(Path.Combine(dir, "mcl.lock"));
+                var experts  = ExpertResolver.ResolveAll(lockFile, dir, verbose: null, warnings: Console.Error);
+                try
                 {
-                    // No key for this provider (e.g. ANTHROPIC_API_KEY unset) — skip so the handle
-                    // simply won't bind, rather than advertise a mission that fails at call time.
-                    Console.Error.WriteLine(
-                        $"Runner: '{label}' has no API key for provider '{p.Provider}' — skipping.");
+                    // Future request-time/custom mission load paths must also validate before registration;
+                    // PipelineRunner intentionally has no runtime mission-recursion depth guard.
+                    ExpertLoader.Validate(ast, experts, Console.Error, contractErrorsAreFatal: true, path);
+                }
+                catch (AggregateExpertLoadException ex)
+                {
+                    if (requiredMissionRef is not null)
+                        throw new InvalidOperationException(
+                            $"'{label}' validation failed: {string.Join("; ", ex.Errors.Select(error => error.Message))}", ex);
+
+                    foreach (var error in ex.Errors)
+                        Console.Error.WriteLine($"Runner: '{label}' validation failed: {error.Message}");
                     continue;
                 }
-                profile = p;
-            }
-            else
-            {
-                Console.Error.WriteLine($"Runner: no forge.toml for '{label}' — LLM steps won't work.");
-            }
+                catch (ExpertLoadException ex)
+                {
+                    if (requiredMissionRef is not null)
+                        throw new InvalidOperationException($"'{label}' validation failed: {ex.Message}", ex);
 
-            byLabel[label] = new RunnerMission(
-                label,
-                description,
-                ast,
-                experts,
-                profile,
-                ToContractCapabilities(manifest?.Capabilities.Artifacts));
+                    Console.Error.WriteLine($"Runner: '{label}' validation failed: {ex.Message}");
+                    continue;
+                }
+                var manifest = ForgeTomlReader.TryRead(path);
+
+                ProviderProfile? profile = null;
+                if (manifest?.Providers?.GetValueOrDefault("default") is { } p)
+                {
+                    if (string.IsNullOrWhiteSpace(p.ApiKey))
+                    {
+                        if (requiredMissionRef is not null)
+                            throw new InvalidOperationException(
+                                $"'{label}' has no API key for provider '{p.Provider}'");
+
+                        // No key for this provider (e.g. ANTHROPIC_API_KEY unset) — skip so the handle
+                        // simply won't bind, rather than advertise a mission that fails at call time.
+                        Console.Error.WriteLine(
+                            $"Runner: '{label}' has no API key for provider '{p.Provider}' — skipping.");
+                        continue;
+                    }
+                    profile = p;
+                }
+                else
+                {
+                    Console.Error.WriteLine($"Runner: no forge.toml for '{label}' — LLM steps won't work.");
+                }
+
+                byLabel[label] = new RunnerMission(
+                    label,
+                    description,
+                    ast,
+                    experts,
+                    profile,
+                    ToContractCapabilities(manifest?.Capabilities.Artifacts));
+            }
+            catch (Exception ex) when (requiredMissionRef is not null)
+            {
+                throw MissionRefStartupFailure(requiredMissionRef, ex.Message, ex);
+            }
         }
 
         return new RunnerRegistry(byLabel);
     }
+
+    private static InvalidOperationException MissionRefStartupFailure(
+        string missionRef,
+        string reason,
+        Exception? innerException = null) =>
+        new($"MissionRef '{missionRef}' failed to load: {reason}", innerException);
 
     private static MissionArtifactCapabilities? ToContractCapabilities(ArtifactCapabilities? artifacts)
     {

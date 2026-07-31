@@ -74,7 +74,7 @@ internal sealed class MissionRunHandler(
                 ct);
 
             writer.TryWrite(response is null
-                ? new RunStreamEvent("error", Error: $"Unknown mission '{request.MissionRef}'.")
+                ? new RunStreamEvent("error", Error: $"Unknown mission '{request.MissionLabel}'.")
                 : new RunStreamEvent("result", Result: response));
         }
         catch (Exception ex)
@@ -90,9 +90,9 @@ internal sealed class MissionRunHandler(
     private async Task<RunResponse?> ExecuteAsync(
         RunRequest request, Action<RunProgress>? onProgress, CancellationToken ct)
     {
-        if (!registry.TryGet(request.MissionRef, out var mission))
+        if (!registry.TryGet(request.MissionLabel, out var mission))
         {
-            logger.LogWarning("Unknown mission ref '{MissionRef}'", request.MissionRef);
+            logger.LogWarning("Unknown mission label '{MissionLabel}'", request.MissionLabel);
             return null; // → 404 at the endpoint
         }
 
@@ -105,7 +105,7 @@ internal sealed class MissionRunHandler(
         // Mission-level span: non-sensitive attributes (ref, provider, model) so a trace ties the
         // gen_ai.* + outbound-HTTP child spans to which @-agent ran. No API key is ever tagged.
         using var runSpan = RunnerTelemetry.Source.StartActivity("mission.run");
-        runSpan?.SetTag("forge.mission.ref", request.MissionRef);
+        runSpan?.SetTag("forge.mission.ref", request.MissionLabel);
         runSpan?.SetTag("forge.provider", mission.Profile?.Provider);
         runSpan?.SetTag("gen_ai.request.model", mission.Profile?.Model);
 
@@ -151,8 +151,8 @@ internal sealed class MissionRunHandler(
         var outputs = await workspace.CollectOutputsAsync(artifacts, ct);
 
         logger.LogInformation(
-            "Ran '{MissionRef}' [{Policy}] — verified={Verified} steps={Steps} in {Tokens}+{Out} tok / {Secs:F2}s",
-            request.MissionRef, request.Policy, verified, trace.Count,
+            "Ran '{MissionLabel}' [{Policy}] — verified={Verified} steps={Steps} in {Tokens}+{Out} tok / {Secs:F2}s",
+            request.MissionLabel, request.Policy, verified, trace.Count,
             usage.InputTokens, usage.OutputTokens, usage.ComputeSeconds);
 
         return new RunResponse(

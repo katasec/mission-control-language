@@ -31,5 +31,32 @@ Runner observations:
   `127.0.0.1:49800`.
 
 The ephemeral Client Runtime and its `forge-client-03aea6fb95e2` container were shut down after the
-test. The remaining Task 6 evidence is the literal Electron `make desktop` visual flow; it is kept
-open in the active spoke along with architecture review.
+test.
+
+**Literal Electron UI proof (2026-07-31).** A live `make desktop` run was screenshotted end to end:
+window titled "Forge", workspace `/Users/ameerdeen/progs/mission-control-language`, prompt "Read
+README.md and tell me its first heading.", tool-call log reading `Running Read` then `Finished
+Read`, and a response correctly quoting the real first heading, `# Mission Control Language (MCL)`,
+from the repository's actual `README.md`. This is the last Task 6 evidence item — prompt → visible
+local tool call → correct final answer, in the real Electron shell, not a test harness.
+
+## Startup hardening verification (2026-07-31)
+
+The runner first pulled the public, pinned vanilla mission into a fresh temporary Forge cache and
+reported healthy. Then only the cached `mission.mcl` was changed to reference a nonexistent expert;
+the OCI artifact was not repulled. A second runner startup proved that a post-pull validation error
+is fatal rather than producing an empty, healthy registry:
+
+```text
+EXIT=134
+HEALTH=unavailable
+Runner: mission cached from ghcr.io/katasec/forge-mission-vanilla@sha256:9663…dc46
+Unhandled exception. System.InvalidOperationException: MissionRef
+'ghcr.io/katasec/forge-mission-vanilla@sha256:9663…dc46' failed to load:
+'katasec/forge-mission-vanilla' validation failed: Missing expert definitions for: MissingExpert.
+```
+
+`dotnet build src/ForgeMission.slnx` completed with 0 warnings and 0 errors. `dotnet test
+src/ForgeMission.slnx --no-build` passed 434 tests (11 explicitly environment-gated integrations
+skipped): the new runner-registry test covers this strict post-pull path, and Client Runtime and
+reference-validation tests cover the early missing-reference guard and uppercase digest rejection.

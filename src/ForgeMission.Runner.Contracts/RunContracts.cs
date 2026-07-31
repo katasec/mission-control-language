@@ -10,8 +10,8 @@ namespace ForgeMission.Runner.Contracts;
 /// the orchestrator; the runner is pure compute.
 /// </summary>
 public sealed record RunRequest(
-    // Registry label of a baked-in mission (e.g. "Forge", "Assistant", "Claude").
-    string MissionRef,
+    // Registry label of a mission (e.g. "Forge", "Assistant", "Claude").
+    string MissionLabel,
     // The fully-assembled goal text (the orchestrator already folds in room context).
     string Goal,
     // Extra pipeline vars beyond the mission's first parameter (reserved; usually empty).

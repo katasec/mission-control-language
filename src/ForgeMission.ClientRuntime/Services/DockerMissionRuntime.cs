@@ -19,10 +19,11 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
     {
         var missionRef = configuration["MissionRuntime:Docker:MissionRef"];
         var runnerImage = configuration["MissionRuntime:Docker:Image"] ?? RunnerImage;
-        var providerEnvironment = ProviderEnvironmentFile.Load(configuration["MissionRuntime:Docker:ProviderEnvFile"]);
 
         if (string.IsNullOrWhiteSpace(missionRef))
             throw new InvalidOperationException("Docker Mission Runtime needs MissionRuntime:Docker:MissionRef.");
+
+        var providerEnvironment = ProviderEnvironmentFile.Load(configuration["MissionRuntime:Docker:ProviderEnvFile"]);
 
         var docker = await DockerPrereqChecker.CheckDockerAsync();
         if (docker.Status == PrereqStatus.Fail)
