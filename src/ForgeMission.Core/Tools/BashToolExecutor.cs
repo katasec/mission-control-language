@@ -11,11 +11,13 @@ public sealed class BashToolExecutor : IToolExecutor
     public string Name => "Bash";
 
     public Task<ToolExecutionResult> ExecuteAsync(
-        IDictionary<string, object?>? arguments, IWorkspace workspace, CancellationToken ct = default)
+        IDictionary<string, object?>? arguments, CapabilityRegistry capabilities, CancellationToken ct = default)
     {
         if (!ToolArguments.TryGetString(arguments, "command", out var command))
             return Task.FromResult(ToolExecutionResult.Error("command is required"));
+        if (!capabilities.TryGetProvider<ITerminalProvider>(out var terminal) || terminal is null)
+            return Task.FromResult(ToolExecutionResult.Error("Terminal capability is unavailable."));
 
-        return workspace.ExecuteAsync(command, workingDir: null, ct);
+        return terminal.ExecuteAsync(command, workingDir: null, ct);
     }
 }

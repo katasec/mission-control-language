@@ -21,7 +21,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
 
     public async Task<string> SendAsync(
         string prompt,
-        IWorkspace workspace,
+        CapabilityRegistry capabilities,
         Action<string>? onTextDelta = null,
         Action<ToolCallNotification>? onToolCall = null,
         CancellationToken ct = default)
@@ -32,7 +32,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
 
         while (true)
         {
-            var response = await SendTurnAsync(onTextDelta, ct);
+            var response = await SendTurnAsync(capabilities, onTextDelta, ct);
             _messages.Add(new WireMessage("assistant", response.Content));
 
             if (response.ToolCalls.Count == 0)
@@ -44,7 +44,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
                 var functionCall = new FunctionCallContent(call.Id, call.Name, call.Arguments);
                 onToolCall?.Invoke(new ToolCallNotification(functionCall, ToolCallNotificationState.Running));
 
-                var result = await _toolExecutors.ExecuteAsync(functionCall, workspace, ct);
+                var result = await _toolExecutors.ExecuteAsync(functionCall, capabilities, ct);
                 onToolCall?.Invoke(new ToolCallNotification(functionCall, ToolCallNotificationState.Done, result));
 
                 results.Add(WireContentBlock.ToolResult(call.Id, result.Content));
@@ -54,14 +54,17 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
         }
     }
 
-    private async Task<TurnResponse> SendTurnAsync(Action<string>? onTextDelta, CancellationToken ct)
+    private async Task<TurnResponse> SendTurnAsync(
+        CapabilityRegistry capabilities,
+        Action<string>? onTextDelta,
+        CancellationToken ct)
     {
         var request = new WireRequest
         {
             Model = model,
             Messages = _messages,
             Stream = true,
-            Tools = AgentToolDeclarations.All.Select(ToWireTool).ToList(),
+            Tools = capabilities.ToolDeclarations.Select(ToWireTool).ToList(),
         };
         var json = JsonSerializer.Serialize(request);
 

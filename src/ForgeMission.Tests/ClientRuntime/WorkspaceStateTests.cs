@@ -16,6 +16,7 @@ public sealed class WorkspaceStateTests : IDisposable
 
         var workspace = Assert.IsType<LocalDiskWorkspace>(state.Workspace);
         Assert.Equal(root, workspace.Roots[0]);
+        Assert.Equal(["file", "terminal"], state.Capabilities!.AvailableCapabilities);
     }
 
     [Fact]
@@ -25,6 +26,7 @@ public sealed class WorkspaceStateTests : IDisposable
 
         var workspace = Assert.IsType<LocalDiskWorkspace>(state.Workspace);
         Assert.Equal(root, workspace.Roots[0]);
+        Assert.Equal(["file", "terminal"], state.Capabilities!.AvailableCapabilities);
     }
 
     public void Dispose() => Directory.Delete(root, recursive: true);

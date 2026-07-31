@@ -30,11 +30,17 @@ public sealed class DockerMissionRuntimeTests
 
         using var http = new HttpClient { BaseAddress = new Uri(baseUrl!) };
         var session = new MissionRuntimeSession(http);
+        var workspace = new LocalDiskWorkspace(workspaceRoot!);
+        var capabilities = new CapabilityRegistry(
+        [
+            new WorkspaceFileProvider(workspace),
+            new WorkspaceTerminalProvider(workspace),
+        ]);
         var toolLog = new List<string>();
 
         var answer = await session.SendAsync(
             "Read README.md and tell me its first heading.",
-            new LocalDiskWorkspace(workspaceRoot!),
+            capabilities,
             onToolCall: notification => toolLog.Add($"{notification.State}:{notification.Call.Name}"));
 
         Assert.Contains("Mission Control Language", answer);

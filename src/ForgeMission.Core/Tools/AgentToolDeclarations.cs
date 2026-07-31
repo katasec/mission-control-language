@@ -82,8 +82,5 @@ public static class AgentToolDeclarations
         }
         """));
 
-    // Declared last so field initializers (which run in textual order) see the four above already set.
-    public static readonly IReadOnlyList<AITool> All = [Read, Edit, Write, Bash];
-
     private static JsonElement ParseSchema(string json) => JsonDocument.Parse(json).RootElement;
 }
