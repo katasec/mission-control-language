@@ -52,6 +52,30 @@ registry shape so the *next* capability is a small addition, not a redesign. See
   *possible*; whether a specific request is *authorized* is [43.9](phase-43.9-client-runtime-authorization.md)'s
   job, layered on top of what this spoke builds. Don't conflate "capability exists" with
   "capability is currently allowed."
+- **Physical placement: `ForgeMission.Core`, not literally `ForgeMission.ClientRuntime`.**
+  [forge-architecture.md](../design/forge-architecture.md)'s `ForgeMission.ClientRuntime.Capabilities`
+  namespace names the *conceptual* owner (Client Runtime owns capabilities); it is not a literal
+  project-placement mandate. Today the tool executors these interfaces wrap
+  (`ReadToolExecutor`/`EditToolExecutor`/`WriteToolExecutor`/`BashToolExecutor`/`ToolExecutorRegistry`/
+  `IWorkspace`) live in `ForgeMission.Core/Tools/`, and `ForgeMission.ClientRuntime` already
+  references `ForgeMission.Core` (not the reverse) — `ClientRuntime`'s `WorkspaceState` and
+  `MissionRuntimeSession` already consume `IWorkspace`/`ToolExecutorRegistry` directly from Core
+  today. Defining `ICapabilityProvider`/`IFileProvider`/`ITerminalProvider`/`CapabilityRegistry` in
+  `ForgeMission.ClientRuntime` instead would force Core to reference ClientRuntime back — a real
+  dependency cycle, not a style choice. Define them in `ForgeMission.Core` (alongside `IWorkspace`,
+  e.g. `ForgeMission.Core.Tools` or a `Capabilities` sub-namespace within it), preserving the exact
+  dependency direction that already works. Physically relocating the executor classes into
+  `ForgeMission.ClientRuntime` to match the architecture doc's illustration literally would be a
+  much bigger move (this spoke reshapes, it does not relocate projects) — defer that, if ever
+  needed, to whenever Mission Runtime and Client Runtime genuinely run as separate deployable
+  processes (see [43.10](phase-43.10-transport-contract.md)/[43.11](phase-43.11-wasm-photino-shell.md)).
+- **`AgenticSession` (Core) is in scope but not the load-bearing path.** Its only production caller
+  today is `ForgeMission.Desktop`'s `VanillaMissionSessionFactory` — the shelved Avalonia shell
+  (dead/superseded per `docs/plan.md`'s Phase 43.2 status, kept only for historical reference). The
+  live forward path is `ForgeMission.ClientRuntime`'s `MissionRuntimeSession`, which is what
+  actually needs to move off `AgentToolDeclarations.All` onto registry-derived declarations.
+  Updating `AgenticSession` alongside it is harmless (same interfaces, same namespace, no cycle) and
+  keeps the two in sync, but it is not where this spoke's real value is proven.
 
 ## Interface shape
 
