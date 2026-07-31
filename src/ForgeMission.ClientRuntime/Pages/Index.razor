@@ -11,29 +11,22 @@
     </header>
 
     <main class="client-runtime-main">
-        <button class="btn btn-primary" @onclick="OpenFolderAsync">Add folder</button>
-
         @if (WorkspaceState.Root is { } root)
         {
-            <p>Workspace: @root</p>
+            <p class="client-runtime-workspace">@root</p>
         }
-
-        <div>
-            <label for="prompt">Prompt</label>
-            <textarea id="prompt" @bind="_prompt" rows="4"></textarea>
-            <button @onclick="SendPromptAsync" disabled="@(_sending || WorkspaceState.Workspace is null)">
-                @(_sending ? "Sending…" : "Send")
-            </button>
-        </div>
 
         @if (_toolLog.Count > 0)
         {
-            <section aria-label="Tool calls">
-                <h2>Tool calls</h2>
-                <ul>
+            <section class="client-runtime-tool-calls" aria-label="Tool calls">
+                <ul class="client-runtime-tool-call-list">
                     @foreach (var entry in _toolLog)
                     {
-                        <li>@entry</li>
+                        <li class="client-runtime-tool-call">
+                            <span class="client-runtime-tool-call-glyph @(entry.IsRunning ? "client-runtime-tool-call-glyph--running" : "client-runtime-tool-call-glyph--done")"
+                                  aria-hidden="true">@(entry.IsRunning ? string.Empty : "✓")</span>
+                            <span>@entry.Text</span>
+                        </li>
                     }
                 </ul>
             </section>
@@ -41,11 +34,41 @@
 
         @if (_response is not null)
         {
-            <section aria-label="Response">
-                <h2>Response</h2>
-                <pre>@_response</pre>
-            </section>
+            <article class="client-runtime-response-card" aria-label="Response">
+                <div class="client-runtime-response">@_response</div>
+            </article>
         }
+
+        <div class="client-runtime-composer">
+            <div class="client-runtime-add-menu">
+                <button class="client-runtime-add-button"
+                        type="button"
+                        aria-label="Add to workspace"
+                        aria-haspopup="menu"
+                        aria-expanded="@_isAddMenuOpen"
+                        @onclick="ToggleAddMenu">
+                    +
+                </button>
+                @if (_isAddMenuOpen)
+                {
+                    <div class="client-runtime-add-flyout" role="menu">
+                        <button type="button" role="menuitem" @onclick="OpenFolderAsync">Add folder</button>
+                    </div>
+                }
+            </div>
+            <textarea id="prompt"
+                      class="client-runtime-prompt"
+                      @bind="_prompt"
+                      @bind:event="oninput"
+                      placeholder="@PromptPlaceholder"
+                      aria-label="Prompt"
+                      rows="1"></textarea>
+            <button class="btn btn-accent client-runtime-send"
+                    @onclick="SendPromptAsync"
+                    disabled="@(_sending || WorkspaceState.Workspace is null)">
+                @(_sending ? "Sending…" : "Send")
+            </button>
+        </div>
 
         @if (_status is not null)
         {
@@ -55,14 +78,25 @@
 </section>
 
 @code {
-    private readonly List<string> _toolLog = [];
+    private const int MaxToolTargetLength = 80;
+
+    private readonly List<ToolLogEntry> _toolLog = [];
+    private readonly Dictionary<string, ToolLogEntry> _toolLogByCallId = [];
     private string _prompt = string.Empty;
     private string? _response;
     private string? _status;
+    private bool _isAddMenuOpen;
     private bool _sending;
+
+    private string PromptPlaceholder => WorkspaceState.Workspace is null
+        ? "Add a folder to start"
+        : "Describe what you want to build";
+
+    private void ToggleAddMenu() => _isAddMenuOpen = !_isAddMenuOpen;
 
     private async Task OpenFolderAsync()
     {
+        _isAddMenuOpen = false;
         var path = await JavaScript.InvokeAsync<string?>("forgeDesktop.pickFolder");
         if (path is null)
         {
@@ -71,8 +105,8 @@
         }
 
         WorkspaceState.OpenFolder(path);
-        _status = $"Workspace: {WorkspaceState.Root}";
-        Console.WriteLine(_status);
+        _status = null;
+        Console.WriteLine($"Workspace: {WorkspaceState.Root}");
     }
 
     private async Task SendPromptAsync()
@@ -83,6 +117,7 @@
         _sending = true;
         _response = string.Empty;
         _toolLog.Clear();
+        _toolLogByCallId.Clear();
         _status = null;
 
         try
@@ -95,7 +130,7 @@
                 }),
                 onToolCall: notification => _ = InvokeAsync(() =>
                 {
-                    _toolLog.Add(FormatToolLog(notification));
+                    UpdateToolLog(notification);
                     StateHasChanged();
                 }));
         }
@@ -109,12 +144,76 @@
         }
     }
 
-    private static string FormatToolLog(ToolCallNotification notification) => notification.State switch
+    private void UpdateToolLog(ToolCallNotification notification)
     {
-        ToolCallNotificationState.Running => $"Running {notification.Call.Name}",
-        ToolCallNotificationState.Done when notification.Result?.IsError == true =>
-            $"{notification.Call.Name} failed: {notification.Result.Content}",
-        ToolCallNotificationState.Done => $"Finished {notification.Call.Name}",
-        _ => notification.Call.Name,
+        var callId = notification.Call.CallId;
+        if (!_toolLogByCallId.TryGetValue(callId, out var entry))
+        {
+            entry = new ToolLogEntry(callId);
+            _toolLogByCallId[callId] = entry;
+            _toolLog.Add(entry);
+        }
+
+        var formatted = FormatToolLog(notification);
+        entry.Text = formatted.Text;
+        entry.IsRunning = formatted.IsRunning;
+    }
+
+    private static FormattedToolLog FormatToolLog(ToolCallNotification notification)
+    {
+        var toolName = notification.Call.Name;
+        var target = ToolTarget(notification.Call.Arguments, toolName);
+        var isRunning = notification.State == ToolCallNotificationState.Running;
+        var verb = isRunning ? RunningVerb(toolName) : DoneVerb(toolName);
+        return new FormattedToolLog($"{verb} {target}{(isRunning ? "…" : string.Empty)}", isRunning);
+    }
+
+    private static string RunningVerb(string toolName) => toolName switch
+    {
+        "Read" => "Reading",
+        "Edit" => "Editing",
+        "Write" => "Writing",
+        "Bash" => "Running",
+        _ => "Using",
     };
+
+    private static string DoneVerb(string toolName) => toolName switch
+    {
+        "Read" => "Read",
+        "Edit" => "Edited",
+        "Write" => "Wrote",
+        "Bash" => "Ran",
+        _ => "Used",
+    };
+
+    private static string ToolTarget(IDictionary<string, object?>? arguments, string toolName)
+    {
+        var key = toolName == "Bash" ? "command" : "file_path";
+        var target = TryGetArgument(arguments, key) ?? toolName;
+        return target.Length <= MaxToolTargetLength
+            ? target
+            : target[..(MaxToolTargetLength - 1)] + "…";
+    }
+
+    private static string? TryGetArgument(IDictionary<string, object?>? arguments, string key)
+    {
+        if (arguments is null || !arguments.TryGetValue(key, out var value))
+            return null;
+
+        return value switch
+        {
+            string text when !string.IsNullOrWhiteSpace(text) => text,
+            not null => value.ToString(),
+            _ => null,
+        };
+    }
+
+    private sealed class ToolLogEntry(string callId)
+    {
+        public string CallId { get; } = callId;
+        public bool IsRunning { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+
+    private sealed record FormattedToolLog(string Text, bool IsRunning);
 }
