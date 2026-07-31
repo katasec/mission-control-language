@@ -24,12 +24,18 @@ public sealed class MissionRuntimeSessionTests : IDisposable
         await using var fixture = await AnthropicServerFixture.StartAsync(client);
         using var http = new HttpClient { BaseAddress = new Uri(fixture.BaseUrl) };
         var session = new MissionRuntimeSession(http);
+        var workspace = new LocalDiskWorkspace(_workspace);
+        var capabilities = new CapabilityRegistry(
+        [
+            new WorkspaceFileProvider(workspace),
+            new WorkspaceTerminalProvider(workspace),
+        ]);
         var streamed = new List<string>();
         var toolLog = new List<string>();
 
         var answer = await session.SendAsync(
             "Update notes.txt and report the final status.",
-            new LocalDiskWorkspace(_workspace),
+            capabilities,
             streamed.Add,
             notification => toolLog.Add($"{notification.State}:{notification.Call.Name}"));
 

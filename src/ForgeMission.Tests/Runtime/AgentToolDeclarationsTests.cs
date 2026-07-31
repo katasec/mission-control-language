@@ -7,10 +7,16 @@ namespace ForgeMission.Tests.Runtime;
 // expert — no wire relay in this path, forge originates the schemas itself.
 public sealed class AgentToolDeclarationsTests
 {
+    private static readonly CapabilityRegistry AllCapabilities = new(
+    [
+        new WorkspaceFileProvider(new LocalDiskWorkspace(AppContext.BaseDirectory)),
+        new WorkspaceTerminalProvider(new LocalDiskWorkspace(AppContext.BaseDirectory)),
+    ]);
+
     [Fact]
     public void All_ContainsExactlyTheEssentials()
     {
-        var names = AgentToolDeclarations.All.Select(t => t.Name).OrderBy(n => n).ToList();
+        var names = AllCapabilities.ToolDeclarations.Select(t => t.Name).OrderBy(n => n).ToList();
         Assert.Equal(["Bash", "Edit", "Read", "Write"], names);
     }
 
@@ -42,7 +48,7 @@ public sealed class AgentToolDeclarationsTests
     [InlineData("Bash")]
     public async Task Declaration_IsNeverExecutableDirectly(string toolName)
     {
-        var tool = (AIFunction)AgentToolDeclarations.All.Single(t => t.Name == toolName);
+        var tool = (AIFunction)AllCapabilities.ToolDeclarations.Single(t => t.Name == toolName);
 
         await Assert.ThrowsAsync<NotSupportedException>(
             () => tool.InvokeAsync(new AIFunctionArguments()).AsTask());

@@ -36,8 +36,13 @@ public sealed class VanillaMissionSessionFactory(IChatClientFactory chatClients)
         var mission = ast.Declarations.OfType<MissionDeclaration>().FirstOrDefault()
             ?? throw new InvalidOperationException("Bundled vanilla mission has no mission declaration.");
         var pipelineRunner = new PipelineRunner(runners, manifest.Execution);
+        var capabilities = new CapabilityRegistry(
+        [
+            new WorkspaceFileProvider(workspace),
+            new WorkspaceTerminalProvider(workspace),
+        ]);
         return new VanillaMissionSession(
-            new AgenticSession(ast, experts, pipelineRunner, workspace, notifyToolCall: notifyToolCall),
+            new AgenticSession(ast, experts, pipelineRunner, capabilities, notifyToolCall: notifyToolCall),
             mission.Name);
     }
 }

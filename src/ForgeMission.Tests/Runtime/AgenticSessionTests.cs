@@ -16,9 +16,17 @@ namespace ForgeMission.Tests.Runtime;
 public sealed class AgenticSessionTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-agentic-").FullName;
-    private readonly IWorkspace _localWorkspace;
+    private readonly CapabilityRegistry _capabilities;
 
-    public AgenticSessionTests() => _localWorkspace = new LocalDiskWorkspace(_workspace);
+    public AgenticSessionTests()
+    {
+        var workspace = new LocalDiskWorkspace(_workspace);
+        _capabilities = new CapabilityRegistry(
+        [
+            new WorkspaceFileProvider(workspace),
+            new WorkspaceTerminalProvider(workspace),
+        ]);
+    }
 
     public void Dispose() => Directory.Delete(_workspace, recursive: true);
 
@@ -45,7 +53,7 @@ public sealed class AgenticSessionTests : IDisposable
 
         var client  = new ScriptedAgentClient(notesPath);
         var runner  = new PipelineRunner(new DirectExpertRunner(client));
-        var session = new AgenticSession(Ast, Experts(), runner, _localWorkspace);
+        var session = new AgenticSession(Ast, Experts(), runner, _capabilities);
 
         var result = await session.RunAsync(new PipelineRunOptions(
             "Task", new Dictionary<string, string> { ["goal"] = "read notes.txt and tell me the secret word" }));
@@ -69,7 +77,7 @@ public sealed class AgenticSessionTests : IDisposable
 
         var client  = new MultiToolScriptedClient(notesPath, catCommand);
         var runner  = new PipelineRunner(new DirectExpertRunner(client));
-        var session = new AgenticSession(Ast, Experts(), runner, _localWorkspace);
+        var session = new AgenticSession(Ast, Experts(), runner, _capabilities);
 
         var result = await session.RunAsync(new PipelineRunOptions(
             "Task", new Dictionary<string, string> { ["goal"] = "update the status then read it back" }));
@@ -95,7 +103,7 @@ public sealed class AgenticSessionTests : IDisposable
 
         var client  = new ScriptedAgentClient(notesPath);
         var runner  = new PipelineRunner(new DirectExpertRunner(client));
-        var session = new AgenticSession(Ast, Experts(), runner, _localWorkspace,
+        var session = new AgenticSession(Ast, Experts(), runner, _capabilities,
             approveToolCall: (_, _) => Task.FromResult(false));
 
         var result = await session.RunAsync(new PipelineRunOptions(

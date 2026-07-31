@@ -5,17 +5,21 @@ namespace ForgeMission.Tests.Tools;
 public sealed class WriteToolExecutorTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("forge-write-").FullName;
-    private readonly IWorkspace _workspace;
+    private readonly CapabilityRegistry _capabilities;
     private readonly WriteToolExecutor _tool = new();
 
-    public WriteToolExecutorTests() => _workspace = new LocalDiskWorkspace(_root);
+    public WriteToolExecutorTests()
+    {
+        var workspace = new LocalDiskWorkspace(_root);
+        _capabilities = new CapabilityRegistry([new WorkspaceFileProvider(workspace)]);
+    }
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
     [Fact]
     public async Task CreatesNewFile()
     {
-        var result = await _tool.ExecuteAsync(Args(("file_path", "new.txt"), ("content", "hello")), _workspace);
+        var result = await _tool.ExecuteAsync(Args(("file_path", "new.txt"), ("content", "hello")), _capabilities);
 
         Assert.False(result.IsError);
         Assert.Equal("hello", File.ReadAllText(Path.Combine(_root, "new.txt")));
@@ -27,7 +31,7 @@ public sealed class WriteToolExecutorTests : IDisposable
         var path = Path.Combine(_root, "a.txt");
         File.WriteAllText(path, "old");
 
-        var result = await _tool.ExecuteAsync(Args(("file_path", "a.txt"), ("content", "new")), _workspace);
+        var result = await _tool.ExecuteAsync(Args(("file_path", "a.txt"), ("content", "new")), _capabilities);
 
         Assert.False(result.IsError);
         Assert.Equal("new", File.ReadAllText(path));
@@ -36,7 +40,7 @@ public sealed class WriteToolExecutorTests : IDisposable
     [Fact]
     public async Task PathEscapingRoot_ReturnsError_NotThrow()
     {
-        var result = await _tool.ExecuteAsync(Args(("file_path", "../escape.txt"), ("content", "x")), _workspace);
+        var result = await _tool.ExecuteAsync(Args(("file_path", "../escape.txt"), ("content", "x")), _capabilities);
 
         Assert.True(result.IsError);
         Assert.Contains("outside the workspace roots", result.Content);
@@ -46,7 +50,7 @@ public sealed class WriteToolExecutorTests : IDisposable
     [Fact]
     public async Task MissingContent_ReturnsError()
     {
-        var result = await _tool.ExecuteAsync(Args(("file_path", "a.txt")), _workspace);
+        var result = await _tool.ExecuteAsync(Args(("file_path", "a.txt")), _capabilities);
         Assert.True(result.IsError);
     }
 

@@ -65,7 +65,7 @@
                       rows="1"></textarea>
             <button class="btn btn-accent client-runtime-send"
                     @onclick="SendPromptAsync"
-                    disabled="@(_sending || WorkspaceState.Workspace is null)">
+                    disabled="@(_sending || WorkspaceState.Capabilities is null)">
                 @(_sending ? "Sending…" : "Send")
             </button>
         </div>
@@ -88,7 +88,7 @@
     private bool _isAddMenuOpen;
     private bool _sending;
 
-    private string PromptPlaceholder => WorkspaceState.Workspace is null
+    private string PromptPlaceholder => WorkspaceState.Capabilities is null
         ? "Add a folder to start"
         : "Describe what you want to build";
 
@@ -111,7 +111,7 @@
 
     private async Task SendPromptAsync()
     {
-        if (WorkspaceState.Workspace is not { } workspace || string.IsNullOrWhiteSpace(_prompt))
+        if (WorkspaceState.Capabilities is not { } capabilities || string.IsNullOrWhiteSpace(_prompt))
             return;
 
         _sending = true;
@@ -122,7 +122,7 @@
 
         try
         {
-            await MissionRuntime.SendAsync(_prompt, workspace,
+            await MissionRuntime.SendAsync(_prompt, capabilities,
                 onTextDelta: text => _ = InvokeAsync(() =>
                 {
                     _response += text;

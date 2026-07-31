@@ -16,7 +16,7 @@ public sealed class AgenticSession(
     Program ast,
     Dictionary<string, ExpertDefinition> experts,
     PipelineRunner pipelineRunner,
-    IWorkspace workspace,
+    CapabilityRegistry capabilities,
     ToolExecutorRegistry? toolExecutors = null,
     Func<FunctionCallContent, CancellationToken, Task<bool>>? approveToolCall = null,
     Func<ToolCallNotification, CancellationToken, Task>? notifyToolCall = null)
@@ -34,7 +34,7 @@ public sealed class AgenticSession(
 
     public async Task<MissionResult> RunAsync(PipelineRunOptions options, CancellationToken ct = default)
     {
-        var toolOptions = options with { Tools = AgentToolDeclarations.All.ToList() };
+        var toolOptions = options with { Tools = capabilities.ToolDeclarations.ToList() };
         var result      = await pipelineRunner.RunAsync(ast, experts, toolOptions, ct);
 
         if (result.ToolCalls is not { Count: > 0 })
@@ -55,7 +55,7 @@ public sealed class AgenticSession(
                 var approved   = await _approveToolCall(call, ct);
                 await _notifyToolCall(new ToolCallNotification(call, ToolCallNotificationState.Running), ct);
                 var toolResult = approved
-                    ? await _toolExecutors.ExecuteAsync(call, workspace, ct)
+                    ? await _toolExecutors.ExecuteAsync(call, capabilities, ct)
                     : ToolExecutionResult.Error("Tool call denied by the user.");
                 await _notifyToolCall(new ToolCallNotification(call, ToolCallNotificationState.Done, toolResult), ct);
 
