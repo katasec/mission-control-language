@@ -1,22 +1,188 @@
 .client-runtime-shell {
   min-height: 100vh;
-  padding: var(--space-5);
+  padding: var(--space-6) var(--space-5);
 }
 
 .client-runtime-header {
-  margin-bottom: var(--space-5);
+  margin: 0 auto var(--space-6);
+  max-width: 720px;
 }
 
 .client-runtime-header h1 {
   margin: 0;
+  font-size: 26px;
 }
 
 .client-runtime-header p,
-.client-runtime-status {
+.client-runtime-status,
+.client-runtime-workspace,
+.client-runtime-tool-call {
   color: var(--text-muted);
+}
+
+.client-runtime-header p {
+  margin-top: var(--space-1);
 }
 
 .client-runtime-main {
   display: grid;
   gap: var(--space-3);
+  margin: 0 auto;
+  max-width: 720px;
+}
+
+.client-runtime-workspace {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-runtime-tool-call-list {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.client-runtime-tool-call {
+  align-items: center;
+  display: flex;
+  font-size: 12px;
+  gap: var(--space-2);
+  line-height: 1.4;
+}
+
+.client-runtime-tool-call-glyph {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 14px;
+  height: 14px;
+  justify-content: center;
+  width: 14px;
+}
+
+.client-runtime-tool-call-glyph--running {
+  border: 1px dashed var(--text-muted);
+  border-radius: var(--radius-pill);
+}
+
+.client-runtime-tool-call-glyph--done {
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.client-runtime-response-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+
+.client-runtime-response {
+  color: var(--text);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.client-runtime-composer {
+  align-items: end;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.client-runtime-add-menu {
+  align-self: center;
+  position: relative;
+}
+
+.client-runtime-add-button {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 20px;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  width: 36px;
+}
+
+.client-runtime-add-button:hover,
+.client-runtime-add-button[aria-expanded="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.client-runtime-add-flyout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  bottom: calc(100% + var(--space-2));
+  box-shadow: var(--shadow-lg);
+  left: 0;
+  min-width: 152px;
+  padding: var(--space-1);
+  position: absolute;
+  z-index: 1;
+}
+
+.client-runtime-add-flyout button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  display: block;
+  font-family: inherit;
+  font-size: 13px;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+
+.client-runtime-add-flyout button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.client-runtime-prompt {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  flex: 1;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.45;
+  min-height: 36px;
+  outline: none;
+  padding: var(--space-2) 0;
+  resize: none;
+}
+
+.client-runtime-prompt::placeholder {
+  color: var(--text-subtle);
+}
+
+.client-runtime-send {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 var(--space-4);
+}
+
+.client-runtime-status {
+  font-size: 13px;
 }
