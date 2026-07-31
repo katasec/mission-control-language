@@ -187,6 +187,33 @@ CI-level enforcement would still need a headless-render + diff step wired into t
 **Deferred deliberately** — not worth the setup cost unless mockup-drift becomes a recurring problem;
 revisit if it does.
 
+### Verified gotchas (2026-07-31) — read before re-discovering these
+
+- **Electron's `BrowserWindow` is not CDP-attachable as launched.** `main.cjs` starts it with no
+  `--remote-debugging-port`, so browser tooling cannot screenshot/inspect the native Electron window
+  directly. This doesn't block verification — the Client Runtime underneath is a plain
+  `dotnet run --project src/ForgeMission.ClientRuntime/...` ASP.NET host that prints
+  `FORGE_CLIENT_RUNTIME_URL=<url>`; run it directly (same env vars as `scripts/desktop.ps1`:
+  `MISSIONRUNTIME__MODE`, `MISSIONRUNTIME__DOCKER__MISSIONREF`, `WORKSPACE__INITIALROOT`) and point
+  browser tooling at that URL instead of trying to reach into Electron's window. Confirmed working
+  this way, screenshot succeeded.
+- **`file://` paths do not get live screenshot/inspect support, regardless of location** (inside or
+  outside the project folder) — they render as a static, non-interactive snapshot; `computer`
+  screenshot/inspect calls fail with "No site is open in this tab" against them. Live
+  screenshot/inspect requires an actual HTTP-served origin.
+- **A fresh, not-yet-approved local HTTP origin can be denied by plain `navigate`.** The
+  confirmed-working pattern is `preview_start({url: "http://host:port"})` pointed directly at an
+  already-running server, not `navigate` cold to a brand-new origin.
+- **For a one-off static HTML mockup that needs a persisted screenshot file** (not just an inline
+  view in the session), headless Chrome is simpler than fighting the above:
+  `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu
+  --screenshot=<out>.png --window-size=W,H file://<path>.html`. This is how
+  [phase-43.2](../phases/phase-43.2-electron-forge-desktop-shell.md)'s Task 3 target mockup
+  (`docs/images/phase-43.2/task3-electron-visual-polish-after.png`) was produced. Bonus: this same
+  loop caught two real overlap bugs in that mockup's own CSS (a negative-margin header overlap, and a
+  flyout with no closed state) that reading the source alone hadn't surfaced — reinforcing rule 6
+  above, not just a tooling note.
+
 ## Worked examples
 
 Both examples below were built under the now-shelved Avalonia shell; the design reasoning (the
