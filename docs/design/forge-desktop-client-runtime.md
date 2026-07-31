@@ -1,6 +1,17 @@
-# Forge Desktop — Client Runtime / Mission Runtime split
+# Forge Desktop — Client Runtime / Mission Runtime split (historical/desktop-specific detail)
 
-> **Why this doc exists.** [Phase 43.2](../phases/phase-43.2-avalonia-vanilla-shell_completed.md)
+> **Status (2026-08-01): the general architecture this doc describes — Client Runtime / Mission
+> Runtime split, capability boundary, protocol-only crossing — is now canonical in
+> [forge-architecture.md](forge-architecture.md), which supersedes this doc for anything not
+> specific to the desktop implementation.** This doc now holds only what's genuinely
+> desktop-specific: why Docker is retained as a Mission Runtime target, local provider-key loading,
+> and the historical record of why Electron+Blazor Server was chosen 2026-07-27. **That choice is
+> itself now superseded 2026-08-01** — the desktop shell is Photino + Blazor WebAssembly (see
+> [forge-architecture.md](forge-architecture.md#native-host-ui-framework-and-the-verification-constraint)
+> and [43.11](../phases/phase-43.11-wasm-photino-shell.md)) — kept here as the historical record of
+> *why* the framework moved twice (Avalonia → Electron → Photino), not as the current implementation.
+>
+> **Original context, preserved:** [Phase 43.2](../phases/phase-43.2-avalonia-vanilla-shell_completed.md)
 > (the Avalonia vanilla shell) proved the tool-execution loop and the agentic streaming UX work —
 > Tasks 1–3 were genuinely done and independently verified. What it also proved is that verifying a
 > *visual* change in Avalonia needs a paid DevTools tier, per-machine license setup, and hit a
@@ -11,9 +22,10 @@
 > XAML `DynamicResource`/`ThemeDictionaries` is real, recurring translation-tax work every time the
 > design changes — and the existing `ForgeUI` Blazor app has been fast and painless to iterate on,
 > with zero-setup browser-based visual verification (Chrome DevTools Protocol) already available.
-> **Decision (2026-07-27): pivot Forge Desktop's client to a web-rendered UI**, presented either as
-> an Electron shell or, for `forge webui`, a plain browser tab. This is not a framework swap alone —
-> it changes the shape of the system into two components, described below.
+> **Decision (2026-07-27, itself later revised): pivot Forge Desktop's client to a web-rendered
+> UI**, presented either as an Electron shell or, for `forge webui`, a plain browser tab. The
+> underlying reasoning (verify against a plain browser, package separately) is what carried forward
+> into the Photino decision — only the specific packaging technology changed.
 
 Cross-references: [Phase 43 hub](../phases/phase-43-forge-desktop.md) (the phase this doc backs),
 [Phase 43.2 — Electron shell](../phases/phase-43.2-electron-forge-desktop-shell.md) (the active
@@ -23,30 +35,25 @@ round-trip mechanism reused verbatim), [42.4](../phases/phase-42.4-container-con
 one-`/v1`-image convergence Docker parity depends on), [Phase 39](../phases/phase-39-metered-runtime-marketplace.md)
 (metering — orthogonal to this split, see below).
 
-## The two components
+## The two components (superseded by the three-layer split in forge-architecture.md — kept for the
+still-valid desktop-specific detail below)
 
-**Client Runtime** — the Electron shell (or, for `forge webui`, just a browser tab pointed at the
-same local server). Owns UI rendering **and** local tool execution: it holds `IWorkspace`
+**Client Runtime** — owns local tool execution: it holds `IWorkspace`
 ([43.7](../phases/phase-43.7-workspace-provider.md)) and `ToolExecutorRegistry`
-([43.1](../phases/phase-43.1-tool-execution-engine.md)), with real filesystem/process access on the
-user's own machine. This is the "hands."
+([43.1](../phases/phase-43.1-tool-execution-engine.md), migrating into the Capability Provider
+shape per [43.8](../phases/phase-43.8-capability-provider-pattern.md)), with real filesystem/process
+access on the user's own machine. This is the "hands." Under the current decision it is a separate
+process from the UI (see [forge-architecture.md](forge-architecture.md)), not the same Blazor Server
+process the UI renders from — that combined-process shape was specific to the now-superseded
+Electron + Blazor Server choice below and no longer holds under Photino + Blazor WebAssembly.
 
-- Built with **Blazor Server**, not a new JS/TS frontend. Reasons:
-  - Shares C# types directly with `ForgeMission.Core` — no serialization boundary. This is the same
-    reasoning [Phase 35](../phases/phase-35-forge-ui-blazor.md)'s design doc already used for
-    `ForgeUI`.
-  - Introduces no new language/toolchain into an otherwise pure .NET repo — this project has an
-    explicit "no npm/Node, right-size deps" bias (see
-    [Phase 40.1's design-system doc](../phases/phase-40.1-design-system-foundation.md)).
-  - The SignalR-per-session overhead that would matter at multi-tenant cloud scale
-    ([Phase 39](../phases/phase-39-metered-runtime-marketplace.md)'s domain) is a non-issue for one
-    local desktop session — there's exactly one circuit, on the user's own machine.
-- UI components for this IDE-shaped surface are **freshly authored** — explicitly **not** reusing
-  `ForgeUI`/Rooms' existing Razor components, which are shaped for async multi-user chat (room
-  membership, `@`-mentions, trust seals) and don't fit a single-user coding-agent surface.
-- **Do** reuse `forge.css`'s design tokens directly — it's already CSS, zero porting cost, unlike
-  the Avalonia XAML translation tax that was part of why this pivoted. See
-  [ui-design-system.md](ui-design-system.md) for the token catalogue itself (not duplicated here).
+**Historical note (superseded):** this was originally built with Blazor **Server**, not WASM,
+specifically so the same process could hold both UI rendering and `IWorkspace`/
+`ToolExecutorRegistry` with no serialization boundary between them. That combined-process
+convenience is what changed with the Photino/WASM decision — WASM UI is sandboxed and cannot hold
+those types directly, so they now live in the separate Client Runtime process, reached over the
+Client Runtime API contract instead of being in the same process as the UI. `forge.css` reuse is
+unaffected either way — the UI is still plain CSS-stylable regardless of Server vs. WASM.
 
 **Mission Runtime ("brain")** — a separate, swappable component reached over
 [Phase 42](../phases/phase-42-forge-cloud.md)'s existing `/v1` wire protocol (the Anthropic/
@@ -147,17 +154,23 @@ targets, only one of which is billed.
 Today, `forge webui` launches [Open WebUI](https://github.com/open-webui/open-webui) in a Docker
 container — a generic third-party chat UI ([Phase 23](../phases/phase-23-container-commands.md)).
 That dependency is dropped. **Going forward**, `forge webui` starts the local Docker Mission
-Runtime (if not pointed at a hosted/cloud target) and opens the Client Runtime UI in a browser tab
-— same backend as the Electron app, no Electron wrapper, browser instead of a native shell.
+Runtime (if not pointed at a hosted/cloud target) and opens the same Blazor WebAssembly UI in a
+browser tab — same UI/Client Runtime pair as the packaged Photino app, browser instead of a native
+shell.
 
-Electron and `forge webui` become **two presentation shells over the identical local Client
-Runtime** — same Blazor Server host, same `IWorkspace`/`ToolExecutorRegistry`, same wire protocol
-to whichever Mission Runtime is configured. The only difference is the chrome around it (a native
-window vs. a browser tab).
+The packaged desktop app and `forge webui` become **two presentation shells over the identical
+Blazor WebAssembly UI and Client Runtime** — same UI code, same capability providers, same wire
+protocol to whichever Mission Runtime is configured. The only difference is the chrome around it (a
+native Photino window vs. a browser tab). This is also, not incidentally, the primary development
+and verification surface — see
+[forge-architecture.md](forge-architecture.md#native-host-ui-framework-and-the-verification-constraint).
 
 ## Architecture decision — orchestration loop lives in the Client Runtime (2026-07-27)
 
-**Resolved.** The Client Runtime owns the tool-call orchestration loop. It plays exactly the role
+**Resolved, and still the current decision** — restated at the general level in
+[forge-architecture.md](forge-architecture.md#communication-flow); the detailed reasoning below
+remains the backing rationale and hasn't changed with the Photino/WASM packaging decision. The
+Client Runtime owns the tool-call orchestration loop. It plays exactly the role
 the real Claude Code CLI already plays against `forge claude` today: send the accumulated message
 history to the Mission Runtime's `/v1/messages`, get back either a final answer or one `tool_use`,
 execute it via `IWorkspace`/`ToolExecutorRegistry`, append the result, send again. The Mission
