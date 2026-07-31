@@ -29,23 +29,55 @@ this doc — their content now lives in [43.4](phase-43.4-ide-trace-surface.md) 
 [43.5](phase-43.5-human-in-the-loop.md) respectively; the brainstorm originals are left as stubs
 pointing here.
 
-## Client Runtime / Mission Runtime architecture (2026-07-27 — supersedes the Avalonia decision below)
+## Architecture (2026-08-01 — supersedes the Electron/Blazor-Server decision below)
 
-The client pivoted from Avalonia to a web-rendered UI (Electron shell, or a plain browser tab for
-`forge webui`) built on Blazor Server, split into a **Client Runtime** (UI + local tool execution —
-the "hands") and a swappable **Mission Runtime** (the "brain," hosted Forge Cloud or a local Docker
-`/v1` image) talking over [Phase 42](phase-42-forge-cloud.md)'s wire protocol. The Client Runtime
-is the sole holder of the opened workspace: a brain may receive explicit mission inputs and return
-tool instructions, but it must never receive a general local-workspace mount. Full rationale (why
-Avalonia was dropped, why Docker is retained, the `forge webui` redefinition, and the settled
-client-owned tool loop) is written up in
-[docs/design/forge-desktop-client-runtime.md](../design/forge-desktop-client-runtime.md) — read
-that doc rather than expecting the architecture re-explained here. The active build spoke is
-[43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md);
-[43.2a — Client Runtime capability boundary](phase-43.2a-client-runtime-capability-boundary.md) and
-[43.2b — OCI mission delivery](phase-43.2b-oci-mission-delivery.md) — the hardening that closed out
-43.2's Docker-packaging task — are both done. 43.2's remaining task (Task 3, visual polish) is next;
-the shelved Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md).
+**The canonical architecture is now [docs/design/forge-architecture.md](../design/forge-architecture.md)** —
+read that doc rather than expecting the architecture re-explained here. Summary: Forge is a Mission
+Runtime; the desktop is one replaceable client among several. Three layers — Mission Runtime
+(Brain), Client Runtime (Hands, also the security enforcement point), Presentation (Face, no
+reasoning/filesystem/terminal logic). Capability contracts and a Capability Registry replace a
+fixed tool list; transport is an explicit, swappable contract (`IClientRuntimeChannel`).
+
+**Desktop implementation: Blazor WebAssembly UI + Photino native packaging**, superseding the
+Electron + Blazor Server shell below. Development and visual verification happen against a plain
+browser tab (unchanged verification story); Photino only wraps the already-verified app for
+shipping — see
+[forge-architecture.md](../design/forge-architecture.md#native-host-ui-framework-and-the-verification-constraint).
+
+**Prerequisite chain before desktop UI work resumes** (dependency order):
+[43.8 — Capability Provider pattern](phase-43.8-capability-provider-pattern.md) →
+[43.9 — Client Runtime authorization](phase-43.9-client-runtime-authorization.md) →
+[43.10 — Transport contract](phase-43.10-transport-contract.md) →
+[43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md). All four are
+prerequisites, not optional polish — [43.3](phase-43.3-mission-attach-point.md) and beyond build on
+this foundation, not the superseded Electron/Blazor-Server one.
+
+**Superseded, not wasted — evidence and design knowledge carry forward:** the Electron/Blazor
+Server track ([43.2](phase-43.2-electron-forge-desktop-shell.md),
+[43.2a](phase-43.2a-client-runtime-capability-boundary.md),
+[43.2b](phase-43.2b-oci-mission-delivery.md)) proved the tool-execution loop, the hands/brain
+capability boundary, and OCI mission delivery all genuinely work — that proof carries forward into
+43.8-43.11's design even though the specific framework doesn't. Task 3's visual-polish work (the
+`forge.css` token application, tool-call indicator design, folder-open `+` menu) is real UX design
+knowledge, not framework-specific code — [43.11](phase-43.11-wasm-photino-shell.md) rebuilds it
+against the new rendering technology, not from scratch. The shelved Avalonia spike is
+[phase-43.2-avalonia-vanilla-shell.md](phase-43.2-avalonia-vanilla-shell.md).
+
+### Prerequisites checklist — do not start 43.3+ desktop UI work until all four are met
+
+- [ ] **43.8** — `IFileProvider`/`ITerminalProvider` + Capability Registry built; Mission Runtime
+      consumes registry-derived tool declarations, not the fixed `AgentToolDeclarations` constant.
+- [ ] **43.9** — Every capability request passes through `ICapabilityDispatcher`; no provider is
+      reachable without authorization first; audit records exist for every dispatch.
+- [ ] **43.10** — `IClientRuntimeChannel` + `HttpClientRuntimeChannel` built; the WASM UI never
+      references `HttpClient` directly; a capability request round-trips over the real loopback
+      network boundary, not an in-process shortcut.
+- [ ] **43.11** — Photino maturity due diligence done; WASM UI verified against a plain browser tab
+      (full loop: open folder, prompt, real tool call, styled response); the same app confirmed once
+      more through the actual packaged Photino build on macOS.
+
+Only once all four are checked does [43.3](phase-43.3-mission-attach-point.md) (or any later desktop
+UI spoke) have a foundation to build on.
 
 ## Locked decisions (2026-07-25, UI framework decision superseded 2026-07-27)
 
@@ -62,17 +94,21 @@ the shelved Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-
   as a mission" to "any real multi-role mission is attachable the same way." First flagship:
   [missions/sdlc-agent/](../../missions/sdlc-agent/) (Architect/CriticalReviewer/Synthesiser/
   QualityJudge, `DesignMode`, `loop(2)`).
-- **UI framework: SUPERSEDED 2026-07-27 — was Avalonia, now Electron + Blazor Server.** Avalonia
-  (MIT-licensed, Skia-rendered, one XAML/MVVM C# codebase for macOS + Windows) was chosen 2026-07-25
-  over true-native (two codebases) and browser/Electron (then judged weaker desktop feel, extra
-  runtime). [Phase 43.2](phase-43.2-avalonia-vanilla-shell.md)'s Tasks 1–3 proved the shell
-  genuinely worked, but Task 4 (visual identity) surfaced that verifying an Avalonia visual change
-  needs a paid DevTools tier, per-machine license setup, and a multi-day environment saga — while
-  the existing Blazor `ForgeUI` app has been fast to iterate on with zero-setup browser-based visual
-  verification already available. See
-  [forge-desktop-client-runtime.md](../design/forge-desktop-client-runtime.md) for the full
-  reasoning; the tradeoff accepted now is Electron's extra runtime/less-native feel, in exchange for
-  removing the theming-verification tax entirely.
+- **UI framework: SUPERSEDED TWICE — Avalonia (2026-07-25) → Electron + Blazor Server (2026-07-27)
+  → Blazor WebAssembly + Photino (2026-08-01).** Avalonia (MIT-licensed, Skia-rendered, one
+  XAML/MVVM C# codebase for macOS + Windows) was chosen 2026-07-25 over true-native (two codebases)
+  and browser/Electron (then judged weaker desktop feel, extra runtime). [Phase 43.2](phase-43.2-avalonia-vanilla-shell.md)'s
+  Tasks 1–3 proved the shell genuinely worked, but Task 4 (visual identity) surfaced that verifying
+  an Avalonia visual change needs a paid DevTools tier, per-machine license setup, and a multi-day
+  environment saga — while the existing Blazor `ForgeUI` app has been fast to iterate on with
+  zero-setup browser-based visual verification already available, which motivated the Electron +
+  Blazor Server pivot. That combined-process shape (UI and tool execution sharing one Blazor Server
+  process) was itself superseded 2026-08-01 once the broader Mission/Client/Presentation
+  architecture ([forge-architecture.md](../design/forge-architecture.md)) made clear the UI should
+  be sandboxed WASM with all real execution in a separate Client Runtime process — Photino replaces
+  Electron as a thinner, `.NET`-native packaging layer around that same verify-in-a-browser
+  development model. See [forge-architecture.md](../design/forge-architecture.md#why-not-maui-avalonia-or-tauri)
+  for why Photino over MAUI/Avalonia/Tauri specifically.
 - **Backend stays `ForgeMission.Core`**, referenced directly by the Blazor Server Client Runtime
   host — no serialization boundary, same reasoning [Phase 35](phase-35-forge-ui-blazor.md) already
   used for `ForgeUI`. **The HTTP conversation/tool loop is client-owned and target-invariant:** it
@@ -100,8 +136,13 @@ the shelved Avalonia spike is [phase-43.2-avalonia-vanilla-shell.md](phase-43.2-
 | ~~43.2 — Avalonia vanilla shell~~ [(shelved)](phase-43.2-avalonia-vanilla-shell.md) | Superseded below. Tasks 1–3 (streaming, real tool execution, indicators) genuinely worked and are preserved as evidence in the [_completed doc](phase-43.2-avalonia-vanilla-shell_completed.md); Task 4 (visual identity) was abandoned mid-flight, merged into `main` via PR 2026-07-27 for historical reference (dead/superseded code, not active). | 43.1, 43.7 | **Shelved 2026-07-27** |
 | [43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md) | The familiar coding-agent chat UI (Claude Code/Codex-shaped), Electron shell (+ browser tab for `forge webui`) over a Blazor Server Client Runtime, talking to a swappable Mission Runtime. Replaces the shelved Avalonia spoke above. | 43.1, 43.7 | **Tasks 1, 2a, 2b done (2b hardened via 43.2a/43.2b, below) — functional "Done when" met 2026-07-31. Next and only open task: Task 3 (tool-call indicators + `forge.css` visual polish) — today's shell is deliberately plain/unstyled HTML.** |
 | [43.2a — Client Runtime capability boundary](phase-43.2a-client-runtime-capability-boundary.md) | Enforce the hands/brain boundary: Docker and hosted Mission Runtimes receive explicit mission inputs and protocol messages, never the opened local workspace; keep the existing Client Runtime loop target-invariant. | 43.2 Task 2b proof | **Boundary proven; its archive implementation is superseded by 43.2b, so no separate review remains open (re-verified as part of 43.2b's review instead)** |
-| [43.2b — OCI mission delivery](phase-43.2b-oci-mission-delivery.md) | Move mission bootstrap into the Mission Runtime: the Client Runtime supplies a digest-pinned OCI reference; the local runner pulls, validates, caches, and loads it itself. | 43.2a | **DONE 2026-07-31** — public image, real Docker loop, and a live Electron UI proof (screenshot) all verified; architecture review completed, found one gap (a `MissionRef` that fails post-pull validation degraded silently instead of failing startup), fixed and architect-accepted on `codex/phase-43.2b-startup-hardening` |
-| [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as the flagship; decide intermediate-role-switch visibility. Now builds on the Electron shell — vision unchanged. | 43.2 (Electron) | Design — next after 43.2's Task 3 |
+| [43.2b — OCI mission delivery](phase-43.2b-oci-mission-delivery.md) | Move mission bootstrap into the Mission Runtime: the Client Runtime supplies a digest-pinned OCI reference; the local runner pulls, validates, caches, and loads it itself. | 43.2a | **DONE 2026-07-31** — public image, real Docker loop, and a live Electron UI proof (screenshot) all verified; architecture review completed, found one gap (a `MissionRef` that fails post-pull validation degraded silently instead of failing startup), fixed and architect-accepted on `codex/phase-43.2b-startup-hardening`. Superseded as the *active* mission-delivery mechanism by the new architecture, but the OCI delivery design itself is expected to carry forward into the Client Runtime's Mission Runtime connection under 43.11 — not thrown away. |
+| **Superseded chain, prerequisite work below replaces it** — [43.2 Task 3 done 2026-08-01](phase-43.2-electron-forge-desktop-shell.md) (Electron/Blazor Server visual polish, real UX design knowledge that carries into 43.11) | — | — | Superseded by 43.8–43.11 |
+| [43.8 — Capability Provider pattern](phase-43.8-capability-provider-pattern.md) | Migrate `IWorkspace`/`ToolExecutorRegistry` into `IFileProvider`/`ITerminalProvider` + a Capability Registry the Mission Runtime can query, replacing the fixed `AgentToolDeclarations` constant. | 43.1, 43.7 | Design |
+| [43.9 — Client Runtime authorization](phase-43.9-client-runtime-authorization.md) | The security enforcement point: validate → authorize → dispatch → audit, sitting between the Mission Runtime's capability requests and 43.8's providers. Distinct from mission-level human-in-the-loop (43.5). | 43.8 | Design |
+| [43.10 — Transport contract](phase-43.10-transport-contract.md) | `IClientRuntimeChannel` + `HttpClientRuntimeChannel` (HTTP + SSE/WebSockets) — the only path the sandboxed WASM UI has to reach the Client Runtime, since they're separate processes under the new architecture. | 43.9 | Design |
+| [43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md) | Replaces the Electron/Blazor Server shell: WASM UI (verified against a plain browser, same loop as today) + Photino native packaging (thin wrapper only). Rebuilds Task 3's proven visual design against the new rendering technology. | 43.10 | Design — Photino maturity due-diligence gate first |
+| [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as the flagship; decide intermediate-role-switch visibility. | 43.11 (WASM/Photino shell) | Design — blocked on the 43.8–43.11 prerequisite chain, not the old Electron shell |
 | [43.4 — IDE trace surface (iterative)](phase-43.4-ide-trace-surface.md) | Evolve the vanilla shell toward the debugger-style workbench (outline/thread/gate/code-pane, dockable panels) from the forge-trace brainstorm. Explicitly a mockup-iterate-refine loop, not a fixed deliverable. Now builds on the Electron shell — vision unchanged. | 43.3 | Design — iteration not started |
 | [43.5 — Human-in-the-loop (suspend/resume)](phase-43.5-human-in-the-loop.md) | `kind: human` pipeline step + `Suspended` `StepEnvelope` outcome + resume-at-step-N — the mechanical prerequisite for 43.4's "Gate" concept and for approval-gated missions generally. Framework-agnostic (Core-level) — unaffected by the Electron pivot. | None (parallel-buildable with 43.1–43.3; blocks only 43.4's Gate feature) | Design |
 | 43.6 — Cross-platform validation checkpoints | Periodic: confirm the Electron shell (and `forge webui` browser path) work on Windows/Linux. Not a spoke — a recurring checklist item against whichever spoke just shipped. | Each prior spoke | Ongoing |
