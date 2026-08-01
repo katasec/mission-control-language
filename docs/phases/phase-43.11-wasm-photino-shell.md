@@ -74,6 +74,23 @@ new layer split.
   making an accidental boundary violation obvious during development, not building tooling for its
   own sake. If boundary-enforcement needs ever grow past a handful of checks like this, that's a
   future reconsideration, not something to build speculatively now.
+- **The WASM static bundle is served by the Client Runtime's existing Kestrel host, at the same
+  origin as the transport API — not by a separate static server, and not by `Photino.Blazor`'s own
+  scheme-handler hosting mechanism.** Blazor WebAssembly itself needs no ASP.NET Core — it's static
+  output any static file server could serve. ASP.NET Core is unavoidable here only because
+  [43.10](phase-43.10-transport-contract.md)'s transport API already needs Kestrel (routing, request
+  binding, SSE) — that requirement exists independent of how the UI gets served. Given that Kestrel
+  process already exists, serving the WASM assets from it too (one origin, one port) is not just
+  convenient, it's the reason `IClientRuntimeChannel`'s calls need no CORS handling at all — same
+  origin means plain relative-URL requests, and specifically avoids cross-origin `EventSource` for
+  the SSE subscription, which is meaningfully worse-behaved than same-origin. It also means the
+  Photino native host stays on plain `Photino.NET` — a window + native WebView pointed at
+  `http://localhost:<port>` — with no dependency on `Photino.Blazor` at all, which matters because
+  `Photino.Blazor` was the single most stale of the three Photino repos checked in the due-diligence
+  finding above (zero pushes of any kind since 2025-01-23, versus a cosmetic README push on the other
+  two). This also means the Photino host project never touches
+  `ForgeMission.ClientRuntime.Transport` directly — it just opens a URL — which is exactly what the
+  shell-boundary test above expects to find.
 
 ## Sequencing: plumbing now (Codex), visual work deferred (Claude paired with Ameer)
 
@@ -97,18 +114,23 @@ fit for the Claude-architect/Codex-developer pipeline in
    decision above.
 2. Scaffold the Blazor WebAssembly project. **Batch A (now):** the bare project — new `.csproj`,
    `forge.css` wired in as a static asset, a minimal unstyled page sufficient for task 3 to prove the
-   channel round-trip. **Batch B (deferred):** the actual UI components (composer, tool-call
-   indicator, response card) — not a port of the Electron shell's Razor markup (the underlying
-   rendering model differs enough that a port risks carrying over Server-specific assumptions).
+   channel round-trip — plus wiring its published static output into `ForgeMission.ClientRuntime`'s
+   existing Kestrel host (same origin as the `/transport/*` API, per the hosting locked decision
+   above), not a separate static server. **Batch B (deferred):** the actual UI components (composer,
+   tool-call indicator, response card) — not a port of the Electron shell's Razor markup (the
+   underlying rendering model differs enough that a port risks carrying over Server-specific
+   assumptions).
 3. **Batch A.** Implement the WASM side of [43.10](phase-43.10-transport-contract.md)'s
    `IClientRuntimeChannel` consumption — the UI's only path to the Client Runtime. Provable against
    task 2's minimal page; does not require task 4's visual polish to exist first.
 4. **Batch B (deferred).** Rebuild the composer, tool-call indicator, and response-card treatment
    against Task 3's existing target mockup and component spec (visual design carries forward; only
    the implementation technology changes).
-5. **Batch A.** Scaffold the Photino native host: window lifecycle, loading the WASM app's local
-   origin, native folder-picker dialog exposed through the Client Runtime API contract. Can load
-   task 2's minimal page for now — doesn't need task 4's polish to prove the host works.
+5. **Batch A.** Scaffold the Photino native host using plain `Photino.NET` (not `Photino.Blazor` —
+   per the hosting locked decision above): window lifecycle, opening a native window pointed at the
+   Client Runtime's own `http://localhost:<port>` (where task 2 wired the WASM static output),
+   native folder-picker dialog exposed through the Client Runtime API contract. Can load task 2's
+   minimal page for now — doesn't need task 4's polish to prove the host works.
 6. **Batch B (deferred).** **Verify against a plain browser first** (screenshot/inspect the WASM app
    running as a normal localhost page — full loop: open folder, send a prompt, see a real tool call,
    see the styled response). Only after that passes, verify the identical app once more through the
