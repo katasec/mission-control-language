@@ -198,6 +198,18 @@ arguments from the published folder spawns the co-located native `ClientRuntime`
 tears down both processes. The Makefile's previously-broken `desktop` target (pointed at the deleted
 Electron directory) and the dead `scripts/desktop.ps1` were replaced/removed in the same pass.
 
+**Third termination path found and fixed the same day, via an actual native window close, not just
+signal tests (commit `232c8d7`):** the two paths above don't cover clicking the window's own close
+button. Confirmed live, twice, by actually opening the published app and closing the window: the
+`ClientRuntime` child was left orphaned both times — code placed after `window.WaitForClose()`
+never ran, because closing the last window on macOS tears the process down via native AppKit
+machinery before control returns to managed code. Root-caused against Photino.NET's own source
+(`PhotinoNetDelegates.cs`): `RegisterWindowClosingHandler`'s callback runs synchronously from native
+code *before* the close is allowed to proceed, which is the correct hook — not `WaitForClose()`'s
+return. Fixed and reverified live, twice more: closing the real window now leaves zero processes
+behind. All three termination paths (normal close, external `SIGTERM`, and the un-catchable `SIGKILL`
+that no process can intercept) are now accounted for, not assumed.
+
 **Full spoke done when** (batch B, later): the Blazor WASM UI, reached through
 `IClientRuntimeChannel`, opens a folder, accepts a prompt, streams a response from the configured
 Mission Runtime, executes at least one real tool call visibly (with correct per-tool glyphs/copy,
