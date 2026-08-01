@@ -1,5 +1,13 @@
 # Phase 43.11 — Blazor WASM UI shell + Photino native packaging
 
+> **Naming note (2026-08-01):** the native packaging project this spoke builds was renamed
+> `ForgeMission.ClientRuntime.Photino` → `ForgeMission.Desktop` (and moved out from under the
+> `ClientRuntime.` prefix — see
+> [forge-architecture.md](../design/forge-architecture.md#naming-the-desktop-shell-project)). Below,
+> literal code references (project name, `PhotinoShellBoundaryTests`) have been updated to the new
+> names; "Photino" elsewhere still correctly names the underlying `Photino.NET` library the shell is
+> built on, which hasn't changed.
+
 **Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.10](phase-43.10-transport-contract.md) (the UI needs a real channel to the Client Runtime before
 it can do anything). Last in the prerequisite chain: 43.8 → 43.9 → 43.10 → **43.11**. Replaces the
@@ -160,14 +168,14 @@ native folder-picker needed yet, see task 5) to a real provider and back; the Ph
 `0c8908c`/`8929943`/`744338e`). Implemented by Codex, verified independently: build clean, full
 suite 446 passed/0 failed/0 warnings; browser proof (unstyled page reads a real file through the
 channel); published-host proof (`/`, `/css/forge.css`, `/_framework/blazor.webassembly.js` all 200);
-Photino proof (native window loads the same URL); `PhotinoShellBoundaryTests` +
+Photino proof (native window loads the same URL); `DesktopShellBoundaryTests` +
 `ClientRuntimePresentationBoundaryTests` passing (5 tests). Cleanup folded in: removed the
 now-fully-orphaned Blazor Server scaffold (`App.razor`/`Shared/MainLayout.razor`/`Pages/Index.razor`/
 `Pages/_Host.cshtml`) and the dead Electron shell scaffold (`electron/main.cjs` + friends, superseded
 by this batch's WASM/Photino replacement).
 
 **AOT validated and enabled**, not just designed: both `ForgeMission.ClientRuntime` and
-`ForgeMission.ClientRuntime.Photino` now publish as genuine single self-contained Native AOT
+`ForgeMission.Desktop` now publish as genuine single self-contained Native AOT
 executables (~16MB / ~1.8MB on osx-arm64, same Homebrew-OpenSSL linker precedent as
 `ForgeMission.Cli`), sub-second startup, confirmed by an actual `dotnet publish` + runtime smoke test
 against the produced binaries — not just a clean build. Found and fixed two real AOT gaps in the
@@ -182,7 +190,7 @@ that starts fast** — confirmed, not assumed.
 **Single-exe orchestration built and verified (2026-08-01, commits `d195ff3`/`26282fe`):** the two
 AOT binaries above were still separately-published with no orchestration between them — running the
 real app required manually starting `ClientRuntime`, reading its URL off stdout, and passing it to
-`Photino` by hand. `ForgeMission.ClientRuntime.Photino` now spawns `ClientRuntime` as a child process
+`Photino` by hand. `ForgeMission.Desktop` now spawns `ClientRuntime` as a child process
 itself when run with no arguments (the real desktop experience), reads its `FORGE_CLIENT_RUNTIME_URL=`
 line, loads that URL, and tears the child down on exit — the explicit-URL argument mode is kept only
 for dev/test convenience. Two real bugs surfaced by actual runtime testing, not review: top-level

@@ -2,13 +2,13 @@ using System.Xml.Linq;
 
 namespace ForgeMission.Tests.Architecture;
 
-public sealed class PhotinoShellBoundaryTests
+public sealed class DesktopShellBoundaryTests
 {
     [Fact]
-    public void PhotinoHost_DoesNotReferenceClientRuntimeImplementation()
+    public void DesktopHost_DoesNotReferenceClientRuntimeImplementation()
     {
-        var project = Path.Combine(RepositoryRoot(), "src", "ForgeMission.ClientRuntime.Photino",
-            "ForgeMission.ClientRuntime.Photino.csproj");
+        var project = Path.Combine(RepositoryRoot(), "src", "ForgeMission.Desktop",
+            "ForgeMission.Desktop.csproj");
         var references = XDocument.Load(project)
             .Descendants("ProjectReference")
             .Select(reference => (string?)reference.Attribute("Include"))

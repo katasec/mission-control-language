@@ -19,7 +19,7 @@ endif
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
 CLIENT_RUNTIME := src/ForgeMission.ClientRuntime
-PHOTINO     := src/ForgeMission.ClientRuntime.Photino
+DESKTOP_SHELL := src/ForgeMission.Desktop
 DESKTOP_DIR := dist/forge-desktop
 
 .PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset desktop desktop-publish
@@ -63,14 +63,14 @@ dev-down: ## Stop local dev environment (keeps data)
 dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
 	./scripts/dev-reset.sh
 
-desktop-publish: ## Publish the desktop app (Client Runtime + Photino shell) as one self-contained folder
+desktop-publish: ## Publish the desktop app (Client Runtime + native desktop shell) as one self-contained folder
 	rm -rf $(DESKTOP_DIR)
 	dotnet publish $(CLIENT_RUNTIME) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
-	dotnet publish $(PHOTINO) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
-	@echo "Desktop app published: $(DESKTOP_DIR)/ForgeMission.ClientRuntime.Photino"
+	dotnet publish $(DESKTOP_SHELL) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
+	@echo "Desktop app published: $(DESKTOP_DIR)/ForgeMission.Desktop"
 
-desktop: desktop-publish ## Publish then launch the desktop app (Photino owns the Client Runtime's lifecycle)
-	$(DESKTOP_DIR)/ForgeMission.ClientRuntime.Photino
+desktop: desktop-publish ## Publish then launch the desktop app (the desktop shell owns the Client Runtime's lifecycle)
+	$(DESKTOP_DIR)/ForgeMission.Desktop
 
 clean: ## Remove build artefacts (bin/ and obj/)
 	dotnet clean src/

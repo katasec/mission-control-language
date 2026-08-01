@@ -29,7 +29,7 @@ else if (args.Length == 0)
 }
 else
 {
-    throw new ArgumentException("Usage: ForgeMission.ClientRuntime.Photino [<client-runtime-url>]");
+    throw new ArgumentException("Usage: ForgeMission.Desktop [<client-runtime-url>]");
 }
 
 // A safety net for abrupt termination (SIGTERM, Ctrl+C) that skips past the normal WaitForClose()

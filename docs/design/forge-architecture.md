@@ -306,12 +306,40 @@ more capable native host emerges later, it should be replaceable with minimal im
 of the platform. This was one of the architectural objectives converged on during the desktop
 design discussions, not an accident of how the code happened to end up.
 
-**Open, separate from the above — not yet decided:** whether Photino should embed and self-serve
-the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host. Closing
-*this* question is not implied by closing "is Photino the shell" above — it's a distinct,
-independently-revisitable question. Treat the WHY and the HOW as two separate steps, in this
-order, and don't let them blur together (a prior discussion looped by answering "how" — a specific
-API/mechanism — while the actual question on the table was still "why"):
+### Naming the desktop shell project
+
+**Decision (2026-08-01, locked): the project is `ForgeMission.Desktop`, not
+`ForgeMission.ClientRuntime.Photino`.** Every other satellite in the `ClientRuntime.*` family is
+named for its role (`.Transport`, `.Presentation`, `.TransportProbe`) — never for the library
+implementing it; there is no `ForgeMission.ClientRuntime.Kestrel`. `.Photino` was the one exception,
+and it directly contradicted the disposability argument two paragraphs up: naming the artifact after
+today's implementation library is exactly what makes a future replacement look like a rewrite
+instead of a swap. Two changes, not one:
+
+- **Suffix:** `.Photino` → `.Desktop` — names the role (Desktop Shell contract), not the library.
+- **Prefix/nesting:** moved out from under `ClientRuntime.` entirely, to a top-level
+  `ForgeMission.Desktop`, sibling to `ForgeMission.Cli`/`ForgeMission.ClientRuntime`. The
+  `ClientRuntime.*` prefix correctly marks things that are *part of* the Client Runtime
+  (`Transport`, `Presentation`); this project isn't one of those — per the layer split above, it
+  spawns and wraps the Client Runtime as a subprocess (#1 spawning #2), it doesn't live inside it.
+  Nesting it under `ClientRuntime.` mischaracterized that relationship.
+
+This is a pure rename — no behavior change, and it does **not** touch actual `Photino.NET`/
+`Photino.Native` usage (the shell is still built on Photino under the hood; only the project that
+*wraps* that library is no longer named after it). Renamed 2026-08-01: `Program.cs`, `.csproj`,
+`ForgeMission.slnx`, `Makefile`, and `PhotinoShellBoundaryTests` → `DesktopShellBoundaryTests` (see
+[43.11](../phases/phase-43.11-wasm-photino-shell.md)). Note this reuses a name previously held by
+the now-deleted Avalonia-era shell project — intentional, not a collision: `ForgeMission.Desktop`
+names *whichever implementation currently satisfies the Desktop Shell contract*, per the
+disposability argument above, and that project is what git history is for.
+
+**Open, separate from the above — not yet decided:** whether the desktop shell should embed and
+self-serve the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host.
+Closing *this* question is not implied by closing "is Photino the shell" above, nor by the naming
+decision just above it — it's a distinct, independently-revisitable question. Treat the WHY and the
+HOW as two separate steps, in this order, and don't let them blur together (a prior discussion
+looped by answering "how" — a specific API/mechanism — while the actual question on the table was
+still "why"):
 
 - **WHY (motivation) — settled:** packaging simplicity. HashiCorp embeds Vault/Consul's UI into
   their server binaries via `go:embed` for exactly this reason — "single binary deployment, no
@@ -324,12 +352,12 @@ API/mechanism — while the actual question on the table was still "why"):
   scope, though: HashiCorp embeds into *the server binary itself* (no separate disposable-shell
   layer exists in their architecture) — that maps to what `ForgeMission.ClientRuntime` (#2)
   already does today (Kestrel serves `wwwroot` from the same publish artifact), not automatically
-  to whether #1 (Photino) should *also* carry a copy. Don't re-derive this "why" from scratch —
-  reference it.
-- **HOW (solutioning) — not yet done, deliberately deferred:** if/how Photino specifically would
-  embed and serve the assets (e.g. `Photino.NET`'s `RegisterCustomSchemeHandler` is one candidate
-  mechanism, confirmed present in the package version in use), and what it costs — what a future
-  shell replacement would additionally need to reimplement (resource embedding, scheme-handler
+  to whether #1 (`ForgeMission.Desktop`) should *also* carry a copy. Don't re-derive this "why" from
+  scratch — reference it.
+- **HOW (solutioning) — not yet done, deliberately deferred:** if/how the desktop shell specifically
+  would embed and serve the assets (e.g. `Photino.NET`'s `RegisterCustomSchemeHandler` is one
+  candidate mechanism, confirmed present in the package version in use), and what it costs — what a
+  future shell replacement would additionally need to reimplement (resource embedding, scheme-handler
   wiring, cross-origin handling against the Client Runtime's transport API) versus the
   disposability goal above. This is intentionally not solved here yet — a future session should
   pick up solutioning from the WHY above, not restart the why/how debate.
