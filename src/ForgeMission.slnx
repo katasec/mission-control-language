@@ -3,6 +3,8 @@
   <Project Path="ForgeMission.Billing/ForgeMission.Billing.csproj" />
   <Project Path="ForgeMission.Cli/ForgeMission.Cli.csproj" />
   <Project Path="ForgeMission.ClientRuntime/ForgeMission.ClientRuntime.csproj" />
+  <Project Path="ForgeMission.ClientRuntime.Transport/ForgeMission.ClientRuntime.Transport.csproj" />
+  <Project Path="ForgeMission.ClientRuntime.TransportProbe/ForgeMission.ClientRuntime.TransportProbe.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
   <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
   <Project Path="ForgeMission.Docker/ForgeMission.Docker.csproj" />
