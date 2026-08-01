@@ -69,6 +69,21 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel
 request, error) — exact schema is an implementation task, not a design decision blocking this
 spoke's approval.
 
+- **This spoke proves the transport against a plain out-of-process HTTP test client, not the real
+  Blazor WASM UI.** Tasks 4–5 as originally scoped ("wire the Blazor WASM UI," "a WASM-hosted test
+  harness") assume a WASM UI project exists — it doesn't yet; it's scaffolded in
+  [43.11](phase-43.11-wasm-photino-shell.md) Task 2, which itself depends on this spoke being done
+  first. Building a throwaway WASM project here just to prove the channel, then discarding it when
+  43.11 scaffolds the real one, is wasted work the spoke doesn't need: the property actually being
+  proven — "a capability request crosses a real network boundary (loopback), not an in-process
+  shortcut" — doesn't require an actual browser WASM runtime, only a genuinely separate process
+  making a real HTTP call. This spoke's end-to-end proof is a plain `HttpClient`-based test (or
+  equivalent out-of-process client) hitting `HttpClientRuntimeChannel` over real loopback HTTP.
+  [43.11](phase-43.11-wasm-photino-shell.md) Task 3 is where the *real* WASM UI consumes
+  `IClientRuntimeChannel` for the first time and re-proves the same property end-to-end from an
+  actual browser WASM context — that is not redundant with this spoke, it's the point where the
+  literal "Blazor WASM UI" wiring this spoke's original task 4 named actually happens.
+
 ## Deferred — documented, not build-ready
 
 - **`GrpcClientRuntimeChannel`** — named as the future option; no concrete need for it yet. Build
@@ -87,18 +102,21 @@ spoke's approval.
 3. Stand up the Client Runtime-side HTTP endpoints this channel calls — a small ASP.NET Core host
    distinct from the UI, exposing the capability dispatcher and the Mission Runtime's streaming
    output over this contract.
-4. Wire the Blazor WASM UI to `IClientRuntimeChannel` exclusively — no direct `HttpClient` usage
-   against the Client Runtime anywhere in UI code (enforced by code review / a lint-style check, not
-   just a written rule).
-5. End-to-end test: a capability request issued from a WASM-hosted test harness, through the
-   channel, through the dispatcher, to a real provider, and a result returned — proving the full
-   chain works over the real transport, not an in-process shortcut.
+4. Establish the "no direct `HttpClient` against the Client Runtime" rule as an enforceable
+   constraint (e.g. an architecture test / assembly-reference check) that 43.11's real WASM UI will
+   be held to from its first commit — there is no UI project to apply this to yet (see the locked
+   decision above), so this task produces the enforcement mechanism, not a UI to run it against.
+5. End-to-end test: a capability request issued from a plain out-of-process HTTP test client (not
+   an in-process shortcut), through `HttpClientRuntimeChannel`, through the dispatcher, to a real
+   provider, and a real result returned — proving the transport itself works over a real loopback
+   network boundary. [43.11](phase-43.11-wasm-photino-shell.md) Task 3/6 re-proves the same property
+   from an actual WASM UI once that project exists.
 
 ## Done when
 
-The Blazor WASM UI never references `HttpClient` (or any transport-specific type) directly — every
-UI ↔ Client Runtime interaction goes through `IClientRuntimeChannel`. `HttpClientRuntimeChannel`
-correctly carries both request/response and streaming traffic. A capability request issued from the
-UI reaches a real provider and returns a real result over the actual network boundary (loopback),
-not an in-process call — proving the WASM sandbox boundary this whole prerequisite chain exists to
-respect is real, not assumed.
+`HttpClientRuntimeChannel` correctly carries both request/response and streaming traffic, verified
+by a capability request issued from a genuinely out-of-process HTTP client that reaches a real
+provider and returns a real result over loopback — not an in-process call. The "no direct
+`HttpClient` against the Client Runtime" constraint exists as an enforceable check ready for
+[43.11](phase-43.11-wasm-photino-shell.md)'s WASM UI to be held to, even though no UI project
+consumes it yet.
