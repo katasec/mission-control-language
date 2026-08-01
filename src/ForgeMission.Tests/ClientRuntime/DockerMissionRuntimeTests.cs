@@ -1,3 +1,4 @@
+using ForgeMission.ClientRuntime;
 using ForgeMission.ClientRuntime.Services;
 using ForgeMission.Core.Tools;
 using Microsoft.Extensions.Configuration;
@@ -9,14 +10,21 @@ namespace ForgeMission.Tests.ClientRuntime;
 public sealed class DockerMissionRuntimeTests
 {
     [Fact]
-    public async Task StartAsync_MissingMissionRef_FailsBeforeProviderFileOrDocker()
+    public void ResolveMissionRef_NoConfiguration_FallsBackToBuiltinVanilla()
     {
         var configuration = new ConfigurationBuilder().Build();
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            DockerMissionRuntime.StartAsync(configuration));
+        Assert.Equal(BuiltinMissionReferences.Vanilla, DockerMissionRuntime.ResolveMissionRef(configuration));
+    }
 
-        Assert.Equal("Docker Mission Runtime needs MissionRuntime:Docker:MissionRef.", exception.Message);
+    [Fact]
+    public void ResolveMissionRef_ExplicitConfiguration_UsesConfiguredValue()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection([new("MissionRuntime:Docker:MissionRef", "ghcr.io/example/custom@sha256:abc")])
+            .Build();
+
+        Assert.Equal("ghcr.io/example/custom@sha256:abc", DockerMissionRuntime.ResolveMissionRef(configuration));
     }
 
     [SkippableFact]

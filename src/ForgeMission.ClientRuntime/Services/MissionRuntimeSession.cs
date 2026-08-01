@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using ForgeMission.Core.Runtime;
 using ForgeMission.Core.Tools;
 using Microsoft.Extensions.AI;
@@ -14,7 +15,7 @@ namespace ForgeMission.ClientRuntime.Services;
 // already-established wire contract.
 // ChatGPT is the public runner's vanilla built-in label. A MissionRef runner has one loaded mission
 // and therefore ignores this model id through its single-mission fallback.
-public sealed class MissionRuntimeSession(HttpClient httpClient, string model = "ChatGPT", ToolExecutorRegistry? toolExecutors = null)
+public sealed partial class MissionRuntimeSession(HttpClient httpClient, string model = "ChatGPT", ToolExecutorRegistry? toolExecutors = null)
 {
     private readonly ToolExecutorRegistry _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
     private readonly List<WireMessage> _messages = [];
@@ -67,7 +68,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
             Stream = true,
             Tools = capabilities.ToolDeclarations.Select(ToWireTool).ToList(),
         };
-        var json = JsonSerializer.Serialize(request);
+        var json = JsonSerializer.Serialize(request, WireJsonContext.Default.WireRequest);
 
         using var message = new HttpRequestMessage(HttpMethod.Post, "v1/messages")
         {
@@ -114,7 +115,8 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
         return new WireTool(function.Name, function.Description, function.JsonSchema);
     }
 
-    private static JsonElement ToElement<T>(T value) => JsonSerializer.SerializeToElement(value);
+    private static JsonElement ToElement<T>(T value) =>
+        JsonSerializer.SerializeToElement(value, (JsonTypeInfo<T>)WireJsonContext.Default.GetTypeInfo(typeof(T))!);
 
     private sealed class AnthropicSseParser(Action<string>? onTextDelta)
     {
@@ -209,7 +211,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
 
             var input = _toolArguments.TryGetValue(index, out var arguments)
                 ? JsonDocument.Parse(arguments.ToString()).RootElement.Clone()
-                : JsonSerializer.SerializeToElement(new { });
+                : JsonDocument.Parse("{}").RootElement.Clone();
             _blocks[index] = block with { Input = input };
         }
 
@@ -291,4 +293,8 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
         public static WireContentBlock ToolUse(string id, string name) => new("tool_use", Id: id, Name: name);
         public static WireContentBlock ToolResult(string id, string content) => new("tool_result", ToolUseId: id, ResultContent: content);
     }
+
+    [JsonSerializable(typeof(WireRequest))]
+    [JsonSerializable(typeof(List<WireContentBlock>))]
+    private sealed partial class WireJsonContext : JsonSerializerContext;
 }

@@ -275,10 +275,142 @@ the browser-tab version did.
 - **Photino** stays intentionally minimal: it hosts the WebView and packages the app. Everything
   else belongs to Blazor or the Client Runtime. The desktop shell should remain almost invisible.
 
-**Open due-diligence item, not a rejection:** Photino's current maintenance health (community size,
-Linux WebKitGTK support quality, issue backlog) hasn't been independently verified yet. Check it
-like any new dependency before committing the packaging strategy fully to it — same bar this
-project already applied to Avalonia's Pro-tier control risk.
+**Due diligence done, not just planned** — see the finding recorded in
+[phase-43.11's locked decisions](../phases/phase-43.11-wasm-photino-shell.md#locked-decisions)
+(2026-08-01): genuine yellow flag (both `photino.NET`/`Photino.Native` and especially
+`Photino.Blazor` are stale, several unmerged community PRs, one unanswered Linux segfault
+report), accepted not deferred, because the mitigation is structural — see below.
+
+### Why Photino, specifically: the shell is intentionally disposable
+
+We didn't choose Photino because it's the best long-term desktop framework. We chose it because,
+after the layer split above, the desktop shell became intentionally insignificant — and that
+insignificance is the actual risk mitigation for picking a dependency with known maintenance
+weaknesses.
+
+All meaningful Forge behavior lives outside the shell: the Blazor WASM UI, the Client Runtime, the
+Mission Runtime, the provider model, transport contracts, capability contracts. The desktop shell
+is deliberately reduced to: native window, native WebView, application lifecycle, packaging, native
+OS integration. Nothing more.
+
+Because of that separation, the shell is disposable. **If Photino disappeared tomorrow, the
+expected outcome is "replace the shell," not "rewrite Forge."** That's an architectural success
+criterion, not an aspiration: if replacing the desktop shell ever requires changes outside the
+Desktop project, that's a violation of one of Forge's core architectural boundaries, not an
+acceptable cost of the choice.
+
+In other words, Photino's maintenance risk was de-risked by construction, not by picking a
+"safer" framework — it owns almost no business logic, so its health doesn't gate Forge's health.
+Photino is simply today's implementation of the Desktop Shell contract; if a better-maintained or
+more capable native host emerges later, it should be replaceable with minimal impact to the rest
+of the platform. This was one of the architectural objectives converged on during the desktop
+design discussions, not an accident of how the code happened to end up.
+
+### Naming the desktop shell project
+
+**Decision (2026-08-01, locked): the project is `ForgeMission.Desktop`, not
+`ForgeMission.ClientRuntime.Photino`.** Every other satellite in the `ClientRuntime.*` family is
+named for its role (`.Transport`, `.Presentation`, `.TransportProbe`) — never for the library
+implementing it; there is no `ForgeMission.ClientRuntime.Kestrel`. `.Photino` was the one exception,
+and it directly contradicted the disposability argument two paragraphs up: naming the artifact after
+today's implementation library is exactly what makes a future replacement look like a rewrite
+instead of a swap. Two changes, not one:
+
+- **Suffix:** `.Photino` → `.Desktop` — names the role (Desktop Shell contract), not the library.
+- **Prefix/nesting:** moved out from under `ClientRuntime.` entirely, to a top-level
+  `ForgeMission.Desktop`, sibling to `ForgeMission.Cli`/`ForgeMission.ClientRuntime`. The
+  `ClientRuntime.*` prefix correctly marks things that are *part of* the Client Runtime
+  (`Transport`, `Presentation`); this project isn't one of those — per the layer split above, it
+  spawns and wraps the Client Runtime as a subprocess (#1 spawning #2), it doesn't live inside it.
+  Nesting it under `ClientRuntime.` mischaracterized that relationship.
+
+This is a pure rename — no behavior change, and it does **not** touch actual `Photino.NET`/
+`Photino.Native` usage (the shell is still built on Photino under the hood; only the project that
+*wraps* that library is no longer named after it). Renamed 2026-08-01: `Program.cs`, `.csproj`,
+`ForgeMission.slnx`, `Makefile`, and `PhotinoShellBoundaryTests` → `DesktopShellBoundaryTests` (see
+[43.11](../phases/phase-43.11-wasm-photino-shell.md)). Note this reuses a name previously held by
+the now-deleted Avalonia-era shell project — intentional, not a collision: `ForgeMission.Desktop`
+names *whichever implementation currently satisfies the Desktop Shell contract*, per the
+disposability argument above, and that project is what git history is for.
+
+### Desktop Host abstraction (`IDesktopHost`)
+
+**Decision (2026-08-01, locked): the Desktop Shell contract is a real interface,
+`IDesktopHost`, not just prose + a project-reference test.** Same pattern this project already
+uses for Model/Storage/Transport/Capability Providers — a stable seam something programs against,
+with a swappable implementation behind it. The seam wasn't obvious at first because a native
+desktop shell has no external caller (nothing outside it invokes "the shell," it invokes
+everything else) — but there *is* an internal caller: `ForgeMission.Desktop/Program.cs`'s
+Client-Runtime orchestration (spawn the child process, wait for its ready URL, register
+SIGTERM/SIGINT teardown) is itself host-agnostic and was already proven independently correct
+through three separate bug fixes (top-level-`await`-on-threadpool, `ProcessExit` not firing on
+external `kill`, window-close bypassing the normal return path — see
+[43.11](../phases/phase-43.11-wasm-photino-shell.md)). Before this decision, that proven
+orchestration code called `PhotinoWindow` directly, so replacing Photino meant rewriting
+`Program.cs` wholesale — including re-deriving those three bugs from scratch. `IDesktopHost` moves
+the seam to where it belongs: the orchestration now depends only on `IDesktopHost`
+(`Load(url)` / `RegisterClosingHandler(Func<bool>)` / `Run()`), and the one line that constructs a
+concrete host (`new PhotinoDesktopHost()`) is the entire footprint a replacement host would touch —
+mirrors `ProviderClientBuilder`'s switch-case being the one place `IChatClient`'s concrete provider
+types are named. (Where the implementation actually lives is covered below — this paragraph is
+about the seam, not the project layout.)
+
+**Revised same day: split into three projects, not kept inside `ForgeMission.Desktop`.** The first
+cut kept `IDesktopHost`/`PhotinoDesktopHost` inside `ForgeMission.Desktop` itself (both `internal`)
+on the grounds that a second project for one implementation would be speculative. That reasoning
+was sound for *runtime* swappability (there's still only one host), but missed a *legibility* cost:
+with everything in one project, `Program.cs` still had to `using` a namespace that could be read as
+naming Photino just to reach the interface, and nothing structurally signaled "this file is the
+implementation, that file is host-agnostic" beyond an `internal` modifier — easy for a future
+reader (human or agent) to miss and reintroduce coupling. Moved to three projects instead:
+
+- `ForgeMission.Desktop.Contracts` — `IDesktopHost` only, `public`, zero dependencies (not even on
+  `ForgeMission.Desktop`).
+- `ForgeMission.Desktop.Photino` — `PhotinoDesktopHost`, `public sealed`, the only project allowed
+  to depend on the `Photino.NET` package; references `ForgeMission.Desktop.Contracts`.
+- `ForgeMission.Desktop` — the exe/composition root. References both of the above; `Program.cs`'s
+  orchestration logic (spawn/wait/signal-teardown) reads only `IDesktopHost`, and
+  `new PhotinoDesktopHost()` is the only place a *concrete host is constructed* — the project name
+  `ForgeMission.Desktop.Photino` itself still appears in that file's `using` directive and a couple
+  of explanatory comments, which is expected and fine; the boundary that matters is "no `Photino.NET`
+  type reference outside the composition line," not "the string Photino appears once."
+
+No `LinkerArg`/`PublishAot` on the two new projects — those stay exe-only, matching how
+`ForgeMission.Core` (a library linked into other AOT exes) is set up; both get `IsAotCompatible`
+only, same as `ForgeMission.ClientRuntime.Transport`. `DesktopShellBoundaryTests` was extended
+(`[Theory]`/`[InlineData]`) to check both `ForgeMission.Desktop.csproj` *and*
+`ForgeMission.Desktop.Photino.csproj` for forbidden references to
+`Core`/`ClientRuntime`/`ClientRuntime.Transport` — now precisely testing "the Desktop Host
+implementation project," not just the exe that happens to contain it.
+
+**Open, separate from the above — not yet decided:** whether the desktop shell should embed and
+self-serve the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host.
+Closing *this* question is not implied by closing "is Photino the shell" above, nor by the naming
+decision just above it — it's a distinct, independently-revisitable question. Treat the WHY and the
+HOW as two separate steps, in this order, and don't let them blur together (a prior discussion
+looped by answering "how" — a specific API/mechanism — while the actual question on the table was
+still "why"):
+
+- **WHY (motivation) — settled:** packaging simplicity. HashiCorp embeds Vault/Consul's UI into
+  their server binaries via `go:embed` for exactly this reason — "single binary deployment, no
+  runtime dependencies, no external files to manage" (their own stated rationale, see
+  [Vault UI README](https://github.com/hashicorp/vault/blob/main/ui/README.md)). That reasoning
+  plausibly applies *more* to a desktop app than to their server case: an ops team deploying Vault
+  has tooling/discipline to keep a binary and its asset folder together; an end user who downloaded
+  Forge does not — a separated `wwwroot/` folder is a more likely, not less likely, failure mode
+  in an unmanaged desktop environment than in a managed fleet deployment. Note the precedent's
+  scope, though: HashiCorp embeds into *the server binary itself* (no separate disposable-shell
+  layer exists in their architecture) — that maps to what `ForgeMission.ClientRuntime` (#2)
+  already does today (Kestrel serves `wwwroot` from the same publish artifact), not automatically
+  to whether #1 (`ForgeMission.Desktop`) should *also* carry a copy. Don't re-derive this "why" from
+  scratch — reference it.
+- **HOW (solutioning) — not yet done, deliberately deferred:** if/how the desktop shell specifically
+  would embed and serve the assets (e.g. `Photino.NET`'s `RegisterCustomSchemeHandler` is one
+  candidate mechanism, confirmed present in the package version in use), and what it costs — what a
+  future shell replacement would additionally need to reimplement (resource embedding, scheme-handler
+  wiring, cross-origin handling against the Client Runtime's transport API) versus the
+  disposability goal above. This is intentionally not solved here yet — a future session should
+  pick up solutioning from the WHY above, not restart the why/how debate.
 
 ---
 

@@ -18,8 +18,11 @@ retained in
 **What's abandoned:** Task 4 (apply the visual identity/design-system skin) was in progress when the
 pivot decision was made and was never finished. The in-flight implementation was on branch
 `codex/phase-43.2-task-4-visual-identity`, merged into `main` via PR 2026-07-27 alongside this
-doc-update pass — kept for historical reference only, not because the Avalonia UI code is active;
-it's dead/superseded code sitting inert in history, same as the rest of this shelved spoke.
+doc-update pass — kept for historical reference only at the time, not because the Avalonia UI code
+was active. **Removed 2026-08-01**: with the WASM/Photino replacement (43.11 Batch A) actually in
+place and proven, the `ForgeMission.Desktop` project (and its `VanillaMissionSessionFactoryTests`)
+were deleted entirely rather than kept as inert history — git history is sufficient provenance for
+dead code once its replacement exists, no reason to carry the project forward in the tree.
 
 **Not shelved:** [43.1 — Tool-execution engine](phase-43.1-tool-execution-engine.md) and
 [43.7 — Workspace provider abstraction](phase-43.7-workspace-provider.md) are framework-agnostic

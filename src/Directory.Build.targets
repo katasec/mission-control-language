@@ -1,0 +1,38 @@
+<Project>
+  <!--
+    Solution-wide publish-output cleanup, applied to every project under src/ automatically
+    (same discovery mechanism as Directory.Build.props). Targets, not properties, belong here by
+    MSBuild convention (Directory.Build.targets imports after each project's own targets are
+    defined, which is what a post-publish cleanup step needs).
+  -->
+
+  <!-- Native AOT strips debug symbols out of the executable into a separate bundle by default
+       (StripSymbols=true, the current .NET default) - correct for a small shipped binary, but the
+       bundle itself is enormous (confirmed: 188MB for a 37MB forge CLI exe) and has no runtime
+       purpose. Embedding it back into the exe instead (StripSymbols=false) was measured and
+       rejected - it roughly 5x's the single shipped file (37MB -> 177MB) instead of shipping a
+       separate large folder. Neither is what a clean "ship a small exe" build wants; deleting the
+       bundle after publish is. A developer who needs to symbolicate a crash can always rebuild
+       from the same source/commit to regenerate it locally - it doesn't need to travel with the
+       shipped binary. macOS-only for now (Linux's equivalent .dbg-file path hasn't been verified
+       on this machine - a Linux publish test would confirm the exact artifact name/shape). -->
+  <!-- AfterTargets="_CopyAotSymbols" (the SDK's own target that copies the bundle in), not
+       "Publish" - that target is itself hooked via AfterTargets="Publish" and gets registered
+       later in the SDK's own import order, so it runs after a plain Publish-hook here would,
+       leaving nothing yet to delete. -->
+  <Target Name="RemoveNativeDebugSymbolBundle" AfterTargets="_CopyAotSymbols"
+          Condition="Exists('$(PublishDir)$(AssemblyName).dSYM')">
+    <RemoveDir Directories="$(PublishDir)$(AssemblyName).dSYM" />
+  </Target>
+
+  <!-- BlazorDebugProxy is a browser-DevTools-only debugging aid (breakpoints in WASM code via
+       Chrome/Edge DevTools) that the Blazor WebAssembly SDK copies into any project hosting a WASM
+       app's static assets, with no documented MSBuild switch to opt out (a still-open, years-old
+       ask upstream: https://github.com/dotnet/aspnetcore/issues/25102). Not needed at runtime -
+       WASM debugging happens against Presentation's own dev server per 43.11's locked "develop
+       against a plain browser tab" decision, not against the hosted, embedded copy. -->
+  <Target Name="RemoveBlazorDebugProxy" AfterTargets="Publish"
+          Condition="Exists('$(PublishDir)BlazorDebugProxy')">
+    <RemoveDir Directories="$(PublishDir)BlazorDebugProxy" />
+  </Target>
+</Project>

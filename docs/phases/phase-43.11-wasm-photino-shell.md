@@ -1,5 +1,19 @@
 # Phase 43.11 — Blazor WASM UI shell + Photino native packaging
 
+> **Naming note (2026-08-01):** the native packaging project this spoke builds was renamed
+> `ForgeMission.ClientRuntime.Photino` → `ForgeMission.Desktop` (and moved out from under the
+> `ClientRuntime.` prefix — see
+> [forge-architecture.md](../design/forge-architecture.md#naming-the-desktop-shell-project)). Below,
+> literal code references (project name, `PhotinoShellBoundaryTests`) have been updated to the new
+> names; "Photino" elsewhere still correctly names the underlying `Photino.NET` library the shell is
+> built on, which hasn't changed. **Same day, follow-up:** the shell contract was also formalized as
+> an actual interface, `IDesktopHost`, split into its own project (`ForgeMission.Desktop.Contracts`)
+> with the implementation (`PhotinoDesktopHost`) in a third project (`ForgeMission.Desktop.Photino`)
+> — see [forge-architecture.md](../design/forge-architecture.md#desktop-host-abstraction-idesktophost)
+> for the current three-project layout and why it isn't just inside `ForgeMission.Desktop`.
+> `Program.cs`'s Client Runtime orchestration now depends only on `IDesktopHost`, not `Photino.NET`
+> directly.
+
 **Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.10](phase-43.10-transport-contract.md) (the UI needs a real channel to the Client Runtime before
 it can do anything). Last in the prerequisite chain: 43.8 → 43.9 → 43.10 → **43.11**. Replaces the
@@ -155,6 +169,60 @@ Client Runtime's own Kestrel host at the same origin as the transport API; a cap
 round-trips through `IClientRuntimeChannel` from that page (using a typed-in workspace path — no
 native folder-picker needed yet, see task 5) to a real provider and back; the Photino host (plain
 `Photino.NET`) loads that same page in a native window; and the shell-boundary test (task 7) passes.
+
+**✅ Batch A DONE (2026-08-01)**, branch `codex/phase-43.11-wasm-photino-shell-batch-a` (commits
+`0c8908c`/`8929943`/`744338e`). Implemented by Codex, verified independently: build clean, full
+suite 446 passed/0 failed/0 warnings; browser proof (unstyled page reads a real file through the
+channel); published-host proof (`/`, `/css/forge.css`, `/_framework/blazor.webassembly.js` all 200);
+Photino proof (native window loads the same URL); `DesktopShellBoundaryTests` +
+`ClientRuntimePresentationBoundaryTests` passing (5 tests). Cleanup folded in: removed the
+now-fully-orphaned Blazor Server scaffold (`App.razor`/`Shared/MainLayout.razor`/`Pages/Index.razor`/
+`Pages/_Host.cshtml`) and the dead Electron shell scaffold (`electron/main.cjs` + friends, superseded
+by this batch's WASM/Photino replacement).
+
+**AOT validated and enabled**, not just designed: both `ForgeMission.ClientRuntime` and
+`ForgeMission.Desktop` now publish as genuine single self-contained Native AOT
+executables (~16MB / ~1.8MB on osx-arm64, same Homebrew-OpenSSL linker precedent as
+`ForgeMission.Cli`), sub-second startup, confirmed by an actual `dotnet publish` + runtime smoke test
+against the produced binaries — not just a clean build. Found and fixed two real AOT gaps in the
+process (both pre-existing code, not introduced by this batch): the minimal API endpoints had no
+source-gen JSON metadata for their own request binding (threw `NotSupportedException` on `GET /`
+specifically, since that's the first request forcing endpoint-table initialization — static files
+were unaffected, different code path); `MissionRuntimeSession` had three reflection-based
+`JsonSerializer` calls plus one anonymous-type serialization with no source-gen context. This directly
+serves the product requirement raised alongside Batch A: **a single shippable executable per host
+that starts fast** — confirmed, not assumed.
+
+**Single-exe orchestration built and verified (2026-08-01, commits `d195ff3`/`26282fe`):** the two
+AOT binaries above were still separately-published with no orchestration between them — running the
+real app required manually starting `ClientRuntime`, reading its URL off stdout, and passing it to
+`Photino` by hand. `ForgeMission.Desktop` now spawns `ClientRuntime` as a child process
+itself when run with no arguments (the real desktop experience), reads its `FORGE_CLIENT_RUNTIME_URL=`
+line, loads that URL, and tears the child down on exit — the explicit-URL argument mode is kept only
+for dev/test convenience. Two real bugs surfaced by actual runtime testing, not review: top-level
+`await` resumes on a thread-pool thread after the first await, which crashed macOS AppKit ("API
+misuse: setting the main menu on a non-main thread") the moment `PhotinoWindow` was constructed —
+fixed by keeping the whole child-wait path synchronous; `AppDomain.ProcessExit` does not reliably
+fire on external `kill -TERM` (confirmed — the child was still orphaned with a `ProcessExit` handler
+registered) — fixed with `PosixSignalRegistration`, verified clean teardown afterward. `make
+desktop-publish` publishes both binaries into one `dist/forge-desktop` folder; `make desktop`
+publishes and launches in one command. Verified end-to-end: running only the Photino exe with zero
+arguments from the published folder spawns the co-located native `ClientRuntime` (confirmed via `ps`
+— no `dotnet` prefix, the native path was used), opens the window, loads the UI, and SIGTERM cleanly
+tears down both processes. The Makefile's previously-broken `desktop` target (pointed at the deleted
+Electron directory) and the dead `scripts/desktop.ps1` were replaced/removed in the same pass.
+
+**Third termination path found and fixed the same day, via an actual native window close, not just
+signal tests (commit `232c8d7`):** the two paths above don't cover clicking the window's own close
+button. Confirmed live, twice, by actually opening the published app and closing the window: the
+`ClientRuntime` child was left orphaned both times — code placed after `window.WaitForClose()`
+never ran, because closing the last window on macOS tears the process down via native AppKit
+machinery before control returns to managed code. Root-caused against Photino.NET's own source
+(`PhotinoNetDelegates.cs`): `RegisterWindowClosingHandler`'s callback runs synchronously from native
+code *before* the close is allowed to proceed, which is the correct hook — not `WaitForClose()`'s
+return. Fixed and reverified live, twice more: closing the real window now leaves zero processes
+behind. All three termination paths (normal close, external `SIGTERM`, and the un-catchable `SIGKILL`
+that no process can intercept) are now accounted for, not assumed.
 
 **Full spoke done when** (batch B, later): the Blazor WASM UI, reached through
 `IClientRuntimeChannel`, opens a folder, accepts a prompt, streams a response from the configured

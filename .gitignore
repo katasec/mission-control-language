@@ -2,6 +2,7 @@ runs/
 src/**/bin/
 src/**/obj/
 .fms/
+dist/
 
 # macOS
 .DS_Store

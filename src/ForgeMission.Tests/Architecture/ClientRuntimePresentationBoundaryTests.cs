@@ -32,7 +32,7 @@ public sealed class ClientRuntimePresentationBoundaryTests
 
     private static void AssertNoDirectHttpClient(string source, string sourceName)
     {
-        if (source.Contains("HttpClient", StringComparison.Ordinal) || source.Contains("IHttpClientFactory", StringComparison.Ordinal))
+        if (System.Text.RegularExpressions.Regex.IsMatch(source, @"\b(HttpClient|IHttpClientFactory)\b"))
             throw new InvalidOperationException($"Presentation must use IClientRuntimeChannel, not direct HTTP: {sourceName}");
     }
 

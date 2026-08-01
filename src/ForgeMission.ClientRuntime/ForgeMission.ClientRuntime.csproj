@@ -4,18 +4,45 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Docker\ForgeMission.Docker.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime.Transport\ForgeMission.ClientRuntime.Transport.csproj" />
+    <ProjectReference Include="..\ForgeMission.ClientRuntime.Presentation\ForgeMission.ClientRuntime.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\ForgeUI\wwwroot\css\forge.css"
-             Link="wwwroot\css\forge.css"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
   </ItemGroup>
+
+  <!-- Same pinned digest ForgeMission.Cli embeds, linked rather than duplicated so there's one
+       source of truth. The desktop app needs its own built-in default: the Electron-era launcher
+       used to supply this externally (scripts/desktop.ps1, now removed) before starting the app;
+       nothing replaced that when Photino took over launching directly. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\ForgeMission.Cli\BuiltinMissionReferences\vanilla.oci-ref"
+                      Link="BuiltinMissionReferences\vanilla.oci-ref"
+                      LogicalName="ForgeMission.ClientRuntime.BuiltinMissionReferences.vanilla.oci-ref" />
+  </ItemGroup>
+
+  <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <LinkerArg Include="-L/opt/homebrew/lib" />
+    <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
+  </ItemGroup>
+
+  <!-- The Presentation project reference exists to pull in its wwwroot static assets (served
+       from _framework/*.wasm) — its own .runtimeconfig.json is a vestigial publish byproduct
+       with no runtime purpose (there's no matching .dll at the top level; Presentation's actual
+       compiled code lives entirely under wwwroot/_framework). -->
+  <Target Name="RemoveVestigialPresentationRuntimeConfig" AfterTargets="Publish">
+    <ItemGroup>
+      <_VestigialPresentationFiles Include="$(PublishDir)ForgeMission.ClientRuntime.Presentation.runtimeconfig.json" />
+    </ItemGroup>
+    <Delete Files="@(_VestigialPresentationFiles)" Condition="Exists('%(_VestigialPresentationFiles.Identity)')" />
+  </Target>
 </Project>

@@ -1,0 +1,9 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <p role="alert">Nothing is available at this address.</p>
+    </NotFound>
+</Router>

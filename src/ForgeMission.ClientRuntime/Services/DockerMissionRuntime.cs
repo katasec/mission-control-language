@@ -13,15 +13,20 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
     private const int RunnerPort = 8080;
     public string BaseUrl => $"http://127.0.0.1:{hostPort}/";
 
+    // Falls back to the built-in vanilla mission so the desktop app works with zero configuration
+    // — split out from StartAsync so it's testable without needing a real Docker daemon.
+    internal static string ResolveMissionRef(IConfiguration configuration)
+    {
+        var configured = configuration["MissionRuntime:Docker:MissionRef"];
+        return string.IsNullOrWhiteSpace(configured) ? BuiltinMissionReferences.Vanilla : configured;
+    }
+
     public static async Task<DockerMissionRuntime> StartAsync(
         IConfiguration configuration,
         CancellationToken ct = default)
     {
-        var missionRef = configuration["MissionRuntime:Docker:MissionRef"];
+        var missionRef = ResolveMissionRef(configuration);
         var runnerImage = configuration["MissionRuntime:Docker:Image"] ?? RunnerImage;
-
-        if (string.IsNullOrWhiteSpace(missionRef))
-            throw new InvalidOperationException("Docker Mission Runtime needs MissionRuntime:Docker:MissionRef.");
 
         var providerEnvironment = ProviderEnvironmentFile.Load(configuration["MissionRuntime:Docker:ProviderEnvFile"]);
 
