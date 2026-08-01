@@ -1,8 +1,27 @@
 # Phase 43.10 — Transport contract (UI ↔ Client Runtime)
 
-**Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
-[43.9](phase-43.9-client-runtime-authorization.md) (the dispatcher this transport carries requests
-to). Third in the prerequisite chain: 43.8 → 43.9 → **43.10** → 43.11.
+**Status: Done (2026-08-01).** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+Depends on [43.9](phase-43.9-client-runtime-authorization.md) (the dispatcher this transport
+carries requests to). Third in the prerequisite chain: 43.8 → 43.9 → **43.10** → 43.11.
+**Next: 43.11 (last in the chain).**
+
+Implemented on branch `codex/phase-43.10-transport-contract` (commit `08964d4`). New
+`ForgeMission.ClientRuntime.Transport` class library holds `IClientRuntimeChannel`, the typed
+session/dispatch/confirmation DTOs, `ClientRuntimeEvent`, source-generated JSON, and
+`HttpClientRuntimeChannel` — independent of both Core and the `ForgeMission.ClientRuntime` host
+(mirrors the existing `ForgeMission.Runner`/`.Contracts` split from Phase 39.1), so the 43.11 WASM
+UI can reference it without depending on the host executable. The ASP.NET host lives inside the
+existing `ForgeMission.ClientRuntime` project (`Transport/ClientRuntimeEndpoints.cs` etc.) rather
+than a new executable. Pending confirmation is a real awaited round-trip
+(`PendingConfirmationHandler`'s `TaskCompletionSource`, resolved by the matching POST), not a stub.
+The "no direct `HttpClient` in Presentation" rule is a working, opt-in architecture test
+(`ClientRuntimePresentationBoundaryTests`), not just a convention. Verified independently: `dotnet
+build`/`dotnet test src/ForgeMission.slnx` — clean except the same pre-existing, unrelated
+`Rooms.Tests` warning; 445 passed / 11 environment-gated skipped / 0 failed, reproduced exactly;
+`ClientRuntimeTransportOutOfProcessTests` launches the real `ForgeMission.ClientRuntime` host and a
+separate probe process over real loopback HTTP — one proves a real file read, the other forces
+`RequiresUserConfirmation`, waits for the SSE confirmation event, posts the approval, and confirms
+the real terminal provider only then executes.
 
 ## Design
 
