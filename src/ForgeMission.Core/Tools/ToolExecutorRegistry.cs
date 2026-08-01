@@ -17,9 +17,9 @@ public sealed class ToolExecutorRegistry
 
     public Task<ToolExecutionResult> ExecuteAsync(
         FunctionCallContent call,
-        CapabilityRegistry capabilities,
+        ICapabilityDispatcher dispatcher,
         CancellationToken ct = default)
         => _executors.TryGetValue(call.Name, out var executor)
-            ? executor.ExecuteAsync(call.Arguments, capabilities, ct)
+            ? executor.ExecuteAsync(call.Arguments, dispatcher, ct)
             : Task.FromResult(ToolExecutionResult.Error($"Unknown tool: {call.Name}"));
 }

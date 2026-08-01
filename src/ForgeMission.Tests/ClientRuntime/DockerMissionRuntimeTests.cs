@@ -36,11 +36,14 @@ public sealed class DockerMissionRuntimeTests
             new WorkspaceFileProvider(workspace),
             new WorkspaceTerminalProvider(workspace),
         ]);
+        var dispatcher = new CapabilityDispatcher(capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default), new InMemoryCapabilityAuditLog());
         var toolLog = new List<string>();
 
         var answer = await session.SendAsync(
             "Read README.md and tell me its first heading.",
             capabilities,
+            dispatcher,
             onToolCall: notification => toolLog.Add($"{notification.State}:{notification.Call.Name}"));
 
         Assert.Contains("Mission Control Language", answer);

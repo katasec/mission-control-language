@@ -17,6 +17,7 @@ public sealed class AgenticSessionTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-agentic-").FullName;
     private readonly CapabilityRegistry _capabilities;
+    private readonly ICapabilityDispatcher _dispatcher;
 
     public AgenticSessionTests()
     {
@@ -26,6 +27,7 @@ public sealed class AgenticSessionTests : IDisposable
             new WorkspaceFileProvider(workspace),
             new WorkspaceTerminalProvider(workspace),
         ]);
+        _dispatcher = DefaultDispatcher(_capabilities);
     }
 
     public void Dispose() => Directory.Delete(_workspace, recursive: true);
@@ -53,7 +55,7 @@ public sealed class AgenticSessionTests : IDisposable
 
         var client  = new ScriptedAgentClient(notesPath);
         var runner  = new PipelineRunner(new DirectExpertRunner(client));
-        var session = new AgenticSession(Ast, Experts(), runner, _capabilities);
+        var session = new AgenticSession(Ast, Experts(), runner, _capabilities, _dispatcher);
 
         var result = await session.RunAsync(new PipelineRunOptions(
             "Task", new Dictionary<string, string> { ["goal"] = "read notes.txt and tell me the secret word" }));
@@ -77,7 +79,7 @@ public sealed class AgenticSessionTests : IDisposable
 
         var client  = new MultiToolScriptedClient(notesPath, catCommand);
         var runner  = new PipelineRunner(new DirectExpertRunner(client));
-        var session = new AgenticSession(Ast, Experts(), runner, _capabilities);
+        var session = new AgenticSession(Ast, Experts(), runner, _capabilities, _dispatcher);
 
         var result = await session.RunAsync(new PipelineRunOptions(
             "Task", new Dictionary<string, string> { ["goal"] = "update the status then read it back" }));
@@ -92,19 +94,20 @@ public sealed class AgenticSessionTests : IDisposable
     }
 
     // ------------------------------------------------------------------
-    // Denial hook: an approval hook returning false must not execute the tool, and the model
-    // must see the denial (not a crash, not a silent skip).
+    // A capability policy denial must not execute the tool, and the model must see the denial
+    // (not a crash, not a silent skip).
     // ------------------------------------------------------------------
     [Fact]
-    public async Task ApprovalHookDenies_ToolNeverExecutes_ModelSeesDenial()
+    public async Task PolicyDenies_ToolNeverExecutes_ModelSeesDenial()
     {
         var notesPath = Path.Combine(_workspace, "notes.txt");
         await File.WriteAllTextAsync(notesPath, "should not be read");
 
         var client  = new ScriptedAgentClient(notesPath);
         var runner  = new PipelineRunner(new DirectExpertRunner(client));
-        var session = new AgenticSession(Ast, Experts(), runner, _capabilities,
-            approveToolCall: (_, _) => Task.FromResult(false));
+        var dispatcher = new CapabilityDispatcher(_capabilities,
+            new FixedOutcomeAuthorizer(AuthorizationOutcome.AutoDenied), new InMemoryCapabilityAuditLog());
+        var session = new AgenticSession(Ast, Experts(), runner, _capabilities, dispatcher);
 
         var result = await session.RunAsync(new PipelineRunOptions(
             "Task", new Dictionary<string, string> { ["goal"] = "read notes.txt" }));
@@ -112,6 +115,16 @@ public sealed class AgenticSessionTests : IDisposable
         Assert.Equal(MissionStatus.Pass, result.Status);
         Assert.Contains("denied", result.Text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("should not be read", result.Text);
+    }
+
+    private static ICapabilityDispatcher DefaultDispatcher(CapabilityRegistry capabilities) =>
+        new CapabilityDispatcher(capabilities, new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            new InMemoryCapabilityAuditLog());
+
+    private sealed class FixedOutcomeAuthorizer(AuthorizationOutcome outcome) : ICapabilityAuthorizer
+    {
+        public Task<AuthorizationOutcome> AuthorizeAsync(string capabilityName, object request, CancellationToken ct) =>
+            Task.FromResult(outcome);
     }
 
     // ------------------------------------------------------------------

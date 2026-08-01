@@ -41,8 +41,12 @@ public sealed class VanillaMissionSessionFactory(IChatClientFactory chatClients)
             new WorkspaceFileProvider(workspace),
             new WorkspaceTerminalProvider(workspace),
         ]);
+        var dispatcher = new CapabilityDispatcher(
+            capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            new InMemoryCapabilityAuditLog());
         return new VanillaMissionSession(
-            new AgenticSession(ast, experts, pipelineRunner, capabilities, notifyToolCall: notifyToolCall),
+            new AgenticSession(ast, experts, pipelineRunner, capabilities, dispatcher, notifyToolCall: notifyToolCall),
             mission.Name);
     }
 }

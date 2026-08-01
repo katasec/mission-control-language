@@ -3,7 +3,7 @@ using Microsoft.Extensions.AI;
 namespace ForgeMission.Core.Tools;
 
 // The Client Runtime's in-process manifest. It reports the providers available on this client;
-// deciding whether an individual call is authorized is intentionally a later layer (Phase 43.9).
+// CapabilityDispatcher is the only component that resolves one to execute an individual call.
 public sealed class CapabilityRegistry
 {
     private readonly IReadOnlyList<ICapabilityProvider> _providers;
