@@ -8,7 +8,6 @@
   <Project Path="ForgeMission.ClientRuntime.Presentation/ForgeMission.ClientRuntime.Presentation.csproj" />
   <Project Path="ForgeMission.ClientRuntime.Photino/ForgeMission.ClientRuntime.Photino.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
-  <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
   <Project Path="ForgeMission.Docker/ForgeMission.Docker.csproj" />
   <Project Path="ForgeMission.Rooms.Data/ForgeMission.Rooms.Data.csproj" />
   <Project Path="ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj" />
