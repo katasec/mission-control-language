@@ -128,9 +128,18 @@ fit for the Claude-architect/Codex-developer pipeline in
    the implementation technology changes).
 5. **Batch A.** Scaffold the Photino native host using plain `Photino.NET` (not `Photino.Blazor` —
    per the hosting locked decision above): window lifecycle, opening a native window pointed at the
-   Client Runtime's own `http://localhost:<port>` (where task 2 wired the WASM static output),
-   native folder-picker dialog exposed through the Client Runtime API contract. Can load task 2's
-   minimal page for now — doesn't need task 4's polish to prove the host works.
+   Client Runtime's own `http://localhost:<port>` (where task 2 wired the WASM static output). Can
+   load task 2's minimal page for now — doesn't need task 4's polish to prove the host works.
+   **The native folder-picker dialog bridge is deferred to Batch B** (raised as an open question
+   during Batch A planning, 2026-08-01): Batch A's Done-when doesn't require it —
+   `SessionSetupRequest` already takes a plain `string WorkspaceRoot`, so the Batch A proof page uses
+   a typed-in path, no dialog needed. The folder-open affordance is UX/visual carryover work per the
+   "What carries forward" section above, not plumbing. When Batch B needs it, the intended shape
+   (recorded here so it isn't lost): reuse `PendingConfirmationHandler`'s exact pattern — Client
+   Runtime publishes a `PickFolderRequested`-style event over the existing SSE hub, the Photino host
+   subscribes as a plain `HttpClient` consumer (no `Transport` project reference needed) and posts
+   the chosen path back, Client Runtime completes a `TaskCompletionSource` exactly like the
+   confirmation flow already does.
 6. **Batch B (deferred).** **Verify against a plain browser first** (screenshot/inspect the WASM app
    running as a normal localhost page — full loop: open folder, send a prompt, see a real tool call,
    see the styled response). Only after that passes, verify the identical app once more through the
@@ -141,9 +150,11 @@ fit for the Claude-architect/Codex-developer pipeline in
 
 ## Done when
 
-**Batch A (Codex, now) done when:** the WASM project exists and loads (unstyled), a capability
-request round-trips through `IClientRuntimeChannel` from that page to a real provider and back, the
-Photino host loads that same page in a native window, and the shell-boundary test (task 7) passes.
+**Batch A (Codex, now) done when:** the WASM project exists and loads (unstyled), served from the
+Client Runtime's own Kestrel host at the same origin as the transport API; a capability request
+round-trips through `IClientRuntimeChannel` from that page (using a typed-in workspace path — no
+native folder-picker needed yet, see task 5) to a real provider and back; the Photino host (plain
+`Photino.NET`) loads that same page in a native window; and the shell-boundary test (task 7) passes.
 
 **Full spoke done when** (batch B, later): the Blazor WASM UI, reached through
 `IClientRuntimeChannel`, opens a folder, accepts a prompt, streams a response from the configured
