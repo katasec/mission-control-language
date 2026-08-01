@@ -275,10 +275,64 @@ the browser-tab version did.
 - **Photino** stays intentionally minimal: it hosts the WebView and packages the app. Everything
   else belongs to Blazor or the Client Runtime. The desktop shell should remain almost invisible.
 
-**Open due-diligence item, not a rejection:** Photino's current maintenance health (community size,
-Linux WebKitGTK support quality, issue backlog) hasn't been independently verified yet. Check it
-like any new dependency before committing the packaging strategy fully to it — same bar this
-project already applied to Avalonia's Pro-tier control risk.
+**Due diligence done, not just planned** — see the finding recorded in
+[phase-43.11's locked decisions](../phases/phase-43.11-wasm-photino-shell.md#locked-decisions)
+(2026-08-01): genuine yellow flag (both `photino.NET`/`Photino.Native` and especially
+`Photino.Blazor` are stale, several unmerged community PRs, one unanswered Linux segfault
+report), accepted not deferred, because the mitigation is structural — see below.
+
+### Why Photino, specifically: the shell is intentionally disposable
+
+We didn't choose Photino because it's the best long-term desktop framework. We chose it because,
+after the layer split above, the desktop shell became intentionally insignificant — and that
+insignificance is the actual risk mitigation for picking a dependency with known maintenance
+weaknesses.
+
+All meaningful Forge behavior lives outside the shell: the Blazor WASM UI, the Client Runtime, the
+Mission Runtime, the provider model, transport contracts, capability contracts. The desktop shell
+is deliberately reduced to: native window, native WebView, application lifecycle, packaging, native
+OS integration. Nothing more.
+
+Because of that separation, the shell is disposable. **If Photino disappeared tomorrow, the
+expected outcome is "replace the shell," not "rewrite Forge."** That's an architectural success
+criterion, not an aspiration: if replacing the desktop shell ever requires changes outside the
+Desktop project, that's a violation of one of Forge's core architectural boundaries, not an
+acceptable cost of the choice.
+
+In other words, Photino's maintenance risk was de-risked by construction, not by picking a
+"safer" framework — it owns almost no business logic, so its health doesn't gate Forge's health.
+Photino is simply today's implementation of the Desktop Shell contract; if a better-maintained or
+more capable native host emerges later, it should be replaceable with minimal impact to the rest
+of the platform. This was one of the architectural objectives converged on during the desktop
+design discussions, not an accident of how the code happened to end up.
+
+**Open, separate from the above — not yet decided:** whether Photino should embed and self-serve
+the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host. Closing
+*this* question is not implied by closing "is Photino the shell" above — it's a distinct,
+independently-revisitable question. Treat the WHY and the HOW as two separate steps, in this
+order, and don't let them blur together (a prior discussion looped by answering "how" — a specific
+API/mechanism — while the actual question on the table was still "why"):
+
+- **WHY (motivation) — settled:** packaging simplicity. HashiCorp embeds Vault/Consul's UI into
+  their server binaries via `go:embed` for exactly this reason — "single binary deployment, no
+  runtime dependencies, no external files to manage" (their own stated rationale, see
+  [Vault UI README](https://github.com/hashicorp/vault/blob/main/ui/README.md)). That reasoning
+  plausibly applies *more* to a desktop app than to their server case: an ops team deploying Vault
+  has tooling/discipline to keep a binary and its asset folder together; an end user who downloaded
+  Forge does not — a separated `wwwroot/` folder is a more likely, not less likely, failure mode
+  in an unmanaged desktop environment than in a managed fleet deployment. Note the precedent's
+  scope, though: HashiCorp embeds into *the server binary itself* (no separate disposable-shell
+  layer exists in their architecture) — that maps to what `ForgeMission.ClientRuntime` (#2)
+  already does today (Kestrel serves `wwwroot` from the same publish artifact), not automatically
+  to whether #1 (Photino) should *also* carry a copy. Don't re-derive this "why" from scratch —
+  reference it.
+- **HOW (solutioning) — not yet done, deliberately deferred:** if/how Photino specifically would
+  embed and serve the assets (e.g. `Photino.NET`'s `RegisterCustomSchemeHandler` is one candidate
+  mechanism, confirmed present in the package version in use), and what it costs — what a future
+  shell replacement would additionally need to reimplement (resource embedding, scheme-handler
+  wiring, cross-origin handling against the Client Runtime's transport API) versus the
+  disposability goal above. This is intentionally not solved here yet — a future session should
+  pick up solutioning from the WHY above, not restart the why/how debate.
 
 ---
 
