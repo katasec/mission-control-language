@@ -17,17 +17,11 @@ public sealed class AgenticSession(
     Dictionary<string, ExpertDefinition> experts,
     PipelineRunner pipelineRunner,
     CapabilityRegistry capabilities,
+    ICapabilityDispatcher dispatcher,
     ToolExecutorRegistry? toolExecutors = null,
-    Func<FunctionCallContent, CancellationToken, Task<bool>>? approveToolCall = null,
     Func<ToolCallNotification, CancellationToken, Task>? notifyToolCall = null)
 {
     private readonly ToolExecutorRegistry _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
-
-    // Defaults to auto-approve — no UI wires a real decision yet (43.2/43.5 do, without touching
-    // this loop). Invoked before EACH call, not once per batch, so a future UI can approve/deny
-    // tool calls individually within the same turn.
-    private readonly Func<FunctionCallContent, CancellationToken, Task<bool>> _approveToolCall =
-        approveToolCall ?? ((_, _) => Task.FromResult(true));
 
     private readonly Func<ToolCallNotification, CancellationToken, Task> _notifyToolCall =
         notifyToolCall ?? ((_, _) => Task.CompletedTask);
@@ -52,11 +46,8 @@ public sealed class AgenticSession(
             {
                 ct.ThrowIfCancellationRequested();
 
-                var approved   = await _approveToolCall(call, ct);
                 await _notifyToolCall(new ToolCallNotification(call, ToolCallNotificationState.Running), ct);
-                var toolResult = approved
-                    ? await _toolExecutors.ExecuteAsync(call, capabilities, ct)
-                    : ToolExecutionResult.Error("Tool call denied by the user.");
+                var toolResult = await _toolExecutors.ExecuteAsync(call, dispatcher, ct);
                 await _notifyToolCall(new ToolCallNotification(call, ToolCallNotificationState.Done, toolResult), ct);
 
                 resultContents.Add(new FunctionResultContent(call.CallId, toolResult.Content));

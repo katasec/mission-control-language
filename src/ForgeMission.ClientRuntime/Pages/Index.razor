@@ -111,7 +111,8 @@
 
     private async Task SendPromptAsync()
     {
-        if (WorkspaceState.Capabilities is not { } capabilities || string.IsNullOrWhiteSpace(_prompt))
+        if (WorkspaceState.Capabilities is not { } capabilities || WorkspaceState.Dispatcher is not { } dispatcher ||
+            string.IsNullOrWhiteSpace(_prompt))
             return;
 
         _sending = true;
@@ -122,7 +123,7 @@
 
         try
         {
-            await MissionRuntime.SendAsync(_prompt, capabilities,
+            await MissionRuntime.SendAsync(_prompt, capabilities, dispatcher,
                 onTextDelta: text => _ = InvokeAsync(() =>
                 {
                     _response += text;

@@ -6,12 +6,14 @@ public sealed class EditToolExecutorTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("forge-edit-").FullName;
     private readonly CapabilityRegistry _capabilities;
+    private readonly ICapabilityDispatcher _dispatcher;
     private readonly EditToolExecutor _tool = new();
 
     public EditToolExecutorTests()
     {
         var workspace = new LocalDiskWorkspace(_root);
         _capabilities = new CapabilityRegistry([new WorkspaceFileProvider(workspace)]);
+        _dispatcher = DefaultDispatcher(_capabilities);
     }
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
@@ -23,7 +25,7 @@ public sealed class EditToolExecutorTests : IDisposable
         File.WriteAllText(path, "hello world");
 
         var result = await _tool.ExecuteAsync(
-            Args(("file_path", "a.txt"), ("old_string", "world"), ("new_string", "there")), _capabilities);
+            Args(("file_path", "a.txt"), ("old_string", "world"), ("new_string", "there")), _dispatcher);
 
         Assert.False(result.IsError);
         Assert.Equal("hello there", File.ReadAllText(path));
@@ -36,7 +38,7 @@ public sealed class EditToolExecutorTests : IDisposable
         File.WriteAllText(path, "foo bar foo");
 
         var result = await _tool.ExecuteAsync(
-            Args(("file_path", "a.txt"), ("old_string", "foo"), ("new_string", "baz")), _capabilities);
+            Args(("file_path", "a.txt"), ("old_string", "foo"), ("new_string", "baz")), _dispatcher);
 
         Assert.True(result.IsError);
         Assert.Contains("not unique", result.Content);
@@ -50,7 +52,7 @@ public sealed class EditToolExecutorTests : IDisposable
         File.WriteAllText(path, "foo bar foo");
 
         var result = await _tool.ExecuteAsync(
-            Args(("file_path", "a.txt"), ("old_string", "foo"), ("new_string", "baz"), ("replace_all", true)), _capabilities);
+            Args(("file_path", "a.txt"), ("old_string", "foo"), ("new_string", "baz"), ("replace_all", true)), _dispatcher);
 
         Assert.False(result.IsError);
         Assert.Equal("baz bar baz", File.ReadAllText(path));
@@ -63,7 +65,7 @@ public sealed class EditToolExecutorTests : IDisposable
         File.WriteAllText(path, "hello world");
 
         var result = await _tool.ExecuteAsync(
-            Args(("file_path", "a.txt"), ("old_string", "missing"), ("new_string", "x")), _capabilities);
+            Args(("file_path", "a.txt"), ("old_string", "missing"), ("new_string", "x")), _dispatcher);
 
         Assert.True(result.IsError);
         Assert.Contains("not found", result.Content);
@@ -73,7 +75,7 @@ public sealed class EditToolExecutorTests : IDisposable
     public async Task NonexistentFile_ReturnsError_PointsToWrite()
     {
         var result = await _tool.ExecuteAsync(
-            Args(("file_path", "nope.txt"), ("old_string", "a"), ("new_string", "b")), _capabilities);
+            Args(("file_path", "nope.txt"), ("old_string", "a"), ("new_string", "b")), _dispatcher);
 
         Assert.True(result.IsError);
         Assert.Contains("Write", result.Content);
@@ -83,7 +85,7 @@ public sealed class EditToolExecutorTests : IDisposable
     public async Task PathEscapingRoot_ReturnsError_NotThrow()
     {
         var result = await _tool.ExecuteAsync(
-            Args(("file_path", "../outside.txt"), ("old_string", "a"), ("new_string", "b")), _capabilities);
+            Args(("file_path", "../outside.txt"), ("old_string", "a"), ("new_string", "b")), _dispatcher);
 
         Assert.True(result.IsError);
         Assert.Contains("outside the workspace roots", result.Content);
@@ -91,4 +93,8 @@ public sealed class EditToolExecutorTests : IDisposable
 
     private static Dictionary<string, object?> Args(params (string key, object value)[] pairs)
         => pairs.ToDictionary(p => p.key, p => (object?)p.value);
+
+    private static ICapabilityDispatcher DefaultDispatcher(CapabilityRegistry capabilities) =>
+        new CapabilityDispatcher(capabilities, new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            new InMemoryCapabilityAuditLog());
 }

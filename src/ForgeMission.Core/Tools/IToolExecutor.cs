@@ -8,7 +8,7 @@ public interface IToolExecutor
 
     Task<ToolExecutionResult> ExecuteAsync(
         IDictionary<string, object?>? arguments,
-        CapabilityRegistry capabilities,
+        ICapabilityDispatcher dispatcher,
         CancellationToken ct = default);
 }
 

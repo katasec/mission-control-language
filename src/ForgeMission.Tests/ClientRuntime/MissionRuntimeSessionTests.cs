@@ -30,12 +30,15 @@ public sealed class MissionRuntimeSessionTests : IDisposable
             new WorkspaceFileProvider(workspace),
             new WorkspaceTerminalProvider(workspace),
         ]);
+        var dispatcher = new CapabilityDispatcher(capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default), new InMemoryCapabilityAuditLog());
         var streamed = new List<string>();
         var toolLog = new List<string>();
 
         var answer = await session.SendAsync(
             "Update notes.txt and report the final status.",
             capabilities,
+            dispatcher,
             streamed.Add,
             notification => toolLog.Add($"{notification.State}:{notification.Call.Name}"));
 

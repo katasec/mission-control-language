@@ -14,6 +14,10 @@ public sealed class WorkspaceState
 
     public CapabilityRegistry? Capabilities { get; private set; }
 
+    public ICapabilityDispatcher? Dispatcher { get; private set; }
+
+    public ICapabilityAuditLog? AuditLog { get; private set; }
+
     public string? Root => Workspace?.Roots[0];
 
     public void OpenFolder(string path)
@@ -25,5 +29,10 @@ public sealed class WorkspaceState
             new WorkspaceFileProvider(Workspace),
             new WorkspaceTerminalProvider(Workspace),
         ]);
+        AuditLog = new InMemoryCapabilityAuditLog();
+        Dispatcher = new CapabilityDispatcher(
+            Capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            AuditLog);
     }
 }

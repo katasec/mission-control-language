@@ -7,6 +7,7 @@ public sealed class ToolExecutorRegistryTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("forge-registry-").FullName;
     private readonly CapabilityRegistry _capabilities;
+    private readonly ICapabilityDispatcher _dispatcher;
 
     public ToolExecutorRegistryTests()
     {
@@ -16,6 +17,8 @@ public sealed class ToolExecutorRegistryTests : IDisposable
             new WorkspaceFileProvider(workspace),
             new WorkspaceTerminalProvider(workspace),
         ]);
+        _dispatcher = new CapabilityDispatcher(_capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default), new InMemoryCapabilityAuditLog());
     }
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
@@ -36,7 +39,7 @@ public sealed class ToolExecutorRegistryTests : IDisposable
         var call = new FunctionCallContent("call1", "Read",
             new Dictionary<string, object?> { ["file_path"] = "a.txt" });
 
-        var result = await registry.ExecuteAsync(call, _capabilities);
+        var result = await registry.ExecuteAsync(call, _dispatcher);
 
         Assert.False(result.IsError);
         Assert.Equal("content", result.Content);
@@ -48,7 +51,7 @@ public sealed class ToolExecutorRegistryTests : IDisposable
         var registry = new ToolExecutorRegistry();
         var call = new FunctionCallContent("call1", "WebFetch", new Dictionary<string, object?>());
 
-        var result = await registry.ExecuteAsync(call, _capabilities);
+        var result = await registry.ExecuteAsync(call, _dispatcher);
 
         Assert.True(result.IsError);
         Assert.Contains("Unknown tool: WebFetch", result.Content);

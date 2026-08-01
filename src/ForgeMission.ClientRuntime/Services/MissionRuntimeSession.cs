@@ -22,6 +22,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
     public async Task<string> SendAsync(
         string prompt,
         CapabilityRegistry capabilities,
+        ICapabilityDispatcher dispatcher,
         Action<string>? onTextDelta = null,
         Action<ToolCallNotification>? onToolCall = null,
         CancellationToken ct = default)
@@ -44,7 +45,7 @@ public sealed class MissionRuntimeSession(HttpClient httpClient, string model = 
                 var functionCall = new FunctionCallContent(call.Id, call.Name, call.Arguments);
                 onToolCall?.Invoke(new ToolCallNotification(functionCall, ToolCallNotificationState.Running));
 
-                var result = await _toolExecutors.ExecuteAsync(functionCall, capabilities, ct);
+                var result = await _toolExecutors.ExecuteAsync(functionCall, dispatcher, ct);
                 onToolCall?.Invoke(new ToolCallNotification(functionCall, ToolCallNotificationState.Done, result));
 
                 results.Add(WireContentBlock.ToolResult(call.Id, result.Content));
