@@ -14,8 +14,7 @@ namespace ForgeMission.Rooms.Tests;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16")
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:16")
         .Build();
 
     public ServiceProvider Services { get; private set; } = null!;
