@@ -1,15 +1,146 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
 using Photino.NET;
 
-if (args.Length != 1 || !Uri.TryCreate(args[0], UriKind.Absolute, out var clientRuntimeUrl) ||
-    clientRuntimeUrl.Scheme is not "http" and not "https")
+// Two ways to run: pass a Client Runtime URL explicitly (dev/test convenience — points at a
+// Client Runtime already running elsewhere), or pass nothing and this process owns the Client
+// Runtime's whole lifecycle (the real, double-click desktop experience — publish both projects
+// into one folder and run only this one).
+//
+// Deliberately synchronous, no `await` anywhere in this file: an `await` in top-level statements
+// makes the compiler generate an async Main, and the continuation after it resumes on a
+// thread-pool thread, not the process's real main thread. macOS AppKit requires all window/menu
+// operations happen on that real main thread — crossing threads here crashes with "API misuse:
+// setting the main menu on a non-main thread" the moment PhotinoWindow is constructed. Blocking
+// synchronously (Task.Wait, not await) keeps everything on the one thread throughout.
+Process? clientRuntime = null;
+string url;
+
+if (args.Length == 1 && Uri.TryCreate(args[0], UriKind.Absolute, out var explicitUrl) &&
+    explicitUrl.Scheme is "http" or "https")
 {
-    throw new ArgumentException("Usage: ForgeMission.ClientRuntime.Photino <client-runtime-url>");
+    url = explicitUrl.AbsoluteUri;
 }
+else if (args.Length == 0)
+{
+    clientRuntime = StartClientRuntime();
+    url = WaitForReadyUrl(clientRuntime);
+}
+else
+{
+    throw new ArgumentException("Usage: ForgeMission.ClientRuntime.Photino [<client-runtime-url>]");
+}
+
+// A safety net for abrupt termination (SIGTERM, Ctrl+C) that skips past the normal WaitForClose()
+// return below — otherwise the Client Runtime child is orphaned. AppDomain.ProcessExit does NOT
+// reliably fire on an external `kill`/SIGTERM (confirmed by testing: the child was still orphaned
+// after `kill -TERM` even with a ProcessExit handler registered) — PosixSignalRegistration is the
+// mechanism that actually intercepts the signal before the process dies. Nothing can catch
+// SIGKILL; that's a universal OS-level limitation, not specific to this process.
+var signalRegistrations = clientRuntime is { } runtimeToClean
+    ? new[]
+    {
+        PosixSignalRegistration.Create(PosixSignal.SIGTERM, _ => KillIfRunning(runtimeToClean)),
+        PosixSignalRegistration.Create(PosixSignal.SIGINT, _ => KillIfRunning(runtimeToClean)),
+    }
+    : [];
 
 var window = new PhotinoWindow()
     .SetTitle("Forge")
     .SetUseOsDefaultSize(true)
     .Center()
-    .Load(clientRuntimeUrl.AbsoluteUri);
+    .Load(url);
 
 window.WaitForClose();
+
+if (clientRuntime is not null)
+    KillIfRunning(clientRuntime);
+
+static void KillIfRunning(Process process)
+{
+    try
+    {
+        if (!process.HasExited)
+            process.Kill(entireProcessTree: true);
+    }
+    catch (InvalidOperationException)
+    {
+        // Already exited between the check and the call — nothing to do.
+    }
+}
+
+static Process StartClientRuntime()
+{
+    var (fileName, dllArgument) = ResolveClientRuntimeCommand();
+    var process = new Process
+    {
+        StartInfo = new ProcessStartInfo(fileName)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        },
+        EnableRaisingEvents = true,
+    };
+    if (dllArgument is not null)
+        process.StartInfo.ArgumentList.Add(dllArgument);
+
+    process.Start();
+    return process;
+}
+
+// Prefers the co-located native binary (the published, single-folder desktop app). Falls back to
+// `dotnet <sibling project's dll>` for the standard bin/<Configuration>/<TFM> layout `dotnet run`
+// produces, so the dev loop doesn't need a full publish for every iteration. If neither resolves,
+// the caller gets a clear error rather than a silent hang.
+static (string FileName, string? DllArgument) ResolveClientRuntimeCommand()
+{
+    var exeName = OperatingSystem.IsWindows() ? "ForgeMission.ClientRuntime.exe" : "ForgeMission.ClientRuntime";
+    var nativePath = Path.Combine(AppContext.BaseDirectory, exeName);
+    if (File.Exists(nativePath))
+        return (nativePath, null);
+
+    var tfmDir = new DirectoryInfo(AppContext.BaseDirectory);
+    var srcDir = tfmDir.Parent?.Parent?.Parent?.Parent;
+    var devDllPath = srcDir is null
+        ? null
+        : Path.Combine(srcDir.FullName, "ForgeMission.ClientRuntime", "bin",
+            tfmDir.Parent!.Name, tfmDir.Name, "ForgeMission.ClientRuntime.dll");
+
+    if (devDllPath is not null && File.Exists(devDllPath))
+        return (Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet", devDllPath);
+
+    throw new FileNotFoundException(
+        "Could not find ForgeMission.ClientRuntime next to this executable, or as a sibling dev " +
+        "build. Publish both projects into the same folder, or pass a Client Runtime URL " +
+        $"explicitly. Looked for: {nativePath}" + (devDllPath is null ? "" : $" and {devDllPath}"));
+}
+
+// Blocks the calling thread on purpose — see the top-of-file note on why this can never be async.
+static string WaitForReadyUrl(Process process)
+{
+    var readyUrl = new TaskCompletionSource<string>();
+    var stderr = new StringBuilder();
+
+    process.OutputDataReceived += (_, e) =>
+    {
+        if (e.Data?.StartsWith("FORGE_CLIENT_RUNTIME_URL=", StringComparison.Ordinal) == true)
+            readyUrl.TrySetResult(e.Data["FORGE_CLIENT_RUNTIME_URL=".Length..]);
+    };
+    process.ErrorDataReceived += (_, e) =>
+    {
+        if (e.Data is not null)
+            stderr.AppendLine(e.Data);
+    };
+    process.BeginOutputReadLine();
+    process.BeginErrorReadLine();
+
+    if (!readyUrl.Task.Wait(TimeSpan.FromSeconds(20)))
+    {
+        process.Kill(entireProcessTree: true);
+        throw new InvalidOperationException($"Client Runtime did not start within 20s. {stderr}");
+    }
+
+    return readyUrl.Task.Result;
+}
