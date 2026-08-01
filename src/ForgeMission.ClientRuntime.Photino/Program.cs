@@ -77,10 +77,38 @@ window.WaitForClose();
 if (clientRuntime is not null)
     KillIfRunning(clientRuntime);
 
+// Graceful-first, hard-kill as a fallback. Confirmed live: a hard Process.Kill() sends SIGKILL on
+// Unix, giving the Client Runtime's own Main() no chance to run its `await using var
+// dockerMissionRuntime` disposal — every prior test left a real Docker container running
+// (`docker ps` showed it, still healthy, well after the app had exited). ASP.NET Core's generic
+// host handles SIGTERM by draining and shutting down gracefully, which is what lets Main()
+// continue past `app.RunAsync()` and actually reach that disposal (stop + remove the container).
+// Windows has no direct SIGTERM equivalent for another process without much more Win32 plumbing
+// (matches this project's existing "Mac first, Windows/Linux validated periodically" priority) —
+// falls straight to the hard kill there.
 static void KillIfRunning(Process process)
 {
     try
     {
+        if (process.HasExited)
+            return;
+
+        if (!OperatingSystem.IsWindows())
+        {
+            using (var sigterm = Process.Start(new ProcessStartInfo("/bin/kill", ["-TERM", process.Id.ToString()])
+            {
+                UseShellExecute = false,
+            }))
+            {
+                sigterm?.WaitForExit();
+            }
+
+            // Docker's own default stop grace period is 10s before it SIGKILLs the container
+            // itself; give the graceful shutdown path at least that long before giving up on it.
+            if (process.WaitForExit(TimeSpan.FromSeconds(10)))
+                return;
+        }
+
         if (!process.HasExited)
             process.Kill(entireProcessTree: true);
     }
