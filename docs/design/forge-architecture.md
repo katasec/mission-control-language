@@ -333,6 +333,37 @@ the now-deleted Avalonia-era shell project — intentional, not a collision: `Fo
 names *whichever implementation currently satisfies the Desktop Shell contract*, per the
 disposability argument above, and that project is what git history is for.
 
+### Desktop Host abstraction (`IDesktopHost`)
+
+**Decision (2026-08-01, locked): the Desktop Shell contract is a real interface,
+`IDesktopHost`, not just prose + a project-reference test.** Same pattern this project already
+uses for Model/Storage/Transport/Capability Providers — a stable seam something programs against,
+with a swappable implementation behind it. The seam wasn't obvious at first because a native
+desktop shell has no external caller (nothing outside it invokes "the shell," it invokes
+everything else) — but there *is* an internal caller: `ForgeMission.Desktop/Program.cs`'s
+Client-Runtime orchestration (spawn the child process, wait for its ready URL, register
+SIGTERM/SIGINT teardown) is itself host-agnostic and was already proven independently correct
+through three separate bug fixes (top-level-`await`-on-threadpool, `ProcessExit` not firing on
+external `kill`, window-close bypassing the normal return path — see
+[43.11](../phases/phase-43.11-wasm-photino-shell.md)). Before this decision, that proven
+orchestration code called `PhotinoWindow` directly, so replacing Photino meant rewriting
+`Program.cs` wholesale — including re-deriving those three bugs from scratch. `IDesktopHost` moves
+the seam to where it belongs: the orchestration now depends only on `IDesktopHost`
+(`Load(url)` / `RegisterClosingHandler(Func<bool>)` / `Run()`), `PhotinoDesktopHost` is the one
+place in the project allowed to touch `Photino.NET` types, and the one line that constructs a
+concrete host (`new PhotinoDesktopHost()`) is the entire footprint a replacement host would touch —
+mirrors `ProviderClientBuilder`'s switch-case being the one place `IChatClient`'s concrete provider
+types are named.
+
+Kept intentionally minimal, no new project: `IDesktopHost`/`PhotinoDesktopHost` live inside
+`ForgeMission.Desktop` itself (both `internal`), not a separate contracts assembly — there is
+exactly one implementation today, and splitting into two projects for one implementation would be
+the kind of speculative abstraction this project avoids elsewhere. If a second host is ever built,
+promoting the interface to its own project is a small, obvious follow-up, not a redesign.
+`DesktopShellBoundaryTests` (the existing no-project-reference-to-Core/ClientRuntime/Transport
+check) already covers the "Desktop Host implementations stay thin" requirement — it was testing the
+same project this interface now lives in, no test changes needed.
+
 **Open, separate from the above — not yet decided:** whether the desktop shell should embed and
 self-serve the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host.
 Closing *this* question is not implied by closing "is Photino the shell" above, nor by the naming

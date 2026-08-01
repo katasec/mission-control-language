@@ -6,7 +6,11 @@
 > [forge-architecture.md](../design/forge-architecture.md#naming-the-desktop-shell-project)). Below,
 > literal code references (project name, `PhotinoShellBoundaryTests`) have been updated to the new
 > names; "Photino" elsewhere still correctly names the underlying `Photino.NET` library the shell is
-> built on, which hasn't changed.
+> built on, which hasn't changed. **Same day, follow-up:** the shell contract was also formalized as
+> an actual interface, `IDesktopHost` (`PhotinoDesktopHost` is the implementation) — see
+> [forge-architecture.md](../design/forge-architecture.md#desktop-host-abstraction-idesktophost).
+> `Program.cs`'s Client Runtime orchestration now depends only on `IDesktopHost`, not `Photino.NET`
+> directly.
 
 **Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.10](phase-43.10-transport-contract.md) (the UI needs a real channel to the Client Runtime before

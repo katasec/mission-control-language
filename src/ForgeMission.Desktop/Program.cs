@@ -1,18 +1,22 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using Photino.NET;
+using ForgeMission.Desktop;
 
 // Two ways to run: pass a Client Runtime URL explicitly (dev/test convenience — points at a
 // Client Runtime already running elsewhere), or pass nothing and this process owns the Client
 // Runtime's whole lifecycle (the real, double-click desktop experience — publish both projects
 // into one folder and run only this one).
 //
+// Everything below is host-agnostic: it never references Photino.NET directly, only IDesktopHost.
+// The one place a concrete host is chosen is the `new PhotinoDesktopHost()` line below — replacing
+// the host is limited to that line plus a new IDesktopHost implementation, not this orchestration.
+//
 // Deliberately synchronous, no `await` anywhere in this file: an `await` in top-level statements
 // makes the compiler generate an async Main, and the continuation after it resumes on a
 // thread-pool thread, not the process's real main thread. macOS AppKit requires all window/menu
 // operations happen on that real main thread — crossing threads here crashes with "API misuse:
-// setting the main menu on a non-main thread" the moment PhotinoWindow is constructed. Blocking
+// setting the main menu on a non-main thread" the moment the native window is constructed. Blocking
 // synchronously (Task.Wait, not await) keeps everything on the one thread throughout.
 Process? clientRuntime = null;
 string url;
@@ -46,33 +50,30 @@ var signalRegistrations = clientRuntime is { } runtimeToClean
     }
     : [];
 
-var window = new PhotinoWindow()
-    .SetTitle("Forge")
-    .SetUseOsDefaultSize(true)
-    .Center()
-    .Load(url);
+IDesktopHost host = new PhotinoDesktopHost();
+host.Load(url);
 
-// The window-closing handler, not the code after WaitForClose() below, is the reliable place to
-// clean up the child process. Confirmed by testing: closing the last window on macOS tears the
-// process down via native AppKit machinery before control ever returns to the managed code that
-// follows WaitForClose() — the child was still orphaned after a real window close even with
-// cleanup code sitting right after that call. RegisterWindowClosingHandler's callback runs
-// synchronously from native code before the close proceeds (confirmed against Photino.NET's own
-// source: "Handler can return true to prevent the window from closing" — returning false here
-// lets the close continue immediately after cleanup runs).
+// The closing handler, not the code after Run() below, is the reliable place to clean up the
+// child process. Confirmed by testing: closing the last window on macOS tears the process down via
+// native AppKit machinery before control ever returns to the managed code that follows Run() — the
+// child was still orphaned after a real window close even with cleanup code sitting right after
+// that call. Photino's underlying RegisterWindowClosingHandler runs its callback synchronously from
+// native code before the close proceeds (confirmed against Photino.NET's own source: "Handler can
+// return true to prevent the window from closing" — returning false here lets the close continue
+// immediately after cleanup runs).
 if (clientRuntime is { } runtimeToCleanOnClose)
 {
-    window.RegisterWindowClosingHandler((_, _) =>
+    host.RegisterClosingHandler(() =>
     {
         KillIfRunning(runtimeToCleanOnClose);
         return false;
     });
 }
 
-window.WaitForClose();
+host.Run();
 
 // Belt-and-suspenders for whichever termination path this line does still run on (e.g. platforms
-// where WaitForClose() returns normally) — a no-op everywhere else since KillIfRunning checks
+// where Run() returns normally) — a no-op everywhere else since KillIfRunning checks
 // HasExited first.
 if (clientRuntime is not null)
     KillIfRunning(clientRuntime);
