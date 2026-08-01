@@ -179,6 +179,25 @@ were unaffected, different code path); `MissionRuntimeSession` had three reflect
 serves the product requirement raised alongside Batch A: **a single shippable executable per host
 that starts fast** — confirmed, not assumed.
 
+**Single-exe orchestration built and verified (2026-08-01, commits `d195ff3`/`26282fe`):** the two
+AOT binaries above were still separately-published with no orchestration between them — running the
+real app required manually starting `ClientRuntime`, reading its URL off stdout, and passing it to
+`Photino` by hand. `ForgeMission.ClientRuntime.Photino` now spawns `ClientRuntime` as a child process
+itself when run with no arguments (the real desktop experience), reads its `FORGE_CLIENT_RUNTIME_URL=`
+line, loads that URL, and tears the child down on exit — the explicit-URL argument mode is kept only
+for dev/test convenience. Two real bugs surfaced by actual runtime testing, not review: top-level
+`await` resumes on a thread-pool thread after the first await, which crashed macOS AppKit ("API
+misuse: setting the main menu on a non-main thread") the moment `PhotinoWindow` was constructed —
+fixed by keeping the whole child-wait path synchronous; `AppDomain.ProcessExit` does not reliably
+fire on external `kill -TERM` (confirmed — the child was still orphaned with a `ProcessExit` handler
+registered) — fixed with `PosixSignalRegistration`, verified clean teardown afterward. `make
+desktop-publish` publishes both binaries into one `dist/forge-desktop` folder; `make desktop`
+publishes and launches in one command. Verified end-to-end: running only the Photino exe with zero
+arguments from the published folder spawns the co-located native `ClientRuntime` (confirmed via `ps`
+— no `dotnet` prefix, the native path was used), opens the window, loads the UI, and SIGTERM cleanly
+tears down both processes. The Makefile's previously-broken `desktop` target (pointed at the deleted
+Electron directory) and the dead `scripts/desktop.ps1` were replaced/removed in the same pass.
+
 **Full spoke done when** (batch B, later): the Blazor WASM UI, reached through
 `IClientRuntimeChannel`, opens a folder, accepts a prompt, streams a response from the configured
 Mission Runtime, executes at least one real tool call visibly (with correct per-tool glyphs/copy,
