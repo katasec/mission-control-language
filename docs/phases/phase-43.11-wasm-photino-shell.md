@@ -75,34 +75,59 @@ new layer split.
   own sake. If boundary-enforcement needs ever grow past a handful of checks like this, that's a
   future reconsideration, not something to build speculatively now.
 
+## Sequencing: plumbing now (Codex), visual work deferred (Claude paired with Ameer)
+
+Per working preference (UI/UX work pairs directly with Ameer; functional/plumbing work stays a good
+fit for the Claude-architect/Codex-developer pipeline in
+[claude-codex-workflow.md](../design/claude-codex-workflow.md)), this spoke splits into two batches:
+
+- **Batch A — plumbing, assigned to Codex now:** task 2's bare project scaffold (new WASM project,
+  `forge.css` included, no styled components yet), task 3 (channel consumption), task 5 (Photino
+  host scaffold), task 7 (boundary test). A minimal, unstyled page is enough to prove task 3's
+  channel round-trip — it does not need to look like anything yet.
+- **Batch B — visual work, deferred to a separate paired session:** task 2's actual UI components,
+  task 4 (composer/tool-call-indicator/response-card rebuild against Task 3's mockup — see
+  [phase-43.2-electron-forge-desktop-shell.md](phase-43.2-electron-forge-desktop-shell.md)), and
+  task 6 (visual verification, browser tab then packaged Photino/macOS). Batch B starts once Batch A
+  is merged.
+
 ## Tasks
 
 1. ~~Due diligence: verify Photino's maturity~~ — **done**, see the finding recorded in the locked
    decision above.
-2. Scaffold the Blazor WebAssembly project — new UI components, not a port of the Electron shell's
-   Razor markup (the underlying rendering model differs enough that a port risks carrying over
-   Server-specific assumptions). Reuse `forge.css` directly, same as the superseded shell did.
-3. Implement the WASM side of [43.10](phase-43.10-transport-contract.md)'s `IClientRuntimeChannel`
-   consumption — the UI's only path to the Client Runtime.
-4. Rebuild the composer, tool-call indicator, and response-card treatment against Task 3's existing
-   target mockup and component spec (visual design carries forward; only the implementation
-   technology changes).
-5. Scaffold the Photino native host: window lifecycle, loading the WASM app's local origin, native
-   folder-picker dialog exposed through the Client Runtime API contract.
-6. **Verify against a plain browser first** (screenshot/inspect the WASM app running as a normal
-   localhost page — full loop: open folder, send a prompt, see a real tool call, see the styled
-   response). Only after that passes, verify the identical app once more through the packaged
-   Photino build on macOS, to confirm the WKWebView residual-risk note in
+2. Scaffold the Blazor WebAssembly project. **Batch A (now):** the bare project — new `.csproj`,
+   `forge.css` wired in as a static asset, a minimal unstyled page sufficient for task 3 to prove the
+   channel round-trip. **Batch B (deferred):** the actual UI components (composer, tool-call
+   indicator, response card) — not a port of the Electron shell's Razor markup (the underlying
+   rendering model differs enough that a port risks carrying over Server-specific assumptions).
+3. **Batch A.** Implement the WASM side of [43.10](phase-43.10-transport-contract.md)'s
+   `IClientRuntimeChannel` consumption — the UI's only path to the Client Runtime. Provable against
+   task 2's minimal page; does not require task 4's visual polish to exist first.
+4. **Batch B (deferred).** Rebuild the composer, tool-call indicator, and response-card treatment
+   against Task 3's existing target mockup and component spec (visual design carries forward; only
+   the implementation technology changes).
+5. **Batch A.** Scaffold the Photino native host: window lifecycle, loading the WASM app's local
+   origin, native folder-picker dialog exposed through the Client Runtime API contract. Can load
+   task 2's minimal page for now — doesn't need task 4's polish to prove the host works.
+6. **Batch B (deferred).** **Verify against a plain browser first** (screenshot/inspect the WASM app
+   running as a normal localhost page — full loop: open folder, send a prompt, see a real tool call,
+   see the styled response). Only after that passes, verify the identical app once more through the
+   packaged Photino build on macOS, to confirm the WKWebView residual-risk note in
    [forge-architecture.md](../design/forge-architecture.md) doesn't manifest in practice.
-7. Add the single shell-boundary test described above (no project reference from the Photino host to
-   `ForgeMission.Core`/`ForgeMission.ClientRuntime`/`ForgeMission.ClientRuntime.Transport`).
+7. **Batch A.** Add the single shell-boundary test described above (no project reference from the
+   Photino host to `ForgeMission.Core`/`ForgeMission.ClientRuntime`/`ForgeMission.ClientRuntime.Transport`).
 
 ## Done when
 
-The Blazor WASM UI, reached through `IClientRuntimeChannel`, opens a folder, accepts a prompt,
-streams a response from the configured Mission Runtime, executes at least one real tool call
-visibly (with correct per-tool glyphs/copy, matching Task 3's already-proven design), and produces
-a working result — verified against a plain browser tab first, then confirmed once more through the
-actual packaged Photino app on macOS. The Photino package has no business logic in it — everything
-it does is window/lifecycle/packaging, proven by the shell-boundary test (task 7), not just by the
-app happening to work or by code review alone.
+**Batch A (Codex, now) done when:** the WASM project exists and loads (unstyled), a capability
+request round-trips through `IClientRuntimeChannel` from that page to a real provider and back, the
+Photino host loads that same page in a native window, and the shell-boundary test (task 7) passes.
+
+**Full spoke done when** (batch B, later): the Blazor WASM UI, reached through
+`IClientRuntimeChannel`, opens a folder, accepts a prompt, streams a response from the configured
+Mission Runtime, executes at least one real tool call visibly (with correct per-tool glyphs/copy,
+matching Task 3's already-proven design), and produces a working result — verified against a plain
+browser tab first, then confirmed once more through the actual packaged Photino app on macOS. The
+Photino package has no business logic in it — everything it does is window/lifecycle/packaging,
+proven by the shell-boundary test (task 7), not just by the app happening to work or by code review
+alone.
