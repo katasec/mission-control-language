@@ -1,16 +1,18 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using ForgeMission.Desktop;
+using ForgeMission.Desktop.Contracts;
+using ForgeMission.Desktop.Photino;
 
 // Two ways to run: pass a Client Runtime URL explicitly (dev/test convenience — points at a
 // Client Runtime already running elsewhere), or pass nothing and this process owns the Client
 // Runtime's whole lifecycle (the real, double-click desktop experience — publish both projects
 // into one folder and run only this one).
 //
-// Everything below is host-agnostic: it never references Photino.NET directly, only IDesktopHost.
-// The one place a concrete host is chosen is the `new PhotinoDesktopHost()` line below — replacing
-// the host is limited to that line plus a new IDesktopHost implementation, not this orchestration.
+// Everything below is host-agnostic: it depends only on IDesktopHost (ForgeMission.Desktop.
+// Contracts), never on Photino.NET types directly. The one place a concrete host is chosen is the
+// `new PhotinoDesktopHost()` line below (ForgeMission.Desktop.Photino) — replacing the host means
+// swapping that one line plus a new IDesktopHost implementation project, not this orchestration.
 //
 // Deliberately synchronous, no `await` anywhere in this file: an `await` in top-level statements
 // makes the compiler generate an async Main, and the continuation after it resumes on a
@@ -50,6 +52,9 @@ var signalRegistrations = clientRuntime is { } runtimeToClean
     }
     : [];
 
+// The one line that names a concrete host — Photino is today's implementation, not a fixed
+// requirement. Swapping desktop hosts touches only this line and a new IDesktopHost
+// implementation project; nothing else in this file should ever reference a concrete host type.
 IDesktopHost host = new PhotinoDesktopHost();
 host.Load(url);
 

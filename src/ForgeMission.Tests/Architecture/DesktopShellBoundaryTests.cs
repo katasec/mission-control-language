@@ -4,11 +4,12 @@ namespace ForgeMission.Tests.Architecture;
 
 public sealed class DesktopShellBoundaryTests
 {
-    [Fact]
-    public void DesktopHost_DoesNotReferenceClientRuntimeImplementation()
+    [Theory]
+    [InlineData("ForgeMission.Desktop")]
+    [InlineData("ForgeMission.Desktop.Photino")]
+    public void DesktopHost_DoesNotReferenceClientRuntimeImplementation(string projectName)
     {
-        var project = Path.Combine(RepositoryRoot(), "src", "ForgeMission.Desktop",
-            "ForgeMission.Desktop.csproj");
+        var project = Path.Combine(RepositoryRoot(), "src", projectName, $"{projectName}.csproj");
         var references = XDocument.Load(project)
             .Descendants("ProjectReference")
             .Select(reference => (string?)reference.Attribute("Include"))

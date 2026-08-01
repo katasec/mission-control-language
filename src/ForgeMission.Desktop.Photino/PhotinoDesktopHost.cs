@@ -1,10 +1,11 @@
+using ForgeMission.Desktop.Contracts;
 using Photino.NET;
 
-namespace ForgeMission.Desktop;
+namespace ForgeMission.Desktop.Photino;
 
-// Today's implementation of IDesktopHost. Deliberately the only file in this project allowed to
-// touch Photino.NET types — everything else programs against the interface.
-internal sealed class PhotinoDesktopHost : IDesktopHost
+// Today's implementation of IDesktopHost. This project is deliberately the only place Photino.NET
+// types are used — ForgeMission.Desktop's composition root only ever sees IDesktopHost.
+public sealed class PhotinoDesktopHost : IDesktopHost
 {
     private readonly PhotinoWindow _window = new PhotinoWindow()
         .SetTitle("Forge")

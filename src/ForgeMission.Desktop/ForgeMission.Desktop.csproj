@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Photino.NET" Version="4.0.16" />
+    <ProjectReference Include="..\ForgeMission.Desktop.Contracts\ForgeMission.Desktop.Contracts.csproj" />
+    <ProjectReference Include="..\ForgeMission.Desktop.Photino\ForgeMission.Desktop.Photino.csproj" />
   </ItemGroup>
 
   <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->

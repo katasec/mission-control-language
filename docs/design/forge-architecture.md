@@ -349,20 +349,39 @@ external `kill`, window-close bypassing the normal return path — see
 orchestration code called `PhotinoWindow` directly, so replacing Photino meant rewriting
 `Program.cs` wholesale — including re-deriving those three bugs from scratch. `IDesktopHost` moves
 the seam to where it belongs: the orchestration now depends only on `IDesktopHost`
-(`Load(url)` / `RegisterClosingHandler(Func<bool>)` / `Run()`), `PhotinoDesktopHost` is the one
-place in the project allowed to touch `Photino.NET` types, and the one line that constructs a
+(`Load(url)` / `RegisterClosingHandler(Func<bool>)` / `Run()`), and the one line that constructs a
 concrete host (`new PhotinoDesktopHost()`) is the entire footprint a replacement host would touch —
 mirrors `ProviderClientBuilder`'s switch-case being the one place `IChatClient`'s concrete provider
-types are named.
+types are named. (Where the implementation actually lives is covered below — this paragraph is
+about the seam, not the project layout.)
 
-Kept intentionally minimal, no new project: `IDesktopHost`/`PhotinoDesktopHost` live inside
-`ForgeMission.Desktop` itself (both `internal`), not a separate contracts assembly — there is
-exactly one implementation today, and splitting into two projects for one implementation would be
-the kind of speculative abstraction this project avoids elsewhere. If a second host is ever built,
-promoting the interface to its own project is a small, obvious follow-up, not a redesign.
-`DesktopShellBoundaryTests` (the existing no-project-reference-to-Core/ClientRuntime/Transport
-check) already covers the "Desktop Host implementations stay thin" requirement — it was testing the
-same project this interface now lives in, no test changes needed.
+**Revised same day: split into three projects, not kept inside `ForgeMission.Desktop`.** The first
+cut kept `IDesktopHost`/`PhotinoDesktopHost` inside `ForgeMission.Desktop` itself (both `internal`)
+on the grounds that a second project for one implementation would be speculative. That reasoning
+was sound for *runtime* swappability (there's still only one host), but missed a *legibility* cost:
+with everything in one project, `Program.cs` still had to `using` a namespace that could be read as
+naming Photino just to reach the interface, and nothing structurally signaled "this file is the
+implementation, that file is host-agnostic" beyond an `internal` modifier — easy for a future
+reader (human or agent) to miss and reintroduce coupling. Moved to three projects instead:
+
+- `ForgeMission.Desktop.Contracts` — `IDesktopHost` only, `public`, zero dependencies (not even on
+  `ForgeMission.Desktop`).
+- `ForgeMission.Desktop.Photino` — `PhotinoDesktopHost`, `public sealed`, the only project allowed
+  to depend on the `Photino.NET` package; references `ForgeMission.Desktop.Contracts`.
+- `ForgeMission.Desktop` — the exe/composition root. References both of the above; `Program.cs`'s
+  orchestration logic (spawn/wait/signal-teardown) reads only `IDesktopHost`, and
+  `new PhotinoDesktopHost()` is the only place a *concrete host is constructed* — the project name
+  `ForgeMission.Desktop.Photino` itself still appears in that file's `using` directive and a couple
+  of explanatory comments, which is expected and fine; the boundary that matters is "no `Photino.NET`
+  type reference outside the composition line," not "the string Photino appears once."
+
+No `LinkerArg`/`PublishAot` on the two new projects — those stay exe-only, matching how
+`ForgeMission.Core` (a library linked into other AOT exes) is set up; both get `IsAotCompatible`
+only, same as `ForgeMission.ClientRuntime.Transport`. `DesktopShellBoundaryTests` was extended
+(`[Theory]`/`[InlineData]`) to check both `ForgeMission.Desktop.csproj` *and*
+`ForgeMission.Desktop.Photino.csproj` for forbidden references to
+`Core`/`ClientRuntime`/`ClientRuntime.Transport` — now precisely testing "the Desktop Host
+implementation project," not just the exe that happens to contain it.
 
 **Open, separate from the above — not yet decided:** whether the desktop shell should embed and
 self-serve the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host.
