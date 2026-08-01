@@ -156,6 +156,29 @@ round-trips through `IClientRuntimeChannel` from that page (using a typed-in wor
 native folder-picker needed yet, see task 5) to a real provider and back; the Photino host (plain
 `Photino.NET`) loads that same page in a native window; and the shell-boundary test (task 7) passes.
 
+**✅ Batch A DONE (2026-08-01)**, branch `codex/phase-43.11-wasm-photino-shell-batch-a` (commits
+`0c8908c`/`8929943`/`744338e`). Implemented by Codex, verified independently: build clean, full
+suite 446 passed/0 failed/0 warnings; browser proof (unstyled page reads a real file through the
+channel); published-host proof (`/`, `/css/forge.css`, `/_framework/blazor.webassembly.js` all 200);
+Photino proof (native window loads the same URL); `PhotinoShellBoundaryTests` +
+`ClientRuntimePresentationBoundaryTests` passing (5 tests). Cleanup folded in: removed the
+now-fully-orphaned Blazor Server scaffold (`App.razor`/`Shared/MainLayout.razor`/`Pages/Index.razor`/
+`Pages/_Host.cshtml`) and the dead Electron shell scaffold (`electron/main.cjs` + friends, superseded
+by this batch's WASM/Photino replacement).
+
+**AOT validated and enabled**, not just designed: both `ForgeMission.ClientRuntime` and
+`ForgeMission.ClientRuntime.Photino` now publish as genuine single self-contained Native AOT
+executables (~16MB / ~1.8MB on osx-arm64, same Homebrew-OpenSSL linker precedent as
+`ForgeMission.Cli`), sub-second startup, confirmed by an actual `dotnet publish` + runtime smoke test
+against the produced binaries — not just a clean build. Found and fixed two real AOT gaps in the
+process (both pre-existing code, not introduced by this batch): the minimal API endpoints had no
+source-gen JSON metadata for their own request binding (threw `NotSupportedException` on `GET /`
+specifically, since that's the first request forcing endpoint-table initialization — static files
+were unaffected, different code path); `MissionRuntimeSession` had three reflection-based
+`JsonSerializer` calls plus one anonymous-type serialization with no source-gen context. This directly
+serves the product requirement raised alongside Batch A: **a single shippable executable per host
+that starts fast** — confirmed, not assumed.
+
 **Full spoke done when** (batch B, later): the Blazor WASM UI, reached through
 `IClientRuntimeChannel`, opens a folder, accepts a prompt, streams a response from the configured
 Mission Runtime, executes at least one real tool call visibly (with correct per-tool glyphs/copy,
