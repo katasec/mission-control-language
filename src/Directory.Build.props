@@ -3,11 +3,15 @@
     Applies to every project under src/ automatically (MSBuild walks up from each project
     looking for this file) — one place to enforce zero-warnings, instead of repeating it in
     22 individual .csproj files. A project with a real, justified suppression (e.g. the
-    YamlDotNet AOT warnings in ForgeMission.Cli/ForgeMission.Desktop) still adds its own
-    <NoWarn> in its own .csproj — NoWarn wins over TreatWarningsAsErrors, so documented
-    exceptions keep working exactly as before.
+    YamlDotNet AOT warnings in ForgeMission.Cli) still adds its own <NoWarn> in its own
+    .csproj — NoWarn wins over TreatWarningsAsErrors, so documented exceptions keep working
+    exactly as before.
   -->
   <PropertyGroup>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Embed debug symbols in the assembly itself instead of emitting a separate loose .pdb —
+         keeps crash/stack-trace diagnostics without the desktop app's published output folder
+         accumulating one .pdb per referenced library project for no runtime purpose. -->
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 </Project>
