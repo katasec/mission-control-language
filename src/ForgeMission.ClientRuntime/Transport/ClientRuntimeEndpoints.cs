@@ -82,6 +82,7 @@ internal static class ClientRuntimeEndpoints
         {
             context.Response.Headers.ContentType = "text/event-stream";
             context.Response.Headers.CacheControl = "no-cache";
+            await context.Response.StartAsync(ct);
             await foreach (var message in events.Subscribe(ct))
             {
                 var json = JsonSerializer.Serialize(message, ClientRuntimeJsonContext.Default.ClientRuntimeEvent);

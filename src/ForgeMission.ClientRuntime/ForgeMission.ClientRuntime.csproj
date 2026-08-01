@@ -10,12 +10,10 @@
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Docker\ForgeMission.Docker.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime.Transport\ForgeMission.ClientRuntime.Transport.csproj" />
+    <ProjectReference Include="..\ForgeMission.ClientRuntime.Presentation\ForgeMission.ClientRuntime.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\ForgeUI\wwwroot\css\forge.css"
-             Link="wwwroot\css\forge.css"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
   </ItemGroup>
 </Project>

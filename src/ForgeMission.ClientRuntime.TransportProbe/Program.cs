@@ -12,18 +12,26 @@ if (args.Length == 4 && args[3].Equals("confirm", StringComparison.OrdinalIgnore
 {
     using var eventsCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(15));
     await using var events = channel.Subscribe(eventsCancellation.Token).GetAsyncEnumerator(eventsCancellation.Token);
+    var confirmationEvent = events.MoveNextAsync().AsTask();
     await Task.Delay(100, eventsCancellation.Token);
     var dispatch = channel.SendAsync<CapabilityDispatchRequest, CapabilityDispatchResponse>(
         new CapabilityDispatchRequest(session.SessionId,
             new CapabilityRequestData("terminal", CapabilityOperation.ExecuteTerminal, Command: "echo confirmation-approved")),
         eventsCancellation.Token);
 
-    while (await events.MoveNextAsync())
+    var receivedConfirmation = false;
+    while (await confirmationEvent)
     {
         if (events.Current.Kind == ClientRuntimeEventKind.ConfirmationRequest)
+        {
+            receivedConfirmation = true;
             break;
+        }
+
+        confirmationEvent = events.MoveNextAsync().AsTask();
     }
-    if (events.Current.Kind != ClientRuntimeEventKind.ConfirmationRequest || events.Current.ConfirmationId is null)
+
+    if (!receivedConfirmation || events.Current.ConfirmationId is null)
         throw new InvalidOperationException("Client Runtime did not publish a confirmation request.");
 
     var confirmation = await channel.SendAsync<ConfirmationResponseRequest, ConfirmationResponse>(

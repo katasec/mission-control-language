@@ -4,8 +4,22 @@ using System.Text.Json;
 
 namespace ForgeMission.ClientRuntime.Transport;
 
-public sealed class HttpClientRuntimeChannel(HttpClient httpClient) : IClientRuntimeChannel
+public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposable
 {
+    private readonly HttpClient httpClient;
+    private readonly bool ownsHttpClient;
+
+    public HttpClientRuntimeChannel(HttpClient httpClient)
+    {
+        this.httpClient = httpClient;
+    }
+
+    public HttpClientRuntimeChannel(Uri baseAddress)
+    {
+        httpClient = new HttpClient { BaseAddress = baseAddress };
+        ownsHttpClient = true;
+    }
+
     public async Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
     {
         var route = RouteFor(request);
@@ -52,4 +66,10 @@ public sealed class HttpClientRuntimeChannel(HttpClient httpClient) : IClientRun
         ConfirmationResponseRequest => "transport/confirmation/respond",
         _ => throw new InvalidOperationException($"Unsupported Client Runtime request: {typeof(TRequest).Name}."),
     };
+
+    public void Dispose()
+    {
+        if (ownsHttpClient)
+            httpClient.Dispose();
+    }
 }

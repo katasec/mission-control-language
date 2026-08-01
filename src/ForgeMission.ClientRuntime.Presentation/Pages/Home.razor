@@ -1,0 +1,101 @@
+@page "/"
+@inject IClientRuntimeChannel ClientRuntime
+
+<h1>Forge Client Runtime</h1>
+
+<p>This unstyled page proves the Client Runtime channel over the same-origin transport API.</p>
+
+<label>
+    Workspace path
+    <input @bind="workspaceRoot" @bind:event="oninput" aria-label="Workspace path" />
+</label>
+<button @onclick="SetupSessionAsync" disabled="@settingUp">Set up session</button>
+
+@if (session is not null)
+{
+    <p>Session ready. Capabilities: @string.Join(", ", session.AvailableCapabilities)</p>
+
+    <label>
+        File path relative to the workspace
+        <input @bind="filePath" @bind:event="oninput" aria-label="File path" />
+    </label>
+    <button @onclick="ReadFileAsync" disabled="@reading">Read file</button>
+}
+
+@if (status is not null)
+{
+    <p role="status">@status</p>
+}
+
+@if (result is not null)
+{
+    <pre>@result</pre>
+}
+
+@code {
+    private string workspaceRoot = string.Empty;
+    private string filePath = string.Empty;
+    private SessionSetupResponse? session;
+    private string? status;
+    private string? result;
+    private bool settingUp;
+    private bool reading;
+
+    private async Task SetupSessionAsync()
+    {
+        if (string.IsNullOrWhiteSpace(workspaceRoot))
+        {
+            status = "Enter a workspace path.";
+            return;
+        }
+
+        settingUp = true;
+        status = null;
+        result = null;
+
+        try
+        {
+            session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
+                new SessionSetupRequest(workspaceRoot), CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            status = exception.Message;
+        }
+        finally
+        {
+            settingUp = false;
+        }
+    }
+
+    private async Task ReadFileAsync()
+    {
+        if (session is null || string.IsNullOrWhiteSpace(filePath))
+        {
+            status = "Enter a file path.";
+            return;
+        }
+
+        reading = true;
+        status = null;
+        result = null;
+
+        try
+        {
+            var response = await ClientRuntime.SendAsync<CapabilityDispatchRequest, CapabilityDispatchResponse>(
+                new CapabilityDispatchRequest(session.SessionId,
+                    new CapabilityRequestData("file", CapabilityOperation.ReadFile, FilePath: filePath)),
+                CancellationToken.None);
+            result = response.Content;
+            status = response.IsError ? "The capability returned an error." : null;
+        }
+        catch (Exception exception)
+        {
+            status = exception.Message;
+        }
+        finally
+        {
+            reading = false;
+        }
+    }
+}
