@@ -52,8 +52,28 @@ var window = new PhotinoWindow()
     .Center()
     .Load(url);
 
+// The window-closing handler, not the code after WaitForClose() below, is the reliable place to
+// clean up the child process. Confirmed by testing: closing the last window on macOS tears the
+// process down via native AppKit machinery before control ever returns to the managed code that
+// follows WaitForClose() — the child was still orphaned after a real window close even with
+// cleanup code sitting right after that call. RegisterWindowClosingHandler's callback runs
+// synchronously from native code before the close proceeds (confirmed against Photino.NET's own
+// source: "Handler can return true to prevent the window from closing" — returning false here
+// lets the close continue immediately after cleanup runs).
+if (clientRuntime is { } runtimeToCleanOnClose)
+{
+    window.RegisterWindowClosingHandler((_, _) =>
+    {
+        KillIfRunning(runtimeToCleanOnClose);
+        return false;
+    });
+}
+
 window.WaitForClose();
 
+// Belt-and-suspenders for whichever termination path this line does still run on (e.g. platforms
+// where WaitForClose() returns normally) — a no-op everywhere else since KillIfRunning checks
+// HasExited first.
 if (clientRuntime is not null)
     KillIfRunning(clientRuntime);
 
