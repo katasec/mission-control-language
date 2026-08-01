@@ -72,6 +72,7 @@ desktop-publish: ## Publish the desktop app (Client Runtime + native desktop she
 desktop: desktop-publish ## Publish then launch the desktop app (the desktop shell owns the Client Runtime's lifecycle)
 	$(DESKTOP_DIR)/ForgeMission.Desktop
 
-clean: ## Remove build artefacts (bin/ and obj/)
+clean: ## Remove all build artefacts (bin/, obj/, dist/)
 	dotnet clean src/
 	find src/ -type d \( -name bin -o -name obj \) | xargs rm -rf
+	rm -rf dist/
