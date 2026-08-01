@@ -53,13 +53,32 @@ new layer split.
   maintenance activity, Linux WebKitGTK support quality, and issue backlog health before committing
   implementation time — same bar already applied to Avalonia's Pro-tier control risk. If Photino
   turns out to be a poor bet, that's a design-stage finding, not something to discover mid-build.
+  **Finding (2026-08-01):** genuine yellow flag, not a blocker. `photino.NET`/`Photino.Native` last
+  merged PR was 2025-06-19; last functional commit 2025-01-23 (v4.0), with one README-only push in
+  March 2026. `Photino.Blazor` — the package this spoke actually depends on — has had zero pushes of
+  any kind since 2025-01-23. Ten community PRs sit unmerged, several since 2025-10, including
+  Linux/GTK contributions; an open Linux segfault report (`SetIconFile`, filed 2026-03) has no
+  maintainer response. The maintainer (CODE Magazine, a side project) has publicly acknowledged
+  reduced bandwidth and is moving to Copilot-assisted triage. **Accepted, not deferred**, because the
+  mitigation here is structural rather than time-boxed: the architecture already requires Photino be
+  a thin, swappable shell (see the next locked decision) — if Photino stalls further or a blocking bug
+  goes unaddressed, only the shell project needs replacing, not Forge itself. Near-term verification
+  target is macOS only (WKWebView, Apple's own native webview — the thinnest, lowest-risk path
+  through this dependency); the Linux-specific staleness above isn't load-bearing for this spoke.
+- **The shell-swappability guarantee is enforced by one simple test, not an architecture-tooling
+  framework.** A single test asserts the Photino host project has no project reference to
+  `ForgeMission.Core`, `ForgeMission.ClientRuntime`, or `ForgeMission.ClientRuntime.Transport` — it
+  only loads the WASM UI's built static output and does native windowing/lifecycle/packaging. This
+  is deliberately a one-off check (in the spirit of 43.10's `ClientRuntimePresentationBoundaryTests`,
+  not necessarily the same mechanism), not a generalized architecture-test framework — the goal is
+  making an accidental boundary violation obvious during development, not building tooling for its
+  own sake. If boundary-enforcement needs ever grow past a handful of checks like this, that's a
+  future reconsideration, not something to build speculatively now.
 
 ## Tasks
 
-1. **Due diligence: verify Photino's maturity** before anything else in this spoke starts. Check
-   recent commit activity, open issue backlog, and specifically Linux (WebKitGTK) support quality —
-   the platform most likely to be the weakest link for a smaller native-webview wrapper. Record the
-   finding here before proceeding.
+1. ~~Due diligence: verify Photino's maturity~~ — **done**, see the finding recorded in the locked
+   decision above.
 2. Scaffold the Blazor WebAssembly project — new UI components, not a port of the Electron shell's
    Razor markup (the underlying rendering model differs enough that a port risks carrying over
    Server-specific assumptions). Reuse `forge.css` directly, same as the superseded shell did.
@@ -75,6 +94,8 @@ new layer split.
    response). Only after that passes, verify the identical app once more through the packaged
    Photino build on macOS, to confirm the WKWebView residual-risk note in
    [forge-architecture.md](../design/forge-architecture.md) doesn't manifest in practice.
+7. Add the single shell-boundary test described above (no project reference from the Photino host to
+   `ForgeMission.Core`/`ForgeMission.ClientRuntime`/`ForgeMission.ClientRuntime.Transport`).
 
 ## Done when
 
@@ -83,5 +104,5 @@ streams a response from the configured Mission Runtime, executes at least one re
 visibly (with correct per-tool glyphs/copy, matching Task 3's already-proven design), and produces
 a working result — verified against a plain browser tab first, then confirmed once more through the
 actual packaged Photino app on macOS. The Photino package has no business logic in it — everything
-it does is window/lifecycle/packaging, confirmed by code review, not just by the app happening to
-work.
+it does is window/lifecycle/packaging, proven by the shell-boundary test (task 7), not just by the
+app happening to work or by code review alone.
