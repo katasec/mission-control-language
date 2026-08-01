@@ -1,8 +1,24 @@
 # Phase 43.9 — Client Runtime security & authorization layer
 
-**Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
-[43.8](phase-43.8-capability-provider-pattern.md) (something has to exist to authorize dispatch
-to). Second in the prerequisite chain: 43.8 → **43.9** → 43.10 → 43.11.
+**Status: Done (2026-08-01).** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+Depends on [43.8](phase-43.8-capability-provider-pattern.md) (something has to exist to authorize
+dispatch to). Second in the prerequisite chain: 43.8 → **43.9** → 43.10 → 43.11. **Next: 43.10.**
+
+Implemented on branch `codex/phase-43.9-client-runtime-authorization` (commit `7a1aa61`).
+`CapabilityDispatcher` (in `ForgeMission.Core.Tools`, following 43.8's placement precedent) owns
+all provider resolution and invocation — tool executors receive only `ICapabilityDispatcher` and
+pass plain, data-only `ICapabilityRequest` records (no closures, no provider references reach
+executor code). `CapabilityAuthorizationPolicy.Default` auto-approves `file`/`terminal` (no
+regression from today's unrestricted behavior); every dispatch produces an audit record via
+`InMemoryCapabilityAuditLog`; `AgenticSession`'s separate `approveToolCall` hook was retired in
+favor of the single dispatcher path (its observational `notifyToolCall` hook was preserved
+unchanged). Verified independently: `dotnet build src/ForgeMission.slnx` clean except the same
+pre-existing, unrelated `Rooms.Tests` warning; `dotnet test src/ForgeMission.slnx` — 441 passed /
+11 environment-gated skipped / 0 failed, reproduced exactly; `grep TryGetProvider` across `src`
+confirms it is called only inside `CapabilityDispatcher` (and the pre-existing `CapabilityRegistry`)
+— no executor or session class resolves a provider directly; `CapabilityDispatcherTests` proves
+denial blocks the provider and is audited, confirmation is evaluated per-request not cached, and an
+executor given a denying dispatcher never reaches the provider.
 
 ## Design
 
