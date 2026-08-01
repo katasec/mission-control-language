@@ -1,4 +1,5 @@
 using ForgeMission.ClientRuntime.Services;
+using ForgeMission.ClientRuntime.Transport;
 using ForgeMission.ClientRuntime.TransportHost;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -25,6 +26,13 @@ internal sealed class Program
         builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
         builder.Services.AddSingleton<ClientRuntimeEventHub>();
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
+        // Native AOT has no reflection fallback for minimal-API request/response JSON binding —
+        // route it through the same source-generated context the transport channel already uses.
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.TypeInfoResolverChain.Insert(0, ClientRuntimeJsonContext.Default);
+            options.SerializerOptions.TypeInfoResolverChain.Insert(1, ReadyResponseJsonContext.Default);
+        });
         builder.Services.AddHttpClient("mission-runtime", client =>
         {
             client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
@@ -43,7 +51,7 @@ internal sealed class Program
         app.MapGet("/ready", (IServer server) =>
         {
             var url = server.Features.Get<IServerAddressesFeature>()?.Addresses.SingleOrDefault();
-            return url is null ? Results.StatusCode(StatusCodes.Status503ServiceUnavailable) : Results.Ok(new { url });
+            return url is null ? Results.StatusCode(StatusCodes.Status503ServiceUnavailable) : Results.Ok(new ReadyResponse(url));
         });
 
         app.Lifetime.ApplicationStarted.Register(() =>
