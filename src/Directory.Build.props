@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Applies to every project under src/ automatically (MSBuild walks up from each project
+    looking for this file) — one place to enforce zero-warnings, instead of repeating it in
+    22 individual .csproj files. A project with a real, justified suppression (e.g. the
+    YamlDotNet AOT warnings in ForgeMission.Cli/ForgeMission.Desktop) still adds its own
+    <NoWarn> in its own .csproj — NoWarn wins over TreatWarningsAsErrors, so documented
+    exceptions keep working exactly as before.
+  -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
