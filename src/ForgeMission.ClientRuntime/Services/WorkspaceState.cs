@@ -20,7 +20,10 @@ public sealed class WorkspaceState
 
     public string? Root => Workspace?.Roots[0];
 
-    public void OpenFolder(string path)
+    public void OpenFolder(
+        string path,
+        ICapabilityAuthorizer? authorizer = null,
+        ICapabilityConfirmationHandler? confirmationHandler = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         Workspace = new LocalDiskWorkspace(path);
@@ -32,7 +35,8 @@ public sealed class WorkspaceState
         AuditLog = new InMemoryCapabilityAuditLog();
         Dispatcher = new CapabilityDispatcher(
             Capabilities,
-            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
-            AuditLog);
+            authorizer ?? new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            AuditLog,
+            confirmationHandler);
     }
 }

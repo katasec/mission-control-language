@@ -1,4 +1,5 @@
 using ForgeMission.ClientRuntime.Services;
+using ForgeMission.ClientRuntime.TransportHost;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.FileProviders;
@@ -20,6 +21,12 @@ internal sealed class Program
             ?? builder.Configuration["MissionRuntime:BaseUrl"]
             ?? "http://127.0.0.1:8080/";
         builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
+        builder.Services.AddSingleton<ClientRuntimeEventHub>();
+        builder.Services.AddSingleton<ClientRuntimeSessionStore>();
+        builder.Services.AddHttpClient("mission-runtime", client =>
+        {
+            client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
+        });
         builder.Services.AddHttpClient<MissionRuntimeSession>(client =>
         {
             client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
@@ -27,14 +34,18 @@ internal sealed class Program
 
         var app = builder.Build();
         var forgeUiWebRoot = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "ForgeUI", "wwwroot"));
-        app.UseStaticFiles(new StaticFileOptions
+        if (Directory.Exists(forgeUiWebRoot))
         {
-            FileProvider = new PhysicalFileProvider(forgeUiWebRoot),
-        });
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(forgeUiWebRoot),
+            });
+        }
         app.UseStaticFiles();
         app.UseRouting();
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
+        app.MapClientRuntimeTransport();
         app.MapGet("/ready", (IServer server) =>
         {
             var url = server.Features.Get<IServerAddressesFeature>()?.Addresses.SingleOrDefault();

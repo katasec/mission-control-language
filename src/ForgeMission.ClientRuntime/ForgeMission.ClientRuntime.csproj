@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Docker\ForgeMission.Docker.csproj" />
+    <ProjectReference Include="..\ForgeMission.ClientRuntime.Transport\ForgeMission.ClientRuntime.Transport.csproj" />
   </ItemGroup>
 
   <ItemGroup>
