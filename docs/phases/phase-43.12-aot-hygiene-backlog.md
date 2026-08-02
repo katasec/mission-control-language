@@ -36,7 +36,7 @@ deliberately rather than assuming "it built, so it's fine."
    default `MissionRuntime:Mode` is `"docker"` (starts a real containerized Mission Runner via
    `ForgeMission.Docker`), but every AOT verification run in 43.11 explicitly set
    `MissionRuntime__Mode=none` to isolate the transport plumbing under test. A read of
-   `DockerMissionRuntime.cs` found nothing reflection-heavy (no YAML, no `Activator`, no unguarded
+   `LocalDockerMissionRuntimeLauncher.cs` found nothing reflection-heavy (no YAML, no `Activator`, no unguarded
    JSON), but that's build-time inspection, not the runtime proof this phase has twice shown is
    necessary. **Fix:** run the actual AOT-published `ForgeMission.ClientRuntime` binary with a real
    local Docker daemon, default mode, and confirm the full startup sequence (pull/start the Mission

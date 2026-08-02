@@ -7,14 +7,14 @@ namespace ForgeMission.Tests.ClientRuntime;
 
 // Runs only when an operator supplies a real Docker /v1 endpoint. The default test suite remains
 // provider-independent; Task 2b invokes this with the ephemeral runner started by the Client Runtime.
-public sealed class DockerMissionRuntimeTests
+public sealed class LocalDockerMissionRuntimeLauncherTests
 {
     [Fact]
     public void ResolveMissionRef_NoConfiguration_FallsBackToBuiltinVanilla()
     {
         var configuration = new ConfigurationBuilder().Build();
 
-        Assert.Equal(BuiltinMissionReferences.Vanilla, DockerMissionRuntime.ResolveMissionRef(configuration));
+        Assert.Equal(BuiltinMissionReferences.Vanilla, LocalDockerMissionRuntimeLauncher.ResolveMissionRef(configuration));
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public sealed class DockerMissionRuntimeTests
             .AddInMemoryCollection([new("MissionRuntime:Docker:MissionRef", "ghcr.io/example/custom@sha256:abc")])
             .Build();
 
-        Assert.Equal("ghcr.io/example/custom@sha256:abc", DockerMissionRuntime.ResolveMissionRef(configuration));
+        Assert.Equal("ghcr.io/example/custom@sha256:abc", LocalDockerMissionRuntimeLauncher.ResolveMissionRef(configuration));
     }
 
     [SkippableFact]
