@@ -23,7 +23,7 @@ are deliberately deferred. The existing one-configured-mission local runtime sha
 - `ForgeMission.Docker.DockerCli` now separates create, archive-copy, and start operations. Existing
   `RunContainerAsync` callers retain their default port behavior; the Client Runtime explicitly
   supplies `HostIp=127.0.0.1`.
-- `DockerMissionRuntime` packages only the selected mission directory with `System.Formats.Tar`,
+- `LocalDockerMissionRuntimeLauncher` (named `DockerMissionRuntime` at the time) packages only the selected mission directory with `System.Formats.Tar`,
   passes no binds, copies the archive to the stopped container, then starts it. It retains the
   prerequisite check, provider-env allow-list, health wait, cancellation, and cleanup behavior.
 - `MissionArchiveTests` proves a package contains the selected mission files and excludes a sibling

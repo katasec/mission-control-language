@@ -5,9 +5,11 @@ using Microsoft.Extensions.Configuration;
 
 namespace ForgeMission.ClientRuntime.Services;
 
-// Owns the local Docker Mission Runtime lifecycle. MissionRuntimeSession sees only BaseUrl, exactly
-// as it does for an in-process or hosted runtime.
-internal sealed class DockerMissionRuntime(string containerName, int hostPort) : IAsyncDisposable
+// Owns the local Docker Mission Runtime lifecycle — a local hosting target for the Mission Runtime,
+// not to be confused with IDockerProvider (a Client Runtime capability the Mission Runtime can
+// request, e.g. sandboxed container execution — see forge-architecture.md). MissionRuntimeSession
+// sees only BaseUrl, exactly as it does for an in-process or hosted runtime.
+internal sealed class LocalDockerMissionRuntimeLauncher(string containerName, int hostPort) : IAsyncDisposable
 {
     private const string RunnerImage = "ghcr.io/katasec/forge-runner:latest";
     private const int RunnerPort = 8080;
@@ -21,7 +23,7 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
         return string.IsNullOrWhiteSpace(configured) ? BuiltinMissionReferences.Vanilla : configured;
     }
 
-    public static async Task<DockerMissionRuntime> StartAsync(
+    public static async Task<LocalDockerMissionRuntimeLauncher> StartAsync(
         IConfiguration configuration,
         CancellationToken ct = default)
     {
@@ -54,7 +56,7 @@ internal sealed class DockerMissionRuntime(string containerName, int hostPort) :
                 network: "forge-net",
                 hostIp: IPAddress.Loopback.ToString());
 
-            var runtime = new DockerMissionRuntime(containerName, hostPort);
+            var runtime = new LocalDockerMissionRuntimeLauncher(containerName, hostPort);
             if (!await runtime.WaitUntilHealthyAsync(ct))
                 throw new InvalidOperationException($"Docker Mission Runtime did not become healthy at {runtime.BaseUrl}health.");
 

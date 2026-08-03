@@ -233,6 +233,39 @@ later (HTTP → gRPC, for example) should never require a UI change, only a new
 
 ---
 
+## Mission Runtime resolution belongs to an orchestration layer, not the Client Runtime
+
+**Decision (2026-08-04):** Deciding *where* the Mission Runtime lives — a local Docker container, an
+already-running `forge serve`, a hosted `forge.katasec.com` URL — and, if that resolution requires
+starting something, supervising that process, is the job of a **surface-agnostic orchestration
+layer**. It is never the Client Runtime's own decision.
+
+This follows directly from the principle already stated above: *"A client... should not care where
+the Mission Runtime lives."* A Client Runtime that defaults to starting Docker itself unless told
+otherwise is making exactly the location decision that principle says a client shouldn't make.
+
+- The orchestration layer resolves the Mission Runtime URL **before** the Client Runtime starts, and
+  hands it in already-resolved (config/env) — the Client Runtime becomes a pure consumer of a URL,
+  with no embedded Docker-mode default and no location logic of its own.
+- This orchestration layer is **shared infrastructure**, not specific to any one client — Forge
+  Desktop, `forge webui`, and any future surface (a TUI, etc.) call the same layer rather than each
+  re-implementing "start Docker locally" independently.
+- Supervision of whatever the orchestrator starts must account for **every termination path** —
+  normal quit, external `SIGTERM`, and crash — the same bar [43.11](../phases/phase-43.11-wasm-photino-shell.md)
+  already established for `Desktop`↔`ClientRuntime` supervision.
+- **Transport protocol is a separate, unaffected concern** — this is exactly the "transport is
+  infrastructure, not architecture" principle below, applied one layer up. `IClientRuntimeChannel`
+  over HTTP/SSE stays as-is regardless of how the Mission Runtime is resolved or reached.
+
+**Prior art:** sanity-checked against GitHub Copilot's own desktop app and public SDK docs — a
+comparable shipped product uses the same shape (thin host process supervising separate sidecar
+agent-runtime processes over a narrow protocol, with a single enforcement point in front of tool
+dispatch). Full research notes, method, and open implementation questions are in
+[43.13](../phases/phase-43.13-mission-runtime-orchestration.md), which is where this becomes a
+concrete build.
+
+---
+
 ## Native host, UI framework, and the verification constraint
 
 **Decision: Blazor WebAssembly for the UI, Photino for native packaging.**

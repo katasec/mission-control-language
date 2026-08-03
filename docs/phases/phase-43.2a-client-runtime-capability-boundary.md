@@ -76,7 +76,7 @@ picker and cross-target mission identity.
    ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-2-5--implementation-and-regression-coverage).
 
 3. **Replace the repository workspace bind with the approved mission-delivery adapter.** Change
-   `DockerMissionRuntime.StartAsync` to validate the selected mission according to Task 1, construct
+   `LocalDockerMissionRuntimeLauncher.StartAsync` to validate the selected mission according to Task 1, construct
    the approved explicit mission input, and set `MissionFile` to its container-visible location.
    It must neither derive a repository root for Docker nor pass that root into `DockerCli`. Retain
    the existing provider allow-list, image pull/prerequisite checks, health wait, cancellation, and
