@@ -175,17 +175,28 @@ narrower cloud door" fork raised earlier in this same design pass — there is n
 the identical `/v1/messages` + classifier path `claude`/`codex` already use; API B is not
 `claude`/`codex`-specific, it's just "the runner's real door," and Desktop uses it exactly as-is.
 
-**What is NOT yet uniform — new, genuinely open work:** auth and billing today exist only as a
-separate gateway service (`ForgeAPI`) in front of the *cloud* runner
-([42.6](phase-42.6-hosted-endpoint-ttfa.md)); local Docker has no equivalent hop at all —
-`LocalDockerMissionRuntimeLauncher` today hands Client Runtime a URL straight to the container,
-nothing in front of it. Making this genuinely uniform means a **local no-op gateway hop needs to
-exist**, structurally mirroring `ForgeAPI`'s shape (always-authorized, no-op ledger) — not "local has
-none." **Its implementation shape is not decided** — candidates include a thin no-op middleware
-folded into `ForgeMission.Orchestration` itself, or a minimal local companion process mirroring
-`ForgeAPI`'s role. This is new scope, not previously captured in [43.12](phase-43.12-aot-hygiene-backlog.md)'s
-Docker items or task 5b's cloud-only framing — the eventual task breakdown should treat it as its own
-item, not assume it falls out of either.
+**Resolved 2026-08-04 — auth and billing don't share an answer, and treating them as one "gateway"
+question was the mistake.** Split:
+
+- **Auth needs no new component at all.** It reduces entirely to what decision 2 already
+  establishes: Client Runtime always sends an `Authorization` header if one is configured, even a
+  placeholder locally. The local runner simply never validates it — that's not "a no-op auth check
+  runs," it's "no auth check exists," externally identical but zero new code to write.
+- **Billing is a genuine fork — and the resolution is to build nothing locally, not to build a
+  no-op mirror of `ForgeAPI`.** In the real (cloud) architecture, billing is already exclusively
+  server-side: `ForgeAPI` debits based on usage the *runner* reports, never something Client Runtime
+  does itself. The runner already emits usage numbers (tokens, compute-seconds) identically in both
+  targets, per 42.4's shared image — that uniformity already exists today, for free. What's
+  genuinely absent locally is anything that *reads and acts on* those numbers, and the resolution is
+  to leave that absent, deliberately, rather than build a ledger component that protects against a
+  requirement (non-paying users) that doesn't exist locally. Turning on real local billing later
+  means writing a small consumer of data that's already being reported — not retrofitting new
+  instrumentation, and not flipping a switch on a component built today for no present reason.
+
+Net: [43.12](phase-43.12-aot-hygiene-backlog.md)'s and task 5b's framing were fine as originally
+written — there's no new "local gateway" item to add to either. Local Docker has nothing extra to
+build for auth or billing; both were solved by recognizing they're different questions, not by
+inventing local infrastructure.
 
 **Refines decision 2 in "Locked decisions — implementation shape" above:** the
 `MissionRuntime__BaseUrl` injection should also carry a credential — even locally, a no-op token — so
@@ -194,15 +205,12 @@ on target.
 
 ## Done when
 
-Design is mostly closed, with one new item genuinely still open: the local no-op gateway hop's
-implementation shape (see "Uniform gateway path" above) is not decided — everything else (project
-separation, env-var + credential injection, the `LocalDockerMissionRuntimeLauncher` migration and
-its thin interface) is. Not yet build-ready in the sense of a task list with file-by-file steps and a
-final "verified" bar; that task breakdown is the next step, not done in this pass, and it should
-resolve the remaining open item rather than improvise it. Full spoke is done when:
-`ForgeMission.Orchestration` exists and owns Mission Runtime resolution/supervision; a local no-op
-gateway hop exists and is structurally identical in shape to the cloud gateway, differing only in
-injected policy; `ForgeMission.ClientRuntime` has no Docker awareness, always sends a credential, and
-fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via the new project
-before spawning Client Runtime; all termination paths (quit/SIGTERM/crash) are verified clean for
-whatever the orchestrator now supervises; full test suite passes.
+Design is fully closed — every question raised in this spoke, including the auth/billing split
+above, is resolved. Not yet build-ready in the sense of a task list with file-by-file steps and a
+final "verified" bar; that task breakdown is the next step, not done in this pass. Full spoke is done
+when: `ForgeMission.Orchestration` exists and owns Mission Runtime resolution/supervision;
+`ForgeMission.ClientRuntime` has no Docker awareness, always sends a credential (even a local
+placeholder), and fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via
+the new project before spawning Client Runtime; all termination paths (quit/SIGTERM/crash) are
+verified clean for whatever the orchestrator now supervises; full test suite passes. **No local
+billing component is in scope for this spoke, by design** — see "Uniform gateway path" above.

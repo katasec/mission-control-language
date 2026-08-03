@@ -260,13 +260,22 @@ otherwise is making exactly the location decision that principle says a client s
 - **Transport protocol is a separate, unaffected concern** — this is exactly the "transport is
   infrastructure, not architecture" principle below, applied one layer up. `IClientRuntimeChannel`
   over HTTP/SSE stays as-is regardless of how the Mission Runtime is resolved or reached.
-- **Auth, billing, and request classification form one gateway layer that is always present — never
-  a structural local/cloud fork.** Local and cloud go through the identical shape; only the injected
-  policy differs (no-op authorization + no-op ledger locally, real platform-key validation + real
-  ledger debit in cloud). This mirrors [43.9](../phases/phase-43.9-client-runtime-authorization.md)'s
-  Client Runtime authorization pattern — one enforcement point, policy varies — applied one layer up,
-  and is a deliberate bias toward one predictable shape over per-environment variants. Full reasoning
-  and what's already uniform vs. still open is in [43.13](../phases/phase-43.13-mission-runtime-orchestration.md).
+- **Auth and billing don't share an answer, and treating them as one "gateway" concern was itself a
+  mistake worth correcting here.** Request classification is already uniform for free — it lives
+  inside the runner, and the runner image is already identical local/cloud (see below) — no new work.
+  Auth reduces to Client Runtime always sending a credential (even a local placeholder) with the
+  local runtime simply never validating it — not a no-op check, no check at all, zero new code.
+  Billing is deliberately **not** mirrored locally with a no-op ledger: billing is already
+  exclusively server-side in the real architecture (`ForgeAPI` debits off usage the runner reports,
+  never something the client does), the runner already reports that usage identically in both
+  targets, and building a local no-op ledger component would protect against a requirement — paying
+  users — that doesn't exist locally. Turning on real local billing later is writing a small consumer
+  of data already being reported, not flipping a switch on infrastructure built today for no present
+  reason. This still mirrors [43.9](../phases/phase-43.9-client-runtime-authorization.md)'s Client
+  Runtime authorization pattern — one enforcement point, policy varies — for the piece that
+  genuinely is one enforcement point (auth); it does not mean inventing a matching enforcement point
+  where none is needed (local billing). Full reasoning is in
+  [43.13](../phases/phase-43.13-mission-runtime-orchestration.md).
 
 **Prior art:** sanity-checked against GitHub Copilot's own desktop app and public SDK docs — a
 comparable shipped product uses the same shape (thin host process supervising separate sidecar
