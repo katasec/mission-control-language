@@ -159,6 +159,11 @@ everyone can predict, not a customized/divergent variant per environment."** Con
   rather than surprising them with a structurally different (or missing) path.
 - Forward-compatible for free: turning on real local metering later, if ever wanted, becomes
   swapping which ledger implementation is injected — not building a new path.
+- Fewer divergent paths is also a reliability argument, not just a readability one: every additional
+  structurally-different path is separate surface area to get wrong, separate surface area to test,
+  and a separate place a fix can land in one path and get missed in the other. One path with injected
+  policy has one thing to get right and one thing to test — that's less bug surface and easier
+  long-term maintenance, not just less to read at a glance.
 
 **What's already uniform, no work needed:** the request classifier (`RequestClassifier`,
 [42.3](phase-42.3-tool-capable-enriching-responder.md)) lives inside the runner itself, and
