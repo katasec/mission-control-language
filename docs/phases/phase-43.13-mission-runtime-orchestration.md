@@ -95,6 +95,17 @@ The three open questions above are now resolved:
    `ForgeMission.Orchestration` depends only on `ForgeMission.Docker` (plus, if ever needed, a small
    shared "resolved endpoint" type) — never on `ForgeMission.Core` or `ForgeMission.ClientRuntime` —
    so it can't quietly become Desktop-shaped again.
+
+   **Why building this ahead of a second confirmed consumer doesn't contradict the YAGNI reasoning
+   used elsewhere in this spoke (e.g. against a local billing component):** the two aren't the same
+   kind of bet. A project/namespace boundary is a Bezos "Type 2," two-way-door decision — cheap to
+   draw, cheap to undo if wrong, so it's fine to lean into a plausible-not-yet-certain need (a TUI is
+   a real, live possibility, not idle speculation). A local billing component would be a costlier,
+   harder-to-cleanly-unwind commitment (real runtime behavior, an interface, tests to maintain) for a
+   need that's speculative *and* gated behind several unproven prior milestones (a working desktop
+   client → paying customers → a discovered use case among them needing managed/billed client
+   instances) — strict YAGNI applies there instead. The door-reversibility test, not a single rule
+   applied uniformly, is what decides which way each of these goes.
 2. **The resolved Mission Runtime URL is injected via environment variable** —
    `MissionRuntime__BaseUrl` (ASP.NET Core's `__` → `:` section-separator convention, already the
    config key `Program.cs` reads today). The orchestrator resolves the URL first, then sets that env
