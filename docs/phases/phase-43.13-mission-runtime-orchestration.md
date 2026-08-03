@@ -22,11 +22,15 @@ first (and so far only) process that needed to make the decision.
 
 ## Locked decisions (2026-08-04)
 
-- **A surface-agnostic orchestration layer resolves the Mission Runtime location, not the Client
-  Runtime.** It decides — local Docker container, an already-running `forge serve`, a hosted
-  `forge.katasec.com` URL — and, if starting something is required, supervises that process. This
+- **A surface-agnostic orchestration layer carries out the Mission Runtime location — it does not
+  infer or decide it.** The choice (local Docker, an already-running `forge serve`, a hosted
+  `forge.katasec.com` URL) is made by the user, through the presentation surface (GUI, TUI, whatever
+  form a given client takes). The orchestrator's job is to take that already-made choice and act on
+  it — starting/supervising a process if the choice requires one, then resolving to a URL. This
   logic is shared, not Desktop-specific: `ForgeMission.Desktop`, `forge webui`, and any future
-  surface (e.g. a TUI) all call the same layer rather than each re-implementing Docker-start logic.
+  surface (e.g. a TUI) all call the same layer rather than each re-implementing Docker-start logic —
+  but each surface owns collecting the user's actual choice before calling in; none of them, and
+  not the orchestrator either, should default or guess it.
 - **The Client Runtime becomes a pure consumer of an already-resolved Mission Runtime URL.** No
   embedded default, no `MissionRuntime:Mode` branch, no `LocalDockerMissionRuntimeLauncher`
   dependency inside `ForgeMission.ClientRuntime` at all — the orchestrator resolves the URL *before*
@@ -120,13 +124,80 @@ The three open questions above are now resolved:
      startup handshake already use, rather than a second, different health-check mechanism — matches
      both this codebase's existing precedent and general practice (Kubernetes readiness probes,
      Docker Compose `condition: service_healthy`).
+   - **A thin interface goes in at the same time — not a general provider registry.**
+     `LocalDockerMissionRuntimeLauncherTests` today only runs against a real Docker daemon (skipped
+     otherwise), and without an abstraction, that same "needs Docker installed" requirement would
+     leak into every test of the orchestrator's own resolution/injection logic (decision 2's
+     fail-fast, the `MissionRuntime__BaseUrl` wiring, `Desktop`'s resolve-then-spawn sequencing) —
+     none of which is actually about Docker. That's a present, concrete need, not a speculative one,
+     so:
+     ```csharp
+     internal interface IMissionRuntimeLauncher : IAsyncDisposable
+     {
+         string BaseUrl { get; }
+     }
+     ```
+     `LocalDockerMissionRuntimeLauncher` implements it (trivial — it already has `BaseUrl` and
+     `IAsyncDisposable`); the resolution function returns `IMissionRuntimeLauncher?` for the "local"
+     branch, `null` for "cloud" (an already-configured URL has nothing to start or own). **Deliberately
+     not more than this** — no swappable-backend provider pattern, no registry, nothing speculative
+     for a second local backend (e.g. Podman) that doesn't exist and isn't planned. YAGNI beyond the
+     one, real, present testability need.
+
+## Uniform gateway path — no local/cloud fork (2026-08-04)
+
+Locked, refining decision 2 above: the auth, billing, and request-classification layer in front of
+the Mission Runtime is **one code path, always present**, for both local and cloud. Local and cloud
+differ only in which concrete implementation gets injected — never in whether the layer exists at
+all. The taste behind this, stated explicitly: **"Mac philosophy, not Windows — one consistent shape
+everyone can predict, not a customized/divergent variant per environment."** Concretely:
+
+- Client Runtime's request code has one unconditional path — it always attaches a credential, always
+  goes through the same shaped gateway — never an `if (isLocal)` branch.
+- Someone running Forge locally already expects auth/billing to effectively be no-ops for "a
+  personally owned local setup" — a uniform path with a no-op local policy matches that expectation,
+  rather than surprising them with a structurally different (or missing) path.
+- Forward-compatible for free: turning on real local metering later, if ever wanted, becomes
+  swapping which ledger implementation is injected — not building a new path.
+
+**What's already uniform, no work needed:** the request classifier (`RequestClassifier`,
+[42.3](phase-42.3-tool-capable-enriching-responder.md)) lives inside the runner itself, and
+[42.4](phase-42.4-container-convergence.md) already put local and cloud on the same runner image —
+so the classifier is already present and identical in both targets. Desktop's traffic (tools +
+thinking enabled) always classifies as `Mission` under the existing structural rules — it doesn't
+need a carve-out door, it naturally never trips the aux path. **This retires the "reuse API B vs. a
+narrower cloud door" fork raised earlier in this same design pass — there is no fork.** Desktop rides
+the identical `/v1/messages` + classifier path `claude`/`codex` already use; API B is not
+`claude`/`codex`-specific, it's just "the runner's real door," and Desktop uses it exactly as-is.
+
+**What is NOT yet uniform — new, genuinely open work:** auth and billing today exist only as a
+separate gateway service (`ForgeAPI`) in front of the *cloud* runner
+([42.6](phase-42.6-hosted-endpoint-ttfa.md)); local Docker has no equivalent hop at all —
+`LocalDockerMissionRuntimeLauncher` today hands Client Runtime a URL straight to the container,
+nothing in front of it. Making this genuinely uniform means a **local no-op gateway hop needs to
+exist**, structurally mirroring `ForgeAPI`'s shape (always-authorized, no-op ledger) — not "local has
+none." **Its implementation shape is not decided** — candidates include a thin no-op middleware
+folded into `ForgeMission.Orchestration` itself, or a minimal local companion process mirroring
+`ForgeAPI`'s role. This is new scope, not previously captured in [43.12](phase-43.12-aot-hygiene-backlog.md)'s
+Docker items or task 5b's cloud-only framing — the eventual task breakdown should treat it as its own
+item, not assume it falls out of either.
+
+**Refines decision 2 in "Locked decisions — implementation shape" above:** the
+`MissionRuntime__BaseUrl` injection should also carry a credential — even locally, a no-op token — so
+Client Runtime's HTTP client code attaches an `Authorization` header unconditionally, with no branch
+on target.
 
 ## Done when
 
-Design is closed — all three implementation-shape questions above are resolved. Not yet build-ready
-in the sense of a task list with file-by-file steps and a final "verified" bar; that task breakdown
-is the next step, not done in this pass. Full spoke is done when: `ForgeMission.Orchestration` exists
-and owns Mission Runtime resolution/supervision; `ForgeMission.ClientRuntime` has no Docker awareness
-and fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via the new project
+Design is mostly closed, with one new item genuinely still open: the local no-op gateway hop's
+implementation shape (see "Uniform gateway path" above) is not decided — everything else (project
+separation, env-var + credential injection, the `LocalDockerMissionRuntimeLauncher` migration and
+its thin interface) is. Not yet build-ready in the sense of a task list with file-by-file steps and a
+final "verified" bar; that task breakdown is the next step, not done in this pass, and it should
+resolve the remaining open item rather than improvise it. Full spoke is done when:
+`ForgeMission.Orchestration` exists and owns Mission Runtime resolution/supervision; a local no-op
+gateway hop exists and is structurally identical in shape to the cloud gateway, differing only in
+injected policy; `ForgeMission.ClientRuntime` has no Docker awareness, always sends a credential, and
+fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via the new project
 before spawning Client Runtime; all termination paths (quit/SIGTERM/crash) are verified clean for
 whatever the orchestrator now supervises; full test suite passes.
