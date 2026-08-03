@@ -232,3 +232,10 @@ browser tab first, then confirmed once more through the actual packaged Photino 
 Photino package has no business logic in it — everything it does is window/lifecycle/packaging,
 proven by the shell-boundary test (task 7), not just by the app happening to work or by code review
 alone.
+
+**Not the only live next step — read [43.13](phase-43.13-mission-runtime-orchestration.md) too.**
+Batch B here (UI/visual work, pairs with Ameer) and 43.13 (Mission Runtime orchestration layer,
+design fully locked, hand off to Codex) are two independent threads, not a sequence — neither blocks
+the other. Don't treat finishing this spoke's Batch B as the only thing left in Phase 43; check
+[plan.md](../plan.md)'s top pointer or the [phase hub](phase-43-forge-desktop.md)'s task table for
+the current state of both before assuming.
