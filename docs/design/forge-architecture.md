@@ -235,10 +235,13 @@ later (HTTP → gRPC, for example) should never require a UI change, only a new
 
 ## Mission Runtime resolution belongs to an orchestration layer, not the Client Runtime
 
-**Decision (2026-08-04):** Deciding *where* the Mission Runtime lives — a local Docker container, an
-already-running `forge serve`, a hosted `forge.katasec.com` URL — and, if that resolution requires
-starting something, supervising that process, is the job of a **surface-agnostic orchestration
-layer**. It is never the Client Runtime's own decision.
+**Decision (2026-08-04):** *Where* the Mission Runtime lives — a local Docker container, an
+already-running `forge serve`, a hosted `forge.katasec.com` URL — is a choice the **user makes
+through the presentation surface** (GUI, TUI, whatever form a given client takes). Neither the
+Client Runtime nor the orchestration layer infers or defaults it. A **surface-agnostic orchestration
+layer** takes that already-made choice and carries it out: starting/supervising a process if the
+choice requires one, then resolving to a URL. It is never the Client Runtime's own decision, and it
+is not the orchestrator's own decision either — only the user's, relayed through the surface.
 
 This follows directly from the principle already stated above: *"A client... should not care where
 the Mission Runtime lives."* A Client Runtime that defaults to starting Docker itself unless told
@@ -246,7 +249,8 @@ otherwise is making exactly the location decision that principle says a client s
 
 - The orchestration layer resolves the Mission Runtime URL **before** the Client Runtime starts, and
   hands it in already-resolved (config/env) — the Client Runtime becomes a pure consumer of a URL,
-  with no embedded Docker-mode default and no location logic of its own.
+  with no embedded Docker-mode default and no location logic of its own. It fails fast at startup if
+  that URL is missing, rather than silently defaulting.
 - This orchestration layer is **shared infrastructure**, not specific to any one client — Forge
   Desktop, `forge webui`, and any future surface (a TUI, etc.) call the same layer rather than each
   re-implementing "start Docker locally" independently.
@@ -256,11 +260,28 @@ otherwise is making exactly the location decision that principle says a client s
 - **Transport protocol is a separate, unaffected concern** — this is exactly the "transport is
   infrastructure, not architecture" principle below, applied one layer up. `IClientRuntimeChannel`
   over HTTP/SSE stays as-is regardless of how the Mission Runtime is resolved or reached.
+- **Auth and billing don't share an answer, and treating them as one "gateway" concern was itself a
+  mistake worth correcting here.** Request classification is already uniform for free — it lives
+  inside the runner, and the runner image is already identical local/cloud (see below) — no new work.
+  Auth reduces to Client Runtime always sending a credential (even a local placeholder) with the
+  local runtime simply never validating it — not a no-op check, no check at all, zero new code.
+  Billing is deliberately **not** mirrored locally with a no-op ledger: billing is already
+  exclusively server-side in the real architecture (`ForgeAPI` debits off usage the runner reports,
+  never something the client does), the runner already reports that usage identically in both
+  targets, and building a local no-op ledger component would protect against a requirement — paying
+  users — that doesn't exist locally. Turning on real local billing later is writing a small consumer
+  of data already being reported, not flipping a switch on infrastructure built today for no present
+  reason. This still mirrors [43.9](../phases/phase-43.9-client-runtime-authorization.md)'s Client
+  Runtime authorization pattern — one enforcement point, policy varies — for the piece that
+  genuinely is one enforcement point (auth); it does not mean inventing a matching enforcement point
+  where none is needed (local billing). Full reasoning is in
+  [43.13](../phases/phase-43.13-mission-runtime-orchestration.md).
 
 **Prior art:** sanity-checked against GitHub Copilot's own desktop app and public SDK docs — a
 comparable shipped product uses the same shape (thin host process supervising separate sidecar
 agent-runtime processes over a narrow protocol, with a single enforcement point in front of tool
-dispatch). Full research notes, method, and open implementation questions are in
+dispatch). Full research notes, method, and the concrete implementation shape (project boundaries,
+env-var injection, a thin `IMissionRuntimeLauncher` for testability) are in
 [43.13](../phases/phase-43.13-mission-runtime-orchestration.md), which is where this becomes a
 concrete build.
 
