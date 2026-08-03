@@ -214,6 +214,105 @@ inventing local infrastructure.
 Client Runtime's HTTP client code attaches an `Authorization` header unconditionally, with no branch
 on target.
 
+## Tasks
+
+Chronological, for Codex — each task names real file paths and the concrete API shape, so this can
+be executed start-to-finish without a design question. Reflects every locked decision above,
+including the auth/billing split and the Type-2-door reasoning for Orchestration's project boundary.
+
+1. **Scaffold `ForgeMission.Orchestration`.** New `src/ForgeMission.Orchestration/ForgeMission.Orchestration.csproj`,
+   added to `src/ForgeMission.slnx`. `ProjectReference` to `ForgeMission.Docker` only — no `Core`,
+   no `ClientRuntime`. Match this repo's existing AOT-library conventions (`IsAotCompatible`, etc. —
+   copy from `ForgeMission.ClientRuntime.Transport.csproj` as the closest precedent).
+
+2. **Add the thin interface.** New `src/ForgeMission.Orchestration/IMissionRuntimeLauncher.cs`:
+   ```csharp
+   namespace ForgeMission.Orchestration;
+
+   public interface IMissionRuntimeLauncher : IAsyncDisposable
+   {
+       string BaseUrl { get; }
+   }
+   ```
+
+3. **Move `LocalDockerMissionRuntimeLauncher`, wholesale.**
+   - `src/ForgeMission.ClientRuntime/Services/LocalDockerMissionRuntimeLauncher.cs` →
+     `src/ForgeMission.Orchestration/LocalDockerMissionRuntimeLauncher.cs`. Change its declared type to
+     `internal sealed class LocalDockerMissionRuntimeLauncher(...) : IMissionRuntimeLauncher` (was
+     `IAsyncDisposable` directly — now via the interface; no other behavior change).
+   - `src/ForgeMission.Tests/ClientRuntime/LocalDockerMissionRuntimeLauncherTests.cs` →
+     `src/ForgeMission.Tests/Orchestration/LocalDockerMissionRuntimeLauncherTests.cs`.
+   - `ForgeMission.ClientRuntime.csproj`: remove its `ForgeMission.Docker` `ProjectReference` (only
+     existed for this class).
+
+4. **Add the resolution entry point.** New `src/ForgeMission.Orchestration/MissionRuntimeResolver.cs`
+   — reuses the existing `MissionRuntime:Mode`/`MissionRuntime:BaseUrl` config keys (already read by
+   `ClientRuntime/Program.cs` today; this task *relocates* that reading, doesn't invent new config
+   surface — a settings UI for this is out of scope here, later UI work):
+   ```csharp
+   namespace ForgeMission.Orchestration;
+
+   public static class MissionRuntimeResolver
+   {
+       public static async Task<(string BaseUrl, IMissionRuntimeLauncher? Launcher)> ResolveAsync(
+           IConfiguration configuration, CancellationToken ct = default)
+       {
+           var mode = configuration["MissionRuntime:Mode"] ?? "docker";
+           if (!mode.Equals("docker", StringComparison.OrdinalIgnoreCase))
+           {
+               var configuredUrl = configuration["MissionRuntime:BaseUrl"]
+                   ?? throw new InvalidOperationException(
+                       "MissionRuntime:BaseUrl is required when MissionRuntime:Mode is not 'docker'.");
+               return (configuredUrl, null);
+           }
+
+           var launcher = await LocalDockerMissionRuntimeLauncher.StartAsync(configuration, ct);
+           return (launcher.BaseUrl, launcher);
+       }
+   }
+   ```
+   `Launcher` is `null` for the cloud/pre-configured-URL branch — nothing local to own or dispose,
+   per the auth/billing split above (no local gateway component to construct here either).
+
+5. **Wire `ForgeMission.Desktop` to resolve, then spawn.**
+   - `ForgeMission.Desktop.csproj`: add `ProjectReference` to `ForgeMission.Orchestration`.
+   - `Program.cs`: before `StartClientRuntime()`, call `MissionRuntimeResolver.ResolveAsync(...)`.
+   - Pass the resolved URL to the `ClientRuntime` child process as `MissionRuntime__BaseUrl`. Also
+     always set `MissionRuntime__Credential` — a fixed local placeholder (e.g. `"local"`) for the
+     Docker branch, or a real value if one is already available (e.g. from `~/.forge`, per
+     [42.5](phase-42.5-platform-identity-keys.md)) for the cloud branch. Wiring an actual UI/flow to
+     obtain a real cloud credential is explicitly out of scope here — this task only needs the
+     variable to always be set, per decision 2's "no branch on target."
+   - If `Launcher` is non-null, dispose it on **every** termination path already handled in this file
+     (normal exit, the `SIGTERM` handler, and the native window-close handler) — the same three paths
+     43.11 already hardened for the `ClientRuntime` child process. Don't add a fourth, different
+     teardown mechanism; hook into the existing three.
+
+6. **Strip `ForgeMission.ClientRuntime` of Docker-starting entirely.**
+   - `Program.cs`: delete `StartLocalDockerMissionRuntimeAsync` and the `MissionRuntime:Mode` branch.
+     Replace with:
+     ```csharp
+     var missionRuntimeBaseUrl = builder.Configuration["MissionRuntime:BaseUrl"]
+         ?? throw new InvalidOperationException(
+             "MissionRuntime:BaseUrl is required (set via MissionRuntime__BaseUrl).");
+     var missionRuntimeCredential = builder.Configuration["MissionRuntime:Credential"];
+     ```
+   - Attach `missionRuntimeCredential` as a `Bearer` `Authorization` header, unconditionally, on the
+     `mission-runtime`/`MissionRuntimeSession` `HttpClient`s built a few lines below — not
+     conditionally on whether it looks like a real token; decision 2 requires this to be
+     unconditional, no `if (isLocal)`.
+
+7. **Boundary-test `ForgeMission.Orchestration`'s own dependency shape.** Extend
+   `DesktopShellBoundaryTests` (or add a sibling test in the same file) asserting
+   `ForgeMission.Orchestration.csproj` has no `ProjectReference` to `ForgeMission.Core`,
+   `ForgeMission.ClientRuntime`, or `ForgeMission.ClientRuntime.Transport` — enforcing "can't quietly
+   become Desktop-shaped again" the same way the existing test does for `Desktop`/`Desktop.Photino`.
+
+8. **Update the stale cross-reference.** [43.12](phase-43.12-aot-hygiene-backlog.md) item 2 currently
+   describes testing `ClientRuntime`'s AOT-published binary under its (now-removed) default
+   Docker-starting path. Update it to describe testing `ForgeMission.Desktop`'s AOT-published binary
+   instead, since that's the new owner of Docker-starting.
+
 ## Done when
 
 Design is fully closed — every question raised in this spoke, including the auth/billing split
