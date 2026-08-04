@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using ForgeMission.Desktop.Contracts;
 using ForgeMission.Desktop.Photino;
+using ForgeMission.Orchestration;
+using Microsoft.Extensions.Configuration;
 
 // Two ways to run: pass a Client Runtime URL explicitly (dev/test convenience — points at a
 // Client Runtime already running elsewhere), or pass nothing and this process owns the Client
@@ -21,6 +23,7 @@ using ForgeMission.Desktop.Photino;
 // setting the main menu on a non-main thread" the moment the native window is constructed. Blocking
 // synchronously (Task.Wait, not await) keeps everything on the one thread throughout.
 Process? clientRuntime = null;
+IMissionRuntimeLauncher? launcher = null;
 string url;
 
 if (args.Length == 1 && Uri.TryCreate(args[0], UriKind.Absolute, out var explicitUrl) &&
@@ -30,7 +33,14 @@ if (args.Length == 1 && Uri.TryCreate(args[0], UriKind.Absolute, out var explici
 }
 else if (args.Length == 0)
 {
-    clientRuntime = StartClientRuntime();
+    var configuration = new ConfigurationBuilder()
+        .AddEnvironmentVariables()
+        .Build();
+    var resolveTask = MissionRuntimeResolver.ResolveAsync(configuration);
+    resolveTask.Wait();
+    var (resolvedUrl, resolvedLauncher) = resolveTask.Result;
+    launcher = resolvedLauncher;
+    clientRuntime = StartClientRuntime(resolvedUrl);
     url = WaitForReadyUrl(clientRuntime);
 }
 else
@@ -47,8 +57,16 @@ else
 var signalRegistrations = clientRuntime is { } runtimeToClean
     ? new[]
     {
-        PosixSignalRegistration.Create(PosixSignal.SIGTERM, _ => KillIfRunning(runtimeToClean)),
-        PosixSignalRegistration.Create(PosixSignal.SIGINT, _ => KillIfRunning(runtimeToClean)),
+        PosixSignalRegistration.Create(PosixSignal.SIGTERM, _ =>
+        {
+            KillIfRunning(runtimeToClean);
+            launcher?.DisposeAsync().AsTask().Wait();
+        }),
+        PosixSignalRegistration.Create(PosixSignal.SIGINT, _ =>
+        {
+            KillIfRunning(runtimeToClean);
+            launcher?.DisposeAsync().AsTask().Wait();
+        }),
     }
     : [];
 
@@ -71,6 +89,7 @@ if (clientRuntime is { } runtimeToCleanOnClose)
     host.RegisterClosingHandler(() =>
     {
         KillIfRunning(runtimeToCleanOnClose);
+        launcher?.DisposeAsync().AsTask().Wait();
         return false;
     });
 }
@@ -81,7 +100,10 @@ host.Run();
 // where Run() returns normally) — a no-op everywhere else since KillIfRunning checks
 // HasExited first.
 if (clientRuntime is not null)
+{
     KillIfRunning(clientRuntime);
+    launcher?.DisposeAsync().AsTask().Wait();
+}
 
 // Graceful-first, hard-kill as a fallback. Confirmed live: a hard Process.Kill() sends SIGKILL on
 // Unix, giving the Client Runtime's own Main() no chance to run its `await using var
@@ -124,7 +146,7 @@ static void KillIfRunning(Process process)
     }
 }
 
-static Process StartClientRuntime()
+static Process StartClientRuntime(string missionRuntimeBaseUrl)
 {
     var (fileName, dllArgument) = ResolveClientRuntimeCommand();
     var process = new Process
@@ -139,6 +161,9 @@ static Process StartClientRuntime()
     };
     if (dllArgument is not null)
         process.StartInfo.ArgumentList.Add(dllArgument);
+
+    process.StartInfo.EnvironmentVariables["MissionRuntime__BaseUrl"] = missionRuntimeBaseUrl;
+    process.StartInfo.EnvironmentVariables["MissionRuntime__Credential"] = "local";
 
     process.Start();
     return process;

@@ -11,6 +11,12 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Desktop.Contracts\ForgeMission.Desktop.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.Desktop.Photino\ForgeMission.Desktop.Photino.csproj" />
+    <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />
   </ItemGroup>
 
   <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
