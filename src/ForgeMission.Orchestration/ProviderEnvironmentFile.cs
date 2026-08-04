@@ -1,4 +1,4 @@
-namespace ForgeMission.ClientRuntime.Services;
+namespace ForgeMission.Orchestration;
 
 // Provider keys must not depend on the Electron parent environment: Finder and Dock launches do
 // not inherit a terminal's pwsh exports. This deliberately small dotenv reader is the single local

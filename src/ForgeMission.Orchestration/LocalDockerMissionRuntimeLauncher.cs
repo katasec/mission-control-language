@@ -3,13 +3,13 @@ using System.Net.Sockets;
 using ForgeMission.Docker;
 using Microsoft.Extensions.Configuration;
 
-namespace ForgeMission.ClientRuntime.Services;
+namespace ForgeMission.Orchestration;
 
 // Owns the local Docker Mission Runtime lifecycle — a local hosting target for the Mission Runtime,
 // not to be confused with IDockerProvider (a Client Runtime capability the Mission Runtime can
 // request, e.g. sandboxed container execution — see forge-architecture.md). MissionRuntimeSession
 // sees only BaseUrl, exactly as it does for an in-process or hosted runtime.
-internal sealed class LocalDockerMissionRuntimeLauncher(string containerName, int hostPort) : IAsyncDisposable
+internal sealed class LocalDockerMissionRuntimeLauncher(string containerName, int hostPort) : IMissionRuntimeLauncher
 {
     private const string RunnerImage = "ghcr.io/katasec/forge-runner:latest";
     private const int RunnerPort = 8080;

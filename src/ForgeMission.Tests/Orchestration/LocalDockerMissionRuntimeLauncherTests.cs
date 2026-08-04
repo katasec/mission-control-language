@@ -1,9 +1,10 @@
 using ForgeMission.ClientRuntime;
 using ForgeMission.ClientRuntime.Services;
 using ForgeMission.Core.Tools;
+using ForgeMission.Orchestration;
 using Microsoft.Extensions.Configuration;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Orchestration;
 
 // Runs only when an operator supplies a real Docker /v1 endpoint. The default test suite remains
 // provider-independent; Task 2b invokes this with the ephemeral runner started by the Client Runtime.
