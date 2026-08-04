@@ -20,7 +20,11 @@ internal sealed class Program
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         var initialWorkspaceRoot = builder.Configuration["Workspace:InitialRoot"];
         var missionRuntimeBaseUrl = builder.Configuration["MissionRuntime:BaseUrl"]
-            ?? "http://127.0.0.1:8080/";
+            ?? throw new InvalidOperationException(
+                "MissionRuntime:BaseUrl is required (set via MissionRuntime__BaseUrl).");
+        var missionRuntimeCredential = builder.Configuration["MissionRuntime:Credential"]
+            ?? throw new InvalidOperationException(
+                "MissionRuntime:Credential is required (set via MissionRuntime__Credential).");
         builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
         builder.Services.AddSingleton<ClientRuntimeEventHub>();
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
@@ -34,10 +38,14 @@ internal sealed class Program
         builder.Services.AddHttpClient("mission-runtime", client =>
         {
             client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
         });
         builder.Services.AddHttpClient<MissionRuntimeSession>(client =>
         {
             client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
         });
 
         var app = builder.Build();

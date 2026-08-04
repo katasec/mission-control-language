@@ -93,7 +93,8 @@ public sealed class ClientRuntimeTransportOutOfProcessTests : IDisposable
                     WorkingDirectory = RepositoryRoot(),
                 },
             };
-            process.StartInfo.Environment["MissionRuntime__Mode"] = "none";
+            process.StartInfo.Environment["MissionRuntime__BaseUrl"] = "http://127.0.0.1:8080/";
+            process.StartInfo.Environment["MissionRuntime__Credential"] = "local";
             if (terminalOutcome is not null)
                 process.StartInfo.Environment["Authorization__TerminalOutcome"] = terminalOutcome;
             process.Start();
