@@ -19,10 +19,12 @@ internal sealed class Program
         builder.WebHost.UseStaticWebAssets();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         var initialWorkspaceRoot = builder.Configuration["Workspace:InitialRoot"];
-        await using var localDockerMissionRuntime = await StartLocalDockerMissionRuntimeAsync(builder);
-        var missionRuntimeBaseUrl = localDockerMissionRuntime?.BaseUrl
-            ?? builder.Configuration["MissionRuntime:BaseUrl"]
-            ?? "http://127.0.0.1:8080/";
+        var missionRuntimeBaseUrl = builder.Configuration["MissionRuntime:BaseUrl"]
+            ?? throw new InvalidOperationException(
+                "MissionRuntime:BaseUrl is required (set via MissionRuntime__BaseUrl).");
+        var missionRuntimeCredential = builder.Configuration["MissionRuntime:Credential"]
+            ?? throw new InvalidOperationException(
+                "MissionRuntime:Credential is required (set via MissionRuntime__Credential).");
         builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
         builder.Services.AddSingleton<ClientRuntimeEventHub>();
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
@@ -36,10 +38,14 @@ internal sealed class Program
         builder.Services.AddHttpClient("mission-runtime", client =>
         {
             client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
         });
         builder.Services.AddHttpClient<MissionRuntimeSession>(client =>
         {
             client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
         });
 
         var app = builder.Build();
@@ -63,14 +69,5 @@ internal sealed class Program
 
         app.MapFallbackToFile("index.html");
         await app.RunAsync();
-    }
-
-    private static async Task<LocalDockerMissionRuntimeLauncher?> StartLocalDockerMissionRuntimeAsync(WebApplicationBuilder builder)
-    {
-        var mode = builder.Configuration["MissionRuntime:Mode"] ?? "docker";
-        if (!mode.Equals("docker", StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        return await LocalDockerMissionRuntimeLauncher.StartAsync(builder.Configuration);
     }
 }

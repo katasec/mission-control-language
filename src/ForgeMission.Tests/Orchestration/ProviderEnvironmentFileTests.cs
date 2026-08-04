@@ -1,6 +1,6 @@
-using ForgeMission.ClientRuntime.Services;
+using ForgeMission.Orchestration;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Orchestration;
 
 public sealed class ProviderEnvironmentFileTests : IDisposable
 {

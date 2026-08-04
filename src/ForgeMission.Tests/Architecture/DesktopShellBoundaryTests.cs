@@ -7,7 +7,8 @@ public sealed class DesktopShellBoundaryTests
     [Theory]
     [InlineData("ForgeMission.Desktop")]
     [InlineData("ForgeMission.Desktop.Photino")]
-    public void DesktopHost_DoesNotReferenceClientRuntimeImplementation(string projectName)
+    [InlineData("ForgeMission.Orchestration")]
+    public void Project_DoesNotReferenceClientRuntimeImplementation(string projectName)
     {
         var project = Path.Combine(RepositoryRoot(), "src", projectName, $"{projectName}.csproj");
         var references = XDocument.Load(project)

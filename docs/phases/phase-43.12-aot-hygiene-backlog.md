@@ -32,15 +32,21 @@ deliberately rather than assuming "it built, so it's fine."
    the marker, the same mistake would build clean and only surface at publish+run time — exactly the
    two bugs this phase already found. **Fix:** add the marker, confirm a clean rebuild.
 
-2. **The AOT smoke tests never exercised the default startup path.** `ForgeMission.ClientRuntime`'s
-   default `MissionRuntime:Mode` is `"docker"` (starts a real containerized Mission Runner via
-   `ForgeMission.Docker`), but every AOT verification run in 43.11 explicitly set
-   `MissionRuntime__Mode=none` to isolate the transport plumbing under test. A read of
-   `LocalDockerMissionRuntimeLauncher.cs` found nothing reflection-heavy (no YAML, no `Activator`, no unguarded
-   JSON), but that's build-time inspection, not the runtime proof this phase has twice shown is
-   necessary. **Fix:** run the actual AOT-published `ForgeMission.ClientRuntime` binary with a real
-   local Docker daemon, default mode, and confirm the full startup sequence (pull/start the Mission
-   Runner container, reach it over the wire) completes under AOT.
+2. **The AOT smoke tests never exercised the default local-Docker startup
+   path.** `ForgeMission.Desktop` resolves the Mission Runtime via
+   `ForgeMission.Orchestration`'s `MissionRuntimeResolver`, defaulting to
+   starting a real containerized Mission Runner via
+   `LocalDockerMissionRuntimeLauncher` when `MissionRuntime:Mode` is unset
+   or `"docker"` — but every AOT verification run in 43.11 isolated the
+   transport plumbing from a real Docker startup instead. A read of
+   `LocalDockerMissionRuntimeLauncher.cs` found nothing reflection-heavy
+   (no YAML, no `Activator`, no unguarded JSON), but that's build-time
+   inspection, not the runtime proof this phase has twice shown is
+   necessary. **Fix:** run the actual AOT-published `ForgeMission.Desktop`
+   binary with a real local Docker daemon, default mode, and confirm the
+   full startup sequence (resolve and start the Mission Runner container,
+   spawn `ForgeMission.ClientRuntime` pointed at its resolved URL, reach it
+   over the wire) completes under AOT.
 
 3. **(Awareness only, no action needed yet.) EF Core + Blazor Server are quarantined from the AOT
    path by convention, not enforcement.** `ForgeMission.Rooms`/`ForgeMission.Rooms.Data` (EF Core,
