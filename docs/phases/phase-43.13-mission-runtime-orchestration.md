@@ -1,6 +1,6 @@
 # Phase 43.13 — Mission Runtime resolution & the orchestration layer
 
-**Status: Design — decisions locked 2026-08-04, implementation not started.** Part of
+**Status: ✅ DONE 2026-08-04 — implemented (all 8 tasks) and live-verified.** Part of
 [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Raised 2026-08-04
 during architecture review of the [`DockerMissionRuntime` → `LocalDockerMissionRuntimeLauncher`
 rename](phase-43.2a-client-runtime-capability-boundary.md) — the rename fixed a naming collision
@@ -316,11 +316,28 @@ including the auth/billing split and the Type-2-door reasoning for Orchestration
 ## Done when
 
 Design is fully closed — every question raised in this spoke, including the auth/billing split
-above, is resolved. Not yet build-ready in the sense of a task list with file-by-file steps and a
-final "verified" bar; that task breakdown is the next step, not done in this pass. Full spoke is done
-when: `ForgeMission.Orchestration` exists and owns Mission Runtime resolution/supervision;
-`ForgeMission.ClientRuntime` has no Docker awareness, always sends a credential (even a local
-placeholder), and fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via
-the new project before spawning Client Runtime; all termination paths (quit/SIGTERM/crash) are
-verified clean for whatever the orchestrator now supervises; full test suite passes. **No local
-billing component is in scope for this spoke, by design** — see "Uniform gateway path" above.
+above, is resolved. **No local billing component is in scope for this spoke, by design** — see
+"Uniform gateway path" above.
+
+**✅ Full spoke DONE 2026-08-04.** All 8 tasks implemented on `codex/phase-43.13-orchestration-scaffold`
+(merged [PR #20](https://github.com/katasec/mission-control-language/pull/20)), each independently
+reviewed and re-verified — build + full test suite re-run by hand after every single task, not just
+trusted from a completion summary. `ForgeMission.Orchestration` exists and owns Mission Runtime
+resolution/supervision; `ForgeMission.ClientRuntime` has no Docker awareness, always sends a
+credential, and fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via the
+new project before spawning Client Runtime. Full test suite: 356 passed, 0 failed, 11 skipped.
+
+**All three termination paths live-verified 2026-08-04, against the actual published AOT binaries
+(`make desktop-publish`, real Mach-O executables, real Docker daemon) — not just unit tests:**
+- **SIGTERM** — `kill -TERM` against the running `ForgeMission.Desktop` process, tested twice: both
+  times the `ClientRuntime` child process and the Docker container were fully torn down (container
+  stopped *and* removed, not left lingering even in `docker ps -a`).
+- **Window close** — a real physical click on the native window's close button, confirmed by Ameer
+  directly on the machine (not simulated — `osascript`-driven UI scripting was tried first and
+  blocked by the sandbox's lack of Accessibility permission, so this specifically needed a human at
+  the keyboard). Same clean result: process tree and Docker container both fully gone afterward.
+- **Normal exit** — confirmed unreachable on macOS, per the code's own existing comment (AppKit tears
+  the process down before `host.Run()` returns when the last window closes) — not a separate live
+  scenario to chase on this platform.
+
+No open items remain for this spoke.
