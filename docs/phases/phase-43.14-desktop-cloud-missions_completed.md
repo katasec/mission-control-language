@@ -47,4 +47,5 @@ verification (below).
 - Diff read directly (`git show 26d9550`) and checked field-for-field against the spoke's locked
   "Wire shape" DTO definitions — exact match.
 
-**Merged:** PR [#TBD] into `main`, approved by the operator 2026-08-06.
+**Merged:** [PR #24](https://github.com/katasec/mission-control-language/pull/24) into `main`,
+approved by the operator 2026-08-06.
