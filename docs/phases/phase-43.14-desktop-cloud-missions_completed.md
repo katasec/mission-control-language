@@ -236,3 +236,6 @@ AGENTS.md — neither was silently built around):
 - Diff read directly (`git show ca880bc`) and checked against the twice-revised, approved plan —
   matches exactly, including both review corrections (the constructor-delegate seam instead of a
   factory class, and the 1:1 role mapping).
+
+**PR:** [#27](https://github.com/katasec/mission-control-language/pull/27), open, pending operator
+approval to merge.
