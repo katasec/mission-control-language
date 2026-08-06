@@ -15,7 +15,10 @@ namespace ForgeMission.Runner;
 /// <c>forge claude --container</c> case). Metering/billing wrap at the hosting layer (42.6),
 /// not here; key→mission routing replaces model routing there too.
 /// </summary>
-internal sealed class MissionDoorClient(RunnerRegistry registry, bool fullConversation) : IChatClient
+internal sealed class MissionDoorClient(
+    RunnerRegistry registry,
+    bool fullConversation,
+    IEnrichmentCache enrichmentCache) : IChatClient
 {
     public Task<ChatResponse> GetResponseAsync(
         IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken ct = default)
@@ -47,6 +50,7 @@ internal sealed class MissionDoorClient(RunnerRegistry registry, bool fullConver
 
         return new MissionChatClient(
             mission.Ast, mission.Experts, runner, fullConversation,
+            enrichmentCache: enrichmentCache,
             webSearch: ProviderClientBuilder.BuildWebSearch());
     }
 

@@ -283,6 +283,10 @@ codebase rather than inventing new process:**
   Runner's own `Cache + blob` datastore, load-bearing for task 3)
 - [phase-43.13-mission-runtime-orchestration.md](phase-43.13-mission-runtime-orchestration.md) (the
   orchestration layer this phase's Desktop-side work plugs into)
+- `~/progs/forge-infra/dev/300-data/pg-server.bicep`, `dev/300-data/main.bicep`,
+  `dev/300-data/scripts/write-conn-strings.sh`, `dev/500-app/main.bicep` (`runner` resource),
+  `dev/550-api/main.bicep` — the exact files task 3b touches, verified against actual content
+  2026-08-06 (see task 3b for line numbers). Separate repo — not this one.
 
 ## Tasks — dependency-ordered, build-ready (locked 2026-08-06)
 
@@ -299,15 +303,53 @@ codebase rather than inventing new process:**
    with `RunResponse.ToolUse` populated instead of `AgentText`. Full narrative + evidence:
    [_completed doc, Task 2](phase-43.14-desktop-cloud-missions_completed.md#task-2--runner-contract-dtos).
 
-3. **Enrichment cache — new datastore, not `authbilling_db`.** New `PostgresEnrichmentCache :
-   IEnrichmentCache` in `src/ForgeMission.Runner/` (raw Npgsql, matching `ForgeMission.Billing`'s
-   AOT-clean precedent — not EF Core), backed by its **own** connection string/database, never
-   `authbilling_db`'s. Idempotent schema bootstrap mirroring
-   `ForgeMission.Billing/AuthBillingSchema.cs`'s `EnsureCreatedAsync` pattern: one table,
-   `(prefix_hash PK, snapshot jsonb, expires_at)`. Wire into `src/ForgeMission.Runner/Program.cs`'s DI
-   — falls back to today's `InMemoryEnrichmentCache` when no connection string is configured, so local
-   `forge serve`/`forge run` need no Postgres. **Done when:** a set/get round-trips through real
-   Postgres in a test; the runner never receives `authbilling_db` credentials in any config path.
+3. **Enrichment cache (code). ✅ Done 2026-08-06** — `PostgresEnrichmentCache : IEnrichmentCache` in
+   `src/ForgeMission.Runner/`, own datastore/connection string (never `authbilling_db`'s), threaded
+   into both `/v1` `MissionDoorClient` instances via DI, falls back to `InMemoryEnrichmentCache` with
+   no config. **This verifies the code, not Azure** — 3b below is the separate, still-open claim that
+   it actually works live. Full narrative + evidence:
+   [_completed doc, Task 3](phase-43.14-desktop-cloud-missions_completed.md#task-3--enrichment-cache-code).
+
+3b. **Enrichment cache (infra) — provision `EnrichmentCacheConnection` in `forge-infra`.** Separate
+   repo (`~/progs/forge-infra`), **not Codex's task** — infra/secret-bearing changes get the
+   what-if-first discipline from AGENTS.md, done directly with the operator. Called out here
+   specifically because the last DB-provisioning task in this project ("build/tested locally, nothing
+   worked in Azure, several wrong assumptions") is the exact failure mode to not repeat: this task's
+   "done when" is a real Postgres round-trip in Azure, confirmed by a named observation — not "the
+   Bicep was authored" and not "Testcontainers passed" (that's 3's separate claim).
+   **Exact wiring chain, verified against the actual current Bicep/scripts (not docs) 2026-08-06:**
+   - **New DB is NOT an array append.** `dev/300-data/pg-server.bicep:60-76` declares each database as
+     its own hardcoded `resource` block (`db`, `authBillingDb`) — a new `enrichmentCacheDb` needs its
+     own `param enrichmentCacheDatabaseName string` (mirroring `pg-server.bicep:7-8`) threaded through
+     `dev/300-data/main.bicep:19-20` (param) and the module call (`main.bicep:81-82`).
+   - **No firewall step needed** — `AllowAllAzureServices` is already set at the server level
+     (`pg-server.bicep:78-85`), so a new DB on the same server is reachable from Azure services with no
+     extra firewall work.
+   - **Connection string is assembled in a bash `deploymentScript`, not raw Bicep interpolation.**
+     `dev/300-data/scripts/write-conn-strings.sh` builds `ConnectionStrings-AuthBillingConnection`
+     (line 13, value built lines 10-11 from `Pg-AdminPassword` + host + dbname) and writes it via
+     `az keyvault secret set`. A new `ConnectionStrings-EnrichmentCacheConnection` secret needs the same
+     treatment — a new `ENRICHMENT_DB` env var fed from Bicep (mirroring `BILL_DB` at `main.bicep:113`)
+     and a new `az keyvault secret set` line in the script.
+   - **The runner Container App has ZERO existing Postgres wiring — this is its first-ever DB
+     connection.** `dev/500-app/main.bicep`'s `runner` resource (lines 101-185) has a `secrets:` block
+     (lines 132-154) with only `mcl-apikey`/`anthropic-apikey`/`xai-apikey`/`platformkeys-hmackey` — no
+     `ConnectionStrings-*` entry, unlike ForgeUI (`connection-authbilling` at `main.bicep:72-76`+`255`)
+     or ForgeAPI (`dev/550-api/main.bicep:89-93`+`113`, wired **independently**, not inherited from
+     ForgeUI/500-app). Adding this is net-new `secrets:` + `env:` entries on the `runner` block, not a
+     copy of an existing runner pattern — nothing to fall back on if the naming or scoping is wrong.
+   - **No migration-job coupling risk** (the category error behind the prior DB-wipe incident, see
+     [phase-42.6 completed doc](phase-42.6-hosted-endpoint-ttfa_completed.md#migration-job-db-wipe--defused-2026-07-18-structurally-fixed-2026-07-19)):
+     `PostgresEnrichmentCache` bootstraps its own schema idempotently at app startup
+     (`CREATE TABLE IF NOT EXISTS`, same as `AuthBillingSchema`) — no EF migration, no `dev/450-migrate`
+     job, nothing to accidentally couple into an app-deploy layer.
+   - **Makefile targets, confirmed against the actual `Makefile`:** `300-data-what-if` → `300-data`
+     (new DB + secret), then `500-app-what-if` → `500-app` (runner env wiring). Run what-if first, no
+     exceptions, per AGENTS.md.
+   - **Verification (live, not inferred):** after deploy, confirm via direct `psql` (same
+     `make 300-data-operator-ip` pattern used for `authbilling_db`) that the table exists, and confirm
+     via a real runner request that a tool-continuation round-trip actually persists/recovers through
+     Postgres — not just that the container started without error.
 
 4. **Runner execution — thread `History`/`Tools` into `MissionRunHandler`.** `src/ForgeMission.Runner/
    MissionRunHandler.cs`. **Real discovery, not an assumption to build against:** `MissionRunHandler.

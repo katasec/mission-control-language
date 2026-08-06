@@ -90,3 +90,71 @@ as Task 1.
 
 **Merged:** [PR #25](https://github.com/katasec/mission-control-language/pull/25) into `main`,
 approved by the operator 2026-08-06.
+
+## Task 3 — Enrichment cache (code)
+
+**Goal:** a real, shared, multi-replica-safe `IEnrichmentCache` for the runner —
+`PostgresEnrichmentCache` (raw Npgsql, no EF), own database/connection string (never
+`authbilling_db`'s), idempotent schema bootstrap mirroring `AuthBillingSchema`'s pattern, DI-wired
+in `src/ForgeMission.Runner/Program.cs` with a fallback to `InMemoryEnrichmentCache` when
+unconfigured. Additionally scoped in during planning: thread the DI-resolved cache into
+`MissionDoorClient` (the `/v1` doors), since today it silently defaults to a fresh
+`InMemoryEnrichmentCache()` per request — a gap Codex's plan surfaced and confirmed independently
+before implementing, per AGENTS.md's design-first rule (an unresolved wiring question gets flagged,
+not silently built around).
+
+**✅ DONE (2026-08-06)** — implemented by Codex on `codex/phase-43.14-enrichment-cache`
+(`3077b51 Add runner Postgres enrichment cache`).
+
+**What changed:**
+- [`src/ForgeMission.Runner/PostgresEnrichmentCache.cs`](../../src/ForgeMission.Runner/PostgresEnrichmentCache.cs)
+  (new) — `GetAsync` filters `expires_at > NOW()`; `SetAsync` upserts via
+  `ON CONFLICT (prefix_hash) DO UPDATE`, storing the snapshot as `jsonb`
+  (`NpgsqlDbType.Jsonb`), serialized through a new source-generated
+  [`EnrichmentCacheJsonContext`](../../src/ForgeMission.Runner/EnrichmentCacheJsonContext.cs)
+  (`Dictionary<string,string>`, AOT-safe, no runtime `JsonSerializerOptions`). 30-minute default TTL,
+  matching `InMemoryEnrichmentCache`.
+- [`src/ForgeMission.Runner/EnrichmentCacheSchema.cs`](../../src/ForgeMission.Runner/EnrichmentCacheSchema.cs)
+  (new) — idempotent `CREATE TABLE IF NOT EXISTS enrichment_cache (prefix_hash PK, snapshot jsonb,
+  expires_at)` + an index on `expires_at`, mirroring `AuthBillingSchema.EnsureCreatedAsync`'s pattern.
+- [`src/ForgeMission.Runner/Program.cs`](../../src/ForgeMission.Runner/Program.cs) — resolves
+  `ConnectionStrings:EnrichmentCacheConnection` only (never derives from or reads
+  `AuthBillingConnection`); registers `InMemoryEnrichmentCache` when unset, or a singleton
+  `NpgsqlDataSource` + `PostgresEnrichmentCache` when set, running the schema bootstrap once at
+  startup. Both `MissionDoorClient` constructions (the Anthropic and OpenAI `/v1` doors) now receive
+  the one shared `IEnrichmentCache` singleton instead of each building their own default.
+- [`src/ForgeMission.Runner/MissionDoorClient.cs`](../../src/ForgeMission.Runner/MissionDoorClient.cs) —
+  new constructor parameter `IEnrichmentCache enrichmentCache`, passed through to
+  `MissionChatClient`'s `enrichmentCache:` argument (previously omitted, defaulting to a fresh
+  `InMemoryEnrichmentCache()` every request — the gap Codex's plan flagged and fixed).
+- [`src/ForgeMission.Runner.Tests/PostgresFixture.cs`](../../src/ForgeMission.Runner.Tests/PostgresFixture.cs)
+  (new) — `Testcontainers.PostgreSql`-backed, mirroring `ForgeMission.Rooms.Tests`' fixture pattern
+  (previously absent from this test project).
+- [`src/ForgeMission.Runner.Tests/PostgresEnrichmentCacheTests.cs`](../../src/ForgeMission.Runner.Tests/PostgresEnrichmentCacheTests.cs)
+  (new) — round-trips a snapshot through two independent `NpgsqlDataSource` instances (a writer and a
+  reader), proving a real durable store rather than same-process caching; also calls
+  `EnsureCreatedAsync` twice to prove the bootstrap stays safe on every boot.
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Runner.Tests --no-build` — **4/4 pass** (1 new Postgres round-trip +
+  3 pre-existing).
+- `grep -rn "AuthBillingConnection|authbilling" src/ForgeMission.Runner/` — zero config-path
+  references; the only hits are doc comments explaining the isolation, confirming the runner never
+  reads `authbilling_db` credentials in any code path.
+- Started the runner directly (`dotnet run --project src/ForgeMission.Runner`) with
+  `EnrichmentCacheConnection` unset — `GET /health` returned `{"status":"ok"}` with no Postgres
+  connection attempted (confirmed from startup log: no schema-bootstrap step ran), proving the
+  no-Postgres local fallback.
+- Diff read directly (`git show 3077b51`) and checked against the approved plan — matches, including
+  the `MissionDoorClient` wiring fix.
+
+**Explicitly not yet done — tracked separately as its own claim, not implied by the above:**
+actual deployment/verification against real Azure Postgres. That's
+[Task 3b](phase-43.14-desktop-cloud-missions.md#3b-enrichment-cache-infra--provision-enrichmentcacheconnection-in-forge-infra)
+in the active spoke — a separate `forge-infra` change, still open, with the exact wiring chain
+locked in against the real current Bicep (not assumptions) specifically to avoid repeating a past
+"built/tested locally, nothing worked in Azure" failure.
+
+**PR:** [#26](https://github.com/katasec/mission-control-language/pull/26), open, pending operator
+approval to merge.
