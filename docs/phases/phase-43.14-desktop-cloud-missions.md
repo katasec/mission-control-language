@@ -291,13 +291,13 @@ codebase rather than inventing new process:**
    [_completed doc, Task 1](phase-43.14-desktop-cloud-missions_completed.md#task-1--forgeapi-dtos).
    (DTO shapes stay defined in "Design review" above — Tasks 2–8 still build against them.)
 
-2. **Runner contract DTOs.** `src/ForgeMission.Runner.Contracts/RunContracts.cs`: mirror the same
-   additive fields — `RunRequest(MissionLabel, Goal, Vars, Policy, InputArtifacts)` gains `History`/
-   `Tools`; `RunResponse(AgentText, Verified, StepCount, RetryCount, Trace, Usage, OutputArtifacts)`
-   gains `ToolUse`. **No new `RunStreamEvent.Type` needed** — a non-terminal turn still rides the
-   existing `"result"` event, just with `RunResponse.ToolUse` populated instead of `AgentText`; the
-   pipeline run itself completes either way; only the *caller* (ForgeAPI) needs to look at `ToolUse` to
-   decide settlement. Register in `RunContractsContext`.
+2. **Runner contract DTOs. ✅ Done 2026-08-06** — `History`/`Tools` added to `RunRequest`, `ToolUse`
+   added to `RunResponse`, plus mirrored `TurnMessage`/`TurnContent`/`MissionToolDecl`/`ToolUseCall`
+   DTOs in `src/ForgeMission.Runner.Contracts/RunContracts.cs` (PascalCase wire, no naming-policy
+   override, matching this context's existing convention — distinct from `MessagesJsonContext`'s
+   camelCase). No new `RunStreamEvent.Type` — a non-terminal turn rides the existing `"result"` event
+   with `RunResponse.ToolUse` populated instead of `AgentText`. Full narrative + evidence:
+   [_completed doc, Task 2](phase-43.14-desktop-cloud-missions_completed.md#task-2--runner-contract-dtos).
 
 3. **Enrichment cache — new datastore, not `authbilling_db`.** New `PostgresEnrichmentCache :
    IEnrichmentCache` in `src/ForgeMission.Runner/` (raw Npgsql, matching `ForgeMission.Billing`'s
