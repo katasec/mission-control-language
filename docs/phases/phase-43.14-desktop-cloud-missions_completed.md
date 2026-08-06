@@ -376,3 +376,6 @@ does the actual mode-based selection.
   `FunctionResultContent` and is correctly excluded from `LastUserTurnIndex`'s "last real user turn"
   candidacy — confirmed correct, not just plausible.
 - Diff read directly (`git show 894f451`) and checked against the approved plan — matches exactly.
+
+**PR:** [#29](https://github.com/katasec/mission-control-language/pull/29), open, pending operator
+approval to merge.
