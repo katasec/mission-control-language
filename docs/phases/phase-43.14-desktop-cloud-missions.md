@@ -372,10 +372,10 @@ codebase rather than inventing new process:**
    narrative + evidence:
    [_completed doc, Task 6](phase-43.14-desktop-cloud-missions_completed.md#task-6--desktop-side-cloud-client).
 
-7. **Credentials.** `src/ForgeMission.Desktop/Program.cs`. Replace the hardcoded
-   `MissionRuntime__Credential = "local"` with a read of the platform key `forge login` writes to
-   `~/.forge` — reuse whatever helper `src/ForgeMission.Cli` already uses for that file rather than
-   reimplementing the read.
+7. **Credentials. ✅ Done 2026-08-07** — `StartClientRuntime` now passes the real platform key from
+   `CredentialStore.GetPlatform()`; a missing credential fails fast with "Not signed in. Run
+   `forge login`." and exit code 1, before any child process launches. Full narrative + evidence:
+   [_completed doc, Task 7](phase-43.14-desktop-cloud-missions_completed.md#task-7--credentials).
 
 8. **Mode selection + default.** `src/ForgeMission.Orchestration/MissionRuntimeResolver.cs` (the
    non-docker-mode seam already exists here) + `src/ForgeMission.ClientRuntime/Program.cs` (DI picks

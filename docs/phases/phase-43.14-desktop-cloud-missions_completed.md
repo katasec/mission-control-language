@@ -377,5 +377,51 @@ does the actual mode-based selection.
   candidacy — confirmed correct, not just plausible.
 - Diff read directly (`git show 894f451`) and checked against the approved plan — matches exactly.
 
-**PR:** [#29](https://github.com/katasec/mission-control-language/pull/29), open, pending operator
-approval to merge.
+**Merged:** [PR #29](https://github.com/katasec/mission-control-language/pull/29) into `main`,
+approved by the operator 2026-08-06.
+
+## Task 7 — Credentials
+
+**Goal:** replace the hardcoded `MissionRuntime__Credential = "local"` in
+`src/ForgeMission.Desktop/Program.cs`'s `StartClientRuntime` with a read of the platform key
+`forge login` writes to `~/.forge`, reusing the CLI's existing helper rather than reimplementing
+the read.
+
+**✅ DONE (2026-08-07)** — implemented by Codex on `codex/phase-43.14-desktop-credentials`
+(`910b837 Forward the real platform credential to the Client Runtime`), two small revision rounds.
+
+**What changed:**
+- [`src/ForgeMission.Desktop/Program.cs`](../../src/ForgeMission.Desktop/Program.cs) — the
+  `args.Length == 0` branch (the real double-click launch path; the explicit-URL dev path is
+  correctly left untouched, since Desktop doesn't own that external process's environment) now
+  calls `CredentialStore.GetPlatform()` before resolving or launching any runtime. A missing/empty
+  key prints `"Not signed in. Run `forge login`."` (matching `ForgeExec.cs`'s exact existing
+  message) and calls `Environment.Exit(1)` before any child process starts. `StartClientRuntime`
+  gained a `missionRuntimeCredential` parameter, passed through as `MissionRuntime__Credential`
+  instead of the `"local"` sentinel.
+- [`src/ForgeMission.Desktop/ForgeMission.Desktop.csproj`](../../src/ForgeMission.Desktop/ForgeMission.Desktop.csproj) —
+  new direct `ForgeMission.Core` project reference (genuinely needed: `Desktop → Orchestration →
+  Docker` is a dead end, `Docker` has zero project references of its own, so `Core`'s
+  `CredentialStore` was not transitively reachable before this).
+
+**One real revision round, caught by direct testing, not code reading:** Codex's own sandbox
+couldn't exercise the missing-credential path (no way to simulate an unauthenticated environment
+without interactive sudo). Claude tested it independently by overriding `HOME` to an empty temp
+directory (never touching the real `~/.forge/credentials.json`) and running the built native
+binary directly — confirmed the message printed correctly, but the exit code was **0**,
+inconsistent with this same file's sibling bad-args branch (which throws, yielding a non-zero
+exit) and with `ForgeExec.RunAsync`'s exact precedent (`return 1`) for the identical message. Sent
+back as a one-line fix (`Environment.Exit(1)`); re-verified directly after the fix landed.
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- **Missing-credential path, executed directly** (not just read): built the native `dotnet`
+  invocation with `HOME` overridden to an empty temp directory — prints `"Not signed in. Run
+  `forge login`."` to stderr and exits with code **1**.
+- **Credentialed path, executed directly**: with the real `~/.forge/credentials.json` present, the
+  app proceeds past the check and launches the full Photino window flow (observed
+  `Photino.NET: "Forge".Load(...)` in stdout) — confirmed no orphaned child processes remained
+  afterward (`pgrep` found none).
+- `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **458/458 pass, 11 skipped, 0
+  failed**.
+- Diff read directly and checked against the approved (twice-revised) plan — matches exactly.
