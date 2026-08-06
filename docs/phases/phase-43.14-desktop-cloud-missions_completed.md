@@ -156,5 +156,83 @@ in the active spoke — a separate `forge-infra` change, still open, with the ex
 locked in against the real current Bicep (not assumptions) specifically to avoid repeating a past
 "built/tested locally, nothing worked in Azure" failure.
 
-**PR:** [#26](https://github.com/katasec/mission-control-language/pull/26), open, pending operator
-approval to merge.
+**Merged:** [PR #26](https://github.com/katasec/mission-control-language/pull/26) into `main`,
+approved by the operator 2026-08-06.
+
+## Task 4 — Runner execution: thread `History`/`Tools` into `MissionRunHandler`
+
+**Goal:** `MissionRunHandler.ExecuteAsync` calls `PipelineRunner.RunAsync` directly and does not go
+through `MissionChatClient` — so this task extracts `MissionChatClient.BuildOptionsAsync`'s
+three-segment gate (`ConversationHash.Prefix`, `IsToolContinuation`, enrichment-cache get/set,
+`StartAtAgent`) into a shared helper both `MissionRunHandler` and `MissionChatClient` call, without
+losing `MissionRunHandler`'s existing trace/progress/artifact wiring. Populate `RunResponse.ToolUse`.
+
+Two real gaps surfaced during planning, both resolved before implementation (design-first, per
+AGENTS.md — neither was silently built around):
+- **Type mismatch**: `RunRequest.History` is `List<TurnMessage>` (Runner.Contracts POCOs from Task
+  2), but `ConversationHash`/`IsToolContinuation` are hard-typed to `IReadOnlyList<ChatMessage>`
+  (Microsoft.Extensions.AI). Resolved by converting `TurnMessage → ChatMessage` in the Runner tier
+  before calling the shared gate, keeping `ConversationHash` itself untouched and single-sourced.
+- **Role-mapping correctness**: an early plan draft proposed representing a `tool_result` turn under
+  a fabricated `ChatRole.Tool`. Caught in review — `TurnMessage.Role` is locked to `"user"|"assistant"`
+  only (Task 1/2's own DTO), and `MissionChatClient.cs`'s `ExtractGoal` comment documents that
+  tool-result hand-backs arrive with role **"user"** on the real wire. Corrected to a straight 1:1
+  role mapping, with `tool_result` becoming a `FunctionResultContent` *within* that user-role message.
+
+**✅ DONE (2026-08-06)** — implemented by Codex on `codex/phase-43.14-runner-tool-continuation`
+(`ca880bc Add runner tool continuation support`).
+
+**What changed:**
+- [`src/ForgeMission.Core/Runtime/ToolContinuationGate.cs`](../../src/ForgeMission.Core/Runtime/ToolContinuationGate.cs)
+  (new) — the extracted three-segment gate as a static helper (`ApplyAsync`), reusing
+  `ConversationHash.Prefix` unchanged; returns a `ToolContinuationState(StartAtAgent,
+  OnPreAgentComplete)`.
+- [`src/ForgeMission.Core/Adapters/MissionChatClient.cs`](../../src/ForgeMission.Core/Adapters/MissionChatClient.cs) —
+  its inline gate replaced with a call to `ToolContinuationGate.ApplyAsync`; duplicate-continuation
+  observation stays at its existing call site, unmoved. Pure extraction — behavior unchanged
+  (confirmed by the existing `ThreeSegmentExecutorTests` passing without modification).
+- [`src/ForgeMission.Runner/RunnerToolTurnMapper.cs`](../../src/ForgeMission.Runner/RunnerToolTurnMapper.cs)
+  (new, Runner-only, reflection-free) — `ToChatMessages` (maps `TurnMessage.Role` 1:1, synthesizes a
+  single user turn from `Goal` when `History` is empty, per the spoke's "forge exec is a degenerate
+  case" design); `ToTools` (each `MissionToolDecl` → `new DeclaredTool(...)`, reusing the
+  `Katasec.AITools` declaration-only-`AIFunction` shape already used in
+  `AgentToolDeclarations.cs`); `ToToolUse` (`FunctionCallContent → ToolUseCall`, converting
+  `Arguments` to `JsonElement` via a hand-rolled `Utf8JsonWriter` walk — mirroring
+  `MissionRuntimeSession`'s existing `JsonElement→IDictionary` conversion in reverse — that throws
+  explicitly on any unsupported value type rather than falling back to a reflection-based serializer.
+- [`src/ForgeMission.Runner/MissionRunHandler.cs`](../../src/ForgeMission.Runner/MissionRunHandler.cs) —
+  new constructor params `IEnrichmentCache enrichmentCache` and an optional
+  `Func<RunnerMission, UsageAccumulator, IExpertRunner>? runnerFactory` (defaulting to the existing
+  `BuildRunner`, enabling direct construction in tests with no DI/`Program.cs` changes — a simpler
+  seam than an earlier plan draft's dedicated factory class, trimmed in review per AGENTS.md's
+  no-speculative-abstractions rule). `ExecuteAsync` now builds `ChatMessage`s from `request.History`,
+  runs the shared gate, and maps `MissionResult.ToolCalls → RunResponse.ToolUse`. When `ToolUse` is
+  populated: `AgentText` is empty, `Verified` is false; `Trace`/`Usage`/`OutputArtifacts` still
+  reflect the actual partial run (Task 5 decides what to do with those fields when shaping the API
+  response).
+- [`src/ForgeMission.Runner.Tests/MissionRunHandlerTests.cs`](../../src/ForgeMission.Runner.Tests/MissionRunHandlerTests.cs)
+  (new) — builds a real 3-step mission (`Enrich → Respond(role:agent) → Verify`) with a scripted
+  `IExpertRunner`, and proves end-to-end: the first call stops after `Respond` emits a tool call
+  (`Trace.Count == 2`, `Verify` never reached, `ToolUse` populated, `AgentText` empty, `Verified`
+  false); the replayed continuation resumes at `Respond` without re-running `Enrich` (enrich-once,
+  proven via a call counter against a real `InMemoryEnrichmentCache`), and asserts directly that the
+  tool-result message the agent sees has `Role == ChatRole.User` — a functional, not just
+  code-reading, confirmation of the role-mapping fix — then reaches `Verify` and returns a terminal,
+  verified result.
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Runner.Tests --no-build` — **5/5 pass**.
+- `dotnet test src/ForgeMission.Tests --filter "FullyQualifiedName~ThreeSegmentExecutorTests"` —
+  **6/6 pass**, confirming the `MissionChatClient` extraction is behavior-neutral.
+- `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **456/456 pass, 11 skipped, 0
+  failed** across all three test projects. The two live xAI integration tests Codex's environment
+  reported as 403 failures (credit/spend-limit exhaustion) skip cleanly in this environment (no
+  `XAI_API_KEY` configured here) — confirming they're a live-external-API dependency unrelated to
+  this change, not a masked regression.
+- `dotnet publish src/ForgeMission.Cli -c Release -r osx-arm64 --self-contained -p:PublishAot=true` —
+  succeeds; only pre-existing macOS SDK linker-version warnings, no ILC/trim warnings — confirms the
+  new code (including the hand-rolled `Utf8JsonWriter` JSON handling) stays AOT-safe.
+- Diff read directly (`git show ca880bc`) and checked against the twice-revised, approved plan —
+  matches exactly, including both review corrections (the constructor-delegate seam instead of a
+  factory class, and the 1:1 role mapping).

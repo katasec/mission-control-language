@@ -351,19 +351,12 @@ codebase rather than inventing new process:**
      via a real runner request that a tool-continuation round-trip actually persists/recovers through
      Postgres — not just that the container started without error.
 
-4. **Runner execution — thread `History`/`Tools` into `MissionRunHandler`.** `src/ForgeMission.Runner/
-   MissionRunHandler.cs`. **Real discovery, not an assumption to build against:** `MissionRunHandler.
-   ExecuteAsync` calls `PipelineRunner.RunAsync` directly today, building its own `PipelineRunOptions`
-   — it does **not** go through `MissionChatClient` (that's `MissionDoorClient.cs`'s job, for the `/v1`
-   doors only). So "consolidation" doesn't mean literally rerouting through `MissionChatClient` — it
-   means extracting `MissionChatClient.BuildOptionsAsync`'s three-segment gate (`ConversationHash.
-   Prefix`, `IsToolContinuation`, enrichment-cache get/set, `StartAtAgent`) out of
-   `src/ForgeMission.Core/Adapters/MissionChatClient.cs` into a shared helper both `MissionRunHandler`
-   and `MissionChatClient` call — so `MissionRunHandler` gains tool-continuation handling without
-   losing its existing trace-building/progress-callback/artifact-collection wiring, which has no
-   equivalent in `MissionChatClient` and shouldn't be rebuilt. **Done when:** a `RunRequest` with
-   `History`/`Tools` produces a `RunResponse.ToolUse`-populated result on the first call and correctly
-   resumes (via the enrichment cache) on a replayed continuation.
+4. **Runner execution — thread `History`/`Tools` into `MissionRunHandler`. ✅ Done 2026-08-06** —
+   the three-segment gate extracted from `MissionChatClient` into a shared
+   `ToolContinuationGate`, called by both it and `MissionRunHandler`; `RunnerToolTurnMapper` handles
+   the `TurnMessage↔ChatMessage`/`MissionToolDecl→AITool`/`FunctionCallContent→ToolUseCall`
+   conversions, reflection-free. Full narrative + evidence:
+   [_completed doc, Task 4](phase-43.14-desktop-cloud-missions_completed.md#task-4--runner-execution--threadhistorytools-into-missionrunhandler).
 
 5. **ForgeAPI wiring.** `src/ForgeMission.Api/MissionExecutionService.cs`,
    `RunCoreAsync`/`RunOnRunnerAsync`. Thread `msg.History`/`msg.Tools` into the `RunRequest` sent to
