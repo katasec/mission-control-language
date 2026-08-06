@@ -358,12 +358,12 @@ codebase rather than inventing new process:**
    conversions, reflection-free. Full narrative + evidence:
    [_completed doc, Task 4](phase-43.14-desktop-cloud-missions_completed.md#task-4--runner-execution--threadhistorytools-into-missionrunhandler).
 
-5. **ForgeAPI wiring.** `src/ForgeMission.Api/MissionExecutionService.cs`,
-   `RunCoreAsync`/`RunOnRunnerAsync`. Thread `msg.History`/`msg.Tools` into the `RunRequest` sent to
-   the runner. When `RunResponse.ToolUse` is populated: map to `ExecuteMissionResponse.ToolUse`,
-   return without calling `billing.SettleRunAsync`. When it's null: settle exactly as today (existing
-   `ClientToken` idempotency, unchanged). **Done when:** a tool-use turn returns unsettled (balance
-   unchanged), the terminal turn settles exactly once even if retried with the same `ClientToken`.
+5. **ForgeAPI wiring. ✅ Done 2026-08-06** — `msg.History`/`msg.Tools` threaded into the `RunRequest`
+   via a new field-for-field `MissionToolTurnMapper` (bridging the separately-defined Api/
+   Runner.Contracts DTOs); a `ToolUse`-populated `RunResponse` returns early, unsettled, zero-cost,
+   with unexpected runner output artifacts discarded rather than leaked; a `null` `ToolUse` settles
+   exactly as before. Full narrative + evidence:
+   [_completed doc, Task 5](phase-43.14-desktop-cloud-missions_completed.md#task-5--forgeapi-wiring).
 
 6. **Desktop-side cloud client.** New `src/ForgeMission.ClientRuntime/Services/
    CloudMissionRuntimeSession.cs` — same round-trip shape as today's `MissionRuntimeSession`

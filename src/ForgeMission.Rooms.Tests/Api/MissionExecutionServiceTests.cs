@@ -47,8 +47,9 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
     private MissionExecutionService NewService(
         IMissionCatalog catalog,
         HttpMessageHandler handler,
-        IArtifactStore? artifacts = null) =>
-        new(catalog, new InMemoryRunStore(), artifacts ?? new StubArtifactStore(), RunnerFactory(handler), Billing,
+        IArtifactStore? artifacts = null,
+        IRunStore? runStore = null) =>
+        new(catalog, runStore ?? new InMemoryRunStore(), artifacts ?? new StubArtifactStore(), RunnerFactory(handler), Billing,
             NullLogger<MissionExecutionService>.Instance);
 
     [Fact]
@@ -90,6 +91,105 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
         Assert.Equal(startingBalance - response.Usage.CostMicroUsd, response.BalanceMicroUsd);
         Assert.Equal(startingBalance - response.Usage.CostMicroUsd, await Billing.GetBalanceMicroUsdAsync(member.Id));
         Assert.NotEmpty(response.RunId);
+        Assert.Null(handler.LastRunRequest!.History);
+        Assert.Null(handler.LastRunRequest.Tools);
+    }
+
+    [Fact]
+    public async Task Execute_forwards_agent_turn_and_returns_tool_use_without_settlement()
+    {
+        var member = await NewMemberAsync();
+        await Billing.GrantStartingCreditAsync(member.Id);
+        var startingBalance = await Billing.GetBalanceMicroUsdAsync(member.Id);
+
+        var runnerArtifact = new RunArtifact(
+            Id: "partial-output", Name: "partial.txt", ContentType: "text/plain", Size: 7, Sha256: "", Role: "output");
+        var runnerResult = new RunResponse(
+            AgentText: "",
+            Verified: false,
+            StepCount: 2,
+            RetryCount: 0,
+            Trace: [],
+            Usage: new RunUsage(InputTokens: 12, OutputTokens: 8, ComputeSeconds: 0.25, Model: "gpt-4o-mini"),
+            OutputArtifacts: [runnerArtifact],
+            ToolUse:
+            [
+                new ForgeMission.Runner.Contracts.ToolUseCall
+                {
+                    Id = "call-1",
+                    Name = "Read",
+                    Arguments = ParseElement("""{"path":"notes.txt"}""")
+                }
+            ]);
+        var handler = new StubRunnerHandler([new RunStreamEvent("result", Result: runnerResult)]);
+        var runStore = new RecordingRunStore();
+        var svc = NewService(Catalog("WebSearch"), handler, runStore: runStore);
+        var msg = new ExecuteMission
+        {
+            Mission = "websearch",
+            Input = "Read notes.txt",
+            ClientToken = $"tok-{Guid.NewGuid():N}",
+            History =
+            [
+                new ForgeMission.Api.TurnMessage
+                {
+                    Role = "user",
+                    Content = [new ForgeMission.Api.TurnContent { Type = "text", Text = "Read notes.txt" }]
+                },
+                new ForgeMission.Api.TurnMessage
+                {
+                    Role = "assistant",
+                    Content =
+                    [
+                        new ForgeMission.Api.TurnContent
+                        {
+                            Type = "tool_use", ToolUseId = "call-0", ToolName = "Read",
+                            ToolInput = ParseElement("""{"path":"previous.txt"}""")
+                        }
+                    ]
+                },
+                new ForgeMission.Api.TurnMessage
+                {
+                    Role = "user",
+                    Content = [new ForgeMission.Api.TurnContent { Type = "tool_result", ToolUseId = "call-0", ToolResult = "previous" }]
+                }
+            ],
+            Tools =
+            [
+                new ForgeMission.Api.MissionToolDecl
+                {
+                    Name = "Read", Description = "Read a file.",
+                    InputSchema = ParseElement("""{"type":"object","required":["path"]}""")
+                }
+            ]
+        };
+
+        var response = await svc.ExecuteAsync(msg, new PlatformKeyContext(member.Id, startingBalance), CancellationToken.None);
+
+        var call = Assert.Single(response.ToolUse!);
+        Assert.Equal("call-1", call.Id);
+        Assert.Equal("Read", call.Name);
+        Assert.Equal("notes.txt", call.Arguments.GetProperty("path").GetString());
+        Assert.Equal(0, response.Usage.CostMicroUsd);
+        Assert.Equal(12, response.Usage.InputTokens);
+        Assert.Equal(startingBalance, response.BalanceMicroUsd);
+        Assert.Equal(startingBalance, await Billing.GetBalanceMicroUsdAsync(member.Id));
+        Assert.Empty(response.Artifacts);
+        Assert.Equal(0, runStore.SaveCount);
+        Assert.Equal(0, handler.ArtifactDownloadCount);
+        Assert.Equal(1, handler.ArtifactDeleteCount);
+
+        var runnerRequest = handler.LastRunRequest!;
+        var history = runnerRequest.History!;
+        Assert.Equal(3, history.Count);
+        Assert.Equal("user", history[0].Role);
+        Assert.Equal("Read", history[1].Content.Single().ToolName);
+        Assert.Equal("previous.txt", history[1].Content.Single().ToolInput!.Value.GetProperty("path").GetString());
+        Assert.Equal("tool_result", history[2].Content.Single().Type);
+        Assert.Equal("previous", history[2].Content.Single().ToolResult);
+        var tool = Assert.Single(runnerRequest.Tools!);
+        Assert.Equal("Read", tool.Name);
+        Assert.Equal("object", tool.InputSchema.GetProperty("type").GetString());
     }
 
     [Fact]
@@ -360,14 +460,31 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
         }
     }
 
+    private sealed class RecordingRunStore : IRunStore
+    {
+        public int SaveCount { get; private set; }
+
+        public Task SaveAsync(string runId, ExecuteMissionResponse result, CancellationToken ct)
+        {
+            SaveCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task<ExecuteMissionResponse?> TryGetAsync(string runId, CancellationToken ct) =>
+            Task.FromResult<ExecuteMissionResponse?>(null);
+    }
+
     private sealed class StubRunnerHandler(IReadOnlyList<RunStreamEvent> events) : HttpMessageHandler
     {
         public bool ThrowIfCalled { get; init; }
         public byte[]? ArtifactBytes { get; init; }
         public HttpStatusCode ArtifactUploadStatus { get; init; } = HttpStatusCode.OK;
         public HttpStatusCode ArtifactDownloadStatus { get; init; } = HttpStatusCode.OK;
+        public RunRequest? LastRunRequest { get; private set; }
+        public int ArtifactDownloadCount { get; private set; }
+        public int ArtifactDeleteCount { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             if (ThrowIfCalled)
                 throw new InvalidOperationException("The runner must not be called when the credit check fails.");
@@ -375,7 +492,7 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
             if (request.RequestUri?.AbsolutePath == "/artifacts/upload")
             {
                 if (ArtifactUploadStatus != HttpStatusCode.OK)
-                    return Task.FromResult(new HttpResponseMessage(ArtifactUploadStatus));
+                    return new HttpResponseMessage(ArtifactUploadStatus);
 
                 var artifact = new RunArtifact(
                     Id: "runner-input-1",
@@ -384,24 +501,33 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
                     Size: request.Content?.Headers.ContentLength ?? 0,
                     Sha256: "",
                     Role: "input");
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                return new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = JsonContent.Create(artifact, RunContractsContext.Default.RunArtifact),
-                });
+                };
             }
 
             if (request.RequestUri?.AbsolutePath.StartsWith("/artifacts/", StringComparison.Ordinal) == true)
             {
                 if (request.Method == HttpMethod.Delete)
-                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+                {
+                    ArtifactDeleteCount++;
+                    return new HttpResponseMessage(HttpStatusCode.NoContent);
+                }
+
+                ArtifactDownloadCount++;
 
                 var artifactResponse = new HttpResponseMessage(ArtifactDownloadStatus)
                 {
                     Content = new ByteArrayContent(ArtifactBytes ?? []),
                 };
                 artifactResponse.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
-                return Task.FromResult(artifactResponse);
+                return artifactResponse;
             }
+
+            await using var content = await request.Content!.ReadAsStreamAsync(ct);
+            LastRunRequest = await JsonSerializer.DeserializeAsync(
+                content, RunContractsContext.Default.RunRequest, ct);
 
             var sb = new StringBuilder();
             foreach (var evt in events)
@@ -411,7 +537,9 @@ public sealed class MissionExecutionServiceTests(PostgresFixture fixture) : ICla
             {
                 Content = new StringContent(sb.ToString(), Encoding.UTF8, "application/x-ndjson"),
             };
-            return Task.FromResult(response);
+            return response;
         }
     }
+
+    private static JsonElement ParseElement(string json) => JsonDocument.Parse(json).RootElement.Clone();
 }
