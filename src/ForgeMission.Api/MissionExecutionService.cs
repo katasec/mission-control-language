@@ -130,7 +130,9 @@ public sealed class MissionExecutionService(
             msg.Input,
             Vars: msg.Inputs,
             RunPolicy.Trusted,
-            InputArtifacts: inputArtifacts);
+            InputArtifacts: inputArtifacts,
+            History: MissionToolTurnMapper.ToRunnerHistory(msg.History),
+            Tools: MissionToolTurnMapper.ToRunnerTools(msg.Tools));
 
         RunResponse result;
         try
@@ -143,7 +145,27 @@ public sealed class MissionExecutionService(
             return Fail(runId, ErrorCode.RunFailed, "The mission run failed.");
         }
 
-        // M7: idempotent against msg.ClientToken — a retry of the same call returns the prior debit.
+        var toolUse = MissionToolTurnMapper.ToApiToolUse(result.ToolUse);
+        if (toolUse is not null)
+        {
+            // A tool-use response is a partial turn. Its provider usage is observable, but it is
+            // not settled until the terminal continuation. Output artifacts have no client-visible
+            // slot on this response, so clean up any unexpected runner outputs instead of leaking.
+            await DiscardOutputsFromRunnerAsync(result.OutputArtifacts, runner, ct);
+            var currentBalance = await billing.GetBalanceMicroUsdAsync(principal.MemberId, ct);
+            return new ExecuteMissionResponse
+            {
+                RunId = runId,
+                Mission = entry.Handle,
+                MissionVersion = entry.Version,
+                Usage = MapUsage(result.Usage, costMicroUsd: 0),
+                ToolUse = toolUse,
+                BalanceMicroUsd = currentBalance,
+                ResponseStatus = ResponseStatus.Ok(),
+            };
+        }
+
+        // M7: idempotent against msg.ClientToken — a retry of the same terminal call returns the prior debit.
         var cost = await billing.SettleRunAsync(
             principal.MemberId, entry.MissionRef, result.Usage, ct, msg.ClientToken);
         var balance = await billing.GetBalanceMicroUsdAsync(principal.MemberId, ct);
@@ -345,6 +367,17 @@ public sealed class MissionExecutionService(
         }
 
         return copied;
+    }
+
+    private async Task DiscardOutputsFromRunnerAsync(
+        IReadOnlyList<RunArtifact>? outputArtifacts,
+        HttpClient runner,
+        CancellationToken ct)
+    {
+        if (outputArtifacts is not { Count: > 0 }) return;
+
+        foreach (var output in outputArtifacts)
+            await DeleteRunnerArtifactAsync(runner, output.Id, ct);
     }
 
     private async Task DeleteRunnerArtifactAsync(HttpClient runner, string artifactId, CancellationToken ct)
