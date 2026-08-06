@@ -425,3 +425,6 @@ back as a one-line fix (`Environment.Exit(1)`); re-verified directly after the f
 - `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **458/458 pass, 11 skipped, 0
   failed**.
 - Diff read directly and checked against the approved (twice-revised) plan — matches exactly.
+
+**PR:** [#30](https://github.com/katasec/mission-control-language/pull/30), open, pending operator
+approval to merge.
