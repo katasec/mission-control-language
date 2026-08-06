@@ -294,3 +294,6 @@ response) were resolved in the plan before implementation, per AGENTS.md's desig
 - Diff read directly (`git show b3ef071`) and checked against the approved plan — matches exactly,
   including both response-shape decisions (zero-cost usage + unchanged balance; skip artifacts/
   run-store for non-terminal turns).
+
+**PR:** [#28](https://github.com/katasec/mission-control-language/pull/28), open, pending operator
+approval to merge.
