@@ -303,18 +303,12 @@ codebase rather than inventing new process:**
    with `RunResponse.ToolUse` populated instead of `AgentText`. Full narrative + evidence:
    [_completed doc, Task 2](phase-43.14-desktop-cloud-missions_completed.md#task-2--runner-contract-dtos).
 
-3. **Enrichment cache (code) — new datastore, not `authbilling_db`.** New `PostgresEnrichmentCache :
-   IEnrichmentCache` in `src/ForgeMission.Runner/` (raw Npgsql, matching `ForgeMission.Billing`'s
-   AOT-clean precedent — not EF Core), backed by its **own** connection string/database, never
-   `authbilling_db`'s. Idempotent schema bootstrap mirroring
-   `ForgeMission.Billing/AuthBillingSchema.cs`'s `EnsureCreatedAsync` pattern: one table,
-   `(prefix_hash PK, snapshot jsonb, expires_at)`. Wire into `src/ForgeMission.Runner/Program.cs`'s DI
-   — falls back to today's `InMemoryEnrichmentCache` when no connection string is configured, so local
-   `forge serve`/`forge run` need no Postgres. **Done when (code):** a set/get round-trips through real
-   Postgres in a test (Testcontainers — same fixture pattern as `ForgeMission.Rooms.Tests`); the runner
-   never receives `authbilling_db` credentials in any config path. **This verifies the code, not
-   Azure** — see 3b below for the separate, still-open claim that this actually works live. In-repo
-   (this repo), Codex-implementable.
+3. **Enrichment cache (code). ✅ Done 2026-08-06** — `PostgresEnrichmentCache : IEnrichmentCache` in
+   `src/ForgeMission.Runner/`, own datastore/connection string (never `authbilling_db`'s), threaded
+   into both `/v1` `MissionDoorClient` instances via DI, falls back to `InMemoryEnrichmentCache` with
+   no config. **This verifies the code, not Azure** — 3b below is the separate, still-open claim that
+   it actually works live. Full narrative + evidence:
+   [_completed doc, Task 3](phase-43.14-desktop-cloud-missions_completed.md#task-3--enrichment-cache-code).
 
 3b. **Enrichment cache (infra) — provision `EnrichmentCacheConnection` in `forge-infra`.** Separate
    repo (`~/progs/forge-infra`), **not Codex's task** — infra/secret-bearing changes get the
