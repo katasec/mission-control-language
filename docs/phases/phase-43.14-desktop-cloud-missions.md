@@ -365,14 +365,12 @@ codebase rather than inventing new process:**
    exactly as before. Full narrative + evidence:
    [_completed doc, Task 5](phase-43.14-desktop-cloud-missions_completed.md#task-5--forgeapi-wiring).
 
-6. **Desktop-side cloud client.** New `src/ForgeMission.ClientRuntime/Services/
-   CloudMissionRuntimeSession.cs` — same round-trip shape as today's `MissionRuntimeSession`
-   (`SendAsync` loop, `onTextDelta`/`onToolCall` callbacks, executes tool calls via the existing
-   `ToolExecutorRegistry`/`CapabilityRegistry`), but speaking `ExecuteMission`/`ExecuteMissionResponse`
-   JSON against ForgeAPI instead of Anthropic SSE — owns and replays `History` itself (no server-held
-   session, per the locked decision), reuses one `ClientToken` across the whole logical run.
-   `MissionRuntimeSession` (today's Anthropic-wire client) stays untouched — it remains the local-Docker
-   path's client, not replaced.
+6. **Desktop-side cloud client. ✅ Done 2026-08-06** — new `CloudMissionRuntimeSession`, own
+   private wire DTOs (no cross-project type sharing, matching the Api/Runner.Contracts precedent),
+   fresh `ClientToken` per `SendAsync` call reused across its tool loop, `onTextDelta` fired
+   terminal-only (API A has no token-level streaming). `MissionRuntimeSession` untouched. Full
+   narrative + evidence:
+   [_completed doc, Task 6](phase-43.14-desktop-cloud-missions_completed.md#task-6--desktop-side-cloud-client).
 
 7. **Credentials.** `src/ForgeMission.Desktop/Program.cs`. Replace the hardcoded
    `MissionRuntime__Credential = "local"` with a read of the platform key `forge login` writes to
