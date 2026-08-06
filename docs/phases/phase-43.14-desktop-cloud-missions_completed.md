@@ -156,4 +156,5 @@ in the active spoke — a separate `forge-infra` change, still open, with the ex
 locked in against the real current Bicep (not assumptions) specifically to avoid repeating a past
 "built/tested locally, nothing worked in Azure" failure.
 
-**Merged:** [PR #TBD] into `main`, pending operator approval.
+**PR:** [#26](https://github.com/katasec/mission-control-language/pull/26), open, pending operator
+approval to merge.
