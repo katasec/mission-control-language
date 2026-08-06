@@ -295,5 +295,84 @@ response) were resolved in the plan before implementation, per AGENTS.md's desig
   including both response-shape decisions (zero-cost usage + unchanged balance; skip artifacts/
   run-store for non-terminal turns).
 
-**PR:** [#28](https://github.com/katasec/mission-control-language/pull/28), open, pending operator
-approval to merge.
+**Merged:** [PR #28](https://github.com/katasec/mission-control-language/pull/28) into `main`,
+approved by the operator 2026-08-06.
+
+## Task 6 — Desktop-side cloud client
+
+**Goal:** a new `CloudMissionRuntimeSession` in `src/ForgeMission.ClientRuntime/Services/` — same
+round-trip shape as `MissionRuntimeSession` (`SendAsync` loop, `onTextDelta`/`onToolCall`
+callbacks, executes tool calls via the existing `ToolExecutorRegistry`/`CapabilityRegistry`), but
+speaking `ExecuteMission`/`ExecuteMissionResponse` JSON against ForgeAPI instead of Anthropic SSE.
+Owns and replays `History` itself (no server-held session, per the locked decision), reuses one
+`ClientToken` across the whole logical run. `MissionRuntimeSession` stays untouched.
+
+Three real questions were resolved in planning before implementation, per AGENTS.md's design-first
+rule — none silently improvised:
+- **Wire DTOs**: `ForgeMission.ClientRuntime` has no project reference to `ForgeMission.Api` or
+  `ForgeMission.Runner.Contracts` (confirmed by reading its `.csproj`) — consistent with how every
+  tier in this phase has independently defined its own wire-shaped DTOs rather than sharing
+  assemblies across deployables. `CloudMissionRuntimeSession` follows the same pattern: private
+  `WireExecuteMission`/`WireTurnMessage`/etc. types local to the file.
+- **`ClientToken` scope**: one fresh token generated at the start of each `SendAsync` call, reused
+  across every `ExecuteMission` request within that call's tool-continuation loop; a later,
+  independent `SendAsync` call (a new user prompt) gets its own fresh token — matching what the
+  billing idempotency test actually protects against (a retry of the same logical run, not a whole
+  conversation).
+- **`onTextDelta` granularity**: ForgeAPI's API A has no token-level streaming (only a terminal
+  `Answer` string) — `onTextDelta` fires once with the complete answer on the terminal response,
+  honest about the wire's real capability rather than faking a typing effect. Tool-use (non-terminal)
+  responses fire no text delta.
+Also decided: buffered `ExecuteMission` (not the streaming form) — simplest correct implementation
+for API A's locked behavior, with progress-NDJSON UI plumbing deferred as separate future work; and
+a shared `MissionRuntimeSession`/`CloudMissionRuntimeSession` interface is deferred to Task 8, which
+does the actual mode-based selection.
+
+**✅ DONE (2026-08-06)** — implemented by Codex on `codex/phase-43.14-cloud-mission-session`
+(`894f451 Add cloud mission runtime session`).
+
+**What changed:**
+- [`src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs`](../../src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs)
+  (new) — `SendAsync` maintains a per-session `_history` list (`WireTurnMessage`s) that accumulates
+  across calls; a `firstTurn` flag (true only for this session instance's very first `SendAsync`
+  call) governs exactly when the user's prompt gets appended, avoiding duplicate entries whether the
+  first response is immediately terminal or goes through one or more tool round-trips. Every request
+  resends `Input` as the original prompt text (required both by ForgeAPI's non-empty-`Input`
+  validation and to keep `ConversationHash.Prefix` stable across the continuation). Tool arguments
+  convert `JsonElement → IDictionary<string,object?>` via the same reflection-free pattern already
+  used in `MissionRuntimeSession`. Errors surface as `HttpRequestException` (transport) or
+  `InvalidOperationException` (a `ResponseStatus.ErrorCode` on an HTTP-200 business failure) — both
+  already caught identically by the one existing caller, `ClientRuntimeEndpoints.cs`. A private
+  `CloudWireJsonContext` (camelCase, matching the real `MessagesJsonContext` wire convention) covers
+  the private wire DTOs.
+- [`src/ForgeMission.Tests/ClientRuntime/CloudMissionRuntimeSessionTests.cs`](../../src/ForgeMission.Tests/ClientRuntime/CloudMissionRuntimeSessionTests.cs)
+  (new) — a genuinely end-to-end test: real `LocalDiskWorkspace`/`WorkspaceFileProvider`/
+  `CapabilityDispatcher` infrastructure actually reads a real temp file for the "Read" tool call
+  (not mocked), against a scripted ForgeAPI handler. Asserts the first request has no `history`
+  field; the second (continuation) request reuses the same `clientToken`/`input` with a 3-item
+  replayed history (`user`/`tool_use`/`tool_result`, including the real file content flowing through
+  `tool_result`); a third, independent `SendAsync` call gets a different `clientToken`; `onTextDelta`
+  fires exactly once per call with the final answer text only; and the tool-call notification log
+  shows exactly one Running→Done pair.
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Tests --filter "FullyQualifiedName~CloudMissionRuntimeSessionTests"` —
+  **1/1 pass**.
+- `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **458/458 pass, 11 skipped, 0
+  failed**, including the new test. No PostgreSQL SSL errors here at all — confirms Codex's reported
+  three Postgres-fixture failures are environment-specific to their machine, not a regression (this
+  class never touches Postgres).
+- `dotnet publish src/ForgeMission.ClientRuntime -p:PublishAot=true` — reproduces the same
+  `NETSDK1203` error Codex reported (`ForgeMission.ClientRuntime.Presentation`, a `browser-wasm`
+  project, is incompatible with Native AOT publish). Confirmed **structurally pre-existing, not
+  introduced by this task**: `git show 894f451 --stat` shows only 2 new `.cs` files, zero
+  `.csproj`/project-reference changes — the WASM project reference this error comes from is
+  untouched by this diff.
+- Traced `ConversationHash.Prefix`/`ToolContinuationGate`'s actual logic (from Task 4) against this
+  client's history-replay behavior by hand, both during plan review and again reading the shipped
+  code — the hash stays stable across multiple sequential tool round-trips within one logical turn
+  (not just a single tool call), because every subsequent user-role message in that turn carries
+  `FunctionResultContent` and is correctly excluded from `LastUserTurnIndex`'s "last real user turn"
+  candidacy — confirmed correct, not just plausible.
+- Diff read directly (`git show 894f451`) and checked against the approved plan — matches exactly.
