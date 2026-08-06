@@ -34,6 +34,12 @@
   runner-side cleanup after each artifact is copied to the API — bounds ephemeral-scratch growth
   without a retention/TTL system.
 
+## Known follow-ups (neither blocking)
+
+- Docker release image push is broken (`.dockerignore` excludes the binaries the root `Dockerfile`
+  needs).
+- `forge-mission-websearch` GHCR visibility is private by mistake.
+
 ## Patterns established here (reuse these, don't re-derive)
 
 - **A step named exactly `Answerer` gets the "Verified" badge.** `MissionRunHandler.

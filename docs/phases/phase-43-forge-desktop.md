@@ -178,6 +178,14 @@ UI spoke) have a foundation to build on.
   specific visual-identity retrofit note (formerly targeting shelved 43.2's Task 4) is now historical
   — see the [_completed doc](phase-43.2-avalonia-vanilla-shell_completed.md#task-4-design-visual-identity-skin)
   for that record.
+- **Generative UI (CopilotKit/AG-UI) for tool-call rendering and HITL widgets** — captured as a
+  brainstorm 2026-08-06, not yet a spoke:
+  [generative-ui-copilotkit.md](../brainstorm/generative-ui-copilotkit.md). Confirms a real (if
+  unproven-at-scale) path to embed CopilotKit's React generative-UI components inside the Blazor
+  WASM shell via JS interop, backed by an AG-UI-shaped endpoint. Natural landing spots if pursued:
+  [43.5](phase-43.5-human-in-the-loop.md) (approve/deny widgets) and
+  [43.4](phase-43.4-ide-trace-surface.md) (general tool-call → component rendering). Not build-ready
+  — no spike done yet.
 - **Longer-term aspiration (not scoped to any spoke yet, 2026-07-26):** the user wants to eventually
   eliminate the manual copy-paste cycle currently used to hand work between Claude (architect/
   reviewer) and Codex (implementor) during this project's own build process — one surface instead.

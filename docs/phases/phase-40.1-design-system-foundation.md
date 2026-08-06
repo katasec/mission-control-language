@@ -4,6 +4,11 @@
 > **Depends on:** none · **Regression risk:** none (global-safe / additive) ·
 > **Design system:** [UI Design System](../design/ui-design-system.md)
 >
+> **Evidence:** pruned 42 dead §5/§6/§8 rules (`forge.css` 606→596 net; live `.chat-meta`/
+> `.mission-label` relocated, not deleted — the "§6 fully dead" assumption was wrong); `100dvh` on
+> all 3 shells; inputs → 16px; `prefers-reduced-motion`; `viewport-fit=cover` + `--safe-*`; new §0
+> breakpoints block (`--bp-rail 640` / `--bp-panes 720`) + mobile-first convention.
+>
 > **Done when:** `forge.css` has no dead rules, no shell uses `100vh`, no focusable input triggers iOS
 > zoom, motion respects `prefers-reduced-motion`, safe-area insets are wired, and a documented
 > breakpoint + mobile-first authoring convention exists — so every surface built in 40.2–40.4 inherits
