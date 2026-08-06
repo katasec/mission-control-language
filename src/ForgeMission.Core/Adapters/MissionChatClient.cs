@@ -121,36 +121,16 @@ public sealed class MissionChatClient(
         if (!fullConversation)
             return new PipelineRunOptions(mission.Name, vars, stepWriter, contentWriter);
 
-        // Three-segment gate (42.3): a tool continuation resumes the agent with the pre-agent
-        // output restored from the enrichment cache; a cache MISS re-runs the pre-agent segment
-        // (never answer ungrounded). Fresh user turns store the snapshot for their continuations.
         var all          = messages.ToList();
-        var prefixHash   = ConversationHash.Prefix(all);
-        var startAtAgent = false;
-        Action<IReadOnlyDictionary<string, string>>? onPreAgentComplete = null;
-
         CountDuplicateContinuations(all);
-
-        if (IsToolContinuation(all) && await _enrichmentCache.GetAsync(prefixHash, ct) is { } cached)
-        {
-            startAtAgent = true;
-            foreach (var (key, value) in cached) vars[key] = value;
-            vars[paramName] = cached.GetValueOrDefault(paramName, goal); // the ORIGINAL turn's goal
-        }
-        else
-        {
-            onPreAgentComplete = snapshot =>
-                _ = _enrichmentCache.SetAsync(prefixHash, snapshot, CancellationToken.None);
-        }
+        var continuation = await ToolContinuationGate.ApplyAsync(
+            all, vars, paramName, goal, _enrichmentCache, ct);
 
         return new PipelineRunOptions(mission.Name, vars, stepWriter, contentWriter,
             ContextObjects: objects, Tools: tools,
-            StartAtAgent: startAtAgent, OnPreAgentComplete: onPreAgentComplete);
+            StartAtAgent: continuation.StartAtAgent,
+            OnPreAgentComplete: continuation.OnPreAgentComplete);
     }
-
-    // A tool continuation hands back a tool's output — the last message carries tool_result parts.
-    private static bool IsToolContinuation(IReadOnlyList<ChatMessage> messages)
-        => messages.LastOrDefault()?.Contents.OfType<FunctionResultContent>().Any() == true;
 
     // Task 7: observe-only. If the identical full conversation (F) arrives twice inside the
     // window, count it and log — no replay, no reject (decided 2026-07-16, §4).

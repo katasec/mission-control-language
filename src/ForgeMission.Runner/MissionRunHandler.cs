@@ -19,7 +19,9 @@ namespace ForgeMission.Runner;
 internal sealed class MissionRunHandler(
     RunnerRegistry registry,
     IRunnerArtifactStore artifacts,
-    ILogger<MissionRunHandler> logger)
+    ILogger<MissionRunHandler> logger,
+    IEnrichmentCache enrichmentCache,
+    Func<RunnerMission, UsageAccumulator, IExpertRunner>? runnerFactory = null)
 {
     /// <summary>Emit a keep-alive if no step-progress event has flowed for this long, so the long
     /// kind:search step (~40s of server-side silence) can't be reaped by an idle timeout (41.7).</summary>
@@ -110,13 +112,21 @@ internal sealed class MissionRunHandler(
         runSpan?.SetTag("gen_ai.request.model", mission.Profile?.Model);
 
         var accumulator = new UsageAccumulator();
-        var runner = BuildRunner(mission, accumulator);
+        var runner = runnerFactory?.Invoke(mission, accumulator) ?? BuildRunner(mission, accumulator);
 
         var trace   = new List<RunTraceStep>();
         var attempt = 1;
 
         var decl = mission.Ast.Declarations.OfType<MissionDeclaration>().First();
         var vars = BuildVars(request, decl, workspace);
+        var agentTurn = request.History is not null || request.Tools is not null;
+        var messages = agentTurn
+            ? RunnerToolTurnMapper.ToChatMessages(request.History, request.Goal)
+            : null;
+        var continuation = messages is null
+            ? null
+            : await ToolContinuationGate.ApplyAsync(
+                messages, vars, decl.Params.FirstOrDefault() ?? "goal", request.Goal, enrichmentCache, ct);
 
         var options = new PipelineRunOptions(
             decl.Name,
@@ -130,7 +140,11 @@ internal sealed class MissionRunHandler(
             OnStepStart: (expertName, kind) => onProgress?.Invoke(new RunProgress(expertName, kind)),
             // Sub-search narration from the kind:search step (41.7 Task 2) — Grok's per-query loop.
             OnSearchProgress: sp => onProgress?.Invoke(
-                new RunProgress("WebSearch", sp.Kind, sp.Detail, sp.ResultCount)));
+                new RunProgress("WebSearch", sp.Kind, sp.Detail, sp.ResultCount)),
+            ContextObjects: messages is null ? null : RunnerToolTurnMapper.ToContextObjects(messages),
+            Tools: RunnerToolTurnMapper.ToTools(request.Tools),
+            StartAtAgent: continuation?.StartAtAgent ?? false,
+            OnPreAgentComplete: continuation?.OnPreAgentComplete);
 
         // kind:search backend (Phase 41.2) — implicitly Grok, built from the runner's XAI_API_KEY operator
         // env var (null if unset ⇒ missions without kind:search are unaffected). Same seam as the CLI.
@@ -139,8 +153,9 @@ internal sealed class MissionRunHandler(
             .RunAsync(mission.Ast, mission.Experts, options, ct);
         stopwatch.Stop();
 
-        var verified  = result.Status == MissionStatus.Pass;
-        var agentText = BuildAgentText(verified, trace, result);
+        var toolUse   = RunnerToolTurnMapper.ToToolUse(result.ToolCalls);
+        var verified  = toolUse is null && result.Status == MissionStatus.Pass;
+        var agentText = toolUse is null ? BuildAgentText(verified, trace, result) : string.Empty;
 
         var usage = new RunUsage(
             InputTokens:    accumulator.InputTokens,
@@ -162,7 +177,8 @@ internal sealed class MissionRunHandler(
             RetryCount: result.Attempts - 1,
             Trace:      trace,
             Usage:      usage,
-            OutputArtifacts: outputs);
+            OutputArtifacts: outputs,
+            ToolUse: toolUse);
     }
 
     private static IExpertRunner BuildRunner(RunnerMission mission, UsageAccumulator accumulator)
