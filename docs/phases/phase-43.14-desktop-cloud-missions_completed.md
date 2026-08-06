@@ -237,5 +237,60 @@ AGENTS.md — neither was silently built around):
   matches exactly, including both review corrections (the constructor-delegate seam instead of a
   factory class, and the 1:1 role mapping).
 
-**PR:** [#27](https://github.com/katasec/mission-control-language/pull/27), open, pending operator
-approval to merge.
+**Merged:** [PR #27](https://github.com/katasec/mission-control-language/pull/27) into `main`,
+approved by the operator 2026-08-06.
+
+## Task 5 — ForgeAPI wiring
+
+**Goal:** thread `msg.History`/`msg.Tools` into the `RunRequest` sent to the runner; when the
+runner's `RunResponse.ToolUse` is populated, map it to `ExecuteMissionResponse.ToolUse` and skip
+billing settlement; when it's `null`, settle exactly as today.
+
+One real gap surfaced during planning: `msg.History`/`msg.Tools` (`ForgeMission.Api`'s types, Task
+1) and `RunRequest.History`/`Tools` (`ForgeMission.Runner.Contracts`'s types, Task 2) are
+separately-defined, field-identical DTOs on either side of the ForgeAPI→Runner boundary — not the
+same C# type. "Thread into the RunRequest" needed a real field-for-field bridge, not a direct
+assignment. Two response-shape questions (what `Usage`/`BalanceMicroUsd` become on a non-terminal
+response; whether output-artifact copying and `runStore.SaveAsync` should run for a non-terminal
+response) were resolved in the plan before implementation, per AGENTS.md's design-first rule.
+
+**✅ DONE (2026-08-06)** — implemented by Codex on `codex/phase-43.14-forgeapi-tool-wiring`
+(`b3ef071 Wire tool continuations through Forge API`).
+
+**What changed:**
+- [`src/ForgeMission.Api/MissionToolTurnMapper.cs`](../../src/ForgeMission.Api/MissionToolTurnMapper.cs)
+  (new) — field-for-field bridge (`ToRunnerHistory`, `ToRunnerTools`, `ToApiToolUse`) between
+  `ForgeMission.Api`'s and `ForgeMission.Runner.Contracts`'s separately-defined `TurnMessage`/
+  `TurnContent`/`MissionToolDecl`/`ToolUseCall` types, using a `RunnerContracts` namespace alias to
+  disambiguate the identically-named types cleanly. Pure copying, no semantic conversion.
+- [`src/ForgeMission.Api/MissionExecutionService.cs`](../../src/ForgeMission.Api/MissionExecutionService.cs) —
+  `RunCoreAsync` (shared by both the buffered and streaming entry points) now maps `msg.History`/
+  `msg.Tools` into the outbound `RunRequest`. When `result.ToolUse` is populated, returns early: a
+  new `DiscardOutputsFromRunnerAsync` helper deletes any unexpected runner output artifacts (rather
+  than copying or leaking them), `Usage` reports the runner's real token/compute observations with
+  `CostMicroUsd: 0` (nothing settled), `BalanceMicroUsd` is still fetched (unchanged, but visible to
+  the client), and `Answer`/`Verified`/`Trace`/`Artifacts`/`runStore.SaveAsync` are all skipped as
+  terminal-only. When `result.ToolUse` is `null`, behavior is byte-identical to before this task.
+- [`src/ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs`](../../src/ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs) —
+  new `Execute_forwards_agent_turn_and_returns_tool_use_without_settlement` test captures the
+  outbound `RunRequest` via an extended stub handler and asserts the full round trip (nested
+  `tool_use`/`tool_result` content, tool schema) maps correctly; asserts zero cost, unchanged
+  balance (both in the response and via a direct `Billing.GetBalanceMicroUsdAsync` check), zero
+  `runStore` saves (`RecordingRunStore`), zero artifact downloads, and exactly one artifact
+  delete — deliberately exercising the unexpected-output-artifact cleanup path by planting an
+  `OutputArtifacts` entry on the mocked runner response. The existing plain-request test gained
+  `Assert.Null(handler.LastRunRequest.History/Tools)` as the regression guard. The pre-existing
+  `Retried_ClientToken_does_not_double_debit_across_two_Execute_calls` test needed no changes —
+  still proves terminal idempotency unmodified.
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Rooms.Tests --filter "FullyQualifiedName~MissionExecutionServiceTests"` —
+  **9/9 pass**.
+- `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **457/457 pass, 11 skipped, 0
+  failed**. Confirms Codex's reported two live-xAI 403s and one flaky exec-runner broken-pipe
+  failure are environment/flakiness issues (skip cleanly here with no `XAI_API_KEY`), not a masked
+  regression from this change.
+- Diff read directly (`git show b3ef071`) and checked against the approved plan — matches exactly,
+  including both response-shape decisions (zero-cost usage + unchanged balance; skip artifacts/
+  run-store for non-terminal turns).
