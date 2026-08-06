@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ForgeMission.Runner.Contracts;
@@ -19,7 +20,11 @@ public sealed record RunRequest(
     // Per-run trust policy hook (39.1: always RunPolicy.Trusted for built-ins).
     string Policy,
     // Input artifacts already copied into the runner's ephemeral scratch store by the orchestrator.
-    IReadOnlyList<RunArtifact>? InputArtifacts = null);
+    IReadOnlyList<RunArtifact>? InputArtifacts = null,
+    // Prior conversation turns, supplied for a tool-result continuation.
+    IReadOnlyList<TurnMessage>? History = null,
+    // Capabilities the client permits the mission to call.
+    IReadOnlyList<MissionToolDecl>? Tools = null);
 
 /// <summary>Trust policy carried per run. 39.1 sets every built-in to <see cref="Trusted"/>;
 /// <see cref="Restricted"/> is the locked-down profile custom missions get in 39.5.</summary>
@@ -42,7 +47,45 @@ public sealed record RunResponse(
     int                        RetryCount,
     IReadOnlyList<RunTraceStep> Trace,
     RunUsage                   Usage,
-    IReadOnlyList<RunArtifact>? OutputArtifacts = null);
+    IReadOnlyList<RunArtifact>? OutputArtifacts = null,
+    // Non-null means this turn is non-terminal; the client executes and resumes.
+    IReadOnlyList<ToolUseCall>? ToolUse = null);
+
+/// <summary>A prior conversational turn supplied with an agentic continuation.</summary>
+public sealed class TurnMessage
+{
+    /// <summary>"user" | "assistant".</summary>
+    public string Role { get; set; } = "";
+    public List<TurnContent> Content { get; set; } = [];
+}
+
+/// <summary>A text, tool-use, or tool-result block within a <see cref="TurnMessage"/>.</summary>
+public sealed class TurnContent
+{
+    /// <summary>"text" | "tool_use" | "tool_result".</summary>
+    public string Type { get; set; } = "";
+    public string? Text { get; set; }
+    public string? ToolUseId { get; set; }
+    public string? ToolName { get; set; }
+    public JsonElement? ToolInput { get; set; }
+    public string? ToolResult { get; set; }
+}
+
+/// <summary>A client-declared tool capability available to a mission turn.</summary>
+public sealed class MissionToolDecl
+{
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public JsonElement InputSchema { get; set; }
+}
+
+/// <summary>A tool invocation the client must execute before resuming the mission.</summary>
+public sealed class ToolUseCall
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public JsonElement Arguments { get; set; }
+}
 
 /// <summary>Artifact metadata passed on the internal runner wire. Bytes travel through raw-byte
 /// upload/download projections, never through this JSON contract.</summary>
@@ -119,6 +162,10 @@ public sealed record MissionArtifactInputCapability(
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(RunRequest))]
 [JsonSerializable(typeof(RunResponse))]
+[JsonSerializable(typeof(TurnMessage))]
+[JsonSerializable(typeof(TurnContent))]
+[JsonSerializable(typeof(MissionToolDecl))]
+[JsonSerializable(typeof(ToolUseCall))]
 [JsonSerializable(typeof(RunArtifact))]
 [JsonSerializable(typeof(RunStreamEvent))]
 [JsonSerializable(typeof(IReadOnlyList<MissionInfo>))]
