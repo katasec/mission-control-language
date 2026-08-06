@@ -80,6 +80,14 @@ the `/v1` wire** (streaming SSE included) to the runner's existing door for **bo
 provider keys + the tool loop stay on the runner; `ForgeAPI` skims `usage` off the wire response to debit.
 `/run` stays the rooms-internal path (`RoomAgentInvoker`), untouched.
 
+> **Scope note (2026-08-06):** this pass-through applies to API B's audience — the literal, unmodified
+> `claude`/`codex` CLI, which cannot be taught anything beyond `ANTHROPIC_BASE_URL`. It does **not**
+> extend to Forge Desktop, a client Forge fully owns on both ends: Desktop reaches cloud missions
+> through an extended `ExecuteMission` (API A) instead, precisely so richer-than-chat mission
+> concepts (human-in-the-loop gates, non-LLM step results) aren't squeezed through Anthropic's
+> content-block vocabulary. See [43.14](phase-43.14-desktop-cloud-missions.md#reconciliation-with-426s-relay--pass-through-v1-decision-2026-08-06)
+> for the full reconciliation — the two decisions are not in tension, they answer different audiences.
+
 **Auth/billing is its own bounded context.** A new AOT-clean `ForgeMission.Billing` lib (`CostMeter` +
 ledger-facing `BillingService`, moved out of `ForgeUI/Services`) over a **separate `authbilling_db`** — a
 second database on the *same* Postgres server as `rooms_db`, sharing nothing but `userId`. `ForgeAPI`
