@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using ForgeMission.Core.Resolution;
 using ForgeMission.Desktop.Contracts;
 using ForgeMission.Desktop.Photino;
 using ForgeMission.Orchestration;
@@ -33,6 +34,14 @@ if (args.Length == 1 && Uri.TryCreate(args[0], UriKind.Absolute, out var explici
 }
 else if (args.Length == 0)
 {
+    var platform = CredentialStore.GetPlatform();
+    if (platform is null || string.IsNullOrEmpty(platform.Key))
+    {
+        Console.Error.WriteLine("Not signed in. Run `forge login`.");
+        Environment.Exit(1);
+        return;
+    }
+
     var configuration = new ConfigurationBuilder()
         .AddEnvironmentVariables()
         .Build();
@@ -40,7 +49,7 @@ else if (args.Length == 0)
     resolveTask.Wait();
     var (resolvedUrl, resolvedLauncher) = resolveTask.Result;
     launcher = resolvedLauncher;
-    clientRuntime = StartClientRuntime(resolvedUrl);
+    clientRuntime = StartClientRuntime(resolvedUrl, platform.Key);
     url = WaitForReadyUrl(clientRuntime);
 }
 else
@@ -146,7 +155,7 @@ static void KillIfRunning(Process process)
     }
 }
 
-static Process StartClientRuntime(string missionRuntimeBaseUrl)
+static Process StartClientRuntime(string missionRuntimeBaseUrl, string missionRuntimeCredential)
 {
     var (fileName, dllArgument) = ResolveClientRuntimeCommand();
     var process = new Process
@@ -163,7 +172,7 @@ static Process StartClientRuntime(string missionRuntimeBaseUrl)
         process.StartInfo.ArgumentList.Add(dllArgument);
 
     process.StartInfo.EnvironmentVariables["MissionRuntime__BaseUrl"] = missionRuntimeBaseUrl;
-    process.StartInfo.EnvironmentVariables["MissionRuntime__Credential"] = "local";
+    process.StartInfo.EnvironmentVariables["MissionRuntime__Credential"] = missionRuntimeCredential;
 
     process.Start();
     return process;
