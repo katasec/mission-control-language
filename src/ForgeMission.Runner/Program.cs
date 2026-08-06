@@ -1,8 +1,10 @@
 using System.Text.Json;
 using ForgeMission.Cli;
+using ForgeMission.Core.Runtime;
 using ForgeMission.Runner;
 using ForgeMission.Runner.Contracts;
 using ForgeMission.Serve;
+using Npgsql;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -50,7 +52,27 @@ builder.Services.AddSingleton(registry);
 builder.Services.AddSingleton<MissionRunHandler>();
 builder.Services.AddSingleton<IRunnerArtifactStore, RunnerArtifactStore>();
 
+// The runner's re-entrancy snapshots are deliberately isolated from authbilling_db: this tier
+// executes mission code, including kind:exec, and therefore never receives billing credentials.
+// Local serve/run remains dependency-free when no runner-owned cache store is configured.
+var enrichmentCacheConnection = builder.Configuration.GetConnectionString("EnrichmentCacheConnection");
+if (string.IsNullOrWhiteSpace(enrichmentCacheConnection))
+{
+    builder.Services.AddSingleton<IEnrichmentCache>(_ => new InMemoryEnrichmentCache());
+}
+else
+{
+    builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
+        new NpgsqlDataSourceBuilder(enrichmentCacheConnection).Build());
+    builder.Services.AddSingleton<IEnrichmentCache, PostgresEnrichmentCache>();
+}
+
 var app = builder.Build();
+
+if (!string.IsNullOrWhiteSpace(enrichmentCacheConnection))
+    await EnrichmentCacheSchema.EnsureCreatedAsync(app.Services.GetRequiredService<NpgsqlDataSource>());
+
+var enrichmentCache = app.Services.GetRequiredService<IEnrichmentCache>();
 
 // Liveness/readiness — ACA probes hit this on the warm runner.
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
@@ -60,8 +82,8 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 // model field routes to a mission by label; a single-mission registry answers regardless (the
 // `forge claude --container` case). Unmetered until 42.6 wraps the hosting layer.
 ForgeServe.MapWires(app, "forge-runner",
-    anthropicDoor: new MissionDoorClient(registry, fullConversation: true),
-    openAiDoor:    new MissionDoorClient(registry, fullConversation: false));
+    anthropicDoor: new MissionDoorClient(registry, fullConversation: true, enrichmentCache),
+    openAiDoor:    new MissionDoorClient(registry, fullConversation: false, enrichmentCache));
 
 // The orchestrator binds only handles whose mission is loadable here (e.g. provider key present).
 app.MapGet("/missions", (RunnerRegistry reg) =>
