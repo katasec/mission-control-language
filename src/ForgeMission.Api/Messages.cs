@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace ForgeMission.Api;
@@ -38,6 +39,12 @@ public sealed class ExecuteMission
 
     /// <summary>M10. A message property, not an Accept header.</summary>
     public bool Stream { get; set; }
+
+    /// <summary>Prior conversation turns, supplied for a tool-result continuation.</summary>
+    public List<TurnMessage>? History { get; set; }
+
+    /// <summary>Capabilities the client permits the mission to call.</summary>
+    public List<MissionToolDecl>? Tools { get; set; }
 }
 
 public sealed class ExecuteMissionResponse
@@ -58,11 +65,50 @@ public sealed class ExecuteMissionResponse
     public List<MissionArtifact> Artifacts { get; set; } = [];
     public MissionUsage Usage { get; set; } = new();
 
+    /// <summary>Non-null means this turn is non-terminal; the client executes and resumes.</summary>
+    public List<ToolUseCall>? ToolUse { get; set; }
+
     /// <summary>M8 — usage/balance travel as response fields; an HTTP header is only a projection.</summary>
     public long BalanceMicroUsd { get; set; }
 
     /// <summary>M4.</summary>
     public ResponseStatus ResponseStatus { get; set; } = new();
+}
+
+/// <summary>A prior conversational turn supplied with an agentic continuation.</summary>
+public sealed class TurnMessage
+{
+    /// <summary>"user" | "assistant".</summary>
+    public string Role { get; set; } = "";
+    public List<TurnContent> Content { get; set; } = [];
+}
+
+/// <summary>A text, tool-use, or tool-result block within a <see cref="TurnMessage"/>.</summary>
+public sealed class TurnContent
+{
+    /// <summary>"text" | "tool_use" | "tool_result".</summary>
+    public string Type { get; set; } = "";
+    public string? Text { get; set; }
+    public string? ToolUseId { get; set; }
+    public string? ToolName { get; set; }
+    public JsonElement? ToolInput { get; set; }
+    public string? ToolResult { get; set; }
+}
+
+/// <summary>A client-declared tool capability available to a mission turn.</summary>
+public sealed class MissionToolDecl
+{
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public JsonElement InputSchema { get; set; }
+}
+
+/// <summary>A tool invocation the client must execute before resuming the mission.</summary>
+public sealed class ToolUseCall
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public JsonElement Arguments { get; set; }
 }
 
 public sealed class MissionUsage
@@ -323,6 +369,10 @@ public sealed class ResponseError
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(ExecuteMission))]
 [JsonSerializable(typeof(ExecuteMissionResponse))]
+[JsonSerializable(typeof(TurnMessage))]
+[JsonSerializable(typeof(TurnContent))]
+[JsonSerializable(typeof(MissionToolDecl))]
+[JsonSerializable(typeof(ToolUseCall))]
 [JsonSerializable(typeof(MissionRunEvent))]
 [JsonSerializable(typeof(UploadArtifact))]
 [JsonSerializable(typeof(UploadArtifactResponse))]

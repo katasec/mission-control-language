@@ -286,11 +286,10 @@ codebase rather than inventing new process:**
 
 ## Tasks — dependency-ordered, build-ready (locked 2026-08-06)
 
-1. **ForgeAPI DTOs.** `src/ForgeMission.Api/Messages.cs`: add `History`/`Tools` to `ExecuteMission`,
-   `ToolUse` to `ExecuteMissionResponse`; add `TurnMessage`/`TurnContent`/`MissionToolDecl`/
-   `ToolUseCall` (shapes in "Design review" above). Register the new types in the existing STJ
-   source-gen context. Purely additive — the existing `MissionExecutionServiceTests.cs` suite must
-   pass unmodified. **Done when:** builds clean, new types round-trip through STJ serialization.
+1. **ForgeAPI DTOs. ✅ Done 2026-08-06** — `History`/`Tools`/`ToolUse` + the four new DTO types added
+   to `src/ForgeMission.Api/Messages.cs`, 10/10 tests pass. Full narrative + evidence:
+   [_completed doc, Task 1](phase-43.14-desktop-cloud-missions_completed.md#task-1--forgeapi-dtos).
+   (DTO shapes stay defined in "Design review" above — Tasks 2–8 still build against them.)
 
 2. **Runner contract DTOs.** `src/ForgeMission.Runner.Contracts/RunContracts.cs`: mirror the same
    additive fields — `RunRequest(MissionLabel, Goal, Vars, Policy, InputArtifacts)` gains `History`/
