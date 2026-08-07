@@ -94,6 +94,19 @@ public sealed class StaticMissionCatalog : IMissionCatalog
             Verified: true,
             MissionRef: "Summarize",
             ArtifactCapabilities: null));
+
+        // Desktop's default cloud mission (phase-43.14 task 6/8) — a raw LLM passthrough, no
+        // verification. Discovered missing live 2026-08-08: the mission file was already loadable
+        // by the runner (advertised as MissionRef "ChatGPT"), but nothing had ever registered a
+        // catalog handle for it, so ExecuteMission 404'd regardless of what the client sent.
+        Register(availableMissions, new CatalogEntry(
+            Handle: "vanilla",
+            Description: "Raw LLM passthrough — a direct answer, not verified.",
+            Publisher: IMissionCatalog.DefaultPublisher,
+            Version: "0.1.0",
+            Verified: false,
+            MissionRef: "ChatGPT",
+            ArtifactCapabilities: null));
     }
 
     private void Register(IReadOnlyList<MissionInfo> availableMissions, CatalogEntry entry)
