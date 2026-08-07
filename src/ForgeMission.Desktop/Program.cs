@@ -47,9 +47,9 @@ else if (args.Length == 0)
         .Build();
     var resolveTask = MissionRuntimeResolver.ResolveAsync(configuration);
     resolveTask.Wait();
-    var (resolvedUrl, resolvedLauncher) = resolveTask.Result;
+    var (resolvedUrl, resolvedMode, resolvedLauncher) = resolveTask.Result;
     launcher = resolvedLauncher;
-    clientRuntime = StartClientRuntime(resolvedUrl, platform.Key);
+    clientRuntime = StartClientRuntime(resolvedUrl, resolvedMode, platform.Key);
     url = WaitForReadyUrl(clientRuntime);
 }
 else
@@ -155,7 +155,7 @@ static void KillIfRunning(Process process)
     }
 }
 
-static Process StartClientRuntime(string missionRuntimeBaseUrl, string missionRuntimeCredential)
+static Process StartClientRuntime(string missionRuntimeBaseUrl, string missionRuntimeMode, string missionRuntimeCredential)
 {
     var (fileName, dllArgument) = ResolveClientRuntimeCommand();
     var process = new Process
@@ -172,6 +172,7 @@ static Process StartClientRuntime(string missionRuntimeBaseUrl, string missionRu
         process.StartInfo.ArgumentList.Add(dllArgument);
 
     process.StartInfo.EnvironmentVariables["MissionRuntime__BaseUrl"] = missionRuntimeBaseUrl;
+    process.StartInfo.EnvironmentVariables["MissionRuntime__Mode"] = missionRuntimeMode;
     process.StartInfo.EnvironmentVariables["MissionRuntime__Credential"] = missionRuntimeCredential;
 
     process.Start();

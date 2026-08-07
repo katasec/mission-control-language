@@ -52,6 +52,7 @@ internal static class ClientRuntimeEndpoints
             PromptRequest request,
             ClientRuntimeSessionStore sessions,
             IHttpClientFactory clients,
+            IConfiguration configuration,
             ClientRuntimeEventHub events,
             CancellationToken ct) =>
         {
@@ -59,15 +60,22 @@ internal static class ClientRuntimeEndpoints
                 session?.Workspace.Capabilities is null || session.Workspace.Dispatcher is null)
                 return Results.NotFound();
 
-            var mission = new MissionRuntimeSession(clients.CreateClient("mission-runtime"));
             try
             {
-                var answer = await mission.SendAsync(request.Prompt, session.Workspace.Capabilities,
-                    session.Workspace.Dispatcher,
-                    text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
-                        request.SessionId, Text: text)),
-                    update => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus,
-                        request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString())), ct);
+                var runtimeClient = clients.CreateClient("mission-runtime");
+                var answer = UsesCloudMissionRuntime(configuration["MissionRuntime:Mode"])
+                    ? await new CloudMissionRuntimeSession(runtimeClient).SendAsync(request.Prompt,
+                        session.Workspace.Capabilities, session.Workspace.Dispatcher,
+                        text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
+                            request.SessionId, Text: text)),
+                        update => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus,
+                            request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString())), ct)
+                    : await new MissionRuntimeSession(runtimeClient).SendAsync(request.Prompt,
+                        session.Workspace.Capabilities, session.Workspace.Dispatcher,
+                        text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
+                            request.SessionId, Text: text)),
+                        update => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus,
+                            request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString())), ct);
                 return Results.Ok(new PromptResponse(answer));
             }
             catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
@@ -91,6 +99,9 @@ internal static class ClientRuntimeEndpoints
             }
         });
     }
+
+    internal static bool UsesCloudMissionRuntime(string? mode) =>
+        mode is null || mode.Equals("cloud", StringComparison.OrdinalIgnoreCase);
 
     private static ICapabilityRequest? ToCapabilityRequest(CapabilityRequestData request) => request.Operation switch
     {
