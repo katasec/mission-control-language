@@ -96,6 +96,20 @@ internal sealed class MissionRunHandler(
     private async Task<RunResponse?> ExecuteAsync(
         RunRequest request, Action<RunProgress>? onProgress, CancellationToken ct)
     {
+        // Temporary diagnostic (2026-08-07): a live production bug had MissionLabel arriving null
+        // from ForgeUI's request, unreproducible via any direct call to this endpoint. Logging the
+        // full bound shape once to see whether only MissionLabel is affected or the whole binding
+        // failed. Remove once root-caused.
+        logger.LogWarning(
+            "DIAG bound request: MissionLabel={MissionLabel} Policy={Policy} " +
+            "Vars={VarsCount} InputArtifacts={ArtifactsCount} History={HistoryCount} Tools={ToolsCount}",
+            request.MissionLabel,
+            request.Policy,
+            request.Vars?.Count.ToString() ?? "(null)",
+            request.InputArtifacts?.Count.ToString() ?? "(null)",
+            request.History?.Count.ToString() ?? "(null)",
+            request.Tools?.Count.ToString() ?? "(null)");
+
         if (!registry.TryGet(request.MissionLabel, out var mission))
         {
             logger.LogWarning("Unknown mission label '{MissionLabel}'", request.MissionLabel);
