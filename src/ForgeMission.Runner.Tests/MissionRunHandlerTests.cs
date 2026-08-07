@@ -52,7 +52,11 @@ public sealed class MissionRunHandlerTests : IDisposable
         Assert.Equal(2, runner.AgentCalls);
         Assert.Equal(1, runner.VerifyCalls);
         Assert.True(runner.AgentSawToolResult);
-        Assert.Equal(ChatRole.User, runner.ToolResultMessageRole);
+        // ChatRole.Tool, not ChatRole.User: confirmed live 2026-08-08 against a real OpenAI call
+        // that embedding tool_result content in a user-role message (the wire's own bookkeeping
+        // role) is Anthropic-specific, not universal — OpenAI's API rejects it outright. Each
+        // provider's IChatClient adapter translates ChatRole.Tool into its own wire correctly.
+        Assert.Equal(ChatRole.Tool, runner.ToolResultMessageRole);
     }
 
     public void Dispose()

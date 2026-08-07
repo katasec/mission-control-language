@@ -49,8 +49,25 @@ internal static class RunnerToolTurnMapper
         }).ToList();
     }
 
+    // A tool-result hand-back always arrives as its own homogeneous "user" turn on the wire (the
+    // client's own bookkeeping — see TurnMessage.Role's "user"|"assistant" contract), but that is
+    // NOT the role every provider expects on the wire it actually speaks: Anthropic's API genuinely
+    // accepts tool_result content inside a user-role message, but OpenAI's Chat Completions API
+    // rejects that outright (HTTP 400 "An assistant message with 'tool_calls' must be followed by
+    // tool messages...") — it requires a dedicated role="tool" message. Microsoft.Extensions.AI's
+    // own abstraction has exactly this seam (ChatRole.Tool, already used the same way in
+    // AgenticSession.cs) specifically so each provider's adapter can translate it correctly — the
+    // wire's "user" is about who sent it, not what role the underlying LLM call should see.
+    // Confirmed live 2026-08-08 (real gpt-4o-mini 400) that mapping tool_result 1:1 into
+    // ChatRole.User, as an earlier revision of this mapper did, is provider-specific-wrong.
     private static ChatMessage ToChatMessage(TurnMessage message)
-        => new(ToRole(message.Role), message.Content.Select(ToContent).ToList());
+    {
+        var contents = message.Content.Select(ToContent).ToList();
+        var role = contents.All(c => c is FunctionResultContent) && contents.Count > 0
+            ? ChatRole.Tool
+            : ToRole(message.Role);
+        return new ChatMessage(role, contents);
+    }
 
     private static ChatRole ToRole(string role) => role switch
     {
