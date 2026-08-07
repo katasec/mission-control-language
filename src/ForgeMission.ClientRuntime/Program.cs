@@ -41,13 +41,6 @@ internal sealed class Program
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
         });
-        builder.Services.AddHttpClient<MissionRuntimeSession>(client =>
-        {
-            client.BaseAddress = new Uri(missionRuntimeBaseUrl, UriKind.Absolute);
-            client.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
-        });
-
         var app = builder.Build();
         app.MapStaticAssets();
         app.UseBlazorFrameworkFiles();
