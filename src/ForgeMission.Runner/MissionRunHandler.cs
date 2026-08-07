@@ -81,6 +81,10 @@ internal sealed class MissionRunHandler(
         }
         catch (Exception ex)
         {
+            // Previously swallowed silently into the event, with no server-side trace at all —
+            // diagnosability gap discovered live (2026-08-07). Full exception incl. stack trace,
+            // never just ex.Message, so a genuine server-side bug is actually debuggable.
+            logger.LogError(ex, "Run failed for mission '{MissionLabel}'", request.MissionLabel);
             writer.TryWrite(new RunStreamEvent("error", Error: ex.Message));
         }
         finally
