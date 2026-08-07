@@ -30,12 +30,13 @@ internal static class ClientRuntimeEndpoints
             if (capabilityRequest is null)
                 return Results.BadRequest("Unsupported capability request.");
 
+            var target = request.Request.FilePath ?? request.Request.Command;
             events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus, request.SessionId,
-                ToolName: request.Request.Operation.ToString(), ToolStatus: "running"));
+                ToolName: request.Request.Operation.ToString(), ToolStatus: "running", ToolTarget: target));
             var result = await session.Workspace.Dispatcher.DispatchAsync(
                 request.Request.CapabilityName, capabilityRequest, ct);
             events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus, request.SessionId,
-                ToolName: request.Request.Operation.ToString(), ToolStatus: result.IsError ? "error" : "done"));
+                ToolName: request.Request.Operation.ToString(), ToolStatus: result.IsError ? "error" : "done", ToolTarget: target));
             return Results.Ok(new CapabilityDispatchResponse(result.Content, result.IsError));
         });
 
@@ -69,13 +70,15 @@ internal static class ClientRuntimeEndpoints
                         text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
                             request.SessionId, Text: text)),
                         update => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus,
-                            request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString())), ct)
+                            request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString(),
+                            ToolTarget: ExtractTarget(update.Call))), ct)
                     : await new MissionRuntimeSession(runtimeClient).SendAsync(request.Prompt,
                         session.Workspace.Capabilities, session.Workspace.Dispatcher,
                         text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
                             request.SessionId, Text: text)),
                         update => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus,
-                            request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString())), ct);
+                            request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString(),
+                            ToolTarget: ExtractTarget(update.Call))), ct);
                 return Results.Ok(new PromptResponse(answer));
             }
             catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
@@ -102,6 +105,21 @@ internal static class ClientRuntimeEndpoints
 
     internal static bool UsesCloudMissionRuntime(string? mode) =>
         mode is null || mode.Equals("cloud", StringComparison.OrdinalIgnoreCase);
+
+    // Read/Edit/Write carry a file_path argument, Bash carries command — either makes a fitting
+    // "Read Foo.cs" / "Running ls -la" indicator target; unrecognized tools show no target.
+    private static string? ExtractTarget(Microsoft.Extensions.AI.FunctionCallContent call)
+    {
+        var key = call.Name switch
+        {
+            "Read" or "Edit" or "Write" => "file_path",
+            "Bash" => "command",
+            _ => null,
+        };
+        return key is not null && call.Arguments?.TryGetValue(key, out var value) is true
+            ? value?.ToString()
+            : null;
+    }
 
     private static ICapabilityRequest? ToCapabilityRequest(CapabilityRequestData request) => request.Operation switch
     {

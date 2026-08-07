@@ -1,101 +1,316 @@
 @page "/"
 @inject IClientRuntimeChannel ClientRuntime
+@implements IAsyncDisposable
 
-<h1>Forge Client Runtime</h1>
+<div class="shell">
+    <header class="shell-header">
+        <h1>Forge</h1>
+        <p class="subtitle">Local Client Runtime</p>
+        @if (workspaceRoot is not null)
+        {
+            <p class="workspace-path">@workspaceRoot</p>
+        }
+    </header>
 
-<p>This unstyled page proves the Client Runtime channel over the same-origin transport API.</p>
+    <main class="turns">
+        @if (turns.Count == 0)
+        {
+            <p class="empty-state">
+                @(workspaceRoot is null ? "Add a folder to start." : "Describe what you want to build.")
+            </p>
+        }
+        @foreach (var turn in turns)
+        {
+            <article class="turn">
+                <p class="turn-prompt">@turn.Prompt</p>
 
-<label>
-    Workspace path
-    <input @bind="workspaceRoot" @bind:event="oninput" aria-label="Workspace path" />
-</label>
-<button @onclick="SetupSessionAsync" disabled="@settingUp">Set up session</button>
+                @foreach (var row in turn.ToolCalls)
+                {
+                    <p class="tool-row">
+                        <span class="tool-glyph @(row.Done ? "done" : "running")">@(row.Done ? "✓" : "•")</span>
+                        <span>@row.Label()</span>
+                    </p>
+                }
 
-@if (session is not null)
-{
-    <p>Session ready. Capabilities: @string.Join(", ", session.AvailableCapabilities)</p>
+                @if (turn.Error is not null)
+                {
+                    <p class="error-banner">@turn.Error</p>
+                }
+                else if (turn.AssistantText.Length > 0 || turn.IsStreaming)
+                {
+                    <div class="response-card">@turn.AssistantText</div>
+                }
+            </article>
+        }
+    </main>
 
-    <label>
-        File path relative to the workspace
-        <input @bind="filePath" @bind:event="oninput" aria-label="File path" />
-    </label>
-    <button @onclick="ReadFileAsync" disabled="@reading">Read file</button>
-}
+    <footer class="composer-bar">
+        @if (showAddFolderMenu)
+        {
+            <div class="add-folder-menu">
+                <label>
+                    Workspace folder
+                    <input @bind="folderInput" @bind:event="oninput" @onkeydown="OnFolderKeyDown"
+                           placeholder="/path/to/project" disabled="@settingUpSession" />
+                </label>
+                <button class="menu-confirm" @onclick="AddFolderAsync" disabled="@settingUpSession">
+                    @(settingUpSession ? "Setting up…" : "Use this folder")
+                </button>
+                @if (folderError is not null)
+                {
+                    <p class="menu-error">@folderError</p>
+                }
+            </div>
+        }
+        <div class="composer">
+            <button class="composer-plus" title="Add folder" @onclick="ToggleAddFolderMenu">+</button>
+            <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
+                   placeholder="@(workspaceRoot is null ? "Add a folder to start" : "Describe what you want to build")"
+                   disabled="@(workspaceRoot is null || sending)" />
+            <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
+                @(sending ? "Sending…" : "Send")
+            </button>
+        </div>
+    </footer>
+</div>
 
-@if (status is not null)
-{
-    <p role="status">@status</p>
-}
+<style>
+    .shell { display: flex; flex-direction: column; height: 100vh; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
 
-@if (result is not null)
-{
-    <pre>@result</pre>
-}
+    .shell-header { padding: var(--space-4) var(--space-5) var(--space-3); border-bottom: 1px solid var(--border); }
+    .shell-header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+    .subtitle { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
+    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: 12px; color: var(--text-subtle); }
+
+    .turns { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
+    .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
+
+    .turn { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
+    .turn-prompt { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
+
+    .tool-row { align-self: stretch; display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 12.5px; color: var(--text-muted); }
+    .tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
+    .tool-glyph.done { color: var(--success); }
+    .tool-glyph.running { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+
+    .response-card { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
+    .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; margin: 0; }
+
+    .composer-bar { position: relative; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--space-5) calc(var(--space-4) + var(--safe-bottom)); }
+    .composer { display: flex; align-items: center; gap: var(--space-2); }
+    .composer-plus { flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); font-size: 16px; cursor: pointer; }
+    .composer-plus:hover { background: var(--surface-hover); }
+    .composer-input { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 var(--space-3); font-size: 14px; background: var(--surface); color: var(--text); }
+    .composer-input:disabled { color: var(--text-subtle); }
+    .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+    .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
+
+    .add-folder-menu { position: absolute; bottom: 100%; left: var(--space-5); margin-bottom: var(--space-2); min-width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+    .add-folder-menu label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+    .add-folder-menu input { height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13px; }
+    .menu-confirm { height: 30px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .menu-confirm:disabled { background: var(--surface-active); color: var(--text-subtle); }
+    .menu-error { margin: 0; color: var(--danger); font-size: 12px; }
+
+    @@keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+</style>
 
 @code {
-    private string workspaceRoot = string.Empty;
-    private string filePath = string.Empty;
+    private string? workspaceRoot;
     private SessionSetupResponse? session;
-    private string? status;
-    private string? result;
-    private bool settingUp;
-    private bool reading;
 
-    private async Task SetupSessionAsync()
+    private bool showAddFolderMenu;
+    private string folderInput = string.Empty;
+    private bool settingUpSession;
+    private string? folderError;
+
+    private string composerText = string.Empty;
+    private bool sending;
+    private readonly List<ChatTurn> turns = [];
+
+    private CancellationTokenSource? eventLoopCts;
+    private ChatTurn? activeTurn;
+    private ToolCallRow? openToolRow;
+
+    private bool CanSend => workspaceRoot is not null && !sending && !string.IsNullOrWhiteSpace(composerText);
+
+    private void ToggleAddFolderMenu()
     {
-        if (string.IsNullOrWhiteSpace(workspaceRoot))
+        showAddFolderMenu = !showAddFolderMenu;
+        folderError = null;
+    }
+
+    private async Task OnFolderKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await AddFolderAsync();
+    }
+
+    private async Task AddFolderAsync()
+    {
+        if (string.IsNullOrWhiteSpace(folderInput))
         {
-            status = "Enter a workspace path.";
+            folderError = "Enter a folder path.";
             return;
         }
 
-        settingUp = true;
-        status = null;
-        result = null;
+        settingUpSession = true;
+        folderError = null;
+        StateHasChanged();
 
         try
         {
             session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(workspaceRoot), CancellationToken.None);
+                new SessionSetupRequest(folderInput), CancellationToken.None);
+            workspaceRoot = folderInput;
+            showAddFolderMenu = false;
+            StartEventLoop();
         }
         catch (Exception exception)
         {
-            status = exception.Message;
+            folderError = exception.Message;
         }
         finally
         {
-            settingUp = false;
+            settingUpSession = false;
         }
     }
 
-    private async Task ReadFileAsync()
+    private async Task OnComposerKeyDown(KeyboardEventArgs e)
     {
-        if (session is null || string.IsNullOrWhiteSpace(filePath))
-        {
-            status = "Enter a file path.";
-            return;
-        }
+        if (e.Key == "Enter" && CanSend)
+            await SendAsync();
+    }
 
-        reading = true;
-        status = null;
-        result = null;
+    private async Task SendAsync()
+    {
+        if (!CanSend || session is null)
+            return;
+
+        var prompt = composerText;
+        composerText = string.Empty;
+        sending = true;
+        openToolRow = null;
+        activeTurn = new ChatTurn(prompt);
+        turns.Add(activeTurn);
+        StateHasChanged();
 
         try
         {
-            var response = await ClientRuntime.SendAsync<CapabilityDispatchRequest, CapabilityDispatchResponse>(
-                new CapabilityDispatchRequest(session.SessionId,
-                    new CapabilityRequestData("file", CapabilityOperation.ReadFile, FilePath: filePath)),
-                CancellationToken.None);
-            result = response.Content;
-            status = response.IsError ? "The capability returned an error." : null;
+            var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
+                new PromptRequest(session.SessionId, prompt), CancellationToken.None);
+            activeTurn.AssistantText = response.Content;
+            activeTurn.Error = response.IsError ? response.Content : null;
         }
         catch (Exception exception)
         {
-            status = exception.Message;
+            activeTurn.Error = exception.Message;
         }
         finally
         {
-            reading = false;
+            activeTurn.IsStreaming = false;
+            activeTurn = null;
+            sending = false;
+            StateHasChanged();
         }
+    }
+
+    private void StartEventLoop()
+    {
+        eventLoopCts = new CancellationTokenSource();
+        _ = ConsumeEventsAsync(eventLoopCts.Token);
+    }
+
+    private async Task ConsumeEventsAsync(CancellationToken ct)
+    {
+        try
+        {
+            await foreach (var evt in ClientRuntime.Subscribe(ct))
+            {
+                ApplyEvent(evt);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected on page teardown.
+        }
+    }
+
+    private void ApplyEvent(ClientRuntimeEvent evt)
+    {
+        if (activeTurn is null || evt.SessionId != session?.SessionId)
+            return;
+
+        switch (evt.Kind)
+        {
+            case ClientRuntimeEventKind.MissionTextDelta:
+                activeTurn.AssistantText += evt.Text;
+                break;
+            case ClientRuntimeEventKind.ToolCallStatus when string.Equals(evt.ToolStatus, "running", StringComparison.OrdinalIgnoreCase):
+                openToolRow = new ToolCallRow(evt.ToolName ?? "Tool", evt.ToolTarget);
+                activeTurn.ToolCalls.Add(openToolRow);
+                break;
+            case ClientRuntimeEventKind.ToolCallStatus:
+                if (openToolRow is not null)
+                {
+                    openToolRow.Done = true;
+                    openToolRow = null;
+                }
+                break;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (eventLoopCts is null)
+            return;
+
+        await eventLoopCts.CancelAsync();
+        eventLoopCts.Dispose();
+    }
+
+    private sealed class ChatTurn(string prompt)
+    {
+        public string Prompt { get; } = prompt;
+        public List<ToolCallRow> ToolCalls { get; } = [];
+        public string AssistantText { get; set; } = string.Empty;
+        public bool IsStreaming { get; set; } = true;
+        public string? Error { get; set; }
+    }
+
+    private sealed class ToolCallRow(string toolName, string? target)
+    {
+        private const int MaxTargetLength = 80;
+
+        public bool Done { get; set; }
+
+        public string Label()
+        {
+            var verb = Done ? DoneVerb(toolName) : RunningVerb(toolName);
+            if (target is null)
+                return verb;
+
+            var shown = target.Length > MaxTargetLength ? target[..MaxTargetLength] + "…" : target;
+            return Done ? $"{verb} {shown}" : $"{verb} {shown}…";
+        }
+
+        private static string RunningVerb(string toolName) => toolName switch
+        {
+            "Read" => "Reading",
+            "Edit" => "Editing",
+            "Write" => "Writing",
+            "Bash" => "Running",
+            _ => "Using",
+        };
+
+        private static string DoneVerb(string toolName) => toolName switch
+        {
+            "Read" => "Read",
+            "Edit" => "Edited",
+            "Write" => "Wrote",
+            "Bash" => "Ran",
+            _ => "Used",
+        };
     }
 }
