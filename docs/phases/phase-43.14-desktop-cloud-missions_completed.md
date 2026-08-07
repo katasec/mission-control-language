@@ -573,5 +573,79 @@ correct distinction (billed cost vs. recorded usage), not a coincidence that hap
   `ReadPaths` depend on the chain genuinely being followed; the cost/balance assertions depend on
   real Postgres state, independently queried, not just trusted from response fields.
 
-**PR:** [#32](https://github.com/katasec/mission-control-language/pull/32), open, pending operator
-approval to merge.
+**Merged:** [PR #32](https://github.com/katasec/mission-control-language/pull/32) into `main`,
+approved by the operator 2026-08-07.
+
+## Task 3b — Enrichment cache (infra)
+
+**Goal:** provision `EnrichmentCacheConnection` for real, live in Azure — the deliberately-deferred
+"actually works in the cloud" claim, kept separate from Task 3's code-level claim from the start
+(see Task 3 above), specifically to avoid repeating a prior project failure mode ("built/tested
+locally, nothing worked in Azure, several wrong assumptions"). Done directly with the operator, not
+delegated to Codex — infra/secret-bearing changes get the what-if-first discipline from AGENTS.md,
+not the Claude↔Codex code-review loop.
+
+**✅ DONE + LIVE (2026-08-07).** Two real things got fixed, not one — the second, more serious gap
+was only discovered because live verification (not just "the deploy succeeded") was insisted on.
+
+**1. The database + secret + runner wiring (`~/progs/forge-infra`, commit `dcf7583`):**
+- [`dev/300-data/pg-server.bicep`](https://github.com/katasec/forge-infra/blob/main/dev/300-data/pg-server.bicep) —
+  new `enrichmentCacheDatabaseName` param + `enrichmentCacheDb` resource block, mirroring
+  `authBillingDb` exactly.
+- [`dev/300-data/main.bicep`](https://github.com/katasec/forge-infra/blob/main/dev/300-data/main.bicep) —
+  threaded the new param through (default `enrichment_cache_db`, not overridden in
+  `main.bicepparam`, matching `authBillingDatabaseName`'s own precedent), added an output, added
+  `ENRICHMENT_DB` to the `write-conn-strings` deployment script's env vars.
+- [`dev/300-data/scripts/write-conn-strings.sh`](https://github.com/katasec/forge-infra/blob/main/dev/300-data/scripts/write-conn-strings.sh) —
+  writes `ConnectionStrings-EnrichmentCacheConnection` to Key Vault, mirroring the existing
+  `AuthBillingConnection`/`ReadConnection`/`WriteConnection` pattern.
+- [`dev/500-app/main.bicep`](https://github.com/katasec/forge-infra/blob/main/dev/500-app/main.bicep) —
+  new `connection-enrichmentcache` secret + `ConnectionStrings__EnrichmentCacheConnection` env var
+  on the `runner` Container App resource — its first-ever Postgres connection, confirmed by reading
+  the resource's existing `secrets:`/`env:` blocks before editing (only provider-key secrets
+  existed there).
+- Both `300-data-what-if`/`300-data` and `500-app-what-if`/`500-app` run in order, per AGENTS.md's
+  what-if-first discipline — no exceptions taken. The `500-app` what-if also surfaced pre-existing,
+  unrelated drift on `ca-forge-ui-dev` (a hardcoded runner-URL env var due to be replaced by a
+  dynamic Bicep expression resolving to the same value) — flagged explicitly to the operator before
+  applying rather than silently bundled in, and accepted as foundational cleanup.
+- **Live-verified, not inferred:** `enrichment_cache_db` confirmed via `az postgres flexible-server
+  db list`; `ConnectionStrings-EnrichmentCacheConnection` confirmed via `az keyvault secret show`;
+  both Container Apps confirmed `Running`/`Succeeded` post-deploy.
+
+**2. The bigger discovery: the deployed images predated the entire phase.** After wiring the
+connection, the schema bootstrap didn't appear to run — `\dt` against the real database showed no
+`enrichment_cache` table despite the runner logging a clean "Application started" (which, per the
+code's actual structure, could only happen if the bootstrap either succeeded or never ran at all —
+an exception there would have prevented that log line, ruling out a silent failure). Rather than
+accept the ambiguous evidence, ran the actual `EnrichmentCacheSchema`/`PostgresEnrichmentCache` code
+**locally** against the real Azure connection string, which worked immediately — isolating the
+problem to something specific to the deployed container, not the code or credentials. Dropped the
+table and did a clean, isolated ACA restart to test the deployed path in isolation: it reproducibly
+did *not* create the table. Checked the deployed image tag directly — `forge-runner:0.10.4`,
+`git log` dated **2026-07-20**. Confirmed `PostgresEnrichmentCache.cs` doesn't exist in that tagged
+commit at all, and the tag isn't an ancestor of Task 8's merge commit. **None of Tasks 1–9's work
+had ever been deployed to dev** — `ca-forge-runner-dev`/`ca-forge-api-dev` were both running builds
+from over two weeks before this phase started.
+
+**Fix:** tagged and pushed `forge-runner-v0.11.0` and `forge-api-v0.3.0` from the current `main`
+(post-Task-9), triggering CI (`forge-runner-image.yml`/`forge-api-image.yml`) to build and push to
+ACR — confirmed both images landed via `az acr repository show-tags`. Bumped `runnerImage`/`image`
+in `dev/500-app/main.bicepparam` and `dev/550-api/main.bicepparam`, ran `500-app-what-if`/`500-app`
+and `550-api-what-if`/`550-api` (clean what-ifs — image-only changes, nothing unexpected).
+
+**Final live verification, all directly observed, not inferred:**
+- Both Container Apps report the new image (`forge-runner:0.11.0`, `forge-api:0.3.0`),
+  `Running`/`Succeeded`.
+- Runner boot log: clean, no errors, new revision (`--0000019`).
+- **`enrichment_cache` table now exists**, correct schema (confirmed via `psql \d`), 0 rows (clean
+  starting state) — created by the real deployed code on a genuine fresh boot, not by the earlier
+  local workaround run.
+- ForgeAPI boot log: `"runner advertises 8 mission(s): ..."` — confirms live ForgeAPI↔Runner
+  communication through the new images, matching the exact verification pattern
+  [deploy.md → Verify live](../design/deploy.md#verify-live) already prescribes.
+- `https://api.forge.katasec.com/health` → `200`.
+
+**Why this matters for Task 10:** live verification would have been silently meaningless against
+the old images — a "success" would have proven nothing about this phase's actual code. This is now
+closed out first, so Task 10 tests the real thing.
