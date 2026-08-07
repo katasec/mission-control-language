@@ -386,10 +386,12 @@ codebase rather than inventing new process:**
    unchanged. Full narrative + evidence:
    [_completed doc, Task 8](phase-43.14-desktop-cloud-missions_completed.md#task-8--mode-selection--default).
 
-9. **Tests — three tiers, per the locked strategy above.** Unit/integration additions to
-   `ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs` +
-   `BillingServiceClientTokenTests.cs`; a new planted-content mock-host round-trip test mirroring
-   `ForgeMission.Tests/Integration/MockClaudeHostTests.cs` but driving the `ExecuteMission` shape.
+9. **Tests — three tiers. ✅ Done 2026-08-07** — tier 1 was already covered incrementally by Tasks
+   1/2/5's own test additions. Tier 2: a new `MissionExecutionToolRoundTripTests.cs` — a real
+   `MissionRunHandler` behind an in-process NDJSON-serializing `HttpMessageHandler`, driven through
+   real `ExecuteMission`/`ExecuteMissionResponse` DTOs, with a chained two-file plant (mirroring
+   `MockClaudeHostTests.cs`'s rigor exactly). Full narrative + evidence:
+   [_completed doc, Task 9](phase-43.14-desktop-cloud-missions_completed.md#task-9--tests--tier-2-planted-content-round-trip).
 
 10. **Live verification.** Deploy to dev; run Forge Desktop against the real hosted endpoint with a
     real `~/.forge` credential; execute one genuine tool call end to end; confirm the four named

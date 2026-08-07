@@ -498,5 +498,80 @@ otherwise break).
 - Diff read directly, file by file, and checked against the approved (twice-revised) plan — matches
   exactly, including the deliberately-accepted small duplication in the endpoint's two branches.
 
-**PR:** [#31](https://github.com/katasec/mission-control-language/pull/31), open, pending operator
+**Merged:** [PR #31](https://github.com/katasec/mission-control-language/pull/31) into `main`,
+approved by the operator 2026-08-06.
+
+## Task 9 — Tests: tier-2 planted-content round trip
+
+**Goal:** the locked testing strategy's tier 2 — a planted-content mock-host round-trip test, same
+rigor as `ForgeMission.Tests/Integration/MockClaudeHostTests.cs`, but driving the `ExecuteMission`
+shape (API A) instead of the Anthropic `/v1/messages` wire. Tier 1 was already covered incrementally
+across Tasks 1/2/5's own test additions to `MissionExecutionServiceTests.cs`
+(`BillingServiceClientTokenTests.cs` confirmed pre-existing and unrelated — pure ledger-level
+`SettleRunAsync`/`ClientToken` idempotency, not touched by the agent-turn feature).
+
+**The real architectural question, resolved before implementation, per AGENTS.md's design-first
+rule:** there is zero precedent anywhere in this repo for a real hosted `TestServer`/
+`WebApplicationFactory` for either `ForgeMission.Api` or `ForgeMission.Runner` (confirmed by a
+repo-wide search before writing the task assignment). `MissionExecutionServiceTests.cs`'s existing
+`StubRunnerHandler` returns canned `RunStreamEvent`s — fine for testing ForgeAPI's own logic in
+isolation, but using it here would mean `MissionRunHandler`/`ToolContinuationGate`/the enrichment
+cache never actually run, which is exactly the false-green failure mode this test exists to
+prevent (`MissionRunHandler` is the real execution engine, not a thin adapter — unlike
+`MissionEndpoints`, which is why the existing precedent's "skip the host" reasoning doesn't
+transfer). Resolved architecture: drive `MissionExecutionService` directly (in-process, no real
+ForgeAPI host — consistent with existing precedent), backed by a **live** `HttpMessageHandler` that
+deserializes the real `RunRequest` and calls a real, directly-constructed
+`MissionRunHandler.RunStreamAsync(...)` (reusing Task 4's `MissionRunHandlerTests.cs` construction
+pattern), serializing its real `RunStreamEvent`s back into NDJSON — genuinely exercising both tiers
+in-process, no real sockets, no new hosting infrastructure invented.
+
+**✅ DONE (2026-08-07)** — implemented by Codex on `codex/phase-43.14-mock-host-integration-test`
+(`30e8765 Add tier-2 planted-content round-trip test for API A tool continuations`).
+
+**What changed:**
+- [`src/ForgeMission.Rooms.Tests/Api/MissionExecutionToolRoundTripTests.cs`](../../src/ForgeMission.Rooms.Tests/Api/MissionExecutionToolRoundTripTests.cs)
+  (new) — a real 3-step mission (`Enrich → Respond(role:agent) → Verify`) built fresh on disk, a
+  `ChainedToolRunner : IExpertRunner` that derives each step from actual conversation state (not
+  hardcoded), a chained two-file plant (file A's content names file B's path; file B holds the
+  magic word — the test can only pass if both hops genuinely execute), a `LiveRunnerHandler :
+  HttpMessageHandler` that bridges to a real, directly-constructed `MissionRunHandler`, and a
+  `MockExecuteMissionClient` that drives real `ExecuteMission` calls, executes real file reads for
+  returned `ToolUse` calls, and replays `History` with the real `TurnMessage`/`TurnContent` DTOs.
+  Asserts: exactly two real reads in the correct order; the magic word present only in the
+  terminal answer; `Enrich` ran once, the agent ran three times, `Verify` ran once; **zero**
+  settlement (verified via a live `Billing.GetBalanceMicroUsdAsync` check, not just response
+  fields) on both tool-use turns; **exactly one** settlement on the terminal turn, with the real
+  ledger balance matching the response's reported balance.
+- [`src/ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj`](../../src/ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj) —
+  new `ForgeMission.Runner`/`ForgeMission.Core` project references + a `Microsoft.Extensions.AI`
+  package reference (needed for direct compile-time use of `ChatMessage`/`FunctionCallContent`/etc.
+  in the new test file — a real, build-verified necessity, not a guess).
+- [`src/ForgeMission.Runner/Properties/AssemblyInfo.cs`](../../src/ForgeMission.Runner/Properties/AssemblyInfo.cs) —
+  new `[assembly: InternalsVisibleTo("ForgeMission.Rooms.Tests")]`, verified genuinely required
+  (`RunnerRegistry`/`IRunnerArtifactStore` confirmed `internal` by reading the source before
+  approving the plan).
+
+**A subtle correctness point verified by hand-tracing the real code, not assumed:** the test
+asserts `response.Usage.CostMicroUsd == 0` on tool-use turns — NOT that no usage was recorded. Real
+token usage genuinely accumulates on every hop (`ChainedToolRunner.RunAsync` calls
+`UsageAccumulator.Add(...)` on every expert step, including the two tool-use hops), but
+`MissionExecutionService`'s tool-use branch (Task 5) hardcodes `costMicroUsd: 0` for non-terminal
+responses specifically because settlement is skipped — so this assertion is testing the precisely
+correct distinction (billed cost vs. recorded usage), not a coincidence that happens to pass.
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Rooms.Tests --filter "FullyQualifiedName~MissionExecutionToolRoundTripTests"` —
+  **1/1 pass**.
+- `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **470/470 pass, 11 skipped, 0
+  failed**.
+- Full hand-trace of the actual `PipelineRunner`/`MissionRunHandler`/`MissionExecutionService`
+  mechanics against every assertion in the test (not just a structural read) — confirmed each one
+  tests something that could only be true if the real system genuinely worked: the enrich-once
+  count depends on `ToolContinuationGate`'s real `StartAtAgent` cache-hit path; the ordered
+  `ReadPaths` depend on the chain genuinely being followed; the cost/balance assertions depend on
+  real Postgres state, independently queried, not just trusted from response fields.
+
+**PR:** [#32](https://github.com/katasec/mission-control-language/pull/32), open, pending operator
 approval to merge.

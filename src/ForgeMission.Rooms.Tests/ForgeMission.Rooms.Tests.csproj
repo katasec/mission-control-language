@@ -13,6 +13,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.7.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.13.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -26,9 +27,11 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
     <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
+    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <!-- ForgeAPI gateway (42.6) — its edge auth filter is unit-tested here alongside the other
          platform-key tests (no DB; a fake resolver). -->
     <ProjectReference Include="..\ForgeMission.Api\ForgeMission.Api.csproj" />
+    <ProjectReference Include="..\ForgeMission.Runner\ForgeMission.Runner.csproj" />
   </ItemGroup>
 
   <!-- The auth-filter test constructs a DefaultHttpContext / EndpointFilterInvocationContext. -->
