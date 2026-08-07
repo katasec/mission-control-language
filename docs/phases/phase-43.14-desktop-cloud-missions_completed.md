@@ -695,3 +695,79 @@ consumers) can silently break accidental compatibility between stale peers. This
 own text was written to guard against — caught here specifically because the operator insisted on a
 real, live regression check immediately after deploying, rather than accepting a clean deploy status
 as proof of correctness.
+
+## Task 10 — Live verification
+
+**Goal:** the phase's final "Done when" condition. Run the real Forge Desktop app, using its default
+cloud configuration with a real `~/.forge` credential, execute a genuine tool call end to end
+against the real hosted endpoint, and confirm four specific observations directly against real
+state — not inferred from a clean deploy or a "looks right" response.
+
+**✅ DONE + LIVE (2026-08-08).** This task found and fixed **three real, previously-undiscovered
+bugs** — none of them caught by any of the extensive tier-1/tier-2 test coverage from Tasks 1–9,
+because all of that coverage used stubbed/mocked runners, catalogs, or providers. This is exactly
+why live verification is its own required step, not a formality after "tests pass."
+
+**Method:** rather than driving the Photino GUI directly (no automation tool for a native macOS
+window), launched the real Desktop process (which launches a real Client Runtime child process,
+resolves cloud mode by default, reads the real `~/.forge` credential) and drove its `/transport/*`
+HTTP endpoints directly — the exact same API a real UI would call. A real temp workspace with a
+planted file (`notes.txt`, containing a random one-time code word) served as the tool-call target.
+
+**Bug 1 — wrong default mission handle.** `CloudMissionRuntimeSession.DefaultMission = "vanilla"`
+404'd (`MissionNotFound`). First hypothesis (wrong): the runner labels this mission `"ChatGPT"`, so
+the client should send that instead — changed it, redeployed, still 404'd. **Real cause:**
+`StaticMissionCatalog`'s hardcoded entry list (`src/ForgeMission.Api/MissionCatalog.cs`) only ever
+registered three handles — `websearch`, `ocr`, `summarize` — never one for the vanilla/ChatGPT
+mission, despite the phase's own locked design review saying it was "already published as a
+built-in... no new mission needs authoring." That assumption checked whether the mission file loaded
+on the runner; it never checked whether ForgeAPI's own catalog had an entry pointing at it. **Fix:**
+reverted the client back to `"vanilla"` (the correct intended public handle) and added the missing
+`Register(..., Handle: "vanilla", MissionRef: "ChatGPT", ...)` catalog entry
+(`44d5ced`/`forge-api-v0.3.1`).
+
+**Bug 2 — no server-side visibility into a genuine RunFailed.** With the catalog fixed, the first
+hop succeeded but the resume call failed with a generic `RunFailed` / "The mission run failed." —
+opaque by design (`DrainRunIntoChannel`'s catch block only ever forwarded `ex.Message`, added no
+logging — the same gap already fixed once for the ForgeUI regression above). The runner's own
+`logger.LogError(ex, ...)` addition from that earlier fix (`2d73886`) immediately surfaced the real
+exception with a full stack trace.
+
+**Bug 3 — tool_result mapped to the wrong role for OpenAI.** The real exception:
+`System.InvalidOperationException: Step 'Answerer' failed: HTTP 400 ... An assistant message with
+'tool_calls' must be followed by tool messages responding to each 'tool_call_id'.` A genuine OpenAI
+API rejection. **Root cause, and a real correction to Claude's own review decision in Task 4:**
+`RunnerToolTurnMapper.ToChatMessage` mapped a tool-result turn's `TurnMessage.Role` ("user", per the
+wire's own bookkeeping) 1:1 into `ChatRole.User` — a choice Claude explicitly requested during Task
+4's plan review, citing `MissionChatClient.cs`'s comment that "tool-result hand-backs arrive with
+role 'user'" as if it were a universal wire convention. It is not — that comment describes
+Anthropic's API specifically (which genuinely accepts tool_result inside a user-role message).
+OpenAI's Chat Completions API requires a dedicated `role="tool"` message instead, and rejects the
+Anthropic-shaped alternative outright. `Microsoft.Extensions.AI` has exactly this seam
+(`ChatRole.Tool`, already precedented in `AgenticSession.cs`) so each provider's own `IChatClient`
+adapter translates it correctly — the wire's declared role is about who sent the turn, not what role
+the underlying LLM call needs to see. **Fix:** a tool-result turn (content entirely
+`FunctionResultContent`) now maps to `ChatRole.Tool` regardless of the wire's declared role
+(`d4318e4`/`forge-runner-v0.11.4`). Updated `MissionRunHandlerTests.cs`'s assertion to match (the
+existing test caught the *shape* correctly — it just asserted the wrong role, since I hadn't
+considered a second provider when approving Task 4).
+
+**Live-confirmed, all four required observations, each with a named check — not inferred:**
+- **The tool actually ran on Desktop's machine, and the answer reflects it:** the final answer was
+  `"The secret code word for today is NEBULA-7749."`, exactly matching a randomly-planted string in
+  a real local file the model could not have known any other way.
+- **Exactly one ledger debit:** `SELECT count(*), count(DISTINCT id) FROM ledger_entries WHERE
+  client_token = '<the run's token>'` → `1, 1` — one row, one distinct id, `-89` µ$, `mission_ref =
+  ChatGPT`, `model = gpt-4o-mini`, `input_tokens = 425`, matching the runner's own log line exactly.
+- **Enrichment-cache continuation correctly recovered:** `SELECT * FROM enrichment_cache` showed a
+  real row with the exact original goal text and workspace context, TTL-bound; the runner's own
+  success log showed both calls completing (`verified=False steps=1` for the tool-use turn,
+  `verified=True steps=1` for the resumed terminal turn — `steps=1` on the resume confirms it jumped
+  straight to the agent step via `StartAtAgent`, not re-running from scratch).
+- **Full regression check:** `dotnet test src/ForgeMission.slnx` — **470/470 pass** after all three
+  fixes (one flaky, unrelated `ForgeMission.Tests` failure reproduced as a pass on rerun).
+
+**Phase 43.14's overall "Done when" is met.** Live Forge Desktop, cloud mode by default, real
+credential, real tool call, real answer, real ledger debit, real enrichment-cache recovery — every
+claim backed by a named observation, per AGENTS.md's status-honesty rule, not an inference from a
+clean deploy.

@@ -359,13 +359,20 @@ codebase rather than inventing new process:**
    `MockClaudeHostTests.cs`'s rigor exactly). Full narrative + evidence:
    [_completed doc, Task 9](phase-43.14-desktop-cloud-missions_completed.md#task-9--tests--tier-2-planted-content-round-trip).
 
-10. **Live verification.** Deploy to dev; run Forge Desktop against the real hosted endpoint with a
-    real `~/.forge` credential; execute one genuine tool call end to end; confirm the four named
-    observations from the testing-strategy section above.
+10. **Live verification. ✅ Done + LIVE 2026-08-08** — ran the real Forge Desktop app against the
+    real hosted endpoint with a real `~/.forge` credential, executed a genuine tool call end to end,
+    confirmed all four required observations directly against real state (ledger, enrichment-cache
+    table, runner logs) — not inferred. Found and fixed three real bugs along the way, none of them
+    caught by any tier-1/tier-2 test. Full narrative + evidence:
+    [_completed doc, Task 10](phase-43.14-desktop-cloud-missions_completed.md#task-10--live-verification).
 
 ## Done when
 
-Forge Desktop, using its default (cloud) configuration with a real `~/.forge` credential, runs the
-`vanilla` mission, executes at least one real tool call end to end, and the response reflects it —
-confirmed live (tier 3 above), with exactly one ledger debit and a correctly recovered
-enrichment-cache continuation on the resumed turn. All tier-1/tier-2 tests pass in CI.
+✅ **Met — 2026-08-08.** Forge Desktop, using its default (cloud) configuration with a real
+`~/.forge` credential, ran the `vanilla` mission, executed a real tool call (`Read`) end to end
+against a real planted file, and the response reflected it exactly (`NEBULA-7749`) — confirmed live,
+with exactly one ledger debit (verified via direct SQL: 1 row, 1 distinct id, -89 µ$) and a correctly
+recovered enrichment-cache continuation on the resumed turn (verified via a real Postgres row + the
+runner's own success log for both calls). All tier-1/tier-2 tests pass in CI (470/470).
+
+**Phase 43.14 is DONE.**
