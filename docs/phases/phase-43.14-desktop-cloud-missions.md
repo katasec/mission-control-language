@@ -377,11 +377,14 @@ codebase rather than inventing new process:**
    `forge login`." and exit code 1, before any child process launches. Full narrative + evidence:
    [_completed doc, Task 7](phase-43.14-desktop-cloud-missions_completed.md#task-7--credentials).
 
-8. **Mode selection + default.** `src/ForgeMission.Orchestration/MissionRuntimeResolver.cs` (the
-   non-docker-mode seam already exists here) + `src/ForgeMission.ClientRuntime/Program.cs` (DI picks
-   `CloudMissionRuntimeSession` vs. today's `MissionRuntimeSession` based on mode). Default
-   `MissionRuntime:Mode` to the cloud endpoint with mission `"vanilla"`; `docker` mode stays available
-   as an explicit local-dev override, not removed.
+8. **Mode selection + default. ✅ Done 2026-08-06** — `MissionRuntimeResolver` defaults absent mode
+   to `cloud` (falling back to `FORGE_API_ENDPOINT` then `https://api.forge.katasec.com` when no
+   `BaseUrl` is configured); the resolved mode threads through a new `MissionRuntime__Mode` env var
+   into the Client Runtime child process, where `ClientRuntimeEndpoints`'s `/transport/prompt`
+   handler picks `CloudMissionRuntimeSession` vs `MissionRuntimeSession` directly (no DI/factory —
+   the spoke's "DI picks..." framing didn't match how the code actually works). `docker` mode
+   unchanged. Full narrative + evidence:
+   [_completed doc, Task 8](phase-43.14-desktop-cloud-missions_completed.md#task-8--mode-selection--default).
 
 9. **Tests — three tiers, per the locked strategy above.** Unit/integration additions to
    `ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs` +

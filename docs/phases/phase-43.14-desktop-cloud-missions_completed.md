@@ -426,5 +426,74 @@ back as a one-line fix (`Environment.Exit(1)`); re-verified directly after the f
   failed**.
 - Diff read directly and checked against the approved (twice-revised) plan — matches exactly.
 
-**PR:** [#30](https://github.com/katasec/mission-control-language/pull/30), open, pending operator
-approval to merge.
+**Merged:** [PR #30](https://github.com/katasec/mission-control-language/pull/30) into `main`,
+approved by the operator 2026-08-06.
+
+## Task 8 — Mode selection + default
+
+**Goal:** default `MissionRuntime:Mode` to the cloud endpoint (mission `"vanilla"`), with `docker`
+staying available as an explicit local-dev override.
+
+The spoke's framing ("DI picks CloudMissionRuntimeSession vs. MissionRuntimeSession based on mode")
+didn't match the real code — traced during planning, not assumed: `MissionRuntimeSession` was never
+actually DI-resolved (a dead typed-`HttpClient` registration existed alongside a direct `new
+MissionRuntimeSession(...)` at the real construction site in `ClientRuntimeEndpoints.cs`'s
+`/transport/prompt` handler), and no signal existed at all for telling the Client Runtime child
+process which wire protocol its `BaseUrl` spoke. Both were resolved before implementation, per
+AGENTS.md's design-first rule.
+
+**✅ DONE (2026-08-06)** — implemented by Codex on `codex/phase-43.14-cloud-mode-default`
+(`fefffca Default Forge Desktop's mission runtime to the cloud endpoint`), two revision rounds (the
+first added the missing mode signal/session-selection precision; the second added test coverage the
+first plan omitted entirely, including fixing an existing test that the new behavior would
+otherwise break).
+
+**What changed:**
+- [`src/ForgeMission.Orchestration/MissionRuntimeResolver.cs`](../../src/ForgeMission.Orchestration/MissionRuntimeResolver.cs) —
+  `ResolveMode` defaults absent `MissionRuntime:Mode` to `"cloud"`; a new pure
+  `ResolveCloudBaseUrl(configuredUrl, apiEndpoint)` helper (deliberately pure — no direct
+  `Environment.GetEnvironmentVariable` call inside it — so tests can exercise the fallback/override
+  logic deterministically without mutating process-wide environment state) resolves `cloud`'s
+  `BaseUrl`: configured `MissionRuntime:BaseUrl` first, then `FORGE_API_ENDPOINT`
+  (trailing-slash-trimmed, matching `ForgeExec.cs`'s existing convention), then the
+  `DefaultCloudEndpoint` constant (`https://api.forge.katasec.com`). `ResolveAsync` now returns
+  `(BaseUrl, Mode, Launcher)` — `docker` unchanged; a genuinely unrecognized mode still requires an
+  explicit `BaseUrl` or throws.
+- [`src/ForgeMission.Desktop/Program.cs`](../../src/ForgeMission.Desktop/Program.cs) — threads the
+  resolved mode through to a new `MissionRuntime__Mode` env var alongside the existing
+  `BaseUrl`/`Credential`.
+- [`src/ForgeMission.ClientRuntime/Program.cs`](../../src/ForgeMission.ClientRuntime/Program.cs) —
+  removed the dead typed `AddHttpClient<MissionRuntimeSession>` registration.
+- [`src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs`](../../src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs) —
+  the `/transport/prompt` handler now reads `MissionRuntime:Mode` via injected `IConfiguration` and
+  picks between `CloudMissionRuntimeSession`/`MissionRuntimeSession` directly at the construction
+  site via a new `UsesCloudMissionRuntime(mode)` selector (`null`/case-insensitive `"cloud"` → true;
+  `"docker"`/anything else → false). Deliberately no shared interface or factory — the two session
+  types have identical public signatures by construction (Task 6), so the small duplication between
+  the two branches is the direct, sanctioned cost of not building unneeded abstraction.
+- [`src/ForgeMission.Tests/Orchestration/MissionRuntimeResolverTests.cs`](../../src/ForgeMission.Tests/Orchestration/MissionRuntimeResolverTests.cs) —
+  the pre-existing `ResolveAsync_NonDockerModeWithoutConfiguredUrl_Throws` test (which asserted
+  `"cloud"` mode with no `BaseUrl` throws) was replaced — that assertion directly contradicted this
+  task's own new behavior. New coverage: no-mode-configured defaults to cloud; cloud without a
+  `BaseUrl` uses the endpoint convention; a genuinely unrecognized mode (`"remote"`) without a
+  `BaseUrl` still throws (preserving the old catch-all behavior test, now on the right mode value);
+  plus direct unit coverage of the pure `ResolveCloudBaseUrl`/`ResolveMode` helpers.
+- [`src/ForgeMission.Tests/ClientRuntime/ClientRuntimeEndpointsTests.cs`](../../src/ForgeMission.Tests/ClientRuntime/ClientRuntimeEndpointsTests.cs)
+  (new) — narrow theory-based tests on `UsesCloudMissionRuntime` alone (not a full hosted-TestServer
+  endpoint test — deliberately scoped down since `MissionRuntimeSession`/`CloudMissionRuntimeSession`
+  are already independently tested elsewhere, so a full endpoint test would mostly re-test their
+  internals via HTTP indirection without adding confidence in the actual new logic this task adds).
+
+**Verified independently by Claude:**
+- `dotnet build src/ForgeMission.slnx --no-restore` — clean, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.Tests --filter "FullyQualifiedName~MissionRuntimeResolverTests|FullyQualifiedName~ClientRuntimeEndpointsTests"` —
+  **13/13 pass**.
+- `dotnet test src/ForgeMission.slnx --no-build` (full solution) — **469/469 pass, 11 skipped, 0
+  failed**. No xAI 403s in this environment (skip cleanly, no `XAI_API_KEY` configured here) —
+  confirms Codex's reported two live-Grok failures are environment-specific, not a regression.
+- Confirmed both flagged `InternalsVisibleTo` requirements (`ForgeMission.Orchestration` →
+  `ForgeMission.Tests` for the internal pure helpers; `ForgeMission.ClientRuntime` →
+  `ForgeMission.Tests` for the internal `UsesCloudMissionRuntime`) already existed — no redundant
+  plumbing was added.
+- Diff read directly, file by file, and checked against the approved (twice-revised) plan — matches
+  exactly, including the deliberately-accepted small duplication in the endpoint's two branches.
