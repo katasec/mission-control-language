@@ -649,3 +649,49 @@ and `550-api-what-if`/`550-api` (clean what-ifs — image-only changes, nothing 
 **Why this matters for Task 10:** live verification would have been silently meaningless against
 the old images — a "success" would have proven nothing about this phase's actual code. This is now
 closed out first, so Task 10 tests the real thing.
+
+### Addendum (2026-08-07) — a second, unrelated stale-deploy regression found and fixed live
+
+Immediately after the runner/API redeploy above, the operator caught a real regression by testing
+Rooms (`forge.katasec.com`) as a guard against exactly this kind of risk: **every `@`-mention
+(`@claude`/`@grok`/`@assistant`/`@openai`) started failing** with a generic "could not complete this
+request." This was **not** caused by any phase-43.14 code — full investigation, evidence-first:
+
+- Reproduced the exact same request three independent ways directly against the runner (its own
+  `localhost:8080`, its internal FQDN over HTTPS matching ForgeUI's real path, with/without
+  synthetic `traceparent`/`baggage` headers, and against goal strings matching Rooms' real
+  multi-line context-assembled shape) — **all succeeded**, ruling out the runner's own logic,
+  AOT (confirmed the runner isn't even AOT-published — `Dockerfile.runner` explicitly sets
+  `PublishAot=false`), and network/ingress/OTel-header theories.
+- The failure was invisible server-side: `DrainRunIntoChannel`'s catch block only ever forwarded
+  `ex.Message` to the client, with zero logging. Added temporary diagnostic logging
+  (`ebb2e78`/`64e889f`, later removed once root-caused), rebuilt, redeployed, and reproduced live —
+  which surfaced the real exception: `System.ArgumentNullException: Value cannot be null.
+  (Parameter 'key')` at `RunnerRegistry.TryGet`, with `request.MissionLabel` bound as **null** while
+  every other field (`Policy`, etc.) bound correctly.
+- Root cause, confirmed via `git log -G` (not inferred): commit `9ad27b5` ("Harden MissionRef runner
+  startup", **2026-07-31**) renamed `RunRequest.MissionRef` → `MissionLabel` in
+  `ForgeMission.Runner.Contracts` — a change completely unrelated to phase-43.14. `forge-ui:0.6.0`
+  (the deployed ForgeUI image, predating that rename) was still sending the old `MissionRef` JSON
+  key. The old runner (`0.10.4`) and old ForgeUI (`0.6.0`) were stale *together*, so they stayed
+  accidentally wire-compatible with each other; rebuilding only the runner/API for Task 3b broke
+  that accidental compatibility by picking up a rename ForgeUI had never rebuilt to match.
+- **Fix:** rebuilt and redeployed `forge-ui:0.6.1` from current `main` (zero ForgeUI source changes
+  needed — it just needed a fresh build against the current `ForgeMission.Runner.Contracts`), and
+  `forge-runner:0.11.3` (the diagnostic-logging-removed, otherwise-identical successor to `0.11.1`/
+  `0.11.2`). Kept one permanent improvement from this investigation:
+  `DrainRunIntoChannel`'s catch block now calls `logger.LogError(ex, ...)` before converting an
+  exception to a `RunStreamEvent` (`2d73886`) — this exact class of bug was undiagnosable without
+  it, and would be again for any future server-side exception.
+- **Live-verified, not inferred:** `@claude` and `@openai` now return real, sensible answers in the
+  actual Rooms UI (operator-confirmed via screenshot). `@grok`'s continued failure was checked and
+  confirmed to be a **separate, genuinely external** issue — `http.response.status_code: 403` from
+  `api.x.ai` itself (exhausted xAI credits, the same live-account issue already seen throughout this
+  phase's CI runs) — not a regression.
+
+**Lesson for future deploys:** a partial fleet redeploy (only some of a wire contract's producers/
+consumers) can silently break accidental compatibility between stale peers. This is exactly the
+"built/tested locally, nothing worked in Azure, several wrong assumptions" failure mode Task 3b's
+own text was written to guard against — caught here specifically because the operator insisted on a
+real, live regression check immediately after deploying, rather than accepting a clean deploy status
+as proof of correctness.
