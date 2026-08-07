@@ -497,3 +497,6 @@ otherwise break).
   plumbing was added.
 - Diff read directly, file by file, and checked against the approved (twice-revised) plan — matches
   exactly, including the deliberately-accepted small duplication in the endpoint's two branches.
+
+**PR:** [#31](https://github.com/katasec/mission-control-language/pull/31), open, pending operator
+approval to merge.
