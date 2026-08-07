@@ -572,3 +572,6 @@ correct distinction (billed cost vs. recorded usage), not a coincidence that hap
   count depends on `ToolContinuationGate`'s real `StartAtAgent` cache-hit path; the ordered
   `ReadPaths` depend on the chain genuinely being followed; the cost/balance assertions depend on
   real Postgres state, independently queried, not just trusted from response fields.
+
+**PR:** [#32](https://github.com/katasec/mission-control-language/pull/32), open, pending operator
+approval to merge.
