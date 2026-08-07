@@ -8,16 +8,24 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposabl
 {
     private readonly HttpClient httpClient;
     private readonly bool ownsHttpClient;
+    private readonly Action<HttpRequestMessage>? prepareStreamingRequest;
 
-    public HttpClientRuntimeChannel(HttpClient httpClient)
+    // Blazor WebAssembly's Fetch-based HttpClient buffers the whole response by default, which
+    // never completes for a long-lived SSE stream. The WASM host opts in via
+    // Microsoft.AspNetCore.Components.WebAssembly.Http.WebAssemblyHttpRequestMessageExtensions.
+    // SetBrowserResponseStreamingEnabled — a WASM-only extension this framework-agnostic project
+    // can't reference directly, so the host supplies it as a hook instead.
+    public HttpClientRuntimeChannel(HttpClient httpClient, Action<HttpRequestMessage>? prepareStreamingRequest = null)
     {
         this.httpClient = httpClient;
+        this.prepareStreamingRequest = prepareStreamingRequest;
     }
 
-    public HttpClientRuntimeChannel(Uri baseAddress)
+    public HttpClientRuntimeChannel(Uri baseAddress, Action<HttpRequestMessage>? prepareStreamingRequest = null)
     {
         httpClient = new HttpClient { BaseAddress = baseAddress };
         ownsHttpClient = true;
+        this.prepareStreamingRequest = prepareStreamingRequest;
     }
 
     public async Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
@@ -42,6 +50,7 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposabl
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "transport/events");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+        prepareStreamingRequest?.Invoke(request);
         using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(ct);

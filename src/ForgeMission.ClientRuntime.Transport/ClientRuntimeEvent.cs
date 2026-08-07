@@ -15,6 +15,7 @@ public sealed record ClientRuntimeEvent(
     string? Text = null,
     string? ToolName = null,
     string? ToolStatus = null,
+    string? ToolTarget = null,
     string? ConfirmationId = null,
     string? CapabilityName = null,
     string? RequestSummary = null,

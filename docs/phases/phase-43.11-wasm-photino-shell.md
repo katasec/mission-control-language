@@ -14,13 +14,13 @@
 > `Program.cs`'s Client Runtime orchestration now depends only on `IDesktopHost`, not `Photino.NET`
 > directly.
 
-**Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
+**Status: ✅ DONE (2026-08-08) — both Batch A and Batch B complete and verified.** Part of
+[Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depended on
 [43.10](phase-43.10-transport-contract.md) (the UI needs a real channel to the Client Runtime before
-it can do anything). Last in the prerequisite chain: 43.8 → 43.9 → 43.10 → **43.11**. Replaces the
-now-superseded Electron + Blazor Server shell
+it can do anything). Replaces the now-superseded Electron + Blazor Server shell
 ([phase-43.2-electron-forge-desktop-shell.md](phase-43.2-electron-forge-desktop-shell.md)) as the
-active desktop-shell spoke. [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md)
-resumes on top of this, not the old shell.
+active desktop-shell spoke. **NEXT: [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md)**
+resumes on top of this shell.
 
 ## Design
 
@@ -232,6 +232,57 @@ browser tab first, then confirmed once more through the actual packaged Photino 
 Photino package has no business logic in it — everything it does is window/lifecycle/packaging,
 proven by the shell-boundary test (task 7), not just by the app happening to work or by code review
 alone.
+
+**✅ Batch B MET (2026-08-08), branch `codex/phase-43.11-batch-b-chat-ui`.** Implemented by Claude,
+paired directly with Ameer per the UI/UX convention — Task 2's real components, Task 4's
+composer/tool-call-indicator/response-card rebuild, and Task 6's two-stage verification are all
+done. `Home.razor` rewritten from the Batch A test page into the actual chat surface: header +
+workspace label, a progressive-disclosure `+` → "Add folder" flyout (inline path entry, since the
+native OS folder-picker bridge — noted below as deferred in task 5 — still doesn't exist; this
+avoids the persistent top-level field the design doc's Principle 1 explicitly flags), a scrollable
+turn list (user prompt pill, tool-call indicator rows, assistant response card), and a composer
+matching [the Task 3 target mockup](../images/phase-43.2/task3-electron-visual-polish-after.png)
+pixel-for-pixel in spirit (forge.css tokens used directly, no translation layer). Tool-call copy
+mapping reuses the exact verb pairs from the already-implemented Avalonia
+[Task 3 component spec](phase-43.2-avalonia-vanilla-shell_completed.md#task-3-design-tool-call-indicators)
+(Reading/Read, Editing/Edited, Writing/Wrote, Running/Ran, Using/Used fallback), extended with a
+`ToolTarget` field threaded onto `ClientRuntimeEvent` (server-side `ClientRuntimeEndpoints.cs`
+extracts `file_path`/`command` from the tool call's arguments) so rows read "Read README.md" /
+"Ran sleep 2 && echo done" instead of the verb alone.
+
+Two real bugs found and fixed during verification, not by review:
+- **Blazor WASM buffers streamed HTTP responses by default** — a long-lived SSE connection
+  (`/transport/events`) never delivers anything to `await foreach` until the connection closes,
+  which for this endpoint is never. Confirmed by a raw `fetch()` probe in the same browser context
+  receiving chunks in real time while the Blazor `HttpClient` path received nothing. Fixed by
+  threading an `Action<HttpRequestMessage>` hook through `HttpClientRuntimeChannel` (kept
+  WASM-agnostic — it's also used by the non-browser `ClientRuntime.TransportProbe` — so the actual
+  `SetBrowserResponseStreamingEnabled(true)` call lives in the WASM host's `Program.cs`, not the
+  shared Transport project).
+- **A casing bug, found only after the streaming fix above ruled out the transport layer**: the
+  prompt-loop path publishes `ToolStatus` from `ToolCallNotificationState.ToString()`
+  ("Running"/"Done", PascalCase), but the older capability-dispatch test path publishes literal
+  lowercase `"running"/"done"`. `Home.razor`'s event switch matched only the lowercase form (copied
+  from the wrong precedent), so tool-call rows silently never rendered even once transport worked.
+  Fixed with an ordinal case-insensitive comparison.
+
+Verified two ways, per the Done-when bar above: (1) real interactive round-trips against a plain
+browser tab pointed at a live `dotnet run` Client Runtime + local `forge serve` (`missions/vanilla`)
+— two separate real prompts, one triggering `Read` and one triggering `Bash`, both showing the
+correct `✓ Read README.md` / `✓ Ran sleep 2 && echo done` indicator rows and a real answer in the
+response card; (2) `make desktop-publish` + launching the actual packaged
+`dist/forge-desktop/ForgeMission.Desktop` binary (native Photino window, explicit-URL dev mode) —
+confirmed via `screencapture` (not just process/log inspection) that the identical styled UI renders
+correctly in the real native window, closing the WKWebView-residual-risk question this doc's design
+section raised. Full interactive flow (folder-open, tool call, response) was proven in the browser
+tab per the documented CDP-attachment gotcha (Photino's window still isn't debuggable directly);
+the Photino pass confirms visual parity, not a second independent interaction test.
+`dotnet build`: 0 warnings/errors. `dotnet test`: 470 passed / 0 failed / 11 skipped (same
+environment-gated skips as baseline).
+
+**Still open, not silently dropped:** the native OS folder-picker dialog bridge (task 5's deferred
+item) remains unbuilt — the inline path-entry flyout is the interim, not the final shape. [43.3](phase-43.3-mission-attach-point.md)
+can now resume on top of this.
 
 **Not the only live next step — read [43.13](phase-43.13-mission-runtime-orchestration.md) too.**
 Batch B here (UI/visual work, pairs with Ameer) and 43.13 (Mission Runtime orchestration layer,

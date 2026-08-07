@@ -72,9 +72,9 @@ against the new rendering technology, not from scratch. The shelved Avalonia spi
 - [ ] **43.10** — `IClientRuntimeChannel` + `HttpClientRuntimeChannel` built; the WASM UI never
       references `HttpClient` directly; a capability request round-trips over the real loopback
       network boundary, not an in-process shortcut.
-- [ ] **43.11** — Photino maturity due diligence done; WASM UI verified against a plain browser tab
+- [x] **43.11** — Photino maturity due diligence done; WASM UI verified against a plain browser tab
       (full loop: open folder, prompt, real tool call, styled response); the same app confirmed once
-      more through the actual packaged Photino build on macOS.
+      more through the actual packaged Photino build on macOS. **Done 2026-08-08.**
 
 Only once all four are checked does [43.3](phase-43.3-mission-attach-point.md) (or any later desktop
 UI spoke) have a foundation to build on.
@@ -141,8 +141,8 @@ UI spoke) have a foundation to build on.
 | [43.8 — Capability Provider pattern](phase-43.8-capability-provider-pattern.md) | Migrate `IWorkspace`/`ToolExecutorRegistry` into `IFileProvider`/`ITerminalProvider` + a Capability Registry the Mission Runtime can query, replacing the fixed `AgentToolDeclarations` constant. | 43.1, 43.7 | Design |
 | [43.9 — Client Runtime authorization](phase-43.9-client-runtime-authorization.md) | The security enforcement point: validate → authorize → dispatch → audit, sitting between the Mission Runtime's capability requests and 43.8's providers. Distinct from mission-level human-in-the-loop (43.5). | 43.8 | Design |
 | [43.10 — Transport contract](phase-43.10-transport-contract.md) | `IClientRuntimeChannel` + `HttpClientRuntimeChannel` (HTTP + SSE/WebSockets) — the only path the sandboxed WASM UI has to reach the Client Runtime, since they're separate processes under the new architecture. | 43.9 | Design |
-| [43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md) | Replaces the Electron/Blazor Server shell: WASM UI (verified against a plain browser, same loop as today) + Photino native packaging (thin wrapper only). Rebuilds Task 3's proven visual design against the new rendering technology. | 43.10 | Design — Photino maturity due-diligence gate first |
-| [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as the flagship; decide intermediate-role-switch visibility. | 43.11 (WASM/Photino shell) | Design — blocked on the 43.8–43.11 prerequisite chain, not the old Electron shell |
+| [43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md) | Replaces the Electron/Blazor Server shell: WASM UI (verified against a plain browser, same loop as today) + Photino native packaging (thin wrapper only). Rebuilds Task 3's proven visual design against the new rendering technology. | 43.10 | **✅ DONE 2026-08-08** — Batch A + Batch B both complete, verified live |
+| [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as the flagship; decide intermediate-role-switch visibility. | 43.11 (WASM/Photino shell) | **Next** — unblocked now that 43.11 is done |
 | [43.4 — IDE trace surface (iterative)](phase-43.4-ide-trace-surface.md) | Evolve the vanilla shell toward the debugger-style workbench (outline/thread/gate/code-pane, dockable panels) from the forge-trace brainstorm. Explicitly a mockup-iterate-refine loop, not a fixed deliverable. Now builds on the Electron shell — vision unchanged. | 43.3 | Design — iteration not started |
 | [43.5 — Human-in-the-loop (suspend/resume)](phase-43.5-human-in-the-loop.md) | `kind: human` pipeline step + `Suspended` `StepEnvelope` outcome + resume-at-step-N — the mechanical prerequisite for 43.4's "Gate" concept and for approval-gated missions generally. Framework-agnostic (Core-level) — unaffected by the Electron pivot. | None (parallel-buildable with 43.1–43.3; blocks only 43.4's Gate feature) | Design |
 | 43.6 — Cross-platform validation checkpoints | Periodic: confirm the Electron shell (and `forge webui` browser path) work on Windows/Linux. Not a spoke — a recurring checklist item against whichever spoke just shipped. | Each prior spoke | Ongoing |
