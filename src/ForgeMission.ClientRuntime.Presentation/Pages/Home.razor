@@ -67,10 +67,29 @@
             <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
                    placeholder="@(workspaceRoot is null ? "Add a folder to start" : "Describe what you want to build")"
                    disabled="@(workspaceRoot is null || sending)" />
+            <button class="mission-trigger" aria-expanded="@showMissionMenu" aria-haspopup="true"
+                    @onclick="ToggleMissionMenu" disabled="@sending">
+                <span>@selectedMission.Name</span>
+                <span class="caret">▾</span>
+            </button>
             <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
                 @(sending ? "Sending…" : "Send")
             </button>
         </div>
+
+        @if (showMissionMenu)
+        {
+            <div class="mission-menu" role="menu">
+                @foreach (var mission in AttachableMissions.All)
+                {
+                    <button class="mission-item" role="menuitemradio"
+                            aria-checked="@(mission == selectedMission)" @onclick="() => SelectMissionAsync(mission)">
+                        <span class="mission-item-name">@mission.Name</span>
+                        <span class="mission-item-check">@(mission == selectedMission ? "✓" : "")</span>
+                    </button>
+                }
+            </div>
+        }
     </footer>
 </div>
 
@@ -112,6 +131,16 @@
     .menu-confirm:disabled { background: var(--surface-active); color: var(--text-subtle); }
     .menu-error { margin: 0; color: var(--danger); font-size: 12px; }
 
+    .mission-trigger { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
+    .mission-trigger:hover { background: var(--surface-hover); }
+    .mission-trigger:disabled { color: var(--text-subtle); cursor: default; }
+    .mission-trigger .caret { color: var(--text-muted); font-size: 10px; }
+    .mission-menu { position: absolute; bottom: 100%; right: var(--space-5); margin-bottom: var(--space-2); min-width: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: var(--space-2); }
+    .mission-item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-3); border: none; background: none; border-radius: var(--radius-sm); cursor: pointer; text-align: left; font-family: inherit; }
+    .mission-item:hover { background: var(--surface-hover); }
+    .mission-item-name { font-size: 13.5px; font-weight: 500; color: var(--text); }
+    .mission-item-check { color: var(--accent); font-size: 13px; }
+
     @@keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 </style>
 
@@ -123,6 +152,9 @@
     private string folderInput = string.Empty;
     private bool settingUpSession;
     private string? folderError;
+
+    private AttachableMission selectedMission = AttachableMissions.Default;
+    private bool showMissionMenu;
 
     private string composerText = string.Empty;
     private bool sending;
@@ -161,7 +193,7 @@
         try
         {
             session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(folderInput), CancellationToken.None);
+                new SessionSetupRequest(folderInput, selectedMission.WireMission), CancellationToken.None);
             workspaceRoot = folderInput;
             showAddFolderMenu = false;
             StartEventLoop();
@@ -174,6 +206,31 @@
         {
             settingUpSession = false;
         }
+    }
+
+    private void ToggleMissionMenu() => showMissionMenu = !showMissionMenu;
+
+    // Switching mid-conversation starts a fresh session (43.3 task 3) — no cross-mission context
+    // carry-over for v1 (see phase-43.3-mission-attach-point.md's open questions).
+    private async Task SelectMissionAsync(AttachableMission mission)
+    {
+        selectedMission = mission;
+        showMissionMenu = false;
+
+        if (workspaceRoot is null)
+            return;
+
+        if (eventLoopCts is not null)
+        {
+            await eventLoopCts.CancelAsync();
+            eventLoopCts.Dispose();
+            eventLoopCts = null;
+        }
+
+        turns.Clear();
+        session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
+            new SessionSetupRequest(workspaceRoot, selectedMission.WireMission), CancellationToken.None);
+        StartEventLoop();
     }
 
     private async Task OnComposerKeyDown(KeyboardEventArgs e)

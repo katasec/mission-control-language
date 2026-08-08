@@ -65,6 +65,59 @@ public sealed class CloudMissionRuntimeSessionTests : IDisposable
         Assert.Equal("Say hello.", third.GetProperty("input").GetString());
     }
 
+    [Fact]
+    public async Task SendAsync_DefaultConstructor_SendsVanillaAsTheMission()
+    {
+        var handler = new RecordingForgeApiHandler();
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://forge.test/") };
+        var session = new CloudMissionRuntimeSession(http);
+        var capabilities = new CapabilityRegistry([new WorkspaceFileProvider(new LocalDiskWorkspace(_workspace))]);
+        var dispatcher = new CapabilityDispatcher(
+            capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            new InMemoryCapabilityAuditLog());
+
+        await session.SendAsync("Say hello.", capabilities, dispatcher);
+
+        Assert.Equal("vanilla", handler.LastRequest!.Value.GetProperty("mission").GetString());
+    }
+
+    [Fact]
+    public async Task SendAsync_MissionConstructorArgument_SendsThatMission()
+    {
+        var handler = new RecordingForgeApiHandler();
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://forge.test/") };
+        var session = new CloudMissionRuntimeSession(http, mission: "websearch");
+        var capabilities = new CapabilityRegistry([new WorkspaceFileProvider(new LocalDiskWorkspace(_workspace))]);
+        var dispatcher = new CapabilityDispatcher(
+            capabilities,
+            new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default),
+            new InMemoryCapabilityAuditLog());
+
+        await session.SendAsync("Search for something current.", capabilities, dispatcher);
+
+        Assert.Equal("websearch", handler.LastRequest!.Value.GetProperty("mission").GetString());
+    }
+
+    private sealed class RecordingForgeApiHandler : HttpMessageHandler
+    {
+        public JsonElement? LastRequest { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            await using var stream = await request.Content!.ReadAsStreamAsync(ct);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+            LastRequest = document.RootElement.Clone();
+
+            var payload = JsonSerializer.Serialize(new { answer = "ok", responseStatus = new { } });
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8,
+                    System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json")),
+            };
+        }
+    }
+
     private sealed class ScriptedForgeApiHandler(string notesPath) : HttpMessageHandler
     {
         public List<JsonElement> Requests { get; } = [];

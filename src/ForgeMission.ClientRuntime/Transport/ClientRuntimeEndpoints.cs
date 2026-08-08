@@ -12,7 +12,7 @@ internal static class ClientRuntimeEndpoints
     {
         app.MapPost("/transport/session/setup", (SessionSetupRequest request, ClientRuntimeSessionStore sessions) =>
         {
-            var session = sessions.Create(request.WorkspaceRoot);
+            var session = sessions.Create(request.WorkspaceRoot, request.Mission);
             return Results.Ok(new SessionSetupResponse(session.Id,
                 session.Workspace.Capabilities?.AvailableCapabilities ?? []));
         });
@@ -65,14 +65,14 @@ internal static class ClientRuntimeEndpoints
             {
                 var runtimeClient = clients.CreateClient("mission-runtime");
                 var answer = UsesCloudMissionRuntime(configuration["MissionRuntime:Mode"])
-                    ? await new CloudMissionRuntimeSession(runtimeClient).SendAsync(request.Prompt,
+                    ? await NewCloudSession(runtimeClient, session.Mission).SendAsync(request.Prompt,
                         session.Workspace.Capabilities, session.Workspace.Dispatcher,
                         text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
                             request.SessionId, Text: text)),
                         update => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ToolCallStatus,
                             request.SessionId, ToolName: update.Call.Name, ToolStatus: update.State.ToString(),
                             ToolTarget: ExtractTarget(update.Call))), ct)
-                    : await new MissionRuntimeSession(runtimeClient).SendAsync(request.Prompt,
+                    : await NewLocalSession(runtimeClient, session.Mission).SendAsync(request.Prompt,
                         session.Workspace.Capabilities, session.Workspace.Dispatcher,
                         text => events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.MissionTextDelta,
                             request.SessionId, Text: text)),
@@ -105,6 +105,15 @@ internal static class ClientRuntimeEndpoints
 
     internal static bool UsesCloudMissionRuntime(string? mode) =>
         mode is null || mode.Equals("cloud", StringComparison.OrdinalIgnoreCase);
+
+    // A null session Mission (no picker selection yet) falls through to each session type's own
+    // constructor default ("vanilla" cloud-side, "ChatGPT" locally) rather than duplicating that
+    // literal here.
+    private static CloudMissionRuntimeSession NewCloudSession(HttpClient client, string? mission) =>
+        mission is null ? new CloudMissionRuntimeSession(client) : new CloudMissionRuntimeSession(client, mission);
+
+    private static MissionRuntimeSession NewLocalSession(HttpClient client, string? mission) =>
+        mission is null ? new MissionRuntimeSession(client) : new MissionRuntimeSession(client, mission);
 
     // Read/Edit/Write carry a file_path argument, Bash carries command — either makes a fitting
     // "Read Foo.cs" / "Running ls -la" indicator target; unrecognized tools show no target.

@@ -1,6 +1,6 @@
 namespace ForgeMission.ClientRuntime.Transport;
 
-public sealed record SessionSetupRequest(string WorkspaceRoot);
+public sealed record SessionSetupRequest(string WorkspaceRoot, string? Mission = null);
 public sealed record SessionSetupResponse(string SessionId, IReadOnlyList<string> AvailableCapabilities);
 
 public sealed record CapabilityDispatchRequest(string SessionId, CapabilityRequestData Request);
