@@ -9,14 +9,14 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
 {
     private readonly ConcurrentDictionary<string, ClientRuntimeSession> _sessions = [];
 
-    public ClientRuntimeSession Create(string workspaceRoot)
+    public ClientRuntimeSession Create(string workspaceRoot, string? mission = null)
     {
         var sessionId = Guid.NewGuid().ToString("N");
         var confirmation = new PendingConfirmationHandler(sessionId, events);
         var state = new WorkspaceState();
         state.OpenFolder(workspaceRoot,
             new PolicyCapabilityAuthorizer(BuildPolicy(configuration)), confirmation);
-        var session = new ClientRuntimeSession(sessionId, state, confirmation);
+        var session = new ClientRuntimeSession(sessionId, state, confirmation, mission);
         if (!_sessions.TryAdd(sessionId, session))
             throw new InvalidOperationException("Unable to create Client Runtime session.");
         return session;
@@ -41,7 +41,10 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
             : AuthorizationOutcome.AutoApproved;
 }
 
+// Mission is fixed for the session's lifetime — switching missions starts a fresh session
+// (43.3 task 3) rather than mutating this one, so no attached mission ever changes mid-conversation.
 internal sealed record ClientRuntimeSession(
     string Id,
     WorkspaceState Workspace,
-    PendingConfirmationHandler Confirmation);
+    PendingConfirmationHandler Confirmation,
+    string? Mission = null);

@@ -34,39 +34,45 @@ propose/critique/revise/gate-check shape no single model turn can.
    each of which computes its own root today. Not yet wired to any transport endpoint or UI; that's
    task 2/3's job. 5 unit tests in
    [src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs](../../src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs).
-2. Picker UI. **Design locked 2026-08-08** — the 2026-07-25 reference screenshot referred to below
-   turned out not to be recoverable from the repo (see
-   [phase-43.2-electron-forge-desktop-shell.md:181-184](phase-43.2-electron-forge-desktop-shell.md)):
-   an earlier revision of that spoke's own target mockup had a mission-picker chip, but it was
-   edited out before ever being committed, specifically so that image wouldn't be misread as that
-   task's scope. A fresh mockup was built and approved in its place:
+2. ✅ **Done (v0, scope deliberately cut down 2026-08-08)** — Picker UI. A full mockup was built and
+   approved first (below), but implementing it whole turned out to be three separate problems
+   tangled into one: (a) show missions in the picker UI, (b) give them nice descriptive
+   metadata, (c) catalog/curate which missions are attachable at all. Per-row descriptions and the
+   "Missions"/"Local" grouping are (b) and (c) — deferred, not solved, see below. What actually
+   shipped is just (a): `AttachableMission(Name, WireMission)` and a hardcoded, flat, two-entry list
+   ([src/ForgeMission.ClientRuntime.Presentation/AttachableMissions.cs](../../src/ForgeMission.ClientRuntime.Presentation/AttachableMissions.cs)) —
+   `ChatGPT`→`vanilla`, `Websearch`→`websearch` — rendered as a trigger pill + dropdown in
+   [Home.razor](../../src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor), name-only, no
+   grouping. Both entries are names already live on the hosted `StaticMissionCatalog`
+   (`ForgeMission.Api/MissionCatalog.cs`), chosen specifically so attach/switch could be proven
+   against the real cloud catalog with zero new publish or redeploy. `MissionDiscovery` (task 1)
+   is **not** wired to this list — it stays an unused-but-tested primitive until the catalog problem
+   (c) is picked back up.
+
+   Verified live in-browser (`dotnet run --project src/ForgeMission.ClientRuntime`, screenshotted
+   via `preview_start`): trigger shows `ChatGPT`, opens the dropdown with a checkmark on the current
+   selection, clicking `Websearch` closes the menu and updates the trigger label. **Not verified**:
+   an actual cloud round trip returning a materially different answer per mission — this sandbox has
+   no reachable Forge API endpoint/credentials, so that check is left for a real run.
+
+   The mockup below remains the aspirational target for once (b)/(c) are solved, not what got built:
 
    ![Mission picker, closed](../images/phase-43.3/mission-picker-closed.png)
    ![Mission picker, open](../images/phase-43.3/mission-picker-open.png)
 
-   Locked decisions this mockup encodes:
-   - Trigger pill sits in the composer bar next to Send — same slot/shape as Claude's model pill —
-     but as its own control, not replacing the `+` folder button.
-   - **Each row shows name + one-line description**, not just a name (unlike Claude's picker, which
-     is name-only). Deliberate: the description is load-bearing here — you're picking a different
-     process, not a smarter model — so it can't be dropped the way Claude drops it.
-   - **Two groups, matching a real code seam**: "Missions" (the hardcoded built-in catalog —
-     `BuiltinMissions.All`/`StaticMissionCatalog`) vs. "Local — missions/*" (task 1's
-     `MissionDiscovery` scan). Not just mockup flavor — the grouping boundary is where the data
-     actually comes from.
-   - Selected mission shows a checkmark, not a keyboard-shortcut number (no shortcut affordance for
-     v1).
-
-   **Still open, sharpened by this mockup**: the built-in group's descriptions are hardcoded strings
-   (mirroring `BuiltinMissions`/`StaticMissionCatalog`), but the "Local" group's missions (found by
-   directory scan, e.g. `sdlc-agent`) have no description source at all today — `MissionDiscovery`
-   only returns `Name`/`MissionFilePath`/`HasManifest`. This is the same open question below
-   (forge.toml field vs. name-only fallback), now concrete: without a source, every locally-scanned
-   mission falls back to name-only in the picker, which the mockup's "Local" rows don't actually
-   show. Resolve before implementing this task's HTML/Blazor.
-3. Attach/switch — selecting a mission rebinds the compose box's target; switching mid-conversation
-   starts a fresh session (no cross-mission context carry-over for v1 — flag as an open question
-   below if it turns out users expect otherwise).
+   What it still gets right for later: trigger pill in the composer bar next to Send (own control,
+   not replacing `+`), checkmark instead of a keyboard-shortcut number.
+3. ✅ **Done** — Attach/switch. `SessionSetupRequest` carries an optional `Mission` field
+   ([ClientRuntimeContracts.cs](../../src/ForgeMission.ClientRuntime.Transport/ClientRuntimeContracts.cs)),
+   stored on `ClientRuntimeSession` and threaded into `CloudMissionRuntimeSession`'s wire request
+   (replacing the old hardcoded `"vanilla"`) and `MissionRuntimeSession`'s existing `model` parameter
+   for local-Docker mode — a null `Mission` falls through to each session type's own default rather
+   than duplicating the literal. Selecting a mission mid-conversation tears down the event loop,
+   clears the turn history, and opens a fresh session against the same workspace root (no
+   cross-mission context carry-over, as designed). **Caveat**: local-Docker-mode mission switching
+   is plumbed but inert in practice — a `LocalDockerMissionRuntimeLauncher` runner is booted with one
+   pinned `MissionRef`, so it only ever answers as whatever mission it started with regardless of
+   what's selected; this only does something real in cloud mode (Desktop's default per 43.14) today.
 4. **Decide and implement intermediate-role-switch visibility** (the open question raised in the
    hub): does the user see "Architect proposes... CriticalReviewer pushes back..." inline as the
    mission runs, or only the final synthesized output? Recommend starting **visible** — it's the
@@ -74,19 +80,28 @@ propose/critique/revise/gate-check shape no single model turn can.
    mission indistinguishable from a single smarter model in the UI, undermining the pitch this
    whole phase is built on.
 5. Dogfood checkpoint: run a real design question through the SDLC mission in the shell, confirm
-   the propose/critique/revise/gate loop is visible and legible.
+   the propose/critique/revise/gate loop is visible and legible. **Blocked** until `sdlc-agent` is
+   actually attachable (see open questions) — today's picker only offers `ChatGPT`/`Websearch`,
+   neither of which exercises a multi-role loop, so this task can't start yet.
 
 ## Done when
 
-The mission picker lists real missions (at minimum: `sdlc-agent` + the existing `@claude`/`@openai`
-passthrough missions), attaching one runs it end-to-end through
-[43.1](phase-43.1-tool-execution-engine.md)'s agentic loop, and role-switches are visible in the
-UI per task 4's decision.
+Original bar: the picker lists real missions (at minimum `sdlc-agent` + the existing
+`@claude`/`@openai` passthrough missions), attaching one runs it end-to-end through
+[43.1](phase-43.1-tool-execution-engine.md)'s agentic loop, and role-switches are visible in the UI
+per task 4's decision. **Not met yet** — `sdlc-agent` isn't attachable (open question above), and
+task 4 hasn't been decided or built. What's met so far: attach/switch works end-to-end against two
+already-cloud-live, single-turn missions (tasks 2/3) — proves the mechanism, not the full bar.
 
 ## Open questions
 
-- Cross-mission context carry-over on switch — deferred above, revisit if dogfooding surfaces real
+- **Three separate problems, deliberately un-conflated 2026-08-08** (see task 2): (a) show missions
+  in the picker UI — done; (b) give missions nice descriptive metadata — not started; (c) how
+  missions get cataloged/curated as attachable at all (hardcoded list today; `MissionDiscovery` from
+  task 1 is the not-yet-wired alternative) — not started, a different problem from (b). Don't
+  re-merge these when picking this back up.
+- Publishing `sdlc-agent` (the flagship) so it's actually attachable: needs an OCI publish to
+  `ghcr.io/katasec` and a `StaticMissionCatalog` entry + hosted redeploy — none of that has happened
+  yet. Explicit follow-up, not implied by anything above.
+- Cross-mission context carry-over on switch — deferred, revisit if dogfooding surfaces real
   friction.
-- Whether mission metadata needs a new field (short description for the picker) or existing
-  frontmatter is enough — check what [missions/sdlc-agent/forge.toml](../../missions/sdlc-agent/forge.toml)
-  already carries before adding anything new.
