@@ -34,9 +34,36 @@ propose/critique/revise/gate-check shape no single model turn can.
    each of which computes its own root today. Not yet wired to any transport endpoint or UI; that's
    task 2/3's job. 5 unit tests in
    [src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs](../../src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs).
-2. Picker UI — same visual treatment as a model dropdown (per the reference screenshot from the
-   2026-07-25 design conversation), listing mission name + one-line description (reuse mission
-   frontmatter/`forge.toml` metadata if present, else the mission name alone).
+2. Picker UI. **Design locked 2026-08-08** — the 2026-07-25 reference screenshot referred to below
+   turned out not to be recoverable from the repo (see
+   [phase-43.2-electron-forge-desktop-shell.md:181-184](phase-43.2-electron-forge-desktop-shell.md)):
+   an earlier revision of that spoke's own target mockup had a mission-picker chip, but it was
+   edited out before ever being committed, specifically so that image wouldn't be misread as that
+   task's scope. A fresh mockup was built and approved in its place:
+
+   ![Mission picker, closed](../images/phase-43.3/mission-picker-closed.png)
+   ![Mission picker, open](../images/phase-43.3/mission-picker-open.png)
+
+   Locked decisions this mockup encodes:
+   - Trigger pill sits in the composer bar next to Send — same slot/shape as Claude's model pill —
+     but as its own control, not replacing the `+` folder button.
+   - **Each row shows name + one-line description**, not just a name (unlike Claude's picker, which
+     is name-only). Deliberate: the description is load-bearing here — you're picking a different
+     process, not a smarter model — so it can't be dropped the way Claude drops it.
+   - **Two groups, matching a real code seam**: "Missions" (the hardcoded built-in catalog —
+     `BuiltinMissions.All`/`StaticMissionCatalog`) vs. "Local — missions/*" (task 1's
+     `MissionDiscovery` scan). Not just mockup flavor — the grouping boundary is where the data
+     actually comes from.
+   - Selected mission shows a checkmark, not a keyboard-shortcut number (no shortcut affordance for
+     v1).
+
+   **Still open, sharpened by this mockup**: the built-in group's descriptions are hardcoded strings
+   (mirroring `BuiltinMissions`/`StaticMissionCatalog`), but the "Local" group's missions (found by
+   directory scan, e.g. `sdlc-agent`) have no description source at all today — `MissionDiscovery`
+   only returns `Name`/`MissionFilePath`/`HasManifest`. This is the same open question below
+   (forge.toml field vs. name-only fallback), now concrete: without a source, every locally-scanned
+   mission falls back to name-only in the picker, which the mockup's "Local" rows don't actually
+   show. Resolve before implementing this task's HTML/Blazor.
 3. Attach/switch — selecting a mission rebinds the compose box's target; switching mid-conversation
    starts a fresh session (no cross-mission context carry-over for v1 — flag as an open question
    below if it turns out users expect otherwise).
