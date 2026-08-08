@@ -1,8 +1,9 @@
 # Phase 43.3 — Mission-as-attach-point
 
-**Status: Design.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
-[43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md) (formerly the
-now-shelved [Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md) — see that doc for why).
+**Status: In progress.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
+[43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md), done 2026-08-08. (The
+43.2 Electron/Avalonia shells this doc originally depended on were both superseded/shelved before
+43.11 shipped — see [phase-43.2-electron-forge-desktop-shell.md](phase-43.2-electron-forge-desktop-shell.md).)
 
 ## Design
 
@@ -22,10 +23,17 @@ propose/critique/revise/gate-check shape no single model turn can.
 
 ## Tasks
 
-1. Mission discovery — list attachable missions. Start with a local directory scan
-   (`missions/*/mission.mcl` + `forge.toml`) mirroring what `forge run`/`forge claude` already
-   resolve; OCI-published mission discovery (Phase 39.4's registry) is a later upgrade, not needed
-   for v1.
+1. ✅ **Done** — Mission discovery. `MissionDiscovery.Discover(missionsRoot)`
+   ([src/ForgeMission.Core/Resolution/MissionDiscovery.cs](../../src/ForgeMission.Core/Resolution/MissionDiscovery.cs))
+   scans immediate subdirectories of a missions root for `mission.mcl`, mirroring the
+   `<missionsRoot>/<name>/mission.mcl` convention `forge run`/`forge claude` already resolve by
+   name — but lists every mission found instead of one pinned handle. Returns a
+   `MissionDescriptor(Name, MissionFilePath, HasManifest)` per mission, sorted by name; pure
+   filesystem read, no OCI/registry calls (Phase 39.4's registry discovery is a later upgrade).
+   Root path resolution is left to the caller — same pattern as `RunnerMissionSource`/`forge claude`,
+   each of which computes its own root today. Not yet wired to any transport endpoint or UI; that's
+   task 2/3's job. 5 unit tests in
+   [src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs](../../src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs).
 2. Picker UI — same visual treatment as a model dropdown (per the reference screenshot from the
    2026-07-25 design conversation), listing mission name + one-line description (reuse mission
    frontmatter/`forge.toml` metadata if present, else the mission name alone).
