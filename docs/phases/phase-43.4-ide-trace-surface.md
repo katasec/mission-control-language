@@ -49,6 +49,10 @@ Grounding: [missions/sdlc-agent/mission.mcl](../../missions/sdlc-agent/mission.m
 propose/critique/revise/gate-check shape this surface visualizes — see
 [sdlc-meta-mission.md](../design/sdlc-meta-mission.md) and
 [interaction-modes.md](../design/interaction-modes.md) for the classifier-router pattern behind it.
+**Nearer-term grounding: [43.15 — Janus](phase-43.15-janus-inter-agent-mission.md)** is the
+deliberately minimal mission (`Proposer -> Approver -> Implementer`, multi-provider) built to give
+this surface real content to render before the full `sdlc-agent` is in scope — start iteration
+against Janus, not `sdlc-agent`, once 43.15's upstream blocker clears.
 
 ## Full solution access + trust gradient
 

@@ -1,0 +1,23 @@
+// Janus — two-faced mission: Claude architects, OpenAI implements.
+//
+// Spike proving two primitives compose the way we think they do:
+//   - `using <profile>` routes different steps to different LLM providers in one mission.
+//   - `role: agent` gives only the Implementer step real tool execution (Read/Edit/Write/Bash),
+//     and only once the Architect (as judge) has approved the plan that round.
+//
+// Proposer/Approver negotiate in a loop: Proposer drafts a plan or asks questions, Approver
+// (Claude, role: judge) passes it or rejects with feedback for the next attempt. Implementer
+// only runs in a round where Approver passed — a failing judge breaks the attempt before
+// Implementer is ever reached, so there is no way to execute an unapproved plan.
+//
+// Run: forge run missions/janus/mission.mcl --steps
+
+let task = "Add a --dry-run flag to the deploy script that prints what would happen without doing it"
+
+mission Janus(task) loop(3) = {
+    Proposer using implementer
+    -> Approver using architect
+    -> Implementer using implementer
+}
+
+output(Janus)
