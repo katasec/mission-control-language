@@ -6,7 +6,7 @@
 > context (why a past decision was made, when something shipped); it is never required to answer
 > "what's next."
 
-## Now (2026-08-08)
+## Now (2026-08-09)
 
 | | |
 |---|---|
