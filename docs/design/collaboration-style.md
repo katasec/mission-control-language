@@ -21,6 +21,15 @@ being longer; it's thorough when nothing needed is missing and nothing unneeded 
   a-restatement-of the row next to it? Merge the second kind into one row (label the relationship
   inline, e.g. "Issue → Response"). Padding a table to look thorough is the same mistake as a prose
   wall, just reformatted.
+- **Spec task lists and "Done when" criteria as MVP, not for completeness.** List only what's
+  actually required next — not every tangentially-related follow-up that could someday matter. A
+  criterion that depends on infrastructure this task doesn't own (a different phase, a not-yet-built
+  subsystem) doesn't belong in this task's "Done when"; note it as a dependency elsewhere instead. A
+  multi-step process that's really one decision with a fallback should read as one step, not three.
+  Padding a spec to look thorough is the same mistake as a prose wall or an inflated table, just
+  reformatted — caught concretely in [43.15](../phases/phase-43.15-janus-inter-agent-mission.md),
+  where "Done when" originally listed a criterion (`Implementer` executing real tool calls) that
+  belonged to a different, already-owned phase.
 - **When in doubt, cut.** Trim before sending rather than after being asked to.
 - **Never reference a phase/spoke number bare — always pair it with its short description.** "43.2"
   means nothing on its own across a session or a hub with 40+ phases; "43.2 — Avalonia vanilla

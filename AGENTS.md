@@ -48,6 +48,24 @@ When designing a new feature: create the hub + spokes, then update `plan.md`'s t
 index. If a `plan.md` cell grows past 1–2 lines or starts explaining *how* rather than linking to
 where the *how* lives, that content belongs in the spoke, not the hub.
 
+**No sub-phase-level detail in `plan.md`, in any form — one row per top-level phase, and that row
+describes the phase's overall state only.** This means no separate rows for sub-phases
+(`phase-N.M-<slug>.md` is never linked directly from the phases index), but just as importantly, no
+sub-phase detail smuggled into prose either — a status or description cell that names which specific
+numbered sub-items are done/deferred/outstanding (`"41.1/41.2/41.7 ✅ LIVE"`, `"Spokes 1–4 done"`) is
+the same violation in a different shape, and just as easy to miss on review since it still reads as
+"one row." If you're about to type a sub-phase/spoke/task number into `plan.md`, stop — it belongs in
+the phase's own hub, not here. Whether a phase's sub-phases live as sections in one hub file or split
+into their own spoke files is that phase's internal decision; `plan.md` never needs to know or
+reflect it either way.
+
+**When fixing a reported instance of a documentation-hygiene problem (stale status, duplicated
+detail, a bloated cell), don't stop at the reported instance.** Re-derive the general rule behind
+what was flagged and sweep the *whole* file against it before calling the cleanup done. This exact
+class of `plan.md` bloat (sub-phase detail leaking back in) was reported and re-fixed four separate
+times in one cleanup pass because each fix addressed only what was pointed out, not everywhere the
+same shape occurred.
+
 **Status honesty matters more than the format.** "Done" means verified — a test result, a live log
 line, a deployed artifact confirmed by a real check — not "written" or "code merged." A doc that
 says a database is deployed because the Bicep was authored, when the DB was never actually applied,
