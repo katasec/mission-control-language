@@ -8,14 +8,19 @@ in the same session, after the AOT work landed —
 lives in the Phase 25 preflight doc (Decision #9's second superseded note), not duplicated here.
 Summary:
 
-1. `context["feedback"]` was never written for a failing `role: judge` step (only `kind:
-   rule`/`kind: exec` do it) — `PipelineRunner.ExecuteStepAsync` needs the fix.
-2. Deeper: even with (1) fixed, Janus's mission shape is wrong. `Implementer` was inside the
-   same `loop(3)` as the two negotiating parties (`Proposer`/`Approver`), which isn't a
-   participant in the negotiation and shouldn't share its loop. Corrected shape: split into
-   `Negotiate(task) loop(3)` (Proposer + Approver only) and `Implement(plan)` (composed
-   afterward), with `loop(N)` defaulting to full conversation-history replay among LLM-only
-   participants (no flag — mission composition already provides the scoping).
+1. Janus's mission shape is wrong. `Implementer` was inside the same `loop(3)` as the two
+   negotiating parties (`Proposer`/`Approver`), which isn't a participant in the negotiation and
+   shouldn't share its loop.
+2. `role: judge` failures never carried anything to the next attempt for an LLM judge like
+   `Approver` — `context["feedback"]` (the single-string mechanism `kind: rule`/`kind: exec`
+   already use) was never wired for `DirectExpertRunner`. **Resolution is not to wire that
+   mechanism for LLM judges — it's to rewrite `loop(N)` to leverage full conversation-history
+   replay between the negotiating LLM agents instead**, which makes a single carried-forward
+   failure string unnecessary: Proposer sees Approver's actual prior turns directly. See
+   [Decision #9's resolution](phase-25-preflight-design-decisions.md#9-loop-context--deterministic-convergence-vs-random-retry)
+   for the full reasoning (every current `loop(N)` mission with an LLM judge is pure-LLM, so
+   every one of them is better served by full replay than by the single-string mechanism —
+   there's no case among any shipped mission where the single-string fix would still be needed).
 
 Neither is implemented yet. The "Implementation verified" evidence in the
 [completed doc](phase-43.15-janus-inter-agent-mission_completed.md) is accurate for what it
@@ -23,10 +28,9 @@ tested (no AOT crash, structured output round-trips, loop mechanically converges
 did **not** verify that Approver's feedback was actually reaching Proposer, and it turns out it
 wasn't. Part of "Done when" below is corrected to reflect that.
 
-**NEXT STEP: implement the full-conversation-replay capability for LLM-only loops, then the
-Janus mission split (`Negotiate` + `Implement`). Skip the standalone `{{feedback}}` wiring fix —
-see "`{{feedback}}` fix deferred" below for why.** Design for the replay capability isn't fully
-closed yet — one open question: `Conversation` (the existing type used for `role: agent` tool
+**NEXT STEP: rewrite `loop(N)` to leverage full conversation-history replay between LLM agents in
+a mission, then split Janus into `Negotiate` + `Implement` to use it.** Design isn't fully closed
+yet — one open question: `Conversation` (the existing type used for `role: agent` tool
 continuations) has fixed message roles, but Proposer and Approver each need the *opposite*
 role-view of the same shared history (own turns as `assistant`, the other party's as `user`) —
 needs a neutral, speaker-labeled accumulator instead, re-tagged per recipient at call time. Once
@@ -34,34 +38,12 @@ that's resolved, write the Codex task assignment (covering both the replay capab
 mission split together — they need to be verified live as one unit, not separately). Re-verify
 live afterward — same bar as the AOT fix: a real run, not just "tests pass."
 
-### `{{feedback}}` fix deferred (2026-08-10) — evidence, not just a call
-
-Audited every `loop(N)` mission in `missions/` for the one scenario where the standalone
-`{{feedback}}` wiring fix (write `context["feedback"]` on a failing `role: judge` LLM step —
-`PipelineRunner.ExecuteStepAsync`, not yet done) would matter and full replay wouldn't already
-cover it: a loop mixing an LLM `role: judge` with a `kind: rule`/`kind: exec` step. **No such
-mission exists today:**
-
-| Mission | Judge | Kind |
-|---|---|---|
-| `sdlc-agent/DesignMode`, `loop-demo/QualityAnswer`, `self-refine/SelfRefine` | LLM `role: judge` | Every step in the loop is `kind: llm` — pure-LLM, would be *better* served by full replay than by the single-string fix |
-| `hallucination-reduction`, `verifiable-reasoning` | `kind: rule` gate, no `role: judge` tag | Already works — `RuleExpertRunner` writes `context["feedback"]` itself regardless of the `role:` tag |
-
-Every current beneficiary of the fix is pure-LLM and gets superseded by full replay anyway; every
-mission that actually uses `kind: rule`/`kind: exec` already works, unaffected by the bug. The fix
-is real (`language.md` documents `{{feedback}}` as working for `role:judge` *or* `kind:rule`; only
-the latter is true today) but has zero current beneficiaries — not worth a task on its own.
-**Revisit if a mission is ever built that genuinely mixes an LLM judge with a deterministic gate
-in the same loop** — until then, deferred, not abandoned.
-
-**Related finding, not yet acted on:** `sdlc-agent/DesignMode`, `loop-demo/QualityAnswer`, and
-`self-refine/SelfRefine` all have the *exact same* unfixed bug Janus did — pure-LLM `loop(N)` with
-an LLM `role: judge`, so `{{feedback}}` never reaches the generator on retry today, in any of
-them. Point 2 below ("What Janus proves") claims `sdlc-agent`'s `DesignMode` "proved this pattern
-first" — that claim is now known to be **false**; it never worked there either, it was simply
-never verified. Left uncorrected in place below (struck through) rather than silently edited, per
-this project's own status-honesty rule. Once the full-replay capability ships, these three
-missions get the same fix Janus does, for free — no separate task needed for them either.
+**Related finding:** `sdlc-agent/DesignMode`, `loop-demo/QualityAnswer`, and `self-refine/SelfRefine`
+all have the same pure-LLM `loop(N)` + `role: judge` shape Janus does, so they get the same
+correction once the replay rewrite ships — for free, no separate task needed. Point 2 below ("What
+Janus proves") claims `sdlc-agent`'s `DesignMode` "proved this pattern first" — that claim is
+**false**; it never worked there either, it was simply never verified. Left visible and struck
+through rather than silently edited, per this project's own status-honesty rule.
 
 ## What Janus proves
 
@@ -74,8 +56,8 @@ missions get the same fix Janus does, for free — no separate task needed for t
    ~~the same mechanism `role: judge` failures already use for critique-driven convergence
    ([`sdlc-agent`'s `DesignMode`](../../missions/sdlc-agent/mission.mcl) proved this pattern
    first)~~ **correction (2026-08-10): false, left visible rather than silently fixed — see
-   "`{{feedback}}` fix deferred" above. `sdlc-agent`'s `DesignMode` never actually exercised this;
-   it has the identical unfixed bug.** What Janus actually validated in this session is the
+   "Related finding" above. `sdlc-agent`'s `DesignMode` never actually exercised this; it has the
+   identical unresolved shape.** What Janus actually validated in this session is the
    opposite of what this point originally claimed: the mechanism was never proven anywhere.
 3. **`role: agent` gates real tool execution** (Read/Edit/Write/Bash, [43.1](phase-43.1-tool-execution-engine.md)'s
    `AgenticSession`) to only after that approval — structurally, not by convention. A failing judge
