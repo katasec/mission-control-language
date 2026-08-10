@@ -169,12 +169,13 @@ One file. Swappable without touching anything else.
 
 ---
 
-### 5. Provider Client Builder — `ForgeMission.Cli/ProviderClientBuilder.cs`
+### 5. Chat Clients — `ForgeMission.ChatClients/`
 
-Builds an `IExpertRunner` from a `ProviderProfile` declared in `forge.toml`. Lives in the CLI project (not Core) because it depends on provider-specific packages.
+Builds an `IExpertRunner` from a `ProviderProfile` declared in `forge.toml`. This project is the
+provider-package boundary: it depends on Core, while Core has no dependency back to it.
 
 ```csharp
-static class ProviderClientBuilder
+static class ChatClients
 {
     IExpertRunner Build(ProviderProfile profile);
     IChatClient   BuildChatClient(ProviderProfile profile);
@@ -188,13 +189,14 @@ Supported providers:
 | `openai` | `OpenAIClient` | Default endpoint or custom via `endpoint` |
 | `azure` | `OpenAIClient` | Same path as openai; `endpoint` required |
 | `ollama` | `OpenAIClient` | Pointed at local Ollama endpoint (OpenAI-compatible) |
-| `anthropic` | `AnthropicClient` | Official Anthropic SDK via `AsIChatClient()` |
+| `anthropic` | `tryAGI.AnthropicClient` | AOT-safe SDK `IChatClient`, decorated only to map `ResponseFormat` to Anthropic native structured output |
 
 ---
 
 ### 6. CLI — `ForgeMission.Cli/`
 
-Thin entry point. Reads `forge.toml` (via `ForgeTomlReader`), builds the runner dictionary (via `ProviderClientBuilder`), wires up `PipelineRunner`, and delegates to Core. No business logic.
+Thin entry point. Reads `forge.toml` (via `ForgeTomlReader`), builds the runner dictionary (via
+`ForgeMission.ChatClients`), wires up `PipelineRunner`, and delegates to Core. No business logic.
 
 **Commands:**
 
@@ -218,7 +220,7 @@ Thin entry point. Reads `forge.toml` (via `ForgeTomlReader`), builds the runner 
 ```
 CLI
  ├→ ForgeTomlReader            (reads forge.toml — providers + expert sources)
- ├→ ProviderClientBuilder      (builds IExpertRunner per profile)
+ ├→ ForgeMission.ChatClients   (builds IExpertRunner per profile)
  └→ Pipeline Runner
       ├→ Parser                (produces AST)
       ├→ Expert Loader         (resolves markdown → ExpertDefinition)
@@ -226,15 +228,20 @@ CLI
            └→ DirectExpertRunner → IChatClient → LLM
 ```
 
-Strictly one direction. Nothing flows upward. Provider-specific packages (OpenAI, Anthropic) live exclusively in the CLI layer — Core knows only `IChatClient`.
+Strictly one direction. Nothing flows upward. Provider-specific packages (OpenAI, Anthropic) live
+exclusively in `ForgeMission.ChatClients` — Core knows only `IChatClient`.
 
 ## Project references
 
 ```
 ForgeMission.Cli
   ├→ ForgeMission.Core
+  └→ ForgeMission.ChatClients
+
+ForgeMission.ChatClients
+  ├→ ForgeMission.Core
   ├→ Microsoft.Extensions.AI.OpenAI   (OpenAI + Ollama + Azure)
-  └→ Anthropic                        (Claude models via AsIChatClient())
+  └→ tryAGI.Anthropic                 (Claude models via its AOT-safe IChatClient)
 
 ForgeMission.Core
   └→ Microsoft.Extensions.AI          (IChatClient abstraction only)

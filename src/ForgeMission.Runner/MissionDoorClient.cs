@@ -42,7 +42,7 @@ internal sealed class MissionDoorClient(
         // sensitive data off). No UsageTrackingChatClient: the /v1 doors are unmetered until
         // 42.6 wraps them at the hosting layer.
         IExpertRunner runner = mission.Profile is { } profile
-            ? new DirectExpertRunner(ProviderClientBuilder.BuildChatClient(profile)
+            ? new DirectExpertRunner(ForgeMission.ChatClients.ChatClients.BuildChatClient(profile)
                 .AsBuilder()
                 .UseOpenTelemetry(sourceName: RunnerTelemetry.SourceName)
                 .Build())

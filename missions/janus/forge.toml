@@ -1,0 +1,17 @@
+# Every step below uses `using architect`/`using implementer` explicitly, so `default` is never
+# actually selected — but the CLI's BuildRunners (Program.cs) requires the key to exist regardless.
+# Aliased to `implementer` rather than duplicated so there's one fewer place to keep in sync.
+[providers.default]
+provider = "openai"
+model    = env("MCL_OPENAI_MODEL", "gpt-4o")
+apiKey   = env("MCL_API_KEY")
+
+[providers.architect]
+provider = "anthropic"
+model    = env("MCL_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+apiKey   = env("ANTHROPIC_API_KEY")
+
+[providers.implementer]
+provider = "openai"
+model    = env("MCL_OPENAI_MODEL", "gpt-4o")
+apiKey   = env("MCL_API_KEY")

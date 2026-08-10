@@ -1,10 +1,12 @@
 # Phase 43.14 — Desktop cloud missions via API A
 
-**Status: Build-ready — full design review completed with the operator 2026-08-06.** Wire path, DTO
-shape, enrichment-cache location (and its correction to a separate datastore, see "Design review"
-below), credential sourcing, default mission, testing/verification strategy, and a dependency-ordered
-task list (see "Tasks" below) are all locked. Ready for a Codex handoff. Part of
-[Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
+**Status: ✅ DONE + LIVE 2026-08-08 — see [phase-43.14-desktop-cloud-missions_completed.md](phase-43.14-desktop-cloud-missions_completed.md)
+for full task-by-task evidence.** All 10 tasks shipped (10 merged PRs, #22–#32); live-confirmed with
+four named observations (real tool execution against a planted file, exactly one ledger debit,
+correct enrichment-cache continuation, 470/470 full regression pass) — not inferred from a clean
+deploy, per AGENTS.md's status-honesty rule. Design-review content below (wire path, DTO shape,
+credential sourcing, task list) is preserved as the historical design record, not the current status.
+Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.13](phase-43.13-mission-runtime-orchestration.md) (Mission Runtime resolution/orchestration —
 done, merged). Extends [Phase 42](phase-42-forge-cloud.md)'s API A
 ([42.6](phase-42.6-hosted-endpoint-ttfa.md)).

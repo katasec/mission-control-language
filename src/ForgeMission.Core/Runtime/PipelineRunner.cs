@@ -56,6 +56,7 @@ public class PipelineRunner
         var maxLoops = mission.MaxLoops;
         MissionResult? lastResult = null;
         string? loopFeedback = null;
+        var history = IsNegotiationEligible(mission, experts) ? new SpeakerTranscript() : null;
 
         for (var attempt = 1; attempt <= maxLoops; attempt++)
         {
@@ -69,6 +70,8 @@ public class PipelineRunner
             context["max_loops"] = maxLoops.ToString();
             if (loopFeedback is not null)
                 context["feedback"] = loopFeedback;
+            if (history is not null)
+                context["history"] = history;
 
             string? failReason = null;
 
@@ -307,12 +310,41 @@ public class PipelineRunner
 
         context["output"] = envelope.Text;
 
+        if (context.TryGetValue("history", out var historyValue)
+            && historyValue is SpeakerTranscript history)
+        {
+            var text = envelope.Text;
+            if (!string.IsNullOrWhiteSpace(envelope.Reason)
+                && !string.Equals(envelope.Reason, text, StringComparison.Ordinal))
+                text = $"{text}\n\nReason: {envelope.Reason}";
+
+            history.Add(step.ExpertName, text);
+        }
+
         options.OnStepComplete?.Invoke(step.ExpertName, envelope);
 
         if (envelope.Status == "fail")
             return $"[{step.ExpertName}] {envelope.Reason ?? "step failed"}";
 
         return null;
+    }
+
+    private static bool IsNegotiationEligible(
+        MissionDeclaration mission,
+        IReadOnlyDictionary<string, ExpertDefinition> experts)
+    {
+        if (mission.MaxLoops <= 1) return false;
+
+        foreach (var element in mission.Pipeline.Elements)
+        {
+            if (element is not StepElement stepElement
+                || !experts.TryGetValue(stepElement.Step.ExpertName, out var expert)
+                || !expert.Kind.Equals("llm", StringComparison.OrdinalIgnoreCase)
+                || expert.IsAgent)
+                return false;
+        }
+
+        return true;
     }
 
     private async Task<(string? failReason, string namedKey, string outputText)> ExecuteParallelStepAsync(

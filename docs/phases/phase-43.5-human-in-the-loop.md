@@ -6,6 +6,13 @@ blocks only [43.4](phase-43.4-ide-trace-surface.md)'s Gate feature. Promoted fro
 [docs/brainstorm/human-in-the-loop.md](../brainstorm/human-in-the-loop.md) (design conversation,
 2026-07-20); that doc is now a stub pointing here.
 
+**Concrete motivating use case (2026-08-09): [43.15 — Janus](phase-43.15-janus-inter-agent-mission.md).**
+Janus's `loop(3)` negotiation between `Proposer` and `Approver` today only has one outcome on
+non-convergence — the mission hard-fails. The "break glass" escalation the user actually wants
+("I don't have to do anything unless I choose to intervene") is this spoke's "Escalation as fallback
+branch" use case below, not yet wired into Janus — pick Janus up as the first real integration once
+this spoke moves past design.
+
 ## The idea
 
 Introduce a human as a first-class step in an MCL pipeline — same composition contract as any

@@ -416,6 +416,133 @@ public class PipelineRunnerTests
         Assert.Equal(1, result.Attempts);
     }
 
+    [Fact]
+    public async Task EligibleLoop_AccumulatesSpeakerTurnsAcrossAttempts()
+    {
+        var ast = MclParser.Parse("""
+            mission Negotiate loop(3) = {
+                Proposer
+                -> Approver
+            }
+            """);
+
+        var proposerHistories = new List<IReadOnlyList<(string Speaker, string Text)>>();
+        var approverCalls = 0;
+        var stub = new StubExpertRunner((name, context) =>
+        {
+            var transcript = Assert.IsType<SpeakerTranscript>(context["history"]);
+            if (name == "Proposer")
+                proposerHistories.Add(transcript.Turns.ToList());
+
+            if (name == "Approver" && ++approverCalls == 1)
+                return new StepEnvelope("missing rollback", "fail", "include a rollback plan");
+
+            return new StepEnvelope($"{name} output");
+        });
+
+        var result = await new PipelineRunner(stub)
+            .RunAsync(ast, Experts("Proposer", "Approver"), new PipelineRunOptions("Negotiate"));
+
+        Assert.Equal(MissionStatus.Pass, result.Status);
+        Assert.Equal(2, proposerHistories.Count);
+        Assert.Empty(proposerHistories[0]);
+        Assert.Equal(
+            [("Proposer", "Proposer output"),
+             ("Approver", "missing rollback\n\nReason: include a rollback plan")],
+            proposerHistories[1]);
+    }
+
+    [Fact]
+    public async Task NonLlmLoop_DoesNotInjectHistory()
+    {
+        var ast = MclParser.Parse("""
+            mission Draft loop(2) = {
+                Drafter
+                -> WordCheck
+            }
+            """);
+        var experts = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal)
+        {
+            ["Drafter"] = Expert("Drafter"),
+            ["WordCheck"] = new ExpertDefinition("WordCheck", "draft", "verdict", "check", Kind: "rule", Check: "word_count >= 1")
+        };
+        var historiesPresent = new List<bool>();
+        var stub = new StubExpertRunner((_, context) =>
+        {
+            historiesPresent.Add(context.ContainsKey("history"));
+            return new StepEnvelope("done");
+        });
+
+        await new PipelineRunner(stub)
+            .RunAsync(ast, experts, new PipelineRunOptions("Draft"));
+
+        Assert.DoesNotContain(historiesPresent, present => present);
+    }
+
+    [Fact]
+    public async Task ParallelAndAgentLoops_DoNotInjectHistory()
+    {
+        var ast = MclParser.Parse("""
+            mission ParallelLoop loop(2) = {
+                parallel {
+                    First
+                    Second
+                }
+                -> Judge
+            }
+            mission AgentLoop loop(2) = {
+                Worker
+                -> Implementer
+            }
+            """);
+        var experts = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal)
+        {
+            ["First"] = Expert("First"),
+            ["Second"] = Expert("Second"),
+            ["Judge"] = Expert("Judge"),
+            ["Worker"] = Expert("Worker"),
+            ["Implementer"] = new ExpertDefinition("Implementer", "plan", "result", "implement", Role: "agent")
+        };
+        var historiesPresent = new List<bool>();
+        var stub = new StubExpertRunner((_, context) =>
+        {
+            historiesPresent.Add(context.ContainsKey("history"));
+            return new StepEnvelope("done");
+        });
+        var runner = new PipelineRunner(stub);
+
+        await runner.RunAsync(ast, experts, new PipelineRunOptions("ParallelLoop"));
+        await runner.RunAsync(ast, experts, new PipelineRunOptions("AgentLoop"));
+
+        Assert.DoesNotContain(historiesPresent, present => present);
+    }
+
+    [Fact]
+    public async Task LoopContainingSubMission_DoesNotInjectHistory()
+    {
+        var ast = MclParser.Parse("""
+            mission Inner = { Worker }
+            mission Outer loop(2) = {
+                Inner
+                -> Reviewer
+            }
+            """);
+        var historiesPresent = new List<bool>();
+        var reviewerCalls = 0;
+        var stub = new StubExpertRunner((name, context) =>
+        {
+            historiesPresent.Add(context.ContainsKey("history"));
+            return name == "Reviewer" && ++reviewerCalls == 1
+                ? new StepEnvelope("needs revision", "fail", "retry")
+                : new StepEnvelope("done");
+        });
+
+        await new PipelineRunner(stub)
+            .RunAsync(ast, Experts("Worker", "Reviewer"), new PipelineRunOptions("Outer"));
+
+        Assert.DoesNotContain(historiesPresent, present => present);
+    }
+
     // ── when() routing ────────────────────────────────────────────────────────
 
     [Fact]

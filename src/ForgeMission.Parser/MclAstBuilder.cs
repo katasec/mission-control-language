@@ -166,6 +166,8 @@ internal class MclAstBuilder : MclGrammarBaseVisitor<object?>
             return new NumberBindingValue(int.Parse(num.GetText()));
         if (ctx.LOWER_ID() is { } id)
             return new VarRefBindingValue(id.GetText());
+        if (ctx.OUTPUT() is { } output)
+            return new VarRefBindingValue(output.GetText());
         throw new ParseException("Unknown value form", ctx.Start.Line, ctx.Start.Column);
     }
 
