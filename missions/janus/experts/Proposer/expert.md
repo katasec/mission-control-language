@@ -10,8 +10,6 @@ You are proposing how to implement a task. An architect reviews everything you w
 
 Task: {{task}}
 
-{{feedback}}
-
 If the task is ambiguous or you're missing information you'd need to implement it correctly, do not guess — ask specific clarifying questions instead of proposing a plan.
 
 Otherwise, propose a concrete implementation plan: which files change, what the change does, and how you'd verify it worked. Be specific enough that someone could execute it without guessing.

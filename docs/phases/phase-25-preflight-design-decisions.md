@@ -424,6 +424,50 @@ session) — summary:
   separate mission → structurally cannot see the negotiation, no special-case needed — mission
   composition's existing "no context inheritance" rule (Decision #11) already guarantees it.
 
+**Third superseded note (2026-08-10, same day, engine-level design closed):** the note above left
+one open question — `Conversation` (`src/ForgeMission.Core/Runtime/Conversation.cs`, used for
+`role: agent` tool continuations) has fixed message roles from one client's point of view, but
+Proposer and Approver each need the *opposite* role-view of the same shared history. Resolved as a
+new, separate type — `Conversation` is untouched, this is not a variant of it:
+
+- **New type `SpeakerTranscript`** (`src/ForgeMission.Core/Runtime/SpeakerTranscript.cs`) — an
+  ordered list of `(Speaker: string, Text: string)` turns, where `Speaker` is the producing step's
+  `ExpertName`. `AsMessages(string self)` re-tags each turn per recipient at read time: `Speaker ==
+  self` → `ChatRole.Assistant`, otherwise → `ChatRole.User`. No fixed viewpoint is baked in — the
+  same accumulator serves both parties, tagged differently on each read.
+- **Eligibility (no opt-in flag, matches this decision's "no explicit flag" ruling above)** — a
+  mission is negotiation-eligible when `MaxLoops > 1` and every `Pipeline.Elements` entry is a
+  `StepElement` (no `ParallelElement` — concurrent turns break "who spoke when") resolving to an
+  expert in the mission's own `experts` dict (excludes sub-mission steps) with `Kind == "llm"`
+  (the default) and `Role != "agent"`. Computed once in `PipelineRunner.RunAsync`, before the
+  `for (attempt ...)` loop.
+- **Lifetime = one `RunAsync` call, not one attempt.** The `SpeakerTranscript` instance is created
+  once, outside the attempt loop (same shape as the existing `loopFeedback` local), and the *same*
+  instance is re-injected into `context["history"]` every attempt — so it accumulates across the
+  loop's retries. A sub-mission call recurses into a fresh `RunAsync`, which allocates its own new
+  instance — mission boundary = new conversation falls out for free, no special-casing needed, same
+  as the `Negotiate`/`Implement` split above.
+- **Turn recording** — in `PipelineRunner.ExecuteStepAsync`, right after `context["output"] =
+  envelope.Text`, if `context["history"]` is present, append one turn: `Speaker = step.ExpertName`,
+  `Text = envelope.Text` — plus `envelope.Reason` appended (`"{Text}\n\nReason: {Reason}"`) only
+  when `Reason` is non-empty and differs from `Text` (Approver's own schema already duplicates the
+  two on fail, so the common case stays a single clean turn).
+- **Consumption** — `DirectExpertRunner.BuildMessages` (`RunAsync` and `StreamAsync` both call it)
+  checks `context["history"]` first: if present and non-empty, the message list is `[System(own
+  interpolated prompt)] + history.AsMessages(expert.Name)`, replacing today's single
+  `[System, User(context["output"] or "Begin.")]` pair. Falls through to the existing single-turn
+  behavior when no history is present (attempt 1's first speaker, and every non-negotiation
+  mission) — this is additive, not a rewrite of the existing path. Mutually exclusive with the
+  `role: agent` tools/`Conversation` branch already in `DirectExpertRunner` (that branch only
+  triggers for `IsAgent` steps, which negotiation-eligibility excludes by construction).
+- **Dead reference to remove**: `missions/janus/experts/Proposer/expert.md`'s `{{feedback}}` line —
+  it was always empty (`DirectExpertRunner` never wrote `context["feedback"]`, only
+  `RuleExpertRunner`/`ExecExpertRunner` do) and is superseded by Approver's actual turn now arriving
+  via history directly.
+
+Design is closed — no remaining open question. Task assignment covering this plus the mission split
+together: [phase-43.15's spoke](phase-43.15-janus-inter-agent-mission.md).
+
 **Context:**
 The current `loop N` implementation almost certainly resets context at the start of each iteration — each attempt runs with the same original input, with no memory of what failed or why. This makes looping random retry, not iterative improvement:
 

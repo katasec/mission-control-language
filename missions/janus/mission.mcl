@@ -5,19 +5,25 @@
 //   - `role: agent` gives only the Implementer step real tool execution (Read/Edit/Write/Bash),
 //     and only once the Architect (as judge) has approved the plan that round.
 //
-// Proposer/Approver negotiate in a loop: Proposer drafts a plan or asks questions, Approver
-// (Claude, role: judge) passes it or rejects with feedback for the next attempt. Implementer
-// only runs in a round where Approver passed — a failing judge breaks the attempt before
-// Implementer is ever reached, so there is no way to execute an unapproved plan.
+// Proposer/Approver negotiate in a loop. Implementer runs only after the separate negotiation
+// mission returns an approved plan, so it never participates in the dialogue replay.
 //
 // Run: forge run missions/janus/mission.mcl --steps
 
-let task = "Add a --dry-run flag to the deploy script that prints what would happen without doing it"
+let task = "Implement a token-bucket rate limiter as a standalone Python class: configurable capacity and refill rate, a try_acquire() method, correct behavior under burst and steady-state load, and a short test plan covering the edge cases"
 
-mission Janus(task) loop(3) = {
+mission Janus(task) = {
+    Negotiate(task: task)
+    -> Implement(plan: output)
+}
+
+mission Negotiate(task) loop(5) = {
     Proposer using implementer
     -> Approver using architect
-    -> Implementer using implementer
+}
+
+mission Implement(plan) = {
+    Implementer using implementer
 }
 
 output(Janus)

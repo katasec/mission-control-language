@@ -1,49 +1,19 @@
 # Phase 43.15 — Janus: minimal inter-agent mission (Claude architect + OpenAI implementer)
 
-**Status: Reopened (2026-08-10).** The AOT fix (`ForgeMission.ChatClients` +
-`tryAGI.Anthropic`) is genuinely done and stays done — that part of "Done when" is real,
-verified, and not in question. What's reopened: the *mission itself* has two real gaps found
-in the same session, after the AOT work landed —
-[full design writeup and resolution](phase-25-preflight-design-decisions.md#9-loop-context--deterministic-convergence-vs-random-retry)
-lives in the Phase 25 preflight doc (Decision #9's second superseded note), not duplicated here.
-Summary:
-
-1. Janus's mission shape is wrong. `Implementer` was inside the same `loop(3)` as the two
-   negotiating parties (`Proposer`/`Approver`), which isn't a participant in the negotiation and
-   shouldn't share its loop.
-2. `role: judge` failures never carried anything to the next attempt for an LLM judge like
-   `Approver` — `context["feedback"]` (the single-string mechanism `kind: rule`/`kind: exec`
-   already use) was never wired for `DirectExpertRunner`. **Resolution is not to wire that
-   mechanism for LLM judges — it's to rewrite `loop(N)` to leverage full conversation-history
-   replay between the negotiating LLM agents instead**, which makes a single carried-forward
-   failure string unnecessary: Proposer sees Approver's actual prior turns directly. See
-   [Decision #9's resolution](phase-25-preflight-design-decisions.md#9-loop-context--deterministic-convergence-vs-random-retry)
-   for the full reasoning (every current `loop(N)` mission with an LLM judge is pure-LLM, so
-   every one of them is better served by full replay than by the single-string mechanism —
-   there's no case among any shipped mission where the single-string fix would still be needed).
-
-Neither is implemented yet. The "Implementation verified" evidence in the
-[completed doc](phase-43.15-janus-inter-agent-mission_completed.md) is accurate for what it
-tested (no AOT crash, structured output round-trips, loop mechanically converges/exhausts) — it
-did **not** verify that Approver's feedback was actually reaching Proposer, and it turns out it
-wasn't. Part of "Done when" below is corrected to reflect that.
-
-**NEXT STEP: rewrite `loop(N)` to leverage full conversation-history replay between LLM agents in
-a mission, then split Janus into `Negotiate` + `Implement` to use it.** Design isn't fully closed
-yet — one open question: `Conversation` (the existing type used for `role: agent` tool
-continuations) has fixed message roles, but Proposer and Approver each need the *opposite*
-role-view of the same shared history (own turns as `assistant`, the other party's as `user`) —
-needs a neutral, speaker-labeled accumulator instead, re-tagged per recipient at call time. Once
-that's resolved, write the Codex task assignment (covering both the replay capability and the
-mission split together — they need to be verified live as one unit, not separately). Re-verify
-live afterward — same bar as the AOT fix: a real run, not just "tests pass."
+**Status: Done (2026-08-11).** Both halves of "Done when" are verified: the AOT fix
+(`ForgeMission.ChatClients` + `tryAGI.Anthropic`) and, since this spoke's 2026-08-10 reopening
+found the negotiation mechanism itself didn't work, the fix for that too — a new
+`SpeakerTranscript` type giving `loop(N)` full conversation-history replay between LLM
+participants, plus splitting Janus into `Negotiate`/`Implement` so the one-shot `Implementer`
+step no longer shares the negotiating parties' loop. Full investigation, design resolution
+([Decision #9](phase-25-preflight-design-decisions.md#9-loop-context--deterministic-convergence-vs-random-retry)),
+Codex task assignment, and independent re-verification are in the
+[completed doc](phase-43.15-janus-inter-agent-mission_completed.md) — this spoke keeps only what
+later phases still need to reference.
 
 **Related finding:** `sdlc-agent/DesignMode`, `loop-demo/QualityAnswer`, and `self-refine/SelfRefine`
-all have the same pure-LLM `loop(N)` + `role: judge` shape Janus does, so they get the same
-correction once the replay rewrite ships — for free, no separate task needed. Point 2 below ("What
-Janus proves") claims `sdlc-agent`'s `DesignMode` "proved this pattern first" — that claim is
-**false**; it never worked there either, it was simply never verified. Left visible and struck
-through rather than silently edited, per this project's own status-honesty rule.
+all share Janus's pure-LLM `loop(N)` + `role: judge` shape, so they now get full
+conversation-history replay for free from the same engine change — no separate task needed.
 
 ## What Janus proves
 
@@ -51,14 +21,16 @@ through rather than silently edited, per this project's own status-honesty rule.
    already shipped) — verified this was never actually exercised by any shipped mission before now;
    every mission in `missions/` uses exactly one `[providers.default]` profile.
 2. **A propose → question/approve → revise negotiation loop** (`Proposer` + `Approver` as
-   `role: judge`, `loop(3)`) mirrors the real manual Claude/Codex workflow described by the user:
-   don't proceed until explicitly approved; questions get answered on retry via `{{feedback}}` —
-   ~~the same mechanism `role: judge` failures already use for critique-driven convergence
-   ([`sdlc-agent`'s `DesignMode`](../../missions/sdlc-agent/mission.mcl) proved this pattern
-   first)~~ **correction (2026-08-10): false, left visible rather than silently fixed — see
-   "Related finding" above. `sdlc-agent`'s `DesignMode` never actually exercised this; it has the
-   identical unresolved shape.** What Janus actually validated in this session is the
-   opposite of what this point originally claimed: the mechanism was never proven anywhere.
+   `role: judge`, `loop(3)`, split into a `Negotiate` sub-mission) mirrors the real manual
+   Claude/Codex workflow described by the user: don't proceed until explicitly approved; questions
+   get answered on retry via full conversation-history replay (`SpeakerTranscript` — see
+   [completed doc](phase-43.15-janus-inter-agent-mission_completed.md)), not a single-string
+   mechanism — Proposer sees Approver's actual prior turn directly. ~~the same mechanism
+   `role: judge` failures already use for critique-driven convergence ([`sdlc-agent`'s
+   `DesignMode`](../../missions/sdlc-agent/mission.mcl) proved this pattern first)~~ **correction
+   (2026-08-10, left visible rather than silently fixed): false — `DesignMode` never actually
+   exercised this; it has the identical shape and gets the same fix for free (see "Related
+   finding" above), but nothing "proved" the pattern until Janus was live-verified 2026-08-11.**
 3. **`role: agent` gates real tool execution** (Read/Edit/Write/Bash, [43.1](phase-43.1-tool-execution-engine.md)'s
    `AgenticSession`) to only after that approval — structurally, not by convention. A failing judge
    step breaks the pipeline's step loop immediately, before any later step (including `Implementer`)
@@ -102,12 +74,13 @@ through rather than silently edited, per this project's own status-honesty rule.
 
 ## Done when
 
-- ✅ `Approver` (Anthropic) runs successfully under the AOT-published `forge` binary — genuinely
-  done, this is purely about the AOT crash, unaffected by the mission-design gaps below.
-- ⏳ **Corrected, 2026-08-10**: the loop *mechanically* converges/exhausts correctly (verified
-  live), but "negotiation" requires Approver's feedback to actually reach Proposer and the
-  mission to only loop its actual negotiating parties — neither was true. Reopened; see status
-  note above. Re-mark done only after the corrected design is implemented and re-verified live.
+- ✅ `Approver` (Anthropic) runs successfully under the AOT-published `forge` binary — the AOT
+  crash fix.
+- ✅ **Verified 2026-08-11**: Approver's actual pass/fail turns reach Proposer through
+  `SpeakerTranscript` replay (not a single-string mechanism), and `Implementer` runs outside the
+  negotiation loop via the `Negotiate`/`Implement` split. Live AOT run + full `dotnet test` (489
+  passed, 11 skipped for unrelated live-provider reasons) — evidence in the
+  [completed doc](phase-43.15-janus-inter-agent-mission_completed.md).
 
 `Implementer` actually executing real tool calls is explicitly **not** part of this spoke's "done" —
 it depends on a CLI-driven agentic mode or Forge Desktop, both owned elsewhere ([43.1](phase-43.1-tool-execution-engine.md),

@@ -92,6 +92,7 @@ anyKey
 value
     : STRING
     | LOWER_ID
+    | OUTPUT
     | INT
     | envCall
     ;

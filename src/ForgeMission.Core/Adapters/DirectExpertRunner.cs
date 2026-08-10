@@ -57,12 +57,7 @@ Respond with this exact JSON format and nothing else — status must always be "
         Dictionary<string, object> context,
         CancellationToken ct = default)
     {
-        var (userMessage, systemPrompt) = BuildMessages(expert, context);
-        var messages = new List<ChatMessage>
-        {
-            new(ChatRole.System, systemPrompt),
-            new(ChatRole.User, userMessage)
-        };
+        var (messages, systemPrompt) = BuildMessages(expert, context);
         // Non-generic call with an explicit closed schema (see _stepFormat) rather than
         // GetResponseAsync<StepEnvelope>, whose derived schema is rejected by Anthropic. Deserialize
         // via the source-gen context (AOT-safe); fall back to the raw text if the model returns
@@ -120,12 +115,7 @@ Respond with this exact JSON format and nothing else — status must always be "
         Dictionary<string, object> context,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var (userMessage, systemPrompt) = BuildMessages(expert, context);
-        var messages = new List<ChatMessage>
-        {
-            new(ChatRole.System, systemPrompt),
-            new(ChatRole.User, userMessage)
-        };
+        var (messages, systemPrompt) = BuildMessages(expert, context);
 
         var options = new ChatOptions();
         IList<AITool>? tools = null;
@@ -162,14 +152,24 @@ Respond with this exact JSON format and nothing else — status must always be "
             context["tool_calls"] = toolCalls;
     }
 
-    private static (string userMessage, string systemPrompt) BuildMessages(
+    private static (List<ChatMessage> messages, string systemPrompt) BuildMessages(
         ExpertDefinition expert,
         Dictionary<string, object> context)
     {
-        var userMessage  = context.TryGetValue("output", out var output) && !string.IsNullOrWhiteSpace(output?.ToString())
+        var systemPrompt = ContextInterpolator.Interpolate(expert.SystemPrompt, context);
+
+        if (context.TryGetValue("history", out var historyValue)
+            && historyValue is SpeakerTranscript history
+            && history.Turns.Count > 0)
+        {
+            var messages = new List<ChatMessage> { new(ChatRole.System, systemPrompt) };
+            messages.AddRange(history.AsMessages(expert.Name));
+            return (messages, systemPrompt);
+        }
+
+        var userMessage = context.TryGetValue("output", out var output) && !string.IsNullOrWhiteSpace(output?.ToString())
             ? output.ToString()!
             : "Begin.";
-        var systemPrompt = ContextInterpolator.Interpolate(expert.SystemPrompt, context);
-        return (userMessage, systemPrompt);
+        return ([new(ChatRole.System, systemPrompt), new(ChatRole.User, userMessage)], systemPrompt);
     }
 }

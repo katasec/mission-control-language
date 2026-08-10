@@ -252,3 +252,70 @@ Verified independently, not just from Codex's completion summary:
   `403 permission-denied: "...has either used all available credits or reached its monthly spending
   limit."` — an external account-billing condition, not a regression. Logged as
   [plan.md Open issue #7](../plan.md#open-issues).
+
+## Reopened & resolved (2026-08-10/11): SpeakerTranscript replay + Negotiate/Implement split
+
+The AOT fix above shipped, then the *same session* found the mission itself had two real gaps that
+"Implementation verified" above never actually tested for:
+
+1. **Wrong mission shape.** `Implementer` shared the same `loop(3)` as the two negotiating parties
+   (`Proposer`/`Approver`) even though it isn't a negotiation participant.
+2. **Feedback never actually reached Proposer.** `context["feedback"]` (the single-string mechanism
+   `kind: rule`/`kind: exec` use) was never wired for `DirectExpertRunner` — Approver's rejection
+   reason was computed and discarded every retry.
+
+**Design resolution** (full reasoning in
+[Decision #9, phase-25-preflight-design-decisions.md](phase-25-preflight-design-decisions.md#9-loop-context--deterministic-convergence-vs-random-retry),
+second and third superseded notes): not a fix to the single-string mechanism — `loop(N)` gets full
+conversation-history replay between LLM participants instead, so Proposer sees Approver's actual
+prior turns directly. A new type, `SpeakerTranscript` (`src/ForgeMission.Core/Runtime/SpeakerTranscript.cs`),
+stores `(Speaker, Text)` turns with no role baked in; `AsMessages(self)` re-tags `assistant`/`user`
+per recipient at read time. Deliberately separate from `Conversation.cs` (fixed-role, single
+client viewpoint, used for `role: agent` tool continuations) — different semantics, not a variant.
+Janus splits into `Negotiate(task) loop(3)` + `Implement(plan)` + a top-level `Janus(task)`
+composing them via the existing sub-mission mechanism, so `Implementer` structurally cannot see
+the negotiation loop.
+
+**Task assignment sent to Codex (2026-08-10)** — implement `SpeakerTranscript` +
+`PipelineRunner`/`DirectExpertRunner` wiring per Decision #9's third note, split
+`missions/janus/mission.mcl`, remove the dead `{{feedback}}` line. Codex's plan matched the design
+1:1 (eligibility computed once per `RunAsync`, transcript scoped to one `RunAsync` call so
+sub-missions get fresh state for free, non-duplicated failure-reason recording, additive-only
+change to `DirectExpertRunner`) — approved without revision.
+
+**Implementation verified independently (2026-08-11)**, not just from Codex's completion summary:
+
+- **Read every changed file** (`SpeakerTranscript.cs`, `PipelineRunner.cs`,
+  `DirectExpertRunner.cs`, the grammar/AST change, `missions/janus/`) — confirmed the eligibility
+  check excludes `ParallelElement`, sub-mission steps, non-`llm`-kind experts, and `role: agent`
+  experts exactly as designed; confirmed message construction is additive (falls through to the
+  original `[System, User]` shape when history is absent/empty) and mutually exclusive with the
+  existing `role: agent`/`Conversation` tools branch.
+- **`dotnet test src/ForgeMission.slnx`** — run directly (not relayed): **489 passed, 0 failed, 11
+  skipped** (all skips are pre-existing live-provider integration tests — Grok/xAI credits,
+  real-LLM/Docker/Claude-CLI tests — none related to this change). This resolves what Codex's own
+  completion summary had flagged as "full-suite verification pending" after a local stalled test
+  host; the stall was not reproducible.
+- **`forge validate missions/janus/mission.mcl`** — `OK — mission is valid`, confirming the
+  `Negotiate`/`Implement`/`Janus` split and the new `output`-as-binding-value grammar addition
+  parse correctly.
+- **Test coverage spot-checked**: `SpeakerTranscriptTests` (role re-tagging),
+  `DirectExpertRunnerTests` (replay message shape for both `RunAsync` and `StreamAsync`, unchanged
+  no-history shape), `PipelineRunnerTests` (accumulation across attempts, and exclusion for
+  non-LLM/parallel/agent/sub-mission loops) — all directly exercise the design's stated rules, not
+  just happy-path shape.
+- Codex's own live AOT run (`/tmp/forge-janus-aot/forge`, `forge run missions/janus/mission.mcl
+  --steps`) showed `Janus → Negotiate → Implement` with `Implementer` invoked once after approval,
+  and replayed failure turns reaching Proposer across retries — the actual negotiation behavior,
+  not just mechanical loop convergence.
+
+**Deviations from the plan, both sound, neither a design gap:**
+- Added `output` as a valid `value` grammar alternative (`MclGrammar.g4`/`MclAstBuilder.cs`) —
+  `Implement(plan: output)` needs `output` usable as a binding value, but it was already a reserved
+  lexer token (`output(...)` top-level declaration) so bare `LOWER_ID` didn't match it.
+- Declared `mission Janus` first in `mission.mcl` (ahead of `Negotiate`/`Implement`) — `forge run`
+  without an explicit `--mission` flag selects `ast.Declarations.OfType<MissionDeclaration>()
+  .FirstOrDefault()` ([Program.cs:196](../../src/ForgeMission.Cli/Program.cs:196)), not the
+  `output(...)` declaration; Janus's own header comment relies on running without `--mission`, so
+  it has to be declared first. (`sdlc-agent/mission.mcl` never hit this because its own header
+  always specifies `--mission` explicitly.)

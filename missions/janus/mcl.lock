@@ -7,8 +7,8 @@ experts:
   Implementer:
     source: experts
     path: experts/Implementer/expert.md
-    hash: 1015cd275a3bfbe6378f8f9c7d1c713e2e7af63f3fc6386f54acd7c2c78f36dc
+    hash: 6b1a6db95c6ef6f7085008cb054c2effff26754254cfb3892afb672ce158b67a
   Proposer:
     source: experts
     path: experts/Proposer/expert.md
-    hash: d2ed70287d89c469a8c8d6cc1d0763024de9e1350d10a930b28b484bc570aa0c
+    hash: f9bdaf827c2b0a701a7775cfede43c3844304b26456aacc11fa08e47029265e7

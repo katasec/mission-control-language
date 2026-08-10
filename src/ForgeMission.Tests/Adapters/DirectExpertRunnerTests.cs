@@ -16,12 +16,14 @@ public class DirectExpertRunnerTests
     private sealed class StubChatClient(string status, string text = "stub output") : IChatClient
     {
         public ChatClientMetadata Metadata => new("stub", null, null);
+        public List<IReadOnlyList<ChatMessage>> Requests { get; } = [];
 
         public Task<ChatResponse> GetResponseAsync(
             IEnumerable<ChatMessage> messages,
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
         {
+            Requests.Add(messages.ToList());
             var json = status == "fail"
                 ? $$$"""{"text":"{{{text}}}","status":"fail","reason":"stub reason"}"""
                 : $$$"""{"text":"{{{text}}}","status":"pass"}""";
@@ -34,7 +36,14 @@ public class DirectExpertRunnerTests
             IEnumerable<ChatMessage> messages,
             ChatOptions? options = null,
             CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
+            => Stream(messages);
+
+        private async IAsyncEnumerable<ChatResponseUpdate> Stream(IEnumerable<ChatMessage> messages)
+        {
+            Requests.Add(messages.ToList());
+            yield return new ChatResponseUpdate(ChatRole.Assistant, "{\"text\":\"stub output\",\"status\":\"pass\"}");
+            await Task.CompletedTask;
+        }
 
         public object? GetService(Type serviceType, object? serviceKey = null) => null;
         public void Dispose() { }
@@ -85,5 +94,56 @@ public class DirectExpertRunnerTests
         var envelope = await runner.RunAsync(JudgeExpert(), EmptyContext());
 
         Assert.Equal("pass", envelope.Status);
+    }
+
+    [Fact]
+    public async Task History_ReplacesSingleUserMessage_WithRecipientRelativeTranscript()
+    {
+        var transcript = new SpeakerTranscript();
+        transcript.Add("PitchCritic", "initial draft");
+        transcript.Add("QualityJudge", "add concrete verification");
+        var context = EmptyContext();
+        context["history"] = transcript;
+        var client = new StubChatClient("pass");
+
+        await new DirectExpertRunner(client).RunAsync(CriticExpert(), context);
+
+        var messages = Assert.Single(client.Requests);
+        Assert.Equal([ChatRole.System, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
+        Assert.Equal("initial draft", messages[1].Text);
+        Assert.Equal("add concrete verification", messages[2].Text);
+        Assert.DoesNotContain(messages, m => m.Text == "some input");
+    }
+
+    [Fact]
+    public async Task EmptyHistory_PreservesSingleTurnMessageShape()
+    {
+        var context = EmptyContext();
+        context["history"] = new SpeakerTranscript();
+        var client = new StubChatClient("pass");
+
+        await new DirectExpertRunner(client).RunAsync(CriticExpert(), context);
+
+        var messages = Assert.Single(client.Requests);
+        Assert.Equal([ChatRole.System, ChatRole.User], messages.Select(m => m.Role));
+        Assert.Equal("some input", messages[1].Text);
+    }
+
+    [Fact]
+    public async Task StreamingHistory_UsesRecipientRelativeTranscript()
+    {
+        var transcript = new SpeakerTranscript();
+        transcript.Add("PitchCritic", "initial draft");
+        transcript.Add("QualityJudge", "add concrete verification");
+        var context = EmptyContext();
+        context["history"] = transcript;
+        var client = new StubChatClient("pass");
+
+        await foreach (var _ in new DirectExpertRunner(client).StreamAsync(CriticExpert(), context))
+        {
+        }
+
+        var messages = Assert.Single(client.Requests);
+        Assert.Equal([ChatRole.System, ChatRole.Assistant, ChatRole.User], messages.Select(m => m.Role));
     }
 }

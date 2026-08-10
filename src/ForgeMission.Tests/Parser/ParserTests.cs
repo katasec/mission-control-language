@@ -416,6 +416,23 @@ public class ParserTests
         Assert.Equal("gpt-4o-mini", value.DefaultValue);
     }
 
+    [Fact]
+    public void StepBinding_Output_ParsesAsRuntimeVariableReference()
+    {
+        var result = MclParser.Parse("""
+            mission Inner(plan) = { Implementer }
+            mission Outer = { Inner(plan: output) }
+            """);
+
+        var outer = result.Declarations.OfType<MissionDeclaration>().Single(m => m.Name == "Outer");
+        var step = Assert.IsType<StepElement>(Assert.Single(outer.Pipeline.Elements)).Step;
+        var binding = Assert.Single(step.Context);
+
+        var value = Assert.IsType<VarRefBindingValue>(binding.Value);
+        Assert.Equal("plan", binding.Key);
+        Assert.Equal("output", value.Name);
+    }
+
     // ── Error cases ───────────────────────────────────────────────────────────
 
     [Fact]
