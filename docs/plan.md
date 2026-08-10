@@ -6,11 +6,11 @@
 > context (why a past decision was made, when something shipped); it is never required to answer
 > "what's next."
 
-## Now (2026-08-09)
+## Now (2026-08-10)
 
 | | |
 |---|---|
-| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** (top priority) — missions attach instead of models. Full status: [hub](phases/phase-43-forge-desktop.md#dependency-ordered-task-list). **Active: [43.15 — Janus](phases/phase-43.15-janus-inter-agent-mission.md)** — AOT fix designed + spiked, task assignment ready for Codex, not yet implemented; see the spoke's own NEXT STEP, not repeated here. [PR #34](https://github.com/katasec/mission-control-language/pull/34) (43.3) awaits review. Phase 39/42.6 paused in favor of this. |
+| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** (top priority) — missions attach instead of models. Full status: [hub](phases/phase-43-forge-desktop.md#dependency-ordered-task-list). **[43.15 — Janus](phases/phase-43.15-janus-inter-agent-mission.md) is Done** — Anthropic AOT fix implemented + verified live; branch `codex/janus-mini-mission` ready to merge, see the spoke's own NEXT STEP for what's next after that. [PR #34](https://github.com/katasec/mission-control-language/pull/34) (43.3) awaits review. Phase 39/42.6 paused in favor of this. |
 | **Paused — [42.6 task 5b](phases/phase-42.6-hosted-endpoint-ttfa.md#tasks--status)** | `forge claude @websearch` hosted chat-wire adapter. User manual: ON HOLD, after 42.6. |
 | **Spend hole (Ph. 39)** | Known + accepted at F&F scale. Edge rate limit **DEFERRED 2026-07-18 — no longer a launch gate** (no CDN/WAF tier exists, so it was never config-only); freeze-at-zero remains the live control ([42.6 task 6](phases/phase-42.6-hosted-endpoint-ttfa.md#tasks--status)). |
 | **Standing check** | Bottleneck = **evidence + clients**, not design — [Phase 37 eval harness](phases/phase-37-eval-harness.md) stays the highest-value alternative. |
@@ -48,7 +48,11 @@ full narrative + evidence preserved there. Summary: OaiServer spec compliance (d
 still pending), Python client example (done), provider-key IaC drift (done 2026-07-09),
 `ExecExpertRunnerTests` Windows hygiene (done 2026-07-26), WDAC DLL-load gotcha on this box
 (root-caused, closed, no fix planned), migration job DB-wipe risk (defused + structurally fixed
-2026-07-19). No open issues currently outstanding.
+2026-07-19).
+
+| # | Issue | Status |
+|---|---|---|
+| 7 | `GrokWebSearchIntegrationTests` (2 tests) fail on `dotnet test` — xAI team account has exhausted credits/hit its monthly spend limit (`403 permission-denied`, confirmed live 2026-08-10). Not a code issue — `ForgeMission.Scout` is unaffected by any recent change. | **Open** — needs an account action (purchase credits / raise spend limit) outside code scope, not a fix here. |
 
 ## Under discussion
 

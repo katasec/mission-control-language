@@ -386,6 +386,7 @@ docs/
   phases/                — one hub + spokes per phase, task lists and statuses
 src/
   ForgeMission.Core/      — parser, expert loader, pipeline runner
+  ForgeMission.ChatClients/ — provider SDK clients and structured-output translation
   ForgeMission.Cli/       — CLI entry point (forge)
   ForgeMission.*.Tests/   — test projects
 missions/                — example + built-in missions

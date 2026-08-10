@@ -7,8 +7,7 @@ using ForgeMission.Parser;
 using ForgeMission.Core.Runtime;
 using static ForgeMission.Core.Runtime.MissionStatus;
 using Microsoft.Extensions.AI;
-using OpenAI;
-using System.ClientModel;
+using ForgeMission.ChatClients;
 using Katasec.OciClient;
 using ForgeMission.Serve;
 using Microsoft.AspNetCore.Builder;
@@ -1033,7 +1032,7 @@ static async Task<(WebApplication App, string MissionPath, bool AnthropicDoor, b
     IChatClient? auxClient = null;
     if (anthropicDoor is not null && ResolveDefaultProfile(manifest, seedContext) is { } auxProfile)
     {
-        try { auxClient = ProviderClientBuilder.BuildChatClient(auxProfile); }
+        try { auxClient = ForgeMission.ChatClients.ChatClients.BuildChatClient(auxProfile); }
         catch { /* aux degrades to the server's canned replies */ }
     }
 
@@ -1194,7 +1193,7 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
     {
         foreach (var (name, profile) in profiles)
         {
-            try { runners[name] = ProviderClientBuilder.Build(profile); }
+            try { runners[name] = ForgeMission.ChatClients.ChatClients.Build(profile); }
             catch (Exception ex) { Die($"Cannot initialise provider profile '{name}': {ex.Message}"); return null; }
         }
     }
@@ -1221,7 +1220,7 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
 
         try
         {
-            runners["default"] = ProviderClientBuilder.Build(new ProviderProfile
+            runners["default"] = ForgeMission.ChatClients.ChatClients.Build(new ProviderProfile
             {
                 Provider = provider,
                 Model    = model,

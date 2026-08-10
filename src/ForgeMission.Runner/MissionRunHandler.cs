@@ -191,7 +191,7 @@ internal sealed class MissionRunHandler(
             return new ExecExpertRunner();
 
         // Fresh usage-tracked runner per request → isolated token counts under concurrency.
-        var instrumented = ProviderClientBuilder.BuildChatClient(profile)
+        var instrumented = ForgeMission.ChatClients.ChatClients.BuildChatClient(profile)
             .AsBuilder()
             .UseOpenTelemetry(sourceName: RunnerTelemetry.SourceName)
             .Build();
