@@ -1,18 +1,102 @@
 # Phase 43.15 — Janus: minimal inter-agent mission (Claude architect + OpenAI implementer)
 
-**Status: In progress — mission built + validated, blocked on an upstream Anthropic SDK Native AOT
-bug.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+**Status: In progress — mission built + validated. Fix designed and spiked (2026-08-10), handed to
+Codex for implementation.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
-**NEXT STEP: spike the unblock, don't re-investigate the bug itself (already fully root-caused, see
-"Blocking bug" below).** Check first whether `Katasec.AnthropicServer` (the hosted `/v1/messages`
-path `forge claude`/[Phase 42](phase-42-forge-cloud.md) already uses live) calls the Anthropic API
-through a different path than `Microsoft.Extensions.AI.AnthropicClientExtensions.AsIChatClient` — a
-pure code-read, no build required. If it avoids `CreateMessageParams`, reuse that route instead of
-`ProviderClientBuilder.BuildAnthropicClient`. If not, temporarily swap `Approver` to an OpenAI
-provider profile so the rest of Janus can be verified end-to-end — a workaround, not a fix; it loses
-the "Claude specifically as architect" property that's the point of the spike, so don't call it done
-once applied. Filing an upstream issue against `anthropics/anthropic-sdk-csharp` is worth doing
-either way, but doesn't unblock anything on its own.
+**NEXT STEP: implement the fix below — a Codex task assignment is ready to send (see bottom of this
+doc), design is closed, no open architecture questions remain.** Do not re-investigate the bug or
+re-run the spike; both are done and their evidence is recorded below.
+
+## Resolution (2026-08-10): swap to `tryAGI.Anthropic`, extract `ForgeMission.ChatClients`
+
+The originally-assumed unblock check (does `Katasec.AnthropicServer` avoid `CreateMessageParams`?)
+turned out moot: `ProviderClientBuilder.BuildAnthropicClient` is the only place in this repo that
+builds an outbound Anthropic client — `Katasec.AnthropicServer` is the *inbound* wire adapter for
+`forge claude`/`forge serve`, it never calls the real Anthropic API itself, so there was never an
+alternate route to reuse.
+
+**Root cause is narrower than originally scoped.** Decompiling the installed `Anthropic` 12.29.1
+package (`ilspycmd`) showed the reflection-based `JsonSerializer.Serialize(value,
+AIJsonUtilities.DefaultOptions.GetTypeInfo(typeof(object)))` calls are confined entirely to
+`Microsoft.Extensions.AI.AnthropicClientExtensions.AnthropicChatClient` — the `.AsIChatClient()`
+adapter shim, not the underlying `Anthropic` SDK. The raw SDK's own model types
+(`MessageCreateParams`, `Message`, etc.) use a hand-rolled `JsonElement`/`RawBodyData` read/write
+pattern — the same AOT-safe shape OpenAI's SDK uses — confirmed by decompiling `MessageCreateParams`
+directly.
+
+**Confirmed as a known, unresolved upstream issue**, not something specific to our integration:
+[anthropics/anthropic-sdk-csharp#79 "Support AOT"](https://github.com/anthropics/anthropic-sdk-csharp/issues/79)
+(open). Anthropic's own team: *"We do ultimately plan to support AOT, but don't yet have an ETA."* A
+duplicate (#222) was folded into it. No new issue needs filing — #79 already covers this.
+
+**Fix: [`tryAGI/Anthropic`](https://github.com/tryAGI/Anthropic) (NuGet `tryAGI.Anthropic`), an
+unofficial OpenAPI-spec-generated SDK that ships its own `System.Text.Json` source-gen context and
+its own `Microsoft.Extensions.AI.IChatClient` implementation** (`AnthropicClient.ChatClient.cs`) —
+no reflection anywhere in its message-conversion path. Verified empirically, not just by reading the
+source — see Spike below.
+
+**Consistency constraint (locked 2026-08-10, this is why the fix is a package swap, not a custom
+adapter):** every other provider (OpenAI, Ollama, xAI) is vendor SDK → `.AsIChatClient()` →
+`IChatClient`, one switch case in `ProviderClientBuilder`, zero hand-rolled message-mapping. A
+custom Anthropic-only `IChatClient` would break that uniformity — we'd own message mapping,
+structured-output wiring, and (eventually) tool-call mapping for exactly one provider, and any
+future divergence in behavior would start with "well, Anthropic's on a different code path." The
+package swap keeps every provider on the identical shape; only the package reference changes.
+[Comparison diagram](https://claude.ai/code/artifact/2f13dd28-94fb-41a8-9323-b64b282b4cfb) drawn
+during this session's design discussion.
+
+**Gap the swap alone doesn't close:** `DirectExpertRunner` sets `ChatOptions.ResponseFormat` for
+`role: judge`/`role: agent` structured output. `tryAGI.Anthropic`'s `AsIChatClient()` does not read
+`ResponseFormat` at all — it only honors structured output via `ChatOptions.RawRepresentationFactory`
+returning a `CreateMessageParams` with `OutputConfig.Format` set (Anthropic's native structured-output
+beta). Left unaddressed, Anthropic judge steps would silently degrade: the model replies in prose,
+JSON parsing fails, and `DirectExpertRunner`'s existing raw-text fallback quietly treats it as a
+passing result instead of a real verdict. **Resolution: a small decorator inside the new
+`ForgeMission.ChatClients` project** (not `DirectExpertRunner`/Core) that watches for
+`options.ResponseFormat is ChatResponseFormatJson` and translates it into the
+`RawRepresentationFactory`/`OutputConfig` shape before delegating to `tryAGI.Anthropic`'s client.
+`DirectExpertRunner` keeps calling `GetResponseAsync(messages, options)` exactly as it does today for
+every other provider — it never learns Anthropic needed special handling. This is deliberately a
+translation shim, not a message-mapper — see the consistency constraint above.
+
+**Also decided this session: extract `ProviderClientBuilder` into a new project,
+`ForgeMission.ChatClients`.** Not scoped to Anthropic — all four providers move out of
+`ForgeMission.Cli` wholesale. Motivation: `ProviderClientBuilder.cs`'s own header comment
+("Lives in CLI because it depends on provider-specific packages") was a rule enforced by convention,
+not by a module boundary — this makes it structural, consistent with the documented rule that
+`IExpertRunner` is the only interface between the CLI and the AI provider. `ForgeMission.Cli.csproj`
+drops every vendor package reference (`Anthropic`/`tryAGI.Anthropic`,
+`Microsoft.Extensions.AI.OpenAI`, etc.) and gets one `ProjectReference` to `ForgeMission.ChatClients`;
+`Program.cs` calls `ChatClients.Build(profile) -> IExpertRunner` and never imports a vendor namespace.
+Chosen over extracting to a separate repo/NuGet package (the `Katasec.AnthropicServer`/
+`Katasec.OaiServer` precedent) for now — same-solution project gets the clean boundary today, and
+nothing blocks moving it to its own repo later if it earns that.
+
+### Spike (2026-08-10) — proof, not just a design argument
+
+Built an isolated console app (net10.0, `PublishAot=true`, package `tryAGI.Anthropic` 3.8.3 +
+`Microsoft.Extensions.AI` 10.7.0) replicating exactly what `DirectExpertRunner` does for `role:
+judge`: system+user `ChatMessage`s, a closed JSON schema (the same `text`/`status`/`reason` shape as
+`StepEnvelopeSchemaJson`) wired via `RawRepresentationFactory` → `OutputConfig.Format`, a real API
+call to `claude-haiku-4-5-20251001`, deserialized via a source-gen `JsonSerializerContext`.
+
+- **macOS AOT publish hit an unrelated toolchain bug first**: `ld: Assertion failed: (_addend ==
+  uniqueIndex && "too many large addends")` — a known Apple `ld-prime` (new linker, default since
+  recent Xcode) crash on large Native AOT binaries, nothing to do with reflection. Fixed with
+  `<LinkerArg Include="-Wl,-ld_classic" />` in the csproj (forces the classic linker). **This flag
+  needs to carry into `ForgeMission.ChatClients.csproj`** (and transitively wherever it's referenced)
+  or the real `forge` binary will hit the same crash once `tryAGI.Anthropic` is linked in — it wasn't
+  needed before because the official `Anthropic` package's dependency graph didn't trigger it.
+- **With that fixed, published a genuine Native AOT Mach-O binary** (`file` confirmed: `Mach-O 64-bit
+  executable arm64`) and ran it standalone (not `dotnet run`) against the real Anthropic API:
+  ```
+  RAW TEXT: {"text":"hello","status":"pass","reason":null}
+  PARSED  : text=hello status=pass reason=
+  RESULT: SUCCESS — no reflection crash, structured output round-tripped.
+  ```
+- Confirms both halves at once: no reflection crash under `PublishAot`, and the
+  `RawRepresentationFactory`/`OutputConfig` bridge actually produces valid structured output from a
+  real model response — not just "doesn't throw."
 
 ## Why this exists
 
@@ -91,11 +175,12 @@ at once: one at the plan, one at the build. Picked 2026-08-09 over Daedalus/Anvi
   `implementer` = OpenAI, `default` aliased to `implementer`), `mission.mcl`, three experts
   (`Proposer`, `Approver`, `Implementer`). `forge init` + `forge validate` both pass.
 - Branch: `codex/janus-mini-mission`. Not merged.
-- **Blocked**: `Approver` (Anthropic, `role: judge`) crashes under the AOT-published `forge` binary
-  — see below. `Proposer` (OpenAI) runs correctly, proving the negotiation-loop plumbing itself works
-  once `Approver` can actually execute.
+- **Blocked** on the bug below when this doc was first written; **fix designed + spiked 2026-08-10,
+  see "Resolution" above** — implementation not yet applied to this branch. `Proposer` (OpenAI) runs
+  correctly, proving the negotiation-loop plumbing itself works once `Approver` can actually execute.
 
-## Blocking bug: Anthropic SDK not AOT-safe for structured/non-tool chat calls
+## Blocking bug: Anthropic SDK not AOT-safe for structured/non-tool chat calls (root cause — see
+Resolution above for the fix)
 
 - **Symptom**: `error: Step 'Approver' failed: Reflection-based serialization has been disabled for
   this application...`
@@ -151,7 +236,7 @@ at once: one at the plan, one at the build. Picked 2026-08-09 over Daedalus/Anvi
 
 ## Open questions / not yet decided
 
-- ~~How to unblock Janus~~ — see **NEXT STEP** at the top of this doc, not repeated here.
+- ~~How to unblock Janus~~ — resolved 2026-08-10, see **Resolution** section above.
 - **Graceful "not approved" outcome** — a `Blocked` branch instead of a hard `MissionStatus.Fail` on
   loop exhaustion. Real, deferred enhancement; needs either a `decision` field added to the judge
   structured-output schema (an actual engine change to `DirectExpertRunner`'s closed schema) or a
@@ -177,10 +262,77 @@ at once: one at the plan, one at the build. Picked 2026-08-09 over Daedalus/Anvi
 
 ## Done when
 
-- `Approver` (Anthropic) runs successfully under the AOT-published `forge` binary — blocked on
-  resolving the upstream bug above.
+- `Approver` (Anthropic) runs successfully under the AOT-published `forge` binary — fix designed and
+  spiked (2026-08-10), not yet applied to `ForgeMission.ChatClients`/`Cli`; see task assignment below.
 - Full negotiation loop (`Proposer` proposes/asks, `Approver` approves/rejects/answers, converges
   within 3 rounds) verified live with real API calls end-to-end.
+
+## Task assignment — extract `ForgeMission.ChatClients`, swap Anthropic to `tryAGI.Anthropic`
+
+Ready to send to Codex as-is (see [claude-codex-workflow.md](../design/claude-codex-workflow.md) for
+the protocol this follows).
+
+```
+TASK ASSIGNMENT
+
+Role: implementer. Do not write or modify any code until I approve your plan.
+
+Read first (do not summarize these back to me):
+- AGENTS.md
+- docs/plan.md
+- docs/phases/phase-43.15-janus-inter-agent-mission.md (read the whole "Resolution
+  (2026-08-10)" section and its "Spike" subsection — that's the design and the
+  evidence this task implements; do not re-derive or re-investigate it)
+
+Task:
+Extract a new project, ForgeMission.ChatClients, that owns everything currently
+in src/ForgeMission.Cli/ProviderClientBuilder.cs — all four providers, not just
+Anthropic. Swap the Anthropic provider from the official `Anthropic` NuGet
+package to `tryAGI.Anthropic` (3.8.3), and add a small decorator inside
+ForgeMission.ChatClients that bridges ChatOptions.ResponseFormat to
+tryAGI.Anthropic's RawRepresentationFactory/OutputConfig structured-output
+shape, exactly as described in the spoke's "Resolution" section. Wire
+ForgeMission.Cli to consume ForgeMission.ChatClients.Build(profile) instead of
+its own ProviderClientBuilder; Cli.csproj should end up with zero vendor SDK
+package references (Anthropic/tryAGI.Anthropic, Microsoft.Extensions.AI.OpenAI,
+etc. all move to the new project). Carry the `-Wl,-ld_classic` LinkerArg
+workaround (documented in the spoke's Spike section) into
+ForgeMission.ChatClients.csproj so the real AOT-published forge binary doesn't
+hit the same macOS linker crash the spike did.
+
+Done when:
+- `Approver` (Anthropic, role: judge) runs successfully under the AOT-published
+  forge binary against missions/janus/ — no reflection crash.
+- Full Janus negotiation loop (Proposer proposes/asks, Approver
+  approves/rejects/answers, converges within 3 rounds) verified live with real
+  API calls end-to-end, per this spoke's top-level "Done when".
+- `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx`
+  both pass.
+- `make install && make demo-naive` still passes (regression check — every
+  other provider must be unaffected).
+- AGENTS.md's "Project structure" tree and docs/design/architecture.md updated
+  to list the new project.
+
+Constraints:
+- Every provider (OpenAI, Ollama, xAI, Anthropic) must end up on the identical
+  shape: vendor SDK -> .AsIChatClient() -> IChatClient, one switch case each,
+  in ForgeMission.ChatClients. Do not hand-roll a custom IChatClient or a
+  message-mapper for Anthropic — the whole point of this design is that the
+  package swap keeps Anthropic structurally indistinguishable from the other
+  three providers. The ResponseFormat/OutputConfig bridge is the one narrow,
+  explicitly-scoped exception, and it belongs in ForgeMission.ChatClients, not
+  in ForgeMission.Core/Adapters/DirectExpertRunner.cs — DirectExpertRunner
+  must not change.
+- ForgeMission.ChatClients depends on ForgeMission.Core only (for
+  IExpertRunner, ProviderProfile, DirectExpertRunner) — no dependency the
+  other direction.
+- Don't touch BuildWebSearch/Scout/Grok wiring — out of scope for this task.
+
+Next step:
+Reply with an implementation plan only: files you will touch or create, your
+approach, sequencing, and any assumption or open question not already
+answered in the docs above. Wait for my explicit approval before implementing.
+```
 
 `Implementer` actually executing real tool calls is explicitly **not** part of this spoke's "done" —
 it depends on a CLI-driven agentic mode or Forge Desktop, both owned elsewhere ([43.1](phase-43.1-tool-execution-engine.md),
