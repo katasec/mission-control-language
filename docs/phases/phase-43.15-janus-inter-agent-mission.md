@@ -23,11 +23,45 @@ tested (no AOT crash, structured output round-trips, loop mechanically converges
 did **not** verify that Approver's feedback was actually reaching Proposer, and it turns out it
 wasn't. Part of "Done when" below is corrected to reflect that.
 
-**NEXT STEP: implement the corrected design** — task assignment(s) to Codex, sequenced: (1) the
-small `{{feedback}}` wiring fix (general-purpose, benefits any `role: judge` + `loop(N)` mission,
-not Janus-specific), (2) the full-conversation-replay capability for LLM-only loops, (3) the
-Janus mission split (`Negotiate` + `Implement`), in that dependency order. Re-verify live
-afterward — same bar as the AOT fix: a real run, not just "tests pass."
+**NEXT STEP: implement the full-conversation-replay capability for LLM-only loops, then the
+Janus mission split (`Negotiate` + `Implement`). Skip the standalone `{{feedback}}` wiring fix —
+see "`{{feedback}}` fix deferred" below for why.** Design for the replay capability isn't fully
+closed yet — one open question: `Conversation` (the existing type used for `role: agent` tool
+continuations) has fixed message roles, but Proposer and Approver each need the *opposite*
+role-view of the same shared history (own turns as `assistant`, the other party's as `user`) —
+needs a neutral, speaker-labeled accumulator instead, re-tagged per recipient at call time. Once
+that's resolved, write the Codex task assignment (covering both the replay capability and the
+mission split together — they need to be verified live as one unit, not separately). Re-verify
+live afterward — same bar as the AOT fix: a real run, not just "tests pass."
+
+### `{{feedback}}` fix deferred (2026-08-10) — evidence, not just a call
+
+Audited every `loop(N)` mission in `missions/` for the one scenario where the standalone
+`{{feedback}}` wiring fix (write `context["feedback"]` on a failing `role: judge` LLM step —
+`PipelineRunner.ExecuteStepAsync`, not yet done) would matter and full replay wouldn't already
+cover it: a loop mixing an LLM `role: judge` with a `kind: rule`/`kind: exec` step. **No such
+mission exists today:**
+
+| Mission | Judge | Kind |
+|---|---|---|
+| `sdlc-agent/DesignMode`, `loop-demo/QualityAnswer`, `self-refine/SelfRefine` | LLM `role: judge` | Every step in the loop is `kind: llm` — pure-LLM, would be *better* served by full replay than by the single-string fix |
+| `hallucination-reduction`, `verifiable-reasoning` | `kind: rule` gate, no `role: judge` tag | Already works — `RuleExpertRunner` writes `context["feedback"]` itself regardless of the `role:` tag |
+
+Every current beneficiary of the fix is pure-LLM and gets superseded by full replay anyway; every
+mission that actually uses `kind: rule`/`kind: exec` already works, unaffected by the bug. The fix
+is real (`language.md` documents `{{feedback}}` as working for `role:judge` *or* `kind:rule`; only
+the latter is true today) but has zero current beneficiaries — not worth a task on its own.
+**Revisit if a mission is ever built that genuinely mixes an LLM judge with a deterministic gate
+in the same loop** — until then, deferred, not abandoned.
+
+**Related finding, not yet acted on:** `sdlc-agent/DesignMode`, `loop-demo/QualityAnswer`, and
+`self-refine/SelfRefine` all have the *exact same* unfixed bug Janus did — pure-LLM `loop(N)` with
+an LLM `role: judge`, so `{{feedback}}` never reaches the generator on retry today, in any of
+them. Point 2 below ("What Janus proves") claims `sdlc-agent`'s `DesignMode` "proved this pattern
+first" — that claim is now known to be **false**; it never worked there either, it was simply
+never verified. Left uncorrected in place below (struck through) rather than silently edited, per
+this project's own status-honesty rule. Once the full-replay capability ships, these three
+missions get the same fix Janus does, for free — no separate task needed for them either.
 
 ## What Janus proves
 
@@ -37,8 +71,12 @@ afterward — same bar as the AOT fix: a real run, not just "tests pass."
 2. **A propose → question/approve → revise negotiation loop** (`Proposer` + `Approver` as
    `role: judge`, `loop(3)`) mirrors the real manual Claude/Codex workflow described by the user:
    don't proceed until explicitly approved; questions get answered on retry via `{{feedback}}` —
-   the same mechanism `role: judge` failures already use for critique-driven convergence
-   ([`sdlc-agent`'s `DesignMode`](../../missions/sdlc-agent/mission.mcl) proved this pattern first).
+   ~~the same mechanism `role: judge` failures already use for critique-driven convergence
+   ([`sdlc-agent`'s `DesignMode`](../../missions/sdlc-agent/mission.mcl) proved this pattern
+   first)~~ **correction (2026-08-10): false, left visible rather than silently fixed — see
+   "`{{feedback}}` fix deferred" above. `sdlc-agent`'s `DesignMode` never actually exercised this;
+   it has the identical unfixed bug.** What Janus actually validated in this session is the
+   opposite of what this point originally claimed: the mechanism was never proven anywhere.
 3. **`role: agent` gates real tool execution** (Read/Edit/Write/Bash, [43.1](phase-43.1-tool-execution-engine.md)'s
    `AgenticSession`) to only after that approval — structurally, not by convention. A failing judge
    step breaks the pipeline's step loop immediately, before any later step (including `Implementer`)
