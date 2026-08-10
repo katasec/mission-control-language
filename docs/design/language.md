@@ -192,9 +192,25 @@ mission BuildOperatorDesign(goal) loop(3) = {
 
 Reruns the full pipeline up to N times. The last step's `status: pass | fail` in the
 `StepEnvelope` controls the loop — if `pass`, exit early; if `fail` and attempts remain,
-retry. Platform-managed feedback injection: the runtime prepends a structured critique
-(Constitutional AI model: criterion, reason, suggestion) to the first expert's context on
-each retry. No developer action required.
+retry.
+
+Two things carry across attempts, and which one applies depends on what's in the loop:
+
+- **`{{feedback}}`** — a single reserved string, the failing expert's `onFail`/`reason`
+  message from the prior attempt, referenceable by any expert's prompt. This is what fires
+  when the loop mixes deterministic checks (`kind: rule`/`kind: exec`) with LLM experts —
+  see the [`kind` field](#kind-field) below.
+- **Full conversation replay** — when *every* step in the loop is an LLM expert (no
+  `kind: rule`/`kind: exec`/`kind: onnx`/`kind: search` mixed in), the loop is a genuine
+  multi-party conversation, and the runtime replays the accumulated transcript to each
+  participant automatically — no developer action required, no opt-in flag. This is the
+  same default every consumer chat product uses (ChatGPT, Claude, Grok, Gemini,
+  Perplexity all silently replay full history); a mission's own boundary is the "new
+  conversation" signal, the same way opening a new chat thread is. See
+  [Mission composition](#mission-composition) for how to scope a negotiation to exactly
+  its participants — a step that shouldn't be part of the conversation (e.g. an execution
+  step that only needs the final agreed output) belongs in a separate, composed mission,
+  not inside the same loop.
 
 Research-backed default: `loop(2)` or `loop(3)`.
 

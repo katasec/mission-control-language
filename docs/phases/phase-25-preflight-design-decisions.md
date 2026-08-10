@@ -360,7 +360,69 @@ record ContextValue(string Raw);           // Phase 25
 
 ## 9. Loop context — deterministic convergence vs random retry
 
-**Status: Resolved**
+**Status: Resolved — partially superseded, see note below (2026-08-10)**
+
+**Superseded note (2026-08-10):** the "Decision" recorded below — `{{feedback}}` removed as a
+public developer API, automatic structured (criterion/reason/suggestion) injection to the first
+expert only — is **not** what was actually built. What shipped, and what
+[`docs/design/language.md`](../design/language.md#L330) documents as the canonical, current design,
+is simpler: `{{feedback}}` **is** a public reserved runtime variable, a raw string (the failing
+expert's `onFail`/`reason` message, not a structured critique), which any expert's prompt can
+reference explicitly — not injection restricted to the first expert only. `language.md:332`
+explicitly documents it as populated by a failing `role:judge` **or** `kind:rule` expert. This
+section was never updated after that simplification happened, so it read as current design when it
+is not — kept below for historical record, not as the live spec. `language.md` is the source of
+truth for `{{feedback}}`'s actual behavior.
+
+**Second superseded note (2026-08-10, same day, deeper finding):** investigating a live bug in
+[missions/janus/](../../missions/janus/) (Phase 43.15) surfaced that `{{feedback}}` — Option A,
+"most recent failure only" — was never actually a considered final answer either. Re-reading
+[`docs/design/research.md`](../design/research.md#L181): *"The literature suggests Option B or C
+produces the best results. Option A is the minimum viable implementation."* Option A shipped anyway
+(Phase 28, for `kind:rule`) because it was what a different, unrelated feature needed at the time,
+and nobody came back to revisit it. Full design conversation and final resolution recorded in
+[phase-43.15-janus-inter-agent-mission.md](phase-43.15-janus-inter-agent-mission.md) (2026-08-10
+session) — summary:
+
+- **Not Option B/C as originally conceived either.** Both assumed a single generator + a judge
+  (Self-Refine/Reflexion shape — one-directional, judge has no memory of its own past verdicts).
+  Janus's actual purpose — *"Proposer/Approver negotiate... questions get answered on retry"* — is
+  a genuine two-party dialogue, not a generator being critiqued. That shape needs both parties to
+  remember, which neither Option A/B/C addresses.
+- **The real bug wasn't only the missing `{{feedback}}` wiring — it was mission structure.** The
+  original `mission Janus(task) loop(3) = { Proposer -> Approver -> Implementer }` put a one-shot
+  execution step (`Implementer`) inside the same loop as the two negotiating parties. Once you ask
+  "should this loop replay conversation history among its participants," `Implementer` was never a
+  participant — it shouldn't have been in that loop at all.
+- **Resolution: `loop(N)` replays full conversation history by default among LLM-backed
+  participants only** (not `kind:rule`/`kind:exec`/`kind:onnx`/`kind:search` steps sharing the same
+  loop) — no explicit opt-in flag. Justification: this is the universal norm for every consumer chat
+  product (ChatGPT, Claude, Grok, Gemini, Perplexity) — a conversation replays silently by default;
+  requiring an explicit flag to get that behavior back would be a knob for its own sake, against
+  this project's own "fewer knobs" design philosophy. What already provides the necessary scoping
+  and explicitness — matching this doc's own Decision #4 "no hidden magic" principle — is **mission
+  composition** (Decision #11, already shipped): a mission's boundary is itself the "new
+  conversation" signal, exactly like opening a new chat thread. `kind:rule`/`kind:exec` loops (e.g.
+  `Drafter -> WordCountGate`, Phase 28's shipped pattern) are unaffected — no LLM-to-LLM replay
+  applies there, today's single-string `{{feedback}}` behavior is unchanged.
+- **Corrected Janus shape** — split into two missions along the negotiation/execution boundary,
+  composed via the existing (already-shipped) sub-mission mechanism:
+  ```fsharp
+  mission Negotiate(task) loop(3) = {
+      Proposer using implementer
+      -> Approver using architect
+  }
+  mission Implement(plan) = {
+      Implementer using implementer
+  }
+  mission Janus(task) = {
+      Negotiate(task: task)
+      -> Implement(plan: output)
+  }
+  ```
+  `Negotiate` is 100% LLM participants → full replay applies automatically. `Implement` is a
+  separate mission → structurally cannot see the negotiation, no special-case needed — mission
+  composition's existing "no context inheritance" rule (Decision #11) already guarantees it.
 
 **Context:**
 The current `loop N` implementation almost certainly resets context at the start of each iteration — each attempt runs with the same original input, with no memory of what failed or why. This makes looping random retry, not iterative improvement:

@@ -1,15 +1,33 @@
 # Phase 43.15 — Janus: minimal inter-agent mission (Claude architect + OpenAI implementer)
 
-**Status: Done (2026-08-10).** `ForgeMission.ChatClients` extracted, Anthropic's Native AOT crash
-fixed (swapped to `tryAGI.Anthropic`), full negotiation loop verified live on the AOT-published
-`forge` binary — both the converge and loop-exhaustion paths. Full build narrative, root-cause
-investigation, design rationale, and verification evidence:
-[phase-43.15-janus-inter-agent-mission_completed.md](phase-43.15-janus-inter-agent-mission_completed.md).
-Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+**Status: Reopened (2026-08-10).** The AOT fix (`ForgeMission.ChatClients` +
+`tryAGI.Anthropic`) is genuinely done and stays done — that part of "Done when" is real,
+verified, and not in question. What's reopened: the *mission itself* has two real gaps found
+in the same session, after the AOT work landed —
+[full design writeup and resolution](phase-25-preflight-design-decisions.md#9-loop-context--deterministic-convergence-vs-random-retry)
+lives in the Phase 25 preflight doc (Decision #9's second superseded note), not duplicated here.
+Summary:
 
-**NEXT STEP: merge `codex/janus-mini-mission`, then decide what's next for Phase 43** — 43.4 (IDE
-trace surface) and 43.5 (human-in-the-loop) are the natural follow-ons per "Relationship to other
-phases" below; neither has started.
+1. `context["feedback"]` was never written for a failing `role: judge` step (only `kind:
+   rule`/`kind: exec` do it) — `PipelineRunner.ExecuteStepAsync` needs the fix.
+2. Deeper: even with (1) fixed, Janus's mission shape is wrong. `Implementer` was inside the
+   same `loop(3)` as the two negotiating parties (`Proposer`/`Approver`), which isn't a
+   participant in the negotiation and shouldn't share its loop. Corrected shape: split into
+   `Negotiate(task) loop(3)` (Proposer + Approver only) and `Implement(plan)` (composed
+   afterward), with `loop(N)` defaulting to full conversation-history replay among LLM-only
+   participants (no flag — mission composition already provides the scoping).
+
+Neither is implemented yet. The "Implementation verified" evidence in the
+[completed doc](phase-43.15-janus-inter-agent-mission_completed.md) is accurate for what it
+tested (no AOT crash, structured output round-trips, loop mechanically converges/exhausts) — it
+did **not** verify that Approver's feedback was actually reaching Proposer, and it turns out it
+wasn't. Part of "Done when" below is corrected to reflect that.
+
+**NEXT STEP: implement the corrected design** — task assignment(s) to Codex, sequenced: (1) the
+small `{{feedback}}` wiring fix (general-purpose, benefits any `role: judge` + `loop(N)` mission,
+not Janus-specific), (2) the full-conversation-replay capability for LLM-only loops, (3) the
+Janus mission split (`Negotiate` + `Implement`), in that dependency order. Re-verify live
+afterward — same bar as the AOT fix: a real run, not just "tests pass."
 
 ## What Janus proves
 
@@ -64,12 +82,12 @@ phases" below; neither has started.
 
 ## Done when
 
-- ✅ `Approver` (Anthropic) runs successfully under the AOT-published `forge` binary.
-- ✅ Full negotiation loop (`Proposer` proposes/asks, `Approver` approves/rejects/answers, converges
-  within 3 rounds, or exhausts to a legitimate `MissionStatus.Fail`) verified live with real API
-  calls end-to-end — both the converge and exhaust paths.
-
-Both verified live 2026-08-10 — see the completed doc for the exact evidence.
+- ✅ `Approver` (Anthropic) runs successfully under the AOT-published `forge` binary — genuinely
+  done, this is purely about the AOT crash, unaffected by the mission-design gaps below.
+- ⏳ **Corrected, 2026-08-10**: the loop *mechanically* converges/exhausts correctly (verified
+  live), but "negotiation" requires Approver's feedback to actually reach Proposer and the
+  mission to only loop its actual negotiating parties — neither was true. Reopened; see status
+  note above. Re-mark done only after the corrected design is implemented and re-verified live.
 
 `Implementer` actually executing real tool calls is explicitly **not** part of this spoke's "done" —
 it depends on a CLI-driven agentic mode or Forge Desktop, both owned elsewhere ([43.1](phase-43.1-tool-execution-engine.md),
