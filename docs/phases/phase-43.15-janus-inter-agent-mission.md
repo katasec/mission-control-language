@@ -41,12 +41,34 @@ conversation-history replay for free from the same engine change — no separate
    this is the target UX: the user briefs Claude, Claude negotiates with the implementer
    autonomously, the user watches the whole exchange, and can intervene — but doesn't have to.
 
+## "Not approved" outcome — resolved as presentation-only (2026-08-11)
+
+**Decision: no engine or language change for this.** `Janus`'s current design already proves the
+intended workflow correctly — Proposer/Approver negotiate with full transcript replay, and
+`Implementer` runs only after `Approver` genuinely passes. A final rejection on loop exhaustion
+already safely stops implementation and surfaces the Architect's actual reason, via the existing
+`MissionStatus.Fail` + `FailReason` path — nothing is silently lost today.
+
+Considered and explicitly rejected for this: a `MissionStatus.Blocked` outcome, `outputKeys`
+runtime support in `DirectExpertRunner`, generated per-expert response schemas, and a
+`kind: json_extract` workaround (the last of these doesn't even work mechanically — a step after a
+failing judge never runs, so an extractor step placed after `Approver` could only ever fire on the
+*passing* case, never the rejection case it would need to capture).
+
+**For [43.4](phase-43.4-ide-trace-surface.md)/Forge Desktop, when it renders an exhausted Janus
+negotiation:** present the existing failure result as
+
+```
+Not approved
+<final Approver reason>
+```
+
+That's a presentation choice over data that already exists (`MissionResult.FailReason`) — not a new
+machine-readable status. Revisit a third machine-readable status only if a future concrete use case
+actually requires branching mission logic on it, not preemptively.
+
 ## Open questions / not yet decided
 
-- **Graceful "not approved" outcome** — a `Blocked` branch instead of a hard `MissionStatus.Fail` on
-  loop exhaustion. Real, deferred enhancement; needs either a `decision` field added to the judge
-  structured-output schema (an actual engine change to `DirectExpertRunner`'s closed schema) or a
-  different mechanism entirely.
 - **Whether `role: agent` (tools) Anthropic calls are AOT-safe** — untested. Plain `forge run` can't
   exercise this path today: tool execution requires `AgenticSession`, which only the not-yet-shipped
   Desktop Client Runtime drives (per [43.1](phase-43.1-tool-execution-engine.md)'s own "reusable
