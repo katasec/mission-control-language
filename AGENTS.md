@@ -172,14 +172,19 @@ documented, raise it and get it resolved before handing off any implementation w
 a task that's handed off can run start-to-finish, unblocked, without stopping mid-build to ask a
 design question that should have been closed out beforehand.
 
-### Roles — Claude (architect) / Codex (implementer)
-Claude owns design, review, and approval. Codex owns implementation. Codex never writes or modifies
-code without an explicitly approved plan, and a task is never marked done without Claude reviewing
-Codex's completion summary against the spoke's "Done when" condition. The handoff mechanics — the
+### Roles — Codex (architect) / Claude (implementer)
+**Trial mode since 2026-08-11**, running for a few weeks as a manual test of MCL's own premise that
+models and roles should be swappable — see
+[docs/design/claude-codex-workflow.md](docs/design/claude-codex-workflow.md) for the reasoning and
+a revert path back to the original split.
+
+Codex owns design, review, and approval. Claude owns implementation. Claude never writes or modifies
+code without an explicitly approved plan, and a task is never marked done without Codex reviewing
+Claude's completion summary against the spoke's "Done when" condition. The handoff mechanics — the
 task-assignment and completion-summary templates, the plan → approve → implement → summarize →
 approve loop — are in
 [docs/design/claude-codex-workflow.md](docs/design/claude-codex-workflow.md).
-**If you are Codex and you just opened this repo: read that doc now.** It defines your role and the
+**If you are Claude and you just opened this repo: read that doc now.** It defines your role and the
 approval gates you operate under — do not start implementing anything until a task assignment
 following that protocol arrives.
 
