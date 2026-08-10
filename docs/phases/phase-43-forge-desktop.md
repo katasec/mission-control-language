@@ -187,11 +187,26 @@ UI spoke) have a foundation to build on.
   [43.5](phase-43.5-human-in-the-loop.md) (approve/deny widgets) and
   [43.4](phase-43.4-ide-trace-surface.md) (general tool-call → component rendering). Not build-ready
   — no spike done yet.
-- ~~**Longer-term aspiration (not scoped to any spoke yet, 2026-07-26)**~~ — **built, see
-  [43.15](phase-43.15-janus-inter-agent-mission.md) (done 2026-08-11).** The user wants to
-  eventually eliminate the manual copy-paste cycle currently used to hand work between Claude
-  (architect/reviewer) and Codex (implementer) during this project's own build process — one
-  surface instead. Forge Desktop's "missions attach instead of models" thesis is the natural
-  candidate; 43.15's `missions/janus/` is the first concrete build step, deliberately minimal
-  rather than the full `sdlc-agent` — proves the primitives, still not wired into an actual
-  desktop UI (that's 43.4/43.5's job).
+- ~~**Longer-term aspiration (not scoped to any spoke yet, 2026-07-26)**~~ — **[43.15](phase-43.15-janus-inter-agent-mission.md)
+  done 2026-08-11, proves the negotiation mechanism itself. Getting it presented in Forge
+  Desktop is separate, unstarted work — not yet a spoke.** The user wants to eventually
+  eliminate the manual copy-paste cycle currently used to hand work between Claude
+  (architect/reviewer) and Codex (implementer) during this project's own build process —
+  Forge Desktop's "missions attach instead of models" thesis is the natural candidate;
+  `missions/janus/` is the first concrete proof, deliberately minimal rather than the full
+  `sdlc-agent`.
+
+  **Base-PoC scope, locked 2026-08-11**: LLM-to-LLM negotiation + real tool calling for
+  `Implementer`, visible in Desktop — explicitly **not**
+  [43.5](phase-43.5-human-in-the-loop.md)'s `kind: human` yet. Three concrete, unstarted gaps
+  between here and that PoC:
+  1. **Janus isn't attachable in Desktop.** Needs the same treatment
+     [43.3](phase-43-forge-desktop.md#dependency-ordered-task-list) is mid-build on for
+     `sdlc-agent` (OCI publish + hosted-catalog registration) — or a simpler local-dev attach
+     path, if one exists; not yet investigated which.
+  2. **Nothing renders it yet.** [43.4](phase-43.4-ide-trace-surface.md) (the debugger-style
+     trace surface) is still "Design, iteration not started." The existing plain Electron/WASM
+     shell streams step output generically, but that's untested for Janus specifically.
+  3. **Real tool execution through Desktop is unproven for this mission.** Every live run so
+     far used plain `forge run`, which never invokes `AgenticSession` — `Implementer` actually
+     calling tools has not been exercised end-to-end yet.
