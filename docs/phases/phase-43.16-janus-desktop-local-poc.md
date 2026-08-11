@@ -22,7 +22,7 @@ authorization path, not a human-in-the-loop shortcut.
 | Durable Janus transcript/run state/reconnect. | Cloud catalog, OCI publishing, provider picker. |
 | Orleans ConversationGrain and MissionRunGrain. | Existing Rooms/membership/ledger migration from Postgres. |
 | Table events, Blob artifacts, Service Bus reliable command delivery. | General resume after an uncertain in-flight provider call. |
-| One-Silo Kind proof with Azurite and Service Bus emulator. | Multi-silo, HA, and cloud deployment. |
+| One-Silo Kind proof plus Azure data-plane provisioning/acceptance. | Multi-silo, HA, and cloud application deployment. |
 | Desktop group-chat projection; future Rooms reuse. | 43.4 workbench and 43.5 human controls. |
 
 ## Locked decisions
@@ -40,7 +40,9 @@ authorization path, not a human-in-the-loop shortcut.
 6. **Recovery is explicit.** Completed steps and waits replay. An uncertain in-flight provider call
    becomes 'interrupted', never silently duplicated.
 7. **Forge-native API is additive.** Conversation HTTP/SSE is separate from unchanged '/v1/*' doors.
-8. **Kind is the acceptance environment.** Desktop stays on the host; Kind runs durable services.
+8. **Kind is the primary product acceptance environment.** Desktop stays on the host; Kind runs
+   durable services. A Bicep-provisioned non-production Azure data plane is a required second
+   acceptance environment.
 
 ## Build sequence
 
@@ -184,7 +186,32 @@ only named resources. The first manifest has one Host/Silo and one worker.
 **Done when:** durable-dev-up reports all dependencies healthy; durable-dev-down removes only named
 development resources; unavailable amd64 SQL emulation fails clearly before deployment.
 
-### 8. Product proof and evidence
+### 8. Provision and verify Azure durable data infrastructure
+
+In the sibling repository '/Users/ameerdeen/progs/forge-infra', add the ordered
+'dev/350-conversation-data' Bicep layer and Make targets:
+
+    make 350-conversation-data-what-if
+    make 350-conversation-data
+
+It is a new data-plane layer between 300-data and 400-appenv, not a modification to the existing
+Postgres layer. Create a Standard v2 Storage account with named Table/Blob resources, a Standard
+Service Bus namespace with the session-enabled duplicate-detection 'mission-command' queue, and
+separate managed identities/RBAC for Conversation Host and worker. Use managed identity endpoints;
+do not create account keys or Service Bus connection-string secrets.
+
+Before any deployment, run and review the what-if target. Deploy only through the Make target, then
+use Azure CLI to verify the named Storage account, Table/Blob resources, Service Bus namespace/queue
+properties, and role assignments. The application-level Azure acceptance test uses
+DefaultAzureCredential against those Bicep-owned resources. Do not use Azure CLI to create
+out-of-band infrastructure.
+
+**Done when:** the Bicep layer validates in its repository, the reviewed Make what-if and deployment
+have named successful observations, Azure CLI confirms each resource/role, and an integration test
+can append/replay an event plus send/receive an idempotent command against the non-production Azure
+resources.
+
+### 9. Product proof and evidence
 
 Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named
 observations for:
@@ -198,8 +225,8 @@ observations for:
 7. browser and packaged Photino rendering of recovered conversation;
 8. successful solution build/test.
 
-Azurite-only success is local-dev evidence. A non-production Azure Storage acceptance run is required
-before any production-ready claim.
+Azurite-only success is local-dev evidence. The Bicep-provisioned non-production Azure data-plane
+acceptance run is required before any production-ready claim.
 
 ## Done when
 
@@ -209,7 +236,8 @@ before any production-ready claim.
 - Service Bus commands are delivered at least once and observed once at the durable run-state
   boundary.
 - Desktop remains sole local-tool executor; '/v1/*' clients work unchanged.
-- The Kind proof and all named evidence above are recorded.
+- The Kind proof, Bicep deployment, Azure CLI verification, and all named evidence above are
+  recorded.
 
 ## Hand-off gate
 

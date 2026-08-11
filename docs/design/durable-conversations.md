@@ -164,6 +164,49 @@ Server dependency is amd64-only. Local scripts must preflight Docker emulation a
 remediation before applying manifests. Azurite Table support is developer-emulator evidence only;
 the final storage-provider acceptance run uses a real non-production Azure Storage account.
 
+## Azure development infrastructure
+
+Azure infrastructure is a required deliverable of the durable-conversation work, not a later
+configuration detail. The current dev resource group has no Storage account and no Service Bus
+namespace, so neither dependency exists yet.
+
+The implementation adds a new ordered layer in the sibling 'forge-infra' repository:
+
+    dev/350-conversation-data/
+      main.bicep
+      main.bicepparam
+      storage.bicep
+      servicebus.bicep
+      identities.bicep
+
+The layer belongs after 300-data and before 400-appenv. It creates:
+
+- a Standard v2 Azure Storage account, with Tables for conversation events/indexes and Orleans
+  checkpoint/clustering state, plus the 'forgeconversationartifacts' Blob container;
+- a Standard Azure Service Bus namespace and a session-enabled, duplicate-detection
+  'mission-command' queue;
+- separate host and worker user-assigned managed identities and least-privilege role assignments.
+  The host can read/write Table/Blob and send commands. The worker can read/write Table/Blob,
+  receive/send commands, pull its image, and read only the existing provider-key secrets from Key
+  Vault. Neither receives billing or Rooms database credentials.
+
+The app uses managed identity and service endpoints, not account keys or Service Bus connection
+strings. The Bicep layer exports only non-secret endpoints/IDs. A later Container Apps layer can
+consume those outputs to host the Conversation Host and worker; that cloud application deployment
+remains after the local Kind proof.
+
+The forge-infra Makefile gains '350-conversation-data-what-if' and
+'350-conversation-data'. The required flow is:
+
+1. build and validate the Bicep in CI;
+2. run 'make 350-conversation-data-what-if' from forge-infra and review it;
+3. run 'make 350-conversation-data' only after that review;
+4. verify control plane, queue properties, and RBAC with Azure CLI observations;
+5. run the non-production Azure Storage/Service-Bus acceptance path with DefaultAzureCredential.
+
+The Azure CLI is for observation, verification, and the Make targets' deployment path; it is never
+used to hand-create a resource that Bicep must own.
+
 ## Deferred
 
 - Human intervention/suspend/resume (43.5).
