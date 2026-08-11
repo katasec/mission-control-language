@@ -174,7 +174,7 @@ Azure infrastructure is a required deliverable of the durable-conversation work,
 configuration detail. The current dev resource group has no Storage account and no Service Bus
 namespace, so neither dependency exists yet.
 
-The implementation adds a new ordered layer in the sibling 'forge-infra' repository:
+Infrastructure is implemented first, in the sibling 'forge-infra' repository:
 
     dev/350-conversation-data/
       main.bicep
@@ -182,8 +182,12 @@ The implementation adds a new ordered layer in the sibling 'forge-infra' reposit
       storage.bicep
       servicebus.bicep
       identities.bicep
+      kind/
+    dev/525-conversation-app/
+      main.bicep
+      main.bicepparam
 
-The layer belongs after 300-data and before 400-appenv. It creates:
+The 350 layer belongs after 300-data and before 400-appenv. It creates:
 
 - a Standard v2 Azure Storage account, with Tables for conversation events/indexes and Orleans
   checkpoint/clustering state, plus the 'forgeconversationartifacts' Blob container;
@@ -201,21 +205,26 @@ to Key Vault through an idempotent deployment script, following the existing 300
 - 'Conversation-StorageConnection' for the isolated conversation Storage account;
 - 'Conversation-ServiceBusConnection' from a dedicated Send/Listen policy with no Manage right.
 
-The Bicep layer exports only non-secret endpoints/IDs. 'durable-dev-up.ps1' uses the developer's
-Azure CLI login to read those Key Vault secrets directly into the transient
+The Bicep layer exports only non-secret endpoints/IDs. Its forge-infra Kind Make target uses the
+developer's Azure CLI login to read those Key Vault secrets directly into the transient
 'forge-conversation-cloud' Kubernetes Secret; no secret is committed, written to a parameter file,
-or left on the host filesystem. 'durable-dev-down.ps1' deletes that namespace Secret with the Kind
-resources. A later Container Apps layer consumes the endpoints/managed identities to host the
-Conversation Host and worker; that cloud application deployment remains after the local Kind proof.
+or left on the host filesystem. The matching down target deletes that namespace Secret with the
+Kind resources.
+
+The 525 layer declares the future cloud Conversation Host and worker Container Apps, their
+identities, ingress, scale rules, Key Vault references, and endpoint configuration. It is authored,
+validated, and what-if reviewed before application work, but its actual deployment waits for the
+application images. The local Kind proof remains the first product deployment.
 
 The forge-infra Makefile gains '350-conversation-data-what-if' and
-'350-conversation-data'. The required flow is:
+'350-conversation-data', the three '350-conversation-kind-*' targets, and
+'525-conversation-app-what-if'/'525-conversation-app'. The required order is:
 
-1. build and validate the Bicep in CI;
+1. author/validate all 350 and 525 IaC in CI;
 2. run 'make 350-conversation-data-what-if' from forge-infra and review it;
-3. run 'make 350-conversation-data' only after that review;
-4. verify control plane, queue properties, and RBAC with Azure CLI observations;
-5. run the non-production Azure Storage/Service-Bus acceptance path with DefaultAzureCredential.
+3. deploy 350 through its Make target and verify cloud resources/RBAC with Azure CLI;
+4. run the Kind Make target to prove the local cluster reaches those cloud resources;
+5. review the 525 what-if before code/image work; deploy it only when the images exist.
 
 The Azure CLI is for observation, verification, and the Make targets' deployment path; it is never
 used to hand-create a resource that Bicep must own.

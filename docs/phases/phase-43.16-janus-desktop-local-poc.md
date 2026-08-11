@@ -46,7 +46,64 @@ authorization path, not a human-in-the-loop shortcut.
 
 ## Build sequence
 
-### 1. Contracts and project boundaries
+### 1. Infrastructure foundation — first, in forge-infra
+
+All infrastructure for this phase is authored, validated, and where it has no image dependency
+deployed before application implementation begins. It lives in the sibling
+'/Users/ameerdeen/progs/forge-infra' repository; mission-control-language contains application code
+and acceptance evidence, not a second IaC implementation.
+
+Create these ordered IaC units:
+
+    dev/350-conversation-data/
+      main.bicep, main.bicepparam
+      storage.bicep, servicebus.bicep, identities.bicep
+      scripts/write-kind-dev-credentials.sh
+      kind/namespace.yaml, kind/conversation-host.yaml, kind/mission-worker.yaml
+    dev/525-conversation-app/
+      main.bicep, main.bicepparam
+
+The 350 layer sits between 300-data and 400-appenv. It creates and deploys the cloud data plane:
+the isolated Storage account/Table/Blob resources, Standard Service Bus namespace and
+session-enabled duplicate-detection queue, Key Vault bootstrap of the two Kind-only credential
+secrets, managed identities, and all least-privilege data-plane/AcrPull/Key-Vault role assignments.
+It does not alter the existing Postgres layer.
+
+The 525 layer declares the future cloud Conversation Host and worker Container Apps, their separate
+identities, Key Vault references, ingress, scale rules, and non-secret Storage/Service-Bus endpoint
+configuration. It is Bicep-validated and what-if reviewed now, before code is written. Its actual
+Container Apps deployment waits only for the application images; cloud application hosting is not a
+substitute for the local Kind product proof.
+
+The forge-infra Makefile gains:
+
+    make 350-conversation-data-what-if
+    make 350-conversation-data
+    make 350-conversation-kind-up
+    make 350-conversation-kind-down
+    make 350-conversation-kind-status
+    make 525-conversation-app-what-if
+    make 525-conversation-app
+
+'350-conversation-kind-up' creates/reuses the 'forge-durable' cluster with
+'kind create cluster --name forge-durable', reads the Bicep-created dev-only cloud credentials
+from Key Vault through the operator's Azure CLI login into a transient namespace Secret, builds and
+loads local images, applies the checked-in manifests, waits for health, and prints the Desktop
+endpoint. Down removes only that named Kind cluster/namespace; it never deletes Bicep-owned Azure
+resources. The local Kind compute therefore uses the real Azure Table/Blob and Service Bus
+resources from day one.
+
+Before deploying any Azure layer, run and review its Make what-if target. Deploy only through its
+Make target. Verify each deployment with Azure CLI observations: Storage account/Table/Blob,
+Service Bus namespace/queue/session/duplicate settings, Key Vault secret presence without printing
+values, and role assignments. The current dev resource group has neither a Storage account nor a
+Service Bus namespace, so this is an upfront dependency, not optional polish.
+
+**Done when:** 350 is deployed and verified; Kind can reach the real Azure data plane; 525 compiles
+and has a reviewed what-if; all IaC is committed/pushed in forge-infra before the first application
+task starts.
+
+### 2. Contracts and project boundaries
 
 Create:
 
@@ -75,7 +132,7 @@ capability declarations. It never contains credentials or the local workspace pa
 **Done when:** serialization tests round-trip every event kind through generated contexts and
 architecture tests prove Client Runtime/CLI do not reference Host/Orleans/Azure SDK assemblies.
 
-### 2. Durable-ready MCL trace facts
+### 3. Durable-ready MCL trace facts
 
 Replace the narrow synchronous PipelineRunOptions step callbacks with awaited structured callbacks.
 Add AOT-safe PipelineStepStarted, PipelineStepDelta, PipelineStepCompleted, and tool-request trace
@@ -93,7 +150,7 @@ additive.
 **Done when:** a deterministic Janus test sees Proposer complete, Approver with verdict, a rejected
 retry attempt, and Implementer only after approval, including across the nested MCL missions.
 
-### 3. Table/Blob persistence and Orleans ownership
+### 4. Table/Blob persistence and Orleans ownership
 
 Implement inside ConversationHost:
 
@@ -113,7 +170,7 @@ marks a stale executing checkpoint as interrupted rather than replaying an uncer
 **Done when:** Azurite integration tests create/re-activate a grain, replay an ordered transcript
 from a fresh host, reject duplicate event/command IDs, and dereference a Blob-backed artifact.
 
-### 4. Service Bus delivery and mission worker
+### 5. Service Bus delivery and mission worker
 
 Add:
 
@@ -134,7 +191,7 @@ continuation. It never accesses a local filesystem or terminal.
 commands for separate conversations remain isolated, and an unexpected tool-result ID does not
 advance the run.
 
-### 5. Conversation API and resumable SSE
+### 6. Conversation API and resumable SSE
 
 ConversationHost Program hosts the Silo, worker, API, health endpoints, and source-generated JSON.
 Map the five routes in [durable-conversations.md](../design/durable-conversations.md#reconnect-and-projections).
@@ -149,7 +206,7 @@ retain tenant/user ownership for a later Forge identity adapter.
 **Done when:** an HTTP test submits Janus, disconnects after a known sequence, reconnects, and
 gets exactly later events in order; existing '/v1/*' contract tests remain unchanged.
 
-### 6. Client Runtime and group-chat rendering
+### 7. Client Runtime and group-chat rendering
 
 Add ConversationRuntimeSession beside MissionRuntimeSession and CloudMissionRuntimeSession. Extend
 session setup/prompt contracts only to select durable conversation runtime and preserve the returned
@@ -167,63 +224,7 @@ rows. Rehydrated and live events use one renderer; normal missions retain their 
 **Done when:** UI tests render approval, revision, not-approved, and rehydrated tool result without
 duplicates; boundary tests still prohibit Presentation's direct Host dependency.
 
-### 7. Provision and verify Azure durable data infrastructure
-
-In the sibling repository '/Users/ameerdeen/progs/forge-infra', add the ordered
-'dev/350-conversation-data' Bicep layer and Make targets:
-
-    make 350-conversation-data-what-if
-    make 350-conversation-data
-
-It is a new data-plane layer between 300-data and 400-appenv, not a modification to the existing
-Postgres layer. Create a Standard v2 Storage account with named Table/Blob resources, a Standard
-Service Bus namespace with the session-enabled duplicate-detection 'mission-command' queue, and
-separate managed identities/RBAC for Conversation Host and worker.
-
-Production app configuration uses managed identity endpoints. Local Kind uses the cloud services
-too, but cannot receive an Azure managed identity: follow the existing 300-data deployment-script
-pattern to write a dev-only Storage connection secret and a dedicated Service Bus Send/Listen
-connection secret to Key Vault. The Kind bootstrap reads them with the developer's Azure CLI login
-into one transient namespace Secret; neither value is committed, output by Bicep, or left in a
-host file.
-
-Before any deployment, run and review the what-if target. Deploy only through the Make target, then
-use Azure CLI to verify the named Storage account, Table/Blob resources, Service Bus namespace/queue
-properties, and role assignments. The application-level Azure acceptance test uses
-DefaultAzureCredential against those Bicep-owned resources. Do not use Azure CLI to create
-out-of-band infrastructure.
-
-**Done when:** the Bicep layer validates in its repository, the reviewed Make what-if and deployment
-have named successful observations, Azure CLI confirms each resource/role, and an integration test
-can append/replay an event plus send/receive an idempotent command against the non-production Azure
-resources.
-
-### 8. Local Kind environment
-
-Add:
-
-    deploy/durable-kind/
-      namespace.yaml, conversation-host.yaml, mission-worker.yaml
-    scripts/durable-dev-up.ps1
-    scripts/durable-dev-down.ps1
-    scripts/durable-dev-status.ps1
-
-The up script first creates/uses the named 'forge-durable' Kind cluster with
-'kind create cluster --name forge-durable' when it does not already exist. It preflights Docker,
-Kind, Kubectl, and Azure CLI authentication; reads the two Bicep-created dev connection secrets
-from Key Vault into the transient 'forge-conversation-cloud' namespace Secret; builds/loads
-Host/Worker images; applies manifests; waits for health; and prints the Desktop port-forward
-endpoint. The first manifest has one Host/Silo and one worker.
-
-The down script removes only the named cluster/namespace resources and therefore removes the
-transient Secret. It never deletes Azure resources: Azure data is Bicep-owned and persists for
-inspection/reconnect across Kind lifecycles.
-
-**Done when:** durable-dev-up creates or reuses 'forge-durable', reports Host/Worker health and
-cloud dependency reachability, and durable-dev-down removes only the named local resources. A
-missing Azure CLI login/Key Vault access fails clearly before Kubernetes resources are applied.
-
-### 9. Product proof and evidence
+### 8. Product proof and evidence
 
 Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named
 observations for:
