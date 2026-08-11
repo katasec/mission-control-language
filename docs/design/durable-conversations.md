@@ -153,16 +153,20 @@ projections of the same events, not new trace databases.
     kind namespace forge-durable
       - conversation-host: one API + Orleans Silo/gateway replica
       - mission-worker: one replica
-      - Azurite: Table + Blob, persistent local volume
-      - Service Bus emulator + its SQL Server dependency
+      - forge-conversation-cloud: transient Kubernetes Secret
+                  |
+                  v
+    Azure dev resource group
+      - Azure Table Storage + Blob artifacts
+      - Azure Service Bus mission-command queue
 
 One Silo is intentional: prove durable recovery before multi-silo placement, load shedding, or
 scale-out. The next environment gate is two Silos only after restart/reconnect is green.
 
-On this Apple-silicon machine the Service Bus emulator image is arm64, but its documented SQL
-Server dependency is amd64-only. Local scripts must preflight Docker emulation and report a clear
-remediation before applying manifests. Azurite Table support is developer-emulator evidence only;
-the final storage-provider acceptance run uses a real non-production Azure Storage account.
+Kind runs the compute locally. Azure Table/Blob and Azure Service Bus are the real cloud services
+from the first product proof; Azurite and the Service Bus emulator are not part of the Kind
+topology. Automated tests may use emulators where appropriate, but a successful emulator run is
+never the deployment proof.
 
 ## Azure development infrastructure
 
@@ -190,10 +194,19 @@ The layer belongs after 300-data and before 400-appenv. It creates:
   receive/send commands, pull its image, and read only the existing provider-key secrets from Key
   Vault. Neither receives billing or Rooms database credentials.
 
-The app uses managed identity and service endpoints, not account keys or Service Bus connection
-strings. The Bicep layer exports only non-secret endpoints/IDs. A later Container Apps layer can
-consume those outputs to host the Conversation Host and worker; that cloud application deployment
-remains after the local Kind proof.
+Production Container Apps use managed identity and service endpoints. Local Kind cannot use an
+Azure managed identity, so the layer also writes two **dev-only**, non-production connection secrets
+to Key Vault through an idempotent deployment script, following the existing 300-data precedent:
+
+- 'Conversation-StorageConnection' for the isolated conversation Storage account;
+- 'Conversation-ServiceBusConnection' from a dedicated Send/Listen policy with no Manage right.
+
+The Bicep layer exports only non-secret endpoints/IDs. 'durable-dev-up.ps1' uses the developer's
+Azure CLI login to read those Key Vault secrets directly into the transient
+'forge-conversation-cloud' Kubernetes Secret; no secret is committed, written to a parameter file,
+or left on the host filesystem. 'durable-dev-down.ps1' deletes that namespace Secret with the Kind
+resources. A later Container Apps layer consumes the endpoints/managed identities to host the
+Conversation Host and worker; that cloud application deployment remains after the local Kind proof.
 
 The forge-infra Makefile gains '350-conversation-data-what-if' and
 '350-conversation-data'. The required flow is:

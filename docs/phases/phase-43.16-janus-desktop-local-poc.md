@@ -167,26 +167,7 @@ rows. Rehydrated and live events use one renderer; normal missions retain their 
 **Done when:** UI tests render approval, revision, not-approved, and rehydrated tool result without
 duplicates; boundary tests still prohibit Presentation's direct Host dependency.
 
-### 7. Local Kind environment
-
-Add:
-
-    deploy/durable-kind/
-      namespace.yaml, azurite.yaml, servicebus-emulator.yaml
-      servicebus-config.json, conversation-host.yaml, mission-worker.yaml
-    scripts/durable-dev-up.ps1
-    scripts/durable-dev-down.ps1
-    scripts/durable-dev-status.ps1
-
-Scripts preflight Docker, Kind/Kubectl, and the Service Bus emulator SQL Server emulation
-prerequisite before changing the cluster. They create/use one named cluster, build/load Host/Worker
-images, apply manifests, wait for health, print the Desktop port-forward endpoint, and clean up
-only named resources. The first manifest has one Host/Silo and one worker.
-
-**Done when:** durable-dev-up reports all dependencies healthy; durable-dev-down removes only named
-development resources; unavailable amd64 SQL emulation fails clearly before deployment.
-
-### 8. Provision and verify Azure durable data infrastructure
+### 7. Provision and verify Azure durable data infrastructure
 
 In the sibling repository '/Users/ameerdeen/progs/forge-infra', add the ordered
 'dev/350-conversation-data' Bicep layer and Make targets:
@@ -197,8 +178,14 @@ In the sibling repository '/Users/ameerdeen/progs/forge-infra', add the ordered
 It is a new data-plane layer between 300-data and 400-appenv, not a modification to the existing
 Postgres layer. Create a Standard v2 Storage account with named Table/Blob resources, a Standard
 Service Bus namespace with the session-enabled duplicate-detection 'mission-command' queue, and
-separate managed identities/RBAC for Conversation Host and worker. Use managed identity endpoints;
-do not create account keys or Service Bus connection-string secrets.
+separate managed identities/RBAC for Conversation Host and worker.
+
+Production app configuration uses managed identity endpoints. Local Kind uses the cloud services
+too, but cannot receive an Azure managed identity: follow the existing 300-data deployment-script
+pattern to write a dev-only Storage connection secret and a dedicated Service Bus Send/Listen
+connection secret to Key Vault. The Kind bootstrap reads them with the developer's Azure CLI login
+into one transient namespace Secret; neither value is committed, output by Bicep, or left in a
+host file.
 
 Before any deployment, run and review the what-if target. Deploy only through the Make target, then
 use Azure CLI to verify the named Storage account, Table/Blob resources, Service Bus namespace/queue
@@ -210,6 +197,31 @@ out-of-band infrastructure.
 have named successful observations, Azure CLI confirms each resource/role, and an integration test
 can append/replay an event plus send/receive an idempotent command against the non-production Azure
 resources.
+
+### 8. Local Kind environment
+
+Add:
+
+    deploy/durable-kind/
+      namespace.yaml, conversation-host.yaml, mission-worker.yaml
+    scripts/durable-dev-up.ps1
+    scripts/durable-dev-down.ps1
+    scripts/durable-dev-status.ps1
+
+The up script first creates/uses the named 'forge-durable' Kind cluster with
+'kind create cluster --name forge-durable' when it does not already exist. It preflights Docker,
+Kind, Kubectl, and Azure CLI authentication; reads the two Bicep-created dev connection secrets
+from Key Vault into the transient 'forge-conversation-cloud' namespace Secret; builds/loads
+Host/Worker images; applies manifests; waits for health; and prints the Desktop port-forward
+endpoint. The first manifest has one Host/Silo and one worker.
+
+The down script removes only the named cluster/namespace resources and therefore removes the
+transient Secret. It never deletes Azure resources: Azure data is Bicep-owned and persists for
+inspection/reconnect across Kind lifecycles.
+
+**Done when:** durable-dev-up creates or reuses 'forge-durable', reports Host/Worker health and
+cloud dependency reachability, and durable-dev-down removes only the named local resources. A
+missing Azure CLI login/Key Vault access fails clearly before Kubernetes resources are applied.
 
 ### 9. Product proof and evidence
 
@@ -225,8 +237,9 @@ observations for:
 7. browser and packaged Photino rendering of recovered conversation;
 8. successful solution build/test.
 
-Azurite-only success is local-dev evidence. The Bicep-provisioned non-production Azure data-plane
-acceptance run is required before any production-ready claim.
+The Kind proof uses the Bicep-provisioned Azure data plane, not local emulators. Automated
+emulator tests remain supplementary; the real Azure run is required before any production-ready
+claim.
 
 ## Done when
 
