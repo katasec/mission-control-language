@@ -35,11 +35,11 @@ conversation-history replay for free from the same engine change — no separate
    `AgenticSession`) to only after that approval — structurally, not by convention. A failing judge
    step breaks the pipeline's step loop immediately, before any later step (including `Implementer`)
    is ever reached, so there is no way to execute an unapproved plan.
-4. Once wired into Forge Desktop's UI ([43.4](phase-43.4-ide-trace-surface.md)) with visible per-step
-   streaming (already proven via CLI `--steps`, matching what the user recalled seeing) and an
-   explicit break-glass escalation option ([43.5](phase-43.5-human-in-the-loop.md)'s `kind: human`),
-   this is the target UX: the user briefs Claude, Claude negotiates with the implementer
-   autonomously, the user watches the whole exchange, and can intervene — but doesn't have to.
+4. Once wired into Forge Desktop's UI, first through [43.16](phase-43.16-janus-desktop-local-poc.md)'s
+   visible observational group chat (per-step streaming is already proven via CLI `--steps`) and later
+   through [43.4](phase-43.4-ide-trace-surface.md)'s workbench plus [43.5](phase-43.5-human-in-the-loop.md)'s
+   break-glass escalation, this is the target UX: the user briefs the mission, the experts negotiate
+   autonomously, and the user watches the whole exchange before eventually being able to intervene.
 
 ## "Not approved" outcome — resolved as presentation-only (2026-08-11)
 
@@ -55,8 +55,9 @@ runtime support in `DirectExpertRunner`, generated per-expert response schemas, 
 failing judge never runs, so an extractor step placed after `Approver` could only ever fire on the
 *passing* case, never the rejection case it would need to capture).
 
-**For [43.4](phase-43.4-ide-trace-surface.md)/Forge Desktop, when it renders an exhausted Janus
-negotiation:** present the existing failure result as
+**For [43.16](phase-43.16-janus-desktop-local-poc.md)/Forge Desktop, and later
+[43.4](phase-43.4-ide-trace-surface.md), when rendering an exhausted Janus negotiation:** present
+the existing failure result as
 
 ```
 Not approved
@@ -83,9 +84,10 @@ actually requires branching mission logic on it, not preemptively.
 - Motivating aspiration already logged in [43 hub's open questions](phase-43-forge-desktop.md#open-questions--not-yet-decided)
   (2026-07-26): eliminate manual Claude/Codex copy-paste. Janus is the first concrete build step
   toward it.
-- Feeds [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md): once Janus's negotiation loop
-  runs end-to-end, rendering it live in the desktop UI (not just CLI `--steps`) is 43.4's job. Janus
-  is the first real content 43.4 has to render, not a mockup.
+- Feeds [43.16 — Janus Desktop local PoC](phase-43.16-janus-desktop-local-poc.md): render Janus live
+  in Desktop as the first observational group chat, not just CLI `--steps`. That proof then feeds
+  [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md), where Janus remains the first real
+  content for the richer workbench rather than a mockup.
 - Feeds [43.5 — Human-in-the-loop](phase-43.5-human-in-the-loop.md): the "break glass" escalation the
   user wants is exactly 43.5's `kind: human`/`Suspended` primitive — not yet wired into Janus. Today
   Janus's only "escalation" is the implicit `MissionStatus.Fail` on loop exhaustion.

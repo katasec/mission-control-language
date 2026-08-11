@@ -143,7 +143,7 @@ UI spoke) have a foundation to build on.
 | [43.10 — Transport contract](phase-43.10-transport-contract.md) | `IClientRuntimeChannel` + `HttpClientRuntimeChannel` (HTTP + SSE/WebSockets) — the only path the sandboxed WASM UI has to reach the Client Runtime, since they're separate processes under the new architecture. | 43.9 | Design |
 | [43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md) | Replaces the Electron/Blazor Server shell: WASM UI (verified against a plain browser, same loop as today) + Photino native packaging (thin wrapper only). Rebuilds Task 3's proven visual design against the new rendering technology. | 43.10 | **✅ DONE 2026-08-08** — Batch A + Batch B both complete, verified live |
 | [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md) | Swap the model picker for a mission picker; wire `missions/sdlc-agent/` in as a future flagship; decide intermediate-role-switch visibility. | 43.11 (WASM/Photino shell) | **In progress, deferred behind the Janus Desktop PoC** — tasks 1–3 done; publishing `sdlc-agent` to OCI and adding it to the hosted catalog remain independent follow-up work, not the current proving path. |
-| [43.4 — IDE trace surface (iterative)](phase-43.4-ide-trace-surface.md) | Evolve the vanilla shell toward the debugger-style workbench (outline/thread/gate/code-pane, dockable panels) from the forge-trace brainstorm. Explicitly a mockup-iterate-refine loop, not a fixed deliverable. | 43.3's completed attach/switch foundation (not its deferred `sdlc-agent` catalog work) | Design — start the Janus rendering iteration after the PoC's attach-path decision |
+| [43.4 — IDE trace surface (iterative)](phase-43.4-ide-trace-surface.md) | Evolve the vanilla shell toward the debugger-style workbench (outline/thread/gate/code-pane, dockable panels) from the forge-trace brainstorm. Explicitly a mockup-iterate-refine loop, not a fixed deliverable. | 43.3's completed attach/switch foundation and the 43.16 Janus group-chat proof | Design — later workbench iteration |
 | [43.5 — Human-in-the-loop (suspend/resume)](phase-43.5-human-in-the-loop.md) | `kind: human` pipeline step + `Suspended` `StepEnvelope` outcome + resume-at-step-N — the mechanical prerequisite for 43.4's "Gate" concept and for approval-gated missions generally. Framework-agnostic (Core-level) — unaffected by the Electron pivot. | None (parallel-buildable with 43.1–43.3; blocks only 43.4's Gate feature) | Design |
 | 43.6 — Cross-platform validation checkpoints | Periodic: confirm the Electron shell (and `forge webui` browser path) work on Windows/Linux. Not a spoke — a recurring checklist item against whichever spoke just shipped. | Each prior spoke | Ongoing |
 | [43.12 — AOT hygiene backlog](phase-43.12-aot-hygiene-backlog.md) | Cross-cutting engineering backlog raised during 43.11 Batch A's AOT validation: `ForgeMission.Docker` missing its `IsAotCompatible` marker (compiler-enforcement gap, not a live bug); the default `docker`-mode startup path never actually run under the published AOT binary; EF Core/Blazor Server AOT-quarantine noted as awareness-only. | None (backlog, not blocking) | Design — engineering backlog, not blocking |
@@ -151,11 +151,11 @@ UI spoke) have a foundation to build on.
 | [43.14 — Desktop cloud missions via API A](phase-43.14-desktop-cloud-missions.md) | Desktop reaches cloud missions through Forge's native API A (small additive tool-turn extension + reused `IEnrichmentCache` re-entrancy, no new session subsystem), not API B — API B stays reserved for external spec-bound clients (`claude`/`codex`). | 43.13 | **✅ DONE + LIVE 2026-08-08** — all 10 tasks shipped, live-verified with 4 named observations, see [_completed doc](phase-43.14-desktop-cloud-missions_completed.md) |
 | [43.15 — Janus: minimal inter-agent mission](phase-43.15-janus-inter-agent-mission.md) | Minimal Claude-architect/OpenAI-implementer mission (`missions/janus/`) proving the primitives for the "eliminate manual Claude/Codex copy-paste" use case below — multi-provider `using`, a propose/approve/revise `loop`, `role: agent` gated on approval. Built instead of the fully-loaded `sdlc-agent` until 43.4/43.5 exist. | 43.1, 43.13 (Phase 25 `using`) | **✅ DONE 2026-08-11** — AOT crash fixed, and the negotiation loop itself (full conversation-history replay + `Negotiate`/`Implement` split) live-verified — see spoke |
 
-**Current next: Janus Desktop PoC.** Build from the completed 43.15 mission, not from
-`sdlc-agent`: make `janus` attachable in Desktop, render its negotiation/step output, and
-live-verify the approval-gated OpenAI `Implementer` executing real tools. The exact attach path
-(local development fixture versus OCI/catalog registration) remains the first design decision;
-43.3's `sdlc-agent` OCI work is independent follow-up, not a prerequisite.
+| [43.16 — Janus Desktop local PoC](phase-43.16-janus-desktop-local-poc.md) | Make locally served Janus the first attachable Desktop mission and render its real Proposer/Approver/Implementer exchange as an observational group chat; prove its approved Implementer can call authorized local tools. | 43.11, 43.15; reuses 43.3's completed picker base | **Design approved 2026-08-11 — implementation next.** Local only; cloud/OCI/catalog and human-in-the-loop are explicitly deferred. |
+
+**Current next: [43.16 — Janus Desktop local PoC](phase-43.16-janus-desktop-local-poc.md).** Build
+from the completed 43.15 mission, not from `sdlc-agent`. The local attach path and observational
+group-chat scope are locked; 43.3's `sdlc-agent` OCI work remains independent follow-up.
 
 ## Relationship to existing phases
 
@@ -193,26 +193,7 @@ live-verify the approval-gated OpenAI `Implementer` executing real tools. The ex
   [43.5](phase-43.5-human-in-the-loop.md) (approve/deny widgets) and
   [43.4](phase-43.4-ide-trace-surface.md) (general tool-call → component rendering). Not build-ready
   — no spike done yet.
-- ~~**Longer-term aspiration (not scoped to any spoke yet, 2026-07-26)**~~ — **[43.15](phase-43.15-janus-inter-agent-mission.md)
-  done 2026-08-11, proves the negotiation mechanism itself. Getting it presented in Forge
-  Desktop is separate, unstarted work — not yet a spoke.** The user wants to eventually
-  eliminate the manual copy-paste cycle currently used to hand work between Claude
-  (architect/reviewer) and Codex (implementer) during this project's own build process —
-  Forge Desktop's "missions attach instead of models" thesis is the natural candidate;
-  `missions/janus/` is the first concrete proof, deliberately minimal rather than the full
-  `sdlc-agent`.
-
-  **Base-PoC scope, locked 2026-08-11**: LLM-to-LLM negotiation + real tool calling for
-  `Implementer`, visible in Desktop — explicitly **not**
-  [43.5](phase-43.5-human-in-the-loop.md)'s `kind: human` yet. Three concrete, unstarted gaps
-  between here and that PoC:
-  1. **Janus isn't attachable in Desktop.** Needs the same treatment
-     [43.3](phase-43-forge-desktop.md#dependency-ordered-task-list) is mid-build on for
-     `sdlc-agent` (OCI publish + hosted-catalog registration) — or a simpler local-dev attach
-     path, if one exists; not yet investigated which.
-  2. **Nothing renders it yet.** [43.4](phase-43.4-ide-trace-surface.md) (the debugger-style
-     trace surface) is still "Design, iteration not started." The existing plain Electron/WASM
-     shell streams step output generically, but that's untested for Janus specifically.
-  3. **Real tool execution through Desktop is unproven for this mission.** Every live run so
-     far used plain `forge run`, which never invokes `AgenticSession` — `Implementer` actually
-     calling tools has not been exercised end-to-end yet.
+- **Manual Claude/Codex handoff elimination** — [43.15](phase-43.15-janus-inter-agent-mission.md)
+  completed the negotiation-and-gating proof. [43.16](phase-43.16-janus-desktop-local-poc.md)
+  now owns its local Desktop presentation and real Implementer-tool proof; human intervention
+  remains explicitly deferred to [43.5](phase-43.5-human-in-the-loop.md).
