@@ -19,8 +19,9 @@
 [43.10](phase-43.10-transport-contract.md) (the UI needs a real channel to the Client Runtime before
 it can do anything). Replaces the now-superseded Electron + Blazor Server shell
 ([phase-43.2-electron-forge-desktop-shell.md](phase-43.2-electron-forge-desktop-shell.md)) as the
-active desktop-shell spoke. **NEXT: [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md)**
-resumes on top of this shell.
+active desktop-shell spoke. The next downstream proof is the **Janus Desktop PoC** recorded in the
+[Phase 43 hub](phase-43-forge-desktop.md#dependency-ordered-task-list); 43.3's remaining
+`sdlc-agent` catalog work is independent follow-up.
 
 ## Design
 
@@ -281,8 +282,9 @@ the Photino pass confirms visual parity, not a second independent interaction te
 environment-gated skips as baseline).
 
 **Still open, not silently dropped:** the native OS folder-picker dialog bridge (task 5's deferred
-item) remains unbuilt — the inline path-entry flyout is the interim, not the final shape. [43.3](phase-43.3-mission-attach-point.md)
-can now resume on top of this.
+item) remains unbuilt — the inline path-entry flyout is the interim, not the final shape. The
+completed shell now hosts the Janus Desktop PoC; 43.3's remaining `sdlc-agent` catalog work is
+independent follow-up.
 
 **Not the only live next step — read [43.13](phase-43.13-mission-runtime-orchestration.md) too.**
 Batch B here (UI/visual work, pairs with Ameer) and 43.13 (Mission Runtime orchestration layer,

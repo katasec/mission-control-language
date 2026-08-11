@@ -90,9 +90,9 @@ actually requires branching mission logic on it, not preemptively.
   user wants is exactly 43.5's `kind: human`/`Suspended` primitive — not yet wired into Janus. Today
   Janus's only "escalation" is the implicit `MissionStatus.Fail` on loop exhaustion.
 - Deliberately NOT using [`missions/sdlc-agent/`](../../missions/sdlc-agent/) as the proving ground —
-  see the completed doc's "Why this exists" for the reasoning. `sdlc-agent`'s OCI-publish blocker
-  ([43.3](phase-43.3-mission-attach-point.md)'s stated NEXT STEP) is independent of this work and
-  unaffected by it.
+  see the completed doc's "Why this exists" for the reasoning. `sdlc-agent`'s OCI-publish work
+  ([43.3](phase-43.3-mission-attach-point.md), formerly the stated next step) is independent
+  follow-up and unaffected by the Janus Desktop PoC.
 
 ## Done when
 

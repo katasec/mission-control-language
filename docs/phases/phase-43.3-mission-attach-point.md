@@ -1,6 +1,7 @@
 # Phase 43.3 — Mission-as-attach-point
 
-**Status: In progress.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
+**Status: In progress, deferred behind the Janus Desktop PoC.** Part of
+[Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depends on
 [43.11 — Blazor WASM UI + Photino shell](phase-43.11-wasm-photino-shell.md), done 2026-08-08. (The
 43.2 Electron/Avalonia shells this doc originally depended on were both superseded/shelved before
 43.11 shipped — see [phase-43.2-electron-forge-desktop-shell.md](phase-43.2-electron-forge-desktop-shell.md).)
@@ -15,7 +16,7 @@ pattern (`@claude`/`@openai` as thin `vanilla`-shape missions,
 [missions/claude/](../../missions/claude/)) from "one model wrapped as a mission" to "any real
 multi-role mission is attachable the same way."
 
-Flagship mission: [missions/sdlc-agent/](../../missions/sdlc-agent/) —
+Future flagship mission: [missions/sdlc-agent/](../../missions/sdlc-agent/) —
 `Classifier -> (DesignMode | TaskMode)`, where `DesignMode` is
 `Architect -> CriticalReviewer -> Synthesiser -> QualityJudge` with `loop(2)`. Picking "SDLC" in
 the desktop app should feel exactly like picking a smarter model, but produce the
@@ -100,8 +101,8 @@ already-cloud-live, single-turn missions (tasks 2/3) — proves the mechanism, n
   missions get cataloged/curated as attachable at all (hardcoded list today; `MissionDiscovery` from
   task 1 is the not-yet-wired alternative) — not started, a different problem from (b). Don't
   re-merge these when picking this back up.
-- Publishing `sdlc-agent` (the flagship) so it's actually attachable: needs an OCI publish to
-  `ghcr.io/katasec` and a `StaticMissionCatalog` entry + hosted redeploy — none of that has happened
-  yet. Explicit follow-up, not implied by anything above.
+- Publishing `sdlc-agent` (the future flagship) so it's actually attachable: needs an OCI publish
+  to `ghcr.io/katasec` and a `StaticMissionCatalog` entry + hosted redeploy — none of that has
+  happened yet. This is explicit follow-up, and is **not** the current Janus Desktop PoC path.
 - Cross-mission context carry-over on switch — deferred, revisit if dogfooding surfaces real
   friction.
