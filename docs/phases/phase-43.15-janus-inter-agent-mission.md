@@ -84,8 +84,9 @@ actually requires branching mission logic on it, not preemptively.
 - Motivating aspiration already logged in [43 hub's open questions](phase-43-forge-desktop.md#open-questions--not-yet-decided)
   (2026-07-26): eliminate manual Claude/Codex copy-paste. Janus is the first concrete build step
   toward it.
-- Feeds [43.16 — Janus Desktop local PoC](phase-43.16-janus-desktop-local-poc.md): render Janus live
-  in Desktop as the first observational group chat, not just CLI `--steps`. That proof then feeds
+- Feeds [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md): render
+  Janus live in Desktop as the first durable observational group chat, not just CLI `--steps`. That
+  proof then feeds
   [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md), where Janus remains the first real
   content for the richer workbench rather than a mockup.
 - Feeds [43.5 — Human-in-the-loop](phase-43.5-human-in-the-loop.md): the "break glass" escalation the

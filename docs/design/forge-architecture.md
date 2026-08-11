@@ -1,6 +1,6 @@
 # Forge Architecture — Mission Runtime, Client Runtime, Presentation
 
-**Status: Locked 2026-08-01.** This is the canonical, durable architecture doc for Forge as a
+**Status: Locked 2026-08-01; durable-conversation extension locked 2026-08-12.** This is the canonical, durable architecture doc for Forge as a
 whole, not just Forge Desktop. It supersedes the general-architecture parts of
 [forge-desktop-client-runtime.md](forge-desktop-client-runtime.md), which now covers only what's
 genuinely desktop-specific (see that doc's updated status line). If this doc and any other doc
@@ -60,7 +60,7 @@ above it should not need to change.
 │  point. Exposes capability interfaces, not implementations.   │
 │  Capability Registry advertises what's available here.        │
 └───────────────────────────┬────────────────────────────────┘
-                             │  Mission Runtime protocol (/v1, tool_use / tool_result)
+                             │  Mission protocol (/v1 compatibility or Forge conversation API)
 ┌───────────────────────────▼────────────────────────────────┐
 │  Mission Runtime (Brain)                                      │
 │  planning · reasoning · expert orchestration · mission         │
@@ -77,6 +77,17 @@ deciding which capabilities should be invoked. It deliberately knows nothing abo
 is implemented — only that the client advertises it. A client treats the Mission Runtime as an
 external service; its internal reasoning architecture (`PipelineRunner`, expert resolution,
 `AgenticSession` when the Mission Runtime hosts the loop itself) is out of scope for any client.
+
+### Durable Conversation Runtime
+
+Some missions are a durable multi-party conversation rather than one stateless model turn. For
+those, the Mission Runtime is fronted by the Forge Conversation API: the conversation owns ordered
+events and run state, and exposes replayable progress to Desktop and Rooms. It is additive to the
+existing '/v1' compatibility doors, not a replacement for them. The Client Runtime still owns local
+capability authorization and execution; it receives a tool request from the conversation, executes
+it locally, and returns a result to the durable run. The complete storage, Orleans, Table, Blob,
+Service Bus, recovery, and reconnect decision is
+[durable-conversations.md](durable-conversations.md).
 
 ### Client Runtime (Hands)
 

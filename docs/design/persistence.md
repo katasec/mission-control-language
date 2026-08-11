@@ -12,9 +12,13 @@ EF Core / Postgres (`LedgerStore`, `ReadStore`, `WriteStore`, and now `PlatformK
 registered in [`RoomsDataServiceCollectionExtensions`](../../src/ForgeMission.Rooms.Data/RoomsDataServiceCollectionExtensions.cs).
 Swapping a store's backend is a **one-line DI change**, not a caller change.
 
-**Azure Table Storage is deferred, not adopted.** Ship EF/Postgres now — the data project
-already has the migration tooling, DI wiring, and `IDbContextFactory` pattern, so EF is zero
-marginal cost. When the cheap-storage move happens, it slots in behind the existing interfaces.
+**Azure Table Storage is deferred, not adopted for existing Rooms/Billing stores.** Ship
+EF/Postgres there now — the data project already has the migration tooling, DI wiring, and
+IDbContextFactory pattern, so EF is zero marginal cost. When the cheap-storage move happens, it
+slots in behind the existing interfaces. This does not prevent a new bounded context from being
+Table-native: [durable conversations](durable-conversations.md) use Azure Table for their
+append-only event log and Orleans checkpoints without silently redefining the existing migration
+decision.
 
 ## Why platform_keys is the first Table Storage candidate
 
