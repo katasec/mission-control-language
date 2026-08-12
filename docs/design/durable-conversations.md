@@ -270,9 +270,11 @@ decision. The local Kind proof remains the first product deployment.
 
 The future Conversation service is an internal-only one-replica Container App; the Worker is a
 one-replica Container App with no ingress because it consumes Service Bus rather than receiving
-HTTP calls. A separate Tier-1 edge must own the public conversation route; its identity holds no
-conversation Table/Blob permission. The precise edge component and authentication route remain a
-required Type-1 decision before 525 is accepted. Both Tier-2 apps use their separate 350
+HTTP calls. The public routes are the existing Tier-1 adapters: ForgeUI for OIDC-authenticated
+browser/Rooms users, and ForgeAPI for platform-key-authenticated Desktop and machine/API clients.
+Both pass the authenticated tenant/user context through an internal Conversation-service contract;
+neither identity holds conversation Table/Blob permission. Wiring either adapter to that contract
+is a separate implementation and security-review task. Both Tier-2 apps use their separate 350
 user-assigned identities and Azure SDK token credentials, never the Kind connection strings. The
 code-facing configuration contract is:
 

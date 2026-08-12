@@ -121,9 +121,10 @@ task starts.
 is pushed; its real Azure Storage/Table/Blob and Service Bus resources plus Kind verifier proved
 cloud connectivity (including failed-first-probe retry and a fresh Job on reused Kind). That proof
 is accepted, but its Worker Table/Blob role and single-queue transport are now superseded and must
-be refit to the tiering/data-ownership gate before cloud application work. The proposed 525
-cloud-hosting layer is **not accepted**: it must be redesigned after that refit and after the
-Tier-1 public-edge/authentication decision is locked.
+be refit to the tiering/data-ownership gate before cloud application work. The Tier-1 decision is
+locked: ForgeUI is the OIDC browser/Rooms edge and ForgeAPI is the platform-key Desktop/machine
+edge; both route internally to the Conversation service. The proposed 525 cloud-hosting layer is
+**not accepted** until the 350 refit is complete and verified.
 
 ### 2. Contracts and project boundaries
 
