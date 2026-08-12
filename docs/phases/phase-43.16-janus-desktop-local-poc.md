@@ -126,7 +126,19 @@ platform-key Desktop/machine edge; both route internally to the Conversation ser
 internal-service/isolated-Worker refit is accepted at local forge-infra commit `ad7b77f`: its
 Bicep and parameters compile, its what-if creates only the two undeployed Container Apps, and the
 pending-image guard blocks a real deployment. It must not be deployed until application images and
-the Tier-1 integration review are ready. **Next: Task 2, contracts and project boundaries.**
+the Tier-1 integration review are ready.
+
+**Task 2 is complete and verified**, on this repo's `codex/conversation-contracts` branch:
+`ForgeMission.Conversations.Contracts` (every v1 record/enum, no project or package reference),
+`ForgeMission.ConversationHost` (a `CreateSlimBuilder`/`Build`/`Run` shell referencing only
+Contracts), and `ForgeMission.ConversationHost.Tests` are added to `ForgeMission.slnx`. 55 tests
+pass: every `ConversationEventKind` representative, every request/response/command/progress/tool/
+capability/snapshot type, and every enum value round-trip through
+`ConversationContractsJsonContext`; a dedicated test proves null optional `ConversationEvent`
+payload fields are omitted; source-level boundary tests prove Contracts has no project/package
+reference and that Contracts, Client Runtime, and CLI name neither `ConversationHost` nor Orleans/
+Azure SDK packages. `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx`
+both pass clean. **Next: Task 3, durable-ready MCL trace facts.**
 
 ### 2. Contracts and project boundaries
 
