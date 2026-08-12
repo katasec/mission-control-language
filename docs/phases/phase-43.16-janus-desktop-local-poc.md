@@ -109,6 +109,13 @@ Service Bus namespace, so this is an upfront dependency, not optional polish.
 and has a reviewed what-if; all IaC is committed/pushed in forge-infra before the first application
 task starts.
 
+**Current status (2026-08-12):** The 350 gate is accepted: `forge-infra` branch
+`codex/350-conversation-data` at `fc36868` is pushed, the real Azure Storage/Table/Blob and Service
+Bus resources plus scoped identities are deployed, and the Kind verifier proved Table, Blob, and
+session Service Bus access. A failed first probe retried and passed; a reused cluster created a
+new verifier Job. Next: design and review `525-conversation-app`, then run its Bicep validation and
+what-if before application implementation begins.
+
 ### 2. Contracts and project boundaries
 
 Create:
