@@ -223,6 +223,24 @@ identities, ingress, scale rules, Key Vault references, and endpoint configurati
 validated, and what-if reviewed before application work, but its actual deployment waits for the
 application images. The local Kind proof remains the first product deployment.
 
+The future Host is an externally-ingressed one-replica Container App; the Worker is a one-replica
+Container App with no ingress because it consumes Service Bus and joins Orleans clustering rather
+than receiving HTTP calls. Both use their separate 350 user-assigned identities and Azure SDK
+token credentials, never the Kind connection strings. The code-facing configuration contract is:
+
+    ConversationStorage__TableEndpoint
+    ConversationStorage__BlobEndpoint
+    ConversationServiceBus__FullyQualifiedNamespace
+    ConversationServiceBus__QueueName
+    AZURE_CLIENT_ID
+
+`AZURE_CLIENT_ID` selects the appropriate user-assigned identity for `DefaultAzureCredential`.
+The Worker alone also receives `MCL_API_KEY` and `ANTHROPIC_API_KEY` through its existing
+individual-secret Key Vault references. The fully qualified Service Bus namespace is supplied as
+`<namespace>.servicebus.windows.net`, never an HTTPS endpoint that application code must parse.
+The 525 Bicep parameter file uses clearly pending ACR image tags so it can compile and what-if now;
+its Make deployment target refuses to deploy until both point to published images.
+
 The forge-infra Makefile gains '350-conversation-data-what-if' and
 '350-conversation-data', the three '350-conversation-kind-*' targets, and
 '525-conversation-app-what-if'/'525-conversation-app'. The required order is:

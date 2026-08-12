@@ -77,6 +77,19 @@ configuration. It is Bicep-validated and what-if reviewed now, before code is wr
 Container Apps deployment waits only for the application images; cloud application hosting is not a
 substitute for the local Kind product proof.
 
+525 assigns the 350 Host identity to an externally-ingressed Conversation Host (initially one
+replica) and the 350 Worker identity to a one-replica background Container App with **no ingress**.
+The worker consumes Service Bus and participates in Orleans clustering; no caller needs HTTP access
+to it. Both apps use managed identity, never the Kind connection strings. Their locked configuration
+surface is `ConversationStorage__TableEndpoint`, `ConversationStorage__BlobEndpoint`,
+`ConversationServiceBus__FullyQualifiedNamespace`, `ConversationServiceBus__QueueName`, and the
+standard `AZURE_CLIENT_ID` identity selector. The Worker alone receives `MCL_API_KEY` and
+`ANTHROPIC_API_KEY` via its two existing secret-scoped Key Vault references. Bicep derives the
+fully qualified Service Bus namespace from the namespace name (`<name>.servicebus.windows.net`),
+not by making application code parse the 350 HTTPS endpoint. The app images remain explicitly
+`pending` ACR tags for validation/what-if; the 525 deploy Make target must fail closed until both
+are replaced with published images.
+
 The forge-infra Makefile gains:
 
     make 350-conversation-data-what-if
