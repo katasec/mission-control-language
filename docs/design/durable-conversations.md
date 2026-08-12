@@ -227,10 +227,10 @@ Infrastructure is implemented first, in the sibling 'forge-infra' repository:
       main.bicep
       main.bicepparam
 
-The 350 layer belongs after 300-data and before 400-appenv. Its currently deployed data plane and
-Kind verifier prove real cloud connectivity, but the deployed Worker Table/Blob grant and
-single-queue transport are an explicitly superseded Type-2 implementation. Before 525 can be
-accepted, 350 must be refit to this target contract:
+The 350 layer belongs after 300-data and before 400-appenv. **Its final state is deployed and
+verified (2026-08-13):** the two-Job Kind verifier passed the service → command → Worker → progress
+→ service round trip after the obsolete Worker Storage/command-Sender rights, combined SAS rule,
+and legacy Key Vault secret were removed. The deployed layer implements this target contract:
 
 - a Standard v2 Azure Storage account, with Tables for conversation events/indexes and Orleans
   checkpoint/clustering state, plus the 'forgeconversationartifacts' Blob container;
@@ -265,8 +265,9 @@ proof.
 
 The 525 layer will declare the cloud Conversation service and Worker Container Apps, their
 identities, ingress, scale rules, Key Vault references, and endpoint configuration. The current 525
-proposal is an unaccepted scaffold; it must be redesigned after the 350 refit and the Tier-1 edge
-decision. The local Kind proof remains the first product deployment.
+proposal is an unaccepted scaffold that must be refit to this contract. The 350 refit is complete
+and the Tier-1 edge decision is locked; the refit may now be implemented and what-if reviewed. The
+local Kind proof remains the first product deployment.
 
 The future Conversation service is an internal-only one-replica Container App; the Worker is a
 one-replica Container App with no ingress because it consumes Service Bus rather than receiving

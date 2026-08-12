@@ -117,14 +117,15 @@ Service Bus namespace, so this is an upfront dependency, not optional polish.
 and has a reviewed what-if; all IaC is committed/pushed in forge-infra before the first application
 task starts.
 
-**Current status (2026-08-13):** `forge-infra` branch `codex/350-conversation-data` at `fc36868`
-is pushed; its real Azure Storage/Table/Blob and Service Bus resources plus Kind verifier proved
-cloud connectivity (including failed-first-probe retry and a fresh Job on reused Kind). That proof
-is accepted, but its Worker Table/Blob role and single-queue transport are now superseded and must
-be refit to the tiering/data-ownership gate before cloud application work. The Tier-1 decision is
-locked: ForgeUI is the OIDC browser/Rooms edge and ForgeAPI is the platform-key Desktop/machine
-edge; both route internally to the Conversation service. The proposed 525 cloud-hosting layer is
-**not accepted** until the 350 refit is complete and verified.
+**Current status (2026-08-13):** The final 350 data-plane refit is deployed and verified live on
+`forge-infra` branch `codex/350-conversation-data` through local commit `f9cf457`: its two-Job
+Kind verifier passed the service → command → Worker → progress → service round trip after the
+obsolete Worker Storage/command-Sender rights, combined SAS rule, and legacy Key Vault secret were
+removed. The Tier-1 decision is locked: ForgeUI is the OIDC browser/Rooms edge and ForgeAPI is the
+platform-key Desktop/machine edge; both route internally to the Conversation service. The proposed
+525 cloud-hosting layer remains **not accepted** until its internal-service/isolated-Worker refit
+is implemented and what-if reviewed; it must not be deployed until application images and the
+Tier-1 integration review are ready.
 
 ### 2. Contracts and project boundaries
 
