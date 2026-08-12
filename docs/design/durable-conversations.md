@@ -41,6 +41,30 @@ It also does not migrate the existing Rooms relational model or billing ledger:
 - New durable mission conversations are a new bounded context and start Table-native. They have no
   prior Postgres schema to migrate.
 
+## North-star tiering gate
+
+The durable-conversation design is governed by [Phase 42's north-star topology](../phases/phase-42-forge-cloud.md#3a-deployment-topology--the-north-star-locked-2026-07-18):
+**CDN → tier 1 presentation → tier 2 application → tier 3 data, adjacent-only.** This is a
+Type-1 decision. A temporary local proof may be simpler, but no cloud design is accepted if it
+makes that separation materially harder to retrofit.
+
+| Tier | Conversation responsibility | Must not hold |
+|---|---|---|
+| 1 — internet-facing | Authenticate/authorize and route browser, Desktop, and API requests to the conversation application service. | Azure Table/Blob credentials or data-plane RBAC. |
+| 2 — internal applications | Conversation/Orleans service owns conversation state; mission worker executes commands and reports through an explicit internal service or durable-message contract. | Another bounded context's datastore credentials. |
+| 3 — data | Conversation Azure Table/Blob state; the Service Bus command/progress transport used by tier-2 services. | Public ingress. |
+
+**One datastore per bounded context is also Type-1.** The conversation store is owned by the
+conversation application service. No other service queries or mutates it directly; data moves
+between bounded contexts through a service contract or a durable message, never a cross-store query
+or foreign key.
+
+This makes the following current-infrastructure choices Type-2 and deliberately reversible before
+cloud deployment: direct Worker Table/Blob grants, external ingress on a state-owning Conversation
+Host, and its Worker-to-grain communication mechanism. The target cloud design must instead define
+an edge-to-conversation-service route, keep the state-owning service internal, and remove the
+Worker's direct conversation-store access unless it is itself part of that owning service.
+
 ## Durable model
 
 | Grain | Key | Durable responsibility | Not responsible for |

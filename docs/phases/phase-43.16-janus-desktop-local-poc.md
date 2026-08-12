@@ -77,18 +77,13 @@ configuration. It is Bicep-validated and what-if reviewed now, before code is wr
 Container Apps deployment waits only for the application images; cloud application hosting is not a
 substitute for the local Kind product proof.
 
-525 assigns the 350 Host identity to an externally-ingressed Conversation Host (initially one
-replica) and the 350 Worker identity to a one-replica background Container App with **no ingress**.
-The worker consumes Service Bus and participates in Orleans clustering; no caller needs HTTP access
-to it. Both apps use managed identity, never the Kind connection strings. Their locked configuration
-surface is `ConversationStorage__TableEndpoint`, `ConversationStorage__BlobEndpoint`,
-`ConversationServiceBus__FullyQualifiedNamespace`, `ConversationServiceBus__QueueName`, and the
-standard `AZURE_CLIENT_ID` identity selector. The Worker alone receives `MCL_API_KEY` and
-`ANTHROPIC_API_KEY` via its two existing secret-scoped Key Vault references. Bicep derives the
-fully qualified Service Bus namespace from the namespace name (`<name>.servicebus.windows.net`),
-not by making application code parse the 350 HTTPS endpoint. The app images remain explicitly
-`pending` ACR tags for validation/what-if; the 525 deploy Make target must fail closed until both
-are replaced with published images.
+**525 cloud topology requires a further design gate before implementation is accepted.** An
+externally-ingressed Conversation Host that owns Table/Blob state would collapse the Phase 42
+internet-facing and application/data-owning tiers. Likewise, a separate Worker with direct
+Table/Blob access breaks conversation-store ownership. The current un-deployed 525 Bicep is useful
+scaffolding only; do not deploy or accept it until the next design assigns an explicit tier-1 edge
+route, an internal-only state-owning Conversation service, and a Worker-to-service progress path
+that does not grant the Worker direct store access. See [durable-conversations.md](../design/durable-conversations.md#north-star-tiering-gate).
 
 The forge-infra Makefile gains:
 
@@ -122,12 +117,12 @@ Service Bus namespace, so this is an upfront dependency, not optional polish.
 and has a reviewed what-if; all IaC is committed/pushed in forge-infra before the first application
 task starts.
 
-**Current status (2026-08-12):** The 350 gate is accepted: `forge-infra` branch
+**Current status (2026-08-13):** The 350 gate is accepted: `forge-infra` branch
 `codex/350-conversation-data` at `fc36868` is pushed, the real Azure Storage/Table/Blob and Service
 Bus resources plus scoped identities are deployed, and the Kind verifier proved Table, Blob, and
 session Service Bus access. A failed first probe retried and passed; a reused cluster created a
-new verifier Job. Next: design and review `525-conversation-app`, then run its Bicep validation and
-what-if before application implementation begins.
+new verifier Job. The proposed 525 cloud-hosting layer is **not accepted**: it must be redesigned
+against Phase 42's tiering/data-ownership gate before its Bicep is accepted or deployed.
 
 ### 2. Contracts and project boundaries
 
