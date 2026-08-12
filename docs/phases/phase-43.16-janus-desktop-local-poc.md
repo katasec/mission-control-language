@@ -122,10 +122,11 @@ task starts.
 Kind verifier passed the service → command → Worker → progress → service round trip after the
 obsolete Worker Storage/command-Sender rights, combined SAS rule, and legacy Key Vault secret were
 removed. The Tier-1 decision is locked: ForgeUI is the OIDC browser/Rooms edge and ForgeAPI is the
-platform-key Desktop/machine edge; both route internally to the Conversation service. The proposed
-525 cloud-hosting layer remains **not accepted** until its internal-service/isolated-Worker refit
-is implemented and what-if reviewed; it must not be deployed until application images and the
-Tier-1 integration review are ready.
+platform-key Desktop/machine edge; both route internally to the Conversation service. The 525
+internal-service/isolated-Worker refit is accepted at local forge-infra commit `ad7b77f`: its
+Bicep and parameters compile, its what-if creates only the two undeployed Container Apps, and the
+pending-image guard blocks a real deployment. It must not be deployed until application images and
+the Tier-1 integration review are ready. **Next: Task 2, contracts and project boundaries.**
 
 ### 2. Contracts and project boundaries
 

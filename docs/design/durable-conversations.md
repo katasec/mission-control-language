@@ -263,11 +263,12 @@ deliberately not applied until their task has defined the image, port, configura
 contracts; they then replace the verification-only acceptance path with the full local service
 proof.
 
-The 525 layer will declare the cloud Conversation service and Worker Container Apps, their
-identities, ingress, scale rules, Key Vault references, and endpoint configuration. The current 525
-proposal is an unaccepted scaffold that must be refit to this contract. The 350 refit is complete
-and the Tier-1 edge decision is locked; the refit may now be implemented and what-if reviewed. The
-local Kind proof remains the first product deployment.
+The 525 layer declares the cloud Conversation service and Worker Container Apps, their identities,
+ingress, scale rules, Key Vault references, and endpoint configuration. **Its final internal-service/
+isolated-Worker refit was authored and what-if reviewed (2026-08-13) at local forge-infra commit
+`ad7b77f`; it is not deployed.** Deployment remains blocked by pending application-image tags and
+the later Tier-1 adapter integration review. The local Kind proof remains the first product
+deployment.
 
 The future Conversation service is an internal-only one-replica Container App; the Worker is a
 one-replica Container App with no ingress because it consumes Service Bus rather than receiving
