@@ -307,21 +307,109 @@ assemblies. `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMissi
 
 ### 3. Durable-ready MCL trace facts
 
-Replace the narrow synchronous PipelineRunOptions step callbacks with awaited structured callbacks.
-Add AOT-safe PipelineStepStarted, PipelineStepDelta, PipelineStepCompleted, and tool-request trace
-records under 'ForgeMission.Core.Runtime'.
+Replace the narrow synchronous step lifecycle callbacks on `PipelineRunOptions`
+(`OnStepStart`/`OnStepComplete`) with one awaited, structured Core trace seam. This task creates
+execution facts only; it neither persists them nor references Conversation contracts, Orleans,
+Azure, Service Bus, HTTP, Client Runtime, or Presentation. Task 5 maps the completed/tool facts to
+the already-defined Worker progress contract; Task 4 is the only owner of durable transcript order.
 
-Each record carries mission name/path, expert/participant, kind, attempt, and completed
-StepEnvelope where relevant. Propagate callbacks through nested mission invocation. This is
-essential: PipelineRunner currently reconstructs options for Janus's Negotiate and Implement
-sub-missions, which otherwise hides the Proposer/Approver/Implementer trace. Parallel steps retain
-their own lifecycle facts; conversation sequence allocation serialises their rendered order.
+#### Trace surface
 
-Keep MissionResult and existing CLI/runner progress contracts compatible. The new trace surface is
-additive.
+Add `PipelineTraceEvent.cs` under `ForgeMission.Core.Runtime` with the following public, sealed
+record hierarchy. `MissionPath` is an immutable-in-practice `IReadOnlyList<string>` created by the
+runner as a fresh array; it contains mission names only, from root to the mission currently
+executing. `MissionName` is its final element. `ExpertName` remains the MCL expert name (and is the
+future Janus participant mapping input); Core does not depend on `ConversationParticipant`.
 
-**Done when:** a deterministic Janus test sees Proposer complete, Approver with verdict, a rejected
-retry attempt, and Implementer only after approval, including across the nested MCL missions.
+    abstract PipelineTraceEvent(
+      string MissionName, IReadOnlyList<string> MissionPath,
+      string ExpertName, string ExpertKind, int Attempt)
+
+    PipelineStepStarted(...)
+    PipelineStepDelta(..., string Text)
+    PipelineStepCompleted(..., StepEnvelope Envelope)
+    PipelineToolRequested(..., IReadOnlyList<PipelineToolCall> Calls)
+    PipelineToolCall(string CallId, string Name, JsonElement Arguments)
+
+`PipelineStepDelta.Text` is a non-empty raw streaming chunk. It is transient: Task 3 does not
+claim it is resumable or turn it into a `ConversationEvent`. `PipelineStepCompleted` is emitted for
+both pass and fail envelopes, after the output/history context update and before the runner decides
+whether the envelope fails the mission. `PipelineToolRequested` is emitted after that step's
+completed event, once for the non-empty set of client tool calls that makes `PipelineRunner` return
+early. It carries no provider SDK object: convert each `FunctionCallContent` to the closed
+`PipelineToolCall` shape, including a cloned `JsonElement` of its arguments. Use a small
+`Utf8JsonWriter`-based conversion (the existing Runner mapper is a useful shape), not reflection
+serialization; an unsupported argument CLR type fails with a clear exception.
+
+Add the following optional final fields to `PipelineRunOptions`; retain its existing mission,
+context, writer, tool, and continuation fields:
+
+    IReadOnlyList<string>? MissionPath = null
+    Func<PipelineTraceEvent, CancellationToken, Task>? OnTrace = null
+
+Remove `OnStepStart` and `OnStepComplete`. `OnTrace` is always awaited with the run cancellation
+token. A throwing trace sink therefore fails the run and lets its caller apply normal retry/nack
+policy; facts must not silently disappear. `OnSearchProgress` remains unchanged in this task: it is
+the existing synchronous callback imposed by Scout's `IProgress` backend, not a pipeline lifecycle
+fact, and preserves the current runner streaming contract. No caller is required to supply
+`OnTrace`, so a normal CLI/API run has unchanged trace overhead and behavior.
+
+#### Runner behavior and nested paths
+
+At the start of `RunAsync`, establish the effective path as `options.MissionPath ??
+new[] { options.MissionName }`. Before invoking a real expert, await `PipelineStepStarted`; its
+attempt is the current invocation's loop attempt. When the existing writer-driven streaming branch
+runs, await a `PipelineStepDelta` for every non-empty yielded chunk in the same order as the writes.
+Do **not** force the streaming path merely because `OnTrace` exists: several non-LLM runners expose
+a text-only streaming adapter that cannot preserve a failing `StepEnvelope`. The non-streaming path
+therefore emits started/completed (and possible tool-request) facts but no deltas, preserving all
+existing pass/fail behavior.
+
+`PipelineStepCompleted` must be awaited before the next step begins. The completed and tool-request
+facts are emitted in that order for one step. Do not emit synthetic lifecycle facts for the
+sub-mission invocation itself: the actual experts inside it are the visible conversation trail.
+
+Replace both ad-hoc child `new PipelineRunOptions(...)` calls in `ExecuteStepAsync` and
+`ExecuteParallelStepAsync` with one small `CreateChildOptions` helper. It passes the current
+`StepWriter`, `ContentWriter`, `OnSearchProgress`, and `OnTrace`; gives the child its explicit
+binding vars; and appends its declared mission name to the parent path. It deliberately does **not**
+inherit `ContextObjects`, `Tools`, `StartAtAgent`, or `OnPreAgentComplete`, preserving today's
+isolated sub-mission/tool semantics. This is the essential Janus fix: Proposer/Approver have
+`[Janus, Negotiate]`, and Implementer has `[Janus, Implement]`.
+
+Parallel steps may call the sink concurrently and retain their own facts/path/attempt. Task 3 does
+not impose a global sequence or sort them; `ConversationGrain` serializes accepted Worker progress
+in Task 4/5. For sequential steps, awaiting the sink provides their observable order.
+
+#### Existing Runner and CLI compatibility
+
+Keep `MissionResult`, `/run`, `/run/stream`, `RunResponse.Trace`, `RunTraceStep`, `RunProgress`,
+and CLI `--steps` wire/console shapes unchanged. Update `MissionRunHandler` to consume `OnTrace`:
+map `PipelineStepStarted` to the existing transient `RunProgress(expertName, expertKind)` and map
+each `PipelineStepCompleted` to the existing `RunTraceStep` using that event's envelope and attempt.
+Ignore deltas/tool facts there for now; they are for the durable Worker path. Protect its buffered
+trace list if parallel callbacks can enter it concurrently. Keep its Scout progress callback
+unchanged. This improves internal trace coverage to nested missions without changing a public
+Runner DTO.
+
+Update the existing Scout lifecycle test to collect `PipelineStepStarted` through `OnTrace` rather
+than the removed callback. Add focused Core tests:
+
+1. A deterministic Janus-shaped mission (`Janus -> Negotiate loop(2) -> Proposer -> Approver`, then
+   `Implement -> Implementer`) uses a stub where Approver fails once then approves. Its trace proves
+   Proposer and Approver completed at `[Janus, Negotiate]`, the first Approver completed with the
+   failed verdict at attempt 1, the second negotiation attempt occurs, and Implementer at
+   `[Janus, Implement]` starts only after the approving Approver completion.
+2. A gated `OnTrace` test proves a step does not invoke its expert until its awaited started sink is
+   released, and a two-step mission proves completed is observed before the next started event.
+3. A tool-capable stub proves `PipelineToolRequested` follows its completed fact and exposes only
+   the closed call ID/name/arguments shape.
+
+**Done when:** the Core and Runner compile with no remaining `OnStepStart`/`OnStepComplete`
+references; the deterministic nested Janus trace and awaited-order/tool tests pass; the existing
+Scout lifecycle test passes through `OnTrace`; and `dotnet build src/ForgeMission.slnx` plus
+`dotnet test src/ForgeMission.slnx` pass. No Conversation Host, Worker, Client Runtime,
+Presentation, mission definition, or forge-infra file changes in this task.
 
 ### 4. Table/Blob persistence and Orleans ownership
 
