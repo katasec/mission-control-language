@@ -65,6 +65,17 @@ Host, and its Worker-to-grain communication mechanism. The target cloud design m
 an edge-to-conversation-service route, keep the state-owning service internal, and remove the
 Worker's direct conversation-store access unless it is itself part of that owning service.
 
+**Cloud Worker-to-grain decision (2026-08-13).** A standalone Worker does not use an Orleans client
+gateway discovered through Azure Table. That would grant it access to the Conversation service's
+storage-clustering state and depend on a direct Container Apps workload path that is not the
+documented service-to-service model (see [Container Apps inter-app
+communication](https://learn.microsoft.com/azure/container-apps/connect-apps)). Instead it publishes
+durable, idempotent trace/progress facts to a dedicated `conversation-progress` queue. The
+state-owning Conversation service consumes that queue and is the only process that invokes
+`ConversationGrain` and writes conversation Table/Blob state. The queues carry stable
+event/command IDs and the conversation session ID; the service's grain remains the sole sequence
+allocator.
+
 ## Durable model
 
 | Grain | Key | Durable responsibility | Not responsible for |
@@ -118,22 +129,27 @@ already-applied command ID.
 Retention/compaction is deferred. A later compactor must write a verified summary/artifact event
 before deletion; no initial implementation deletes transcript data.
 
-## Reliable command delivery
+## Reliable command and progress delivery
 
-Service Bus carries work commands, not the transcript or UI stream:
+Service Bus carries work commands and completed trace/progress facts, never the transcript or UI
+stream:
 
-    HTTP submit/tool result -> ConversationGrain checkpoint -> mission-command queue -> worker
+    Tier-1 edge -> Conversation service -> ConversationGrain checkpoint
+        -> mission-command queue -> Worker
+    Worker -> conversation-progress queue -> Conversation service -> ConversationGrain
 
-Each command has a client-generated 'command_id'. It becomes Service Bus 'MessageId', while
-'SessionId' is the conversation ID for per-conversation order. Queue duplicate detection is enabled
-where the namespace tier supports it; the worker remains idempotent because peek-lock delivery is
-at-least-once.
+Each command has a client-generated `command_id`. It becomes Service Bus `MessageId`, while
+`SessionId` is the conversation ID for per-conversation order. Each Worker trace/progress fact has
+a stable `event_id` as `MessageId` and the same conversation `SessionId`. Both queues use sessions
+and duplicate detection where the namespace tier supports it; every consumer remains idempotent
+because peek-lock delivery is at-least-once.
 
-If a process dies after a send but before completion, recovery resends the same command ID. The
-broker can deduplicate it and the worker ignores an already-recorded transition. If it dies before
-send, the durable pending command remains and a reminder/reconciler retries it. Service Bus is not
-inserted between normal Orleans grain calls and is not the browser/Desktop event source: clients
-reconnect from the durable sequence.
+If a process dies after a send but before completion, recovery resends the same ID. The broker can
+deduplicate it and the consuming service ignores an already-recorded transition. If it dies before
+send, the durable pending command remains and a reminder/reconciler retries it. The Worker completes
+its command only after the corresponding progress fact is broker-accepted; the Conversation service
+completes progress only after its grain has durably accepted the idempotent event. Service Bus is
+not the browser/Desktop event source: clients reconnect from the durable sequence.
 
 ## Mission execution and failure semantics
 
@@ -182,7 +198,7 @@ projections of the same events, not new trace databases.
                   v
     Azure dev resource group
       - Azure Table Storage + Blob artifacts
-      - Azure Service Bus mission-command queue
+      - Azure Service Bus mission-command and conversation-progress queues
 
 One Silo is intentional: prove durable recovery before multi-silo placement, load shedding, or
 scale-out. The next environment gate is two Silos only after restart/reconnect is green.
@@ -211,25 +227,30 @@ Infrastructure is implemented first, in the sibling 'forge-infra' repository:
       main.bicep
       main.bicepparam
 
-The 350 layer belongs after 300-data and before 400-appenv. It creates:
+The 350 layer belongs after 300-data and before 400-appenv. Its currently deployed data plane and
+Kind verifier prove real cloud connectivity, but the deployed Worker Table/Blob grant and
+single-queue transport are an explicitly superseded Type-2 implementation. Before 525 can be
+accepted, 350 must be refit to this target contract:
 
 - a Standard v2 Azure Storage account, with Tables for conversation events/indexes and Orleans
   checkpoint/clustering state, plus the 'forgeconversationartifacts' Blob container;
-- a Standard Azure Service Bus namespace and a session-enabled, duplicate-detection
-  'mission-command' queue;
+- a Standard Azure Service Bus namespace and session-enabled, duplicate-detection
+  `mission-command` and `conversation-progress` queues;
 - separate host and worker user-assigned managed identities and least-privilege role assignments.
-  Both identities can pull their own images and the host can read/write Table/Blob and send
-  commands. The worker can read/write Table/Blob, receive/send commands, and read only the
-  existing `Mcl-ApiKey` and `Anthropic-ApiKey` secrets through individual-secret Key Vault role
-  assignments. Neither receives a vault-wide Key Vault role, billing, or Rooms database
-  credentials.
+  Both identities can pull their own images. The Conversation service can read/write Table/Blob,
+  send `mission-command`, and receive `conversation-progress`. The Worker can receive
+  `mission-command`, send `conversation-progress`, and read only the existing `Mcl-ApiKey` and
+  `Anthropic-ApiKey` secrets through individual-secret Key Vault role assignments. The Worker has
+  no Table/Blob role. Neither identity receives a vault-wide Key Vault role, billing, or Rooms
+  database credentials.
 
 Production Container Apps use managed identity and service endpoints. Local Kind cannot use an
-Azure managed identity, so the layer also writes two **dev-only**, non-production connection secrets
-to Key Vault through an idempotent deployment script, following the existing 300-data precedent:
-
-- 'Conversation-StorageConnection' for the isolated conversation Storage account;
-- 'Conversation-ServiceBusConnection' from a dedicated Send/Listen policy with no Manage right.
+Azure managed identity, so the refit writes **dev-only**, non-production, least-privilege connection
+secrets to Key Vault through an idempotent deployment script, following the existing 300-data
+precedent. The Conversation service receives its isolated Storage connection plus queue-scoped
+`mission-command` Send and `conversation-progress` Listen credentials. The Worker receives only
+queue-scoped `mission-command` Listen and `conversation-progress` Send credentials. No local Worker
+credential authorises Storage access or Service Bus Manage.
 
 The Bicep layer exports only non-secret endpoints/IDs. Its forge-infra Kind Make target uses the
 developer's Azure CLI login to read those Key Vault secrets directly into the transient
@@ -242,15 +263,18 @@ deliberately not applied until their task has defined the image, port, configura
 contracts; they then replace the verification-only acceptance path with the full local service
 proof.
 
-The 525 layer declares the future cloud Conversation Host and worker Container Apps, their
-identities, ingress, scale rules, Key Vault references, and endpoint configuration. It is authored,
-validated, and what-if reviewed before application work, but its actual deployment waits for the
-application images. The local Kind proof remains the first product deployment.
+The 525 layer will declare the cloud Conversation service and Worker Container Apps, their
+identities, ingress, scale rules, Key Vault references, and endpoint configuration. The current 525
+proposal is an unaccepted scaffold; it must be redesigned after the 350 refit and the Tier-1 edge
+decision. The local Kind proof remains the first product deployment.
 
-The future Host is an externally-ingressed one-replica Container App; the Worker is a one-replica
-Container App with no ingress because it consumes Service Bus and joins Orleans clustering rather
-than receiving HTTP calls. Both use their separate 350 user-assigned identities and Azure SDK
-token credentials, never the Kind connection strings. The code-facing configuration contract is:
+The future Conversation service is an internal-only one-replica Container App; the Worker is a
+one-replica Container App with no ingress because it consumes Service Bus rather than receiving
+HTTP calls. A separate Tier-1 edge must own the public conversation route; its identity holds no
+conversation Table/Blob permission. The precise edge component and authentication route remain a
+required Type-1 decision before 525 is accepted. Both Tier-2 apps use their separate 350
+user-assigned identities and Azure SDK token credentials, never the Kind connection strings. The
+code-facing configuration contract is:
 
     ConversationStorage__TableEndpoint
     ConversationStorage__BlobEndpoint

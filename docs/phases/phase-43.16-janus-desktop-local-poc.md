@@ -117,12 +117,13 @@ Service Bus namespace, so this is an upfront dependency, not optional polish.
 and has a reviewed what-if; all IaC is committed/pushed in forge-infra before the first application
 task starts.
 
-**Current status (2026-08-13):** The 350 gate is accepted: `forge-infra` branch
-`codex/350-conversation-data` at `fc36868` is pushed, the real Azure Storage/Table/Blob and Service
-Bus resources plus scoped identities are deployed, and the Kind verifier proved Table, Blob, and
-session Service Bus access. A failed first probe retried and passed; a reused cluster created a
-new verifier Job. The proposed 525 cloud-hosting layer is **not accepted**: it must be redesigned
-against Phase 42's tiering/data-ownership gate before its Bicep is accepted or deployed.
+**Current status (2026-08-13):** `forge-infra` branch `codex/350-conversation-data` at `fc36868`
+is pushed; its real Azure Storage/Table/Blob and Service Bus resources plus Kind verifier proved
+cloud connectivity (including failed-first-probe retry and a fresh Job on reused Kind). That proof
+is accepted, but its Worker Table/Blob role and single-queue transport are now superseded and must
+be refit to the tiering/data-ownership gate before cloud application work. The proposed 525
+cloud-hosting layer is **not accepted**: it must be redesigned after that refit and after the
+Tier-1 public-edge/authentication decision is locked.
 
 ### 2. Contracts and project boundaries
 
@@ -196,26 +197,33 @@ from a fresh host, reject duplicate event/command IDs, and dereference a Blob-ba
 Add:
 
     IConversationCommandQueue / AzureServiceBusConversationCommandQueue
-    ConversationCommandDispatcher / ConversationCommandWorker
+    IConversationProgressQueue / AzureServiceBusConversationProgressQueue
+    ConversationCommandDispatcher / ConversationCommandWorker / ConversationProgressConsumer
 
-Configure a session-enabled 'mission-command' queue with duplicate detection. Set MessageId to
-command ID and SessionId to conversation ID. The worker uses peek-lock, records its
-command/run-state transition before completing the message, retries pending work with the identical
-ID, and turns dead-letter failure into a visible error/run-status event.
+Configure session-enabled `mission-command` and `conversation-progress` queues with duplicate
+detection. A command uses its command ID as `MessageId` and its conversation ID as `SessionId`; a
+Worker trace/progress fact uses its stable event ID as `MessageId` and the same conversation
+`SessionId`. The Worker uses peek-lock, publishes the progress fact before completing its command,
+retries pending work with identical IDs, and turns dead-letter failure into a visible error/run-status
+event. The Conversation service consumes progress and invokes `ConversationGrain`; it alone assigns
+sequence and appends the event to the conversation store.
 
 The worker loads Janus from its existing mission and forge configuration, invokes traced
-PipelineRunner, and appends each completed trace event through ConversationGrain. At a tool call it
-appends tool_requested, waits for the matching tool result, then enqueues only the safe
-continuation. It never accesses a local filesystem or terminal.
+PipelineRunner, and publishes each completed trace event through `conversation-progress`. At a tool
+call it publishes `tool_requested`, waits for the matching tool result, then enqueues only the safe
+continuation. It never accesses a local filesystem, terminal, Orleans client gateway, or conversation
+Table/Blob store.
 
-**Done when:** queue integration tests prove duplicate delivery creates one durable transition,
-commands for separate conversations remain isolated, and an unexpected tool-result ID does not
-advance the run.
+**Done when:** queue integration tests prove duplicate command and progress delivery creates one
+durable transition, commands for separate conversations remain isolated, an unexpected tool-result
+ID does not advance the run, and the Worker has no reference to Orleans or the conversation
+Table/Blob stores.
 
 ### 6. Conversation API and resumable SSE
 
-ConversationHost Program hosts the Silo, worker, API, health endpoints, and source-generated JSON.
-Map the five routes in [durable-conversations.md](../design/durable-conversations.md#reconnect-and-projections).
+ConversationHost Program hosts the Silo, progress consumer, API, health endpoints, and
+source-generated JSON. The separately deployed Worker hosts command dispatch/execution. Map the
+five routes in [durable-conversations.md](../design/durable-conversations.md#reconnect-and-projections).
 
 SSE first reads durable events after the client's supplied sequence, then follows live appends.
 Correctness is replay, not a permanently healthy connection. A one-replica in-process live notifier
