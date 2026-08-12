@@ -172,6 +172,17 @@ documented, raise it and get it resolved before handing off any implementation w
 a task that's handed off can run start-to-finish, unblocked, without stopping mid-build to ask a
 design question that should have been closed out beforehand.
 
+### Architecture-security gate
+
+Every design must pass [Security Architecture](docs/design/security-architecture.md) before an
+implementation handoff. This is mandatory for hosted changes and applies proportionately to every
+other change: state whether the tier/data/identity questions are not applicable rather than silently
+skipping them. Tier boundaries, bounded-context/data ownership, public entry points, and
+cross-context contracts are Type-1 decisions and must be locked before code/IaC. A Type-2 exception
+must state its exact scope, reversal path, and removal condition in the active spoke. Do not approve
+a plan that lets an internet-facing component hold direct datastore access, lets one context query
+another's store, or leaves an architecture-security answer for implementation to decide.
+
 ### Roles — Codex (architect) / Claude (implementer)
 **Trial mode since 2026-08-11**, running for a few weeks as a manual test of MCL's own premise that
 models and roles should be swappable — see
