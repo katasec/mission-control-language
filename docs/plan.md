@@ -64,6 +64,7 @@ Resolved: ~~Mission Composition~~, ~~Skills and Tools~~, ~~Parallel steps runtim
 |-------|-------------|
 | Multi-Agent Debate (`debate {}` block) | Round orchestration, per-round context summarisation, cross-agent output wiring. Deferred from Phase 25; needs a dedicated phase. Research-backed default: rounds: 3, warn beyond 5. |
 | Language governance process | Java uses JSRs, C# uses Language Design Meeting notes, Go uses a formal proposal process (golang/proposal). Key design decisions are currently recorded in ad-hoc markdown files. A standardised proposal format — problem, prior art, alternatives considered, decision, rationale — would make decisions traceable and give future contributors clear reasoning rather than just outcomes. Decide format, location (`docs/proposals/`?), and whether past decisions (Phase 25 pre-flight) are backfilled. |
+| Mechanical guardrails | After the Forge Desktop proof, turn the [Engineering Philosophy](design/engineering-philosophy.md) and security gates into machine-enforced repository controls: protected `main`/required CI, secret detection, supply-chain checks, and agent/IaC safety policy. |
 
 ## Design docs
 
