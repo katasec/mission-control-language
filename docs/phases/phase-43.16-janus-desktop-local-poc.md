@@ -67,7 +67,9 @@ The 350 layer sits between 300-data and 400-appenv. It creates and deploys the c
 the isolated Storage account/Table/Blob resources, Standard Service Bus namespace and
 session-enabled duplicate-detection queue, Key Vault bootstrap of the two Kind-only credential
 secrets, managed identities, and all least-privilege data-plane/AcrPull/Key-Vault role assignments.
-It does not alter the existing Postgres layer.
+The Worker receives Key Vault Secrets User at the individual `Mcl-ApiKey` and `Anthropic-ApiKey`
+secret scopes only; it receives neither a vault-wide assignment nor billing/Rooms credentials. It
+does not alter the existing Postgres layer.
 
 The 525 layer declares the future cloud Conversation Host and worker Container Apps, their separate
 identities, Key Vault references, ingress, scale rules, and non-secret Storage/Service-Bus endpoint
@@ -87,11 +89,15 @@ The forge-infra Makefile gains:
 
 '350-conversation-kind-up' creates/reuses the 'forge-durable' cluster with
 'kind create cluster --name forge-durable', reads the Bicep-created dev-only cloud credentials
-from Key Vault through the operator's Azure CLI login into a transient namespace Secret, builds and
-loads local images, applies the checked-in manifests, waits for health, and prints the Desktop
-endpoint. Down removes only that named Kind cluster/namespace; it never deletes Bicep-owned Azure
-resources. The local Kind compute therefore uses the real Azure Table/Blob and Service Bus
-resources from day one.
+from Key Vault through the operator's Azure CLI login into a transient namespace Secret, and runs a
+checked-in verification Job that creates/reads/deletes a temporary Azure Table entity, uploads and
+deletes a Blob probe, and sends then session-receives a Service Bus probe message. This is the 350
+acceptance proof before Host/Worker images exist. The Host and Worker
+manifest templates are checked in now but are not applied until their application tasks define their
+image, port, environment, and health contracts; their later version of the target builds/loads the
+local images, waits for health, and prints the Desktop endpoint. Down removes only that named Kind
+cluster/namespace; it never deletes Bicep-owned Azure resources. The local Kind compute therefore
+uses the real Azure Table/Blob and Service Bus resources from day one.
 
 Before deploying any Azure layer, run and review its Make what-if target. Deploy only through its
 Make target. Verify each deployment with Azure CLI observations: Storage account/Table/Blob,

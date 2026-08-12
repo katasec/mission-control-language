@@ -194,9 +194,11 @@ The 350 layer belongs after 300-data and before 400-appenv. It creates:
 - a Standard Azure Service Bus namespace and a session-enabled, duplicate-detection
   'mission-command' queue;
 - separate host and worker user-assigned managed identities and least-privilege role assignments.
-  The host can read/write Table/Blob and send commands. The worker can read/write Table/Blob,
-  receive/send commands, pull its image, and read only the existing provider-key secrets from Key
-  Vault. Neither receives billing or Rooms database credentials.
+  Both identities can pull their own images and the host can read/write Table/Blob and send
+  commands. The worker can read/write Table/Blob, receive/send commands, and read only the
+  existing `Mcl-ApiKey` and `Anthropic-ApiKey` secrets through individual-secret Key Vault role
+  assignments. Neither receives a vault-wide Key Vault role, billing, or Rooms database
+  credentials.
 
 Production Container Apps use managed identity and service endpoints. Local Kind cannot use an
 Azure managed identity, so the layer also writes two **dev-only**, non-production connection secrets
@@ -209,7 +211,12 @@ The Bicep layer exports only non-secret endpoints/IDs. Its forge-infra Kind Make
 developer's Azure CLI login to read those Key Vault secrets directly into the transient
 'forge-conversation-cloud' Kubernetes Secret; no secret is committed, written to a parameter file,
 or left on the host filesystem. The matching down target deletes that namespace Secret with the
-Kind resources.
+Kind resources. Before the application images exist, that target applies a checked-in verification
+Job which creates/reads/deletes a temporary Table entity, uploads/deletes a Blob probe, and sends
+then session-receives a Service Bus probe message from Kind. Host/Worker manifest templates are
+deliberately not applied until their task has defined the image, port, configuration, and health
+contracts; they then replace the verification-only acceptance path with the full local service
+proof.
 
 The 525 layer declares the future cloud Conversation Host and worker Container Apps, their
 identities, ingress, scale rules, Key Vault references, and endpoint configuration. It is authored,
