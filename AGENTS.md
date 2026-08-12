@@ -183,6 +183,15 @@ must state its exact scope, reversal path, and removal condition in the active s
 a plan that lets an internet-facing component hold direct datastore access, lets one context query
 another's store, or leaves an architecture-security answer for implementation to decide.
 
+### Engineering-philosophy gate
+
+Every design and implementation handoff must also pass [Engineering
+Philosophy](docs/design/engineering-philosophy.md). Treat its bad-smell review as a build-readiness
+gate: lock named ownership and failure boundaries, reject unjustified knobs and speculative
+abstractions, prefer structural containment to warnings or remembered procedures, and name the
+verification observation in “Done when.” Record any material exception and its removal path in the
+active spoke; do not defer it to implementation.
+
 ### Roles — Codex (architect) / Claude (implementer)
 **Trial mode since 2026-08-11**, running for a few weeks as a manual test of MCL's own premise that
 models and roles should be swappable — see

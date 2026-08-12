@@ -76,6 +76,7 @@ Resolved: ~~Mission Composition~~, ~~Skills and Tools~~, ~~Parallel steps runtim
 | [Standard Library](design/stdlib.md) | Definition of what qualifies as a stdlib expert — four gates, current members, worked examples |
 | [Architecture](design/architecture.md) | Components, boundaries, dependency flow |
 | [Security Architecture](design/security-architecture.md) | **Mandatory design gate.** Tier 1/2/3 adjacent-only topology, one datastore per bounded context, Type-1/Type-2 classification, least-privilege review, and transitional-exception rules. |
+| [Engineering Philosophy](design/engineering-philosophy.md) | **Mandatory design gate.** Small explicit components, fixed conventions, structural risk containment, progressive disclosure, and named verification evidence. |
 | [Interaction Modes & Classifier-Router Pattern](design/interaction-modes.md) | Human-AI collaboration modes, classifier as HAProxy, SDLC meta-mission, `when {}` conditional step primitive |
 | [SDLC Meta-Mission](design/sdlc-meta-mission.md) | Planned reference example — mission composition + debate{} + routing in one file; feature gap analysis and build order |
 | [Research Foundations](design/research.md) | Academic literature mapped to MCL design decisions — Self-Refine, Reflexion, Multi-Agent Debate, Constitutional AI, MoE routing, MoA |
