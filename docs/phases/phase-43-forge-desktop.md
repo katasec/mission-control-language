@@ -151,11 +151,11 @@ UI spoke) have a foundation to build on.
 | [43.14 — Desktop cloud missions via API A](phase-43.14-desktop-cloud-missions.md) | Desktop reaches cloud missions through Forge's native API A (small additive tool-turn extension + reused `IEnrichmentCache` re-entrancy, no new session subsystem), not API B — API B stays reserved for external spec-bound clients (`claude`/`codex`). | 43.13 | **✅ DONE + LIVE 2026-08-08** — all 10 tasks shipped, live-verified with 4 named observations, see [_completed doc](phase-43.14-desktop-cloud-missions_completed.md) |
 | [43.15 — Janus: minimal inter-agent mission](phase-43.15-janus-inter-agent-mission.md) | Minimal Claude-architect/OpenAI-implementer mission (`missions/janus/`) proving the primitives for the "eliminate manual Claude/Codex copy-paste" use case below — multi-provider `using`, a propose/approve/revise `loop`, `role: agent` gated on approval. Built instead of the fully-loaded `sdlc-agent` until 43.4/43.5 exist. | 43.1, 43.13 (Phase 25 `using`) | **✅ DONE 2026-08-11** — AOT crash fixed, and the negotiation loop itself (full conversation-history replay + `Negotiate`/`Implement` split) live-verified — see spoke |
 
-| [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Make Janus the first attachable Desktop mission and render its durable real Proposer/Approver/Implementer exchange as an observational group chat; prove restart/reconnect, authorized local tools, Orleans state, Table/Blob events, and Service Bus delivery locally in Kind. | 43.11, 43.15; reuses 43.3's completed picker base | **Design review 2026-08-12 — next implementation candidate.** Cloud catalog/OCI and human-in-the-loop remain explicitly deferred. |
+| [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Make Janus the first attachable Desktop mission and render its durable real Proposer/Approver/Implementer exchange as an observational group chat; prove restart/reconnect, authorized local tools, Orleans state, Table/Blob events, and Service Bus delivery locally in Kind. | 43.11, 43.15; reuses 43.3's completed picker base | **Implementation active 2026-08-13** — durable persistence review passed; its complete-suite verification is blocked by unrelated package-audit restores. Resolve that gate before the next dependency-ordered build task. Cloud catalog/OCI and human-in-the-loop remain explicitly deferred. |
 
-**Current next: [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md).**
-Review its Orleans/Table/Service-Bus local-Kind design, then build from the completed 43.15 mission,
-not from sdlc-agent. 43.3's sdlc-agent OCI work remains independent follow-up.
+**Current next: unblock complete-suite verification for [43.16](phase-43.16-janus-desktop-local-poc.md), then continue its dependency-ordered Service Bus/Worker build.**
+Build from the completed 43.15 mission, not from sdlc-agent. 43.3's sdlc-agent OCI work remains
+independent follow-up.
 
 ## Relationship to existing phases
 
