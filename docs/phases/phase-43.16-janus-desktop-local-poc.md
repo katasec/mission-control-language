@@ -733,30 +733,7 @@ Task-7 Client Runtime/Presentation, mission, or forge-infra change is included.
 
 ### 5. Service Bus delivery and mission worker
 
-Add:
-
-    IConversationCommandQueue / AzureServiceBusConversationCommandQueue
-    IConversationProgressQueue / AzureServiceBusConversationProgressQueue
-    ConversationCommandDispatcher / ConversationCommandWorker / ConversationProgressConsumer
-
-Configure session-enabled `mission-command` and `conversation-progress` queues with duplicate
-detection. A command uses its command ID as `MessageId` and its conversation ID as `SessionId`; a
-Worker trace/progress fact uses its stable event ID as `MessageId` and the same conversation
-`SessionId`. The Worker uses peek-lock, publishes the progress fact before completing its command,
-retries pending work with identical IDs, and turns dead-letter failure into a visible error/run-status
-event. The Conversation service consumes progress and invokes `ConversationGrain`; it alone assigns
-sequence and appends the event to the conversation store.
-
-The worker loads Janus from its existing mission and forge configuration, invokes traced
-PipelineRunner, and publishes each completed trace event through `conversation-progress`. At a tool
-call it publishes `tool_requested`, waits for the matching tool result, then enqueues only the safe
-continuation. It never accesses a local filesystem, terminal, Orleans client gateway, or conversation
-Table/Blob store.
-
-**Done when:** queue integration tests prove duplicate command and progress delivery creates one
-durable transition, commands for separate conversations remain isolated, an unexpected tool-result
-ID does not advance the run, and the Worker has no reference to Orleans or the conversation
-Table/Blob stores.
+**Task 5 design — implementation-ready 2026-08-13.** See [Service Bus delivery and Janus Worker](phase-43.16-task-5-service-bus-worker.md).
 
 ### 6. Conversation API and resumable SSE
 
