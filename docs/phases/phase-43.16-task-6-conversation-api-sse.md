@@ -78,17 +78,37 @@ Add the following Host-local `[GenerateSerializer]` input records in
     ConversationToolResultInput(Guid CommandId, Guid ToolRequestId, string Content, bool IsError)
 
 Their primitive fields deliberately keep Contracts records/`JsonElement` out of the Orleans
-interface. Both new methods return the existing `ConversationCommandAcceptance` shape; a small
-typed Host-local rejection result may be used for the documented `409` cases, but it must name its
-outcome/reason rather than make the endpoint parse exception text.
+interface. Add `ConversationCommandOutcome` (`Accepted`, `Conflict`) and
+`ConversationCommandOutcomeResult(ConversationCommandOutcome Outcome,
+ConversationCommandAcceptance? Acceptance, string? ConflictReason)`. All three accept methods
+return this Host-local result: an expected active-run, tool-request, or unequal-ID conflict is
+explicitly `Conflict`; only an accepted command carries `Acceptance`. The endpoint maps that result
+to `202`/`409`; it must never classify every `InvalidOperationException` as a client conflict.
 
 Extend `ConversationCheckpoint` with `PinnedCapabilitiesJson` (source-generated
-`ConversationCapabilityDeclaration[]` JSON). On the first accepted start, persist the validated
-capability declarations with the pinned mission before the first event transition. It remains after
-a run becomes terminal; `ActiveStartCommandJson` keeps its current, narrower lifetime for a
-currently active tool continuation. A follow-up command reconstructs its `ConversationCommand`
-inside the grain from `MissionRef`, `PinnedCapabilitiesJson`, its new run ID, and supplied text.
-It must not let an adapter select a mission or replace capabilities.
+`ConversationCapabilityDeclaration[]` JSON) and `PendingRunStart`. The latter is a
+`[GenerateSerializer]` Host-local recovery record containing the complete accepted start-command
+JSON, one preallocated queued-event ID, and its preallocated occurrence timestamp. On the first
+accepted start, persist the validated capability declarations, pinned mission, active-start command,
+and `PendingRunStart` in one checkpoint write **before** the first event transition. It remains
+until both the deterministic `UserMessage` and `RunStatus(Queued)` transitions have recovered or
+completed; it is not cleared merely because the user message exists.
+
+After its ordinary pending-transition repair, activation detects `PendingRunStart`: it resolves the
+command-ID event, appends the `UserMessage` if absent, then resolves the stable queued-event ID. If
+that event is absent, it plans/appends/dispatches the queued transition through the existing durable
+pending-transition/outbox protocol. If it is present, its own completed pending transition already
+proved the dispatch was broker-accepted, so clear `PendingRunStart` without resending. This closes
+the literal crash gap between the two start facts and keeps the paired `n + 1` duplicate acceptance
+true. A start retry first repairs `PendingRunStart`, then uses the normal exact-duplicate path.
+
+The capabilities remain after a run becomes terminal; `ActiveStartCommandJson` keeps its current,
+narrower lifetime for a currently active tool continuation. A follow-up command reconstructs its
+`ConversationCommand` inside the grain from `MissionRef`, `PinnedCapabilitiesJson`, its new run
+ID, and supplied text. It must not let an adapter select a mission or replace capabilities. For an
+exact follow-up duplicate, equivalence is the stored user-message event's conversation/run/kind/text
+plus the grain-pinned mission/capabilities; `associatedCommandJson` remains null because the client
+cannot supply any other semantic command field.
 
 `AcceptToolResultAsync` similarly constructs the `ConversationProgress` inside the grain using its
 active run and the caller's stable `CommandId` as `EventId`. Before it rejects a non-active request,
@@ -96,6 +116,10 @@ it first resolves the durable event-ID row: an exactly equal previously accepted
 its fixed acceptance; unequal reuse is conflict. Its normal success path uses the existing
 `RecordProgressAsync`/deterministic-continuation semantics. Reuse the existing event-store semantic
 comparison; do not create a second in-memory idempotency map.
+
+The matching `ToolResult` participant is `Implementer`: it completes the Implementer's declared
+tool hand-off, which lets Task 7 render one coherent Implementer tool row. `Forge` remains reserved
+for infrastructure/lifecycle facts such as `RunStatus` and dead-letter errors.
 
 ## Durable replay and one-replica live notifier
 
@@ -155,10 +179,10 @@ than invoking endpoint delegates.
 | `src/ForgeMission.ConversationHost/Grains/IConversationEventNotifier.cs` | Grain-owned narrow post-durability notification contract; no HTTP or storage dependency. |
 | `src/ForgeMission.ConversationHost/Api/ConversationEventHub.cs` | Narrow non-durable notifier/subscription implementation with bounded stale-client containment. |
 | `src/ForgeMission.ConversationHost/Api/ConversationSseWriter.cs` | SSE framing plus the replay/subscribe/catch-up/drain algorithm. |
-| `src/ForgeMission.ConversationHost/Grains/IConversationGrain.cs`, `ConversationGrainResults.cs`, `ConversationCheckpoint.cs`, `ConversationGrain.cs` | Host-local follow-up/tool-result inputs, persisted pinned capabilities, exact-duplicate acceptance, and post-durable live publish. |
+| `src/ForgeMission.ConversationHost/Grains/IConversationGrain.cs`, `ConversationGrainResults.cs`, `ConversationCheckpoint.cs`, `ConversationGrain.cs` | Host-local typed acceptance/conflict results, start-pair recovery, pinned capabilities, exact-duplicate acceptance, and post-durable live publish. |
 | `src/ForgeMission.ConversationHost.Tests/AzuriteFixture.cs` | Register/map the real API and expose its loopback base URI; do not add an ASP.NET test-server package. |
 | `src/ForgeMission.ConversationHost.Tests/ConversationApiTests.cs` | New real-Kestrel HTTP/SSE integration coverage below. |
-| `src/ForgeMission.ConversationHost.Tests/ConversationGrainTests.cs` | Extend persistence/idempotency coverage for terminal duplicate starts, pinned-capability follow-ups, and duplicate tool-result acceptance if that is clearer than asserting it only over HTTP. |
+| `src/ForgeMission.ConversationHost.Tests/ConversationGrainTests.cs` | Extend persistence/idempotency coverage for a crash after the `UserMessage` but before its queued pair, terminal duplicate starts, pinned-capability follow-ups, and duplicate tool-result acceptance if that is clearer than asserting it only over HTTP. |
 
 `ConversationApiTests` must prove, using source-generated request/response JSON and an
 `HttpCompletionOption.ResponseHeadersRead` SSE client:
