@@ -246,8 +246,9 @@ the internal service; tenant/user IDs are therefore **not client-supplied fields
     SubmitToolResultResponse(Guid ConversationId, Guid RunId, long AcceptedSequence,
                              ConversationRunStatus Status)
 
-- `POST /conversations` accepts `StartConversationRequest`, creates a conversation and its first
-  run, appends the `UserMessage` fact, and returns `201 Created` with
+- `POST /conversations` accepts `StartConversationRequest`, deterministically derives its
+  conversation and first-run IDs from the client `CommandId`, appends the `UserMessage` fact, and
+  returns `201 Created` with
   `StartConversationResponse` and `Location: /conversations/{conversationId}`.
 - `POST /conversations/{conversationId}/commands` accepts a follow-up `Text` for the conversation's
   pinned `MissionRef`, creates a run, and returns `202 Accepted` with

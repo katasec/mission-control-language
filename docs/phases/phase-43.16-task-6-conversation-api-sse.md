@@ -36,11 +36,18 @@ Table/Blob permission.
 
 | Route | Adapter action and result |
 |---|---|
-| `POST /conversations` | Require non-empty `commandId`, `missionRef`, and `goal`, a non-null capability array, and `missionRef == "Janus"` for this Janus-only proof. Generate conversation/run IDs, call the grain's start acceptance, and return `201 Created`, `Location: /conversations/{conversationId}`, and `StartConversationResponse`. |
+| `POST /conversations` | Require non-empty `commandId`, `missionRef`, and `goal`, a non-null capability array, and `missionRef == "Janus"` for this Janus-only proof. Derive both conversation and initial-run IDs from the client command ID, call the grain's start acceptance, and return `201 Created`, `Location: /conversations/{conversationId}`, and `StartConversationResponse`. An exact retry therefore reaches the same grain and returns the original acceptance; unequal reuse reaches its typed conflict result. |
 | `POST /conversations/{id}/commands` | Require a valid non-empty GUID route ID plus non-empty `commandId` and `text`. The grain—not the adapter—uses its pinned mission and capabilities to create a new run. Return `202 Accepted` and `SubmitConversationCommandResponse`. |
 | `POST /conversations/{id}/tool-results` | Require valid route/request GUIDs and non-null `content`. The grain validates the outstanding request and turns the result into one durable `ToolResult` plus its deterministic continuation command. Return `202 Accepted` and `SubmitToolResultResponse`. |
 | `GET /conversations/{id}` | Return the source-generated `ConversationSnapshot`; an uninitialized/no-mission grain is `404`, not an empty snapshot. |
 | `GET /conversations/{id}/events?after=` | Validate optional `after` as a non-negative `long` (default `0`), reject unknown conversations before starting the response, then produce the SSE protocol below. |
+
+Add `ConversationDeterministicIds.Conversation(Guid commandId)` using the fixed v5 name
+`conversation:{commandId:N}`, and `InitialRun(Guid commandId)` using
+`initial-run:{commandId:N}`. This is a narrow Contracts change (plus its source-generation tests),
+not a new HTTP DTO or cross-project dependency. The server does not mint random identities for a
+start request: without these deterministic address and run IDs, a client that lost its `201`
+response could not use its stable `CommandId` to retry the same logical conversation.
 
 Malformed request JSON, empty required strings/IDs, an invalid route GUID, a negative/non-numeric
 `after`, or any mission other than `Janus` is `400 Bad Request`. A missing conversation is `404`.
@@ -175,6 +182,7 @@ than invoking endpoint delegates.
 | File | Change |
 |---|---|
 | `src/ForgeMission.ConversationHost/Program.cs` | Register source-generated HTTP JSON and the singleton event hub; map API and health routes. |
+| `src/ForgeMission.Conversations.Contracts/ConversationDeterministicIds.cs` and its tests | Add deterministic conversation and initial-run IDs, including stable UUID-v5 test vectors and distinct-name assertions. |
 | `src/ForgeMission.ConversationHost/Api/ConversationApiEndpoints.cs` | Focused minimal-route adapter: validation, fixed `dev` address, grain calls, and explicit HTTP mapping. |
 | `src/ForgeMission.ConversationHost/Grains/IConversationEventNotifier.cs` | Grain-owned narrow post-durability notification contract; no HTTP or storage dependency. |
 | `src/ForgeMission.ConversationHost/Api/ConversationEventHub.cs` | Narrow non-durable notifier/subscription implementation with bounded stale-client containment. |
@@ -187,8 +195,9 @@ than invoking endpoint delegates.
 `ConversationApiTests` must prove, using source-generated request/response JSON and an
 `HttpCompletionOption.ResponseHeadersRead` SSE client:
 
-1. start Janus returns `201`/Location and its two initial durable events; snapshot and health
-   return their documented responses;
+1. start Janus returns `201`/Location and its two initial durable events; repeating the exact same
+   request reaches the same deterministic conversation/run and returns the original acceptance
+   without additional events; snapshot and health return their documented responses;
 2. a terminal first run accepts a follow-up without client-supplied mission/capabilities, and the
    fake dispatcher observes the original pinned capability declarations;
 3. tool-result acceptance validates the expected request, creates only one continuation, and exact
