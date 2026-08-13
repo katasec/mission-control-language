@@ -731,19 +731,14 @@ Task-7 Client Runtime/Presentation, mission, or forge-infra change is included.
 
 ### 6. Conversation API and resumable SSE
 
-ConversationHost Program hosts the Silo, progress consumer, API, health endpoints, and
-source-generated JSON. The separately deployed Worker hosts command dispatch/execution. Map the
-five routes in [durable-conversations.md](../design/durable-conversations.md#reconnect-and-projections).
+**Task 6 — build-ready.** See [Conversation API and resumable SSE](phase-43.16-task-6-conversation-api-sse.md).
+It maps the five additive Forge-native routes, preserves pinned capability declarations for
+follow-up runs, and closes the Table-replay/live-notifier race without making a healthy SSE
+connection a correctness condition. The local adapter uses the fixed `dev` tenant only; a future
+Tier-1 ForgeAPI/ForgeUI adapter supplies authenticated identity.
 
-SSE first reads durable events after the client's supplied sequence, then follows live appends.
-Correctness is replay, not a permanently healthy connection. A one-replica in-process live notifier
-is allowed only because event history always comes from Table.
-
-The local HTTP adapter supplies fixed development tenant/user identity only; contract/grain keys
-retain tenant/user ownership for a later Forge identity adapter.
-
-**Done when:** an HTTP test submits Janus, disconnects after a known sequence, reconnects, and
-gets exactly later events in order; existing '/v1/*' contract tests remain unchanged.
+**Done when:** the Task 6 document's named HTTP/SSE tests pass (including disconnect/reconnect
+replay), `/v1/*` contract tests remain unchanged, and the full solution build/test passes.
 
 ### 7. Client Runtime and group-chat rendering
 
