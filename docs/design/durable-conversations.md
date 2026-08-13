@@ -184,6 +184,22 @@ updates. Clients retain their last rendered sequence and deduplicate by event ID
 normal, not data loss. Desktop renders group chat; Rooms and the later 43.4 workbench are further
 projections of the same events, not new trace databases.
 
+### External collaboration projections
+
+Forge may later project its durable conversation into an external collaboration system (for example,
+a [Buzz](https://github.com/block/buzz) room) when that product integration has a concrete user
+need. This is deliberately not an integration commitment or a Phase 43.16 deliverable.
+
+The adapter is a distinct Tier-2 projection consumer: it reads the Conversation service through a
+named internal contract, remembers its own delivery cursor, and uses Forge `EventId` for
+idempotency while retaining Forge `Sequence` for source ordering. It owns any external credentials
+and external projection state. It never reads conversation Table/Blob directly, never becomes a
+second sequence allocator, and never turns transient token deltas/typing into durable transcript
+facts. Start with one Forge identity and carry `Participant`, `RunId`, `Sequence`, and `EventId` as
+metadata; mapping individual Janus participants to external identities is a separate product and
+identity decision. Projection UIs may summarize routine successful tool bursts, but approval,
+rejection, tool hand-off/result, error, and interrupted state remain individually visible.
+
 ## Local Kind topology
 
     Desktop / Client Runtime (host machine)
