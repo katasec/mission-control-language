@@ -118,8 +118,7 @@ internal sealed class MissionRunHandler(
         var accumulator = new UsageAccumulator();
         var runner = runnerFactory?.Invoke(mission, accumulator) ?? BuildRunner(mission, accumulator);
 
-        var trace   = new List<RunTraceStep>();
-        var attempt = 1;
+        var trace = new List<RunTraceStep>();
 
         var decl = mission.Ast.Declarations.OfType<MissionDeclaration>().First();
         var vars = BuildVars(request, decl, workspace);
@@ -135,20 +134,37 @@ internal sealed class MissionRunHandler(
         var options = new PipelineRunOptions(
             decl.Name,
             vars,
-            OnStepComplete: (expertName, envelope) =>
-            {
-                if (envelope.Status == "fail") attempt++;
-                trace.Add(new RunTraceStep(expertName, envelope.Status, envelope.Text, envelope.Reason, attempt));
-            },
-            // Step-start → transient progress (41.7). No-op for the buffered path (onProgress null).
-            OnStepStart: (expertName, kind) => onProgress?.Invoke(new RunProgress(expertName, kind)),
             // Sub-search narration from the kind:search step (41.7 Task 2) — Grok's per-query loop.
+            // Unchanged by Task 3 — Scout's own synchronous IProgress callback, not a trace fact.
             OnSearchProgress: sp => onProgress?.Invoke(
                 new RunProgress("WebSearch", sp.Kind, sp.Detail, sp.ResultCount)),
             ContextObjects: messages is null ? null : RunnerToolTurnMapper.ToContextObjects(messages),
             Tools: RunnerToolTurnMapper.ToTools(request.Tools),
             StartAtAgent: continuation?.StartAtAgent ?? false,
-            OnPreAgentComplete: continuation?.OnPreAgentComplete);
+            OnPreAgentComplete: continuation?.OnPreAgentComplete,
+            // Awaited pipeline trace sink (Phase 43.16 Task 3), replacing the removed
+            // OnStepStart/OnStepComplete callbacks. Deltas/tool-request facts are ignored here —
+            // they are for the durable Worker path (Task 5), not this buffered/streaming Runner
+            // trace. The buffered trace list is locked because parallel steps can call this
+            // concurrently.
+            OnTrace: (evt, _) =>
+            {
+                switch (evt)
+                {
+                    case PipelineStepStarted started:
+                        onProgress?.Invoke(new RunProgress(started.ExpertName, started.ExpertKind));
+                        break;
+                    case PipelineStepCompleted completed:
+                        lock (trace)
+                        {
+                            trace.Add(new RunTraceStep(
+                                completed.ExpertName, completed.Envelope.Status, completed.Envelope.Text,
+                                completed.Envelope.Reason, completed.Attempt));
+                        }
+                        break;
+                }
+                return Task.CompletedTask;
+            });
 
         // kind:search backend (Phase 41.2) — implicitly Grok, built from the runner's XAI_API_KEY operator
         // env var (null if unset ⇒ missions without kind:search are unaffected). Same seam as the CLI.

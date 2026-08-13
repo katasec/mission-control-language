@@ -411,6 +411,22 @@ Scout lifecycle test passes through `OnTrace`; and `dotnet build src/ForgeMissio
 `dotnet test src/ForgeMission.slnx` pass. No Conversation Host, Worker, Client Runtime,
 Presentation, mission definition, or forge-infra file changes in this task.
 
+**Task 3 is complete and verified**, on this repo's `codex/durable-pipeline-trace` branch:
+`PipelineTraceEvent.cs` adds the closed `PipelineStepStarted`/`PipelineStepDelta`/
+`PipelineStepCompleted`/`PipelineToolRequested`/`PipelineToolCall` hierarchy;
+`PipelineRunOptions.OnStepStart`/`OnStepComplete` are gone, replaced by the awaited
+`MissionPath`/`OnTrace` fields; `PipelineRunner`'s new `CreateChildOptions` helper is the single
+place a nested sub-mission's options are built, appending its mission name to the parent path
+without inheriting `ContextObjects`/`Tools`/`StartAtAgent`/`OnPreAgentComplete`; the
+writer-driven streaming condition is untouched, so `OnTrace` alone never forces streaming;
+`MissionRunHandler` maps `PipelineStepStarted`/`PipelineStepCompleted` to the existing
+`RunProgress`/`RunTraceStep` shapes under a lock, ignoring deltas/tool facts for now. `dotnet
+build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx` both pass clean: 401 tests
+(390 passed + 11 pre-existing xAI-credit-exhaustion skips, issue #7 — unrelated), including the
+updated Scout lifecycle test and three new `PipelineTraceTests` covering the nested Janus-shaped
+trace, the awaited gate/ordering proof, and the closed tool-request shape. **Next: Task 4,
+Table/Blob persistence and Orleans ownership.**
+
 ### 4. Table/Blob persistence and Orleans ownership
 
 Implement inside ConversationHost:

@@ -8,14 +8,11 @@ public record PipelineRunOptions(
     IReadOnlyDictionary<string, string>? Vars = null,
     TextWriter? StepWriter = null,
     TextWriter? ContentWriter = null,
-    Action<string, StepEnvelope>? OnStepComplete = null,
-    // Fired when a step BEGINS, with (expertName, kind). The engine-level progress signal (Phase
-    // 41.7): it lands before a long-running step (e.g. kind:search) so a consumer can show "Searching
-    // the web…" while it runs, not a frozen spinner. Provider-agnostic — every mission benefits.
-    Action<string, string>? OnStepStart = null,
     // Fired for each sub-search a kind:search backend narrates while a single search step runs (41.7
     // Task 2) — e.g. Grok's per-query web_search_call actions. Fills the long search step with live
-    // detail; backends that can't narrate simply never call it.
+    // detail; backends that can't narrate simply never call it. Unlike OnTrace below, this is the
+    // existing synchronous callback imposed by Scout's IProgress backend, not a pipeline lifecycle
+    // fact — left unchanged by Task 3.
     Action<WebSearchProgress>? OnSearchProgress = null,
     // Structured objects seeded into the context bag alongside Vars (Phase 42.1) — e.g. the full
     // client Conversation. The bag is untyped but not stringly-typed: real objects go in as-is.
@@ -29,4 +26,13 @@ public record PipelineRunOptions(
     bool StartAtAgent = false,
     // Fired once per run, just before the agent step, with the string-valued context snapshot —
     // the caller (MissionChatClient) stores it in the enrichment cache keyed by prefix hash P.
-    Action<IReadOnlyDictionary<string, string>>? OnPreAgentComplete = null);
+    Action<IReadOnlyDictionary<string, string>>? OnPreAgentComplete = null,
+    // Mission names, root to current, for the currently executing mission (Phase 43.16 Task 3).
+    // Null at a fresh top-level call — the runner defaults it to [MissionName]; CreateChildOptions
+    // appends the child's declared mission name for a nested sub-mission invocation.
+    IReadOnlyList<string>? MissionPath = null,
+    // Awaited pipeline lifecycle sink (Phase 43.16 Task 3), replacing the former synchronous
+    // OnStepStart/OnStepComplete callbacks. Always awaited with the run cancellation token — a
+    // throwing sink fails the run rather than silently dropping a fact. No caller is required to
+    // supply it, so a normal CLI/API run has unchanged trace overhead and behavior.
+    Func<PipelineTraceEvent, CancellationToken, Task>? OnTrace = null);

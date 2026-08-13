@@ -1,9 +1,11 @@
+using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Experts;
 using ForgeMission.Core.Manifest;
 using ForgeMission.Parser;
+using Microsoft.Extensions.AI;
 using Scout;
 
 namespace ForgeMission.Core.Runtime;
@@ -57,6 +59,11 @@ public class PipelineRunner
         MissionResult? lastResult = null;
         string? loopFeedback = null;
         var history = IsNegotiationEligible(mission, experts) ? new SpeakerTranscript() : null;
+
+        // Fresh array, root mission first, ending with this mission (Phase 43.16 Task 3). A
+        // top-level call leaves options.MissionPath null; CreateChildOptions supplies it for a
+        // nested sub-mission invocation.
+        IReadOnlyList<string> missionPath = options.MissionPath ?? [options.MissionName];
 
         for (var attempt = 1; attempt <= maxLoops; attempt++)
         {
@@ -114,7 +121,7 @@ public class PipelineRunner
                     var snapshot = new Dictionary<string, object>(context, StringComparer.Ordinal);
                     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     var tasks = parallel.Steps
-                        .Select(step => ExecuteParallelStepAsync(step, ast, experts, snapshot, options, linkedCts))
+                        .Select(step => ExecuteParallelStepAsync(step, ast, experts, snapshot, options, missionPath, attempt, linkedCts))
                         .ToArray();
 
                     try
@@ -170,15 +177,26 @@ public class PipelineRunner
                         if (anyGuardedStepMatched) continue;
                     }
 
-                    failReason = await ExecuteStepAsync(step, ast, experts, context, options, ct);
+                    failReason = await ExecuteStepAsync(step, ast, experts, context, options, missionPath, attempt, ct);
                     if (failReason is not null) break;
 
                     // Agent expert asked for a tool (42.3): return the tool_use to the client NOW.
                     // Post-agent steps (verify/judge) run on the final continuation — the request
                     // whose agent segment terminates without a tool call — never on this one.
                     if (context.TryGetValue("tool_calls", out var tc)
-                        && tc is IReadOnlyList<Microsoft.Extensions.AI.FunctionCallContent> toolCalls)
+                        && tc is IReadOnlyList<FunctionCallContent> toolCalls)
                     {
+                        // Emitted after that step's completed fact (already awaited inside
+                        // ExecuteStepAsync above), once for the non-empty tool-call set that makes
+                        // the pipeline return early (Phase 43.16 Task 3).
+                        if (options.OnTrace is { } onToolRequested
+                            && experts.TryGetValue(step.ExpertName, out var toolExpert))
+                        {
+                            await onToolRequested(new PipelineToolRequested(
+                                options.MissionName, missionPath, step.ExpertName, toolExpert.Kind,
+                                attempt, ToPipelineToolCalls(toolCalls)), ct);
+                        }
+
                         var toolText = context.TryGetValue("output", out var o) ? o?.ToString() ?? string.Empty : string.Empty;
                         return new MissionResult(options.MissionName, toolText, MissionStatus.Pass, null, attempt, toolCalls);
                     }
@@ -210,9 +228,13 @@ public class PipelineRunner
         Dictionary<string, ExpertDefinition> experts,
         Dictionary<string, object> context,
         PipelineRunOptions options,
+        IReadOnlyList<string> missionPath,
+        int attempt,
         CancellationToken ct)
     {
-        // Sub-mission: step name matches a declared mission → recurse.
+        // Sub-mission: step name matches a declared mission → recurse. No synthetic lifecycle fact
+        // is emitted for the sub-mission invocation itself (Phase 43.16 Task 3) — the actual
+        // experts inside it, at the deeper path CreateChildOptions builds, are the visible trail.
         var subMission = ast.Declarations
             .OfType<MissionDeclaration>()
             .FirstOrDefault(m => m.Name == step.ExpertName);
@@ -228,7 +250,7 @@ public class PipelineRunner
                 await msw.WriteLineAsync($"→ {step.ExpertName} (mission)...");
 
             var subResult = await RunAsync(ast, experts,
-                new PipelineRunOptions(step.ExpertName, childVars, options.StepWriter, options.ContentWriter), ct);
+                CreateChildOptions(options, step.ExpertName, childVars, missionPath), ct);
 
             context["output"] = subResult.Text;
 
@@ -260,7 +282,10 @@ public class PipelineRunner
             _              => ResolveRunner(step.Using)
         };
 
-        options.OnStepStart?.Invoke(step.ExpertName, expert.Kind);
+        // Before invoking a real expert (Phase 43.16 Task 3): its attempt is the enclosing
+        // mission's current loop attempt.
+        if (options.OnTrace is { } onStarted)
+            await onStarted(new PipelineStepStarted(options.MissionName, missionPath, step.ExpertName, expert.Kind, attempt), ct);
 
         if (options.StepWriter is { } sw)
             await sw.WriteLineAsync($"→ {step.ExpertName}...");
@@ -278,6 +303,9 @@ public class PipelineRunner
         StepEnvelope envelope;
         try
         {
+            // Never force the streaming path merely because OnTrace is configured (Task 3): several
+            // non-LLM runners expose a text-only streaming adapter that cannot preserve a failing
+            // StepEnvelope. This condition is unchanged from before OnTrace existed.
             if (options.StepWriter is not null || options.ContentWriter is not null)
             {
                 var sb = new StringBuilder();
@@ -288,6 +316,9 @@ public class PipelineRunner
                     if (options.ContentWriter is { } cw)
                         await cw.WriteAsync(chunk);
                     sb.Append(chunk);
+
+                    if (options.OnTrace is { } onDelta && !string.IsNullOrEmpty(chunk))
+                        await onDelta(new PipelineStepDelta(options.MissionName, missionPath, step.ExpertName, expert.Kind, attempt, chunk), ct);
                 }
                 if (options.StepWriter is { } sw3)
                     await sw3.WriteLineAsync("\n");
@@ -321,13 +352,36 @@ public class PipelineRunner
             history.Add(step.ExpertName, text);
         }
 
-        options.OnStepComplete?.Invoke(step.ExpertName, envelope);
+        // Emitted for both pass and fail envelopes, after the output/history update above and
+        // before the caller decides whether the envelope fails the mission — always awaited
+        // before the next step begins (Phase 43.16 Task 3).
+        if (options.OnTrace is { } onCompleted)
+            await onCompleted(new PipelineStepCompleted(options.MissionName, missionPath, step.ExpertName, expert.Kind, attempt, envelope), ct);
 
         if (envelope.Status == "fail")
             return $"[{step.ExpertName}] {envelope.Reason ?? "step failed"}";
 
         return null;
     }
+
+    // One small helper (Phase 43.16 Task 3) replacing the two ad-hoc child `new
+    // PipelineRunOptions(...)` calls in ExecuteStepAsync/ExecuteParallelStepAsync. Deliberately
+    // does not inherit ContextObjects, Tools, StartAtAgent, or OnPreAgentComplete — preserving
+    // today's isolated sub-mission/tool semantics (the essential Janus fix: Proposer/Approver run
+    // under [Janus, Negotiate], Implementer under [Janus, Implement]).
+    private static PipelineRunOptions CreateChildOptions(
+        PipelineRunOptions parent,
+        string childMissionName,
+        Dictionary<string, string> childVars,
+        IReadOnlyList<string> parentPath)
+        => new(
+            childMissionName,
+            childVars,
+            parent.StepWriter,
+            parent.ContentWriter,
+            OnSearchProgress: parent.OnSearchProgress,
+            OnTrace: parent.OnTrace,
+            MissionPath: [.. parentPath, childMissionName]);
 
     private static bool IsNegotiationEligible(
         MissionDeclaration mission,
@@ -353,11 +407,14 @@ public class PipelineRunner
         Dictionary<string, ExpertDefinition> experts,
         Dictionary<string, object> baseContext,
         PipelineRunOptions options,
+        IReadOnlyList<string> missionPath,
+        int attempt,
         CancellationTokenSource cts)
     {
         var namedKey = $"{step.ExpertName}.output";
 
-        // Sub-mission in parallel block → recurse with isolated child context.
+        // Sub-mission in parallel block → recurse with isolated child context. No synthetic
+        // lifecycle fact for the sub-mission invocation itself, same as the sequential path.
         var subMission = ast.Declarations
             .OfType<MissionDeclaration>()
             .FirstOrDefault(m => m.Name == step.ExpertName);
@@ -370,7 +427,7 @@ public class PipelineRunner
                 StringComparer.Ordinal);
 
             var subResult = await RunAsync(ast, experts,
-                new PipelineRunOptions(step.ExpertName, childVars, options.StepWriter, options.ContentWriter),
+                CreateChildOptions(options, step.ExpertName, childVars, missionPath),
                 cts.Token);
 
             if (subResult.Status == MissionStatus.Fail)
@@ -407,7 +464,16 @@ public class PipelineRunner
             _              => ResolveRunner(step.Using)
         };
 
+        // Parallel steps may call the sink concurrently and retain their own facts/path/attempt
+        // (Task 3 imposes no global sequence across them). No streaming path exists here today, so
+        // only started/completed are emitted — never a delta.
+        if (options.OnTrace is { } onStarted)
+            await onStarted(new PipelineStepStarted(options.MissionName, missionPath, step.ExpertName, expert.Kind, attempt), cts.Token);
+
         var envelope = await runner.RunAsync(expert, localContext, cts.Token);
+
+        if (options.OnTrace is { } onCompleted)
+            await onCompleted(new PipelineStepCompleted(options.MissionName, missionPath, step.ExpertName, expert.Kind, attempt, envelope), cts.Token);
 
         if (envelope.Status == "fail")
         {
@@ -416,6 +482,62 @@ public class PipelineRunner
         }
 
         return (null, namedKey, envelope.Text);
+    }
+
+    // Converts each provider-SDK FunctionCallContent to the closed PipelineToolCall shape (Phase
+    // 43.16 Task 3) — no provider SDK object crosses into the trace. Mirrors
+    // ForgeMission.Runner's RunnerToolTurnMapper.ToJsonElement/WriteValue (Core cannot reference
+    // Runner, so the small Utf8JsonWriter-based conversion is duplicated here rather than
+    // reflection-serialized).
+    private static IReadOnlyList<PipelineToolCall> ToPipelineToolCalls(IReadOnlyList<FunctionCallContent> calls)
+        => calls.Select(call => new PipelineToolCall(
+            call.CallId,
+            call.Name,
+            ToolArgumentsToJsonElement(call.Arguments))).ToList();
+
+    private static JsonElement ToolArgumentsToJsonElement(IDictionary<string, object?>? arguments)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer);
+        writer.WriteStartObject();
+        foreach (var (name, value) in arguments ?? new Dictionary<string, object?>())
+        {
+            writer.WritePropertyName(name);
+            WriteToolArgumentValue(writer, value);
+        }
+        writer.WriteEndObject();
+        writer.Flush();
+
+        using var document = JsonDocument.Parse(buffer.WrittenMemory);
+        return document.RootElement.Clone();
+    }
+
+    private static void WriteToolArgumentValue(Utf8JsonWriter writer, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                writer.WriteNullValue();
+                return;
+            case string text:
+                writer.WriteStringValue(text);
+                return;
+            case bool boolean:
+                writer.WriteBooleanValue(boolean);
+                return;
+            case long integer:
+                writer.WriteNumberValue(integer);
+                return;
+            case double number:
+                writer.WriteNumberValue(number);
+                return;
+            case JsonElement element:
+                element.WriteTo(writer);
+                return;
+            default:
+                throw new InvalidOperationException(
+                    $"Unsupported tool argument type '{value.GetType().FullName}'.");
+        }
     }
 
     // The restorable slice of the context bag: string values only. Structured objects
