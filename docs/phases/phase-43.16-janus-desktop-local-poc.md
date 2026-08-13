@@ -524,7 +524,9 @@ scope; a run ID never makes a separate transcript partition.
 `AppendAsync` rejects a wrong conversation ID, `Version != 1`, non-positive sequence, or an
 oversized inline payload. It first resolves `eventId`; if found, it returns the stored event only
 when every semantic field (including sequence) is equal, otherwise it throws a clear invariant
-violation. It does not generate IDs, sequences, timestamps, or Table keys — those are grain-owned.
+violation. A conflicting append that has no matching event ID is a sequence/row-key collision and
+also fails loudly; it must never be treated as a duplicate. It does not generate IDs, sequences,
+timestamps, or Table keys — those are grain-owned.
 
 The event table uses one transaction and partition for each append:
 
@@ -638,9 +640,22 @@ this checkpoint; Task 4 only preserves it.
 `MissionRunCheckpoint` contains only `TenantId`, `RunId`, `ConversationId`, `Status`,
 `ExecutionBoundary` (`NotStarted`, `ExecutingProvider`, `WaitingForTool`, `Terminal`), stable
 `InterruptionEventId`/`InterruptionOccurredAtUtc` (both null until needed), and `UpdatedAtUtc`.
-`IMissionRunGrain` exposes `ApplyDurableEventAsync(MissionRunEventInput)` and `GetStatusAsync()`.
-ConversationGrain invokes it only after the corresponding event appended, except for its dedicated
-interruption-report operation below.
+`IMissionRunGrain` exposes `ApplyDurableEventAsync(MissionRunEventInput)` and
+`Task<ConversationRunStatus> GetStatusAsync()`; it never returns its complete checkpoint. The
+following fixed mapping prevents a completed safe boundary from looking like an uncertain provider
+call after restart:
+
+| Durable event | Status / execution boundary |
+|---|---|
+| `RunStatus(Queued)` or `RunStatus(Running)` | stated status / `NotStarted` — dispatch is not a provider call. |
+| `ParticipantStarted` | `Running` / `ExecutingProvider`. |
+| `ParticipantMessage`, `Approval`, `Artifact`, `ToolResult`, `Error` | preserve non-terminal status / `NotStarted` — the reported fact is durable before a later call may begin. |
+| `ToolRequested` or `RunStatus(WaitingForTool)` | `WaitingForTool` / `WaitingForTool`. |
+| terminal `RunStatus` (`Completed`, `Rejected`, `Interrupted`, `Failed`) | stated status / `Terminal`. |
+| `UserMessage` | no run-state change; `AcceptCommandAsync` already initialized the run. |
+
+ConversationGrain invokes `ApplyDurableEventAsync` only after the corresponding event appended,
+except for its dedicated interruption-report operation below.
 
 On activation, `ExecutingProvider` first checks `ReadLatestForRunAsync`: a terminal transcript fact
 wins and is adopted. Otherwise MissionRunGrain generates/stores its stable interruption ID/time,
