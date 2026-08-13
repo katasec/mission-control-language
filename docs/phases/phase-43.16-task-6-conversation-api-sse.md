@@ -271,6 +271,23 @@ introduced: none solves a present Task 6 need. One-Silo/one-host live notificati
 declared proof limitation; Table replay is the durable reconnection path and later HA replaces only
 the notifier backplane.
 
+### OrleansContrib pattern review (2026-08-14)
+
+The community Observer pattern confirms that subscriptions are transient and must be explicitly
+managed. It is therefore deliberately **not** the conversation delivery guarantee: our bounded
+in-process notifier has the same best-effort role, while the durable Table sequence remains the
+only reconnect source. The Hub pattern is also deferred: a global aggregation hub adds a singleton
+pressure point and can reorder buffered events, neither of which is acceptable for this one
+conversation's canonical sequence. A future multi-silo notifier backplane may use a hub-like
+implementation internally, but it must preserve the current SSE cursor/replay contract.
+
+Cadence, Dispatcher, Reduce, and Smart Cache do not solve a present Task 6 requirement. The
+durable outbox reminder is a recovery mechanism, not cadence/batching; it must send the individual
+stable command ID promptly. Service Bus consumers already resolve each message directly to its
+conversation grain, which preserves per-conversation ordering; introducing an Orleans dispatcher
+would add a hop and latency without reducing a demonstrated boundary cost. Aggregation and cached
+reads are premature while this proof has one Silo and Table remains the authoritative transcript.
+
 ## Architecture-security and engineering gates
 
 | Gate | Locked answer |
