@@ -1,6 +1,6 @@
 # Phase 43.16 Task 5 — Service Bus delivery and Janus Worker
 
-> **Status: implementation-ready 2026-08-13.** Parent: [43.16 Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md).
+> **Status: done and verified 2026-08-14** (implementation commit `1da4dc7`). `dotnet build src/ForgeMission.slnx` completed with 0 warnings/errors; `dotnet test src/ForgeMission.slnx` completed with 615 passed, 11 known provider-dependent skips, 0 failed. Real Service Bus/Kind delivery remains Task 8. Parent: [43.16 Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md).
 
 ## Scope
 

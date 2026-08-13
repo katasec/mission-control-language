@@ -1,7 +1,8 @@
 # Phase 43.16 — Durable Janus conversation proof
 
-> **Status: Design review (2026-08-12).** This replaces the earlier in-memory Janus Desktop sketch
-> before implementation starts. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md);
+> **Status: Implementation active (2026-08-14).** Durable persistence and Service Bus/Worker
+> delivery are verified; conversation API/SSE is next. This replaces the earlier in-memory Janus
+> Desktop sketch. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md);
 > builds on [43.11](phase-43.11-wasm-photino-shell.md), the completed
 > [43.15 Janus mission](phase-43.15-janus-inter-agent-mission.md), and the shared
 > [durable-conversations design](../design/durable-conversations.md).
@@ -429,16 +430,9 @@ Table/Blob persistence and Orleans ownership.**
 
 ### 4. Table/Blob persistence and Orleans ownership
 
-**Task 4 — done and verified 2026-08-13 (commit `951bf73`; suite unblocker `2a8aa60`).** The
-real-Azurite Host suite passes **76/76**, including fresh-Host transcript replay, Blob
-dereference, interruption recovery, and notification-after-append recovery. The full solution
-build passes with zero warnings/errors; its test suite passes **568**, skips **11** known
-provider-dependent tests, and has zero failures. **Next: Task 5, Service Bus delivery and mission
-worker.** This task is the Conversation service's
-durability/ownership boundary only. It adds no HTTP route, Service Bus client/consumer, Worker,
-MCL execution, Client Runtime, Presentation, or forge-infra change. Task 5 owns queue delivery and
-Worker execution; Task 6 owns endpoint/status mapping. The Host is a normal server/Silo, so its
-Azure/Orleans dependencies remain isolated here and must not cross the Contracts boundary.
+**Task 4 — done and verified 2026-08-13** (commit `951bf73`; suite unblocker `2a8aa60`). See its
+existing persistence design and evidence below. Task 5 is also verified; next is Task 6,
+conversation API and resumable SSE.
 
 #### Files, packages, and composition root
 
@@ -733,7 +727,7 @@ Task-7 Client Runtime/Presentation, mission, or forge-infra change is included.
 
 ### 5. Service Bus delivery and mission worker
 
-**Task 5 design — implementation-ready 2026-08-13.** See [Service Bus delivery and Janus Worker](phase-43.16-task-5-service-bus-worker.md).
+**Task 5 — done and verified 2026-08-14** (commit `1da4dc7`). See [Service Bus delivery and Janus Worker](phase-43.16-task-5-service-bus-worker.md): full build has 0 warnings/errors and full suite has 615 passed, 11 known provider-dependent skips, 0 failed. Real Service Bus/Kind proof remains Task 8.
 
 ### 6. Conversation API and resumable SSE
 
