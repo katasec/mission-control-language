@@ -107,18 +107,21 @@ Extend `ConversationCheckpoint` with `PinnedCapabilitiesJson` (source-generated
 `ConversationCapabilityDeclaration[]` JSON) and `PendingRunStart`. The latter is a
 `[GenerateSerializer]` Host-local recovery record containing the complete accepted start-command
 JSON, one preallocated queued-event ID, and its preallocated occurrence timestamp. On the first
-accepted start, persist the validated capability declarations, pinned mission, active-start command,
-and `PendingRunStart` in one checkpoint write **before** the first event transition. It remains
-until both the deterministic `UserMessage` and `RunStatus(Queued)` transitions have recovered or
-completed; it is not cleared merely because the user message exists.
+accepted start, persist the validated capability declarations, pinned mission, and
+`PendingRunStart` in one checkpoint write **before** the first event transition. `PendingRunStart`
+is the sole retained start-command copy during this window: do **not** also set
+`ActiveStartCommandJson`, because two full command copies could exceed the Azure Table-backed
+Orleans-state cell limit.
 
 After its ordinary pending-transition repair, activation detects `PendingRunStart`: it resolves the
 command-ID event, appends the `UserMessage` if absent, then resolves the stable queued-event ID. If
 that event is absent, it plans/appends/dispatches the queued transition through the existing durable
-pending-transition/outbox protocol. If it is present, its own completed pending transition already
-proved the dispatch was broker-accepted, so clear `PendingRunStart` without resending. This closes
-the literal crash gap between the two start facts and keeps the paired `n + 1` duplicate acceptance
-true. A start retry first repairs `PendingRunStart`, then uses the normal exact-duplicate path.
+pending-transition/outbox protocol. Once that queued event is present, set
+`ActiveStartCommandJson = PendingRunStart.StartCommandJson` and clear `PendingRunStart` in **one**
+checkpoint write. The queued transition's completed pending-transition protocol already proves its
+dispatch was broker-accepted, so this recovery step does not resend. This closes the literal crash
+gap between the two start facts and keeps the paired `n + 1` duplicate acceptance true. A start
+retry first repairs `PendingRunStart`, then uses the normal exact-duplicate path.
 
 The capabilities remain after a run becomes terminal; `ActiveStartCommandJson` keeps its current,
 narrower lifetime for a currently active tool continuation. A follow-up command reconstructs its
@@ -138,6 +141,24 @@ comparison; do not create a second in-memory idempotency map.
 The matching `ToolResult` participant is `Implementer`: it completes the Implementer's declared
 tool hand-off, which lets Task 7 render one coherent Implementer tool row. `Forge` remains reserved
 for infrastructure/lifecycle facts such as `RunStatus` and dead-letter errors.
+
+### Orleans state and payload bounds
+
+`ConversationGrain` is deliberately a small, sequential ownership boundary, not a place for
+provider execution, blocking I/O, or a growing transcript. The event log remains Table-owned; grain
+state contains only the operational checkpoint and at most **one** full accepted start-command JSON
+copy. Before any checkpoint write, the grain validates the source-generated UTF-8
+`ConversationCommand` JSON is at most **32 KiB**. This fixed bound covers the goal plus all
+capability declarations/schema, leaves margin below the Azure Table provider's 64 KiB cell limit,
+and is enforced for both first and follow-up starts. An over-limit client request returns an explicit
+typed `Invalid` acceptance result mapped to `400`; it is never allowed to become a storage failure.
+
+Likewise, before calling `RecordProgressAsync` for a Client Runtime tool result, validate the
+source-generated resulting `ConversationProgress` JSON against the existing 48 KiB inline-event
+limit. An over-limit content payload returns the same typed `Invalid`/`400` result rather than
+relying on the store's invariant exception. Add `Invalid` to `ConversationCommandOutcome`; its
+reason is suitable for the adapter's `400` response. The store retains its existing limits and
+throws as the non-client-reachable integrity backstop.
 
 ## Durable replay and one-replica live notifier
 
@@ -199,7 +220,7 @@ than invoking endpoint delegates.
 | `src/ForgeMission.ConversationHost/Api/ConversationEventHub.cs` | Narrow non-durable notifier/subscription implementation with bounded stale-client containment. |
 | `src/ForgeMission.ConversationHost/Api/ConversationSseWriter.cs` | SSE framing plus the replay/subscribe/catch-up/drain algorithm. |
 | `src/ForgeMission.ConversationHost/Persistence/IConversationEventStore.cs`, `AzureTableConversationEventStore.cs`, and test fakes | Return the Host-local stored event plus accepted-command JSON to make duplicate equality explicit; retain `AppendAsync` as an integrity backstop. |
-| `src/ForgeMission.ConversationHost/Grains/IConversationGrain.cs`, `ConversationGrainResults.cs`, `ConversationCheckpoint.cs`, `ConversationGrain.cs` | Host-local typed acceptance/conflict results, start-pair recovery, pinned capabilities, exact-duplicate acceptance, and post-durable live publish. |
+| `src/ForgeMission.ConversationHost/Grains/IConversationGrain.cs`, `ConversationGrainResults.cs`, `ConversationCheckpoint.cs`, `ConversationGrain.cs` | Host-local typed acceptance/conflict/invalid results, one-copy start-pair recovery, pinned capabilities, exact-duplicate acceptance, fixed payload bounds, and post-durable live publish. |
 | `src/ForgeMission.ConversationHost.Tests/AzuriteFixture.cs` | Register/map the real API and expose its loopback base URI; do not add an ASP.NET test-server package. |
 | `src/ForgeMission.ConversationHost.Tests/ConversationApiTests.cs` | New real-Kestrel HTTP/SSE integration coverage below. |
 | `src/ForgeMission.ConversationHost.Tests/ConversationGrainTests.cs` | Extend persistence/idempotency coverage for a crash after the `UserMessage` but before its queued pair, terminal duplicate starts, pinned-capability follow-ups, and duplicate tool-result acceptance if that is clearer than asserting it only over HTTP. |
@@ -214,7 +235,7 @@ than invoking endpoint delegates.
    fake dispatcher observes the original pinned capability declarations;
 3. tool-result acceptance validates the expected request, creates only one continuation, and exact
    duplicate retries return the original acceptance without another event/dispatch; mismatches are
-   `409` with no state advance;
+   `409` with no state advance, while an over-limit payload is `400` with no state advance;
 4. malformed/unknown/active-run inputs return the documented `400`/`404`/`409` mapping; and
 5. the SSE client reads a known sequence, cancels/disconnects, misses later events, reconnects with
    its last sequence, and receives exactly the later durable events in sequence order. Include the
@@ -229,6 +250,27 @@ Run:
 Existing `/v1/*` contract tests must remain unchanged; this task neither edits nor re-baselines
 them.
 
+## Orleans best-practices review (2026-08-14)
+
+Reviewed against Microsoft's Orleans guidance before Task 6 implementation. The design is aligned:
+
+- one small, independent, non-reentrant `ConversationGrain` owns one ordered conversation; Janus
+  participants are events, not chatty grains, and one conversation's required sequence is a
+  deliberate local coordinator rather than a cross-conversation bottleneck;
+- provider calls and long-running execution remain in the Worker, not a grain; grain operations use
+  awaited storage, grain, and dispatcher calls only—no blocking waits, locks, or reentrancy;
+- `IPersistentState<T>` is the compact operational checkpoint, while the transcript stays in Table;
+  the one-copy start recovery and fixed 32 KiB command bound now enforce that distinction against
+  the Azure Table state-cell limit; and
+- Orleans request delivery is at-most-once, so the stable client `CommandId`, deterministic initial
+  address/run IDs, idempotency rows, pending transition/start recovery, and Service Bus outbox are
+  the end-to-end retry contract rather than an assumption that a failed call is rerun.
+
+No stateless worker, grain reentrancy, timers for state batching, or multi-silo test cluster is
+introduced: none solves a present Task 6 need. One-Silo/one-host live notifications remain a
+declared proof limitation; Table replay is the durable reconnection path and later HA replaces only
+the notifier backplane.
+
 ## Architecture-security and engineering gates
 
 | Gate | Locked answer |
@@ -239,7 +281,7 @@ them.
 | Credentials | No new credentials, grants, packages, or ingress are introduced. Host retains its existing least-privilege data/queue directions; Worker retains no Storage/Orleans credential. |
 | Type | Conversation ownership, public-edge target, and no cross-store access remain Type 1 locked decisions. The bounded one-replica notifier and SSE mechanics are Type 2 behind `IConversationEventNotifier`; replacement condition is multi-replica/HA work requiring a shared backplane while preserving Table replay. |
 | Ownership / failure boundary | Routes adapt HTTP only; grain owns mutation/idempotency/outbox; event store owns durable replay; notifier owns best-effort live delivery; SSE writer owns framing/reconnect handoff. A full/broken live channel ends, never blocks or mutates a run. |
-| Knobs / abstractions | One real seam (`IConversationEventNotifier`) exists to enforce the non-durable live boundary. Capacity 64 is fixed for this proof; no heartbeat, retry, cache, or configurable transport abstraction is added. |
+| Knobs / abstractions | One real seam (`IConversationEventNotifier`) exists to enforce the non-durable live boundary. Capacity 64, a 32 KiB command bound, and the existing 48 KiB event bound are fixed for this proof; no heartbeat, retry, cache, or configurable transport abstraction is added. |
 | Verification | Named real-Kestrel HTTP/SSE tests prove the critical disconnect/replay and replay/live-overlap observations; full build/test proves the additive change preserves existing contracts. |
 
 **Done when:** the named tests above pass, including the disconnect/reconnect and overlap cases;
