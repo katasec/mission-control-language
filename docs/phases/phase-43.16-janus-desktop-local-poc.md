@@ -429,23 +429,250 @@ Table/Blob persistence and Orleans ownership.**
 
 ### 4. Table/Blob persistence and Orleans ownership
 
-Implement inside ConversationHost:
+**Task 4 design — implementation-ready 2026-08-13.** This task is the Conversation service's
+durability/ownership boundary only. It adds no HTTP route, Service Bus client/consumer, Worker,
+MCL execution, Client Runtime, Presentation, or forge-infra change. Task 5 owns queue delivery and
+Worker execution; Task 6 owns endpoint/status mapping. The Host is a normal server/Silo, so its
+Azure/Orleans dependencies remain isolated here and must not cross the Contracts boundary.
 
-    IConversationEventStore / AzureTableConversationEventStore
-    IConversationArtifactStore / AzureBlobConversationArtifactStore
-    ConversationGrain / MissionRunGrain
+#### Files, packages, and composition root
 
-Configure named Azure Table grain storage for ConversationCheckpoint and MissionRunCheckpoint and
-Azure Storage clustering for Kind. Event append is idempotent by event ID, uses grain-assigned
-sequence, and exposes ReadAfterAsync(conversationId, sequence). Content beyond Table bounds goes
-to Blob before a reference event is appended.
+Add the following Host-only files; use one type per concern and keep endpoint code out of them:
 
-ConversationGrain persists accepted command state before dispatch and repairs its deterministic
-event on activation. MissionRunGrain records terminal status, never creates per-expert grains, and
-marks a stale executing checkpoint as interrupted rather than replaying an uncertain provider call.
+    src/ForgeMission.ConversationHost/Persistence/
+      IConversationEventStore.cs
+      AzureTableConversationEventStore.cs
+      IConversationArtifactStore.cs
+      AzureBlobConversationArtifactStore.cs
+      ConversationStorageOptions.cs
+    src/ForgeMission.ConversationHost/Grains/
+      ConversationAddress.cs
+      ConversationCheckpoint.cs
+      MissionRunCheckpoint.cs
+      ConversationGrain.cs / MissionRunGrain.cs
+      IConversationGrain.cs / IMissionRunGrain.cs
+      ConversationGrainResults.cs
+    src/ForgeMission.ConversationHost.Tests/
+      AzuriteFixture.cs
+      ConversationPersistenceTests.cs
+      ConversationGrainTests.cs
 
-**Done when:** Azurite integration tests create/re-activate a grain, replay an ordered transcript
-from a fresh host, reject duplicate event/command IDs, and dereference a Blob-backed artifact.
+Add only these production packages to `ForgeMission.ConversationHost.csproj`, all pinned to
+`10.0.0`: `Microsoft.Orleans.Server`, `Microsoft.Orleans.Clustering.AzureStorage`, and
+`Microsoft.Orleans.Persistence.AzureStorage`; add `Azure.Data.Tables` `12.11.0`,
+`Azure.Storage.Blobs` `12.29.1`, and `Azure.Identity` `1.21.0`. Add
+`Testcontainers.Azurite` `4.13.0` to the test project only. Do not add any Azure or Orleans
+dependency to Contracts, Client Runtime, CLI, or Presentation. Extend the existing source-level
+boundary test to prove that only ConversationHost and its test project may name Orleans/Azure
+packages, and only Host may reference its persistence or grain namespaces.
+
+`ConversationStorageOptions` has exactly these required settings:
+
+    ConnectionString                 # Kind/Azurite only
+    TableEndpoint                    # production managed-identity path
+    BlobEndpoint                     # production managed-identity path
+    EventTableName = forgeconversationevents
+    ArtifactContainerName = forgeconversationartifacts
+    OrleansClusterId = forge-conversation-dev
+    OrleansServiceId = forge-conversation
+
+The composition root selects exactly one credential path: a non-empty `ConnectionString`, otherwise
+both endpoints with `DefaultAzureCredential`. Fail startup if the selected path is incomplete;
+never silently fall back from endpoints to a connection string. Kind receives only its existing
+Host-only development Storage secret; production uses the Host managed identity. Register one
+`TableServiceClient`, one `BlobServiceClient`, `IConversationEventStore`, and
+`IConversationArtifactStore` as singletons.
+
+Call `UseOrleans` from `Program.cs`, configure Azure Storage clustering, and configure these named
+Table grain stores against the same selected credential/client:
+
+    conversation-checkpoint  -> ConversationCheckpoint
+    mission-run-checkpoint   -> MissionRunCheckpoint
+
+Use `IPersistentState<T>` with `[PersistentState]`, rather than `Grain<TState>`. State loads before
+`OnActivateAsync`; every changed transition explicitly awaits `WriteStateAsync`. The one-Silo Kind
+configuration uses the fixed development cluster/service IDs above. No local membership, in-memory
+grain state, generic default store, dashboard, client gateway, reminder, stream, or multi-silo
+setting belongs in this task. Orleans creates its own clustering/checkpoint tables under the Host's
+existing Table role; the Azurite fixture creates only the application event table/container.
+
+#### Identity, Table/Blob layout, and persistence seams
+
+The future authenticated adapter supplies a server-trusted internal value:
+
+    ConversationAddress(string TenantId, Guid ConversationId)
+
+It has no public HTTP/Contracts representation. Its canonical grain/Table partition key is
+`v1|{TenantId}|{ConversationId:N}`; `TenantId` must be non-empty and cannot contain `|`. Task 6's
+development adapter uses the fixed tenant `dev`; it never takes a tenant from a route or request.
+The canonical address string is the `IConversationGrain` key. An address determines transcript
+scope; a run ID never makes a separate transcript partition.
+
+`IConversationEventStore` is the only application-level reader/writer of
+`forgeconversationevents`:
+
+    Task<ConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct)
+    Task<ConversationEvent> AppendAsync(ConversationAddress address, ConversationEvent @event, CancellationToken ct)
+    IAsyncEnumerable<ConversationEvent> ReadAfterAsync(ConversationAddress address, long sequence, CancellationToken ct)
+    Task<ConversationEvent?> ReadLatestForRunAsync(ConversationAddress address, Guid runId, CancellationToken ct)
+
+`AppendAsync` rejects a wrong conversation ID, `Version != 1`, non-positive sequence, or an
+oversized inline payload. It first resolves `eventId`; if found, it returns the stored event only
+when every semantic field (including sequence) is equal, otherwise it throws a clear invariant
+violation. It does not generate IDs, sequences, timestamps, or Table keys — those are grain-owned.
+
+The event table uses one transaction and partition for each append:
+
+| Row type | Row key | Stored fields | Purpose |
+|---|---|---|---|
+| Event | `0-{sequence:D19}` | `EventJson`, `RunId`, `OccurredAtUtc` | Canonical ordered transcript. |
+| Idempotency | `1-{eventId:N}` | `Sequence`, `EventJson` | Event-ID lookup/equality check. |
+
+Both rows use the `ConversationAddress` partition key. `ReadAfterAsync` queries only the `0-` key
+range in ascending order through `ConversationContractsJsonContext`, returning only
+`Sequence > after`; idempotency rows are never transcript data. `ReadLatestForRunAsync` enumerates
+the same ordered conversation range and retains the last matching `RunStatus` for the requested
+run; the initial proof deliberately trades this rare activation repair for no second run index. No
+initial retention deletes either row type. This provides durable event/command ID idempotency
+without putting an unbounded history in grain state.
+
+The Table entity maximum is 1 MiB, but a string property is much smaller. Fix the conservative
+inline limit at **48 KiB of UTF-8 `EventJson`**. Large content is stored through:
+
+    Task<ConversationArtifactReference> PutAsync(
+      ConversationAddress address, Guid? runId, Guid artifactId,
+      string contentType, string? fileName, Stream content, CancellationToken ct)
+    Task<Stream> OpenReadAsync(ConversationAddress address,
+      Guid? runId, ConversationArtifactReference artifact, CancellationToken ct)
+
+`AzureBlobConversationArtifactStore` writes create-only to
+`{escaped-tenant}/{conversationId:N}/{run-or-conversation}/{artifactId:N}` in private container
+`forgeconversationartifacts`. `artifactId` is supplied by the grain/caller and remains stable on
+retry; an existing blob is accepted as that artifact and never overwritten. The caller writes the
+Blob before appending its `Artifact` reference event. The store derives the complete Blob path from
+the address/reference only; it never accepts a Blob path or SAS URI from an event/request. No Blob
+delete or retention policy is introduced.
+
+#### Grain ownership and recovery protocol
+
+The only grain identities are `ConversationGrain` per `ConversationAddress` and `MissionRunGrain`
+per `{TenantId}|{RunId:N}`. Proposer, Approver, Implementer, a tool request, and a transcript event
+are values in state — never grains. Their interfaces are internal to ConversationHost; later API
+adapters/queue consumers use `IGrainFactory`, not direct storage or another service.
+
+`ConversationCheckpoint` contains exactly:
+
+    string TenantId; Guid ConversationId; string MissionRef; Guid? ActiveRunId;
+    long LastSequence; ConversationRunStatus Status; Guid? ExpectedToolRequestId;
+    PendingConversationTransition? PendingTransition; DateTimeOffset UpdatedAtUtc
+
+`PendingConversationTransition` holds one fully planned `ConversationEvent`, plus an optional
+accepted `ConversationCommand` and `DispatchState` (`NotDispatched` only in this task). It is a
+recovery record, not history. The accepted command's deterministic `UserMessage` uses `CommandId`
+as its `EventId`; duplicate command acceptance therefore resolves through the durable event-ID row.
+Before Task 5 exists, acceptance stops after the event/checkpoint is durable — it never enqueues.
+
+`IConversationGrain` exposes only these Task-4 operations; result/acceptance records are internal
+Host DTOs, not public wire contracts:
+
+    Task<ConversationCommandAcceptance> AcceptCommandAsync(ConversationCommand command)
+    Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgress progress)
+    Task<ConversationSnapshot> GetSnapshotAsync()
+    Task<IReadOnlyList<ConversationEvent>> ReadAfterAsync(long sequence)
+
+`AcceptCommandAsync` validates conversation identity, pins `MissionRef` on first acceptance,
+rejects a different mission or an active run, and creates a new run after a terminal prior run. It
+plans a deterministic `UserMessage` event followed by a deterministic `RunStatus(Queued)` event.
+Each is one independent pending transition; the returned acceptance names the second event's
+sequence. `RecordProgressAsync` validates
+conversation/run identity, converts Worker progress into the closed event contract, and never
+accepts a Worker sequence. Its acceptance distinguishes an already-recorded equal event from a new
+one, and carries a rejected result for an invalid tool result. Both use this fixed protocol:
+
+1. Repair any prior pending transition before accepting new work.
+2. Allocate `LastSequence + 1`, fully plan the event with stable ID/timestamp, and persist it in
+   `PendingTransition`.
+3. Await idempotent `AppendAsync`, which appends both rows or returns the equal prior event.
+4. Advance `LastSequence`, clear `PendingTransition`, update snapshot fields, and persist state.
+
+There is deliberately no claimed atomic transaction between Orleans state and the application event
+table. A crash after step 2 or 3 is repaired by retrying the same planned ID/sequence; a new request
+never overtakes it. `OnActivateAsync` repairs its own pending transition first. If it finds a Table
+append after an older checkpoint, it advances from the returned event. A Table sequence beyond the
+checkpoint without the matching planned event fails activation loudly as corruption — it must not
+guess a missing transition.
+
+On accepting `ToolRequested`, set `ExpectedToolRequestId` and `WaitingForTool`; only its matching
+tool result clears it. Unknown, mismatched, or already-completed tool results return a rejected
+internal result and do not append, advance, or enqueue. Task 5 later derives safe continuation from
+this checkpoint; Task 4 only preserves it.
+
+`MissionRunCheckpoint` contains only `TenantId`, `RunId`, `ConversationId`, `Status`,
+`ExecutionBoundary` (`NotStarted`, `ExecutingProvider`, `WaitingForTool`, `Terminal`), and
+`UpdatedAtUtc`. `IMissionRunGrain` exposes `ApplyDurableEventAsync(ConversationEvent)` and
+`GetStatusAsync()`. ConversationGrain invokes it only after the corresponding event appended. On
+activation, `ExecutingProvider` becomes persisted `Interrupted`, then reports one deterministic
+`RunStatus(Interrupted)` fact through its owning ConversationGrain's pending-transition protocol.
+It never invokes a provider or re-sends work. `WaitingForTool` remains waiting. If a terminal event
+appended just before the run checkpoint write, activation repairs terminal state from
+`ReadLatestForRunAsync`; transcript/event state wins. Activation may only use Host-local storage and
+the paired conversation/run grain — never a Worker, queue, provider, local capability, or another
+bounded context.
+
+This preserves the Type-1 ownership boundary: ConversationHost alone has Table/Blob access and
+allocates transcript order. The future Worker has neither Storage access nor an Orleans client or
+gateway path.
+
+#### Architecture-security and engineering gates
+
+| Gate question | Locked Task-4 answer |
+|---|---|
+| Bounded context and owner | Durable conversations are a new bounded context. Internal Tier-2 ConversationHost owns its event Table, Blob artifacts, and Orleans checkpoints. |
+| Public entry point | None is introduced here. The already-locked future Tier-1 ForgeUI (OIDC) / ForgeAPI (platform key) adapters route authenticated context internally; neither receives Table/Blob credentials. |
+| Tier-2/3 contracts | ConversationHost talks directly only to its Tier-3 Storage and its in-process Silo. Task 5's Worker reports through Service Bus and never receives Storage/Orleans access. |
+| Credentials and enforcement | Kind uses the existing Host-only dev connection string; deployed Host uses its user-assigned managed identity. Azure 350 RBAC grants Table/Blob only to that Host identity. |
+| Type classification | Context ownership, edge separation, and Worker exclusion are Type 1. One-Silo Kind, Table row layout, 48 KiB threshold, and Azurite test transport are Type 2; all stay behind the two store interfaces and can change without changing the event contract. |
+
+There is one owner per external dependency: the event store owns Table access, the artifact store
+owns Blob access, and grains own transition ordering/recovery. There are no retry or storage-mode
+knobs: a malformed configuration or a non-repairable state discrepancy fails loudly, while the one
+specified pending-transition path is structurally idempotent. Fresh-Host replay and Blob
+dereference are the required observations, so the design does not confuse a written checkpoint with
+a durable conversation.
+
+#### Tests and verification
+
+`AzuriteFixture` starts one throwaway Azurite container with `Testcontainers.Azurite`, exposes its
+connection string to a fresh in-process Host/Silo, and creates the event table/container. Each test
+uses unique tenant/conversation/run IDs and starts a second Host/Silo against the same endpoint to
+prove reactivation/replay rather than reading memory. Docker absence fails explicitly as an
+integration-environment error; these required tests never silently skip.
+
+Add focused tests proving:
+
+1. A command creates checkpoint and ordered deterministic events; a fresh Host reactivates it and
+   `ReadAfterAsync(0)` returns the same sequences/event IDs in order.
+2. Repeating a command ID returns its prior acceptance without a new event/sequence; repeating a
+   Worker event ID does the same, while the same ID with a changed payload fails loudly.
+3. A crash-shaped persisted `PendingTransition` is repaired once on activation; its successor has
+   no sequence gap or duplicate.
+4. `ExecutingProvider` reactivates as one durable `Interrupted` status with no provider/queue call;
+   `WaitingForTool` remains waiting.
+5. Content over 48 KiB uploads before its `Artifact` reference is appended, and `OpenReadAsync`
+   returns the original bytes using only address/reference data.
+6. Boundary tests prove Contracts, Client Runtime, CLI, and Presentation neither name nor reference
+   Host/Orleans/Azure; no Worker project exists or changes in this task.
+
+Run `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx`. The named
+completion observation is fresh-Host Azurite transcript replay plus Blob dereference, not an
+in-memory grain test.
+
+**Done when:** the named Table/Blob stores and two named Orleans checkpoint stores are configured
+only in ConversationHost; Azurite integration tests create/re-activate grains, replay an ordered
+transcript from a fresh Host, reject duplicate/mismatched event and command IDs, repair one pending
+transition, surface a stale executing run as `Interrupted`, and dereference a Blob-backed artifact;
+boundary tests, solution build, and complete suite pass. No Task-5 queue/Worker, Task-6 endpoint,
+Task-7 Client Runtime/Presentation, mission, or forge-infra change is included.
 
 ### 5. Service Bus delivery and mission worker
 
