@@ -429,12 +429,12 @@ Table/Blob persistence and Orleans ownership.**
 
 ### 4. Table/Blob persistence and Orleans ownership
 
-**Task 4 — implementation review passed 2026-08-13 (commit `951bf73`).** The real-Azurite Host
-suite passes **76/76**, including fresh-Host transcript replay, Blob dereference, interruption
-recovery, and notification-after-append recovery. Formal completion remains blocked by the
-pre-existing full-suite restore failure: `ForgeMission.Runner.Tests` and
-`ForgeMission.Rooms.Tests` resolve vulnerable `SSH.NET` 2025.1.0 through their own
-`Testcontainers.PostgreSql` dependency (`NU1903`); neither project changed here. This task is the Conversation service's
+**Task 4 — done and verified 2026-08-13 (commit `951bf73`; suite unblocker `2a8aa60`).** The
+real-Azurite Host suite passes **76/76**, including fresh-Host transcript replay, Blob
+dereference, interruption recovery, and notification-after-append recovery. The full solution
+build passes with zero warnings/errors; its test suite passes **568**, skips **11** known
+provider-dependent tests, and has zero failures. **Next: Task 5, Service Bus delivery and mission
+worker.** This task is the Conversation service's
 durability/ownership boundary only. It adds no HTTP route, Service Bus client/consumer, Worker,
 MCL execution, Client Runtime, Presentation, or forge-infra change. Task 5 owns queue delivery and
 Worker execution; Task 6 owns endpoint/status mapping. The Host is a normal server/Silo, so its
