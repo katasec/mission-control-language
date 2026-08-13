@@ -10,7 +10,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** (top priority) — implement the durable-ready, nested Janus MCL trace seam; contracts/project boundaries and final 350/525 IaC are verified, while 525 remains image-gated and undeployed. sdlc-agent publishing is independent follow-up. Phase 39/42.6 paused in favor of this. |
+| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** (top priority) — design Table/Blob persistence and Orleans ownership for durable conversations; contracts, nested trace facts, and final 350/525 IaC are verified, while 525 remains image-gated and undeployed. sdlc-agent publishing is independent follow-up. Phase 39/42.6 paused in favor of this. |
 | **Paused — [42.6 task 5b](phases/phase-42.6-hosted-endpoint-ttfa.md#tasks--status)** | `forge claude @websearch` hosted chat-wire adapter. User manual: ON HOLD, after 42.6. |
 | **Spend hole (Ph. 39)** | Known + accepted at F&F scale. Edge rate limit **DEFERRED 2026-07-18 — no longer a launch gate** (no CDN/WAF tier exists, so it was never config-only); freeze-at-zero remains the live control ([42.6 task 6](phases/phase-42.6-hosted-endpoint-ttfa.md#tasks--status)). |
 | **Standing check** | Bottleneck = **evidence + clients**, not design — [Phase 37 eval harness](phases/phase-37-eval-harness.md) stays the highest-value alternative. |
