@@ -267,6 +267,23 @@ Circuit Breaker, throttling, competing-consumer tuning, a global pub/sub project
 and caching are deferred. They do not solve a present Task 6 risk, and several would weaken the
 fixed-order/durable-fact contract or introduce provider-spend policy before it is designed.
 
+## Earlier Forge message-API reconciliation (2026-08-14)
+
+Reviewed the prior `/v1` tool-turn, Desktop cloud-mission, Rooms, and Client Runtime transport
+designs before building this API. The shared rules are deliberate; the transport models remain
+separate:
+
+| Earlier design | Reuse / boundary for durable conversations |
+|---|---|
+| [42.3 tool-capable responder](phase-42.3-tool-capable-enriching-responder.md) | Reuse the strict tool-result correlation rule and the finding that a provider-facing tool result has its own role/shape. Do **not** reuse its full-client-history replay, prefix-hash enrichment cache, or deferred response replay: `/v1/messages` is a compatibility wire whose client owns the loop; `ConversationCommand`/`ConversationEvent` are a server-owned durable protocol. |
+| [43.14 Desktop cloud missions](phase-43.14-desktop-cloud-missions.md) | Preserve the distinction it locked: an idempotency token is not a continuation/re-entrancy key. Here `CommandId` identifies one accepted command, `EventId` one durable fact, and `ToolRequestId` one authorized hand-off; none substitutes for another. |
+| [38.1 Rooms foundation](phase-38.1-room-foundation.md) | Reuse append-before-broadcast and recovered-history-before-live delivery. Do **not** reuse Rooms Postgres messages or SignalR as a second transcript; Rooms becomes a projection of the Conversation service's Table event log. |
+| [43.10 Client Runtime transport](phase-43.10-transport-contract.md) | Reuse HTTP POST plus SSE as transport shapes, but not its in-memory/lossy event hub. Presentation reaches the Host only through the Client Runtime in Task 7; the Conversation API's sequence cursor/Table replay is what makes a dropped SSE recoverable. |
+
+The regression boundary is explicit: Task 6 neither changes `/v1/*` contracts nor moves Desktop's
+local-tool authorization out of Client Runtime. Its tests retain the existing `/v1/*` suite unchanged
+and prove that a `tool_requested` durable fact still requires the matching `ToolRequestId` result.
+
 ## Orleans best-practices review (2026-08-14)
 
 Reviewed against Microsoft's Orleans guidance before Task 6 implementation. The design is aligned:
