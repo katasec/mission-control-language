@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ForgeMission.ConversationHost.Messaging;
 using ForgeMission.ConversationHost.Persistence;
 using ForgeMission.Conversations.Contracts;
 using Orleans;
@@ -10,18 +11,27 @@ namespace ForgeMission.ConversationHost.Grains;
 /// The sole sequence allocator and event appender for one conversation. Fixed protocol for both
 /// public accept operations: (1) repair any prior pending transition, (2) plan one event at
 /// <c>LastSequence + 1</c> and persist it in <c>PendingTransition</c> first, (3) idempotently
-/// append it, (4) advance <c>LastSequence</c>/clear <c>PendingTransition</c>/update snapshot
-/// fields, then notify <c>MissionRunGrain</c> — except <see cref="RecordRunInterruptionAsync"/>,
-/// which deliberately skips that notification (it is called only after MissionRunGrain has already
-/// persisted its own terminal state, so calling back would be a synchronous re-entrant call into
-/// its still-executing activation).
+/// append it, (4) advance <c>LastSequence</c>/update snapshot fields and notify
+/// <c>MissionRunGrain</c> — except <see cref="RecordRunInterruptionAsync"/>, which deliberately
+/// skips that notification (it is called only after MissionRunGrain has already persisted its own
+/// terminal state, so calling back would be a synchronous re-entrant call into its still-executing
+/// activation) — then (5) if the transition owes a mission-command send, dispatch it (a resend
+/// after a broker accept is safe: the queue dedupes on <c>MessageId</c>) and only then clear
+/// <c>PendingTransition</c>. A transition that owes a dispatch also owns a durable Orleans reminder
+/// (<see cref="OutboxReminderName"/>) so a crash between steps is retried even if this activation
+/// never restarts on its own.
 /// </summary>
 public sealed class ConversationGrain(
     [PersistentState("conversation-checkpoint", "conversation-checkpoint")] IPersistentState<ConversationCheckpoint> checkpoint,
     IConversationEventStore eventStore,
-    IGrainFactory grainFactory)
-    : Grain, IConversationGrain
+    IGrainFactory grainFactory,
+    IConversationCommandDispatcher dispatcher)
+    : Grain, IConversationGrain, IRemindable
 {
+    private const string OutboxReminderName = "mission-command-outbox";
+    private static readonly TimeSpan OutboxReminderDueTime = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan OutboxReminderPeriod = TimeSpan.FromMinutes(1);
+
     private ConversationAddress Address => ConversationAddress.Parse(this.GetPrimaryKeyString());
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
@@ -39,6 +49,26 @@ public sealed class ConversationGrain(
         }
 
         await base.OnActivateAsync(cancellationToken);
+    }
+
+    /// <summary>The durable retry driver for the mission-command outbox beyond activation-triggered
+    /// repair alone — fires periodically while a dispatch is owed. A tick with no pending
+    /// transition means the reminder outlived its transition (an earlier unregister was lost); it
+    /// is unregistered here as a safety net rather than left to fire forever.</summary>
+    public async Task ReceiveReminder(string reminderName, TickStatus status)
+    {
+        if (reminderName != OutboxReminderName)
+            return;
+
+        if (checkpoint.State.PendingTransition is null)
+        {
+            var reminder = await this.GetReminder(OutboxReminderName);
+            if (reminder is not null)
+                await this.UnregisterReminder(reminder);
+            return;
+        }
+
+        await RepairPendingTransitionIfAnyAsync(CancellationToken.None);
     }
 
     public async Task<ConversationCommandAcceptance> AcceptCommandAsync(ConversationCommandInput input)
@@ -90,20 +120,27 @@ public sealed class ConversationGrain(
             checkpoint.State.TenantId = Address.TenantId;
             checkpoint.State.ConversationId = Address.ConversationId;
             checkpoint.State.MissionRef = command.MissionRef;
-            await checkpoint.WriteStateAsync();
         }
+
+        // Folded into the same write regardless of whether this is the conversation's first-ever
+        // run: ActiveStartCommandJson must always reflect the CURRENT active run's StartMission
+        // command, so a later matching ToolResult can derive its ContinueAfterTool continuation
+        // without a second store read.
+        checkpoint.State.ActiveStartCommandJson =
+            JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand);
+        await checkpoint.WriteStateAsync();
 
         var userMessage = new ConversationEvent(
             command.CommandId, 1, Address.ConversationId, command.RunId, checkpoint.State.LastSequence + 1,
             ConversationEventKind.UserMessage, ConversationParticipant.User, null, command.Goal, null,
             null, null, null, null, null, DateTimeOffset.UtcNow);
-        await PlanAppendAdvanceAsync(userMessage, command, notifyMissionRun: true, ct);
+        await PlanAppendAdvanceAsync(userMessage, command, notifyMissionRun: true, dispatchCommand: null, ct);
 
         var queued = new ConversationEvent(
             Guid.NewGuid(), 1, Address.ConversationId, command.RunId, checkpoint.State.LastSequence + 1,
             ConversationEventKind.RunStatus, ConversationParticipant.Forge, null, null, null,
             null, null, null, null, ConversationRunStatus.Queued, DateTimeOffset.UtcNow);
-        var storedQueued = await PlanAppendAdvanceAsync(queued, null, notifyMissionRun: true, ct);
+        var storedQueued = await PlanAppendAdvanceAsync(queued, null, notifyMissionRun: true, dispatchCommand: command, ct);
 
         return new ConversationCommandAcceptance(
             Address.ConversationId, command.RunId, storedQueued.Sequence, ConversationRunStatus.Queued);
@@ -149,7 +186,28 @@ public sealed class ConversationGrain(
                     ConversationProgressOutcome.Rejected, null, "Event ID already recorded with different content.");
         }
 
-        var stored = await PlanAppendAdvanceAsync(planned, null, notifyMissionRun: true, ct);
+        // A valid ToolResult (already matched against ExpectedToolRequestId above) deterministically
+        // owes a ContinueAfterTool dispatch derived from the active run's own StartMission command —
+        // never a fresh Guid, so a repaired/retried transition always re-derives the identical
+        // continuation command.
+        ConversationCommand? dispatchCommand = null;
+        if (progress.Kind == ConversationEventKind.ToolResult)
+        {
+            var startCommand = JsonSerializer.Deserialize(
+                checkpoint.State.ActiveStartCommandJson
+                    ?? throw new InvalidOperationException("No ActiveStartCommandJson for a conversation with an outstanding tool result."),
+                ConversationContractsJsonContext.Default.ConversationCommand)
+                ?? throw new InvalidOperationException("ActiveStartCommandJson deserialized to null.");
+
+            dispatchCommand = startCommand with
+            {
+                CommandId = ConversationDeterministicIds.Continuation(progress.EventId),
+                Kind = ConversationCommandKind.ContinueAfterTool,
+                ToolResult = progress.ToolResult,
+            };
+        }
+
+        var stored = await PlanAppendAdvanceAsync(planned, null, notifyMissionRun: true, dispatchCommand, ct);
         return new ConversationProgressAcceptance(ConversationProgressOutcome.Appended, stored.Sequence, null);
     }
 
@@ -170,7 +228,7 @@ public sealed class ConversationGrain(
         // Deliberately notifyMissionRun: false — MissionRunGrain already persisted its own
         // Interrupted/Terminal state before calling this; notifying it back here would be a
         // synchronous re-entrant call into its still-executing activation.
-        await PlanAppendAdvanceAsync(planned, null, notifyMissionRun: false, ct);
+        await PlanAppendAdvanceAsync(planned, null, notifyMissionRun: false, dispatchCommand: null, ct);
     }
 
     public Task<ConversationSnapshotResult> GetSnapshotAsync()
@@ -208,29 +266,42 @@ public sealed class ConversationGrain(
         // interruption-report transition must stay notifyMissionRun: false, never defaulting to
         // true, or it would call back into MissionRunGrain in violation of the no-cycle rule.
         await AdvanceAsync(stored, pending.NotifyMissionRun);
+        await CompleteDispatchAndClearAsync(ct);
     }
 
     private async Task<ConversationEvent> PlanAppendAdvanceAsync(
-        ConversationEvent plannedEvent, ConversationCommand? acceptedCommand, bool notifyMissionRun, CancellationToken ct)
+        ConversationEvent plannedEvent, ConversationCommand? acceptedCommand, bool notifyMissionRun,
+        ConversationCommand? dispatchCommand, CancellationToken ct)
     {
         var plannedJson = JsonSerializer.Serialize(plannedEvent, ConversationContractsJsonContext.Default.ConversationEvent);
         var commandJson = acceptedCommand is null
             ? null
             : JsonSerializer.Serialize(acceptedCommand, ConversationContractsJsonContext.Default.ConversationCommand);
+        var dispatchJson = dispatchCommand is null
+            ? null
+            : JsonSerializer.Serialize(dispatchCommand, ConversationContractsJsonContext.Default.ConversationCommand);
+
+        // Registered BEFORE the transition is persisted: once durable state says a dispatch is
+        // owed, a reminder must already exist to guarantee that owed send is retried even if this
+        // activation never repairs it itself.
+        if (dispatchCommand is not null)
+            await this.RegisterOrUpdateReminder(OutboxReminderName, OutboxReminderDueTime, OutboxReminderPeriod);
 
         checkpoint.State.PendingTransition =
-            new PendingConversationTransition(plannedJson, commandJson, DispatchState.NotDispatched, notifyMissionRun);
+            new PendingConversationTransition(plannedJson, commandJson, DispatchState.NotDispatched, notifyMissionRun, dispatchJson);
         await checkpoint.WriteStateAsync();
 
         var stored = await eventStore.AppendAsync(Address, plannedEvent, commandJson, ct);
         await AdvanceAsync(stored, notifyMissionRun);
+        await CompleteDispatchAndClearAsync(ct);
         return stored;
     }
 
-    // PendingTransition is deliberately NOT cleared until after the MissionRunGrain notification
-    // (when one is owed) has succeeded. AppendAsync is idempotent and ApplyDurableEventAsync's
-    // effect is a pure function of (Kind, RunStatus), so a retry/recovery that re-runs this whole
-    // method after a failure between the two WriteStateAsync calls below is always safe to repeat.
+    // The event-append/snapshot/notify half of one transition. PendingTransition is deliberately
+    // NOT cleared here — CompleteDispatchAndClearAsync clears it only once any owed dispatch has
+    // been sent and broker-accepted, so a crash between these two steps always has a durable
+    // record of exactly what is still owed. AppendAsync is idempotent and ApplyDurableEventAsync's
+    // effect is a pure function of (Kind, RunStatus), so re-running this method is always safe.
     private async Task AdvanceAsync(ConversationEvent stored, bool notifyMissionRun)
     {
         checkpoint.State.LastSequence = Math.Max(checkpoint.State.LastSequence, stored.Sequence);
@@ -244,9 +315,40 @@ public sealed class ConversationGrain(
             await runGrain.ApplyDurableEventAsync(
                 new MissionRunEventInput(stored.EventId, runId, stored.ConversationId, stored.Kind, stored.RunStatus));
         }
+    }
+
+    // Sends the owed dispatch (a resend when DispatchState is still NotDispatched is safe — the
+    // queue dedupes on MessageId), persists BrokerAccepted so recovery never resends after this,
+    // then clears PendingTransition and unregisters the outbox reminder only once that clear is
+    // durable.
+    private async Task CompleteDispatchAndClearAsync(CancellationToken ct)
+    {
+        var pending = checkpoint.State.PendingTransition;
+        if (pending is null)
+            return;
+
+        var owesDispatch = pending.DispatchCommandJson is not null;
+
+        if (pending.DispatchCommandJson is { } dispatchJson && pending.DispatchState == DispatchState.NotDispatched)
+        {
+            var dispatchCommand = JsonSerializer.Deserialize(dispatchJson, ConversationContractsJsonContext.Default.ConversationCommand)
+                ?? throw new InvalidOperationException("Pending DispatchCommandJson deserialized to null.");
+
+            await dispatcher.SendAsync(Address, dispatchCommand, ct);
+
+            checkpoint.State.PendingTransition = pending with { DispatchState = DispatchState.BrokerAccepted };
+            await checkpoint.WriteStateAsync();
+        }
 
         checkpoint.State.PendingTransition = null;
         await checkpoint.WriteStateAsync();
+
+        if (owesDispatch)
+        {
+            var reminder = await this.GetReminder(OutboxReminderName);
+            if (reminder is not null)
+                await this.UnregisterReminder(reminder);
+        }
     }
 
     private void ApplySnapshotFields(ConversationEvent stored)
@@ -255,7 +357,10 @@ public sealed class ConversationGrain(
         {
             case ConversationEventKind.RunStatus:
                 checkpoint.State.Status = stored.RunStatus!.Value;
-                checkpoint.State.ActiveRunId = IsTerminal(stored.RunStatus.Value) ? null : stored.RunId;
+                var terminal = IsTerminal(stored.RunStatus.Value);
+                checkpoint.State.ActiveRunId = terminal ? null : stored.RunId;
+                if (terminal)
+                    checkpoint.State.ActiveStartCommandJson = null;
                 break;
             case ConversationEventKind.ToolRequested:
                 checkpoint.State.ExpectedToolRequestId = stored.ToolRequest?.RequestId;

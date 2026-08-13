@@ -9,18 +9,22 @@ namespace ForgeMission.ConversationHost.Grains;
 // primitives/enums plus source-generated JSON strings; the caller/grain (de)serializes real
 // Contracts values with ConversationContractsJsonContext at the boundary.
 
-/// <summary>Whether a pending transition's accepted command has been enqueued to the Worker.
-/// <c>NotDispatched</c> only in this task — Task 5 adds the dispatched states.</summary>
+/// <summary>Whether a pending transition's outbox command has been sent to the Worker.
+/// <c>NotDispatched</c>: not yet sent, or a resend is still owed. <c>BrokerAccepted</c>: the
+/// broker acknowledged the send — recovery must never resend after this.</summary>
 public enum DispatchState
 {
     NotDispatched,
+    BrokerAccepted,
 }
 
 /// <summary>
 /// A recovery record, not history: one fully planned <see cref="ConversationEvent"/> (as
 /// source-generated JSON) that a crash may have left un-appended or un-advanced, plus its
-/// optional accepted <see cref="ConversationCommand"/> (also JSON) and dispatch state.
-/// <see cref="NotifyMissionRun"/> persists whether this transition owes a
+/// optional accepted <see cref="ConversationCommand"/> (also JSON, UserMessage idempotency data
+/// only — never the outbox command), an optional outbox <see cref="DispatchCommandJson"/> (the
+/// StartMission or derived ContinueAfterTool command this transition owes a send for), and
+/// dispatch state. <see cref="NotifyMissionRun"/> persists whether this transition owes a
 /// <c>MissionRunGrain.ApplyDurableEventAsync</c> notification once durably appended — repair
 /// must reproduce the original call's intent (in particular, the interruption-report path's
 /// own append must never repair into a notifying call, which would be a synchronous re-entrant
@@ -31,7 +35,8 @@ public sealed record PendingConversationTransition(
     [property: Id(0)] string PlannedEventJson,
     [property: Id(1)] string? AcceptedCommandJson,
     [property: Id(2)] DispatchState DispatchState,
-    [property: Id(3)] bool NotifyMissionRun);
+    [property: Id(3)] bool NotifyMissionRun,
+    [property: Id(4)] string? DispatchCommandJson);
 
 /// <summary>Grain-interface wrapper for a <see cref="ConversationCommand"/>, serialized by the
 /// caller with <see cref="ConversationContractsJsonContext"/>.</summary>

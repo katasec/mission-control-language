@@ -67,20 +67,45 @@ public class ConversationContractsBoundaryTests
         var text = ReadCsproj("ForgeMission.ConversationHost", "ForgeMission.ConversationHost.csproj");
 
         // Exactly one ProjectReference — Contracts. A second project reference here would be an
-        // undocumented dependency Task 4 did not add.
+        // undocumented dependency Task 4/5 did not add.
         var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
         Assert.Equal(1, projectReferenceCount);
         Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
 
-        // The six Task-4-approved packages, at their pinned versions — no other Orleans/Azure
-        // package, no serializer package/codec of any kind.
+        // The Task-4-approved packages plus Task 5's reminder/Service Bus additions, at their
+        // pinned versions — no other Orleans/Azure package, no serializer package/codec of any kind.
         Assert.Contains("""<PackageReference Include="Microsoft.Orleans.Server" Version="10.0.0" />""", text);
         Assert.Contains("""<PackageReference Include="Microsoft.Orleans.Clustering.AzureStorage" Version="10.0.0" />""", text);
         Assert.Contains("""<PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="10.0.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Microsoft.Orleans.Reminders.AzureStorage" Version="10.0.0" />""", text);
         Assert.Contains("""<PackageReference Include="Azure.Data.Tables" Version="12.11.0" />""", text);
         Assert.Contains("""<PackageReference Include="Azure.Storage.Blobs" Version="12.29.1" />""", text);
         Assert.Contains("""<PackageReference Include="Azure.Identity" Version="1.21.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />""", text);
         Assert.DoesNotContain("Serialization", text);
+    }
+
+    [Fact]
+    public void ConversationWorker_ReferencesOnlyContractsCoreChatClients_AndNamesOnlyTheTwoApprovedAzurePackages()
+    {
+        var text = ReadCsproj("ForgeMission.ConversationWorker", "ForgeMission.ConversationWorker.csproj");
+
+        Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
+        Assert.Contains("ForgeMission.Core.csproj", text);
+        Assert.Contains("ForgeMission.ChatClients.csproj", text);
+        var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
+        Assert.Equal(3, projectReferenceCount);
+
+        // Worker constructs the mission-command Listen and progress Send directions itself and
+        // needs Azure.Identity for DefaultAzureCredential — nothing else Azure-named, and no
+        // Orleans/Host/Storage/ClientRuntime dependency at all.
+        Assert.Contains("""<PackageReference Include="Azure.Identity" Version="1.21.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.2" />""", text);
+        Assert.DoesNotContain("ConversationHost", text);
+        Assert.DoesNotContain("Orleans", text);
+        Assert.DoesNotContain("Azure.Data.Tables", text);
+        Assert.DoesNotContain("Azure.Storage", text);
+        Assert.DoesNotContain("ClientRuntime", text);
     }
 
     [Fact]

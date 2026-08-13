@@ -22,4 +22,10 @@ public sealed class ConversationCheckpoint
     [Id(6)] public Guid? ExpectedToolRequestId { get; set; }
     [Id(7)] public PendingConversationTransition? PendingTransition { get; set; }
     [Id(8)] public DateTimeOffset UpdatedAtUtc { get; set; }
+
+    /// <summary>The full accepted StartMission <see cref="ConversationCommand"/> JSON for the
+    /// active run — set once on acceptance, retained until that run reaches a terminal
+    /// <see cref="ConversationRunStatus"/>, so a matching ToolResult can derive its
+    /// ContinueAfterTool continuation without querying another store.</summary>
+    [Id(9)] public string? ActiveStartCommandJson { get; set; }
 }

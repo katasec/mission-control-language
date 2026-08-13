@@ -1,6 +1,7 @@
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using ForgeMission.ConversationHost.Grains;
+using ForgeMission.ConversationHost.Messaging;
 using ForgeMission.ConversationHost.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,6 +86,12 @@ public sealed class AzuriteFixture : IAsyncLifetime
         });
         builder.Services.AddSingleton<IConversationArtifactStore, AzureBlobConversationArtifactStore>();
 
+        // The small in-memory dispatcher seam the Task 5 spoke calls for in place of a real Azure
+        // Service Bus emulator — exposed to tests via ConversationHostInstance.Dispatcher.
+        builder.Services.AddSingleton<FakeConversationCommandDispatcher>();
+        builder.Services.AddSingleton<IConversationCommandDispatcher>(
+            sp => sp.GetRequiredService<FakeConversationCommandDispatcher>());
+
         builder.UseOrleans(siloBuilder =>
         {
             siloBuilder.UseAzureStorageClustering(options => options.TableServiceClient = tableServiceClient);
@@ -112,6 +119,11 @@ public sealed class AzuriteFixture : IAsyncLifetime
             {
                 options.TableServiceClient = tableServiceClient;
                 options.TableName = "OrleansMissionRunCheckpoints";
+            });
+            siloBuilder.UseAzureTableReminderService(options =>
+            {
+                options.TableServiceClient = tableServiceClient;
+                options.TableName = "OrleansConversationReminders";
             });
         });
 
@@ -163,6 +175,8 @@ public sealed class ConversationHostInstance(WebApplication app) : IAsyncDisposa
     public IConversationEventStore EventStore => app.Services.GetRequiredService<IConversationEventStore>();
 
     public IConversationArtifactStore ArtifactStore => app.Services.GetRequiredService<IConversationArtifactStore>();
+
+    public FakeConversationCommandDispatcher Dispatcher => app.Services.GetRequiredService<FakeConversationCommandDispatcher>();
 
     public ValueTask DisposeAsync() => new(app.StopAsync());
 }

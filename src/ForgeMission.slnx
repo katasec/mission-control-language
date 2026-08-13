@@ -10,6 +10,8 @@
   <Project Path="ForgeMission.Conversations.Contracts/ForgeMission.Conversations.Contracts.csproj" />
   <Project Path="ForgeMission.ConversationHost/ForgeMission.ConversationHost.csproj" />
   <Project Path="ForgeMission.ConversationHost.Tests/ForgeMission.ConversationHost.Tests.csproj" />
+  <Project Path="ForgeMission.ConversationWorker/ForgeMission.ConversationWorker.csproj" />
+  <Project Path="ForgeMission.ConversationWorker.Tests/ForgeMission.ConversationWorker.Tests.csproj" />
   <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
   <Project Path="ForgeMission.Desktop.Contracts/ForgeMission.Desktop.Contracts.csproj" />
   <Project Path="ForgeMission.Desktop.Photino/ForgeMission.Desktop.Photino.csproj" />
