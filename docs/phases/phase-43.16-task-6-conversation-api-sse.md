@@ -92,6 +92,17 @@ return this Host-local result: an expected active-run, tool-request, or unequal-
 explicitly `Conflict`; only an accepted command carries `Acceptance`. The endpoint maps that result
 to `202`/`409`; it must never classify every `InvalidOperationException` as a client conflict.
 
+Make duplicate equality equally explicit at the persistence seam. Replace
+`FindByEventIdAsync`'s event-only return with the Host-local
+`StoredConversationEvent(ConversationEvent Event, string? AcceptedCommandJson)`. The Azure Table
+store loads the idempotency companion row together with the event row; test fakes do the same.
+The grain compares the reconstructed start command's source-generated JSON with
+`AcceptedCommandJson`, plus the event's ID/conversation/run/kind/participant/text, and returns the
+typed `Conflict` on any mismatch. Follow-up and tool-result paths use the same returned event for
+their narrower explicit equality checks. `AppendAsync` retains its own equality guard as a storage
+integrity backstop, but normal client-conflict control flow does not call it and does not catch its
+exceptions.
+
 Extend `ConversationCheckpoint` with `PinnedCapabilitiesJson` (source-generated
 `ConversationCapabilityDeclaration[]` JSON) and `PendingRunStart`. The latter is a
 `[GenerateSerializer]` Host-local recovery record containing the complete accepted start-command
@@ -187,6 +198,7 @@ than invoking endpoint delegates.
 | `src/ForgeMission.ConversationHost/Grains/IConversationEventNotifier.cs` | Grain-owned narrow post-durability notification contract; no HTTP or storage dependency. |
 | `src/ForgeMission.ConversationHost/Api/ConversationEventHub.cs` | Narrow non-durable notifier/subscription implementation with bounded stale-client containment. |
 | `src/ForgeMission.ConversationHost/Api/ConversationSseWriter.cs` | SSE framing plus the replay/subscribe/catch-up/drain algorithm. |
+| `src/ForgeMission.ConversationHost/Persistence/IConversationEventStore.cs`, `AzureTableConversationEventStore.cs`, and test fakes | Return the Host-local stored event plus accepted-command JSON to make duplicate equality explicit; retain `AppendAsync` as an integrity backstop. |
 | `src/ForgeMission.ConversationHost/Grains/IConversationGrain.cs`, `ConversationGrainResults.cs`, `ConversationCheckpoint.cs`, `ConversationGrain.cs` | Host-local typed acceptance/conflict results, start-pair recovery, pinned capabilities, exact-duplicate acceptance, and post-durable live publish. |
 | `src/ForgeMission.ConversationHost.Tests/AzuriteFixture.cs` | Register/map the real API and expose its loopback base URI; do not add an ASP.NET test-server package. |
 | `src/ForgeMission.ConversationHost.Tests/ConversationApiTests.cs` | New real-Kestrel HTTP/SSE integration coverage below. |
