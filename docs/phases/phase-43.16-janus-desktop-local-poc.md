@@ -489,6 +489,11 @@ Table grain stores against the same selected credential/client:
     conversation-checkpoint  -> ConversationCheckpoint
     mission-run-checkpoint   -> MissionRunCheckpoint
 
+Their physical Azure Table names are `OrleansConversationCheckpoints` and
+`OrleansMissionRunCheckpoints`, respectively. These alphanumeric names are intentionally distinct
+from both the event table and the logical provider names, which Azure Table cannot use because they
+contain hyphens.
+
 Use `IPersistentState<T>` with `[PersistentState]`, rather than `Grain<TState>`. State loads before
 `OnActivateAsync`; every changed transition explicitly awaits `WriteStateAsync`. The one-Silo Kind
 configuration uses the fixed development cluster/service IDs above. No local membership, in-memory
@@ -560,25 +565,48 @@ per `{TenantId}|{RunId:N}`. Proposer, Approver, Implementer, a tool request, and
 are values in state — never grains. Their interfaces are internal to ConversationHost; later API
 adapters/queue consumers use `IGrainFactory`, not direct storage or another service.
 
+**Orleans serializer boundary.** Contracts intentionally remain free of Orleans attributes and
+packages, and `JsonElement` must not rely on an unverified fallback serializer. Consequently no
+Contracts record is a grain-interface parameter/return type or a field in Orleans persistent state.
+Host-local grain DTOs are `[GenerateSerializer]` types with explicit `[Id]` fields and carry only
+primitives/enums plus source-generated JSON strings:
+
+    ConversationCommandInput(string CommandJson)
+    ConversationProgressInput(string ProgressJson)
+    ConversationSnapshotResult(string SnapshotJson)
+    ConversationEventBatch(string[] EventJson)
+    MissionRunEventInput(Guid EventId, Guid RunId,
+                         ConversationEventKind Kind, ConversationRunStatus? RunStatus)
+    MissionRunInterruption(Guid RunId, Guid EventId, DateTimeOffset OccurredAtUtc)
+
+The caller serializes Contracts values with `ConversationContractsJsonContext`; the grain
+deserializes at its boundary, validates it, and converts its response back before returning. The
+pending record persists `PlannedEventJson` and optional `AcceptedCommandJson`, rather than an
+object graph containing `JsonElement`. Add `[GenerateSerializer]`/`[Id]` to every Host-local grain
+state, enum-bearing input/result, and pending-transition type. Do not add a serializer package,
+codec, reflection fallback, or any Orleans annotation to Contracts.
+
 `ConversationCheckpoint` contains exactly:
 
     string TenantId; Guid ConversationId; string MissionRef; Guid? ActiveRunId;
     long LastSequence; ConversationRunStatus Status; Guid? ExpectedToolRequestId;
     PendingConversationTransition? PendingTransition; DateTimeOffset UpdatedAtUtc
 
-`PendingConversationTransition` holds one fully planned `ConversationEvent`, plus an optional
-accepted `ConversationCommand` and `DispatchState` (`NotDispatched` only in this task). It is a
-recovery record, not history. The accepted command's deterministic `UserMessage` uses `CommandId`
-as its `EventId`; duplicate command acceptance therefore resolves through the durable event-ID row.
-Before Task 5 exists, acceptance stops after the event/checkpoint is durable — it never enqueues.
+`PendingConversationTransition` holds the source-generated JSON for one fully planned
+`ConversationEvent`, plus optional source-generated JSON for its accepted `ConversationCommand`
+and `DispatchState` (`NotDispatched` only in this task). It is a recovery record, not history. The
+accepted command's deterministic `UserMessage` uses `CommandId` as its `EventId`; duplicate command
+acceptance therefore resolves through the durable event-ID row. Before Task 5 exists, acceptance
+stops after the event/checkpoint is durable — it never enqueues.
 
 `IConversationGrain` exposes only these Task-4 operations; result/acceptance records are internal
 Host DTOs, not public wire contracts:
 
-    Task<ConversationCommandAcceptance> AcceptCommandAsync(ConversationCommand command)
-    Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgress progress)
-    Task<ConversationSnapshot> GetSnapshotAsync()
-    Task<IReadOnlyList<ConversationEvent>> ReadAfterAsync(long sequence)
+    Task<ConversationCommandAcceptance> AcceptCommandAsync(ConversationCommandInput command)
+    Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgressInput progress)
+    Task RecordRunInterruptionAsync(MissionRunInterruption interruption)
+    Task<ConversationSnapshotResult> GetSnapshotAsync()
+    Task<ConversationEventBatch> ReadAfterAsync(long sequence)
 
 `AcceptCommandAsync` validates conversation identity, pins `MissionRef` on first acceptance,
 rejects a different mission or an active run, and creates a new run after a terminal prior run. It
@@ -608,16 +636,22 @@ internal result and do not append, advance, or enqueue. Task 5 later derives saf
 this checkpoint; Task 4 only preserves it.
 
 `MissionRunCheckpoint` contains only `TenantId`, `RunId`, `ConversationId`, `Status`,
-`ExecutionBoundary` (`NotStarted`, `ExecutingProvider`, `WaitingForTool`, `Terminal`), and
-`UpdatedAtUtc`. `IMissionRunGrain` exposes `ApplyDurableEventAsync(ConversationEvent)` and
-`GetStatusAsync()`. ConversationGrain invokes it only after the corresponding event appended. On
-activation, `ExecutingProvider` becomes persisted `Interrupted`, then reports one deterministic
-`RunStatus(Interrupted)` fact through its owning ConversationGrain's pending-transition protocol.
-It never invokes a provider or re-sends work. `WaitingForTool` remains waiting. If a terminal event
-appended just before the run checkpoint write, activation repairs terminal state from
-`ReadLatestForRunAsync`; transcript/event state wins. Activation may only use Host-local storage and
-the paired conversation/run grain — never a Worker, queue, provider, local capability, or another
-bounded context.
+`ExecutionBoundary` (`NotStarted`, `ExecutingProvider`, `WaitingForTool`, `Terminal`), stable
+`InterruptionEventId`/`InterruptionOccurredAtUtc` (both null until needed), and `UpdatedAtUtc`.
+`IMissionRunGrain` exposes `ApplyDurableEventAsync(MissionRunEventInput)` and `GetStatusAsync()`.
+ConversationGrain invokes it only after the corresponding event appended, except for its dedicated
+interruption-report operation below.
+
+On activation, `ExecutingProvider` first checks `ReadLatestForRunAsync`: a terminal transcript fact
+wins and is adopted. Otherwise MissionRunGrain generates/stores its stable interruption ID/time,
+sets its own state to `Interrupted`/`Terminal`, and persists that state **before** calling
+`ConversationGrain.RecordRunInterruptionAsync`. The latter appends the matching deterministic
+`RunStatus(Interrupted)` through the normal pending-transition protocol but deliberately does not
+call MissionRunGrain back; its run checkpoint is already durable. Re-activation retries the same
+stored interruption ID until the fact is present. This avoids a grain-call cycle during activation.
+It never invokes a provider or re-sends work. `WaitingForTool` remains waiting. Activation may only
+use Host-local storage and the paired conversation/run grain — never a Worker, queue, provider,
+local capability, or another bounded context.
 
 This preserves the Type-1 ownership boundary: ConversationHost alone has Table/Blob access and
 allocates transcript order. The future Worker has neither Storage access nor an Orleans client or
@@ -660,7 +694,10 @@ Add focused tests proving:
    `WaitingForTool` remains waiting.
 5. Content over 48 KiB uploads before its `Artifact` reference is appended, and `OpenReadAsync`
    returns the original bytes using only address/reference data.
-6. Boundary tests prove Contracts, Client Runtime, CLI, and Presentation neither name nor reference
+6. A tool-shaped command/progress payload containing `JsonElement` crosses an actual grain call and
+   survives checkpoint reactivation through its Host-local JSON DTO, with no Orleans serializer
+   fallback or Contracts annotation.
+7. Boundary tests prove Contracts, Client Runtime, CLI, and Presentation neither name nor reference
    Host/Orleans/Azure; no Worker project exists or changes in this task.
 
 Run `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx`. The named
