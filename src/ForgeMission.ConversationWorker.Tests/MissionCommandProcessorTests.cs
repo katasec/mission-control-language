@@ -431,4 +431,58 @@ public class MissionCommandProcessorTests
         Assert.Contains(published, p => p.Kind == ConversationEventKind.Error);
         Assert.Contains(published, p => p.Kind == ConversationEventKind.RunStatus && p.RunStatus == ConversationRunStatus.Failed);
     }
+
+    // ── Final review: outbox failure boundary ─────────────────────────────────────
+    // A failure from the publish delegate itself (a transient broker/store problem, not a Janus
+    // execution failure) must never be reclassified into a synthetic Error/Failed fact — doing so
+    // could overwrite the pending fact already durably persisted for the send that just failed.
+
+    [Fact]
+    public async Task PublishFailureAfterPendingPersisted_PropagatesUnsettled_RetainsOriginalPendingFact_NoSyntheticOverwrite()
+    {
+        var mission = BuildMission(HappyPathRunner());
+        var processor = new MissionCommandProcessor(mission);
+        var conversationId = Guid.NewGuid();
+        var command = StartCommand(conversationId, Guid.NewGuid());
+
+        var sessions = new Dictionary<Guid, WorkerSessionState>();
+        var published = new List<ConversationProgress>();
+
+        Task Save(WorkerSessionState state, CancellationToken _)
+        {
+            sessions[conversationId] = state;
+            return Task.CompletedTask;
+        }
+
+        // Fails the very first fact this run ever tries to send (Proposer's ParticipantStarted) —
+        // by then PendingProgressJson for it has already been durably saved.
+        Task Publish(ConversationProgress progress, string _, CancellationToken __)
+        {
+            if (progress.Kind == ConversationEventKind.ParticipantStarted)
+                throw new InvalidOperationException("simulated publish failure");
+            published.Add(progress);
+            return Task.CompletedTask;
+        }
+
+        var thrown = await Assert.ThrowsAnyAsync<Exception>(
+            () => processor.ProcessAsync(command, "dev", session: null, Save, Publish, CancellationToken.None));
+
+        // The private marker exception preserves the original message — asserted without needing
+        // to reference the (deliberately private) wrapper type.
+        Assert.Equal("simulated publish failure", thrown.Message);
+
+        // Nothing after the failed fact ever ran: no Error/Failed fact was synthesized, and the
+        // failed fact itself never actually reached the publisher's success path.
+        Assert.Empty(published);
+
+        Assert.True(sessions.ContainsKey(conversationId));
+        var finalState = sessions[conversationId];
+        Assert.NotNull(finalState.PendingProgressJson);
+        var pendingFact = JsonSerializer.Deserialize(
+            finalState.PendingProgressJson!, ConversationContractsJsonContext.Default.ConversationProgress)!;
+        Assert.Equal(ConversationEventKind.ParticipantStarted, pendingFact.Kind);
+        Assert.Equal(ConversationParticipant.Proposer, pendingFact.Participant);
+        Assert.Equal(0, finalState.NextProgressOrdinal); // never advanced past the failed fact.
+        Assert.Equal(WorkerSessionPhase.ExecutingProvider, finalState.Phase); // never reached Terminal.
+    }
 }

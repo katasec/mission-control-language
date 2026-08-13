@@ -21,6 +21,16 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
 {
     private const string SupportedMissionRef = "Janus";
 
+    // Marks a failure from the save/publish delegates themselves (a transient store/broker
+    // problem) as distinct from a caught Janus/provider execution failure. The two try/catch
+    // blocks in ProcessFreshStartAsync/ProcessContinuationAsync deliberately exclude this type —
+    // a save/publish failure must never be reclassified into a synthetic Error/Failed fact (doing
+    // so could overwrite a pending progress fact already persisted for an earlier, still-unsent
+    // send). It must escape ProcessAsync entirely so the caller leaves the command unsettled and
+    // the last durably-saved state (including any still-pending fact) is exactly what a normal
+    // retry/redelivery finds.
+    private sealed class WorkerOutboxFailureException(Exception inner) : Exception(inner.Message, inner);
+
     public async Task<WorkerSessionState> ProcessAsync(
         ConversationCommand command,
         string tenantId,
@@ -29,15 +39,30 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         Func<ConversationProgress, string, CancellationToken, Task> publishAsync,
         CancellationToken ct)
     {
+        // Every downstream call goes through these guarded wrappers instead of the raw delegates,
+        // so a failure at the save/publish boundary is uniformly tagged no matter where in the
+        // outbox flow it happens.
+        async Task GuardedSaveAsync(WorkerSessionState state, CancellationToken saveCt)
+        {
+            try { await saveSessionAsync(state, saveCt); }
+            catch (Exception ex) { throw new WorkerOutboxFailureException(ex); }
+        }
+
+        async Task GuardedPublishAsync(ConversationProgress progress, string tid, CancellationToken publishCt)
+        {
+            try { await publishAsync(progress, tid, publishCt); }
+            catch (Exception ex) { throw new WorkerOutboxFailureException(ex); }
+        }
+
         // A crash between persisting a pending progress fact and its confirmed send resends the
         // identical fact, under its already-assigned deterministic ID, before anything else runs.
         if (session is { PendingProgressJson: { } pendingJson })
         {
             var pending = JsonSerializer.Deserialize(pendingJson, ConversationContractsJsonContext.Default.ConversationProgress)
                 ?? throw new InvalidOperationException("PendingProgressJson deserialized to null.");
-            await publishAsync(pending, tenantId, ct);
+            await GuardedPublishAsync(pending, tenantId, ct);
             session = session with { PendingProgressJson = null, NextProgressOrdinal = session.NextProgressOrdinal + 1 };
-            await saveSessionAsync(session, ct);
+            await GuardedSaveAsync(session, ct);
         }
 
         async Task<WorkerSessionState> PublishFactDurablyAsync(WorkerSessionState current, ConversationProgress progress, CancellationToken factCt)
@@ -46,10 +71,10 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
             {
                 PendingProgressJson = JsonSerializer.Serialize(progress, ConversationContractsJsonContext.Default.ConversationProgress),
             };
-            await saveSessionAsync(withPending, factCt);
-            await publishAsync(progress, tenantId, factCt);
+            await GuardedSaveAsync(withPending, factCt);
+            await GuardedPublishAsync(progress, tenantId, factCt);
             var cleared = withPending with { PendingProgressJson = null, NextProgressOrdinal = withPending.NextProgressOrdinal + 1 };
-            await saveSessionAsync(cleared, factCt);
+            await GuardedSaveAsync(cleared, factCt);
             return cleared;
         }
 
@@ -67,18 +92,18 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
                 runStatus: ConversationRunStatus.Interrupted);
             var afterInterrupt = await PublishFactDurablyAsync(redelivered, interrupted, ct);
             afterInterrupt = afterInterrupt with { Phase = WorkerSessionPhase.Terminal };
-            await saveSessionAsync(afterInterrupt, ct);
+            await GuardedSaveAsync(afterInterrupt, ct);
             return afterInterrupt;
         }
 
         if (command.Kind == ConversationCommandKind.ContinueAfterTool)
-            return await ProcessContinuationAsync(command, session, saveSessionAsync, PublishFactDurablyAsync, ct);
+            return await ProcessContinuationAsync(command, session, GuardedSaveAsync, PublishFactDurablyAsync, ct);
 
         // command.Kind == StartMission.
         if (session is { Phase: not WorkerSessionPhase.Terminal })
             return session; // A duplicate/second StartMission while a run is already active — no-op.
 
-        return await ProcessFreshStartAsync(command, saveSessionAsync, PublishFactDurablyAsync, ct);
+        return await ProcessFreshStartAsync(command, GuardedSaveAsync, PublishFactDurablyAsync, ct);
     }
 
     private async Task<WorkerSessionState> ProcessFreshStartAsync(
@@ -108,10 +133,12 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
             result = await JanusMissionExecutor.RunFullMissionAsync(
                 mission, command.Goal, command.Capabilities, PublishMappedFactAsync, OnApprovedPlanAsync, ct);
         }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
         {
             // A caught executor/provider failure is a KNOWN outcome, not an ambiguous crash — it
-            // resolves through the normal outbox as Error+Failed, never as Interrupted.
+            // resolves through the normal outbox as Error+Failed, never as Interrupted. A
+            // WorkerOutboxFailureException is deliberately excluded (see its own doc comment) —
+            // that class of failure must propagate unsettled, never be reclassified.
             return await HandleMissionResultAsync(
                 command, state, new MissionResult(command.MissionRef, "", MissionStatus.Fail, ex.Message),
                 publishFactDurablyAsync, saveSessionAsync, ct);
@@ -155,7 +182,7 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
                 mission, state.ApprovedPlan!, outstanding.ProviderCallId, outstanding.ToolName, outstanding.Arguments,
                 command.ToolResult, command.Capabilities, PublishMappedFactAsync, ct);
         }
-        catch (Exception ex) when (!ct.IsCancellationRequested)
+        catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
         {
             return await HandleMissionResultAsync(
                 command, state, new MissionResult(command.MissionRef, "", MissionStatus.Fail, ex.Message),
