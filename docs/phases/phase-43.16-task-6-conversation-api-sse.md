@@ -37,8 +37,8 @@ Table/Blob permission.
 | Route | Adapter action and result |
 |---|---|
 | `POST /conversations` | Require non-empty `commandId`, `missionRef`, and `goal`, a non-null capability array, and `missionRef == "Janus"` for this Janus-only proof. Derive both conversation and initial-run IDs from the client command ID, call the grain's start acceptance, and return `201 Created`, `Location: /conversations/{conversationId}`, and `StartConversationResponse`. An exact retry therefore reaches the same grain and returns the original acceptance; unequal reuse reaches its typed conflict result. |
-| `POST /conversations/{id}/commands` | Require a valid non-empty GUID route ID plus non-empty `commandId` and `text`. The grain—not the adapter—uses its pinned mission and capabilities to create a new run. Return `202 Accepted` and `SubmitConversationCommandResponse`. |
-| `POST /conversations/{id}/tool-results` | Require valid route/request GUIDs and non-null `content`. The grain validates the outstanding request and turns the result into one durable `ToolResult` plus its deterministic continuation command. Return `202 Accepted` and `SubmitToolResultResponse`. |
+| `POST /conversations/{id}/commands` | Require a valid non-empty GUID route ID plus non-empty `commandId` and `text`. The grain—not the adapter—uses its pinned mission and capabilities to create a new run. Return `202 Accepted`, `Location: /conversations/{conversationId}`, `Retry-After: 1`, and `SubmitConversationCommandResponse`. |
+| `POST /conversations/{id}/tool-results` | Require valid route/request GUIDs and non-null `content`. The grain validates the outstanding request and turns the result into one durable `ToolResult` plus its deterministic continuation command. Return `202 Accepted`, `Location: /conversations/{conversationId}`, `Retry-After: 1`, and `SubmitToolResultResponse`. |
 | `GET /conversations/{id}` | Return the source-generated `ConversationSnapshot`; an uninitialized/no-mission grain is `404`, not an empty snapshot. |
 | `GET /conversations/{id}/events?after=` | Validate optional `after` as a non-negative `long` (default `0`), reject unknown conversations before starting the response, then produce the SSE protocol below. |
 
@@ -249,6 +249,23 @@ Run:
 
 Existing `/v1/*` contract tests must remain unchanged; this task neither edits nor re-baselines
 them.
+
+## Azure cloud-pattern review (2026-08-14)
+
+This design intentionally composes a small set of applicable patterns rather than adopting the
+catalog as a feature list:
+
+| Pattern | Task 6 decision |
+|---|---|
+| Asynchronous Request-Reply | The service validates and durably accepts a command before returning. `POST /conversations/{id}/commands` and `/tool-results` return `202`, the durable `GET /conversations/{id}` status resource in `Location`, and fixed `Retry-After: 1`; SSE is the preferred push path, while GET is the reconnect/poll fallback. `201` remains correct for creating the conversation resource. There is no `303` because completion is represented by the same durable conversation resource, not a distinct result resource. |
+| Event Sourcing + CQRS | Ordered Table events are the system of record; the Orleans checkpoint is a bounded operational snapshot, never a second transcript. SSE/Desktop/Rooms are read projections. A conversation index or other materialized view remains later work, only when a query cannot be served by the stream/snapshot. |
+| Claim Check | Existing Blob artifacts are the claim-check path: large payload is written before its reference event. Task 6 rejects oversized tool-result content rather than adding an unscoped client Blob-upload flow or putting large payloads on Service Bus. |
+| Queue-Based Load Leveling + Sequential Convoy | Service Bus separates accepted work from Worker execution; `ConversationId` is the session/category key, preserving FIFO within a conversation while independent conversations can scale in parallel. Existing producer/consumer envelope validation and DLQs protect this key and unblock poison sessions. |
+| Health Endpoint Monitoring | `/health` is deliberately a liveness-only process endpoint for this task, with no fake dependency probe. A later deployment task must define separate readiness observations for storage, Service Bus, and Orleans when a platform probe actually consumes them. |
+
+Circuit Breaker, throttling, competing-consumer tuning, a global pub/sub projection, saga/compensation,
+and caching are deferred. They do not solve a present Task 6 risk, and several would weaken the
+fixed-order/durable-fact contract or introduce provider-spend policy before it is designed.
 
 ## Orleans best-practices review (2026-08-14)
 

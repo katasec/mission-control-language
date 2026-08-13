@@ -252,11 +252,13 @@ the internal service; tenant/user IDs are therefore **not client-supplied fields
   `StartConversationResponse` and `Location: /conversations/{conversationId}`.
 - `POST /conversations/{conversationId}/commands` accepts a follow-up `Text` for the conversation's
   pinned `MissionRef`, creates a run, and returns `202 Accepted` with
+  `Location: /conversations/{conversationId}`, `Retry-After: 1`, and
   `SubmitConversationCommandResponse`. The request cannot select a different mission or replace
   capabilities.
 - `POST /conversations/{conversationId}/tool-results` accepts `SubmitToolResultRequest` and returns
-  `202 Accepted` with `SubmitToolResultResponse`. The grain rejects an unknown or already-completed
-  tool request without advancing the run.
+  `202 Accepted` with `Location: /conversations/{conversationId}`, `Retry-After: 1`, and
+  `SubmitToolResultResponse`. The grain rejects an unknown or already-completed tool request without
+  advancing the run.
 - `GET /conversations/{conversationId}` returns `200 OK` with `ConversationSnapshot`; an unknown
   conversation is `404`.
 - `GET /conversations/{conversationId}/events?after={sequence}` returns `text/event-stream`. It
