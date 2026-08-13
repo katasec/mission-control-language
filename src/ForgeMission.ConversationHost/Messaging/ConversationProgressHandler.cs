@@ -26,21 +26,13 @@ public sealed class ConversationProgressHandler(IGrainFactory grainFactory)
         var progress = JsonSerializer.Deserialize(message.Body, ConversationContractsJsonContext.Default.ConversationProgress)
             ?? throw new InvalidOperationException($"Progress message '{message.MessageId}' body deserialized to null.");
 
-        if (!message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue)
-            || tenantValue is not string { Length: > 0 } tenantId)
-            throw new InvalidOperationException(
-                $"Progress message '{message.MessageId}' is missing a non-empty 'tenant_id' application property.");
+        message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
+        var validation = ConversationProgressEnvelopeValidator.Validate(
+            progress, message.SessionId, message.MessageId, tenantValue as string);
+        if (!validation.IsValid)
+            throw new InvalidOperationException($"Progress message '{message.MessageId}': {validation.FailureReason}");
 
-        if (message.SessionId != progress.ConversationId.ToString("N"))
-            throw new InvalidOperationException(
-                $"Progress message '{message.MessageId}' SessionId '{message.SessionId}' does not match " +
-                $"body ConversationId '{progress.ConversationId:N}'.");
-
-        if (message.MessageId != progress.EventId.ToString("N"))
-            throw new InvalidOperationException(
-                $"Progress message '{message.MessageId}' does not match body EventId '{progress.EventId:N}'.");
-
-        var address = new ConversationAddress(tenantId, progress.ConversationId);
+        var address = new ConversationAddress(validation.TenantId!, progress.ConversationId);
         var grain = grainFactory.GetGrain<IConversationGrain>(address.ToString());
         var progressJson = JsonSerializer.Serialize(progress, ConversationContractsJsonContext.Default.ConversationProgress);
         var acceptance = await grain.RecordProgressAsync(new ConversationProgressInput(progressJson));

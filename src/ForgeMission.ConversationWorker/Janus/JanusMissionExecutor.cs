@@ -59,7 +59,6 @@ public static class JanusMissionExecutor
         JanusMissionContext mission,
         string goal,
         IReadOnlyList<ConversationCapabilityDeclaration> capabilities,
-        Guid toolRequestId,
         Func<MappedProgressFact, CancellationToken, Task> publishFactAsync,
         Func<string, CancellationToken, Task> onApprovedPlanAsync,
         CancellationToken ct)
@@ -76,7 +75,7 @@ public static class JanusMissionExecutor
                 await onApprovedPlanAsync(approvedPlan, innerCt);
             }
 
-            foreach (var fact in JanusPipelineProgressMapper.MapTraceEvent(traceEvent, mission.Experts, toolRequestId))
+            foreach (var fact in JanusPipelineProgressMapper.MapTraceEvent(traceEvent, mission.Experts))
                 await publishFactAsync(fact, innerCt);
         }
 
@@ -111,7 +110,6 @@ public static class JanusMissionExecutor
         JsonElement toolArguments,
         ConversationToolResult toolResult,
         IReadOnlyList<ConversationCapabilityDeclaration> capabilities,
-        Guid toolRequestId,
         Func<MappedProgressFact, CancellationToken, Task> publishFactAsync,
         CancellationToken ct)
     {
@@ -125,7 +123,7 @@ public static class JanusMissionExecutor
 
         async Task OnTrace(PipelineTraceEvent traceEvent, CancellationToken innerCt)
         {
-            foreach (var fact in JanusPipelineProgressMapper.MapTraceEvent(traceEvent, mission.Experts, toolRequestId))
+            foreach (var fact in JanusPipelineProgressMapper.MapTraceEvent(traceEvent, mission.Experts))
                 await publishFactAsync(fact, innerCt);
         }
 

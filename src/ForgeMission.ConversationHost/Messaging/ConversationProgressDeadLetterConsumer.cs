@@ -9,14 +9,21 @@ using Orleans;
 namespace ForgeMission.ConversationHost.Messaging;
 
 /// <summary>
-/// Session processor on the <c>conversation-progress</c> queue's own dead-letter sub-queue —
-/// session-aware because its parent queue is session-enabled. A dead-lettered message is delivery
-/// that the main <see cref="ConversationProgressConsumer"/> could never settle: if it is a valid,
-/// addressable body (deserializes, carries a non-empty <c>tenant_id</c>), this turns it into a
-/// stable UUID-v5-derived <see cref="ConversationEventKind.Error"/> fact followed by
+/// Processor on the <c>conversation-progress</c> queue's own dead-letter sub-queue. A plain
+/// (non-session) processor via <see cref="ServiceBusProcessorOptions.SubQueue"/> — the SDK's
+/// session processor type has no <c>SubQueue</c> setting, and the dead-letter sub-queue of a
+/// session-enabled entity is not itself session-enabled, so a real session receiver cannot target
+/// it at all; <c>MaxConcurrentCalls = 1</c> keeps the one-at-a-time processing the rest of this
+/// pipeline relies on. A dead-lettered message is delivery that the main
+/// <see cref="ConversationProgressConsumer"/> could never settle: if its body deserializes AND its
+/// trusted <c>tenant_id</c>/<c>SessionId</c>/<c>MessageId</c> envelope matches its own
+/// ConversationId/EventId (the same check <see cref="ConversationProgressHandler"/> makes), this
+/// turns it into a stable UUID-v5-derived <see cref="ConversationEventKind.Error"/> fact followed by
 /// <see cref="ConversationRunStatus.Failed"/>, so the conversation's own log records the failure
-/// rather than the run hanging forever. A malformed or unaddressable message cannot be turned into
-/// any durable fact at all — it is structured-logged and completed so it does not dead-letter loop.
+/// rather than the run hanging forever. A malformed or unaddressable message (deserialize failure,
+/// missing tenant, or an envelope that does not match its own body) cannot be turned into any
+/// durable fact at all — it is structured-logged and completed without a grain call, so it does not
+/// dead-letter loop.
 /// </summary>
 public sealed class ConversationProgressDeadLetterConsumer(
     ServiceBusClient client,
@@ -25,17 +32,16 @@ public sealed class ConversationProgressDeadLetterConsumer(
     ILogger<ConversationProgressDeadLetterConsumer> logger)
     : BackgroundService
 {
-    private ServiceBusSessionProcessor? processor;
+    private ServiceBusProcessor? processor;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var deadLetterPath = $"{options.ProgressQueueName}/$DeadLetterQueue";
-        processor = client.CreateSessionProcessor(deadLetterPath, new ServiceBusSessionProcessorOptions
+        processor = client.CreateProcessor(options.ProgressQueueName, new ServiceBusProcessorOptions
         {
             AutoCompleteMessages = false,
             ReceiveMode = ServiceBusReceiveMode.PeekLock,
-            MaxConcurrentSessions = 1,
-            MaxConcurrentCallsPerSession = 1,
+            MaxConcurrentCalls = 1,
+            SubQueue = SubQueue.DeadLetter,
         });
 
         processor.ProcessMessageAsync += ProcessMessageAsync;
@@ -55,7 +61,7 @@ public sealed class ConversationProgressDeadLetterConsumer(
         }
     }
 
-    private async Task ProcessMessageAsync(ProcessSessionMessageEventArgs args)
+    private async Task ProcessMessageAsync(ProcessMessageEventArgs args)
     {
         var (progress, tenantId) = TryReadAddressableProgress(args.Message);
         if (progress is null || tenantId is null)
@@ -111,16 +117,16 @@ public sealed class ConversationProgressDeadLetterConsumer(
         if (progress is null)
             return (null, null);
 
-        if (!message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue)
-            || tenantValue is not string { Length: > 0 } tenantId)
-            return (progress, null);
+        message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
+        var validation = ConversationProgressEnvelopeValidator.Validate(
+            progress, message.SessionId, message.MessageId, tenantValue as string);
 
-        return (progress, tenantId);
+        return validation.IsValid ? (progress, validation.TenantId) : (progress, null);
     }
 
     private Task ProcessErrorAsync(ProcessErrorEventArgs args)
     {
-        logger.LogError(args.Exception, "Progress dead-letter session processor error from {ErrorSource}.", args.ErrorSource);
+        logger.LogError(args.Exception, "Progress dead-letter processor error from {ErrorSource}.", args.ErrorSource);
         return Task.CompletedTask;
     }
 

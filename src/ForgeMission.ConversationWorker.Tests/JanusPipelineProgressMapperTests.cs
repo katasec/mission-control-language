@@ -96,27 +96,20 @@ public class JanusPipelineProgressMapperTests
     }
 
     [Fact]
-    public void SingleToolCall_BecomesToolRequestedWithSuppliedRequestId()
+    public void SingleToolCall_BecomesToolRequestedWithNameArgumentsAndProviderCallId()
     {
-        var requestId = Guid.NewGuid();
         var call = new PipelineToolCall("provider-call-1", "Read", JsonDocument.Parse("""{"file_path":"a.txt"}""").RootElement);
         var toolRequested = new PipelineToolRequested("Implement", ["Janus", "Implement"], "Implementer", "llm", 1, [call]);
 
-        var facts = JanusPipelineProgressMapper.MapTraceEvent(toolRequested, Experts, requestId);
+        var facts = JanusPipelineProgressMapper.MapTraceEvent(toolRequested, Experts);
 
         var fact = Assert.Single(facts);
         Assert.Equal(ConversationEventKind.ToolRequested, fact.Kind);
-        Assert.Equal(requestId, fact.ToolRequest!.RequestId);
-        Assert.Equal("Read", fact.ToolRequest.ToolName);
-    }
-
-    [Fact]
-    public void ToolRequested_WithoutSuppliedRequestId_FailsVisibly()
-    {
-        var call = new PipelineToolCall("provider-call-1", "Read", JsonDocument.Parse("{}").RootElement);
-        var toolRequested = new PipelineToolRequested("Implement", ["Janus", "Implement"], "Implementer", "llm", 1, [call]);
-
-        Assert.Throws<InvalidOperationException>(() => JanusPipelineProgressMapper.MapTraceEvent(toolRequested, Experts));
+        Assert.Equal("Read", fact.ToolName);
+        Assert.Equal("provider-call-1", fact.ProviderCallId);
+        Assert.Equal("a.txt", fact.ToolArguments!.Value.GetProperty("file_path").GetString());
+        // The mapper never allocates the deterministic RequestId itself — that requires the
+        // caller's current progress ordinal, which only its session state holds.
     }
 
     [Fact]
@@ -126,8 +119,7 @@ public class JanusPipelineProgressMapperTests
         var calls = new[] { new PipelineToolCall("a", "Read", arg), new PipelineToolCall("b", "Write", arg) };
         var toolRequested = new PipelineToolRequested("Implement", ["Janus", "Implement"], "Implementer", "llm", 1, calls);
 
-        Assert.Throws<InvalidOperationException>(
-            () => JanusPipelineProgressMapper.MapTraceEvent(toolRequested, Experts, Guid.NewGuid()));
+        Assert.Throws<InvalidOperationException>(() => JanusPipelineProgressMapper.MapTraceEvent(toolRequested, Experts));
     }
 
     [Fact]

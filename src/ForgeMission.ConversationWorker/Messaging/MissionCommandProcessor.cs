@@ -1,9 +1,7 @@
-using System.Buffers;
 using System.Text.Json;
 using ForgeMission.ConversationWorker.Janus;
 using ForgeMission.Conversations.Contracts;
 using ForgeMission.Core.Runtime;
-using Microsoft.Extensions.AI;
 
 namespace ForgeMission.ConversationWorker.Messaging;
 
@@ -21,6 +19,8 @@ namespace ForgeMission.ConversationWorker.Messaging;
 /// </summary>
 public sealed class MissionCommandProcessor(JanusMissionContext mission)
 {
+    private const string SupportedMissionRef = "Janus";
+
     public async Task<WorkerSessionState> ProcessAsync(
         ConversationCommand command,
         string tenantId,
@@ -58,10 +58,13 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
             if (redelivered.Phase != WorkerSessionPhase.ExecutingProvider)
                 return redelivered; // WaitingForTool or Terminal: a plain redelivery — no-op.
 
-            var interrupted = new ConversationProgress(
-                ConversationDeterministicIds.Progress(command.CommandId, redelivered.NextProgressOrdinal),
-                command.ConversationId, command.RunId, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
-                null, null, null, null, null, null, null, ConversationRunStatus.Interrupted, DateTimeOffset.UtcNow);
+            // A caught exception during the ORIGINAL attempt already resolved to Error/Failed
+            // below (never leaving ExecutingProvider pending) — a redelivery landing here means
+            // the process died or was cancelled with no chance to run that handler, so this is the
+            // one legitimate source of an Interrupted fact.
+            var interrupted = BuildProgress(
+                command, redelivered.NextProgressOrdinal, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
+                runStatus: ConversationRunStatus.Interrupted);
             var afterInterrupt = await PublishFactDurablyAsync(redelivered, interrupted, ct);
             afterInterrupt = afterInterrupt with { Phase = WorkerSessionPhase.Terminal };
             await saveSessionAsync(afterInterrupt, ct);
@@ -69,98 +72,167 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         }
 
         if (command.Kind == ConversationCommandKind.ContinueAfterTool)
-        {
-            if (session is null || session.Phase != WorkerSessionPhase.WaitingForTool || session.OutstandingTool is null
-                || session.RunId != command.RunId || command.ToolResult is null
-                || command.ToolResult.RequestId != session.OutstandingTool.RequestId)
-                return session!; // Mismatch, wrong run, or a duplicate StartMission — no progress, no execution.
-
-            var outstanding = session.OutstandingTool;
-            var state = session with
-            {
-                CurrentCommandId = command.CommandId, Phase = WorkerSessionPhase.ExecutingProvider, OutstandingTool = null,
-            };
-            await saveSessionAsync(state, ct);
-
-            var toolRequestId = ConversationDeterministicIds.ToolRequest(command.CommandId, 0);
-
-            async Task PublishMappedFactAsync(MappedProgressFact fact, CancellationToken factCt)
-            {
-                var eventId = ConversationDeterministicIds.Progress(command.CommandId, state.NextProgressOrdinal);
-                var progress = new ConversationProgress(
-                    eventId, command.ConversationId, command.RunId, fact.Kind, fact.Participant, fact.Attempt,
-                    fact.Text, fact.Reason, fact.Approval, fact.ToolRequest, null, null, null, DateTimeOffset.UtcNow);
-                state = await PublishFactDurablyAsync(state, progress, factCt);
-            }
-
-            var result = await JanusMissionExecutor.RunContinuationAsync(
-                mission, state.ApprovedPlan!, outstanding.ProviderCallId, outstanding.ToolName, outstanding.Arguments,
-                command.ToolResult, command.Capabilities, toolRequestId, PublishMappedFactAsync, ct);
-
-            return await HandleMissionResultAsync(command, state, ToOutcome(result, toolRequestId), PublishFactDurablyAsync, saveSessionAsync, ct);
-        }
+            return await ProcessContinuationAsync(command, session, saveSessionAsync, PublishFactDurablyAsync, ct);
 
         // command.Kind == StartMission.
         if (session is { Phase: not WorkerSessionPhase.Terminal })
             return session; // A duplicate/second StartMission while a run is already active — no-op.
 
-        var fresh = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
-        await saveSessionAsync(fresh, ct);
-        var freshState = fresh;
+        return await ProcessFreshStartAsync(command, saveSessionAsync, PublishFactDurablyAsync, ct);
+    }
 
-        var freshToolRequestId = ConversationDeterministicIds.ToolRequest(command.CommandId, 0);
+    private async Task<WorkerSessionState> ProcessFreshStartAsync(
+        ConversationCommand command,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        CancellationToken ct)
+    {
+        var state = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
+        await saveSessionAsync(state, ct);
 
-        async Task PublishFreshFactAsync(MappedProgressFact fact, CancellationToken factCt)
-        {
-            var eventId = ConversationDeterministicIds.Progress(command.CommandId, freshState.NextProgressOrdinal);
-            var progress = new ConversationProgress(
-                eventId, command.ConversationId, command.RunId, fact.Kind, fact.Participant, fact.Attempt,
-                fact.Text, fact.Reason, fact.Approval, fact.ToolRequest, null, null, null, DateTimeOffset.UtcNow);
-            freshState = await PublishFactDurablyAsync(freshState, progress, factCt);
-        }
+        if (command.MissionRef != SupportedMissionRef)
+            return await RejectUnsupportedMissionAsync(command, state, publishFactDurablyAsync, saveSessionAsync, ct);
+
+        async Task PublishMappedFactAsync(MappedProgressFact fact, CancellationToken factCt)
+            => state = await PublishFactAsync(command, state, fact, publishFactDurablyAsync, saveSessionAsync, factCt);
 
         Task OnApprovedPlanAsync(string plan, CancellationToken planCt)
         {
-            freshState = freshState with { ApprovedPlan = plan };
-            return saveSessionAsync(freshState, planCt);
+            state = state with { ApprovedPlan = plan };
+            return saveSessionAsync(state, planCt);
         }
 
-        var freshResult = await JanusMissionExecutor.RunFullMissionAsync(
-            mission, command.Goal, command.Capabilities, freshToolRequestId, PublishFreshFactAsync, OnApprovedPlanAsync, ct);
+        MissionResult result;
+        try
+        {
+            result = await JanusMissionExecutor.RunFullMissionAsync(
+                mission, command.Goal, command.Capabilities, PublishMappedFactAsync, OnApprovedPlanAsync, ct);
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            // A caught executor/provider failure is a KNOWN outcome, not an ambiguous crash — it
+            // resolves through the normal outbox as Error+Failed, never as Interrupted.
+            return await HandleMissionResultAsync(
+                command, state, new MissionResult(command.MissionRef, "", MissionStatus.Fail, ex.Message),
+                publishFactDurablyAsync, saveSessionAsync, ct);
+        }
 
-        return await HandleMissionResultAsync(command, freshState, ToOutcome(freshResult, freshToolRequestId), PublishFactDurablyAsync, saveSessionAsync, ct);
+        if (result.ToolCalls is { Count: > 0 })
+            return state; // Already fully persisted as WaitingForTool by PublishFactAsync's ToolRequested branch.
+
+        return await HandleMissionResultAsync(command, state, result, publishFactDurablyAsync, saveSessionAsync, ct);
     }
 
-    private static async Task<WorkerSessionState> HandleMissionResultAsync(
+    private async Task<WorkerSessionState> ProcessContinuationAsync(
         ConversationCommand command,
-        WorkerSessionState session,
-        MissionResultOutcome result,
+        WorkerSessionState? session,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        CancellationToken ct)
+    {
+        if (session is null || session.Phase != WorkerSessionPhase.WaitingForTool || session.OutstandingTool is null
+            || session.RunId != command.RunId || command.ToolResult is null
+            || command.ToolResult.RequestId != session.OutstandingTool.RequestId)
+            return session!; // Mismatch, wrong run, or a duplicate StartMission — no progress, no execution.
+
+        var outstanding = session.OutstandingTool;
+        var state = session with
+        {
+            CurrentCommandId = command.CommandId, Phase = WorkerSessionPhase.ExecutingProvider, OutstandingTool = null,
+        };
+        await saveSessionAsync(state, ct);
+
+        if (command.MissionRef != SupportedMissionRef)
+            return await RejectUnsupportedMissionAsync(command, state, publishFactDurablyAsync, saveSessionAsync, ct);
+
+        async Task PublishMappedFactAsync(MappedProgressFact fact, CancellationToken factCt)
+            => state = await PublishFactAsync(command, state, fact, publishFactDurablyAsync, saveSessionAsync, factCt);
+
+        MissionResult result;
+        try
+        {
+            result = await JanusMissionExecutor.RunContinuationAsync(
+                mission, state.ApprovedPlan!, outstanding.ProviderCallId, outstanding.ToolName, outstanding.Arguments,
+                command.ToolResult, command.Capabilities, PublishMappedFactAsync, ct);
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested)
+        {
+            return await HandleMissionResultAsync(
+                command, state, new MissionResult(command.MissionRef, "", MissionStatus.Fail, ex.Message),
+                publishFactDurablyAsync, saveSessionAsync, ct);
+        }
+
+        if (result.ToolCalls is { Count: > 0 })
+            return state;
+
+        return await HandleMissionResultAsync(command, state, result, publishFactDurablyAsync, saveSessionAsync, ct);
+    }
+
+    // The one place a ToolRequested fact is turned into a durable send — and the one place the
+    // WaitingForTool/OutstandingTool crash boundary is enforced: session state naming the exact
+    // tool-request correlation (deterministic RequestId, provider CallId, name, arguments) is
+    // persisted BEFORE this method builds or sends the ConversationProgress fact that announces it,
+    // using the SAME current NextProgressOrdinal for both the Progress EventId and the ToolRequest
+    // RequestId (Janus v1 has exactly one tool request per command, so they name the same fact).
+    private static async Task<WorkerSessionState> PublishFactAsync(
+        ConversationCommand command,
+        WorkerSessionState state,
+        MappedProgressFact fact,
         Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
         Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
         CancellationToken ct)
     {
-        if (result.ToolCall is { } call)
+        if (fact.Kind == ConversationEventKind.ToolRequested)
         {
-            var outstanding = new OutstandingToolCall(result.ToolRequestId, call.CallId, call.Name, ToJsonElement(call.Arguments));
-            session = session with { Phase = WorkerSessionPhase.WaitingForTool, OutstandingTool = outstanding };
-            await saveSessionAsync(session, ct);
-            return session;
+            var ordinal = state.NextProgressOrdinal;
+            var toolRequestId = ConversationDeterministicIds.ToolRequest(command.CommandId, ordinal);
+            var outstanding = new OutstandingToolCall(toolRequestId, fact.ProviderCallId!, fact.ToolName!, fact.ToolArguments!.Value);
+
+            state = state with { Phase = WorkerSessionPhase.WaitingForTool, OutstandingTool = outstanding };
+            await saveSessionAsync(state, ct);
+
+            var toolRequestProgress = BuildProgress(
+                command, ordinal, fact.Kind, fact.Participant, fact.Attempt,
+                toolRequest: new ConversationToolRequest(toolRequestId, fact.ToolName!, fact.ToolArguments!.Value));
+            return await publishFactDurablyAsync(state, toolRequestProgress, ct);
         }
 
-        if (!result.Passed)
+        var progress = BuildProgress(
+            command, state.NextProgressOrdinal, fact.Kind, fact.Participant, fact.Attempt, fact.Text, fact.Reason, fact.Approval);
+        return await publishFactDurablyAsync(state, progress, ct);
+    }
+
+    private static Task<WorkerSessionState> RejectUnsupportedMissionAsync(
+        ConversationCommand command,
+        WorkerSessionState state,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        CancellationToken ct)
+        => HandleMissionResultAsync(
+            command, state,
+            new MissionResult(command.MissionRef, "", MissionStatus.Fail,
+                $"Unsupported MissionRef '{command.MissionRef}' — only '{SupportedMissionRef}' is accepted."),
+            publishFactDurablyAsync, saveSessionAsync, ct);
+
+    private static async Task<WorkerSessionState> HandleMissionResultAsync(
+        ConversationCommand command,
+        WorkerSessionState session,
+        MissionResult result,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        CancellationToken ct)
+    {
+        if (result.Status == MissionStatus.Fail)
         {
-            var error = new ConversationProgress(
-                ConversationDeterministicIds.Progress(command.CommandId, session.NextProgressOrdinal),
-                command.ConversationId, command.RunId, ConversationEventKind.Error, ConversationParticipant.Forge,
-                null, null, result.FailReason ?? "Mission failed.", null, null, null, null, null, DateTimeOffset.UtcNow);
+            var error = BuildProgress(
+                command, session.NextProgressOrdinal, ConversationEventKind.Error, ConversationParticipant.Forge,
+                reason: result.FailReason ?? "Mission failed.");
             session = await publishFactDurablyAsync(session, error, ct);
         }
 
-        var runStatus = new ConversationProgress(
-            ConversationDeterministicIds.Progress(command.CommandId, session.NextProgressOrdinal),
-            command.ConversationId, command.RunId, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
-            null, null, null, null, null, null, null,
-            result.Passed ? ConversationRunStatus.Completed : ConversationRunStatus.Failed, DateTimeOffset.UtcNow);
+        var runStatus = BuildProgress(
+            command, session.NextProgressOrdinal, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
+            runStatus: result.Status == MissionStatus.Pass ? ConversationRunStatus.Completed : ConversationRunStatus.Failed);
         session = await publishFactDurablyAsync(session, runStatus, ct);
 
         session = session with { Phase = WorkerSessionPhase.Terminal };
@@ -168,67 +240,18 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         return session;
     }
 
-    // A pause (non-empty ToolCalls) and a genuine pass/fail are mutually exclusive outcomes of one
-    // MissionResult — folded into a single closed shape so HandleMissionResultAsync never has to
-    // re-derive "is this a pause" from raw PipelineRunner fields.
-    internal readonly record struct MissionResultOutcome(bool Passed, string? FailReason, FunctionCallContent? ToolCall, Guid ToolRequestId);
-
-    internal static MissionResultOutcome ToOutcome(MissionResult result, Guid toolRequestId)
-    {
-        if (result.ToolCalls is { Count: > 0 } calls)
-        {
-            if (calls.Count != 1)
-                throw new InvalidOperationException($"Janus v1 supports exactly one tool call per request; got {calls.Count}.");
-            return new MissionResultOutcome(true, null, calls[0], toolRequestId);
-        }
-
-        return new MissionResultOutcome(result.Status == MissionStatus.Pass, result.FailReason, null, toolRequestId);
-    }
-
-    // Mirrors RunnerToolTurnMapper's arguments->JsonElement conversion (Worker cannot reference
-    // ForgeMission.Runner) — the reverse of JanusMissionExecutor's ToArguments.
-    internal static JsonElement ToJsonElement(IDictionary<string, object?>? arguments)
-    {
-        var buffer = new ArrayBufferWriter<byte>();
-        using (var writer = new Utf8JsonWriter(buffer))
-        {
-            writer.WriteStartObject();
-            foreach (var (name, value) in arguments ?? new Dictionary<string, object?>())
-            {
-                writer.WritePropertyName(name);
-                WriteValue(writer, value);
-            }
-            writer.WriteEndObject();
-        }
-
-        using var document = JsonDocument.Parse(buffer.WrittenMemory);
-        return document.RootElement.Clone();
-    }
-
-    private static void WriteValue(Utf8JsonWriter writer, object? value)
-    {
-        switch (value)
-        {
-            case null:
-                writer.WriteNullValue();
-                return;
-            case string text:
-                writer.WriteStringValue(text);
-                return;
-            case bool boolean:
-                writer.WriteBooleanValue(boolean);
-                return;
-            case long integer:
-                writer.WriteNumberValue(integer);
-                return;
-            case double number:
-                writer.WriteNumberValue(number);
-                return;
-            case JsonElement element:
-                element.WriteTo(writer);
-                return;
-            default:
-                throw new InvalidOperationException($"Unsupported tool argument type '{value.GetType().FullName}'.");
-        }
-    }
+    private static ConversationProgress BuildProgress(
+        ConversationCommand command,
+        int ordinal,
+        ConversationEventKind kind,
+        ConversationParticipant participant,
+        int? attempt = null,
+        string? text = null,
+        string? reason = null,
+        ConversationApproval? approval = null,
+        ConversationToolRequest? toolRequest = null,
+        ConversationRunStatus? runStatus = null)
+        => new(
+            ConversationDeterministicIds.Progress(command.CommandId, ordinal), command.ConversationId, command.RunId,
+            kind, participant, attempt, text, reason, approval, toolRequest, null, null, runStatus, DateTimeOffset.UtcNow);
 }

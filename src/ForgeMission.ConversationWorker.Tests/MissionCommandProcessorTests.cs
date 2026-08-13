@@ -282,4 +282,153 @@ public class MissionCommandProcessorTests
         Assert.Null(final.PendingProgressJson);
         Assert.Equal(5, final.NextProgressOrdinal);
     }
+
+    // ── Review round 2, correction 1: ToolRequested ordering and ID ──────────────
+
+    [Fact]
+    public async Task ToolRequested_PersistsWaitingForToolStateBeforeThePublisherEverSeesTheFact()
+    {
+        var mission = BuildMission(ToolPauseRunner());
+        var processor = new MissionCommandProcessor(mission);
+        var conversationId = Guid.NewGuid();
+        var command = StartCommand(conversationId, Guid.NewGuid());
+
+        var callIndex = 0;
+        int? firstWaitingForToolSaveIndex = null;
+        int? toolRequestedPublishIndex = null;
+
+        Task Save(WorkerSessionState state, CancellationToken _)
+        {
+            if (firstWaitingForToolSaveIndex is null && state.Phase == WorkerSessionPhase.WaitingForTool && state.OutstandingTool is not null)
+                firstWaitingForToolSaveIndex = callIndex;
+            callIndex++;
+            return Task.CompletedTask;
+        }
+
+        Task Publish(ConversationProgress progress, string _, CancellationToken __)
+        {
+            if (progress.Kind == ConversationEventKind.ToolRequested)
+                toolRequestedPublishIndex ??= callIndex;
+            callIndex++;
+            return Task.CompletedTask;
+        }
+
+        await processor.ProcessAsync(command, "dev", session: null, Save, Publish, CancellationToken.None);
+
+        Assert.NotNull(firstWaitingForToolSaveIndex);
+        Assert.NotNull(toolRequestedPublishIndex);
+        Assert.True(firstWaitingForToolSaveIndex < toolRequestedPublishIndex,
+            $"WaitingForTool state must be saved (call #{firstWaitingForToolSaveIndex}) before the " +
+            $"publisher ever sees the ToolRequested fact (call #{toolRequestedPublishIndex}).");
+    }
+
+    [Fact]
+    public async Task ToolRequested_UsesTheCurrentNonZeroOrdinal_NotAFixedZero()
+    {
+        // Proposer + Approver each publish ParticipantStarted/ParticipantMessage/Approval facts
+        // before Implementer ever runs, so the ordinal in effect when Implementer's tool request
+        // fires is well past 0.
+        var mission = BuildMission(ToolPauseRunner());
+        var processor = new MissionCommandProcessor(mission);
+        var (published, sessions) = NewSinks();
+        var conversationId = Guid.NewGuid();
+        var command = StartCommand(conversationId, Guid.NewGuid());
+
+        var final = await processor.ProcessAsync(
+            command, "dev", session: null, SaveTo(sessions, conversationId), PublishTo(published), CancellationToken.None);
+
+        var zeroOrdinalId = ConversationDeterministicIds.ToolRequest(command.CommandId, 0);
+        Assert.NotEqual(zeroOrdinalId, final.OutstandingTool!.RequestId);
+
+        var toolRequestedFact = Assert.Single(published, p => p.Kind == ConversationEventKind.ToolRequested);
+        Assert.Equal(toolRequestedFact.ToolRequest!.RequestId, final.OutstandingTool.RequestId);
+
+        // The ToolRequested fact's own EventId and its ToolRequest.RequestId are derived from the
+        // same ordinal (Progress and ToolRequest share it — they name the same fact) — proved here
+        // by reconstructing the ToolRequest ID from the ordinal implicit in the fact's own EventId
+        // (Progress and ToolRequest use the same namespace-scoped Generate primitive, so equal
+        // ordinal input to both always agrees) rather than assuming ordinal 0.
+        var ordinal = published.IndexOf(toolRequestedFact);
+        Assert.Equal(ConversationDeterministicIds.ToolRequest(command.CommandId, ordinal), final.OutstandingTool.RequestId);
+    }
+
+    // ── Review round 2, correction 2: known execution failures ───────────────────
+
+    [Fact]
+    public async Task ExecutorException_PublishesErrorThenFailed_NeverInterrupted()
+    {
+        var runner = new FakeExpertRunner((expert, _) => expert.Name switch
+        {
+            "Proposer" => new StepEnvelope("here's my proposal", "pass"),
+            "Approver" => new StepEnvelope("the approved plan", "pass"),
+            "Implementer" => throw new InvalidOperationException("simulated provider failure"),
+            _ => throw new InvalidOperationException($"Unexpected expert '{expert.Name}'."),
+        });
+        var mission = BuildMission(runner);
+        var processor = new MissionCommandProcessor(mission);
+        var (published, sessions) = NewSinks();
+        var conversationId = Guid.NewGuid();
+        var command = StartCommand(conversationId, Guid.NewGuid());
+
+        var final = await processor.ProcessAsync(
+            command, "dev", session: null, SaveTo(sessions, conversationId), PublishTo(published), CancellationToken.None);
+
+        Assert.Equal(WorkerSessionPhase.Terminal, final.Phase);
+        // PipelineRunner itself wraps the raw exception ("Step 'Implementer' failed: <message>")
+        // before it reaches MissionCommandProcessor — Contains, not exact-match, keeps this test
+        // decoupled from that wrapping format.
+        Assert.Contains(published, p => p.Kind == ConversationEventKind.Error
+            && p.Reason!.Contains("simulated provider failure", StringComparison.Ordinal));
+        var runStatus = Assert.Single(published, p => p.Kind == ConversationEventKind.RunStatus);
+        Assert.Equal(ConversationRunStatus.Failed, runStatus.RunStatus);
+        Assert.DoesNotContain(published, p => p.RunStatus == ConversationRunStatus.Interrupted);
+    }
+
+    [Fact]
+    public async Task CancelledOperation_PropagatesUncaught_LeavingExecutingProviderForRedeliveryToReportInterrupted()
+    {
+        using var cts = new CancellationTokenSource();
+        var runner = new FakeExpertRunner((expert, _) =>
+        {
+            if (expert.Name == "Proposer")
+            {
+                cts.Cancel();
+                cts.Token.ThrowIfCancellationRequested();
+            }
+            throw new InvalidOperationException($"Unexpected expert '{expert.Name}'.");
+        });
+        var mission = BuildMission(runner);
+        var processor = new MissionCommandProcessor(mission);
+        var (published, sessions) = NewSinks();
+        var conversationId = Guid.NewGuid();
+        var command = StartCommand(conversationId, Guid.NewGuid());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => processor.ProcessAsync(
+            command, "dev", session: null, SaveTo(sessions, conversationId), PublishTo(published), cts.Token));
+
+        // Nothing durable resolved this as a known failure — a later redelivery is what reports
+        // Interrupted, proving the exception was never caught and turned into Error/Failed here.
+        Assert.DoesNotContain(published, p => p.Kind is ConversationEventKind.Error or ConversationEventKind.RunStatus);
+    }
+
+    // ── Review round 2, correction 4: mission admission ───────────────────────────
+
+    [Fact]
+    public async Task WrongMissionRef_FailsVisibly_NoExecutorCall()
+    {
+        var mission = BuildMission(new ThrowingExpertRunner());
+        var processor = new MissionCommandProcessor(mission);
+        var (published, sessions) = NewSinks();
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var command = new ConversationCommand(
+            Guid.NewGuid(), conversationId, runId, ConversationCommandKind.StartMission, "NotJanus", "goal", [], null);
+
+        var final = await processor.ProcessAsync(
+            command, "dev", session: null, SaveTo(sessions, conversationId), PublishTo(published), CancellationToken.None);
+
+        Assert.Equal(WorkerSessionPhase.Terminal, final.Phase);
+        Assert.Contains(published, p => p.Kind == ConversationEventKind.Error);
+        Assert.Contains(published, p => p.Kind == ConversationEventKind.RunStatus && p.RunStatus == ConversationRunStatus.Failed);
+    }
 }

@@ -26,24 +26,31 @@ public sealed class AzureServiceBusMissionCommandConsumer(
     private readonly MissionCommandProcessor _processor = new(mission);
 
     private ServiceBusSessionProcessor? _commandProcessor;
-    private ServiceBusSessionProcessor? _deadLetterProcessor;
+    private ServiceBusProcessor? _deadLetterProcessor;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var processorOptions = new ServiceBusSessionProcessorOptions
+        _commandProcessor = client.CreateSessionProcessor(options.MissionCommandQueueName, new ServiceBusSessionProcessorOptions
         {
             AutoCompleteMessages = false,
             ReceiveMode = ServiceBusReceiveMode.PeekLock,
             MaxConcurrentSessions = 1,
             MaxConcurrentCallsPerSession = 1,
-        };
-
-        _commandProcessor = client.CreateSessionProcessor(options.MissionCommandQueueName, processorOptions);
+        });
         _commandProcessor.ProcessMessageAsync += ProcessCommandAsync;
         _commandProcessor.ProcessErrorAsync += ProcessErrorAsync;
 
-        _deadLetterProcessor = client.CreateSessionProcessor(
-            $"{options.MissionCommandQueueName}/$DeadLetterQueue", processorOptions);
+        // A plain (non-session) processor: the SDK's session processor options have no SubQueue
+        // setting, and the dead-letter sub-queue of a session-enabled entity is not itself
+        // session-enabled — a session receiver cannot target it at all. MaxConcurrentCalls = 1
+        // keeps the one-at-a-time processing the rest of this pipeline relies on.
+        _deadLetterProcessor = client.CreateProcessor(options.MissionCommandQueueName, new ServiceBusProcessorOptions
+        {
+            AutoCompleteMessages = false,
+            ReceiveMode = ServiceBusReceiveMode.PeekLock,
+            MaxConcurrentCalls = 1,
+            SubQueue = SubQueue.DeadLetter,
+        });
         _deadLetterProcessor.ProcessMessageAsync += ProcessDeadLetterAsync;
         _deadLetterProcessor.ProcessErrorAsync += ProcessErrorAsync;
 
@@ -74,15 +81,12 @@ public sealed class AzureServiceBusMissionCommandConsumer(
             command = JsonSerializer.Deserialize(args.Message.Body, ConversationContractsJsonContext.Default.ConversationCommand)
                 ?? throw new InvalidOperationException("Command body deserialized to null.");
 
-            if (!args.Message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue)
-                || tenantValue is not string { Length: > 0 } t)
-                throw new InvalidOperationException("Missing a non-empty 'tenant_id' application property.");
-            tenantId = t;
-
-            if (args.Message.SessionId != command.ConversationId.ToString("N"))
-                throw new InvalidOperationException("SessionId does not match body ConversationId.");
-            if (args.Message.MessageId != command.CommandId.ToString("N"))
-                throw new InvalidOperationException("MessageId does not match body CommandId.");
+            args.Message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
+            var validation = ConversationCommandEnvelopeValidator.Validate(
+                command, args.Message.SessionId, args.Message.MessageId, tenantValue as string);
+            if (!validation.IsValid)
+                throw new InvalidOperationException(validation.FailureReason);
+            tenantId = validation.TenantId!;
         }
         catch (Exception ex)
         {
@@ -103,15 +107,24 @@ public sealed class AzureServiceBusMissionCommandConsumer(
         await args.CompleteMessageAsync(args.Message, ct);
     }
 
-    private async Task ProcessDeadLetterAsync(ProcessSessionMessageEventArgs args)
+    private async Task ProcessDeadLetterAsync(ProcessMessageEventArgs args)
     {
         ConversationCommand? command;
         string? tenantId;
         try
         {
             command = JsonSerializer.Deserialize(args.Message.Body, ConversationContractsJsonContext.Default.ConversationCommand);
-            tenantId = args.Message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue)
-                && tenantValue is string { Length: > 0 } t ? t : null;
+            if (command is not null)
+            {
+                args.Message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
+                var validation = ConversationCommandEnvelopeValidator.Validate(
+                    command, args.Message.SessionId, args.Message.MessageId, tenantValue as string);
+                tenantId = validation.IsValid ? validation.TenantId : null;
+            }
+            else
+            {
+                tenantId = null;
+            }
         }
         catch (JsonException)
         {
