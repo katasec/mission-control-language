@@ -227,51 +227,63 @@ contains neither credentials nor local workspace paths. `ConversationProgress` d
 sequence: the Conversation service converts it to the canonical `ConversationEvent` through the
 grain.
 
-#### HTTP request/response contract
+#### Transport-neutral request/response messages
 
-The Host's local development adapter uses its fixed development tenant/user identity. A later
-ForgeUI/ForgeAPI adapter obtains identity at Tier 1 and passes authenticated tenant/user context to
-the internal service; tenant/user IDs are therefore **not client-supplied fields** in these v1 DTOs.
+These Contracts records are the named public command/query messages; HTTP/SSE is only Task 6's
+first projection of them. They contain neither `HttpContext`, status/header fields, route templates,
+Orleans types, nor Storage types, so a future direct service, gRPC, or broker adapter can carry the
+same semantic message. The Host's local development adapter uses its fixed development tenant/user
+identity. A later ForgeUI/ForgeAPI adapter obtains identity at Tier 1 and passes authenticated
+tenant/user context to the internal service; tenant/user IDs are therefore **not client-supplied
+fields** in these v1 DTOs.
 
     StartConversationRequest(Guid CommandId, string MissionRef, string Goal,
                              ConversationCapabilityDeclaration[] Capabilities)
     StartConversationResponse(Guid ConversationId, Guid RunId, long AcceptedSequence,
                               ConversationRunStatus Status)
 
-    SubmitConversationCommandRequest(Guid CommandId, string Text)
+    SubmitConversationCommandRequest(Guid ConversationId, Guid CommandId, string Text)
     SubmitConversationCommandResponse(Guid ConversationId, Guid RunId, long AcceptedSequence,
                                       ConversationRunStatus Status)
 
-    SubmitToolResultRequest(Guid CommandId, Guid ToolRequestId, string Content, bool IsError)
+    SubmitToolResultRequest(Guid ConversationId, Guid CommandId, Guid ToolRequestId, string Content,
+                            bool IsError)
     SubmitToolResultResponse(Guid ConversationId, Guid RunId, long AcceptedSequence,
                              ConversationRunStatus Status)
+
+    GetConversationRequest(Guid ConversationId)
+    GetConversationResponse(ConversationSnapshot Snapshot)
+    ReadConversationEventsRequest(Guid ConversationId, long After)
 
 - `POST /conversations` accepts `StartConversationRequest`, deterministically derives its
   conversation and first-run IDs from the client `CommandId`, appends the `UserMessage` fact, and
   returns `201 Created` with
   `StartConversationResponse` and `Location: /conversations/{conversationId}`.
 - `POST /conversations/{conversationId}/commands` accepts a follow-up `Text` for the conversation's
-  pinned `MissionRef`, creates a run, and returns `202 Accepted` with
+  pinned `MissionRef`, binds the route value to the message's `ConversationId`, creates a run, and returns `202 Accepted` with
   `Location: /conversations/{conversationId}`, `Retry-After: 1`, and
   `SubmitConversationCommandResponse`. The request cannot select a different mission or replace
   capabilities.
-- `POST /conversations/{conversationId}/tool-results` accepts `SubmitToolResultRequest` and returns
+- `POST /conversations/{conversationId}/tool-results` binds the route value to
+  `SubmitToolResultRequest.ConversationId` and returns
   `202 Accepted` with `Location: /conversations/{conversationId}`, `Retry-After: 1`, and
   `SubmitToolResultResponse`. The grain rejects an unknown or already-completed tool request without
   advancing the run.
-- `GET /conversations/{conversationId}` returns `200 OK` with `ConversationSnapshot`; an unknown
-  conversation is `404`.
-- `GET /conversations/{conversationId}/events?after={sequence}` returns `text/event-stream`. It
+- `GET /conversations/{conversationId}` maps to `GetConversationRequest` and returns `200 OK` with
+  `GetConversationResponse`; an unknown conversation is `404`.
+- `GET /conversations/{conversationId}/events?after={sequence}` maps to
+  `ReadConversationEventsRequest` and projects its event sequence as `text/event-stream`. It
   emits each complete `ConversationEvent` as `event: conversation-event`, `id: {Sequence}`, and
   one source-generated JSON `data:` value. `after` is an optional non-negative `long`, default
   `0`; the server first replays events with `Sequence > after`, then follows live events. The
   client deduplicates by `EventId`, retains its highest rendered sequence, and reconnects with that
   value. SSE token deltas are outside this v1 durable contract.
 
-Malformed route/request data is `400`; an accepted duplicate `CommandId` or already-recorded tool
-result returns the original accepted response rather than producing another event. The endpoint
-adapter owns HTTP status mapping; grains and queue consumers return typed results, never
-`HttpContext` or `IResult`.
+Malformed adapter input is `400`; an accepted duplicate `CommandId` or already-recorded tool result
+returns the original accepted response rather than producing another event. The endpoint adapter
+owns HTTP status mapping; grains and queue consumers return typed results, never `HttpContext` or
+`IResult`. The Task 6 source-generation tests extend Task 2's coverage to these additive message
+types; this is a pre-publication correction, so no published wire compatibility is broken.
 
 #### Project and JSON boundary
 

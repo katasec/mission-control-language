@@ -171,7 +171,24 @@ provider call is deferred rather than pretending duplicate calls cannot happen.
 
 ## Reconnect and projections
 
-The Conversation API provides:
+### Transport-neutral conversation messages
+
+The Conversation API is a **message contract**, not an HTTP resource design. Named command and
+query messages (and the versioned `ConversationEvent` stream) are the stable contract shared by
+Desktop, a future Tier-1 adapter, and any future in-process, gRPC, or broker adapter. HTTP routes,
+HTTP status/headers, and SSE framing are projections of those messages, not the definition of their
+semantics. In particular, a message carries the `ConversationId` needed to address an existing
+conversation; an HTTP route may bind that same value, but no caller has to depend on a URL shape to
+invoke the operation.
+
+One operation message evolves additively. A new message is introduced only when it has a distinct
+command/query semantic or response shape: starting a conversation, submitting user input,
+submitting an authorized tool result, reading its snapshot, and reading its event sequence are
+therefore distinct messages, not cases in a public `kind`/"god command" envelope. Transport
+adapters translate their own authentication, correlation, status, and streaming concerns at the
+edge; they do not leak HTTP, Orleans, or storage types into Contracts.
+
+The initial HTTP/SSE projection is:
 
     POST /conversations
     POST /conversations/{conversationId}/commands

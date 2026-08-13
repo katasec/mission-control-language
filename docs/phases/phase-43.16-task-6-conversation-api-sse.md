@@ -1,10 +1,10 @@
 # Phase 43.16 Task 6 — Conversation API and resumable SSE
 
-> **Status: Build-ready for Claude implementation (2026-08-14).** Tasks 4 and 5 are accepted and
-> verified through `951bf73` and `1da4dc7`; status was recorded at `aea36e6`. This task exposes
-> their durable Conversation service through the additive Forge-native HTTP/SSE contract. It does
-> not change the Worker, Service Bus delivery, Desktop UI, `/v1/*`, mission definitions, or
-> forge-infra.
+> **Status: Build-ready for Claude implementation (2026-08-14; transport-neutral contract
+> correction locked).** Tasks 4 and 5 are accepted and verified through `951bf73` and `1da4dc7`;
+> status was recorded at `aea36e6`. This task exposes their durable Conversation service through an
+> additive Forge-native message contract, with HTTP/SSE as its first projection. It does not change
+> the Worker, Service Bus delivery, Desktop UI, `/v1/*`, mission definitions, or forge-infra.
 
 ## Outcome and scope
 
@@ -14,8 +14,10 @@ health response, and configures the existing source-generated Contracts JSON con
 API binding/serialization. The Worker remains a separately deployed command consumer/executor.
 
 The authoritative public contract already lives in
-[43.16 Task 2](phase-43.16-janus-desktop-local-poc.md#http-requestresponse-contract) and
-[Durable conversations](../design/durable-conversations.md#reconnect-and-projections):
+[43.16 Task 2](phase-43.16-janus-desktop-local-poc.md#transport-neutral-requestresponse-messages)
+and [Durable conversations](../design/durable-conversations.md#transport-neutral-conversation-messages).
+Its named command/query messages and `ConversationEvent` stream are the API; the following are only
+the first HTTP/SSE projection:
 
     POST /conversations
     POST /conversations/{conversationId}/commands
@@ -25,6 +27,27 @@ The authoritative public contract already lives in
 
 No route is added under `/v1`. There is no token-delta event, pagination API, CORS policy,
 authentication implementation, Room projection, or human approval control in this task.
+
+## Message contract before transport
+
+`StartConversationRequest`, `SubmitConversationCommandRequest`,
+`SubmitToolResultRequest`, `GetConversationRequest`, `GetConversationResponse`, and
+`ReadConversationEventsRequest` belong to `ForgeMission.Conversations.Contracts` and are the
+transport-neutral public API. `ConversationId` is part of every existing-conversation command/query
+message, even where the HTTP adapter also obtains it from a route. Thus a future direct service,
+gRPC, or broker adapter can invoke the same operation without reconstructing meaning from a URL.
+
+The three mutations intentionally remain distinct typed messages: start selects the initial mission
+and capabilities; a follow-up submits user text against pinned conversation state; and a tool result
+proves an outstanding authorized hand-off. They have distinct validation, authorization, and
+idempotency rules. Do not replace them with a public `ConversationCommand { kind: ... }` envelope.
+Each named message may instead grow additively when its own semantic operation evolves.
+
+HTTP status codes, `Location`/`Retry-After`, fixed development identity, minimal-API binding, and
+SSE's `event:`/`id:`/`data:` framing are adapter concerns. The endpoint maps between those concerns
+and the Contracts messages; no Contracts type, grain method, persistence interface, or Worker
+message may expose an HTTP type. SSE projects the `ReadConversationEventsRequest` result; the
+durable `ConversationEvent` and its sequence—not a live HTTP response—are the reconnect contract.
 
 ## Locked API behaviour
 
@@ -37,10 +60,10 @@ Table/Blob permission.
 | Route | Adapter action and result |
 |---|---|
 | `POST /conversations` | Require non-empty `commandId`, `missionRef`, and `goal`, a non-null capability array, and `missionRef == "Janus"` for this Janus-only proof. Derive both conversation and initial-run IDs from the client command ID, call the grain's start acceptance, and return `201 Created`, `Location: /conversations/{conversationId}`, and `StartConversationResponse`. An exact retry therefore reaches the same grain and returns the original acceptance; unequal reuse reaches its typed conflict result. |
-| `POST /conversations/{id}/commands` | Require a valid non-empty GUID route ID plus non-empty `commandId` and `text`. The grain—not the adapter—uses its pinned mission and capabilities to create a new run. Return `202 Accepted`, `Location: /conversations/{conversationId}`, `Retry-After: 1`, and `SubmitConversationCommandResponse`. |
-| `POST /conversations/{id}/tool-results` | Require valid route/request GUIDs and non-null `content`. The grain validates the outstanding request and turns the result into one durable `ToolResult` plus its deterministic continuation command. Return `202 Accepted`, `Location: /conversations/{conversationId}`, `Retry-After: 1`, and `SubmitToolResultResponse`. |
-| `GET /conversations/{id}` | Return the source-generated `ConversationSnapshot`; an uninitialized/no-mission grain is `404`, not an empty snapshot. |
-| `GET /conversations/{id}/events?after=` | Validate optional `after` as a non-negative `long` (default `0`), reject unknown conversations before starting the response, then produce the SSE protocol below. |
+| `POST /conversations/{id}/commands` | Bind a valid non-empty GUID route ID to `SubmitConversationCommandRequest.ConversationId`; require non-empty `commandId` and `text`. The grain—not the adapter—uses its pinned mission and capabilities to create a new run. Return `202 Accepted`, `Location: /conversations/{conversationId}`, `Retry-After: 1`, and `SubmitConversationCommandResponse`. |
+| `POST /conversations/{id}/tool-results` | Bind the valid route ID to `SubmitToolResultRequest.ConversationId`; require valid request GUIDs and non-null `content`. The grain validates the outstanding request and turns the result into one durable `ToolResult` plus its deterministic continuation command. Return `202 Accepted`, `Location: /conversations/{conversationId}`, `Retry-After: 1`, and `SubmitToolResultResponse`. |
+| `GET /conversations/{id}` | Bind the route ID to `GetConversationRequest` and project `GetConversationResponse`; an uninitialized/no-mission grain is `404`, not an empty snapshot. |
+| `GET /conversations/{id}/events?after=` | Bind route/query values to `ReadConversationEventsRequest`, validate `after` as a non-negative `long` (default `0`), reject unknown conversations before starting the response, then produce the SSE projection below. |
 
 Add `ConversationDeterministicIds.Conversation(Guid commandId)` using the fixed v5 name
 `conversation:{commandId:N}`, and `InitialRun(Guid commandId)` using
@@ -214,7 +237,7 @@ than invoking endpoint delegates.
 | File | Change |
 |---|---|
 | `src/ForgeMission.ConversationHost/Program.cs` | Register source-generated HTTP JSON and the singleton event hub; map API and health routes. |
-| `src/ForgeMission.Conversations.Contracts/ConversationDeterministicIds.cs` and its tests | Add deterministic conversation and initial-run IDs, including stable UUID-v5 test vectors and distinct-name assertions. |
+| `src/ForgeMission.Conversations.Contracts/ConversationDeterministicIds.cs`, contracts, JSON context, and their tests | Add deterministic conversation and initial-run IDs plus the transport-neutral existing-conversation command/query messages; extend source-generation round trips, including stable UUID-v5 test vectors and distinct-name assertions. |
 | `src/ForgeMission.ConversationHost/Api/ConversationApiEndpoints.cs` | Focused minimal-route adapter: validation, fixed `dev` address, grain calls, and explicit HTTP mapping. |
 | `src/ForgeMission.ConversationHost/Grains/IConversationEventNotifier.cs` | Grain-owned narrow post-durability notification contract; no HTTP or storage dependency. |
 | `src/ForgeMission.ConversationHost/Api/ConversationEventHub.cs` | Narrow non-durable notifier/subscription implementation with bounded stale-client containment. |
@@ -225,7 +248,7 @@ than invoking endpoint delegates.
 | `src/ForgeMission.ConversationHost.Tests/ConversationApiTests.cs` | New real-Kestrel HTTP/SSE integration coverage below. |
 | `src/ForgeMission.ConversationHost.Tests/ConversationGrainTests.cs` | Extend persistence/idempotency coverage for a crash after the `UserMessage` but before its queued pair, terminal duplicate starts, pinned-capability follow-ups, and duplicate tool-result acceptance if that is clearer than asserting it only over HTTP. |
 
-`ConversationApiTests` must prove, using source-generated request/response JSON and an
+`ConversationApiTests` must prove, using source-generated contract request/response JSON and an
 `HttpCompletionOption.ResponseHeadersRead` SSE client:
 
 1. start Janus returns `201`/Location and its two initial durable events; repeating the exact same
@@ -236,7 +259,9 @@ than invoking endpoint delegates.
 3. tool-result acceptance validates the expected request, creates only one continuation, and exact
    duplicate retries return the original acceptance without another event/dispatch; mismatches are
    `409` with no state advance, while an over-limit payload is `400` with no state advance;
-4. malformed/unknown/active-run inputs return the documented `400`/`404`/`409` mapping; and
+4. each HTTP route maps its path/query values into the same transport-neutral Contracts message
+   that a non-HTTP adapter would invoke; malformed/unknown/active-run inputs return the documented
+   `400`/`404`/`409` mapping; and
 5. the SSE client reads a known sequence, cancels/disconnects, misses later events, reconnects with
    its last sequence, and receives exactly the later durable events in sequence order. Include the
    subscribe/catch-up overlap (an append published to the hub while replay is in progress) and
