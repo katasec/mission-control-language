@@ -31,7 +31,8 @@ enum SessionRuntimeKind { Mission, DurableConversation }
 SessionSetupRequest(
     string WorkspaceRoot,
     string? Mission = null,
-    SessionRuntimeKind Runtime = SessionRuntimeKind.Mission)
+    SessionRuntimeKind Runtime = SessionRuntimeKind.Mission,
+    string? ReplacesSessionId = null)
 
 SessionSetupResponse(
     string SessionId,
@@ -48,9 +49,9 @@ ClientRuntimeEvent: existing fields + ConversationEvent? Conversation
 
 The existing defaults keep all non-Janus callers source/behaviour compatible. `ConversationId` is returned by the durable prompt path and retained by the owning `ConversationRuntimeSession`; it is never fabricated by Presentation. The session setup response does not pretend that an empty new Janus session already has a conversation.
 
-`AttachableMission` gains the runtime kind. The picker supplies `Mission` for ChatGPT/Websearch and `DurableConversation` plus wire mission `Janus` for Janus. On a durable prompt, the endpoint gets (or creates) the one `ConversationRuntimeSession` owned by that `ClientRuntimeSession`; normal mission paths remain their current direct construction. A session’s selected mission and runtime never change after setup.
+`AttachableMission` gains the runtime kind. The picker supplies `Mission` for ChatGPT/Websearch and `DurableConversation` plus wire mission `Janus` for Janus. On a durable prompt, the endpoint gets (or creates) the one `ConversationRuntimeSession` owned by that `ClientRuntimeSession`; normal mission paths remain their current direct construction. A session’s selected mission and runtime never change after setup. When replacing an existing picker session, `Home` sends its current ID as `ReplacesSessionId`; the store removes and disposes that old session before returning the new one. This cancels a durable tail before a user can switch missions, so an abandoned Janus session cannot later execute a local tool.
 
-`ClientRuntimeJsonContext` source-generates the changed records, enum, and event. The Contracts context remains the source-generated metadata for every durable-conversation payload; do not add runtime `JsonSerializerOptions` or reflection fallback.
+`ClientRuntimeJsonContext` source-generates the changed request/response records and `SessionRuntimeKind`. Add a dedicated source-generated `ConversationRelayJsonContext` for the local `ClientRuntimeEvent` envelope plus its `ConversationEvent` payload, with the string-enum behaviour required by the Contracts wire. This keeps the existing `CapabilityOperation` wire representation unchanged while avoiding runtime `JsonSerializerOptions`/resolver chaining and reflection fallback. `ConversationContractsJsonContext` remains the source-generated metadata used by `ConversationHostClient` for every direct durable-conversation message/payload.
 
 ## ConversationHost adapter and durable-session behaviour
 
@@ -72,7 +73,7 @@ new StartConversationRequest(
 
 For subsequent prompts it posts `SubmitConversationCommandRequest` against the retained ID. The capability declarations are converted from the already-authoritative `CapabilityRegistry.ToolDeclarations` (`AIFunction.Name`, `Description`, and `JsonSchema`), so the Worker receives exactly the tools that this local workspace can dispatch. No workspace root or desktop path crosses the boundary.
 
-After a successful start or follow-up acceptance, the session runs one background SSE tail. It opens `GET /conversations/{id}/events?after={lastSequence}`; each full `event: conversation-event` JSON record is source-generated into `ConversationEvent`, then published as one local `ClientRuntimeEvent`. It records the event ID and advances the high-water sequence before reconnecting. A duplicate event ID is ignored; a previously unseen event at or below the high-water sequence is a protocol error, surfaced as the existing local `Error` event rather than silently reordered. A normal SSE completion or transient HTTP failure retries with the same `lastSequence` after one fixed 250 ms delay. There is no retry-count/configuration knob. The session cancellation token stops that loop during Client Runtime shutdown.
+After a successful start or follow-up acceptance, the session runs one background SSE tail. It opens `GET /conversations/{id}/events?after={lastSequence}`; each full `event: conversation-event` JSON record is source-generated into `ConversationEvent`, then published as one local `ClientRuntimeEvent`. It records the event ID and advances the high-water sequence before reconnecting. A duplicate event ID is ignored; a previously unseen event at or below the high-water sequence is a protocol error, surfaced as the existing local `Error` event rather than silently reordered. A normal SSE completion or transient HTTP failure retries with the same `lastSequence` after one fixed 250 ms delay. There is no retry-count/configuration knob. `ConversationRuntimeSession` is `IAsyncDisposable`: session replacement and Client Runtime shutdown both cancel and await its tail before allowing the session to disappear.
 
 The Host’s Table transcript is the source of truth. Client Runtime’s in-memory sequence/event-ID set is only a live-tail cursor; it is not a transcript cache or second sequence allocator. A Client Runtime restart therefore restarts from the Host’s durable events, while a normal dropped Host SSE connection replays from the last delivered sequence.
 
@@ -82,9 +83,9 @@ On a newly observed `ToolRequested` event, `ConversationRuntimeSession` must fir
 
 1. `Participant == Implementer`;
 2. `ToolRequest` is present and has a non-empty request ID/name; and
-3. the name is one of the locally declared `ToolExecutorRegistry` tools.
+3. `ToolExecutorRegistry.CanExecute(name)` confirms the name is locally known.
 
-It converts the request’s `JsonElement` arguments with the same closed value mapping used by the existing mission sessions, constructs `FunctionCallContent`, and calls `ToolExecutorRegistry.ExecuteAsync` with the session’s existing `ICapabilityDispatcher`. That is the only execution path: local capability authorization, confirmation, workspace confinement, and audit stay intact. Unsupported/invalid requests become an error `ConversationToolResult`, never a fallback shell/filesystem operation.
+Add that small `CanExecute` query to `ToolExecutorRegistry`; it exposes only its already-owned name set and adds no new execution path. The session converts the request’s `JsonElement` arguments with the same closed value mapping used by the existing mission sessions, constructs `FunctionCallContent`, and calls `ToolExecutorRegistry.ExecuteAsync` with the session’s existing `ICapabilityDispatcher`. That is the only execution path: local capability authorization, confirmation, workspace confinement, and audit stay intact. Unsupported/invalid requests become an error `ConversationToolResult`, never a fallback shell/filesystem operation.
 
 The session posts exactly one logical result through `SubmitToolResultRequest`. Its `CommandId` is the new public deterministic helper `ConversationDeterministicIds.ClientToolResult(Guid toolRequestId)`, using the locked name `client-tool-result:{toolRequestId:N}`. This is a narrow Contracts addition with a known-vector/stability test; it allows an HTTP retry or Client Runtime reconnect to receive Task 6’s original acceptance rather than append another durable result/continuation. Within one Client Runtime process, cache the completed `ToolExecutionResult` by request ID until its matching durable `ToolResult` appears, so a replay retries the post but never re-executes the same local request.
 
@@ -130,8 +131,9 @@ The normal `ChatTurn` renderer remains intact and is selected only for `SessionR
 Expected implementation changes are limited to:
 
 - `src/ForgeMission.Conversations.Contracts/ConversationDeterministicIds.cs` and its tests — deterministic client tool-result command ID.
-- `src/ForgeMission.ClientRuntime.Transport/*` — additive runtime/session/event records, route, JSON context, and Contracts reference.
-- `src/ForgeMission.ClientRuntime/Program.cs`, `Transport/ClientRuntimeEndpoints.cs`, `Transport/ClientRuntimeSessionStore.cs`, and new focused services — durable-session selection, adapter, tail, and tool hand-off.
+- `src/ForgeMission.Core/Tools/ToolExecutorRegistry.cs` — the narrow `CanExecute` query used to reject unknown durable tool names before dispatch.
+- `src/ForgeMission.ClientRuntime.Transport/*` — additive runtime/session/event records, route, the two source-generated JSON contexts, and Contracts reference.
+- `src/ForgeMission.ClientRuntime/Program.cs`, `Transport/ClientRuntimeEndpoints.cs`, `Transport/ClientRuntimeSessionStore.cs`, and new focused services — durable-session selection/replacement, adapter, tail, and tool hand-off.
 - `src/ForgeMission.Desktop/Program.cs` — pass only `ConversationRuntime__BaseUrl` when configured.
 - `src/ForgeMission.ClientRuntime.Presentation/AttachableMissions.cs`, `Pages/Home.razor`, and a focused projection/renderer — Janus picker and durable renderer.
 - Client Runtime, Contracts, Presentation/UI, and architecture boundary tests. Add a component-test dependency only if needed to assert rendered markup; do not test markup through raw HTTP.
@@ -139,7 +141,7 @@ Expected implementation changes are limited to:
 Required tests:
 
 1. `ConversationRuntimeSession` sends the start/follow-up Contracts messages with capability declarations, retains the returned ID, parses a real-shaped multi-frame SSE stream, and relays typed events.
-2. A completed Host stream reconnects with the last delivered sequence; duplicate replay neither republishes the event nor executes its tool again.
+2. A completed Host stream reconnects with the last delivered sequence; duplicate replay neither republishes the event nor executes its tool again; replacing the session cancels its tail before a subsequent durable request can be dispatched.
 3. An Implementer `ToolRequested` reaches the existing registry/dispatcher, posts the stable `ClientToolResult` command ID, and uses an error result for malformed/unsupported tools.
 4. The transcript component renders approved, revision-requested, not-approved, and a rehydrated completed tool result; applying its event twice does not create a second bubble/tool row.
 5. Existing mission-session/transport tests prove ChatGPT/Websearch stay on their old path.
