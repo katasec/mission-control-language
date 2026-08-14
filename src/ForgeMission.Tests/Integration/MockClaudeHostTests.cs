@@ -80,7 +80,11 @@ public sealed class MockClaudeHostTests
 
             for (var hop = 0; hop < MaxHops; hop++)
             {
-                var root = await PostAsync(messages);
+                // Real clients (Claude Code) rebuild their system prompt fresh on EVERY call —
+                // a per-call build stamp / context envelope that must not defeat the enrichment
+                // cache (regression: Claude Code 2.1.211). Vary it per hop here so CI actually
+                // exercises that, instead of never sending a `system` field at all.
+                var root = await PostAsync(messages, $"mock-claude-host system cc_version=2.1.211.hop{hop}");
                 var content = root.GetProperty("content").EnumerateArray().ToList();
 
                 if (root.GetProperty("stop_reason").GetString() != "tool_use")
@@ -117,13 +121,14 @@ public sealed class MockClaudeHostTests
         private static object RawBlock(JsonElement block)
             => JsonSerializer.Deserialize<object>(block.GetRawText())!;
 
-        private async Task<JsonElement> PostAsync(List<object> messages)
+        private async Task<JsonElement> PostAsync(List<object> messages, string system)
         {
             var request = new
             {
                 model      = "claude-sonnet-4-6",
                 max_tokens = 1024,
                 stream     = false,
+                system,
                 messages,
                 tools = new object[]
                 {

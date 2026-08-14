@@ -5,11 +5,16 @@ using Microsoft.Extensions.AI;
 namespace ForgeMission.Core.Runtime;
 
 // Content-addressed conversation identity (Phase 42.3 §3/§4). Hashes a CANONICALIZED
-// projection — roles + text + tool blocks — never raw request bytes, so field order,
-// whitespace, and client-added metadata don't split the identity.
+// projection — roles + text + tool blocks, EXCLUDING ChatRole.System — never raw request
+// bytes, so field order, whitespace, and client-added metadata don't split the identity.
+// System is excluded because real clients (Claude Code) rebuild it fresh on every call —
+// a per-call build stamp/context envelope inside it would otherwise change the hash on
+// every request and defeat the cache (observed live with Claude Code 2.1.211).
 //
 //   P = prefix through the last real user turn  → enrichment cache key (enrich once per turn)
 //   F = the full message array                  → duplicate_continuation detection
+//
+// F deliberately reuses the same canonicalizer as P (§4: "same normalizer serves P").
 public static class ConversationHash
 {
     public static string Prefix(IReadOnlyList<ChatMessage> messages)
@@ -39,6 +44,10 @@ public static class ConversationHash
         var sb = new StringBuilder();
         foreach (var message in messages)
         {
+            // System is client-rebuilt-per-call scaffolding, not conversation identity - see
+            // the file banner. Excluding it here is what keeps both P and F stable.
+            if (message.Role == ChatRole.System) continue;
+
             sb.Append('\u001e').Append(message.Role.Value);
             foreach (var part in message.Contents)
             {

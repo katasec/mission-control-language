@@ -1,7 +1,11 @@
 # Phase 43.4 — IDE trace surface (`forge trace`)
 
-**Status: Design — iteration not started.** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
-Depends on [43.3](phase-43.3-mission-attach-point.md). Promoted from
+**Status: Design — later workbench iteration, not the initial durable Janus conversation proof.**
+Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). The initial observational Janus
+group-chat renderer and durable event contract are [43.16](phase-43.16-janus-desktop-local-poc.md);
+this spoke builds the richer workbench as another projection of that same conversation after the
+proof. It depends on [43.3](phase-43.3-mission-attach-point.md)'s completed attach/switch
+foundation, **not** its deferred sdlc-agent catalog work. Promoted from
 [docs/brainstorm/forge-trace-ide-surface.md](../brainstorm/forge-trace-ide-surface.md) (design
 conversation, 2026-07-20); that doc is now a stub pointing here.
 
@@ -51,8 +55,9 @@ propose/critique/revise/gate-check shape this surface visualizes — see
 [interaction-modes.md](../design/interaction-modes.md) for the classifier-router pattern behind it.
 **Nearer-term grounding: [43.15 — Janus](phase-43.15-janus-inter-agent-mission.md)** is the
 deliberately minimal mission (`Proposer -> Approver -> Implementer`, multi-provider) built to give
-this surface real content to render before the full `sdlc-agent` is in scope — start iteration
-against Janus, not `sdlc-agent`, once 43.15's upstream blocker clears.
+this surface real content to render before the full `sdlc-agent` is in scope. Its initial group-chat
+renderer is 43.16; start the richer workbench iteration against Janus after that proof, not against
+`sdlc-agent`.
 
 ## Full solution access + trust gradient
 
@@ -127,14 +132,12 @@ a historical note, not a starting point.
 ## Iteration approach for this spoke
 
 1. Build a rough mockup of the dockable workbench (outline + thread + code pane, no gate logic yet)
-   inside the [43.2 — Electron Forge Desktop shell](phase-43.2-electron-forge-desktop-shell.md)
-   (formerly the now-shelved [Avalonia vanilla shell](phase-43.2-avalonia-vanilla-shell.md) — see
-   that doc for why).
-2. Run a real SDLC mission session through it, evaluate against the debugger-concept table above —
+   inside the current [43.11 — Blazor WASM + Photino shell](phase-43.11-wasm-photino-shell.md).
+2. Run a real Janus mission session through it, evaluate against the debugger-concept table above —
    does each row actually map cleanly in the built UI, or does the analogy break somewhere real
    usage reveals?
 3. Iterate layout/interaction based on what breaks. Repeat until the workbench survives a real
-   multi-round design-review session without the human reaching for raw source out of frustration
+   multi-round Janus negotiation without the human reaching for raw source out of frustration
    (a rough, honest signal — not a number, but a real bar).
 4. Only then layer in the Gate (needs [43.5](phase-43.5-human-in-the-loop.md)) and full/scoped
    toggle.

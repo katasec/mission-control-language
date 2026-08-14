@@ -95,11 +95,13 @@ public class SearchMissionPipelineTests
         Assert.Equal("DIRECT", result.Text);                            // when(else) answered
     }
 
-    // Phase 41.7: OnStepStart fires as each step BEGINS, in pipeline order, carrying the expert kind —
-    // the engine-level progress signal the room turns into "Searching the web…". Fires before the step
-    // runs (so the search chip shows *during* the ~40s search, not after), and only for taken branches.
+    // Phase 41.7: a PipelineStepStarted trace fact fires as each step BEGINS, in pipeline order,
+    // carrying the expert kind — the engine-level progress signal the room turns into "Searching
+    // the web…". Fires before the step runs (so the search chip shows *during* the ~40s search,
+    // not after), and only for taken branches. Phase 43.16 Task 3: collected through the awaited
+    // OnTrace sink rather than the removed synchronous OnStepStart callback.
     [Fact]
-    public async Task OnStepStart_FiresPerBeginningStep_InOrder_WithKind()
+    public async Task PipelineStepStarted_FiresPerBeginningStep_InOrder_WithKind()
     {
         var ast = MclParser.Parse(MissionMcl);
         var web = new StubWebSearch();
@@ -109,7 +111,12 @@ public class SearchMissionPipelineTests
         await new PipelineRunner(llm, webSearch: web)
             .RunAsync(ast, Experts(), new PipelineRunOptions("SearchAgent",
                 new Dictionary<string, string> { ["goal"] = "who plays in the world cup today?" },
-                OnStepStart: (expert, kind) => starts.Add((expert, kind))));
+                OnTrace: (evt, _) =>
+                {
+                    if (evt is PipelineStepStarted started)
+                        starts.Add((started.ExpertName, started.ExpertKind));
+                    return Task.CompletedTask;
+                }));
 
         // The search branch: classify → route → search → grounded answer. DirectAnswer's when(else)
         // never fires, so no start for it — progress narrates only the path actually taken.
