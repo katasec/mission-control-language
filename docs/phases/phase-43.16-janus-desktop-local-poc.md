@@ -774,10 +774,11 @@ is verified — met, per the completed evidence above.
 ### 8. Product proof and evidence
 
 **Prerequisite — [Task 8a: Kind runtime build-out](phase-43.16-task-8a-kind-runtime-buildout.md)
-— in progress.** Builds the real ConversationHost/Worker container images and rolls them out into
-Kind with immutable, commit-SHA-derived provenance; discovered as a blocking gap during Task 8
-planning (the Kind manifests were still `image: TBD` placeholders). Kept explicitly separate from
-the evidence-only run below; Task 8 does not start until 8a is merged in both repos.
+— done and verified 2026-08-14.** Built the real ConversationHost/Worker container images and
+rolled them out into Kind with immutable, commit-SHA-derived provenance; discovered as a blocking
+gap during Task 8 planning (the Kind manifests were still `image: TBD` placeholders). Kept
+explicitly separate from the evidence-only run below. Both real Deployments are live in
+`forge-durable` now; the live product-proof run itself has not started.
 
 Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named
 observations for:
