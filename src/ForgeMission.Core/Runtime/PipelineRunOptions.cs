@@ -35,4 +35,13 @@ public record PipelineRunOptions(
     // OnStepStart/OnStepComplete callbacks. Always awaited with the run cancellation token — a
     // throwing sink fails the run rather than silently dropping a fact. No caller is required to
     // supply it, so a normal CLI/API run has unchanged trace overhead and behavior.
-    Func<PipelineTraceEvent, CancellationToken, Task>? OnTrace = null);
+    Func<PipelineTraceEvent, CancellationToken, Task>? OnTrace = null,
+    // Constrains the agent expert's provider request to at most one tool call per turn (Phase
+    // 43.16 Task 8b). Null preserves today's unrestricted behavior for every caller that doesn't
+    // set it — only Janus's Implement step (ConversationHost/Worker) opts into `false`, matching
+    // JanusPipelineProgressMapper's "exactly one tool call per request" invariant. Threaded to
+    // DirectExpertRunner through a closed, Core-internal context-bag instruction (see
+    // PipelineRuntimeInstructions) — never a mission-authorable variable, and deliberately not
+    // inherited by CreateChildOptions, matching Tools' own non-inheritance rule (it is meaningless
+    // without Tools alongside it).
+    bool? AllowMultipleToolCalls = null);

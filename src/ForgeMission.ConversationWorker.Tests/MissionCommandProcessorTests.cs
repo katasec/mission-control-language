@@ -164,6 +164,76 @@ public class MissionCommandProcessorTests
         Assert.Contains(published, p => p.Kind == ConversationEventKind.RunStatus && p.RunStatus == ConversationRunStatus.Completed);
     }
 
+    // A real multi-file plan (the exact 3-file rate-limiter shape from Task 8's failed live run)
+    // driven through three sequential ContinueAfterTool rounds — Phase 43.16 Task 8b's proof that
+    // the one-tool-call-per-turn contract actually completes a multi-file plan end to end, not
+    // just that the constraint is set. This test does not exercise ChatOptions/DirectExpertRunner
+    // (FakeExpertRunner never builds one) — see JanusMissionExecutorToolCallOptionsTests for that;
+    // this proves persistence/ordering of the sequential hand-off through the Worker itself.
+    [Fact]
+    public async Task SequentialToolCalls_AcrossThreeContinuations_CompleteAThreeFilePlan()
+    {
+        var implementerCallCount = 0;
+        var files = new[] { "rate_limiter.py", "server.py", "test_rate_limiter.py" };
+
+        var runner = new FakeExpertRunner((expert, context) =>
+        {
+            if (expert.Name is "Proposer" or "Approver")
+                return new StepEnvelope("the approved plan", "pass");
+
+            if (implementerCallCount < files.Length)
+            {
+                var file = files[implementerCallCount];
+                implementerCallCount++;
+                context["tool_calls"] = new List<Microsoft.Extensions.AI.FunctionCallContent>
+                {
+                    new($"provider-call-{implementerCallCount}", "Write",
+                        new Dictionary<string, object?> { ["file_path"] = file }),
+                };
+                return new StepEnvelope($"writing {file}", "pass");
+            }
+
+            implementerCallCount++;
+            return new StepEnvelope("all three files written and verified", "pass");
+        });
+
+        var mission = BuildMission(runner);
+        var processor = new MissionCommandProcessor(mission);
+        var (published, sessions) = NewSinks();
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+
+        var session = await processor.ProcessAsync(
+            StartCommand(conversationId, runId), "dev", session: null,
+            SaveTo(sessions, conversationId), PublishTo(published), CancellationToken.None);
+
+        // Two more rounds after the first: submit the outstanding tool's result, which drives the
+        // next tool call (or, on the third round, the final completion).
+        for (var round = 0; round < 3; round++)
+        {
+            Assert.Equal(WorkerSessionPhase.WaitingForTool, session.Phase);
+            var outstanding = session.OutstandingTool!;
+            var continueCommand = new ConversationCommand(
+                Guid.NewGuid(), conversationId, runId, ConversationCommandKind.ContinueAfterTool, "Janus",
+                "do the task", [], new ConversationToolResult(outstanding.RequestId, "ok", IsError: false));
+
+            session = await processor.ProcessAsync(
+                continueCommand, "dev", session, SaveTo(sessions, conversationId), PublishTo(published), CancellationToken.None);
+        }
+
+        Assert.Equal(4, implementerCallCount); // 3 tool calls + 1 final no-tool completion
+        Assert.Equal(WorkerSessionPhase.Terminal, session.Phase);
+        Assert.Equal(files.Length, published.Count(p => p.Kind == ConversationEventKind.ToolRequested));
+        Assert.Contains(published, p => p.Kind == ConversationEventKind.RunStatus && p.RunStatus == ConversationRunStatus.Completed);
+        Assert.DoesNotContain(published, p => p.Kind == ConversationEventKind.Error);
+
+        // In order: three ToolRequested facts, one per file, each naming that file's tool call.
+        var toolRequests = published.Where(p => p.Kind == ConversationEventKind.ToolRequested).ToList();
+        Assert.Equal(files.Length, toolRequests.Count);
+        for (var i = 0; i < files.Length; i++)
+            Assert.Equal(files[i], toolRequests[i].ToolRequest?.Arguments.GetProperty("file_path").GetString());
+    }
+
     [Fact]
     public async Task MismatchedContinuation_DoesNothing_NoExecutorCall()
     {
