@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+# ForgeMission.ConversationHost — the durable-conversation Silo/API (Phase 43.16 Task 8a).
+#
+# NOT Native AOT: an ASP.NET Orleans Silo host, same shape as Dockerfile.runner/.forgeapi. Build
+# context = repo root. ConversationHost references only ForgeMission.Conversations.Contracts
+# (zero package/project dependencies of its own) plus Orleans/Azure SDK packages — none of which
+# are private GitHub Packages, so no NUGET_AUTH_TOKEN build secret is needed here, unlike
+# Dockerfile.conversationworker.
+#
+#   docker build -f Dockerfile.conversationhost -t forge-conversation-host:local .
+
+# ---- build --------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY nuget.config ./
+COPY src/ ./src/
+
+RUN dotnet publish src/ForgeMission.ConversationHost/ForgeMission.ConversationHost.csproj -c Release -o /app/publish \
+      /p:UseAppHost=false /p:PublishAot=false
+
+# ---- runtime ------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app/publish ./
+
+ENV ASPNETCORE_URLS=http://+:8080 \
+    ASPNETCORE_ENVIRONMENT=Production \
+    DOTNET_gcServer=0
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "ForgeMission.ConversationHost.dll"]

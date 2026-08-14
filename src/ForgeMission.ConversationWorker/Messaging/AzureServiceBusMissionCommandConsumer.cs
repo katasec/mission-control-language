@@ -56,6 +56,9 @@ public sealed class AzureServiceBusMissionCommandConsumer(
 
         await _commandProcessor.StartProcessingAsync(stoppingToken);
         await _deadLetterProcessor.StartProcessingAsync(stoppingToken);
+        logger.LogInformation(
+            "Mission-command session processor and dead-letter processor started for queue '{QueueName}'.",
+            options.MissionCommandQueueName);
         try
         {
             await Task.Delay(Timeout.Infinite, stoppingToken);

@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+# ForgeMission.ConversationWorker — the Janus mission executor (Phase 43.16 Task 8a). No HTTP
+# surface: a generic-host background service that only consumes/produces Service Bus messages, so
+# unlike Dockerfile.conversationhost this image exposes no port.
+#
+# NOT Native AOT: a normal .NET 10 worker host, same shape as Dockerfile.runner. Build context =
+# repo root. ForgeMission.ConversationWorker -> ForgeMission.Core depends on the PRIVATE GitHub
+# Packages feed (Katasec.AITools), so restore needs the repo's nuget.config AND a read:packages
+# token, supplied as a REQUIRED BuildKit secret (never written into an image layer, and the build
+# fails outright rather than silently restoring without it) — same pattern as Dockerfile.forgeui/
+# Dockerfile.runner:
+#
+#   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
+#   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
+#     -f Dockerfile.conversationworker -t forge-conversation-worker:local .
+#
+# The checked-in, read-only Janus mission directory is baked into the image (not a local-machine
+# path) — only MissionRef == "Janus" is ever accepted at the Contracts boundary.
+
+# ---- build --------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY nuget.config ./
+COPY src/ ./src/
+
+RUN --mount=type=secret,id=nuget_token,required=true \
+    NUGET_AUTH_TOKEN="$(cat /run/secrets/nuget_token)" \
+    dotnet publish src/ForgeMission.ConversationWorker/ForgeMission.ConversationWorker.csproj -c Release -o /app/publish \
+      /p:UseAppHost=false /p:PublishAot=false
+
+# ---- runtime ------------------------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app/publish ./
+COPY missions/janus/ /app/missions/janus/
+
+ENV ConversationWorker__JanusMissionDirectory=/app/missions/janus \
+    DOTNET_ENVIRONMENT=Production \
+    DOTNET_gcServer=0
+
+ENTRYPOINT ["dotnet", "ForgeMission.ConversationWorker.dll"]
