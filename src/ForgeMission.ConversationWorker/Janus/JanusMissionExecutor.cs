@@ -98,7 +98,11 @@ public static class JanusMissionExecutor
             Vars: new Dictionary<string, string> { ["plan"] = approvedPlan },
             Tools: ToTools(capabilities),
             MissionPath: ["Janus", "Implement"],
-            OnTrace: OnTrace);
+            OnTrace: OnTrace,
+            // Janus v1 supports exactly one tool call per request (JanusPipelineProgressMapper);
+            // this constrains the provider request itself rather than hoping the model complies
+            // (Phase 43.16 Task 8b).
+            AllowMultipleToolCalls: false);
         return await runner.RunAsync(mission.Ast, mission.Experts, implementOptions, ct);
     }
 
@@ -134,7 +138,10 @@ public static class JanusMissionExecutor
             Tools: ToTools(capabilities),
             StartAtAgent: true,
             MissionPath: ["Janus", "Implement"],
-            OnTrace: OnTrace);
+            OnTrace: OnTrace,
+            // Same one-tool-call-per-request constraint as the initial run above — the resumed
+            // Implementer call must stay inside the same v1 contract (Phase 43.16 Task 8b).
+            AllowMultipleToolCalls: false);
 
         return await runner.RunAsync(mission.Ast, mission.Experts, options, ct);
     }

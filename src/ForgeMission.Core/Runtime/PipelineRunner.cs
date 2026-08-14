@@ -298,7 +298,11 @@ public class PipelineRunner
         // Client tools attach to the agent expert's call only (42.3) — enrichment and
         // verification experts never see them. Rides the context bag like everything else.
         if (expert.IsAgent && options.Tools is { Count: > 0 })
+        {
             context["tools"] = options.Tools;
+            if (options.AllowMultipleToolCalls is { } allowMultiple)
+                context[PipelineRuntimeInstructions.AllowMultipleToolCalls] = allowMultiple;
+        }
 
         StepEnvelope envelope;
         try
@@ -337,6 +341,7 @@ public class PipelineRunner
         finally
         {
             context.Remove("tools");
+            context.Remove(PipelineRuntimeInstructions.AllowMultipleToolCalls);
         }
 
         context["output"] = envelope.Text;

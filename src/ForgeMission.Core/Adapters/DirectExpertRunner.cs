@@ -72,6 +72,12 @@ Respond with this exact JSON format and nothing else — status must always be "
             options.Tools          = tools;
             options.ResponseFormat = null;
 
+            // Closed runtime instruction (Phase 43.16 Task 8b) — set only by callers that opted
+            // into it (Janus's Implement step); never a mission-authorable variable.
+            if (context.TryGetValue(PipelineRuntimeInstructions.AllowMultipleToolCalls, out var amtc)
+                && amtc is bool allowMultiple)
+                options.AllowMultipleToolCalls = allowMultiple;
+
             // Drive the tool loop on the NATIVE conversation (prior tool_use/tool_result included)
             // so the provider model can continue its own loop across continuations. The client's
             // system prompt is replaced by the expert's — the mission is the brain.
@@ -123,6 +129,11 @@ Respond with this exact JSON format and nothing else — status must always be "
         if (toolMode)
         {
             options.Tools = tools;
+
+            // Closed runtime instruction (Phase 43.16 Task 8b) — mirrors the RunAsync branch above.
+            if (context.TryGetValue(PipelineRuntimeInstructions.AllowMultipleToolCalls, out var amtc)
+                && amtc is bool allowMultiple)
+                options.AllowMultipleToolCalls = allowMultiple;
 
             if (context.TryGetValue("conversation", out var c) && c is Conversation conversation)
             {

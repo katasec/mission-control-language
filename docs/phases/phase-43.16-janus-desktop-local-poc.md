@@ -778,7 +778,17 @@ is verified — met, per the completed evidence above.
 rolled them out into Kind with immutable, commit-SHA-derived provenance; discovered as a blocking
 gap during Task 8 planning (the Kind manifests were still `image: TBD` placeholders). Kept
 explicitly separate from the evidence-only run below. Both real Deployments are live in
-`forge-durable` now; the live product-proof run itself has not started.
+`forge-durable` now.
+
+**Status: active and unverified (2026-08-14).** The first live-proof attempt validly proved
+observations #1–#3 below (real, unscripted revision-then-approval cycle) against real OpenAI/
+Anthropic providers, then hit a genuine product defect that failed the run before observations
+#4–#6 could be attempted: the Implementer's provider call emitted two tool calls in one turn and
+tripped `JanusPipelineProgressMapper`'s deliberate "exactly one tool call per request" guard. See
+[Task 8b: Janus one-tool-per-turn contract](phase-43.16-task-8b-janus-one-tool-per-turn.md) for the
+full finding (conversation ID, event sequence, root cause) and the corrective fix — a second,
+**mandatory prerequisite**, not yet merged. Task 8's live proof is not reauthorized until Task 8b
+lands, deploys, and this section is updated.
 
 Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named
 observations for:
