@@ -758,21 +758,12 @@ replay), `/v1/*` contract tests remain unchanged, and the full solution build/te
 
 ### 7. Client Runtime and group-chat rendering
 
-Add ConversationRuntimeSession beside MissionRuntimeSession and CloudMissionRuntimeSession. Extend
-session setup/prompt contracts only to select durable conversation runtime and preserve the returned
-conversation ID. Presentation never calls ConversationHost directly.
+**Design complete; ready for implementation.** See [Client Runtime and group-chat rendering](phase-43.16-task-7-client-runtime-group-chat.md).
+It locks the Client Runtime-owned Host adapter, stable local tool-result idempotency, and one
+durable-event transcript projection before code changes begin.
 
-Client Runtime starts/submits Janus, subscribes/reconnects using last sequence, relays typed
-conversation events through its existing local SSE endpoint, executes 'tool_requested' through
-ToolExecutorRegistry and ICapabilityDispatcher, then posts the matching result.
-
-Update AttachableMissions with **Janus** on this durable local path. ChatGPT/Websearch remain on
-their existing paths until separately migrated. In Pages/Home.razor, add named participant bubbles,
-attempt grouping, approval/revision/not-approved states, transient typing, and Implementer tool
-rows. Rehydrated and live events use one renderer; normal missions retain their current renderer.
-
-**Done when:** UI tests render approval, revision, not-approved, and rehydrated tool result without
-duplicates; boundary tests still prohibit Presentation's direct Host dependency.
+**Done when:** [Task 7's named condition](phase-43.16-task-7-client-runtime-group-chat.md#done-when)
+is verified.
 
 ### 8. Product proof and evidence
 
