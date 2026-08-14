@@ -1,12 +1,15 @@
 # Phase 43.16 Task 6 — Conversation API and resumable SSE
 
-> **Status: Claude correction required (2026-08-14).** The initial Task 6 implementation passed
-> the full suite (631 passed, 11 known provider-dependent skips) but implemented the superseded
-> `70e76a6` HTTP-shaped contract rather than the transport-neutral message contract locked at
-> `99fe1ef`. Tasks 4 and 5 are accepted and verified through `951bf73` and `1da4dc7`; status was
-> recorded at `aea36e6`. This task exposes their durable Conversation service through an additive
-> Forge-native message contract, with HTTP/SSE as its first projection. It does not change the
-> Worker, Service Bus delivery, Desktop UI, `/v1/*`, mission definitions, or forge-infra.
+> **Status: Implementation accepted; phase verification pending (2026-08-14).** The corrected
+> Task 6 implementation satisfies its design and has a clean build, 120/120 ConversationHost tests,
+> and three consecutive 9/9 real-Kestrel API/SSE runs. The full solution suite is not currently
+> green because the unmodified live `ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission`
+> integration test reproducibly expects one tool call but observes two; this must be resolved or
+> explicitly classified before Task 6 can be marked verified. Tasks 4 and 5 are accepted and
+> verified through `951bf73` and `1da4dc7`; status was recorded at `aea36e6`. This task exposes
+> their durable Conversation service through an additive Forge-native message contract, with
+> HTTP/SSE as its first projection. It does not change the Worker, Service Bus delivery, Desktop UI,
+> `/v1/*`, mission definitions, or forge-infra.
 
 ## Outcome and scope
 
@@ -78,13 +81,34 @@ resubmitting it must make these bounded changes and add/adjust the named tests:
 5. A transport-neutral query handler returns the public `GetConversationResponse` (or its typed
    missing/invalid outcome), never a bare `ConversationSnapshot` that HTTP happens to wrap. Likewise
    `ReadConversationEventsRequest` validates its own `ConversationId`/`After` and yields its
-   ordered `ConversationEvent` sequence to the adapter; it must not collapse into an
-   HTTP-only boolean existence helper while `ConversationSseWriter` independently performs the
-   actual query. The SSE writer's only role is framing that sequence and managing its HTTP response.
-   Add direct-handler tests for both query responses as well as the existing mutation-message test.
+   ordered `ConversationEvent` sequence to the adapter; it must not collapse into an HTTP-only
+   boolean existence helper. `ConversationSseWriter` remains the HTTP adapter's specialised
+   replay/subscribe/catch-up/drain implementation and may re-read the durable store after the
+   message handler's bounded read, because that second read is what closes the live-subscription
+   race. This costs one extra Table read per SSE connection, not per event, and does not change the
+   public contract. Its reversal path is to pass the handler's first batch to the writer while
+   preserving the fixed subscribe-before-catch-up order; do that only if measurement makes this
+   connection-open cost material. Add direct-handler tests for both query responses as well as the
+   existing mutation-message test.
 
 These are corrections to the already locked design, not new scope. Re-run the full solution suite
 afterward and provide the exact result in the next completion summary.
+
+### Review evidence (2026-08-14)
+
+Codex accepted the corrected implementation after direct diff review: public messages carry their
+own existing-conversation identity; named message handlers have no HTTP types; HTTP/SSE maps them
+without becoming their semantic definition; accepted mutations set the documented headers; and
+source-generated bounded validation returns typed `Invalid` before state advance. The source tree
+has no Task 6 edits under `ForgeMission.Api` or `ForgeMission.Tests`.
+
+`dotnet build src/ForgeMission.slnx --no-restore` succeeded with 0 warnings and 0 errors.
+`ForgeMission.ConversationHost.Tests` passed 120/120, and the nine `ConversationApiTests` passed
+three consecutive independent runs. A full `dotnet test src/ForgeMission.slnx --no-restore` did
+not pass: the existing live `ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission` test failed
+twice (including a focused rerun) at `ClaudeCodeTests.cs:153`, asserting one tool call but observing
+two. It is outside Task 6's diff, but it is now a documented verification gate rather than hidden
+behind a Task 6 completion claim.
 
 ## Locked API behaviour
 
