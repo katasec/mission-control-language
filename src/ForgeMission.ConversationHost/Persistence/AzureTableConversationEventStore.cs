@@ -17,7 +17,6 @@ namespace ForgeMission.ConversationHost.Persistence;
 /// </summary>
 public sealed class AzureTableConversationEventStore : IConversationEventStore
 {
-    private const int InlineEventJsonLimitBytes = 48 * 1024; // 48 KiB, conservative vs. the 1 MiB entity max.
     private const string EventRowPrefix = "0-";
     private const string IdempotencyRowPrefix = "1-";
 
@@ -28,10 +27,10 @@ public sealed class AzureTableConversationEventStore : IConversationEventStore
         _table = tableServiceClient.GetTableClient(options.EventTableName);
     }
 
-    public async Task<ConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct)
+    public async Task<StoredConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct)
     {
         var raw = await FindIdempotencyRowAsync(address, eventId, ct);
-        return raw is null ? null : DeserializeEvent(raw.Value.EventJson);
+        return raw is null ? null : new StoredConversationEvent(DeserializeEvent(raw.Value.EventJson), raw.Value.AcceptedCommandJson);
     }
 
     public async Task<ConversationEvent> AppendAsync(
@@ -47,10 +46,10 @@ public sealed class AzureTableConversationEventStore : IConversationEventStore
 
         var eventJson = JsonSerializer.Serialize(@event, ConversationContractsJsonContext.Default.ConversationEvent);
         var byteCount = Encoding.UTF8.GetByteCount(eventJson);
-        if (byteCount > InlineEventJsonLimitBytes)
+        if (byteCount > ConversationJsonLimits.MaxInlineEventJsonBytes)
             throw new InvalidOperationException(
                 $"ConversationEvent {@event.EventId} serializes to {byteCount} bytes, exceeding the " +
-                $"{InlineEventJsonLimitBytes}-byte inline limit. Large content must go through " +
+                $"{ConversationJsonLimits.MaxInlineEventJsonBytes}-byte inline limit. Large content must go through " +
                 "IConversationArtifactStore before its reference event is appended.");
 
         var existing = await FindIdempotencyRowAsync(address, @event.EventId, ct);

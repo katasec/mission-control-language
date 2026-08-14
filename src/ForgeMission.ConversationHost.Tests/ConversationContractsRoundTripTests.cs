@@ -204,7 +204,7 @@ public class ConversationContractsRoundTripTests
 
     [Fact]
     public void SubmitConversationCommandRequest_RoundTrips()
-        => AssertRoundTrips(new SubmitConversationCommandRequest(Guid.NewGuid(), "one more thing"));
+        => AssertRoundTrips(new SubmitConversationCommandRequest(Guid.NewGuid(), Guid.NewGuid(), "one more thing"));
 
     [Fact]
     public void SubmitConversationCommandResponse_RoundTrips()
@@ -212,11 +212,24 @@ public class ConversationContractsRoundTripTests
 
     [Fact]
     public void SubmitToolResultRequest_RoundTrips()
-        => AssertRoundTrips(new SubmitToolResultRequest(Guid.NewGuid(), Guid.NewGuid(), "tool output", false));
+        => AssertRoundTrips(new SubmitToolResultRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "tool output", false));
 
     [Fact]
     public void SubmitToolResultResponse_RoundTrips()
         => AssertRoundTrips(new SubmitToolResultResponse(Guid.NewGuid(), Guid.NewGuid(), 3, ConversationRunStatus.Running));
+
+    [Fact]
+    public void GetConversationRequest_RoundTrips()
+        => AssertRoundTrips(new GetConversationRequest(Guid.NewGuid()));
+
+    [Fact]
+    public void GetConversationResponse_RoundTrips()
+        => AssertRoundTrips(new GetConversationResponse(new ConversationSnapshot(
+            Guid.NewGuid(), "Janus", Guid.NewGuid(), 12, ConversationRunStatus.WaitingForTool, Guid.NewGuid(), DateTimeOffset.UtcNow)));
+
+    [Fact]
+    public void ReadConversationEventsRequest_RoundTrips()
+        => AssertRoundTrips(new ReadConversationEventsRequest(Guid.NewGuid(), 42));
 
     public static IEnumerable<object[]> AllParticipants()
         => Enum.GetValues<ConversationParticipant>().Select(v => new object[] { v });

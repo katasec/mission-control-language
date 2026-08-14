@@ -33,7 +33,9 @@ public class ConversationGrainTests(AzuriteFixture fixture)
     {
         var command = new ConversationCommand(
             Guid.NewGuid(), address.ConversationId, runId, ConversationCommandKind.StartMission, "Janus", goal, [], null);
-        return await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
+        var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
+        Assert.Equal(ConversationCommandOutcome.Accepted, result.Outcome);
+        return result.Acceptance!;
     }
 
     // ── 1. Ordered events, fresh-Host replay ────────────────────────────────────
@@ -52,7 +54,9 @@ public class ConversationGrainTests(AzuriteFixture fixture)
             commandId = Guid.NewGuid();
             var command = new ConversationCommand(
                 commandId, address.ConversationId, runId, ConversationCommandKind.StartMission, "Janus", "goal text", [], null);
-            acceptance = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
+            var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
+            Assert.Equal(ConversationCommandOutcome.Accepted, result.Outcome);
+            acceptance = result.Acceptance!;
         }
 
         Assert.Equal(2, acceptance.AcceptedSequence);
@@ -88,13 +92,15 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         var first = await grain.AcceptCommandAsync(new ConversationCommandInput(commandJson));
         var second = await grain.AcceptCommandAsync(new ConversationCommandInput(commandJson));
 
-        Assert.Equal(first.AcceptedSequence, second.AcceptedSequence);
-        Assert.Equal(first.Status, second.Status);
+        Assert.Equal(ConversationCommandOutcome.Accepted, first.Outcome);
+        Assert.Equal(ConversationCommandOutcome.Accepted, second.Outcome);
+        Assert.Equal(first.Acceptance!.AcceptedSequence, second.Acceptance!.AcceptedSequence);
+        Assert.Equal(first.Acceptance.Status, second.Acceptance.Status);
         Assert.Equal(2, (await grain.ReadAfterAsync(0)).EventJson.Length);
     }
 
     [Fact]
-    public async Task RepeatingCommandId_WithChangedMissionRef_FailsLoudly()
+    public async Task RepeatingCommandId_WithChangedMissionRef_IsTypedConflict()
     {
         var address = NewAddress();
         var runId = Guid.NewGuid();
@@ -110,12 +116,16 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         // just the event-text check.
         var changed = original with { MissionRef = "DifferentMission" };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(changed))));
+        var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(changed)));
+
+        Assert.Equal(ConversationCommandOutcome.Conflict, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
+        Assert.Equal(2, (await grain.ReadAfterAsync(0)).EventJson.Length); // no new event appended
     }
 
     [Fact]
-    public async Task RepeatingCommandId_WithChangedGoal_FailsLoudly()
+    public async Task RepeatingCommandId_WithChangedGoal_IsTypedConflict()
     {
         var address = NewAddress();
         var runId = Guid.NewGuid();
@@ -128,8 +138,12 @@ public class ConversationGrainTests(AzuriteFixture fixture)
 
         var changed = original with { Goal = "different goal" };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(changed))));
+        var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(changed)));
+
+        Assert.Equal(ConversationCommandOutcome.Conflict, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
+        Assert.Equal(2, (await grain.ReadAfterAsync(0)).EventJson.Length); // no new event appended
     }
 
     [Fact]
@@ -219,11 +233,85 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         Assert.Equal(ConversationRunStatus.Queued, snapshot.Status);
     }
 
+    // ── 3c. PendingRunStart: the literal gap between the two start facts (Task 6) ────────
+    // The test above faults inside AppendAsync itself, after a Queued-side PendingTransition was
+    // already durably written. This one faults strictly BEFORE that — at the Queued event's own
+    // existence check inside CompletePendingRunStartAsync, which runs after the UserMessage is
+    // already fully durable/advanced but before any Queued-side PendingTransition would ever be
+    // written. Only PendingRunStart's own preallocated QueuedEventId/timestamp (durably written
+    // before either start fact was attempted) can recover this gap.
+
+    [Fact]
+    public async Task StartPairCrash_BetweenUserMessageAndQueuedLookup_RepairedOnceOnActivation_NoGapOrDuplicate()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+        var commandId = Guid.NewGuid();
+        var command = new ConversationCommand(
+            commandId, address.ConversationId, runId, ConversationCommandKind.StartMission, "Janus", "goal", [], null);
+
+        await using (var host1 = await fixture.StartHostAsync(
+            store => new ThrowOnNthFindByEventIdEventStore(store, throwOnCallNumber: 3)))
+        {
+            var grain = host1.GetConversationGrain(address);
+
+            // Call #1: AcceptCommandAsync's own duplicate-check (not found — fresh conversation).
+            // Call #2: CompletePendingRunStartAsync's UserMessage-existence check (not found; the
+            // UserMessage is then appended and fully advanced for real). Call #3: the Queued
+            // event's OWN existence check — throws here, strictly before any Queued-side
+            // PendingTransition exists.
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command))));
+        }
+
+        await using var host2 = await fixture.StartHostAsync(); // fresh Silo, healthy store
+        var grain2 = host2.GetConversationGrain(address);
+        var events = DeserializeEvents(await grain2.ReadAfterAsync(0));
+
+        Assert.Equal(2, events.Count);
+        Assert.Equal(1, events[0].Sequence);
+        Assert.Equal(ConversationEventKind.UserMessage, events[0].Kind);
+        Assert.Equal(2, events[1].Sequence); // repaired exactly once — no gap, no duplicate row
+        Assert.Equal(ConversationEventKind.RunStatus, events[1].Kind);
+        Assert.Equal(ConversationRunStatus.Queued, events[1].RunStatus);
+
+        // The paired n + 1 duplicate-acceptance formula survived the repair: a resubmission of the
+        // same CommandId still returns the identical, original acceptance, with no new event.
+        var retry = await grain2.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
+        Assert.Equal(ConversationCommandOutcome.Accepted, retry.Outcome);
+        Assert.Equal(2, retry.Acceptance!.AcceptedSequence);
+        Assert.Equal(ConversationRunStatus.Queued, retry.Acceptance.Status);
+        Assert.Equal(2, (await grain2.ReadAfterAsync(0)).EventJson.Length);
+    }
+
+    private sealed class ThrowOnNthFindByEventIdEventStore(IConversationEventStore inner, int throwOnCallNumber) : IConversationEventStore
+    {
+        private int _callCount;
+
+        public Task<StoredConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct)
+        {
+            if (Interlocked.Increment(ref _callCount) == throwOnCallNumber)
+                throw new InvalidOperationException(
+                    "Simulated crash: strictly between the UserMessage's own completion and the Queued event's existence check.");
+            return inner.FindByEventIdAsync(address, eventId, ct);
+        }
+
+        public Task<ConversationEvent> AppendAsync(
+            ConversationAddress address, ConversationEvent @event, string? associatedCommandJson, CancellationToken ct)
+            => inner.AppendAsync(address, @event, associatedCommandJson, ct);
+
+        public IAsyncEnumerable<ConversationEvent> ReadAfterAsync(ConversationAddress address, long sequence, CancellationToken ct)
+            => inner.ReadAfterAsync(address, sequence, ct);
+
+        public Task<ConversationEvent?> ReadLatestForRunAsync(ConversationAddress address, Guid runId, CancellationToken ct)
+            => inner.ReadLatestForRunAsync(address, runId, ct);
+    }
+
     private sealed class ThrowOnNthAppendEventStore(IConversationEventStore inner, int throwOnCallNumber) : IConversationEventStore
     {
         private int _callCount;
 
-        public Task<ConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct)
+        public Task<StoredConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct)
             => inner.FindByEventIdAsync(address, eventId, ct);
 
         public Task<ConversationEvent> AppendAsync(
@@ -506,5 +594,210 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         var toolRequested = Assert.Single(events, e => e.Kind == ConversationEventKind.ToolRequested);
         Assert.Equal("mission/notes.md", toolRequested.ToolRequest!.Arguments.GetProperty("path").GetString());
         Assert.True(toolRequested.ToolRequest.Arguments.GetProperty("recursive").GetBoolean());
+    }
+
+    // ── 7. Follow-up commands (Task 6) ───────────────────────────────────────────
+
+    [Fact]
+    public async Task Followup_UsesPinnedCapabilities_NotClientSupplied()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        using var schemaDoc = JsonDocument.Parse("""{"type":"object"}""");
+        var capabilities = new[] { new ConversationCapabilityDeclaration("read_file", "Reads a file", schemaDoc.RootElement) };
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+
+        var startCommand = new ConversationCommand(
+            Guid.NewGuid(), address.ConversationId, runId, ConversationCommandKind.StartMission, "Janus", "goal", capabilities, null);
+        var startResult = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(startCommand)));
+        Assert.Equal(ConversationCommandOutcome.Accepted, startResult.Outcome);
+
+        // Terminate the first run so a follow-up is allowed.
+        var completed = new ConversationProgress(
+            Guid.NewGuid(), address.ConversationId, runId, ConversationEventKind.RunStatus,
+            ConversationParticipant.Forge, null, null, null, null, null, null, null,
+            ConversationRunStatus.Completed, DateTimeOffset.UtcNow);
+        var completeAcceptance = await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(completed)));
+        Assert.Equal(ConversationProgressOutcome.Appended, completeAcceptance.Outcome);
+
+        var followupResult = await grain.AcceptFollowupCommandAsync(
+            new ConversationFollowupCommandInput(Guid.NewGuid(), "follow-up text"));
+        Assert.Equal(ConversationCommandOutcome.Accepted, followupResult.Outcome);
+        Assert.NotEqual(runId, followupResult.Acceptance!.RunId); // a genuinely new run
+
+        var followupDispatch = Assert.Single(
+            host.Dispatcher.Sent, s => s.Command.Kind == ConversationCommandKind.StartMission && s.Command.Goal == "follow-up text");
+
+        Assert.Equal(capabilities.Length, followupDispatch.Command.Capabilities.Length);
+        Assert.Equal(capabilities[0].Name, followupDispatch.Command.Capabilities[0].Name);
+        Assert.Equal(capabilities[0].Description, followupDispatch.Command.Capabilities[0].Description);
+    }
+
+    [Fact]
+    public async Task AcceptCommand_ReusingEventIdFromDifferentKind_IsTypedConflict()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, runId);
+
+        var collidingId = Guid.NewGuid();
+        var participantStarted = new ConversationProgress(
+            collidingId, address.ConversationId, runId, ConversationEventKind.ParticipantStarted,
+            ConversationParticipant.Proposer, 1, null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
+        var progressAcceptance = await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(participantStarted)));
+        Assert.Equal(ConversationProgressOutcome.Appended, progressAcceptance.Outcome);
+
+        var reusedIdCommand = new ConversationCommand(
+            collidingId, address.ConversationId, Guid.NewGuid(), ConversationCommandKind.StartMission, "Janus", "goal", [], null);
+        var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(reusedIdCommand)));
+
+        Assert.Equal(ConversationCommandOutcome.Conflict, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
+    }
+
+    [Fact]
+    public async Task AcceptFollowup_ReusingEventIdFromDifferentKind_IsTypedConflict()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, runId);
+
+        var collidingId = Guid.NewGuid();
+        var participantStarted = new ConversationProgress(
+            collidingId, address.ConversationId, runId, ConversationEventKind.ParticipantStarted,
+            ConversationParticipant.Proposer, 1, null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(participantStarted)));
+
+        var completed = new ConversationProgress(
+            Guid.NewGuid(), address.ConversationId, runId, ConversationEventKind.RunStatus,
+            ConversationParticipant.Forge, null, null, null, null, null, null, null,
+            ConversationRunStatus.Completed, DateTimeOffset.UtcNow);
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(completed)));
+
+        var result = await grain.AcceptFollowupCommandAsync(new ConversationFollowupCommandInput(collidingId, "some text"));
+
+        Assert.Equal(ConversationCommandOutcome.Conflict, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
+    }
+
+    // ── 8. Tool results (Task 6) ─────────────────────────────────────────────────
+
+    [Fact]
+    public async Task DuplicateToolResult_ReturnsOriginalAcceptance_NoNewEventOrDispatch()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, runId);
+
+        var toolRequestId = Guid.NewGuid();
+        using var argsDoc = JsonDocument.Parse("""{"path":"mission/notes.md"}""");
+        var toolRequestedProgress = new ConversationProgress(
+            Guid.NewGuid(), address.ConversationId, runId, ConversationEventKind.ToolRequested,
+            ConversationParticipant.Implementer, 1, null, null, null,
+            new ConversationToolRequest(toolRequestId, "read_file", argsDoc.RootElement), null, null, null, DateTimeOffset.UtcNow);
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(toolRequestedProgress)));
+
+        var input = new ConversationToolResultInput(Guid.NewGuid(), toolRequestId, "file contents", false);
+
+        var first = await grain.AcceptToolResultAsync(input);
+        var second = await grain.AcceptToolResultAsync(input);
+
+        Assert.Equal(ConversationCommandOutcome.Accepted, first.Outcome);
+        Assert.Equal(ConversationCommandOutcome.Accepted, second.Outcome);
+        Assert.Equal(first.Acceptance!.AcceptedSequence, second.Acceptance!.AcceptedSequence);
+        Assert.Equal(ConversationRunStatus.WaitingForTool, first.Acceptance.Status);
+        Assert.Equal(ConversationRunStatus.WaitingForTool, second.Acceptance.Status);
+
+        var events = DeserializeEvents(await grain.ReadAfterAsync(0));
+        Assert.Single(events, e => e.Kind == ConversationEventKind.ToolResult);
+        Assert.Single(host.Dispatcher.Sent, s => s.Command.Kind == ConversationCommandKind.ContinueAfterTool);
+    }
+
+    // ── 9. Fixed payload bounds (Task 6 correction) ──────────────────────────────
+
+    [Fact]
+    public async Task AcceptCommand_OversizedGoal_ReturnsInvalid_NoStateAdvance()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+
+        var oversizedGoal = new string('x', 40_000); // pushes serialized ConversationCommand JSON past 32 KiB
+        var command = new ConversationCommand(
+            Guid.NewGuid(), address.ConversationId, runId, ConversationCommandKind.StartMission, "Janus", oversizedGoal, [], null);
+        var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
+
+        Assert.Equal(ConversationCommandOutcome.Invalid, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
+        Assert.Empty((await grain.ReadAfterAsync(0)).EventJson);
+    }
+
+    [Fact]
+    public async Task AcceptToolResult_OversizedContent_ReturnsInvalid_NoStateAdvance()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, runId);
+
+        var toolRequestId = Guid.NewGuid();
+        using var argsDoc = JsonDocument.Parse("""{"path":"mission/notes.md"}""");
+        var toolRequested = new ConversationProgress(
+            Guid.NewGuid(), address.ConversationId, runId, ConversationEventKind.ToolRequested,
+            ConversationParticipant.Implementer, 1, null, null, null,
+            new ConversationToolRequest(toolRequestId, "read_file", argsDoc.RootElement), null, null, null, DateTimeOffset.UtcNow);
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(toolRequested)));
+
+        var eventsBefore = await grain.ReadAfterAsync(0);
+        var oversizedContent = new string('y', 60_000); // pushes the derived ConversationProgress JSON past 48 KiB
+        var result = await grain.AcceptToolResultAsync(new ConversationToolResultInput(Guid.NewGuid(), toolRequestId, oversizedContent, false));
+
+        Assert.Equal(ConversationCommandOutcome.Invalid, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
+        var eventsAfter = await grain.ReadAfterAsync(0);
+        Assert.Equal(eventsBefore.EventJson.Length, eventsAfter.EventJson.Length);
+    }
+
+    [Fact]
+    public async Task AcceptToolResult_ReusingEventIdFromDifferentKind_IsTypedConflict()
+    {
+        var address = NewAddress();
+        var runId = Guid.NewGuid();
+
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, runId);
+
+        var collidingId = Guid.NewGuid();
+        var participantStarted = new ConversationProgress(
+            collidingId, address.ConversationId, runId, ConversationEventKind.ParticipantStarted,
+            ConversationParticipant.Proposer, 1, null, null, null, null, null, null, null, DateTimeOffset.UtcNow);
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(participantStarted)));
+
+        var result = await grain.AcceptToolResultAsync(new ConversationToolResultInput(collidingId, Guid.NewGuid(), "content", false));
+
+        Assert.Equal(ConversationCommandOutcome.Conflict, result.Outcome);
+        Assert.Null(result.Acceptance);
+        Assert.NotNull(result.Reason);
     }
 }

@@ -28,4 +28,14 @@ public sealed class ConversationCheckpoint
     /// <see cref="ConversationRunStatus"/>, so a matching ToolResult can derive its
     /// ContinueAfterTool continuation without querying another store.</summary>
     [Id(9)] public string? ActiveStartCommandJson { get; set; }
+
+    /// <summary>The validated <see cref="ConversationCapabilityDeclaration"/> array JSON pinned on
+    /// the conversation's first accepted start — retained through every later follow-up run
+    /// (including after a run reaches a terminal status, unlike <see cref="ActiveStartCommandJson"/>)
+    /// so a follow-up command can never let an adapter select different capabilities.</summary>
+    [Id(10)] public string? PinnedCapabilitiesJson { get; set; }
+
+    /// <summary>Non-null while a start pair (<c>UserMessage</c> + paired <c>RunStatus(Queued)</c>)
+    /// is in flight for the current run — see the <see cref="PendingRunStart"/> record.</summary>
+    [Id(11)] public PendingRunStart? PendingRunStart { get; set; }
 }

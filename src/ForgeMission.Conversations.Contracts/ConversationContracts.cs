@@ -199,8 +199,11 @@ public sealed record StartConversationResponse(
 
 /// <summary><c>POST /conversations/{conversationId}/commands</c> request. Cannot select a
 /// different mission or replace capabilities — it is a follow-up on the conversation's pinned
-/// <c>MissionRef</c>.</summary>
+/// <c>MissionRef</c>. <see cref="ConversationId"/> is part of the message itself (not only an HTTP
+/// route value) so a future direct/gRPC/broker adapter can invoke this operation without
+/// reconstructing meaning from a URL.</summary>
 public sealed record SubmitConversationCommandRequest(
+    Guid ConversationId,
     Guid CommandId,
     string Text);
 
@@ -211,8 +214,10 @@ public sealed record SubmitConversationCommandResponse(
     long AcceptedSequence,
     ConversationRunStatus Status);
 
-/// <summary><c>POST /conversations/{conversationId}/tool-results</c> request.</summary>
+/// <summary><c>POST /conversations/{conversationId}/tool-results</c> request. <see cref="ConversationId"/>
+/// is part of the message itself, mirroring <see cref="SubmitConversationCommandRequest"/>.</summary>
 public sealed record SubmitToolResultRequest(
+    Guid ConversationId,
     Guid CommandId,
     Guid ToolRequestId,
     string Content,
@@ -224,3 +229,13 @@ public sealed record SubmitToolResultResponse(
     Guid RunId,
     long AcceptedSequence,
     ConversationRunStatus Status);
+
+/// <summary><c>GET /conversations/{conversationId}</c> request.</summary>
+public sealed record GetConversationRequest(Guid ConversationId);
+
+/// <summary><c>GET /conversations/{conversationId}</c> response (<c>200 OK</c>).</summary>
+public sealed record GetConversationResponse(ConversationSnapshot Snapshot);
+
+/// <summary><c>GET /conversations/{conversationId}/events?after={sequence}</c> request. Projected
+/// as an SSE stream by the HTTP adapter; the message itself carries no transport framing.</summary>
+public sealed record ReadConversationEventsRequest(Guid ConversationId, long After);

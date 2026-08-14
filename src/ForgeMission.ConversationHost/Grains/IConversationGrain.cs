@@ -8,7 +8,19 @@ namespace ForgeMission.ConversationHost.Grains;
 /// </summary>
 public interface IConversationGrain : Orleans.IGrainWithStringKey
 {
-    Task<ConversationCommandAcceptance> AcceptCommandAsync(ConversationCommandInput command);
+    /// <summary>Starts a new conversation (its first-ever run) or, for an exact retry of an
+    /// already-accepted <c>CommandId</c>, returns that original acceptance. An active run already
+    /// existing, or the same <c>CommandId</c> reused with different content, is a typed
+    /// <see cref="ConversationCommandOutcome.Conflict"/> — never a thrown exception.</summary>
+    Task<ConversationCommandOutcomeResult> AcceptCommandAsync(ConversationCommandInput command);
+
+    /// <summary>Starts a new run on an existing conversation's pinned mission/capabilities (Task 6).
+    /// Same conflict/duplicate semantics as <see cref="AcceptCommandAsync"/>.</summary>
+    Task<ConversationCommandOutcomeResult> AcceptFollowupCommandAsync(ConversationFollowupCommandInput input);
+
+    /// <summary>Records a client-submitted tool result for the active run's outstanding tool
+    /// request (Task 6). Same conflict/duplicate semantics as <see cref="AcceptCommandAsync"/>.</summary>
+    Task<ConversationCommandOutcomeResult> AcceptToolResultAsync(ConversationToolResultInput input);
 
     Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgressInput progress);
 

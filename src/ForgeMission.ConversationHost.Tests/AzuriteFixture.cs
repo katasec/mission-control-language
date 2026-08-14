@@ -1,9 +1,15 @@
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
+using ForgeMission.ConversationHost.Api;
 using ForgeMission.ConversationHost.Grains;
 using ForgeMission.ConversationHost.Messaging;
 using ForgeMission.ConversationHost.Persistence;
+using ForgeMission.Conversations.Contracts;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans;
@@ -69,6 +75,13 @@ public sealed class AzuriteFixture : IAsyncLifetime
         Func<IGrainFactory, IGrainFactory>? decorateGrainFactory = null)
     {
         var builder = WebApplication.CreateSlimBuilder();
+        // Loopback, OS-assigned port — mirrors the Silo/Gateway "reserve a real free port" approach
+        // below (Kestrel, unlike Orleans' EndpointOptions, accepts ":0" directly) so more than one
+        // Host can coexist in this one test process without colliding.
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.TypeInfoResolverChain.Insert(0, ConversationContractsJsonContext.Default));
 
         var storageOptions = new ConversationStorageOptions { ConnectionString = ConnectionString };
         storageOptions.Validate();
@@ -91,6 +104,9 @@ public sealed class AzuriteFixture : IAsyncLifetime
         builder.Services.AddSingleton<FakeConversationCommandDispatcher>();
         builder.Services.AddSingleton<IConversationCommandDispatcher>(
             sp => sp.GetRequiredService<FakeConversationCommandDispatcher>());
+
+        builder.Services.AddSingleton<IConversationEventNotifier, ConversationEventHub>();
+        builder.Services.AddSingleton<ConversationSseWriter>();
 
         builder.UseOrleans(siloBuilder =>
         {
@@ -148,8 +164,15 @@ public sealed class AzuriteFixture : IAsyncLifetime
         }
 
         var app = builder.Build();
+        app.MapConversationApi();
+        app.MapGet("/health", () => Results.Ok());
+
         await app.StartAsync();
-        return new ConversationHostInstance(app);
+
+        var boundAddress = app.Services.GetRequiredService<IServer>()
+            .Features.Get<IServerAddressesFeature>()!.Addresses.First();
+
+        return new ConversationHostInstance(app, new Uri(boundAddress));
     }
 
     private static int GetFreeTcpPort()
@@ -164,8 +187,18 @@ public sealed class AzuriteFixture : IAsyncLifetime
 
 /// <summary>A running in-process Host/Silo built by <see cref="AzuriteFixture.StartHostAsync"/>.
 /// Disposing stops the Silo (simulating a Host restart) without touching Azurite itself.</summary>
-public sealed class ConversationHostInstance(WebApplication app) : IAsyncDisposable
+/// <param name="app">The started application.</param>
+/// <param name="baseAddress">The real, loopback, Kestrel-bound URI this instance's HTTP/SSE routes
+/// are reachable on — tests use a real <see cref="HttpClient"/> against it rather than invoking
+/// endpoint delegates.</param>
+public sealed class ConversationHostInstance(WebApplication app, Uri baseAddress) : IAsyncDisposable
 {
+    public Uri BaseAddress { get; } = baseAddress;
+
+    /// <summary>Exposed so tests can call <c>ConversationApiEndpoints.Handle*Async</c> message
+    /// handlers directly, proving they work with no HTTP meaning at all.</summary>
+    public IGrainFactory GrainFactory => app.Services.GetRequiredService<IGrainFactory>();
+
     public IConversationGrain GetConversationGrain(ConversationAddress address)
         => app.Services.GetRequiredService<IGrainFactory>().GetGrain<IConversationGrain>(address.PartitionKey);
 

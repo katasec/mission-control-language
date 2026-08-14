@@ -23,6 +23,17 @@ public static class ConversationDeterministicIds
 {
     private static readonly Guid Namespace = Guid.Parse("d6a0c730-a25d-5cbf-a047-8ee9a1c0f171");
 
+    /// <summary>The deterministic conversation ID for a <c>POST /conversations</c> start request —
+    /// derived from the client's own <c>CommandId</c> so an exact retry (lost response, redelivery)
+    /// always lands on the same conversation instead of minting a second one.</summary>
+    public static Guid Conversation(Guid commandId)
+        => Generate($"conversation:{commandId:N}");
+
+    /// <summary>The deterministic first-run ID paired with <see cref="Conversation"/> for the same
+    /// start request.</summary>
+    public static Guid InitialRun(Guid commandId)
+        => Generate($"initial-run:{commandId:N}");
+
     /// <summary>The ContinueAfterTool command derived from a matching ToolResult.</summary>
     public static Guid Continuation(Guid toolResultEventId)
         => Generate($"continuation:{toolResultEventId:N}");

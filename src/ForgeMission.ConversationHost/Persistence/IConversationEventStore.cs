@@ -12,7 +12,12 @@ namespace ForgeMission.ConversationHost.Persistence;
 /// </summary>
 public interface IConversationEventStore
 {
-    Task<ConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct);
+    /// <summary>Resolves one event by its stable ID together with whatever
+    /// <see cref="ConversationCommand"/> JSON was recorded alongside it (non-null only for the
+    /// deterministic <c>UserMessage</c> a start/follow-up command produced) — so a caller can
+    /// compare full command content itself rather than relying on <see cref="AppendAsync"/>'s own
+    /// equality-throw for duplicate-command classification.</summary>
+    Task<StoredConversationEvent?> FindByEventIdAsync(ConversationAddress address, Guid eventId, CancellationToken ct);
 
     /// <summary>
     /// Rejects a wrong conversation ID, <c>Version != 1</c>, a non-positive sequence, or an
@@ -38,3 +43,8 @@ public interface IConversationEventStore
     /// <paramref name="runId"/> whose <c>Kind</c> is <see cref="ConversationEventKind.RunStatus"/>.</summary>
     Task<ConversationEvent?> ReadLatestForRunAsync(ConversationAddress address, Guid runId, CancellationToken ct);
 }
+
+/// <summary>Host-local pairing of one durable event with its idempotency row's associated command
+/// JSON, when it has one. Never crosses an Orleans grain-interface boundary — this is a plain
+/// Host-internal service return type, not a wire contract.</summary>
+public sealed record StoredConversationEvent(ConversationEvent Event, string? AcceptedCommandJson);

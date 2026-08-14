@@ -31,5 +31,8 @@ namespace ForgeMission.Conversations.Contracts;
 [JsonSerializable(typeof(SubmitConversationCommandResponse))]
 [JsonSerializable(typeof(SubmitToolResultRequest))]
 [JsonSerializable(typeof(SubmitToolResultResponse))]
+[JsonSerializable(typeof(GetConversationRequest))]
+[JsonSerializable(typeof(GetConversationResponse))]
+[JsonSerializable(typeof(ReadConversationEventsRequest))]
 [JsonSerializable(typeof(JsonElement))]
 public partial class ConversationContractsJsonContext : JsonSerializerContext;

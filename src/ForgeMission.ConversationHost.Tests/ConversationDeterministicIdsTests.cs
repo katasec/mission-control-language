@@ -10,6 +10,35 @@ namespace ForgeMission.ConversationHost.Tests;
 public class ConversationDeterministicIdsTests
 {
     [Fact]
+    public void Conversation_IsDeterministic()
+    {
+        var commandId = Guid.NewGuid();
+        Assert.Equal(ConversationDeterministicIds.Conversation(commandId), ConversationDeterministicIds.Conversation(commandId));
+    }
+
+    [Fact]
+    public void Conversation_DifferentCommandId_ProducesDifferentId()
+    {
+        Assert.NotEqual(ConversationDeterministicIds.Conversation(Guid.NewGuid()), ConversationDeterministicIds.Conversation(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void InitialRun_IsDeterministic_AndDistinctFromConversation()
+    {
+        var commandId = Guid.NewGuid();
+        Assert.Equal(ConversationDeterministicIds.InitialRun(commandId), ConversationDeterministicIds.InitialRun(commandId));
+        Assert.NotEqual(ConversationDeterministicIds.InitialRun(commandId), ConversationDeterministicIds.Conversation(commandId));
+    }
+
+    [Fact]
+    public void Conversation_AndInitialRun_AreDistinctFromOtherDeterministicIdMethods()
+    {
+        var commandId = Guid.NewGuid();
+        Assert.NotEqual(ConversationDeterministicIds.Conversation(commandId), ConversationDeterministicIds.Continuation(commandId));
+        Assert.NotEqual(ConversationDeterministicIds.InitialRun(commandId), ConversationDeterministicIds.Progress(commandId, 0));
+    }
+
+    [Fact]
     public void Continuation_IsDeterministic()
     {
         var eventId = Guid.NewGuid();

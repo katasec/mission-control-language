@@ -2,15 +2,21 @@ using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using Azure.Storage.Blobs;
+using ForgeMission.ConversationHost.Api;
+using ForgeMission.ConversationHost.Grains;
 using ForgeMission.ConversationHost.Messaging;
 using ForgeMission.ConversationHost.Persistence;
+using ForgeMission.Conversations.Contracts;
 using Orleans.Configuration;
 
-// ConversationHost — the future durable-conversation Silo/API (Phase 43.16). Task 4 is the
-// composition root for Table/Blob persistence and Orleans ownership; Task 5 adds the
-// mission-command outbox (Service Bus send + a durable reminder retry driver) and the
-// conversation-progress consumer/dead-letter consumer; Task 6 maps HTTP routes.
+// ConversationHost — the durable-conversation Silo/API (Phase 43.16). Task 4 is the composition
+// root for Table/Blob persistence and Orleans ownership; Task 5 adds the mission-command outbox
+// (Service Bus send + a durable reminder retry driver) and the conversation-progress
+// consumer/dead-letter consumer; Task 6 maps the additive Forge-native HTTP/SSE routes.
 var builder = WebApplication.CreateSlimBuilder(args);
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, ConversationContractsJsonContext.Default));
 
 var storageOptions = builder.Configuration.GetSection("ConversationStorage").Get<ConversationStorageOptions>()
     ?? new ConversationStorageOptions();
@@ -46,6 +52,9 @@ builder.Services.AddSingleton<ConversationProgressHandler>();
 builder.Services.AddHostedService<ConversationProgressConsumer>();
 builder.Services.AddHostedService<ConversationProgressDeadLetterConsumer>();
 
+builder.Services.AddSingleton<IConversationEventNotifier, ConversationEventHub>();
+builder.Services.AddSingleton<ConversationSseWriter>();
+
 builder.UseOrleans(siloBuilder =>
 {
     siloBuilder.UseAzureStorageClustering(options => options.TableServiceClient = tableServiceClient);
@@ -74,6 +83,10 @@ builder.UseOrleans(siloBuilder =>
 });
 
 var app = builder.Build();
+
+app.MapConversationApi();
+app.MapGet("/health", () => Results.Ok());
+
 app.Run();
 
 // Selects exactly one credential path: a non-empty ConnectionString (Kind/Azurite), otherwise the

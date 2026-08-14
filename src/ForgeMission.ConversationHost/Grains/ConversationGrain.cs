@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using ForgeMission.ConversationHost.Messaging;
 using ForgeMission.ConversationHost.Persistence;
@@ -8,24 +9,34 @@ using Orleans.Runtime;
 namespace ForgeMission.ConversationHost.Grains;
 
 /// <summary>
-/// The sole sequence allocator and event appender for one conversation. Fixed protocol for both
-/// public accept operations: (1) repair any prior pending transition, (2) plan one event at
-/// <c>LastSequence + 1</c> and persist it in <c>PendingTransition</c> first, (3) idempotently
-/// append it, (4) advance <c>LastSequence</c>/update snapshot fields and notify
-/// <c>MissionRunGrain</c> — except <see cref="RecordRunInterruptionAsync"/>, which deliberately
-/// skips that notification (it is called only after MissionRunGrain has already persisted its own
-/// terminal state, so calling back would be a synchronous re-entrant call into its still-executing
-/// activation) — then (5) if the transition owes a mission-command send, dispatch it (a resend
-/// after a broker accept is safe: the queue dedupes on <c>MessageId</c>) and only then clear
-/// <c>PendingTransition</c>. A transition that owes a dispatch also owns a durable Orleans reminder
-/// (<see cref="OutboxReminderName"/>) so a crash between steps is retried even if this activation
-/// never restarts on its own.
+/// The sole sequence allocator and event appender for one conversation. Fixed protocol for every
+/// accept/record operation: (1) repair any prior pending transition (and, for the two commands that
+/// begin a new run, any prior pending run start), (2) plan one event at <c>LastSequence + 1</c> and
+/// persist it in <c>PendingTransition</c> first, (3) idempotently append it, (4) advance
+/// <c>LastSequence</c>/update snapshot fields, publish it to <see cref="IConversationEventNotifier"/>,
+/// and notify <c>MissionRunGrain</c> — except <see cref="RecordRunInterruptionAsync"/>, which
+/// deliberately skips that notification (it is called only after MissionRunGrain has already
+/// persisted its own terminal state, so calling back would be a synchronous re-entrant call into its
+/// still-executing activation) — then (5) if the transition owes a mission-command send, dispatch it
+/// (a resend after a broker accept is safe: the queue dedupes on <c>MessageId</c>) and only then
+/// clear <c>PendingTransition</c>. A transition that owes a dispatch also owns a durable Orleans
+/// reminder (<see cref="OutboxReminderName"/>) so a crash between steps is retried even if this
+/// activation never restarts on its own.
+///
+/// <see cref="AcceptCommandAsync"/>, <see cref="AcceptFollowupCommandAsync"/>, and
+/// <see cref="AcceptToolResultAsync"/> (Task 6) classify every expected client conflict — an active
+/// run already existing, a mismatched/unknown/already-completed tool request, or a reused
+/// command/event ID with different content — as a typed <see cref="ConversationCommandOutcomeResult"/>
+/// they compare explicitly themselves. None of them call or catch exceptions from
+/// <c>IConversationEventStore.AppendAsync</c> for that classification; <c>AppendAsync</c>'s own
+/// equality guard remains only a storage-level integrity backstop for repair paths.
 /// </summary>
 public sealed class ConversationGrain(
     [PersistentState("conversation-checkpoint", "conversation-checkpoint")] IPersistentState<ConversationCheckpoint> checkpoint,
     IConversationEventStore eventStore,
     IGrainFactory grainFactory,
-    IConversationCommandDispatcher dispatcher)
+    IConversationCommandDispatcher dispatcher,
+    IConversationEventNotifier notifier)
     : Grain, IConversationGrain, IRemindable
 {
     private const string OutboxReminderName = "mission-command-outbox";
@@ -37,6 +48,7 @@ public sealed class ConversationGrain(
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
         await RepairPendingTransitionIfAnyAsync(cancellationToken);
+        await RepairPendingRunStartIfAnyAsync(cancellationToken);
 
         // A Table sequence beyond the checkpoint without the matching planned event is
         // corruption — it must not guess a missing transition.
@@ -71,10 +83,11 @@ public sealed class ConversationGrain(
         await RepairPendingTransitionIfAnyAsync(CancellationToken.None);
     }
 
-    public async Task<ConversationCommandAcceptance> AcceptCommandAsync(ConversationCommandInput input)
+    public async Task<ConversationCommandOutcomeResult> AcceptCommandAsync(ConversationCommandInput input)
     {
         var ct = CancellationToken.None;
         await RepairPendingTransitionIfAnyAsync(ct);
+        await RepairPendingRunStartIfAnyAsync(ct);
 
         var command = JsonSerializer.Deserialize(input.CommandJson, ConversationContractsJsonContext.Default.ConversationCommand)
             ?? throw new InvalidOperationException("CommandJson deserialized to null.");
@@ -86,64 +99,118 @@ public sealed class ConversationGrain(
         // Duplicate command acceptance resolves through the durable event-ID row (the UserMessage
         // event's EventId is the command's CommandId) — checked before allocating any new
         // sequence, so a retry never fights a fresh (wrong) sequence number against the original.
-        var existingUserMessage = await eventStore.FindByEventIdAsync(Address, command.CommandId, ct);
-        if (existingUserMessage is not null)
-        {
-            // Reconstruct the candidate at the ORIGINAL sequence/timestamp and let AppendAsync's
-            // own event-ID semantic-equality invariant (now extended to the associated command
-            // JSON too) decide: same command content returns cleanly, changed MissionRef/Goal/
-            // Kind/Capabilities/ToolResult throws loudly. This is the single source of truth for
-            // "is this really the same submission" — no separate ad-hoc check.
-            var candidate = new ConversationEvent(
-                command.CommandId, 1, command.ConversationId, command.RunId, existingUserMessage.Sequence,
-                ConversationEventKind.UserMessage, ConversationParticipant.User, null, command.Goal, null,
-                null, null, null, null, null, existingUserMessage.OccurredAtUtc);
-            var commandJson = JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand);
-            await eventStore.AppendAsync(Address, candidate, commandJson, ct);
+        var existing = await eventStore.FindByEventIdAsync(Address, command.CommandId, ct);
+        if (existing is not null)
+            return ResolveDuplicateStart(existing, command);
 
-            var latest = await eventStore.ReadLatestForRunAsync(Address, command.RunId, ct);
-            var status = latest?.RunStatus ?? ConversationRunStatus.Queued;
-            var sequence = latest?.Sequence ?? existingUserMessage.Sequence;
-            return new ConversationCommandAcceptance(Address.ConversationId, command.RunId, sequence, status);
-        }
-
+        // Unreachable via the Task 6 HTTP adapter: POST /conversations derives a fresh, previously
+        // unused deterministic address per CommandId, so no live caller can present a NEW CommandId
+        // against an ALREADY-pinned conversation with a different mission. Retained as a genuine
+        // programming-error guard for any other caller of this grain.
         if (checkpoint.State.MissionRef is { Length: > 0 } pinned && pinned != command.MissionRef)
             throw new InvalidOperationException(
                 $"Conversation is pinned to mission '{pinned}'; cannot accept '{command.MissionRef}'.");
 
         if (checkpoint.State.ActiveRunId is not null)
-            throw new InvalidOperationException(
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null,
                 $"Conversation already has an active run '{checkpoint.State.ActiveRunId}'.");
 
+        // Pinned once, on the conversation's first-ever accepted start; folded into the SAME
+        // checkpoint write BeginRunAsync performs below for ActiveStartCommandJson/PendingRunStart.
         if (string.IsNullOrEmpty(checkpoint.State.MissionRef))
         {
             checkpoint.State.TenantId = Address.TenantId;
             checkpoint.State.ConversationId = Address.ConversationId;
             checkpoint.State.MissionRef = command.MissionRef;
+            checkpoint.State.PinnedCapabilitiesJson = JsonSerializer.Serialize(
+                command.Capabilities, ConversationContractsJsonContext.Default.ConversationCapabilityDeclarationArray);
         }
 
-        // Folded into the same write regardless of whether this is the conversation's first-ever
-        // run: ActiveStartCommandJson must always reflect the CURRENT active run's StartMission
-        // command, so a later matching ToolResult can derive its ContinueAfterTool continuation
-        // without a second store read.
-        checkpoint.State.ActiveStartCommandJson =
-            JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand);
-        await checkpoint.WriteStateAsync();
+        return await BeginRunAsync(command, ct);
+    }
 
-        var userMessage = new ConversationEvent(
-            command.CommandId, 1, Address.ConversationId, command.RunId, checkpoint.State.LastSequence + 1,
-            ConversationEventKind.UserMessage, ConversationParticipant.User, null, command.Goal, null,
-            null, null, null, null, null, DateTimeOffset.UtcNow);
-        await PlanAppendAdvanceAsync(userMessage, command, notifyMissionRun: true, dispatchCommand: null, ct);
+    public async Task<ConversationCommandOutcomeResult> AcceptFollowupCommandAsync(ConversationFollowupCommandInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        await RepairPendingRunStartIfAnyAsync(ct);
 
-        var queued = new ConversationEvent(
-            Guid.NewGuid(), 1, Address.ConversationId, command.RunId, checkpoint.State.LastSequence + 1,
-            ConversationEventKind.RunStatus, ConversationParticipant.Forge, null, null, null,
-            null, null, null, null, ConversationRunStatus.Queued, DateTimeOffset.UtcNow);
-        var storedQueued = await PlanAppendAdvanceAsync(queued, null, notifyMissionRun: true, dispatchCommand: command, ct);
+        var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
+        if (existing is not null)
+            return ResolveDuplicateFollowup(existing, input);
 
-        return new ConversationCommandAcceptance(
-            Address.ConversationId, command.RunId, storedQueued.Sequence, ConversationRunStatus.Queued);
+        if (string.IsNullOrEmpty(checkpoint.State.MissionRef))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "Conversation has no pinned mission.");
+
+        if (checkpoint.State.ActiveRunId is not null)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null,
+                $"Conversation already has an active run '{checkpoint.State.ActiveRunId}'.");
+
+        // The grain — never the caller — reconstructs mission/capabilities from what is already
+        // pinned, so a follow-up can never select a different mission or replace capabilities.
+        var capabilities = JsonSerializer.Deserialize(
+            checkpoint.State.PinnedCapabilitiesJson ?? "[]",
+            ConversationContractsJsonContext.Default.ConversationCapabilityDeclarationArray) ?? [];
+
+        var command = new ConversationCommand(
+            input.CommandId, Address.ConversationId, Guid.NewGuid(), ConversationCommandKind.StartMission,
+            checkpoint.State.MissionRef, input.Text, capabilities, null);
+
+        return await BeginRunAsync(command, ct);
+    }
+
+    public async Task<ConversationCommandOutcomeResult> AcceptToolResultAsync(ConversationToolResultInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+
+        // Resolved BEFORE checking current run state — an exact replay of an already-accepted tool
+        // result must return its original acceptance even after the run has since gone terminal and
+        // ExpectedToolRequestId/ActiveRunId no longer reflect it.
+        var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
+        if (existing is not null)
+            return ResolveDuplicateToolResult(existing, input);
+
+        if (checkpoint.State.ActiveRunId is not { } activeRunId)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "No active run.");
+
+        if (checkpoint.State.ExpectedToolRequestId is not { } expected || expected != input.ToolRequestId)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "Tool result does not match the expected outstanding tool request.");
+
+        // The matching participant is Implementer: this completes the Implementer's declared tool
+        // hand-off. Forge stays reserved for infrastructure/lifecycle facts (RunStatus, Error).
+        var progress = new ConversationProgress(
+            input.CommandId, Address.ConversationId, activeRunId, ConversationEventKind.ToolResult, ConversationParticipant.Implementer,
+            null, null, null, null, null,
+            new ConversationToolResult(input.ToolRequestId, input.Content, input.IsError), null, null, DateTimeOffset.UtcNow);
+        var progressJson = JsonSerializer.Serialize(progress, ConversationContractsJsonContext.Default.ConversationProgress);
+        var progressByteCount = Encoding.UTF8.GetByteCount(progressJson);
+        if (progressByteCount > ConversationJsonLimits.MaxInlineEventJsonBytes)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Invalid, null,
+                $"Tool result content ({progressByteCount} bytes) exceeds the " +
+                $"{ConversationJsonLimits.MaxInlineEventJsonBytes}-byte limit.");
+
+        // Reuses RecordProgressAsync's existing expected-request/deterministic-continuation
+        // semantics rather than forking them; its own duplicate check is a harmless no-op re-read
+        // here, since the lookup above already proved input.CommandId is not yet recorded.
+        var progressAcceptance = await RecordProgressAsync(new ConversationProgressInput(progressJson));
+
+        return progressAcceptance.Outcome switch
+        {
+            ConversationProgressOutcome.Appended or ConversationProgressOutcome.AlreadyRecorded =>
+                new ConversationCommandOutcomeResult(
+                    ConversationCommandOutcome.Accepted,
+                    new ConversationCommandAcceptance(
+                        Address.ConversationId, activeRunId, progressAcceptance.Sequence!.Value, ConversationRunStatus.WaitingForTool),
+                    null),
+            ConversationProgressOutcome.Rejected =>
+                new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, progressAcceptance.RejectionReason),
+            _ => throw new InvalidOperationException($"Unhandled {nameof(ConversationProgressOutcome)} '{progressAcceptance.Outcome}'."),
+        };
     }
 
     public async Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgressInput input)
@@ -176,12 +243,12 @@ public sealed class ConversationGrain(
         var existing = await eventStore.FindByEventIdAsync(Address, progress.EventId, ct);
         if (existing is not null)
         {
-            var existingJson = JsonSerializer.Serialize(existing, ConversationContractsJsonContext.Default.ConversationEvent);
+            var existingJson = JsonSerializer.Serialize(existing.Event, ConversationContractsJsonContext.Default.ConversationEvent);
             var plannedAtExistingSequence = JsonSerializer.Serialize(
-                planned with { Sequence = existing.Sequence }, ConversationContractsJsonContext.Default.ConversationEvent);
+                planned with { Sequence = existing.Event.Sequence }, ConversationContractsJsonContext.Default.ConversationEvent);
 
             return string.Equals(existingJson, plannedAtExistingSequence, StringComparison.Ordinal)
-                ? new ConversationProgressAcceptance(ConversationProgressOutcome.AlreadyRecorded, existing.Sequence, null)
+                ? new ConversationProgressAcceptance(ConversationProgressOutcome.AlreadyRecorded, existing.Event.Sequence, null)
                 : new ConversationProgressAcceptance(
                     ConversationProgressOutcome.Rejected, null, "Event ID already recorded with different content.");
         }
@@ -251,6 +318,156 @@ public sealed class ConversationGrain(
         return new ConversationEventBatch([.. events]);
     }
 
+    // -- start-pair (UserMessage + paired RunStatus(Queued)) protocol --
+
+    /// <summary>Begins a new run: validates the fixed 32 KiB start-command bound, then preallocates
+    /// and durably records the paired Queued event's identity/timestamp in ONE checkpoint write
+    /// before either start fact is ever appended, then completes it. <c>PendingRunStart</c> is the
+    /// SOLE retained start-command copy during this window — <c>ActiveStartCommandJson</c> is not
+    /// also set here, because two full command copies could exceed the Azure Table-backed
+    /// Orleans-state cell limit. Shared by <see cref="AcceptCommandAsync"/> (first run) and
+    /// <see cref="AcceptFollowupCommandAsync"/> (every later run).</summary>
+    private async Task<ConversationCommandOutcomeResult> BeginRunAsync(ConversationCommand command, CancellationToken ct)
+    {
+        var commandJson = JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand);
+        var byteCount = Encoding.UTF8.GetByteCount(commandJson);
+        if (byteCount > ConversationJsonLimits.MaxStartCommandJsonBytes)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Invalid, null,
+                $"Start command JSON ({byteCount} bytes) exceeds the {ConversationJsonLimits.MaxStartCommandJsonBytes}-byte limit.");
+
+        checkpoint.State.PendingRunStart = new PendingRunStart(commandJson, Guid.NewGuid(), DateTimeOffset.UtcNow);
+        await checkpoint.WriteStateAsync();
+
+        var acceptance = await CompletePendingRunStartAsync(ct);
+        return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted, acceptance, null);
+    }
+
+    private async Task RepairPendingRunStartIfAnyAsync(CancellationToken ct)
+    {
+        if (checkpoint.State.PendingRunStart is null)
+            return;
+
+        await CompletePendingRunStartAsync(ct);
+    }
+
+    /// <summary>Resolves/appends the UserMessage by CommandId (idempotent), then resolves/appends
+    /// the paired RunStatus(Queued) by the PREALLOCATED QueuedEventId (also idempotent) — if that
+    /// event is already durable, its own completed pending transition already proved any owed
+    /// dispatch was broker-accepted, so this never resends. Because the Queued event is always
+    /// allocated as the very next sequence after the UserMessage's own advance, in a single-threaded
+    /// grain activation where nothing else can interleave, the paired <c>n + 1</c> relationship
+    /// holds structurally, not just by convention.</summary>
+    private async Task<ConversationCommandAcceptance> CompletePendingRunStartAsync(CancellationToken ct)
+    {
+        var pendingStart = checkpoint.State.PendingRunStart
+            ?? throw new InvalidOperationException("CompletePendingRunStartAsync called with no PendingRunStart.");
+
+        var command = JsonSerializer.Deserialize(pendingStart.StartCommandJson, ConversationContractsJsonContext.Default.ConversationCommand)
+            ?? throw new InvalidOperationException("PendingRunStart.StartCommandJson deserialized to null.");
+
+        var storedUser = await eventStore.FindByEventIdAsync(Address, command.CommandId, ct);
+        ConversationEvent userEvent;
+        if (storedUser is null)
+        {
+            var userMessage = new ConversationEvent(
+                command.CommandId, 1, Address.ConversationId, command.RunId, checkpoint.State.LastSequence + 1,
+                ConversationEventKind.UserMessage, ConversationParticipant.User, null, command.Goal, null,
+                null, null, null, null, null, DateTimeOffset.UtcNow);
+            userEvent = await PlanAppendAdvanceAsync(userMessage, command, notifyMissionRun: true, dispatchCommand: null, ct);
+        }
+        else
+        {
+            userEvent = storedUser.Event;
+        }
+
+        var storedQueued = await eventStore.FindByEventIdAsync(Address, pendingStart.QueuedEventId, ct);
+        ConversationEvent queuedEvent;
+        if (storedQueued is null)
+        {
+            var queued = new ConversationEvent(
+                pendingStart.QueuedEventId, 1, Address.ConversationId, command.RunId, checkpoint.State.LastSequence + 1,
+                ConversationEventKind.RunStatus, ConversationParticipant.Forge, null, null, null,
+                null, null, null, null, ConversationRunStatus.Queued, pendingStart.QueuedOccurredAtUtc);
+            queuedEvent = await PlanAppendAdvanceAsync(queued, null, notifyMissionRun: true, dispatchCommand: command, ct);
+        }
+        else
+        {
+            queuedEvent = storedQueued.Event;
+        }
+
+        // Only now that the queued transition is durably present — its own completed pending
+        // transition already proves any owed dispatch was broker-accepted — retain the start
+        // command as the active run's copy and release PendingRunStart, in ONE checkpoint write.
+        checkpoint.State.ActiveStartCommandJson = pendingStart.StartCommandJson;
+        checkpoint.State.PendingRunStart = null;
+        await checkpoint.WriteStateAsync();
+
+        return new ConversationCommandAcceptance(Address.ConversationId, command.RunId, queuedEvent.Sequence, ConversationRunStatus.Queued);
+    }
+
+    // -- explicit duplicate equality (Task 6) — never relies on AppendAsync's own equality-throw --
+
+    private ConversationCommandOutcomeResult ResolveDuplicateStart(StoredConversationEvent existing, ConversationCommand command)
+    {
+        var reconstructedCommandJson =
+            JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand);
+
+        var isEqual =
+            existing.Event.ConversationId == command.ConversationId &&
+            existing.Event.RunId == command.RunId &&
+            existing.Event.Kind == ConversationEventKind.UserMessage &&
+            existing.Event.Participant == ConversationParticipant.User &&
+            existing.Event.Text == command.Goal &&
+            existing.AcceptedCommandJson == reconstructedCommandJson;
+
+        return isEqual
+            ? new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Accepted,
+                new ConversationCommandAcceptance(
+                    Address.ConversationId, existing.Event.RunId!.Value, existing.Event.Sequence + 1, ConversationRunStatus.Queued),
+                null)
+            : new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "CommandId already used with different content.");
+    }
+
+    private ConversationCommandOutcomeResult ResolveDuplicateFollowup(StoredConversationEvent existing, ConversationFollowupCommandInput input)
+    {
+        var isEqual =
+            existing.Event.ConversationId == Address.ConversationId &&
+            existing.Event.Kind == ConversationEventKind.UserMessage &&
+            existing.Event.Participant == ConversationParticipant.User &&
+            existing.Event.Text == input.Text;
+
+        return isEqual
+            ? new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Accepted,
+                new ConversationCommandAcceptance(
+                    Address.ConversationId, existing.Event.RunId!.Value, existing.Event.Sequence + 1, ConversationRunStatus.Queued),
+                null)
+            : new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "CommandId already used with different content.");
+    }
+
+    private ConversationCommandOutcomeResult ResolveDuplicateToolResult(StoredConversationEvent existing, ConversationToolResultInput input)
+    {
+        var isEqual =
+            existing.Event.ConversationId == Address.ConversationId &&
+            existing.Event.Kind == ConversationEventKind.ToolResult &&
+            existing.Event.Participant == ConversationParticipant.Implementer &&
+            existing.Event.ToolResult is { } tr &&
+            tr.RequestId == input.ToolRequestId && tr.Content == input.Content && tr.IsError == input.IsError;
+
+        return isEqual
+            ? new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Accepted,
+                new ConversationCommandAcceptance(
+                    Address.ConversationId, existing.Event.RunId!.Value, existing.Event.Sequence, ConversationRunStatus.WaitingForTool),
+                null)
+            : new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "CommandId already used with different content.");
+    }
+
     // -- shared protocol steps --
 
     private async Task RepairPendingTransitionIfAnyAsync(CancellationToken ct)
@@ -308,6 +525,11 @@ public sealed class ConversationGrain(
         ApplySnapshotFields(stored);
         checkpoint.State.UpdatedAtUtc = stored.OccurredAtUtc;
         await checkpoint.WriteStateAsync();
+
+        // Published only after the checkpoint write above is durable, and only once per call —
+        // including on repair, which can therefore emit a harmless duplicate live notification for
+        // an event the client may have already rendered; its event ID/sequence makes that safe.
+        notifier.Publish(Address, stored);
 
         if (notifyMissionRun && stored.RunId is { } runId)
         {

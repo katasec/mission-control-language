@@ -53,6 +53,25 @@ public sealed record ConversationProgressInput([property: Id(0)] string Progress
 [GenerateSerializer]
 public sealed record ConversationSnapshotResult([property: Id(0)] string SnapshotJson);
 
+/// <summary>Grain-interface wrapper for a follow-up submission on an existing conversation's
+/// pinned mission (Task 6). The grain — never the caller — reconstructs the full
+/// <see cref="ConversationCommand"/> from <see cref="ConversationCheckpoint.MissionRef"/> and
+/// <see cref="ConversationCheckpoint.PinnedCapabilitiesJson"/>, so a follow-up can never select a
+/// different mission or replace capabilities.</summary>
+[GenerateSerializer]
+public sealed record ConversationFollowupCommandInput(
+    [property: Id(0)] Guid CommandId,
+    [property: Id(1)] string Text);
+
+/// <summary>Grain-interface wrapper for a client-submitted tool result (Task 6). The grain
+/// constructs the matching <see cref="ConversationProgress"/> itself from its active run.</summary>
+[GenerateSerializer]
+public sealed record ConversationToolResultInput(
+    [property: Id(0)] Guid CommandId,
+    [property: Id(1)] Guid ToolRequestId,
+    [property: Id(2)] string Content,
+    [property: Id(3)] bool IsError);
+
 /// <summary>Grain-interface wrapper for an ordered <see cref="ConversationEvent"/> range; each
 /// element is deserialized individually by the caller with <see cref="ConversationContractsJsonContext"/>.</summary>
 [GenerateSerializer]
@@ -113,3 +132,49 @@ public sealed record ConversationProgressAcceptance(
     [property: Id(0)] ConversationProgressOutcome Outcome,
     [property: Id(1)] long? Sequence,
     [property: Id(2)] string? RejectionReason);
+
+/// <summary>Distinguishes an accepted start/follow-up/tool-result command from an expected,
+/// non-exceptional outcome: <see cref="Conflict"/> (an active run already exists, a tool request is
+/// unknown/mismatched/already completed, or a reused command/event ID carries different content),
+/// <see cref="Invalid"/> (malformed/missing required fields, or a payload exceeding a fixed size
+/// bound), or <see cref="NotFound"/> (the message names a conversation that does not exist). None of
+/// these is ever thrown as an exception — the message handlers below classify every expected
+/// outcome explicitly and return this typed result, so the HTTP adapter maps it directly to
+/// 202/400/404/409 without inspecting any exception.</summary>
+public enum ConversationCommandOutcome
+{
+    Accepted,
+    Conflict,
+    Invalid,
+    NotFound,
+}
+
+/// <summary>Result of <c>ConversationGrain.AcceptCommandAsync</c>,
+/// <c>AcceptFollowupCommandAsync</c>, and <c>AcceptToolResultAsync</c>, and of the transport-neutral
+/// message handlers that call them. <see cref="Acceptance"/> is non-null only when
+/// <see cref="Outcome"/> is <see cref="ConversationCommandOutcome.Accepted"/>; <see cref="Reason"/>
+/// is non-null for every other outcome.</summary>
+[GenerateSerializer]
+public sealed record ConversationCommandOutcomeResult(
+    [property: Id(0)] ConversationCommandOutcome Outcome,
+    [property: Id(1)] ConversationCommandAcceptance? Acceptance,
+    [property: Id(2)] string? Reason);
+
+/// <summary>
+/// A durable recovery record for the two-fact start pair (<c>UserMessage</c> then
+/// <c>RunStatus(Queued)</c>) that begins any new run — the conversation's first ever run, or any
+/// later follow-up run. <see cref="QueuedEventId"/>/<see cref="QueuedOccurredAtUtc"/> are
+/// preallocated and persisted in the SAME checkpoint write that begins the run, before the
+/// <c>UserMessage</c> is ever appended — so a crash strictly between the two facts (after the
+/// <c>UserMessage</c> is durable, before the <c>RunStatus(Queued)</c> transition has even been
+/// attempted) still has a durable record of exactly what is owed and under which stable identity.
+/// Cleared only once both facts have been confirmed durable (freshly appended, or found already
+/// present — either way, "already present" also proves any owed dispatch was already
+/// broker-accepted, since the existing pending-transition/outbox protocol never clears a pending
+/// transition until that happens).
+/// </summary>
+[GenerateSerializer]
+public sealed record PendingRunStart(
+    [property: Id(0)] string StartCommandJson,
+    [property: Id(1)] Guid QueuedEventId,
+    [property: Id(2)] DateTimeOffset QueuedOccurredAtUtc);
