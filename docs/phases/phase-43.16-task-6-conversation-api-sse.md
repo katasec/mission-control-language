@@ -75,6 +75,14 @@ resubmitting it must make these bounded changes and add/adjust the named tests:
 4. Extend source-generation and real-Kestrel tests to prove the same Contracts message can be
    used without HTTP meaning, while HTTP only maps path/query/header concerns at its edge.
 
+5. A transport-neutral query handler returns the public `GetConversationResponse` (or its typed
+   missing/invalid outcome), never a bare `ConversationSnapshot` that HTTP happens to wrap. Likewise
+   `ReadConversationEventsRequest` validates its own `ConversationId`/`After` and yields its
+   ordered `ConversationEvent` sequence to the adapter; it must not collapse into an
+   HTTP-only boolean existence helper while `ConversationSseWriter` independently performs the
+   actual query. The SSE writer's only role is framing that sequence and managing its HTTP response.
+   Add direct-handler tests for both query responses as well as the existing mutation-message test.
+
 These are corrections to the already locked design, not new scope. Re-run the full solution suite
 afterward and provide the exact result in the next completion summary.
 
