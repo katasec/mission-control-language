@@ -56,4 +56,20 @@ public sealed class ToolExecutorRegistryTests : IDisposable
         Assert.True(result.IsError);
         Assert.Contains("Unknown tool: WebFetch", result.Content);
     }
+
+    [Fact]
+    public void CanExecute_KnownDefaultTool_ReturnsTrue()
+    {
+        var registry = new ToolExecutorRegistry();
+
+        Assert.True(registry.CanExecute("Read"));
+    }
+
+    [Fact]
+    public void CanExecute_UnknownToolName_ReturnsFalse()
+    {
+        var registry = new ToolExecutorRegistry();
+
+        Assert.False(registry.CanExecute("WebFetch"));
+    }
 }

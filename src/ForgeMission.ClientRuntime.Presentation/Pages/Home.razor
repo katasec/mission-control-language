@@ -13,34 +13,45 @@
     </header>
 
     <main class="turns">
-        @if (turns.Count == 0)
+        @if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
         {
-            <p class="empty-state">
-                @(workspaceRoot is null ? "Add a folder to start." : "Describe what you want to build.")
-            </p>
+            @if (conversationError is not null)
+            {
+                <p class="error-banner">@conversationError</p>
+            }
+            <ConversationTranscriptView Entries="conversationTranscript.Entries" />
         }
-        @foreach (var turn in turns)
+        else
         {
-            <article class="turn">
-                <p class="turn-prompt">@turn.Prompt</p>
+            @if (turns.Count == 0)
+            {
+                <p class="empty-state">
+                    @(workspaceRoot is null ? "Add a folder to start." : "Describe what you want to build.")
+                </p>
+            }
+            @foreach (var turn in turns)
+            {
+                <article class="turn">
+                    <p class="turn-prompt">@turn.Prompt</p>
 
-                @foreach (var row in turn.ToolCalls)
-                {
-                    <p class="tool-row">
-                        <span class="tool-glyph @(row.Done ? "done" : "running")">@(row.Done ? "✓" : "•")</span>
-                        <span>@row.Label()</span>
-                    </p>
-                }
+                    @foreach (var row in turn.ToolCalls)
+                    {
+                        <p class="tool-row">
+                            <span class="tool-glyph @(row.Done ? "done" : "running")">@(row.Done ? "✓" : "•")</span>
+                            <span>@row.Label()</span>
+                        </p>
+                    }
 
-                @if (turn.Error is not null)
-                {
-                    <p class="error-banner">@turn.Error</p>
-                }
-                else if (turn.AssistantText.Length > 0 || turn.IsStreaming)
-                {
-                    <div class="response-card">@turn.AssistantText</div>
-                }
-            </article>
+                    @if (turn.Error is not null)
+                    {
+                        <p class="error-banner">@turn.Error</p>
+                    }
+                    else if (turn.AssistantText.Length > 0 || turn.IsStreaming)
+                    {
+                        <div class="response-card">@turn.AssistantText</div>
+                    }
+                </article>
+            }
         }
     </main>
 
@@ -164,6 +175,9 @@
     private ChatTurn? activeTurn;
     private ToolCallRow? openToolRow;
 
+    private ConversationTranscript conversationTranscript = new();
+    private string? conversationError;
+
     private bool CanSend => workspaceRoot is not null && !sending && !string.IsNullOrWhiteSpace(composerText);
 
     private void ToggleAddFolderMenu()
@@ -193,7 +207,7 @@
         try
         {
             session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(folderInput, selectedMission.WireMission), CancellationToken.None);
+                new SessionSetupRequest(folderInput, selectedMission.WireMission, selectedMission.Runtime), CancellationToken.None);
             workspaceRoot = folderInput;
             showAddFolderMenu = false;
             StartEventLoop();
@@ -211,9 +225,12 @@
     private void ToggleMissionMenu() => showMissionMenu = !showMissionMenu;
 
     // Switching mid-conversation starts a fresh session (43.3 task 3) — no cross-mission context
-    // carry-over for v1 (see phase-43.3-mission-attach-point.md's open questions).
+    // carry-over for v1 (see phase-43.3-mission-attach-point.md's open questions). The outgoing
+    // session's ID is passed as ReplacesSessionId so the store can cancel/dispose a durable
+    // Janus session's background tail instead of abandoning it (Phase 43.16 Task 7).
     private async Task SelectMissionAsync(AttachableMission mission)
     {
+        var previousSessionId = session?.SessionId;
         selectedMission = mission;
         showMissionMenu = false;
 
@@ -228,8 +245,11 @@
         }
 
         turns.Clear();
+        conversationTranscript = new();
+        conversationError = null;
         session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-            new SessionSetupRequest(workspaceRoot, selectedMission.WireMission), CancellationToken.None);
+            new SessionSetupRequest(workspaceRoot, selectedMission.WireMission, selectedMission.Runtime, previousSessionId),
+            CancellationToken.None);
         StartEventLoop();
     }
 
@@ -247,6 +267,13 @@
         var prompt = composerText;
         composerText = string.Empty;
         sending = true;
+
+        if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+        {
+            await SendDurableAsync(prompt);
+            return;
+        }
+
         openToolRow = null;
         activeTurn = new ChatTurn(prompt);
         turns.Add(activeTurn);
@@ -267,6 +294,32 @@
         {
             activeTurn.IsStreaming = false;
             activeTurn = null;
+            sending = false;
+            StateHasChanged();
+        }
+    }
+
+    // PromptResponse is an acceptance for the durable path, not a synthetic chat answer — the
+    // real turn renders once its durable UserMessage (and everything after it) arrives through
+    // ConsumeEventsAsync/ApplyEvent, not from this call's return value.
+    private async Task SendDurableAsync(string prompt)
+    {
+        conversationError = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
+                new PromptRequest(session!.SessionId, prompt), CancellationToken.None);
+            if (response.IsError)
+                conversationError = response.Content;
+        }
+        catch (Exception exception)
+        {
+            conversationError = exception.Message;
+        }
+        finally
+        {
             sending = false;
             StateHasChanged();
         }
@@ -296,7 +349,19 @@
 
     private void ApplyEvent(ClientRuntimeEvent evt)
     {
-        if (activeTurn is null || evt.SessionId != session?.SessionId)
+        if (evt.SessionId != session?.SessionId)
+            return;
+
+        if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+        {
+            if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is not null)
+                conversationTranscript.Apply(evt.Conversation);
+            else if (evt.Kind == ClientRuntimeEventKind.Error)
+                conversationError = evt.Error;
+            return;
+        }
+
+        if (activeTurn is null)
             return;
 
         switch (evt.Kind)

@@ -1,3 +1,5 @@
+using ForgeMission.ClientRuntime.Transport;
+
 namespace ForgeMission.ClientRuntime.Presentation;
 
 /// <summary>
@@ -14,6 +16,7 @@ internal static class AttachableMissions
     [
         new("ChatGPT", "vanilla"),
         new("Websearch", "websearch"),
+        new("Janus", "Janus", SessionRuntimeKind.DurableConversation),
     ];
 
     public static AttachableMission Default => All[0];
@@ -21,4 +24,7 @@ internal static class AttachableMissions
 
 /// <param name="Name">Shown in the picker.</param>
 /// <param name="WireMission">Sent as the wire request's <c>Mission</c>/<c>model</c> field.</param>
-internal sealed record AttachableMission(string Name, string WireMission);
+/// <param name="Runtime">Mission (today's stateless per-prompt round-trip, the default) or
+/// DurableConversation (the Client Runtime-owned durable Janus session, Phase 43.16 Task 7).</param>
+internal sealed record AttachableMission(
+    string Name, string WireMission, SessionRuntimeKind Runtime = SessionRuntimeKind.Mission);

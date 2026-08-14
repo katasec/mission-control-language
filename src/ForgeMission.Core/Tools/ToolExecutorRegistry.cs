@@ -22,4 +22,9 @@ public sealed class ToolExecutorRegistry
         => _executors.TryGetValue(call.Name, out var executor)
             ? executor.ExecuteAsync(call.Arguments, dispatcher, ct)
             : Task.FromResult(ToolExecutionResult.Error($"Unknown tool: {call.Name}"));
+
+    // Lets a caller reject an unsupported tool name before constructing a call/request for it —
+    // used by the durable Janus tool hand-off (Task 7), which must not attempt to dispatch a
+    // name this registry has no executor for.
+    public bool CanExecute(string name) => _executors.ContainsKey(name);
 }

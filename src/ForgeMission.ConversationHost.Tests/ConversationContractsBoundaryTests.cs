@@ -42,14 +42,16 @@ public class ConversationContractsBoundaryTests
         Assert.DoesNotContain("<PackageReference", text);
     }
 
-    // Client Runtime, CLI, and Presentation are the AOT-published/user-facing surfaces (Client
-    // Runtime may reference Contracts from Task 7 — never Host). Contracts itself must also stay
-    // clean of its own server-side dependencies, so it's included alongside them here. Host and
-    // its own test project are the only projects allowed to name Orleans/Azure SDK packages
-    // (checked positively below) — everything else in this list must not.
+    // Client Runtime, CLI, Presentation, and Client Runtime's own Transport are the AOT-published/
+    // user-facing surfaces (Client Runtime and Transport may reference Contracts from Task 7 —
+    // never Host). Contracts itself must also stay clean of its own server-side dependencies, so
+    // it's included alongside them here. Host and its own test project are the only projects
+    // allowed to name Orleans/Azure SDK packages (checked positively below) — everything else in
+    // this list must not.
     [Theory]
     [InlineData("ForgeMission.Conversations.Contracts", "ForgeMission.Conversations.Contracts.csproj")]
     [InlineData("ForgeMission.ClientRuntime", "ForgeMission.ClientRuntime.csproj")]
+    [InlineData("ForgeMission.ClientRuntime.Transport", "ForgeMission.ClientRuntime.Transport.csproj")]
     [InlineData("ForgeMission.Cli", "ForgeMission.Cli.csproj")]
     [InlineData("ForgeMission.ClientRuntime.Presentation", "ForgeMission.ClientRuntime.Presentation.csproj")]
     public void ClientFacingProjects_DoNotNameConversationHostOrleansOrAzureSdk(string projectFolder, string csprojFileName)

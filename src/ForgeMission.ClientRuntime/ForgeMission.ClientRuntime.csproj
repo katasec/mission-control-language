@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime.Transport\ForgeMission.ClientRuntime.Transport.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime.Presentation\ForgeMission.ClientRuntime.Presentation.csproj" />
   </ItemGroup>

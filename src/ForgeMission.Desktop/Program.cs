@@ -49,7 +49,8 @@ else if (args.Length == 0)
     resolveTask.Wait();
     var (resolvedUrl, resolvedMode, resolvedLauncher) = resolveTask.Result;
     launcher = resolvedLauncher;
-    clientRuntime = StartClientRuntime(resolvedUrl, resolvedMode, platform.Key);
+    var conversationRuntimeBaseUrl = configuration["ConversationRuntime:BaseUrl"];
+    clientRuntime = StartClientRuntime(resolvedUrl, resolvedMode, platform.Key, conversationRuntimeBaseUrl);
     url = WaitForReadyUrl(clientRuntime);
 }
 else
@@ -155,7 +156,9 @@ static void KillIfRunning(Process process)
     }
 }
 
-static Process StartClientRuntime(string missionRuntimeBaseUrl, string missionRuntimeMode, string missionRuntimeCredential)
+static Process StartClientRuntime(
+    string missionRuntimeBaseUrl, string missionRuntimeMode, string missionRuntimeCredential,
+    string? conversationRuntimeBaseUrl)
 {
     var (fileName, dllArgument) = ResolveClientRuntimeCommand();
     var process = new Process
@@ -174,6 +177,9 @@ static Process StartClientRuntime(string missionRuntimeBaseUrl, string missionRu
     process.StartInfo.EnvironmentVariables["MissionRuntime__BaseUrl"] = missionRuntimeBaseUrl;
     process.StartInfo.EnvironmentVariables["MissionRuntime__Mode"] = missionRuntimeMode;
     process.StartInfo.EnvironmentVariables["MissionRuntime__Credential"] = missionRuntimeCredential;
+    // Only forwarded when configured — a normal (non-Janus) run must not require it.
+    if (!string.IsNullOrWhiteSpace(conversationRuntimeBaseUrl))
+        process.StartInfo.EnvironmentVariables["ConversationRuntime__BaseUrl"] = conversationRuntimeBaseUrl;
 
     process.Start();
     return process;

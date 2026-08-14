@@ -61,7 +61,7 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposabl
             if (!line.StartsWith("data: ", StringComparison.Ordinal))
                 continue;
 
-            var message = JsonSerializer.Deserialize(line["data: ".Length..], ClientRuntimeJsonContext.Default.ClientRuntimeEvent)
+            var message = JsonSerializer.Deserialize(line["data: ".Length..], ConversationRelayJsonContext.Default.ClientRuntimeEvent)
                 ?? throw new InvalidOperationException("Client Runtime sent an invalid event.");
             yield return message;
         }
