@@ -38,6 +38,13 @@ public static class ConversationDeterministicIds
     public static Guid Continuation(Guid toolResultEventId)
         => Generate($"continuation:{toolResultEventId:N}");
 
+    /// <summary>The Client Runtime's own <c>SubmitToolResultRequest.CommandId</c> for one
+    /// authorized local tool hand-off — stable across an HTTP retry or Client Runtime reconnect,
+    /// so a resend reaches the grain's original accepted response rather than appending a second
+    /// result/continuation for the same <paramref name="toolRequestId"/>.</summary>
+    public static Guid ClientToolResult(Guid toolRequestId)
+        => Generate($"client-tool-result:{toolRequestId:N}");
+
     /// <summary>The Nth progress fact the Worker sends while processing one command.</summary>
     public static Guid Progress(Guid commandId, int ordinal)
         => Generate($"progress:{commandId:N}:{ordinal}");

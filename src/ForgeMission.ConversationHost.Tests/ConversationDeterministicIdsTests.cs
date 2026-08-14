@@ -46,6 +46,32 @@ public class ConversationDeterministicIdsTests
     }
 
     [Fact]
+    public void ClientToolResult_IsDeterministic()
+    {
+        var toolRequestId = Guid.NewGuid();
+        Assert.Equal(
+            ConversationDeterministicIds.ClientToolResult(toolRequestId),
+            ConversationDeterministicIds.ClientToolResult(toolRequestId));
+    }
+
+    [Fact]
+    public void ClientToolResult_DifferentToolRequestId_ProducesDifferentId()
+    {
+        Assert.NotEqual(
+            ConversationDeterministicIds.ClientToolResult(Guid.NewGuid()),
+            ConversationDeterministicIds.ClientToolResult(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void ClientToolResult_IsDistinctFromOtherDeterministicIdMethods()
+    {
+        var id = Guid.NewGuid();
+        Assert.NotEqual(ConversationDeterministicIds.ClientToolResult(id), ConversationDeterministicIds.Continuation(id));
+        Assert.NotEqual(ConversationDeterministicIds.ClientToolResult(id), ConversationDeterministicIds.Conversation(id));
+        Assert.NotEqual(ConversationDeterministicIds.ClientToolResult(id), ConversationDeterministicIds.ToolRequest(id, 0));
+    }
+
+    [Fact]
     public void Progress_IsDeterministic()
     {
         var commandId = Guid.NewGuid();

@@ -41,6 +41,15 @@ internal sealed class Program
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", missionRuntimeCredential);
         });
+        // Optional and unvalidated at startup — unlike MissionRuntime:BaseUrl, a normal Mission
+        // session must not require it. A durable Janus session's first prompt fails loudly
+        // through the usual HttpRequestException path if this was never configured.
+        var conversationRuntimeBaseUrl = builder.Configuration["ConversationRuntime:BaseUrl"];
+        builder.Services.AddHttpClient("conversation-host", client =>
+        {
+            if (!string.IsNullOrWhiteSpace(conversationRuntimeBaseUrl))
+                client.BaseAddress = new Uri(conversationRuntimeBaseUrl, UriKind.Absolute);
+        });
         var app = builder.Build();
         app.MapStaticAssets();
         app.UseBlazorFrameworkFiles();

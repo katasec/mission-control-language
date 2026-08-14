@@ -2,6 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace ForgeMission.ClientRuntime.Transport;
 
+// ClientRuntimeEvent is deliberately not declared here — it now embeds a Contracts
+// ConversationEvent and is (de)serialized through ConversationRelayJsonContext instead, which
+// mirrors ConversationContractsJsonContext's string-enum options so that embedded payload's wire
+// format matches what ConversationHost produces. Every other type below is unaffected: their
+// enums (e.g. CapabilityRequestData's CapabilityOperation) keep serializing under this context's
+// own (numeric) default.
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(SessionSetupRequest))]
 [JsonSerializable(typeof(SessionSetupResponse))]
@@ -12,5 +18,4 @@ namespace ForgeMission.ClientRuntime.Transport;
 [JsonSerializable(typeof(ConfirmationResponseRequest))]
 [JsonSerializable(typeof(ConfirmationResponse))]
 [JsonSerializable(typeof(CapabilityRequestData))]
-[JsonSerializable(typeof(ClientRuntimeEvent))]
 public partial class ClientRuntimeJsonContext : JsonSerializerContext;

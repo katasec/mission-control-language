@@ -1,0 +1,115 @@
+@namespace ForgeMission.ClientRuntime.Presentation
+
+@* Presentational renderer over one ConversationTranscript projection. Applies no HTTP/SSE logic
+   of its own — Entries is already deduplicated/ordered by the caller's ConversationTranscript. *@
+
+<div class="conversation-transcript">
+    @if (Entries.Count == 0)
+    {
+        <p class="empty-state">Describe what you want Janus to do.</p>
+    }
+    @foreach (var entry in Entries)
+    {
+        @if (entry.Kind == ConversationEntryKind.UserMessage)
+        {
+            <p class="convo-user-bubble">@entry.Text</p>
+        }
+        else if (entry.Kind == ConversationEntryKind.Typing)
+        {
+            <p class="convo-typing">@ParticipantLabel(entry.Participant) is thinking…</p>
+        }
+        else if (entry.Kind == ConversationEntryKind.ParticipantMessage)
+        {
+            <article class="convo-participant-bubble">
+                <p class="convo-participant-name">@ParticipantLabel(entry.Participant)</p>
+                <p class="convo-participant-text">@entry.Text</p>
+            </article>
+        }
+        else if (entry.Kind == ConversationEntryKind.Approval)
+        {
+            <p class="convo-approval @(entry.ApprovalOutcome == ConversationApprovalOutcome.Approved ? "approved" : "revision")">
+                @(entry.ApprovalOutcome == ConversationApprovalOutcome.Approved ? "Approved" : "Revision requested")
+                @if (!string.IsNullOrEmpty(entry.Feedback))
+                {
+                    <span class="convo-feedback">— @entry.Feedback</span>
+                }
+            </p>
+        }
+        else if (entry.Kind == ConversationEntryKind.NotApproved)
+        {
+            <p class="convo-not-approved">
+                Not approved
+                @if (!string.IsNullOrEmpty(entry.Feedback))
+                {
+                    <span class="convo-feedback">— @entry.Feedback</span>
+                }
+            </p>
+        }
+        else if (entry.Kind == ConversationEntryKind.ToolCall)
+        {
+            <p class="convo-tool-row">
+                <span class="convo-tool-glyph @(entry.ToolCompleted ? (entry.ToolIsError ? "error" : "done") : "running")">
+                    @(entry.ToolCompleted ? (entry.ToolIsError ? "✗" : "✓") : "•")
+                </span>
+                <span>@(entry.ToolName ?? "Tool") @(entry.ToolCompleted ? "completed" : "running…")</span>
+            </p>
+        }
+        else if (entry.Kind == ConversationEntryKind.Status)
+        {
+            <p class="convo-status @(entry.StatusKind == ConversationEventKind.Error ? "error" : "")">
+                @StatusLabel(entry)
+            </p>
+        }
+    }
+</div>
+
+<style>
+    .conversation-transcript { display: flex; flex-direction: column; gap: var(--space-3); }
+    .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
+
+    .convo-user-bubble { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
+    .convo-typing { margin: 0; font-size: 13px; color: var(--text-muted); font-style: italic; animation: convo-pulse 1.2s ease-in-out infinite; }
+
+    .convo-participant-bubble { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-3) var(--space-4); }
+    .convo-participant-name { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .convo-participant-text { margin: 0; font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
+
+    .convo-approval { margin: 0; font-size: 13px; font-weight: 600; }
+    .convo-approval.approved { color: var(--success); }
+    .convo-approval.revision { color: var(--accent); }
+    .convo-not-approved { margin: 0; font-size: 13px; font-weight: 600; color: var(--danger); }
+    .convo-feedback { font-weight: 400; color: var(--text-muted); }
+
+    .convo-tool-row { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 12.5px; color: var(--text-muted); }
+    .convo-tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
+    .convo-tool-glyph.done { color: var(--success); }
+    .convo-tool-glyph.error { color: var(--danger); }
+    .convo-tool-glyph.running { color: var(--accent); animation: convo-pulse 1.2s ease-in-out infinite; }
+
+    .convo-status { margin: 0; font-size: 12.5px; color: var(--text-subtle); }
+    .convo-status.error { color: var(--danger); }
+
+    @@keyframes convo-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+</style>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+
+    private static string ParticipantLabel(ConversationParticipant participant) => participant switch
+    {
+        ConversationParticipant.Proposer => "Proposer",
+        ConversationParticipant.Approver => "Approver",
+        ConversationParticipant.Implementer => "Implementer",
+        ConversationParticipant.Forge => "Forge",
+        _ => "User",
+    };
+
+    private static string StatusLabel(ConversationEntry entry) => entry.StatusKind switch
+    {
+        ConversationEventKind.Error => entry.Text ?? "An error occurred.",
+        ConversationEventKind.Artifact => $"Artifact: {entry.ArtifactId}",
+        ConversationEventKind.RunStatus => $"Status: {entry.RunStatus}",
+        _ => entry.Text ?? string.Empty,
+    };
+}

@@ -10,9 +10,10 @@ internal static class ClientRuntimeEndpoints
 {
     public static void MapClientRuntimeTransport(this WebApplication app)
     {
-        app.MapPost("/transport/session/setup", (SessionSetupRequest request, ClientRuntimeSessionStore sessions) =>
+        app.MapPost("/transport/session/setup", async (SessionSetupRequest request, ClientRuntimeSessionStore sessions) =>
         {
-            var session = sessions.Create(request.WorkspaceRoot, request.Mission);
+            var session = await sessions.CreateAsync(
+                request.WorkspaceRoot, request.Mission, request.Runtime, request.ReplacesSessionId);
             return Results.Ok(new SessionSetupResponse(session.Id,
                 session.Workspace.Capabilities?.AvailableCapabilities ?? []));
         });
@@ -55,6 +56,7 @@ internal static class ClientRuntimeEndpoints
             IHttpClientFactory clients,
             IConfiguration configuration,
             ClientRuntimeEventHub events,
+            IHostApplicationLifetime lifetime,
             CancellationToken ct) =>
         {
             if (!sessions.TryGet(request.SessionId, out var session) ||
@@ -63,6 +65,24 @@ internal static class ClientRuntimeEndpoints
 
             try
             {
+                if (session.Runtime == SessionRuntimeKind.DurableConversation)
+                {
+                    // Admission, lazy creation, and SendAsync must stay one call — see
+                    // ConversationSessionSlot for why a separate GetOrCreate-then-SendAsync would
+                    // race a concurrent mission-switch replacement.
+                    var conversationId = await session.Conversation.SendPromptAsync(
+                        () => new ConversationRuntimeSession(
+                            request.SessionId,
+                            session.Mission ?? "Janus",
+                            new ConversationHostClient(clients.CreateClient("conversation-host")),
+                            session.Workspace.Capabilities,
+                            session.Workspace.Dispatcher,
+                            events.Publish,
+                            lifetime.ApplicationStopping),
+                        request.Prompt, ct);
+                    return Results.Ok(new PromptResponse(string.Empty, ConversationId: conversationId));
+                }
+
                 var runtimeClient = clients.CreateClient("mission-runtime");
                 var answer = UsesCloudMissionRuntime(configuration["MissionRuntime:Mode"])
                     ? await NewCloudSession(runtimeClient, session.Mission).SendAsync(request.Prompt,
@@ -96,7 +116,7 @@ internal static class ClientRuntimeEndpoints
             await context.Response.StartAsync(ct);
             await foreach (var message in events.Subscribe(ct))
             {
-                var json = JsonSerializer.Serialize(message, ClientRuntimeJsonContext.Default.ClientRuntimeEvent);
+                var json = JsonSerializer.Serialize(message, ConversationRelayJsonContext.Default.ClientRuntimeEvent);
                 await context.Response.WriteAsync($"data: {json}\n\n", ct);
                 await context.Response.Body.FlushAsync(ct);
             }
