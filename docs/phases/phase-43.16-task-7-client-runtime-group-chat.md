@@ -108,7 +108,7 @@ The projection/rendering rules are fixed:
 | `ToolRequested` / matching `ToolResult` | One Implementer tool row keyed by `ToolRequestId`; it changes from requested/running to completed/error when the result arrives. No extra transient Client Runtime tool row is emitted. |
 | `Error`, other `RunStatus`, `Artifact` | Individually visible compact status/error/artifact rows; artifact stays a reference, never a direct Blob call. |
 
-The normal `ChatTurn` renderer remains intact and is selected only for `SessionRuntimeKind.Mission`. For Janus, a prompt is rendered only after its durable `UserMessage` arrives; `PromptResponse` is an acceptance, not a synthetic chat answer. Presentation’s local SSE connection can reconnect as it does today; the durable session’s Host tail provides replay from its cursor, and the projection makes a live/replayed duplicate harmless.
+The normal `ChatTurn` renderer remains intact and is selected only for `SessionRuntimeKind.Mission`. Both `AddFolderAsync` (first setup) and `SelectMissionAsync` (replacement setup) send the selected mission’s runtime; the latter additionally supplies `ReplacesSessionId`. Thus selecting Janus before opening a workspace is durable from its first prompt, not only after a later picker switch. For Janus, a prompt is rendered only after its durable `UserMessage` arrives; `PromptResponse` is an acceptance, not a synthetic chat answer. Presentation’s local SSE connection can reconnect as it does today; the durable session’s Host tail provides replay from its cursor, and the projection makes a live/replayed duplicate harmless.
 
 ## Security architecture gate
 
