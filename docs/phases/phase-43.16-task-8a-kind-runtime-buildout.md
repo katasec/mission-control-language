@@ -1,6 +1,8 @@
 # Phase 43.16 Task 8a — Kind runtime build-out
 
-> **Status: Implementation in progress (2026-08-14).** Prerequisite to
+> **Status: Done and verified (2026-08-14).** mission-control-language commit `071d245` (merged
+> `main` at `cde3623ed4a872b355cf6eb8d5209ab945621fe8`) and forge-infra commit `d8e8108` (merged
+> `main` at `8121453`). Prerequisite to
 > [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
 > builds the real `ForgeMission.ConversationHost`/`ForgeMission.ConversationWorker` container
 > images and rolls them out into the `forge-durable` Kind cluster with immutable, commit-SHA-derived
@@ -97,23 +99,52 @@
   - Both verification-only `:local` tags were removed afterward; `kind-up.sh` builds its own
     SHA-tagged images independently.
 
-### Kind rollout verification (forge-infra, after this merges to `main`)
+### Kind rollout verification (forge-infra, run after this repo's Task 8a merged to `main`)
 
-Recorded separately in `forge-infra`'s Task 8a PR/commit, since `kind-up.sh`'s clean-`main`-
-checkout requirement means the real rollout can only be exercised once these changes are live on
-`mission-control-language`'s `main` — see that PR for the resolved commit SHA, `kubectl rollout
-status` output for both Deployments, the Worker's consumer-start log line, the `/health` check,
-and `kind-status.sh`'s secret-name-only report. This document is updated with a pointer to that
-evidence once available.
+`make 350-conversation-kind-up` run live against this repo's merged `main` commit
+`cde3623ed4a872b355cf6eb8d5209ab945621fe8`:
+
+- Provenance resolved and logged: `Building Kind application images from mission-control-language
+  commit cde3623ed4a872b355cf6eb8d5209ab945621fe8 (clean main checkout).`
+- Both images built and `kind load docker-image`'d under that exact SHA tag
+  (`forge-conversation-host:cde3623...`, `forge-conversation-worker:cde3623...`).
+- The existing verifier Jobs still passed unchanged (`all_probes: PASS` on both sides) — a
+  transient first-attempt network failure on a brand-new cluster, already documented as expected
+  in `kind-up.sh`, self-healed on the built-in retry.
+- `kubectl rollout status`: `deployment "conversation-host" successfully rolled out` and
+  `deployment "mission-worker" successfully rolled out`.
+- `kubectl get pods -n forge-durable`: both `conversation-host-...` and `mission-worker-...`
+  `1/1 Running`.
+- `conversation-host`'s own readiness/liveness probe logs show `GET /health` → `200` repeatedly;
+  independently confirmed again via `kubectl port-forward svc/conversation-host 18080:8080` plus
+  `curl -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/health` → `200`.
+- `mission-worker` log:
+  `Mission-command session processor and dead-letter processor started for queue
+  'mission-command'.` — the added `LogInformation` line, confirming the consumer is live.
+- `make 350-conversation-kind-status`: `forge-conversation-worker-provider-keys` listed by name
+  only (`Opaque`, `DATA 2`) alongside the two existing verifier Secrets — no value printed
+  anywhere in the entire run's captured output.
+
+Full IaC diff and this evidence: forge-infra PR
+[#4](https://github.com/katasec/forge-infra/pull/4), commit `d8e8108`, merged to `main` at
+`8121453`.
 
 ## Done when
 
-- Both Dockerfiles build; the Worker build fails closed (verified) without `NUGET_AUTH_TOKEN`.
-- `make 350-conversation-kind-up` succeeds end to end against a clean `main` checkout of this
-  repo: SHA resolved and logged; both images built/loaded; the existing verifier Jobs still pass;
-  the provider-key Secret written only after both keys are confirmed non-empty; both Deployments
-  `kubectl rollout status ... successfully rolled out`; the Worker's new log line present in
-  `kubectl logs`; `/health` returns 200 on `conversation-host`.
-- `make 350-conversation-kind-status` lists the new provider-key Secret by name, no values
+All met — see verification evidence above:
+
+- ✅ Both Dockerfiles build; the Worker build fails closed (verified) without `NUGET_AUTH_TOKEN`.
+- ✅ `make 350-conversation-kind-up` succeeded end to end against a clean `main` checkout of this
+  repo: SHA resolved and logged; both images built/loaded; the existing verifier Jobs still
+  passed; the provider-key Secret written only after both keys were confirmed non-empty; both
+  Deployments `kubectl rollout status ... successfully rolled out`; the Worker's new log line
+  present in `kubectl logs`; `/health` returned 200 on `conversation-host`.
+- ✅ `make 350-conversation-kind-status` listed the new provider-key Secret by name, no values
   anywhere in captured output.
-- Both repos committed, pushed, PR'd, and merged to `main`.
+- ✅ Both repos committed, pushed, PR'd, and merged to `main`:
+  mission-control-language [#41](https://github.com/katasec/mission-control-language/pull/41)
+  (commit `071d245`), forge-infra [#4](https://github.com/katasec/forge-infra/pull/4)
+  (commit `d8e8108`).
+
+**Task 8's live product proof has not started.** The `forge-durable` Kind cluster is left running
+(both real Deployments up) for that next step, not torn down.
