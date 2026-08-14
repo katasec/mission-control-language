@@ -1,34 +1,24 @@
-using System.Text.Json;
 using Azure.Messaging.ServiceBus;
-using ForgeMission.ConversationHost.Grains;
-using ForgeMission.Conversations.Contracts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Orleans;
 
 namespace ForgeMission.ConversationHost.Messaging;
 
 /// <summary>
-/// Processor on the <c>conversation-progress</c> queue's own dead-letter sub-queue. A plain
-/// (non-session) processor via <see cref="ServiceBusProcessorOptions.SubQueue"/> — the SDK's
-/// session processor type has no <c>SubQueue</c> setting, and the dead-letter sub-queue of a
+/// The Service Bus SDK adapter for the <c>conversation-progress</c> queue's dead-letter sub-queue.
+/// A plain (non-session) processor via <see cref="ServiceBusProcessorOptions.SubQueue"/> — the
+/// SDK's session processor type has no <c>SubQueue</c> setting, and the dead-letter sub-queue of a
 /// session-enabled entity is not itself session-enabled, so a real session receiver cannot target
 /// it at all; <c>MaxConcurrentCalls = 1</c> keeps the one-at-a-time processing the rest of this
-/// pipeline relies on. A dead-lettered message is delivery that the main
-/// <see cref="ConversationProgressConsumer"/> could never settle: if its body deserializes AND its
-/// trusted <c>tenant_id</c>/<c>SessionId</c>/<c>MessageId</c> envelope matches its own
-/// ConversationId/EventId (the same check <see cref="ConversationProgressHandler"/> makes), this
-/// turns it into a stable UUID-v5-derived <see cref="ConversationEventKind.Error"/> fact followed by
-/// <see cref="ConversationRunStatus.Failed"/>, so the conversation's own log records the failure
-/// rather than the run hanging forever. A malformed or unaddressable message (deserialize failure,
-/// missing tenant, or an envelope that does not match its own body) cannot be turned into any
-/// durable fact at all — it is structured-logged and completed without a grain call, so it does not
-/// dead-letter loop.
+/// pipeline relies on. All classification and grain-call logic lives in the SDK-independent
+/// <see cref="ConversationProgressDeadLetterHandler"/> (Phase 43.16 Task 8c); this class only reads
+/// the Service Bus message, logs the outcome, and completes it — every result completes, since a
+/// dead-lettered message never gets a second retry regardless of outcome.
 /// </summary>
 public sealed class ConversationProgressDeadLetterConsumer(
     ServiceBusClient client,
     ConversationServiceBusOptions options,
-    IGrainFactory grainFactory,
+    ConversationProgressDeadLetterHandler handler,
     ILogger<ConversationProgressDeadLetterConsumer> logger)
     : BackgroundService
 {
@@ -63,65 +53,27 @@ public sealed class ConversationProgressDeadLetterConsumer(
 
     private async Task ProcessMessageAsync(ProcessMessageEventArgs args)
     {
-        var (progress, tenantId) = TryReadAddressableProgress(args.Message);
-        if (progress is null || tenantId is null)
+        var result = await handler.HandleAsync(args.Message, args.CancellationToken);
+
+        if (!result.WasAddressable)
         {
             logger.LogError(
-                "Progress dead-letter message '{MessageId}' is malformed or unaddressable; completing without action.",
-                args.Message.MessageId);
-            await args.CompleteMessageAsync(args.Message, args.CancellationToken);
-            return;
+                "Progress dead-letter message '{MessageId}' discarded as unaddressable: {Category}.",
+                args.Message.MessageId, result.DiscardCategory);
         }
-
-        var address = new ConversationAddress(tenantId, progress.ConversationId);
-        var grain = grainFactory.GetGrain<IConversationGrain>(address.ToString());
-
-        var errorProgress = new ConversationProgress(
-            ConversationDeterministicIds.DeadLetter(progress.EventId, "progress-error"),
-            progress.ConversationId, progress.RunId, ConversationEventKind.Error, ConversationParticipant.Forge,
-            null, null, "Progress delivery exhausted retries and was dead-lettered.", null, null, null, null, null,
-            DateTimeOffset.UtcNow);
-        var errorAcceptance = await grain.RecordProgressAsync(new ConversationProgressInput(
-            JsonSerializer.Serialize(errorProgress, ConversationContractsJsonContext.Default.ConversationProgress)));
-        if (errorAcceptance.Outcome == ConversationProgressOutcome.Rejected)
-            logger.LogWarning(
-                "Dead-letter Error fact for progress message '{MessageId}' was rejected: {Reason}",
-                args.Message.MessageId, errorAcceptance.RejectionReason);
-
-        var failedProgress = new ConversationProgress(
-            ConversationDeterministicIds.DeadLetter(progress.EventId, "progress-failed"),
-            progress.ConversationId, progress.RunId, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
-            null, null, null, null, null, null, null, ConversationRunStatus.Failed, DateTimeOffset.UtcNow);
-        var failedAcceptance = await grain.RecordProgressAsync(new ConversationProgressInput(
-            JsonSerializer.Serialize(failedProgress, ConversationContractsJsonContext.Default.ConversationProgress)));
-        if (failedAcceptance.Outcome == ConversationProgressOutcome.Rejected)
-            logger.LogWarning(
-                "Dead-letter Failed fact for progress message '{MessageId}' was rejected: {Reason}",
-                args.Message.MessageId, failedAcceptance.RejectionReason);
+        else
+        {
+            if (result.ErrorFactOutcome == ConversationProgressHandlingOutcome.Rejected)
+                logger.LogWarning(
+                    "Dead-letter Error fact for progress message '{MessageId}' was rejected: {Reason}",
+                    args.Message.MessageId, result.ErrorFactRejectionReason);
+            if (result.FailedFactOutcome == ConversationProgressHandlingOutcome.Rejected)
+                logger.LogWarning(
+                    "Dead-letter Failed fact for progress message '{MessageId}' was rejected: {Reason}",
+                    args.Message.MessageId, result.FailedFactRejectionReason);
+        }
 
         await args.CompleteMessageAsync(args.Message, args.CancellationToken);
-    }
-
-    private static (ConversationProgress? Progress, string? TenantId) TryReadAddressableProgress(ServiceBusReceivedMessage message)
-    {
-        ConversationProgress? progress;
-        try
-        {
-            progress = JsonSerializer.Deserialize(message.Body, ConversationContractsJsonContext.Default.ConversationProgress);
-        }
-        catch (JsonException)
-        {
-            return (null, null);
-        }
-
-        if (progress is null)
-            return (null, null);
-
-        message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
-        var validation = ConversationProgressEnvelopeValidator.Validate(
-            progress, message.SessionId, message.MessageId, tenantValue as string);
-
-        return validation.IsValid ? (progress, validation.TenantId) : (progress, null);
     }
 
     private Task ProcessErrorAsync(ProcessErrorEventArgs args)

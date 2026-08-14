@@ -790,8 +790,19 @@ full finding (conversation ID, event sequence, root cause) and the corrective fi
 prerequisite, **done and verified 2026-08-14**: code merged
 ([#43](https://github.com/katasec/mission-control-language/pull/43)) and deployed into
 `forge-durable` (`make 350-conversation-kind-up` against merged main
-`01047eab2a086587743a04163041802f295878b4`, both Deployments rolled out). **Task 8's live proof
-itself remains not reauthorized** — it requires an explicit separate go-ahead and a full rerun
+`01047eab2a086587743a04163041802f295878b4`, both Deployments rolled out).
+
+The rerun that followed Task 8b's fix reproduced observations #1-#4 for real (including sequential
+tool hand-offs completing a genuine multi-file plan) and then surfaced a second, distinct blocker
+during observation #6: a raw, non-JSON `kind-verifier-*` probe message — orphaned on the shared
+`conversation-progress` queue by an earlier, self-healing-looking verifier retry — got picked up by
+the live Host and, with `MaxConcurrentSessions=1`, starved conversation
+`173da2e0-248e-5637-ac1b-4c8fea4ad05a`'s own healthy session indefinitely. See
+[Task 8c: poison-progress containment](phase-43.16-task-8c-poison-progress-containment.md) for the
+full diagnosis and corrective fix — a **third prerequisite, implementation in progress**, not yet
+merged.
+
+**Task 8's live proof itself remains not reauthorized** — it requires an explicit separate go-ahead and a full rerun
 using the original "Implement a rate limiter." goal before this section can be marked done.
 
 Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named

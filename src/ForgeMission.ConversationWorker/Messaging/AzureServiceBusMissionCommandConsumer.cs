@@ -11,9 +11,15 @@ namespace ForgeMission.ConversationWorker.Messaging;
 /// The Service Bus SDK adapter for the <c>mission-command</c> queue, and — folded into the same
 /// class per the locked design — its own dead-letter sub-queue. Both are session processors:
 /// peek-lock, auto-complete false, one concurrent session and one concurrent call per session (a
-/// single Janus run per conversation at a time). All recovery/outbox decision logic lives in the
-/// SDK-independent <see cref="MissionCommandProcessor"/>; this class only reads/writes the Service
-/// Bus session state and completes messages.
+/// single Janus run per conversation at a time). Every message is classified first
+/// (<see cref="ConversationCommandMessageClassifier"/>, Phase 43.16 Task 8c): unaddressable poison
+/// input is completed with no session-state load, no <see cref="MissionCommandProcessor"/> call,
+/// and no publish — proven by <see cref="ProcessCommandCoreAsync"/> taking session load/save as
+/// injected delegates rather than touching the SDK session directly, so a test can prove they are
+/// never invoked for poison input without needing a real <c>ProcessSessionMessageEventArgs</c>. All
+/// other recovery/outbox decision logic lives in the SDK-independent
+/// <see cref="MissionCommandProcessor"/>; this class only reads/writes the Service Bus session
+/// state and completes messages.
 /// </summary>
 public sealed class AzureServiceBusMissionCommandConsumer(
     ServiceBusClient client,
@@ -24,6 +30,7 @@ public sealed class AzureServiceBusMissionCommandConsumer(
     : BackgroundService
 {
     private readonly MissionCommandProcessor _processor = new(mission);
+    private readonly ConversationCommandDeadLetterHandler _deadLetterHandler = new(publisher);
 
     private ServiceBusSessionProcessor? _commandProcessor;
     private ServiceBusProcessor? _deadLetterProcessor;
@@ -76,86 +83,51 @@ public sealed class AzureServiceBusMissionCommandConsumer(
     private async Task ProcessCommandAsync(ProcessSessionMessageEventArgs args)
     {
         var ct = args.CancellationToken;
+        await ProcessCommandCoreAsync(
+            args.Message,
+            loadSessionAsync: loadCt => LoadSessionStateAsync(args, loadCt),
+            saveSessionAsync: (s, saveCt) => SaveSessionStateAsync(args, s, saveCt),
+            ct);
+        await args.CompleteMessageAsync(args.Message, ct);
+    }
 
-        ConversationCommand command;
-        string tenantId;
-        try
+    /// <summary>SDK-independent core: classify first, and only an addressable command ever touches
+    /// session state or the processor. Internal + <c>InternalsVisibleTo</c> (Phase 43.16 Task 8c) so
+    /// a test can pass a <paramref name="loadSessionAsync"/> that throws if ever invoked, proving
+    /// structurally that unaddressable input short-circuits before any session-state touch — without
+    /// needing an uninstantiable real <c>ProcessSessionMessageEventArgs</c>.</summary>
+    internal async Task ProcessCommandCoreAsync(
+        ServiceBusReceivedMessage message,
+        Func<CancellationToken, Task<WorkerSessionState?>> loadSessionAsync,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        CancellationToken ct)
+    {
+        var classification = ConversationCommandMessageClassifier.Classify(message);
+        if (classification is UnaddressableCommand unaddressable)
         {
-            command = JsonSerializer.Deserialize(args.Message.Body, ConversationContractsJsonContext.Default.ConversationCommand)
-                ?? throw new InvalidOperationException("Command body deserialized to null.");
-
-            args.Message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
-            var validation = ConversationCommandEnvelopeValidator.Validate(
-                command, args.Message.SessionId, args.Message.MessageId, tenantValue as string);
-            if (!validation.IsValid)
-                throw new InvalidOperationException(validation.FailureReason);
-            tenantId = validation.TenantId!;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Unhandled failure reading command message '{MessageId}'; leaving unsettled for broker retry.",
-                args.Message.MessageId);
+            logger.LogError(
+                "Command message '{MessageId}' is unaddressable ({Category}); completing without action.",
+                message.MessageId, unaddressable.Category);
             return;
         }
 
-        var session = await LoadSessionStateAsync(args, ct);
+        var addressable = (AddressableCommand)classification;
+        var session = await loadSessionAsync(ct);
 
         await _processor.ProcessAsync(
-            command, tenantId, session,
-            saveSessionAsync: (s, saveCt) => SaveSessionStateAsync(args, s, saveCt),
+            addressable.Command, addressable.TenantId, session,
+            saveSessionAsync: saveSessionAsync,
             publishAsync: (progress, tid, publishCt) => publisher.PublishAsync(progress, tid, publishCt),
             ct);
-
-        await args.CompleteMessageAsync(args.Message, ct);
     }
 
     private async Task ProcessDeadLetterAsync(ProcessMessageEventArgs args)
     {
-        ConversationCommand? command;
-        string? tenantId;
-        try
-        {
-            command = JsonSerializer.Deserialize(args.Message.Body, ConversationContractsJsonContext.Default.ConversationCommand);
-            if (command is not null)
-            {
-                args.Message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
-                var validation = ConversationCommandEnvelopeValidator.Validate(
-                    command, args.Message.SessionId, args.Message.MessageId, tenantValue as string);
-                tenantId = validation.IsValid ? validation.TenantId : null;
-            }
-            else
-            {
-                tenantId = null;
-            }
-        }
-        catch (JsonException)
-        {
-            command = null;
-            tenantId = null;
-        }
-
-        if (command is null || tenantId is null)
-        {
+        var result = await _deadLetterHandler.HandleAsync(args.Message, args.CancellationToken);
+        if (!result.WasAddressable)
             logger.LogError(
-                "Command dead-letter message '{MessageId}' is malformed or unaddressable; completing without action.",
-                args.Message.MessageId);
-            await args.CompleteMessageAsync(args.Message, args.CancellationToken);
-            return;
-        }
-
-        var errorFact = new ConversationProgress(
-            ConversationDeterministicIds.DeadLetter(command.CommandId, "command-error"),
-            command.ConversationId, command.RunId, ConversationEventKind.Error, ConversationParticipant.Forge,
-            null, null, "Mission command delivery exhausted retries and was dead-lettered.", null, null, null, null, null,
-            DateTimeOffset.UtcNow);
-        await publisher.PublishAsync(errorFact, tenantId, args.CancellationToken);
-
-        var failedFact = new ConversationProgress(
-            ConversationDeterministicIds.DeadLetter(command.CommandId, "command-failed"),
-            command.ConversationId, command.RunId, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
-            null, null, null, null, null, null, null, ConversationRunStatus.Failed, DateTimeOffset.UtcNow);
-        await publisher.PublishAsync(failedFact, tenantId, args.CancellationToken);
+                "Command dead-letter message '{MessageId}' discarded as unaddressable: {Category}.",
+                args.Message.MessageId, result.DiscardCategory);
 
         await args.CompleteMessageAsync(args.Message, args.CancellationToken);
     }

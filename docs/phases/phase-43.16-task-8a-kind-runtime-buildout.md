@@ -110,7 +110,14 @@
   (`forge-conversation-host:cde3623...`, `forge-conversation-worker:cde3623...`).
 - The existing verifier Jobs still passed unchanged (`all_probes: PASS` on both sides) — a
   transient first-attempt network failure on a brand-new cluster, already documented as expected
-  in `kind-up.sh`, self-healed on the built-in retry.
+  in `kind-up.sh`, self-healed on the built-in retry. **Correction (2026-08-15, via
+  [Task 8c](phase-43.16-task-8c-poison-progress-containment.md)):** "self-healed" described only
+  the verifier's own PASS/FAIL reporting. The retry does not clean up the failed attempt's
+  already-sent probe message — it is now known that this exact transient failure leaves a raw,
+  non-JSON `kind-verifier-*` probe message orphaned on the shared `conversation-progress` queue,
+  which a live Host consumer can later pick up and get stuck retrying (the incident that opened
+  Task 8c). The observation itself (Jobs passed, rollout succeeded) stands; the "self-healed"
+  characterization of the underlying transient failure does not.
 - `kubectl rollout status`: `deployment "conversation-host" successfully rolled out` and
   `deployment "mission-worker" successfully rolled out`.
 - `kubectl get pods -n forge-durable`: both `conversation-host-...` and `mission-worker-...`
