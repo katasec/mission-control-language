@@ -746,11 +746,12 @@ Task-7 Client Runtime/Presentation, mission, or forge-infra change is included.
 
 ### 6. Conversation API and resumable SSE
 
-**Task 6 — build-ready.** See [Conversation API and resumable SSE](phase-43.16-task-6-conversation-api-sse.md).
-It maps the five additive Forge-native routes, preserves pinned capability declarations for
-follow-up runs, and closes the Table-replay/live-notifier race without making a healthy SSE
-connection a correctness condition. The local adapter uses the fixed `dev` tenant only; a future
-Tier-1 ForgeAPI/ForgeUI adapter supplies authenticated identity.
+**Task 6 — done and verified 2026-08-14.** See [Conversation API and resumable SSE](phase-43.16-task-6-conversation-api-sse.md)
+and [its completed evidence](phase-43.16-task-6-conversation-api-sse_completed.md). It maps the
+five additive Forge-native routes, preserves pinned capability declarations for follow-up runs, and
+closes the Table-replay/live-notifier race without making a healthy SSE connection a correctness
+condition. The local adapter uses the fixed `dev` tenant only; a future Tier-1 ForgeAPI/ForgeUI
+adapter supplies authenticated identity.
 
 **Done when:** the Task 6 document's named HTTP/SSE tests pass (including disconnect/reconnect
 replay), `/v1/*` contract tests remain unchanged, and the full solution build/test passes.

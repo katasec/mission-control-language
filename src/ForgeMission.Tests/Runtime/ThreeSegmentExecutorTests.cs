@@ -177,6 +177,26 @@ public sealed class ThreeSegmentExecutorTests
     }
 
     // ------------------------------------------------------------------
+    // Regression (Claude Code 2.1.211): the client rebuilds its system prompt fresh on
+    // EVERY call — a per-call build stamp / context envelope inside it must not defeat the
+    // enrichment cache. Reproduces the reported symptom directly through the mission loop.
+    // ------------------------------------------------------------------
+    [Fact]
+    public async Task ToolLoop_EnrichesOncePerUserTurn_EvenWhenClientSystemPromptDriftsPerCall()
+    {
+        var provider = new SegmentAwareClient();
+        var mission  = new MissionChatClient(Ast, Experts(), new DirectExpertRunner(provider), fullConversation: true);
+
+        // Same logical user turn, but the client's own system prompt is DIFFERENT text on
+        // each call — exactly what a per-call build stamp / context envelope produces.
+        await mission.GetResponseAsync(UserTurn(system: "client system prompt cc_version=2.1.211.aaa"), Tools());
+        await mission.GetResponseAsync(Continuation(system: "client system prompt cc_version=2.1.211.bbb"), Tools());
+
+        Assert.Equal(1, provider.EnrichCalls);   // enrich-once must survive system drift
+        Assert.Equal(1, provider.VerifyCalls);
+    }
+
+    // ------------------------------------------------------------------
     // Conversation identity (P/F) sanity
     // ------------------------------------------------------------------
     [Fact]
@@ -189,19 +209,51 @@ public sealed class ThreeSegmentExecutorTests
         Assert.NotEqual(ConversationHash.Full(turn), ConversationHash.Full(continuation));
     }
 
+    [Fact]
+    public void PrefixAndFullHash_AreStable_WhenOnlyTheClientSystemPromptDiffers()
+    {
+        // Same real user turn, same tool round-trip — only the client's rebuilt-per-call
+        // system prompt text differs. Neither P nor F may change: system is excluded from
+        // both (§4: "same normalizer serves P").
+        var turnA = UserTurn(system: "cc_version=2.1.211.aaa");
+        var turnB = UserTurn(system: "cc_version=2.1.211.bbb — totally different length too");
+        Assert.Equal(ConversationHash.Prefix(turnA), ConversationHash.Prefix(turnB));
+        Assert.Equal(ConversationHash.Full(turnA), ConversationHash.Full(turnB));
+
+        var continuationA = Continuation(system: "cc_version=2.1.211.aaa");
+        var continuationB = Continuation(system: "cc_version=2.1.211.bbb — totally different length too");
+        Assert.Equal(ConversationHash.Prefix(continuationA), ConversationHash.Prefix(continuationB));
+        Assert.Equal(ConversationHash.Full(continuationA), ConversationHash.Full(continuationB));
+    }
+
+    [Fact]
+    public void PrefixHash_DiffersForGenuinelyDifferentUserGoals()
+    {
+        // Guard against over-filtering: excluding system must not collapse two DIFFERENT
+        // logical user turns into the same cache key. A real cache miss must still occur.
+        var goalA = UserTurn();
+        var goalB = new List<ChatMessage>
+        {
+            new(ChatRole.System, "client system prompt"),
+            new(ChatRole.User, "an entirely different request"),
+        };
+
+        Assert.NotEqual(ConversationHash.Prefix(goalA), ConversationHash.Prefix(goalB));
+    }
+
     // ------------------------------------------------------------------
     // Conversations as the wire would hand them over (BuildChatHistory shapes)
     // ------------------------------------------------------------------
 
-    private static List<ChatMessage> UserTurn() =>
+    private static List<ChatMessage> UserTurn(string system = "client system prompt") =>
     [
-        new(ChatRole.System, "client system prompt"),
+        new(ChatRole.System, system),
         new(ChatRole.User, "read the probe file and tell me the magic word"),
     ];
 
-    private static List<ChatMessage> Continuation() =>
+    private static List<ChatMessage> Continuation(string system = "client system prompt") =>
     [
-        new(ChatRole.System, "client system prompt"),
+        new(ChatRole.System, system),
         new(ChatRole.User, "read the probe file and tell me the magic word"),
         new(ChatRole.Assistant,
             [new FunctionCallContent("toolu_seg_1", "Read", new Dictionary<string, object?> { ["file_path"] = "/tmp/x" })]),

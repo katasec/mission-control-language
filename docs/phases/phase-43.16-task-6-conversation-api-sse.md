@@ -1,15 +1,11 @@
 # Phase 43.16 Task 6 — Conversation API and resumable SSE
 
-> **Status: Implementation accepted; phase verification pending (2026-08-14).** The corrected
-> Task 6 implementation satisfies its design and has a clean build, 120/120 ConversationHost tests,
-> and three consecutive 9/9 real-Kestrel API/SSE runs. The full solution suite is not currently
-> green because the unmodified live `ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission`
-> integration test reproducibly expects one tool call but observes two; this must be resolved or
-> explicitly classified before Task 6 can be marked verified. Tasks 4 and 5 are accepted and
-> verified through `951bf73` and `1da4dc7`; status was recorded at `aea36e6`. This task exposes
-> their durable Conversation service through an additive Forge-native message contract, with
-> HTTP/SSE as its first projection. It does not change the Worker, Service Bus delivery, Desktop UI,
-> `/v1/*`, mission definitions, or forge-infra.
+> **Status: Done and verified (2026-08-14).** Task 6's additive message-first Conversation API and
+> HTTP/SSE projection satisfy the locked design. The full suite is green after the separately scoped
+> Phase 42.3 continuation-cache correction restored enrich-once behavior for Claude Code 2.1.211;
+> see [the completed evidence](phase-43.16-task-6-conversation-api-sse_completed.md). Tasks 4 and 5
+> remain verified through `951bf73` and `1da4dc7`. Task 6 does not change the Worker, Service Bus
+> delivery, Desktop UI, `/v1/*`, mission definitions, or forge-infra.
 
 ## Outcome and scope
 
@@ -102,13 +98,13 @@ without becoming their semantic definition; accepted mutations set the documente
 source-generated bounded validation returns typed `Invalid` before state advance. The source tree
 has no Task 6 edits under `ForgeMission.Api` or `ForgeMission.Tests`.
 
-`dotnet build src/ForgeMission.slnx --no-restore` succeeded with 0 warnings and 0 errors.
-`ForgeMission.ConversationHost.Tests` passed 120/120, and the nine `ConversationApiTests` passed
-three consecutive independent runs. A full `dotnet test src/ForgeMission.slnx --no-restore` did
-not pass: the existing live `ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission` test failed
-twice (including a focused rerun) at `ClaudeCodeTests.cs:153`, asserting one tool call but observing
-two. It is outside Task 6's diff, but it is now a documented verification gate rather than hidden
-behind a Task 6 completion claim.
+Task 6 implementation verification passed: `dotnet build src/ForgeMission.slnx --no-restore` had
+0 warnings/errors; `ForgeMission.ConversationHost.Tests` passed 120/120; and the nine
+`ConversationApiTests` passed three independent real-Kestrel runs. The required full-suite gate is
+now also green. Its only prior failure was a Phase 42.3 cache-key regression exposed by Claude Code
+2.1.211—not a Task 6 change—and the correction retains the live test's exact `enrichRuns == 1`
+assertion. Full evidence and the completed-task narrative are in
+[the completed record](phase-43.16-task-6-conversation-api-sse_completed.md).
 
 ## Locked API behaviour
 
