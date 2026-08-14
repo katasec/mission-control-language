@@ -1,10 +1,12 @@
 # Phase 43.16 Task 6 — Conversation API and resumable SSE
 
-> **Status: Build-ready for Claude implementation (2026-08-14; transport-neutral contract
-> correction locked).** Tasks 4 and 5 are accepted and verified through `951bf73` and `1da4dc7`;
-> status was recorded at `aea36e6`. This task exposes their durable Conversation service through an
-> additive Forge-native message contract, with HTTP/SSE as its first projection. It does not change
-> the Worker, Service Bus delivery, Desktop UI, `/v1/*`, mission definitions, or forge-infra.
+> **Status: Claude correction required (2026-08-14).** The initial Task 6 implementation passed
+> the full suite (631 passed, 11 known provider-dependent skips) but implemented the superseded
+> `70e76a6` HTTP-shaped contract rather than the transport-neutral message contract locked at
+> `99fe1ef`. Tasks 4 and 5 are accepted and verified through `951bf73` and `1da4dc7`; status was
+> recorded at `aea36e6`. This task exposes their durable Conversation service through an additive
+> Forge-native message contract, with HTTP/SSE as its first projection. It does not change the
+> Worker, Service Bus delivery, Desktop UI, `/v1/*`, mission definitions, or forge-infra.
 
 ## Outcome and scope
 
@@ -48,6 +50,33 @@ SSE's `event:`/`id:`/`data:` framing are adapter concerns. The endpoint maps bet
 and the Contracts messages; no Contracts type, grain method, persistence interface, or Worker
 message may expose an HTTP type. SSE projects the `ReadConversationEventsRequest` result; the
 durable `ConversationEvent` and its sequence—not a live HTTP response—are the reconnect contract.
+
+### Required correction to the initial implementation
+
+The initial Claude implementation correctly delivered durable replay, idempotency/recovery, and
+the HTTP/SSE adapter against the earlier contract revision, but it is **not accepted** yet. Before
+resubmitting it must make these bounded changes and add/adjust the named tests:
+
+1. Add `ConversationId` to `SubmitConversationCommandRequest` and
+   `SubmitToolResultRequest`; add `GetConversationRequest`, `GetConversationResponse`, and
+   `ReadConversationEventsRequest` to Contracts and `ConversationContractsJsonContext`. The
+   adapter must construct/bind these messages, reject a route/body conversation-ID disagreement as
+   `400`, and return `GetConversationResponse`, not a bare snapshot. The grain-local Orleans DTOs
+   stay Host-only.
+2. For accepted follow-up and tool-result HTTP projections, set the documented
+   `Location: /conversations/{conversationId}` and `Retry-After: 1` headers. Test both headers;
+   `Results.Accepted(null, ...)` alone does not meet this contract.
+3. Implement the existing bounded-input decision: source-generate and measure the start
+   `ConversationCommand` UTF-8 JSON before durable work (maximum 32 KiB), and the derived
+   tool-result `ConversationProgress` JSON before calling `RecordProgressAsync` (the existing
+   48 KiB inline-event threshold). Add `Invalid` to `ConversationCommandOutcome`, return its
+   reason without state advance, map it to `400`, and test both limits. Table limits remain the
+   integrity backstop, not public validation.
+4. Extend source-generation and real-Kestrel tests to prove the same Contracts message can be
+   used without HTTP meaning, while HTTP only maps path/query/header concerns at its edge.
+
+These are corrections to the already locked design, not new scope. Re-run the full solution suite
+afterward and provide the exact result in the next completion summary.
 
 ## Locked API behaviour
 
