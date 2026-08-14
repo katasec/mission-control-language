@@ -1,8 +1,9 @@
 # Phase 43.16 — Durable Janus conversation proof
 
-> **Status: Implementation active (2026-08-14).** Durable persistence and Service Bus/Worker
-> delivery are verified; conversation API/SSE is next. This replaces the earlier in-memory Janus
-> Desktop sketch. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md);
+> **Status: Implementation active (2026-08-14).** Durable persistence, Service Bus/Worker
+> delivery, the conversation API/SSE, and the Client Runtime durable session are verified; the
+> Kind/Azure product proof (Task 8) is next. This replaces the earlier in-memory Janus Desktop
+> sketch. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md);
 > builds on [43.11](phase-43.11-wasm-photino-shell.md), the completed
 > [43.15 Janus mission](phase-43.15-janus-inter-agent-mission.md), and the shared
 > [durable-conversations design](../design/durable-conversations.md).
@@ -758,12 +759,17 @@ replay), `/v1/*` contract tests remain unchanged, and the full solution build/te
 
 ### 7. Client Runtime and group-chat rendering
 
-**Design complete; ready for implementation.** See [Client Runtime and group-chat rendering](phase-43.16-task-7-client-runtime-group-chat.md).
-It locks the Client Runtime-owned Host adapter, stable local tool-result idempotency, and one
-durable-event transcript projection before code changes begin.
+**Task 7 — done and verified 2026-08-14** (commit `18b9eba`). See
+[Client Runtime and group-chat rendering](phase-43.16-task-7-client-runtime-group-chat.md) and
+[its completed evidence](phase-43.16-task-7-client-runtime-group-chat_completed.md). Client
+Runtime owns the durable Janus session end to end (start/follow-up, tail reconnect, expected-tool
+hand-off with a stable result command ID); `ConversationSessionSlot` serializes prompt admission,
+lazy session creation, and replacement disposal as one operation, closing a real race found during
+review where a prompt could otherwise start an orphaned durable session after a mission switch.
+Presentation projects the event stream through a pure `ConversationTranscript` model.
 
 **Done when:** [Task 7's named condition](phase-43.16-task-7-client-runtime-group-chat.md#done-when)
-is verified.
+is verified — met, per the completed evidence above.
 
 ### 8. Product proof and evidence
 

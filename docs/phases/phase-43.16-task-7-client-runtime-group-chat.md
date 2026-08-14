@@ -1,6 +1,6 @@
 # Phase 43.16 Task 7 — Client Runtime and group-chat rendering
 
-> **Status: Design complete; ready for Claude implementation (2026-08-14).** This task makes Janus selectable in Desktop, connects the existing local Client Runtime to the Task 6 message-first Conversation API, and projects the durable event stream as one group-chat transcript. It does not change ConversationHost, ConversationWorker, Service Bus, the Janus mission, `/v1/*`, or forge-infra.
+> **Status: Done and verified (2026-08-14).** This task makes Janus selectable in Desktop, connects the existing local Client Runtime to the Task 6 message-first Conversation API, and projects the durable event stream as one group-chat transcript. It does not change ConversationHost, ConversationWorker, Service Bus, the Janus mission, `/v1/*`, or forge-infra. See [its completed evidence](phase-43.16-task-7-client-runtime-group-chat_completed.md) for delivery, verification, and the prompt-admission/replacement-disposal lifecycle race found and fixed during review.
 
 ## Outcome and scope
 
