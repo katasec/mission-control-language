@@ -160,6 +160,10 @@ involvement.
 - `make 350-conversation-kind-up` has been run from that clean `main` checkout and its rollout
   evidence (new SHA, both Deployments' rollout status, pod state) is recorded in a follow-up docs
   PR.
-- Task 8's live proof is explicitly reauthorized and rerun — using the same "Implement a rate
-  limiter." goal that originally failed, not an artificially single-file-scoped one — before Task 8
-  itself is marked done.
+
+## Next after Task 8b
+
+Task 8b landing does not by itself close out Task 8. [Task 8's live proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence)
+remains **active and unverified** and requires separate Codex reauthorization, plus a full rerun
+using the same "Implement a rate limiter." goal that originally failed — not an artificially
+single-file-scoped one — before Task 8 itself is marked done.
