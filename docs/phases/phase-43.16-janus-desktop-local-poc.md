@@ -786,9 +786,13 @@ Anthropic providers, then hit a genuine product defect that failed the run befor
 #4–#6 could be attempted: the Implementer's provider call emitted two tool calls in one turn and
 tripped `JanusPipelineProgressMapper`'s deliberate "exactly one tool call per request" guard. See
 [Task 8b: Janus one-tool-per-turn contract](phase-43.16-task-8b-janus-one-tool-per-turn.md) for the
-full finding (conversation ID, event sequence, root cause) and the corrective fix — a second,
-**mandatory prerequisite**, not yet merged. Task 8's live proof is not reauthorized until Task 8b
-lands, deploys, and this section is updated.
+full finding (conversation ID, event sequence, root cause) and the corrective fix — a second
+prerequisite, **done and verified 2026-08-14**: code merged
+([#43](https://github.com/katasec/mission-control-language/pull/43)) and deployed into
+`forge-durable` (`make 350-conversation-kind-up` against merged main
+`01047eab2a086587743a04163041802f295878b4`, both Deployments rolled out). **Task 8's live proof
+itself remains not reauthorized** — it requires an explicit separate go-ahead and a full rerun
+using the original "Implement a rate limiter." goal before this section can be marked done.
 
 Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named
 observations for:

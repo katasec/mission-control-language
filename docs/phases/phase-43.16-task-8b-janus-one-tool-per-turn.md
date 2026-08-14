@@ -1,6 +1,8 @@
 # Phase 43.16 Task 8b — Janus one-tool-per-turn contract
 
-> **Status: implementation in progress (2026-08-14).** Prerequisite to
+> **Status: code merged and Kind rollout verified (2026-08-14).** mission-control-language PR
+> [#43](https://github.com/katasec/mission-control-language/pull/43), merge commit
+> `01047eab2a086587743a04163041802f295878b4`. Prerequisite to
 > [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
 > corrects a real defect discovered during Task 8's first live run, where the Implementer's
 > provider call emitted two tool calls in one turn and tripped
@@ -139,27 +141,48 @@ among the extra calls.
 4. `JanusPipelineProgressMapperTests.MultipleToolCalls_FailsVisibly` — unchanged, still required to
    pass exactly as today.
 
-## Kind rollout (after code review/merge only)
+## Kind rollout — done and verified (2026-08-14)
 
-Deploying the corrected Worker is part of this task's Done-when, but only after its code PR is
-reviewed and merged — no separate Worker-only deployment path. From a clean `main` checkout, run
-`make 350-conversation-kind-up` (the single established target from Task 8a) — it builds, loads,
-SHA-tags, and rolls out **both** `conversation-host` and `mission-worker` images together by
-design, even though `conversation-host`'s own code doesn't change here. Record the new `main`
-commit SHA and the same rollout observations Task 8a captured (image tags, `kubectl rollout
-status` for both Deployments, pod `Running` state) in a follow-up docs PR. No `525` layer
-involvement.
+`make -C /Users/ameerdeen/progs/forge-infra 350-conversation-kind-up` run live against this repo's
+merged `main` commit `01047eab2a086587743a04163041802f295878b4` (no `525` layer involvement, both
+images built/rolled out together by the one established target — no Worker-only path invented):
+
+- Provenance resolved and logged: `Building Kind application images from mission-control-language
+  commit 01047eab2a086587743a04163041802f295878b4 (clean main checkout).`
+- Both images built and `kind load docker-image`'d under that exact SHA tag:
+  `forge-conversation-host:01047eab2a086587743a04163041802f295878b4`,
+  `forge-conversation-worker:01047eab2a086587743a04163041802f295878b4`.
+- The pre-existing verifier Jobs passed (`all_probes: PASS` both sides) — attempt 1/3 hit the
+  same already-documented transient `SessionCannotBeLockedError` on
+  `progress_receive_roundtrip` that Task 8a's own evidence recorded as expected on a busy
+  cluster; it self-healed on the built-in retry (attempt 2/3 succeeded clean).
+- `kubectl rollout status`: `deployment "conversation-host" successfully rolled out` and
+  `deployment "mission-worker" successfully rolled out`.
+- `kubectl get pods -n forge-durable`: both `conversation-host-67cb95ff86-hm6gb` and
+  `mission-worker-6c6ff75548-bhxjs` `1/1 Running` (fresh pods from this rollout, not the
+  pre-existing ones).
+- Independently re-verified after rollout (not just trusted from the `make` output): a fresh
+  `kubectl port-forward` to `conversation-host` plus `Invoke-WebRequest -Uri
+  http://127.0.0.1:18081/health` → `200`; `kubectl logs deployment/mission-worker` contains
+  `Mission-command session processor and dead-letter processor started for queue
+  'mission-command'.`.
+- `make 350-conversation-kind-status`: `forge-conversation-worker-provider-keys` listed by name
+  only (`Opaque`, `DATA 2`) — no value printed anywhere in the entire run's captured output.
 
 ## Done when
 
-- The context-bag seam, `PipelineRunOptions.AllowMultipleToolCalls`, and Janus's opt-in are
+- ✅ The context-bag seam, `PipelineRunOptions.AllowMultipleToolCalls`, and Janus's opt-in are
   implemented exactly as scoped above; the mapper guard is unchanged.
-- All four test items above pass; `dotnet build src/ForgeMission.slnx` and
-  `dotnet test src/ForgeMission.slnx` are both clean.
-- This code/docs PR is reviewed and merged to `main`.
-- `make 350-conversation-kind-up` has been run from that clean `main` checkout and its rollout
-  evidence (new SHA, both Deployments' rollout status, pod state) is recorded in a follow-up docs
-  PR.
+- ✅ All four test items above pass; `dotnet build src/ForgeMission.slnx` and
+  `dotnet test src/ForgeMission.slnx` are both clean (694 passed/skipped, 0 failed — the 688 Task
+  8a baseline plus the 6 tests this task adds).
+- ✅ This code/docs PR ([#43](https://github.com/katasec/mission-control-language/pull/43)) is
+  reviewed and merged to `main` (`01047eab2a086587743a04163041802f295878b4`).
+- ✅ `make 350-conversation-kind-up` has been run from that clean `main` checkout and its rollout
+  evidence is recorded above, in this follow-up docs PR.
+
+**Task 8b is complete.** Task 8's live proof itself is a separate, not-yet-reauthorized next step
+— see below.
 
 ## Next after Task 8b
 
