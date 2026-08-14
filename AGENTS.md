@@ -128,8 +128,12 @@ session:
 3. Make **"what's next"** unambiguous in the hub's top so a fresh agent can resume from the plan
    alone.
 4. Verify tests pass. Don't hand off with known-failing tests undocumented.
-5. Commit + push **everything, across every touched repo** (this may span more than one repo).
-   End on 0 uncommitted / 0 unpushed per repo. Never an empty commit.
+5. Commit + push **everything, across every touched repo** (this may span more than one repo),
+   then create a PR and merge it into `main` once its required verification passes. A task is not
+   fully delivered while its completed work sits only on a feature branch. Apply this per repo:
+   one task may require one PR in each repository it changed. Never commit directly to `main`, and
+   never merge work whose required checks are failing or still unverified. End on `main` with 0
+   uncommitted / 0 unpushed per repo. Never an empty commit.
 
 ## Branch isolation
 
