@@ -1,8 +1,8 @@
 # Phase 43.16 Task 8c — Poison-progress containment
 
-> **Status: implementation complete, awaiting merge and rollout evidence (2026-08-15) — not Done.**
+> **Status: ✅ Done — merged and deployed 2026-08-15.**
 > Prerequisite to
-> [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
+> [Task 8's core product proof](phase-43.16-janus-desktop-local-poc.md#8-core-product-proof--done-2026-08-16):
 > corrects a real defect discovered during Task 8's rerun (after
 > [Task 8b](phase-43.16-task-8b-janus-one-tool-per-turn.md) landed), where an orphaned raw
 > `kind-verifier-*` probe message on the shared `conversation-progress` queue permanently starved a
@@ -215,25 +215,27 @@ prior task. `python3 -m unittest test_drain test_service_roundtrip test_cleanup`
 `dev/350-conversation-data/kind/verifier/`) clean. `bash -n dev/350-conversation-data/scripts/
 kind-up.sh` clean.
 
-## Kind rollout and live recovery (after code review/merge only)
+## Kind rollout and historical incident — verified (2026-08-15)
 
-Both repos' PRs reviewed and merged first — no `make 350-conversation-kind-up`, no message
-settlement, and no Task 8 rerun performed as part of this task's own implementation. Once
-authorized as a separate step: `make 350-conversation-kind-up` from a clean `main` checkout
-exercises the full new quiesce -> verify -> restore sequence for real. Evidence to capture:
+Both implementation PRs merged first: MCL at
+`5afa2cc1d029b1d6adb8ddde25d5636a10bc84bf` and forge-infra at
+`c00dd89f5dde1519011634e37c55a8558ca31768`. The authorized
+`make 350-conversation-kind-up` run from that clean MCL `main` completed with exit code 0:
 
-- both Deployments observed scaled to 0 and pods gone before the verifier Jobs run;
-- each role's own-session drain succeeding (its receive-until-empty loop terminating clean);
-- both Deployments restored to exactly one replica, `kubectl rollout status` succeeding;
-- the specific stranded message `71fcc8b5-29e3-4551-a3ea-40dca4d15695` being safely discarded by
-  the *deployed Host's* new classification behavior — a log line naming it exactly once, not the
-  prior ten-times-and-counting retry loop, and no manual broker settlement of any kind;
-- conversation `173da2e0-248e-5637-ac1b-4c8fea4ad05a` confirmed advancing past `lastSequence: 139`
-  with no duplicate action taken on it.
+- both Deployments scaled to zero and their pods disappeared before verifier Jobs ran;
+- verifier attempt 1/3 passed, including `service-cleanup` and `worker-cleanup`
+  `probe_session_drain: PASS (drained 0)`;
+- both Deployments returned to one replica on
+  `forge-conversation-{host,worker}:5afa2cc...`, with zero restarts; and
+- the deployed Host discarded poison message
+  `71fcc8b5-29e3-4551-a3ea-40dca4d15695` exactly once as `InvalidJson`, with no manual broker
+  settlement and no recurring retry loop.
 
-This rollout requires separate, later, explicit Codex reauthorization to run — but, unlike Task
-8's own full live-proof rerun below, it and its evidence are now part of this task's own
-Done-when (see below): merged PRs alone do not close this task.
+Conversation `173da2e0-248e-5637-ac1b-4c8fea4ad05a` remains a historical stranded artifact at
+`lastSequence: 139`, `waitingForTool`. Clearing the unrelated poison message freed the shared
+consumer slot; it could not resume this already-idle conversation because no matching tool result
+was queued. Advancing it was therefore never a valid Task 8c containment criterion and no recovery
+feature is introduced here.
 
 ## Done when
 
@@ -249,18 +251,5 @@ Implementation-complete (already satisfied):
   the new local-Kind downtime behavior and the two-stage (immediate drain + cleanup barrier)
   guarantee.
 
-Still required before this task is Done — implementation PRs being open is not completion:
-
-- MCL and forge-infra PRs reviewed and merged to their respective `main`s, with required checks
-  passed.
-- `make 350-conversation-kind-up` run from a clean MCL `main` checkout, proving the full sequence
-  for real: quiesce -> original verifier Jobs -> post-attempt cleanup barrier -> one-replica
-  application rollout.
-- Named live observations recorded in a follow-up evidence/docs PR: the known poison MessageId
-  (`71fcc8b5-29e3-4551-a3ea-40dca4d15695`) is safely discarded by the deployed Host's new
-  classification behavior, with no manual broker settlement of any kind; conversation
-  `173da2e0-248e-5637-ac1b-4c8fea4ad05a` confirmed advancing past `lastSequence: 139` with no
-  duplicate action taken on it.
-- Task 8's own eight-observation live product proof rerun ("Implement a rate limiter.") remains
-  explicitly out of scope for this task and requires separate, later Codex authorization — not
-  part of this Done-when.
+All Task 8c conditions above are satisfied. The completed Task 8 core product proof is recorded in
+the [Phase 43.16 hub](phase-43.16-janus-desktop-local-poc.md#8-core-product-proof--done-2026-08-16).

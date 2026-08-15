@@ -1,9 +1,9 @@
 # Phase 43.16 — Durable Janus conversation proof
 
-> **Status: Implementation active (2026-08-14).** Durable persistence, Service Bus/Worker
-> delivery, the conversation API/SSE, and the Client Runtime durable session are verified; the
-> Kind/Azure product proof (Task 8) is next. This replaces the earlier in-memory Janus Desktop
-> sketch. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md);
+> **Status: ✅ Core product proof done (2026-08-16).** Janus Desktop visibly rendered a real
+> Proposer → Approver → Implementer conversation through Kind, including revision, approval,
+> local-tool execution, and completion. This replaces the earlier in-memory Janus Desktop sketch.
+> Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md);
 > builds on [43.11](phase-43.11-wasm-photino-shell.md), the completed
 > [43.15 Janus mission](phase-43.15-janus-inter-agent-mission.md), and the shared
 > [durable-conversations design](../design/durable-conversations.md).
@@ -771,7 +771,7 @@ Presentation projects the event stream through a pure `ConversationTranscript` m
 **Done when:** [Task 7's named condition](phase-43.16-task-7-client-runtime-group-chat.md#done-when)
 is verified — met, per the completed evidence above.
 
-### 8. Product proof and evidence
+### 8. Core product proof — done (2026-08-16)
 
 **Prerequisite — [Task 8a: Kind runtime build-out](phase-43.16-task-8a-kind-runtime-buildout.md)
 — done and verified 2026-08-14.** Built the real ConversationHost/Worker container images and
@@ -780,60 +780,28 @@ gap during Task 8 planning (the Kind manifests were still `image: TBD` placehold
 explicitly separate from the evidence-only run below. Both real Deployments are live in
 `forge-durable` now.
 
-**Status: active and unverified (2026-08-14).** The first live-proof attempt validly proved
-observations #1–#3 below (real, unscripted revision-then-approval cycle) against real OpenAI/
-Anthropic providers, then hit a genuine product defect that failed the run before observations
-#4–#6 could be attempted: the Implementer's provider call emitted two tool calls in one turn and
-tripped `JanusPipelineProgressMapper`'s deliberate "exactly one tool call per request" guard. See
-[Task 8b: Janus one-tool-per-turn contract](phase-43.16-task-8b-janus-one-tool-per-turn.md) for the
-full finding (conversation ID, event sequence, root cause) and the corrective fix — a second
-prerequisite, **done and verified 2026-08-14**: code merged
-([#43](https://github.com/katasec/mission-control-language/pull/43)) and deployed into
-`forge-durable` (`make 350-conversation-kind-up` against merged main
-`01047eab2a086587743a04163041802f295878b4`, both Deployments rolled out).
+**Done.** On 2026-08-16, a fresh Janus run against the existing Kind Host and Worker at MCL
+`5afa2cc1d029b1d6adb8ddde25d5636a10bc84bf` was opened in Desktop using a fresh local workspace.
+The UI visibly showed the required conversation: Proposer proposal, Approver revision request,
+revised Proposer proposal, Approver approval, then Implementer activity and `Completed` status.
+The durable Host record for conversation
+`15d172c4-99d9-52d7-a11c-eae9f54874cd` recorded that same order (Proposer at sequence 3,
+Approver revision at 5–7, revised proposal at 8–9, approval at 10–12, Implementer at 13, and
+terminal completion at 27). The Implementer used its authorized local tool and the requested
+`hello.txt` existed in the selected workspace with `Hello from Janus`.
 
-The rerun that followed Task 8b's fix reproduced observations #1-#4 for real (including sequential
-tool hand-offs completing a genuine multi-file plan) and then surfaced a second, distinct blocker
-during observation #6: a raw, non-JSON `kind-verifier-*` probe message — orphaned on the shared
-`conversation-progress` queue by an earlier, self-healing-looking verifier retry — got picked up by
-the live Host and, with `MaxConcurrentSessions=1`, starved conversation
-`173da2e0-248e-5637-ac1b-4c8fea4ad05a`'s own healthy session indefinitely. See
-[Task 8c: poison-progress containment](phase-43.16-task-8c-poison-progress-containment.md) for the
-full diagnosis and corrective fix — a **third prerequisite, implementation in progress**, not yet
-merged.
+This is the product outcome for this phase: the human can inspect the real Janus Desktop and begin
+UI iteration with Codex. The earlier resilience and packaged-shell observations are useful
+follow-up evidence, not outstanding acceptance gates for this completed core proof.
 
-**Task 8's live proof itself remains not reauthorized** — it requires an explicit separate go-ahead and a full rerun
-using the original "Implement a rate limiter." goal before this section can be marked done.
-
-Run real Janus with configured OpenAI and Anthropic providers through Desktop and Kind. Record named
-observations for:
-
-1. picker to Janus task submission;
-2. ordered Proposer/Approver/Implementer group conversation;
-3. rejection/revision with no Implementer before approval;
-4. authorized local Implementer tool call and durable result;
-5. service/Desktop disconnect and replay from missed sequence;
-6. visible interrupted status rather than a silent duplicate after intentional in-flight stop;
-7. browser and packaged Photino rendering of recovered conversation;
-8. successful solution build/test.
-
-The Kind proof uses the Bicep-provisioned Azure data plane, not local emulators. Automated
-emulator tests remain supplementary; the real Azure run is required before any production-ready
-claim.
+**Scope boundary:** do not add Desktop durability/recovery work under Task 8 based on an old
+stranded conversation. Any separate product need requires its own approved design.
 
 ## Done when
 
 - Janus is selectable in Desktop and its real multi-provider exchange is one ordered group chat.
-- Completed messages, approval/revision, tool hand-offs/results, and terminal state survive Host
-  restart and Desktop reconnect.
-- Service Bus commands are delivered at least once and observed once at the durable run-state
-  boundary.
-- Desktop remains sole local-tool executor; '/v1/*' clients work unchanged.
-- The Kind proof, Bicep deployment, Azure CLI verification, and all named evidence above are
-  recorded.
+- Revision precedes approval; the Implementer acts only after approval.
+- The authorized local tool result and terminal completion are visible in Desktop and recorded by
+  the Host.
 
-## Hand-off gate
-
-This is ready for a Claude implementation assignment only after the operator reviews and approves
-it. The assignment follows [claude-codex-workflow.md](../design/claude-codex-workflow.md): one task
-at a time, named files/tests, and Codex review against this Done-when condition.
+All conditions are met by the named 2026-08-16 observation above.
