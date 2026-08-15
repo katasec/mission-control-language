@@ -1,6 +1,7 @@
 # Phase 43.16 Task 8c — Poison-progress containment
 
-> **Status: implementation in progress (2026-08-15).** Prerequisite to
+> **Status: implementation complete, awaiting merge and rollout evidence (2026-08-15) — not Done.**
+> Prerequisite to
 > [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
 > corrects a real defect discovered during Task 8's rerun (after
 > [Task 8b](phase-43.16-task-8b-janus-one-tool-per-turn.md) landed), where an orphaned raw
@@ -230,17 +231,36 @@ exercises the full new quiesce -> verify -> restore sequence for real. Evidence 
 - conversation `173da2e0-248e-5637-ac1b-4c8fea4ad05a` confirmed advancing past `lastSequence: 139`
   with no duplicate action taken on it.
 
-This rollout and Task 8's own full live-proof rerun are both separate, later, explicitly
-Codex-reauthorized steps — not part of this task's own Done-when.
+This rollout requires separate, later, explicit Codex reauthorization to run — but, unlike Task
+8's own full live-proof rerun below, it and its evidence are now part of this task's own
+Done-when (see below): merged PRs alone do not close this task.
 
 ## Done when
+
+Implementation-complete (already satisfied):
 
 - Both classifiers implemented exactly as scoped; `MaxConcurrentSessions` unchanged at 1 on both
   consumers; no Host<->Worker cross-reference; all log lines use fixed categories only.
 - All named tests (both repos) pass; `dotnet build`/`dotnet test` and
-  `python3 -m unittest test_drain.py` all clean.
+  `python3 -m unittest test_drain test_service_roundtrip test_cleanup` (run from
+  `dev/350-conversation-data/kind/verifier/`) all clean.
 - forge-infra's role-separated exact-session draining, quiesce-before-probe sequencing, and
   post-attempt cleanup barrier all implemented per the locked decisions above; README documents
   the new local-Kind downtime behavior and the two-stage (immediate drain + cleanup barrier)
   guarantee.
-- Both repos' PRs opened (this task does not merge them).
+
+Still required before this task is Done — implementation PRs being open is not completion:
+
+- MCL and forge-infra PRs reviewed and merged to their respective `main`s, with required checks
+  passed.
+- `make 350-conversation-kind-up` run from a clean MCL `main` checkout, proving the full sequence
+  for real: quiesce -> original verifier Jobs -> post-attempt cleanup barrier -> one-replica
+  application rollout.
+- Named live observations recorded in a follow-up evidence/docs PR: the known poison MessageId
+  (`71fcc8b5-29e3-4551-a3ea-40dca4d15695`) is safely discarded by the deployed Host's new
+  classification behavior, with no manual broker settlement of any kind; conversation
+  `173da2e0-248e-5637-ac1b-4c8fea4ad05a` confirmed advancing past `lastSequence: 139` with no
+  duplicate action taken on it.
+- Task 8's own eight-observation live product proof rerun ("Implement a rate limiter.") remains
+  explicitly out of scope for this task and requires separate, later Codex authorization — not
+  part of this Done-when.
