@@ -104,6 +104,19 @@ leave-unsettled pattern, with the same `MaxConcurrentSessions=1` blast radius, f
    own-session drains succeed; on any failure within a bounded retry/time budget, both stay at 0
    and the script exits non-zero — deliberately disruptive for the local Kind target, and
    documented as such, in preference to silently letting verifier traffic reach a live queue again.
+8. **Post-attempt cleanup barrier — the immediate per-role drain (decision 6) is first-line
+   cleanup, not the full guarantee.** The Worker and Conversation-service round-trip Jobs run
+   concurrently as two separate Kubernetes Jobs; the service Job's own immediate drain can
+   complete *before* the Worker Job — still running — has processed an ambiguously-sent command
+   and emitted its progress probe. A closing barrier runs after **every** attempt (success or
+   failure alike): both original round-trip Jobs are waited to terminal state and deleted first
+   (so neither can send anything more), then two new, role-isolated, cleanup-only Jobs
+   (`verifier-conversation-service-cleanup-job.yaml`, `verifier-worker-cleanup-job.yaml`) each
+   drain only their own queue with their own role's Secret — no send, no Storage, no cross-role
+   credential, no third combined-credential Job. Both cleanup Jobs must pass before the attempt can
+   be retried (fresh probe ID) or the Deployments restored; if either fails, `kind-up` stops
+   immediately — no retry, both Deployments stay at 0, non-zero exit — since a failed cleanup means
+   the queues' state can no longer be proven at all.
 
 ## Files
 
@@ -137,10 +150,14 @@ mission-control-language:
 
 forge-infra:
 
-    dev/350-conversation-data/kind/verifier/verify.py       (edit)
-    dev/350-conversation-data/kind/verifier/test_drain.py   (new)
-    dev/350-conversation-data/scripts/kind-up.sh             (edit)
-    dev/350-conversation-data/README.md                       (edit)
+    dev/350-conversation-data/kind/verifier/verify.py                    (edit)
+    dev/350-conversation-data/kind/verifier/test_drain.py                (new)
+    dev/350-conversation-data/kind/verifier/test_service_roundtrip.py    (new)
+    dev/350-conversation-data/kind/verifier/test_cleanup.py              (new)
+    dev/350-conversation-data/kind/verifier-conversation-service-cleanup-job.yaml (new)
+    dev/350-conversation-data/kind/verifier-worker-cleanup-job.yaml      (new)
+    dev/350-conversation-data/scripts/kind-up.sh                         (edit)
+    dev/350-conversation-data/README.md                                  (edit)
 
 No Bicep changes. No new queue, credential, RBAC role, or Manage right anywhere.
 
@@ -171,11 +188,31 @@ proves `MissionCommandProcessor` still runs, reusing the existing `FakeExpertRun
 succeeds on an already-matching message; drain retries then succeeds after a transient receiver
 failure (the actual finally/retry path, exercised for real, not just present in source); drain
 reports success on an already-empty session; drain fails closed (does not complete) on an
-unexpected body; drain reports failure after exhausting its bounded retry budget. No test sends
-real poison to a real application queue.
+unexpected body; drain reports failure after exhausting its bounded retry budget. `test_service_
+roundtrip.py` — fake-callable coverage proving the service role's drain always runs, even when
+`send_command` raises after an ambiguous send (the exact shape the incident needs closed);
+receive-only-attempted-after-a-successful-send; a passing round trip still fails the probe if the
+drain alone fails. `test_cleanup.py` — fake-`DrainOutcome` coverage of `run_cleanup_role`, the
+control flow shared by both post-attempt cleanup-only roles. No test sends real poison to a real
+application queue.
+
+A separate, throwaway bash sequencing simulation (fake `kubectl`/`kind`/`docker`/`az` on `PATH`,
+scenario-controlled per-Job wait exit codes, real `kind-up.sh` truncated just before the
+application-image section and run for real) proved three orderings against the actual script, not
+a reimplementation of it: (A) a fully-passing attempt still runs the post-attempt cleanup barrier
+before `probe_succeeded=1`; (B) either cleanup Job failing stops the script immediately with no
+retry and no second probe ConfigMap; (C) a failed original round trip still runs the barrier, and
+retries with a fresh probe ID once the barrier passes. This simulation is not checked into the
+repo — its throwaway harness lives outside forge-infra and is not part of this task's shipped
+artifact — but it is what caught a real bug during this correction: `run_cleanup_barrier`
+re-enabling `set -e` internally before its own `return` statement silently killed the whole script
+via `errexit`, undetected by `bash -n` or by manual reading, only surfaced once the simulation
+actually exercised the failure path.
 
 `dotnet build src/ForgeMission.slnx` / `dotnet test src/ForgeMission.slnx` clean, same bar as every
-prior task. `python3 -m unittest dev/350-conversation-data/kind/verifier/test_drain.py` clean.
+prior task. `python3 -m unittest test_drain test_service_roundtrip test_cleanup` (run from
+`dev/350-conversation-data/kind/verifier/`) clean. `bash -n dev/350-conversation-data/scripts/
+kind-up.sh` clean.
 
 ## Kind rollout and live recovery (after code review/merge only)
 
@@ -202,7 +239,8 @@ Codex-reauthorized steps — not part of this task's own Done-when.
   consumers; no Host<->Worker cross-reference; all log lines use fixed categories only.
 - All named tests (both repos) pass; `dotnet build`/`dotnet test` and
   `python3 -m unittest test_drain.py` all clean.
-- forge-infra's role-separated exact-session draining and quiesce-before-probe sequencing
-  implemented per the locked decisions above; README documents the new local-Kind downtime
-  behavior.
+- forge-infra's role-separated exact-session draining, quiesce-before-probe sequencing, and
+  post-attempt cleanup barrier all implemented per the locked decisions above; README documents
+  the new local-Kind downtime behavior and the two-stage (immediate drain + cleanup barrier)
+  guarantee.
 - Both repos' PRs opened (this task does not merge them).
