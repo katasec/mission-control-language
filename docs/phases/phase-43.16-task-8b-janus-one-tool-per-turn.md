@@ -155,7 +155,11 @@ images built/rolled out together by the one established target — no Worker-onl
 - The pre-existing verifier Jobs passed (`all_probes: PASS` both sides) — attempt 1/3 hit the
   same already-documented transient `SessionCannotBeLockedError` on
   `progress_receive_roundtrip` that Task 8a's own evidence recorded as expected on a busy
-  cluster; it self-healed on the built-in retry (attempt 2/3 succeeded clean).
+  cluster; it self-healed on the built-in retry (attempt 2/3 succeeded clean). **Correction
+  (2026-08-15, via [Task 8c](phase-43.16-task-8c-poison-progress-containment.md)):** this exact
+  attempt-1 failure is the one that produced the orphaned `kind-verifier-*` probe message Task 8c
+  traces the Task 8 live-proof incident back to — "self-healed" covered the verifier's own
+  reporting, not the leftover message it left behind on the real `conversation-progress` queue.
 - `kubectl rollout status`: `deployment "conversation-host" successfully rolled out` and
   `deployment "mission-worker" successfully rolled out`.
 - `kubectl get pods -n forge-durable`: both `conversation-host-67cb95ff86-hm6gb` and

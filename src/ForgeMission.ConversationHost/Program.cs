@@ -49,6 +49,7 @@ var progressListenClient = BuildServiceBusClient(
     serviceBusOptions.ProgressListenConnectionString, serviceBusOptions.FullyQualifiedNamespace);
 builder.Services.AddSingleton(progressListenClient);
 builder.Services.AddSingleton<ConversationProgressHandler>();
+builder.Services.AddSingleton<ConversationProgressDeadLetterHandler>();
 builder.Services.AddHostedService<ConversationProgressConsumer>();
 builder.Services.AddHostedService<ConversationProgressDeadLetterConsumer>();
 

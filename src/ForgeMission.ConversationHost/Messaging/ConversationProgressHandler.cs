@@ -6,43 +6,52 @@ using Orleans;
 
 namespace ForgeMission.ConversationHost.Messaging;
 
-/// <summary>Whether the calling consumer should complete the source Service Bus message.
-/// <see cref="RejectionReason"/> is set only when the grain itself rejected the fact — a
-/// structurally invalid message (bad body, tenant/session/message-ID mismatch) instead throws, so
-/// the consumer leaves it unsettled for the broker's own retry-then-dead-letter path.</summary>
-public sealed record ConversationProgressHandlingResult(bool ShouldComplete, string? RejectionReason);
+/// <summary>What happened to a progress message: durably applied to its conversation, rejected by
+/// the addressable grain (e.g. an unknown/already-completed tool request), or discarded as
+/// unaddressable poison input before any grain call was ever made. Never conflated — a discard and
+/// a grain-level rejection are logged distinctly (Phase 43.16 Task 8c).</summary>
+public enum ConversationProgressHandlingOutcome
+{
+    Applied,
+    Rejected,
+    Discarded,
+}
+
+/// <summary><paramref name="Reason"/> is the grain's rejection reason when <see cref="Outcome"/> is
+/// <see cref="ConversationProgressHandlingOutcome.Rejected"/>, or the fixed
+/// <see cref="ConversationProgressUnaddressableCategory"/> name when <see cref="Outcome"/> is
+/// <see cref="ConversationProgressHandlingOutcome.Discarded"/>; null when Applied.</summary>
+public sealed record ConversationProgressHandlingResult(ConversationProgressHandlingOutcome Outcome, string? Reason);
 
 /// <summary>
 /// The typed adapter between the Service Bus SDK and <see cref="IConversationGrain.RecordProgressAsync"/>.
-/// Validates the message's trusted <c>tenant_id</c> application property and that its
-/// <c>SessionId</c>/<c>MessageId</c> match the body's <c>ConversationId</c>/<c>EventId</c> before
-/// ever calling a grain — a mismatch is corruption, not a retryable condition, so it throws rather
-/// than being folded into <see cref="ConversationProgressOutcome.Rejected"/>.
+/// Classifies every message first (<see cref="ConversationProgressMessageClassifier"/>): unaddressable
+/// poison input (invalid JSON, missing tenant, envelope mismatch) is discarded with no grain call at
+/// all — never a throw, never a retry. Only an addressable message reaches the grain, preserving
+/// today's Applied/Rejected outcomes unchanged. A genuine failure *after* classification succeeds
+/// (e.g. a transient Orleans/Table error) is not caught here — it still propagates to the caller for
+/// the broker's own unsettled-retry-then-dead-letter path (Phase 43.16 Task 8c).
 /// </summary>
 public sealed class ConversationProgressHandler(IGrainFactory grainFactory)
 {
     public async Task<ConversationProgressHandlingResult> HandleAsync(ServiceBusReceivedMessage message, CancellationToken ct)
     {
-        var progress = JsonSerializer.Deserialize(message.Body, ConversationContractsJsonContext.Default.ConversationProgress)
-            ?? throw new InvalidOperationException($"Progress message '{message.MessageId}' body deserialized to null.");
+        var classification = ConversationProgressMessageClassifier.Classify(message);
+        if (classification is UnaddressableProgress unaddressable)
+            return new ConversationProgressHandlingResult(ConversationProgressHandlingOutcome.Discarded, unaddressable.Category.ToString());
 
-        message.ApplicationProperties.TryGetValue("tenant_id", out var tenantValue);
-        var validation = ConversationProgressEnvelopeValidator.Validate(
-            progress, message.SessionId, message.MessageId, tenantValue as string);
-        if (!validation.IsValid)
-            throw new InvalidOperationException($"Progress message '{message.MessageId}': {validation.FailureReason}");
-
-        var address = new ConversationAddress(validation.TenantId!, progress.ConversationId);
+        var addressable = (AddressableProgress)classification;
+        var address = new ConversationAddress(addressable.TenantId, addressable.Progress.ConversationId);
         var grain = grainFactory.GetGrain<IConversationGrain>(address.ToString());
-        var progressJson = JsonSerializer.Serialize(progress, ConversationContractsJsonContext.Default.ConversationProgress);
+        var progressJson = JsonSerializer.Serialize(addressable.Progress, ConversationContractsJsonContext.Default.ConversationProgress);
         var acceptance = await grain.RecordProgressAsync(new ConversationProgressInput(progressJson));
 
         return acceptance.Outcome switch
         {
             ConversationProgressOutcome.Appended or ConversationProgressOutcome.AlreadyRecorded
-                => new ConversationProgressHandlingResult(true, null),
+                => new ConversationProgressHandlingResult(ConversationProgressHandlingOutcome.Applied, null),
             ConversationProgressOutcome.Rejected
-                => new ConversationProgressHandlingResult(true, acceptance.RejectionReason),
+                => new ConversationProgressHandlingResult(ConversationProgressHandlingOutcome.Rejected, acceptance.RejectionReason),
             _ => throw new InvalidOperationException($"Unhandled {nameof(ConversationProgressOutcome)} '{acceptance.Outcome}'."),
         };
     }

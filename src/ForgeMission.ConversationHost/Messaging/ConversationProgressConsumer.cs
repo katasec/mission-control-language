@@ -63,11 +63,26 @@ public sealed class ConversationProgressConsumer(
             return;
         }
 
-        if (result.RejectionReason is not null)
-            logger.LogWarning("Progress message '{MessageId}' rejected: {Reason}", args.Message.MessageId, result.RejectionReason);
+        switch (result.Outcome)
+        {
+            case ConversationProgressHandlingOutcome.Discarded:
+                logger.LogWarning(
+                    "Progress message '{MessageId}' discarded as unaddressable: {Category}.",
+                    args.Message.MessageId, result.Reason);
+                break;
+            case ConversationProgressHandlingOutcome.Rejected:
+                logger.LogWarning(
+                    "Progress message '{MessageId}' rejected by grain: {Reason}",
+                    args.Message.MessageId, result.Reason);
+                break;
+            case ConversationProgressHandlingOutcome.Applied:
+                break;
+        }
 
-        if (result.ShouldComplete)
-            await args.CompleteMessageAsync(args.Message, args.CancellationToken);
+        // Every outcome above completes — Discarded and Rejected never retry, matching a
+        // dead-lettered message's own terminal handling (Phase 43.16 Task 8c). Only a thrown
+        // exception (caught above) leaves a message unsettled for broker retry.
+        await args.CompleteMessageAsync(args.Message, args.CancellationToken);
     }
 
     private Task ProcessErrorAsync(ProcessErrorEventArgs args)
