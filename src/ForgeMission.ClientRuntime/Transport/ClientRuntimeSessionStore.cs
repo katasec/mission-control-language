@@ -8,6 +8,7 @@ namespace ForgeMission.ClientRuntime.TransportHost;
 internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IConfiguration configuration)
 {
     private readonly ConcurrentDictionary<string, ClientRuntimeSession> _sessions = [];
+    private readonly Lazy<string> _defaultWorkspaceRoot = new(DefaultWorkspace.CreateNext);
 
     // replacesSessionId is the outgoing session's ID when the picker is replacing a still-live
     // session (a mission switch) rather than creating a workspace's first session. Removing and
@@ -30,6 +31,10 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
             throw new InvalidOperationException("Unable to create Client Runtime session.");
         return session;
     }
+
+    public Task<ClientRuntimeSession> CreateDefaultAsync(
+        string? mission = null, SessionRuntimeKind runtime = SessionRuntimeKind.Mission) =>
+        CreateAsync(_defaultWorkspaceRoot.Value, mission, runtime);
 
     public bool TryGet(string sessionId, out ClientRuntimeSession? session) => _sessions.TryGetValue(sessionId, out session);
 

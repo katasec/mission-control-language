@@ -19,6 +19,14 @@ public sealed record SessionSetupRequest(
     string? ReplacesSessionId = null);
 public sealed record SessionSetupResponse(string SessionId, IReadOnlyList<string> AvailableCapabilities);
 
+public sealed record DefaultWorkspaceSessionRequest(
+    string? Mission = null,
+    SessionRuntimeKind Runtime = SessionRuntimeKind.Mission);
+public sealed record DefaultWorkspaceSessionResponse(
+    string SessionId,
+    IReadOnlyList<string> AvailableCapabilities,
+    string WorkspaceRoot);
+
 public sealed record CapabilityDispatchRequest(string SessionId, CapabilityRequestData Request);
 public sealed record CapabilityDispatchResponse(string Content, bool IsError);
 

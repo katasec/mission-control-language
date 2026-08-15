@@ -180,6 +180,28 @@
 
     private bool CanSend => workspaceRoot is not null && !sending && !string.IsNullOrWhiteSpace(composerText);
 
+    protected override async Task OnInitializedAsync()
+    {
+        settingUpSession = true;
+        try
+        {
+            var initial = await ClientRuntime.SendAsync<DefaultWorkspaceSessionRequest, DefaultWorkspaceSessionResponse>(
+                new DefaultWorkspaceSessionRequest(selectedMission.WireMission, selectedMission.Runtime), CancellationToken.None);
+            session = new SessionSetupResponse(initial.SessionId, initial.AvailableCapabilities);
+            workspaceRoot = initial.WorkspaceRoot;
+            StartEventLoop();
+        }
+        catch (Exception exception)
+        {
+            folderError = exception.Message;
+            showAddFolderMenu = true;
+        }
+        finally
+        {
+            settingUpSession = false;
+        }
+    }
+
     private void ToggleAddFolderMenu()
     {
         showAddFolderMenu = !showAddFolderMenu;

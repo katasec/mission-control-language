@@ -797,6 +797,17 @@ follow-up evidence, not outstanding acceptance gates for this completed core pro
 **Scope boundary:** do not add Desktop durability/recovery work under Task 8 based on an old
 stranded conversation. Any separate product need requires its own approved design.
 
+#### UI iteration — default workspace bootstrap
+
+Desktop must not block chat behind manual folder entry. On launch, Client Runtime creates and
+selects the next numeric workspace beneath the platform equivalent of Visual Studio's default
+project root: `%USERPROFILE%\source\repos` on Windows and `~/source/repos` elsewhere. The first
+folders are `0001`, `0002`, and so on; the next number is one greater than the highest existing
+numeric sibling. The chosen directory is still the sole root for local file and terminal tools.
+The existing folder control remains for deliberately switching to another project, which creates a
+fresh Client Runtime session. This is a local-client decision: the workspace path never crosses to
+Host or Worker.
+
 ## Done when
 
 - Janus is selectable in Desktop and its real multi-provider exchange is one ordered group chat.

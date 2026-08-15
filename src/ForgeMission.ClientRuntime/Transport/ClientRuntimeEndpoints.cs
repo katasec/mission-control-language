@@ -18,6 +18,15 @@ internal static class ClientRuntimeEndpoints
                 session.Workspace.Capabilities?.AvailableCapabilities ?? []));
         });
 
+        app.MapPost("/transport/session/default", async (DefaultWorkspaceSessionRequest request,
+            ClientRuntimeSessionStore sessions) =>
+        {
+            var session = await sessions.CreateDefaultAsync(request.Mission, request.Runtime);
+            return Results.Ok(new DefaultWorkspaceSessionResponse(session.Id,
+                session.Workspace.Capabilities?.AvailableCapabilities ?? [],
+                session.Workspace.Root!));
+        });
+
         app.MapPost("/transport/capability/dispatch", async (
             CapabilityDispatchRequest request,
             ClientRuntimeSessionStore sessions,
