@@ -1,6 +1,16 @@
 # Phase 35 — Forge UI (Blazor Server)
 
-**Status:** Design
+**Status:** Superseded as a new implementation plan (2026-08-16) — do not build this phase.
+
+The proposed standalone Blazor Server application has been superseded for Desktop by
+[Phase 43.11](phase-43.11-wasm-photino-shell.md) (local Desktop shell) and
+[Phase 43.16](phase-43.16-janus-desktop-local-poc.md) (the completed visible Janus
+Proposer → Approver → Implementer conversation). Future Desktop trace/workbench work belongs in
+[Phase 43.4](phase-43.4-ide-trace-surface.md). Existing hosted ForgeUI/Rooms evolution belongs to
+[Phase 38](phase-38-forge-rooms.md) and [Phase 40](phase-40-forge-ui-shell.md).
+
+This document remains historical rationale for those implementations; it is not a backlog task.
+See [plan_completed.md](../plan_completed.md#superseded-plans) for the archive entry.
 
 ---
 

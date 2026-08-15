@@ -6,6 +6,12 @@ siblings ([AGENTS.md](../AGENTS.md#spoke-shape--lookup-table-not-narrative-compl
 the phase still has its own full spoke doc under [phases/](phases/) — this file is just the TOC row,
 relocated so `plan.md` only shows what's still active.
 
+## Superseded plans
+
+| Plan | Replacement / status |
+|------|----------------------|
+| [Phase 35 — Forge UI (Blazor Server)](phases/phase-35-forge-ui-blazor.md) | **Superseded 2026-08-16 — do not implement as a new phase.** Desktop is [Phase 43.11](phases/phase-43.11-wasm-photino-shell.md) + [Phase 43.16](phases/phase-43.16-janus-desktop-local-poc.md), with future trace/workbench work in [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). Hosted ForgeUI/Rooms work evolved through [Phase 38](phases/phase-38-forge-rooms.md) + [Phase 40](phases/phase-40-forge-ui-shell.md). |
+
 ## Completed phases
 
 Same table shape as `plan.md`'s active "Phases" table — moved here 2026-08-09 once verified `Done`
