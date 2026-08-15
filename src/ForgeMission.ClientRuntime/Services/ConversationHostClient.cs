@@ -30,6 +30,12 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
             ConversationContractsJsonContext.Default.SubmitToolResultRequest,
             ConversationContractsJsonContext.Default.SubmitToolResultResponse, ct);
 
+    // Existence validation for a reattach (Phase 43.16 Task 8d) — never used to seed a replay
+    // starting sequence; TailAsync always replays from zero.
+    public Task<GetConversationResponse> GetConversationAsync(Guid conversationId, CancellationToken ct) =>
+        GetAsync($"conversations/{conversationId}",
+            ConversationContractsJsonContext.Default.GetConversationResponse, ct);
+
     public async IAsyncEnumerable<ConversationEvent> StreamEventsAsync(
         Guid conversationId, long after, [EnumeratorCancellation] CancellationToken ct)
     {
@@ -74,6 +80,18 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
     {
         var json = JsonSerializer.Serialize(request, requestType);
         using var response = await httpClient.PostAsync(route, new StringContent(json, Encoding.UTF8, "application/json"), ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"ConversationHost returned HTTP {(int)response.StatusCode}: {body}");
+
+        return JsonSerializer.Deserialize(body, responseType)
+            ?? throw new InvalidOperationException("ConversationHost returned an empty response.");
+    }
+
+    private async Task<TResponse> GetAsync<TResponse>(
+        string route, JsonTypeInfo<TResponse> responseType, CancellationToken ct)
+    {
+        using var response = await httpClient.GetAsync(route, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"ConversationHost returned HTTP {(int)response.StatusCode}: {body}");

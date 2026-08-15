@@ -19,6 +19,23 @@
             {
                 <p class="error-banner">@conversationError</p>
             }
+            @if (resumeCandidates.Count > 0)
+            {
+                <div class="resume-banner">
+                    <p class="resume-banner-title">Resume a conversation</p>
+                    @foreach (var candidate in resumeCandidates)
+                    {
+                        <button class="resume-candidate" disabled="@resuming" @onclick="() => ResumeAsync(candidate)">
+                            <span>@candidate.MissionRef — @candidate.Status</span>
+                            <span class="resume-candidate-time">@candidate.CreatedAtUtc.LocalDateTime.ToString("g")</span>
+                        </button>
+                    }
+                    @if (resumeError is not null)
+                    {
+                        <p class="menu-error">@resumeError</p>
+                    }
+                </div>
+            }
             <ConversationTranscriptView Entries="conversationTranscript.Entries" />
         }
         else
@@ -124,6 +141,13 @@
     .tool-glyph.running { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
 
     .response-card { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
+
+    .resume-banner { align-self: stretch; display: flex; flex-direction: column; gap: var(--space-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-4); }
+    .resume-banner-title { margin: 0; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .resume-candidate { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); height: 36px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: 13.5px; cursor: pointer; text-align: left; font-family: inherit; }
+    .resume-candidate:hover { background: var(--surface-hover); }
+    .resume-candidate:disabled { color: var(--text-subtle); cursor: default; }
+    .resume-candidate-time { color: var(--text-muted); font-size: 12px; }
     .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; margin: 0; }
 
     .composer-bar { position: relative; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--space-5) calc(var(--space-4) + var(--safe-bottom)); }
@@ -178,6 +202,10 @@
     private ConversationTranscript conversationTranscript = new();
     private string? conversationError;
 
+    private List<ResumeCandidate> resumeCandidates = [];
+    private bool resuming;
+    private string? resumeError;
+
     private bool CanSend => workspaceRoot is not null && !sending && !string.IsNullOrWhiteSpace(composerText);
 
     private void ToggleAddFolderMenu()
@@ -211,6 +239,8 @@
             workspaceRoot = folderInput;
             showAddFolderMenu = false;
             StartEventLoop();
+            if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+                await LoadResumeCandidatesAsync();
         }
         catch (Exception exception)
         {
@@ -247,10 +277,63 @@
         turns.Clear();
         conversationTranscript = new();
         conversationError = null;
+        resumeCandidates = [];
         session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
             new SessionSetupRequest(workspaceRoot, selectedMission.WireMission, selectedMission.Runtime, previousSessionId),
             CancellationToken.None);
         StartEventLoop();
+        if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+            await LoadResumeCandidatesAsync();
+    }
+
+    private async Task LoadResumeCandidatesAsync()
+    {
+        if (session is null)
+            return;
+
+        try
+        {
+            var response = await ClientRuntime.SendAsync<ResumeCandidatesRequest, ResumeCandidatesResponse>(
+                new ResumeCandidatesRequest(session.SessionId), CancellationToken.None);
+            resumeCandidates = response.Candidates.ToList();
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            // Best-effort discovery — a failure here just means no resume banner shows;
+            // the user can still start a fresh conversation normally.
+        }
+    }
+
+    // Resets the transcript BEFORE the resume call, per the locked design: Home.razor owns
+    // ConversationTranscript, ConversationRuntimeSession never constructs or resets it.
+    // Replayed ClientRuntimeEvents (delivered through the same already-running event loop this
+    // session started at session/setup) rebuild it from the Host's full replay-from-zero.
+    private async Task ResumeAsync(ResumeCandidate candidate)
+    {
+        if (session is null || resuming)
+            return;
+
+        resuming = true;
+        resumeError = null;
+        conversationTranscript = new();
+        conversationError = null;
+        StateHasChanged();
+
+        try
+        {
+            await ClientRuntime.SendAsync<ResumeConversationRequest, ResumeConversationResponse>(
+                new ResumeConversationRequest(session.SessionId, candidate.ConversationId), CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            resumeError = exception.Message;
+        }
+        finally
+        {
+            resuming = false;
+            StateHasChanged();
+        }
     }
 
     private async Task OnComposerKeyDown(KeyboardEventArgs e)

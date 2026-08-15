@@ -27,6 +27,11 @@ internal sealed class Program
                 "MissionRuntime:Credential is required (set via MissionRuntime__Credential).");
         builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
         builder.Services.AddSingleton<ClientRuntimeEventHub>();
+        // Phase 43.16 Task 8d — shared local persistence for durable conversation reattachment and
+        // tool-result recovery. Pure file I/O, no in-memory state to keep consistent across
+        // instances, but registered as singletons for conventional DI lifetime clarity.
+        builder.Services.AddSingleton<ConversationResumeStore>();
+        builder.Services.AddSingleton<ConversationToolResultLedger>();
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
         // Native AOT has no reflection fallback for minimal-API request/response JSON binding —
         // route it through the same source-generated context the transport channel already uses.

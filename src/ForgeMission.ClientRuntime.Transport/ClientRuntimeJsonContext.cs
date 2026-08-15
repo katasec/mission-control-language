@@ -18,4 +18,9 @@ namespace ForgeMission.ClientRuntime.Transport;
 [JsonSerializable(typeof(ConfirmationResponseRequest))]
 [JsonSerializable(typeof(ConfirmationResponse))]
 [JsonSerializable(typeof(CapabilityRequestData))]
+[JsonSerializable(typeof(ResumeCandidate))]
+[JsonSerializable(typeof(ResumeCandidatesRequest))]
+[JsonSerializable(typeof(ResumeCandidatesResponse))]
+[JsonSerializable(typeof(ResumeConversationRequest))]
+[JsonSerializable(typeof(ResumeConversationResponse))]
 public partial class ClientRuntimeJsonContext : JsonSerializerContext;

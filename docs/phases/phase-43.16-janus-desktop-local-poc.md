@@ -798,9 +798,13 @@ during observation #6: a raw, non-JSON `kind-verifier-*` probe message — orpha
 `conversation-progress` queue by an earlier, self-healing-looking verifier retry — got picked up by
 the live Host and, with `MaxConcurrentSessions=1`, starved conversation
 `173da2e0-248e-5637-ac1b-4c8fea4ad05a`'s own healthy session indefinitely. See
-[Task 8c: poison-progress containment](phase-43.16-task-8c-poison-progress-containment.md) for the
-full diagnosis and corrective fix — a **third prerequisite, implementation in progress**, not yet
-merged.
+[Task 8c: poison-progress containment](phase-43.16-task-8c-poison-progress-containment.md) — a
+**third prerequisite, merged and deployed 2026-08-15**, blocked only on its last observation, which
+in turn opened a **fourth prerequisite,
+[Task 8d: durable Client Runtime reattachment and tool-result recovery](phase-43.16-task-8d-client-runtime-reattachment.md)**
+(implementation complete, awaiting merge) — the Client Runtime has no way to reattach to an
+existing conversation or durably resend a lost tool result across a restart, which is exactly what
+left `173da2e0-248e-5637-ac1b-4c8fea4ad05a` unrecoverable even after Task 8c's fix.
 
 **Task 8's live proof itself remains not reauthorized** — it requires an explicit separate go-ahead and a full rerun
 using the original "Implement a rate limiter." goal before this section can be marked done.

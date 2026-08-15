@@ -16,8 +16,21 @@ namespace ForgeMission.Tests.ClientRuntime;
 public sealed class ConversationRuntimeSessionTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-conversation-session-").FullName;
+    private readonly string _recovery = Directory.CreateTempSubdirectory("forge-conversation-recovery-").FullName;
+    private readonly ConversationResumeStore _resumeStore;
+    private readonly ConversationToolResultLedger _ledger;
 
-    public void Dispose() => Directory.Delete(_workspace, recursive: true);
+    public ConversationRuntimeSessionTests()
+    {
+        _resumeStore = new ConversationResumeStore(_recovery);
+        _ledger = new ConversationToolResultLedger(_recovery);
+    }
+
+    public void Dispose()
+    {
+        Directory.Delete(_workspace, recursive: true);
+        Directory.Delete(_recovery, recursive: true);
+    }
 
     [Fact]
     public async Task SendAsync_FirstPrompt_StartsConversation_WithCapabilityDeclarations_AndRetainsId()
@@ -198,6 +211,127 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
         Assert.DoesNotContain(handler.PostBodies, IsToolResultBody); // the blocked dispatch never completed
     }
 
+    // Phase 43.16 Task 8d — AttachAsync and the durable-ledger branch of HandleToolRequestedAsync.
+
+    [Fact]
+    public async Task AttachAsync_ExistingConversation_ValidatesExistence_AndReplaysFromSequenceZero()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var userEvent = NewEvent(conversationId, runId, 1, ConversationEventKind.UserMessage,
+            ConversationParticipant.User, text: "Build the thing.");
+        var handler = new ScriptedConversationHostHandler(
+            conversationId, runId, new Queue<string>([ToSseBody(userEvent)]));
+        var (capabilities, dispatcher) = BuildWorkspace();
+        var published = new List<ClientRuntimeEvent>();
+
+        await using var session = NewSession(handler, capabilities, dispatcher, published.Add);
+        var status = await session.AttachAsync(conversationId, CancellationToken.None);
+
+        Assert.Equal(ConversationRunStatus.WaitingForTool, status); // from the GET's scripted snapshot
+
+        await WaitUntilAsync(() => handler.SseAfterValues.Count >= 1);
+        Assert.Equal(0, handler.SseAfterValues[0]); // full replay from sequence zero — never seeded from the snapshot
+    }
+
+    [Fact]
+    public async Task AttachAsync_UnknownConversation_ThrowsAndNeverStartsATail()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var handler = new ScriptedConversationHostHandler(conversationId, runId, new Queue<string>());
+        var (capabilities, dispatcher) = BuildWorkspace();
+
+        await using var session = NewSession(handler, capabilities, dispatcher, _ => { });
+
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
+            session.AttachAsync(Guid.NewGuid(), CancellationToken.None)); // a different, unrecognized id -> 404
+
+        Assert.Empty(handler.SseAfterValues); // tail never started
+    }
+
+    [Fact]
+    public async Task HandleToolRequested_ExecutedButNotAcknowledged_ResubmitsTheHeldResult_WithoutReExecuting()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        await _ledger.MarkStartedAsync(conversationId, requestId, CancellationToken.None);
+        await _ledger.MarkExecutedAsync(conversationId, requestId,
+            new ToolExecutionResult("the secret word is PLATYPUS"), CancellationToken.None);
+
+        var toolRequested = NewEvent(conversationId, runId, 1, ConversationEventKind.ToolRequested,
+            ConversationParticipant.Implementer,
+            toolRequest: new ConversationToolRequest(requestId, "Read", JsonDocument.Parse("{}").RootElement.Clone()));
+        var handler = new ScriptedConversationHostHandler(
+            conversationId, runId, new Queue<string>([ToSseBody(toolRequested)]));
+        var (capabilities, dispatcher, executionCount) = BuildCountingWorkspace();
+
+        await using var session = NewSession(handler, capabilities, dispatcher, _ => { });
+        await session.AttachAsync(conversationId, CancellationToken.None);
+
+        await WaitUntilAsync(() => handler.PostBodies.Count(IsToolResultBody) >= 1);
+
+        Assert.Equal(0, executionCount.Value); // the tool executor is never invoked
+        var toolResultBody = handler.PostBodies.First(IsToolResultBody);
+        Assert.Contains("PLATYPUS", toolResultBody.GetProperty("content").GetString());
+        Assert.Equal(
+            ConversationDeterministicIds.ClientToolResult(requestId).ToString(),
+            toolResultBody.GetProperty("commandId").GetString(), ignoreCase: true); // same stable id — a safe Host-side resend
+    }
+
+    [Fact]
+    public async Task HandleToolRequested_AlreadyAcknowledged_NeitherExecutesNorResubmits()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        await _ledger.MarkStartedAsync(conversationId, requestId, CancellationToken.None);
+        await _ledger.MarkExecutedAsync(conversationId, requestId, new ToolExecutionResult("done"), CancellationToken.None);
+        await _ledger.MarkAcknowledgedAsync(conversationId, requestId, CancellationToken.None);
+
+        var toolRequested = NewEvent(conversationId, runId, 1, ConversationEventKind.ToolRequested,
+            ConversationParticipant.Implementer,
+            toolRequest: new ConversationToolRequest(requestId, "Read", JsonDocument.Parse("{}").RootElement.Clone()));
+        var handler = new ScriptedConversationHostHandler(
+            conversationId, runId, new Queue<string>([ToSseBody(toolRequested)]));
+        var (capabilities, dispatcher, executionCount) = BuildCountingWorkspace();
+
+        await using var session = NewSession(handler, capabilities, dispatcher, _ => { });
+        await session.AttachAsync(conversationId, CancellationToken.None);
+
+        await WaitUntilAsync(() => handler.SseAfterValues.Count >= 1);
+        await Task.Delay(200); // give a wrongly-resubmitting session a chance to (incorrectly) act
+
+        Assert.Equal(0, executionCount.Value);
+        Assert.DoesNotContain(handler.PostBodies, IsToolResultBody);
+    }
+
+    [Fact]
+    public async Task HandleToolRequested_StartedButNeverExecuted_FailsClosed_NoExecution_NoFabricatedHostResult()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        await _ledger.MarkStartedAsync(conversationId, requestId, CancellationToken.None); // a crash mid-execution — no Executed entry
+
+        var toolRequested = NewEvent(conversationId, runId, 1, ConversationEventKind.ToolRequested,
+            ConversationParticipant.Implementer,
+            toolRequest: new ConversationToolRequest(requestId, "Read", JsonDocument.Parse("{}").RootElement.Clone()));
+        var handler = new ScriptedConversationHostHandler(
+            conversationId, runId, new Queue<string>([ToSseBody(toolRequested)]));
+        var (capabilities, dispatcher, executionCount) = BuildCountingWorkspace();
+        var published = new List<ClientRuntimeEvent>();
+
+        await using var session = NewSession(handler, capabilities, dispatcher, published.Add);
+        await session.AttachAsync(conversationId, CancellationToken.None);
+
+        await WaitUntilAsync(() => published.Any(p => p.Kind == ClientRuntimeEventKind.Error));
+
+        Assert.Equal(0, executionCount.Value); // never re-executed
+        Assert.DoesNotContain(handler.PostBodies, IsToolResultBody); // never fabricated a Host result
+    }
+
     private static bool IsToolResultBody(JsonElement body) => body.TryGetProperty("toolRequestId", out _);
 
     private ConversationRuntimeSession NewSession(
@@ -206,7 +340,8 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
     {
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") };
         return new ConversationRuntimeSession(
-            "session-1", "Janus", new ConversationHostClient(http), capabilities, dispatcher, publish, CancellationToken.None);
+            "session-1", "Janus", _workspace, new ConversationHostClient(http), capabilities, dispatcher, publish,
+            CancellationToken.None, _resumeStore, _ledger);
     }
 
     private (CapabilityRegistry Capabilities, ICapabilityDispatcher Dispatcher) BuildWorkspace()
@@ -304,8 +439,36 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
                 return await AcceptAsync(request, ct, waitingForTool: true);
             if (request.Method == HttpMethod.Get && path == $"/conversations/{conversationId}/events")
                 return ServeEvents(request);
+            if (request.Method == HttpMethod.Get && path == $"/conversations/{conversationId}")
+                return GetConversation();
+            if (request.Method == HttpMethod.Get && path.StartsWith("/conversations/", StringComparison.Ordinal))
+                return new HttpResponseMessage(HttpStatusCode.NotFound)
+                {
+                    Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+                };
 
             throw new InvalidOperationException($"Unexpected request: {request.Method} {path}");
+        }
+
+        private HttpResponseMessage GetConversation()
+        {
+            var payload = JsonSerializer.Serialize(new
+            {
+                snapshot = new
+                {
+                    conversationId,
+                    missionRef = "Janus",
+                    activeRunId = runId,
+                    lastSequence = 0,
+                    status = "waitingForTool",
+                    expectedToolRequestId = (Guid?)null,
+                    updatedAtUtc = DateTimeOffset.UtcNow,
+                },
+            });
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json"),
+            };
         }
 
         private async Task<HttpResponseMessage> AcceptAsync(HttpRequestMessage request, CancellationToken ct, bool waitingForTool = false)

@@ -4,6 +4,7 @@ using System.Text.Json;
 using ForgeMission.ClientRuntime.Services;
 using ForgeMission.ClientRuntime.Transport;
 using ForgeMission.ClientRuntime.TransportHost;
+using ForgeMission.Conversations.Contracts;
 using ForgeMission.Core.Tools;
 using Microsoft.Extensions.Configuration;
 
@@ -17,9 +18,23 @@ namespace ForgeMission.Tests.ClientRuntime;
 public sealed class ConversationSessionSlotTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-conversation-slot-").FullName;
-    private readonly ClientRuntimeSessionStore _store = new(new ClientRuntimeEventHub(), new ConfigurationBuilder().Build());
+    private readonly string _recovery = Directory.CreateTempSubdirectory("forge-conversation-slot-recovery-").FullName;
+    private readonly ClientRuntimeSessionStore _store;
+    private readonly ConversationResumeStore _resumeStore;
+    private readonly ConversationToolResultLedger _ledger;
 
-    public void Dispose() => Directory.Delete(_workspace, recursive: true);
+    public ConversationSessionSlotTests()
+    {
+        _resumeStore = new ConversationResumeStore(_recovery);
+        _ledger = new ConversationToolResultLedger(_recovery);
+        _store = new ClientRuntimeSessionStore(new ClientRuntimeEventHub(), new ConfigurationBuilder().Build(), _resumeStore);
+    }
+
+    public void Dispose()
+    {
+        Directory.Delete(_workspace, recursive: true);
+        Directory.Delete(_recovery, recursive: true);
+    }
 
     [Fact]
     public async Task PromptThatObtainedAReplacedSession_IsRejected_WithNoHostCallOrCreatedSession()
@@ -102,6 +117,78 @@ public sealed class ConversationSessionSlotTests : IDisposable
         await session.Conversation.DisposeAsync(); // a third, later call is also a safe no-op
     }
 
+    // Phase 43.16 Task 8d — AttachExistingConversationAsync's own admission gate.
+
+    [Fact]
+    public async Task AttachExistingConversationAsync_OnAClosedSlot_IsRejected_WithNoHostCallOrCreatedSession()
+    {
+        var oldSession = await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
+        var handler = new RecordingConversationHostHandler(Guid.NewGuid(), Guid.NewGuid());
+        var factoryCalled = false;
+
+        await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation,
+            replacesSessionId: oldSession.Id); // closes oldSession.Conversation
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            oldSession.Conversation.AttachExistingConversationAsync(
+                () =>
+                {
+                    factoryCalled = true;
+                    return NewSession(handler, oldSession.Id);
+                },
+                Guid.NewGuid(), CancellationToken.None));
+
+        Assert.False(factoryCalled);
+        Assert.Empty(handler.PostBodies);
+    }
+
+    [Fact]
+    public async Task AttachExistingConversationAsync_OnASlotThatAlreadyHasASession_IsRejected()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var handler = new RecordingConversationHostHandler(conversationId, runId);
+        var session = await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
+
+        try
+        {
+            await session.Conversation.SendPromptAsync(
+                () => NewSession(handler, session.Id), "Build the thing.", CancellationToken.None);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                session.Conversation.AttachExistingConversationAsync(
+                    () => NewSession(handler, session.Id), conversationId, CancellationToken.None));
+        }
+        finally
+        {
+            await session.Conversation.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task AttachExistingConversationAsync_Succeeds_AndNeverCallsSendAsyncStartAsyncOrSubmitCommand()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var handler = new RecordingConversationHostHandler(conversationId, runId);
+        var session = await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
+
+        try
+        {
+            var status = await session.Conversation.AttachExistingConversationAsync(
+                () => NewSession(handler, session.Id), conversationId, CancellationToken.None);
+
+            Assert.Equal(ConversationRunStatus.WaitingForTool, status);
+            // Only the existence-check GET happened — no Start (/conversations POST) or follow-up
+            // (/commands POST) command was ever sent.
+            Assert.Empty(handler.PostBodies);
+        }
+        finally
+        {
+            await session.Conversation.DisposeAsync();
+        }
+    }
+
     private ConversationRuntimeSession NewSession(HttpMessageHandler handler, string sessionId)
     {
         var workspace = new LocalDiskWorkspace(_workspace);
@@ -110,7 +197,8 @@ public sealed class ConversationSessionSlotTests : IDisposable
             capabilities, new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default), new InMemoryCapabilityAuditLog());
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") };
         return new ConversationRuntimeSession(
-            sessionId, "Janus", new ConversationHostClient(http), capabilities, dispatcher, _ => { }, CancellationToken.None);
+            sessionId, "Janus", _workspace, new ConversationHostClient(http), capabilities, dispatcher, _ => { },
+            CancellationToken.None, _resumeStore, _ledger);
     }
 
     private sealed class RecordingConversationHostHandler(Guid conversationId, Guid runId) : HttpMessageHandler
@@ -143,6 +231,27 @@ public sealed class ConversationSessionSlotTests : IDisposable
                 return new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent(string.Empty, Encoding.UTF8, "text/event-stream"),
+                };
+            }
+
+            if (request.Method == HttpMethod.Get && path == $"/conversations/{conversationId}")
+            {
+                var payload = JsonSerializer.Serialize(new
+                {
+                    snapshot = new
+                    {
+                        conversationId,
+                        missionRef = "Janus",
+                        activeRunId = runId,
+                        lastSequence = 0,
+                        status = "waitingForTool",
+                        expectedToolRequestId = (Guid?)null,
+                        updatedAtUtc = DateTimeOffset.UtcNow,
+                    },
+                });
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(payload, Encoding.UTF8, "application/json"),
                 };
             }
 

@@ -20,17 +20,19 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
 
     private readonly string _sessionId;
     private readonly string _missionRef;
+    private readonly string _workspaceRoot;
     private readonly ConversationHostClient _hostClient;
     private readonly CapabilityRegistry _capabilities;
     private readonly ICapabilityDispatcher _dispatcher;
     private readonly ToolExecutorRegistry _toolExecutors;
     private readonly Action<ClientRuntimeEvent> _publish;
     private readonly CancellationTokenSource _lifetimeCts;
+    private readonly ConversationResumeStore _resumeStore;
+    private readonly ConversationToolResultLedger _ledger;
 
     // Tail-loop-only state: touched exclusively by the single TailAsync loop, never concurrently
-    // with a SendAsync call, so no additional locking is needed.
+    // with a SendAsync/AttachAsync call, so no additional locking is needed.
     private readonly HashSet<Guid> _seenEventIds = [];
-    private readonly Dictionary<Guid, ToolExecutionResult> _toolResultCache = [];
     private long _lastSequence;
 
     private Guid? _conversationId;
@@ -39,19 +41,25 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
     public ConversationRuntimeSession(
         string sessionId,
         string missionRef,
+        string workspaceRoot,
         ConversationHostClient hostClient,
         CapabilityRegistry capabilities,
         ICapabilityDispatcher dispatcher,
         Action<ClientRuntimeEvent> publish,
         CancellationToken applicationStopping,
+        ConversationResumeStore resumeStore,
+        ConversationToolResultLedger ledger,
         ToolExecutorRegistry? toolExecutors = null)
     {
         _sessionId = sessionId;
         _missionRef = missionRef;
+        _workspaceRoot = workspaceRoot;
         _hostClient = hostClient;
         _capabilities = capabilities;
         _dispatcher = dispatcher;
         _publish = publish;
+        _resumeStore = resumeStore;
+        _ledger = ledger;
         _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
         _lifetimeCts = CancellationTokenSource.CreateLinkedTokenSource(applicationStopping);
     }
@@ -68,6 +76,11 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
             var response = await _hostClient.StartAsync(
                 new StartConversationRequest(Guid.NewGuid(), _missionRef, prompt, ToCapabilityDeclarations(_capabilities)), ct);
             _conversationId = response.ConversationId;
+            // Every durable conversation becomes resumable from the moment it starts — without
+            // this, only conversations someone thought to resume-record in advance could ever be
+            // reattached (Phase 43.16 Task 8d).
+            await _resumeStore.UpsertAsync(new ResumeRecord(
+                response.ConversationId, _workspaceRoot, _missionRef, ConversationRunStatus.Queued, DateTimeOffset.UtcNow), ct);
             StartTailIfNeeded();
         }
         else
@@ -77,6 +90,23 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
         }
 
         return _conversationId.Value;
+    }
+
+    // Attaches to an EXISTING conversation instead of starting or continuing one — never calls
+    // StartAsync/SubmitCommandAsync, so no command is sent. The GET both validates the
+    // ConversationId actually exists on the Host and returns its current status for display.
+    // _lastSequence stays at its default 0, so TailAsync performs a full replay from sequence
+    // zero — the Host's own SSE replay is what rebuilds the browser transcript and re-triggers
+    // HandleToolRequestedAsync for any tool request whose durable ledger entry still needs a
+    // resend (Phase 43.16 Task 8d).
+    public async Task<ConversationRunStatus> AttachAsync(Guid conversationId, CancellationToken ct)
+    {
+        var response = await _hostClient.GetConversationAsync(conversationId, ct);
+        _conversationId = conversationId;
+        await _resumeStore.UpsertAsync(new ResumeRecord(
+            conversationId, _workspaceRoot, _missionRef, response.Snapshot.Status, DateTimeOffset.UtcNow), ct);
+        StartTailIfNeeded();
+        return response.Snapshot.Status;
     }
 
     private void StartTailIfNeeded()
@@ -140,14 +170,44 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
         if (evt.Kind == ConversationEventKind.ToolRequested && evt.ToolRequest is not null)
             await HandleToolRequestedAsync(evt.ToolRequest, evt.Participant, ct);
         else if (evt.Kind == ConversationEventKind.ToolResult && evt.ToolResult is not null)
-            _toolResultCache.Remove(evt.ToolResult.RequestId);
+            await _ledger.MarkAcknowledgedAsync(_conversationId!.Value, evt.ToolResult.RequestId, ct);
     }
 
+    // Four-state durable ledger branch (Phase 43.16 Task 8d) — fires identically whether this
+    // ToolRequested is arriving live or through a full replay-from-zero after a reattach:
+    //   Acknowledged        -> already fully settled, nothing to do.
+    //   Executed (unacked)  -> resubmit the held result via the SAME deterministic CommandId,
+    //                          never re-executing the tool. Safe unconditionally: Host command
+    //                          handling is already idempotent (at-least-once, peek-lock).
+    //   Started (no result) -> FAILS CLOSED. A crash mid-execution leaves no way to know whether
+    //                          the local side effect actually ran, so this never re-executes and
+    //                          never fabricates a Host result — only a local-only fact is
+    //                          published. No further automatic action; this is the one case this
+    //                          task does not attempt to recover.
+    //   (absent)            -> normal first-time execution.
     private async Task HandleToolRequestedAsync(
         ConversationToolRequest request, ConversationParticipant participant, CancellationToken ct)
     {
-        if (!_toolResultCache.TryGetValue(request.RequestId, out var result))
+        var entry = await _ledger.TryGetAsync(_conversationId!.Value, request.RequestId, ct);
+
+        if (entry is { State: ToolResultLedgerState.Acknowledged })
+            return;
+
+        ToolExecutionResult result;
+        if (entry is { State: ToolResultLedgerState.Executed, ResultContent: not null })
         {
+            result = new ToolExecutionResult(entry.ResultContent, entry.ResultIsError ?? false);
+        }
+        else if (entry is { State: ToolResultLedgerState.Started })
+        {
+            _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, _sessionId,
+                Error: $"Tool '{request.ToolName}' was interrupted mid-execution and was not automatically resumed."));
+            return;
+        }
+        else
+        {
+            await _ledger.MarkStartedAsync(_conversationId.Value, request.RequestId, ct);
+
             var isExpected = participant == ConversationParticipant.Implementer
                 && request.RequestId != Guid.Empty
                 && !string.IsNullOrEmpty(request.ToolName)
@@ -156,7 +216,7 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
             result = isExpected
                 ? await ExecuteToolAsync(request, ct)
                 : ToolExecutionResult.Error($"Unsupported or invalid tool request: {request.ToolName}");
-            _toolResultCache[request.RequestId] = result;
+            await _ledger.MarkExecutedAsync(_conversationId.Value, request.RequestId, result, ct);
         }
 
         try

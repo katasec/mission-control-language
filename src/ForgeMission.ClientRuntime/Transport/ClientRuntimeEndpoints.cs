@@ -57,6 +57,8 @@ internal static class ClientRuntimeEndpoints
             IConfiguration configuration,
             ClientRuntimeEventHub events,
             IHostApplicationLifetime lifetime,
+            ConversationResumeStore resumeStore,
+            ConversationToolResultLedger ledger,
             CancellationToken ct) =>
         {
             if (!sessions.TryGet(request.SessionId, out var session) ||
@@ -74,11 +76,14 @@ internal static class ClientRuntimeEndpoints
                         () => new ConversationRuntimeSession(
                             request.SessionId,
                             session.Mission ?? "Janus",
+                            session.Workspace.Root!,
                             new ConversationHostClient(clients.CreateClient("conversation-host")),
                             session.Workspace.Capabilities,
                             session.Workspace.Dispatcher,
                             events.Publish,
-                            lifetime.ApplicationStopping),
+                            lifetime.ApplicationStopping,
+                            resumeStore,
+                            ledger),
                         request.Prompt, ct);
                     return Results.Ok(new PromptResponse(string.Empty, ConversationId: conversationId));
                 }
@@ -106,6 +111,63 @@ internal static class ClientRuntimeEndpoints
                 events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, request.SessionId,
                     Error: exception.Message));
                 return Results.Ok(new PromptResponse(exception.Message, IsError: true));
+            }
+        });
+
+        // Phase 43.16 Task 8d — POST, not GET: IClientRuntimeChannel exposes only SendAsync
+        // (POST-shaped) and Subscribe (the one SSE stream); no generic GET transport method
+        // exists or is added here. Both routes take SessionId only — WorkspaceRoot/MissionRef are
+        // always derived server-side from the already-established session (ClientRuntimeSessionStore
+        // §GetResumeCandidatesAsync/ResumeConversationAsync), never accepted from the caller.
+        app.MapPost("/transport/resume-candidates", async (
+            ResumeCandidatesRequest request, ClientRuntimeSessionStore sessions, CancellationToken ct) =>
+        {
+            var candidates = await sessions.GetResumeCandidatesAsync(request.SessionId, ct);
+            return Results.Ok(new ResumeCandidatesResponse(candidates
+                .Select(record => new ResumeCandidate(record.ConversationId, record.MissionRef, record.Status, record.CreatedAtUtc))
+                .ToList()));
+        });
+
+        app.MapPost("/transport/resume", async (
+            ResumeConversationRequest request,
+            ClientRuntimeSessionStore sessions,
+            IHttpClientFactory clients,
+            ClientRuntimeEventHub events,
+            IHostApplicationLifetime lifetime,
+            ConversationResumeStore resumeStore,
+            ConversationToolResultLedger ledger,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) ||
+                session?.Workspace.Capabilities is null || session.Workspace.Dispatcher is null)
+                return Results.NotFound();
+
+            try
+            {
+                var status = await sessions.ResumeConversationAsync(
+                    request.SessionId, request.ConversationId,
+                    () => new ConversationRuntimeSession(
+                        request.SessionId,
+                        session.Mission ?? "Janus",
+                        session.Workspace.Root!,
+                        new ConversationHostClient(clients.CreateClient("conversation-host")),
+                        session.Workspace.Capabilities,
+                        session.Workspace.Dispatcher,
+                        events.Publish,
+                        lifetime.ApplicationStopping,
+                        resumeStore,
+                        ledger),
+                    ct);
+
+                return status is null
+                    ? Results.NotFound()
+                    : Results.Ok(new ResumeConversationResponse(request.ConversationId, status.Value));
+            }
+            catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
+            {
+                events.Publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, request.SessionId,
+                    Error: exception.Message));
+                return Results.BadRequest(exception.Message);
             }
         });
 

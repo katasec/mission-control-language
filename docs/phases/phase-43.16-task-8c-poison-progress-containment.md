@@ -1,7 +1,7 @@
 # Phase 43.16 Task 8c — Poison-progress containment
 
-> **Status: implementation complete, awaiting merge and rollout evidence (2026-08-15) — not Done.**
-> Prerequisite to
+> **Status: merged and deployed; blocked on Task 8d for its last observation (2026-08-15) — not
+> Done.** Prerequisite to
 > [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
 > corrects a real defect discovered during Task 8's rerun (after
 > [Task 8b](phase-43.16-task-8b-janus-one-tool-per-turn.md) landed), where an orphaned raw
@@ -215,25 +215,36 @@ prior task. `python3 -m unittest test_drain test_service_roundtrip test_cleanup`
 `dev/350-conversation-data/kind/verifier/`) clean. `bash -n dev/350-conversation-data/scripts/
 kind-up.sh` clean.
 
-## Kind rollout and live recovery (after code review/merge only)
+## Kind rollout and live recovery — done, partially (2026-08-15)
 
-Both repos' PRs reviewed and merged first — no `make 350-conversation-kind-up`, no message
-settlement, and no Task 8 rerun performed as part of this task's own implementation. Once
-authorized as a separate step: `make 350-conversation-kind-up` from a clean `main` checkout
-exercises the full new quiesce -> verify -> restore sequence for real. Evidence to capture:
+Both repos' PRs reviewed and merged: mission-control-language `5afa2cc1d029b1d6adb8ddde25d5636a10bc84bf`
+(merge commit `5afa2cc`), forge-infra `c00dd89f5dde1519011634e37c55a8558ca31768` (merge commit
+`c00dd89`). `make 350-conversation-kind-up` then run from that exact clean `main`, authorized and
+performed as a separate step — exit code 0, evidence:
 
-- both Deployments observed scaled to 0 and pods gone before the verifier Jobs run;
-- each role's own-session drain succeeding (its receive-until-empty loop terminating clean);
-- both Deployments restored to exactly one replica, `kubectl rollout status` succeeding;
-- the specific stranded message `71fcc8b5-29e3-4551-a3ea-40dca4d15695` being safely discarded by
-  the *deployed Host's* new classification behavior — a log line naming it exactly once, not the
-  prior ten-times-and-counting retry loop, and no manual broker settlement of any kind;
-- conversation `173da2e0-248e-5637-ac1b-4c8fea4ad05a` confirmed advancing past `lastSequence: 139`
-  with no duplicate action taken on it.
+- both Deployments observed scaled to 0 and pods gone before the verifier Jobs ran;
+- verifier attempt 1/3 passed clean end to end, including the new post-attempt cleanup barrier
+  itself (`service-cleanup`/`worker-cleanup` both `probe_session_drain: PASS (drained 0)`);
+- both Deployments restored to exactly one replica, image
+  `forge-conversation-{host,worker}:5afa2cc...`, 0 restarts, confirmed live via `kubectl get
+  deployment`;
+- the stranded message `71fcc8b5-29e3-4551-a3ea-40dca4d15695` safely discarded by the deployed
+  Host's new classification behavior — exactly one log line, `warn:
+  ForgeMission.ConversationHost.Messaging.ConversationProgressConsumer[0] Progress message
+  '71fcc8b5-...' discarded as unaddressable: InvalidJson.`, not the prior ten-times-and-counting
+  retry loop, and no manual broker settlement of any kind.
 
-This rollout requires separate, later, explicit Codex reauthorization to run — but, unlike Task
-8's own full live-proof rerun below, it and its evidence are now part of this task's own
-Done-when (see below): merged PRs alone do not close this task.
+**Not achieved, and not achievable as originally scoped:** conversation
+`173da2e0-248e-5637-ac1b-4c8fea4ad05a` did not advance past `lastSequence: 139` on its own. Queried
+live via `GET /conversations/{id}` against the freshly-rolled-out Host: unchanged state, same
+timestamp, zero grain log activity in the following 20 minutes. Clearing the poison message frees
+the Host's single concurrency slot, but does not by itself resume a conversation that has no
+pending message queued for it — this specific conversation's own local Client Runtime already
+believed its `Write` tool result had been reported and had nothing left to resend, and (as
+diagnosed live) no route existed to reattach a fresh Client Runtime session to that existing
+`ConversationId` at all. See [Task 8d: durable Client Runtime reattachment and
+tool-result recovery](phase-43.16-task-8d-client-runtime-reattachment.md) — the task that finding
+opened.
 
 ## Done when
 
@@ -248,19 +259,19 @@ Implementation-complete (already satisfied):
   post-attempt cleanup barrier all implemented per the locked decisions above; README documents
   the new local-Kind downtime behavior and the two-stage (immediate drain + cleanup barrier)
   guarantee.
+- Both repos' PRs merged to `main` and the Kind rollout run for real — see above.
+- The known poison MessageId `71fcc8b5-29e3-4551-a3ea-40dca4d15695` confirmed discarded by the
+  deployed Host with no manual broker settlement — see above.
 
-Still required before this task is Done — implementation PRs being open is not completion:
+Still required before this task is Done:
 
-- MCL and forge-infra PRs reviewed and merged to their respective `main`s, with required checks
-  passed.
-- `make 350-conversation-kind-up` run from a clean MCL `main` checkout, proving the full sequence
-  for real: quiesce -> original verifier Jobs -> post-attempt cleanup barrier -> one-replica
-  application rollout.
-- Named live observations recorded in a follow-up evidence/docs PR: the known poison MessageId
-  (`71fcc8b5-29e3-4551-a3ea-40dca4d15695`) is safely discarded by the deployed Host's new
-  classification behavior, with no manual broker settlement of any kind; conversation
-  `173da2e0-248e-5637-ac1b-4c8fea4ad05a` confirmed advancing past `lastSequence: 139` with no
-  duplicate action taken on it.
+- Conversation `173da2e0-248e-5637-ac1b-4c8fea4ad05a` is preserved as the historical incident
+  record and is explicitly not recoverable — it predates Task 8d's durable local resume/ledger
+  state, and there is no authorized way to fabricate that state after the fact. This observation
+  is satisfied instead by a freshly-scripted, equivalent controlled repro: a new conversation
+  deliberately interrupted at the same point (a completed local tool result whose report to the
+  Host is lost), recovered through Task 8d's resume flow, performed only after Task 8d is merged
+  and deployed.
 - Task 8's own eight-observation live product proof rerun ("Implement a rate limiter.") remains
   explicitly out of scope for this task and requires separate, later Codex authorization — not
   part of this Done-when.

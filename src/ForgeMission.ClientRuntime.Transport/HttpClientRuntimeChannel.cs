@@ -73,6 +73,8 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposabl
         CapabilityDispatchRequest => "transport/capability/dispatch",
         PromptRequest => "transport/prompt",
         ConfirmationResponseRequest => "transport/confirmation/respond",
+        ResumeCandidatesRequest => "transport/resume-candidates",
+        ResumeConversationRequest => "transport/resume",
         _ => throw new InvalidOperationException($"Unsupported Client Runtime request: {typeof(TRequest).Name}."),
     };
 

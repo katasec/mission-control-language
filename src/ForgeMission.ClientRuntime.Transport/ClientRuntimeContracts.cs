@@ -1,3 +1,5 @@
+using ForgeMission.Conversations.Contracts;
+
 namespace ForgeMission.ClientRuntime.Transport;
 
 // Mission: today's stateless per-prompt tool round-trip (MissionRuntimeSession/
@@ -31,6 +33,17 @@ public sealed record PromptResponse(string Content, bool IsError = false, Guid? 
 
 public sealed record ConfirmationResponseRequest(string SessionId, string ConfirmationId, bool Approved);
 public sealed record ConfirmationResponse(bool Accepted);
+
+// Local-only, Client-Runtime-internal contracts (Phase 43.16 Task 8d) — never Host wire
+// contracts. Both requests carry SessionId so the server derives WorkspaceRoot/MissionRef from
+// the already-established ClientRuntimeSession; neither is ever accepted from the caller
+// directly, so the Client Runtime's own UI can never list or attach a ConversationId unrelated
+// to the caller's already-open workspace/mission session.
+public sealed record ResumeCandidate(Guid ConversationId, string MissionRef, ConversationRunStatus Status, DateTimeOffset CreatedAtUtc);
+public sealed record ResumeCandidatesRequest(string SessionId);
+public sealed record ResumeCandidatesResponse(IReadOnlyList<ResumeCandidate> Candidates);
+public sealed record ResumeConversationRequest(string SessionId, Guid ConversationId);
+public sealed record ResumeConversationResponse(Guid ConversationId, ConversationRunStatus Status);
 
 public sealed record CapabilityRequestData(
     string CapabilityName,
