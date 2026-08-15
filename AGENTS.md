@@ -19,9 +19,10 @@ for the grammar and syntax decisions.
 ## How to orient at the start of a session
 
 1. Read this file.
-2. Read [docs/plan.md](docs/plan.md) — the hub. It's a **light table of contents**: links + a
-   one-line status per phase, nothing more. It tells you what phases exist, which are done, and
-   which are active.
+2. Read [docs/plan.md](docs/plan.md) — the active-work hub. It's a **light table of contents**:
+   links + a one-line status per active phase, nothing more. It answers only "what is next?".
+   Read [docs/backlog.md](docs/backlog.md) or [docs/plan_completed.md](docs/plan_completed.md)
+   only when the task requires deferred or historical context.
 3. Read the spoke doc for the current phase — linked from `docs/plan.md` — for the actual detail:
    design, decisions, task status.
 4. Read [docs/design/architecture.md](docs/design/architecture.md) if you need component
@@ -70,6 +71,11 @@ same shape occurred.
 line, a deployed artifact confirmed by a real check — not "written" or "code merged." A doc that
 says a database is deployed because the Bicep was authored, when the DB was never actually applied,
 is worse than no doc at all — it actively misleads the next agent into skipping verification.
+
+**Plan routing:** `docs/plan.md` contains selected active work only; move deferred work to
+[docs/backlog.md](docs/backlog.md) and verified or superseded work to
+[docs/plan_completed.md](docs/plan_completed.md). A superseded plan must name and link to its
+replacement rather than silently disappear.
 
 ### Spoke shape — lookup table, not narrative; completed work moves out
 
@@ -417,7 +423,9 @@ private method — no new packages needed for OpenAI-compatible APIs.
 README.md               — what MCL is and why it exists
 AGENTS.md                — this file (canonical; CLAUDE.md symlinks here)
 docs/
-  plan.md                — hub: light TOC, phase list with statuses and links
+  plan.md                — active-work hub: current phases only
+  backlog.md             — deferred candidates, paused work, and external conditions
+  plan_completed.md      — verified completed work and superseded-plan mappings
   design/                — cross-cutting design decisions (language, architecture, deploy, code-style, ...)
   phases/                — one hub + spokes per phase, task lists and statuses
 src/
