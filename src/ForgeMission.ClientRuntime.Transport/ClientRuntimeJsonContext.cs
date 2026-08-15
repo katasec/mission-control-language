@@ -11,6 +11,8 @@ namespace ForgeMission.ClientRuntime.Transport;
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(SessionSetupRequest))]
 [JsonSerializable(typeof(SessionSetupResponse))]
+[JsonSerializable(typeof(DefaultWorkspaceSessionRequest))]
+[JsonSerializable(typeof(DefaultWorkspaceSessionResponse))]
 [JsonSerializable(typeof(CapabilityDispatchRequest))]
 [JsonSerializable(typeof(CapabilityDispatchResponse))]
 [JsonSerializable(typeof(PromptRequest))]
