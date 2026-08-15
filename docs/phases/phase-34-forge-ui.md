@@ -1,6 +1,13 @@
 # Phase 34 — Forge UI
 
-**Status:** Design
+**Status:** Backlog reference (2026-08-16) — not an active build plan.
+
+The rationale for visible trust remains relevant, but the standalone Next.js implementation proposed
+by this phase is not planned. Hosted UI work evolved through
+[Phase 38](phase-38-forge-rooms.md) and [Phase 40](phase-40-forge-ui-shell.md); the
+Desktop counterpart is the completed Janus group-chat proof in
+[Phase 43.16](phase-43.16-janus-desktop-local-poc.md), with future workbench iteration in
+[Phase 43.4](phase-43.4-ide-trace-surface.md). See the [backlog](../backlog.md#ui-plans-that-are-no-longer-implementation-work).
 
 ---
 
