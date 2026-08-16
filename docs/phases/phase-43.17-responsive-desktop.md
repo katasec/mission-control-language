@@ -40,6 +40,39 @@ The durable Conversation Runtime already has valuable precedents: it owns one ta
 the session is replaced, deduplicates by event ID, and reconnects with a cursor. Reuse those
 principles; do not introduce a second generic reactive framework.
 
+## Comparable-product research — GitHub Copilot app (2026-08-16)
+
+**Method:** compliance-bounded black-box observation of the installed GitHub Copilot app 1.1.2
+(`ps`, `lsof`, launch, and visible UI only), plus GitHub's public documentation. No binary/resource
+inspection. This is product inspiration, not an API or implementation dependency.
+
+**Observed:** within three seconds of launch, the native `github` host had started four direct
+`copilot --server --stdio --no-auto-update` child processes and was listening only on two loopback
+ports. Yet the visible app already presented a complete, focused shell: persistent navigation,
+session rail, prompt box, mode/model/effort controls, and immediately useful empty-state content.
+The host did not make its first interactive surface wait for all agent workers to become useful.
+
+GitHub's public docs describe the same product shape: independent sessions appear in a persistent
+sidebar; an active session owns its workspace and can be switched without turning the entire app
+into one global busy operation; and the stream distinguishes ephemeral deltas from persisted
+messages/tool results. Sub-agent events carry identity so the main transcript can render only the
+parent response while routing other activity to progress/trace UI. See [Copilot app sessions](https://docs.github.com/en/copilot/how-tos/github-copilot-app/agent-sessions) and
+[Copilot streaming events](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/streaming-events).
+
+### Adopt the principle, not the product shape
+
+| Copilot observation | Forge response |
+|---|---|
+| Shell appears while several workers start. | Task 2 must create/render the native boot shell before Mission Runtime and Client Runtime readiness. A boot state is a product state, not a blocked precondition. |
+| One typed stream has transient deltas and replayable completed facts. | Task 4 must classify/buffer text deltas separately from ordered tool/error/durable conversation state. Deltas may coalesce; durable facts cannot be silently dropped. |
+| UI has a durable session rail and an active-session focus. | Task 3's single current view/session operation is the v1 prerequisite. Only its events may update the active transcript; session replacement cancels the old subscription before it creates the new one. |
+| Permission/interception is outside the agent's core turn. | Keep Forge's existing Client Runtime `ICapabilityDispatcher` boundary; responsiveness work must not let UI rendering or Mission Runtime calls bypass it. |
+
+**Not adopted:** Copilot's stdio transport, four-sidecar startup count, worktree/cloud-sandbox
+product model, and specific visual design. Forge retains its existing Client Runtime HTTP/SSE
+contract and one Client Runtime process. Parallel/multi-workspace sessions become a separate product
+decision only when the current single-active-session lifecycle is proven responsive.
+
 ## Locked boundaries
 
 - **Presentation stays presentation-only.** Blazor/WASM may render lifecycle and stream state, but
