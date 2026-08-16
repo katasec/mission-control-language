@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** — the core Janus Desktop proof is done: a real visible Proposer → Approver → Implementer conversation completed through Kind, including revision, approval, local-tool execution, and completion. Iterate on the UI with Codex. |
+| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** — improve the desktop’s responsiveness now that the core Janus proof is complete. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | UI iteration active; the core Janus group-chat proof is done |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Responsive UI/lifecycle design active; core Janus group-chat proof complete |
 
 ## Design docs
 
