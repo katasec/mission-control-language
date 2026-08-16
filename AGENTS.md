@@ -247,6 +247,12 @@ dotnet test src/ForgeMission.slnx
 
 All tests must pass before marking any task complete. Never mark a task done if tests are failing.
 
+**Documentation-only exception:** When a change is confined to Markdown/documentation files, do
+not run the build or test suite by default. Instead, review the rendered/linked documentation and
+the diff for consistency, and state that no code verification was needed. Run checks only if the
+documentation change also alters executable configuration, scripts, generated artifacts, or if the
+operator explicitly asks for validation.
+
 ---
 
 ## AOT-first — standing rules for all new code
