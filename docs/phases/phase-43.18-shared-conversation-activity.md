@@ -111,6 +111,29 @@ Contract Tasks 2–3 map onto — fixed and safe to build against:
 `main` in a clean worktree). Task 2 edits that file, so this must be resolved before Rooms adoption
 can be verified.
 
+### Task 1.5 — Restore Rooms build coverage
+
+`RoomConversation.razor` renders the legacy, completed-message trace through
+`ForgeUI.Models.PipelineTraceEvent`. A later Core runtime type with the same short name is globally
+imported for `StepEnvelope`, which makes the existing projection ambiguous. Resolve the collision
+locally with an explicit alias for the ForgeUI view-model; do not rename, map to, or otherwise adopt
+Core's runtime lifecycle type. It carries different facts and remains outside Rooms' durable trace.
+
+Add `ForgeUI` to `ForgeMission.slnx` so its production build is part of the normal solution
+verification. Its existing project references continue to own its dependency graph; do not add a
+new test project, transport contract, or shared trace abstraction.
+
+| Gate | Answer |
+|---|---|
+| Bounded context / data / credentials | Not applicable. This is a compile-time presentation-model disambiguation; it changes no request, store, identity, or data ownership. |
+| Type | Type 2 build-coverage repair. The local alias and solution entry are reversible without changing a conversation contract. |
+| Failure ownership | `RoomConversation` owns its legacy trace projection. A compile failure is surfaced by the solution build rather than discovered when a later Rooms task happens to build the host. |
+| Engineering-philosophy result | One local alias states which trace model the existing component renders; adding the host to the solution structurally prevents recurrence. No adapter or generic conversion layer is justified. |
+
+**Done when:** `RoomConversation` explicitly constructs `ForgeUI.Models.PipelineTraceEvent`; no Core
+runtime trace type flows into the legacy trace view; `dotnet build src/ForgeUI/ForgeUI.csproj` and
+`dotnet build src/ForgeMission.slnx` pass with zero errors, with the latter building `ForgeUI`.
+
 ### Task 2 — Adopt it in Forge Rooms
 
 Replace only the current `agent-thinking` / `thinking-dots` activity markup in
