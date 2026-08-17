@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!--
+    The one shared in-transcript activity renderer for Forge Rooms and Forge Desktop (43.18).
+    Presentation only: it references no Forge project, holds no conversation state, and opens no
+    connection. Styling lives in ForgeUI/wwwroot/css/forge.css — Forge's single styling authority,
+    which both hosts already load — so this library ships markup and semantics, not a theme.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

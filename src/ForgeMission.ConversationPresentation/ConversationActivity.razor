@@ -1,0 +1,42 @@
+@namespace ForgeMission.ConversationPresentation
+
+@* The one in-transcript "work is happening" visual, shared by Rooms and Desktop (43.18). The caller
+   decides only whether to render it and supplies State; the treatment for each of the three fixed
+   kinds is chosen here, from Kind alone. Styling is the tokenized .convo-activity* block in
+   forge.css — this component ships markup and status semantics, not a theme. *@
+
+<div class="convo-activity @KindClass" role="status" aria-live="polite">
+    <span class="convo-activity-text">@State.Actor @Phrase</span>
+    @if (State.Kind == ConversationActivityKind.Thinking)
+    {
+        @* Decorative: the announced text above already carries the meaning. *@
+        <span class="convo-activity-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+    }
+    else if (State.Kind == ConversationActivityKind.Streaming)
+    {
+        <span class="convo-activity-caret" aria-hidden="true"></span>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ConversationActivityState State { get; set; } = default!;
+
+    // One text rule for all three kinds: an existing progress/tool label replaces the default
+    // phrase, so a surface passes the label it already has instead of a formatting switch.
+    private string Phrase => string.IsNullOrWhiteSpace(State.Detail) ? DefaultPhrase : State.Detail!;
+
+    private string DefaultPhrase => State.Kind switch
+    {
+        ConversationActivityKind.Working => "is working…",
+        ConversationActivityKind.Streaming => "is responding…",
+        _ => "is thinking…",
+    };
+
+    private string KindClass => State.Kind switch
+    {
+        ConversationActivityKind.Working => "convo-activity-working",
+        ConversationActivityKind.Streaming => "convo-activity-streaming",
+        _ => "convo-activity-thinking",
+    };
+}
