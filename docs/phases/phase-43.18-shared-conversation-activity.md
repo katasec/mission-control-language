@@ -94,15 +94,19 @@ silently absorbed here.
 
 ## Dependency-ordered work
 
-### Task 1 — Build the shared activity renderer
+### Task 1 — Build the shared activity renderer — done 2026-08-17
 
-Create the small Razor Class Library and add it to `ForgeMission.slnx`. Move the existing activity
-visual treatment into `ConversationActivity`; retain Forge token styling and add reduced-motion and
-accessible-status behaviour.
+`ForgeMission.ConversationPresentation` (RCL, in `ForgeMission.slnx`) ships `ConversationActivity`,
+`ConversationActivityKind`, and `ConversationActivityState`; the tokenized `.convo-activity*` styles
+live in `forge.css`. See
+[phase-43.18-shared-conversation-activity_completed.md — Task 1](phase-43.18-shared-conversation-activity_completed.md#task-1--build-the-shared-activity-renderer-done-2026-08-17).
 
-**Done when:** renderer tests prove the three named states produce their intended visible text and
-status semantics, and the component has no dependency on Rooms, Client Runtime transport, or a
-network service.
+Text rule Tasks 2–3 map onto: `{Actor} {Detail ?? defaultPhrase(Kind)}`, defaults `is thinking…` /
+`is working…` / `is responding…`.
+
+**Blocks Task 2:** `src/ForgeUI` is absent from `ForgeMission.slnx` and does not compile on `main`
+(`CS0104` ambiguous `PipelineTraceEvent` at `RoomConversation.razor:353`, reproduced on unmodified
+`main`). Task 2 edits that file, so this must be resolved before Rooms adoption can be verified.
 
 ### Task 2 — Adopt it in Forge Rooms
 

@@ -410,6 +410,34 @@ h2 { font-size: 20px; }
 .thinking-dots span:nth-child(3) { animation-delay: .36s; }
 @keyframes thinking-bounce { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
 
+/* Shared conversation activity (43.18) — the one in-transcript "work is happening" visual for both
+   Rooms and Desktop, styled here because forge.css is Forge's single styling authority and both
+   hosts already load it. The ConversationActivity component picks exactly one kind class; nothing
+   here is caller-configurable. */
+.convo-activity { align-self: flex-start; display: flex; align-items: center; gap: var(--space-2); font-size: 13px; color: var(--text-muted); font-style: italic; }
+.convo-activity-thinking::before,
+.convo-activity-working::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--accent); animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0; }
+
+/* Thinking — staggered trailing dots carry "still working" when there is no step label to show. */
+.convo-activity-dots { display: inline-flex; align-items: flex-end; gap: 3px; margin-left: 1px; }
+.convo-activity-dots span { width: 4px; height: 4px; border-radius: var(--radius-pill); background: currentColor; opacity: .35; animation: thinking-bounce 1.3s ease-in-out infinite; }
+.convo-activity-dots span:nth-child(2) { animation-delay: .18s; }
+.convo-activity-dots span:nth-child(3) { animation-delay: .36s; }
+
+/* Streaming — a blinking caret, the familiar "text is arriving" cue. */
+.convo-activity-caret { width: 2px; height: 14px; background: var(--accent); border-radius: 1px; animation: convo-activity-blink 1s step-end infinite; }
+@keyframes convo-activity-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Reduced motion: hold every activity animation on its visible frame, so the cue stays legible
+   without movement. The global rule above already neutralises durations; this makes the resting
+   state explicit rather than leaving it to a one-shot final frame. */
+@media (prefers-reduced-motion: reduce) {
+  .convo-activity-thinking::before,
+  .convo-activity-working::before,
+  .convo-activity-dots span,
+  .convo-activity-caret { animation: none; opacity: 1; }
+}
+
 .room-composer { position: relative; display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-5) var(--space-4); border-top: 1px solid var(--border); background: var(--surface); }
 .room-input    { flex: 1; }
 
