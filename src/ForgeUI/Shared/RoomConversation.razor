@@ -1,6 +1,10 @@
 @using ForgeMission.Core.Runtime
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
+@* Core.Runtime (imported above for StepEnvelope) declares its own, differently shaped
+   PipelineTraceEvent — live mission lifecycle facts. This file's completed-message trace is the
+   ForgeUI view model, and says so explicitly. *@
+@using PipelineTraceEvent = ForgeUI.Models.PipelineTraceEvent
 @inject IReadStore Reads
 @inject CurrentUser Current
 @inject RoomMessageService Messages

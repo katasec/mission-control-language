@@ -106,10 +106,16 @@ Contract Tasks 2–3 map onto — fixed and safe to build against:
 `{Actor} {Detail ?? defaultPhrase(Kind)}` with defaults `is thinking…` / `is working…` /
 `is responding…`.
 
-**Blocks Task 2:** `src/ForgeUI` is absent from `ForgeMission.slnx` and does not compile on `main`
-(`CS0104` ambiguous `PipelineTraceEvent` at `RoomConversation.razor:353`, reproduced on unmodified
-`main` in a clean worktree). Task 2 edits that file, so this must be resolved before Rooms adoption
-can be verified.
+### Task 1.5 — Restore Rooms build coverage — done 2026-08-17
+
+`RoomConversation.razor` declares `@using PipelineTraceEvent = ForgeUI.Models.PipelineTraceEvent`, so
+its legacy completed-message trace binds explicitly to the view model despite Core's same-named
+runtime type being in scope for `StepEnvelope`. `ForgeUI` is in `ForgeMission.slnx`, so the host
+builds with the solution. Verified — see
+[completed record → Task 1.5](phase-43.18-shared-conversation-activity_completed.md#task-15--restore-rooms-build-coverage-done-2026-08-17).
+
+Task 2 is unblocked: `RoomConversation.razor` compiles, and any regression in it now fails the
+normal solution build.
 
 ### Task 2 — Adopt it in Forge Rooms
 
