@@ -184,3 +184,123 @@ state. Desktop quality gate: not applicable — ForgeUI is the hosted Blazor Ser
 adapter, Supervisor, Client Runtime, or Mission Runtime file was touched.
 
 Delivered by [PR #63](https://github.com/katasec/mission-control-language/pull/63).
+
+## Task 3 — Adopt it in Forge Desktop (done 2026-08-17)
+
+### What shipped
+
+| File | Change |
+|---|---|
+| `ForgeMission.ClientRuntime.Presentation.csproj` | ProjectReference to `ForgeMission.ConversationPresentation`. |
+| `Pages/Home.razor` | File-local `@using`; `CurrentActivity()`; the activity rendered at the foot of the active turn; the tool loop narrowed to `Where(row => row.Done)`; `.tool-glyph.running` and `@keyframes pulse` deleted. |
+| `Components/ConversationTranscriptView.razor` | `Typing` and unfinished `ToolCall` entries render the shared component via small `Thinking(entry)` / `Working(entry)` projections; `.convo-typing`, `.convo-tool-glyph.running`, `@keyframes convo-pulse` deleted. |
+| `Presentation/HomeSessionOperationTests.cs`, `Presentation/ConversationTranscriptViewTests.cs` | 9 new cases. |
+
+The ordinary-turn adapter, explicit guard then locked precedence:
+
+```csharp
+private ConversationActivityState? CurrentActivity()
+{
+    if (activeTurn is null || activeTurn.Error is not null) return null;
+    if (openToolRow is not null)
+        return new(selectedMission.Name, ConversationActivityKind.Working, openToolRow.Label());
+    if (activeTurn.AssistantText.Length > 0)
+        return new(selectedMission.Name, ConversationActivityKind.Streaming, null);
+
+    return new(selectedMission.Name, ConversationActivityKind.Thinking, null);
+}
+```
+
+Durable entries map `Typing` → Thinking and unfinished `ToolCall` → Working with the existing
+`"{ToolName} running…"` label. They expose no live-delta fact, so this view never claims Streaming.
+
+### The pulse-keyframe collision, found while removing dead CSS
+
+Removing `.tool-glyph.running` orphaned `Home.razor`'s own `@keyframes pulse` — and a component
+`<style>` block is *global* CSS, so that keyframe duplicated `forge.css`'s `pulse` under the same name
+with a different curve (`.35→1` vs `1→.4`). Whichever the browser saw last won for every user of
+`pulse`, including the shared activity glyph. Both were removed; `grep -rn "keyframes pulse" src` now
+returns exactly one definition, `forge.css:345`.
+
+### Verification (2026-08-17)
+
+```
+dotnet build src/ForgeMission.slnx → Build succeeded. 0 Warning(s), 0 Error(s).
+dotnet test  src/ForgeMission.slnx → 0 failed, 749 passed, 11 skipped (740 baseline + 9)
+make desktop-publish               → dist/forge-desktop/ForgeMission.Desktop
+```
+
+Packaged macOS Desktop, recorded from the published build's live DOM (Photino window on
+`http://127.0.0.1:59259`, `ChatGPT` mission, a Bash tool held open by `sleep 8`):
+
+| t | state | text | tool rows |
+|---|---|---|---|
+| 82182 ms | `convo-activity-thinking` | `ChatGPT is thinking…` | — |
+| 84982 ms | `convo-activity-working` | `ChatGPT Running sleep 8; echo finished…` | — (no running row) |
+| 92896 ms | `convo-activity-thinking` | `ChatGPT is thinking…` | `✓ Ran sleep 8; echo finished` |
+| 93902 ms | `convo-activity-streaming` | `ChatGPT is responding…` | `✓ Ran sleep 8; echo finished` |
+| 93911 ms | *(cleared)* | — | `✓ Ran sleep 8; echo finished` |
+
+Every state carried `role="status"` and `aria-live="polite"`. The t=92896 row is the locked precedence
+behaving as written: tool finished, no text yet, so the turn falls back to Thinking.
+
+**Observation method, worth keeping:** the first packaged attempt (`Read README.md`) captured Thinking
+→ Streaming but never Working — that tool's running and completed events landed in one render batch, so
+no frame showed the running state. A Bash tool held open by `sleep 8` is the reliable way to observe
+Working in a packaged run. Durable Janus was proven test-only by design; no ConversationHost was
+started and no live Janus observation was claimed.
+
+Negative checks: no `.convo-typing` / `.tool-glyph.running` / `convo-pulse` reference remains in
+source; no Desktop or Presentation project references `ForgeMission.Rooms`.
+
+### Desktop quality gate — implementation review
+
+| Required answer | Evidence | Result |
+|---|---|---|
+| Product behaviour | The packaged transcript states thinking, tool work, and responding before the answer completes — table above. | PASS |
+| Owner | Presentation only: two `.razor` files, one csproj, two test files. No process boundary crossed. | PASS |
+| Adapter verification | `Home` already held `activeTurn`, `openToolRow`, `AssistantText`; `ConversationTranscript` already projected `Typing`/`ToolCall` completion; the packaged run confirmed Desktop resolves the shared `.convo-activity*` styling through its existing forge.css link with no host change. | PASS |
+| Replacement boundary | One RCL reference; the RCL references no Forge assembly; no Rooms reference; no runtime, process, or credential ownership moved. | PASS |
+| Proof | 749-test suite plus the packaged macOS observation. | PASS |
+
+Delivered by [PR #64](https://github.com/katasec/mission-control-language/pull/64).
+
+### The locked design this was built to (moved from the active spoke on closeout)
+
+The `ForgeMission.ClientRuntime.Presentation` project references the shared RCL. The two adapters
+are deliberately direct projections, not a common activity store:
+
+| Surface | Existing state | Shared state / rendering rule |
+|---|---|---|
+| Ordinary mission turn | `activeTurn` exists; no active tool and no response text | `Thinking` for `selectedMission.Name`. |
+| Ordinary mission turn | `openToolRow` exists from a running `ToolCallStatus` | `Working` for `selectedMission.Name`, with `openToolRow.Label()` as detail. This shared activity replaces the current running tool row; completed tool rows remain transcript history. |
+| Ordinary mission turn | `activeTurn.AssistantText` becomes non-empty from `MissionTextDelta` | `Streaming` for `selectedMission.Name`. A running tool takes precedence if both facts are momentarily present. |
+| Durable Janus transcript | `ConversationEntryKind.Typing` | `Thinking` for `ParticipantLabel(entry.Participant)`. |
+| Durable Janus transcript | unfinished `ConversationEntryKind.ToolCall` | `Working` for `ParticipantLabel(entry.Participant)`, using the existing tool-running label as detail. A completed tool row remains as it is. |
+
+Durable transcript entries do not expose a distinct live-delta fact, so Task 3 does not fabricate a
+`Streaming` state for them. It renders the existing typing and unfinished-tool facts only.
+
+Add focused bUnit coverage by extending `HomeSessionOperationTests`' existing fake
+`IClientRuntimeChannel` and `ConversationTranscriptViewTests`: normal mission thinking → working →
+streaming state selection, durable typing/unfinished-tool activity, and retention of a completed tool
+row. The final user-visible proof is a `make desktop-publish` macOS packaged Desktop observation;
+the Host, Supervisor, Client Runtime, transport, and event-delivery cadence remain untouched.
+
+| Desktop quality gate | Answer |
+|---|---|
+| Product behaviour | The conversation transcript visibly states a selected mission/participant is thinking, working, or responding before a normal answer is complete. |
+| Owner / process boundary | Presentation owns this rendering-only projection inside its existing render pass. No Host, Supervisor, Client Runtime, or Mission Runtime process boundary changes. |
+| Adapter observation | `Home` already holds `activeTurn`, `openToolRow`, and response text; `ConversationTranscript` already projects typing/tool entries. No new `IClientRuntimeChannel` event is needed. |
+| Replacement boundary | The Presentation project consumes the small shared RCL; it gains no runtime, process, credential, transport, or service ownership. |
+| Proof | Focused adapter tests plus the named packaged macOS Desktop observation after Send. |
+
+| Security / engineering gate | Answer |
+|---|---|
+| Tier, data, identity, credentials | Not applicable: no ingress, request, store, identity, or credential path changes. |
+| Failure ownership | Existing turn/transcript state owns missing or terminal activity; the renderer has no subscription, retry, or fallback work. |
+| Scope containment | No new event bus, trace schema, or streaming mechanism; the adapter uses only facts already rendered or held by Presentation. |
+
+**Done when:** in the packaged Desktop, Send immediately creates a visible in-chat `Thinking`
+state; a received tool-running event changes it to `Working`; and a text delta changes it to the
+streaming cursor. Normal mission and Janus paths both use the shared component.

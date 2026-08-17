@@ -134,63 +134,13 @@ aborts with `3D000: database "authbilling_db" does not exist`. A fresh clone hit
 CREATE ON SCHEMA public TO forge_app`). Anyone doing a local Rooms run for Task 4 will hit it too.
 Left as a documented development-environment issue, not fixed inside 43.18.
 
-### Task 3 — Adopt it in Forge Desktop — implemented, pending review
+### Task 3 — Adopt it in Forge Desktop — done 2026-08-17
 
-**Status (2026-08-17):** implemented on `codex/phase-43.18-desktop-adopt-activity-design`
-([PR #64](https://github.com/katasec/mission-control-language/pull/64)), awaiting review. Ordinary
-turns render `Home.CurrentActivity()`'s state and only completed tool rows; durable Typing and
-unfinished `ToolCall` entries render the shared component, with completed rows unchanged. Nine focused
-bUnit cases added. Packaged macOS Desktop captured Thinking → Working → Streaming → cleared, with the
-completed tool row retained. Evidence goes into the completed record on approval, not before.
-
-Also removed as dead: `Home.razor`'s `.tool-glyph.running` and its orphaned `@keyframes pulse` — the
-latter was a same-name, different-curve duplicate of `forge.css`'s `pulse`, so as global CSS it could
-override the shared renderer's animation. `forge.css` is now the single definition. In the durable
-view, `.convo-typing`, `.convo-tool-glyph.running`, and their sole-user `@keyframes convo-pulse` are
-gone.
-
-Replace Desktop's input-only sending cue with `ConversationActivity` in the active turn/transcript.
-Use existing prompt, `ToolCallStatus`, text-delta, typing, and tool-progress state only; do not add
-an event or alter event timing. Apply the same renderer to ordinary mission turns and durable Janus
-transcript activity.
-
-The `ForgeMission.ClientRuntime.Presentation` project references the shared RCL. The two adapters
-are deliberately direct projections, not a common activity store:
-
-| Surface | Existing state | Shared state / rendering rule |
-|---|---|---|
-| Ordinary mission turn | `activeTurn` exists; no active tool and no response text | `Thinking` for `selectedMission.Name`. |
-| Ordinary mission turn | `openToolRow` exists from a running `ToolCallStatus` | `Working` for `selectedMission.Name`, with `openToolRow.Label()` as detail. This shared activity replaces the current running tool row; completed tool rows remain transcript history. |
-| Ordinary mission turn | `activeTurn.AssistantText` becomes non-empty from `MissionTextDelta` | `Streaming` for `selectedMission.Name`. A running tool takes precedence if both facts are momentarily present. |
-| Durable Janus transcript | `ConversationEntryKind.Typing` | `Thinking` for `ParticipantLabel(entry.Participant)`. |
-| Durable Janus transcript | unfinished `ConversationEntryKind.ToolCall` | `Working` for `ParticipantLabel(entry.Participant)`, using the existing tool-running label as detail. A completed tool row remains as it is. |
-
-Durable transcript entries do not expose a distinct live-delta fact, so Task 3 does not fabricate a
-`Streaming` state for them. It renders the existing typing and unfinished-tool facts only.
-
-Add focused bUnit coverage by extending `HomeSessionOperationTests`' existing fake
-`IClientRuntimeChannel` and `ConversationTranscriptViewTests`: normal mission thinking → working →
-streaming state selection, durable typing/unfinished-tool activity, and retention of a completed tool
-row. The final user-visible proof is a `make desktop-publish` macOS packaged Desktop observation;
-the Host, Supervisor, Client Runtime, transport, and event-delivery cadence remain untouched.
-
-| Desktop quality gate | Answer |
-|---|---|
-| Product behaviour | The conversation transcript visibly states a selected mission/participant is thinking, working, or responding before a normal answer is complete. |
-| Owner / process boundary | Presentation owns this rendering-only projection inside its existing render pass. No Host, Supervisor, Client Runtime, or Mission Runtime process boundary changes. |
-| Adapter observation | `Home` already holds `activeTurn`, `openToolRow`, and response text; `ConversationTranscript` already projects typing/tool entries. No new `IClientRuntimeChannel` event is needed. |
-| Replacement boundary | The Presentation project consumes the small shared RCL; it gains no runtime, process, credential, transport, or service ownership. |
-| Proof | Focused adapter tests plus the named packaged macOS Desktop observation after Send. |
-
-| Security / engineering gate | Answer |
-|---|---|
-| Tier, data, identity, credentials | Not applicable: no ingress, request, store, identity, or credential path changes. |
-| Failure ownership | Existing turn/transcript state owns missing or terminal activity; the renderer has no subscription, retry, or fallback work. |
-| Scope containment | No new event bus, trace schema, or streaming mechanism; the adapter uses only facts already rendered or held by Presentation. |
-
-**Done when:** in the packaged Desktop, Send immediately creates a visible in-chat `Thinking`
-state; a received tool-running event changes it to `Working`; and a text delta changes it to the
-streaming cursor. Normal mission and Janus paths both use the shared component.
+`Home.CurrentActivity()` drives the ordinary turn's shared activity (completed-only tool rows), and the
+durable view renders `Typing` / unfinished `ToolCall` through the same component. Packaged macOS
+Desktop captured Thinking → Working → Streaming → cleared; `forge.css` is now the sole `pulse`
+keyframe. Verified — see
+[completed record → Task 3](phase-43.18-shared-conversation-activity_completed.md#task-3--adopt-it-in-forge-desktop-done-2026-08-17).
 
 ### Task 4 — Verify the narrow boundary
 
