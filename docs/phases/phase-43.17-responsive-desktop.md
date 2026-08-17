@@ -1,8 +1,9 @@
 # Phase 43.17 — Responsive Desktop lifecycle and UI
 
-> **Status: Supervisor/Host design locked (2026-08-17).** The current Desktop combines runtime
-> supervision and its disposable native host in one process. First split those responsibilities;
-> then implement the named lifecycle and event-flow changes below. Part of
+> **Status: Supervisor/Host split live (2026-08-17); UI work next.** Tasks 1–2 are done — the
+> Desktop Supervisor and its disposable native host are separate processes, and the Supervisor owns
+> a non-blocking lifecycle with exactly-once cleanup. Tasks 3–5 (session ownership, bounded event
+> delivery, progressive rendering) are outstanding. Part of
 > [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Read boundary
@@ -32,8 +33,6 @@ memory or one render per token.
 
 | Location | Current behavior | Consequence |
 |---|---|---|
-| `src/ForgeMission.Desktop/Program.cs` | One process both resolves/starts runtimes and constructs/runs the Photino host. | A native window close can terminate the same process that owns runtime cleanup. |
-| `src/ForgeMission.Desktop/Program.cs` | `ResolveAsync(...).Wait()` and `WaitForReadyUrl` block before the host exists; its synchronous close callback waits for child/container cleanup. | A slow start leaves no useful native UI; a close can beachball. |
 | `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` | `AddFolderAsync` starts a new event loop without stopping the existing default-session loop. | Duplicate SSE subscribers can process later events twice. |
 | `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` | Each SSE event mutates state and invokes `StateHasChanged`; text appends allocate a new string for every delta. | Render pressure and growing per-turn string-copy cost during long streams. |
 | `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEventHub.cs` | Each subscriber has an unbounded channel and every event is forwarded/flushed individually. | A slow WebView can accumulate unbounded queued data. |
@@ -107,7 +106,9 @@ decision only when the current single-active-session lifecycle is proven respons
 ## Desktop Design and Implementation Quality Gate
 
 Apply the mandatory [Engineering Philosophy gate](../design/engineering-philosophy.md#desktop-design-and-implementation-quality-gate)
-before approving a Task 2 plan or its implementation. This task's recorded result is:
+before approving a Task 2 plan or its implementation. The design result is below; the implementation
+result — with the measured adapter observations and the published-app evidence — is in the
+[completed record](phase-43.17-responsive-desktop_completed.md#desktop-quality-gate-result).
 
 | Required answer | Result |
 |---|---|
@@ -158,23 +159,9 @@ named ownership, control messages, credential boundary, failure paths, and verif
 
 ### Task 2 — Non-blocking supervised lifecycle
 
-**Depends on:** Task 1.
-
-Implement a focused `DesktopLifecycle` in the **Supervisor**, with state
-`Booting`, `Ready`, `Failed`, `Stopping`, `Stopped` and one exactly-once cleanup operation. It starts
-Host before any potentially slow runtime work and sends the fixed Host commands only after the
-relevant state transition. A Host process exit — including a normal window close — cancels boot and
-starts cleanup; it never invokes cleanup inline in a native callback. SIGTERM/SIGINT perform the
-same Supervisor-owned cleanup and terminate Host as a child.
-
-The Host may use a concrete adapter's documented main-thread mechanism internally to render its
-local boot/failure content and handle its command pipe, but that mechanism does not leak through the
-Supervisor boundary. Do not patch, fork, or otherwise depend on a Host-specific close veto.
-
-**Done when:** boundary tests prove the Supervisor has no concrete-host dependency or `IDesktopHost`
-source use and the Host has no runtime/capability dependency; a deliberately delayed runtime shows `Booting` before readiness;
-and published macOS checks prove no Client Runtime child or Docker Mission Runtime container remains
-after normal window close, Host kill, or Supervisor SIGTERM.
+**Done 2026-08-17** — Supervisor/Host split implemented and verified; see
+[phase-43.17-responsive-desktop_completed.md](phase-43.17-responsive-desktop_completed.md#task-2--non-blocking-supervised-lifecycle-done-2026-08-17)
+for the build narrative, boundary/lifecycle test evidence, and the six published-app observations.
 
 ### Task 3 — Session operation ownership and stale-result suppression
 

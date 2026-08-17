@@ -473,9 +473,11 @@ the process it starts is an implementation detail behind the fixed Supervisor↔
 `IDesktopHost`, not just prose + a project-reference test.** Same pattern this project already
 uses for Model/Storage/Transport/Capability Providers — a stable seam something programs against,
 with a swappable implementation behind it. Its only caller is the **Host process**, not the Desktop
-Supervisor. `IDesktopHost` covers local window/WebView operations such as loading Host-owned markup
-or a ready URL and running the native loop; it does not own processes, credentials, cleanup, or a
-generic scheduler. In particular, a host close veto is not part of the Supervisor lifecycle design.
+Supervisor. `IDesktopHost` covers local window/WebView operations: showing Host-owned markup, showing
+a ready URL, hearing the one local Retry click so the Host can translate it into the locked
+`RetryRequested` event, and running the native loop. It does not own processes, credentials, cleanup,
+or a generic scheduler. In particular, a host close veto is not part of the Supervisor lifecycle
+design.
 
 The former same-process composition made `ForgeMission.Desktop/Program.cs` both runtime supervisor
 and `IDesktopHost` caller. That was an implementation error: it coupled host exit to runtime cleanup
@@ -504,8 +506,8 @@ reader (human or agent) to miss and reintroduce coupling. Moved to three project
 
 No `LinkerArg`/`PublishAot` on Contracts or adapter libraries — those stay exe-only, matching how
 `ForgeMission.Core` (a library linked into other AOT exes) is set up; they get `IsAotCompatible`
-only. The Supervisor and Host executables each publish Native AOT. Task 2 must add
-`DesktopSupervisorHostBoundaryTests`: the Supervisor cannot reference a concrete-host package and
+only. The Supervisor and Host executables each publish Native AOT. This split is enforced by
+`DesktopSupervisorHostBoundaryTests` (added by Task 2): the Supervisor cannot reference a concrete-host package and
 its source cannot name `IDesktopHost`; the Host cannot reference `Core`, `Orchestration`,
 `ClientRuntime`, or capability providers; and the Photino adapter cannot reference those runtime
 projects either.

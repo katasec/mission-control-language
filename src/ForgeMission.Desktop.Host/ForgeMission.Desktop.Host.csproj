@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <!-- Contracts plus today's concrete host, and deliberately nothing else: no Core, no
+       Orchestration, no Client Runtime, no capability provider. This process owns a window, not a
+       runtime. -->
+  <ItemGroup>
+    <ProjectReference Include="..\ForgeMission.Desktop.Contracts\ForgeMission.Desktop.Contracts.csproj" />
+    <ProjectReference Include="..\ForgeMission.Desktop.Photino\ForgeMission.Desktop.Photino.csproj" />
+  </ItemGroup>
+
+  <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <LinkerArg Include="-L/opt/homebrew/lib" />
+    <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
+  </ItemGroup>
+</Project>

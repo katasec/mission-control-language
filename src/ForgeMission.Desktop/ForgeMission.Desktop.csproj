@@ -8,16 +8,25 @@
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
+  <!-- Contracts (the pipe protocol), Orchestration (Mission Runtime resolution) and Core (the
+       platform credential this process hands to the Client Runtime, and to nothing else).
+       Deliberately no reference to a concrete native host or to ForgeMission.Desktop.Host: the Host
+       is started as a sibling binary by path, which keeps its dependencies out of this process. -->
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Desktop.Contracts\ForgeMission.Desktop.Contracts.csproj" />
-    <ProjectReference Include="..\ForgeMission.Desktop.Photino\ForgeMission.Desktop.Photino.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />
+  </ItemGroup>
+
+  <!-- The lifecycle's ordering and exactly-once cleanup rules are verified against a fake host
+       channel rather than a real window. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="ForgeMission.Tests" />
   </ItemGroup>
 
   <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
