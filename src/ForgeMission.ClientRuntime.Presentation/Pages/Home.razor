@@ -92,6 +92,7 @@
         <div class="composer">
             <button class="composer-plus" title="Add folder" @onclick="ToggleAddFolderMenu">+</button>
             <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
+                   @ref="composerInput"
                    placeholder="@ComposerPlaceholder"
                    disabled="@(session is null || sending || PromptsBlocked)" />
             <button class="mission-trigger" aria-expanded="@showMissionMenu" aria-haspopup="true"
@@ -189,6 +190,8 @@
 
     private string composerText = string.Empty;
     private bool sending;
+    private ElementReference composerInput;
+    private bool focusComposerAfterRender;
     private readonly List<ChatTurn> turns = [];
 
     // One view operation at a time (43.17 task 3). viewCts cancels this view's setup/prompt
@@ -240,6 +243,7 @@
 
             session = new SessionSetupResponse(initial.SessionId, initial.AvailableCapabilities);
             workspaceRoot = initial.WorkspaceRoot;
+            focusComposerAfterRender = true;
             StartEventLoop(view);
         }
         catch (OperationCanceledException)
@@ -259,6 +263,15 @@
             if (IsCurrent(view.Generation))
                 settingUpSession = false;
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusComposerAfterRender)
+            return;
+
+        focusComposerAfterRender = false;
+        await composerInput.FocusAsync();
     }
 
     private void ToggleAddFolderMenu()
