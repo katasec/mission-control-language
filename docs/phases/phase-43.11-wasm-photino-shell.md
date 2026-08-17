@@ -1,9 +1,16 @@
 # Phase 43.11 — Blazor WASM UI shell + Photino native packaging
 
-> **Naming note (2026-08-01):** the native packaging project this spoke builds was renamed
+> **Operational correction (2026-08-17):** This completed spoke records the original single-process
+> implementation. It is historical evidence only. New work must follow the locked
+> [Desktop Supervisor/Host process boundary](../design/forge-architecture.md#desktop-supervisor-and-native-host-are-separate-processes):
+> `ForgeMission.Desktop` is the Supervisor; `ForgeMission.Desktop.Host` is the disposable native
+> host. In particular, do not use this spoke's `Program.cs` orchestration or its host-close handling
+> as precedent.
+
+> **Historical naming note (2026-08-01):** the native packaging project this spoke built was renamed
 > `ForgeMission.ClientRuntime.Photino` → `ForgeMission.Desktop` (and moved out from under the
-> `ClientRuntime.` prefix — see
-> [forge-architecture.md](../design/forge-architecture.md#naming-the-desktop-shell-project)). Below,
+> `ClientRuntime.` prefix). The current process names are fixed in
+> [Forge Architecture](../design/forge-architecture.md#naming-the-desktop-processes). Below,
 > literal code references (project name, `PhotinoShellBoundaryTests`) have been updated to the new
 > names; "Photino" elsewhere still correctly names the underlying `Photino.NET` library the shell is
 > built on, which hasn't changed. **Same day, follow-up:** the shell contract was also formalized as
@@ -11,17 +18,17 @@
 > with the implementation (`PhotinoDesktopHost`) in a third project (`ForgeMission.Desktop.Photino`)
 > — see [forge-architecture.md](../design/forge-architecture.md#desktop-host-abstraction-idesktophost)
 > for the current three-project layout and why it isn't just inside `ForgeMission.Desktop`.
-> `Program.cs`'s Client Runtime orchestration now depends only on `IDesktopHost`, not `Photino.NET`
-> directly.
+> The former `Program.cs` Client Runtime orchestration depended only on `IDesktopHost`, not
+> `Photino.NET` directly. That same-process composition is superseded by the correction above.
 
 **Status: ✅ DONE (2026-08-08) — both Batch A and Batch B complete and verified.** Part of
 [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Depended on
 [43.10](phase-43.10-transport-contract.md) (the UI needs a real channel to the Client Runtime before
 it can do anything). Replaces the now-superseded Electron + Blazor Server shell
 ([phase-43.2-electron-forge-desktop-shell.md](phase-43.2-electron-forge-desktop-shell.md)) as the
-active desktop-shell spoke. The next downstream proof is the **Janus Desktop PoC** recorded in the
-[Phase 43 hub](phase-43-forge-desktop.md#dependency-ordered-task-list); 43.3's remaining
-`sdlc-agent` catalog work is independent follow-up.
+active desktop-shell spoke. The later **Janus Desktop PoC** is recorded in the
+[Phase 43 completed record](phase-43-forge-desktop_completed.md); 43.3's remaining `sdlc-agent`
+catalog work is independent follow-up.
 
 ## Design
 

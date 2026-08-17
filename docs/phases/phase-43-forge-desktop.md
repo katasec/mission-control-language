@@ -38,8 +38,9 @@ items. Their history is either in the individual spoke or the
 - **Missions are the attach point, not models.**
 - **Forge owns local tool execution.** The Client Runtime, never the Presentation layer, owns
   capability authorization and filesystem/terminal work.
-- **Desktop is Blazor WebAssembly packaged by Photino.** Photino is a disposable native host, not
-  the UI framework or a place for business logic.
+- **Desktop is supervised separately from its native host.** `ForgeMission.Desktop` owns runtime
+  lifetime; the Host is a disposable child process (Photino today), not the UI framework or a place
+  for business logic, credentials, or cleanup.
 - **The Mission Runtime is external to the Client Runtime.** The shared orchestration layer resolves
   and supervises it before injecting its URL into Client Runtime.
 
