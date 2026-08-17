@@ -119,3 +119,68 @@ renders nothing new. Rooms' visible behaviour is Task 2's verification.
 `ForgeMission.Parser`, `ForgeMission.Runner`, `ForgeMission.Runner.Contracts`, and
 `ForgeMission.ClientRuntime.Demo` are still absent from `ForgeMission.slnx` and build only
 transitively. None is currently failing, so they were left out of this task's scope.
+
+## Task 2 — Adopt it in Forge Rooms (done 2026-08-17)
+
+### What shipped
+
+| File | Change |
+|---|---|
+| `src/ForgeUI/ForgeUI.csproj` | ProjectReference to `ForgeMission.ConversationPresentation`. |
+| `src/ForgeUI/Shared/RoomConversation.razor` | File-local `@using ForgeMission.ConversationPresentation`; the `agent-thinking` markup block replaced by `<ConversationActivity State="activity" />` in the same transcript position; one computed `Activity` property. |
+| `src/ForgeUI/wwwroot/css/forge.css` | `.agent-thinking`, `.agent-thinking::before` and the four `.thinking-dots` rules deleted, so `.convo-activity*` is the sole activity styling. |
+
+The adapter is the whole mapping:
+
+```csharp
+private ConversationActivityState? Activity
+    => _thinkingHandle is null
+        ? null
+        : new(_thinkingHandle,
+              _progressLabel is null ? ConversationActivityKind.Thinking : ConversationActivityKind.Working,
+              _progressLabel);
+```
+
+Kept deliberately: `@keyframes thinking-bounce` (the shared `.convo-activity-dots` animate from it —
+deleting it with its original rules would have silently frozen them), `@keyframes pulse`, and the
+unrelated still-used `.thinking-pulse`. Untouched: `RoomBroadcaster`, `RoomAgentInvoker`,
+`AgentThinking`/`AgentProgress`/`RoomEvent`, `OnRoomEvent`'s switch and its clearing paths,
+persistence, trace DTOs, transport, `PipelineTrace.razor`, the show-thinking control, message cards.
+
+### Verification (2026-08-17)
+
+```
+dotnet build src/ForgeUI/ForgeUI.csproj  → Build succeeded. 0 Warning(s), 0 Error(s).
+dotnet build src/ForgeMission.slnx       → Build succeeded. 0 Warning(s), 0 Error(s). (ForgeUI built)
+dotnet test  src/ForgeMission.slnx       → 0 failed, 740 passed, 11 skipped
+grep agent-thinking|thinking-dots (src, excluding bin/obj) → only the explanatory CSS comment
+```
+
+Live local run — `make dev-up`, runner on :5000 advertising 7 missions, ForgeUI on :5286 with
+`RunnerBaseUrl` pointed at it, dev sign-in as alice, `@assistant` prompted in a seeded room. A
+`MutationObserver` installed on `.room-stream` *before* Send recorded the transient states from the
+real DOM:
+
+| t | class | rendered text |
+|---|---|---|
+| 85142 ms | `convo-activity convo-activity-thinking` | `@assistant is thinking…` + the three `aria-hidden` dots |
+| 85160 ms | `convo-activity convo-activity-working` | `@assistant Thinking` — the engine's own first progress label, arriving via the existing `AgentProgress` path |
+
+Both carried `role="status"` and `aria-live="polite"`. On answer: `.convo-activity` count returned to
+0, and `.agent-thinking` / `.thinking-dots` never rendered at all (count 0 throughout). The completed
+message showed `✓ Verified @assistant` with `show thinking ▼`; expanding it rendered one
+`.trace-panel` with its two `.trace-row` entries (Answerer PASS, Verifier PASS), unchanged.
+
+Timing note: the Thinking state lasted ~18 ms in this run because the runner's first step-start
+progress event follows `AgentThinking` almost immediately. That is pre-existing event timing — the old
+markup switched to the label just as fast — and is why the states were captured with an observer
+rather than a screenshot.
+
+### Gates
+
+Security architecture: not applicable — no route, tier, store, identity, credential, or cross-context
+path changed; markup was swapped inside an existing authenticated component that already held this
+state. Desktop quality gate: not applicable — ForgeUI is the hosted Blazor Server web app, and no Host
+adapter, Supervisor, Client Runtime, or Mission Runtime file was touched.
+
+Delivered by [PR #63](https://github.com/katasec/mission-control-language/pull/63).

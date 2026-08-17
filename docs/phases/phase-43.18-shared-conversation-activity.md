@@ -117,15 +117,22 @@ builds with the solution. Verified — see
 Task 2 is unblocked: `RoomConversation.razor` compiles, and any regression in it now fails the
 normal solution build.
 
-### Task 2 — Adopt it in Forge Rooms
+### Task 2 — Adopt it in Forge Rooms — done 2026-08-17
 
-Replace only the current `agent-thinking` / `thinking-dots` activity markup in
-`RoomConversation.razor` with `ConversationActivity`. Map `AgentThinking` and `AgentProgress` to
-the shared state. Leave message cards, `PipelineTrace`, and the existing `show thinking` control
-unchanged.
+`RoomConversation.razor` renders `ConversationActivity` from its computed `Activity` mapping; the
+legacy `agent-thinking` / `thinking-dots` rules are gone and `.convo-activity*` is Rooms' sole
+activity styling. Live DOM observation and build/tests verified — see
+[completed record → Task 2](phase-43.18-shared-conversation-activity_completed.md#task-2--adopt-it-in-forge-rooms-done-2026-08-17).
 
-**Done when:** Rooms shows the shared thinking/working visual from its current events and its
-completed-message trace remains exactly where it was.
+### Open, unrelated to the remaining tasks' code: local `authbilling_db` bootstrap gap
+
+`scripts/db/init/01-init.sql` creates only `forge_rooms`, and `make dev-up` applies only the Rooms EF
+migrations — but ForgeUI also bootstraps the separate `authbilling_db` context (42.6) at startup and
+aborts with `3D000: database "authbilling_db" does not exist`. A fresh clone hits this on its first
+`dotnet run`; Task 2's observation needed the database created by hand in the local container
+(`CREATE DATABASE authbilling_db OWNER postgres`, `GRANT CONNECT … TO forge_app`, `GRANT USAGE,
+CREATE ON SCHEMA public TO forge_app`). Anyone doing a local Rooms run for Task 4 will hit it too.
+Left as a documented development-environment issue, not fixed inside 43.18.
 
 ### Task 3 — Adopt it in Forge Desktop
 
