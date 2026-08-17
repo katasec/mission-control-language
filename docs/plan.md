@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-08-16)
+## Now (2026-08-17)
 
 | | |
 |---|---|
-| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** — improve the desktop’s responsiveness now that the core Janus proof is complete. |
+| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** — deliver one shared, visible in-chat activity surface for Rooms and Desktop. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Responsive UI/lifecycle work active; core Janus group-chat proof complete |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Shared conversation activity surface active; core Janus group-chat proof complete |
 
 ## Design docs
 
