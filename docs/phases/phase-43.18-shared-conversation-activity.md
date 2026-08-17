@@ -1,9 +1,12 @@
 # Phase 43.18 — Shared conversation activity surface
 
-> **Status: design ready for implementation (2026-08-17).** Part of
-> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). Build one small, shared activity visual
-> in the chat surface. It replaces neither product's conversation model, event transport, or rich
-> trace view.
+> **Status: verified complete (2026-08-17).** Part of
+> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). One small shared activity visual in the chat
+> surface, live in Rooms and the packaged Desktop. It replaced neither product's conversation model,
+> event transport, nor rich trace view. Task evidence:
+> [completed record](phase-43.18-shared-conversation-activity_completed.md).
+>
+> Still open and **not** part of this phase: the local `authbilling_db` bootstrap gap below.
 
 ## Outcome
 
@@ -142,37 +145,19 @@ Desktop captured Thinking → Working → Streaming → cleared; `forge.css` is 
 keyframe. Verified — see
 [completed record → Task 3](phase-43.18-shared-conversation-activity_completed.md#task-3--adopt-it-in-forge-desktop-done-2026-08-17).
 
-### Task 4 — Verify the narrow boundary
+### Task 4 — Verify the narrow boundary — done 2026-08-17
 
-Run renderer and adapter tests, then verify both Rooms and the packaged macOS Desktop against the
-states above. Review the final dependency graph and diff for the following negatives: no new
-`IClientRuntimeChannel` event, no Desktop reference to `ForgeMission.Rooms`, no new server route,
-and no modification to 43.17's deferred event-delivery work.
+Build 0/0 with `ForgeUI` covered, 749 tests passed / 11 pre-existing skips / 0 failed, live Rooms and
+packaged macOS Desktop observations, and all five negatives clean across the phase's 16-file diff —
+see
+[completed record → Task 4](phase-43.18-shared-conversation-activity_completed.md#task-4--verify-the-narrow-boundary-done-2026-08-17).
 
-**Done when:** `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx` pass
-with zero failures, and the manual observation records a visible chat-surface activity state before
-the first answer text.
-
-**Status (2026-08-17): verification run, pending review.** Ran on
-`codex/phase-43.18-verify-narrow-boundary` from `main` (`76c71b9`). Results below are the evidence
-under review; no completed record is written and the phase is not marked complete until approved.
-
-| Check | Result |
-|---|---|
-| `dotnet build src/ForgeMission.slnx` | Build succeeded. 0 Warning(s), 0 Error(s); `ForgeUI -> ForgeUI.dll` present. |
-| `dotnet test src/ForgeMission.slnx` | 0 failed, 749 passed, 11 pre-existing live-provider skips. ConversationHost 2m26s and Runner 2m7s (machine load from the packaged-app work; passing, just slow). |
-| Rooms live | `convo-activity-thinking` "@assistant is thinking…" → `convo-activity-working` "@assistant Thinking" (existing progress label) → cleared on answer; both `role="status"` + `aria-live="polite"`; `.agent-thinking`/`.thinking-dots` count 0 throughout; `show thinking` expanded one `.trace-panel` with its Answerer/Verifier PASS rows. |
-| Packaged Desktop | Thinking → Working (`Running sleep 8; echo verified…`, no running `.tool-row`) → Thinking (tool done, no text yet) → Streaming → cleared, with `✓ Ran sleep 8; echo verified` retained; every state `role="status"` + `aria-live="polite"`. |
-| Negatives | 43.18 touches 16 source files (`8a5dd7c..HEAD`). Transport diff empty (no new channel event); no `ForgeMission.Rooms` reference from any Desktop/Presentation project; no route additions; `ClientRuntimeEventHub.cs`, `DesktopLifecycleTests.cs`, `DesktopSupervisorHostBoundaryTests.cs` absent from the diff, and `Home.razor`'s hunks touch only activity rendering plus dead CSS. |
-| Shared animation | `@keyframes pulse` has exactly one source definition (`forge.css:345`); `thinking-bounce` and `convo-activity-blink` intact. |
-
-Not claimed: live durable Janus. No `ConversationHost` was started and no infrastructure was added,
-per the Task 3 decision that the durable adapter stays test-proven. The local `authbilling_db`
-workaround was not needed — the dev container already held the database from Task 2.
-
-## Completion condition
+## Completion condition — met and verified 2026-08-17
 
 Rooms and Desktop use one renderer for active conversation work. Desktop visibly communicates
 thinking, tool work, and response generation within the transcript; Rooms retains its existing
 full-fidelity trace. No new protocol, trace abstraction, lifecycle work, or speculative framework
 is introduced.
+
+Proven by Task 4: build 0/0 including `ForgeUI`, 749 tests passed with 0 failures, both live
+observations, and all five negatives clean across the phase's 16-file diff.

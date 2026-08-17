@@ -304,3 +304,57 @@ the Host, Supervisor, Client Runtime, transport, and event-delivery cadence rema
 **Done when:** in the packaged Desktop, Send immediately creates a visible in-chat `Thinking`
 state; a received tool-running event changes it to `Working`; and a text delta changes it to the
 streaming cursor. Normal mission and Janus paths both use the shared component.
+
+## Task 4 — Verify the narrow boundary (done 2026-08-17)
+
+Ran on
+`codex/phase-43.18-verify-narrow-boundary` from `main` (`76c71b9`). Results below are the evidence
+under review; no completed record is written and the phase is not marked complete until approved.
+
+| Check | Result |
+|---|---|
+| `dotnet build src/ForgeMission.slnx` | Build succeeded. 0 Warning(s), 0 Error(s); `ForgeUI -> ForgeUI.dll` present. |
+| `dotnet test src/ForgeMission.slnx` | 0 failed, 749 passed, 11 pre-existing live-provider skips. ConversationHost 2m26s and Runner 2m7s (machine load from the packaged-app work; passing, just slow). |
+| Rooms live | `convo-activity-thinking` "@assistant is thinking…" → `convo-activity-working` "@assistant Thinking" (existing progress label) → cleared on answer; both `role="status"` + `aria-live="polite"`; `.agent-thinking`/`.thinking-dots` count 0 throughout; `show thinking` expanded one `.trace-panel` with its Answerer/Verifier PASS rows. |
+| Packaged Desktop | Thinking → Working (`Running sleep 8; echo verified…`, no running `.tool-row`) → Thinking (tool done, no text yet) → Streaming → cleared, with `✓ Ran sleep 8; echo verified` retained; every state `role="status"` + `aria-live="polite"`. |
+| Negatives | 43.18 touches 16 source files (`8a5dd7c..HEAD`). Transport diff empty (no new channel event); no `ForgeMission.Rooms` reference from any Desktop/Presentation project; no route additions; `ClientRuntimeEventHub.cs`, `DesktopLifecycleTests.cs`, `DesktopSupervisorHostBoundaryTests.cs` absent from the diff, and `Home.razor`'s hunks touch only activity rendering plus dead CSS. |
+| Shared animation | `@keyframes pulse` has exactly one source definition (`forge.css:345`); `thinking-bounce` and `convo-activity-blink` intact. |
+
+Not claimed: live durable Janus. No `ConversationHost` was started and no infrastructure was added,
+per the Task 3 decision that the durable adapter stays test-proven. The local `authbilling_db`
+workaround was not needed — the dev container already held the database from Task 2.
+
+### Observation detail worth keeping
+
+**Rooms** (Postgres healthy; runner "loaded 7 mission(s)"; ForgeUI "runner advertises 7 mission(s)";
+dev sign-in as alice), recorded by a `MutationObserver` armed on `.room-stream` before Send:
+
+| t | state | text |
+|---|---|---|
+| 73849 ms | `convo-activity-thinking` | `@assistant is thinking…` |
+| 73946 ms | `convo-activity-working` | `@assistant Thinking` — the engine's own first progress label |
+| 80313 ms | *(cleared)* | agent card count 3 → 4 |
+
+Then `show thinking` on the new card flipped to `hide thinking ▲` and rendered one `.trace-panel`
+with `Answerer … PASS` / `Verifier … PASS`.
+
+**Packaged Desktop** (fresh `make desktop-publish`; Photino window on `http://127.0.0.1:60204`;
+`ChatGPT` mission; Bash tool held open by `sleep 8`):
+
+| t | state | text | tool rows |
+|---|---|---|---|
+| 20108 ms | `convo-activity-thinking` | `ChatGPT is thinking…` | — |
+| 23746 ms | `convo-activity-working` | `ChatGPT Running sleep 8; echo verified…` | — |
+| 31668 ms | `convo-activity-thinking` | `ChatGPT is thinking…` | `✓ Ran sleep 8; echo verified` |
+| 32740 ms | `convo-activity-streaming` | `ChatGPT is responding…` | `✓ Ran sleep 8; echo verified` |
+| 32749 ms | *(cleared)* | — | `✓ Ran sleep 8; echo verified` |
+
+This reproduced Task 3's sequence independently, from a fresh publish of `main`.
+
+### Test-duration deviation, recorded not smoothed over
+
+`ConversationHost.Tests` took 2m26s and `Runner.Tests` 2m7s, against 17s and 4s earlier the same day;
+the run exceeded a 600s foreground budget and completed in the background with exit code 0. Every case
+passed, and neither assembly appears in the phase diff — the cause is machine load from the
+packaged-app and Docker work in the same session, not a code change.
+
