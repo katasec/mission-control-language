@@ -1,9 +1,10 @@
 # Phase 43.17 — Responsive Desktop lifecycle and UI
 
-> **Status: design spike active (2026-08-16).** The current Desktop can block the macOS native
-> event path during startup and shutdown, and it renders every streamed event immediately. First
-> resolve the narrow Photino main-thread lifecycle mechanism; only then implement the named
-> lifecycle and event-flow changes below. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: Supervisor/Host split live (2026-08-17); UI work next.** Tasks 1–2 are done — the
+> Desktop Supervisor and its disposable native host are separate processes, and the Supervisor owns
+> a non-blocking lifecycle with exactly-once cleanup. Tasks 3–5 (session ownership, bounded event
+> delivery, progressive rendering) are outstanding. Part of
+> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Read boundary
 
@@ -22,16 +23,16 @@ or unrelated task spokes. They are not dependencies of this work.
 
 ## Outcome
 
-The shell reacts immediately. Native callbacks only make small state transitions; process, Docker,
-network, and stream work is outside the rendering path. The user can see boot/closing state while
-the work continues, and a stream cannot turn into unbounded memory or one render per token.
+The Supervisor reacts correctly even when a native host exits or crashes. The Host renders a useful
+boot state immediately; runtime resolution, process, Docker, and network work live in the
+Supervisor, outside native callbacks and rendering. Closing the window closes the disposable Host;
+the Supervisor then cleans up every runtime before it exits. A stream cannot turn into unbounded
+memory or one render per token.
 
 ## Current evidence
 
 | Location | Current behavior | Consequence |
 |---|---|---|
-| `src/ForgeMission.Desktop/Program.cs` | `ResolveAsync(...).Wait()` resolves/starts the Mission Runtime before the Photino host exists; `WaitForReadyUrl` blocks for up to 20 seconds. | A slow Docker pull or child start leaves no useful native UI to render. |
-| `src/ForgeMission.Desktop/Program.cs` | The synchronous Photino close callback calls `KillIfRunning`, which waits up to 10 seconds for Client Runtime, then synchronously disposes the Mission Runtime launcher. | **P0:** AppKit’s close/UI path can beachball while process/Docker cleanup runs. |
 | `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` | `AddFolderAsync` starts a new event loop without stopping the existing default-session loop. | Duplicate SSE subscribers can process later events twice. |
 | `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` | Each SSE event mutates state and invokes `StateHasChanged`; text appends allocate a new string for every delta. | Render pressure and growing per-turn string-copy cost during long streams. |
 | `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEventHub.cs` | Each subscriber has an unbounded channel and every event is forwarded/flushed individually. | A slow WebView can accumulate unbounded queued data. |
@@ -63,7 +64,7 @@ parent response while routing other activity to progress/trace UI. See [Copilot 
 
 | Copilot observation | Forge response |
 |---|---|
-| Shell appears while several workers start. | Task 2 must create/render the native boot shell before Mission Runtime and Client Runtime readiness. A boot state is a product state, not a blocked precondition. |
+| Shell appears while several workers start. | Task 2 must start the Host and render its native boot shell before Mission Runtime and Client Runtime readiness. A boot state is a product state, not a blocked precondition. |
 | One typed stream has transient deltas and replayable completed facts. | Task 4 must classify/buffer text deltas separately from ordered tool/error/durable conversation state. Deltas may coalesce; durable facts cannot be silently dropped. |
 | UI has a durable session rail and an active-session focus. | Task 3's single current view/session operation is the v1 prerequisite. Only its events may update the active transcript; session replacement cancels the old subscription before it creates the new one. |
 | Permission/interception is outside the agent's core turn. | Keep Forge's existing Client Runtime `ICapabilityDispatcher` boundary; responsiveness work must not let UI rendering or Mission Runtime calls bypass it. |
@@ -81,9 +82,12 @@ decision only when the current single-active-session lifecycle is proven respons
   `ICapabilityDispatcher`, authorization, or the Mission Runtime protocol.
 - **Mission Runtime resolution remains in `ForgeMission.Orchestration`.** Responsiveness changes
   when Desktop begins/observes that work, not who chooses the runtime location or owns Docker.
-- **`IDesktopHost` remains the native-host seam.** A lifecycle capability belongs there only if the
-  Photino spike proves it is necessary to get back onto the native main thread. Do not add a global
-  `UiScheduler` or a general reactive framework.
+- **Desktop Supervisor and Host are separate processes.** The Supervisor exclusively owns runtime
+  resolution, children, cancellation, and cleanup. The Host is disposable; its exit is an observed
+  child-process event, never the cleanup owner. See [Forge Architecture — Desktop Supervisor and
+  native host](../design/forge-architecture.md#desktop-supervisor-and-native-host-are-separate-processes).
+- **`IDesktopHost` remains a Host-private seam.** The Supervisor does not construct it. Do not add a
+  global `UiScheduler`, a process API, or a close-veto requirement to the interface.
 - **Stream policy is fixed, not configurable.** Preserve ordered state/tool/error events; coalesce
   only adjacent text deltas for the same session. A slow subscriber is bounded rather than allowed
   unlimited memory.
@@ -95,53 +99,69 @@ decision only when the current single-active-session lifecycle is proven respons
 | Bounded context / data ownership | No new context or datastore. Desktop, Client Runtime, and Mission Runtime ownership stays unchanged. |
 | Public entry point / tier change | Not applicable: this is loopback Desktop lifecycle and local UI scheduling; no hosted ingress or cross-context datastore path changes. |
 | Credentials | No new credential or environment forwarding. The existing Client Runtime-only credential boundary remains intact. |
-| Type | Type 2: lifecycle scheduling and per-client event delivery behind existing Desktop/transport contracts. Reversal is confined to the Desktop host and Presentation/transport implementations. |
-| Failure ownership | `DesktopLifecycle` owns boot/close state and process cleanup; Client Runtime owns event fan-out; Presentation owns a view operation’s cancellation and rendering. |
-| Proof | Fake-host/lifecycle tests, event batching tests, published AOT desktop observation, and an explicit no-orphan check. |
+| Type | Type 2: local Supervisor/Host control transport and host implementation. Reversal swaps the Host or pipe transport; it never changes Supervisor ownership of runtime cleanup. |
+| Failure ownership | `DesktopLifecycle` in the Supervisor owns boot/stop state and process cleanup; the Host owns only its window/local state; Client Runtime owns event fan-out; Presentation owns a view operation’s cancellation and rendering. |
+| Proof | Supervisor/Host boundary tests, event batching tests, published AOT boot observation, and no-orphan checks after host close, host crash, and supervisor signal. |
+
+## Desktop Design and Implementation Quality Gate
+
+Apply the mandatory [Engineering Philosophy gate](../design/engineering-philosophy.md#desktop-design-and-implementation-quality-gate)
+before approving a Task 2 plan or its implementation. The design result is below; the implementation
+result — with the measured adapter observations and the published-app evidence — is in the
+[completed record](phase-43.17-responsive-desktop_completed.md#desktop-quality-gate-result).
+
+| Required answer | Result |
+|---|---|
+| What product behaviour is required? | Closing the native window ends only the disposable Host; the Supervisor remains long enough to cancel and clean up its runtimes. |
+| Who owns it? | The Desktop Supervisor owns runtime/process cleanup. The Host owns only window/WebView state. |
+| What has been verified about the adapter? | Photino's macOS close-veto callback is not the lifecycle mechanism: its managed contract promises cancellation, while the current native adapter invokes it post-decision. That is an adapter defect/limitation, not a product-architecture requirement. |
+| Why does the proposal preserve the replacement boundary? | No Host callback, `IDesktopHost` member, package patch, or fork participates in runtime cleanup; the Host can be swapped without changing the Supervisor. |
+| What proves it? | Boundary tests plus published-AOT observations: Host window close and Host kill leave no Client Runtime child or Mission Runtime container; Supervisor SIGTERM does the same. |
+
+**PASS:** the Supervisor/Host split passes. **FAIL:** the discarded close-veto/Photino-workaround
+direction failed because it conflated closing a window with terminating the application and tried to
+make an adapter callback own Supervisor cleanup. Any future task that repeats that direction fails
+this gate before implementation.
 
 ## Dependency-ordered work
 
-### Task 1 — Photino lifecycle spike (design gate; do first)
+### Task 1 — Supervisor / Host boundary (design gate; locked)
 
-**Goal:** Establish the current `Photino.NET` package’s supported way to create the window on the
-macOS main thread, show a lightweight local boot/closing view, and later request navigation/close
-from background completion without violating AppKit affinity.
+The design is locked in [Forge Architecture — Desktop Supervisor and native host are separate
+processes](../design/forge-architecture.md#desktop-supervisor-and-native-host-are-separate-processes).
+It replaces the former requirement that a concrete Host veto a window close.
 
-**Inspect only:** `IDesktopHost.cs`, `PhotinoDesktopHost.cs`, `ForgeMission.Desktop/Program.cs`,
-the installed package API/source, and the native-host architecture sections named above.
+**Project and contract shape:**
 
-**Decide and record in this spoke before any implementation handoff:**
+- `ForgeMission.Desktop` remains the user-launched **Desktop Supervisor**. It references
+  `Orchestration` and starts/supervises Client Runtime, Mission Runtime, and the Host child; it has
+  no `Photino.NET` dependency and never names or constructs `IDesktopHost`.
+- `ForgeMission.Desktop.Host` is a new native-host executable. It owns local Booting/Failed content,
+  constructs `IDesktopHost`, and receives no credentials or capability providers.
+- `ForgeMission.Desktop.Contracts` owns the inherited-pipe protocol:
+  `DesktopHostCommand(DesktopHostCommandKind Kind, string Payload)`, where `Kind` is exactly
+  `Navigate` or `ShowFailure`, plus `DesktopHostEvent(DesktopHostEventKind Kind)`, where `Kind` is
+  exactly `RetryRequested`. Frames are `[kind: byte][UTF-8 payload byte count: Int32 little-endian]
+  [payload]`; `RetryRequested` has an empty payload. No listener, HTTP endpoint, acknowledgement,
+  options record, or generic event framework is introduced.
+- `ForgeMission.Desktop.Photino` remains the only project that references `Photino.NET`; it is
+  consumed only by `ForgeMission.Desktop.Host`.
 
-1. the smallest `IDesktopHost` lifecycle additions, if any, for boot rendering, main-thread
-   navigation, close veto, and final close;
-2. the exact owner/thread of each operation; and
-3. how a close during boot cancels boot work and still guarantees supervised child/container cleanup.
+**Lifecycle:** the Supervisor starts Host first; Host renders `Booting`; Supervisor resolves and
+starts runtimes; then it sends `Navigate`. A normal Host window close or an unexpected Host crash is
+detected by the Supervisor's child-process wait and triggers one background cleanup. The Supervisor
+does not need a Host close callback, and Host exit cannot leave a Client Runtime child or Mission
+Runtime container running. A failed boot is shown by `ShowFailure`; only a `RetryRequested` event
+allows the Supervisor to retry.
 
-Do not assume `Task.Run`, an arbitrary `await`, or an undocumented Photino callback is a safe
-main-thread marshal. The existing top-level `await` failure is evidence that this must be proven.
+**Done when:** this locked design is reflected in the canonical architecture and this spoke, with
+named ownership, control messages, credential boundary, failure paths, and verification observations.
 
-**Done when:** a tiny published-AOT macOS probe demonstrates window creation, a visible boot state,
-background completion reaching the native host safely, and a vetoed close followed by a programmatic
-close — with the API/version and observation recorded here.
+### Task 2 — Non-blocking supervised lifecycle
 
-### Task 2 — Non-blocking Desktop lifecycle
-
-**Depends on:** Task 1’s recorded mechanism.
-
-Create one focused `DesktopLifecycle` owner in the Desktop composition layer. It exposes a small
-state model (`Booting`, `Ready`, `Closing`, `Failed`, `Closed`) and owns exactly-once startup and
-shutdown. It calls the existing orchestration resolver and starts Client Runtime outside the native
-event path; `IDesktopHost` receives only minimal state/navigation/close actions on its proven
-main-thread mechanism.
-
-The normal close callback must veto immediately, display `Closing`, initiate one background
-shutdown, and permit final native close only after graceful-first child termination and launcher
-disposal complete. SIGTERM/SIGINT remain shutdown paths, but may bypass UI presentation because the
-process is exiting. Startup failure becomes a visible retryable/error state, never a silent hang.
-
-**Done when:** fake-host tests prove no native callback waits for lifecycle completion; a deliberately
-delayed runtime shows boot state before readiness; and a real published macOS close leaves neither a
-Client Runtime child nor Docker Mission Runtime container.
+**Done 2026-08-17** — Supervisor/Host split implemented and verified; see
+[phase-43.17-responsive-desktop_completed.md](phase-43.17-responsive-desktop_completed.md#task-2--non-blocking-supervised-lifecycle-done-2026-08-17)
+for the build narrative, boundary/lifecycle test evidence, and the six published-app observations.
 
 ### Task 3 — Session operation ownership and stale-result suppression
 
@@ -186,7 +206,7 @@ subscriber cannot make `ClientRuntimeEventHub` retain unbounded messages.
 
 **Depends on:** Tasks 2–4.
 
-Render the useful shell immediately: boot/closing/error state first, then the active workspace,
+Render the useful shell immediately: boot/error state first, then the active workspace,
 session, and transcript as they become available. Keep only the active conversation’s visible tail
 in the normal render tree when transcript volume makes that necessary; add history virtualization or
 an explicit older-history loader only when measurement demonstrates it. Do not pre-emptively add a
@@ -208,14 +228,15 @@ probe; and the UI is checked in both Chromium and the packaged macOS WKWebView.
 7. State drives rendering; business/lifecycle operations do not choreograph individual controls.
 8. Treat text deltas as buffered data, not one-render instructions.
 9. Bound queues and state the recovery behavior for a slow or disconnected consumer.
-10. Verify both perceived behavior (visible boot/closing state, responsive input) and lifecycle
-    correctness (no orphaned process/container) in the published native app.
+10. Verify both perceived behavior (visible boot/error state, responsive input) and lifecycle
+    correctness (no orphaned process/container after Host close/crash or Supervisor signal) in the
+    published native app.
 
 ## Done when
 
 All five tasks are implemented and verified: the published macOS Desktop displays promptly during a
-deliberately delayed boot, never beachballs while close cleanup runs, leaves no child/container
-orphan on normal close or SIGTERM, has one cancellable current session subscription, and processes a
-long stream with bounded queue/render behavior. `dotnet build src/ForgeMission.slnx` and
+deliberately delayed boot, a Host close or crash never leaves a child/container orphan, Supervisor
+SIGTERM cleans up every child, the UI has one cancellable current session subscription, and a long
+stream has bounded queue/render behavior. `dotnet build src/ForgeMission.slnx` and
 `dotnet test src/ForgeMission.slnx` pass with zero failures; the native verification names the exact
 observations rather than inferring success from code review.

@@ -14,6 +14,7 @@
   <Project Path="ForgeMission.ConversationWorker.Tests/ForgeMission.ConversationWorker.Tests.csproj" />
   <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
   <Project Path="ForgeMission.Desktop.Contracts/ForgeMission.Desktop.Contracts.csproj" />
+  <Project Path="ForgeMission.Desktop.Host/ForgeMission.Desktop.Host.csproj" />
   <Project Path="ForgeMission.Desktop.Photino/ForgeMission.Desktop.Photino.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />
   <Project Path="ForgeMission.Docker/ForgeMission.Docker.csproj" />

@@ -9,6 +9,12 @@ the rename alone doesn't fix. Locked-decision summary lives in
 [forge-architecture.md](../design/forge-architecture.md#mission-runtime-resolution-belongs-to-an-orchestration-layer-not-the-client-runtime);
 this spoke is where the actual build gets task-broken-down once the design below is final.
 
+> **Operational correction (2026-08-17):** In this completed spoke, `ForgeMission.Desktop` means
+> the former single process that both supervised runtimes and owned the native window. It is now the
+> Desktop Supervisor only; `ForgeMission.Desktop.Host` is the disposable native child. The old
+> window-close verification below is historical evidence about the superseded shape, not an approved
+> lifecycle pattern. New work follows the [Desktop Supervisor/Host boundary](../design/forge-architecture.md#desktop-supervisor-and-native-host-are-separate-processes).
+
 ## The drift this corrects
 
 [`ForgeMission.ClientRuntime/Program.cs`](../../src/ForgeMission.ClientRuntime/Program.cs) defaults
@@ -327,7 +333,7 @@ resolution/supervision; `ForgeMission.ClientRuntime` has no Docker awareness, al
 credential, and fails fast without `MissionRuntime__BaseUrl`; `ForgeMission.Desktop` resolves via the
 new project before spawning Client Runtime. Full test suite: 356 passed, 0 failed, 11 skipped.
 
-**All three termination paths live-verified 2026-08-04, against the actual published AOT binaries
+**Historical termination-path evidence, live-verified 2026-08-04, against the actual published AOT binaries
 (`make desktop-publish`, real Mach-O executables, real Docker daemon) — not just unit tests:**
 - **SIGTERM** — `kill -TERM` against the running `ForgeMission.Desktop` process, tested twice: both
   times the `ClientRuntime` child process and the Docker container were fully torn down (container

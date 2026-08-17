@@ -58,6 +58,40 @@ An implementation task is not build-ready if a material smell remains unexplaine
 to implementation. The detailed code-reading rules live in [Code Style](code-style.md); tiering,
 data ownership, and identity rules live in [Security Architecture](security-architecture.md).
 
+## Desktop Design and Implementation Quality Gate
+
+**Mandatory for every Desktop, native-host, WebView, or desktop-lifecycle design, implementation
+plan, and completion review.** It deliberately treats a plausible-but-wrong desktop assumption by
+an operator or an agent — and a concrete framework's limitation or defect — as an expected failure
+input. The remedy is to test the proposal against Forge's ownership boundaries before writing code,
+not to make a current framework's callback or workaround the architecture.
+
+A proposal **fails** this gate and returns to design when any answer is unclear, or when it:
+
+- treats a concrete Host/adapter behaviour as a Mission Runtime, Client Runtime, or Supervisor
+  lifecycle concern without proving that the existing boundary is insufficient;
+- moves runtime startup, shutdown, credentials, capability dispatch, or process cleanup into a
+  native callback, `IDesktopHost`, or a concrete Host adapter;
+- conflates **window close**, **Host-process exit**, and **Supervisor/application exit**;
+- proposes to patch, fork, or add a framework-specific workaround before first checking whether the
+  product requirement belongs outside the adapter; or
+- lacks a replacement-boundary test and a user-visible or process-level verification observation.
+
+The design review in the active spoke, the implementer's plan, and the completion review must each
+record these five answers, with **PASS** or **FAIL**:
+
+| Required answer | Passing evidence |
+|---|---|
+| What product behaviour is required? | States the user-visible/process outcome without naming the current framework. |
+| Who owns it? | Names exactly one of Presentation, Host, Desktop Supervisor, Client Runtime, or Mission Runtime, plus the relevant process boundary. |
+| What has been verified about the adapter? | A documented API/source observation; an assumption is explicitly an unknown, never a basis for a workaround. |
+| Why does the proposal preserve the replacement boundary? | The Supervisor stays framework-free; Host adapters do not gain runtime/process/credential ownership. |
+| What proves it? | A boundary test plus the relevant published-app observation (for example, window close leaves no supervised child). |
+
+For a **design or plan** review, a single FAIL stops handoff and must be resolved in the spoke. For
+an **implementation** review, a single FAIL rejects the diff even if its tests pass. This is a
+quality gate, not a reminder or a suggestion.
+
 ## Working consequences
 
 - Keep command entry points thin and put business behaviour behind focused services.

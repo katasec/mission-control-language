@@ -1,6 +1,7 @@
 # Forge Architecture — Mission Runtime, Client Runtime, Presentation
 
-**Status: Locked 2026-08-01; durable-conversation extension locked 2026-08-12.** This is the canonical, durable architecture doc for Forge as a
+**Status: Locked 2026-08-01; durable-conversation extension locked 2026-08-12;
+Desktop Supervisor/Host boundary locked 2026-08-17.** This is the canonical, durable architecture doc for Forge as a
 whole, not just Forge Desktop. It supersedes the general-architecture parts of
 [forge-desktop-client-runtime.md](forge-desktop-client-runtime.md), which now covers only what's
 genuinely desktop-specific (see that doc's updated status line). If this doc and any other doc
@@ -298,6 +299,90 @@ concrete build.
 
 ---
 
+## Desktop Supervisor and native host are separate processes
+
+**Decision (2026-08-17, locked): the user-launched `ForgeMission.Desktop` process is the
+Desktop Supervisor. It is never the native host.** It owns Mission Runtime resolution, the Client
+Runtime child, the launcher, startup cancellation, and every cleanup path. It starts the native
+host as a separate child process and remains alive after that child exits. A concrete host — Photino
+today, another host tomorrow — owns only a native window and its WebView.
+
+```
+ForgeMission.Desktop (Desktop Supervisor)
+  ├─ ForgeMission.Desktop.Host (disposable native host) ── native window + WebView
+  ├─ ForgeMission.ClientRuntime                              local capability boundary
+  └─ Mission Runtime launcher/container                      reasoning runtime
+```
+
+This is a process boundary, not a convention. The Supervisor has no `Photino.NET` reference and
+never constructs `IDesktopHost`; `ForgeMission.Desktop.Host` is the only composition root that does.
+`ForgeMission.Desktop.Photino` remains only one implementation behind that host contract. Replacing
+the host therefore cannot move runtime ownership, cleanup, credentials, or capability dispatch into
+the replacement.
+
+### Lifecycle contract
+
+- **Boot:** the Supervisor starts the Host first. The Host displays local, static `Booting` content
+  without requiring a Client Runtime URL. The Supervisor resolves and starts runtimes in the
+  background, then tells the Host to navigate to the ready Client Runtime URL.
+- **Window close or Host crash:** the Host may exit immediately. The Supervisor observes its child
+  process exit; it does not rely on a host callback being delivered. It cancels startup, gracefully
+  stops Client Runtime, disposes the Mission Runtime launcher, and then exits. There is no
+  in-window `Closing` state after the user has closed the only window.
+- **Supervisor shutdown:** SIGTERM/SIGINT and normal supervisor shutdown run the same exactly-once
+  cleanup owner. The Supervisor terminates the Host as part of its own shutdown; host exit alone
+  never owns runtime cleanup.
+- **Supervisor abnormal termination:** this process model does not claim cleanup after an uncatchable
+  Supervisor crash or force-kill. That requires a separately designed parent-death containment
+  mechanism and is not silently delegated to the Host. Until such a mechanism is designed and
+  verified, the supported cleanup observations are normal Host exit/crash and Supervisor
+  SIGTERM/SIGINT only.
+- **Failure/retry:** the Host can render a locally supplied failure state and send a retry request;
+  only the Supervisor may retry resolution or start children. A Host restart is never a second
+  runtime startup.
+
+The control contract is two inherited, local anonymous pipes. The complete public contract in
+`ForgeMission.Desktop.Contracts` is deliberately this small:
+
+```csharp
+public enum DesktopHostCommandKind : byte { Navigate = 1, ShowFailure = 2 }
+public readonly record struct DesktopHostCommand(DesktopHostCommandKind Kind, string Payload);
+public enum DesktopHostEventKind : byte { RetryRequested = 1 }
+public readonly record struct DesktopHostEvent(DesktopHostEventKind Kind);
+```
+
+Supervisor → Host sends only `Navigate(url)` and `ShowFailure(message)`; Host → Supervisor sends
+only `RetryRequested`. Each pipe frame is `[kind: byte][UTF-8 payload byte count: Int32 little-endian]
+[payload]`; `RetryRequested` has an empty payload. `Navigate` accepts an absolute loopback URL and
+`ShowFailure` accepts display text. No other command, options record, acknowledgement, listener,
+HTTP endpoint, or generic event bus is permitted without a fresh architecture decision. The
+Supervisor also waits on the Host process, which is the authoritative host-exit signal if a pipe
+message is lost. The Host receives no platform key, Mission Runtime credential, or capability
+implementation; the URL is the only runtime value it needs.
+
+### Consequences and enforcement
+
+- A host's close callback must return immediately if it has one, but no host needs a close veto for
+  correct runtime cleanup. `IDesktopHost` must not grow a generic scheduler, process API, or
+  “keep the app alive” capability.
+- `DesktopLifecycle` belongs to the Supervisor and is the sole owner of runtime state
+  (`Booting`, `Ready`, `Failed`, `Stopping`, `Stopped`) and exactly-once cleanup. The Host owns only
+  its visible local state.
+- The process boundary is Type 2: the control transport and concrete host can change, but the
+  Supervisor-only ownership and no-secret Host boundary are fixed. There is no public ingress,
+  datastore, or new credential. Inherited pipe handles are the sole local control path.
+- A boundary test must prove the Supervisor has no project/package reference to a concrete host and
+  the Host has no reference to `Core`, `Orchestration`, `ClientRuntime`, or capability providers.
+  Published-AOT verification must prove: visible boot before delayed runtime readiness; a normal
+  window close leaves no Client Runtime or container; an unexpected Host kill does the same; and a
+  supervisor SIGTERM terminates all children.
+
+This corrects the former same-process composition, where the Supervisor accidentally constructed the
+native host and a native close callback became responsible for process cleanup. That implementation
+shape is not an alternative architecture and must not be reintroduced.
+
+---
+
 ## Native host, UI framework, and the verification constraint
 
 **Decision: Blazor WebAssembly for the UI, Photino for native packaging.**
@@ -307,8 +392,8 @@ DevTools, Playwright, screenshots, hot reload, standard browser tooling, the sam
 verification loop [desktop-interaction-principles.md](desktop-interaction-principles.md) already
 established as the reason the Avalonia→Electron pivot happened. **Photino is a thin native
 packaging layer around that same application, not the UI framework and not where business logic
-lives.** Its job is limited to: native window, native WebView, desktop lifecycle, packaging, OS
-integration.
+lives.** Its job is limited to: native window, native WebView, local Host rendering, packaging, and
+OS integration. Runtime lifecycle belongs to the Desktop Supervisor above.
 
 This resolves the verification-tooling tension the WASM/native-host choice originally raised:
 development and iteration happen against a plain browser tab (CDP-verifiable, exactly as today),
@@ -355,70 +440,50 @@ weaknesses.
 
 All meaningful Forge behavior lives outside the shell: the Blazor WASM UI, the Client Runtime, the
 Mission Runtime, the provider model, transport contracts, capability contracts. The desktop shell
-is deliberately reduced to: native window, native WebView, application lifecycle, packaging, native
+is deliberately reduced to: native window, native WebView, local window lifecycle, packaging, native
 OS integration. Nothing more.
 
 Because of that separation, the shell is disposable. **If Photino disappeared tomorrow, the
-expected outcome is "replace the shell," not "rewrite Forge."** That's an architectural success
-criterion, not an aspiration: if replacing the desktop shell ever requires changes outside the
-Desktop project, that's a violation of one of Forge's core architectural boundaries, not an
-acceptable cost of the choice.
+expected outcome is "replace the Host adapter," not "rewrite Forge."** That's an architectural
+success criterion, not an aspiration: if replacing the native host requires changes outside
+`ForgeMission.Desktop.Host` and its selected adapter, that's a violation of one of Forge's core
+architectural boundaries, not an acceptable cost of the choice.
 
 In other words, Photino's maintenance risk was de-risked by construction, not by picking a
 "safer" framework — it owns almost no business logic, so its health doesn't gate Forge's health.
-Photino is simply today's implementation of the Desktop Shell contract; if a better-maintained or
+Photino is simply today's implementation of the native Host contract; if a better-maintained or
 more capable native host emerges later, it should be replaceable with minimal impact to the rest
 of the platform. This was one of the architectural objectives converged on during the desktop
 design discussions, not an accident of how the code happened to end up.
 
-### Naming the desktop shell project
+### Naming the Desktop processes
 
-**Decision (2026-08-01, locked): the project is `ForgeMission.Desktop`, not
-`ForgeMission.ClientRuntime.Photino`.** Every other satellite in the `ClientRuntime.*` family is
-named for its role (`.Transport`, `.Presentation`, `.TransportProbe`) — never for the library
-implementing it; there is no `ForgeMission.ClientRuntime.Kestrel`. `.Photino` was the one exception,
-and it directly contradicted the disposability argument two paragraphs up: naming the artifact after
-today's implementation library is exactly what makes a future replacement look like a rewrite
-instead of a swap. Two changes, not one:
+**Decision (2026-08-17, locked): `ForgeMission.Desktop` names the user-launched Supervisor, and
+`ForgeMission.Desktop.Host` names the disposable native-host executable.** Neither name contains a
+concrete framework. `ForgeMission.Desktop.Photino` names only today's adapter library; it is never
+the user entry point and may be replaced without renaming or moving the Supervisor.
 
-- **Suffix:** `.Photino` → `.Desktop` — names the role (Desktop Shell contract), not the library.
-- **Prefix/nesting:** moved out from under `ClientRuntime.` entirely, to a top-level
-  `ForgeMission.Desktop`, sibling to `ForgeMission.Cli`/`ForgeMission.ClientRuntime`. The
-  `ClientRuntime.*` prefix correctly marks things that are *part of* the Client Runtime
-  (`Transport`, `Presentation`); this project isn't one of those — per the layer split above, it
-  spawns and wraps the Client Runtime as a subprocess (#1 spawning #2), it doesn't live inside it.
-  Nesting it under `ClientRuntime.` mischaracterized that relationship.
-
-This is a pure rename — no behavior change, and it does **not** touch actual `Photino.NET`/
-`Photino.Native` usage (the shell is still built on Photino under the hood; only the project that
-*wraps* that library is no longer named after it). Renamed 2026-08-01: `Program.cs`, `.csproj`,
-`ForgeMission.slnx`, `Makefile`, and `PhotinoShellBoundaryTests` → `DesktopShellBoundaryTests` (see
-[43.11](../phases/phase-43.11-wasm-photino-shell.md)). Note this reuses a name previously held by
-the now-deleted Avalonia-era shell project — intentional, not a collision: `ForgeMission.Desktop`
-names *whichever implementation currently satisfies the Desktop Shell contract*, per the
-disposability argument above, and that project is what git history is for.
+This corrects the old single-process naming, where `ForgeMission.Desktop` ambiguously meant both
+the user-facing app and the native shell. The public `ForgeMission.Desktop` entry point stays stable;
+the process it starts is an implementation detail behind the fixed Supervisor↔Host contract.
 
 ### Desktop Host abstraction (`IDesktopHost`)
 
 **Decision (2026-08-01, locked): the Desktop Shell contract is a real interface,
 `IDesktopHost`, not just prose + a project-reference test.** Same pattern this project already
 uses for Model/Storage/Transport/Capability Providers — a stable seam something programs against,
-with a swappable implementation behind it. The seam wasn't obvious at first because a native
-desktop shell has no external caller (nothing outside it invokes "the shell," it invokes
-everything else) — but there *is* an internal caller: `ForgeMission.Desktop/Program.cs`'s
-Client-Runtime orchestration (spawn the child process, wait for its ready URL, register
-SIGTERM/SIGINT teardown) is itself host-agnostic and was already proven independently correct
-through three separate bug fixes (top-level-`await`-on-threadpool, `ProcessExit` not firing on
-external `kill`, window-close bypassing the normal return path — see
-[43.11](../phases/phase-43.11-wasm-photino-shell.md)). Before this decision, that proven
-orchestration code called `PhotinoWindow` directly, so replacing Photino meant rewriting
-`Program.cs` wholesale — including re-deriving those three bugs from scratch. `IDesktopHost` moves
-the seam to where it belongs: the orchestration now depends only on `IDesktopHost`
-(`Load(url)` / `RegisterClosingHandler(Func<bool>)` / `Run()`), and the one line that constructs a
-concrete host (`new PhotinoDesktopHost()`) is the entire footprint a replacement host would touch —
-mirrors `ProviderClientBuilder`'s switch-case being the one place `IChatClient`'s concrete provider
-types are named. (Where the implementation actually lives is covered below — this paragraph is
-about the seam, not the project layout.)
+with a swappable implementation behind it. Its only caller is the **Host process**, not the Desktop
+Supervisor. `IDesktopHost` covers local window/WebView operations: showing Host-owned markup, showing
+a ready URL, hearing the one local Retry click so the Host can translate it into the locked
+`RetryRequested` event, and running the native loop. It does not own processes, credentials, cleanup,
+or a generic scheduler. In particular, a host close veto is not part of the Supervisor lifecycle
+design.
+
+The former same-process composition made `ForgeMission.Desktop/Program.cs` both runtime supervisor
+and `IDesktopHost` caller. That was an implementation error: it coupled host exit to runtime cleanup
+and made a host-specific close callback look architecturally important. The split in
+`Desktop Supervisor and native host are separate processes` above is the current rule; do not use
+the old composition as precedent.
 
 **Revised same day: split into three projects, not kept inside `ForgeMission.Desktop`.** The first
 cut kept `IDesktopHost`/`PhotinoDesktopHost` inside `ForgeMission.Desktop` itself (both `internal`)
@@ -429,24 +494,23 @@ naming Photino just to reach the interface, and nothing structurally signaled "t
 implementation, that file is host-agnostic" beyond an `internal` modifier — easy for a future
 reader (human or agent) to miss and reintroduce coupling. Moved to three projects instead:
 
-- `ForgeMission.Desktop.Contracts` — `IDesktopHost` only, `public`, zero dependencies (not even on
-  `ForgeMission.Desktop`).
+- `ForgeMission.Desktop.Contracts` — `IDesktopHost` and the fixed Supervisor↔Host pipe records,
+  `public`, zero dependencies (not even on `ForgeMission.Desktop`).
 - `ForgeMission.Desktop.Photino` — `PhotinoDesktopHost`, `public sealed`, the only project allowed
   to depend on the `Photino.NET` package; references `ForgeMission.Desktop.Contracts`.
-- `ForgeMission.Desktop` — the exe/composition root. References both of the above; `Program.cs`'s
-  orchestration logic (spawn/wait/signal-teardown) reads only `IDesktopHost`, and
-  `new PhotinoDesktopHost()` is the only place a *concrete host is constructed* — the project name
-  `ForgeMission.Desktop.Photino` itself still appears in that file's `using` directive and a couple
-  of explanatory comments, which is expected and fine; the boundary that matters is "no `Photino.NET`
-  type reference outside the composition line," not "the string Photino appears once."
+- `ForgeMission.Desktop.Host` — the Host executable/composition root. References Contracts and the
+  selected concrete adapter; this is the only process that constructs `IDesktopHost`.
+- `ForgeMission.Desktop` — the Supervisor executable. References Contracts and Orchestration; it
+  starts the Host executable and runtime children, but has no host package and never names or
+  constructs `IDesktopHost`.
 
-No `LinkerArg`/`PublishAot` on the two new projects — those stay exe-only, matching how
-`ForgeMission.Core` (a library linked into other AOT exes) is set up; both get `IsAotCompatible`
-only, same as `ForgeMission.ClientRuntime.Transport`. `DesktopShellBoundaryTests` was extended
-(`[Theory]`/`[InlineData]`) to check both `ForgeMission.Desktop.csproj` *and*
-`ForgeMission.Desktop.Photino.csproj` for forbidden references to
-`Core`/`ClientRuntime`/`ClientRuntime.Transport` — now precisely testing "the Desktop Host
-implementation project," not just the exe that happens to contain it.
+No `LinkerArg`/`PublishAot` on Contracts or adapter libraries — those stay exe-only, matching how
+`ForgeMission.Core` (a library linked into other AOT exes) is set up; they get `IsAotCompatible`
+only. The Supervisor and Host executables each publish Native AOT. This split is enforced by
+`DesktopSupervisorHostBoundaryTests` (added by Task 2): the Supervisor cannot reference a concrete-host package and
+its source cannot name `IDesktopHost`; the Host cannot reference `Core`, `Orchestration`,
+`ClientRuntime`, or capability providers; and the Photino adapter cannot reference those runtime
+projects either.
 
 **Open, separate from the above — not yet decided:** whether the desktop shell should embed and
 self-serve the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host.
@@ -467,7 +531,7 @@ still "why"):
   scope, though: HashiCorp embeds into *the server binary itself* (no separate disposable-shell
   layer exists in their architecture) — that maps to what `ForgeMission.ClientRuntime` (#2)
   already does today (Kestrel serves `wwwroot` from the same publish artifact), not automatically
-  to whether #1 (`ForgeMission.Desktop`) should *also* carry a copy. Don't re-derive this "why" from
+  to whether #1 (`ForgeMission.Desktop.Host`) should *also* carry a copy. Don't re-derive this "why" from
   scratch — reference it.
 - **HOW (solutioning) — not yet done, deliberately deferred:** if/how the desktop shell specifically
   would embed and serve the assets (e.g. `Photino.NET`'s `RegisterCustomSchemeHandler` is one

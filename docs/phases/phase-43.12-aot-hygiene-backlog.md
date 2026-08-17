@@ -2,8 +2,10 @@
 
 **Status: Design — engineering backlog, not blocking.** Raised 2026-08-01 during
 [43.11](phase-43.11-wasm-photino-shell.md) Batch A's Native AOT validation of `ForgeMission.ClientRuntime`/
-`ForgeMission.Desktop` (the native desktop shell project, renamed 2026-08-01 from
-`ForgeMission.ClientRuntime.Photino` — see [forge-architecture.md](../design/forge-architecture.md#naming-the-desktop-shell-project)).
+the then-single-process `ForgeMission.Desktop` implementation (renamed 2026-08-01 from
+`ForgeMission.ClientRuntime.Photino`). Since 2026-08-17, `ForgeMission.Desktop` is the Supervisor
+and the native executable is `ForgeMission.Desktop.Host` — see
+[Forge Architecture](../design/forge-architecture.md#desktop-supervisor-and-native-host-are-separate-processes).
 Cross-cutting — not scoped to Phase 43 specifically
 (`ForgeMission.Docker` is also compiled into `ForgeMission.Cli`, which predates this phase) — tracked
 here because that's where the gaps were found. Same shape as [39.7](phase-39.7-exec-secret-isolation.md):

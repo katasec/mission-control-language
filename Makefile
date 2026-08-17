@@ -19,7 +19,8 @@ endif
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
 CLIENT_RUNTIME := src/ForgeMission.ClientRuntime
-DESKTOP_SHELL := src/ForgeMission.Desktop
+DESKTOP_SUPERVISOR := src/ForgeMission.Desktop
+DESKTOP_HOST := src/ForgeMission.Desktop.Host
 DESKTOP_DIR := dist/forge-desktop
 
 .PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset desktop desktop-publish
@@ -63,13 +64,17 @@ dev-down: ## Stop local dev environment (keeps data)
 dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
 	./scripts/dev-reset.sh
 
-desktop-publish: ## Publish the desktop app (Client Runtime + native desktop shell) as one self-contained folder
+desktop-publish: ## Publish the desktop app (Client Runtime + supervisor + native host) as one self-contained folder
 	rm -rf $(DESKTOP_DIR)
 	dotnet publish $(CLIENT_RUNTIME) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
-	dotnet publish $(DESKTOP_SHELL) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
+	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
+	# Last on purpose: publishing into a shared folder prunes files a project published before but
+	# no longer owns, and the native host's Photino.Native.dylib is the one asset another project
+	# here used to own. Publishing it last puts it back after any such pruning.
+	dotnet publish $(DESKTOP_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	@echo "Desktop app published: $(DESKTOP_DIR)/ForgeMission.Desktop"
 
-desktop: desktop-publish ## Publish then launch the desktop app (the desktop shell owns the Client Runtime's lifecycle)
+desktop: desktop-publish ## Publish then launch the desktop app (the supervisor owns every runtime's lifecycle; the native host is its child)
 	$(DESKTOP_DIR)/ForgeMission.Desktop
 
 clean: ## Remove all build artefacts (bin/, obj/, dist/)
