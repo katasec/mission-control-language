@@ -104,6 +104,24 @@ decision only when the current single-active-session lifecycle is proven respons
 | Failure ownership | `DesktopLifecycle` in the Supervisor owns boot/stop state and process cleanup; the Host owns only its window/local state; Client Runtime owns event fan-out; Presentation owns a view operation’s cancellation and rendering. |
 | Proof | Supervisor/Host boundary tests, event batching tests, published AOT boot observation, and no-orphan checks after host close, host crash, and supervisor signal. |
 
+## Desktop Design and Implementation Quality Gate
+
+Apply the mandatory [Engineering Philosophy gate](../design/engineering-philosophy.md#desktop-design-and-implementation-quality-gate)
+before approving a Task 2 plan or its implementation. This task's recorded result is:
+
+| Required answer | Result |
+|---|---|
+| What product behaviour is required? | Closing the native window ends only the disposable Host; the Supervisor remains long enough to cancel and clean up its runtimes. |
+| Who owns it? | The Desktop Supervisor owns runtime/process cleanup. The Host owns only window/WebView state. |
+| What has been verified about the adapter? | Photino's macOS close-veto callback is not the lifecycle mechanism: its managed contract promises cancellation, while the current native adapter invokes it post-decision. That is an adapter defect/limitation, not a product-architecture requirement. |
+| Why does the proposal preserve the replacement boundary? | No Host callback, `IDesktopHost` member, package patch, or fork participates in runtime cleanup; the Host can be swapped without changing the Supervisor. |
+| What proves it? | Boundary tests plus published-AOT observations: Host window close and Host kill leave no Client Runtime child or Mission Runtime container; Supervisor SIGTERM does the same. |
+
+**PASS:** the Supervisor/Host split passes. **FAIL:** the discarded close-veto/Photino-workaround
+direction failed because it conflated closing a window with terminating the application and tried to
+make an adapter callback own Supervisor cleanup. Any future task that repeats that direction fails
+this gate before implementation.
+
 ## Dependency-ordered work
 
 ### Task 1 — Supervisor / Host boundary (design gate; locked)

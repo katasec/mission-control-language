@@ -38,15 +38,19 @@ initiative, even if a gap looks obvious.
 
 1. Codex finishes the design (per AGENTS.md's Design first rule — no open architecture questions)
    and sends Claude a task assignment using the template below.
-2. Claude replies with an implementation plan only — no code yet.
+2. Claude replies with an implementation plan only — no code yet. For a Desktop/native-host task,
+   the plan starts with the **Desktop Design and Implementation Quality Gate** result from
+   [Engineering Philosophy](engineering-philosophy.md#desktop-design-and-implementation-quality-gate).
 3. Codex reviews the plan. If it's wrong, incomplete, or exposes a design gap, Codex sends
    corrections and Claude revises (repeat until approved). A plan that surfaces an unresolved design
    question goes back to design — it is never silently implemented around.
 4. Once Codex approves, Claude implements.
 5. Claude delivers a completion summary using the template below.
 6. Codex reviews the summary against the task's "Done when" condition before marking the task
-   done. Verification means a named check (test result, command output, a live run) — matching
-   AGENTS.md's status-honesty rule — not "looks complete."
+   done. For a Desktop/native-host task, Codex also re-runs the Desktop Quality Gate against the
+   approved plan, changed boundary, and named observation; a failed answer rejects the work.
+   Verification means a named check (test result, command output, a live run) — matching AGENTS.md's
+   status-honesty rule — not "looks complete."
 
 ---
 
@@ -79,7 +83,9 @@ Constraints:
 Next step:
 Reply with an implementation plan only: files you will touch or create, your
 approach, sequencing, and any assumption or open question not already answered
-in the docs above. Wait for my explicit approval before implementing.
+in the docs above. For a Desktop/native-host task, start with the five PASS/FAIL
+answers in Engineering Philosophy's Desktop Design and Implementation Quality Gate.
+Wait for my explicit approval before implementing.
 ```
 
 ---
@@ -107,6 +113,10 @@ Deviations from the approved plan:
 Open questions / follow-ups:
 [none, or what's left - do not claim the task is done if this section
  describes something the "Done when" condition actually requires]
+
+Desktop Quality Gate (Desktop/native-host tasks only):
+[the five PASS/FAIL answers from Engineering Philosophy, with the boundary
+test and published-app observation]
 ```
 
 ---
