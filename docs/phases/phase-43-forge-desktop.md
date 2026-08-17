@@ -15,7 +15,7 @@ is a replaceable presentation client over the Mission Runtime (reasoning) and Cl
 
 | If working on… | Read… |
 |---|---|
-| Shared in-chat activity visual | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md), then only its named design sections and source files. |
+| Shared in-chat activity visual (complete; read only if changing it) | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md), then only its named design sections and source files. |
 | Deferred responsiveness/lifecycle work | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md). |
 | Trace/workbench UX | [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md). |
 | Human approval/suspend/resume | [43.5 — Human-in-the-loop](phase-43.5-human-in-the-loop.md). |
@@ -30,7 +30,7 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | **Current work.** One small visual renderer, used by Rooms and Desktop; no new event or trace transport. |
+| [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |
 | [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Core product proof done and verified 2026-08-16. |
 | 43.3 mission catalog/OCI follow-up; 43.4 workbench; 43.5 human controls | Deferred follow-up work; each owns its own design and readiness. |

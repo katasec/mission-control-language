@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **[Phase 43 — Forge Desktop](phases/phase-43-forge-desktop.md)** — deliver one shared, visible in-chat activity surface for Rooms and Desktop. |
+| **NEXT STEP** | **Codex design review** — select the next active work after Phase 43.18 verification. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Shared conversation activity surface active; core Janus group-chat proof complete |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Awaiting selection of the next sub-phase; core Janus group-chat proof complete |
 
 ## Design docs
 
