@@ -8,13 +8,14 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Codex design review** — select the next active work after Phase 43.18 verification. |
+| **NEXT STEP** | **Phase 44 — Local development bootstrap integrity:** restore the missing Auth & Billing database creation on a fresh local PostgreSQL volume. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Awaiting selection of the next sub-phase; core Janus group-chat proof complete |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Core Janus group-chat proof complete; remaining follow-ups deferred |
+| [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
 
 ## Design docs
 

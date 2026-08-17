@@ -1,8 +1,7 @@
 # Phase 43 — Forge Desktop
 
-> **Status: shared conversation activity design active (2026-08-17).** The Janus Desktop product
-> proof is complete; the immediate work is giving Rooms and Desktop one visible in-chat activity
-> surface without expanding their transport or trace contracts.
+> **Status: core Janus group-chat proof complete (2026-08-17).** The shared Rooms/Desktop activity
+> surface is verified; remaining Desktop follow-ups are deliberately deferred until selected.
 
 ## Purpose
 

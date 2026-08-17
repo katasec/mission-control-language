@@ -6,7 +6,9 @@
 > event transport, nor rich trace view. Task evidence:
 > [completed record](phase-43.18-shared-conversation-activity_completed.md).
 >
-> Still open and **not** part of this phase: the local `authbilling_db` bootstrap gap below.
+> The unrelated local `authbilling_db` bootstrap gap now has its own active
+> [Phase 44](phase-44-local-development-bootstrap.md); its original observation remains below as
+> historical context.
 
 ## Outcome
 
@@ -127,7 +129,7 @@ legacy `agent-thinking` / `thinking-dots` rules are gone and `.convo-activity*` 
 activity styling. Live DOM observation and build/tests verified — see
 [completed record → Task 2](phase-43.18-shared-conversation-activity_completed.md#task-2--adopt-it-in-forge-rooms-done-2026-08-17).
 
-### Open, unrelated to the remaining tasks' code: local `authbilling_db` bootstrap gap
+### Historical handoff: local `authbilling_db` bootstrap gap
 
 `scripts/db/init/01-init.sql` creates only `forge_rooms`, and `make dev-up` applies only the Rooms EF
 migrations — but ForgeUI also bootstraps the separate `authbilling_db` context (42.6) at startup and
@@ -135,7 +137,8 @@ aborts with `3D000: database "authbilling_db" does not exist`. A fresh clone hit
 `dotnet run`; Task 2's observation needed the database created by hand in the local container
 (`CREATE DATABASE authbilling_db OWNER postgres`, `GRANT CONNECT … TO forge_app`, `GRANT USAGE,
 CREATE ON SCHEMA public TO forge_app`). Anyone doing a local Rooms run for Task 4 will hit it too.
-Left as a documented development-environment issue, not fixed inside 43.18.
+It is deliberately not fixed inside 43.18; the active repair and verification are in
+[Phase 44](phase-44-local-development-bootstrap.md).
 
 ### Task 3 — Adopt it in Forge Desktop — done 2026-08-17
 
