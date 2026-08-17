@@ -71,3 +71,51 @@ the component until Tasks 2–3.
 | Proof | Build + test output above. The packaged-Desktop observation belongs to Task 3 and is not claimed here. | PASS |
 
 Delivered by [PR #61](https://github.com/katasec/mission-control-language/pull/61).
+
+## Task 1.5 — Restore Rooms build coverage (done 2026-08-17)
+
+### What shipped
+
+| Artefact | Change |
+|---|---|
+| `src/ForgeUI/Shared/RoomConversation.razor` | One alias directive: `@using PipelineTraceEvent = ForgeUI.Models.PipelineTraceEvent`, with a comment naming the collision. `ToEvents`' signature and construction are otherwise untouched. |
+| `src/ForgeMission.slnx` | `ForgeUI/ForgeUI.csproj` added, so the production host builds with the solution. |
+
+### Why an alias, and only in that one file
+
+`_Imports.razor:12` gives every ForgeUI component `@using ForgeUI.Models`. `RoomConversation.razor`
+additionally imports `ForgeMission.Core.Runtime` for `StepEnvelope`, and that namespace declares its
+own `PipelineTraceEvent` — so the short name had two candidates *in that file alone*. The other three
+uses (`PipelineTrace.razor:25`, `Models/ChatMessage.cs:7`, the declaration itself) carry no
+Core.Runtime import and were never ambiguous, so they were left alone.
+
+The two types are different shapes, which is why no mapping or adoption was appropriate:
+
+| Type | Shape | Role |
+|---|---|---|
+| `ForgeUI.Models.PipelineTraceEvent` | `(ExpertName, StepEnvelope Envelope, DateTime Timestamp, int Attempt)` | Concrete view model; the trace panel reads `Envelope.Status/.Reason/.Text`. |
+| `ForgeMission.Core.Runtime.PipelineTraceEvent` | abstract `(MissionName, MissionPath, ExpertName, ExpertKind, Attempt)` + `Started`/`Delta`/`Completed`/`ToolRequested` | Live mission lifecycle facts; no `Envelope` on the base. |
+
+### Verification (2026-08-17)
+
+```
+dotnet build src/ForgeUI/ForgeUI.csproj  → Build succeeded. 0 Warning(s), 0 Error(s).
+dotnet build src/ForgeMission.slnx       → Build succeeded. 0 Warning(s), 0 Error(s).
+                                           includes "ForgeUI -> .../ForgeUI.dll"
+dotnet test  src/ForgeMission.slnx       → 0 failed, 740 passed, 11 skipped
+    ForgeMission.Tests 457 (+11 pre-existing live-provider skips) · ConversationHost 139
+    Rooms 97 · ConversationWorker 42 · Runner 5
+```
+
+Negative check: grep for `PipelineStepStarted|PipelineStepDelta|PipelineStepCompleted|PipelineToolRequested|Core.Runtime.PipelineTraceEvent`
+across `RoomConversation.razor`, `PipelineTrace.razor`, `Models/PipelineTraceEvent.cs`, and
+`Models/ChatMessage.cs` returns nothing — no Core runtime trace type reaches the legacy trace view.
+
+No runtime or browser observation is claimed: this task restores compilation and build coverage and
+renders nothing new. Rooms' visible behaviour is Task 2's verification.
+
+### Note for future solution-membership work
+
+`ForgeMission.Parser`, `ForgeMission.Runner`, `ForgeMission.Runner.Contracts`, and
+`ForgeMission.ClientRuntime.Demo` are still absent from `ForgeMission.slnx` and build only
+transitively. None is currently failing, so they were left out of this task's scope.

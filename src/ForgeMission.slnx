@@ -27,4 +27,5 @@
   <Project Path="ForgeMission.Scout/ForgeMission.Scout.csproj" />
   <Project Path="ForgeMission.Serve/ForgeMission.Serve.csproj" />
   <Project Path="ForgeMission.Tests/ForgeMission.Tests.csproj" />
+  <Project Path="ForgeUI/ForgeUI.csproj" />
 </Solution>
