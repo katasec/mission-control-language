@@ -13,7 +13,23 @@
     </header>
 
     <main class="turns">
-        @if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+        @if (connectionError is not null)
+        {
+            <div class="connection-banner">
+                <span>Connection lost: @connectionError</span>
+                <button class="connection-retry" @onclick="RetryConnectionAsync">Retry</button>
+            </div>
+        }
+        @if (reconnectedWithGap)
+        {
+            <p class="gap-notice">Reconnected. Updates that arrived while disconnected are not shown.</p>
+        }
+        @if (sessionError is not null)
+        {
+            <p class="error-banner">@sessionError</p>
+        }
+
+        @if (IsDurable)
         {
             @if (conversationError is not null)
             {
@@ -76,8 +92,8 @@
         <div class="composer">
             <button class="composer-plus" title="Add folder" @onclick="ToggleAddFolderMenu">+</button>
             <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
-                   placeholder="@(workspaceRoot is null ? "Add a folder to start" : "Describe what you want to build")"
-                   disabled="@(workspaceRoot is null || sending)" />
+                   placeholder="@ComposerPlaceholder"
+                   disabled="@(session is null || sending || PromptsBlocked)" />
             <button class="mission-trigger" aria-expanded="@showMissionMenu" aria-haspopup="true"
                     @onclick="ToggleMissionMenu" disabled="@sending">
                 <span>@selectedMission.Name</span>
@@ -122,6 +138,10 @@
     .tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
     .tool-glyph.done { color: var(--success); }
     .tool-glyph.running { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+
+    .connection-banner { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
+    .connection-retry { flex-shrink: 0; height: 28px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-pill); background: var(--danger); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .gap-notice { align-self: stretch; margin: 0; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-muted); font-size: 12.5px; text-align: center; }
 
     .response-card { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
     .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; margin: 0; }
@@ -171,34 +191,73 @@
     private bool sending;
     private readonly List<ChatTurn> turns = [];
 
-    private CancellationTokenSource? eventLoopCts;
+    // One view operation at a time (43.17 task 3). viewCts cancels this view's setup/prompt
+    // requests and its event subscription together; viewGeneration is the identity a late result
+    // is checked against before it may mutate anything; eventLoopTask is observed, never
+    // fire-and-forget. Replacing a folder or mission cancels and awaits the old subscription
+    // before creating the replacement, so two subscribers can never overlap.
+    private CancellationTokenSource? viewCts;
+    private Task? eventLoopTask;
+    private int viewGeneration;
+
     private ChatTurn? activeTurn;
     private ToolCallRow? openToolRow;
 
     private ConversationTranscript conversationTranscript = new();
     private string? conversationError;
+    private string? sessionError;
+    private string? connectionError;
+    private bool reconnectedWithGap;
 
-    private bool CanSend => workspaceRoot is not null && !sending && !string.IsNullOrWhiteSpace(composerText);
+    private bool IsDurable => selectedMission.Runtime == SessionRuntimeKind.DurableConversation;
+
+    // A durable transcript is built only from relayed events, so a prompt sent while the stream is
+    // down would add a second unrecoverable gap. A Mission prompt renders its final answer from the
+    // PromptResponse itself, so it stays usable while disconnected.
+    private bool PromptsBlocked => IsDurable && connectionError is not null;
+
+    private string ComposerPlaceholder => (workspaceRoot, PromptsBlocked) switch
+    {
+        (null, _) => "Add a folder to start",
+        (_, true) => "Reconnect to continue this conversation",
+        _ => "Describe what you want to build",
+    };
+
+    private bool CanSend =>
+        session is not null && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
 
     protected override async Task OnInitializedAsync()
     {
+        var view = await BeginViewAsync();
         settingUpSession = true;
+
         try
         {
             var initial = await ClientRuntime.SendAsync<DefaultWorkspaceSessionRequest, DefaultWorkspaceSessionResponse>(
-                new DefaultWorkspaceSessionRequest(selectedMission.WireMission, selectedMission.Runtime), CancellationToken.None);
+                new DefaultWorkspaceSessionRequest(selectedMission.WireMission, selectedMission.Runtime), view.Token);
+            if (!IsCurrent(view.Generation))
+                return;
+
             session = new SessionSetupResponse(initial.SessionId, initial.AvailableCapabilities);
             workspaceRoot = initial.WorkspaceRoot;
-            StartEventLoop();
+            StartEventLoop(view);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the view was replaced or disposed before the default session resolved.
         }
         catch (Exception exception)
         {
+            if (!IsCurrent(view.Generation))
+                return;
+
             folderError = exception.Message;
             showAddFolderMenu = true;
         }
         finally
         {
-            settingUpSession = false;
+            if (IsCurrent(view.Generation))
+                settingUpSession = false;
         }
     }
 
@@ -222,25 +281,39 @@
             return;
         }
 
+        var requestedFolder = folderInput;
+        var view = await BeginViewAsync();
         settingUpSession = true;
         folderError = null;
         StateHasChanged();
 
         try
         {
-            session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(folderInput, selectedMission.WireMission, selectedMission.Runtime), CancellationToken.None);
-            workspaceRoot = folderInput;
+            var setup = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
+                new SessionSetupRequest(requestedFolder, selectedMission.WireMission, selectedMission.Runtime), view.Token);
+            if (!IsCurrent(view.Generation))
+                return;
+
+            session = setup;
+            workspaceRoot = requestedFolder;
             showAddFolderMenu = false;
-            StartEventLoop();
+            StartEventLoop(view);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: a newer folder/mission replaced this one while its setup was in flight.
         }
         catch (Exception exception)
         {
+            if (!IsCurrent(view.Generation))
+                return;
+
             folderError = exception.Message;
         }
         finally
         {
-            settingUpSession = false;
+            if (IsCurrent(view.Generation))
+                settingUpSession = false;
         }
     }
 
@@ -259,20 +332,28 @@
         if (workspaceRoot is null)
             return;
 
-        if (eventLoopCts is not null)
-        {
-            await eventLoopCts.CancelAsync();
-            eventLoopCts.Dispose();
-            eventLoopCts = null;
-        }
+        var view = await BeginViewAsync();
 
-        turns.Clear();
-        conversationTranscript = new();
-        conversationError = null;
-        session = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-            new SessionSetupRequest(workspaceRoot, selectedMission.WireMission, selectedMission.Runtime, previousSessionId),
-            CancellationToken.None);
-        StartEventLoop();
+        try
+        {
+            var setup = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
+                new SessionSetupRequest(workspaceRoot, selectedMission.WireMission, selectedMission.Runtime, previousSessionId),
+                view.Token);
+            if (!IsCurrent(view.Generation))
+                return;
+
+            session = setup;
+            StartEventLoop(view);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: another replacement superseded this one while its setup was in flight.
+        }
+        catch (Exception exception)
+        {
+            if (IsCurrent(view.Generation))
+                sessionError = exception.Message;
+        }
     }
 
     private async Task OnComposerKeyDown(KeyboardEventArgs e)
@@ -283,48 +364,63 @@
 
     private async Task SendAsync()
     {
-        if (!CanSend || session is null)
+        if (!CanSend || session is null || viewCts is null)
             return;
 
+        var view = new ViewOperation(viewGeneration, viewCts.Token);
         var prompt = composerText;
         composerText = string.Empty;
         sending = true;
 
-        if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+        if (IsDurable)
         {
-            await SendDurableAsync(prompt);
+            await SendDurableAsync(prompt, view);
             return;
         }
 
         openToolRow = null;
-        activeTurn = new ChatTurn(prompt);
-        turns.Add(activeTurn);
+        var turn = new ChatTurn(prompt);
+        activeTurn = turn;
+        turns.Add(turn);
         StateHasChanged();
 
         try
         {
             var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
-                new PromptRequest(session.SessionId, prompt), CancellationToken.None);
-            activeTurn.AssistantText = response.Content;
-            activeTurn.Error = response.IsError ? response.Content : null;
+                new PromptRequest(session.SessionId, prompt), view.Token);
+            if (!IsCurrent(view.Generation))
+                return;
+
+            turn.AssistantText = response.Content;
+            turn.Error = response.IsError ? response.Content : null;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the user replaced the folder/mission while this prompt was in flight.
         }
         catch (Exception exception)
         {
-            activeTurn.Error = exception.Message;
+            if (IsCurrent(view.Generation))
+                turn.Error = exception.Message;
         }
         finally
         {
-            activeTurn.IsStreaming = false;
-            activeTurn = null;
-            sending = false;
-            StateHasChanged();
+            // A late result belongs to a discarded view: it must not clear the replacement's
+            // sending state or write into its transcript.
+            if (IsCurrent(view.Generation))
+            {
+                turn.IsStreaming = false;
+                activeTurn = null;
+                sending = false;
+                StateHasChanged();
+            }
         }
     }
 
     // PromptResponse is an acceptance for the durable path, not a synthetic chat answer — the
     // real turn renders once its durable UserMessage (and everything after it) arrives through
     // ConsumeEventsAsync/ApplyEvent, not from this call's return value.
-    private async Task SendDurableAsync(string prompt)
+    private async Task SendDurableAsync(string prompt, ViewOperation view)
     {
         conversationError = null;
         StateHasChanged();
@@ -332,41 +428,127 @@
         try
         {
             var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
-                new PromptRequest(session!.SessionId, prompt), CancellationToken.None);
-            if (response.IsError)
+                new PromptRequest(session!.SessionId, prompt), view.Token);
+            if (response.IsError && IsCurrent(view.Generation))
                 conversationError = response.Content;
-        }
-        catch (Exception exception)
-        {
-            conversationError = exception.Message;
-        }
-        finally
-        {
-            sending = false;
-            StateHasChanged();
-        }
-    }
-
-    private void StartEventLoop()
-    {
-        eventLoopCts = new CancellationTokenSource();
-        _ = ConsumeEventsAsync(eventLoopCts.Token);
-    }
-
-    private async Task ConsumeEventsAsync(CancellationToken ct)
-    {
-        try
-        {
-            await foreach (var evt in ClientRuntime.Subscribe(ct))
-            {
-                ApplyEvent(evt);
-                await InvokeAsync(StateHasChanged);
-            }
         }
         catch (OperationCanceledException)
         {
-            // Expected on page teardown.
+            // Expected: the user replaced the folder/mission while this prompt was in flight.
         }
+        catch (Exception exception)
+        {
+            if (IsCurrent(view.Generation))
+                conversationError = exception.Message;
+        }
+        finally
+        {
+            if (IsCurrent(view.Generation))
+            {
+                sending = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    // The identity a long operation carries: the generation it belongs to, checked before any
+    // state mutation, and the token that cancels it when that view is replaced.
+    private readonly record struct ViewOperation(int Generation, CancellationToken Token);
+
+    private bool IsCurrent(int generation) => generation == viewGeneration;
+
+    // Every replacement starts here: the previous subscription is cancelled and awaited before
+    // anything new exists, then this view's state is cleared and given a fresh identity.
+    private async Task<ViewOperation> BeginViewAsync()
+    {
+        await StopViewAsync();
+
+        viewGeneration++;
+        viewCts = new CancellationTokenSource();
+
+        session = null;
+        turns.Clear();
+        activeTurn = null;
+        openToolRow = null;
+        conversationTranscript = new();
+        conversationError = null;
+        sessionError = null;
+        connectionError = null;
+        reconnectedWithGap = false;
+        sending = false;
+
+        return new ViewOperation(viewGeneration, viewCts.Token);
+    }
+
+    // ConsumeEventsAsync records its own failures instead of rethrowing, so awaiting the loop here
+    // cannot throw and cannot leave a subscription alive past this point.
+    private async Task StopViewAsync()
+    {
+        if (viewCts is null)
+            return;
+
+        await viewCts.CancelAsync();
+        if (eventLoopTask is not null)
+            await eventLoopTask;
+
+        viewCts.Dispose();
+        viewCts = null;
+        eventLoopTask = null;
+    }
+
+    private void StartEventLoop(ViewOperation view) => eventLoopTask = ConsumeEventsAsync(view);
+
+    private async Task ConsumeEventsAsync(ViewOperation view)
+    {
+        try
+        {
+            await foreach (var evt in ClientRuntime.Subscribe(view.Token))
+            {
+                if (!IsCurrent(view.Generation))
+                    return;
+
+                ApplyEvent(evt);
+                await InvokeAsync(StateHasChanged);
+            }
+
+            // The stream ended without an error. Nothing further will arrive on it, so this is a
+            // disconnection like any other rather than a quietly finished page.
+            await ReportDisconnectedAsync(view, "the Client Runtime event stream ended.");
+        }
+        catch (OperationCanceledException) when (view.Token.IsCancellationRequested)
+        {
+            // Expected: the view was replaced, or the page was disposed.
+        }
+        catch (Exception exception)
+        {
+            await ReportDisconnectedAsync(view, exception.Message);
+        }
+    }
+
+    private async Task ReportDisconnectedAsync(ViewOperation view, string reason)
+    {
+        if (!IsCurrent(view.Generation))
+            return;
+
+        connectionError = reason;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Retry opens a new subscription for the same session, generation, and token. It never
+    // recreates the session, resends a prompt, or replays what was missed — no cursor or replay
+    // route exists below IClientRuntimeChannel — so the gap notice below is set as the honest
+    // record that this transcript is now incomplete. It clears only when a new view begins.
+    private async Task RetryConnectionAsync()
+    {
+        if (viewCts is null || connectionError is null)
+            return;
+
+        if (eventLoopTask is not null)
+            await eventLoopTask;
+
+        connectionError = null;
+        reconnectedWithGap = true;
+        StartEventLoop(new ViewOperation(viewGeneration, viewCts.Token));
     }
 
     private void ApplyEvent(ClientRuntimeEvent evt)
@@ -374,7 +556,7 @@
         if (evt.SessionId != session?.SessionId)
             return;
 
-        if (selectedMission.Runtime == SessionRuntimeKind.DurableConversation)
+        if (IsDurable)
         {
             if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is not null)
                 conversationTranscript.Apply(evt.Conversation);
@@ -405,14 +587,7 @@
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (eventLoopCts is null)
-            return;
-
-        await eventLoopCts.CancelAsync();
-        eventLoopCts.Dispose();
-    }
+    public async ValueTask DisposeAsync() => await StopViewAsync();
 
     private sealed class ChatTurn(string prompt)
     {
