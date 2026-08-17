@@ -177,9 +177,31 @@ task whose expected cancellation is silent and whose unexpected failure becomes 
 Do not invent a reusable `LatestOperationWins` framework: this page has the real caller and should
 own its short, explicit operation lifetime.
 
+#### Locked Task 3 recovery decisions (2026-08-17)
+
+`IClientRuntimeChannel.Subscribe` has no cursor or replay route. A retry therefore opens a fresh
+subscription for the same session, generation, and cancellation token; it does not recreate the
+session, resend a prompt, or claim to restore events missed while disconnected. Expected
+cancellation (replacement or disposal) is silent. An unexpected subscription failure shows its
+error and a Retry action.
+
+After a successful retry, Presentation keeps a persistent transcript-area notice: **“Reconnected.
+Updates that arrived while disconnected are not shown.”** It clears only when a new view begins.
+This is deliberately honest about the permanent gap, especially for a durable conversation whose
+transcript is event-derived. No UI-only durable-event type or transcript-model entry is added.
+Remove the notice only when a replay/cursor path exists below `IClientRuntimeChannel`; the deferred
+Task 4 owns that work.
+
+While disconnected, Mission-kind prompts remain enabled because their final `PromptResponse` is
+rendered independently of the event stream. DurableConversation prompts are disabled until Retry
+succeeds because their visible transcript is event-derived and would otherwise acquire another
+unrecoverable gap. Replacing a workspace or mission cancels an in-flight prompt and silently
+discards its late result; the user-selected replacement must not wait for it.
+
 **Done when:** tests or a transport probe show exactly one active subscription after repeated
 folder/mission replacement, cancellation of an old prompt cannot update the current session, and a
-broken event stream becomes visible/retryable state rather than an unobserved task failure.
+broken event stream becomes visible/retryable state rather than an unobserved task failure. A retry
+is explicitly proven to display the persistent gap notice, which clears only on session replacement.
 
 ### Task 4 — Bounded, frame-friendly event delivery
 
