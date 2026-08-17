@@ -83,3 +83,66 @@ process arguments, child exit code 0.
 | What has been verified about the adapter? | `Photino.NET` 4.0.16 exposes `Invoke(Action)`, `Load`, `LoadRawString`, `RegisterWindowCreatedHandler`, `RegisterWebMessageReceivedHandler`, `WaitForClose` (verified by reflecting the package). Whether `Load` before native creation defers to a start URL was treated as unknown and designed around. The Host's non-response to SIGTERM was measured, not assumed. No close veto is used. **PASS** |
 | Why does the proposal preserve the replacement boundary? | Enforced by `DesktopSupervisorHostBoundaryTests`, not by convention. **PASS** |
 | What proves it? | The boundary tests, the lifecycle tests, and the six published-app observations above. **PASS** |
+
+## Task 3 — Session operation ownership and stale-result suppression (done 2026-08-17)
+
+`Home.razor` now owns exactly one cancellable view operation. Replacing a workspace folder or an
+attached mission cancels and awaits the previous subscription before the replacement exists, so two
+subscribers can never overlap, and every long operation carries an identity a late result is checked
+against before it may mutate anything.
+
+### What was built
+
+| Area | Detail |
+|---|---|
+| View operation | Four page-private fields replace the old `eventLoopCts`: `viewCts` (cancels this view's setup/prompt requests *and* its subscription), `eventLoopTask` (observed, no longer `_ = ...`), `viewGeneration` (stale-result identity), `connectionError`. `ViewOperation(Generation, Token)` is a private record struct carried by each long operation. |
+| Replacement path | `BeginViewAsync()` → `StopViewAsync()` (cancel, await the loop, dispose) → bump generation → fresh CTS → clear session/turns/transcript/errors. `OnInitializedAsync`, `AddFolderAsync`, and `SelectMissionAsync` all start there; `AddFolderAsync` previously started a second loop without stopping the first. |
+| Stale-result suppression | Setup and prompt results are assigned to locals, then discarded unless `IsCurrent(generation)`. Every `finally` guards `sending`/`settingUpSession` the same way, so a cancelled prompt cannot clear the replacement's state. `OperationCanceledException` is caught separately everywhere and is silent. |
+| Disconnected state | `ConsumeEventsAsync` records its own failure as `connectionError` instead of faulting unobserved; the banner offers Retry. `RetryConnectionAsync` opens a new subscription on the same session, generation, and token. |
+| Gap notice | A successful retry sets a persistent `.gap-notice` line ("Reconnected. Updates that arrived while disconnected are not shown."), cleared only by `BeginViewAsync`. |
+| Prompt gating | `PromptsBlocked` disables the composer for DurableConversation while disconnected; Mission prompts stay enabled because their final answer arrives on the `PromptResponse`, not the stream. |
+
+### Decisions made during the build
+
+| Decision | Why |
+|---|---|
+| A normally-*ended* stream is treated as a disconnection, not a quiet finish. | The locked decision names an "unexpected subscription failure", but an SSE stream that completes without an exception leaves the same dead page with no further events. It now sets `connectionError` with "the Client Runtime event stream ended." and offers the same Retry. |
+| `session` is cleared by `BeginViewAsync`, and `CanSend` requires a session. | The old code left the previous `SessionSetupResponse` in place when a replacement's setup failed, so the composer looked usable while pointing at a session whose subscription had already been cancelled. |
+| Added one page-private `sessionError` banner. | `SelectMissionAsync` had no error handling at all — a failed mission switch threw out of a Blazor event handler. With the state now cleared before the request, that would have left a blank page and no message. |
+| The gap notice is set when Retry is pressed, not when the first post-retry event arrives. | The gap is already real at that point; waiting for an event would leave a quiet conversation looking complete. Nothing below `IClientRuntimeChannel` signals "subscription established". |
+
+### Verification
+
+`dotnet build src/ForgeMission.slnx` — 0 warnings, 0 errors.
+
+Ten bunit tests in `src/ForgeMission.Tests/Presentation/HomeSessionOperationTests.cs` drive the real
+page through its real markup against a fake `IClientRuntimeChannel` that counts *concurrent*
+subscriptions, so the central claim is a measured peak rather than a code-reading inference:
+
+| Observation | Test |
+|---|---|
+| Four replacements (2 folders, 2 missions) start 5 subscriptions, leave 1 active, peak 1. | `RepeatedFolderAndMissionReplacement_LeavesExactlyOneSubscription` |
+| One delta is applied once, not twice, after repeated replacement. | `Replacement_AwaitsTheOldSubscription_SoEachEventIsAppliedOnce` |
+| A replacement issued while 200 deltas are rendering still completes. | `ReplacementWhileEventsAreRendering_CompletesWithoutDeadlock` |
+| A prompt released *after* its session was replaced changes nothing, raises no banner, and does not clear the new view's sending state. | `StalePromptResult_AfterReplacement_CannotMutateTheNewSession` |
+| Replacement produces no error/connection/gap banner. | `ExpectedCancellation_IsSilent` |
+| A faulted stream shows its message and a Retry control. | `UnexpectedStreamFailure_BecomesVisibleRetryableState` |
+| Retry opens exactly one new subscription, clears the banner, shows the gap notice, and the notice survives later events. | `Retry_OpensANewSubscriptionAndShowsThePersistentGapNotice` |
+| The notice clears only on session replacement. | `GapNotice_ClearsOnlyWhenANewViewBegins` |
+| Durable prompts are disabled while disconnected; Mission prompts are not. | `WhileDisconnected_DurableConversationPromptsAreBlocked_AndMissionPromptsAreNot` |
+| Disposal leaves no active subscription. | `DisposeAsync_LeavesNoActiveSubscription` |
+
+The deadlock probe exists because the design awaits the event loop from inside a UI event handler.
+The first draft of the suite hung, which turned out to be the test awaiting a deliberately-held
+prompt handler rather than a product deadlock; the probe was added so the distinction stays proven
+rather than argued.
+
+### Desktop Quality Gate result
+
+| Required answer | Result |
+|---|---|
+| What product behaviour is required? | Replacing folder or mission shows only the new session: one live subscription, no event applied twice, no late result from the discarded session, no error flash from an intentional switch. A broken stream becomes a visible, retryable banner. **PASS** |
+| Who owns it? | Presentation (`Home.razor`) in the Client Runtime Presentation WASM app inside the Host's WebView. It owns cancellation, stale-result identity, and rendering only. **PASS** |
+| What has been verified about the adapter? | No adapter behaviour is relied on. `IClientRuntimeChannel.Subscribe` has no cursor, `ClientRuntimeEventHub` drops events with no live subscriber, and `ConversationRuntimeSession` publishes each event exactly once — all read in source, which is why the gap is stated rather than papered over. **PASS** |
+| Why does the proposal preserve the replacement boundary? | The diff is one page plus one test file. No `IDesktopHost`, Supervisor, Host, transport-contract, or transcript-model change. **PASS** |
+| What proves it? | The ten tests above plus a clean solution build/test. Process-level observation is **not applicable**: this task changes no process lifecycle (Task 2 owns that). **PASS** |

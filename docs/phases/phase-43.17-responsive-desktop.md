@@ -1,8 +1,8 @@
 # Phase 43.17 — Responsive Desktop lifecycle and UI
 
-> **Status: Supervisor/Host split live (2026-08-17); Task 3 active.** Tasks 1–2 are done — the
-> Desktop Supervisor and its disposable native host are separate processes, and the Supervisor owns
-> a non-blocking lifecycle with exactly-once cleanup. Task 3 (session ownership) is next; Tasks 4–5
+> **Status: Tasks 1–3 done (2026-08-17); Tasks 4–5 deferred.** The Desktop Supervisor and its
+> disposable native host are separate processes, the Supervisor owns a non-blocking lifecycle with
+> exactly-once cleanup, and Presentation owns one cancellable session/view operation. Tasks 4–5
 > (bounded event delivery and progressive rendering) are deferred after Task 3 by operator direction
 > on 2026-08-17. Part of
 > [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
@@ -34,7 +34,7 @@ memory or one render per token.
 
 | Location | Current behavior | Consequence |
 |---|---|---|
-| `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` | `AddFolderAsync` starts a new event loop without stopping the existing default-session loop. | Duplicate SSE subscribers can process later events twice. |
+| ~~`Home.razor` — `AddFolderAsync` starts a new event loop without stopping the existing one~~ | Fixed by Task 3: one view operation owns the subscription, and a replacement cancels and awaits it first. | — |
 | `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` | Each SSE event mutates state and invokes `StateHasChanged`; text appends allocate a new string for every delta. | Render pressure and growing per-turn string-copy cost during long streams. |
 | `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEventHub.cs` | Each subscriber has an unbounded channel and every event is forwarded/flushed individually. | A slow WebView can accumulate unbounded queued data. |
 
@@ -166,16 +166,13 @@ for the build narrative, boundary/lifecycle test evidence, and the six published
 
 ### Task 3 — Session operation ownership and stale-result suppression
 
-**Depends on:** Task 2 only for shared lifecycle terminology; otherwise independent.
+**Done 2026-08-17** — `Home.razor` owns one cancellable view operation; a replacement cancels and
+awaits the old subscription before creating the new one. See
+[phase-43.17-responsive-desktop_completed.md](phase-43.17-responsive-desktop_completed.md#task-3--session-operation-ownership-and-stale-result-suppression-done-2026-08-17)
+for the build narrative, the ten-test evidence, and the quality-gate result.
 
-Make `Home.razor` own one cancelable session/view operation at a time. Replacing a workspace or
-mission cancels and awaits the old event subscription before creating the replacement. Prompt and
-setup requests receive a view/session cancellation token plus a generation identity; a late result
-must not mutate the newly-selected session. Replace the fire-and-forget event loop with an observed
-task whose expected cancellation is silent and whose unexpected failure becomes `Disconnected`.
-
-Do not invent a reusable `LatestOperationWins` framework: this page has the real caller and should
-own its short, explicit operation lifetime.
+The recovery decisions below stay here, not in the completed record: the deferred Task 4 owns
+removing the gap notice, so it is a live constraint on future work.
 
 #### Locked Task 3 recovery decisions (2026-08-17)
 
