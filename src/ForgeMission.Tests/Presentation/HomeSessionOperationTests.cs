@@ -189,6 +189,88 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Equal(0, channel.ActiveSubscriptions);
     }
 
+    // --- 43.18 task 3: the ordinary mission turn's shared activity states -----------------------
+
+    [Fact]
+    public async Task ActiveTurnWithNoToolAndNoText_ShowsThinkingForTheSelectedMission()
+    {
+        var page = RenderHome();
+        await AddFolderAsync(page, "/one");
+
+        channel.HoldNextPrompt();
+        await SendPromptAsync(page, "build it");
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-thinking")));
+        Assert.Contains("ChatGPT is thinking…", page.Find(".convo-activity-text").TextContent);
+    }
+
+    [Fact]
+    public async Task RunningTool_BecomesWorkingWithItsLabel_AndNoRunningToolRow()
+    {
+        var page = RenderHome();
+        await AddFolderAsync(page, "/one");
+
+        channel.HoldNextPrompt();
+        await SendPromptAsync(page, "build it");
+        channel.Publish(ToolStatus("Read", "running", "src/Program.cs"));
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-working")));
+        Assert.Contains("ChatGPT Reading src/Program.cs…", page.Find(".convo-activity-text").TextContent);
+        // The shared activity replaces the running row rather than sitting beside it.
+        Assert.Empty(page.FindAll(".tool-row"));
+    }
+
+    [Fact]
+    public async Task RunningToolOutranksStreamingText_WhileBothFactsArePresent()
+    {
+        var page = RenderHome();
+        await AddFolderAsync(page, "/one");
+
+        channel.HoldNextPrompt();
+        await SendPromptAsync(page, "build it");
+        channel.Publish(ToolStatus("Read", "running", "src/Program.cs"));
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-working")));
+
+        channel.Publish(Delta("partial answer"));
+
+        page.WaitForAssertion(() => Assert.Contains("partial answer", page.Find(".response-card").TextContent));
+        Assert.Single(page.FindAll(".convo-activity-working"));
+        Assert.Empty(page.FindAll(".convo-activity-streaming"));
+    }
+
+    [Fact]
+    public async Task TextDeltaAfterTheToolCompletes_BecomesStreaming_AndKeepsTheCompletedRow()
+    {
+        var page = RenderHome();
+        await AddFolderAsync(page, "/one");
+
+        channel.HoldNextPrompt();
+        await SendPromptAsync(page, "build it");
+        channel.Publish(ToolStatus("Read", "running", "src/Program.cs"));
+        channel.Publish(Delta("partial answer"));
+        channel.Publish(ToolStatus("Read", "completed", "src/Program.cs"));
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-streaming")));
+        Assert.Contains("ChatGPT is responding…", page.Find(".convo-activity-text").TextContent);
+        // The finished call stays as transcript history.
+        Assert.Contains("Read src/Program.cs", page.Find(".tool-row").TextContent);
+    }
+
+    [Fact]
+    public async Task WhenTheTurnCompletes_TheActivityIsGone()
+    {
+        var page = RenderHome();
+        await AddFolderAsync(page, "/one");
+
+        channel.HoldNextPrompt();
+        await SendPromptAsync(page, "build it");
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity")));
+
+        channel.ReleaseHeldPrompt(new PromptResponse("done"));
+
+        page.WaitForAssertion(() => Assert.Empty(page.FindAll(".convo-activity")));
+    }
+
     private IRenderedComponent<Home> RenderHome()
     {
         var page = Render<Home>();
@@ -198,6 +280,10 @@ public sealed class HomeSessionOperationTests : BunitContext
 
     private ClientRuntimeEvent Delta(string text) =>
         new(ClientRuntimeEventKind.MissionTextDelta, channel.CurrentSessionId, Text: text);
+
+    private ClientRuntimeEvent ToolStatus(string toolName, string status, string? target = null) =>
+        new(ClientRuntimeEventKind.ToolCallStatus, channel.CurrentSessionId,
+            ToolName: toolName, ToolStatus: status, ToolTarget: target);
 
     private async Task AddFolderAsync(IRenderedComponent<Home> page, string folder)
     {

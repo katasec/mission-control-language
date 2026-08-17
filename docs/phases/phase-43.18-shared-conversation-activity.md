@@ -134,16 +134,13 @@ aborts with `3D000: database "authbilling_db" does not exist`. A fresh clone hit
 CREATE ON SCHEMA public TO forge_app`). Anyone doing a local Rooms run for Task 4 will hit it too.
 Left as a documented development-environment issue, not fixed inside 43.18.
 
-### Task 3 — Adopt it in Forge Desktop
+### Task 3 — Adopt it in Forge Desktop — done 2026-08-17
 
-Replace Desktop's input-only sending cue with `ConversationActivity` in the active turn/transcript.
-Use existing prompt, `ToolCallStatus`, text-delta, typing, and tool-progress state only; do not add
-an event or alter event timing. Apply the same renderer to ordinary mission turns and durable Janus
-transcript activity.
-
-**Done when:** in the packaged Desktop, Send immediately creates a visible in-chat `Thinking`
-state; a received tool-running event changes it to `Working`; and a text delta changes it to the
-streaming cursor. Normal mission and Janus paths both use the shared component.
+`Home.CurrentActivity()` drives the ordinary turn's shared activity (completed-only tool rows), and the
+durable view renders `Typing` / unfinished `ToolCall` through the same component. Packaged macOS
+Desktop captured Thinking → Working → Streaming → cleared; `forge.css` is now the sole `pulse`
+keyframe. Verified — see
+[completed record → Task 3](phase-43.18-shared-conversation-activity_completed.md#task-3--adopt-it-in-forge-desktop-done-2026-08-17).
 
 ### Task 4 — Verify the narrow boundary
 

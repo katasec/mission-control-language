@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.ClientRuntime.Transport\ForgeMission.ClientRuntime.Transport.csproj" />
+    <ProjectReference Include="..\ForgeMission.ConversationPresentation\ForgeMission.ConversationPresentation.csproj" />
     <Content Include="..\ForgeUI\wwwroot\css\forge.css"
              Link="wwwroot\css\forge.css"
              CopyToOutputDirectory="PreserveNewest"
