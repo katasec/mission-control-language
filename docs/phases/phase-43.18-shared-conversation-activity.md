@@ -153,6 +153,23 @@ and no modification to 43.17's deferred event-delivery work.
 with zero failures, and the manual observation records a visible chat-surface activity state before
 the first answer text.
 
+**Status (2026-08-17): verification run, pending review.** Ran on
+`codex/phase-43.18-verify-narrow-boundary` from `main` (`76c71b9`). Results below are the evidence
+under review; no completed record is written and the phase is not marked complete until approved.
+
+| Check | Result |
+|---|---|
+| `dotnet build src/ForgeMission.slnx` | Build succeeded. 0 Warning(s), 0 Error(s); `ForgeUI -> ForgeUI.dll` present. |
+| `dotnet test src/ForgeMission.slnx` | 0 failed, 749 passed, 11 pre-existing live-provider skips. ConversationHost 2m26s and Runner 2m7s (machine load from the packaged-app work; passing, just slow). |
+| Rooms live | `convo-activity-thinking` "@assistant is thinking…" → `convo-activity-working` "@assistant Thinking" (existing progress label) → cleared on answer; both `role="status"` + `aria-live="polite"`; `.agent-thinking`/`.thinking-dots` count 0 throughout; `show thinking` expanded one `.trace-panel` with its Answerer/Verifier PASS rows. |
+| Packaged Desktop | Thinking → Working (`Running sleep 8; echo verified…`, no running `.tool-row`) → Thinking (tool done, no text yet) → Streaming → cleared, with `✓ Ran sleep 8; echo verified` retained; every state `role="status"` + `aria-live="polite"`. |
+| Negatives | 43.18 touches 16 source files (`8a5dd7c..HEAD`). Transport diff empty (no new channel event); no `ForgeMission.Rooms` reference from any Desktop/Presentation project; no route additions; `ClientRuntimeEventHub.cs`, `DesktopLifecycleTests.cs`, `DesktopSupervisorHostBoundaryTests.cs` absent from the diff, and `Home.razor`'s hunks touch only activity rendering plus dead CSS. |
+| Shared animation | `@keyframes pulse` has exactly one source definition (`forge.css:345`); `thinking-bounce` and `convo-activity-blink` intact. |
+
+Not claimed: live durable Janus. No `ConversationHost` was started and no infrastructure was added,
+per the Task 3 decision that the durable adapter stays test-proven. The local `authbilling_db`
+workaround was not needed — the dev container already held the database from Task 2.
+
 ## Completion condition
 
 Rooms and Desktop use one renderer for active conversation work. Desktop visibly communicates
