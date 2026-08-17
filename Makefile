@@ -74,8 +74,7 @@ desktop-publish: ## Publish the desktop app (Client Runtime + supervisor + nativ
 	dotnet publish $(DESKTOP_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	@echo "Desktop app published: $(DESKTOP_DIR)/ForgeMission.Desktop"
 
-desktop: desktop-publish ## Publish then launch the desktop app (the supervisor owns every runtime's lifecycle; the native host is its child)
-	$(DESKTOP_DIR)/ForgeMission.Desktop
+desktop: desktop-publish ## Publish the desktop app without launching it
 
 clean: ## Remove all build artefacts (bin/, obj/, dist/)
 	dotnet clean src/
