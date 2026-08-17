@@ -26,6 +26,12 @@
 | [Phase 34 — Forge UI](phases/phase-34-forge-ui.md) | Reference rationale only. Its old standalone Next.js proposal is not planned. Hosted UI outcomes are in [Phase 38](phases/phase-38-forge-rooms.md)/[Phase 40](phases/phase-40-forge-ui-shell.md); Desktop outcomes are in [Phase 43.16](phases/phase-43.16-janus-desktop-local-poc.md) and the future [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). |
 | [Phase 35 — Forge UI (Blazor Server)](phases/phase-35-forge-ui-blazor.md) | **Superseded — do not implement as a new phase.** The Desktop replacement is [Phase 43.11](phases/phase-43.11-wasm-photino-shell.md) plus [Phase 43.16](phases/phase-43.16-janus-desktop-local-poc.md); future Desktop trace/workbench work is [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). Existing hosted ForgeUI/Rooms evolution is [Phase 38](phases/phase-38-forge-rooms.md)/[Phase 40](phases/phase-40-forge-ui-shell.md). |
 
+## Deferred responsive Desktop follow-up
+
+| Item | Status / pointer |
+|------|------------------|
+| [Phase 43.17 Tasks 4–5 — bounded event delivery and progressive rendering](phases/phase-43.17-responsive-desktop.md#task-4--bounded-frame-friendly-event-delivery) | Deferred by operator direction on 2026-08-17 after Task 3. Reselect explicitly before implementation. |
+
 ## External conditions and future design candidates
 
 | Item | Status / pointer |

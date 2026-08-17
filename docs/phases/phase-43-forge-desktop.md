@@ -29,7 +29,7 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | **Current work.** Supervisor/Host split and non-blocking lifecycle are live; bounded reactive UI updates are next. |
+| [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | **Current work.** Supervisor/Host split and non-blocking lifecycle are live; session ownership is next. Bounded delivery and progressive rendering are deferred after it. |
 | [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Core product proof done and verified 2026-08-16. |
 | 43.3 mission catalog/OCI follow-up; 43.4 workbench; 43.5 human controls | Deferred follow-up work; each owns its own design and readiness. |
 
