@@ -1,7 +1,8 @@
 # Forge Architecture — Mission Runtime, Client Runtime, Presentation
 
 **Status: Locked 2026-08-01; durable-conversation extension locked 2026-08-12;
-Desktop Supervisor/Host boundary locked 2026-08-17.** This is the canonical, durable architecture doc for Forge as a
+Desktop Supervisor/Host boundary locked 2026-08-17; durable local-runtime bootstrap locked
+2026-08-18.** This is the canonical, durable architecture doc for Forge as a
 whole, not just Forge Desktop. It supersedes the general-architecture parts of
 [forge-desktop-client-runtime.md](forge-desktop-client-runtime.md), which now covers only what's
 genuinely desktop-specific (see that doc's updated status line). If this doc and any other doc
@@ -298,6 +299,17 @@ env-var injection, a thin `IMissionRuntimeLauncher` for testability) are in
 concrete build.
 
 ---
+
+### Durable Conversation Runtime local-proof bootstrap
+
+The durable Conversation Runtime is an independent boot dependency of a Janus-capable Desktop, not an optional value that may drift into Client Runtime configuration. During the current Kind proof, the Desktop Supervisor composes one `ConversationRuntimeResolver` result before starting Client Runtime:
+
+1. use the existing `ConversationRuntime:BaseUrl` override when present and valid; otherwise use the sole current local default, `http://127.0.0.1:18080/`;
+2. verify `GET /health` succeeds before Client Runtime starts;
+3. for the default only, start and own a localhost-only `kubectl port-forward` to Kind's `conversation-host` service if no healthy endpoint already exists; and
+4. pass only the verified URL to Client Runtime, then dispose only a tunnel the Supervisor itself started.
+
+The Supervisor does not provision Kind, deploy Host/Worker images, read development secret values, or grant credentials; Forge Infra's explicit Kind workflow owns those operations. Client Runtime and Presentation receive no data-plane or cluster credential. This is a Type-2 local-proof adapter: when the authenticated cloud edge exists, replace this resolver's default with the edge URL and remove the local tunnel branch. Do not point a released client at the internal ConversationHost.
 
 ## Desktop Supervisor and native host are separate processes
 

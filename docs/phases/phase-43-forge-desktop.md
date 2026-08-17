@@ -1,7 +1,8 @@
 # Phase 43 — Forge Desktop
 
-> **Status: core Janus group-chat proof complete (2026-08-17).** The shared Rooms/Desktop activity
-> surface is verified; remaining Desktop follow-ups are deliberately deferred until selected.
+> **Status: durable Conversation Runtime supervision design ready (2026-08-18).** The shared
+> Rooms/Desktop activity surface is verified; the selected follow-up restores the Supervisor-owned
+> Janus bootstrap path before deferred Desktop work resumes.
 
 ## Purpose
 
@@ -29,6 +30,7 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
+| [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Design ready. Supervisor must resolve, health-check, and inject the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |
 | [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Core product proof done and verified 2026-08-16. |
