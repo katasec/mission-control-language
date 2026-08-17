@@ -1,4 +1,5 @@
 @namespace ForgeMission.ClientRuntime.Presentation
+@using ForgeMission.ConversationPresentation
 
 @* Presentational renderer over one ConversationTranscript projection. Applies no HTTP/SSE logic
    of its own — Entries is already deduplicated/ordered by the caller's ConversationTranscript. *@
@@ -16,7 +17,7 @@
         }
         else if (entry.Kind == ConversationEntryKind.Typing)
         {
-            <p class="convo-typing">@ParticipantLabel(entry.Participant) is thinking…</p>
+            <ConversationActivity State="Thinking(entry)" />
         }
         else if (entry.Kind == ConversationEntryKind.ParticipantMessage)
         {
@@ -45,13 +46,17 @@
                 }
             </p>
         }
+        else if (entry.Kind == ConversationEntryKind.ToolCall && !entry.ToolCompleted)
+        {
+            <ConversationActivity State="Working(entry)" />
+        }
         else if (entry.Kind == ConversationEntryKind.ToolCall)
         {
             <p class="convo-tool-row">
-                <span class="convo-tool-glyph @(entry.ToolCompleted ? (entry.ToolIsError ? "error" : "done") : "running")">
-                    @(entry.ToolCompleted ? (entry.ToolIsError ? "✗" : "✓") : "•")
+                <span class="convo-tool-glyph @(entry.ToolIsError ? "error" : "done")">
+                    @(entry.ToolIsError ? "✗" : "✓")
                 </span>
-                <span>@(entry.ToolName ?? "Tool") @(entry.ToolCompleted ? "completed" : "running…")</span>
+                <span>@(entry.ToolName ?? "Tool") completed</span>
             </p>
         }
         else if (entry.Kind == ConversationEntryKind.Status)
@@ -68,7 +73,6 @@
     .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
 
     .convo-user-bubble { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
-    .convo-typing { margin: 0; font-size: 13px; color: var(--text-muted); font-style: italic; animation: convo-pulse 1.2s ease-in-out infinite; }
 
     .convo-participant-bubble { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-3) var(--space-4); }
     .convo-participant-name { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
@@ -80,21 +84,29 @@
     .convo-not-approved { margin: 0; font-size: 13px; font-weight: 600; color: var(--danger); }
     .convo-feedback { font-weight: 400; color: var(--text-muted); }
 
+    /* Completed calls only — a running call is the shared ConversationActivity (43.18), styled and
+       animated from forge.css. */
     .convo-tool-row { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 12.5px; color: var(--text-muted); }
     .convo-tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
     .convo-tool-glyph.done { color: var(--success); }
     .convo-tool-glyph.error { color: var(--danger); }
-    .convo-tool-glyph.running { color: var(--accent); animation: convo-pulse 1.2s ease-in-out infinite; }
 
     .convo-status { margin: 0; font-size: 12.5px; color: var(--text-subtle); }
     .convo-status.error { color: var(--danger); }
-
-    @@keyframes convo-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 </style>
 
 @code {
     [Parameter, EditorRequired]
     public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+
+    // The two live entry kinds map to the shared activity states (43.18); a durable entry exposes
+    // no distinct live-delta fact, so this view never claims Streaming.
+    private static ConversationActivityState Thinking(ConversationEntry entry)
+        => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Thinking, null);
+
+    private static ConversationActivityState Working(ConversationEntry entry)
+        => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Working,
+               $"{entry.ToolName ?? "Tool"} running…");
 
     private static string ParticipantLabel(ConversationParticipant participant) => participant switch
     {

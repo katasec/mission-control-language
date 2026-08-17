@@ -1,4 +1,5 @@
 @page "/"
+@using ForgeMission.ConversationPresentation
 @inject IClientRuntimeChannel ClientRuntime
 @implements IAsyncDisposable
 
@@ -50,10 +51,11 @@
                 <article class="turn">
                     <p class="turn-prompt">@turn.Prompt</p>
 
-                    @foreach (var row in turn.ToolCalls)
+                    @* Completed calls only — a running one is the shared activity below (43.18). *@
+                    @foreach (var row in turn.ToolCalls.Where(row => row.Done))
                     {
                         <p class="tool-row">
-                            <span class="tool-glyph @(row.Done ? "done" : "running")">@(row.Done ? "✓" : "•")</span>
+                            <span class="tool-glyph done">✓</span>
                             <span>@row.Label()</span>
                         </p>
                     }
@@ -65,6 +67,11 @@
                     else if (turn.AssistantText.Length > 0 || turn.IsStreaming)
                     {
                         <div class="response-card">@turn.AssistantText</div>
+                    }
+
+                    @if (turn == activeTurn && CurrentActivity() is { } activity)
+                    {
+                        <ConversationActivity State="activity" />
                     }
                 </article>
             }
@@ -135,10 +142,11 @@
     .turn { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
     .turn-prompt { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
 
+    /* Completed calls only — a running call is the shared ConversationActivity (43.18), whose
+       styling and animation live in forge.css. */
     .tool-row { align-self: stretch; display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 12.5px; color: var(--text-muted); }
     .tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
     .tool-glyph.done { color: var(--success); }
-    .tool-glyph.running { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
 
     .connection-banner { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
     .connection-retry { flex-shrink: 0; height: 28px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-pill); background: var(--danger); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
@@ -172,8 +180,6 @@
     .mission-item:hover { background: var(--surface-hover); }
     .mission-item-name { font-size: 13.5px; font-weight: 500; color: var(--text); }
     .mission-item-check { color: var(--accent); font-size: 13px; }
-
-    @@keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 </style>
 
 @code {
@@ -228,6 +234,20 @@
 
     private bool CanSend =>
         session is not null && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
+
+    // The active turn's activity for the shared renderer (43.18), from facts this page already
+    // holds. Tool work outranks streaming text while a delta and a running tool overlap.
+    private ConversationActivityState? CurrentActivity()
+    {
+        if (activeTurn is null || activeTurn.Error is not null)
+            return null;
+        if (openToolRow is not null)
+            return new(selectedMission.Name, ConversationActivityKind.Working, openToolRow.Label());
+        if (activeTurn.AssistantText.Length > 0)
+            return new(selectedMission.Name, ConversationActivityKind.Streaming, null);
+
+        return new(selectedMission.Name, ConversationActivityKind.Thinking, null);
+    }
 
     protected override async Task OnInitializedAsync()
     {
