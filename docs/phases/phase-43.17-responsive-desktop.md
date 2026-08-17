@@ -1,9 +1,10 @@
 # Phase 43.17 — Responsive Desktop lifecycle and UI
 
-> **Status: Supervisor/Host split live (2026-08-17); UI work next.** Tasks 1–2 are done — the
+> **Status: Supervisor/Host split live (2026-08-17); Task 3 active.** Tasks 1–2 are done — the
 > Desktop Supervisor and its disposable native host are separate processes, and the Supervisor owns
-> a non-blocking lifecycle with exactly-once cleanup. Tasks 3–5 (session ownership, bounded event
-> delivery, progressive rendering) are outstanding. Part of
+> a non-blocking lifecycle with exactly-once cleanup. Task 3 (session ownership) is next; Tasks 4–5
+> (bounded event delivery and progressive rendering) are deferred after Task 3 by operator direction
+> on 2026-08-17. Part of
 > [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Read boundary
@@ -184,6 +185,9 @@ broken event stream becomes visible/retryable state rather than an unobserved ta
 
 **Depends on:** Task 3.
 
+> **Deferred after Task 3 (operator direction, 2026-08-17).** Do not begin this task unless it is
+> deliberately reselected; see [Backlog](../backlog.md#deferred-responsive-desktop-follow-up).
+
 Give Client Runtime event fan-out and the Presentation consumer complementary fixed policies:
 
 - a subscriber queue is bounded; it cannot grow indefinitely;
@@ -205,6 +209,9 @@ subscriber cannot make `ClientRuntimeEventHub` retain unbounded messages.
 ### Task 5 — Progressive rendering baseline
 
 **Depends on:** Tasks 2–4.
+
+> **Deferred after Task 3 (operator direction, 2026-08-17).** Do not begin this task unless it is
+> deliberately reselected; see [Backlog](../backlog.md#deferred-responsive-desktop-follow-up).
 
 Render the useful shell immediately: boot/error state first, then the active workspace,
 session, and transcript as they become available. Keep only the active conversation’s visible tail
