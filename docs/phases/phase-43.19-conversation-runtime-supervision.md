@@ -66,6 +66,8 @@ otherwise                    -> DefaultLocalBaseUrl
 
 The resolver normalizes a trailing slash before the probe/client use a relative route. A non-empty but invalid, relative, or non-HTTP(S) override fails during boot with its configuration key named. There is no new mode, port, timeout, or UI setting.
 
+Readiness is one fixed 30-second startup budget, polling every 250 ms, for both the default and an explicit configured endpoint. A configured endpoint never triggers a local tunnel, but it is still required to become healthy before Client Runtime starts; a bounded wait accommodates a service that is concurrently starting without hiding a permanent error.
+
 ### Local default behaviour
 
 For the default only, bootstrap first probes `http://127.0.0.1:18080/health`.
