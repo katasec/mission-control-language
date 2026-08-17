@@ -141,6 +141,40 @@ Use existing prompt, `ToolCallStatus`, text-delta, typing, and tool-progress sta
 an event or alter event timing. Apply the same renderer to ordinary mission turns and durable Janus
 transcript activity.
 
+The `ForgeMission.ClientRuntime.Presentation` project references the shared RCL. The two adapters
+are deliberately direct projections, not a common activity store:
+
+| Surface | Existing state | Shared state / rendering rule |
+|---|---|---|
+| Ordinary mission turn | `activeTurn` exists; no active tool and no response text | `Thinking` for `selectedMission.Name`. |
+| Ordinary mission turn | `openToolRow` exists from a running `ToolCallStatus` | `Working` for `selectedMission.Name`, with `openToolRow.Label()` as detail. This shared activity replaces the current running tool row; completed tool rows remain transcript history. |
+| Ordinary mission turn | `activeTurn.AssistantText` becomes non-empty from `MissionTextDelta` | `Streaming` for `selectedMission.Name`. A running tool takes precedence if both facts are momentarily present. |
+| Durable Janus transcript | `ConversationEntryKind.Typing` | `Thinking` for `ParticipantLabel(entry.Participant)`. |
+| Durable Janus transcript | unfinished `ConversationEntryKind.ToolCall` | `Working` for `ParticipantLabel(entry.Participant)`, using the existing tool-running label as detail. A completed tool row remains as it is. |
+
+Durable transcript entries do not expose a distinct live-delta fact, so Task 3 does not fabricate a
+`Streaming` state for them. It renders the existing typing and unfinished-tool facts only.
+
+Add focused bUnit coverage by extending `HomeSessionOperationTests`' existing fake
+`IClientRuntimeChannel` and `ConversationTranscriptViewTests`: normal mission thinking → working →
+streaming state selection, durable typing/unfinished-tool activity, and retention of a completed tool
+row. The final user-visible proof is a `make desktop-publish` macOS packaged Desktop observation;
+the Host, Supervisor, Client Runtime, transport, and event-delivery cadence remain untouched.
+
+| Desktop quality gate | Answer |
+|---|---|
+| Product behaviour | The conversation transcript visibly states a selected mission/participant is thinking, working, or responding before a normal answer is complete. |
+| Owner / process boundary | Presentation owns this rendering-only projection inside its existing render pass. No Host, Supervisor, Client Runtime, or Mission Runtime process boundary changes. |
+| Adapter observation | `Home` already holds `activeTurn`, `openToolRow`, and response text; `ConversationTranscript` already projects typing/tool entries. No new `IClientRuntimeChannel` event is needed. |
+| Replacement boundary | The Presentation project consumes the small shared RCL; it gains no runtime, process, credential, transport, or service ownership. |
+| Proof | Focused adapter tests plus the named packaged macOS Desktop observation after Send. |
+
+| Security / engineering gate | Answer |
+|---|---|
+| Tier, data, identity, credentials | Not applicable: no ingress, request, store, identity, or credential path changes. |
+| Failure ownership | Existing turn/transcript state owns missing or terminal activity; the renderer has no subscription, retry, or fallback work. |
+| Scope containment | No new event bus, trace schema, or streaming mechanism; the adapter uses only facts already rendered or held by Presentation. |
+
 **Done when:** in the packaged Desktop, Send immediately creates a visible in-chat `Thinking`
 state; a received tool-running event changes it to `Working`; and a text delta changes it to the
 streaming cursor. Normal mission and Janus paths both use the shared component.
