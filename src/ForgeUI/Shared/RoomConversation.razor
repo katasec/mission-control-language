@@ -1,3 +1,4 @@
+@using ForgeMission.ConversationPresentation
 @using ForgeMission.Core.Runtime
 @using ForgeMission.Rooms
 @using ForgeMission.Rooms.Data
@@ -119,12 +120,9 @@
                 </div>
             }
 
-            @if (_thinkingHandle is not null)
+            @if (Activity is { } activity)
             {
-                <div class="agent-thinking">
-                    <span>@_thinkingHandle @(_progressLabel ?? "is thinking")</span>
-                    <span class="thinking-dots"><span></span><span></span><span></span></span>
-                </div>
+                <ConversationActivity State="activity" />
             }
         </div>
 
@@ -308,6 +306,16 @@
     private string? _pendingAddHandle;
     private string _renameValue = "";
     private string? _notice;
+
+    // The room's live activity, mapped for the shared renderer (43.18) from the two facts this
+    // component already holds: a progress label means tool work, its absence means thinking.
+    // No new event, field, or subscription.
+    private ConversationActivityState? Activity
+        => _thinkingHandle is null
+            ? null
+            : new(_thinkingHandle,
+                  _progressLabel is null ? ConversationActivityKind.Thinking : ConversationActivityKind.Working,
+                  _progressLabel);
 
     // Header affordance: "N members" — the click target that opens the roster modal.
     private string MemberCountLabel => _memberNames.Count == 1 ? "1 member" : $"{_memberNames.Count} members";

@@ -117,7 +117,7 @@ builds with the solution. Verified — see
 Task 2 is unblocked: `RoomConversation.razor` compiles, and any regression in it now fails the
 normal solution build.
 
-### Task 2 — Adopt it in Forge Rooms
+### Task 2 — Adopt it in Forge Rooms — implemented, pending review
 
 Replace only the current `agent-thinking` / `thinking-dots` activity markup in
 `RoomConversation.razor` with `ConversationActivity`. Map `AgentThinking` and `AgentProgress` to
@@ -126,6 +126,18 @@ unchanged.
 
 **Done when:** Rooms shows the shared thinking/working visual from its current events and its
 completed-message trace remains exactly where it was.
+
+**Status (2026-08-17):** implemented on `codex/phase-43.18-rooms-adopt-activity`
+([PR #63](https://github.com/katasec/mission-control-language/pull/63)), awaiting review. Adapter is
+the computed `Activity` property in `RoomConversation.razor`; the legacy CSS rules are gone and
+`@keyframes thinking-bounce` is retained for the shared dots. Live local run captured both states
+from real events and the retained completed-message trace; evidence goes into the completed record
+on approval, not before.
+
+**Local-run gap found, not fixed here:** `make dev-up` / `scripts/db/init/01-init.sql` create only
+`forge_rooms`, but ForgeUI also bootstraps `authbilling_db` (42.6) and aborts at startup with
+`3D000: database "authbilling_db" does not exist`. Created by hand in the local container to run the
+observation. A fresh clone hits this on first `dotnet run`.
 
 ### Task 3 — Adopt it in Forge Desktop
 
