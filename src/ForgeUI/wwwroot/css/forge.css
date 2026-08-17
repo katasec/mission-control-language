@@ -416,16 +416,17 @@ h2 { font-size: 20px; }
    here is caller-configurable. */
 .convo-activity { align-self: flex-start; display: flex; align-items: center; gap: var(--space-2); font-size: 13px; color: var(--text-muted); font-style: italic; }
 .convo-activity-thinking::before,
-.convo-activity-working::before { content: ""; width: 6px; height: 6px; border-radius: var(--radius-pill); background: var(--accent); animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0; }
+.convo-activity-working::before { content: ""; width: var(--space-1); height: var(--space-1); border-radius: var(--radius-pill); background: var(--accent); animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0; }
 
 /* Thinking — staggered trailing dots carry "still working" when there is no step label to show. */
-.convo-activity-dots { display: inline-flex; align-items: flex-end; gap: 3px; margin-left: 1px; }
-.convo-activity-dots span { width: 4px; height: 4px; border-radius: var(--radius-pill); background: currentColor; opacity: .35; animation: thinking-bounce 1.3s ease-in-out infinite; }
+.convo-activity-dots { display: inline-flex; align-items: flex-end; gap: var(--space-1); }
+.convo-activity-dots span { width: var(--space-1); height: var(--space-1); border-radius: var(--radius-pill); background: currentColor; opacity: .35; animation: thinking-bounce 1.3s ease-in-out infinite; }
 .convo-activity-dots span:nth-child(2) { animation-delay: .18s; }
 .convo-activity-dots span:nth-child(3) { animation-delay: .36s; }
 
-/* Streaming — a blinking caret, the familiar "text is arriving" cue. */
-.convo-activity-caret { width: 2px; height: 14px; background: var(--accent); border-radius: 1px; animation: convo-activity-blink 1s step-end infinite; }
+/* Streaming — a square-edged block caret, the familiar "text is arriving" cue, sized on the
+   spacing scale so it carries no literal dimension or radius of its own. */
+.convo-activity-caret { width: var(--space-1); height: var(--space-3); background: var(--accent); flex-shrink: 0; animation: convo-activity-blink 1s step-end infinite; }
 @keyframes convo-activity-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
 /* Reduced motion: hold every activity animation on its visible frame, so the cue stays legible

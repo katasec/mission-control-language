@@ -94,19 +94,31 @@ silently absorbed here.
 
 ## Dependency-ordered work
 
-### Task 1 — Build the shared activity renderer — done 2026-08-17
+### Task 1 — Build the shared activity renderer — implementation pending review correction
 
-`ForgeMission.ConversationPresentation` (RCL, in `ForgeMission.slnx`) ships `ConversationActivity`,
-`ConversationActivityKind`, and `ConversationActivityState`; the tokenized `.convo-activity*` styles
-live in `forge.css`. See
-[phase-43.18-shared-conversation-activity_completed.md — Task 1](phase-43.18-shared-conversation-activity_completed.md#task-1--build-the-shared-activity-renderer-done-2026-08-17).
+Create the small Razor Class Library and add it to `ForgeMission.slnx`. Move the existing activity
+visual treatment into `ConversationActivity`; retain Forge token styling and add reduced-motion and
+accessible-status behaviour.
 
-Text rule Tasks 2–3 map onto: `{Actor} {Detail ?? defaultPhrase(Kind)}`, defaults `is thinking…` /
-`is working…` / `is responding…`.
+**Done when:** renderer tests prove the three named states produce their intended visible text and
+status semantics, and the component has no dependency on Rooms, Client Runtime transport, or a
+network service.
+
+**Status (2026-08-17):** implemented on `codex/phase-43.18-task-1-conversation-activity`
+([PR #61](https://github.com/katasec/mission-control-language/pull/61)), not approved. The first
+review found literal spacing/radius values in the new `forge.css` rules; a correction moving every
+new dimension onto `--space-*` / `--radius-*` has been applied and awaits final approval. Not done,
+and no completed record exists, until that approval lands.
+
+Contract Tasks 2–3 map onto — fixed and safe to build against:
+`ConversationActivityState(string Actor, ConversationActivityKind Kind, string? Detail)`, rendered as
+`{Actor} {Detail ?? defaultPhrase(Kind)}` with defaults `is thinking…` / `is working…` /
+`is responding…`.
 
 **Blocks Task 2:** `src/ForgeUI` is absent from `ForgeMission.slnx` and does not compile on `main`
 (`CS0104` ambiguous `PipelineTraceEvent` at `RoomConversation.razor:353`, reproduced on unmodified
-`main`). Task 2 edits that file, so this must be resolved before Rooms adoption can be verified.
+`main` in a clean worktree). Task 2 edits that file, so this must be resolved before Rooms adoption
+can be verified.
 
 ### Task 2 — Adopt it in Forge Rooms
 
