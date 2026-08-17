@@ -35,6 +35,15 @@ public sealed class HomeSessionOperationTests : BunitContext
     }
 
     [Fact]
+    public void DefaultWorkspaceReady_FocusesTheComposer()
+    {
+        RenderHome();
+
+        Assert.Contains(JSInterop.Invocations,
+            invocation => invocation.Identifier == "Blazor._internal.domWrapper.focus");
+    }
+
+    [Fact]
     public async Task Replacement_AwaitsTheOldSubscription_SoEachEventIsAppliedOnce()
     {
         var page = RenderHome();
