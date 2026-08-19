@@ -1,6 +1,6 @@
 # Phase 43.19 — Durable conversation runtime supervision
 
-> **Status: design ready (2026-08-18).** Restore the Supervisor's missing durable-conversation bootstrap contract: one resolved endpoint, healthy before Client Runtime starts, and one owner for any local loopback tunnel it creates. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: Task 1 done (2026-08-20); Task 2 next.** Restore the Supervisor's missing durable-conversation bootstrap contract: one resolved endpoint, healthy before Client Runtime starts, and one owner for any local loopback tunnel it creates. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -113,11 +113,11 @@ When a future authenticated Forge edge routes durable conversations, the resolve
 
 ## Dependency-ordered work
 
-### Task 1 — Resolve and prepare the durable Conversation Runtime
+### Task 1 — Resolve and prepare the durable Conversation Runtime — done (2026-08-20)
 
-Create the four focused Orchestration units in the locked design. The local default is the sole constant, the existing `ConversationRuntime__BaseUrl` remains the only override, and a configured endpoint never triggers a local tunnel. Implement fixed, bounded health waiting and deterministic local-tunnel process cleanup.
+The four Orchestration units exist and their "Done when" is met: 24 focused tests, no Kind/credentials/provider, full suite 773 passed / 0 failed. Detail and verification: [phase-43.19-conversation-runtime-supervision_completed.md](phase-43.19-conversation-runtime-supervision_completed.md#task-1--resolve-and-prepare-the-durable-conversation-runtime--done-2026-08-20).
 
-**Done when:** focused tests prove default/override validation, exact `/health` probing, healthy default reuse, unavailable-default tunnel start, configured-endpoint no-tunnel behaviour, and disposal only of the tunnel created by the bootstrap. No test needs Kind, cloud credentials, or a real provider.
+Task 2 builds against `ConversationRuntimeBootstrap.PrepareAsync(IConfiguration, CancellationToken)` returning `ConversationRuntimeLease(string BaseUrl, IAsyncDisposable? OwnedTunnel)`, whose `DisposeAsync` stops only a tunnel that bootstrap started. Readiness uses one fixed 30s budget polled at 250ms for both the local default and a configured endpoint.
 
 ### Task 2 — Compose it into supervised Desktop boot
 
