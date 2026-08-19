@@ -24,6 +24,18 @@ public sealed class LocalKindConversationRuntimeTunnelTests
         Assert.False(startInfo.UseShellExecute);
     }
 
+    // The loopback half of the command must track the one default-endpoint constant, so the two can
+    // never drift apart; the Kind half stays the tunnel's own.
+    [Fact]
+    public void PortForwardStartInfo_TakesItsLoopbackAddressAndLocalPortFromTheResolverDefault()
+    {
+        var localDefault = new Uri(ConversationRuntimeResolver.DefaultLocalBaseUrl);
+        var arguments = LocalKindConversationRuntimeTunnel.PortForwardStartInfo().ArgumentList;
+
+        Assert.Equal(localDefault.Host, arguments[arguments.IndexOf("--address") + 1]);
+        Assert.Equal($"{localDefault.Port}:8080", arguments[^1]);
+    }
+
     [Fact]
     public void Start_KubectlUnavailable_ThrowsNamingThePrerequisite()
     {

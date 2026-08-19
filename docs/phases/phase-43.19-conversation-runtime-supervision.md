@@ -115,7 +115,7 @@ When a future authenticated Forge edge routes durable conversations, the resolve
 
 ### Task 1 — Resolve and prepare the durable Conversation Runtime — done (2026-08-20)
 
-The four Orchestration units exist and their "Done when" is met: 24 focused tests, no Kind/credentials/provider, full suite 773 passed / 0 failed. Detail and verification: [phase-43.19-conversation-runtime-supervision_completed.md](phase-43.19-conversation-runtime-supervision_completed.md#task-1--resolve-and-prepare-the-durable-conversation-runtime--done-2026-08-20).
+The four Orchestration units exist and their "Done when" is met: 25 focused tests, no Kind/credentials/provider, full suite 774 passed / 0 failed. Detail and verification: [phase-43.19-conversation-runtime-supervision_completed.md](phase-43.19-conversation-runtime-supervision_completed.md#task-1--resolve-and-prepare-the-durable-conversation-runtime--done-2026-08-20).
 
 Task 2 builds against `ConversationRuntimeBootstrap.PrepareAsync(IConfiguration, CancellationToken)` returning `ConversationRuntimeLease(string BaseUrl, IAsyncDisposable? OwnedTunnel)`, whose `DisposeAsync` stops only a tunnel that bootstrap started. Readiness uses one fixed 30s budget polled at 250ms for both the local default and a configured endpoint.
 
