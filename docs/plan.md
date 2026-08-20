@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-08-18)
+## Now (2026-08-20)
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** restore Supervisor-owned durable Conversation Runtime startup so Janus is ready before the client accepts work. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** supervised durable Conversation Runtime startup is live and verified; the next Desktop step is not yet assigned. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Durable Conversation Runtime supervision in progress |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Supervised boot starts a verified durable Conversation Runtime before the client accepts work |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
 
 ## Design docs

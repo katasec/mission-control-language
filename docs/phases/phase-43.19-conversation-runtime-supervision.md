@@ -1,6 +1,6 @@
 # Phase 43.19 — Durable conversation runtime supervision
 
-> **Status: Task 1 done (2026-08-20); Task 2 next.** Restore the Supervisor's missing durable-conversation bootstrap contract: one resolved endpoint, healthy before Client Runtime starts, and one owner for any local loopback tunnel it creates. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: complete and verified (2026-08-20).** Restore the Supervisor's missing durable-conversation bootstrap contract: one resolved endpoint, healthy before Client Runtime starts, and one owner for any local loopback tunnel it creates. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -119,16 +119,10 @@ The four Orchestration units exist and their "Done when" is met: 25 focused test
 
 Task 2 builds against `ConversationRuntimeBootstrap.PrepareAsync(IConfiguration, CancellationToken)` returning `ConversationRuntimeLease(string BaseUrl, IAsyncDisposable? OwnedTunnel)`, whose `DisposeAsync` stops only a tunnel that bootstrap started. Readiness uses one fixed 30s budget polled at 250ms for both the local default and a configured endpoint.
 
-### Task 2 — Compose it into supervised Desktop boot
+### Task 2 — Compose it into supervised Desktop boot — done (2026-08-20)
 
-**Depends on:** Task 1.
+`DesktopBoot` prepares both runtimes before the child starts, injects the verified durable URL unconditionally, and cleans up in reverse dependency order. Its "Done when" is met: 9 focused tests, full suite 783 passed / 0 failed, and a packaged macOS Desktop reaching the Janus group conversation over both the reused operator port-forward and a Supervisor-owned tunnel. Detail and evidence: [phase-43.19-conversation-runtime-supervision_completed.md](phase-43.19-conversation-runtime-supervision_completed.md#task-2--compose-it-into-supervised-desktop-boot--done-2026-08-20).
 
-Have `DesktopBoot` prepare both runtimes before Client Runtime starts; pass the resolved durable base URL unconditionally to the child; include the returned tunnel lease in the existing cleanup path. Preserve Host-first Booting/Failed behaviour and all Mission Runtime lifecycle behaviour.
-
-Add a narrow, testable child-launch configuration seam only if required to prove the exact process environment; do not add a generalized process abstraction. Extend the Supervisor/lifecycle tests to cover a failed durable bootstrap and cleanup of a just-started tunnel.
-
-**Done when:** automated tests prove no Client Runtime starts after durable readiness failure, the resolved URL becomes `ConversationRuntime__BaseUrl` in the child start info, and normal/failed boot dispose each owned runtime exactly once. `dotnet build src/ForgeMission.slnx` and `dotnet test src/ForgeMission.slnx` pass. A published macOS Desktop, with the real Kind service available, accepts a Janus prompt and visibly reaches the durable group conversation without an invalid-URI error.
-
-## Completion condition
+## Completion condition — met (2026-08-20)
 
 Desktop's current local default starts a verified, usable Janus path without a manually exported endpoint. Endpoint selection, health, local port-forward ownership, and cleanup remain in small Orchestration/Supervisor units. The next cloud route replaces only the default resolver branch; no trace or presentation parity work is silently included.
