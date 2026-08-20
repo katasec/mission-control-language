@@ -15,9 +15,21 @@ internal sealed class DesktopRuntimes(string url, Func<ValueTask> stopAsync) : I
     public ValueTask DisposeAsync() => stopAsync();
 }
 
+// What starting the child produced: the wait for its ready URL, and the one operation that stops it.
+// Ownership is handed back before the wait, so a child that starts and then never reports ready is
+// still stopped by the boot's cleanup path.
+internal sealed record ClientRuntimeStart(Task<string> ReadyUrl, Func<ValueTask> StopAsync);
+
+internal delegate ClientRuntimeStart StartClientRuntime(
+    string missionRuntimeBaseUrl,
+    string missionRuntimeMode,
+    string conversationRuntimeBaseUrl,
+    CancellationToken ct);
+
 // The potentially slow work the Supervisor performs while the Host is already on screen: resolve
-// where the Mission Runtime lives (Orchestration's decision to carry out, never the Desktop's or
-// the Client Runtime's), then start the Client Runtime and wait for its ready URL.
+// where the Mission Runtime lives and prepare the durable Conversation Runtime (both Orchestration's
+// decisions to carry out, never the Desktop's or the Client Runtime's), then start the Client
+// Runtime with both verified URLs and wait for its ready URL.
 //
 // A boot either returns fully-started runtimes or throws having stopped whatever it partially
 // started — the lifecycle never inherits a half-built runtime set.
@@ -41,32 +53,83 @@ internal static class DesktopBoot
         if (platform is null || string.IsNullOrEmpty(platform.Key))
             throw new InvalidOperationException("Not signed in. Run `forge login`, then retry.");
 
-        var (missionRuntimeUrl, mode, launcher) = await MissionRuntimeResolver.ResolveAsync(configuration, ct);
-        Process? clientRuntime = null;
+        return await ComposeAsync(
+            token => MissionRuntimeResolver.ResolveAsync(configuration, token),
+            token => ConversationRuntimeBootstrap.PrepareAsync(configuration, token),
+            (missionRuntimeUrl, mode, conversationRuntimeUrl, token) =>
+                StartClientRuntimeProcess(missionRuntimeUrl, mode, platform.Key, conversationRuntimeUrl, token),
+            ct);
+    }
+
+    // The startup order itself: both runtimes are prepared and verified before the child that
+    // depends on them exists, and every failure leaves through the one cleanup path. Composed from
+    // seams rather than concrete calls so that order and its cleanup contract are provable without
+    // Docker, Kind, or a real child process.
+    internal static async Task<DesktopRuntimes> ComposeAsync(
+        Func<CancellationToken, Task<(string BaseUrl, string Mode, IMissionRuntimeLauncher? Launcher)>> prepareMissionRuntime,
+        Func<CancellationToken, Task<ConversationRuntimeLease>> prepareConversationRuntime,
+        StartClientRuntime startClientRuntime,
+        CancellationToken ct)
+    {
+        var (missionRuntimeUrl, mode, launcher) = await prepareMissionRuntime(ct);
+        ConversationRuntimeLease? conversation = null;
+        ClientRuntimeStart? clientRuntime = null;
         try
         {
             ct.ThrowIfCancellationRequested();
-            clientRuntime = ClientRuntimeProcess.Start(
-                missionRuntimeUrl, mode, platform.Key, configuration["ConversationRuntime:BaseUrl"]);
-            var url = await ClientRuntimeProcess.WaitForReadyUrlAsync(clientRuntime, ct);
-            return new DesktopRuntimes(url, () => StopAsync(clientRuntime, launcher));
+            conversation = await prepareConversationRuntime(ct);
+
+            ct.ThrowIfCancellationRequested();
+            clientRuntime = startClientRuntime(missionRuntimeUrl, mode, conversation.BaseUrl, ct);
+            var url = await clientRuntime.ReadyUrl;
+
+            return new DesktopRuntimes(url, () => StopAsync(clientRuntime, conversation, launcher));
         }
         catch
         {
-            await StopAsync(clientRuntime, launcher);
+            await StopAsync(clientRuntime, conversation, launcher);
             throw;
         }
     }
 
-    private static async ValueTask StopAsync(Process? clientRuntime, IMissionRuntimeLauncher? launcher)
+    // Starts the child and hands back its stop closure immediately; the ready wait belongs to the
+    // caller, which by then already owns the termination path.
+    private static ClientRuntimeStart StartClientRuntimeProcess(
+        string missionRuntimeBaseUrl,
+        string missionRuntimeMode,
+        string missionRuntimeCredential,
+        string conversationRuntimeBaseUrl,
+        CancellationToken ct)
+    {
+        var process = ClientRuntimeProcess.Start(
+            missionRuntimeBaseUrl, missionRuntimeMode, missionRuntimeCredential, conversationRuntimeBaseUrl);
+
+        return new ClientRuntimeStart(
+            ClientRuntimeProcess.WaitForReadyUrlAsync(process, ct),
+            () => StopClientRuntimeAsync(process));
+    }
+
+    // Reverse dependency order: the child that consumes both runtimes goes first, then the tunnel
+    // this Supervisor owns (if it started one), then the Mission Runtime it launched. Anything that
+    // was never created is skipped, so a failure part-way through stops exactly what exists.
+    private static async ValueTask StopAsync(
+        ClientRuntimeStart? clientRuntime,
+        ConversationRuntimeLease? conversation,
+        IMissionRuntimeLauncher? launcher)
     {
         if (clientRuntime is not null)
-        {
-            await ProcessTermination.StopAsync(clientRuntime);
-            clientRuntime.Dispose();
-        }
+            await clientRuntime.StopAsync();
+
+        if (conversation is not null)
+            await conversation.DisposeAsync();
 
         if (launcher is not null)
             await launcher.DisposeAsync();
+    }
+
+    private static async ValueTask StopClientRuntimeAsync(Process process)
+    {
+        await ProcessTermination.StopAsync(process);
+        process.Dispose();
     }
 }

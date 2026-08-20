@@ -61,3 +61,70 @@ Test doubles live in `src/ForgeMission.Tests/Orchestration/ConversationRuntimeTe
 nothing calls `ConversationRuntimeBootstrap` yet — that composition, the unconditional child
 environment variable, and the cleanup ordering are Task 2. The packaged macOS Desktop Janus run
 against the real Kind service is Task 2's proof, not Task 1's.
+
+---
+
+## Task 2 — Compose it into supervised Desktop boot — done 2026-08-20
+
+Two production files changed; no other component touched.
+
+| File | What changed |
+|---|---|
+| `src/ForgeMission.Desktop/DesktopBoot.cs` | Startup order moved into `internal static ComposeAsync(prepareMissionRuntime, prepareConversationRuntime, startClientRuntime, ct)`. It prepares Mission Runtime, then `ConversationRuntimeBootstrap.PrepareAsync`, then starts Client Runtime with `lease.BaseUrl`, then awaits readiness. `StartAsync` keeps the credential check first and wires the three production delegates. Cleanup is one private `StopAsync` in reverse dependency order — Client Runtime, Conversation lease, Mission launcher — shared by the returned `DesktopRuntimes` and the catch path. |
+| `src/ForgeMission.Desktop/ClientRuntimeProcess.cs` | `conversationRuntimeBaseUrl` is non-nullable and always set; the "only forwarded when configured" branch is gone. `BuildStartInfo(...)` is extracted so the exact child environment is assertable without spawning a process. |
+
+### The ownership fix caught in review
+
+The first plan had the child-start seam return `Task<(Url, Stop)>`. A readiness
+failure would then have thrown before the caller ever held the stop closure,
+orphaning a Client Runtime that had already started. The seam is therefore
+synchronous and returns `ClientRuntimeStart(Task<string> ReadyUrl, Func<ValueTask> StopAsync)`:
+ownership transfers the moment the process exists, and `ComposeAsync` awaits
+`ReadyUrl` afterwards. Test 4 below is the regression guard for exactly that.
+
+### Verification (2026-08-20)
+
+- `dotnet build src/ForgeMission.slnx` — Build succeeded, 0 warnings, 0 errors.
+- `dotnet test src/ForgeMission.slnx` — 783 passed, 0 failed, 11 skipped:
+  ConversationHost 139, ConversationWorker 42, ForgeMission 500, Runner 5, Rooms 97.
+- Nine new tests, no Docker/Kind/credential/process involved:
+
+| Test | Proves |
+|---|---|
+| `DesktopBootTests.StartsClientRuntimeWithTheResolvedDurableUrl` | the child is handed the lease's `BaseUrl` plus the resolver's mission URL/mode. |
+| `…NormalBoot_DisposesEachOwnedRuntimeExactlyOnce_InReverseOrder` | disposal order is client → conversation → mission, one each. |
+| `…DurableReadinessFailure_StartsNoClientRuntime_AndDisposesTheMissionLauncher` | a durable failure starts no child and disposes the already-started launcher once. |
+| `…ClientRuntimeStartedThenReadinessFails_StopsTheStartedClientRuntimeThenLeaseThenLauncher_ExactlyOnce` | the started-but-never-ready child is stopped, then lease, then launcher. |
+| `…ChildSpawnFailure_DisposesLeaseAndLauncherExactlyOnce_AndStopsNoClientRuntime` | no ownership returned → conversation → mission only. |
+| `…MissionRuntimeFailure_DisposesNothing_AndNeverPreparesTheDurableRuntime` | the durable runtime is never prepared when mission resolution fails. |
+| `…CancellationBeforeClientStart_StartsNoClientRuntime_AndDisposesWhatWasPrepared` | a window closed mid-boot leaves nothing running. |
+| `ClientRuntimeProcessTests.BuildStartInfo_CarriesBothRuntimesIntoTheChildEnvironment` | `ConversationRuntime__BaseUrl` plus the `MissionRuntime__*` trio, redirected streams, no shell execute. |
+| `…BuildStartInfo_SetsTheDurableUrlUnconditionally` | a default-derived URL reaches the child exactly as a configured one does. |
+
+`DesktopLifecycleTests` and `DesktopSupervisorHostBoundaryTests` were not modified and stayed green.
+
+### Packaged macOS Janus proof (2026-08-20)
+
+Environment: Kind cluster `forge-durable` up, `conversation-host` ClusterIP:8080 (age 5d22h),
+`make desktop-publish` → `dist/forge-desktop/ForgeMission.Desktop`.
+
+**Run 1 — healthy-default reuse.** An operator `kubectl port-forward` (PID 80970) was already
+serving `127.0.0.1:18080`. Desktop booted, and `ps eww` on the packaged child showed
+`ConversationRuntime__BaseUrl=http://127.0.0.1:18080/` alongside
+`MissionRuntime__BaseUrl=https://api.forge.katasec.com` and `MissionRuntime__Mode=cloud`. No second
+port-forward appeared. A Janus prompt through the packaged client reached the durable group
+conversation — "Status: Queued", then a Proposer turn, then "Approver is thinking…" — with no
+invalid-URI error. On exit, all packaged processes were gone and PID 80970 was **still running**:
+Desktop did not stop what it did not start.
+
+**Run 2 — Supervisor-owned tunnel.** With 80970 stopped, `127.0.0.1:18080` refused connections.
+Desktop booted and started its own tunnel: PID 20284, parent PID 20276 (the Supervisor), argv
+exactly `kubectl port-forward --address 127.0.0.1 --namespace forge-durable service/conversation-host 18080:8080`.
+Health went green, the child again received `ConversationRuntime__BaseUrl=http://127.0.0.1:18080/`,
+and a Janus prompt again reached the group conversation with a Proposer turn. On exit no
+port-forward process remained and `127.0.0.1:18080` refused connections again — the Supervisor
+stopped the tunnel it owned.
+
+An HTTP 409 "Conversation already has an active run" appeared in run 2 because the operator clicked
+Send twice; that is a real ConversationHost application response over a working base address, not a
+transport or URI failure. The dev machine was restored afterwards with an equivalent port-forward.

@@ -15,31 +15,44 @@ internal static class ClientRuntimeProcess
         string missionRuntimeBaseUrl,
         string missionRuntimeMode,
         string missionRuntimeCredential,
-        string? conversationRuntimeBaseUrl)
+        string conversationRuntimeBaseUrl)
     {
-        var (fileName, dllArgument) = SiblingExecutable.Resolve("ForgeMission.ClientRuntime");
         var process = new Process
         {
-            StartInfo = new ProcessStartInfo(fileName)
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            },
+            StartInfo = BuildStartInfo(
+                missionRuntimeBaseUrl, missionRuntimeMode, missionRuntimeCredential, conversationRuntimeBaseUrl),
             EnableRaisingEvents = true,
         };
-        if (dllArgument is not null)
-            process.StartInfo.ArgumentList.Add(dllArgument);
-
-        process.StartInfo.EnvironmentVariables["MissionRuntime__BaseUrl"] = missionRuntimeBaseUrl;
-        process.StartInfo.EnvironmentVariables["MissionRuntime__Mode"] = missionRuntimeMode;
-        process.StartInfo.EnvironmentVariables["MissionRuntime__Credential"] = missionRuntimeCredential;
-        // Only forwarded when configured — a normal (non-Janus) run must not require it.
-        if (!string.IsNullOrWhiteSpace(conversationRuntimeBaseUrl))
-            process.StartInfo.EnvironmentVariables["ConversationRuntime__BaseUrl"] = conversationRuntimeBaseUrl;
 
         process.Start();
         return process;
+    }
+
+    // Everything the child is told, in one place it can be asserted from: both runtime URLs are
+    // already resolved and verified by the time the Supervisor gets here, so the durable one is
+    // passed unconditionally — a Janus send must never fall back to a relative URI with no base
+    // address.
+    internal static ProcessStartInfo BuildStartInfo(
+        string missionRuntimeBaseUrl,
+        string missionRuntimeMode,
+        string missionRuntimeCredential,
+        string conversationRuntimeBaseUrl)
+    {
+        var (fileName, dllArgument) = SiblingExecutable.Resolve("ForgeMission.ClientRuntime");
+        var startInfo = new ProcessStartInfo(fileName)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        if (dllArgument is not null)
+            startInfo.ArgumentList.Add(dllArgument);
+
+        startInfo.EnvironmentVariables["MissionRuntime__BaseUrl"] = missionRuntimeBaseUrl;
+        startInfo.EnvironmentVariables["MissionRuntime__Mode"] = missionRuntimeMode;
+        startInfo.EnvironmentVariables["MissionRuntime__Credential"] = missionRuntimeCredential;
+        startInfo.EnvironmentVariables["ConversationRuntime__BaseUrl"] = conversationRuntimeBaseUrl;
+        return startInfo;
     }
 
     // Genuinely asynchronous: the Supervisor no longer runs a native loop, so a slow Client Runtime
