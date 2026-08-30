@@ -86,10 +86,18 @@ floats depending on the task at hand, not fixed panes.
 Studio project or JetBrains solution. A Project owns one durable **Mission Control** conversation,
 its mission assets/context, and its named runs. Janus is a reusable mission/team definition—not a
 project or conversation name—and a run is one execution of it. For example, `Golang API` and
-`TypeScript API` are separate Projects when they have distinct repositories, context, or
-lifecycle; each Project has its own Mission Control and its own runs. Related work becomes a later
-run in the same Project. A Go API and TypeScript API that genuinely share one product context and
-lifecycle may instead be workstreams in one Project.
+`TypeScript API` are separate Projects when they have distinct purpose, membership, or lifecycle;
+each Project has its own Mission Control and its own runs. The Project is defined by a Forge-owned
+manifest of metadata and references to relevant files/directories, not by a Git repository. It may
+span zero, one, or many repositories; Git is attached context, never the identity boundary.
+The manifest is a local project file, analogous to a `.csproj` or IntelliJ project configuration,
+not a hosted shared workspace with membership or Project-level roles. The baseline actor is the
+local Forge user; any sensitive external action is governed by its explicit capability/approval
+policy and local credentials, not by a Project-owner/contributor access model. Version control can
+share the manifest and its assets normally; hosted real-time collaboration is a separate future
+product decision.
+Related work becomes a later run in the same Project. A Go API and TypeScript API that genuinely
+share one product context and lifecycle may instead be workstreams in one Project.
 
 Each run records an immutable launch snapshot: the project context and mission-definition version
 used for that execution. This prevents later changes to `mission.mcl`, prompts, profiles, or
@@ -97,16 +105,42 @@ project context from rewriting the meaning of an earlier trace. On completion a 
 concise outcome—artifacts, verification evidence, and summary—to its Project Mission Control;
 Mission Control remains the human-facing REPL, rather than becoming the full agent transcript.
 
-**Break-glass stop (decision, 2026-08-30):** A live Forge Trace has a visible red **Stop run**
-control adjacent to its `Live` status—not hidden behind an overflow menu and not conflated with a
-human gate. It immediately prevents queued/future turns and requests cancellation of the active
-provider or tool operation. The UI enters `Stopping…` until the runner reaches a terminal
-boundary; it must not claim external side effects were undone when cancellation cannot be atomic.
-The durable trace records the stop request, partial artifacts, and a `Stopped by user` terminal
-outcome. Continuing work is an explicit new run or a deliberate resume from a recorded safe
-checkpoint, never an invisible continuation. **Pause after step** is a separate, non-emergency
-control: complete the active bounded action, then suspend before another turn begins. **Add
-guidance** remains the third, safe-boundary-only intervention path.
+**Lightweight context provenance (decision, 2026-08-30):** A launch snapshot records only values
+available without meaningful extra work: selected paths/directories, a Git revision when a
+referenced repository has one, and an identifier/content hash for an explicitly attached file or
+generated artifact when already available. It must not crawl or hash an entire workspace merely to
+launch. Credentials, secret values, and secret-derived material are never recorded in the snapshot
+or trace.
+
+**Break-glass stop (target; runtime deferred):** The trace mock establishes a visible red **Stop
+run** control adjacent to `Live`, not hidden behind an overflow menu and not conflated with a human
+gate. The underlying durable control feature is explicitly out of scope for this UI exercise and
+is the next backlog item after it. When selected, it must prevent queued/future turns, request
+cancellation of the active provider/tool operation, enter `Stopping…`, and durably record the
+request, observed result, and known partial effects. It must never imply rollback of non-atomic
+external effects. **Pause after step** and **Add guidance** remain separate, non-emergency
+intervention paths.
+
+**Run control vs. mission workflow (decision, 2026-08-30):** Do not hardcode Janus stages, role
+names, step count, order, or transitions into the runner or workbench. The future platform
+run-control lifecycle supplies stable scheduling/safety semantics; separately, the versioned
+mission definition supplies arbitrary named stages, experts, steps, gates, and ordering. A Project
+can rename, add, remove, or reorder its workflow for future runs. Every launched run pins that
+definition snapshot, so the trace renders the workflow it actually executed even after later edits.
+The UI shows both run-control state and the current definition-driven stage; neither layer
+substitutes for the other.
+
+**Recovery (decision, 2026-08-30):** `Stopped by user`, `Failed`, and `Interrupted` runs remain
+immutable, append-only history. Recovery creates a new, separately named run linked to its prior
+run; no uncertain in-flight work is replayed automatically. A future checkpoint feature may offer
+an explicit resume only from a recorded, verified safe boundary.
+
+**Current governance scope — composed wrapper (decision, 2026-08-30):** MCL provides named
+mission composition, not inheritance syntax. The UI exercise therefore uses the conceptual entry
+mission `GovernedJanus = PlatformPreflight -> Janus -> PlatformFinalise`. It gives reusable,
+visible, versioned homes for security/policy checks and reporting, without hardcoding them into the
+workbench. Composition alone cannot enforce a hard budget or cancel an in-flight host operation;
+the durable runtime enforcement layer is deferred to the next backlog item after this UI exercise.
 
 The vertical activity rail must expose a **Conversations** (or **Missions**) view. At normal
 Desktop/workbench width it opens a named, Rooms-like list of durable records beside the selected
