@@ -18,9 +18,10 @@ configuration—not a hosted shared workspace with membership or project-level r
 Forge workspace
 └── Project — e.g. Todos API, Golang API, TypeScript API
     ├── Mission Control — the long-lived human ↔ Forge REPL
-    ├── Mission assets — mission.mcl, expert prompts, profiles, context, checks
+    ├── Project assets — mission.mcl, expert prompts, profiles, context, checks
+    ├── Source context — attached files, directories, repositories, and artifacts
     └── Runs — named executions launched from the project
-        └── Janus trace — Proposer → Approver → Implementer
+        └── Janus trace — a debugger-like view of Proposer → Approver → Implementer
 ```
 
 This names the layers deliberately. In MCL, a `mission` is an executable definition; **Janus** is
@@ -43,15 +44,46 @@ credentials and explicit capability/approval policy of that action—not by a sp
 Project-owner/contributor permission system. Version control may share the project manifest and
 assets in the ordinary way; real-time hosted collaboration is a separate future product decision.
 
+## Locked MVP activity rail
+
+The workbench keeps a small, VS Code-like vertical activity rail. It is deliberately not a menu of
+every possible object in Forge. The three entries below are the initial MVP contribution set, not a
+closed or hard-coded list: later Forge capabilities can register an additional rail entry, pane, and
+document surface without changing the Project, Mission Control, or Run model.
+
+1. **Project Explorer** — a collapsible file/folder navigator for the selected local Project:
+   Mission assets, source context, and the Project-owned Runs.
+2. **Mission Control** — a control-tower entry point to the Project's continuing Forge conversation.
+   Its active and recent run cards link directly to their corresponding trace documents.
+3. **Settings** — a gear fixed at the bottom of the rail. For the MVP it opens an intentionally
+   empty placeholder surface, reserving a stable home for settings without inventing their scope.
+
+There is no separate **Runs** rail application: a Project owns its runs, Mission Control launches
+and links to them, and a selected run opens as a trace document. Notifications are deferred entirely
+from the MVP, including a rail icon; later they can become a workspace-level attention inbox for
+human intervention that deep-links to the owning Project, run, and trace.
+
+## Locked MVP visual language
+
+The workbench uses a light, calm content canvas paired with a dark navy activity rail. Forge blue
+and cyan express navigation, selection, and interactive actions; lime is reserved for positive,
+approved, or healthy states. Borders, inactive icons, and supporting text use restrained blue-gray.
+The palette should feel technical and distinctive without becoming a neon or rainbow interface.
+
+Every journey mock uses the same rail in the same order: **Project Explorer** (folder), **Mission
+Control** (control-tower/crosshair), then **Settings** (gear, fixed to the bottom). The currently
+open surface alone receives the cyan selected treatment. No mock introduces a fourth rail entry,
+including Notifications or a standalone Runs view.
+
 ## The chronological experience
 
 ### 1. Choose a project
 
-Forge opens on Projects. The user selects an existing project—such as `Golang API` or
-`TypeScript API`—or creates a new one. The activity rail is persistent; its flyouts are manually
-collapsible, like VS Code.
+Forge opens with Project Explorer selected. The user selects an existing project—such as `Golang
+API` or `TypeScript API`—or creates a new one. The activity rail is persistent; its side panes are
+manually collapsible, like VS Code.
 
-![Step 1 — choose Golang API or TypeScript API from the Projects flyout](../images/mission-project-flow-01-choose-project.png)
+![Step 1 — choose Golang API or TypeScript API from Project Explorer](../images/mission-project-flow-01-choose-project.png)
 
 ### 2. Create a project from a goal
 
@@ -89,16 +121,16 @@ existing one.
 
 ### 6. Inspect and steer the Janus trace
 
-The run opens as an inspectable Forge Trace: its own surface, separate from Mission Control. A
-Runs flyout lists multiple named executions—shown here with `Golang API — v1 endpoints` and
-`Todos API — Implement Todos API` visible together. The selected trace shows the real
+The selected Project-owned run opens as an inspectable Forge Trace document. Mission Control remains
+the control surface and lists active and recent named runs; selecting one opens its trace without
+turning the trace itself into a generic chat room. The selected trace shows the real
 Proposer → Approver → Implementer exchange, state, artifacts, and a genuine safe-boundary guidance
 control. It also shows three deliberately different intervention paths: **Add guidance** for the
 next safe boundary, **Pause after step** to finish the active bounded action before stopping, and
 the prominent red **Stop run** break-glass control for drift or an unsafe direction. Selecting a
-run never hides, merges, or replaces the other run records.
+run never hides, merges, or replaces the other run records in Mission Control.
 
-![Step 6 — a named Runs flyout and selected Janus trace with safe-boundary guidance](../images/mission-project-flow-06-run-trace.png)
+![Step 6 — Project-owned Runs and a selected Janus trace with safe-boundary guidance](../images/mission-project-flow-06-run-trace.png)
 
 ### 7. Return the outcome to Mission Control
 
@@ -113,19 +145,19 @@ from a raw transcript.
 
 1. **Mission Control is project-scoped.** Opening `Golang API` and `TypeScript API` opens
    different durable control conversations and context, rather than two tabs over one global chat.
-2. **Run traces are inspectable documents.** They are dockable alongside source, diffs, artifacts,
+2. **A Project owns its runs.** Mission Control launches and summarizes them; its active and recent
+   run cards open the selected run's trace.
+3. **Run traces are inspectable documents.** They are dockable alongside source, diffs, artifacts,
    and mission-definition views; they are not generic chat rooms.
-3. **The activity rail provides navigation, not a permanent second transcript.** At ordinary
-   desktop width, the Projects or Runs flyout is visible by default when its rail icon is selected.
-   It can be manually collapsed exactly like VS Code’s primary sidebar, while the activity rail
-   remains available to restore it. On constrained widths, collapse the inspector before the
-   active flyout; hide it automatically only on genuinely narrow/mobile layouts.
-4. **Durability remains server-owned.** The workbench discovers projects, conversations, and runs
+4. **The activity rail is intentionally small.** Project Explorer and Mission Control open
+   collapsible side panes; Settings is fixed at the bottom. There is no separate Runs surface or
+   Notifications icon in the MVP.
+5. **Durability remains server-owned.** The workbench discovers projects, conversations, and runs
    through projections of canonical durable state. It must not maintain a second UI-owned
    transcript store.
-5. **A run has an immutable launch snapshot.** Its project context and mission-definition version
+6. **A run has an immutable launch snapshot.** Its project context and mission-definition version
    are recorded when it starts, so its trace and outcomes remain reproducible and intelligible.
-6. **Stopping is a deliberate next capability, not UI theatre.** The run-trace mock shows the
+7. **Stopping is a deliberate next capability, not UI theatre.** The run-trace mock shows the
    intended red `Stop run` control adjacent to `Live`, not inside an overflow menu. Its durable
    runtime implementation is explicitly deferred until immediately after this UI exercise; see
    [the backlog](../../backlog.md). When built, it will block queued/future turns, request
