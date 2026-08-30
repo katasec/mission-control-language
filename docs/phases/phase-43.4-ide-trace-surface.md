@@ -80,6 +80,27 @@ for its Debug/AnyCPU config. This directly answers "where does each surface perm
 Solution Explorer, Mission outline, and Trace are interchangeable surfaces a person docks, tabs, or
 floats depending on the task at hand, not fixed panes.
 
+### Multiple durable mission conversations — required navigation behaviour
+
+**Decision (2026-08-30):** Janus is a reusable mission/team definition, not a conversation name.
+Starting it for each distinct objective creates a separately named durable conversation — for
+example, `Golang API` and `TypeScript API` — each with its own Proposer → Approver → Implementer
+trace, runs, artifacts, and intervention state. Related follow-up work may remain a later run in
+the same conversation; unrelated work starts another conversation.
+
+The vertical activity rail must expose a **Conversations** (or **Missions**) view. At normal
+Desktop/workbench width it opens a named, Rooms-like list of durable conversations beside the
+selected Forge Trace. Selecting a row changes the active trace; it never hides or merges the other
+rows. The list is visible by default but manually collapsible exactly like VS Code's primary
+sidebar; the activity rail remains visible to restore it. When width is constrained, collapse the
+inspector before the conversation list; hide the list automatically only on genuinely
+narrow/mobile layouts. The selected trace remains a dockable document surface next to source/diff/
+artifact tabs — it is not a generic chat-room rendering.
+
+The underlying list is a Conversation-service query/projection over the canonical durable event
+log, never a UI-owned second transcript. See the [mission-conversations brainstorm
+artifact](../brainstorm/mission-conversations/README.md) and its visual reference.
+
 ## Relationship to `human-in-the-loop` (43.5)
 
 [43.5](phase-43.5-human-in-the-loop.md) is the mechanical spec this depends on: `kind: human`
