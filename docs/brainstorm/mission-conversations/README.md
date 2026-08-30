@@ -3,7 +3,8 @@
 **Status: interaction direction captured 2026-08-30.** This is product-design input to
 [Phase 43.4 — IDE trace surface](../../phases/phase-43.4-ide-trace-surface.md), not an
 implementation handoff by itself. The phase spoke carries the requirements an implementer must
-build against.
+build against. A complementary [Anders Hejlsberg / Michael Truell design-lens review](design-review.md)
+tests the direction without claiming either person's actual view.
 
 ## The model
 
