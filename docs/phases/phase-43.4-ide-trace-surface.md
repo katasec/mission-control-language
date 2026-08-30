@@ -82,24 +82,47 @@ floats depending on the task at hand, not fixed panes.
 
 ### Multiple durable mission conversations — required navigation behaviour
 
-**Decision (2026-08-30):** Janus is a reusable mission/team definition, not a conversation name.
-Starting it for each distinct objective creates a separately named durable conversation — for
-example, `Golang API` and `TypeScript API` — each with its own Proposer → Approver → Implementer
-trace, runs, artifacts, and intervention state. Related follow-up work may remain a later run in
-the same conversation; unrelated work starts another conversation.
+**Decision (2026-08-30):** The outer user-facing unit is a **Project**, analogous to a Visual
+Studio project or JetBrains solution. A Project owns one durable **Mission Control** conversation,
+its mission assets/context, and its named runs. Janus is a reusable mission/team definition—not a
+project or conversation name—and a run is one execution of it. For example, `Golang API` and
+`TypeScript API` are separate Projects when they have distinct repositories, context, or
+lifecycle; each Project has its own Mission Control and its own runs. Related work becomes a later
+run in the same Project. A Go API and TypeScript API that genuinely share one product context and
+lifecycle may instead be workstreams in one Project.
+
+Each run records an immutable launch snapshot: the project context and mission-definition version
+used for that execution. This prevents later changes to `mission.mcl`, prompts, profiles, or
+project context from rewriting the meaning of an earlier trace. On completion a run returns a
+concise outcome—artifacts, verification evidence, and summary—to its Project Mission Control;
+Mission Control remains the human-facing REPL, rather than becoming the full agent transcript.
+
+**Break-glass stop (decision, 2026-08-30):** A live Forge Trace has a visible red **Stop run**
+control adjacent to its `Live` status—not hidden behind an overflow menu and not conflated with a
+human gate. It immediately prevents queued/future turns and requests cancellation of the active
+provider or tool operation. The UI enters `Stopping…` until the runner reaches a terminal
+boundary; it must not claim external side effects were undone when cancellation cannot be atomic.
+The durable trace records the stop request, partial artifacts, and a `Stopped by user` terminal
+outcome. Continuing work is an explicit new run or a deliberate resume from a recorded safe
+checkpoint, never an invisible continuation. **Pause after step** is a separate, non-emergency
+control: complete the active bounded action, then suspend before another turn begins. **Add
+guidance** remains the third, safe-boundary-only intervention path.
 
 The vertical activity rail must expose a **Conversations** (or **Missions**) view. At normal
-Desktop/workbench width it opens a named, Rooms-like list of durable conversations beside the
-selected Forge Trace. Selecting a row changes the active trace; it never hides or merges the other
-rows. The list is visible by default but manually collapsible exactly like VS Code's primary
-sidebar; the activity rail remains visible to restore it. When width is constrained, collapse the
-inspector before the conversation list; hide the list automatically only on genuinely
-narrow/mobile layouts. The selected trace remains a dockable document surface next to source/diff/
-artifact tabs — it is not a generic chat-room rendering.
+Desktop/workbench width it opens a named, Rooms-like list of durable records beside the selected
+Forge Trace. The exact list is Project-scoped where appropriate: it may show that Project's named
+runs, while the Project switcher shows `Golang API` and `TypeScript API`. Selecting a row changes
+the active trace; it never hides or merges the other rows. The list is visible by default but
+manually collapsible exactly like VS Code's primary sidebar; the activity rail remains visible to
+restore it. When width is constrained, collapse the inspector before the conversation list; hide
+the list automatically only on genuinely narrow/mobile layouts. The selected trace remains a
+dockable document surface next to source/diff/artifact tabs — it is not a generic chat-room
+rendering.
 
-The underlying list is a Conversation-service query/projection over the canonical durable event
-log, never a UI-owned second transcript. See the [mission-conversations brainstorm
-artifact](../brainstorm/mission-conversations/README.md) and its visual reference.
+The underlying Project, conversation, and run lists are service queries/projections over canonical
+durable state, never UI-owned second transcripts. See the [project Mission Control and Janus runs
+brainstorm artifact](../brainstorm/mission-conversations/README.md) and its seven-step visual
+reference.
 
 ## Relationship to `human-in-the-loop` (43.5)
 
