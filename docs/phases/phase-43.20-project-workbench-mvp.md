@@ -306,26 +306,30 @@ primary action, so the draft call fires when the goal is committed (blur or Ente
 name and location fields in place; `Create project` is the only button. Both fields stay editable
 overrides, sent back verbatim.
 
-**Values**, sampled from the journey mock (not from the ember theme): canvas `#f7faff`; header
+**Reference values**, sampled from the journey mock (not from the ember theme): canvas `#f7faff`; header
 `#f6f8fd` with rule `#c9d5e7`; wordmark and links `#0468ed`; primary action `#0f6eeb`; focused
 field border `#0f56d2`; card `#ffffff` with border `#e7ecf4`; field border `#d5dae5`; divider
 `#e5eaf2`; ink `#101d33`; secondary ink `#1d2c47`; muted `#5b6b83`; placeholder `#8b99ad`. Type:
 wordmark 36/700, subtitle 28/400, card title 36/700, goal 22, name 21, labels 20 and 16, action
-22/600. Lime is reserved for healthy/approved states in the locked visual language and the launcher
-has none, so it is unused here.
+22/600. These are reference-artifact values only. The implementation maps them to the named
+Workbench theme's semantic tokens; no component rule may copy them as literals. Lime is reserved
+for healthy/approved states in the locked visual language and the launcher has none, so it is unused.
 
 **Not sampled — the reference has no failure state.** The error band's `#b42318` on `#fef3f2` with
 `#fda29b`, and the notice band's `#eff5fe` on `#c9dcf8`, are chosen to sit in the same saturation
 register as the sampled blues. They are the one place this spec invents rather than matches.
 
-**Scoping.** These values live as launcher-local custom properties on the component root in
-`ProjectLauncher.razor.css` (Blazor CSS isolation), never on `:root`. `forge.css` is not edited and
-no other surface changes appearance. If CSS isolation does not work in the actual build, stop and
-report it rather than substituting a mechanism.
+**Themed reskin, not local styling.** `forge.css` owns a named `workbench` product-theme token map.
+The Client Runtime selects that product theme at its root while retaining the existing `data-theme`
+light/dark mode hook; the named map composes with both automatic and explicit colour mode. The
+launcher uses only the existing semantic tokens (`--bg`, `--surface`, `--text`, `--accent`,
+`--ink`, radii, spacing, and shadows) in its local layout rules. It declares no replacement
+colour/type/radius/spacing custom properties. ForgeUI keeps the default theme unless it explicitly
+selects `workbench`.
 
-**Light-only, deliberately.** The journey mock is a light composition; `forge.css`'s
-`prefers-color-scheme` dark scheme has no reference counterpart, so the launcher's scoped values are
-light-fixed for Task 1. A dark treatment needs its own reference before it is built.
+**Dark map is required.** The journey mock supplies the Workbench light target. Before build
+approval, the spec must define its paired dark-token values using the established semantic roles and
+verify contrast in the running dark-mode surface. A light-only launcher is not an allowed fallback.
 
 **Visual acceptance rule.** The comparison is card-internal fidelity — field order, labels, copy,
 type scale, control sizes, spacing rhythm, divider and action-row placement — plus the header band.

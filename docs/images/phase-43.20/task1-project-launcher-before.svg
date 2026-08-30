@@ -1,0 +1,23 @@
+<svg viewBox="0 0 1536 1024" width="1536" height="1024" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Before: the rejected two-card launcher</title>
+<desc>The launcher as implemented and rejected on 2026-08-30. Two stacked equal-weight cards 460px wide on an ember canvas: "Start a Project" with a single-line goal input and a Continue button, and "Or open an existing folder" with a path input and an Open button. It shares no header wordmark, card geometry, typography, or visual language with the binding reference.</desc>
+<rect x="0" y="0" width="1536" height="1024" rx="0" fill="#f7f6f3"/>
+<rect x="0" y="0" width="1536" height="101" rx="0" fill="#f7f6f3"/>
+<line x1="0" y1="101" x2="1536" y2="101" stroke="#e6e4dd"/>
+<text x="24" y="44" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#1c1b19" text-anchor="start">Forge</text>
+<text x="24" y="66" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#6b6862" text-anchor="start">Local Client Runtime</text>
+<rect x="538" y="180" width="460" height="166" rx="14" fill="#ffffff" stroke="#e6e4dd"/>
+<text x="554" y="210" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1c1b19" text-anchor="start">Start a Project</text>
+<text x="554" y="238" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6b6862" text-anchor="start">What do you want to build?</text>
+<rect x="554" y="248" width="428" height="34" rx="6" fill="#f7f6f3" stroke="#e6e4dd"/>
+<text x="564" y="270" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#9a968d" text-anchor="start">Describe the goal</text>
+<rect x="554" y="300" width="96" height="32" rx="999" fill="#c2410c"/>
+<text x="602.0" y="322" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle">Continue</text>
+<rect x="538" y="378" width="460" height="166" rx="14" fill="#ffffff" stroke="#e6e4dd"/>
+<text x="554" y="408" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#1c1b19" text-anchor="start">Or open an existing folder</text>
+<text x="554" y="436" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6b6862" text-anchor="start">Folder</text>
+<rect x="554" y="446" width="428" height="34" rx="6" fill="#f7f6f3" stroke="#e6e4dd"/>
+<text x="564" y="468" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#9a968d" text-anchor="start">/path/to/project</text>
+<rect x="554" y="498" width="72" height="32" rx="999" fill="#c2410c"/>
+<text x="590.0" y="520" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle">Open</text>
+</svg>
