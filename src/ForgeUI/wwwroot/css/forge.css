@@ -92,6 +92,7 @@
   --space-4:         16px;
   --space-5:         24px;
   --space-6:         32px;
+  --space-7:         44px;
 
   /* Elevation */
   --shadow-sm:  0 1px 2px rgba(20, 18, 15, 0.05);
@@ -101,6 +102,16 @@
   /* Type */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Type scale. Named so a themed surface can restate it; the defaults are the sizes existing
+     rules already use as literals, so declaring them changes nothing that ships today. */
+  --font-size-display: 30px;
+  --font-size-title:   22px;
+  --font-size-lead:    17px;
+  --font-size-body:    15px;
+  --font-size-label:   14px;
+  --font-size-meta:  12.5px;
+  --font-size-mono:    12px;
 
   /* Motion */
   --transition: 130ms ease;
@@ -197,6 +208,190 @@
   --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow:     0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* 2b. Design tokens — Workbench product theme ---------------------------- */
+/* A named product theme (43.20), selected with data-surface-theme="workbench" on <html> by the
+   Client Runtime Presentation. It is orthogonal to data-theme, which keeps its light/dark colour-
+   mode meaning: each selector below carries the surface-theme attribute *in addition to* the mode
+   condition the default theme already uses, so it outranks its counterpart on specificity and the
+   cascade never depends on source order. Nothing without the attribute matches, so ForgeUI stays
+   on the default ember theme.
+
+   Values are the approved Task 1 reference targets. Provenance, per
+   docs/phases/phase-43.20-project-workbench-mvp.md:
+     S  sampled from the binding SVG reference
+     D  derived from a sampled value by the relationship the default theme already uses
+     N  no reference evidence — the reference has no failure/success/warning/seal state
+     A  an accessibility override of a sampled value, carried back into the SVG references */
+
+:root[data-surface-theme="workbench"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg:               #f7faff;   /* S */
+  --surface-sunken:   #f6f8fd;   /* S */
+  --surface:          #ffffff;   /* S */
+  --surface-hover:    #eef3fb;   /* D */
+  --surface-active:   #e4ecf8;   /* D */
+
+  /* Lines */
+  --border:           #e7ecf4;   /* S */
+  --border-strong:    #d5dae5;   /* S */
+
+  /* Text. --text-subtle is A, not S: the reference's #8b99ad reaches only 2.89 against
+     --surface, and accessibility wins over sample fidelity. 4.78 here. */
+  --text:             #101d33;   /* S */
+  --text-muted:       #5b6b83;   /* S */
+  --text-subtle:      #62748c;   /* A */
+
+  /* Accent and ink are one blue action family: a solid action is the same blue whichever
+     family a component reaches for. */
+  --accent:           #0f6eeb;   /* S */
+  --accent-hover:     #0f56d2;   /* S */
+  --accent-soft:      #eff5fe;   /* S */
+  --accent-contrast:  #ffffff;   /* S */
+  --ink:              #0f6eeb;   /* S */
+  --ink-hover:        #0f56d2;   /* S */
+  --ink-contrast:     #ffffff;   /* S */
+
+  /* Semantic */
+  --success:          #4d7c0f;   /* N */
+  --success-bg:       #f2fbe6;   /* N */
+  --success-border:   #84cc16;   /* N — the locked visual language's lime */
+  --danger:           #b42318;   /* N */
+  --danger-bg:        #fef3f2;   /* N */
+  --danger-border:    #fda29b;   /* N */
+  --warning:          #8a5a06;   /* N */
+  --warning-bg:       #fef6e7;   /* N */
+
+  /* Trust seals */
+  --seal-official:    #8a5a06;   /* N */
+  --seal-verified:    #0f6eeb;   /* N */
+  --seal-check:       #ffffff;   /* N */
+
+  /* Radii */
+  --radius-sm:         8px;      /* S */
+  --radius:           10px;      /* S */
+  --radius-lg:        16px;      /* S */
+  --radius-pill:     999px;
+
+  /* Spacing */
+  --space-1:           4px;
+  --space-2:           8px;
+  --space-3:          12px;
+  --space-4:          16px;
+  --space-5:          24px;
+  --space-6:          32px;
+  --space-7:          44px;      /* S — card padding, measured 45–46 */
+
+  /* Type */
+  --font-size-display: 36px;     /* S */
+  --font-size-title:   28px;     /* S */
+  --font-size-lead:    22px;     /* S */
+  --font-size-body:    21px;     /* S */
+  --font-size-label:   20px;     /* S */
+  --font-size-meta:    16px;     /* S */
+  --font-size-mono:    15px;     /* S */
+
+  /* Elevation, focus */
+  --shadow-sm:  0 1px 2px rgba(11, 36, 71, 0.06);                                    /* D */
+  --shadow:     0 1px 3px rgba(11, 36, 71, 0.08), 0 4px 12px rgba(11, 36, 71, 0.06); /* D */
+  --shadow-lg:  0 8px 30px rgba(11, 36, 71, 0.14);                                   /* D */
+  --focus-ring: 0 0 0 3px rgba(15, 110, 235, 0.30);                                  /* D */
+}
+
+/* Workbench dark. No visual mock exists for it, so it is held to token composition and contrast
+   rather than to a reference; every pair clears AA. Radii, spacing, type and fonts are inherited
+   from the Workbench light block above — only what differs is restated. */
+@media (prefers-color-scheme: dark) {
+  :root[data-surface-theme="workbench"]:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg:             #071426;
+    --surface-sunken: #0a1a30;
+    --surface:        #0f2440;
+    --surface-hover:  #16304f;
+    --surface-active: #1d3a5c;
+
+    --border:         #1d3556;
+    --border-strong:  #2b4a72;
+
+    --text:           #e6edf7;
+    --text-muted:     #9fb2ca;
+    --text-subtle:    #8aa3c2;
+
+    --accent:         #4d9bff;
+    --accent-hover:   #74b2ff;
+    --accent-soft:    #12294a;
+    --accent-contrast:#06121f;
+    --ink:            #4d9bff;
+    --ink-hover:      #74b2ff;
+    --ink-contrast:   #06121f;
+
+    --success:        #a3e635;
+    --success-bg:     #16300a;
+    --success-border: #65a30d;
+    --danger:         #ff9d95;
+    --danger-bg:      #3a1512;
+    --danger-border:  #b42318;
+    --warning:        #e8c06a;
+    --warning-bg:     #3a2c10;
+
+    --seal-official:  #e8c06a;
+    --seal-verified:  #4d9bff;
+    --seal-check:     #071426;
+
+    --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow:     0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40);
+    --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.55);
+    --focus-ring: 0 0 0 3px rgba(77, 155, 255, 0.35);
+  }
+}
+
+/* Workbench dark, forced. Same values as the automatic block; a forced light choice needs no
+   counterpart because it lands on the Workbench light block above. */
+:root[data-surface-theme="workbench"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:             #071426;
+  --surface-sunken: #0a1a30;
+  --surface:        #0f2440;
+  --surface-hover:  #16304f;
+  --surface-active: #1d3a5c;
+
+  --border:         #1d3556;
+  --border-strong:  #2b4a72;
+
+  --text:           #e6edf7;
+  --text-muted:     #9fb2ca;
+  --text-subtle:    #8aa3c2;
+
+  --accent:         #4d9bff;
+  --accent-hover:   #74b2ff;
+  --accent-soft:    #12294a;
+  --accent-contrast:#06121f;
+  --ink:            #4d9bff;
+  --ink-hover:      #74b2ff;
+  --ink-contrast:   #06121f;
+
+  --success:        #a3e635;
+  --success-bg:     #16300a;
+  --success-border: #65a30d;
+  --danger:         #ff9d95;
+  --danger-bg:      #3a1512;
+  --danger-border:  #b42318;
+  --warning:        #e8c06a;
+  --warning-bg:     #3a2c10;
+
+  --seal-official:  #e8c06a;
+  --seal-verified:  #4d9bff;
+  --seal-check:     #071426;
+
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow:     0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40);
+  --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.55);
+  --focus-ring: 0 0 0 3px rgba(77, 155, 255, 0.35);
 }
 
 /* 3. Base / reset -------------------------------------------------------- */

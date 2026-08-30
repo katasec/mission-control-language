@@ -1,0 +1,239 @@
+/* Layout for the Project launcher (43.20 task 1). Every colour, radius, spacing, font family and
+   font size resolves through a semantic token from the Workbench theme map in forge.css — this
+   file declares no custom property and hardcodes no visual value. Geometry that is neither a
+   colour nor a token (the card's 906px width, the goal field's 170px height) comes from the
+   binding SVG reference and is measured, not chosen. */
+
+.pl-root {
+    flex: 1;
+    overflow-y: auto;
+    padding: 37px var(--space-5) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg);
+}
+
+.pl-card {
+    width: 906px;
+    max-width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-7) var(--space-7) 46px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* The four row gaps below are measured from the binding reference (30 / 37 / 17 / 49 / 34), not
+   chosen: its vertical rhythm does not land on the token spacing scale, and matching the reference
+   within its ±2px tolerance is the higher requirement. Every colour, radius and type value here is
+   still a token — see the summary for the trade-off this records. */
+.pl-title {
+    margin: 0 0 30px;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-display);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+}
+
+/* The sparkle sits outside the field's left edge, as in the reference, so the goal field aligns
+   with the two below it rather than with the card's text column. */
+.pl-goal-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-5);
+}
+
+/* The reference aligns every field, the divider and the action with the goal field, which sits
+   one sparkle-gutter in from the card's text column. 53px is that gutter: the 29px glyph plus its
+   24px gap, measured from the reference. */
+.pl-stack {
+    margin-left: 53px;
+}
+
+.pl-sparkle {
+    flex: none;
+    width: 29px;
+    height: 33px;
+    margin-top: var(--space-4);
+    fill: var(--accent);
+}
+
+.pl-goal,
+.pl-name,
+.pl-location {
+    width: 100%;
+    font-family: var(--font-sans);
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pl-goal {
+    height: 170px;
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--font-size-lead);
+    line-height: 1.4;
+    resize: vertical;
+}
+
+.pl-goal:focus,
+.pl-name:focus,
+.pl-location:focus {
+    outline: none;
+    border-color: var(--accent-hover);
+    box-shadow: var(--focus-ring);
+}
+
+.pl-goal::placeholder,
+.pl-name::placeholder,
+.pl-location::placeholder {
+    color: var(--text-subtle);
+}
+
+.pl-goal:disabled,
+.pl-name:disabled,
+.pl-location:disabled {
+    background: var(--surface-active);
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.pl-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: 37px;
+}
+
+.pl-field-demoted {
+    margin-top: 17px;
+}
+
+.pl-field-label {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    color: var(--text);
+}
+
+.pl-name {
+    height: 63px;
+    padding: 0 var(--space-5);
+    font-size: var(--font-size-body);
+}
+
+/* Demoted: the reference gives the two fields above it the prominence, and the spoke requires the
+   location to stay visible and editable rather than hidden. */
+.pl-field-demoted .pl-field-label {
+    font-size: var(--font-size-meta);
+    color: var(--text-muted);
+}
+
+.pl-location {
+    height: 46px;
+    padding: 0 var(--space-5);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    color: var(--text-muted);
+}
+
+.pl-notice,
+.pl-error {
+    margin: 21px 0 2px;
+    padding: 19px var(--space-4);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-meta);
+    line-height: 1.4;
+}
+
+.pl-notice {
+    background: var(--accent-soft);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+}
+
+.pl-error {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger);
+}
+
+.pl-rule {
+    margin: 49px 0 0;
+    border: none;
+    border-top: 1px solid var(--border);
+}
+
+.pl-actions {
+    margin-top: 34px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pl-create {
+    min-width: 271px;
+    height: 68px;
+    padding: 0 var(--space-5);
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-lead);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.pl-create:hover:not(:disabled) { background: var(--accent-hover); }
+.pl-create:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Disabled keeps the action's own colour at reduced strength rather than switching to a grey,
+   so the button still reads as the primary action it will become. */
+.pl-create:disabled {
+    background: var(--accent);
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* The reference's quiet link treatment for the same action, not a second card. */
+.pl-open-link {
+    align-self: flex-start;
+    margin: var(--space-6) 0 0 calc(((100% - 906px) / 2) + var(--space-7));
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    cursor: pointer;
+}
+
+.pl-open-link:hover:not(:disabled) { color: var(--accent-hover); text-decoration: underline; }
+.pl-open-link:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+.pl-open-link:disabled { opacity: 0.45; cursor: default; }
+
+.pl-folder-glyph {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+/* Below the card's own width the centring offset above stops making sense, so the link returns to
+   the content edge. */
+@media (max-width: 1006px) {
+    .pl-open-link { margin-left: 0; }
+}

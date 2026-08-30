@@ -1,0 +1,102 @@
+@* The first-use surface (43.20 task 1): state a goal, confirm the name and location Forge
+   derived, create the Project. Presentation only — it derives no title, slug, or home, holds no
+   filesystem rule, and reaches nothing but the callbacks below. Every value it shows came from a
+   Client Runtime contract; every value it sends is what the person left in the field.
+
+   Binding reference: docs/images/phase-43.20/task1-project-launcher-{empty,drafted,busy,failed,
+   goal-required}.svg at 1536x1024. *@
+
+<section class="pl-root">
+    <div class="pl-card">
+        <h2 class="pl-title">New project</h2>
+
+        <div class="pl-goal-row">
+            @* Decorative: it marks the field as the one Forge reasons from, and carries no
+               button treatment because it does nothing when clicked. *@
+            <svg class="pl-sparkle" viewBox="0 0 32 34" aria-hidden="true" focusable="false">
+                <path d="M14 0 L17.2 10.8 L28 14 L17.2 17.2 L14 28 L10.8 17.2 L0 14 L10.8 10.8 Z" />
+                <path d="M25 20 L26.6 25.4 L32 27 L26.6 28.6 L25 34 L23.4 28.6 L18 27 L23.4 25.4 Z" />
+            </svg>
+            <textarea class="pl-goal" rows="3" placeholder="Describe what you want to build"
+                      disabled="@Busy" value="@Goal"
+                      @oninput="OnGoalInput" @onchange="OnGoalCommitted" @onkeydown="OnGoalKeyDown"></textarea>
+        </div>
+
+        <div class="pl-stack">
+        <label class="pl-field">
+            <span class="pl-field-label">Project name</span>
+            <input class="pl-name" placeholder="Derived from your goal" disabled="@Busy"
+                   value="@Title" @oninput="OnTitleInput" />
+        </label>
+
+        <label class="pl-field pl-field-demoted">
+            <span class="pl-field-label">Location</span>
+            <input class="pl-location" placeholder="Derived from your project name" disabled="@Busy"
+                   value="@Home" @oninput="OnHomeInput" />
+        </label>
+
+        @if (Notice is not null)
+        {
+            <p class="pl-notice">@Notice</p>
+        }
+        @if (Error is not null)
+        {
+            <p class="pl-error">@Error</p>
+        }
+
+        <hr class="pl-rule" />
+
+        <div class="pl-actions">
+            <button class="pl-create" disabled="@(Busy || !CanCreate)" @onclick="OnCreate">
+                @(Busy ? "Working…" : "Create project")
+            </button>
+        </div>
+        </div>
+    </div>
+
+    <button class="pl-open-link" disabled="@Busy" @onclick="OnOpenRequested">
+        <svg class="pl-folder-glyph" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+            <path d="M0.9 3.6 h6.4 l1.8 2.2 h9.0 a0.9 0.9 0 0 1 0.9 0.9 v9.7 a0.9 0.9 0 0 1 -0.9 0.9
+                     h-17.2 a0.9 0.9 0 0 1 -0.9 -0.9 v-11.9 a0.9 0.9 0 0 1 0.9 -0.9 z" />
+        </svg>
+        <span>Open an existing folder…</span>
+    </button>
+</section>
+
+@code {
+    [Parameter] public string Goal { get; set; } = string.Empty;
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Home { get; set; } = string.Empty;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public string? Notice { get; set; }
+
+    [Parameter] public EventCallback<string> GoalChanged { get; set; }
+    [Parameter] public EventCallback<string> TitleChanged { get; set; }
+    [Parameter] public EventCallback<string> HomeChanged { get; set; }
+
+    /// <summary>Raised when the goal is committed (blur or Enter) — the moment a draft is worth
+    /// asking for. There is no separate confirm control: the reference has one primary action.</summary>
+    [Parameter] public EventCallback GoalCommitted { get; set; }
+    [Parameter] public EventCallback Create { get; set; }
+    [Parameter] public EventCallback OpenRequested { get; set; }
+
+    private bool CanCreate => !string.IsNullOrWhiteSpace(Goal);
+
+    private Task OnGoalInput(ChangeEventArgs e) => GoalChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+    private Task OnTitleInput(ChangeEventArgs e) => TitleChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+    private Task OnHomeInput(ChangeEventArgs e) => HomeChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+
+    private Task OnGoalCommitted() => CanCreate ? GoalCommitted.InvokeAsync() : Task.CompletedTask;
+
+    // Enter commits the goal rather than inserting a newline; Shift+Enter keeps the newline, since
+    // a goal can legitimately be more than one line.
+    private async Task OnGoalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey && CanCreate)
+            await GoalCommitted.InvokeAsync();
+    }
+
+    private Task OnCreate() => Create.InvokeAsync();
+    private Task OnOpenRequested() => OpenRequested.InvokeAsync();
+}

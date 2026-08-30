@@ -4,69 +4,40 @@
 @implements IAsyncDisposable
 
 <div class="shell">
+    @* The Workbench header band, from the Task 1 reference: wordmark, hairline divider, product
+       name. An open Project adds its own line beneath rather than replacing any of it. *@
     <header class="shell-header">
-        <h1>Forge</h1>
-        <p class="subtitle">@(project?.Title ?? "Local Client Runtime")</p>
+        <div class="brand">
+            <h1>Forge</h1>
+            <span class="brand-divider"></span>
+            <p class="subtitle">AI Workbench</p>
+        </div>
         @if (project is not null)
         {
-            <p class="workspace-path">@project.Home</p>
+            <p class="workspace-path">@project.Title · @project.Home</p>
         }
     </header>
 
 @if (project is null)
 {
-    <main class="launcher">
-        <section class="launcher-panel">
-            <h2>Start a Project</h2>
-            <label class="launcher-field">
-                <span>What do you want to build?</span>
-                <input class="launcher-goal" @bind="goalInput" @bind:event="oninput" @onkeydown="OnGoalKeyDown"
-                       placeholder="Describe the goal" disabled="@busy" />
-            </label>
+    <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value"
+                     Title="@titleInput" TitleChanged="value => titleInput = value"
+                     Home="@homeInput" HomeChanged="value => homeInput = value"
+                     Busy="busy" Error="@launcherError" Notice="@LauncherNotice"
+                     GoalCommitted="DraftProjectAsync"
+                     Create="CreateProjectAsync"
+                     OpenRequested="ToggleOpenFolder" />
 
-            @* Forge derives the name and location: this page only shows what the Client Runtime
-               returned and sends back whatever the user leaves in these fields. *@
-            @if (drafted)
-            {
-                <label class="launcher-field">
-                    <span>Project name</span>
-                    <input class="launcher-title" @bind="titleInput" @bind:event="oninput" disabled="@busy" />
-                </label>
-                <label class="launcher-field">
-                    <span>Location</span>
-                    <input class="launcher-home" @bind="homeInput" @bind:event="oninput" disabled="@busy" />
-                </label>
-                <button class="launcher-create" @onclick="CreateProjectAsync" disabled="@busy">
-                    @(busy ? "Working…" : "Create Project")
-                </button>
-            }
-            else
-            {
-                <button class="launcher-continue" @onclick="DraftProjectAsync" disabled="@busy">
-                    @(busy ? "Working…" : "Continue")
-                </button>
-            }
-        </section>
-
-        <section class="launcher-panel">
-            <h2>Or open an existing folder</h2>
-            <label class="launcher-field">
-                <span>Folder</span>
-                <input class="launcher-open-path" @bind="openPathInput" @bind:event="oninput" @onkeydown="OnOpenKeyDown"
-                       placeholder="/path/to/project" disabled="@busy" />
-            </label>
-            <button class="launcher-open" @onclick="OpenProjectAsync" disabled="@busy">Open</button>
-        </section>
-
-        @if (goalRequired)
-        {
-            <p class="launcher-notice">That folder is not a Forge Project yet. Enter a goal above to create one there.</p>
-        }
-        @if (launcherError is not null)
-        {
-            <p class="launcher-error">@launcherError</p>
-        }
-    </main>
+    @* Not drawn in any approved reference frame — see the Task 1 summary. A folder has to be
+       named somehow, and a link that does nothing would fail the honest-affordance principle. *@
+    @if (showOpenFolder)
+    {
+        <div class="open-folder">
+            <input class="open-folder-path" @bind="openPathInput" @bind:event="oninput"
+                   @onkeydown="OnOpenKeyDown" placeholder="/path/to/project" disabled="@busy" />
+            <button class="open-folder-go" @onclick="OpenProjectAsync" disabled="@busy">Open</button>
+        </div>
+    }
 }
 else
 {
@@ -169,10 +140,14 @@ else
 <style>
     .shell { display: flex; flex-direction: column; height: 100vh; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
 
-    .shell-header { padding: var(--space-4) var(--space-5) var(--space-3); border-bottom: 1px solid var(--border); }
-    .shell-header h1 { margin: 0; font-size: 22px; font-weight: 700; }
-    .subtitle { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
-    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: 12px; color: var(--text-subtle); }
+    /* 97px and the 80px inset are measured from the binding reference, like the card geometry in
+       ProjectLauncher.razor.css; every colour and type value is a token. */
+    .shell-header { min-height: 97px; padding: 0 var(--space-5) 0 80px; display: flex; flex-direction: column; justify-content: center; background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); }
+    .brand { display: flex; align-items: baseline; gap: var(--space-5); }
+    .shell-header h1 { margin: 0; font-size: var(--font-size-display); font-weight: 700; color: var(--accent); }
+    .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); }
+    .subtitle { margin: 0; font-size: var(--font-size-title); color: var(--text); }
+    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); }
 
     .turns { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
     .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
@@ -202,15 +177,13 @@ else
     .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
     .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
 
-    .launcher { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); align-items: center; }
-    .launcher-panel { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); }
-    .launcher-panel h2 { margin: 0; font-size: 15px; font-weight: 600; }
-    .launcher-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
-    .launcher-field input { height: 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13.5px; background: var(--bg); color: var(--text); }
-    .launcher-continue, .launcher-create, .launcher-open { align-self: flex-start; height: 32px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13px; font-weight: 600; cursor: pointer; }
-    .launcher-continue:disabled, .launcher-create:disabled, .launcher-open:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
-    .launcher-notice { max-width: 460px; margin: 0; color: var(--text-muted); font-size: 12.5px; text-align: center; }
-    .launcher-error { max-width: 460px; margin: 0; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
+    /* The one launcher element with no approved reference frame — see the Task 1 summary. It
+       borrows the launcher's own token language so it does not read as a foreign control. */
+    .open-folder { align-self: center; width: 906px; max-width: 100%; margin-top: var(--space-3); display: flex; gap: var(--space-3); }
+    .open-folder-path { flex: 1; height: 46px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-5); background: var(--surface); color: var(--text); font-family: var(--font-mono); font-size: var(--font-size-mono); }
+    .open-folder-path::placeholder { color: var(--text-subtle); }
+    .open-folder-go { height: 46px; padding: 0 var(--space-5); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--accent); font-family: var(--font-sans); font-size: var(--font-size-meta); font-weight: 600; cursor: pointer; }
+    .open-folder-go:disabled { opacity: 0.45; cursor: default; }
 
     .mission-trigger { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
     .mission-trigger:hover { background: var(--surface-hover); }
@@ -235,10 +208,14 @@ else
     private string titleInput = string.Empty;
     private string homeInput = string.Empty;
     private string openPathInput = string.Empty;
-    private bool drafted;
     private bool goalRequired;
+    private bool showOpenFolder;
     private bool busy;
     private string? launcherError;
+
+    private string? LauncherNotice => goalRequired
+        ? "That folder is not a Forge Project yet. Enter a goal to create one there."
+        : null;
 
     private AttachableMission selectedMission = AttachableMissions.Default;
     private bool showMissionMenu;
@@ -307,15 +284,10 @@ else
         await composerInput.FocusAsync();
     }
 
-    private async Task OnGoalKeyDown(KeyboardEventArgs e)
+    private void ToggleOpenFolder()
     {
-        if (e.Key != "Enter")
-            return;
-
-        if (drafted)
-            await CreateProjectAsync();
-        else
-            await DraftProjectAsync();
+        showOpenFolder = !showOpenFolder;
+        launcherError = null;
     }
 
     private async Task OnOpenKeyDown(KeyboardEventArgs e)
@@ -345,7 +317,6 @@ else
 
         titleInput = draft.ProposedTitle;
         homeInput = draft.HomePath;
-        drafted = true;
     }
 
     private async Task CreateProjectAsync()
@@ -385,7 +356,7 @@ else
                 break;
             case ProjectOperationOutcome.GoalRequired when response.Proposal is not null:
                 goalRequired = true;
-                drafted = true;
+                showOpenFolder = false;
                 titleInput = response.Proposal.ProposedTitle;
                 homeInput = response.Proposal.HomePath;
                 break;

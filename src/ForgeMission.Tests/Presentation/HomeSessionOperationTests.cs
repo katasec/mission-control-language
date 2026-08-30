@@ -28,7 +28,7 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Empty(channel.Requests);
         Assert.Equal(0, channel.ActiveSubscriptions);
         Assert.Equal(0, channel.SubscriptionsStarted);
-        Assert.Single(page.FindAll(".launcher-goal"));
+        Assert.Single(page.FindAll(".pl-goal"));
     }
 
     [Fact]
@@ -45,16 +45,17 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Empty(channel.Requests.OfType<ProjectCreateRequest>());
     }
 
+    // No Continue control exists: the reference has one primary action, so committing the goal is
+    // what asks for a draft. A blank goal commits nothing and enables nothing.
     [Fact]
-    public async Task ABlankGoal_SendsNothing()
+    public async Task ABlankGoal_SendsNothing_AndLeavesCreateDisabled()
     {
         var page = Render<Home>();
 
-        await InputAsync(page, ".launcher-goal", "   ");
-        await ClickAsync(page, ".launcher-continue");
+        await CommitGoalAsync(page, "   ");
 
         Assert.Empty(channel.Requests);
-        Assert.Single(page.FindAll(".launcher-error"));
+        Assert.True(page.Find(".pl-create").HasAttribute("disabled"));
     }
 
     // The page shows what the Client Runtime returned and sends back whatever is left in the
@@ -65,11 +66,11 @@ public sealed class HomeSessionOperationTests : BunitContext
         var page = Render<Home>();
         await DraftAsync(page, "Todos API");
 
-        Assert.Equal("Todos API", page.Find(".launcher-title").GetAttribute("value"));
-        Assert.Equal(FakeClientRuntimeChannel.DefaultHome, page.Find(".launcher-home").GetAttribute("value"));
+        Assert.Equal("Todos API", page.Find(".pl-name").GetAttribute("value"));
+        Assert.Equal(FakeClientRuntimeChannel.DefaultHome, page.Find(".pl-location").GetAttribute("value"));
 
-        await InputAsync(page, ".launcher-title", "Renamed by hand");
-        await StartReplacementAsync(page, ".launcher-create");
+        await InputAsync(page, ".pl-name", "Renamed by hand");
+        await StartReplacementAsync(page, ".pl-create");
 
         var create = Assert.Single(channel.Requests.OfType<ProjectCreateRequest>());
         Assert.Equal("Todos API", create.Goal);
@@ -82,9 +83,12 @@ public sealed class HomeSessionOperationTests : BunitContext
     {
         var page = await OpenCreatedProjectAsync();
 
-        Assert.Contains("Todos API", page.Find(".subtitle").TextContent);
-        Assert.Contains(FakeClientRuntimeChannel.DefaultHome, page.Find(".workspace-path").TextContent);
-        Assert.Empty(page.FindAll(".launcher-goal"));
+        // The header band keeps its product identity; the open Project is named on its own line.
+        Assert.Equal("AI Workbench", page.Find(".subtitle").TextContent);
+        var openProject = page.Find(".workspace-path").TextContent;
+        Assert.Contains("Todos API", openProject);
+        Assert.Contains(FakeClientRuntimeChannel.DefaultHome, openProject);
+        Assert.Empty(page.FindAll(".pl-goal"));
         Assert.Equal(1, channel.SubscriptionsStarted);
         Assert.Equal(1, channel.ActiveSubscriptions);
     }
@@ -95,17 +99,18 @@ public sealed class HomeSessionOperationTests : BunitContext
         var page = Render<Home>();
         channel.RespondWith(FakeClientRuntimeChannel.GoalRequired("/src/existing", "existing"));
 
-        await InputAsync(page, ".launcher-open-path", "/src/existing");
-        await ClickAsync(page, ".launcher-open");
+        await ClickAsync(page, ".pl-open-link");
+        await InputAsync(page, ".open-folder-path", "/src/existing");
+        await ClickAsync(page, ".open-folder-go");
 
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".launcher-notice")));
-        Assert.Equal("existing", page.Find(".launcher-title").GetAttribute("value"));
-        Assert.Equal("/src/existing", page.Find(".launcher-home").GetAttribute("value"));
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".pl-notice")));
+        Assert.Equal("existing", page.Find(".pl-name").GetAttribute("value"));
+        Assert.Equal("/src/existing", page.Find(".pl-location").GetAttribute("value"));
         Assert.Empty(channel.Requests.OfType<ProjectCreateRequest>());
         Assert.Equal(0, channel.SubscriptionsStarted);
 
-        await InputAsync(page, ".launcher-goal", "Add pagination");
-        await StartReplacementAsync(page, ".launcher-create");
+        await InputAsync(page, ".pl-goal", "Add pagination");
+        await StartReplacementAsync(page, ".pl-create");
 
         var create = Assert.Single(channel.Requests.OfType<ProjectCreateRequest>());
         Assert.Equal("Add pagination", create.Goal);
@@ -119,13 +124,14 @@ public sealed class HomeSessionOperationTests : BunitContext
         channel.RespondWith(FakeClientRuntimeChannel.Failed(
             ProjectOperationErrorCode.HomeNotFound, "No directory exists at /nope."));
 
-        await InputAsync(page, ".launcher-open-path", "/nope");
-        await ClickAsync(page, ".launcher-open");
+        await ClickAsync(page, ".pl-open-link");
+        await InputAsync(page, ".open-folder-path", "/nope");
+        await ClickAsync(page, ".open-folder-go");
 
         page.WaitForAssertion(() => Assert.Contains("No directory exists at /nope.",
-            page.Find(".launcher-error").TextContent));
+            page.Find(".pl-error").TextContent));
         Assert.Equal(0, channel.SubscriptionsStarted);
-        Assert.Single(page.FindAll(".launcher-goal"));
+        Assert.Single(page.FindAll(".pl-goal"));
     }
 
     [Fact]
@@ -134,11 +140,10 @@ public sealed class HomeSessionOperationTests : BunitContext
         var page = Render<Home>();
         channel.FailNextDraft(ProjectOperationErrorCode.InvalidGoal, "A goal is required to name a Project.");
 
-        await InputAsync(page, ".launcher-goal", "Todos API");
-        await ClickAsync(page, ".launcher-continue");
+        await CommitGoalAsync(page, "Todos API");
 
-        page.WaitForAssertion(() => Assert.Contains("A goal is required", page.Find(".launcher-error").TextContent));
-        Assert.Empty(page.FindAll(".launcher-create"));
+        page.WaitForAssertion(() => Assert.Contains("A goal is required", page.Find(".pl-error").TextContent));
+        Assert.Empty(channel.Requests.OfType<ProjectCreateRequest>());
     }
 
     // Replacement only: the request carries the open Project's own home and the session it
@@ -396,18 +401,27 @@ public sealed class HomeSessionOperationTests : BunitContext
     {
         var page = Render<Home>();
         await DraftAsync(page, "Todos API");
-        await StartReplacementAsync(page, ".launcher-create");
-        page.WaitForAssertion(() => Assert.Empty(page.FindAll(".launcher-goal")));
+        await StartReplacementAsync(page, ".pl-create");
+        page.WaitForAssertion(() => Assert.Empty(page.FindAll(".pl-goal")));
         return page;
     }
 
     private async Task DraftAsync(IRenderedComponent<Home> page, string goal)
     {
-        await InputAsync(page, ".launcher-goal", goal);
-        await ClickAsync(page, ".launcher-continue");
+        await CommitGoalAsync(page, goal);
         page.WaitForAssertion(() => Assert.True(
-            page.FindAll(".launcher-title").Count > 0 || page.FindAll(".launcher-error").Count > 0));
+            page.Find(".pl-name").GetAttribute("value")?.Length > 0 || page.FindAll(".pl-error").Count > 0));
     }
+
+    // Typing then committing, exactly as a person does: the change event is the goal-commit
+    // trigger the launcher listens for.
+    private static Task CommitGoalAsync(IRenderedComponent<Home> page, string goal) =>
+        page.InvokeAsync(() =>
+        {
+            var field = page.Find(".pl-goal");
+            field.Input(new ChangeEventArgs { Value = goal });
+            field.Change(new ChangeEventArgs { Value = goal });
+        });
 
     private ClientRuntimeEvent Delta(string text) =>
         new(ClientRuntimeEventKind.MissionTextDelta, channel.CurrentSessionId, Text: text);
@@ -429,7 +443,7 @@ public sealed class HomeSessionOperationTests : BunitContext
         var before = channel.SubscriptionsStarted;
         await ClickAsync(page, selector, text);
         page.WaitForAssertion(() => Assert.True(
-            channel.SubscriptionsStarted > before || page.FindAll(".launcher-error").Count > 0));
+            channel.SubscriptionsStarted > before || page.FindAll(".pl-error").Count > 0));
     }
 
     private static async Task SendPromptAsync(IRenderedComponent<Home> page, string prompt)
