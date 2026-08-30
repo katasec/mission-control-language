@@ -9,7 +9,10 @@ build against.
 
 A user works in a **Project**: the durable, goal-oriented workspace analogous to a Visual Studio
 project or JetBrains solution. It has one enduring **Mission Control** conversation, its mission
-assets, context, and a history of work.
+assets, context, and a history of work. Its identity is a Forge-owned project manifest that records
+metadata and references to the relevant files and directory structures; it is **not** a Git
+repository. The manifest is a local project file, like a `.csproj` or IntelliJ project
+configuration—not a hosted shared workspace with membership or project-level roles.
 
 ```
 Forge workspace
@@ -25,9 +28,20 @@ a reusable mission/team definition, not a project or a conversation name. A **ru
 execution of that definition. The user-facing project and run titles describe the work, such as
 `Golang API` and `Implement Todos API`.
 
-Related work becomes a later run in the same project. A distinct objective with its own repository,
-context, or lifecycle becomes a new project. If the Go API and TypeScript API are parts of one
+Related work becomes a later run in the same project. A distinct objective with a separate purpose,
+membership, or lifecycle becomes a new project. If the Go API and TypeScript API are parts of one
 product with shared context and lifecycle, they can instead be workstreams inside one project.
+
+A Project may reference zero, one, or many Git repositories, alongside arbitrary local directories,
+documents, generated artifacts, and configuration. Git is optional attached context; a project can
+span a monorepo, several repositories, or no repository at all. A repository change never by
+itself creates or splits a Forge Project.
+
+The baseline authority model is therefore local: the person running Forge can edit project assets,
+launch, guide, pause, or stop its runs. Any sensitive external action is governed by the local
+credentials and explicit capability/approval policy of that action—not by a speculative
+Project-owner/contributor permission system. Version control may share the project manifest and
+assets in the ordinary way; real-time hosted collaboration is a separate future product decision.
 
 ## The chronological experience
 
@@ -42,7 +56,8 @@ collapsible, like VS Code.
 ### 2. Create a project from a goal
 
 The user can begin with a natural-language goal, for example: “Build a mock Todos API.” They name
-the project and optionally attach a repository, product documents, or an API specification. This
+the project and optionally attach one or more repositories, product documents, directories, or an
+API specification. This
 creates the durable project boundary; it does not silently start an implementation run.
 
 ![Step 2 — create a Todos API project from a goal and initial context](../images/mission-project-flow-02-create-project.png)
@@ -110,13 +125,72 @@ from a raw transcript.
    transcript store.
 5. **A run has an immutable launch snapshot.** Its project context and mission-definition version
    are recorded when it starts, so its trace and outcomes remain reproducible and intelligible.
-6. **Stopping is real, visible, and auditable.** `Stop run` remains adjacent to the Live status,
-   not inside an overflow menu. It immediately blocks queued/future turns and requests cancellation
-   of the active provider or tool operation. Forge shows `Stopping…` until the runner reaches a
-   terminal boundary; it never claims work was undone when an external tool could not be cancelled.
-   The trace preserves the stop request, partial artifacts, and terminal `Stopped by user` outcome.
-   Continuing work requires an explicit new run or a deliberate resume from a recorded safe
-   checkpoint—never an invisible continuation.
+6. **Stopping is a deliberate next capability, not UI theatre.** The run-trace mock shows the
+   intended red `Stop run` control adjacent to `Live`, not inside an overflow menu. Its durable
+   runtime implementation is explicitly deferred until immediately after this UI exercise; see
+   [the backlog](../../backlog.md). When built, it will block queued/future turns, request
+   cancellation of the active provider or tool operation, enter `Stopping…`, and durably record
+   the request, observed result, and known partial effects. It will never imply rollback of
+   external effects. `Pause after step` and `Add guidance` remain separate, non-emergency controls.
+
+## Run control is separate from the editable mission workflow
+
+The future platform-owned **run-control lifecycle** carries only the safety and scheduling facts
+the runner must understand: `Draft`, `Queued`, `Live`, `Pausing`, `Paused`, `Stopping`, `Stopped
+by user`, `Failed`, and `Completed`. These are stable machine semantics, with an auditable event
+for every transition; their display labels may evolve, but their meaning cannot be casually renamed
+or reordered without changing runner behaviour. This durable stop/pause layer is deferred until
+after the UI exercise.
+
+Terminal and uncertain runs are append-only history. A run that is `Stopped by user`, `Failed`, or
+`Interrupted` is never silently replayed or overwritten; recovery creates a new, separately named
+run that points back to the prior one. A future checkpoint feature may offer an explicit resume
+only from a recorded, verified safe boundary. It must never resume an uncertain in-flight provider
+or tool operation.
+
+The mission-owned **workflow** is a separate, versioned definition. It supplies the named stages,
+experts, ordered steps, gates, and transitions visible inside a trace—for example `Propose →
+Approve → Implement`. A project may rename a stage, insert a verification step, or reorder the
+workflow as it learns. That creates a new mission-definition version for future runs. An existing
+run retains the exact workflow snapshot it launched with, so its trace remains understandable even
+after the project evolves.
+
+The workbench renders both layers: a stable run-control status such as `Live` or `Paused`, plus the
+definition-driven current stage and step. It must not encode Janus’s three roles, a fixed number of
+steps, or a particular stage order in the client.
+
+## Current governance scope: composed wrapper
+
+MCL currently composes named missions; it does not have inheritance syntax. The UI exercise can
+therefore model shared governance using a visible, reusable wrapper:
+
+```mcl
+mission GovernedJanus(task) = {
+    PlatformPreflight(task: task)
+    -> Janus(task: task)
+    -> PlatformFinalise
+}
+```
+
+`PlatformPreflight` and `PlatformFinalise` provide an explicit home for reusable checks and
+reporting—such as security review, policy checks, logging, or budget reporting—and the launched
+entry mission is `GovernedJanus`, not raw `Janus`. This answers the composition and extensibility
+question: the wrapper and its stages can evolve like any other versioned mission, while a run pins
+the exact definition it used.
+
+Composition does **not** itself enforce a hard resource limit or cancel an in-flight provider/tool
+call: raw `Janus` could still be invoked directly and a mission step cannot govern the host while it
+is executing. The non-bypassable runtime enforcement layer—durable `StopMission`, cancellation
+source ownership, budget/capability enforcement, and truthful terminal outcomes—is deliberately
+deferred to the next item after this UI exercise.
+
+## Lightweight context provenance
+
+A run records only provenance that Forge can obtain without meaningful extra work: the selected
+paths/directories, the Git revision when a referenced repository has one, and an identifier or
+content hash for an explicitly attached file or generated artifact when that value is already
+available. Forge does **not** crawl or hash an entire workspace merely to launch a run. Credentials,
+secret values, and secret-derived material are never recorded in the manifest or trace.
 
 ## Product and runtime fit
 
