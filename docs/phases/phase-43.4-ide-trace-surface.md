@@ -105,6 +105,22 @@ project context from rewriting the meaning of an earlier trace. On completion a 
 concise outcome—artifacts, verification evidence, and summary—to its Project Mission Control;
 Mission Control remains the human-facing REPL, rather than becoming the full agent transcript.
 
+### Expert dialogue is first-class trace evidence
+
+The Forge Trace must render the actual chronological expert exchange, not merely a sequence of step
+names, statuses, or generated summaries. A conversation-centred Janus run opens in an **expanded
+conversation** reading form: each Proposer, Approver, and Implementer turn displays its full message
+inline with role, outcome, timestamp, and links to its proposal, feedback, and attached artifacts.
+The reader must be able to follow a proposal, revision request, revised proposal, approval, and
+implementation start inside the selected trace document.
+
+A compact timeline is permitted as a density mode for scanning long runs, but it cannot be the only
+way to inspect the exchange and must not send the user to a separate chat surface. Mission Control
+is the enduring human ↔ Forge REPL; the trace is the first-class surface where experts speak with
+one another. The expanded expert-conversation mock in the [project Mission Control and Janus runs
+brainstorm artifact](../brainstorm/mission-conversations/README.md#the-expert-conversation-is-the-traces-primary-evidence)
+is the visual reference for this requirement.
+
 **Lightweight context provenance (decision, 2026-08-30):** A launch snapshot records only values
 available without meaningful extra work: selected paths/directories, a Git revision when a
 referenced repository has one, and an identifier/content hash for an explicitly attached file or
@@ -142,16 +158,31 @@ visible, versioned homes for security/policy checks and reporting, without hardc
 workbench. Composition alone cannot enforce a hard budget or cancel an in-flight host operation;
 the durable runtime enforcement layer is deferred to the next backlog item after this UI exercise.
 
-The vertical activity rail must expose a **Conversations** (or **Missions**) view. At normal
-Desktop/workbench width it opens a named, Rooms-like list of durable records beside the selected
-Forge Trace. The exact list is Project-scoped where appropriate: it may show that Project's named
-runs, while the Project switcher shows `Golang API` and `TypeScript API`. Selecting a row changes
-the active trace; it never hides or merges the other rows. The list is visible by default but
-manually collapsible exactly like VS Code's primary sidebar; the activity rail remains visible to
-restore it. When width is constrained, collapse the inspector before the conversation list; hide
-the list automatically only on genuinely narrow/mobile layouts. The selected trace remains a
-dockable document surface next to source/diff/artifact tabs — it is not a generic chat-room
-rendering.
+The MVP vertical activity rail has exactly three stable entry points. This is an initial contribution
+set, not a closed enum: later Forge capabilities can register an additional rail entry, pane, and
+document surface without changing the Project, Mission Control, or Run model.
+
+1. **Project Explorer** opens the selected local Project's collapsible file/folder navigator:
+   Mission assets, source context, and Project-owned Runs.
+2. **Mission Control** opens that Project's continuing REPL-like conversation. Its active and
+   recent run cards link directly to the selected run's trace.
+3. **Settings** is a gear fixed at the bottom of the rail. It opens an intentionally empty
+   placeholder surface in this MVP.
+
+There is no separate Runs application: the Project owns the runs; Mission Control launches and
+links to them; the selected run opens as a Forge Trace document. At normal desktop/workbench width,
+the Project Explorer and Mission Control panes are visible by default and manually collapsible
+exactly like VS Code's primary sidebar; the activity rail remains visible to restore them. The
+trace remains a dockable document surface next to source/diff/artifact tabs — it is not a generic
+chat-room rendering. Notifications are deferred entirely from this MVP, including a rail icon; a
+future notification inbox can deep-link human-intervention requests to the owning Project, run, and
+trace.
+
+The locked visual language is a light content canvas with a dark navy activity rail. Forge blue and
+cyan communicate navigation, selection, and actions; lime is reserved for positive, approved, or
+healthy state. All journey mocks keep the same rail order—Project Explorer (folder), Mission
+Control (control-tower/crosshair), Settings (gear fixed at bottom)—and give cyan selection treatment
+only to the active surface. Notifications and a standalone Runs icon must not appear in this MVP.
 
 The underlying Project, conversation, and run lists are service queries/projections over canonical
 durable state, never UI-owned second transcripts. See the [project Mission Control and Janus runs
