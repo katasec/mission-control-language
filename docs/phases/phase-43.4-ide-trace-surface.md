@@ -1,11 +1,13 @@
 # Phase 43.4 — IDE trace surface (`forge trace`)
 
-**Status: Design — later workbench iteration, not the initial durable Janus conversation proof.**
-Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md). The initial observational Janus
-group-chat renderer and durable event contract are [43.16](phase-43.16-janus-desktop-local-poc.md);
-this spoke builds the richer workbench as another projection of that same conversation after the
-proof. It depends on [43.3](phase-43.3-mission-attach-point.md)'s completed attach/switch
-foundation, **not** its deferred sdlc-agent catalog work. Promoted from
+**Status: Deferred rich-workbench iteration.** Part of [Phase 43 — Forge
+Desktop](phase-43-forge-desktop.md). The current, deliberately minimal Project/Conversation/Run
+workbench is [43.20](phase-43.20-project-workbench-mvp.md); this spoke is the later iteration for
+docking, code/source context, richer trace navigation, and human gates after that MVP demonstrates
+which additions are needed. The initial observational Janus group-chat renderer and durable event
+contract are [43.16](phase-43.16-janus-desktop-local-poc.md). It depends on
+[43.3](phase-43.3-mission-attach-point.md)'s completed attach/switch foundation, **not** its
+deferred sdlc-agent catalog work. Promoted from
 [docs/brainstorm/forge-trace-ide-surface.md](../brainstorm/forge-trace-ide-surface.md) (design
 conversation, 2026-07-20); that doc is now a stub pointing here.
 
