@@ -27,7 +27,7 @@ internal sealed class ProjectStore(string? projectsRoot = null)
     /// implied reservation. <see cref="Create"/> stays authoritative for the final home.</summary>
     public ProjectHomeProposal Draft(string goal, string? titleOverride, string? homeOverride)
     {
-        var title = DeriveTitle(goal, titleOverride);
+        var title = DeriveTitle(RequiredGoal(goal), titleOverride);
         var home = Blank(homeOverride) ? Path.Combine(_projectsRoot, Slugify(title)) : ValidHome(homeOverride!);
         return new ProjectHomeProposal(home, title);
     }
@@ -39,13 +39,14 @@ internal sealed class ProjectStore(string? projectsRoot = null)
     /// used exactly, because silently relocating it would be worse than refusing.</summary>
     public ProjectRecord Create(string goal, string? titleOverride, string? homeOverride)
     {
-        var title = DeriveTitle(goal, titleOverride);
+        var required = RequiredGoal(goal);
+        var title = DeriveTitle(required, titleOverride);
         var home = Blank(homeOverride) ? null : ValidHome(homeOverride!);
         return home is null
-            ? CreateInFirstFreeHome(Slugify(title), title, goal.Trim())
+            ? CreateInFirstFreeHome(Slugify(title), title, required)
             : IsForgeManagedHome(home)
-                ? CreateInFirstFreeHome(Path.GetFileName(home), title, goal.Trim())
-                : CreateInExactHome(home, title, goal.Trim());
+                ? CreateInFirstFreeHome(Path.GetFileName(home), title, required)
+                : CreateInExactHome(home, title, required);
     }
 
     /// <summary>Opens an existing directory as a Project home. A directory with no manifest is not
@@ -67,18 +68,22 @@ internal sealed class ProjectStore(string? projectsRoot = null)
 
     // --- derivation (pure) ----------------------------------------------------------------------
 
-    private static string DeriveTitle(string goal, string? titleOverride)
+    // The goal gate runs before anything else, including a title override. A supplied title says
+    // what to call the Project, never that the Project may exist without a goal — an override that
+    // could skip this check is exactly how an empty goal would reach a persisted manifest.
+    private static string RequiredGoal(string goal)
     {
-        if (!Blank(titleOverride))
-            return titleOverride!.Trim();
-
         if (Blank(goal))
             throw new ProjectOperationException(ProjectOperationErrorCode.InvalidGoal,
-                "A goal is required to name a Project.");
+                "A goal is required to create a Project.");
 
-        var firstLine = goal.Trim().Split('\n')[0].Trim();
-        return Truncate(firstLine, MaxTitleLength);
+        return goal.Trim();
     }
+
+    private static string DeriveTitle(string goal, string? titleOverride) =>
+        Blank(titleOverride)
+            ? Truncate(goal.Split('\n')[0].Trim(), MaxTitleLength)
+            : titleOverride!.Trim();
 
     // Only when a non-empty title normalizes to nothing usable (for example "***", or a fully
     // non-ASCII title) does the directory name fall back — the title itself is always preserved

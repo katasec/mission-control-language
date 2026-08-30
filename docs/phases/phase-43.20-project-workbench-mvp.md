@@ -232,21 +232,24 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest ✅
+### Task 1 — Project home and local manifest — implemented, awaiting review
 
-**Done and verified 2026-08-30** — see
-[phase-43.20-project-workbench-mvp_completed.md](phase-43.20-project-workbench-mvp_completed.md#task-1--project-home-and-local-manifest-verified-2026-08-30)
-for the build narrative, decisions, and evidence.
+**Not yet approved.** Implementation and local verification are complete; the build narrative and
+evidence are in
+[phase-43.20-project-workbench-mvp_completed.md](phase-43.20-project-workbench-mvp_completed.md#task-1--project-home-and-local-manifest-implemented-awaiting-review).
+Mark this task done only after Codex approves the corrected completion summary and its PR merges.
 
-Live: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic home
-and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole execution
-root. `DefaultWorkspace`, `/transport/session/default`, and `Workspace:InitialRoot` are removed.
+Built: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic
+home and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole
+execution root. `DefaultWorkspace`, `/transport/session/default`, and `Workspace:InitialRoot` are
+removed.
 
 Still true for later tasks: `ProjectDraftRequest` (side-effect free), `ProjectCreateRequest`, and
 `ProjectOpenRequest` all answer with the surface-neutral `ProjectOperationResponse` /
-`ProjectDraftResponse`; `SessionSetupRequest` is replacement-only and enforced in Client Runtime, so
-only project create/open establish a session and root; `MissionControlConversationId` is still
-`null` and Task 2 owns its first write-back.
+`ProjectDraftResponse`; a non-empty goal is required by every one of them, whatever overrides are
+supplied; `SessionSetupRequest` is replacement-only and enforced in Client Runtime, so only project
+create/open establish a session and root; `MissionControlConversationId` is still `null` and Task 2
+owns its first write-back.
 
 ### Task 2 — Durable Project Mission Control
 

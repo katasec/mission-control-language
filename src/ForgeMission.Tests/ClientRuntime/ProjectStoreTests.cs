@@ -53,6 +53,30 @@ public sealed class ProjectStoreTests : IDisposable
         Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
     }
 
+    // A title override says what to call the Project, never that it may exist without a goal.
+    // Returning the override before the goal gate is exactly how an empty goal reached a
+    // persisted manifest.
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\n\t")]
+    public void Draft_EmptyGoal_IsRejectedEvenWithANonEmptyTitleOverride(string goal)
+    {
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.Draft(goal, "Todos API", null));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
+    }
+
+    [Fact]
+    public void Draft_EmptyGoal_IsRejectedWithBothATitleAndAHomeOverride()
+    {
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.Draft("  ", "Todos API", Path.Combine(_profile, "work")));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
+    }
+
     [Fact]
     public void Draft_RelativeHomeOverride_IsRejected()
     {
@@ -146,6 +170,33 @@ public sealed class ProjectStoreTests : IDisposable
 
         Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
         Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\n\t")]
+    public void Create_EmptyGoal_IsRejectedEvenWithANonEmptyTitleOverride_AndCreatesNothing(string goal)
+    {
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.Create(goal, "Todos API", null));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    // The explicit-home branch is the one an empty goal could have reached a manifest through:
+    // it skips slug derivation entirely, so it needs its own proof that the gate still fires.
+    [Fact]
+    public void Create_EmptyGoal_IsRejectedWithATitleAndHomeOverride_AndWritesNoManifest()
+    {
+        var chosen = Path.Combine(_profile, "work", "todos");
+
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.Create("   ", "Todos API", chosen));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
+        Assert.False(File.Exists(Path.Combine(chosen, ProjectStore.ManifestFileName)));
     }
 
     [Fact]

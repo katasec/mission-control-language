@@ -61,6 +61,17 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         Assert.Equal(ProjectOperationErrorCode.InvalidGoal, response.Error!.Code);
     }
 
+    // A title override must not let an empty goal through: the goal gate runs first, on every
+    // surface, because only Client Runtime decides what a valid Project is.
+    [Fact]
+    public async Task Draft_AnEmptyGoalWithATitleOverride_IsStillATypedFailure()
+    {
+        var response = await DraftAsync(new ProjectDraftRequest("  ", "Todos API"));
+
+        Assert.Null(response.Draft);
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, response.Error!.Code);
+    }
+
     // --- create -----------------------------------------------------------------------------
 
     [Fact]
@@ -101,6 +112,28 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
 
         var reopened = await OpenAsync(new ProjectOpenRequest(first.Session.Project.Home));
         Assert.Equal(first.Session.Project.ProjectId, reopened.Session!.Project.ProjectId);
+    }
+
+    [Fact]
+    public async Task Create_AnEmptyGoal_IsATypedFailure_AndWritesNoProject()
+    {
+        var response = await CreateAsync(new ProjectCreateRequest("   "));
+
+        Assert.Equal(ProjectOperationOutcome.Failed, response.Outcome);
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, response.Error!.Code);
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    [Fact]
+    public async Task Create_AnEmptyGoalWithTitleAndHomeOverrides_IsStillATypedFailure()
+    {
+        var chosen = Path.Combine(_profile, "work", "todos");
+
+        var response = await CreateAsync(new ProjectCreateRequest("  ", "Todos API", chosen));
+
+        Assert.Equal(ProjectOperationOutcome.Failed, response.Outcome);
+        Assert.Equal(ProjectOperationErrorCode.InvalidGoal, response.Error!.Code);
+        Assert.False(File.Exists(Path.Combine(chosen, "forge.project.json")));
     }
 
     // --- open -------------------------------------------------------------------------------

@@ -4,7 +4,11 @@
 > ([phase-43.20-project-workbench-mvp.md](phase-43.20-project-workbench-mvp.md)) keeps only the
 > locked design later tasks still build against, plus a one-line status per completed task.
 
-## Task 1 — Project home and local manifest (verified 2026-08-30)
+## Task 1 — Project home and local manifest (implemented, awaiting review)
+
+> **Not approved yet.** Everything below was built and observed locally on 2026-08-30, but the task
+> is not "done" until Codex approves the completion summary and its PR merges. A first review
+> rejected it for a P1 goal-validation bug (recorded under *Decisions made while building*).
 
 ### What shipped
 
@@ -47,11 +51,19 @@ no correct surface ever trips, so it fails loudly rather than becoming a rendera
 already carries a runtime-derived home and title, so the extra round-trip would add nothing; the
 plan's second draft call was dropped. No derivation moved into Presentation.
 
+**A title override must never skip the goal gate (P1, found in Codex review).**
+`DeriveTitle` returned a non-empty title override *before* validating the goal, so
+`Create("", "Todos API", ...)` and the matching draft accepted an empty goal — and create would have
+persisted a manifest whose `goal` was empty, breaking the locked "goal is never empty" rule. The
+gate is now a separate `RequiredGoal` guard run first by both `Draft` and `Create`, before any
+override is consulted. Proven red-then-green: the eight new store tests fail against the previous
+implementation and pass against the fix, with matching surface-free contract coverage.
+
 **Rootedness is checked before normalizing.** `Path.GetFullPath` silently resolves a relative path
 against the Client Runtime's working directory, which is never a home a caller meant to name — the
 first `Draft_RelativeHomeOverride_IsRejected` run failed on exactly that.
 
-### Verification
+### Local verification (pre-approval)
 
 | Observation | Result |
 |---|---|
