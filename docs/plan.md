@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** Project Workbench MVP design is ready; begin with the local Project home and manifest. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** the local Project home and manifest are live; continue the Project Workbench MVP with durable Project Mission Control. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Project Workbench MVP design ready; implementation pending |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Project Workbench MVP in progress; local Project record live |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
 
 ## Design docs

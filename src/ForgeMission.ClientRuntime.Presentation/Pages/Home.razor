@@ -6,13 +6,70 @@
 <div class="shell">
     <header class="shell-header">
         <h1>Forge</h1>
-        <p class="subtitle">Local Client Runtime</p>
-        @if (workspaceRoot is not null)
+        <p class="subtitle">@(project?.Title ?? "Local Client Runtime")</p>
+        @if (project is not null)
         {
-            <p class="workspace-path">@workspaceRoot</p>
+            <p class="workspace-path">@project.Home</p>
         }
     </header>
 
+@if (project is null)
+{
+    <main class="launcher">
+        <section class="launcher-panel">
+            <h2>Start a Project</h2>
+            <label class="launcher-field">
+                <span>What do you want to build?</span>
+                <input class="launcher-goal" @bind="goalInput" @bind:event="oninput" @onkeydown="OnGoalKeyDown"
+                       placeholder="Describe the goal" disabled="@busy" />
+            </label>
+
+            @* Forge derives the name and location: this page only shows what the Client Runtime
+               returned and sends back whatever the user leaves in these fields. *@
+            @if (drafted)
+            {
+                <label class="launcher-field">
+                    <span>Project name</span>
+                    <input class="launcher-title" @bind="titleInput" @bind:event="oninput" disabled="@busy" />
+                </label>
+                <label class="launcher-field">
+                    <span>Location</span>
+                    <input class="launcher-home" @bind="homeInput" @bind:event="oninput" disabled="@busy" />
+                </label>
+                <button class="launcher-create" @onclick="CreateProjectAsync" disabled="@busy">
+                    @(busy ? "Working…" : "Create Project")
+                </button>
+            }
+            else
+            {
+                <button class="launcher-continue" @onclick="DraftProjectAsync" disabled="@busy">
+                    @(busy ? "Working…" : "Continue")
+                </button>
+            }
+        </section>
+
+        <section class="launcher-panel">
+            <h2>Or open an existing folder</h2>
+            <label class="launcher-field">
+                <span>Folder</span>
+                <input class="launcher-open-path" @bind="openPathInput" @bind:event="oninput" @onkeydown="OnOpenKeyDown"
+                       placeholder="/path/to/project" disabled="@busy" />
+            </label>
+            <button class="launcher-open" @onclick="OpenProjectAsync" disabled="@busy">Open</button>
+        </section>
+
+        @if (goalRequired)
+        {
+            <p class="launcher-notice">That folder is not a Forge Project yet. Enter a goal above to create one there.</p>
+        }
+        @if (launcherError is not null)
+        {
+            <p class="launcher-error">@launcherError</p>
+        }
+    </main>
+}
+else
+{
     <main class="turns">
         @if (connectionError is not null)
         {
@@ -42,9 +99,7 @@
         {
             @if (turns.Count == 0)
             {
-                <p class="empty-state">
-                    @(workspaceRoot is null ? "Add a folder to start." : "Describe what you want to build.")
-                </p>
+                <p class="empty-state">Describe what you want to build.</p>
             }
             @foreach (var turn in turns)
             {
@@ -79,29 +134,11 @@
     </main>
 
     <footer class="composer-bar">
-        @if (showAddFolderMenu)
-        {
-            <div class="add-folder-menu">
-                <label>
-                    Workspace folder
-                    <input @bind="folderInput" @bind:event="oninput" @onkeydown="OnFolderKeyDown"
-                           placeholder="/path/to/project" disabled="@settingUpSession" />
-                </label>
-                <button class="menu-confirm" @onclick="AddFolderAsync" disabled="@settingUpSession">
-                    @(settingUpSession ? "Setting up…" : "Use this folder")
-                </button>
-                @if (folderError is not null)
-                {
-                    <p class="menu-error">@folderError</p>
-                }
-            </div>
-        }
         <div class="composer">
-            <button class="composer-plus" title="Add folder" @onclick="ToggleAddFolderMenu">+</button>
             <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
                    @ref="composerInput"
                    placeholder="@ComposerPlaceholder"
-                   disabled="@(session is null || sending || PromptsBlocked)" />
+                   disabled="@(sessionId is null || sending || PromptsBlocked)" />
             <button class="mission-trigger" aria-expanded="@showMissionMenu" aria-haspopup="true"
                     @onclick="ToggleMissionMenu" disabled="@sending">
                 <span>@selectedMission.Name</span>
@@ -126,6 +163,7 @@
             </div>
         }
     </footer>
+}
 </div>
 
 <style>
@@ -164,12 +202,15 @@
     .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
     .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
 
-    .add-folder-menu { position: absolute; bottom: 100%; left: var(--space-5); margin-bottom: var(--space-2); min-width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
-    .add-folder-menu label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
-    .add-folder-menu input { height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13px; }
-    .menu-confirm { height: 30px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
-    .menu-confirm:disabled { background: var(--surface-active); color: var(--text-subtle); }
-    .menu-error { margin: 0; color: var(--danger); font-size: 12px; }
+    .launcher { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); align-items: center; }
+    .launcher-panel { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); }
+    .launcher-panel h2 { margin: 0; font-size: 15px; font-weight: 600; }
+    .launcher-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+    .launcher-field input { height: 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0 var(--space-2); font-size: 13.5px; background: var(--bg); color: var(--text); }
+    .launcher-continue, .launcher-create, .launcher-open { align-self: flex-start; height: 32px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .launcher-continue:disabled, .launcher-create:disabled, .launcher-open:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
+    .launcher-notice { max-width: 460px; margin: 0; color: var(--text-muted); font-size: 12.5px; text-align: center; }
+    .launcher-error { max-width: 460px; margin: 0; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
 
     .mission-trigger { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
     .mission-trigger:hover { background: var(--surface-hover); }
@@ -183,13 +224,21 @@
 </style>
 
 @code {
-    private string? workspaceRoot;
-    private SessionSetupResponse? session;
+    // The open Project and its one Client Runtime session. Both are null until a project
+    // create/open contract returns — Desktop boot establishes neither.
+    private ProjectSummary? project;
+    private string? sessionId;
 
-    private bool showAddFolderMenu;
-    private string folderInput = string.Empty;
-    private bool settingUpSession;
-    private string? folderError;
+    // Launcher state. Every value shown here came from the Client Runtime: this page derives no
+    // title, slug, or home, and holds no filesystem rule.
+    private string goalInput = string.Empty;
+    private string titleInput = string.Empty;
+    private string homeInput = string.Empty;
+    private string openPathInput = string.Empty;
+    private bool drafted;
+    private bool goalRequired;
+    private bool busy;
+    private string? launcherError;
 
     private AttachableMission selectedMission = AttachableMissions.Default;
     private bool showMissionMenu;
@@ -225,15 +274,11 @@
     // PromptResponse itself, so it stays usable while disconnected.
     private bool PromptsBlocked => IsDurable && connectionError is not null;
 
-    private string ComposerPlaceholder => (workspaceRoot, PromptsBlocked) switch
-    {
-        (null, _) => "Add a folder to start",
-        (_, true) => "Reconnect to continue this conversation",
-        _ => "Describe what you want to build",
-    };
+    private string ComposerPlaceholder =>
+        PromptsBlocked ? "Reconnect to continue this conversation" : "Describe what you want to build";
 
     private bool CanSend =>
-        session is not null && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
+        sessionId is not null && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
 
     // The active turn's activity for the shared renderer (43.18), from facts this page already
     // holds. Tool work outranks streaming text while a delta and a running tool overlap.
@@ -249,41 +294,9 @@
         return new(selectedMission.Name, ConversationActivityKind.Thinking, null);
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        var view = await BeginViewAsync();
-        settingUpSession = true;
-
-        try
-        {
-            var initial = await ClientRuntime.SendAsync<DefaultWorkspaceSessionRequest, DefaultWorkspaceSessionResponse>(
-                new DefaultWorkspaceSessionRequest(selectedMission.WireMission, selectedMission.Runtime), view.Token);
-            if (!IsCurrent(view.Generation))
-                return;
-
-            session = new SessionSetupResponse(initial.SessionId, initial.AvailableCapabilities);
-            workspaceRoot = initial.WorkspaceRoot;
-            focusComposerAfterRender = true;
-            StartEventLoop(view);
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected: the view was replaced or disposed before the default session resolved.
-        }
-        catch (Exception exception)
-        {
-            if (!IsCurrent(view.Generation))
-                return;
-
-            folderError = exception.Message;
-            showAddFolderMenu = true;
-        }
-        finally
-        {
-            if (IsCurrent(view.Generation))
-                settingUpSession = false;
-        }
-    }
+    // Deliberately no OnInitializedAsync: opening Desktop issues no request, creates no session or
+    // event subscription, and gives the Client Runtime no reason to touch the filesystem. The first
+    // channel call is the one a person triggers by entering a goal or naming a folder.
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -294,61 +307,129 @@
         await composerInput.FocusAsync();
     }
 
-    private void ToggleAddFolderMenu()
+    private async Task OnGoalKeyDown(KeyboardEventArgs e)
     {
-        showAddFolderMenu = !showAddFolderMenu;
-        folderError = null;
+        if (e.Key != "Enter")
+            return;
+
+        if (drafted)
+            await CreateProjectAsync();
+        else
+            await DraftProjectAsync();
     }
 
-    private async Task OnFolderKeyDown(KeyboardEventArgs e)
+    private async Task OnOpenKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
-            await AddFolderAsync();
+            await OpenProjectAsync();
     }
 
-    private async Task AddFolderAsync()
+    // Asks the Client Runtime what it would name this Project and where it would put it. The call
+    // creates nothing; its answer is shown in editable fields and sent straight back to create.
+    private async Task DraftProjectAsync()
     {
-        if (string.IsNullOrWhiteSpace(folderInput))
+        if (string.IsNullOrWhiteSpace(goalInput))
         {
-            folderError = "Enter a folder path.";
+            launcherError = "Enter a goal to start.";
             return;
         }
 
-        var requestedFolder = folderInput;
+        var response = await RunLauncherOperationAsync(token =>
+            ClientRuntime.SendAsync<ProjectDraftRequest, ProjectDraftResponse>(
+                new ProjectDraftRequest(goalInput, NullIfBlank(titleInput), NullIfBlank(homeInput)), token));
+        if (response?.Draft is not { } draft)
+        {
+            launcherError = response?.Error?.Message ?? launcherError;
+            return;
+        }
+
+        titleInput = draft.ProposedTitle;
+        homeInput = draft.HomePath;
+        drafted = true;
+    }
+
+    private async Task CreateProjectAsync()
+    {
+        var response = await RunLauncherOperationAsync(token =>
+            ClientRuntime.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
+                new ProjectCreateRequest(goalInput, NullIfBlank(titleInput), NullIfBlank(homeInput),
+                    selectedMission.WireMission, selectedMission.Runtime), token));
+        if (response is not null)
+            await ApplyProjectOutcomeAsync(response);
+    }
+
+    private async Task OpenProjectAsync()
+    {
+        if (string.IsNullOrWhiteSpace(openPathInput))
+        {
+            launcherError = "Enter a folder to open.";
+            return;
+        }
+
+        var response = await RunLauncherOperationAsync(token =>
+            ClientRuntime.SendAsync<ProjectOpenRequest, ProjectOperationResponse>(
+                new ProjectOpenRequest(openPathInput, selectedMission.WireMission, selectedMission.Runtime), token));
+        if (response is not null)
+            await ApplyProjectOutcomeAsync(response);
+    }
+
+    // One place decides what a project outcome means for this page. GoalRequired is not a failure:
+    // the folder simply has no manifest yet, so the same goal-confirmation fields reopen with the
+    // Client Runtime's own proposal already filled in.
+    private async Task ApplyProjectOutcomeAsync(ProjectOperationResponse response)
+    {
+        switch (response.Outcome)
+        {
+            case ProjectOperationOutcome.Created or ProjectOperationOutcome.Opened when response.Session is not null:
+                await EnterProjectAsync(response.Session);
+                break;
+            case ProjectOperationOutcome.GoalRequired when response.Proposal is not null:
+                goalRequired = true;
+                drafted = true;
+                titleInput = response.Proposal.ProposedTitle;
+                homeInput = response.Proposal.HomePath;
+                break;
+            default:
+                launcherError = response.Error?.Message ?? "The Client Runtime returned no Project.";
+                break;
+        }
+    }
+
+    private async Task EnterProjectAsync(ProjectSession opened)
+    {
         var view = await BeginViewAsync();
-        settingUpSession = true;
-        folderError = null;
+        project = opened.Project;
+        sessionId = opened.SessionId;
+        focusComposerAfterRender = true;
+        StartEventLoop(view);
+    }
+
+    // The launcher's single busy/error boundary. An expected Project failure arrives as a typed
+    // response rather than an exception, so only a transport/process fault lands in the catch.
+    private async Task<TResponse?> RunLauncherOperationAsync<TResponse>(
+        Func<CancellationToken, Task<TResponse>> operation) where TResponse : class
+    {
+        busy = true;
+        launcherError = null;
         StateHasChanged();
 
         try
         {
-            var setup = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(requestedFolder, selectedMission.WireMission, selectedMission.Runtime), view.Token);
-            if (!IsCurrent(view.Generation))
-                return;
-
-            session = setup;
-            workspaceRoot = requestedFolder;
-            showAddFolderMenu = false;
-            StartEventLoop(view);
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected: a newer folder/mission replaced this one while its setup was in flight.
+            return await operation(CancellationToken.None);
         }
         catch (Exception exception)
         {
-            if (!IsCurrent(view.Generation))
-                return;
-
-            folderError = exception.Message;
+            launcherError = exception.Message;
+            return null;
         }
         finally
         {
-            if (IsCurrent(view.Generation))
-                settingUpSession = false;
+            busy = false;
+            StateHasChanged();
         }
     }
+
+    private static string? NullIfBlank(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     private void ToggleMissionMenu() => showMissionMenu = !showMissionMenu;
 
@@ -358,11 +439,15 @@
     // Janus session's background tail instead of abandoning it (Phase 43.16 Task 7).
     private async Task SelectMissionAsync(AttachableMission mission)
     {
-        var previousSessionId = session?.SessionId;
+        var previousSessionId = sessionId;
+        var openProject = project;
         selectedMission = mission;
         showMissionMenu = false;
 
-        if (workspaceRoot is null)
+        // Replacement only: this request carries the open Project's own home and the session it
+        // replaces. With no Project open there is nothing to replace, and the Client Runtime would
+        // reject the call anyway — a first root can only come from project create/open.
+        if (openProject is null || previousSessionId is null)
             return;
 
         var view = await BeginViewAsync();
@@ -370,12 +455,14 @@
         try
         {
             var setup = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(workspaceRoot, selectedMission.WireMission, selectedMission.Runtime, previousSessionId),
+                new SessionSetupRequest(openProject.Home, previousSessionId,
+                    selectedMission.WireMission, selectedMission.Runtime),
                 view.Token);
             if (!IsCurrent(view.Generation))
                 return;
 
-            session = setup;
+            project = openProject;
+            sessionId = setup.SessionId;
             StartEventLoop(view);
         }
         catch (OperationCanceledException)
@@ -397,7 +484,7 @@
 
     private async Task SendAsync()
     {
-        if (!CanSend || session is null || viewCts is null)
+        if (!CanSend || sessionId is null || viewCts is null)
             return;
 
         var view = new ViewOperation(viewGeneration, viewCts.Token);
@@ -420,7 +507,7 @@
         try
         {
             var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
-                new PromptRequest(session.SessionId, prompt), view.Token);
+                new PromptRequest(sessionId, prompt), view.Token);
             if (!IsCurrent(view.Generation))
                 return;
 
@@ -461,7 +548,7 @@
         try
         {
             var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
-                new PromptRequest(session!.SessionId, prompt), view.Token);
+                new PromptRequest(sessionId!, prompt), view.Token);
             if (response.IsError && IsCurrent(view.Generation))
                 conversationError = response.Content;
         }
@@ -499,7 +586,7 @@
         viewGeneration++;
         viewCts = new CancellationTokenSource();
 
-        session = null;
+        sessionId = null;
         turns.Clear();
         activeTurn = null;
         openToolRow = null;
@@ -586,7 +673,7 @@
 
     private void ApplyEvent(ClientRuntimeEvent evt)
     {
-        if (evt.SessionId != session?.SessionId)
+        if (evt.SessionId != sessionId)
             return;
 
         if (IsDurable)

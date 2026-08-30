@@ -7,8 +7,8 @@
 
 ## Outcome
 
-A person opens Forge into their most recent local **Project**, or supplies one goal to create a
-named Project. The Project owns a local manifest, mission assets, attached context, one durable
+A person starts at a zero-authority Project home, opens an existing local **Project**, or supplies
+one goal to create a named Project. The Project owns a local manifest, mission assets, attached context, one durable
 Mission Control conversation, and its named runs. It is not a Git repository and may refer to
 zero, one, or many repositories.
 
@@ -64,6 +64,54 @@ later multi-root capability is not inferred by this task.
 
 `~/source/repos/0001` and successors are removed. Desktop does not create a directory, Client
 Runtime session, or tool authority merely because the app opened.
+
+### Manifest v1 schema and launcher boundary
+
+Task 1 writes the complete v1 shape so later tasks add facts to empty collections instead of
+silently changing the local schema:
+
+| Field | Type / initial value | Ownership rule |
+|---|---|---|
+| `schemaVersion` | `1` | Reject a newer version; migrations are explicit. |
+| `projectId`, `title`, `goal` | `Guid`, non-empty strings | Stable local Project identity and user intent. |
+| `assets` | `ProjectAssetDescriptor[]`, initially empty | Every descriptor is `{ kind: Mission \| Expert \| LockFile, relativePath, contentHash? }`; paths are normalized, home-relative, and never escape the Project home. |
+| `selectedMission` | `ProjectMissionReference`, initially `{ origin: BuiltIn, reference: Janus, digest: null }` | `origin` is `BuiltIn`, `Local`, or `Oci`; a local reference is home-relative, an OCI reference has a pinned digest, and the local content hash belongs to a run snapshot rather than the mutable selection. |
+| `attachedContext` | `ProjectContextDescriptor[]`, initially empty | Each descriptor is `{ id, kind: SourceRoot \| File \| Artifact, displayName, reference, contentHash? }`. `reference` is an absolute local path only for `SourceRoot`/`File`; for `Artifact` it is an opaque artifact ID. These values never cross the Conversation boundary. |
+| `missionControlConversationId` | nullable `Guid`, initially `null` | Task 2 writes the server-issued ID after durable acceptance. |
+| `runs` | `ProjectRunMetadata[]`, initially empty | Local projection only; Conversation remains canonical for events and status. |
+
+`ProjectRunMetadata` is `{ runId, title, status, predecessorRunId?, launchSnapshot }`.
+`launchSnapshot` is immutable and contains `{ mission, localMissionContentHash?, resolvedExperts[],
+context[] , gitRevision?, artifacts[] }`, where a resolved expert is `{ reference, digest }`, a
+context snapshot is `{ contextId, contentHash? }`, and an artifact snapshot is `{ artifactId,
+contentHash? }`. Task 4 writes this once; it must not crawl a workspace to populate optional
+hashes or revisions. The `status` value is the durable `ConversationRunStatus` projection; Task 6
+extends that shared lifecycle with `Stopping` and `StoppedByUser` rather than creating a local
+parallel enum.
+
+The Task 1 launcher deliberately has no profile-level recents index or automatic resume: boot
+performs no Project open, session creation, or capability authorization. It offers create-from-goal
+and explicit existing-directory open. A later recent-project experience requires its own bounded
+design; it is not inferred by scanning directories or adding a hidden catalog here.
+
+`goal` is never empty in a persisted manifest. Choosing an existing directory first discovers its
+manifest. If it is absent, the launcher keeps that directory as the proposed home and uses the same
+goal-confirmation flow to create the manifest there; it does not manufacture an empty-goal Project.
+
+Project create/open share one surface-neutral `ProjectOperationResponse`: `Created`, `Opened`,
+`GoalRequired`, or `Failed`. A successful response carries `ProjectSession`; `GoalRequired`
+carries `ProjectHomeProposal`; and `Failed` carries the named `{ code, message }`
+`ProjectOperationError`. Expected domain failures (invalid goal/home, missing home, invalid/newer
+manifest, path validation, and exhausted collision attempts) use this response rather than
+surface-specific exception handling. Unexpected transport/process failures may still fail the
+transport normally.
+
+`ProjectDraftRequest` is a separate, side-effect-free Client Runtime contract used after the user
+enters a goal to show the derived title and home before confirmation. It accepts the goal plus
+optional title/home overrides and returns the values to display; it creates no directory, manifest,
+session, capability authority, or collision reservation. Create recomputes the draft and performs
+the authoritative collision-safe write, so a concurrent Project creation may produce a different
+final suffix. Desktop and TUI use this same draft contract; neither derives a Project value itself.
 
 ### Project assets and expert dependencies
 
@@ -166,6 +214,7 @@ known partial effects when present and never offers a resume button.
 | Cross-context access | No service queries another context's store. Project metadata is local; Conversation state is reached solely through named Conversation commands/queries. |
 | Type / reversal | Conversation ownership and run-control audit semantics are Type 1 and remain in the existing Conversation context. Local manifest location, trace layout, and the run-control transport implementation are Type 2 behind named contracts. Removing the local manifest feature removes only Client Runtime files; it does not alter durable ownership. |
 | Failure ownership | Manifest store reports invalid/missing local Project data; ConversationHost reports invalid/duplicate control commands; Worker reports observed cancellation; Client Runtime reports local tool cancellation; Presentation renders those facts. |
+| Surface portability | Desktop and a future TUI are interchangeable Presentation consumers. Every Project action is a named `IClientRuntimeChannel`/transport contract with the same result and failure semantics; Desktop-only layout/focus details own no business behaviour. |
 | Engineering philosophy | One small manifest, one control-conversation owner, one event stream, and two named controls replace anonymous folders and UI-only buttons. No catalog browser, layout engine, or project service is introduced. |
 | Proof | Unit/contract tests cover manifest collision and migration, command idempotency, trace replay/deduplication, safe-boundary ordering, and stop outcomes. An isolated Kind/Desktop run proves a named Project opens, a Janus Trace replays exact messages, guidance applies after a safe boundary, and Stop reaches a truthful terminal status. |
 
@@ -183,23 +232,21 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest
+### Task 1 — Project home and local manifest ✅
 
-Create the local Project record and replace `DefaultWorkspace`'s numbered directory bootstrap.
+**Done and verified 2026-08-30** — see
+[phase-43.20-project-workbench-mvp_completed.md](phase-43.20-project-workbench-mvp_completed.md#task-1--project-home-and-local-manifest-verified-2026-08-30)
+for the build narrative, decisions, and evidence.
 
-- Add a source-generated, versioned `forge.project.json` model/store in
-  `ForgeMission.ClientRuntime`; keep all filesystem access there and expose project open/create
-  through `IClientRuntimeChannel`/transport DTOs.
-- The first-use Presentation asks only for a goal, derives the default title/home, and creates the
-  manifest on confirmation. Existing-folder open creates/discovers the manifest in that folder.
-- Use the Project home as the initial `IWorkspace` root only after a Project has been opened; do not
-  create a Client Runtime session or directory at Desktop boot.
-- Keep `MissionControlConversationId` optional until Task 2; no local transcript is written.
+Live: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic home
+and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole execution
+root. `DefaultWorkspace`, `/transport/session/default`, and `Workspace:InitialRoot` are removed.
 
-**Done when:** an empty profile has no new directory after opening Desktop; creating `Todos API`
-creates one deterministic Project home and manifest, including collision handling; reopening it
-uses that home as the sole local execution root; the old numbered-workspace tests are replaced;
-Client Runtime/Presentation boundary tests plus the normal solution build/test suite pass.
+Still true for later tasks: `ProjectDraftRequest` (side-effect free), `ProjectCreateRequest`, and
+`ProjectOpenRequest` all answer with the surface-neutral `ProjectOperationResponse` /
+`ProjectDraftResponse`; `SessionSetupRequest` is replacement-only and enforced in Client Runtime, so
+only project create/open establish a session and root; `MissionControlConversationId` is still
+`null` and Task 2 owns its first write-back.
 
 ### Task 2 — Durable Project Mission Control
 

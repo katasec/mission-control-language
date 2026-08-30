@@ -70,7 +70,9 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposabl
     private static string RouteFor<TRequest>(TRequest request) => request switch
     {
         SessionSetupRequest => "transport/session/setup",
-        DefaultWorkspaceSessionRequest => "transport/session/default",
+        ProjectDraftRequest => "transport/project/draft",
+        ProjectCreateRequest => "transport/project/create",
+        ProjectOpenRequest => "transport/project/open",
         CapabilityDispatchRequest => "transport/capability/dispatch",
         PromptRequest => "transport/prompt",
         ConfirmationResponseRequest => "transport/confirmation/respond",

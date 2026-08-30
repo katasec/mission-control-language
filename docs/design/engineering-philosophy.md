@@ -92,6 +92,21 @@ For a **design or plan** review, a single FAIL stops handoff and must be resolve
 an **implementation** review, a single FAIL rejects the diff even if its tests pass. This is a
 quality gate, not a reminder or a suggestion.
 
+## Presentation-surface parity gate
+
+**Mandatory for every new or changed Desktop product action.** Desktop and TUI are Presentation
+surfaces, not separate product-capability owners. Before approving a design, implementation plan,
+or completion summary, record this answer with **PASS** or **FAIL**:
+
+| Required answer | Passing evidence |
+|---|---|
+| Could a TUI invoke this same product action with the same authorization, outcome, and failure semantics? | The action is a named Client Runtime contract; its business rule, filesystem/process work, and capability authorization live below Presentation. A surface-neutral contract test proves the path without Desktop/Blazor/Host types. |
+
+Surface-specific layout, keyboard handling, focus, accessibility, and window behavior do not need
+a TUI equivalent. A rule that affects a Project, mission, run, capability, or durable conversation
+does. A **FAIL** returns the work to design; adding a Desktop-only workaround or moving the rule
+into a UI component is not an exception.
+
 ## Working consequences
 
 - Keep command entry points thin and put business behaviour behind focused services.

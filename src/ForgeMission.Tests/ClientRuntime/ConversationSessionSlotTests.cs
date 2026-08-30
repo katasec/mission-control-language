@@ -24,15 +24,14 @@ public sealed class ConversationSessionSlotTests : IDisposable
     [Fact]
     public async Task PromptThatObtainedAReplacedSession_IsRejected_WithNoHostCallOrCreatedSession()
     {
-        var oldSession = await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
+        var oldSession = _store.CreateForProject(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
         var handler = new RecordingConversationHostHandler(Guid.NewGuid(), Guid.NewGuid());
         var factoryCalled = false;
 
         // Simulates the exact race: a /transport/prompt request already obtained oldSession via
         // ClientRuntimeSessionStore.TryGet (this same reference) but had not yet called
         // SendPromptAsync when the mission switch below fully replaces (and disposes) it.
-        await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation,
-            replacesSessionId: oldSession.Id);
+        await _store.ReplaceAsync(oldSession.Id, _workspace, "Janus", SessionRuntimeKind.DurableConversation);
 
         // The paused prompt now "resumes" and finally calls SendPromptAsync on the replaced session.
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -54,7 +53,7 @@ public sealed class ConversationSessionSlotTests : IDisposable
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
         var handler = new RecordingConversationHostHandler(conversationId, runId);
-        var session = await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
+        var session = _store.CreateForProject(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
         var factoryCallCount = 0;
 
         ConversationRuntimeSession Factory()
@@ -88,7 +87,7 @@ public sealed class ConversationSessionSlotTests : IDisposable
     public async Task DisposeAsync_CalledTwiceConcurrently_DoesNotThrow_AndDisposesTheUnderlyingSessionOnlyOnce()
     {
         var handler = new RecordingConversationHostHandler(Guid.NewGuid(), Guid.NewGuid());
-        var session = await _store.CreateAsync(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
+        var session = _store.CreateForProject(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
         await session.Conversation.SendPromptAsync(
             () => NewSession(handler, session.Id), "Build the thing.", CancellationToken.None);
 

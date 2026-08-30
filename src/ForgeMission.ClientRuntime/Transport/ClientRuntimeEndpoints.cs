@@ -10,21 +10,71 @@ internal static class ClientRuntimeEndpoints
 {
     public static void MapClientRuntimeTransport(this WebApplication app)
     {
+        // Replacement only (43.20 task 1): this route can never establish a Project's first
+        // session or root. The store rejects a replacement that does not name the current session
+        // or that changes its root, and the rejection is a 400 rather than a rendered outcome —
+        // no correct surface, Desktop or TUI, ever sends one.
         app.MapPost("/transport/session/setup", async (SessionSetupRequest request, ClientRuntimeSessionStore sessions) =>
         {
-            var session = await sessions.CreateAsync(
-                request.WorkspaceRoot, request.Mission, request.Runtime, request.ReplacesSessionId);
-            return Results.Ok(new SessionSetupResponse(session.Id,
-                session.Workspace.Capabilities?.AvailableCapabilities ?? []));
+            try
+            {
+                var session = await sessions.ReplaceAsync(
+                    request.ReplacesSessionId, request.WorkspaceRoot, request.Mission, request.Runtime);
+                return Results.Ok(new SessionSetupResponse(session.Id,
+                    session.Workspace.Capabilities?.AvailableCapabilities ?? []));
+            }
+            catch (SessionReplacementRejectedException exception)
+            {
+                return Results.BadRequest(exception.Message);
+            }
         });
 
-        app.MapPost("/transport/session/default", async (DefaultWorkspaceSessionRequest request,
-            ClientRuntimeSessionStore sessions) =>
+        // Side-effect free: it answers "what would you name and where would you put it" and
+        // nothing else. Create recomputes the same derivation and owns the collision-safe write.
+        app.MapPost("/transport/project/draft", (ProjectDraftRequest request, ProjectStore projects) =>
         {
-            var session = await sessions.CreateDefaultAsync(request.Mission, request.Runtime);
-            return Results.Ok(new DefaultWorkspaceSessionResponse(session.Id,
-                session.Workspace.Capabilities?.AvailableCapabilities ?? [],
-                session.Workspace.Root!));
+            try
+            {
+                return Results.Ok(new ProjectDraftResponse(
+                    projects.Draft(request.Goal, request.TitleOverride, request.HomeOverride), Error: null));
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(new ProjectDraftResponse(Draft: null, ToError(exception)));
+            }
+        });
+
+        app.MapPost("/transport/project/create", (ProjectCreateRequest request,
+            ProjectStore projects, ClientRuntimeSessionStore sessions) =>
+        {
+            try
+            {
+                var project = projects.Create(request.Goal, request.Title, request.HomePath);
+                return Results.Ok(new ProjectOperationResponse(ProjectOperationOutcome.Created,
+                    OpenSession(sessions, project, request.Mission, request.Runtime)));
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(Failed(exception));
+            }
+        });
+
+        app.MapPost("/transport/project/open", (ProjectOpenRequest request,
+            ProjectStore projects, ClientRuntimeSessionStore sessions) =>
+        {
+            try
+            {
+                var result = projects.Open(request.HomePath);
+                return Results.Ok(result.Project is { } project
+                    ? new ProjectOperationResponse(ProjectOperationOutcome.Opened,
+                        OpenSession(sessions, project, request.Mission, request.Runtime))
+                    : new ProjectOperationResponse(ProjectOperationOutcome.GoalRequired,
+                        Proposal: result.GoalRequired));
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(Failed(exception));
+            }
         });
 
         app.MapPost("/transport/capability/dispatch", async (
@@ -131,6 +181,27 @@ internal static class ClientRuntimeEndpoints
             }
         });
     }
+
+    // The Project home is the sole local execution root, and this is the only place a project
+    // operation turns into a session — so a capability authority never exists before a Project does.
+    private static ProjectSession OpenSession(
+        ClientRuntimeSessionStore sessions, ProjectRecord project, string? mission, SessionRuntimeKind runtime)
+    {
+        var session = sessions.CreateForProject(project.Home, mission, runtime);
+        return new ProjectSession(session.Id,
+            session.Workspace.Capabilities?.AvailableCapabilities ?? [],
+            new ProjectSummary(project.Manifest.ProjectId, project.Manifest.Title,
+                project.Manifest.Goal, project.Home));
+    }
+
+    // Expected Project domain failures become one typed response every surface renders the same
+    // way. Unexpected faults are deliberately not caught here: they fail the transport instead of
+    // being laundered into a domain code.
+    private static ProjectOperationResponse Failed(ProjectOperationException exception) =>
+        new(ProjectOperationOutcome.Failed, Error: ToError(exception));
+
+    private static ProjectOperationError ToError(ProjectOperationException exception) =>
+        new(exception.Code, exception.Message);
 
     internal static bool UsesCloudMissionRuntime(string? mode) =>
         mode is null || mode.Equals("cloud", StringComparison.OrdinalIgnoreCase);

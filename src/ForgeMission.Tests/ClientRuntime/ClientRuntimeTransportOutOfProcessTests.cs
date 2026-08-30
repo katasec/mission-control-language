@@ -57,69 +57,13 @@ public sealed class ClientRuntimeTransportOutOfProcessTests : IDisposable
         return new ProcessResult(process.ExitCode, await standardOutput, await standardError);
     }
 
-    private static string RepositoryRoot()
-    {
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
-        {
-            if (File.Exists(Path.Combine(directory.FullName, "src", "ForgeMission.slnx")))
-                return directory.FullName;
-        }
-
-        throw new InvalidOperationException("Could not locate the repository root.");
-    }
-
-    private static string HostAssembly() => Path.Combine(
-        RepositoryRoot(), "src", "ForgeMission.ClientRuntime", "bin", "Debug", "net10.0", "ForgeMission.ClientRuntime.dll");
+    private static string RepositoryRoot() => ClientRuntimeHostProcess.RepositoryRoot();
 
     private static string ProbeAssembly() => Path.Combine(
         RepositoryRoot(), "src", "ForgeMission.ClientRuntime.TransportProbe", "bin", "Debug", "net10.0",
         "ForgeMission.ClientRuntime.TransportProbe.dll");
 
-    private static string DotnetHost() => Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet";
-
-    private sealed class ClientRuntimeHostProcess(Process process, string baseUrl) : IAsyncDisposable
-    {
-        public string BaseUrl { get; } = baseUrl;
-
-        public static async Task<ClientRuntimeHostProcess> StartAsync(string? terminalOutcome = null)
-        {
-            var process = new Process
-            {
-                StartInfo = new ProcessStartInfo(DotnetHost(), HostAssembly())
-                {
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    WorkingDirectory = RepositoryRoot(),
-                },
-            };
-            process.StartInfo.Environment["MissionRuntime__BaseUrl"] = "http://127.0.0.1:8080/";
-            process.StartInfo.Environment["MissionRuntime__Credential"] = "local";
-            if (terminalOutcome is not null)
-                process.StartInfo.Environment["Authorization__TerminalOutcome"] = terminalOutcome;
-            process.Start();
-
-            var deadline = DateTime.UtcNow.AddSeconds(20);
-            while (DateTime.UtcNow < deadline)
-            {
-                var line = await process.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(2));
-                if (line?.StartsWith("FORGE_CLIENT_RUNTIME_URL=", StringComparison.Ordinal) == true)
-                    return new ClientRuntimeHostProcess(process, line["FORGE_CLIENT_RUNTIME_URL=".Length..]);
-            }
-
-            var error = await process.StandardError.ReadToEndAsync();
-            process.Kill(entireProcessTree: true);
-            throw new InvalidOperationException($"Client Runtime did not start. {error}");
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
-            process.Dispose();
-            return ValueTask.CompletedTask;
-        }
-    }
+    private static string DotnetHost() => ClientRuntimeHostProcess.DotnetHost();
 
     private sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError);
 }

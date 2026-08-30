@@ -19,15 +19,5 @@ public sealed class WorkspaceStateTests : IDisposable
         Assert.Equal(["file", "terminal"], state.Capabilities!.AvailableCapabilities);
     }
 
-    [Fact]
-    public void Constructor_OpensConfiguredInitialRoot()
-    {
-        var state = new WorkspaceState(root);
-
-        var workspace = Assert.IsType<LocalDiskWorkspace>(state.Workspace);
-        Assert.Equal(root, workspace.Roots[0]);
-        Assert.Equal(["file", "terminal"], state.Capabilities!.AvailableCapabilities);
-    }
-
     public void Dispose() => Directory.Delete(root, recursive: true);
 }

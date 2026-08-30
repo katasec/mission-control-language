@@ -18,15 +18,16 @@ internal sealed class Program
         });
         builder.WebHost.UseStaticWebAssets();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
-        var initialWorkspaceRoot = builder.Configuration["Workspace:InitialRoot"];
         var missionRuntimeBaseUrl = builder.Configuration["MissionRuntime:BaseUrl"]
             ?? throw new InvalidOperationException(
                 "MissionRuntime:BaseUrl is required (set via MissionRuntime__BaseUrl).");
         var missionRuntimeCredential = builder.Configuration["MissionRuntime:Credential"]
             ?? throw new InvalidOperationException(
                 "MissionRuntime:Credential is required (set via MissionRuntime__Credential).");
-        builder.Services.AddScoped(_ => new WorkspaceState(initialWorkspaceRoot));
         builder.Services.AddSingleton<ClientRuntimeEventHub>();
+        // No projects root is configured: it is <user-profile>/Forge/Projects by fixed convention,
+        // and nothing here is touched until a surface actually creates or opens a Project.
+        builder.Services.AddSingleton(new ProjectStore());
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
         // Native AOT has no reflection fallback for minimal-API request/response JSON binding —
         // route it through the same source-generated context the transport channel already uses.
