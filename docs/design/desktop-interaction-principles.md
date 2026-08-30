@@ -173,10 +173,13 @@ deferred. An implementer may not quietly substitute a smaller or different layou
 reference is broader than the immediate work.
 
 Completion requires a screenshot or live inspection of the running surface compared with that named
-reference, and a recorded human/reviewer PASS or FAIL. A material mismatch is a FAIL: the task is
-not complete and its implementation is not approved, even when behavior and automated tests pass.
-Revise the scoped design, then repeat visual acceptance. This governs visual surfaces; the
-cross-surface capability requirement remains the Presentation-surface parity gate in
+reference, and a recorded reviewer PASS or FAIL. **Do not ask the operator for visual acceptance
+until the implementing/reviewing agents have first recorded PASS against the reference.** The
+operator's review is the final independent acceptance check, not a substitute for internal visual
+QA. A material mismatch is a FAIL: the task is not complete and its implementation is not approved,
+even when behavior and automated tests pass. Revise the scoped design, then repeat visual
+acceptance. This governs visual surfaces; the cross-surface capability requirement remains the
+Presentation-surface parity gate in
 [Engineering Philosophy](engineering-philosophy.md#presentation-surface-parity-gate).
 
 ## AI-assisted design & verification tooling (updated 2026-07-27 — this is the reason for the pivot)

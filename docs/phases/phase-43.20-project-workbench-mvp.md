@@ -251,6 +251,9 @@ Before another implementation handoff, create and approve a Task 1-specific SVG 
 `docs/images/phase-43.20/` that states exactly what this task renders now and what remains deferred.
 Do not infer that scope from the broader journey mockup.
 
+After reimplementation, Claude and Codex must first record a visual PASS against that approved
+slice in the running app. Only then may the operator be asked for final visual acceptance.
+
 Built: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic
 home and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole
 execution root. `DefaultWorkspace`, `/transport/session/default`, and `Workspace:InitialRoot` are

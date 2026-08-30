@@ -119,7 +119,8 @@ tasks must explicitly allocate the visible elements; an implementer cannot infer
 | Does the running UI match the visual reference this task owns? | A live inspection or screenshot of the actual running surface, compared with the named reference at the stated viewport, and a recorded human/reviewer PASS. |
 
 A visual FAIL rejects the implementation even if its tests pass. Update the scoped design and repeat
-the comparison before approval or merge. The detailed UI workflow is in
+the comparison before approval or merge. Agent review must record PASS before requesting the
+operator's final independent visual acceptance. The detailed UI workflow is in
 [Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate).
 
 ## Working consequences
