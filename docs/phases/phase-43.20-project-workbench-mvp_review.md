@@ -10,7 +10,8 @@
 > 2026-08-30, and its earlier P1 goal-validation defect was fixed. It then failed visual acceptance:
 > the running two-card launcher materially differs from the named Project-home reference. The
 > implementation remains review evidence only until the active spoke's scoped visual reference is
-> approved and the running UI passes comparison.
+> approved and the running UI passes comparison. Codex review and the operator's independent visual
+> review both recorded FAIL.
 
 ### What was implemented
 

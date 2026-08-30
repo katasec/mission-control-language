@@ -242,7 +242,8 @@ at its 1536×1024 composition, with its flow context in
 [Mission Conversations](../brainstorm/mission-conversations/README.md#2-create-a-project-from-a-goal).
 The running implementation inspected on 2026-08-30 is a small two-card launcher; it lacks the
 reference's Workbench header, activity rail, project canvas, recent-project area, and initial
-context choices. **Result: FAIL.**
+context choices. **Result: FAIL.** Codex review and the operator's independent visual review both
+recorded this failure; it is a binding rejection, not a request for cosmetic follow-up.
 
 The reference intentionally spans Project creation, navigation, recents, and later workbench
 experiences, while this task deliberately owns no recents index and Task 3 owns the rail/explorer.
