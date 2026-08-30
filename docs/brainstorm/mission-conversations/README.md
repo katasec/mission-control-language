@@ -132,6 +132,21 @@ run never hides, merges, or replaces the other run records in Mission Control.
 
 ![Step 6 — Project-owned Runs and a selected Janus trace with safe-boundary guidance](../images/mission-project-flow-06-run-trace.png)
 
+#### The expert conversation is the trace's primary evidence
+
+The compact timeline is useful for scanning, but it must never reduce the Janus exchange to status
+labels or force the human into a different chat product. The same trace document has an **expanded
+conversation** form: each chronological expert turn renders the actual Proposer, Approver, and
+Implementer message inline, together with its role, outcome, timestamp, and links to the proposal,
+feedback, or other attached artifact. The human can read the whole argument—proposal, revision
+request, revised proposal, approval, then implementation start—without leaving the selected run.
+
+For a conversation-centred Janus run, this expanded form is the default reading surface. A compact
+timeline is a density control, not a replacement for the message content. Mission Control remains
+the human ↔ Forge REPL; the trace is where the experts speak with one another.
+
+![Step 6a — expanded expert conversation within the selected Janus trace](../images/mission-project-flow-06a-expanded-expert-conversation.png)
+
 ### 7. Return the outcome to Mission Control
 
 On completion, the run returns a concise outcome card to the project: artifacts, verification
@@ -148,7 +163,8 @@ from a raw transcript.
 2. **A Project owns its runs.** Mission Control launches and summarizes them; its active and recent
    run cards open the selected run's trace.
 3. **Run traces are inspectable documents.** They are dockable alongside source, diffs, artifacts,
-   and mission-definition views; they are not generic chat rooms.
+   and mission-definition views. The expert conversation is readable inline in the trace; it is not
+   hidden behind a generic chat room or a status-only timeline.
 4. **The activity rail is intentionally small.** Project Explorer and Mission Control open
    collapsible side panes; Settings is fixed at the bottom. There is no separate Runs surface or
    Notifications icon in the MVP.

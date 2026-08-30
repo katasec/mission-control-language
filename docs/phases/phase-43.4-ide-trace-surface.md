@@ -105,6 +105,22 @@ project context from rewriting the meaning of an earlier trace. On completion a 
 concise outcome—artifacts, verification evidence, and summary—to its Project Mission Control;
 Mission Control remains the human-facing REPL, rather than becoming the full agent transcript.
 
+### Expert dialogue is first-class trace evidence
+
+The Forge Trace must render the actual chronological expert exchange, not merely a sequence of step
+names, statuses, or generated summaries. A conversation-centred Janus run opens in an **expanded
+conversation** reading form: each Proposer, Approver, and Implementer turn displays its full message
+inline with role, outcome, timestamp, and links to its proposal, feedback, and attached artifacts.
+The reader must be able to follow a proposal, revision request, revised proposal, approval, and
+implementation start inside the selected trace document.
+
+A compact timeline is permitted as a density mode for scanning long runs, but it cannot be the only
+way to inspect the exchange and must not send the user to a separate chat surface. Mission Control
+is the enduring human ↔ Forge REPL; the trace is the first-class surface where experts speak with
+one another. The expanded expert-conversation mock in the [project Mission Control and Janus runs
+brainstorm artifact](../brainstorm/mission-conversations/README.md#the-expert-conversation-is-the-traces-primary-evidence)
+is the visual reference for this requirement.
+
 **Lightweight context provenance (decision, 2026-08-30):** A launch snapshot records only values
 available without meaningful extra work: selected paths/directories, a Git revision when a
 referenced repository has one, and an identifier/content hash for an explicitly attached file or
