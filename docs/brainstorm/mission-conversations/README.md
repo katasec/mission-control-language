@@ -131,6 +131,11 @@ next safe boundary, **Pause after step** to finish the active bounded action bef
 the prominent red **Stop run** break-glass control for drift or an unsafe direction. Selecting a
 run never hides, merges, or replaces the other run records in Mission Control.
 
+**MVP trace navigation decision (2026-08-30):** clicking a named Project-owned run opens its one
+trace document, where the original expert messages are read in chronological order. The MVP has no
+expert filters, search, jump-to-current/start controls, threaded views, or other transcript
+navigation system. Those can be added only after use demonstrates the need.
+
 ![Step 6 — Project-owned Runs and a selected Janus trace with safe-boundary guidance](../images/mission-project-flow-06-run-trace.png)
 
 #### The expert conversation is the trace's primary evidence
@@ -141,6 +146,15 @@ conversation** form: each chronological expert turn renders the actual Proposer,
 Implementer message inline, together with its role, outcome, timestamp, and links to the proposal,
 feedback, or other attached artifact. The human can read the whole argument—proposal, revision
 request, revised proposal, approval, then implementation start—without leaving the selected run.
+
+**Exact-message decision (2026-08-30):** “actual” means the original durable message exactly as
+stored. Forge must not silently summarise, rewrite, or shorten a turn in the trace. If a content
+policy requires a redaction, the trace shows an explicit redaction marker rather than presenting a
+replacement as though it were the expert's original text.
+
+**MVP artifact decision (2026-08-30):** a message card may show a simple link to its proposal,
+feedback, diff, OpenAPI specification, or other artifact. The MVP does not create inline artifact
+previews within the trace; following the link opens the artifact in its own document surface.
 
 For a conversation-centred Janus run, this expanded form is the default reading surface. A compact
 timeline is a density control, not a replacement for the message content. Mission Control remains

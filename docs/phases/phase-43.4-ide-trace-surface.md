@@ -114,6 +114,15 @@ inline with role, outcome, timestamp, and links to its proposal, feedback, and a
 The reader must be able to follow a proposal, revision request, revised proposal, approval, and
 implementation start inside the selected trace document.
 
+**Exact-message decision (2026-08-30):** a displayed expert turn is the original durable message
+exactly as stored. The UI must not silently rewrite, shorten, or substitute a generated summary. If
+an explicit content policy requires redaction, it must render an unambiguous redaction marker; it
+must never make replacement text appear to be the expert's original message.
+
+**MVP artifact decision (2026-08-30):** a trace message may expose a simple link to its proposal,
+feedback, diff, OpenAPI specification, or other artifact. Do not build inline artifact previews in
+the trace MVP; following the link opens that artifact in its own document surface.
+
 A compact timeline is permitted as a density mode for scanning long runs, but it cannot be the only
 way to inspect the exchange and must not send the user to a separate chat surface. Mission Control
 is the enduring human ↔ Forge REPL; the trace is the first-class surface where experts speak with
@@ -177,6 +186,11 @@ trace remains a dockable document surface next to source/diff/artifact tabs — 
 chat-room rendering. Notifications are deferred entirely from this MVP, including a rail icon; a
 future notification inbox can deep-link human-intervention requests to the owning Project, run, and
 trace.
+
+**MVP trace navigation decision (2026-08-30):** clicking a named Project-owned run opens its one
+trace document, which reads the original expert turns in chronological order. Do not add filters,
+search, jump controls, threaded views, or a transcript-navigation subsystem in this MVP. Add such
+controls only after real usage demonstrates a need.
 
 The locked visual language is a light content canvas with a dark navy activity rail. Forge blue and
 cyan communicate navigation, selection, and actions; lime is reserved for positive, approved, or
