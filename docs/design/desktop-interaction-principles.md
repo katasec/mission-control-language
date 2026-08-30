@@ -172,6 +172,12 @@ If a journey mockup spans several tasks, the spoke must say which part this task
 deferred. An implementer may not quietly substitute a smaller or different layout because the
 reference is broader than the immediate work.
 
+The visual reference must also map to the existing design-system tokens. Do not hard-code sampled
+colours, spacing, radii, or type values in a component-local stylesheet to mimic a mockup. When a
+new visual language is needed, add or select a named token theme (including its dark-mode values)
+and have the surface select that theme; rules continue to consume the ordinary tokens. See
+[UI Design System](ui-design-system.md#named-product-themes-and-reskins).
+
 Completion requires a screenshot or live inspection of the running surface compared with that named
 reference, and a recorded reviewer PASS or FAIL. **Do not ask the operator for visual acceptance
 until the implementing/reviewing agents have first recorded PASS against the reference.** The

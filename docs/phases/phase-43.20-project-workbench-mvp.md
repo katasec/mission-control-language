@@ -251,8 +251,104 @@ Before another implementation handoff, create and approve a Task 1-specific SVG 
 `docs/images/phase-43.20/` that states exactly what this task renders now and what remains deferred.
 Do not infer that scope from the broader journey mockup.
 
+#### Approved-for-review visual specification (drafted 2026-08-30, awaiting Codex sign-off)
+
+**Binding Task 1 reference:** the five state files under `docs/images/phase-43.20/`, each a full
+1536×1024 frame, are what the implementation is judged against — not the journey mock directly:
+
+| State | File | What it shows |
+|---|---|---|
+| Empty | [task1-project-launcher-empty.svg](../images/phase-43.20/task1-project-launcher-empty.svg) | Goal field focused and empty; name and location show derived-value placeholders; **Create project** disabled. |
+| Drafted | [task1-project-launcher-drafted.svg](../images/phase-43.20/task1-project-launcher-drafted.svg) | `ProjectDraftResponse` values filled in and editable; Create enabled. |
+| Busy | [task1-project-launcher-busy.svg](../images/phase-43.20/task1-project-launcher-busy.svg) | A draft or create in flight; every control disabled; the action reads `Working…`. |
+| Failed | [task1-project-launcher-failed.svg](../images/phase-43.20/task1-project-launcher-failed.svg) | A typed `ProjectOperationError` message inside the card; nothing created; entered values preserved. |
+| Goal required | [task1-project-launcher-goal-required.svg](../images/phase-43.20/task1-project-launcher-goal-required.svg) | A chosen directory with no manifest: the runtime's proposed name/location plus a notice; Create disabled until a goal exists. |
+
+[task1-project-launcher-before.svg](../images/phase-43.20/task1-project-launcher-before.svg)
+records the rejected two-card launcher so the defect stays on file.
+
+**Slice.** Task 1 owns the journey mock's centre "New project" card and the page header, and
+nothing else on that screen. The card keeps the reference's internal proportions, field order,
+label wording, and type hierarchy, recomposed for a canvas with no rail and no recents column.
+
+**Deferred, named so it is not inferred as missing work:** the navy activity rail (Task 3); the
+"Recent local projects" column (no recents index exists by design); "Add context (optional)" and
+its two buttons (needs an `attachedContext` contract — Task 4); journey screen 01 "Choose a
+project" (depends on the deferred recents index); and everything the workbench shows after a
+Project opens (Tasks 2/3).
+
+**Geometry**, measured from the journey mock at 1536×1024 and preserved:
+
+| Element | Reference | Task 1 |
+|---|---|---|
+| Header band | 0–97, rule `#c9d5e7` | identical; wordmark at x=80 (the reference's 83px canvas margin, with no rail to offset it) |
+| Card | x 205–1111 (906 wide), top y=134 | 906 wide, centred → x 315–1221; **top stays y=134** so its relationship to the header is unchanged |
+| Card padding | 45–46 | identical |
+| Goal textarea | x 303–1065 (762), y +115…+285 from card top | identical offsets |
+| Project name | label +347, field +361…+424 (63 tall) | identical |
+| Location | — | label +461 (16px), field +475…+521 (46 tall), monospace value |
+| Divider → action | rule, then button 271×68 right-aligned to the field edge | identical rhythm |
+| Card height | 802 | 718, or 804 when an error/notice band is present |
+
+The card is shorter than the reference's because two blocks are deferred; the freed space accrues
+below the card rather than being redistributed.
+
+**Copy strings**, exact: header `Forge` / `AI Workbench`; card title `New project`; goal
+placeholder `Describe what you want to build`; labels `Project name` and `Location`; name
+placeholder `Derived from your goal`; location placeholder `Derived from your project name`;
+primary action `Create project`, and `Working…` while busy; secondary link
+`Open an existing folder…`; goal-required notice
+`That folder is not a Forge Project yet. Enter a goal to create one there.` A failure renders the
+`ProjectOperationError.Message` verbatim — the surface never rewrites it.
+
+**Interaction change from the rejected build:** there is no `Continue` button. The reference has one
+primary action, so the draft call fires when the goal is committed (blur or Enter) and fills the
+name and location fields in place; `Create project` is the only button. Both fields stay editable
+overrides, sent back verbatim.
+
+**Values**, sampled from the journey mock (not from the ember theme): canvas `#f7faff`; header
+`#f6f8fd` with rule `#c9d5e7`; wordmark and links `#0468ed`; primary action `#0f6eeb`; focused
+field border `#0f56d2`; card `#ffffff` with border `#e7ecf4`; field border `#d5dae5`; divider
+`#e5eaf2`; ink `#101d33`; secondary ink `#1d2c47`; muted `#5b6b83`; placeholder `#8b99ad`. Type:
+wordmark 36/700, subtitle 28/400, card title 36/700, goal 22, name 21, labels 20 and 16, action
+22/600. Lime is reserved for healthy/approved states in the locked visual language and the launcher
+has none, so it is unused here.
+
+**Not sampled — the reference has no failure state.** The error band's `#b42318` on `#fef3f2` with
+`#fda29b`, and the notice band's `#eff5fe` on `#c9dcf8`, are chosen to sit in the same saturation
+register as the sampled blues. They are the one place this spec invents rather than matches.
+
+**Scoping.** These values live as launcher-local custom properties on the component root in
+`ProjectLauncher.razor.css` (Blazor CSS isolation), never on `:root`. `forge.css` is not edited and
+no other surface changes appearance. If CSS isolation does not work in the actual build, stop and
+report it rather than substituting a mechanism.
+
+**Light-only, deliberately.** The journey mock is a light composition; `forge.css`'s
+`prefers-color-scheme` dark scheme has no reference counterpart, so the launcher's scoped values are
+light-fixed for Task 1. A dark treatment needs its own reference before it is built.
+
+**Visual acceptance rule.** The comparison is card-internal fidelity — field order, labels, copy,
+type scale, control sizes, spacing rhythm, divider and action-row placement — plus the header band.
+Page-level side margins differ from the journey mock because two columns are deferred; that
+difference alone is not a FAIL. Any difference inside the card is.
+
+**Assessment gate.** *Cooper:* the screen serves the one goal a person has before a Project exists —
+state the goal and get a workspace — and shows the system's own derived name and location rather
+than making them invent a path. *Rams:* one card, one primary action, no control that could be
+merged away; all five states are drawn, not just the happy path; nothing here has to be worked
+around when Task 3's rail lands, because the rail composes around this canvas. *Norman:* the only
+interactive elements are the three fields, the button, and the link; the sparkle is decorative and
+carries no button treatment; the draft's returned values are the immediate feedback for committing a
+goal; and Create is disabled — not silently failing — until a goal exists.
+
 After reimplementation, Claude and Codex must first record a visual PASS against that approved
 slice in the running app. Only then may the operator be asked for final visual acceptance.
+
+**Theme constraint:** Task 1's visual language must be delivered through a named design-system
+theme and its light/dark token maps, not launcher-local sampled values or a light-only override.
+The launcher may select the theme at its boundary; its rules must consume the shared semantic
+tokens. The implementation plan must name the theme selector, token source, and the dark-mode
+verification before build approval.
 
 Built: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic
 home and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole

@@ -67,6 +67,18 @@ Dark mode is **not optional** — every token has a dark value. It is delivered 
 rule:** if the background were near-black, would every text element still be readable? If you
 used tokens, yes.
 
+### Named product themes and reskins
+
+A product surface may need a visual language different from the default Forge ember theme. Preserve
+the system by adding a **named theme token map**, not by copying colour values into a component.
+The map overrides the existing semantic tokens (`--bg`, `--surface`, `--text`, `--accent`, `--ink`,
+and so on) for that named surface theme; component rules continue to use only those tokens.
+
+Keep product-theme identity distinct from the existing `data-theme="light|dark"` colour-mode hook
+so automatic dark mode and an explicit light/dark choice continue to work. A named theme therefore
+defines both light and dark token values, and its selector must compose with the colour-mode
+selectors. Never force a light mockup's values in a component and call that a theme.
+
 ---
 
 ## 4. Reusable primitives
@@ -165,6 +177,9 @@ sidebar foot to the **rail foot** (desktop); on mobile it lives behind the **Acc
 - **New page:** add a `.razor` under `Pages/`, gate it with `@attribute [Authorize]` (see §8),
   compose from existing primitives, and put any new rules in `forge.css` under the right
   section using tokens. Don't add a scoped `*.razor.css` unless the style is genuinely local.
+- **Visual reskin:** map the reference to a named product-theme token block in `forge.css`, with
+  light and dark values. A component may select that theme at its boundary, but may not redefine
+  colour, type, radius, or spacing tokens locally.
 - **New agent card / message type:** reuse `.agent-card` + `.trust-badge` so the trust surface
   stays consistent (this is the product's core differentiator — never fake a green ✓).
 - **Anything showing agent identity:** use `.identity-seal` (gold/blue), **never** the green
