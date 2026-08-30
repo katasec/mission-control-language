@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-08-20)
+## Now (2026-08-30)
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** the Project Workbench MVP's local Project record is awaiting review; durable Project Mission Control is next. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** bind and approve the Project-home visual reference slice, then rework the visual surface. |
 
 ## Active phases
 
@@ -27,4 +27,5 @@
 | [Architecture](design/architecture.md) | Components, boundaries, dependency flow. |
 | [Security Architecture](design/security-architecture.md) | Mandatory design gate. |
 | [Engineering Philosophy](design/engineering-philosophy.md) | Mandatory design and implementation gate. |
+| [Desktop Interaction Principles](design/desktop-interaction-principles.md) | Binding visual-reference acceptance for Desktop and ForgeUI changes. |
 | [Deploy Runbook](design/deploy.md) | Operational hosted-app deployment reference. |

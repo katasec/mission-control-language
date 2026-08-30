@@ -161,6 +161,24 @@ anything touching Forge Desktop's UI, before any markup is written:
    browser tooling (Chrome DevTools Protocol) to screenshot/inspect the live app and compare against
    the mockup from step 1. Not required for non-visual changes.
 
+## Visual-reference acceptance gate — non-negotiable
+
+For every user-visible Desktop or ForgeUI change, a mockup is a **binding acceptance artifact**, not
+inspiration. Before implementation, its task in the active spoke must name the exact reference
+(repository path or design URL), target viewport, task-owned visual slice, and the states that must
+match. A non-visual task may record a concise N/A rationale instead.
+
+If a journey mockup spans several tasks, the spoke must say which part this task owns and what stays
+deferred. An implementer may not quietly substitute a smaller or different layout because the
+reference is broader than the immediate work.
+
+Completion requires a screenshot or live inspection of the running surface compared with that named
+reference, and a recorded human/reviewer PASS or FAIL. A material mismatch is a FAIL: the task is
+not complete and its implementation is not approved, even when behavior and automated tests pass.
+Revise the scoped design, then repeat visual acceptance. This governs visual surfaces; the
+cross-surface capability requirement remains the Presentation-surface parity gate in
+[Engineering Philosophy](engineering-philosophy.md#presentation-surface-parity-gate).
+
 ## AI-assisted design & verification tooling (updated 2026-07-27 — this is the reason for the pivot)
 
 For a web-rendered UI (Electron's local Blazor Server host, or `forge webui`'s browser tab), Claude's

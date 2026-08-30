@@ -1,9 +1,8 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: design ready (2026-08-30).** Replace Desktop's proof-era anonymous workspace with a
-> project-first workbench: one enduring Mission Control conversation, named runs, a minimal exact
-> trace, and honest stop/guidance controls. Part of [Phase 43 — Forge
-> Desktop](phase-43-forge-desktop.md).
+> **Status: Task 1 visual acceptance failed (2026-08-30).** Its current launcher is technically
+> implemented but does not match the named Project-home reference. A task-scoped visual slice must
+> be agreed before reimplementation or approval. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -232,12 +231,24 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest — implemented, awaiting review
+### Task 1 — Project home and local manifest — visual acceptance failed
 
-**Not yet approved.** Implementation and local verification are complete; the build narrative and
-evidence are in
-[phase-43.20-project-workbench-mvp_completed.md](phase-43.20-project-workbench-mvp_completed.md#task-1--project-home-and-local-manifest-implemented-awaiting-review).
-Mark this task done only after Codex approves the corrected completion summary and its PR merges.
+**Not approved; do not merge.** The technical implementation and its local verification are kept in
+[the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected), but a behavioral pass cannot replace
+visual acceptance.
+
+**Binding reference:** [Create a Project from a Goal](../brainstorm/images/mission-project-flow-02-create-project.png)
+at its 1536×1024 composition, with its flow context in
+[Mission Conversations](../brainstorm/mission-conversations/README.md#2-create-a-project-from-a-goal).
+The running implementation inspected on 2026-08-30 is a small two-card launcher; it lacks the
+reference's Workbench header, activity rail, project canvas, recent-project area, and initial
+context choices. **Result: FAIL.**
+
+The reference intentionally spans Project creation, navigation, recents, and later workbench
+experiences, while this task deliberately owns no recents index and Task 3 owns the rail/explorer.
+Before another implementation handoff, create and approve a Task 1-specific SVG slice under
+`docs/images/phase-43.20/` that states exactly what this task renders now and what remains deferred.
+Do not infer that scope from the broader journey mockup.
 
 Built: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic
 home and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole

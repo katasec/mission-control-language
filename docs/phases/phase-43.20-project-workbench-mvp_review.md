@@ -1,16 +1,18 @@
-# Phase 43.20 — Project Workbench MVP: completed work
+# Phase 43.20 — Project Workbench MVP: implementation review record
 
-> Build narrative and verification evidence for finished 43.20 tasks. The active spoke
-> ([phase-43.20-project-workbench-mvp.md](phase-43.20-project-workbench-mvp.md)) keeps only the
-> locked design later tasks still build against, plus a one-line status per completed task.
+> This record preserves technical build and verification evidence for an unapproved implementation.
+> The active spoke ([phase-43.20-project-workbench-mvp.md](phase-43.20-project-workbench-mvp.md))
+> is the source of truth for the open visual-design requirement.
 
-## Task 1 — Project home and local manifest (implemented, awaiting review)
+## Task 1 — Project home and local manifest (visual acceptance rejected)
 
-> **Not approved yet.** Everything below was built and observed locally on 2026-08-30, but the task
-> is not "done" until Codex approves the completion summary and its PR merges. A first review
-> rejected it for a P1 goal-validation bug (recorded under *Decisions made while building*).
+> **Not approved; do not merge.** The implementation below was built and observed locally on
+> 2026-08-30, and its earlier P1 goal-validation defect was fixed. It then failed visual acceptance:
+> the running two-card launcher materially differs from the named Project-home reference. The
+> implementation remains review evidence only until the active spoke's scoped visual reference is
+> approved and the running UI passes comparison.
 
-### What shipped
+### What was implemented
 
 `~/source/repos/0001` is gone. Desktop boots into a launcher that issues no request at all; a
 Project — and only a Project — creates a local execution root.

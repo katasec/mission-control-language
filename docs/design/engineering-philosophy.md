@@ -107,6 +107,21 @@ a TUI equivalent. A rule that affects a Project, mission, run, capability, or du
 does. A **FAIL** returns the work to design; adding a Desktop-only workaround or moving the rule
 into a UI component is not an exception.
 
+## Visual-reference acceptance gate
+
+**Mandatory for every user-visible Desktop or ForgeUI change.** Treat the named visual reference as
+an acceptance artifact, not an optional design hint. The active task must bind its exact reference,
+viewport, task-owned slice, and required states before implementation. A mockup that spans multiple
+tasks must explicitly allocate the visible elements; an implementer cannot infer a smaller substitute.
+
+| Required answer | Passing evidence |
+|---|---|
+| Does the running UI match the visual reference this task owns? | A live inspection or screenshot of the actual running surface, compared with the named reference at the stated viewport, and a recorded human/reviewer PASS. |
+
+A visual FAIL rejects the implementation even if its tests pass. Update the scoped design and repeat
+the comparison before approval or merge. The detailed UI workflow is in
+[Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate).
+
 ## Working consequences
 
 - Keep command entry points thin and put business behaviour behind focused services.
