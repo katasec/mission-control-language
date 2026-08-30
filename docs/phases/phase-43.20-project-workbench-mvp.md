@@ -315,26 +315,175 @@ wordmark 36/700, subtitle 28/400, card title 36/700, goal 22, name 21, labels 20
 Workbench theme's semantic tokens; no component rule may copy them as literals. Lime is reserved
 for healthy/approved states in the locked visual language and the launcher has none, so it is unused.
 
-**Not sampled — the reference has no failure state.** The error band's `#b42318` on `#fef3f2` with
-`#fda29b`, and the notice band's `#eff5fe` on `#c9dcf8`, are chosen to sit in the same saturation
-register as the sampled blues. They are the one place this spec invents rather than matches.
+**Not sampled — the reference has no failure state.** Every value marked **N** in the token maps
+below is chosen to sit in the same saturation register as the sampled blues rather than measured
+from the reference. They are the one place this spec invents rather than matches.
 
-**Themed reskin, not local styling.** `forge.css` owns a named `workbench` product-theme token map.
-The Client Runtime selects that product theme at its root while retaining the existing `data-theme`
-light/dark mode hook; the named map composes with both automatic and explicit colour mode. The
-launcher uses only the existing semantic tokens (`--bg`, `--surface`, `--text`, `--accent`,
-`--ink`, radii, spacing, and shadows) in its local layout rules. It declares no replacement
-colour/type/radius/spacing custom properties. ForgeUI keeps the default theme unless it explicitly
-selects `workbench`.
+**Theme architecture.** The sampled values are reference targets; the implementation reaches them
+through the existing semantic tokens, via a named **Workbench** product theme in
+`src/ForgeUI/wwwroot/css/forge.css`. `ProjectLauncher.razor.css` (Blazor CSS isolation) carries
+layout rules only — grid/flex, sizing, position, and disabled/focus/hover state — and every colour,
+radius, spacing, font family, and font size resolves through `var(--token)`. It declares no custom
+property of its own. If a value the reference needs has no token, the token is added to the
+Workbench map rather than inlined in the component.
 
-**Dark map is required.** The journey mock supplies the Workbench light target. Before build
-approval, the spec must define its paired dark-token values using the established semantic roles and
-verify contrast in the running dark-mode surface. A light-only launcher is not an allowed fallback.
+Selection is `data-surface-theme="workbench"` on `<html>` in the Client Runtime Presentation's
+`index.html`. `data-theme` keeps its existing light/dark meaning; `data-surface-theme` is the
+orthogonal product axis. Three blocks compose with the existing three-state mode model, each
+outranking its default-theme counterpart on specificity so the cascade does not depend on source
+order:
+
+| Selector | Specificity | Applies when |
+|---|---|---|
+| `:root[data-surface-theme="workbench"]` | 0,2,0 | Workbench light — the default, and under a forced `data-theme="light"` |
+| `@media (prefers-color-scheme: dark) { :root[data-surface-theme="workbench"]:not([data-theme="light"]) }` | 0,3,0 | Workbench automatic dark |
+| `:root[data-surface-theme="workbench"][data-theme="dark"]` | 0,3,0 | Workbench forced dark |
+
+Nothing without the attribute matches any Workbench selector, so ForgeUI stays on its default theme.
+The theme reskins every Desktop client surface through semantic tokens — deliberately, since it
+changes no layout, interaction, or product behaviour.
+
+**Workbench token map — light.** Provenance: **S** sampled from the reference, **D** derived from a
+sampled value by the relationship the default theme already uses, **N** no reference evidence (the
+reference has no failure, success, warning, or seal state), **A** an accessibility override of a
+sampled value, carried back into the SVG references so they stay binding.
+
+| Token | Light value | Src | Used for |
+|---|---|---|---|
+| `color-scheme` | `light` | — | |
+| `--bg` | `#f7faff` | S | page canvas |
+| `--surface-sunken` | `#f6f8fd` | S | header band |
+| `--surface` | `#ffffff` | S | card, fields |
+| `--surface-hover` | `#eef3fb` | D | |
+| `--surface-active` | `#e4ecf8` | D | |
+| `--border` | `#e7ecf4` | S | card border |
+| `--border-strong` | `#d5dae5` | S | field border |
+| `--text` | `#101d33` | S | card title, field values |
+| `--text-muted` | `#5b6b83` | S | `Location` label |
+| `--text-subtle` | `#62748c` | A | placeholders — see the accessibility override below |
+| `--accent` | `#0f6eeb` | S | primary action, links |
+| `--accent-hover` | `#0f56d2` | S | hover, focused field border |
+| `--accent-soft` | `#eff5fe` | S | notice band |
+| `--accent-contrast` | `#ffffff` | S | text on the primary action |
+| `--ink` | `#0f6eeb` | S | solid action — the same blue family as `--accent` |
+| `--ink-hover` | `#0f56d2` | S | |
+| `--ink-contrast` | `#ffffff` | S | |
+| `--success` | `#4d7c0f` | N | |
+| `--success-bg` | `#f2fbe6` | N | |
+| `--success-border` | `#84cc16` | N | the locked language's lime |
+| `--danger` | `#b42318` | N | failure message |
+| `--danger-bg` | `#fef3f2` | N | failure band |
+| `--danger-border` | `#fda29b` | N | |
+| `--warning` | `#8a5a06` | N | |
+| `--warning-bg` | `#fef6e7` | N | |
+| `--seal-official` | `#8a5a06` | N | |
+| `--seal-verified` | `#0f6eeb` | N | |
+| `--seal-check` | `#ffffff` | N | |
+| `--radius-sm` | `8px` | S | `Location` field |
+| `--radius` | `10px` | S | goal, name, button |
+| `--radius-lg` | `16px` | S | card |
+| `--radius-pill` | `999px` | — | |
+| `--space-1` … `--space-6` | `4px` `8px` `12px` `16px` `24px` `32px` | — | |
+| `--space-7` | `44px` | S | card padding (measured 45–46, within tolerance) |
+| `--font-size-display` | `36px` | S | wordmark, card title |
+| `--font-size-title` | `28px` | S | `AI Workbench` |
+| `--font-size-lead` | `22px` | S | goal text, button label |
+| `--font-size-body` | `21px` | S | `Project name` value |
+| `--font-size-label` | `20px` | S | `Project name` label |
+| `--font-size-meta` | `16px` | S | `Location` label |
+| `--font-size-mono` | `15px` | S | location path |
+| `--font-sans` | `system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` | — | |
+| `--font-mono` | `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace` | — | |
+| `--transition` | `130ms ease` | — | |
+| `--focus-ring` | `0 0 0 3px rgba(15, 110, 235, 0.30)` | D | |
+| `--shadow-sm` | `0 1px 2px rgba(11, 36, 71, 0.06)` | D | card |
+| `--shadow` | `0 1px 3px rgba(11, 36, 71, 0.08), 0 4px 12px rgba(11, 36, 71, 0.06)` | D | |
+| `--shadow-lg` | `0 8px 30px rgba(11, 36, 71, 0.14)` | D | |
+
+The seven `--font-size-*` names are new. They are declared in the default `:root` with the sizes
+current components already use in literals (`30px` `22px` `17px` `15px` `14px` `12.5px` `12px`), so
+adding them changes nothing that exists, and the Workbench map overrides them as above.
+
+**Workbench token map — dark.** Applies to both the automatic and forced-dark selectors. Radii,
+spacing, type sizes, fonts and transition are restated identically to the light map and are not
+repeated here; every token that differs is listed.
+
+| Token | Dark value | Used for |
+|---|---|---|
+| `color-scheme` | `dark` | |
+| `--bg` | `#071426` | page canvas |
+| `--surface-sunken` | `#0a1a30` | header band |
+| `--surface` | `#0f2440` | card, fields |
+| `--surface-hover` | `#16304f` | |
+| `--surface-active` | `#1d3a5c` | |
+| `--border` | `#1d3556` | card border |
+| `--border-strong` | `#2b4a72` | field border |
+| `--text` | `#e6edf7` | |
+| `--text-muted` | `#9fb2ca` | |
+| `--text-subtle` | `#8aa3c2` | placeholders |
+| `--accent` | `#4d9bff` | primary action, links |
+| `--accent-hover` | `#74b2ff` | |
+| `--accent-soft` | `#12294a` | notice band |
+| `--accent-contrast` | `#06121f` | text on the primary action |
+| `--ink` | `#4d9bff` | solid action — the same blue family as `--accent` |
+| `--ink-hover` | `#74b2ff` | |
+| `--ink-contrast` | `#06121f` | |
+| `--success` | `#a3e635` | |
+| `--success-bg` | `#16300a` | |
+| `--success-border` | `#65a30d` | |
+| `--danger` | `#ff9d95` | failure message |
+| `--danger-bg` | `#3a1512` | failure band |
+| `--danger-border` | `#b42318` | |
+| `--warning` | `#e8c06a` | |
+| `--warning-bg` | `#3a2c10` | |
+| `--seal-official` | `#e8c06a` | |
+| `--seal-verified` | `#4d9bff` | |
+| `--seal-check` | `#071426` | |
+| `--focus-ring` | `0 0 0 3px rgba(77, 155, 255, 0.35)` | |
+| `--shadow-sm` | `0 1px 2px rgba(0, 0, 0, 0.45)` | |
+| `--shadow` | `0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40)` | |
+| `--shadow-lg` | `0 8px 30px rgba(0, 0, 0, 0.55)` | |
+
+**Measured contrast**, computed from the values above rather than asserted. Every text-bearing
+pairing meets its applicable AA threshold in both maps:
+
+| Pair | Light | Dark |
+|---|---|---|
+| `--text` on `--surface` | 16.86 | 13.23 |
+| `--text` on `--bg` | 16.12 | 15.67 |
+| `--text-muted` on `--surface` | 5.42 | 7.20 |
+| `--text-subtle` on `--surface` | 4.78 | 6.01 |
+| `--text-subtle` on `--bg` | 4.57 | 5.19 |
+| `--accent-contrast` on `--accent` | 4.72 | 6.69 |
+| `--accent` on `--surface` | 4.72 | 5.53 |
+| `--ink-contrast` on `--ink` | 4.72 | 6.69 |
+| `--ink-contrast` on `--ink-hover` | 6.40 | 8.58 |
+| `--danger` on `--danger-bg` | 6.05 | 8.11 |
+| `--success` on `--success-bg` | 4.69 | 9.53 |
+| `--warning` on `--warning-bg` | 5.51 | 7.87 |
+| `--seal-check` on `--seal-official` | 5.92 | 10.71 |
+| `--seal-check` on `--seal-verified` | 4.72 | 6.55 |
+
+**Accessibility override.** The reference's placeholder colour is `#8b99ad`, which reaches only
+2.89 against `--surface`. Accessibility wins over sample fidelity, so Workbench light uses
+`#62748c` — 4.78 on `--surface`, 4.57 on `--bg`. The change is carried into
+`task1-project-launcher-empty.svg` and `task1-project-launcher-goal-required.svg`, the two frames
+that render placeholder text, so the SVGs remain the binding reference and the implementation
+matches them exactly. One consequence, recorded rather than hidden: `--text-subtle` now sits closer
+to `--text-muted` (4.78 against 5.42), so the visual step between hint text and secondary labels is
+smaller than the reference's.
+
+**Dark-mode acceptance.** Dark has no visual mock and is not compared to one. It passes on three
+checks: every Workbench token resolves under both the automatic and forced-dark selectors, no
+default-theme ember value appears anywhere on the surface, and the contrast pairs above hold.
 
 **Visual acceptance rule.** The comparison is card-internal fidelity — field order, labels, copy,
 type scale, control sizes, spacing rhythm, divider and action-row placement — plus the header band.
 Page-level side margins differ from the journey mock because two columns are deferred; that
-difference alone is not a FAIL. Any difference inside the card is.
+difference alone is not a FAIL. Any difference inside the card is, within one stated tolerance:
+geometry may differ by ±2px, because hand-written CSS and a hand-authored SVG differ slightly in
+text metrics. Copy strings, field order, hierarchy, type scale, token-resolved colours, and state
+behaviour are exact requirements with no tolerance.
 
 **Assessment gate.** *Cooper:* the screen serves the one goal a person has before a Project exists —
 state the goal and get a workspace — and shows the system's own derived name and location rather

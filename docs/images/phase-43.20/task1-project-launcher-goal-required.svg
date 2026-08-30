@@ -11,7 +11,7 @@
 <text x="360" y="217" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="36" font-weight="700" fill="#101d33" text-anchor="start">New project</text>
 <g transform="translate(354,265)" fill="#0468ed" aria-hidden="true"><path d="M14 0 L17.2 10.8 L28 14 L17.2 17.2 L14 28 L10.8 17.2 L0 14 L10.8 10.8 Z"/><path d="M25 20 L26.6 25.4 L32 27 L26.6 28.6 L25 34 L23.4 28.6 L18 27 L23.4 25.4 Z"/></g>
 <rect x="413" y="249" width="762" height="170" rx="10" fill="#ffffff" stroke="#0f56d2" stroke-width="2"/>
-<text x="439" y="294" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="400" fill="#8b99ad" text-anchor="start">Describe what you want to build</text>
+<text x="439" y="294" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="400" fill="#62748c" text-anchor="start">Describe what you want to build</text>
 <text x="413" y="481" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1d2c47" text-anchor="start">Project name</text>
 <rect x="413" y="495" width="762" height="63" rx="10" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
 <text x="439" y="536" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="21" font-weight="400" fill="#101d33" text-anchor="start">existing-code</text>
