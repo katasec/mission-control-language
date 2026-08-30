@@ -1,8 +1,8 @@
 # Phase 43 — Forge Desktop
 
-> **Status: durable Conversation Runtime supervision design ready (2026-08-18).** The shared
-> Rooms/Desktop activity surface is verified; the selected follow-up restores the Supervisor-owned
-> Janus bootstrap path before deferred Desktop work resumes.
+> **Status: Project Workbench MVP design ready (2026-08-30).** The shared Rooms/Desktop activity
+> surface and durable Conversation Runtime supervision are verified. The selected follow-up replaces
+> the proof-era anonymous workspace with a project-first workbench.
 
 ## Purpose
 
@@ -15,9 +15,10 @@ is a replaceable presentation client over the Mission Runtime (reasoning) and Cl
 
 | If working on… | Read… |
 |---|---|
+| Current Project/Conversation/Run workbench MVP | [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md). |
 | Shared in-chat activity visual (complete; read only if changing it) | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md), then only its named design sections and source files. |
+| Deferred rich trace/workbench UX | [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md). |
 | Deferred responsiveness/lifecycle work | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md). |
-| Trace/workbench UX | [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md). |
 | Human approval/suspend/resume | [43.5 — Human-in-the-loop](phase-43.5-human-in-the-loop.md). |
 | Mission picker/catalog follow-up | [43.3 — Mission-as-attach-point](phase-43.3-mission-attach-point.md). |
 | AOT follow-up | [43.12 — AOT hygiene backlog](phase-43.12-aot-hygiene-backlog.md). |
@@ -30,11 +31,12 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Design ready. Supervisor must resolve, health-check, and inject the current local Conversation Runtime before Client Runtime starts. |
+| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) | Design ready. Project identity, Mission Control, named runs, exact Trace, Stop, guidance, and outcome loop. |
+| [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |
 | [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Core product proof done and verified 2026-08-16. |
-| 43.3 mission catalog/OCI follow-up; 43.4 workbench; 43.5 human controls | Deferred follow-up work; each owns its own design and readiness. |
+| 43.3 mission catalog/OCI follow-up; 43.4 rich workbench; 43.5 human gates | Deferred follow-up work; each owns its own design and readiness. |
 
 ## Durable decisions
 
