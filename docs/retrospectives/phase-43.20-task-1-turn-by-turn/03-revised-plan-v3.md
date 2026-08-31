@@ -4,9 +4,11 @@
 
 Ensure Desktop and a future TUI expose the same underlying capability.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Add the non-negotiable rule that every Desktop capability must also be possible through the TUI.”
+**Verbatim source:** [R03 in the Codex handoff transcript](claude-relay-transcript.md#r03).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

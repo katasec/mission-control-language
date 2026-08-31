@@ -4,9 +4,11 @@
 
 Correct the four-corner and lower-bound gaps, then provide a build-ready plan.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Correct the rectangular-range proof and remove the unjustified 320px policy; return a build-ready plan.”
+**Verbatim source:** [R23 in the Codex handoff transcript](claude-relay-transcript.md#r23).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

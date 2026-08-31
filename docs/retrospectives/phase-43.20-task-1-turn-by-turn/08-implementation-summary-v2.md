@@ -4,9 +4,11 @@
 
 Correct the discovered empty-goal validation flaw and report the updated implementation.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Fix the empty-goal validation defect and show the test evidence.”
+**Verbatim source:** [R08 in the Codex handoff transcript](claude-relay-transcript.md#r08).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

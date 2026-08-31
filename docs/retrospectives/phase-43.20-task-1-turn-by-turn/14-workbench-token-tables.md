@@ -4,9 +4,11 @@
 
 Supply concrete token tables and the implementation file list for the Workbench surface.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Provide the Workbench token values, selector plan, and affected-file list for approval.”
+**Verbatim source:** [R14 in the Codex handoff transcript](claude-relay-transcript.md#r14).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

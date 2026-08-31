@@ -4,9 +4,11 @@
 
 Close the remaining action, failure, and manifest-design questions before implementation.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Resolve the remaining Task 1 contract questions and provide the final implementation plan.”
+**Verbatim source:** [R04 in the Codex handoff transcript](claude-relay-transcript.md#r04).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

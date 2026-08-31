@@ -4,9 +4,11 @@
 
 Refine theme-owned geometry and repeat the visual report.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Move the reference geometry into the theme and rerun the internal visual comparison.”
+**Verbatim source:** [R18 in the Codex handoff transcript](claude-relay-transcript.md#r18).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

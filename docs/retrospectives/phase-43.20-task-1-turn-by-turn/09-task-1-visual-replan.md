@@ -4,9 +4,11 @@
 
 Recover from the visible mismatch between the running launcher and the journey mock.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Re-plan Task 1 so the delivered Desktop matches the agreed visual mockup.”
+**Verbatim source:** [R09 in the Codex handoff transcript](claude-relay-transcript.md#r09).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

@@ -4,9 +4,11 @@
 
 Make the compact plan browser-first, fluid, token-based, and TUI-safe.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Amend the responsive design for browser-first validation, fluid layout, named tokens, and TUI parity.”
+**Verbatim source:** [R22 in the Codex handoff transcript](claude-relay-transcript.md#r22).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

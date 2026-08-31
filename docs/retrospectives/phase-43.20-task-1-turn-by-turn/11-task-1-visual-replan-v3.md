@@ -4,9 +4,11 @@
 
 Amend the visual plan to avoid inert deferred UI and match the approved visual language.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Amend the visual plan so deferred capabilities are not represented by misleading inert controls.”
+**Verbatim source:** [R11 in the Codex handoff transcript](claude-relay-transcript.md#r11).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

@@ -4,9 +4,11 @@
 
 Correct the visual acceptance order and define the launcher slice.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Correct the re-plan and settle the visual scope before implementation resumes.”
+**Verbatim source:** [R10 in the Codex handoff transcript](claude-relay-transcript.md#r10).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

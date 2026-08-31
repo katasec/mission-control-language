@@ -5,10 +5,11 @@
 Implement the approved plan and return browser-first evidence, packaged parity, tests, and a
 per-check PASS/FAIL summary for Codex review.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Implement the approved responsive launcher. Return files changed, test/package evidence, browser
-PASS/FAIL evidence, packaged parity last, and do not commit before Codex review.”
+**Verbatim source:** [R24 in the Codex handoff transcript](claude-relay-transcript.md#r24).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

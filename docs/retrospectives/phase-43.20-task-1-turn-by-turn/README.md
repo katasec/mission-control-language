@@ -5,10 +5,10 @@ responsive launcher. Each numbered file records the request in force, the mistak
 control visible at that point, and the guidance, design, or documentation that would have prevented
 the next iteration. Two literal duplicate relays are intentionally retained as turns 04 and 19.
 
-The original inbound relay is not stored beside every Claude response. Each turn file therefore
-labels its **Prompt used** as a faithful reconstruction of the instruction in force, not as a
-verbatim transcript. The **Better prompt** is the concrete replacement that would have constrained
-the next turn.
+Every **Prompt used** section links to the verbatim source in
+[claude-relay-transcript.md](claude-relay-transcript.md). A duplicated response says explicitly
+that it had no new relay. No prompt is summarized or reconstructed. The **Better prompt** is the
+concrete replacement that would have constrained the next turn.
 
 This is forensic history, not active implementation guidance. Durable rules proven here belong in
 the relevant `docs/design/` documents after their separate review.
