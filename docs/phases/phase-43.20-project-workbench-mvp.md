@@ -1,8 +1,9 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Task 1 internal visual acceptance passed (2026-08-31).** The packaged Desktop matches
-> its six scoped references and its named Workbench theme; final independent operator acceptance is
-> pending. Do not merge before that check. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: Task 1 default-window visual acceptance failed (2026-08-31).** The six 1536×1024
+> references pass, but the packaged Desktop's default usable viewport opens with its primary action
+> below the fold. Measure and bind the compact viewport before remediation or approval. Part of
+> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -231,12 +232,26 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest — internal acceptance passed; operator acceptance pending
+### Task 1 — Project home and local manifest — default-window visual acceptance failed
 
-**Not approved for merge.** Claude and Codex have passed the internal package, behavior, theme, and
-six-state visual comparisons. The earlier rejected implementation remains in
+**Not approved for merge.** Claude and Codex passed the internal package, behavior, theme, and
+six-state 1536×1024 visual comparisons, but the operator found that the packaged Desktop default
+window requires a scroll to reach **Create project**. The earlier rejected implementation remains in
 [the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected);
-the current implementation is in PR #78. Only final independent operator visual acceptance remains.
+the current implementation is in PR #78. It needs a compact, default-window visual design and a
+new internal review before another operator acceptance request.
+
+**Default-window responsive gate.** Before another implementation handoff, observe the packaged
+window's actual `window.innerWidth × window.innerHeight`; do not infer it from native window
+chrome. Add an approved compact reference for that viewport. It must show every required input,
+**Create project**, and the open-folder entry point without document scrolling in the empty,
+drafted, busy, failed, and goal-required states. The compact rule must reskin through Workbench
+tokens (including responsive `--wb-*` geometry/type values), not component-local overrides. The
+`--wb-*` values must be fluid and bounded (`min()`, `max()`, `clamp()`, percentage/viewport-relative
+values) so they retain the approved 1536×1024 geometry at that viewport and contract at the actual
+default one; do not replace one fixed card size with a different fixed card size. The
+open-folder-expanded state may scroll only if its entry point and its own primary action remain
+visible; otherwise it too needs a compact fit.
 
 **Binding reference:** [Create a Project from a Goal](../brainstorm/images/mission-project-flow-02-create-project.png)
 at its 1536×1024 composition, with its flow context in

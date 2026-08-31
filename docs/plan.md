@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** final independent visual acceptance of the Project home, then merge its verified implementation. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** bind and implement the Project home's compact default-window design, then repeat visual acceptance. |
 
 ## Active phases
 

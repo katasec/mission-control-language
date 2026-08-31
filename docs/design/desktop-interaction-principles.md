@@ -168,6 +168,17 @@ inspiration. Before implementation, its task in the active spoke must name the e
 (repository path or design URL), target viewport, task-owned visual slice, and the states that must
 match. A non-visual task may record a concise N/A rationale instead.
 
+For Desktop, the task must also name the packaged app's **default usable viewport**, measured from
+the running window rather than guessed from its outer chrome. It must show the initial task action
+and every required input without document scrolling at that viewport. Large-canvas fidelity does
+not excuse a default window that opens with its primary action below the fold; bind a compact
+reference/state and verify it in the packaged app as well.
+
+Use fluid, bounded layout values rather than a second set of arbitrary fixed dimensions: tokenized
+`min()`, `max()`, `clamp()`, and percentage/viewport-relative values may contract a surface for the
+available width and height while retaining the exact reference dimensions at its named large
+viewport. Use a breakpoint only for a real structural rearrangement, not to paper over a fixed card.
+
 If a journey mockup spans several tasks, the spoke must say which part this task owns and what stays
 deferred. An implementer may not quietly substitute a smaller or different layout because the
 reference is broader than the immediate work.
