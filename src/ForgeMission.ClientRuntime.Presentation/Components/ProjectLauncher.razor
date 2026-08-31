@@ -61,6 +61,18 @@
         </svg>
         <span>Open an existing folder…</span>
     </button>
+
+    @* The link's expanded state, with its own reference frame
+       (task1-project-launcher-open-folder.svg). A folder has to be named somehow, and a link that
+       revealed nothing would fail the honest-affordance principle. *@
+    @if (ShowOpenFolder)
+    {
+        <div class="pl-open-folder">
+            <input class="pl-open-path" placeholder="/path/to/project" disabled="@Busy"
+                   value="@OpenPath" @oninput="OnOpenPathInput" @onkeydown="OnOpenPathKeyDown" />
+            <button class="pl-open-go" disabled="@Busy" @onclick="OnOpen">Open</button>
+        </div>
+    }
 </section>
 
 @code {
@@ -70,6 +82,8 @@
     [Parameter] public bool Busy { get; set; }
     [Parameter] public string? Error { get; set; }
     [Parameter] public string? Notice { get; set; }
+    [Parameter] public bool ShowOpenFolder { get; set; }
+    [Parameter] public string OpenPath { get; set; } = string.Empty;
 
     [Parameter] public EventCallback<string> GoalChanged { get; set; }
     [Parameter] public EventCallback<string> TitleChanged { get; set; }
@@ -80,6 +94,8 @@
     [Parameter] public EventCallback GoalCommitted { get; set; }
     [Parameter] public EventCallback Create { get; set; }
     [Parameter] public EventCallback OpenRequested { get; set; }
+    [Parameter] public EventCallback<string> OpenPathChanged { get; set; }
+    [Parameter] public EventCallback Open { get; set; }
 
     private bool CanCreate => !string.IsNullOrWhiteSpace(Goal);
 
@@ -99,4 +115,12 @@
 
     private Task OnCreate() => Create.InvokeAsync();
     private Task OnOpenRequested() => OpenRequested.InvokeAsync();
+    private Task OnOpenPathInput(ChangeEventArgs e) => OpenPathChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+    private Task OnOpen() => Open.InvokeAsync();
+
+    private async Task OnOpenPathKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await Open.InvokeAsync();
+    }
 }

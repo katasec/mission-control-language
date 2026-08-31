@@ -42,6 +42,35 @@ public sealed class ForgeCssThemeScopingTests
         }
     }
 
+    // The launcher's geometry lives in the Workbench map, so the surface that renders it must
+    // actually select the theme; without the attribute those tokens resolve to nothing.
+    [Fact]
+    public void TheClientRuntimePresentation_SelectsTheWorkbenchSurfaceTheme()
+    {
+        var index = Path.Combine(RepositoryRoot(), "src", "ForgeMission.ClientRuntime.Presentation",
+            "wwwroot", "index.html");
+
+        Assert.Contains("data-surface-theme=\"workbench\"", File.ReadAllText(index), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheWorkbenchTheme_DeclaresTheLayoutGeometryItsSurfacesConsume()
+    {
+        var light = TokenBlocks().Single(block =>
+            block.Selector.Contains(SurfaceThemeAttribute, StringComparison.Ordinal) &&
+            block.Body.Contains("color-scheme: light", StringComparison.Ordinal));
+
+        foreach (var token in new[]
+                 {
+                     "--wb-header-height", "--wb-header-inset", "--wb-card-width", "--wb-card-gap-top",
+                     "--wb-card-pad", "--wb-card-pad-bottom", "--wb-field-gutter", "--wb-goal-height",
+                     "--wb-name-height", "--wb-location-height", "--wb-gap-title", "--wb-gap-field",
+                     "--wb-gap-rule", "--wb-gap-action", "--wb-band-gap", "--wb-band-pad",
+                     "--wb-action-width", "--wb-action-height", "--wb-link-gap", "--wb-open-row-gap",
+                 })
+            Assert.Contains(token, light.Body, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ForgeUiHost_SelectsNoSurfaceTheme()
     {

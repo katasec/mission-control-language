@@ -100,8 +100,8 @@ public sealed class HomeSessionOperationTests : BunitContext
         channel.RespondWith(FakeClientRuntimeChannel.GoalRequired("/src/existing", "existing"));
 
         await ClickAsync(page, ".pl-open-link");
-        await InputAsync(page, ".open-folder-path", "/src/existing");
-        await ClickAsync(page, ".open-folder-go");
+        await InputAsync(page, ".pl-open-path", "/src/existing");
+        await ClickAsync(page, ".pl-open-go");
 
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".pl-notice")));
         Assert.Equal("existing", page.Find(".pl-name").GetAttribute("value"));
@@ -125,8 +125,8 @@ public sealed class HomeSessionOperationTests : BunitContext
             ProjectOperationErrorCode.HomeNotFound, "No directory exists at /nope."));
 
         await ClickAsync(page, ".pl-open-link");
-        await InputAsync(page, ".open-folder-path", "/nope");
-        await ClickAsync(page, ".open-folder-go");
+        await InputAsync(page, ".pl-open-path", "/nope");
+        await ClickAsync(page, ".pl-open-go");
 
         page.WaitForAssertion(() => Assert.Contains("No directory exists at /nope.",
             page.Find(".pl-error").TextContent));

@@ -24,20 +24,12 @@
                      Title="@titleInput" TitleChanged="value => titleInput = value"
                      Home="@homeInput" HomeChanged="value => homeInput = value"
                      Busy="busy" Error="@launcherError" Notice="@LauncherNotice"
+                     ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput"
+                     OpenPathChanged="value => openPathInput = value"
                      GoalCommitted="DraftProjectAsync"
                      Create="CreateProjectAsync"
-                     OpenRequested="ToggleOpenFolder" />
-
-    @* Not drawn in any approved reference frame — see the Task 1 summary. A folder has to be
-       named somehow, and a link that does nothing would fail the honest-affordance principle. *@
-    @if (showOpenFolder)
-    {
-        <div class="open-folder">
-            <input class="open-folder-path" @bind="openPathInput" @bind:event="oninput"
-                   @onkeydown="OnOpenKeyDown" placeholder="/path/to/project" disabled="@busy" />
-            <button class="open-folder-go" @onclick="OpenProjectAsync" disabled="@busy">Open</button>
-        </div>
-    }
+                     OpenRequested="ToggleOpenFolder"
+                     Open="OpenProjectAsync" />
 }
 else
 {
@@ -140,9 +132,9 @@ else
 <style>
     .shell { display: flex; flex-direction: column; height: 100vh; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
 
-    /* 97px and the 80px inset are measured from the binding reference, like the card geometry in
-       ProjectLauncher.razor.css; every colour and type value is a token. */
-    .shell-header { min-height: 97px; padding: 0 var(--space-5) 0 80px; display: flex; flex-direction: column; justify-content: center; background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); }
+    /* The band's height and inset are Workbench theme geometry (--wb-header-*), like every other
+       measured value on this surface; nothing here is a literal. */
+    .shell-header { min-height: var(--wb-header-height); padding: 0 var(--space-5) 0 var(--wb-header-inset); display: flex; flex-direction: column; justify-content: center; background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); }
     .brand { display: flex; align-items: baseline; gap: var(--space-5); }
     .shell-header h1 { margin: 0; font-size: var(--font-size-display); font-weight: 700; color: var(--accent); }
     .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); }
@@ -176,14 +168,6 @@ else
     .composer-input:disabled { color: var(--text-subtle); }
     .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
     .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
-
-    /* The one launcher element with no approved reference frame — see the Task 1 summary. It
-       borrows the launcher's own token language so it does not read as a foreign control. */
-    .open-folder { align-self: center; width: 906px; max-width: 100%; margin-top: var(--space-3); display: flex; gap: var(--space-3); }
-    .open-folder-path { flex: 1; height: 46px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0 var(--space-5); background: var(--surface); color: var(--text); font-family: var(--font-mono); font-size: var(--font-size-mono); }
-    .open-folder-path::placeholder { color: var(--text-subtle); }
-    .open-folder-go { height: 46px; padding: 0 var(--space-5); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--accent); font-family: var(--font-sans); font-size: var(--font-size-meta); font-weight: 600; cursor: pointer; }
-    .open-folder-go:disabled { opacity: 0.45; cursor: default; }
 
     .mission-trigger { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
     .mission-trigger:hover { background: var(--surface-hover); }
@@ -288,12 +272,6 @@ else
     {
         showOpenFolder = !showOpenFolder;
         launcherError = null;
-    }
-
-    private async Task OnOpenKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-            await OpenProjectAsync();
     }
 
     // Asks the Client Runtime what it would name this Project and where it would put it. The call

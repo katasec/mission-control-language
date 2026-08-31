@@ -263,6 +263,7 @@ Do not infer that scope from the broader journey mockup.
 | Busy | [task1-project-launcher-busy.svg](../images/phase-43.20/task1-project-launcher-busy.svg) | A draft or create in flight; every control disabled; the action reads `Working…`. |
 | Failed | [task1-project-launcher-failed.svg](../images/phase-43.20/task1-project-launcher-failed.svg) | A typed `ProjectOperationError` message inside the card; nothing created; entered values preserved. |
 | Goal required | [task1-project-launcher-goal-required.svg](../images/phase-43.20/task1-project-launcher-goal-required.svg) | A chosen directory with no manifest: the runtime's proposed name/location plus a notice; Create disabled until a goal exists. |
+| Open folder | [task1-project-launcher-open-folder.svg](../images/phase-43.20/task1-project-launcher-open-folder.svg) | The `Open an existing folder…` link expanded: one path row beneath the card, spanning its width, in the same field language, with its `Open` action. Nothing else on the surface changes. |
 
 [task1-project-launcher-before.svg](../images/phase-43.20/task1-project-launcher-before.svg)
 records the rejected two-card launcher so the defect stays on file.
@@ -321,11 +322,16 @@ from the reference. They are the one place this spec invents rather than matches
 
 **Theme architecture.** The sampled values are reference targets; the implementation reaches them
 through the existing semantic tokens, via a named **Workbench** product theme in
-`src/ForgeUI/wwwroot/css/forge.css`. `ProjectLauncher.razor.css` (Blazor CSS isolation) carries
-layout rules only — grid/flex, sizing, position, and disabled/focus/hover state — and every colour,
-radius, spacing, font family, and font size resolves through `var(--token)`. It declares no custom
-property of its own. If a value the reference needs has no token, the token is added to the
-Workbench map rather than inlined in the component.
+`src/ForgeUI/wwwroot/css/forge.css`. `ProjectLauncher.razor.css` (Blazor CSS isolation) and the
+page's own rules carry structure only — flex/grid, direction, alignment, and disabled/focus/hover
+state. Every colour, radius, spacing, font, type size **and the reference's own geometry** resolves
+through `var(--token)`; neither file declares a custom property or a literal value.
+
+The measured geometry is theme-owned, in the same map, as `--wb-*`: header height and inset; card
+width, top gap and padding; the sparkle gutter and glyph size; goal, name and location field
+heights; the title, field, tight-field, label, rule and action row gaps; notice/error gap and
+padding; action width and height; link gap and glyph; and the open-folder row's gap and action
+width. These are mode-independent, so the dark maps inherit them unchanged.
 
 Selection is `data-surface-theme="workbench"` on `<html>` in the Client Runtime Presentation's
 `index.html`. `data-theme` keeps its existing light/dark meaning; `data-surface-theme` is the

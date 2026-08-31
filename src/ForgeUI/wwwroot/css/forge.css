@@ -294,6 +294,38 @@
   --font-size-meta:    16px;     /* S */
   --font-size-mono:    15px;     /* S */
 
+  /* Layout geometry, measured from the binding Task 1 references. It lives here, with the rest of
+     the theme, because it is the Workbench surface's geometry — a component rule that hard-coded
+     it would be exactly the fragmentation the token system exists to prevent. All values are
+     mode-independent, so the dark maps below inherit them unchanged. */
+  --wb-header-height:    97px;
+  --wb-header-inset:     80px;
+  --wb-card-width:      906px;
+  --wb-card-gap-top:     37px;
+  --wb-card-pad:         44px;
+  --wb-card-pad-bottom:  46px;
+  --wb-field-gutter:     53px;   /* sparkle glyph + its gap: the column every field aligns to */
+  --wb-sparkle-width:    29px;
+  --wb-sparkle-height:   33px;
+  --wb-goal-height:     170px;
+  --wb-name-height:      63px;
+  --wb-location-height:  46px;
+  --wb-gap-title:        30px;
+  --wb-gap-field:        37px;
+  --wb-gap-field-tight:  17px;   /* the demoted Location block sits closer to the field above */
+  --wb-gap-label:         8px;
+  --wb-gap-rule:         49px;
+  --wb-gap-action:       34px;
+  --wb-band-gap:         21px;
+  --wb-band-gap-after:    2px;
+  --wb-band-pad:         19px;
+  --wb-action-width:    271px;
+  --wb-action-height:    68px;
+  --wb-link-gap:         32px;
+  --wb-link-glyph:       22px;
+  --wb-open-action-width: 100px;
+  --wb-open-row-gap:      21px;
+
   /* Elevation, focus */
   --shadow-sm:  0 1px 2px rgba(11, 36, 71, 0.06);                                    /* D */
   --shadow:     0 1px 3px rgba(11, 36, 71, 0.08), 0 4px 12px rgba(11, 36, 71, 0.06); /* D */
