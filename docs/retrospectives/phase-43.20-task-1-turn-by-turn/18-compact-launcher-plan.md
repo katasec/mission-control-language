@@ -4,9 +4,11 @@
 
 Design a compact version after the packaged Desktop was visibly too tall at its default size.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Fix the default-window layout. Measure the available space and produce compact design artifacts.”
+**Verbatim source:** [R19 in the Codex handoff transcript](claude-relay-transcript.md#r19).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

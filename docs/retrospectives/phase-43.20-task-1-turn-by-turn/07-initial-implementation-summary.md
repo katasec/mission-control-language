@@ -4,9 +4,11 @@
 
 Implement Task 1 from the approved contract plan and report the result.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Implement Task 1, run the tests, push the branch, and return a completion summary.”
+**Verbatim source:** [R07 in the Codex handoff transcript](claude-relay-transcript.md#r07).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

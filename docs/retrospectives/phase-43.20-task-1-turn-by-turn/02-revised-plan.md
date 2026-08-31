@@ -4,9 +4,11 @@
 
 Revise the initial plan after feedback about ownership and implementation scope.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Revise the Task 1 plan to make ownership and implementation scope clearer.”
+**Verbatim source:** [R02 in the Codex handoff transcript](claude-relay-transcript.md#r02).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

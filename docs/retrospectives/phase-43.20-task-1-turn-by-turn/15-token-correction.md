@@ -4,9 +4,11 @@
 
 Correct a Workbench token contrast/context defect before implementation.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Correct the token issue and confirm the theme remains accessible.”
+**Verbatim source:** [R15 in the Codex handoff transcript](claude-relay-transcript.md#r15).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

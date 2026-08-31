@@ -5,9 +5,11 @@
 Produce a build-ready plan for Phase 43.20 Task 1: create/open a project through the shared Client
 Runtime, with Desktop as a presentation surface.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Design Phase 43.20 Task 1 and return an implementation plan. Keep Desktop over the Client Runtime.”
+**Verbatim source:** [R01 in the Codex handoff transcript](claude-relay-transcript.md#r01).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

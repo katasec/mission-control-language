@@ -4,9 +4,11 @@
 
 Strengthen the shared-action/TUI proof and lock the Task 1 plan.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Strengthen the TUI parity proof and return a final plan.”
+**Verbatim source:** [R06 in the Codex handoff transcript](claude-relay-transcript.md#r06).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

@@ -4,9 +4,11 @@
 
 Ensure the new launcher reskins through the existing theming system instead of hard-coded colours.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Use the existing design system to reskin the Workbench; do not add a colour hack.”
+**Verbatim source:** [R13 in the Codex handoff transcript](claude-relay-transcript.md#r13).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

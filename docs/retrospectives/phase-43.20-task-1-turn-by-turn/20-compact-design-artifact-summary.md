@@ -4,9 +4,11 @@
 
 Measure the real viewport, create compact SVGs, and specify the responsive launcher before code.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Create compact 800×568 references and a fluid responsive specification before implementation.”
+**Verbatim source:** [R21 in the Codex handoff transcript](claude-relay-transcript.md#r21).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

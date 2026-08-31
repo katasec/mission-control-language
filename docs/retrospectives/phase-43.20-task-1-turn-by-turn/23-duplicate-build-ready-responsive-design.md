@@ -4,9 +4,9 @@
 
 Provide the final build-ready responsive design.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Return the build-ready responsive design summary.”
+**No new relay was sent.** This was a literal duplicate of Turn 22's response to [R23 in the Codex handoff transcript](claude-relay-transcript.md#r23).
 
 ## Better prompt
 

@@ -4,9 +4,11 @@
 
 Provide the compact-launcher plan.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Return the compact launcher plan for review.”
+**Verbatim source:** [R20 in the Codex handoff transcript](claude-relay-transcript.md#r20).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

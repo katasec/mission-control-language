@@ -4,9 +4,11 @@
 
 Implement the approved Workbench launcher slice and perform internal visual acceptance.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Implement the approved visual slice, run tests, compare all states to the reference, and report PASS/FAIL.”
+**Verbatim source:** [R17 in the Codex handoff transcript](claude-relay-transcript.md#r17).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 

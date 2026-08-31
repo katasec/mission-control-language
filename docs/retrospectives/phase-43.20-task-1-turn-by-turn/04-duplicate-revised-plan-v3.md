@@ -4,9 +4,9 @@
 
 Provide the updated Task 1 plan.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Send the revised v3 Task 1 plan for review.”
+**No new relay was sent.** This was a literal duplicate of Turn 03's response to [R03 in the Codex handoff transcript](claude-relay-transcript.md#r03).
 
 ## Better prompt
 

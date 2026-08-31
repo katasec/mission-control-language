@@ -4,9 +4,11 @@
 
 Create state SVGs and a Task 1-specific visual specification for approval before implementation.
 
-## Prompt used (reconstructed)
+## Prompt used
 
-“Create binding launcher SVGs and a component/state specification; do not implement yet.”
+**Verbatim source:** [R12 in the Codex handoff transcript](claude-relay-transcript.md#r12).
+
+This is the full relay text used for this turn, preserved without summary or reconstruction.
 
 ## Better prompt
 
