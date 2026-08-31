@@ -4,6 +4,15 @@
 
 Implement the approved Workbench launcher slice and perform internal visual acceptance.
 
+## Prompt used (reconstructed)
+
+“Implement the approved visual slice, run tests, compare all states to the reference, and report PASS/FAIL.”
+
+## Better prompt
+
+“Validate all states first in the browser at every approved viewport, including the actual packaged
+default content viewport. Do not commit or update the PR until Claude and Codex both record visual PASS.”
+
 ## What Claude did wrong
 
 It declared a six-state visual PASS from the spacious reference view, then committed and updated

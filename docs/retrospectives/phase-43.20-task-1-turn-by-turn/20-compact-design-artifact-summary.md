@@ -4,6 +4,15 @@
 
 Measure the real viewport, create compact SVGs, and specify the responsive launcher before code.
 
+## Prompt used (reconstructed)
+
+“Create compact 800×568 references and a fluid responsive specification before implementation.”
+
+## Better prompt
+
+“Treat 800×568 and 1536×1024 as boundary checkpoints, not layouts. Specify browser-first evidence
+for all states, four corners, continuous resize, long content, zoom, themes, and token audit.”
+
 ## What Claude did wrong
 
 The artifacts correctly measured 800×568, but the specification still optimized two endpoints and

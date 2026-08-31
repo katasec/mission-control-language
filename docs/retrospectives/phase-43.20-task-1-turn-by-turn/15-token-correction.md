@@ -4,6 +4,15 @@
 
 Correct a Workbench token contrast/context defect before implementation.
 
+## Prompt used (reconstructed)
+
+“Correct the token issue and confirm the theme remains accessible.”
+
+## Better prompt
+
+“Audit every foreground/background pairing in every state and mode before approval. Report measured
+contrast for each pair; do not approve a token from a single favourable background.”
+
 ## What Claude did wrong
 
 The initial token proposal checked a value in one context and missed its use against another

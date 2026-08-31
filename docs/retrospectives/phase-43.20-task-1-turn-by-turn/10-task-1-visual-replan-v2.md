@@ -4,6 +4,15 @@
 
 Correct the visual acceptance order and define the launcher slice.
 
+## Prompt used (reconstructed)
+
+“Correct the re-plan and settle the visual scope before implementation resumes.”
+
+## Better prompt
+
+“Return a decision-complete slice: every mock element marked owned/deferred/blocked, no open
+composition questions, and one approved set of state references before a build handoff.”
+
 ## What Claude did wrong
 
 This was corrective rather than a new defect, but it shows that scope decisions such as the sparse

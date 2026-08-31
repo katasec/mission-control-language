@@ -4,6 +4,15 @@
 
 Amend the visual plan to avoid inert deferred UI and match the approved visual language.
 
+## Prompt used (reconstructed)
+
+“Amend the visual plan so deferred capabilities are not represented by misleading inert controls.”
+
+## Better prompt
+
+“For each reference element, state its owning task. Omit anything deferred unless it has a real
+current capability; do not use decorative placeholders to make an incomplete screen look complete.”
+
 ## What Claude did wrong
 
 The needed correction arrived only after two earlier re-plans. The design had not initially

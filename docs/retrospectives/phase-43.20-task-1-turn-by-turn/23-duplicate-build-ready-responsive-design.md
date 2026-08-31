@@ -4,6 +4,15 @@
 
 Provide the final build-ready responsive design.
 
+## Prompt used (reconstructed)
+
+“Return the build-ready responsive design summary.”
+
+## Better prompt
+
+“Include the version/hash of the last approved artifact. If the outgoing response matches it,
+report a duplicate-send error rather than consume another human relay and review turn.”
+
 ## What Claude did wrong
 
 This was a literal duplicate of turn 22, accidentally relayed again. It created review churn but
