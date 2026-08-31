@@ -31,7 +31,7 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) | In progress. The Project-home implementation failed visual acceptance; bind and approve its scoped reference before further work. |
+| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) | In progress. Project-home passed internal visual acceptance; final independent operator acceptance is pending. |
 | [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |

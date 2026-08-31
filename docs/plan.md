@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** bind and approve the Project-home visual reference slice, then rework the visual surface. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** final independent visual acceptance of the Project home, then merge its verified implementation. |
 
 ## Active phases
 

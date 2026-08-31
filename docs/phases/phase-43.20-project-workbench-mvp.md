@@ -1,8 +1,8 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Task 1 visual acceptance failed (2026-08-30).** Its current launcher is technically
-> implemented but does not match the named Project-home reference. A task-scoped visual slice must
-> be agreed before reimplementation or approval. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: Task 1 internal visual acceptance passed (2026-08-31).** The packaged Desktop matches
+> its six scoped references and its named Workbench theme; final independent operator acceptance is
+> pending. Do not merge before that check. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -231,11 +231,12 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest — visual acceptance failed
+### Task 1 — Project home and local manifest — internal acceptance passed; operator acceptance pending
 
-**Not approved; do not merge.** The technical implementation and its local verification are kept in
-[the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected), but a behavioral pass cannot replace
-visual acceptance.
+**Not approved for merge.** Claude and Codex have passed the internal package, behavior, theme, and
+six-state visual comparisons. The earlier rejected implementation remains in
+[the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected);
+the current implementation is in PR #78. Only final independent operator visual acceptance remains.
 
 **Binding reference:** [Create a Project from a Goal](../brainstorm/images/mission-project-flow-02-create-project.png)
 at its 1536×1024 composition, with its flow context in
