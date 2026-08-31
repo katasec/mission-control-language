@@ -5,8 +5,13 @@ if (args.Length is < 3 or > 4)
 
 using var http = new HttpClient { BaseAddress = new Uri(args[0], UriKind.Absolute) };
 var channel = new HttpClientRuntimeChannel(http);
-var session = await channel.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-    new SessionSetupRequest(args[1]), CancellationToken.None);
+// A session and its local execution root can only come from a Project (43.20 task 1), so this
+// non-Desktop surface opens one the same way Desktop does — proof in itself that the contract is
+// surface-neutral, since nothing here references Blazor or a Host.
+var opened = await channel.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
+    new ProjectCreateRequest("Client Runtime transport probe", HomePath: args[1]), CancellationToken.None);
+var session = opened.Session
+    ?? throw new InvalidOperationException(opened.Error?.Message ?? "Client Runtime returned no Project session.");
 
 if (args.Length == 4 && args[3].Equals("confirm", StringComparison.OrdinalIgnoreCase))
 {

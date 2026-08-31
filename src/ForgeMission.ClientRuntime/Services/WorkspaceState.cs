@@ -4,12 +4,6 @@ namespace ForgeMission.ClientRuntime.Services;
 
 public sealed class WorkspaceState
 {
-    public WorkspaceState(string? initialRoot = null)
-    {
-        if (!string.IsNullOrWhiteSpace(initialRoot))
-            OpenFolder(initialRoot);
-    }
-
     public IWorkspace? Workspace { get; private set; }
 
     public CapabilityRegistry? Capabilities { get; private set; }

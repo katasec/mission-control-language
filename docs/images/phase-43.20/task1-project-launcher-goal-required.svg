@@ -1,0 +1,28 @@
+<svg viewBox="0 0 1536 1024" width="1536" height="1024" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Task 1 launcher - goal required</title>
+<desc>An existing directory with no manifest: the Client Runtime proposed name and location are filled in, a notice explains why, and Create project stays disabled until a goal exists.</desc>
+<rect x="0" y="0" width="1536" height="1024" rx="0" fill="#f7faff"/>
+<rect x="0" y="0" width="1536" height="97" rx="0" fill="#f6f8fd"/>
+<line x1="0" y1="97" x2="1536" y2="97" stroke="#c9d5e7" stroke-width="1"/>
+<text x="80" y="72" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="36" font-weight="700" fill="#0468ed" text-anchor="start">Forge</text>
+<line x1="186" y1="40" x2="186" y2="72" stroke="#c3cfe0" stroke-width="1"/>
+<text x="207" y="68" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" font-weight="400" fill="#1d2c47" text-anchor="start">AI Workbench</text>
+<rect x="315" y="134" width="906" height="804" rx="16" fill="#ffffff" stroke="#e7ecf4" stroke-width="1"/>
+<text x="360" y="217" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="36" font-weight="700" fill="#101d33" text-anchor="start">New project</text>
+<g transform="translate(354,265)" fill="#0468ed" aria-hidden="true"><path d="M14 0 L17.2 10.8 L28 14 L17.2 17.2 L14 28 L10.8 17.2 L0 14 L10.8 10.8 Z"/><path d="M25 20 L26.6 25.4 L32 27 L26.6 28.6 L25 34 L23.4 28.6 L18 27 L23.4 25.4 Z"/></g>
+<rect x="413" y="249" width="762" height="170" rx="10" fill="#ffffff" stroke="#0f56d2" stroke-width="2"/>
+<text x="439" y="294" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="400" fill="#62748c" text-anchor="start">Describe what you want to build</text>
+<text x="413" y="481" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#1d2c47" text-anchor="start">Project name</text>
+<rect x="413" y="495" width="762" height="63" rx="10" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
+<text x="439" y="536" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="21" font-weight="400" fill="#101d33" text-anchor="start">existing-code</text>
+<text x="413" y="595" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#5b6b83" text-anchor="start">Location</text>
+<rect x="413" y="609" width="762" height="46" rx="8" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
+<text x="439" y="639" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="15" font-weight="400" fill="#5b6b83" text-anchor="start">/src/existing-code</text>
+<rect x="413" y="675" width="762" height="62" rx="10" fill="#eff5fe" stroke="#c9dcf8" stroke-width="1"/>
+<text x="433" y="713" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="17" font-weight="400" fill="#1d2c47" text-anchor="start">That folder is not a Forge Project yet. Enter a goal to create one there.</text>
+<line x1="413" y1="789" x2="1175" y2="789" stroke="#e5eaf2" stroke-width="1"/>
+<rect x="904" y="824" width="271" height="68" rx="10" fill="#9dc0f2"/>
+<text x="1039.5" y="867" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="#ffffff" text-anchor="middle">Create project</text>
+<g transform="translate(360,974)" fill="none" stroke="#0468ed" stroke-width="1.8"><path d="M0.9 3.6 h6.4 l1.8 2.2 h9.0 a0.9 0.9 0 0 1 0.9 0.9 v9.7 a0.9 0.9 0 0 1 -0.9 0.9 h-17.2 a0.9 0.9 0 0 1 -0.9 -0.9 v-11.9 a0.9 0.9 0 0 1 0.9 -0.9 z"/></g>
+<text x="394" y="990" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="400" fill="#0468ed" text-anchor="start">Open an existing folder…</text>
+</svg>

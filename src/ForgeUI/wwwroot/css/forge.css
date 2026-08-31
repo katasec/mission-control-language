@@ -92,6 +92,7 @@
   --space-4:         16px;
   --space-5:         24px;
   --space-6:         32px;
+  --space-7:         44px;
 
   /* Elevation */
   --shadow-sm:  0 1px 2px rgba(20, 18, 15, 0.05);
@@ -101,6 +102,16 @@
   /* Type */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Type scale. Named so a themed surface can restate it; the defaults are the sizes existing
+     rules already use as literals, so declaring them changes nothing that ships today. */
+  --font-size-display: 30px;
+  --font-size-title:   22px;
+  --font-size-lead:    17px;
+  --font-size-body:    15px;
+  --font-size-label:   14px;
+  --font-size-meta:  12.5px;
+  --font-size-mono:    12px;
 
   /* Motion */
   --transition: 130ms ease;
@@ -197,6 +208,240 @@
   --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow:     0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* 2b. Design tokens — Workbench product theme ---------------------------- */
+/* A named product theme (43.20), selected with data-surface-theme="workbench" on <html> by the
+   Client Runtime Presentation. It is orthogonal to data-theme, which keeps its light/dark colour-
+   mode meaning: each selector below carries the surface-theme attribute *in addition to* the mode
+   condition the default theme already uses, so it outranks its counterpart on specificity and the
+   cascade never depends on source order. Nothing without the attribute matches, so ForgeUI stays
+   on the default ember theme.
+
+   Values are the approved Task 1 reference targets. Provenance, per
+   docs/phases/phase-43.20-project-workbench-mvp.md:
+     S  sampled from the binding SVG reference
+     D  derived from a sampled value by the relationship the default theme already uses
+     N  no reference evidence — the reference has no failure/success/warning/seal state
+     A  an accessibility override of a sampled value, carried back into the SVG references */
+
+:root[data-surface-theme="workbench"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg:               #f7faff;   /* S */
+  --surface-sunken:   #f6f8fd;   /* S */
+  --surface:          #ffffff;   /* S */
+  --surface-hover:    #eef3fb;   /* D */
+  --surface-active:   #e4ecf8;   /* D */
+
+  /* Lines */
+  --border:           #e7ecf4;   /* S */
+  --border-strong:    #d5dae5;   /* S */
+
+  /* Text. --text-subtle is A, not S: the reference's #8b99ad reaches only 2.89 against
+     --surface, and accessibility wins over sample fidelity. 4.78 here. */
+  --text:             #101d33;   /* S */
+  --text-muted:       #5b6b83;   /* S */
+  --text-subtle:      #62748c;   /* A */
+
+  /* Accent and ink are one blue action family: a solid action is the same blue whichever
+     family a component reaches for. */
+  --accent:           #0f6eeb;   /* S */
+  --accent-hover:     #0f56d2;   /* S */
+  --accent-soft:      #eff5fe;   /* S */
+  --accent-contrast:  #ffffff;   /* S */
+  --ink:              #0f6eeb;   /* S */
+  --ink-hover:        #0f56d2;   /* S */
+  --ink-contrast:     #ffffff;   /* S */
+
+  /* Semantic */
+  --success:          #4d7c0f;   /* N */
+  --success-bg:       #f2fbe6;   /* N */
+  --success-border:   #84cc16;   /* N — the locked visual language's lime */
+  --danger:           #b42318;   /* N */
+  --danger-bg:        #fef3f2;   /* N */
+  --danger-border:    #fda29b;   /* N */
+  --warning:          #8a5a06;   /* N */
+  --warning-bg:       #fef6e7;   /* N */
+
+  /* Trust seals */
+  --seal-official:    #8a5a06;   /* N */
+  --seal-verified:    #0f6eeb;   /* N */
+  --seal-check:       #ffffff;   /* N */
+
+  /* Radii */
+  --radius-sm:         8px;      /* S */
+  --radius:           10px;      /* S */
+  --radius-lg:        16px;      /* S */
+  --radius-pill:     999px;
+
+  /* Spacing */
+  --space-1:           4px;
+  --space-2:           8px;
+  --space-3:          12px;
+  --space-4:          16px;
+  --space-5:          24px;
+  --space-6:          32px;
+  --space-7:          44px;
+
+
+  /* Layout geometry, from the binding Task 1 references. It is theme-owned: a component rule that
+     hard-coded it would be exactly the fragmentation the token system exists to prevent.
+
+     Each value ramps between the two boundary frames — 800x568 and 1536x1024 — landing on its
+     compact figure at the lower boundary and exactly its approved figure at the upper one. The
+     ramp supports the layout; it does not define it (the layout is grid/flex and content-led).
+
+     AXIS RULE: vertical rhythm follows height (vh), horizontal follows width (vw). A wide but
+     short window must not inherit tall vertical padding from its width, which is why the card's
+     padding is split into -x and -y. All values are mode-independent, so the dark maps inherit
+     them unchanged. */
+  --wb-header-height:     clamp(56px, calc(4.93px + 8.991vh), 97px);
+  --wb-header-inset:      clamp(20px, calc(-45.22px + 8.152vw), 80px);
+  --wb-card-width:        min(906px, 100%);   /* the page inset is the container's padding */
+  --wb-page-inset:        clamp(16px, calc(7.3px + 1.087vw), 24px);
+  --wb-card-gap-top:      clamp(12px, calc(-19.14px + 5.482vh), 37px);
+  --wb-card-pad-x:        clamp(20px, calc(-6.09px + 3.261vw), 44px);
+  --wb-card-pad-y:        clamp(20px, calc(-9.89px + 5.263vh), 44px);
+  --wb-card-pad-bottom:   clamp(20px, calc(-12.39px + 5.702vh), 46px);
+  --wb-field-gutter:      clamp(32px, calc(9.17px + 2.853vw), 53px);
+  --wb-sparkle-width:     clamp(22px, calc(14.39px + 0.951vw), 29px);
+  --wb-sparkle-height:    clamp(25px, calc(16.3px + 1.087vw), 33px);
+  --wb-goal-height:       clamp(88px, calc(-14.14px + 17.982vh), 170px);
+  --wb-name-height:       clamp(44px, calc(20.33px + 4.167vh), 63px);
+  --wb-location-height:   clamp(38px, calc(28.04px + 1.754vh), 46px);
+  --wb-gap-title:         clamp(12px, calc(-10.42px + 3.947vh), 30px);
+  --wb-gap-field:         clamp(17px, calc(-15.39px + 5.702vh), 43px);
+  --wb-gap-field-tight:   clamp(10px, calc(-6.19px + 2.851vh), 23px);
+  --wb-gap-label:         clamp(6px, calc(3.51px + 0.439vh), 8px);
+  --wb-gap-rule:          clamp(16px, calc(-25.11px + 7.237vh), 49px);
+  --wb-gap-action:        clamp(12px, calc(-15.4px + 4.825vh), 34px);
+  --wb-band-gap:          clamp(10px, calc(-3.7px + 2.412vh), 21px);
+  --wb-band-gap-after:    clamp(2px, calc(2.0px + 0.0vh), 2px);
+  --wb-band-pad:          clamp(10px, calc(-1.21px + 1.974vh), 19px);
+  /* The band's own ceiling, measured from the space left below it rather than derived from the
+     goal field: an unbounded failure message would otherwise push the primary action off a
+     short viewport. 54px at 568 and 86px at 1024 both keep the action on screen with slack. */
+  --wb-band-max:          clamp(54px, calc(14.14px + 7.018vh), 86px);
+  --wb-action-width:      clamp(150px, calc(18.48px + 16.44vw), 271px);
+  /* The action's box is reference geometry; the room inside it is not. At the compact bound the
+     label measures exactly the width a 24px inset leaves, so it wrapped to two lines against a
+     reference that draws it on one. Width-driven, like the box it sits in. */
+  --wb-action-pad-x:      clamp(12px, calc(-1.04px + 1.63vw), 24px);
+  --wb-action-height:     clamp(40px, calc(5.12px + 6.14vh), 68px);
+  --wb-link-gap:          clamp(15px, calc(-6.17px + 3.728vh), 32px);
+  --wb-link-glyph:        clamp(18px, calc(13.65px + 0.543vw), 22px);
+  --wb-open-row-gap:      clamp(10px, calc(-3.7px + 2.412vh), 21px);
+  --wb-open-action-width: clamp(84px, calc(66.61px + 2.174vw), 100px);
+
+  /* Type. Height-driven: every size contributes to the vertical stack. */
+  --font-size-display:    clamp(24px, calc(9.05px + 2.632vh), 36px);
+  --font-size-title:      clamp(18px, calc(5.54px + 2.193vh), 28px);
+  --font-size-lead:       clamp(15px, calc(6.28px + 1.535vh), 22px);
+  --font-size-body:       clamp(15px, calc(7.53px + 1.316vh), 21px);
+  --font-size-label:      clamp(14px, calc(6.53px + 1.316vh), 20px);
+  --font-size-meta:       clamp(12px, calc(7.02px + 0.877vh), 16px);
+  --font-size-mono:       clamp(12px, calc(8.26px + 0.658vh), 15px);
+
+  /* Elevation, focus */
+  --shadow-sm:  0 1px 2px rgba(11, 36, 71, 0.06);                                    /* D */
+  --shadow:     0 1px 3px rgba(11, 36, 71, 0.08), 0 4px 12px rgba(11, 36, 71, 0.06); /* D */
+  --shadow-lg:  0 8px 30px rgba(11, 36, 71, 0.14);                                   /* D */
+  --focus-ring: 0 0 0 3px rgba(15, 110, 235, 0.30);                                  /* D */
+}
+
+/* Workbench dark. No visual mock exists for it, so it is held to token composition and contrast
+   rather than to a reference; every pair clears AA. Radii, spacing, type and fonts are inherited
+   from the Workbench light block above — only what differs is restated. */
+@media (prefers-color-scheme: dark) {
+  :root[data-surface-theme="workbench"]:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg:             #071426;
+    --surface-sunken: #0a1a30;
+    --surface:        #0f2440;
+    --surface-hover:  #16304f;
+    --surface-active: #1d3a5c;
+
+    --border:         #1d3556;
+    --border-strong:  #2b4a72;
+
+    --text:           #e6edf7;
+    --text-muted:     #9fb2ca;
+    --text-subtle:    #8aa3c2;
+
+    --accent:         #4d9bff;
+    --accent-hover:   #74b2ff;
+    --accent-soft:    #12294a;
+    --accent-contrast:#06121f;
+    --ink:            #4d9bff;
+    --ink-hover:      #74b2ff;
+    --ink-contrast:   #06121f;
+
+    --success:        #a3e635;
+    --success-bg:     #16300a;
+    --success-border: #65a30d;
+    --danger:         #ff9d95;
+    --danger-bg:      #3a1512;
+    --danger-border:  #b42318;
+    --warning:        #e8c06a;
+    --warning-bg:     #3a2c10;
+
+    --seal-official:  #e8c06a;
+    --seal-verified:  #4d9bff;
+    --seal-check:     #071426;
+
+    --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow:     0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40);
+    --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.55);
+    --focus-ring: 0 0 0 3px rgba(77, 155, 255, 0.35);
+  }
+}
+
+/* Workbench dark, forced. Same values as the automatic block; a forced light choice needs no
+   counterpart because it lands on the Workbench light block above. */
+:root[data-surface-theme="workbench"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:             #071426;
+  --surface-sunken: #0a1a30;
+  --surface:        #0f2440;
+  --surface-hover:  #16304f;
+  --surface-active: #1d3a5c;
+
+  --border:         #1d3556;
+  --border-strong:  #2b4a72;
+
+  --text:           #e6edf7;
+  --text-muted:     #9fb2ca;
+  --text-subtle:    #8aa3c2;
+
+  --accent:         #4d9bff;
+  --accent-hover:   #74b2ff;
+  --accent-soft:    #12294a;
+  --accent-contrast:#06121f;
+  --ink:            #4d9bff;
+  --ink-hover:      #74b2ff;
+  --ink-contrast:   #06121f;
+
+  --success:        #a3e635;
+  --success-bg:     #16300a;
+  --success-border: #65a30d;
+  --danger:         #ff9d95;
+  --danger-bg:      #3a1512;
+  --danger-border:  #b42318;
+  --warning:        #e8c06a;
+  --warning-bg:     #3a2c10;
+
+  --seal-official:  #e8c06a;
+  --seal-verified:  #4d9bff;
+  --seal-check:     #071426;
+
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow:     0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40);
+  --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.55);
+  --focus-ring: 0 0 0 3px rgba(77, 155, 255, 0.35);
 }
 
 /* 3. Base / reset -------------------------------------------------------- */

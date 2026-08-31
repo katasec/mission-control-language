@@ -23,17 +23,49 @@ public sealed class ClientRuntimePresentationBoundaryTests
         Assert.Throws<InvalidOperationException>(() => AssertNoDirectHttpClient(source, "Ui.cs"));
     }
 
-    private static void AssertNoDirectHttpClient(string directory)
+    // 43.20 task 1: local execution — including deriving a Project home or reading a manifest —
+    // belongs to the Client Runtime. Presentation cannot hold a filesystem rule it has no API for.
+    [Fact]
+    public void MarkedPresentationProjects_CannotUseTheFilesystem()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ClientRuntimePresentation>true</ClientRuntimePresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoFilesystemAccess);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsFilesystemUsage()
+    {
+        var source = "class Ui { string Read() => File.ReadAllText(Path.Combine(\"a\", \"b\")); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoFilesystemAccess(source, "Ui.cs"));
+    }
+
+    private static void AssertNoDirectHttpClient(string directory) =>
+        ForEachSourceFile(directory, AssertNoDirectHttpClient);
+
+    private static void ForEachSourceFile(string directory, Action<string, string> assert)
     {
         foreach (var file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
-                     .Where(file => Path.GetExtension(file) is ".cs" or ".razor"))
-            AssertNoDirectHttpClient(File.ReadAllText(file), file);
+                     .Where(file => Path.GetExtension(file) is ".cs" or ".razor")
+                     .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)))
+            assert(File.ReadAllText(file), file);
     }
 
     private static void AssertNoDirectHttpClient(string source, string sourceName)
     {
         if (System.Text.RegularExpressions.Regex.IsMatch(source, @"\b(HttpClient|IHttpClientFactory)\b"))
             throw new InvalidOperationException($"Presentation must use IClientRuntimeChannel, not direct HTTP: {sourceName}");
+    }
+
+    private static void AssertNoFilesystemAccess(string source, string sourceName)
+    {
+        if (System.Text.RegularExpressions.Regex.IsMatch(source, @"\b(System\.IO|File|Directory|Path|FileStream|StreamReader|StreamWriter)\s*\."))
+            throw new InvalidOperationException($"Presentation must not touch the filesystem: {sourceName}");
     }
 
     private static string RepositoryRoot()

@@ -9,23 +9,92 @@ public enum SessionRuntimeKind
     DurableConversation,
 }
 
-// ReplacesSessionId is the outgoing session's ID when the picker is replacing a still-live
-// session (a mission switch), not creating a workspace's first session. It lets the store
-// cancel/dispose the prior session's durable tail instead of abandoning it.
+// Replacement only (43.20 task 1). This request can never establish a Project's first session or
+// root — only ProjectCreateRequest/ProjectOpenRequest can. ReplacesSessionId is the outgoing
+// session's ID (a mission switch), so the store can cancel/dispose that session's durable tail
+// instead of abandoning it, and WorkspaceRoot must equal that same session's Project home. The
+// Client Runtime endpoint enforces both, so every surface — Desktop today, a TUI later — is bound
+// by the rule rather than trusted to follow it.
 public sealed record SessionSetupRequest(
     string WorkspaceRoot,
-    string? Mission = null,
-    SessionRuntimeKind Runtime = SessionRuntimeKind.Mission,
-    string? ReplacesSessionId = null);
-public sealed record SessionSetupResponse(string SessionId, IReadOnlyList<string> AvailableCapabilities);
-
-public sealed record DefaultWorkspaceSessionRequest(
+    string ReplacesSessionId,
     string? Mission = null,
     SessionRuntimeKind Runtime = SessionRuntimeKind.Mission);
-public sealed record DefaultWorkspaceSessionResponse(
+public sealed record SessionSetupResponse(string SessionId, IReadOnlyList<string> AvailableCapabilities);
+
+// --- Project contracts (43.20 task 1) -------------------------------------------------------
+// Surface-neutral by construction: derivation, filesystem work, collision handling, and manifest
+// validation all live in Client Runtime, and every expected domain failure is a typed
+// ProjectOperationError rather than an exception each surface interprets its own way.
+
+/// <summary>Side-effect-free: returns the title/home Forge would use so a surface can show them
+/// before confirmation. It creates no directory, manifest, session, capability authority, or
+/// collision reservation — so a concurrent creation can make <see cref="ProjectCreateRequest"/>
+/// land on a different suffix than the draft displayed.</summary>
+public sealed record ProjectDraftRequest(
+    string Goal,
+    string? TitleOverride = null,
+    string? HomeOverride = null);
+public sealed record ProjectDraftResponse(
+    ProjectHomeProposal? Draft,
+    ProjectOperationError? Error);
+
+public sealed record ProjectCreateRequest(
+    string Goal,
+    string? Title = null,
+    string? HomePath = null,
+    string? Mission = null,
+    SessionRuntimeKind Runtime = SessionRuntimeKind.Mission);
+
+public sealed record ProjectOpenRequest(
+    string HomePath,
+    string? Mission = null,
+    SessionRuntimeKind Runtime = SessionRuntimeKind.Mission);
+
+/// <summary>The one response shape create and open share. Exactly one payload is populated:
+/// <see cref="Session"/> for Created/Opened, <see cref="Proposal"/> for GoalRequired, and
+/// <see cref="Error"/> for Failed.</summary>
+public sealed record ProjectOperationResponse(
+    ProjectOperationOutcome Outcome,
+    ProjectSession? Session = null,
+    ProjectHomeProposal? Proposal = null,
+    ProjectOperationError? Error = null);
+
+public enum ProjectOperationOutcome
+{
+    Created,
+    Opened,
+    // The chosen directory exists but holds no manifest: the same goal-confirmation flow creates
+    // one there. Nothing was created to reach this outcome.
+    GoalRequired,
+    Failed,
+}
+
+public sealed record ProjectSession(
     string SessionId,
     IReadOnlyList<string> AvailableCapabilities,
-    string WorkspaceRoot);
+    ProjectSummary Project);
+
+public sealed record ProjectSummary(Guid ProjectId, string Title, string Goal, string Home);
+
+/// <summary>What Forge would use, for display: the derived (or overridden) home and title. Returned
+/// by both a draft and the GoalRequired outcome — a surface never derives either value itself.</summary>
+public sealed record ProjectHomeProposal(string HomePath, string ProposedTitle);
+
+public sealed record ProjectOperationError(ProjectOperationErrorCode Code, string Message);
+
+// Expected Project domain failures. Unexpected process/transport failures (host down, socket
+// reset) still fail the transport normally rather than being laundered into a code here.
+public enum ProjectOperationErrorCode
+{
+    InvalidGoal,
+    InvalidHome,
+    HomeNotFound,
+    InvalidManifest,
+    UnsupportedManifestVersion,
+    InvalidPath,
+    CollisionAttemptsExhausted,
+}
 
 public sealed record CapabilityDispatchRequest(string SessionId, CapabilityRequestData Request);
 public sealed record CapabilityDispatchResponse(string Content, bool IsError);

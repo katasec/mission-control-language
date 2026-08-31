@@ -1,14 +1,14 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: design ready (2026-08-30).** Replace Desktop's proof-era anonymous workspace with a
-> project-first workbench: one enduring Mission Control conversation, named runs, a minimal exact
-> trace, and honest stop/guidance controls. Part of [Phase 43 — Forge
-> Desktop](phase-43-forge-desktop.md).
+> **Status: Task 1 default-window visual acceptance failed (2026-08-31).** The six 1536×1024
+> references pass, but the packaged Desktop's default usable viewport opens with its primary action
+> below the fold. Measure and bind the compact viewport before remediation or approval. Part of
+> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
-A person opens Forge into their most recent local **Project**, or supplies one goal to create a
-named Project. The Project owns a local manifest, mission assets, attached context, one durable
+A person starts at a zero-authority Project home, opens an existing local **Project**, or supplies
+one goal to create a named Project. The Project owns a local manifest, mission assets, attached context, one durable
 Mission Control conversation, and its named runs. It is not a Git repository and may refer to
 zero, one, or many repositories.
 
@@ -64,6 +64,54 @@ later multi-root capability is not inferred by this task.
 
 `~/source/repos/0001` and successors are removed. Desktop does not create a directory, Client
 Runtime session, or tool authority merely because the app opened.
+
+### Manifest v1 schema and launcher boundary
+
+Task 1 writes the complete v1 shape so later tasks add facts to empty collections instead of
+silently changing the local schema:
+
+| Field | Type / initial value | Ownership rule |
+|---|---|---|
+| `schemaVersion` | `1` | Reject a newer version; migrations are explicit. |
+| `projectId`, `title`, `goal` | `Guid`, non-empty strings | Stable local Project identity and user intent. |
+| `assets` | `ProjectAssetDescriptor[]`, initially empty | Every descriptor is `{ kind: Mission \| Expert \| LockFile, relativePath, contentHash? }`; paths are normalized, home-relative, and never escape the Project home. |
+| `selectedMission` | `ProjectMissionReference`, initially `{ origin: BuiltIn, reference: Janus, digest: null }` | `origin` is `BuiltIn`, `Local`, or `Oci`; a local reference is home-relative, an OCI reference has a pinned digest, and the local content hash belongs to a run snapshot rather than the mutable selection. |
+| `attachedContext` | `ProjectContextDescriptor[]`, initially empty | Each descriptor is `{ id, kind: SourceRoot \| File \| Artifact, displayName, reference, contentHash? }`. `reference` is an absolute local path only for `SourceRoot`/`File`; for `Artifact` it is an opaque artifact ID. These values never cross the Conversation boundary. |
+| `missionControlConversationId` | nullable `Guid`, initially `null` | Task 2 writes the server-issued ID after durable acceptance. |
+| `runs` | `ProjectRunMetadata[]`, initially empty | Local projection only; Conversation remains canonical for events and status. |
+
+`ProjectRunMetadata` is `{ runId, title, status, predecessorRunId?, launchSnapshot }`.
+`launchSnapshot` is immutable and contains `{ mission, localMissionContentHash?, resolvedExperts[],
+context[] , gitRevision?, artifacts[] }`, where a resolved expert is `{ reference, digest }`, a
+context snapshot is `{ contextId, contentHash? }`, and an artifact snapshot is `{ artifactId,
+contentHash? }`. Task 4 writes this once; it must not crawl a workspace to populate optional
+hashes or revisions. The `status` value is the durable `ConversationRunStatus` projection; Task 6
+extends that shared lifecycle with `Stopping` and `StoppedByUser` rather than creating a local
+parallel enum.
+
+The Task 1 launcher deliberately has no profile-level recents index or automatic resume: boot
+performs no Project open, session creation, or capability authorization. It offers create-from-goal
+and explicit existing-directory open. A later recent-project experience requires its own bounded
+design; it is not inferred by scanning directories or adding a hidden catalog here.
+
+`goal` is never empty in a persisted manifest. Choosing an existing directory first discovers its
+manifest. If it is absent, the launcher keeps that directory as the proposed home and uses the same
+goal-confirmation flow to create the manifest there; it does not manufacture an empty-goal Project.
+
+Project create/open share one surface-neutral `ProjectOperationResponse`: `Created`, `Opened`,
+`GoalRequired`, or `Failed`. A successful response carries `ProjectSession`; `GoalRequired`
+carries `ProjectHomeProposal`; and `Failed` carries the named `{ code, message }`
+`ProjectOperationError`. Expected domain failures (invalid goal/home, missing home, invalid/newer
+manifest, path validation, and exhausted collision attempts) use this response rather than
+surface-specific exception handling. Unexpected transport/process failures may still fail the
+transport normally.
+
+`ProjectDraftRequest` is a separate, side-effect-free Client Runtime contract used after the user
+enters a goal to show the derived title and home before confirmation. It accepts the goal plus
+optional title/home overrides and returns the values to display; it creates no directory, manifest,
+session, capability authority, or collision reservation. Create recomputes the draft and performs
+the authoritative collision-safe write, so a concurrent Project creation may produce a different
+final suffix. Desktop and TUI use this same draft contract; neither derives a Project value itself.
 
 ### Project assets and expert dependencies
 
@@ -166,6 +214,7 @@ known partial effects when present and never offers a resume button.
 | Cross-context access | No service queries another context's store. Project metadata is local; Conversation state is reached solely through named Conversation commands/queries. |
 | Type / reversal | Conversation ownership and run-control audit semantics are Type 1 and remain in the existing Conversation context. Local manifest location, trace layout, and the run-control transport implementation are Type 2 behind named contracts. Removing the local manifest feature removes only Client Runtime files; it does not alter durable ownership. |
 | Failure ownership | Manifest store reports invalid/missing local Project data; ConversationHost reports invalid/duplicate control commands; Worker reports observed cancellation; Client Runtime reports local tool cancellation; Presentation renders those facts. |
+| Surface portability | Desktop and a future TUI are interchangeable Presentation consumers. Every Project action is a named `IClientRuntimeChannel`/transport contract with the same result and failure semantics; Desktop-only layout/focus details own no business behaviour. |
 | Engineering philosophy | One small manifest, one control-conversation owner, one event stream, and two named controls replace anonymous folders and UI-only buttons. No catalog browser, layout engine, or project service is introduced. |
 | Proof | Unit/contract tests cover manifest collision and migration, command idempotency, trace replay/deduplication, safe-boundary ordering, and stop outcomes. An isolated Kind/Desktop run proves a named Project opens, a Janus Trace replays exact messages, guidance applies after a safe boundary, and Stop reaches a truthful terminal status. |
 
@@ -183,23 +232,466 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest
+### Task 1 — Project home and local manifest — default-window visual acceptance failed
 
-Create the local Project record and replace `DefaultWorkspace`'s numbered directory bootstrap.
+**Not approved for merge.** Claude and Codex passed the internal package, behavior, theme, and
+six-state 1536×1024 visual comparisons, but the operator found that the packaged Desktop default
+window requires a scroll to reach **Create project**. The earlier rejected implementation remains in
+[the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected);
+the current implementation is in PR #78. It needs a compact, default-window visual design and a
+new internal review before another operator acceptance request.
 
-- Add a source-generated, versioned `forge.project.json` model/store in
-  `ForgeMission.ClientRuntime`; keep all filesystem access there and expose project open/create
-  through `IClientRuntimeChannel`/transport DTOs.
-- The first-use Presentation asks only for a goal, derives the default title/home, and creates the
-  manifest on confirmation. Existing-folder open creates/discovers the manifest in that folder.
-- Use the Project home as the initial `IWorkspace` root only after a Project has been opened; do not
-  create a Client Runtime session or directory at Desktop boot.
-- Keep `MissionControlConversationId` optional until Task 2; no local transcript is written.
+**Default-window responsive gate.** Before another implementation handoff, observe the packaged
+window's actual `window.innerWidth × window.innerHeight`; do not infer it from native window
+chrome. Add an approved compact reference for that viewport. It must show every required input,
+**Create project**, and the open-folder entry point without document scrolling in the empty,
+drafted, busy, failed, and goal-required states. The compact rule must reskin through Workbench
+tokens (including responsive `--wb-*` geometry/type values), not component-local overrides. The
+`--wb-*` values must be fluid and bounded (`min()`, `max()`, `clamp()`, percentage/viewport-relative
+values) so they retain the approved 1536×1024 geometry at that viewport and contract at the actual
+default one; do not replace one fixed card size with a different fixed card size. The
+open-folder-expanded state may scroll only if its entry point and its own primary action remain
+visible; otherwise it too needs a compact fit.
 
-**Done when:** an empty profile has no new directory after opening Desktop; creating `Todos API`
-creates one deterministic Project home and manifest, including collision handling; reopening it
-uses that home as the sole local execution root; the old numbered-workspace tests are replaced;
-Client Runtime/Presentation boundary tests plus the normal solution build/test suite pass.
+**Binding reference:** [Create a Project from a Goal](../brainstorm/images/mission-project-flow-02-create-project.png)
+at its 1536×1024 composition, with its flow context in
+[Mission Conversations](../brainstorm/mission-conversations/README.md#2-create-a-project-from-a-goal).
+The running implementation inspected on 2026-08-30 is a small two-card launcher; it lacks the
+reference's Workbench header, activity rail, project canvas, recent-project area, and initial
+context choices. **Result: FAIL.** Codex review and the operator's independent visual review both
+recorded this failure; it is a binding rejection, not a request for cosmetic follow-up.
+
+The reference intentionally spans Project creation, navigation, recents, and later workbench
+experiences, while this task deliberately owns no recents index and Task 3 owns the rail/explorer.
+Before another implementation handoff, create and approve a Task 1-specific SVG slice under
+`docs/images/phase-43.20/` that states exactly what this task renders now and what remains deferred.
+Do not infer that scope from the broader journey mockup.
+
+#### Approved-for-review visual specification (drafted 2026-08-30, awaiting Codex sign-off)
+
+**Binding Task 1 reference:** the five state files under `docs/images/phase-43.20/`, each a full
+1536×1024 frame, are what the implementation is judged against — not the journey mock directly:
+
+| State | File | What it shows |
+|---|---|---|
+| Empty | [task1-project-launcher-empty.svg](../images/phase-43.20/task1-project-launcher-empty.svg) | Goal field focused and empty; name and location show derived-value placeholders; **Create project** disabled. |
+| Drafted | [task1-project-launcher-drafted.svg](../images/phase-43.20/task1-project-launcher-drafted.svg) | `ProjectDraftResponse` values filled in and editable; Create enabled. |
+| Busy | [task1-project-launcher-busy.svg](../images/phase-43.20/task1-project-launcher-busy.svg) | A draft or create in flight; every control disabled; the action reads `Working…`. |
+| Failed | [task1-project-launcher-failed.svg](../images/phase-43.20/task1-project-launcher-failed.svg) | A typed `ProjectOperationError` message inside the card; nothing created; entered values preserved. |
+| Goal required | [task1-project-launcher-goal-required.svg](../images/phase-43.20/task1-project-launcher-goal-required.svg) | A chosen directory with no manifest: the runtime's proposed name/location plus a notice; Create disabled until a goal exists. |
+| Open folder | [task1-project-launcher-open-folder.svg](../images/phase-43.20/task1-project-launcher-open-folder.svg) | The `Open an existing folder…` link expanded: one path row beneath the card, spanning its width, in the same field language, with its `Open` action. Nothing else on the surface changes. |
+
+[task1-project-launcher-before.svg](../images/phase-43.20/task1-project-launcher-before.svg)
+records the rejected two-card launcher so the defect stays on file.
+
+**Slice.** Task 1 owns the journey mock's centre "New project" card and the page header, and
+nothing else on that screen. The card keeps the reference's internal proportions, field order,
+label wording, and type hierarchy, recomposed for a canvas with no rail and no recents column.
+
+**Deferred, named so it is not inferred as missing work:** the navy activity rail (Task 3); the
+"Recent local projects" column (no recents index exists by design); "Add context (optional)" and
+its two buttons (needs an `attachedContext` contract — Task 4); journey screen 01 "Choose a
+project" (depends on the deferred recents index); and everything the workbench shows after a
+Project opens (Tasks 2/3).
+
+**Geometry**, measured from the journey mock at 1536×1024 and preserved:
+
+| Element | Reference | Task 1 |
+|---|---|---|
+| Header band | 0–97, rule `#c9d5e7` | identical; wordmark at x=80 (the reference's 83px canvas margin, with no rail to offset it) |
+| Card | x 205–1111 (906 wide), top y=134 | 906 wide, centred → x 315–1221; **top stays y=134** so its relationship to the header is unchanged |
+| Card padding | 45–46 | identical |
+| Goal textarea | x 303–1065 (762), y +115…+285 from card top | identical offsets |
+| Project name | label +347, field +361…+424 (63 tall) | identical |
+| Location | — | label +461 (16px), field +475…+521 (46 tall), monospace value |
+| Divider → action | rule, then button 271×68 right-aligned to the field edge | identical rhythm |
+| Card height | 802 | 718, or 804 when an error/notice band is present |
+
+The card is shorter than the reference's because two blocks are deferred; the freed space accrues
+below the card rather than being redistributed.
+
+**Copy strings**, exact: header `Forge` / `AI Workbench`; card title `New project`; goal
+placeholder `Describe what you want to build`; labels `Project name` and `Location`; name
+placeholder `Derived from your goal`; location placeholder `Derived from your project name`;
+primary action `Create project`, and `Working…` while busy; secondary link
+`Open an existing folder…`; goal-required notice
+`That folder is not a Forge Project yet. Enter a goal to create one there.` A failure renders the
+`ProjectOperationError.Message` verbatim — the surface never rewrites it.
+
+**Interaction change from the rejected build:** there is no `Continue` button. The reference has one
+primary action, so the draft call fires when the goal is committed (blur or Enter) and fills the
+name and location fields in place; `Create project` is the only button. Both fields stay editable
+overrides, sent back verbatim.
+
+**Reference values**, sampled from the journey mock (not from the ember theme): canvas `#f7faff`; header
+`#f6f8fd` with rule `#c9d5e7`; wordmark and links `#0468ed`; primary action `#0f6eeb`; focused
+field border `#0f56d2`; card `#ffffff` with border `#e7ecf4`; field border `#d5dae5`; divider
+`#e5eaf2`; ink `#101d33`; secondary ink `#1d2c47`; muted `#5b6b83`; placeholder `#8b99ad`. Type:
+wordmark 36/700, subtitle 28/400, card title 36/700, goal 22, name 21, labels 20 and 16, action
+22/600. These are reference-artifact values only. The implementation maps them to the named
+Workbench theme's semantic tokens; no component rule may copy them as literals. Lime is reserved
+for healthy/approved states in the locked visual language and the launcher has none, so it is unused.
+
+**Not sampled — the reference has no failure state.** Every value marked **N** in the token maps
+below is chosen to sit in the same saturation register as the sampled blues rather than measured
+from the reference. They are the one place this spec invents rather than matches.
+
+**Theme architecture.** The sampled values are reference targets; the implementation reaches them
+through the existing semantic tokens, via a named **Workbench** product theme in
+`src/ForgeUI/wwwroot/css/forge.css`. `ProjectLauncher.razor.css` (Blazor CSS isolation) and the
+page's own rules carry structure only — flex/grid, direction, alignment, and disabled/focus/hover
+state. Every colour, radius, spacing, font, type size **and the reference's own geometry** resolves
+through `var(--token)`; neither file declares a custom property or a literal value.
+
+The measured geometry is theme-owned, in the same map, as `--wb-*`: header height and inset; card
+width, top gap and padding; the sparkle gutter and glyph size; goal, name and location field
+heights; the title, field, tight-field, label, rule and action row gaps; notice/error gap and
+padding; action width and height; link gap and glyph; and the open-folder row's gap and action
+width. These are mode-independent, so the dark maps inherit them unchanged.
+
+Selection is `data-surface-theme="workbench"` on `<html>` in the Client Runtime Presentation's
+`index.html`. `data-theme` keeps its existing light/dark meaning; `data-surface-theme` is the
+orthogonal product axis. Three blocks compose with the existing three-state mode model, each
+outranking its default-theme counterpart on specificity so the cascade does not depend on source
+order:
+
+| Selector | Specificity | Applies when |
+|---|---|---|
+| `:root[data-surface-theme="workbench"]` | 0,2,0 | Workbench light — the default, and under a forced `data-theme="light"` |
+| `@media (prefers-color-scheme: dark) { :root[data-surface-theme="workbench"]:not([data-theme="light"]) }` | 0,3,0 | Workbench automatic dark |
+| `:root[data-surface-theme="workbench"][data-theme="dark"]` | 0,3,0 | Workbench forced dark |
+
+Nothing without the attribute matches any Workbench selector, so ForgeUI stays on its default theme.
+The theme reskins every Desktop client surface through semantic tokens — deliberately, since it
+changes no layout, interaction, or product behaviour.
+
+**Workbench token map — light.** Provenance: **S** sampled from the reference, **D** derived from a
+sampled value by the relationship the default theme already uses, **N** no reference evidence (the
+reference has no failure, success, warning, or seal state), **A** an accessibility override of a
+sampled value, carried back into the SVG references so they stay binding.
+
+| Token | Light value | Src | Used for |
+|---|---|---|---|
+| `color-scheme` | `light` | — | |
+| `--bg` | `#f7faff` | S | page canvas |
+| `--surface-sunken` | `#f6f8fd` | S | header band |
+| `--surface` | `#ffffff` | S | card, fields |
+| `--surface-hover` | `#eef3fb` | D | |
+| `--surface-active` | `#e4ecf8` | D | |
+| `--border` | `#e7ecf4` | S | card border |
+| `--border-strong` | `#d5dae5` | S | field border |
+| `--text` | `#101d33` | S | card title, field values |
+| `--text-muted` | `#5b6b83` | S | `Location` label |
+| `--text-subtle` | `#62748c` | A | placeholders — see the accessibility override below |
+| `--accent` | `#0f6eeb` | S | primary action, links |
+| `--accent-hover` | `#0f56d2` | S | hover, focused field border |
+| `--accent-soft` | `#eff5fe` | S | notice band |
+| `--accent-contrast` | `#ffffff` | S | text on the primary action |
+| `--ink` | `#0f6eeb` | S | solid action — the same blue family as `--accent` |
+| `--ink-hover` | `#0f56d2` | S | |
+| `--ink-contrast` | `#ffffff` | S | |
+| `--success` | `#4d7c0f` | N | |
+| `--success-bg` | `#f2fbe6` | N | |
+| `--success-border` | `#84cc16` | N | the locked language's lime |
+| `--danger` | `#b42318` | N | failure message |
+| `--danger-bg` | `#fef3f2` | N | failure band |
+| `--danger-border` | `#fda29b` | N | |
+| `--warning` | `#8a5a06` | N | |
+| `--warning-bg` | `#fef6e7` | N | |
+| `--seal-official` | `#8a5a06` | N | |
+| `--seal-verified` | `#0f6eeb` | N | |
+| `--seal-check` | `#ffffff` | N | |
+| `--radius-sm` | `8px` | S | `Location` field |
+| `--radius` | `10px` | S | goal, name, button |
+| `--radius-lg` | `16px` | S | card |
+| `--radius-pill` | `999px` | — | |
+| `--space-1` … `--space-6` | `4px` `8px` `12px` `16px` `24px` `32px` | — | |
+| `--space-7` | `44px` | S | card padding (measured 45–46, within tolerance) |
+| `--font-size-display` | `36px` | S | wordmark, card title |
+| `--font-size-title` | `28px` | S | `AI Workbench` |
+| `--font-size-lead` | `22px` | S | goal text, button label |
+| `--font-size-body` | `21px` | S | `Project name` value |
+| `--font-size-label` | `20px` | S | `Project name` label |
+| `--font-size-meta` | `16px` | S | `Location` label |
+| `--font-size-mono` | `15px` | S | location path |
+| `--font-sans` | `system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif` | — | |
+| `--font-mono` | `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace` | — | |
+| `--transition` | `130ms ease` | — | |
+| `--focus-ring` | `0 0 0 3px rgba(15, 110, 235, 0.30)` | D | |
+| `--shadow-sm` | `0 1px 2px rgba(11, 36, 71, 0.06)` | D | card |
+| `--shadow` | `0 1px 3px rgba(11, 36, 71, 0.08), 0 4px 12px rgba(11, 36, 71, 0.06)` | D | |
+| `--shadow-lg` | `0 8px 30px rgba(11, 36, 71, 0.14)` | D | |
+
+The seven `--font-size-*` names are new. They are declared in the default `:root` with the sizes
+current components already use in literals (`30px` `22px` `17px` `15px` `14px` `12.5px` `12px`), so
+adding them changes nothing that exists, and the Workbench map overrides them as above.
+
+**Workbench token map — dark.** Applies to both the automatic and forced-dark selectors. Radii,
+spacing, type sizes, fonts and transition are restated identically to the light map and are not
+repeated here; every token that differs is listed.
+
+| Token | Dark value | Used for |
+|---|---|---|
+| `color-scheme` | `dark` | |
+| `--bg` | `#071426` | page canvas |
+| `--surface-sunken` | `#0a1a30` | header band |
+| `--surface` | `#0f2440` | card, fields |
+| `--surface-hover` | `#16304f` | |
+| `--surface-active` | `#1d3a5c` | |
+| `--border` | `#1d3556` | card border |
+| `--border-strong` | `#2b4a72` | field border |
+| `--text` | `#e6edf7` | |
+| `--text-muted` | `#9fb2ca` | |
+| `--text-subtle` | `#8aa3c2` | placeholders |
+| `--accent` | `#4d9bff` | primary action, links |
+| `--accent-hover` | `#74b2ff` | |
+| `--accent-soft` | `#12294a` | notice band |
+| `--accent-contrast` | `#06121f` | text on the primary action |
+| `--ink` | `#4d9bff` | solid action — the same blue family as `--accent` |
+| `--ink-hover` | `#74b2ff` | |
+| `--ink-contrast` | `#06121f` | |
+| `--success` | `#a3e635` | |
+| `--success-bg` | `#16300a` | |
+| `--success-border` | `#65a30d` | |
+| `--danger` | `#ff9d95` | failure message |
+| `--danger-bg` | `#3a1512` | failure band |
+| `--danger-border` | `#b42318` | |
+| `--warning` | `#e8c06a` | |
+| `--warning-bg` | `#3a2c10` | |
+| `--seal-official` | `#e8c06a` | |
+| `--seal-verified` | `#4d9bff` | |
+| `--seal-check` | `#071426` | |
+| `--focus-ring` | `0 0 0 3px rgba(77, 155, 255, 0.35)` | |
+| `--shadow-sm` | `0 1px 2px rgba(0, 0, 0, 0.45)` | |
+| `--shadow` | `0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40)` | |
+| `--shadow-lg` | `0 8px 30px rgba(0, 0, 0, 0.55)` | |
+
+**Measured contrast**, computed from the values above rather than asserted. Every text-bearing
+pairing meets its applicable AA threshold in both maps:
+
+| Pair | Light | Dark |
+|---|---|---|
+| `--text` on `--surface` | 16.86 | 13.23 |
+| `--text` on `--bg` | 16.12 | 15.67 |
+| `--text-muted` on `--surface` | 5.42 | 7.20 |
+| `--text-subtle` on `--surface` | 4.78 | 6.01 |
+| `--text-subtle` on `--bg` | 4.57 | 5.19 |
+| `--accent-contrast` on `--accent` | 4.72 | 6.69 |
+| `--accent` on `--surface` | 4.72 | 5.53 |
+| `--ink-contrast` on `--ink` | 4.72 | 6.69 |
+| `--ink-contrast` on `--ink-hover` | 6.40 | 8.58 |
+| `--danger` on `--danger-bg` | 6.05 | 8.11 |
+| `--success` on `--success-bg` | 4.69 | 9.53 |
+| `--warning` on `--warning-bg` | 5.51 | 7.87 |
+| `--seal-check` on `--seal-official` | 5.92 | 10.71 |
+| `--seal-check` on `--seal-verified` | 4.72 | 6.55 |
+
+**Accessibility override.** The reference's placeholder colour is `#8b99ad`, which reaches only
+2.89 against `--surface`. Accessibility wins over sample fidelity, so Workbench light uses
+`#62748c` — 4.78 on `--surface`, 4.57 on `--bg`. The change is carried into
+`task1-project-launcher-empty.svg` and `task1-project-launcher-goal-required.svg`, the two frames
+that render placeholder text, so the SVGs remain the binding reference and the implementation
+matches them exactly. One consequence, recorded rather than hidden: `--text-subtle` now sits closer
+to `--text-muted` (4.78 against 5.42), so the visual step between hint text and secondary labels is
+smaller than the reference's.
+
+**Dark-mode acceptance.** Dark has no visual mock and is not compared to one. It passes on three
+checks: every Workbench token resolves under both the automatic and forced-dark selectors, no
+default-theme ember value appears anywhere on the surface, and the contrast pairs above hold.
+
+**Responsive behaviour.** The launcher is one fluid surface, not two layouts. Two frames are
+binding *boundary references* — 800×568 and 1536×1024 — but they are checkpoints on a continuous
+range, not the two sizes to optimise in isolation.
+
+*Supported range*, at 100% zoom: widths **800–1536px** and heights **568–1024px** are fully
+supported and must satisfy the compact-height rule below — 800×568 is Forge's agreed lower boundary.
+Above 1536×1024 the composition holds at its upper bound and the extra space becomes margin. Below
+the boundary — a deliberately shrunken window, or browser/WebView zoom at 125/150/200% — the page may
+scroll, and it must degrade without overlap or clipping where the host permits. No smaller formal
+guarantee is claimed here; if one is ever needed it requires its own user/host rationale as a
+separate design decision.
+
+*How the fluidity is built.* Layout comes first and `clamp()`/`calc()` only supports it:
+
+- The page is a flex column: header band, then a scroll container holding the launcher.
+- The card is `width: min(906px, 100%)` inside a page inset, centred — it shrinks with the viewport
+  rather than switching to a second fixed width.
+- The field stack is a grid; every child that holds a control carries `min-width: 0`, so a long path
+  or project name shrinks its field instead of widening the card.
+- The open-folder row is `grid-template-columns: minmax(0, 1fr) auto`: the path field absorbs the
+  available width and its action keeps its intrinsic size.
+- Heights are content-led. The goal field uses a clamped `min-height`, not a fixed `height`, so it
+  can grow when a person drags it; labels and messages wrap.
+- **Vertical rhythm follows height; horizontal rhythm follows width.** Every gap, field height and
+  type size that contributes to the vertical stack ramps on `vh`; only insets, gutters and the
+  action's width ramp on `vw`. This is what makes a wide-but-short window behave: at 1536×568 the
+  card is wide and its vertical rhythm is compact, rather than inheriting 44px of vertical padding
+  from its width. The card's padding is split accordingly into `--wb-card-pad-x` and
+  `--wb-card-pad-y`.
+- Because the whole vertical stack is height-driven, its total is a linear interpolation between
+  the two heights: fitting at 568 and at 1024 proves fitting at every height between them. The
+  corner checks below still run — the proof constrains the design, it does not replace evidence.
+- `clamp()`/`calc()` is used for spacing and type only, sized so each value lands on its approved
+  1536×1024 figure at the upper bound and its compact figure at 800×568. That is a smooth ramp
+  between checkpoints, not the definition of the layout.
+- **No breakpoint is planned.** A container or media query may be added only where the structure is
+  demonstrably failing at some width — with the failing evidence recorded here — never to match a
+  device or a reference resolution.
+
+*Measured viewport.* The packaged Desktop opens at **800×568** CSS pixels
+(`window.innerWidth × window.innerHeight`, read inside the packaged app with a temporary probe that
+was reverted and never committed; the 865×636 native outer window would have implied a viewport
+65px too wide and 40px too tall). That measurement is why 800×568 is the lower boundary frame — the
+packaged app is not where the layout is designed or iterated.
+
+*Token endpoints*, for the geometry and type that ramp between the two boundary frames. Every value
+resolves through the named Workbench tokens; no raw colour, spacing or type literal appears in a
+component rule, and `forge.css` gains no raw surface/theme colour outside the Workbench maps.
+`--wb-card-width` is `min(906px, 100%)`: the page inset is the launcher container's own padding, so
+subtracting it again inside the token would double-count it — measured live at 800 wide, that put the
+card 16px in on each side of its reference.
+
+| Token | 800×568 | 1536×1024 |
+|---|---|---|
+| `--wb-page-inset` | 16px | 24px |
+| `--wb-card-width` | 768px (`min(906px, 100%)` inside the inset) | 906px |
+| `--wb-header-height` / `--wb-header-inset` | 56px / 20px | 97px / 80px |
+| `--wb-card-gap-top` | 12px | 37px |
+| `--wb-card-pad-x` (width-driven) | 20px | 44px |
+| `--wb-card-pad-y` / `--wb-card-pad-bottom` (height-driven) | 20px / 20px | 44px / 46px |
+| `--wb-field-gutter` | 32px | 53px |
+| `--wb-sparkle-width` / `-height` | 22px / 25px | 29px / 33px |
+| `--wb-goal-height` (min-height) | 88px | 170px |
+| `--wb-name-height` / `--wb-location-height` | 44px / 38px | 63px / 46px |
+| `--wb-gap-title` / `-field` / `-field-tight` / `-label` | 12 / 17 / 10 / 6px | 30 / 43 / 23 / 8px |
+| `--wb-gap-rule` / `--wb-gap-action` | 16px / 12px | 49px / 34px |
+| `--wb-band-gap` / `--wb-band-pad` | 10px / 10px | 21px / 19px |
+| `--wb-band-max` (message-band ceiling) | 54px | 86px |
+| `--wb-action-width` / `--wb-action-height` | 150px / 40px | 271px / 68px |
+| `--wb-action-pad-x` (label inset, width-driven) | 12px | 24px |
+| `--wb-link-gap` / `--wb-link-glyph` | 15px / 18px | 32px / 22px |
+| `--wb-open-row-gap` / `--wb-open-action-width` | 10px / 84px | 21px / 100px |
+| `--font-size-display` … `-mono` | 24 / 18 / 15 / 15 / 14 / 12 / 12px | 36 / 28 / 22 / 21 / 20 / 16 / 15px |
+
+They live in the Workbench map and are mode-independent, so both dark blocks inherit them and the
+ForgeUI boundary is unaffected.
+
+*Presentation only.* Responsive behaviour changes CSS and markup structure and nothing else: no
+Client Runtime contract, authorization, or filesystem behaviour moves, and no action exists here
+that a TUI could not invoke. Creating a Project and opening an existing folder remain the same
+`ProjectCreateRequest` / `ProjectOpenRequest` contracts at every size.
+
+**Compact references**, the binding lower-boundary artifacts at 800×568. The six 1536×1024 frames
+remain the upper boundary and are unchanged:
+
+| State | File | Lowest element |
+|---|---|---|
+| Empty | [task1-launcher-compact-empty.svg](../images/phase-43.20/task1-launcher-compact-empty.svg) | 492px |
+| Drafted | [task1-launcher-compact-drafted.svg](../images/phase-43.20/task1-launcher-compact-drafted.svg) | 492px |
+| Busy | [task1-launcher-compact-busy.svg](../images/phase-43.20/task1-launcher-compact-busy.svg) | 492px |
+| Failed | [task1-launcher-compact-failed.svg](../images/phase-43.20/task1-launcher-compact-failed.svg) | 542px |
+| Goal required | [task1-launcher-compact-goal-required.svg](../images/phase-43.20/task1-launcher-compact-goal-required.svg) | 542px |
+| Open folder | [task1-launcher-compact-open-folder.svg](../images/phase-43.20/task1-launcher-compact-open-folder.svg) | 540px |
+
+**Compact-height rule.** At 800×568, in **every** launcher state, the goal field, `Project name`,
+`Location`, `Create project` and the open-folder entry point are visible without page scrolling:
+`document.scrollHeight <= window.innerHeight`, and each of those elements'
+`getBoundingClientRect().bottom <= window.innerHeight`. Only genuinely secondary content may use an
+explicit, contained scroll region — in practice a very long failure message, whose band scrolls
+inside itself rather than pushing the primary action off screen. This is asserted numerically, not
+judged from a screenshot.
+
+The band's ceiling is `--wb-band-max`, a token of its own rather than a fraction of the goal field.
+The two are unrelated quantities: what bounds the band is the space left *below* it, which is the
+viewport minus the rest of the stack. Measured band-less, that allowance is 60px at 568px tall and
+92px at 1024px tall, so the ceiling is height-driven and set one slack step inside it — 54px and
+86px. A ceiling derived from the goal field instead read 66px and 127px, which overflowed the
+primary action by 2px at 800×568 and by 35px at 1536×1024 once a message was long enough to reach
+it. Both reference messages sit under the ceiling (39px compact, 62px large), so the six frames are
+unaffected by it.
+
+**Where visual work happens.** The browser-rendered Client Runtime is the primary design,
+screenshot, and resize-validation surface: it is the same Presentation, served over HTTP, and it can
+be resized, zoomed and inspected. The packaged native Desktop is **not** used to discover or iterate
+on layout; it is a single parity check after browser acceptance passes, confirming the accepted
+layout renders identically in the WebView at its own default window.
+
+**Acceptance evidence, browser-first.** Produced against the browser-rendered Client Runtime after
+build, full test suite and package all pass, and before any native check:
+
+1. **Boundary frames.** All six states at 1536×1024 against the large references and at 800×568
+   against the compact references, compared by scanning both rasters for the same structural edges,
+   ±2px.
+2. **The four rectangular corners**, binding for every launcher state — this is what catches
+   wide/short and narrow/tall failures that a diagonal sweep hides:
+
+   | | 568 high | 1024 high |
+   |---|---|---|
+   | **800 wide** | narrow + short | narrow + tall |
+   | **1536 wide** | wide + short | wide + tall |
+
+   Modelled from the token endpoints, the worst state (a message band present) stacks to 539px at
+   either 568-high corner and 989px at either 1024-high corner, so the design is expected to fit at
+   all four with 29–35px of headroom; the checks confirm it rather than assume it.
+3. **Representative sweep and a continuous drag.** Widths 1536 → 1440 → 1366 → 1280 → 1152 → 1024 →
+   960 → 900 → 860 → 800 with heights ramped 1024 → 568, plus an observed continuous drag-resize
+   through the range rather than a screenshot per pixel. At every step: no horizontal document
+   scroll, no element wider than the card, no clipped or overlapping text, and the compact-height
+   rule from 568px of height. Any size where the structure breaks is recorded, and only then is a
+   query considered.
+4. **Long content.** A ~400-character goal, a ~120-character project name, a ~300-character location
+   path, and a long failure message, at both boundary sizes: fields shrink rather than widening the
+   card, the card never exceeds its width, and only the message band scrolls inside itself.
+5. **Zoom / text scaling.** 125%, 150% and 200%: nothing overlaps or is clipped, and the page
+   degrades by scrolling rather than breaking. Zoom takes the effective viewport below the supported
+   boundary, so scrolling there is recorded as expected behaviour, not reported as a pass against
+   the compact-height rule.
+6. **Theme modes.** Automatic light, automatic dark, forced light under a dark OS, forced dark, and
+   the attribute-removed check that ForgeUI inherits neither palette nor geometry.
+7. **Token audit.** The computed value of every launcher colour, radius, spacing and type property
+   traced to a named token, plus the structural test asserting `forge.css` adds no raw
+   surface/theme colour outside the Workbench maps.
+8. **Native parity, last.** Only after the above pass: the packaged Desktop at its own default
+   window, one screenshot and the numeric no-scroll assertion, confirming the accepted browser
+   layout renders identically in the WebView.
+
+**Visual acceptance rule.** The comparison is card-internal fidelity — field order, labels, copy,
+type scale, control sizes, spacing rhythm, divider and action-row placement — plus the header band.
+Page-level side margins differ from the journey mock because two columns are deferred; that
+difference alone is not a FAIL. Any difference inside the card is, within one stated tolerance:
+geometry may differ by ±2px, because hand-written CSS and a hand-authored SVG differ slightly in
+text metrics. Copy strings, field order, hierarchy, type scale, token-resolved colours, and state
+behaviour are exact requirements with no tolerance.
+
+**Assessment gate.** *Cooper:* the screen serves the one goal a person has before a Project exists —
+state the goal and get a workspace — and shows the system's own derived name and location rather
+than making them invent a path. *Rams:* one card, one primary action, no control that could be
+merged away; all five states are drawn, not just the happy path; nothing here has to be worked
+around when Task 3's rail lands, because the rail composes around this canvas. *Norman:* the only
+interactive elements are the three fields, the button, and the link; the sparkle is decorative and
+carries no button treatment; the draft's returned values are the immediate feedback for committing a
+goal; and Create is disabled — not silently failing — until a goal exists.
+
+After reimplementation, Claude and Codex must first record a visual PASS against that approved
+slice in the running app. Only then may the operator be asked for final visual acceptance.
+
+**Theme constraint:** Task 1's visual language must be delivered through a named design-system
+theme and its light/dark token maps, not launcher-local sampled values or a light-only override.
+The launcher may select the theme at its boundary; its rules must consume the shared semantic
+tokens. The implementation plan must name the theme selector, token source, and the dark-mode
+verification before build approval.
+
+Built: an empty profile stays empty after opening Desktop; `Todos API` creates one deterministic
+home and v1 manifest; a second one takes `todos-api-2`; reopening uses that home as the sole
+execution root. `DefaultWorkspace`, `/transport/session/default`, and `Workspace:InitialRoot` are
+removed.
+
+Still true for later tasks: `ProjectDraftRequest` (side-effect free), `ProjectCreateRequest`, and
+`ProjectOpenRequest` all answer with the surface-neutral `ProjectOperationResponse` /
+`ProjectDraftResponse`; a non-empty goal is required by every one of them, whatever overrides are
+supplied; `SessionSetupRequest` is replacement-only and enforced in Client Runtime, so only project
+create/open establish a session and root; `MissionControlConversationId` is still `null` and Task 2
+owns its first write-back.
 
 ### Task 2 — Durable Project Mission Control
 

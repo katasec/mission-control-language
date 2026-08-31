@@ -1,0 +1,302 @@
+/* Layout for the Project launcher (43.20 task 1). This file declares no custom property and
+   contains no literal visual or geometric value: colour, radius, type, spacing and the reference's
+   own geometry all resolve through the Workbench theme map in forge.css.
+
+   The layout itself is content-led — grid and flex, minmax(0, 1fr), min-width: 0, min-height
+   rather than height — so it reflows continuously between the two boundary frames instead of
+   switching between them. The theme's fluid tokens ramp the spacing and type along the way; they
+   support the layout, they are not the layout. */
+
+.pl-root {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--wb-card-gap-top) var(--wb-page-inset) var(--wb-page-inset);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg);
+}
+
+.pl-card {
+    width: var(--wb-card-width);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--wb-card-pad-y) var(--wb-card-pad-x) var(--wb-card-pad-bottom);
+    display: grid;
+}
+
+.pl-title {
+    margin: 0 0 var(--wb-gap-title);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-display);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+}
+
+/* The sparkle sits outside the field's left edge, as in the reference, so the goal field aligns
+   with the column every other row uses. */
+/* The sparkle occupies the gutter; minmax(0, 1fr) lets the field absorb the rest and shrink to
+   nothing rather than forcing the card wider. */
+.pl-goal-row {
+    display: grid;
+    grid-template-columns: var(--wb-sparkle-width) minmax(0, 1fr);
+    column-gap: calc(var(--wb-field-gutter) - var(--wb-sparkle-width));
+    align-items: start;
+}
+
+/* Every field, the divider and the action align with the goal field, one gutter in from the
+   card's text column. */
+.pl-stack {
+    margin-left: var(--wb-field-gutter);
+    display: grid;
+    min-width: 0;
+}
+
+.pl-sparkle {
+    flex: none;
+    width: var(--wb-sparkle-width);
+    height: var(--wb-sparkle-height);
+    margin-top: var(--space-4);
+    fill: var(--accent);
+}
+
+.pl-goal,
+.pl-name,
+.pl-location {
+    width: 100%;
+    font-family: var(--font-sans);
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+/* Height and min-height together: the rows attribute would otherwise set an intrinsic height of
+   its own, and resize: vertical still lets a person grow the field. */
+.pl-goal {
+    height: var(--wb-goal-height);
+    min-height: var(--wb-goal-height);
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--font-size-lead);
+    line-height: 1.4;
+    resize: vertical;
+}
+
+.pl-goal:focus,
+.pl-name:focus,
+.pl-location:focus,
+.pl-open-path:focus {
+    outline: none;
+    border-color: var(--accent-hover);
+    box-shadow: var(--focus-ring);
+}
+
+.pl-goal::placeholder,
+.pl-name::placeholder,
+.pl-location::placeholder,
+.pl-open-path::placeholder {
+    color: var(--text-subtle);
+}
+
+.pl-goal:disabled,
+.pl-name:disabled,
+.pl-location:disabled,
+.pl-open-path:disabled {
+    background: var(--surface-active);
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.pl-field {
+    display: grid;
+    gap: var(--wb-gap-label);
+    margin-top: var(--wb-gap-field);
+    min-width: 0;
+}
+
+.pl-field-demoted {
+    margin-top: var(--wb-gap-field-tight);
+}
+
+/* A fixed ratio rather than the inherited line-height: the label's box height is part of the
+   vertical rhythm the references pin, so it cannot vary with an inherited value. */
+.pl-field-label {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--text);
+}
+
+.pl-name {
+    min-width: 0;
+    height: var(--wb-name-height);
+    padding: 0 var(--space-5);
+    font-size: var(--font-size-body);
+}
+
+/* Demoted: the reference gives the two fields above it the prominence, and the spoke requires the
+   location to stay visible and editable rather than hidden. */
+.pl-field-demoted .pl-field-label {
+    font-size: var(--font-size-meta);
+    color: var(--text-muted);
+}
+
+.pl-location {
+    min-width: 0;
+    height: var(--wb-location-height);
+    padding: 0 var(--space-5);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    color: var(--text-muted);
+}
+
+/* A long failure message is genuinely secondary content, so it scrolls inside its own band rather
+   than pushing the primary action off a short viewport. The ceiling is its own token because it is
+   bounded by the space left below the band, which is not the goal field's height. */
+.pl-notice,
+.pl-error {
+    max-height: var(--wb-band-max);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin: var(--wb-band-gap) 0 var(--wb-band-gap-after);
+    padding: var(--wb-band-pad) var(--space-4);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-meta);
+    line-height: 1.4;
+}
+
+.pl-notice {
+    background: var(--accent-soft);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+}
+
+.pl-error {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger);
+}
+
+.pl-rule {
+    margin: var(--wb-gap-rule) 0 0;
+    border: none;
+    border-top: 1px solid var(--border);
+}
+
+.pl-actions {
+    margin-top: var(--wb-gap-action);
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.pl-create {
+    width: var(--wb-action-width);
+    max-width: 100%;
+    height: var(--wb-action-height);
+    padding: 0 var(--wb-action-pad-x);
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-lead);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.pl-create:hover:not(:disabled) { background: var(--accent-hover); }
+.pl-create:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Disabled keeps the action's own colour at reduced strength rather than switching to a grey,
+   so the button still reads as the primary action it will become. */
+.pl-create:disabled {
+    background: var(--accent);
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* The reference's quiet link treatment for the same action, not a second card. */
+.pl-open-link {
+    align-self: flex-start;
+    max-width: 100%;
+    margin: var(--wb-link-gap) 0 0
+            calc(((100% - var(--wb-card-width)) / 2) + var(--wb-card-pad-x));
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    cursor: pointer;
+}
+
+.pl-open-link:hover:not(:disabled) { color: var(--accent-hover); text-decoration: underline; }
+.pl-open-link:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+.pl-open-link:disabled { opacity: 0.45; cursor: default; }
+
+.pl-folder-glyph {
+    width: var(--wb-link-glyph);
+    height: var(--wb-link-glyph);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+/* The link's expanded state: one path row spanning the card's own width, in the same field
+   language. A disclosure, not a second card. */
+.pl-open-folder {
+    width: var(--wb-card-width);
+    margin-top: var(--wb-open-row-gap);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-4);
+}
+
+.pl-open-path {
+    min-width: 0;
+    height: var(--wb-location-height);
+    padding: 0 var(--space-5);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pl-open-go {
+    width: var(--wb-open-action-width);
+    height: var(--wb-location-height);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--accent);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-meta);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.pl-open-go:hover:not(:disabled) { background: var(--surface-hover); }
+.pl-open-go:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.pl-open-go:disabled { opacity: 0.45; cursor: default; }
+
+/* No media or container query: --wb-card-width caps the card and otherwise lets it take the full
+   content width, so below that cap the centring offset above resolves to the page inset on its own
+   and the link stays with the card's content edge. Browser evidence across the whole 800x568 to
+   1536x1024 range shows the structure holding, so no query is warranted. */

@@ -8,19 +8,41 @@ namespace ForgeMission.ClientRuntime.TransportHost;
 internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IConfiguration configuration)
 {
     private readonly ConcurrentDictionary<string, ClientRuntimeSession> _sessions = [];
-    private readonly Lazy<string> _defaultWorkspaceRoot = new(DefaultWorkspace.CreateNext);
 
-    // replacesSessionId is the outgoing session's ID when the picker is replacing a still-live
-    // session (a mission switch) rather than creating a workspace's first session. Removing and
-    // disposing that entry first is what stops an abandoned Janus session's durable tail before
-    // it can execute a later local tool — see ConversationRuntimeSession.DisposeAsync.
-    public async Task<ClientRuntimeSession> CreateAsync(
-        string workspaceRoot, string? mission = null,
-        SessionRuntimeKind runtime = SessionRuntimeKind.Mission, string? replacesSessionId = null)
+    // The only way a first session and local execution root come into existence (43.20 task 1).
+    // Its caller is always a project create/open endpoint, after ProjectStore has produced and
+    // validated that home — which is what makes "no session or tool authority at Desktop boot"
+    // structural rather than a rule Presentation has to remember.
+    public ClientRuntimeSession CreateForProject(
+        string projectHome, string? mission = null,
+        SessionRuntimeKind runtime = SessionRuntimeKind.Mission) =>
+        Open(projectHome, mission, runtime);
+
+    // Replacement only: a mission switch inside an already-open Project. Removing and disposing the
+    // outgoing entry first is what stops an abandoned Janus session's durable tail before it can
+    // execute a later local tool — see ConversationRuntimeSession.DisposeAsync. Requiring the
+    // outgoing session to exist, and its root to match, is what stops this path from quietly
+    // becoming a second way to open an arbitrary folder.
+    public async Task<ClientRuntimeSession> ReplaceAsync(
+        string replacesSessionId, string workspaceRoot, string? mission = null,
+        SessionRuntimeKind runtime = SessionRuntimeKind.Mission)
     {
-        if (replacesSessionId is not null && _sessions.TryRemove(replacesSessionId, out var replaced))
-            await replaced.Conversation.DisposeAsync();
+        if (!_sessions.TryGetValue(replacesSessionId, out var replaced))
+            throw new SessionReplacementRejectedException(
+                "A session replacement must name the current session.");
 
+        if (!string.Equals(replaced.Workspace.Root, workspaceRoot, StringComparison.Ordinal))
+            throw new SessionReplacementRejectedException(
+                "A session replacement must keep the open Project's home as its root.");
+
+        _sessions.TryRemove(replacesSessionId, out _);
+        await replaced.Conversation.DisposeAsync();
+        return Open(workspaceRoot, mission, runtime);
+    }
+
+    private ClientRuntimeSession Open(
+        string workspaceRoot, string? mission, SessionRuntimeKind runtime)
+    {
         var sessionId = Guid.NewGuid().ToString("N");
         var confirmation = new PendingConfirmationHandler(sessionId, events);
         var state = new WorkspaceState();
@@ -31,10 +53,6 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
             throw new InvalidOperationException("Unable to create Client Runtime session.");
         return session;
     }
-
-    public Task<ClientRuntimeSession> CreateDefaultAsync(
-        string? mission = null, SessionRuntimeKind runtime = SessionRuntimeKind.Mission) =>
-        CreateAsync(_defaultWorkspaceRoot.Value, mission, runtime);
 
     public bool TryGet(string sessionId, out ClientRuntimeSession? session) => _sessions.TryGetValue(sessionId, out session);
 
@@ -54,6 +72,11 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
             ? outcome
             : AuthorizationOutcome.AutoApproved;
 }
+
+// A misuse or stale-race guard, not a Project domain outcome: no correct surface sends a
+// replacement for a session that is gone or for a different root, so it fails loudly at the
+// transport rather than being rendered as a normal state.
+internal sealed class SessionReplacementRejectedException(string message) : Exception(message);
 
 // Mission is fixed for the session's lifetime — switching missions starts a fresh session
 // (43.3 task 3) rather than mutating this one, so no attached mission ever changes mid-conversation.

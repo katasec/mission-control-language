@@ -92,6 +92,38 @@ For a **design or plan** review, a single FAIL stops handoff and must be resolve
 an **implementation** review, a single FAIL rejects the diff even if its tests pass. This is a
 quality gate, not a reminder or a suggestion.
 
+## Presentation-surface parity gate
+
+**Mandatory for every new or changed Desktop product action.** Desktop and TUI are Presentation
+surfaces, not separate product-capability owners. Before approving a design, implementation plan,
+or completion summary, record this answer with **PASS** or **FAIL**:
+
+| Required answer | Passing evidence |
+|---|---|
+| Could a TUI invoke this same product action with the same authorization, outcome, and failure semantics? | The action is a named Client Runtime contract; its business rule, filesystem/process work, and capability authorization live below Presentation. A surface-neutral contract test proves the path without Desktop/Blazor/Host types. |
+
+Surface-specific layout, keyboard handling, focus, accessibility, and window behavior do not need
+a TUI equivalent. A rule that affects a Project, mission, run, capability, or durable conversation
+does. A **FAIL** returns the work to design; adding a Desktop-only workaround or moving the rule
+into a UI component is not an exception.
+
+## Visual-reference acceptance gate
+
+**Mandatory for every user-visible Desktop or ForgeUI change.** Treat the named visual reference as
+an acceptance artifact, not an optional design hint. The active task must bind its exact reference,
+viewport, task-owned slice, and required states before implementation. A mockup that spans multiple
+tasks must explicitly allocate the visible elements; an implementer cannot infer a smaller substitute.
+
+| Required answer | Passing evidence |
+|---|---|
+| Does the running UI match the visual reference this task owns? | A live inspection or screenshot of the actual running surface, compared with the named reference at the stated viewport, and a recorded human/reviewer PASS. |
+| Does the visual language preserve the design system's theming boundary? | The task maps the reference to named design tokens/theme selection, including dark-mode values; component rules contain no hard-coded visual values. |
+
+A visual FAIL rejects the implementation even if its tests pass. Update the scoped design and repeat
+the comparison before approval or merge. Agent review must record PASS before requesting the
+operator's final independent visual acceptance. The detailed UI workflow is in
+[Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate).
+
 ## Working consequences
 
 - Keep command entry points thin and put business behaviour behind focused services.
