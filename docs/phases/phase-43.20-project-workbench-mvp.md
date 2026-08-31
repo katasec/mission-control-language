@@ -1,8 +1,7 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Task 1 default-window visual acceptance failed (2026-08-31).** The six 1536×1024
-> references pass, but the packaged Desktop's default usable viewport opens with its primary action
-> below the fold. Measure and bind the compact viewport before remediation or approval. Part of
+> **Status: Task 1 verified and merged (2026-08-31); Task 2 is next.** The Project home now passes
+> browser-first and packaged Desktop visual acceptance at both 800×568 and 1536×1024. Part of
 > [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
@@ -232,18 +231,15 @@ known partial effects when present and never offers a resume button.
 
 ## Dependency-ordered work
 
-### Task 1 — Project home and local manifest — default-window visual acceptance failed
+### Task 1 — Project home and local manifest — verified and merged
 
-**Not approved for merge.** Claude and Codex passed the internal package, behavior, theme, and
-six-state 1536×1024 visual comparisons, but the operator found that the packaged Desktop default
-window requires a scroll to reach **Create project**. The earlier rejected implementation remains in
-[the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected);
-the current implementation is in PR #78. It needs a compact, default-window visual design and a
-new internal review before another operator acceptance request.
+**Done.** PR #78 merged as `d3f1aa2` after the full local build/test/AOT publish, browser-first
+responsive evidence, packaged Desktop parity, Codex review, and operator visual acceptance. The
+earlier rejected attempt remains in [the implementation review record](phase-43.20-project-workbench-mvp_review.md#task-1--project-home-and-local-manifest-visual-acceptance-rejected).
 
-**Default-window responsive gate.** Before another implementation handoff, observe the packaged
-window's actual `window.innerWidth × window.innerHeight`; do not infer it from native window
-chrome. Add an approved compact reference for that viewport. It must show every required input,
+**Default-window responsive baseline.** The packaged window's actual `window.innerWidth × window.innerHeight`
+was measured rather than inferred from native window chrome. The approved compact reference must
+show every required input,
 **Create project**, and the open-folder entry point without document scrolling in the empty,
 drafted, busy, failed, and goal-required states. The compact rule must reskin through Workbench
 tokens (including responsive `--wb-*` geometry/type values), not component-local overrides. The
@@ -256,18 +252,16 @@ visible; otherwise it too needs a compact fit.
 **Binding reference:** [Create a Project from a Goal](../brainstorm/images/mission-project-flow-02-create-project.png)
 at its 1536×1024 composition, with its flow context in
 [Mission Conversations](../brainstorm/mission-conversations/README.md#2-create-a-project-from-a-goal).
-The running implementation inspected on 2026-08-30 is a small two-card launcher; it lacks the
-reference's Workbench header, activity rail, project canvas, recent-project area, and initial
-context choices. **Result: FAIL.** Codex review and the operator's independent visual review both
-recorded this failure; it is a binding rejection, not a request for cosmetic follow-up.
+The delivered launcher owns only the project-creation slice. The activity rail, project canvas,
+recent-project area, and initial context choices remain intentionally deferred to their named
+tasks; the rejected pre-responsive implementation is retained in the review record above.
 
 The reference intentionally spans Project creation, navigation, recents, and later workbench
 experiences, while this task deliberately owns no recents index and Task 3 owns the rail/explorer.
-Before another implementation handoff, create and approve a Task 1-specific SVG slice under
-`docs/images/phase-43.20/` that states exactly what this task renders now and what remains deferred.
-Do not infer that scope from the broader journey mockup.
+The verified Task 1-specific SVG slices under `docs/images/phase-43.20/` state exactly what this
+task renders now and what remains deferred; do not infer that scope from the broader journey mockup.
 
-#### Approved-for-review visual specification (drafted 2026-08-30, awaiting Codex sign-off)
+#### Verified visual specification
 
 **Binding Task 1 reference:** the five state files under `docs/images/phase-43.20/`, each a full
 1536×1024 frame, are what the implementation is judged against — not the journey mock directly:

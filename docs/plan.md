@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-08-30)
+## Now (2026-08-31)
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** bind and implement the Project home's compact default-window design, then repeat visual acceptance. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** implement Task 2, durable Project Mission Control, on the verified Project-home foundation. |
 
 ## Active phases
 
