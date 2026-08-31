@@ -130,16 +130,19 @@ else
 </div>
 
 <style>
-    .shell { display: flex; flex-direction: column; height: 100vh; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
+    /* The shell is the page's flex column: a fixed header band, then a flexible region that owns
+       any scrolling. min-height: 0 is what lets that region actually shrink in a short window
+       instead of overflowing the viewport. */
+    .shell { display: flex; flex-direction: column; height: 100vh; min-height: 0; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
 
     /* The band's height and inset are Workbench theme geometry (--wb-header-*), like every other
        measured value on this surface; nothing here is a literal. */
-    .shell-header { min-height: var(--wb-header-height); padding: 0 var(--space-5) 0 var(--wb-header-inset); display: flex; flex-direction: column; justify-content: center; background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); }
-    .brand { display: flex; align-items: baseline; gap: var(--space-5); }
+    .shell-header { flex: none; min-height: var(--wb-header-height); padding: 0 var(--wb-page-inset) 0 var(--wb-header-inset); display: flex; flex-direction: column; justify-content: center; background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); }
+    .brand { display: flex; align-items: baseline; gap: var(--space-5); min-width: 0; }
     .shell-header h1 { margin: 0; font-size: var(--font-size-display); font-weight: 700; color: var(--accent); }
     .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); }
     .subtitle { margin: 0; font-size: var(--font-size-title); color: var(--text); }
-    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); }
+    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .turns { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
     .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
@@ -339,6 +342,9 @@ else
                 homeInput = response.Proposal.HomePath;
                 break;
             default:
+                // The row closes on a failure, as the reference frame shows: the message explains
+                // what happened, and the typed path is kept so reopening the link restores it.
+                showOpenFolder = false;
                 launcherError = response.Error?.Message ?? "The Client Runtime returned no Project.";
                 break;
         }

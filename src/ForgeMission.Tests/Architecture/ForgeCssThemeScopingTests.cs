@@ -63,10 +63,11 @@ public sealed class ForgeCssThemeScopingTests
         foreach (var token in new[]
                  {
                      "--wb-header-height", "--wb-header-inset", "--wb-card-width", "--wb-card-gap-top",
-                     "--wb-card-pad", "--wb-card-pad-bottom", "--wb-field-gutter", "--wb-goal-height",
+                     "--wb-card-pad-x", "--wb-card-pad-y", "--wb-card-pad-bottom", "--wb-page-inset",
+                     "--wb-field-gutter", "--wb-goal-height",
                      "--wb-name-height", "--wb-location-height", "--wb-gap-title", "--wb-gap-field",
-                     "--wb-gap-rule", "--wb-gap-action", "--wb-band-gap", "--wb-band-pad",
-                     "--wb-action-width", "--wb-action-height", "--wb-link-gap", "--wb-open-row-gap",
+                     "--wb-gap-rule", "--wb-gap-action", "--wb-band-gap", "--wb-band-pad", "--wb-band-max",
+                     "--wb-action-width", "--wb-action-height", "--wb-action-pad-x", "--wb-link-gap", "--wb-open-row-gap",
                  })
             Assert.Contains(token, light.Body, StringComparison.Ordinal);
     }

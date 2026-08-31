@@ -283,48 +283,66 @@
   --space-4:          16px;
   --space-5:          24px;
   --space-6:          32px;
-  --space-7:          44px;      /* S — card padding, measured 45–46 */
+  --space-7:          44px;
 
-  /* Type */
-  --font-size-display: 36px;     /* S */
-  --font-size-title:   28px;     /* S */
-  --font-size-lead:    22px;     /* S */
-  --font-size-body:    21px;     /* S */
-  --font-size-label:   20px;     /* S */
-  --font-size-meta:    16px;     /* S */
-  --font-size-mono:    15px;     /* S */
 
-  /* Layout geometry, measured from the binding Task 1 references. It lives here, with the rest of
-     the theme, because it is the Workbench surface's geometry — a component rule that hard-coded
-     it would be exactly the fragmentation the token system exists to prevent. All values are
-     mode-independent, so the dark maps below inherit them unchanged. */
-  --wb-header-height:    97px;
-  --wb-header-inset:     80px;
-  --wb-card-width:      906px;
-  --wb-card-gap-top:     37px;
-  --wb-card-pad:         44px;
-  --wb-card-pad-bottom:  46px;
-  --wb-field-gutter:     53px;   /* sparkle glyph + its gap: the column every field aligns to */
-  --wb-sparkle-width:    29px;
-  --wb-sparkle-height:   33px;
-  --wb-goal-height:     170px;
-  --wb-name-height:      63px;
-  --wb-location-height:  46px;
-  --wb-gap-title:        30px;
-  --wb-gap-field:        37px;
-  --wb-gap-field-tight:  17px;   /* the demoted Location block sits closer to the field above */
-  --wb-gap-label:         8px;
-  --wb-gap-rule:         49px;
-  --wb-gap-action:       34px;
-  --wb-band-gap:         21px;
-  --wb-band-gap-after:    2px;
-  --wb-band-pad:         19px;
-  --wb-action-width:    271px;
-  --wb-action-height:    68px;
-  --wb-link-gap:         32px;
-  --wb-link-glyph:       22px;
-  --wb-open-action-width: 100px;
-  --wb-open-row-gap:      21px;
+  /* Layout geometry, from the binding Task 1 references. It is theme-owned: a component rule that
+     hard-coded it would be exactly the fragmentation the token system exists to prevent.
+
+     Each value ramps between the two boundary frames — 800x568 and 1536x1024 — landing on its
+     compact figure at the lower boundary and exactly its approved figure at the upper one. The
+     ramp supports the layout; it does not define it (the layout is grid/flex and content-led).
+
+     AXIS RULE: vertical rhythm follows height (vh), horizontal follows width (vw). A wide but
+     short window must not inherit tall vertical padding from its width, which is why the card's
+     padding is split into -x and -y. All values are mode-independent, so the dark maps inherit
+     them unchanged. */
+  --wb-header-height:     clamp(56px, calc(4.93px + 8.991vh), 97px);
+  --wb-header-inset:      clamp(20px, calc(-45.22px + 8.152vw), 80px);
+  --wb-card-width:        min(906px, 100%);   /* the page inset is the container's padding */
+  --wb-page-inset:        clamp(16px, calc(7.3px + 1.087vw), 24px);
+  --wb-card-gap-top:      clamp(12px, calc(-19.14px + 5.482vh), 37px);
+  --wb-card-pad-x:        clamp(20px, calc(-6.09px + 3.261vw), 44px);
+  --wb-card-pad-y:        clamp(20px, calc(-9.89px + 5.263vh), 44px);
+  --wb-card-pad-bottom:   clamp(20px, calc(-12.39px + 5.702vh), 46px);
+  --wb-field-gutter:      clamp(32px, calc(9.17px + 2.853vw), 53px);
+  --wb-sparkle-width:     clamp(22px, calc(14.39px + 0.951vw), 29px);
+  --wb-sparkle-height:    clamp(25px, calc(16.3px + 1.087vw), 33px);
+  --wb-goal-height:       clamp(88px, calc(-14.14px + 17.982vh), 170px);
+  --wb-name-height:       clamp(44px, calc(20.33px + 4.167vh), 63px);
+  --wb-location-height:   clamp(38px, calc(28.04px + 1.754vh), 46px);
+  --wb-gap-title:         clamp(12px, calc(-10.42px + 3.947vh), 30px);
+  --wb-gap-field:         clamp(17px, calc(-15.39px + 5.702vh), 43px);
+  --wb-gap-field-tight:   clamp(10px, calc(-6.19px + 2.851vh), 23px);
+  --wb-gap-label:         clamp(6px, calc(3.51px + 0.439vh), 8px);
+  --wb-gap-rule:          clamp(16px, calc(-25.11px + 7.237vh), 49px);
+  --wb-gap-action:        clamp(12px, calc(-15.4px + 4.825vh), 34px);
+  --wb-band-gap:          clamp(10px, calc(-3.7px + 2.412vh), 21px);
+  --wb-band-gap-after:    clamp(2px, calc(2.0px + 0.0vh), 2px);
+  --wb-band-pad:          clamp(10px, calc(-1.21px + 1.974vh), 19px);
+  /* The band's own ceiling, measured from the space left below it rather than derived from the
+     goal field: an unbounded failure message would otherwise push the primary action off a
+     short viewport. 54px at 568 and 86px at 1024 both keep the action on screen with slack. */
+  --wb-band-max:          clamp(54px, calc(14.14px + 7.018vh), 86px);
+  --wb-action-width:      clamp(150px, calc(18.48px + 16.44vw), 271px);
+  /* The action's box is reference geometry; the room inside it is not. At the compact bound the
+     label measures exactly the width a 24px inset leaves, so it wrapped to two lines against a
+     reference that draws it on one. Width-driven, like the box it sits in. */
+  --wb-action-pad-x:      clamp(12px, calc(-1.04px + 1.63vw), 24px);
+  --wb-action-height:     clamp(40px, calc(5.12px + 6.14vh), 68px);
+  --wb-link-gap:          clamp(15px, calc(-6.17px + 3.728vh), 32px);
+  --wb-link-glyph:        clamp(18px, calc(13.65px + 0.543vw), 22px);
+  --wb-open-row-gap:      clamp(10px, calc(-3.7px + 2.412vh), 21px);
+  --wb-open-action-width: clamp(84px, calc(66.61px + 2.174vw), 100px);
+
+  /* Type. Height-driven: every size contributes to the vertical stack. */
+  --font-size-display:    clamp(24px, calc(9.05px + 2.632vh), 36px);
+  --font-size-title:      clamp(18px, calc(5.54px + 2.193vh), 28px);
+  --font-size-lead:       clamp(15px, calc(6.28px + 1.535vh), 22px);
+  --font-size-body:       clamp(15px, calc(7.53px + 1.316vh), 21px);
+  --font-size-label:      clamp(14px, calc(6.53px + 1.316vh), 20px);
+  --font-size-meta:       clamp(12px, calc(7.02px + 0.877vh), 16px);
+  --font-size-mono:       clamp(12px, calc(8.26px + 0.658vh), 15px);
 
   /* Elevation, focus */
   --shadow-sm:  0 1px 2px rgba(11, 36, 71, 0.06);                                    /* D */

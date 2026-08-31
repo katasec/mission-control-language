@@ -499,6 +499,162 @@ smaller than the reference's.
 checks: every Workbench token resolves under both the automatic and forced-dark selectors, no
 default-theme ember value appears anywhere on the surface, and the contrast pairs above hold.
 
+**Responsive behaviour.** The launcher is one fluid surface, not two layouts. Two frames are
+binding *boundary references* — 800×568 and 1536×1024 — but they are checkpoints on a continuous
+range, not the two sizes to optimise in isolation.
+
+*Supported range*, at 100% zoom: widths **800–1536px** and heights **568–1024px** are fully
+supported and must satisfy the compact-height rule below — 800×568 is Forge's agreed lower boundary.
+Above 1536×1024 the composition holds at its upper bound and the extra space becomes margin. Below
+the boundary — a deliberately shrunken window, or browser/WebView zoom at 125/150/200% — the page may
+scroll, and it must degrade without overlap or clipping where the host permits. No smaller formal
+guarantee is claimed here; if one is ever needed it requires its own user/host rationale as a
+separate design decision.
+
+*How the fluidity is built.* Layout comes first and `clamp()`/`calc()` only supports it:
+
+- The page is a flex column: header band, then a scroll container holding the launcher.
+- The card is `width: min(906px, 100%)` inside a page inset, centred — it shrinks with the viewport
+  rather than switching to a second fixed width.
+- The field stack is a grid; every child that holds a control carries `min-width: 0`, so a long path
+  or project name shrinks its field instead of widening the card.
+- The open-folder row is `grid-template-columns: minmax(0, 1fr) auto`: the path field absorbs the
+  available width and its action keeps its intrinsic size.
+- Heights are content-led. The goal field uses a clamped `min-height`, not a fixed `height`, so it
+  can grow when a person drags it; labels and messages wrap.
+- **Vertical rhythm follows height; horizontal rhythm follows width.** Every gap, field height and
+  type size that contributes to the vertical stack ramps on `vh`; only insets, gutters and the
+  action's width ramp on `vw`. This is what makes a wide-but-short window behave: at 1536×568 the
+  card is wide and its vertical rhythm is compact, rather than inheriting 44px of vertical padding
+  from its width. The card's padding is split accordingly into `--wb-card-pad-x` and
+  `--wb-card-pad-y`.
+- Because the whole vertical stack is height-driven, its total is a linear interpolation between
+  the two heights: fitting at 568 and at 1024 proves fitting at every height between them. The
+  corner checks below still run — the proof constrains the design, it does not replace evidence.
+- `clamp()`/`calc()` is used for spacing and type only, sized so each value lands on its approved
+  1536×1024 figure at the upper bound and its compact figure at 800×568. That is a smooth ramp
+  between checkpoints, not the definition of the layout.
+- **No breakpoint is planned.** A container or media query may be added only where the structure is
+  demonstrably failing at some width — with the failing evidence recorded here — never to match a
+  device or a reference resolution.
+
+*Measured viewport.* The packaged Desktop opens at **800×568** CSS pixels
+(`window.innerWidth × window.innerHeight`, read inside the packaged app with a temporary probe that
+was reverted and never committed; the 865×636 native outer window would have implied a viewport
+65px too wide and 40px too tall). That measurement is why 800×568 is the lower boundary frame — the
+packaged app is not where the layout is designed or iterated.
+
+*Token endpoints*, for the geometry and type that ramp between the two boundary frames. Every value
+resolves through the named Workbench tokens; no raw colour, spacing or type literal appears in a
+component rule, and `forge.css` gains no raw surface/theme colour outside the Workbench maps.
+`--wb-card-width` is `min(906px, 100%)`: the page inset is the launcher container's own padding, so
+subtracting it again inside the token would double-count it — measured live at 800 wide, that put the
+card 16px in on each side of its reference.
+
+| Token | 800×568 | 1536×1024 |
+|---|---|---|
+| `--wb-page-inset` | 16px | 24px |
+| `--wb-card-width` | 768px (`min(906px, 100%)` inside the inset) | 906px |
+| `--wb-header-height` / `--wb-header-inset` | 56px / 20px | 97px / 80px |
+| `--wb-card-gap-top` | 12px | 37px |
+| `--wb-card-pad-x` (width-driven) | 20px | 44px |
+| `--wb-card-pad-y` / `--wb-card-pad-bottom` (height-driven) | 20px / 20px | 44px / 46px |
+| `--wb-field-gutter` | 32px | 53px |
+| `--wb-sparkle-width` / `-height` | 22px / 25px | 29px / 33px |
+| `--wb-goal-height` (min-height) | 88px | 170px |
+| `--wb-name-height` / `--wb-location-height` | 44px / 38px | 63px / 46px |
+| `--wb-gap-title` / `-field` / `-field-tight` / `-label` | 12 / 17 / 10 / 6px | 30 / 43 / 23 / 8px |
+| `--wb-gap-rule` / `--wb-gap-action` | 16px / 12px | 49px / 34px |
+| `--wb-band-gap` / `--wb-band-pad` | 10px / 10px | 21px / 19px |
+| `--wb-band-max` (message-band ceiling) | 54px | 86px |
+| `--wb-action-width` / `--wb-action-height` | 150px / 40px | 271px / 68px |
+| `--wb-action-pad-x` (label inset, width-driven) | 12px | 24px |
+| `--wb-link-gap` / `--wb-link-glyph` | 15px / 18px | 32px / 22px |
+| `--wb-open-row-gap` / `--wb-open-action-width` | 10px / 84px | 21px / 100px |
+| `--font-size-display` … `-mono` | 24 / 18 / 15 / 15 / 14 / 12 / 12px | 36 / 28 / 22 / 21 / 20 / 16 / 15px |
+
+They live in the Workbench map and are mode-independent, so both dark blocks inherit them and the
+ForgeUI boundary is unaffected.
+
+*Presentation only.* Responsive behaviour changes CSS and markup structure and nothing else: no
+Client Runtime contract, authorization, or filesystem behaviour moves, and no action exists here
+that a TUI could not invoke. Creating a Project and opening an existing folder remain the same
+`ProjectCreateRequest` / `ProjectOpenRequest` contracts at every size.
+
+**Compact references**, the binding lower-boundary artifacts at 800×568. The six 1536×1024 frames
+remain the upper boundary and are unchanged:
+
+| State | File | Lowest element |
+|---|---|---|
+| Empty | [task1-launcher-compact-empty.svg](../images/phase-43.20/task1-launcher-compact-empty.svg) | 492px |
+| Drafted | [task1-launcher-compact-drafted.svg](../images/phase-43.20/task1-launcher-compact-drafted.svg) | 492px |
+| Busy | [task1-launcher-compact-busy.svg](../images/phase-43.20/task1-launcher-compact-busy.svg) | 492px |
+| Failed | [task1-launcher-compact-failed.svg](../images/phase-43.20/task1-launcher-compact-failed.svg) | 542px |
+| Goal required | [task1-launcher-compact-goal-required.svg](../images/phase-43.20/task1-launcher-compact-goal-required.svg) | 542px |
+| Open folder | [task1-launcher-compact-open-folder.svg](../images/phase-43.20/task1-launcher-compact-open-folder.svg) | 540px |
+
+**Compact-height rule.** At 800×568, in **every** launcher state, the goal field, `Project name`,
+`Location`, `Create project` and the open-folder entry point are visible without page scrolling:
+`document.scrollHeight <= window.innerHeight`, and each of those elements'
+`getBoundingClientRect().bottom <= window.innerHeight`. Only genuinely secondary content may use an
+explicit, contained scroll region — in practice a very long failure message, whose band scrolls
+inside itself rather than pushing the primary action off screen. This is asserted numerically, not
+judged from a screenshot.
+
+The band's ceiling is `--wb-band-max`, a token of its own rather than a fraction of the goal field.
+The two are unrelated quantities: what bounds the band is the space left *below* it, which is the
+viewport minus the rest of the stack. Measured band-less, that allowance is 60px at 568px tall and
+92px at 1024px tall, so the ceiling is height-driven and set one slack step inside it — 54px and
+86px. A ceiling derived from the goal field instead read 66px and 127px, which overflowed the
+primary action by 2px at 800×568 and by 35px at 1536×1024 once a message was long enough to reach
+it. Both reference messages sit under the ceiling (39px compact, 62px large), so the six frames are
+unaffected by it.
+
+**Where visual work happens.** The browser-rendered Client Runtime is the primary design,
+screenshot, and resize-validation surface: it is the same Presentation, served over HTTP, and it can
+be resized, zoomed and inspected. The packaged native Desktop is **not** used to discover or iterate
+on layout; it is a single parity check after browser acceptance passes, confirming the accepted
+layout renders identically in the WebView at its own default window.
+
+**Acceptance evidence, browser-first.** Produced against the browser-rendered Client Runtime after
+build, full test suite and package all pass, and before any native check:
+
+1. **Boundary frames.** All six states at 1536×1024 against the large references and at 800×568
+   against the compact references, compared by scanning both rasters for the same structural edges,
+   ±2px.
+2. **The four rectangular corners**, binding for every launcher state — this is what catches
+   wide/short and narrow/tall failures that a diagonal sweep hides:
+
+   | | 568 high | 1024 high |
+   |---|---|---|
+   | **800 wide** | narrow + short | narrow + tall |
+   | **1536 wide** | wide + short | wide + tall |
+
+   Modelled from the token endpoints, the worst state (a message band present) stacks to 539px at
+   either 568-high corner and 989px at either 1024-high corner, so the design is expected to fit at
+   all four with 29–35px of headroom; the checks confirm it rather than assume it.
+3. **Representative sweep and a continuous drag.** Widths 1536 → 1440 → 1366 → 1280 → 1152 → 1024 →
+   960 → 900 → 860 → 800 with heights ramped 1024 → 568, plus an observed continuous drag-resize
+   through the range rather than a screenshot per pixel. At every step: no horizontal document
+   scroll, no element wider than the card, no clipped or overlapping text, and the compact-height
+   rule from 568px of height. Any size where the structure breaks is recorded, and only then is a
+   query considered.
+4. **Long content.** A ~400-character goal, a ~120-character project name, a ~300-character location
+   path, and a long failure message, at both boundary sizes: fields shrink rather than widening the
+   card, the card never exceeds its width, and only the message band scrolls inside itself.
+5. **Zoom / text scaling.** 125%, 150% and 200%: nothing overlaps or is clipped, and the page
+   degrades by scrolling rather than breaking. Zoom takes the effective viewport below the supported
+   boundary, so scrolling there is recorded as expected behaviour, not reported as a pass against
+   the compact-height rule.
+6. **Theme modes.** Automatic light, automatic dark, forced light under a dark OS, forced dark, and
+   the attribute-removed check that ForgeUI inherits neither palette nor geometry.
+7. **Token audit.** The computed value of every launcher colour, radius, spacing and type property
+   traced to a named token, plus the structural test asserting `forge.css` adds no raw
+   surface/theme colour outside the Workbench maps.
+8. **Native parity, last.** Only after the above pass: the packaged Desktop at its own default
+   window, one screenshot and the numeric no-scroll assertion, confirming the accepted browser
+   layout renders identically in the WebView.
+
 **Visual acceptance rule.** The comparison is card-internal fidelity — field order, labels, copy,
 type scale, control sizes, spacing rhythm, divider and action-row placement — plus the header band.
 Page-level side margins differ from the journey mock because two columns are deferred; that

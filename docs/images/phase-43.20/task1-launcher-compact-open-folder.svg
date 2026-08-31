@@ -1,0 +1,31 @@
+<svg viewBox="0 0 800 568" width="800" height="568" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Task 1 launcher (compact) - open folder</title>
+<desc>The open-an-existing-folder link expanded: one path row beneath the card with its Open action.</desc>
+<rect x="0" y="0" width="800" height="568" rx="0" fill="#f7faff"/>
+<rect x="0" y="0" width="800" height="56" rx="0" fill="#f6f8fd"/>
+<line x1="0" y1="56" x2="800" y2="56" stroke="#c9d5e7" stroke-width="1"/>
+<text x="20" y="36" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#0468ed" text-anchor="start">Forge</text>
+<line x1="90" y1="20" x2="90" y2="40" stroke="#c3cfe0" stroke-width="1"/>
+<text x="104" y="35" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="400" fill="#1d2c47" text-anchor="start">AI Workbench</text>
+<rect x="16" y="68" width="768" height="390" rx="14" fill="#ffffff" stroke="#e7ecf4" stroke-width="1"/>
+<text x="36" y="110" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#101d33" text-anchor="start">New project</text>
+<g transform="translate(34,138) scale(0.76)" fill="#0468ed" aria-hidden="true"><path d="M14 0 L17.2 10.8 L28 14 L17.2 17.2 L14 28 L10.8 17.2 L0 14 L10.8 10.8 Z"/><path d="M25 20 L26.6 25.4 L32 27 L26.6 28.6 L25 34 L23.4 28.6 L18 27 L23.4 25.4 Z"/></g>
+<rect x="68" y="128" width="696" height="88" rx="8" fill="#ffffff" stroke="#0f56d2" stroke-width="2"/>
+<text x="84" y="156" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#62748c" text-anchor="start">Describe what you want to build</text>
+<text x="68" y="244" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="500" fill="#101d33" text-anchor="start">Project name</text>
+<rect x="68" y="256" width="696" height="44" rx="8" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
+<text x="84" y="284" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#62748c" text-anchor="start">Derived from your goal</text>
+<text x="68" y="322" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="500" fill="#5b6b83" text-anchor="start">Location</text>
+<rect x="68" y="332" width="696" height="38" rx="6" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
+<text x="84" y="356" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#62748c" text-anchor="start">Derived from your project name</text>
+<line x1="68" y1="386" x2="764" y2="386" stroke="#e5eaf2" stroke-width="1"/>
+<rect x="614" y="398" width="150" height="40" rx="8" fill="#9dc0f2"/>
+<text x="689.0" y="424" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#ffffff" text-anchor="middle">Create project</text>
+<g transform="translate(36,473) scale(0.82)" fill="none" stroke="#0468ed" stroke-width="1.8"><path d="M0.9 3.6 h6.4 l1.8 2.2 h9.0 a0.9 0.9 0 0 1 0.9 0.9 v9.7 a0.9 0.9 0 0 1 -0.9 0.9 h-17.2 a0.9 0.9 0 0 1 -0.9 -0.9 v-11.9 a0.9 0.9 0 0 1 0.9 -0.9 z"/></g>
+<text x="62" y="486" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="400" fill="#0468ed" text-anchor="start">Open an existing folder…</text>
+<rect x="16" y="502" width="672" height="38" rx="6" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
+<text x="32" y="526" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="12" font-weight="400" fill="#62748c" text-anchor="start">/path/to/project</text>
+<rect x="700" y="502" width="84" height="38" rx="6" fill="#ffffff" stroke="#d5dae5" stroke-width="1"/>
+<text x="742" y="526" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#0468ed" text-anchor="middle">Open</text>
+<!-- lowest element bottom: 540 of 568 -->
+</svg>
