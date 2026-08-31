@@ -4,6 +4,15 @@
 
 Design a compact version after the packaged Desktop was visibly too tall at its default size.
 
+## Prompt used (reconstructed)
+
+“Fix the default-window layout. Measure the available space and produce compact design artifacts.”
+
+## Better prompt
+
+“Measure `window.innerWidth × window.innerHeight` once in the packaged app, revert the probe, then
+do all design and resize work in the browser-rendered Client Runtime. Define no-scroll primary actions.”
+
 ## What Claude did wrong
 
 It returned to the native package to discover and iterate on layout, left the usable viewport as an

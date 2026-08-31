@@ -4,6 +4,15 @@
 
 Refine theme-owned geometry and repeat the visual report.
 
+## Prompt used (reconstructed)
+
+“Move the reference geometry into the theme and rerun the internal visual comparison.”
+
+## Better prompt
+
+“Use a viewport acceptance matrix, not a single spacious screenshot: record each required state at
+the actual default viewport and large reference viewport before claiming a visual PASS.”
+
 ## What Claude did wrong
 
 The second self-PASS still used the 1536×1024 evidence path and therefore repeated the same

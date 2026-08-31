@@ -4,6 +4,15 @@
 
 Recover from the visible mismatch between the running launcher and the journey mock.
 
+## Prompt used (reconstructed)
+
+“Re-plan Task 1 so the delivered Desktop matches the agreed visual mockup.”
+
+## Better prompt
+
+“Create an owned/deferred visual slice and define acceptance order exactly: Claude PASS, Codex
+PASS, then operator acceptance. A failure remains internal and returns to design or implementation.”
+
 ## What Claude did wrong
 
 The first visual re-plan still put the operator too early in the acceptance sequence. It had not
