@@ -182,6 +182,12 @@ documented, raise it and get it resolved before handing off any implementation w
 a task that's handed off can run start-to-finish, unblocked, without stopping mid-build to ask a
 design question that should have been closed out beforehand.
 
+For every user-visible Desktop or ForgeUI change, read
+[Desktop Interaction Principles](docs/design/desktop-interaction-principles.md) and the
+[UI Design System](docs/design/ui-design-system.md) before design or implementation. They govern
+the binding visual reference, responsive evidence, and theme/token ownership; the task assignment
+must name them explicitly rather than leaving their relevance to inference.
+
 ### Architecture-security gate
 
 Every design must pass [Security Architecture](docs/design/security-architecture.md) before an

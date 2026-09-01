@@ -166,7 +166,11 @@ anything touching Forge Desktop's UI, before any markup is written:
 For every user-visible Desktop or ForgeUI change, a mockup is a **binding acceptance artifact**, not
 inspiration. Before implementation, its task in the active spoke must name the exact reference
 (repository path or design URL), target viewport, task-owned visual slice, and the states that must
-match. A non-visual task may record a concise N/A rationale instead.
+match. It must also classify every element in a broader reference as **owned**, **deferred**,
+**blocked**, or **omitted**; a deferred element is absent unless it has real behaviour in this task.
+A non-visual task may record a concise N/A rationale instead. A task that reuses an existing renderer
+without changing its visual behaviour records that reuse explicitly rather than silently bypassing
+the gate.
 
 For Desktop, the task must also name the packaged app's **default usable viewport**, measured from
 the running window rather than guessed from its outer chrome. It must show the initial task action
@@ -179,6 +183,16 @@ Use fluid, bounded layout values rather than a second set of arbitrary fixed dim
 available width and height while retaining the exact reference dimensions at its named large
 viewport. Use a breakpoint only for a real structural rearrangement, not to paper over a fixed card.
 
+**Responsive evidence is browser-first and rectangular.** Measure the packaged app's usable WebView
+viewport once, then remove the probe and design, resize, and inspect in the browser-rendered
+Presentation. The supported width/height range is a rectangle: test all four boundary corners, not
+only proportional endpoint or diagonal resizes; then perform a continuous resize through the range.
+For every required state, record no unintended horizontal/document scrolling, no clipping or overlap,
+long-content behaviour, zoom/text-scaling behaviour, and text fit inside interactive controls.
+Only after those checks pass may the packaged app be used for one parity check at its measured default
+viewport. The native package confirms the accepted layout; it is not the place to discover or iterate
+on it.
+
 If a journey mockup spans several tasks, the spoke must say which part this task owns and what stays
 deferred. An implementer may not quietly substitute a smaller or different layout because the
 reference is broader than the immediate work.
@@ -188,6 +202,10 @@ colours, spacing, radii, or type values in a component-local stylesheet to mimic
 new visual language is needed, add or select a named token theme (including its dark-mode values)
 and have the surface select that theme; rules continue to consume the ordinary tokens. See
 [UI Design System](ui-design-system.md#named-product-themes-and-reskins).
+
+The task's visual contract records the chosen theme selector, semantic token mapping and source
+provenance, plus the foreground/background contrast pairs used in every required state. The design
+system owns these values; the task only binds the reference to them.
 
 Completion requires a screenshot or live inspection of the running surface compared with that named
 reference, and a recorded reviewer PASS or FAIL. **Do not ask the operator for visual acceptance

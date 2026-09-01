@@ -178,12 +178,17 @@ sidebar foot to the **rail foot** (desktop); on mobile it lives behind the **Acc
   compose from existing primitives, and put any new rules in `forge.css` under the right
   section using tokens. Don't add a scoped `*.razor.css` unless the style is genuinely local.
 - **Visual reskin:** map the reference to a named product-theme token block in `forge.css`, with
-  light and dark values. A component may select that theme at its boundary, but may not redefine
-  colour, type, radius, or spacing tokens locally.
+  light and dark values. The task's visual contract records each semantic token, its provenance
+  (sampled, derived, accessibility override, or newly chosen), and every foreground/background
+  contrast pair used in its required states. A component may select that theme at its boundary, but
+  may not redefine colour, type, radius, or spacing tokens locally.
 - **Responsive themed surface:** keep reference geometry in named tokens, but use fluid bounded
   values (`min()`, `max()`, `clamp()`, and viewport/percentage terms) where it must fit different
   window sizes. Preserve the approved large viewport as the upper bound; do not add a second set of
-  arbitrary component-local pixels merely to make a smaller window fit.
+  arbitrary component-local pixels merely to make a smaller window fit. The detailed evidence
+  method — four rectangular boundary corners, continuous resize, text fit, and browser-first
+  packaged parity — is binding in
+  [Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate).
 - **New agent card / message type:** reuse `.agent-card` + `.trust-badge` so the trust surface
   stays consistent (this is the product's core differentiator — never fake a green ✓).
 - **Anything showing agent identity:** use `.identity-seal` (gold/blue), **never** the green
