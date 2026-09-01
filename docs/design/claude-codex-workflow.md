@@ -69,12 +69,44 @@ Read first (do not summarize these back to me):
 - docs/plan.md
 - [docs/phases/phase-N.M-<slug>.md]
 - [docs/design/<relevant>.md]
+- For every user-visible Desktop or ForgeUI change: also
+  `docs/design/desktop-interaction-principles.md` and
+  `docs/design/ui-design-system.md`.
 
 Task:
 [1-3 sentences: what to build, scoped to one task from the spoke's task list]
 
+Scope card:
+- Tangible user-visible/process outcome:
+- Expected files and tests:
+- Dependencies and explicitly deferred work:
+- Why this is the smallest task that delivers the outcome:
+
 Done when:
 [the "Done when" condition from the spoke, or "see spoke doc, task N"]
+
+Shared-action ownership (when the task adds or changes a user action):
+[for each action: shared contract, outcome/failure semantics, authorization
+ owner, and why Presentation contains no business rule]
+
+UI task contract (every user-visible Desktop or ForgeUI change):
+- Visual disposition: binding reference(s), viewport(s), required states, and
+  each reference element classified as owned, deferred, blocked, or omitted.
+  A no-visual-change task records an explicit N/A or existing-renderer reuse rationale.
+- Theme and accessibility: selected theme/selector; semantic-token mapping with
+  light/dark values and provenance; foreground/background contrast pairs for
+  every state.
+- Evidence plan: browser-first four-corner viewport matrix, continuous resize,
+  long-content and zoom/text-scaling checks, text-fit checks, then packaged-app
+  parity last. Name the evidence paths to be produced.
+
+Precondition test matrix (every stateful action):
+[each named precondition, its positive test, its negative test, and the named
+ expected result]
+
+Revision record (every revision after the first):
+[changed decisions, files, and evidence since the preceding version; the prior
+ artifact title/version. If none changed, say so rather than resending it.]
 
 Constraints:
 [anything task-specific not already covered by AGENTS.md or the spoke - keep
@@ -104,6 +136,10 @@ Verification:
 [the actual check performed - test run output, command output, a live check -
  not "should work"]
 
+Precondition test matrix:
+[named positive and negative result for every precondition in the approved plan,
+ or N/A with a reason]
+
 Done when - met?
 [yes/no against the spoke's "Done when" condition, with the evidence above]
 
@@ -117,6 +153,11 @@ Open questions / follow-ups:
 Desktop Quality Gate (Desktop/native-host tasks only):
 [the five PASS/FAIL answers from Engineering Philosophy, with the boundary
 test and published-app observation]
+
+UI visual acceptance (user-visible Desktop/ForgeUI tasks only):
+[browser-first evidence paths and PASS/FAIL for every approved state and
+ viewport check; text-fit result; packaged-app parity result. Do not claim
+ completion or request operator acceptance until this is PASS.]
 ```
 
 ---
@@ -127,6 +168,9 @@ test and published-app observation]
   spoke's task list, not one assignment for the whole spoke.
 - The templates are copy/paste-shaped for a human relaying between two chat surfaces; nothing here
   assumes Claude and Codex are wired together programmatically.
+- **A revision is a delta, not a retransmission.** Lead every revised plan with its changed
+  decisions, files, and evidence plus the prior artifact title/version. If that delta is empty,
+  report that no revised artifact exists; do not consume a review turn with an identical relay.
 - **Always output the filled-in template inside a fenced code block**, not as plain prose — that's
   what makes it a single clean copy/paste between desktop apps. Codex in particular tends to forget
   this; if a task assignment or completion summary shows up unfenced, re-send it fenced rather than
