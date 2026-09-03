@@ -738,8 +738,13 @@ shapes:
 
 `ConversationCommand`/`ConversationProgress` gain the purpose-aware internal representation needed
 by the Worker: a Project-control command has a null `RunId`, no capabilities, and the fixed
-`MissionControl` resolver key. `ConversationGrain` remains the sole sequence allocator/event
-appender; it does not notify `MissionRunGrain` for a null-run event. The Worker resolver owns
+`MissionControl` resolver key. Its `ConversationCommand.ProjectGoal` is the non-empty value pinned
+in the control checkpoint and is set only by `ConversationGrain`; it is distinct from the current
+turn text and is `null` for `MissionRun`. The zero-tool MissionControl executor receives that
+project goal on every turn, so refinement remains scoped to the Project without accepting it from
+the caller or moving any local-path data into the Conversation boundary. `ConversationGrain`
+remains the sole sequence allocator/event appender; it does not notify `MissionRunGrain` for a
+null-run event. The Worker resolver owns
 choosing the zero-tool MissionControl executor. It may publish only `UserMessage`,
 `ParticipantMessage`, and `Error` control facts under the existing event store/outbox; it cannot
 publish a tool request, create a run, or select Janus. A `MissionControl` participant is added to
@@ -760,12 +765,17 @@ successful local write.
 **Task 2 UI disposition — existing-renderer reuse.** This task changes the durable source and
 session semantics, not the visual layout: it reuses the current Project-open transcript/composer
 surface in `Pages/Home.razor` and `ConversationTranscriptView.razor`; its only renderer change is
-the `MissionControl` participant label. The Task 3 rail, Explorer, launch summary, Trace, run
-controls, and outcome cards are explicitly absent. No new theme, token, or component-local visual
-rule is permitted. Browser/component evidence proves the reopened control stream renders through
-that existing renderer; the Task 1 browser/package acceptance remains the only layout acceptance
-required here. The reused composer retains its accessible label/focus and the existing
-disabled/busy/error states; no Host-specific UI path is added.
+the `MissionControl` participant label. On Project open, Mission Control is the sole active
+conversation: the existing mission picker is not rendered for the Project-open surface, and the
+composer calls only the named Project-control contract. The manifest's selected launch mission
+remains local Task 4 input; it is not a Task 2 UI selection. The existing Janus `PromptRequest`
+path remains a Client Runtime regression path but is not reachable from an open Project. The Task
+3 rail, Explorer, launch summary, Trace, run controls, and outcome cards are explicitly absent. No
+new theme, token, or component-local visual rule is permitted. Browser/component evidence proves
+the reopened control stream renders through that existing renderer; the Task 1 browser/package
+acceptance remains the only layout acceptance required here. The reused composer retains its
+accessible label/focus and the existing disabled/busy/error states; no Host-specific UI path is
+added.
 
 **Precondition test matrix.** Test a null manifest ID (create once then persist); an accepted Host
 create followed by failed manifest replacement (same ID on retry); a non-null stored ID (replay/tail
