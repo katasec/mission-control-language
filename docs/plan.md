@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** implement Task 2, durable Project Mission Control, on the verified Project-home foundation. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** approve and implement Task 2, durable Project Mission Control, using the locked Project-control contract and existing durable-conversation substrate. |
 
 ## Active phases
 
