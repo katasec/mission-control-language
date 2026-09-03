@@ -1,23 +1,23 @@
 <svg viewBox="0 0 800 568" width="800" height="568" xmlns="http://www.w3.org/2000/svg" role="img">
 <title>Task 2 Project Control — compact after</title>
-<desc>The same Mission Control transcript and one-action composer at the 800 by 568 compact target viewport.</desc>
+<desc>At the compact viewport the unchanged right-aligned user bubble, Mission Control response, and picker-free existing composer remain visible.</desc>
 <rect width="800" height="568" fill="#f7faff"/>
-<rect width="800" height="64" fill="#f6f8fd"/>
-<line x2="800" y1="64" y2="64" stroke="#c9d5e7"/>
-<text x="28" y="42" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#0468ed">Forge</text>
-<text x="112" y="40" font-family="system-ui, sans-serif" font-size="17" fill="#1d2c47">AI Workbench</text>
-<text x="28" y="91" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#1d2c47">Release planner</text>
-<rect x="28" y="136" width="420" height="73" rx="10" fill="#ffffff" stroke="#d5dae5"/>
-<text x="46" y="164" font-family="system-ui, sans-serif" font-size="12" fill="#5b6b83">You</text>
-<text x="46" y="190" font-family="system-ui, sans-serif" font-size="16" fill="#1d2c47">Help me shape the first release.</text>
-<rect x="28" y="228" width="606" height="102" rx="10" fill="#ffffff" stroke="#d5dae5"/>
-<text x="46" y="256" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#1d2c47">Mission Control</text>
-<text x="46" y="282" font-family="system-ui, sans-serif" font-size="16" fill="#1d2c47">Let’s clarify the outcome and</text>
-<text x="46" y="305" font-family="system-ui, sans-serif" font-size="16" fill="#1d2c47">smallest useful milestone.</text>
-<rect y="470" width="800" height="98" fill="#f6f8fd"/>
-<line x2="800" y1="470" y2="470" stroke="#c9d5e7"/>
-<rect x="24" y="504" width="606" height="40" rx="10" fill="#ffffff" stroke="#c1ccdc"/>
-<text x="40" y="530" font-family="system-ui, sans-serif" font-size="14" fill="#62748c">Describe what you want to refine</text>
-<rect x="646" y="504" width="104" height="40" rx="20" fill="#1d2c47"/>
-<text x="698" y="530" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Send</text>
+<rect width="800" height="56" fill="#f6f8fd"/>
+<line x2="800" y1="56" y2="56" stroke="#d5dae5"/>
+<text x="20" y="34" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#0f6eeb">Forge</text>
+<line x1="91" x2="91" y1="16" y2="40" stroke="#d5dae5"/>
+<text x="106" y="34" font-family="system-ui, sans-serif" font-size="17" fill="#101d33">AI Workbench</text>
+<text x="20" y="50" font-family="ui-monospace, monospace" font-size="10" fill="#5b6b83">Release planner · /Forge/Projects/release-planner</text>
+<rect x="448" y="80" width="336" height="39" rx="10" fill="#eff5fe"/>
+<text x="460" y="105" font-family="system-ui, sans-serif" font-size="13" fill="#101d33">Help me shape the first release.</text>
+<rect x="16" y="139" width="640" height="94" rx="16" fill="#ffffff" stroke="#e7ecf4"/>
+<text x="28" y="165" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#5b6b83">Mission Control</text>
+<text x="28" y="193" font-family="system-ui, sans-serif" font-size="14" fill="#101d33">Let’s clarify the outcome and the smallest</text>
+<text x="28" y="216" font-family="system-ui, sans-serif" font-size="14" fill="#101d33">useful first milestone.</text>
+<rect y="496" width="800" height="72" fill="#f7faff"/>
+<line x2="800" y1="496" y2="496" stroke="#e7ecf4"/>
+<rect x="16" y="512" width="656" height="40" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
+<text x="28" y="538" font-family="system-ui, sans-serif" font-size="14" fill="#62748c">What is this Project for?</text>
+<rect x="680" y="514" width="104" height="36" rx="18" fill="#0f6eeb"/>
+<text x="732" y="538" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13.5" font-weight="600" fill="#ffffff">Send</text>
 </svg>
