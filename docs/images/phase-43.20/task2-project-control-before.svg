@@ -1,0 +1,28 @@
+<svg viewBox="0 0 1536 1024" width="1536" height="1024" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Task 2 Project Control — before</title>
+<desc>The existing Project-open conversation surface with the obsolete interactive Janus mission picker in the composer.</desc>
+<rect width="1536" height="1024" fill="#f7faff"/>
+<rect width="1536" height="97" fill="#f6f8fd"/>
+<line x2="1536" y1="97" y2="97" stroke="#c9d5e7"/>
+<text x="80" y="68" font-family="system-ui, sans-serif" font-size="36" font-weight="700" fill="#0468ed">Forge</text>
+<line x1="185" x2="185" y1="40" y2="72" stroke="#c3cfe0"/>
+<text x="206" y="68" font-family="system-ui, sans-serif" font-size="28" fill="#1d2c47">AI Workbench</text>
+<text x="80" y="143" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#1d2c47">Release planner · /Forge/Projects/release-planner</text>
+<line x2="1536" y1="166" y2="166" stroke="#e1e8f2"/>
+<rect x="160" y="222" width="676" height="95" rx="14" fill="#ffffff" stroke="#d5dae5"/>
+<text x="188" y="259" font-family="system-ui, sans-serif" font-size="15" fill="#5b6b83">You</text>
+<text x="188" y="291" font-family="system-ui, sans-serif" font-size="20" fill="#1d2c47">Help me shape the first release.</text>
+<rect x="160" y="355" width="850" height="142" rx="14" fill="#ffffff" stroke="#d5dae5"/>
+<text x="188" y="393" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#1d2c47">Forge</text>
+<text x="188" y="426" font-family="system-ui, sans-serif" font-size="20" fill="#1d2c47">Let’s clarify the outcome, constraints, and the</text>
+<text x="188" y="454" font-family="system-ui, sans-serif" font-size="20" fill="#1d2c47">smallest useful first milestone.</text>
+<rect y="880" width="1536" height="144" fill="#f6f8fd"/>
+<line x2="1536" y1="880" y2="880" stroke="#c9d5e7"/>
+<rect x="80" y="925" width="810" height="48" rx="12" fill="#ffffff" stroke="#c1ccdc"/>
+<text x="102" y="956" font-family="system-ui, sans-serif" font-size="17" fill="#62748c">Describe what you want to refine</text>
+<rect x="912" y="925" width="188" height="48" rx="24" fill="#ffffff" stroke="#aebdce"/>
+<text x="934" y="956" font-family="system-ui, sans-serif" font-size="17" fill="#1d2c47">Janus  ▾</text>
+<rect x="1124" y="925" width="112" height="48" rx="24" fill="#1d2c47"/>
+<text x="1180" y="956" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="600" fill="#ffffff">Send</text>
+<text x="1270" y="956" font-family="system-ui, sans-serif" font-size="15" fill="#a33939">Removed in Task 2</text>
+</svg>

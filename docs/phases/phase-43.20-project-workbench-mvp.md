@@ -762,20 +762,34 @@ the same returned ID, and refuses a different non-null ID. A failed replacement 
 same deterministic create retry returns its ID. It is never reported as a new conversation or a
 successful local write.
 
-**Task 2 UI disposition — existing-renderer reuse.** This task changes the durable source and
-session semantics, not the visual layout: it reuses the current Project-open transcript/composer
-surface in `Pages/Home.razor` and `ConversationTranscriptView.razor`; its only renderer change is
-the `MissionControl` participant label. On Project open, Mission Control is the sole active
-conversation: the existing mission picker is not rendered for the Project-open surface, and the
-composer calls only the named Project-control contract. The manifest's selected launch mission
-remains local Task 4 input; it is not a Task 2 UI selection. The existing Janus `PromptRequest`
-path remains a Client Runtime regression path but is not reachable from an open Project. The Task
-3 rail, Explorer, launch summary, Trace, run controls, and outcome cards are explicitly absent. No
-new theme, token, or component-local visual rule is permitted. Browser/component evidence proves
-the reopened control stream renders through that existing renderer; the Task 1 browser/package
-acceptance remains the only layout acceptance required here. The reused composer retains its
-accessible label/focus and the existing disabled/busy/error states; no Host-specific UI path is
-added.
+**Task 2 UI disposition — existing-renderer reuse with one visible removal.** This task reuses
+the current Project-open transcript/composer surface in `Pages/Home.razor` and
+`ConversationTranscriptView.razor`; its only new renderer label is `MissionControl`. It also
+removes the obsolete interactive Janus mission picker, a visible behavioural correction that is
+bound to the following references:
+
+| State | Reference | Viewport | Task 2-owned visual slice |
+|---|---|---|---|
+| Before | [task2-project-control-before.svg](../images/phase-43.20/task2-project-control-before.svg) | 1536×1024 | Existing transcript/composer, including the misleading Janus picker being removed. Documentation only; never preserve it as a target. |
+| Ready | [task2-project-control-after.svg](../images/phase-43.20/task2-project-control-after.svg) | 1536×1024 | Existing Project header, durable message rows, accessible composer, `MissionControl` participant label, and the now wider one-action composer. |
+| Ready compact | [task2-project-control-compact-after.svg](../images/phase-43.20/task2-project-control-compact-after.svg) | 800×568 | The same owned slice with its input and Send action visible without document scrolling. |
+
+On Project open, Mission Control is the sole active conversation and the composer calls only the
+named Project-control contract. The manifest's selected launch mission remains local Task 4 input;
+it is not a Task 2 UI selection. The existing Janus `PromptRequest` path remains a Client Runtime
+regression path but is not reachable from an open Project. The Task 3 rail, Explorer, launch
+summary, Trace, run controls, and outcome cards are explicitly deferred and absent. No new theme,
+token, or component-local visual rule is permitted: the existing Workbench token theme supplies
+both colour modes. The reused composer retains its accessible label, focus, disabled, busy, and
+error states.
+
+Before implementation, record the Cooper/Rams/Norman gate: removal leaves one honest refinement
+action, removes redundant chrome, and keeps the existing composer feedback/constraints. Browser
+evidence must compare the ready state to both after references, prove the picker is absent in
+ready/busy/error/replay states, exercise the four 800/1536 × 568/1024 viewport corners plus
+continuous resize, long content, 125/150/200% scaling, and both colour modes. The packaged Desktop
+then supplies the final parity check at its measured usable default viewport. This is the Task 2
+visual acceptance; Task 1's launcher evidence is not substituted for it.
 
 **Precondition test matrix.** Test a null manifest ID (create once then persist); an accepted Host
 create followed by failed manifest replacement (same ID on retry); a non-null stored ID (replay/tail
