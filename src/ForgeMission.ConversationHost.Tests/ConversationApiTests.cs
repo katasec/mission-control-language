@@ -225,6 +225,36 @@ public class ConversationApiTests(AzuriteFixture fixture)
         throw new InvalidOperationException("The SSE stream produced no event.");
     }
 
+    [Fact]
+    public async Task ProjectControlMessage_WithWhitespaceOnlyText_Is400_AndAppendsNothing()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var conversationId = await CreateControlConversationAsync(client);
+
+        var whitespace = await PostControlMessageAsync(client, conversationId, Guid.NewGuid(), "   ");
+        var newlines = await PostControlMessageAsync(client, conversationId, Guid.NewGuid(), "\n\t");
+
+        Assert.Equal(HttpStatusCode.BadRequest, whitespace.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, newlines.StatusCode);
+
+        var grain = host.GetConversationGrain(new ConversationAddress("dev", conversationId));
+        Assert.Empty((await grain.ReadAfterAsync(0)).EventJson);
+    }
+
+    [Fact]
+    public async Task ProjectControlCreate_WithAWhitespaceOnlyGoal_Is400()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+
+        var response = await client.PostAsJsonAsync("/conversations/project-control",
+            new CreateProjectControlConversationRequest(Guid.NewGuid(), Guid.NewGuid(), "   "),
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     // ── 2. Follow-up: pinned mission/capabilities, not client-supplied ──────────────
 
     [Fact]

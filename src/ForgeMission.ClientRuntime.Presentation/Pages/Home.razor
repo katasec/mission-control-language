@@ -62,7 +62,7 @@ else
             <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
                    @ref="composerInput"
                    placeholder="@ComposerPlaceholder"
-                   disabled="@(sessionId is null || sending || PromptsBlocked)" />
+                   disabled="@(!missionControlReady || sending || PromptsBlocked)" />
             <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
                 @(sending ? "Sending…" : "Send")
             </button>
@@ -141,6 +141,16 @@ else
     private Task? eventLoopTask;
     private int viewGeneration;
 
+    // True only once Mission Control has actually opened. The session id alone is NOT enough:
+    // EnterProjectAsync sets it before awaiting the open, so gating on it would leave a window
+    // where a person could submit a turn against a conversation that does not exist yet.
+    private bool missionControlReady;
+
+    // The in-flight turn's identity. Retained across a typed or transport failure so a retry of
+    // unchanged text sends the identical request; released only on acceptance.
+    private Guid? pendingCommandId;
+    private string? pendingCommandText;
+
     private ConversationTranscript conversationTranscript = new();
     private string? conversationError;
     private string? sessionError;
@@ -152,11 +162,16 @@ else
     // already reports.
     private bool PromptsBlocked => connectionError is not null;
 
-    private string ComposerPlaceholder =>
-        PromptsBlocked ? "Reconnect to continue this conversation" : "What is this Project for?";
+    // A disabled composer says why it is disabled rather than looking broken.
+    private string ComposerPlaceholder => this switch
+    {
+        { PromptsBlocked: true } => "Reconnect to continue this conversation",
+        { missionControlReady: false, conversationError: null } => "Opening Mission Control…",
+        _ => "What is this Project for?",
+    };
 
     private bool CanSend =>
-        sessionId is not null && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
+        missionControlReady && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
 
     // Deliberately no OnInitializedAsync: opening Desktop issues no request, creates no session or
     // event subscription, and gives the Client Runtime no reason to touch the filesystem. The first
@@ -259,6 +274,12 @@ else
         sessionId = opened.SessionId;
         focusComposerAfterRender = true;
         StartEventLoop(view);
+
+        // Render the workbench BEFORE awaiting the open. Without this the surface would sit on the
+        // launcher for the whole open, then jump straight to a ready composer — so the disabled
+        // "Opening Mission Control…" state, and an open failure's error, would never be seen.
+        StateHasChanged();
+
         await OpenMissionControlAsync(view);
     }
 
@@ -268,8 +289,16 @@ else
         {
             var response = await ClientRuntime.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(
                 new OpenProjectMissionControlRequest(sessionId!), view.Token);
-            if (IsCurrent(view.Generation) && response.Error is { } error)
+            if (!IsCurrent(view.Generation))
+                return;
+
+            // Ready ONLY on a conversation the Runtime actually opened. A typed error leaves the
+            // composer disabled with its message visible, rather than inviting a turn that has
+            // nowhere to go.
+            if (response.Error is { } error)
                 conversationError = error.Message;
+            else
+                missionControlReady = response.ConversationId is not null;
         }
         catch (OperationCanceledException)
         {
@@ -332,23 +361,46 @@ else
 
         var view = new ViewOperation(viewGeneration, viewCts.Token);
         var text = composerText;
-        composerText = string.Empty;
+
+        // The command id is minted for a SPECIFIC piece of text and survives a failure with it,
+        // so pressing Send again reproduces a byte-identical request and the Conversation service
+        // resolves the duplicate instead of appending a second message. Editing the text first is
+        // a different turn, so it mints a new id — that rule falls out of this comparison rather
+        // than needing separate edit tracking.
+        if (pendingCommandId is null || !string.Equals(pendingCommandText, text, StringComparison.Ordinal))
+        {
+            pendingCommandId = Guid.NewGuid();
+            pendingCommandText = text;
+        }
+
+        // The composer is NOT cleared here: until the turn is accepted, the person's text is the
+        // only copy of it that exists anywhere.
         sending = true;
         conversationError = null;
         StateHasChanged();
 
         try
         {
-            // Generated once per submission: a retry of THIS turn would reuse it, and the
-            // Conversation service resolves the duplicate rather than appending a second message.
             var response = await ClientRuntime.SendAsync<
                 SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
-                new SubmitProjectMissionControlTurnRequest(sessionId, Guid.NewGuid(), text), view.Token);
+                new SubmitProjectMissionControlTurnRequest(sessionId, pendingCommandId.Value, text), view.Token);
+
+            if (!IsCurrent(view.Generation))
+                return;
 
             // The response is an acceptance, not a rendered answer: the turn appears once its
             // durable UserMessage — and everything after it — arrives through the relayed stream.
-            if (IsCurrent(view.Generation) && response.Error is { } error)
+            if (response.Error is { } error)
+            {
                 conversationError = error.Message;
+            }
+            else
+            {
+                // Accepted: only now is the pending turn released.
+                composerText = string.Empty;
+                pendingCommandId = null;
+                pendingCommandText = null;
+            }
         }
         catch (OperationCanceledException)
         {
@@ -385,6 +437,9 @@ else
         viewCts = new CancellationTokenSource();
 
         sessionId = null;
+        missionControlReady = false;
+        pendingCommandId = null;
+        pendingCommandText = null;
         conversationTranscript = new();
         conversationError = null;
         sessionError = null;

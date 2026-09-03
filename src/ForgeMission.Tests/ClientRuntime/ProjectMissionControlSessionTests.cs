@@ -147,7 +147,9 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
         var handler = new ScriptedControlHostHandler(Guid.NewGuid());
         await using var session = NewSession(handler, project.Home);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        // A dedicated type, so the endpoint can map exactly this to a typed outcome without also
+        // catching unrelated InvalidOperationExceptions.
+        await Assert.ThrowsAsync<MissionControlNotOpenedException>(
             () => session.SubmitAsync(Guid.NewGuid(), "refine", CancellationToken.None));
 
         Assert.Empty(handler.Posts);

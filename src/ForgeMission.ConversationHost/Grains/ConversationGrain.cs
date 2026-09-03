@@ -195,9 +195,10 @@ public sealed class ConversationGrain(
         var ct = CancellationToken.None;
         await RepairPendingTransitionIfAnyAsync(ct);
 
-        if (input.ProjectId == Guid.Empty || string.IsNullOrWhiteSpace(input.ProjectGoal))
+        if (input.CommandId == Guid.Empty || input.ProjectId == Guid.Empty || string.IsNullOrWhiteSpace(input.ProjectGoal))
             return new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Invalid, null, "A Project-control create requires a project id and a non-empty goal.");
+                ConversationCommandOutcome.Invalid, null,
+                "A Project-control create requires a command id, a project id, and a non-blank goal.");
 
         // Already pinned: recognise an exact retry by the create command's own CONTENT, mirroring
         // ResolveDuplicateStart. A create naming a different Project or goal must never silently
@@ -243,6 +244,15 @@ public sealed class ConversationGrain(
     {
         var ct = CancellationToken.None;
         await RepairPendingTransitionIfAnyAsync(ct);
+
+        // Message-shape validation comes FIRST — before the purpose check, the duplicate lookup,
+        // and any append. These are properties of the message itself, not of conversation state,
+        // so the grain refuses them without consulting the conversation at all. It also keeps a
+        // malformed message from ever reaching FindByEventIdAsync under Guid.Empty, where two
+        // unrelated malformed commands would otherwise collide on the same idempotency row.
+        if (input.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(input.Text))
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Invalid, null, "A control message requires a command id and non-blank text.");
 
         if (checkpoint.State.Purpose != ConversationPurpose.ProjectControl)
             return new ConversationCommandOutcomeResult(

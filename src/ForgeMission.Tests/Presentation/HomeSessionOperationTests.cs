@@ -192,6 +192,121 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Empty(page.FindAll(".mission-menu"));
     }
 
+    // --- 43.20 task 2 corrections: readiness gate and idempotent retry ------------------------
+
+    // The session id alone is not readiness: EnterProjectAsync sets it before awaiting the open,
+    // so gating on it would leave a window in which a turn could be submitted against a
+    // conversation that does not exist yet.
+    [Fact]
+    public async Task BeforeMissionControlOpens_TheComposerIsDisabled_AndNoTurnCanBeSent()
+    {
+        channel.HoldNextMissionControlOpen();
+        var page = await OpenCreatedProjectAsync();
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".composer-input")));
+        Assert.True(page.Find(".composer-input").HasAttribute("disabled"));
+        Assert.True(page.Find(".composer-send").HasAttribute("disabled"));
+        Assert.Contains("Opening Mission Control", page.Find(".composer-input").GetAttribute("placeholder")!);
+
+        await InputAsync(page, ".composer-input", "too early");
+        await ClickAsync(page, ".composer-send");
+        Assert.Empty(channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>());
+
+        channel.ReleaseHeldMissionControlOpen();
+
+        page.WaitForAssertion(() => Assert.False(page.Find(".composer-input").HasAttribute("disabled")));
+    }
+
+    [Fact]
+    public async Task AFailedMissionControlOpen_LeavesTheComposerDisabled_WithItsErrorVisible()
+    {
+        channel.FailNextMissionControlOpen(
+            ProjectOperationErrorCode.ManifestWriteFailed, "Could not update forge.project.json.");
+
+        var page = await OpenCreatedProjectAsync();
+
+        page.WaitForAssertion(() => Assert.Contains(
+            "Could not update forge.project.json.", page.Find(".error-banner").TextContent));
+        // The error is shown AND the input stays blocked — one assertion pair, not two hopes.
+        Assert.True(page.Find(".composer-input").HasAttribute("disabled"));
+        Assert.True(page.Find(".composer-send").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task AFailedTurn_KeepsTheTypedText_AndRetryingSendsTheIdenticalRequest()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.FailNextControlTurn(
+            ProjectOperationErrorCode.MissionControlConflict, "CommandId already used with different content.");
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".error-banner")));
+
+        // The text is still on screen — it was the only copy of it that existed.
+        Assert.Equal("narrow the scope", page.Find(".composer-input").GetAttribute("value"));
+
+        await ClickAsync(page, ".composer-send");
+        page.WaitForAssertion(() =>
+            Assert.Equal(2, channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count()));
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        Assert.Equal(turns[0].CommandId, turns[1].CommandId);
+        Assert.Equal(turns[0].Text, turns[1].Text);
+    }
+
+    [Fact]
+    public async Task EditingAfterAFailure_SendsANewCommandId()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.FailNextControlTurn(ProjectOperationErrorCode.MissionControlInvalid, "rejected");
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".error-banner")));
+
+        await InputAsync(page, ".composer-input", "narrow the scope, but only the API");
+        await ClickAsync(page, ".composer-send");
+        page.WaitForAssertion(() =>
+            Assert.Equal(2, channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count()));
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        Assert.NotEqual(turns[0].CommandId, turns[1].CommandId);
+        Assert.Equal("narrow the scope, but only the API", turns[1].Text);
+    }
+
+    [Fact]
+    public async Task AnAcceptedTurn_ClearsTheComposer_AndTheNextTurnUsesADifferentCommandId()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Equal("", page.Find(".composer-input").GetAttribute("value")));
+        Assert.Empty(page.FindAll(".error-banner"));
+
+        await SendTurnAsync(page, "and name the success criteria");
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        // Clearing is proved by the NEXT send minting a fresh id, not by inspecting private state.
+        Assert.NotEqual(turns[0].CommandId, turns[1].CommandId);
+    }
+
+    [Fact]
+    public async Task ATransportExceptionOnSubmit_BehavesLikeATypedFailure_ForRetryPurposes()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.ThrowOnNextControlTurn(new IOException("socket reset"));
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Contains("socket reset", page.Find(".error-banner").TextContent));
+        Assert.Equal("narrow the scope", page.Find(".composer-input").GetAttribute("value"));
+
+        await ClickAsync(page, ".composer-send");
+        page.WaitForAssertion(() =>
+            Assert.Equal(2, channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count()));
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        Assert.Equal(turns[0].CommandId, turns[1].CommandId);
+    }
+
     [Fact]
     public void WithNoProjectOpen_NoMissionControlRequestCanBeSent()
     {
@@ -411,6 +526,8 @@ public sealed class HomeSessionOperationTests : BunitContext
         private Exception? nextSubscriptionFault;
         private ProjectOperationError? nextOpenError;
         private ProjectOperationError? nextTurnError;
+        private Exception? nextTurnFault;
+        private TaskCompletionSource<OpenProjectMissionControlResponse>? heldOpen;
         private long acceptedSequence;
         private ProjectOperationResponse? nextProjectResponse;
         private ProjectOperationError? nextDraftError;
@@ -431,6 +548,29 @@ public sealed class HomeSessionOperationTests : BunitContext
         public void FailNextControlTurn(ProjectOperationErrorCode code, string message) =>
             nextTurnError = new ProjectOperationError(code, message);
 
+        public void ThrowOnNextControlTurn(Exception fault) => nextTurnFault = fault;
+
+        // Holds the OPEN response so a test can observe the window between "a session exists" and
+        // "Mission Control is actually open" — the window the readiness gate closes.
+        public void HoldNextMissionControlOpen() =>
+            heldOpen = new TaskCompletionSource<OpenProjectMissionControlResponse>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void ReleaseHeldMissionControlOpen()
+        {
+            var held = heldOpen ?? throw new InvalidOperationException("No Mission Control open is being held.");
+            heldOpen = null;
+            held.SetResult(new OpenProjectMissionControlResponse(ControlConversationId));
+        }
+
+        private Task<OpenProjectMissionControlResponse> OpenMissionControlAsync()
+        {
+            if (heldOpen is { } held)
+                return held.Task;
+
+            return Task.FromResult(OpenMissionControl());
+        }
+
         private OpenProjectMissionControlResponse OpenMissionControl()
         {
             if (nextOpenError is { } error)
@@ -444,6 +584,12 @@ public sealed class HomeSessionOperationTests : BunitContext
 
         private SubmitProjectMissionControlTurnResponse SubmitControlTurn()
         {
+            if (nextTurnFault is { } fault)
+            {
+                nextTurnFault = null;
+                throw fault;
+            }
+
             if (nextTurnError is { } error)
             {
                 nextTurnError = null;
@@ -462,7 +608,7 @@ public sealed class HomeSessionOperationTests : BunitContext
             }
         }
 
-        public Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
+        public async Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
         {
             Requests.Add(request!);
             object response = request switch
@@ -470,7 +616,7 @@ public sealed class HomeSessionOperationTests : BunitContext
                 ProjectDraftRequest draft => DraftResponse(draft),
                 ProjectCreateRequest create => nextProjectResponse ?? Created(create.Title ?? "Todos API", create.HomePath ?? DefaultHome),
                 ProjectOpenRequest open => nextProjectResponse ?? Opened(open.HomePath),
-                OpenProjectMissionControlRequest => OpenMissionControl(),
+                OpenProjectMissionControlRequest => await OpenMissionControlAsync().WaitAsync(ct),
                 SubmitProjectMissionControlTurnRequest => SubmitControlTurn(),
                 // PromptRequest and SessionSetupRequest are deliberately ABSENT. Mission Control is
                 // the sole active conversation while a Project is open (43.20 task 2), so a page
@@ -480,7 +626,7 @@ public sealed class HomeSessionOperationTests : BunitContext
             };
 
             nextProjectResponse = null;
-            return Task.FromResult((TResponse)response);
+            return (TResponse)response;
         }
 
         // Everything a Project operation returns is decided here, never by the page: these fakes

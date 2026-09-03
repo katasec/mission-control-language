@@ -268,6 +268,12 @@ internal static class ClientRuntimeEndpoints
     private static ProjectOperationError? ToMissionControlError(Exception exception) => exception switch
     {
         ProjectOperationException project => ToError(project),
+        // Submitting before Mission Control has opened. Desktop's composer stays disabled until
+        // it has, but a TUI could still order the two calls this way, and surface parity says both
+        // get the same typed outcome rather than one getting an escaping transport failure.
+        MissionControlNotOpenedException => new ProjectOperationError(
+            ProjectOperationErrorCode.MissionControlInvalid,
+            MissionControlMessage(ProjectOperationErrorCode.MissionControlInvalid)),
         HttpRequestException { StatusCode: { } status }
             when ProjectControlRuntimeSession.ToErrorCode(status) is { } code =>
             new ProjectOperationError(code, MissionControlMessage(code)),

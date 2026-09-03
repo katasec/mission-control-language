@@ -53,8 +53,7 @@ internal sealed class ProjectControlRuntimeSession(
     /// Conversation checkpoint, and no capability, path, tool, or run value exists to send.</summary>
     public async Task<SubmitProjectControlMessageResponse> SubmitAsync(Guid commandId, string text, CancellationToken ct)
     {
-        var conversationId = _conversationId
-            ?? throw new InvalidOperationException("Mission Control has not been opened for this session.");
+        var conversationId = _conversationId ?? throw new MissionControlNotOpenedException();
 
         return await hostClient.SubmitProjectControlMessageAsync(
             new SubmitProjectControlMessageRequest(conversationId, commandId, text), ct);
@@ -92,3 +91,12 @@ internal sealed class ProjectControlRuntimeSession(
 
     public ValueTask DisposeAsync() => _tail.DisposeAsync();
 }
+
+/// <summary>A turn submitted before Mission Control was opened for this session. A dedicated type
+/// rather than a bare <see cref="InvalidOperationException"/>: the endpoint maps THIS to a typed
+/// outcome, and mapping the general exception would also launder unrelated faults — a missing
+/// HttpClient base address, for one — into a domain error a surface would render as normal.
+/// Raised from both places that can observe it: the session slot (no session yet) and the session
+/// itself (constructed, but its open never completed).</summary>
+internal sealed class MissionControlNotOpenedException()
+    : Exception("Mission Control has not been opened for this session.");

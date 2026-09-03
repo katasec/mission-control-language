@@ -147,8 +147,10 @@ public static class ConversationApiEndpoints
     public static async Task<ConversationCommandOutcomeResult> HandleSubmitProjectControlMessageAsync(
         SubmitProjectControlMessageRequest request, IGrainFactory grainFactory)
     {
-        if (request.ConversationId == Guid.Empty || request.CommandId == Guid.Empty || string.IsNullOrEmpty(request.Text))
-            return Invalid("conversationId, commandId, and text are required.");
+        // Whitespace-aware: "   " is not a refinement turn, and appending it would put a blank
+        // bubble in a durable transcript that nothing can remove.
+        if (request.ConversationId == Guid.Empty || request.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(request.Text))
+            return Invalid("conversationId, commandId, and non-blank text are required.");
 
         var address = new ConversationAddress(DevTenantId, request.ConversationId);
         var grain = grainFactory.GetGrain<IConversationGrain>(address.PartitionKey);

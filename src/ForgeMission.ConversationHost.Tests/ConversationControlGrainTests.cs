@@ -401,6 +401,62 @@ public class ConversationControlGrainTests(AzuriteFixture fixture)
         Assert.Single(DeserializeEvents(await grain.ReadAfterAsync(0)));
     }
 
+    // ── 9. Message-shape validation, refused before any state is consulted ─────────
+
+    [Fact]
+    public async Task ControlMessage_WithWhitespaceOnlyTextOrEmptyCommandId_IsInvalid_AndAppendsNothing()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(NewAddress());
+        await CreateControlAsync(grain, Guid.NewGuid());
+
+        var whitespace = await grain.AcceptControlMessageAsync(new ConversationControlMessageInput(Guid.NewGuid(), "   \t\n "));
+        var empty = await grain.AcceptControlMessageAsync(new ConversationControlMessageInput(Guid.NewGuid(), ""));
+        var noCommandId = await grain.AcceptControlMessageAsync(new ConversationControlMessageInput(Guid.Empty, "refine"));
+
+        Assert.Equal(ConversationCommandOutcome.Invalid, whitespace.Outcome);
+        Assert.Equal(ConversationCommandOutcome.Invalid, empty.Outcome);
+        Assert.Equal(ConversationCommandOutcome.Invalid, noCommandId.Outcome);
+
+        // "Rejected" has to mean no durable fact AND no dispatched side effect — not merely a
+        // typed result with an append that happened anyway.
+        Assert.Empty((await grain.ReadAfterAsync(0)).EventJson);
+        Assert.Empty(host.Dispatcher.Sent);
+    }
+
+    // The shape check runs before the purpose check, so a malformed message is refused the same
+    // way whatever conversation it names — and can never reach the idempotency row under
+    // Guid.Empty, where two unrelated malformed commands would collide.
+    [Fact]
+    public async Task AMalformedControlMessage_IsRefusedEvenOnANonControlConversation()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+
+        var command = new ConversationCommand(
+            Guid.NewGuid(), address.ConversationId, Guid.NewGuid(), ConversationCommandKind.StartMission,
+            "Janus", "do the work", [], null);
+        await grain.AcceptCommandAsync(new ConversationCommandInput(
+            JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand)));
+
+        var result = await grain.AcceptControlMessageAsync(new ConversationControlMessageInput(Guid.Empty, "  "));
+
+        Assert.Equal(ConversationCommandOutcome.Invalid, result.Outcome);
+    }
+
+    [Fact]
+    public async Task ControlCreate_WithAnEmptyCommandId_IsInvalid()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(NewAddress());
+
+        var result = await grain.AcceptControlCreateAsync(
+            new ConversationControlCreateInput(Guid.Empty, Guid.NewGuid(), "Ship a todos API"));
+
+        Assert.Equal(ConversationCommandOutcome.Invalid, result.Outcome);
+    }
+
     private static Task<ConversationProgressAcceptance> RecordAsync(
         IConversationGrain grain,
         ConversationAddress address,

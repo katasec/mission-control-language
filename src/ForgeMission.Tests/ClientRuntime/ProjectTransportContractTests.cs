@@ -318,11 +318,16 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
             typeof(SubmitProjectMissionControlTurnRequest).GetProperties().Select(p => p.Name).Order().ToList());
 
         // Both requests route to their own Client Runtime endpoints through the production channel.
+        // No ConversationHost runs here, so the open fails at the transport — but it fails AFTER
+        // resolving the Project and reading its manifest itself, which is the part under test.
         await Assert.ThrowsAnyAsync<Exception>(() =>
             _channel.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(open, CancellationToken.None));
-        await Assert.ThrowsAnyAsync<Exception>(() =>
-            _channel.SendAsync<SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
-                turn, CancellationToken.None));
+
+        // The submit reaches its own endpoint and comes back as a TYPED outcome (the turn was
+        // submitted before Mission Control opened), not as an escaping transport failure.
+        var submitted = await _channel.SendAsync<
+            SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(turn, CancellationToken.None);
+        Assert.Equal(ProjectOperationErrorCode.MissionControlInvalid, submitted.Error!.Code);
     }
 
     [Fact]
@@ -333,5 +338,26 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
                 new OpenProjectMissionControlRequest("not-a-session"), CancellationToken.None));
 
         Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    // Desktop's composer stays disabled until Mission Control has opened, but a TUI could still
+    // order the two calls this way. Surface parity says both get the same TYPED outcome rather
+    // than one getting an escaping transport failure.
+    [Fact]
+    public async Task SubmittingBeforeOpening_IsATypedMissionControlInvalid_NotATransportFailure()
+    {
+        var created = await _channel.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
+            new ProjectCreateRequest("Ship a todos API"), CancellationToken.None);
+
+        var response = await _channel.SendAsync<
+            SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
+            new SubmitProjectMissionControlTurnRequest(
+                created.Session!.SessionId, Guid.NewGuid(), "narrow the scope"),
+            CancellationToken.None);
+
+        Assert.Null(response.ConversationId);
+        Assert.Equal(ProjectOperationErrorCode.MissionControlInvalid, response.Error!.Code);
+        // The rendered message names Mission Control, not an HTTP status or an internal service.
+        Assert.DoesNotContain("HTTP", response.Error.Message, StringComparison.Ordinal);
     }
 }

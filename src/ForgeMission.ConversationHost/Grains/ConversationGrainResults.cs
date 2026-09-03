@@ -76,7 +76,12 @@ public sealed record ConversationToolResultInput(
 /// (43.20 task 2). <see cref="ProjectId"/>/<see cref="ProjectGoal"/> are the create command's
 /// content: an exact retry is recognised by comparing them, and a create naming a different
 /// Project or goal against an already-pinned conversation is a conflict rather than a silent
-/// overwrite.</summary>
+/// overwrite.
+///
+/// <see cref="CommandId"/> is validated as non-empty but is deliberately NOT part of that content
+/// comparison: the conversation id is derived from it one layer up, so two different command ids
+/// address two different grains and no grain can ever see a second one. Comparing it here would
+/// be a check that cannot fail.</summary>
 [GenerateSerializer]
 public sealed record ConversationControlCreateInput(
     [property: Id(0)] Guid CommandId,

@@ -146,7 +146,7 @@ internal sealed class ProjectControlSessionSlot : IAsyncDisposable
             if (_closed)
                 throw new InvalidOperationException("This Client Runtime session has been replaced.");
             if (_session is null)
-                throw new InvalidOperationException("Mission Control has not been opened for this session.");
+                throw new MissionControlNotOpenedException();
 
             return await operation(_session);
         }
