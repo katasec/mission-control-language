@@ -1,8 +1,8 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Task 1 verified and merged (2026-08-31); Task 2 is next.** The Project home now passes
-> browser-first and packaged Desktop visual acceptance at both 800×568 and 1536×1024. Part of
-> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: Task 1 verified and merged (2026-08-31); Task 2 is ready for implementation-plan
+> review (2026-09-03).** The Project home now passes browser-first and packaged Desktop visual
+> acceptance at both 800×568 and 1536×1024. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -724,12 +724,62 @@ wrong capability shape. Preserve that Janus behaviour for the existing durable-c
   idempotent create path. Reopening a Project therefore replays and follows Mission Control without
   creating a run.
 
+**Locked control contract and failure boundary.** These are new additive Contracts types, registered
+in `ConversationContractsJsonContext`; they deliberately do not alter the existing Janus request
+shapes:
+
+| Contract | Required fields and result | Invariant |
+|---|---|---|
+| `ConversationPurpose` | `ProjectControl` or existing `MissionRun` | Stored in the Conversation checkpoint/snapshot. `ProjectControl` events always have `run_id: null`; existing Janus events retain their non-null run ID. |
+| `CreateProjectControlConversationRequest` | `{ projectId, commandId, projectGoal }` → `CreateProjectControlConversationResponse { conversationId, acceptedSequence }` | Client Runtime derives `commandId` deterministically from the stable manifest `projectId` through `ConversationDeterministicIds.ProjectControlCreate`. `projectGoal` is non-empty; no path, capability, selected launch mission, credential, or run ID is accepted. A newly created empty conversation returns sequence `0`. |
+| `SubmitProjectControlMessageRequest` | `{ conversationId, commandId, text }` → `SubmitProjectControlMessageResponse { conversationId, acceptedSequence }` | `commandId` is generated once per user submission and reused only for its retry. `text` is non-empty. The Host appends exactly one `UserMessage` and dispatches exactly one zero-tool control command; a duplicate with changed text is `Conflict`. |
+| `OpenProjectMissionControlRequest` (Client Runtime) | `{ sessionId }` → `{ conversationId }` | The Runtime resolves the Project from its existing session/root, reads the manifest itself, creates only when the stored ID is null, then starts the existing replay/tail. Presentation supplies neither a Project path nor a conversation ID. |
+| `SubmitProjectMissionControlTurnRequest` (Client Runtime) | `{ sessionId, commandId, text }` → `{ conversationId, acceptedSequence }` | The Runtime submits only against the session's opened Project-control conversation. This is the TUI-equivalent action; `PromptRequest` remains the Janus proof path. |
+
+`ConversationCommand`/`ConversationProgress` gain the purpose-aware internal representation needed
+by the Worker: a Project-control command has a null `RunId`, no capabilities, and the fixed
+`MissionControl` resolver key. `ConversationGrain` remains the sole sequence allocator/event
+appender; it does not notify `MissionRunGrain` for a null-run event. The Worker resolver owns
+choosing the zero-tool MissionControl executor. It may publish only `UserMessage`,
+`ParticipantMessage`, and `Error` control facts under the existing event store/outbox; it cannot
+publish a tool request, create a run, or select Janus. A `MissionControl` participant is added to
+the Contracts enum rather than mislabelling its response as a Janus participant.
+
+The first three rows are registered in `ConversationContractsJsonContext`; the two Client Runtime
+rows and their responses are registered in `ClientRuntimeJsonContext`, and the relayed
+`ConversationEvent` remains registered in `ConversationRelayJsonContext`. No runtime-built JSON
+options or Host/Orleans/Azure/provider type enters either public contract.
+
+After Host acceptance, `ProjectStore` alone writes `MissionControlConversationId`: it rewrites the
+validated manifest through a sibling temporary file and atomic replacement, accepts only `null` or
+the same returned ID, and refuses a different non-null ID. A failed replacement returns the named
+`ProjectOperationErrorCode.ManifestWriteFailed`; the durable conversation remains valid and the
+same deterministic create retry returns its ID. It is never reported as a new conversation or a
+successful local write.
+
+**Task 2 UI disposition — existing-renderer reuse.** This task changes the durable source and
+session semantics, not the visual layout: it reuses the current Project-open transcript/composer
+surface in `Pages/Home.razor` and `ConversationTranscriptView.razor`; its only renderer change is
+the `MissionControl` participant label. The Task 3 rail, Explorer, launch summary, Trace, run
+controls, and outcome cards are explicitly absent. No new theme, token, or component-local visual
+rule is permitted. Browser/component evidence proves the reopened control stream renders through
+that existing renderer; the Task 1 browser/package acceptance remains the only layout acceptance
+required here. The reused composer retains its accessible label/focus and the existing
+disabled/busy/error states; no Host-specific UI path is added.
+
+**Precondition test matrix.** Test a null manifest ID (create once then persist); an accepted Host
+create followed by failed manifest replacement (same ID on retry); a non-null stored ID (replay/tail
+only, no create); duplicate same/different create and submit command IDs; blank IDs/text and a
+foreign/not-found conversation; and a control turn that attempts to carry a capability, path, tool
+request, or run ID. The positive control turn must yield ordered user/Forge durable facts; every
+negative case must yield its typed invalid/conflict/not-found response and no local tool dispatch,
+Janus command, or `ProjectRunMetadata` write.
+
 **Do not infer further scope:** no Project database, direct Presentation-to-Conversation call,
 new local transcript persistence, generic conversation browser, tool declaration, local-path
 transport, Janus run, or change to the existing Janus conversation flow. Before implementation
-handoff, the Task 2 plan must name the exact new contract types and prove their source-generated
-JSON registration; it must also show the existing units above that are being reused rather than
-copied.
+handoff, the Task 2 plan must prove the source-generated registration and the existing units above
+are reused rather than copied.
 
 **Done when:** reopening a Project restores its same durable Mission Control conversation; a
 control turn produces durable Forge/user messages but no Run record or local tool request; retries
@@ -750,6 +800,35 @@ Build the small navigation surface over the manifest and durable projections.
 - Opening an asset or dependency uses an ordinary document view; no remote registry browser,
   package pull/update, standalone Runs entry, or Notifications entry is added.
 
+**Locked read boundary.** Presentation obtains this view through two additive Client Runtime
+contracts, never by opening a manifest, lock file, or Project path itself:
+
+| Contract | Result and failure semantics |
+|---|---|
+| `GetProjectWorkbenchRequest { sessionId }` | Returns `ProjectWorkbenchProjection { project, assets, context, runs }`. `ProjectExplorerEntry` contains only a stable entry ID, display name, entry kind, read-only flag, and—only for a resolved OCI dependency—its pinned reference/digest. It never exposes an absolute local path. An unknown/replaced session is `NotFound`; a malformed/missing Project asset or lock file is a named `ProjectOperationError`, not a partial invented dependency list. |
+| `OpenProjectDocumentRequest { sessionId, entryId }` | Returns `ProjectDocumentResponse { title, contentType, text }` for an entry returned by the projection. Client Runtime validates that a local asset remains home-relative and that a dependency was resolved from that Project's `mcl.lock`; unknown/stale entries and binary/oversized content receive named failures. It accepts no arbitrary path or OCI reference. |
+
+`ProjectStore` owns the manifest read/validation; a narrow Runtime projection adapter owns
+`LockFileIO.Read` and maps its already-resolved `LockFile.Experts` values. This task only displays
+those records—there is no resolver, pull, update, or catalog call. The positive tests cover an
+empty Project, local mission/expert assets, a valid pinned OCI dependency, and opening an allowed
+document. Negative tests cover a missing/invalid lock file, a path escaping the Project home,
+an unknown entry, binary/oversized document content, and a stale/replaced session.
+
+**Task 3 UI contract.** The binding large reference is
+[`mission-project-flow-03-mission-control.png`](../brainstorm/images/mission-project-flow-03-mission-control.png)
+at 1536×1024. This task owns only the three-entry dark rail in its shown order (Explorer, Mission
+Control, bottom-fixed Settings), the selected state, and the light Explorer list for Project
+assets/context/runs. The Mission Control conversation body, right inspector, add-source action,
+new-run action, Project chooser, and all activity not backed by this task are deferred and absent.
+Before Task 3 handoff, add a task-owned 800×568 compact SVG for its empty, selected-Explorer,
+selected-Mission-Control, selected-Settings, and document-open states; that is a prerequisite,
+not an implementation discovery. The Workbench named theme remains the selector and owns all
+light/dark semantic colours, geometry, type, radii, and spacing; rail/document controls require
+keyboard reachability, visible focus, labels, and text alternatives for icons. Browser-first
+acceptance covers the four 800/1536 × 568/1024 corners, continuous resize, long asset/digest text,
+125/150/200% scaling, both colour modes, and packaged parity last.
+
 **Done when:** a created Project opens Mission Control by default; the rail switches to Explorer
 and Settings without creating a new project/session; Explorer accurately distinguishes local and
 pinned OCI expert/mission evidence; and browser/component tests prove the three-entry order and
@@ -766,6 +845,34 @@ Launch a selected mission from Project Mission Control without a configuration w
   Start action is explicit; title/location/context edits are optional.
 - Capture only the locked lightweight provenance. Local absolute paths stay local. A later asset,
   mission, or context edit never changes an existing run snapshot.
+
+**Locked launch contract.** `StartProjectRunRequest { sessionId, commandId, title }` is the only
+Presentation action. Client Runtime derives the selected mission, project goal, declared local
+capabilities, and lightweight local `ProjectLaunchSnapshot`; it sends the Host a separate
+`StartProjectRunRequest { conversationId, commandId, mission, goal, capabilities }` whose mission
+and opaque context IDs contain no path. The Host returns `StartProjectRunResponse { runId, title,
+acceptedSequence, status }`. `commandId` is generated once when the user presses Start and reused
+on retry; equal retries return the original run, while changed content under that ID is `Conflict`.
+The Host owns durable run creation/dispatch; Client Runtime atomically appends the returned local
+metadata/snapshot only after acceptance. A local write failure is `ManifestWriteFailed` and retries
+the same command before creating anything else. “Location” in the journey mock is not editable
+run input in this MVP: the Project home remains the sole root. Context edits select only already
+attached descriptors and cannot attach a path or crawl a workspace.
+
+Positive tests cover selected built-in/local/pinned-OCI mission snapshots, the accepted retry after
+a failed local write, and immutability after later manifest changes. Negative tests cover an empty
+or reused-with-different command ID, an unknown/replaced session/control conversation, unsupported
+mission/capability/context, terminal control conversation, and every attempted path crossing.
+
+**Task 4 UI contract.** The binding large reference is
+[`mission-project-flow-05-launch-run.png`](../brainstorm/images/mission-project-flow-05-launch-run.png)
+at 1536×1024. This task owns the launch-summary card, derived editable run-title field, immutable
+mission/context evidence, explicit Start action, busy, accepted, and typed-failure states. It does
+not own asset editing, source attachment, Project choosing, rich run history, or any stop/guidance
+control. Before handoff, add compact 800×568 SVGs for collapsed, expanded/ready, busy, and failure
+states. Use the Workbench token theme only; ensure the summary and Start action are keyboard
+reachable, labelled, and focus-visible. Apply the Task 3 browser-first responsive matrix plus
+long title/context text, zoom, colour modes, and packaged parity.
 
 **Done when:** starting a run creates one named run visible in Project Explorer and Mission
 Control, pins its mission/expert/context evidence, and begins the selected execution mission;
@@ -784,6 +891,42 @@ Render a selected run as one read-only, chronological document.
   access remains inside ConversationHost; Presentation receives only the resulting document data.
 - Do not add a timeline mode, filters, search, threading, inline preview, source pane, or control
   buttons other than Task 6/7's live-run controls.
+
+**Locked trace and artifact boundary.** `ReadProjectRunTraceRequest { sessionId, runId, after }`
+returns the existing ordered `ConversationEvent` projection filtered by its durable `run_id`; Client
+Runtime retains the existing sequence/event-ID replay dedupe and exposes no transcript store.
+`ConversationEventKind` is made forward-compatible on the wire: an unknown future kind is retained
+as its original string discriminator and display-safe payload, not rejected by enum deserialization.
+The Trace maps it to one labelled “Unknown activity” card without inventing a meaning. Explicit
+redaction is a new canonical `Redacted` event kind with `{ reason? }`, never a locally edited message.
+
+`ReadConversationArtifactRequest { conversationId, runId, artifactId }` and
+`ReadConversationArtifactResponse { fileName, contentType, content }` are the sole artifact-document
+contract. ConversationHost first proves the requested artifact reference occurs in that
+conversation/run's canonical event stream, then calls `IConversationArtifactStore.OpenReadAsync`.
+It enforces the existing bounded document-size/content-type policy and returns typed
+`NotFound`/`Invalid`/`Unavailable` outcomes; it accepts neither a Blob path nor URI. Client Runtime
+relays this response and Presentation renders it as an ordinary document, never a Blob reader. All
+new Contracts/Client Runtime transport types are source-generated in their respective JSON contexts.
+The MVP document payload is UTF-8 `text/plain` or `application/json` of at most 1 MiB; all other
+content types or larger payloads return `Invalid` rather than becoming an inline preview.
+
+Positive tests cover exact one-row-per-durable-message ordering, replay/live overlap, redaction,
+known artifact read, and an unknown event kind. Negative tests cover a mismatched run/artifact,
+unknown artifact, invalid/oversized artifact result, duplicate event ID, and a reconnect that must
+not merge adjacent messages. The current `ConversationTranscript` grouping renderer is explicitly
+not reused for Trace text; only its event-ID dedupe may be factored.
+
+**Task 5 UI contract.** The binding large reference is
+[`mission-project-flow-06-run-trace.png`](../brainstorm/images/mission-project-flow-06-run-trace.png)
+at 1536×1024. This task owns the read-only Trace document header, chronological message/fact rows,
+status, explicit redaction, unknown-activity card, and artifact link. Guidance, pause, stop,
+timeline/filter/search/source/preview controls, and any side inspector are deferred and absent.
+Before handoff, add compact 800×568 SVGs for empty, loading/reconnecting, complete, redacted,
+unknown-event, and artifact-link states. The Workbench theme owns colours and geometry; semantic
+status is text-labelled as well as colour-coded, rows are keyboard readable, links have names, and
+focus is visible. Use the browser-first four-corner/continuous-resize/long-content/zoom/theme
+matrix and packaged parity last.
 
 **Done when:** a Trace reopened after an SSE disconnect shows the exact ordered durable messages
 once, includes its run status and artifact links, and has no UI-owned transcript persistence;
@@ -805,6 +948,42 @@ Implement the break-glass control before adding ordinary guidance.
 - Add the red, confirmed Trace action. It changes to `Stopping…` after accepted request and shows
   the terminal fact only when the durable stream supplies it.
 
+**Locked stop control path.** `RequestStopRunRequest { conversationId, runId, commandId }` and
+`RequestStopRunResponse { acceptedSequence, status }` are additive Contracts types. The Client
+Runtime action is `RequestProjectRunStopRequest { sessionId, runId, commandId }`; it resolves the
+conversation from the opened Project, so Presentation never submits a path or capability.
+`commandId` is generated once for the explicit confirmation and reused for retry. Host accepts a
+live run once, appends `RunStatus(Stopping)`, and publishes a distinct `RunControlCommand` on a
+separate, run-addressed control channel/consumer. It must not share the active mission-command
+consumer/session lock: the Worker control consumer reaches a per-run cancellation registry while
+the provider call is active. Duplicate equal requests return the original acceptance; terminal,
+unknown, and same-ID/different-run requests return typed conflict/not-found outcomes.
+
+The Worker owns the cancellation source from provider invocation through any active local tool
+handoff; Client Runtime owns a run-keyed local-tool cancellation registration and reports its
+observed result through the existing Conversation path. `StoppedByUser` is appended only after
+every active cooperating work item observes cancellation. A non-cooperating, timed-out, or crashed boundary
+appends `Interrupted` with its known partial-effect fact; neither owner offers rollback.
+`MissionRunGrain` remains lifecycle owner and records `Stopping` as non-terminal. The control
+transport is a Type-2 implementation behind these messages; its queue identity, consumer identity,
+and removal/reversal path must be named in the implementation plan without granting Worker or
+Client Runtime Conversation-store access.
+
+Positive tests cover queued/future-work prevention, provider cancellation, local-tool cancellation,
+and equal retry. Negative tests cover unconfirmed UI submission, terminal/unknown/mismatched run,
+duplicate changed request, non-cooperating provider/tool, Host/Worker restart, and cancellation
+report failure; each must preserve the original trace and produce only the truthful terminal fact.
+
+**Task 6 UI contract.** The binding large reference is
+[`mission-project-flow-06-run-trace.png`](../brainstorm/images/mission-project-flow-06-run-trace.png)
+at 1536×1024. This task owns only the red Stop action and its confirmation, disabled/accepted
+`Stopping…`, `Stopped by user`, and `Interrupted` states. Guidance, pause, timeline, filtering,
+and outcome cards are deferred. Before handoff, add compact 800×568 SVGs for live, confirmation,
+accepted-stopping, stopped, interrupted, and rejected-terminal states. The action is an accessible
+native confirmation/dialog with a visible destructive label, keyboard focus return, and no
+colour-only meaning; tokenised semantic-danger values require both colour modes. Apply the
+browser-first matrix and packaged parity after durable-control tests pass.
+
 **Done when:** tests prove a stop blocks queued/future work, cancels active provider and local-tool
 paths when they cooperate, keeps a non-cooperating/unknown path truthful as `Interrupted`, and is
 idempotent; a live Kind/Desktop run visibly reaches `Stopped by user` with its prior trace intact.
@@ -823,6 +1002,48 @@ Add non-emergency correction after Stop is proven.
 - Trace renders queued guidance and its exact application location. A terminal run leaves pending
   guidance visibly unapplied.
 
+**Locked guidance contract and ordering.** `QueueRunGuidanceRequest { conversationId, runId,
+commandId, text }` and `QueueRunGuidanceResponse { acceptedSequence, status }` are additive
+Contracts types. The corresponding Client Runtime request takes `{ sessionId, runId, commandId,
+text }`; it resolves the conversation through the current Project session. A command ID is created
+once for one submit and reused on retry. The text has one fixed, documented maximum length; blank,
+terminal, unknown, duplicate-with-different-content, and already-pending submissions receive typed
+invalid/conflict/not-found results and do not touch a provider call.
+
+The maximum guidance text is 4,096 UTF-8 characters; the Host checks it before reserving the one
+pending slot. The response to a valid first request is `Queued`; it never means a provider call was
+interrupted or that the instruction has already been applied.
+
+ConversationHost owns one pending-guidance slot in the durable run state and appends canonical
+`GuidanceQueued`, `GuidanceApplied`, or `GuidanceUnapplied` facts with the stable command ID. Worker
+reads/consumes that slot only through a named run-control query/acknowledgement contract; it never
+reads Conversation Table/Blob. A safe boundary is the point after `PipelineStepCompleted` has been
+accepted by ConversationHost into the canonical event sequence—not merely after the Worker sent a
+broker message—and before `PipelineRunner` starts the next expert. The acknowledgement returns at
+most one instruction and atomically marks it applied; a terminal race marks it unapplied. This keeps
+replay from applying the same text twice.
+
+Core adds one awaited, optional safe-boundary callback alongside `PipelineRunOptions.OnTrace`; it
+has no Conversation dependency. `JanusMissionExecutor` supplies the callback and passes returned
+text in the reserved `guidance` context key only to the next declared opted-in Janus step. The Janus
+asset explicitly binds that key; no global prompt or provider-system-prompt mutation is allowed.
+
+Positive tests cover one queued instruction, Host acknowledgement after a completed durable fact,
+exactly-one application before the following opted-in step, and replay after the acknowledgement.
+Negative tests cover blank/oversized/duplicate guidance, a second pending slot, terminal race,
+non-opted-in mission, provider call already executing, broker/Host restart, and guidance that must
+remain visibly unapplied. Every test asserts that guidance neither stops a run nor alters capability
+authorization.
+
+**Task 7 UI contract.** The binding large reference is
+[`mission-project-flow-06-run-trace.png`](../brainstorm/images/mission-project-flow-06-run-trace.png)
+at 1536×1024. This task owns the one guidance entry/action plus queued, applied-location, and
+unapplied-terminal facts in Trace. Stop retains Task 6 ownership; pause, timelines, filters, and
+all additional instruction queues are absent. Before handoff, add compact 800×568 SVGs for live,
+one-queued, applied, terminal-unapplied, and rejected-second-instruction states. Use Workbench
+tokens, a programmatic label and focus order, a textual queue state in addition to colour, and the
+browser-first responsive/zoom/theme/parity evidence matrix.
+
 **Done when:** a live Janus run accepts one instruction, completes its current safe step, applies
 the instruction exactly once before the following opted-in expert, and records the ordered facts;
 guidance cannot cancel/interrupt a call or mutate a terminal run; Core ordering tests, durable
@@ -838,6 +1059,35 @@ Close the project loop without replacing the Trace.
   cards retain known partial effects and link a new-run action; they never offer implicit resume.
 - Keep the source Trace and terminal event canonical; the card is a projection, not a generated
   substitute for expert messages.
+
+**Locked outcome projection.** `GetProjectMissionControlRequest { sessionId, after }` returns the
+existing ordered control stream plus `ProjectRunOutcomeCard[]`; it does not create a new durable
+event or store. Client Runtime derives each card deterministically from exactly one terminal
+`RunStatus` event and the already-known Project run metadata, keyed by `{ conversationId, runId,
+terminalEventId }`. This key is also the replay/dedupe key, so reconnect or retry cannot duplicate
+the card. `ProjectRunOutcomeCard` contains `{ runId, terminalEventId, status, title, traceTarget,
+artifactIds, verificationEvidence, knownPartialEffects }`; absent artifacts/evidence/partial effects
+are explicit empty values, never fabricated claims. `traceTarget` is the one typed Project+run
+document destination used by Explorer and Mission Control.
+
+Completed, Failed, StoppedByUser, and Interrupted have fixed text labels. Only Completed may show
+available verification evidence as success evidence; Failed/StoppedByUser/Interrupted preserve
+their truthful error/partial-effect facts. “New run” is a navigation affordance to Task 4's launch
+action with an explicit predecessor ID; it never resumes or replays the terminal run. Positive tests
+cover one card for every terminal state, terminal replay, an absent artifact/evidence case, and
+Explorer/Mission-Control navigation to the same Trace. Negative tests cover duplicate terminal
+delivery, a non-terminal event, a mismatched Project/run, missing manifest metadata, and unavailable
+Trace/artifact documents.
+
+**Task 8 UI contract.** The binding large reference is
+[`mission-project-flow-07-outcome.png`](../brainstorm/images/mission-project-flow-07-outcome.png)
+at 1536×1024. This task owns one labelled outcome card, Trace/artifact/evidence links, status copy,
+partial-effect disclosure, and the explicit new-run action. The reference's extra rails, inspector,
+notifications, broad history, and implicit resume are deferred and absent. Before handoff, add
+compact 800×568 SVGs for each terminal status, missing evidence/artifact, and the linked/new-run
+focus states. Use named Workbench tokens, text plus semantic colour, named links/buttons, logical
+keyboard order, and visible focus; run browser-first four-corner/resize/long-content/zoom/theme
+checks before packaged parity.
 
 **Done when:** every terminal run yields exactly one durable/project-visible outcome card with the
 correct status and Trace link; retry/replay does not duplicate cards; component tests and a full
