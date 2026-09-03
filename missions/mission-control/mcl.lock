@@ -1,0 +1,6 @@
+version: 1
+experts:
+  Controller:
+    source: experts
+    path: experts/Controller/expert.md
+    hash: 146b53e5f20539f3d84ee6f5a4b7baae5cd8d6cd6decd3f3678a2213537cdd85

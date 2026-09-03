@@ -44,7 +44,7 @@ public class JanusMissionExecutorToolCallOptionsTests
     private static ConversationCapabilityDeclaration OneDeclaredCapability() =>
         new("Read", "Reads a file", JsonDocument.Parse("""{"type":"object"}""").RootElement);
 
-    private static JanusMissionContext BuildMission(IChatClient client) => new()
+    private static WorkerMissionContext BuildMission(IChatClient client) => new()
     {
         Ast = MclParser.Parse(MissionSource),
         Experts = Experts(),

@@ -17,9 +17,8 @@ namespace ForgeMission.ConversationWorker.Messaging;
 /// the call (also the last state persisted via <paramref name="saveSessionAsync"/> below) — a
 /// caller with no other need for it may ignore the return value.
 /// </summary>
-public sealed class MissionCommandProcessor(JanusMissionContext mission)
+public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
 {
-    private const string SupportedMissionRef = "Janus";
 
     // Marks a failure from the save/publish delegates themselves (a transient store/broker
     // problem) as distinct from a caught Janus/provider execution failure. The two try/catch
@@ -78,6 +77,10 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
             return cleared;
         }
 
+        // Resolved BEFORE any recovery or dispatch decision below: which mission this command names
+        // determines not only how it executes but which facts are even legal for it to produce.
+        var missionKind = missions.Resolve(command.MissionRef);
+
         if (session is { } redelivered && redelivered.CurrentCommandId == command.CommandId)
         {
             if (redelivered.Phase != WorkerSessionPhase.ExecutingProvider)
@@ -85,28 +88,64 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
 
             // A caught exception during the ORIGINAL attempt already resolved to Error/Failed
             // below (never leaving ExecutingProvider pending) — a redelivery landing here means
-            // the process died or was cancelled with no chance to run that handler, so this is the
-            // one legitimate source of an Interrupted fact.
-            var interrupted = BuildProgress(
-                command, redelivered.NextProgressOrdinal, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
-                runStatus: ConversationRunStatus.Interrupted);
-            var afterInterrupt = await PublishFactDurablyAsync(redelivered, interrupted, ct);
+            // the process died or was cancelled with no chance to run that handler.
+            //
+            // The reported fact is purpose-aware. A mission run reports RunStatus(Interrupted).
+            // A Project-control turn has NO RUN whose status could be interrupted, so it reports a
+            // truthful Error instead: it states the turn did not complete, and deliberately does
+            // not claim the turn was stopped, cancelled, or rolled back. ConversationGrain's
+            // control guard independently rejects a RunStatus on a control conversation, so a
+            // regression here fails loudly at the sequence allocator rather than appending a
+            // meaningless run status to a control transcript.
+            var interruptionFact = missionKind == WorkerMissionKind.MissionControl
+                ? BuildProgress(
+                    command, redelivered.NextProgressOrdinal, ConversationEventKind.Error, ConversationParticipant.Forge,
+                    reason: "This Mission Control turn was interrupted before it completed and produced no response.")
+                : BuildProgress(
+                    command, redelivered.NextProgressOrdinal, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
+                    runStatus: ConversationRunStatus.Interrupted);
+
+            var afterInterrupt = await PublishFactDurablyAsync(redelivered, interruptionFact, ct);
             afterInterrupt = afterInterrupt with { Phase = WorkerSessionPhase.Terminal };
             await GuardedSaveAsync(afterInterrupt, ct);
             return afterInterrupt;
         }
 
         if (command.Kind == ConversationCommandKind.ContinueAfterTool)
+        {
+            // A control conversation never publishes a ToolRequested fact, so ConversationGrain
+            // never holds an expected tool request for one and can never derive a continuation.
+            // Refusing it explicitly keeps that structural fact from depending on the nullable
+            // RunId comparison inside ProcessContinuationAsync, where null == null would otherwise
+            // read as a match.
+            if (missionKind == WorkerMissionKind.MissionControl)
+                return await FailControlTurnAsync(
+                    command, session, "A Mission Control conversation has no tool hand-off to continue.",
+                    GuardedSaveAsync, PublishFactDurablyAsync, ct);
+
             return await ProcessContinuationAsync(command, session, GuardedSaveAsync, PublishFactDurablyAsync, ct);
+        }
 
         // command.Kind == StartMission.
         if (session is { Phase: not WorkerSessionPhase.Terminal })
-            return session; // A duplicate/second StartMission while a run is already active — no-op.
+            return session; // A duplicate/second StartMission while work is already active — no-op.
 
-        return await ProcessFreshStartAsync(command, GuardedSaveAsync, PublishFactDurablyAsync, ct);
+        return missionKind switch
+        {
+            WorkerMissionKind.MissionControl =>
+                await ProcessControlTurnAsync(command, GuardedSaveAsync, PublishFactDurablyAsync, ct),
+            _ => await ProcessFreshStartAsync(command, missionKind, GuardedSaveAsync, PublishFactDurablyAsync, ct),
+        };
     }
 
-    private async Task<WorkerSessionState> ProcessFreshStartAsync(
+    /// <summary>
+    /// One zero-tool Project-control refinement turn (43.20 task 2). It publishes EXACTLY ONE fact:
+    /// a <c>ParticipantMessage</c> from <see cref="ConversationParticipant.MissionControl"/> on
+    /// success, or an <c>Error</c> on failure. It never publishes a <c>RunStatus</c> of any status,
+    /// never requests a tool, and never allocates a run — a control command carries a null
+    /// <c>RunId</c> from the grain and keeps it.
+    /// </summary>
+    private async Task<WorkerSessionState> ProcessControlTurnAsync(
         ConversationCommand command,
         Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
         Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
@@ -115,7 +154,90 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         var state = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
         await saveSessionAsync(state, ct);
 
-        if (command.MissionRef != SupportedMissionRef)
+        // ConversationGrain is the only writer of ProjectGoal and always sets a pinned, non-empty
+        // value, so a blank one here is a corrupted command — named as such rather than silently
+        // substituted with an empty string the mission would then reason over.
+        if (string.IsNullOrWhiteSpace(command.ProjectGoal))
+            return await CompleteControlTurnAsync(
+                command, state, null, "This Mission Control turn carried no Project goal and could not be run.",
+                saveSessionAsync, publishFactDurablyAsync, ct);
+
+        MissionResult result;
+        try
+        {
+            result = await MissionControlMissionExecutor.RunTurnAsync(
+                missions.MissionControl, command.ProjectGoal, command.Goal, ct);
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
+        {
+            return await CompleteControlTurnAsync(
+                command, state, null, ex.Message, saveSessionAsync, publishFactDurablyAsync, ct);
+        }
+
+        return result.Status == MissionStatus.Pass
+            ? await CompleteControlTurnAsync(command, state, result.Text, null, saveSessionAsync, publishFactDurablyAsync, ct)
+            : await CompleteControlTurnAsync(
+                command, state, null, result.FailReason ?? "The Mission Control turn failed.",
+                saveSessionAsync, publishFactDurablyAsync, ct);
+    }
+
+    /// <summary>The single exit point of a control turn, so exactly one fact is published for it
+    /// whichever way it ended. Exactly one of <paramref name="text"/> and
+    /// <paramref name="failReason"/> is non-null.</summary>
+    private static async Task<WorkerSessionState> CompleteControlTurnAsync(
+        ConversationCommand command,
+        WorkerSessionState state,
+        string? text,
+        string? failReason,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        CancellationToken ct)
+    {
+        var fact = failReason is null
+            ? BuildProgress(
+                command, state.NextProgressOrdinal, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.MissionControl, text: text)
+            : BuildProgress(
+                command, state.NextProgressOrdinal, ConversationEventKind.Error,
+                ConversationParticipant.Forge, reason: failReason);
+
+        state = await publishFactDurablyAsync(state, fact, ct);
+        state = state with { Phase = WorkerSessionPhase.Terminal };
+        await saveSessionAsync(state, ct);
+        return state;
+    }
+
+    /// <summary>A control command that cannot be executed at all (today: a continuation, which a
+    /// control conversation can never legitimately produce). Resolves through the same
+    /// single-Error exit as any other control failure.</summary>
+    private static async Task<WorkerSessionState> FailControlTurnAsync(
+        ConversationCommand command,
+        WorkerSessionState? session,
+        string reason,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        CancellationToken ct)
+    {
+        var state = session ?? new WorkerSessionState(
+            command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
+        state = state with { CurrentCommandId = command.CommandId, Phase = WorkerSessionPhase.ExecutingProvider };
+        await saveSessionAsync(state, ct);
+
+        return await CompleteControlTurnAsync(
+            command, state, null, reason, saveSessionAsync, publishFactDurablyAsync, ct);
+    }
+
+    private async Task<WorkerSessionState> ProcessFreshStartAsync(
+        ConversationCommand command,
+        WorkerMissionKind missionKind,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        CancellationToken ct)
+    {
+        var state = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
+        await saveSessionAsync(state, ct);
+
+        if (missionKind != WorkerMissionKind.Janus)
             return await RejectUnsupportedMissionAsync(command, state, publishFactDurablyAsync, saveSessionAsync, ct);
 
         async Task PublishMappedFactAsync(MappedProgressFact fact, CancellationToken factCt)
@@ -131,7 +253,7 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         try
         {
             result = await JanusMissionExecutor.RunFullMissionAsync(
-                mission, command.Goal, command.Capabilities, PublishMappedFactAsync, OnApprovedPlanAsync, ct);
+                missions.Janus, command.Goal, command.Capabilities, PublishMappedFactAsync, OnApprovedPlanAsync, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
         {
@@ -169,7 +291,7 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         };
         await saveSessionAsync(state, ct);
 
-        if (command.MissionRef != SupportedMissionRef)
+        if (missions.Resolve(command.MissionRef) != WorkerMissionKind.Janus)
             return await RejectUnsupportedMissionAsync(command, state, publishFactDurablyAsync, saveSessionAsync, ct);
 
         async Task PublishMappedFactAsync(MappedProgressFact fact, CancellationToken factCt)
@@ -179,7 +301,7 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         try
         {
             result = await JanusMissionExecutor.RunContinuationAsync(
-                mission, state.ApprovedPlan!, outstanding.ProviderCallId, outstanding.ToolName, outstanding.Arguments,
+                missions.Janus, state.ApprovedPlan!, outstanding.ProviderCallId, outstanding.ToolName, outstanding.Arguments,
                 command.ToolResult, command.Capabilities, PublishMappedFactAsync, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
@@ -238,7 +360,7 @@ public sealed class MissionCommandProcessor(JanusMissionContext mission)
         => HandleMissionResultAsync(
             command, state,
             new MissionResult(command.MissionRef, "", MissionStatus.Fail,
-                $"Unsupported MissionRef '{command.MissionRef}' — only '{SupportedMissionRef}' is accepted."),
+                $"Unsupported MissionRef '{command.MissionRef}'."),
             publishFactDurablyAsync, saveSessionAsync, ct);
 
     private static async Task<WorkerSessionState> HandleMissionResultAsync(

@@ -50,50 +50,11 @@ else
             <p class="error-banner">@sessionError</p>
         }
 
-        @if (IsDurable)
+        @if (conversationError is not null)
         {
-            @if (conversationError is not null)
-            {
-                <p class="error-banner">@conversationError</p>
-            }
-            <ConversationTranscriptView Entries="conversationTranscript.Entries" />
+            <p class="error-banner">@conversationError</p>
         }
-        else
-        {
-            @if (turns.Count == 0)
-            {
-                <p class="empty-state">Describe what you want to build.</p>
-            }
-            @foreach (var turn in turns)
-            {
-                <article class="turn">
-                    <p class="turn-prompt">@turn.Prompt</p>
-
-                    @* Completed calls only — a running one is the shared activity below (43.18). *@
-                    @foreach (var row in turn.ToolCalls.Where(row => row.Done))
-                    {
-                        <p class="tool-row">
-                            <span class="tool-glyph done">✓</span>
-                            <span>@row.Label()</span>
-                        </p>
-                    }
-
-                    @if (turn.Error is not null)
-                    {
-                        <p class="error-banner">@turn.Error</p>
-                    }
-                    else if (turn.AssistantText.Length > 0 || turn.IsStreaming)
-                    {
-                        <div class="response-card">@turn.AssistantText</div>
-                    }
-
-                    @if (turn == activeTurn && CurrentActivity() is { } activity)
-                    {
-                        <ConversationActivity State="activity" />
-                    }
-                </article>
-            }
-        }
+        <ConversationTranscriptView Entries="conversationTranscript.Entries" />
     </main>
 
     <footer class="composer-bar">
@@ -102,29 +63,11 @@ else
                    @ref="composerInput"
                    placeholder="@ComposerPlaceholder"
                    disabled="@(sessionId is null || sending || PromptsBlocked)" />
-            <button class="mission-trigger" aria-expanded="@showMissionMenu" aria-haspopup="true"
-                    @onclick="ToggleMissionMenu" disabled="@sending">
-                <span>@selectedMission.Name</span>
-                <span class="caret">▾</span>
-            </button>
             <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
                 @(sending ? "Sending…" : "Send")
             </button>
         </div>
 
-        @if (showMissionMenu)
-        {
-            <div class="mission-menu" role="menu">
-                @foreach (var mission in AttachableMissions.All)
-                {
-                    <button class="mission-item" role="menuitemradio"
-                            aria-checked="@(mission == selectedMission)" @onclick="() => SelectMissionAsync(mission)">
-                        <span class="mission-item-name">@mission.Name</span>
-                        <span class="mission-item-check">@(mission == selectedMission ? "✓" : "")</span>
-                    </button>
-                }
-            </div>
-        }
     </footer>
 }
 </div>
@@ -145,42 +88,22 @@ else
     .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .turns { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
-    .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
 
-    .turn { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
-    .turn-prompt { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
 
-    /* Completed calls only — a running call is the shared ConversationActivity (43.18), whose
-       styling and animation live in forge.css. */
-    .tool-row { align-self: stretch; display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 12.5px; color: var(--text-muted); }
-    .tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
-    .tool-glyph.done { color: var(--success); }
 
     .connection-banner { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
     .connection-retry { flex-shrink: 0; height: 28px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-pill); background: var(--danger); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
     .gap-notice { align-self: stretch; margin: 0; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-muted); font-size: 12.5px; text-align: center; }
 
-    .response-card { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-4); font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
     .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; margin: 0; }
 
     .composer-bar { position: relative; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--space-5) calc(var(--space-4) + var(--safe-bottom)); }
     .composer { display: flex; align-items: center; gap: var(--space-2); }
-    .composer-plus { flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); font-size: 16px; cursor: pointer; }
-    .composer-plus:hover { background: var(--surface-hover); }
     .composer-input { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 var(--space-3); font-size: 14px; background: var(--surface); color: var(--text); }
     .composer-input:disabled { color: var(--text-subtle); }
     .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
     .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
 
-    .mission-trigger { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; }
-    .mission-trigger:hover { background: var(--surface-hover); }
-    .mission-trigger:disabled { color: var(--text-subtle); cursor: default; }
-    .mission-trigger .caret { color: var(--text-muted); font-size: 10px; }
-    .mission-menu { position: absolute; bottom: 100%; right: var(--space-5); margin-bottom: var(--space-2); min-width: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: var(--space-2); }
-    .mission-item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-3); border: none; background: none; border-radius: var(--radius-sm); cursor: pointer; text-align: left; font-family: inherit; }
-    .mission-item:hover { background: var(--surface-hover); }
-    .mission-item-name { font-size: 13.5px; font-weight: 500; color: var(--text); }
-    .mission-item-check { color: var(--accent); font-size: 13px; }
 </style>
 
 @code {
@@ -204,14 +127,10 @@ else
         ? "That folder is not a Forge Project yet. Enter a goal to create one there."
         : null;
 
-    private AttachableMission selectedMission = AttachableMissions.Default;
-    private bool showMissionMenu;
-
     private string composerText = string.Empty;
     private bool sending;
     private ElementReference composerInput;
     private bool focusComposerAfterRender;
-    private readonly List<ChatTurn> turns = [];
 
     // One view operation at a time (43.17 task 3). viewCts cancels this view's setup/prompt
     // requests and its event subscription together; viewGeneration is the identity a late result
@@ -222,41 +141,22 @@ else
     private Task? eventLoopTask;
     private int viewGeneration;
 
-    private ChatTurn? activeTurn;
-    private ToolCallRow? openToolRow;
-
     private ConversationTranscript conversationTranscript = new();
     private string? conversationError;
     private string? sessionError;
     private string? connectionError;
     private bool reconnectedWithGap;
 
-    private bool IsDurable => selectedMission.Runtime == SessionRuntimeKind.DurableConversation;
-
-    // A durable transcript is built only from relayed events, so a prompt sent while the stream is
-    // down would add a second unrecoverable gap. A Mission prompt renders its final answer from the
-    // PromptResponse itself, so it stays usable while disconnected.
-    private bool PromptsBlocked => IsDurable && connectionError is not null;
+    // Mission Control's transcript is built only from relayed durable events, so a turn submitted
+    // while the stream is down would add a second unrecoverable gap on top of the one the banner
+    // already reports.
+    private bool PromptsBlocked => connectionError is not null;
 
     private string ComposerPlaceholder =>
-        PromptsBlocked ? "Reconnect to continue this conversation" : "Describe what you want to build";
+        PromptsBlocked ? "Reconnect to continue this conversation" : "What is this Project for?";
 
     private bool CanSend =>
         sessionId is not null && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
-
-    // The active turn's activity for the shared renderer (43.18), from facts this page already
-    // holds. Tool work outranks streaming text while a delta and a running tool overlap.
-    private ConversationActivityState? CurrentActivity()
-    {
-        if (activeTurn is null || activeTurn.Error is not null)
-            return null;
-        if (openToolRow is not null)
-            return new(selectedMission.Name, ConversationActivityKind.Working, openToolRow.Label());
-        if (activeTurn.AssistantText.Length > 0)
-            return new(selectedMission.Name, ConversationActivityKind.Streaming, null);
-
-        return new(selectedMission.Name, ConversationActivityKind.Thinking, null);
-    }
 
     // Deliberately no OnInitializedAsync: opening Desktop issues no request, creates no session or
     // event subscription, and gives the Client Runtime no reason to touch the filesystem. The first
@@ -304,8 +204,7 @@ else
     {
         var response = await RunLauncherOperationAsync(token =>
             ClientRuntime.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
-                new ProjectCreateRequest(goalInput, NullIfBlank(titleInput), NullIfBlank(homeInput),
-                    selectedMission.WireMission, selectedMission.Runtime), token));
+                new ProjectCreateRequest(goalInput, NullIfBlank(titleInput), NullIfBlank(homeInput)), token));
         if (response is not null)
             await ApplyProjectOutcomeAsync(response);
     }
@@ -320,7 +219,7 @@ else
 
         var response = await RunLauncherOperationAsync(token =>
             ClientRuntime.SendAsync<ProjectOpenRequest, ProjectOperationResponse>(
-                new ProjectOpenRequest(openPathInput, selectedMission.WireMission, selectedMission.Runtime), token));
+                new ProjectOpenRequest(openPathInput), token));
         if (response is not null)
             await ApplyProjectOutcomeAsync(response);
     }
@@ -350,6 +249,9 @@ else
         }
     }
 
+    // Opening a Project opens its one Mission Control conversation. The event loop starts FIRST so
+    // the durable replay this call triggers is already being relayed when it arrives — a reopened
+    // Project therefore restores its whole transcript without any local cache.
     private async Task EnterProjectAsync(ProjectSession opened)
     {
         var view = await BeginViewAsync();
@@ -357,6 +259,32 @@ else
         sessionId = opened.SessionId;
         focusComposerAfterRender = true;
         StartEventLoop(view);
+        await OpenMissionControlAsync(view);
+    }
+
+    private async Task OpenMissionControlAsync(ViewOperation view)
+    {
+        try
+        {
+            var response = await ClientRuntime.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(
+                new OpenProjectMissionControlRequest(sessionId!), view.Token);
+            if (IsCurrent(view.Generation) && response.Error is { } error)
+                conversationError = error.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the view was replaced while the open was in flight.
+        }
+        catch (Exception exception)
+        {
+            if (IsCurrent(view.Generation))
+                conversationError = exception.Message;
+        }
+        finally
+        {
+            if (IsCurrent(view.Generation))
+                StateHasChanged();
+        }
     }
 
     // The launcher's single busy/error boundary. An expected Project failure arrives as a typed
@@ -386,130 +314,45 @@ else
 
     private static string? NullIfBlank(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
-    private void ToggleMissionMenu() => showMissionMenu = !showMissionMenu;
-
-    // Switching mid-conversation starts a fresh session (43.3 task 3) — no cross-mission context
-    // carry-over for v1 (see phase-43.3-mission-attach-point.md's open questions). The outgoing
-    // session's ID is passed as ReplacesSessionId so the store can cancel/dispose a durable
-    // Janus session's background tail instead of abandoning it (Phase 43.16 Task 7).
-    private async Task SelectMissionAsync(AttachableMission mission)
-    {
-        var previousSessionId = sessionId;
-        var openProject = project;
-        selectedMission = mission;
-        showMissionMenu = false;
-
-        // Replacement only: this request carries the open Project's own home and the session it
-        // replaces. With no Project open there is nothing to replace, and the Client Runtime would
-        // reject the call anyway — a first root can only come from project create/open.
-        if (openProject is null || previousSessionId is null)
-            return;
-
-        var view = await BeginViewAsync();
-
-        try
-        {
-            var setup = await ClientRuntime.SendAsync<SessionSetupRequest, SessionSetupResponse>(
-                new SessionSetupRequest(openProject.Home, previousSessionId,
-                    selectedMission.WireMission, selectedMission.Runtime),
-                view.Token);
-            if (!IsCurrent(view.Generation))
-                return;
-
-            project = openProject;
-            sessionId = setup.SessionId;
-            StartEventLoop(view);
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected: another replacement superseded this one while its setup was in flight.
-        }
-        catch (Exception exception)
-        {
-            if (IsCurrent(view.Generation))
-                sessionError = exception.Message;
-        }
-    }
-
     private async Task OnComposerKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && CanSend)
             await SendAsync();
     }
 
+    // The one send path on this surface. Mission Control is the sole active conversation while a
+    // Project is open, so there is no mission to choose and no second path to fall back to. The
+    // Janus prompt flow lives on in Client Runtime and its own tests, and is unreachable from here
+    // — enforced by ClientRuntimePresentationBoundaryTests, which fails on the mere mention of its
+    // contract types in this project (43.20 task 2).
     private async Task SendAsync()
     {
         if (!CanSend || sessionId is null || viewCts is null)
             return;
 
         var view = new ViewOperation(viewGeneration, viewCts.Token);
-        var prompt = composerText;
+        var text = composerText;
         composerText = string.Empty;
         sending = true;
-
-        if (IsDurable)
-        {
-            await SendDurableAsync(prompt, view);
-            return;
-        }
-
-        openToolRow = null;
-        var turn = new ChatTurn(prompt);
-        activeTurn = turn;
-        turns.Add(turn);
-        StateHasChanged();
-
-        try
-        {
-            var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
-                new PromptRequest(sessionId, prompt), view.Token);
-            if (!IsCurrent(view.Generation))
-                return;
-
-            turn.AssistantText = response.Content;
-            turn.Error = response.IsError ? response.Content : null;
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected: the user replaced the folder/mission while this prompt was in flight.
-        }
-        catch (Exception exception)
-        {
-            if (IsCurrent(view.Generation))
-                turn.Error = exception.Message;
-        }
-        finally
-        {
-            // A late result belongs to a discarded view: it must not clear the replacement's
-            // sending state or write into its transcript.
-            if (IsCurrent(view.Generation))
-            {
-                turn.IsStreaming = false;
-                activeTurn = null;
-                sending = false;
-                StateHasChanged();
-            }
-        }
-    }
-
-    // PromptResponse is an acceptance for the durable path, not a synthetic chat answer — the
-    // real turn renders once its durable UserMessage (and everything after it) arrives through
-    // ConsumeEventsAsync/ApplyEvent, not from this call's return value.
-    private async Task SendDurableAsync(string prompt, ViewOperation view)
-    {
         conversationError = null;
         StateHasChanged();
 
         try
         {
-            var response = await ClientRuntime.SendAsync<PromptRequest, PromptResponse>(
-                new PromptRequest(sessionId!, prompt), view.Token);
-            if (response.IsError && IsCurrent(view.Generation))
-                conversationError = response.Content;
+            // Generated once per submission: a retry of THIS turn would reuse it, and the
+            // Conversation service resolves the duplicate rather than appending a second message.
+            var response = await ClientRuntime.SendAsync<
+                SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
+                new SubmitProjectMissionControlTurnRequest(sessionId, Guid.NewGuid(), text), view.Token);
+
+            // The response is an acceptance, not a rendered answer: the turn appears once its
+            // durable UserMessage — and everything after it — arrives through the relayed stream.
+            if (IsCurrent(view.Generation) && response.Error is { } error)
+                conversationError = error.Message;
         }
         catch (OperationCanceledException)
         {
-            // Expected: the user replaced the folder/mission while this prompt was in flight.
+            // Expected: the view was replaced while this turn was in flight.
         }
         catch (Exception exception)
         {
@@ -542,9 +385,6 @@ else
         viewCts = new CancellationTokenSource();
 
         sessionId = null;
-        turns.Clear();
-        activeTurn = null;
-        openToolRow = null;
         conversationTranscript = new();
         conversationError = null;
         sessionError = null;
@@ -631,80 +471,11 @@ else
         if (evt.SessionId != sessionId)
             return;
 
-        if (IsDurable)
-        {
-            if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is not null)
-                conversationTranscript.Apply(evt.Conversation);
-            else if (evt.Kind == ClientRuntimeEventKind.Error)
-                conversationError = evt.Error;
-            return;
-        }
-
-        if (activeTurn is null)
-            return;
-
-        switch (evt.Kind)
-        {
-            case ClientRuntimeEventKind.MissionTextDelta:
-                activeTurn.AssistantText += evt.Text;
-                break;
-            case ClientRuntimeEventKind.ToolCallStatus when string.Equals(evt.ToolStatus, "running", StringComparison.OrdinalIgnoreCase):
-                openToolRow = new ToolCallRow(evt.ToolName ?? "Tool", evt.ToolTarget);
-                activeTurn.ToolCalls.Add(openToolRow);
-                break;
-            case ClientRuntimeEventKind.ToolCallStatus:
-                if (openToolRow is not null)
-                {
-                    openToolRow.Done = true;
-                    openToolRow = null;
-                }
-                break;
-        }
+        if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is not null)
+            conversationTranscript.Apply(evt.Conversation);
+        else if (evt.Kind == ClientRuntimeEventKind.Error)
+            conversationError = evt.Error;
     }
 
     public async ValueTask DisposeAsync() => await StopViewAsync();
-
-    private sealed class ChatTurn(string prompt)
-    {
-        public string Prompt { get; } = prompt;
-        public List<ToolCallRow> ToolCalls { get; } = [];
-        public string AssistantText { get; set; } = string.Empty;
-        public bool IsStreaming { get; set; } = true;
-        public string? Error { get; set; }
-    }
-
-    private sealed class ToolCallRow(string toolName, string? target)
-    {
-        private const int MaxTargetLength = 80;
-
-        public bool Done { get; set; }
-
-        public string Label()
-        {
-            var verb = Done ? DoneVerb(toolName) : RunningVerb(toolName);
-            if (target is null)
-                return verb;
-
-            var shown = target.Length > MaxTargetLength ? target[..MaxTargetLength] + "…" : target;
-            return Done ? $"{verb} {shown}" : $"{verb} {shown}…";
-        }
-
-        private static string RunningVerb(string toolName) => toolName switch
-        {
-            "Read" => "Reading",
-            "Edit" => "Editing",
-            "Write" => "Writing",
-            "Bash" => "Running",
-            _ => "Using",
-        };
-
-        private static string DoneVerb(string toolName) => toolName switch
-        {
-            "Read" => "Read",
-            "Edit" => "Edited",
-            "Write" => "Wrote",
-            "Bash" => "Ran",
-            _ => "Used",
-        };
-    }
 }

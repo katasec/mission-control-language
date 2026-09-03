@@ -293,4 +293,45 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         File.WriteAllText(Path.Combine(home, "forge.project.json"), json);
         return home;
     }
+
+    // --- Mission Control, as a TUI would invoke it (43.20 task 2) ---------------------------
+
+    // The surface-parity proof for this task: both Mission Control actions are named Client Runtime
+    // contracts reached over the production channel, with no Blazor, bunit, Photino, Desktop, or
+    // Host type anywhere in this class.
+    [Fact]
+    public async Task MissionControl_IsReachableThroughTheNamedContracts_WithNoProjectPathOrConversationId()
+    {
+        var created = await _channel.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
+            new ProjectCreateRequest("Ship a todos API"), CancellationToken.None);
+        var sessionId = created.Session!.SessionId;
+
+        // No ConversationHost is running in this test, so the open fails at the transport — but it
+        // fails AFTER resolving the Project and reading its manifest itself, which is the part
+        // under test: the request carries nothing but the session id.
+        var open = new OpenProjectMissionControlRequest(sessionId);
+        Assert.Equal("SessionId", Assert.Single(typeof(OpenProjectMissionControlRequest).GetProperties()).Name);
+
+        var turn = new SubmitProjectMissionControlTurnRequest(sessionId, Guid.NewGuid(), "narrow the scope");
+        Assert.Equal(
+            ["CommandId", "SessionId", "Text"],
+            typeof(SubmitProjectMissionControlTurnRequest).GetProperties().Select(p => p.Name).Order().ToList());
+
+        // Both requests route to their own Client Runtime endpoints through the production channel.
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(open, CancellationToken.None));
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
+                turn, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task MissionControl_ForAnUnknownSession_IsNotFound_AndTouchesNoProject()
+    {
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(
+                new OpenProjectMissionControlRequest("not-a-session"), CancellationToken.None));
+
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
 }

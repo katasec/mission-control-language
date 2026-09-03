@@ -16,8 +16,6 @@ namespace ForgeMission.ClientRuntime.Services;
 // the tail before it can execute a later local tool for an abandoned session.
 internal sealed class ConversationRuntimeSession : IAsyncDisposable
 {
-    private static readonly TimeSpan ReconnectDelay = TimeSpan.FromMilliseconds(250);
-
     private readonly string _sessionId;
     private readonly string _missionRef;
     private readonly ConversationHostClient _hostClient;
@@ -25,16 +23,13 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
     private readonly ICapabilityDispatcher _dispatcher;
     private readonly ToolExecutorRegistry _toolExecutors;
     private readonly Action<ClientRuntimeEvent> _publish;
-    private readonly CancellationTokenSource _lifetimeCts;
+    private readonly ConversationTailReader _tail;
 
-    // Tail-loop-only state: touched exclusively by the single TailAsync loop, never concurrently
-    // with a SendAsync call, so no additional locking is needed.
-    private readonly HashSet<Guid> _seenEventIds = [];
+    // Tail-loop-only state: touched exclusively by the tail reader's single loop, never
+    // concurrently with a SendAsync call, so no additional locking is needed.
     private readonly Dictionary<Guid, ToolExecutionResult> _toolResultCache = [];
-    private long _lastSequence;
 
     private Guid? _conversationId;
-    private Task? _tailTask;
 
     public ConversationRuntimeSession(
         string sessionId,
@@ -53,7 +48,9 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
         _dispatcher = dispatcher;
         _publish = publish;
         _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
-        _lifetimeCts = CancellationTokenSource.CreateLinkedTokenSource(applicationStopping);
+        // The tool hand-off is this session's own concern, supplied to the shared tail reader as
+        // its per-event hook. A Project-control session supplies none (43.20 task 2).
+        _tail = new ConversationTailReader(sessionId, hostClient, publish, applicationStopping, OnTailEventAsync);
     }
 
     // Returns the conversation's ID (starting it on the first call, submitting a follow-up
@@ -68,7 +65,7 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
             var response = await _hostClient.StartAsync(
                 new StartConversationRequest(Guid.NewGuid(), _missionRef, prompt, ToCapabilityDeclarations(_capabilities)), ct);
             _conversationId = response.ConversationId;
-            StartTailIfNeeded();
+            _tail.Start(_conversationId.Value);
         }
         else
         {
@@ -79,64 +76,10 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
         return _conversationId.Value;
     }
 
-    private void StartTailIfNeeded()
+    // The tail reader owns replay, reconnect and relay-dedupe; this session owns only what to do
+    // with a tool request once one is durably observed.
+    private async Task OnTailEventAsync(ConversationEvent evt, CancellationToken ct)
     {
-        if (_tailTask is not null)
-            return;
-
-        _tailTask = Task.Run(() => TailAsync(_lifetimeCts.Token));
-    }
-
-    private async Task TailAsync(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                await foreach (var evt in _hostClient.StreamEventsAsync(_conversationId!.Value, _lastSequence, ct))
-                    await ApplyAsync(evt, ct);
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                return;
-            }
-            catch (Exception)
-            {
-                // Normal SSE completion or a transient HTTP failure — reconnect below with the
-                // same cursor. No retry-count/configuration knob: this is a fixed policy.
-            }
-
-            try
-            {
-                await Task.Delay(ReconnectDelay, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-        }
-    }
-
-    // Relay-dedupe (by EventId, gating _publish) and tool-execution-idempotency (by RequestId,
-    // gating the dispatcher call) are deliberately separate: an event the UI has already seen
-    // must never render twice, but an expected tool request whose post never durably completed
-    // must still be retryable without re-executing the local side effect.
-    private async Task ApplyAsync(ConversationEvent evt, CancellationToken ct)
-    {
-        if (_seenEventIds.Add(evt.EventId))
-        {
-            if (evt.Sequence <= _lastSequence)
-            {
-                _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, _sessionId,
-                    Error: $"Conversation protocol error: received unseen event at sequence {evt.Sequence}, already past {_lastSequence}."));
-            }
-            else
-            {
-                _lastSequence = evt.Sequence;
-                _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ConversationEvent, _sessionId, Conversation: evt));
-            }
-        }
-
         if (evt.Kind == ConversationEventKind.ToolRequested && evt.ToolRequest is not null)
             await HandleToolRequestedAsync(evt.ToolRequest, evt.Participant, ct);
         else if (evt.Kind == ConversationEventKind.ToolResult && evt.ToolResult is not null)
@@ -210,21 +153,5 @@ internal sealed class ConversationRuntimeSession : IAsyncDisposable
         _ => value.Clone(),
     };
 
-    public async ValueTask DisposeAsync()
-    {
-        await _lifetimeCts.CancelAsync();
-        if (_tailTask is not null)
-        {
-            try
-            {
-                await _tailTask;
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected — the tail loop observes cancellation and returns.
-            }
-        }
-
-        _lifetimeCts.Dispose();
-    }
+    public ValueTask DisposeAsync() => _tail.DisposeAsync();
 }

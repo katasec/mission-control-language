@@ -12,18 +12,6 @@ using MclProgram = ForgeMission.Parser.Program;
 
 namespace ForgeMission.ConversationWorker.Janus;
 
-/// <summary>The checked-in, read-only Janus mission — parsed AST, loaded experts, and a built
-/// runner per <c>forge.toml</c> provider profile. Loaded once at Worker startup from
-/// <c>ConversationWorker__JanusMissionDirectory</c>; the packaged directory is not local-machine
-/// authority — only <c>MissionRef == "Janus"</c> is ever accepted.</summary>
-public sealed class JanusMissionContext
-{
-    public required MclProgram Ast { get; init; }
-    public required Dictionary<string, ExpertDefinition> Experts { get; init; }
-    public required IReadOnlyDictionary<string, IExpertRunner> Runners { get; init; }
-    public required ExecutionConfig Execution { get; init; }
-}
-
 /// <summary>
 /// Runs the real Janus mission (<c>Negotiate -&gt; Implement</c>) via <see cref="PipelineRunner"/>,
 /// translating every trace fact through <see cref="JanusPipelineProgressMapper"/> into the
@@ -34,29 +22,8 @@ public sealed class JanusMissionContext
 /// </summary>
 public static class JanusMissionExecutor
 {
-    public static JanusMissionContext Load(string missionDirectory)
-    {
-        var missionPath = Path.Combine(missionDirectory, "mission.mcl");
-        var lockPath = Path.Combine(missionDirectory, "mcl.lock");
-
-        var ast = MclParser.Parse(File.ReadAllText(missionPath));
-
-        var lockFile = LockFileIO.Read(lockPath);
-        var experts = ExpertLoader.LoadFromLockFile(lockFile, missionDirectory);
-        ExpertLoader.Validate(ast, experts, warnings: null, contractErrorsAreFatal: true, missionFilePath: missionPath);
-
-        var manifest = ForgeTomlReader.TryRead(missionPath)
-            ?? throw new InvalidOperationException($"No forge.toml found alongside '{missionPath}'.");
-
-        var runners = new Dictionary<string, IExpertRunner>(StringComparer.Ordinal);
-        foreach (var (name, profile) in manifest.Providers)
-            runners[name] = ChatClients.ChatClients.Build(profile);
-
-        return new JanusMissionContext { Ast = ast, Experts = experts, Runners = runners, Execution = manifest.Execution };
-    }
-
     public static async Task<MissionResult> RunFullMissionAsync(
-        JanusMissionContext mission,
+        WorkerMissionContext mission,
         string goal,
         IReadOnlyList<ConversationCapabilityDeclaration> capabilities,
         Func<MappedProgressFact, CancellationToken, Task> publishFactAsync,
@@ -107,7 +74,7 @@ public static class JanusMissionExecutor
     }
 
     public static async Task<MissionResult> RunContinuationAsync(
-        JanusMissionContext mission,
+        WorkerMissionContext mission,
         string approvedPlan,
         string providerCallId,
         string toolName,

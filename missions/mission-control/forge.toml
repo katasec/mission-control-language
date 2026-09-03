@@ -1,0 +1,7 @@
+# One provider profile: the MissionControl mission has a single expert and no `using` clause, so
+# `default` is the profile it selects. It reuses the MCL_API_KEY the Worker container already
+# receives for Janus — this mission introduces no new secret, Key Vault role, or identity.
+[providers.default]
+provider = "openai"
+model    = env("MCL_OPENAI_MODEL", "gpt-4o")
+apiKey   = env("MCL_API_KEY")

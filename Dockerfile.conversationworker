@@ -14,8 +14,9 @@
 #   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
 #     -f Dockerfile.conversationworker -t forge-conversation-worker:local .
 #
-# The checked-in, read-only Janus mission directory is baked into the image (not a local-machine
-# path) — only MissionRef == "Janus" is ever accepted at the Contracts boundary.
+# The checked-in, read-only mission directories are baked into the image (not local-machine paths).
+# Only a MissionRef the named WorkerMissionResolver recognises — "Janus" or the zero-tool
+# "MissionControl" (43.20 task 2) — is ever executed.
 
 # ---- build --------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -35,8 +36,10 @@ WORKDIR /app
 
 COPY --from=build /app/publish ./
 COPY missions/janus/ /app/missions/janus/
+COPY missions/mission-control/ /app/missions/mission-control/
 
 ENV ConversationWorker__JanusMissionDirectory=/app/missions/janus \
+    ConversationWorker__MissionControlMissionDirectory=/app/missions/mission-control \
     DOTNET_ENVIRONMENT=Production \
     DOTNET_gcServer=0
 

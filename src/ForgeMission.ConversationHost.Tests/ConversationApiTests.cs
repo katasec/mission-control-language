@@ -72,6 +72,159 @@ public class ConversationApiTests(AzuriteFixture fixture)
         Assert.Equal(2, (await grain.ReadAfterAsync(0)).EventJson.Length);
     }
 
+    // ── 1b. Project-control create/submit and its SSE replay (43.20 task 2) ────────
+
+    [Fact]
+    public async Task ProjectControlCreate_Returns201WithSequenceZero_AndAnExactRetryReturnsTheSameConversation()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+
+        var projectId = Guid.NewGuid();
+        var request = new CreateProjectControlConversationRequest(
+            projectId, ConversationDeterministicIds.ProjectControlCreate(projectId), "Ship a todos API");
+
+        var response = await client.PostAsJsonAsync("/conversations/project-control", request,
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationResponse);
+
+        // A newly created control conversation is empty: create appends no event.
+        Assert.Equal(0, body!.AcceptedSequence);
+        Assert.Equal(ConversationDeterministicIds.Conversation(request.CommandId), body.ConversationId);
+
+        var retry = await client.PostAsJsonAsync("/conversations/project-control", request,
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+        var retryBody = await retry.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationResponse);
+        Assert.Equal(body.ConversationId, retryBody!.ConversationId);
+        Assert.Equal(body.AcceptedSequence, retryBody.AcceptedSequence);
+
+        var snapshot = await client.GetFromJsonAsync($"/conversations/{body.ConversationId}",
+            ConversationContractsJsonContext.Default.GetConversationResponse);
+        Assert.Equal(ConversationPurpose.ProjectControl, snapshot!.Snapshot.Purpose);
+    }
+
+    [Fact]
+    public async Task ProjectControlCreate_WithADifferentGoal_Conflicts_AndABlankGoalIsRejected()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+
+        var projectId = Guid.NewGuid();
+        var commandId = ConversationDeterministicIds.ProjectControlCreate(projectId);
+        await client.PostAsJsonAsync("/conversations/project-control",
+            new CreateProjectControlConversationRequest(projectId, commandId, "Ship a todos API"),
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+
+        var conflicting = await client.PostAsJsonAsync("/conversations/project-control",
+            new CreateProjectControlConversationRequest(projectId, commandId, "Something else"),
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+        var blank = await client.PostAsJsonAsync("/conversations/project-control",
+            new CreateProjectControlConversationRequest(Guid.NewGuid(), Guid.NewGuid(), "  "),
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+
+        Assert.Equal(HttpStatusCode.Conflict, conflicting.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, blank.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProjectControlMessage_Accepts_Duplicates_Conflicts_AndRejectsAForeignOrMissingConversation()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var conversationId = await CreateControlConversationAsync(client);
+
+        var commandId = Guid.NewGuid();
+        var accepted = await PostControlMessageAsync(client, conversationId, commandId, "narrow the scope");
+        Assert.Equal(HttpStatusCode.Accepted, accepted.StatusCode);
+        var acceptedBody = await accepted.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.SubmitProjectControlMessageResponse);
+        Assert.Equal(1, acceptedBody!.AcceptedSequence);
+
+        var duplicate = await PostControlMessageAsync(client, conversationId, commandId, "narrow the scope");
+        var changed = await PostControlMessageAsync(client, conversationId, commandId, "different text");
+        var blank = await PostControlMessageAsync(client, conversationId, Guid.NewGuid(), "");
+        var missing = await PostControlMessageAsync(client, Guid.NewGuid(), Guid.NewGuid(), "hello");
+
+        Assert.Equal(HttpStatusCode.Accepted, duplicate.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, changed.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, blank.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    // A Janus conversation is addressable but is not a control conversation — a conflict, not a
+    // not-found, and it must never reach the control accept path.
+    [Fact]
+    public async Task ProjectControlMessage_AgainstAJanusConversation_Conflicts()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+
+        var start = await client.PostAsJsonAsync("/conversations",
+            new StartConversationRequest(Guid.NewGuid(), "Janus", "goal", []),
+            ConversationContractsJsonContext.Default.StartConversationRequest);
+        var started = await start.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.StartConversationResponse);
+
+        var control = await PostControlMessageAsync(client, started!.ConversationId, Guid.NewGuid(), "refine");
+
+        Assert.Equal(HttpStatusCode.Conflict, control.StatusCode);
+    }
+
+    // The SSE route is NOT duplicated for control conversations — this proves a control stream
+    // replays through the identical projection the Janus stream uses.
+    [Fact]
+    public async Task AControlConversation_ReplaysThroughTheExistingSseRoute()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var conversationId = await CreateControlConversationAsync(client);
+        await PostControlMessageAsync(client, conversationId, Guid.NewGuid(), "narrow the scope");
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/conversations/{conversationId}/events?after=0");
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var reader = new StreamReader(await response.Content.ReadAsStreamAsync());
+        var replayed = await ReadFirstEventAsync(reader);
+
+        Assert.Equal(ConversationEventKind.UserMessage, replayed.Kind);
+        Assert.Equal("narrow the scope", replayed.Text);
+        Assert.Null(replayed.RunId);
+    }
+
+    private static async Task<Guid> CreateControlConversationAsync(HttpClient client, string goal = "Ship a todos API")
+    {
+        var projectId = Guid.NewGuid();
+        var response = await client.PostAsJsonAsync("/conversations/project-control",
+            new CreateProjectControlConversationRequest(
+                projectId, ConversationDeterministicIds.ProjectControlCreate(projectId), goal),
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest);
+        var body = await response.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.CreateProjectControlConversationResponse);
+        return body!.ConversationId;
+    }
+
+    private static Task<HttpResponseMessage> PostControlMessageAsync(
+        HttpClient client, Guid conversationId, Guid commandId, string text) =>
+        client.PostAsJsonAsync($"/conversations/{conversationId}/control-messages",
+            new SubmitProjectControlMessageRequest(conversationId, commandId, text),
+            ConversationContractsJsonContext.Default.SubmitProjectControlMessageRequest);
+
+    private static async Task<ConversationEvent> ReadFirstEventAsync(StreamReader reader)
+    {
+        while (await reader.ReadLineAsync() is { } line)
+        {
+            if (line.StartsWith("data: ", StringComparison.Ordinal))
+                return JsonSerializer.Deserialize(
+                    line["data: ".Length..], ConversationContractsJsonContext.Default.ConversationEvent)!;
+        }
+
+        throw new InvalidOperationException("The SSE stream produced no event.");
+    }
+
     // ── 2. Follow-up: pinned mission/capabilities, not client-supplied ──────────────
 
     [Fact]

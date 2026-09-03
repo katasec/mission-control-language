@@ -52,6 +52,12 @@ public static class ConversationApiEndpoints
         app.MapPost("/conversations/{conversationId}/tool-results", SubmitToolResultAsync);
         app.MapGet("/conversations/{conversationId}", GetConversationAsync);
         app.MapGet("/conversations/{conversationId}/events", StreamEventsAsync);
+        // 43.20 task 2. Deliberately separate routes from the Janus pair above: reusing
+        // POST /conversations or its commands route for Project refinement would silently start
+        // Janus work and permit the wrong capability shape. The events/SSE route above is NOT
+        // duplicated — a control conversation replays and tails through that same one.
+        app.MapPost("/conversations/project-control", CreateProjectControlConversationAsync);
+        app.MapPost("/conversations/{conversationId}/control-messages", SubmitProjectControlMessageAsync);
     }
 
     // ═══════════════════════════ Transport-neutral message handlers ═══════════════════════════
@@ -116,6 +122,48 @@ public static class ConversationApiEndpoints
             new ConversationToolResultInput(request.CommandId, request.ToolRequestId, request.Content, request.IsError));
     }
 
+    /// <summary>Creates a Project's Mission Control conversation idempotently (43.20 task 2). The
+    /// conversation ID is derived from the caller's own deterministic <c>CommandId</c> through the
+    /// SAME <see cref="ConversationDeterministicIds.Conversation"/> derivation the Janus start uses,
+    /// so a retry after Host acceptance but before the manifest write lands on the same grain and
+    /// returns its original acceptance.</summary>
+    public static async Task<ConversationCommandOutcomeResult> HandleCreateProjectControlConversationAsync(
+        CreateProjectControlConversationRequest request, IGrainFactory grainFactory)
+    {
+        if (request.ProjectId == Guid.Empty || request.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(request.ProjectGoal))
+            return Invalid("projectId, commandId, and a non-empty projectGoal are required.");
+
+        var conversationId = ConversationDeterministicIds.Conversation(request.CommandId);
+        var address = new ConversationAddress(DevTenantId, conversationId);
+
+        var grain = grainFactory.GetGrain<IConversationGrain>(address.PartitionKey);
+        return await grain.AcceptControlCreateAsync(
+            new ConversationControlCreateInput(request.CommandId, request.ProjectId, request.ProjectGoal));
+    }
+
+    /// <summary>Submits one Project-control turn (43.20 task 2). A conversation that exists but is
+    /// a Janus run conversation is a conflict, not a not-found: it is addressable, it is simply not
+    /// a control conversation.</summary>
+    public static async Task<ConversationCommandOutcomeResult> HandleSubmitProjectControlMessageAsync(
+        SubmitProjectControlMessageRequest request, IGrainFactory grainFactory)
+    {
+        if (request.ConversationId == Guid.Empty || request.CommandId == Guid.Empty || string.IsNullOrEmpty(request.Text))
+            return Invalid("conversationId, commandId, and text are required.");
+
+        var address = new ConversationAddress(DevTenantId, request.ConversationId);
+        var grain = grainFactory.GetGrain<IConversationGrain>(address.PartitionKey);
+
+        if (await TryGetExistingSnapshotAsync(grain) is not { } snapshot)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.NotFound, null, "Conversation not found.");
+
+        if (snapshot.Purpose != ConversationPurpose.ProjectControl)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "This conversation is not a Project-control conversation.");
+
+        return await grain.AcceptControlMessageAsync(
+            new ConversationControlMessageInput(request.CommandId, request.Text));
+    }
+
     public static async Task<GetConversationOutcomeResult> HandleGetConversationAsync(
         GetConversationRequest request, IGrainFactory grainFactory)
     {
@@ -167,7 +215,7 @@ public static class ConversationApiEndpoints
             ConversationCommandOutcome.Accepted => Results.Created(
                 $"/conversations/{result.Acceptance!.ConversationId}",
                 new StartConversationResponse(
-                    result.Acceptance.ConversationId, result.Acceptance.RunId, result.Acceptance.AcceptedSequence, result.Acceptance.Status)),
+                    result.Acceptance.ConversationId, result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status)),
             ConversationCommandOutcome.Invalid => BadRequest(result.Reason),
             ConversationCommandOutcome.Conflict => Conflict(result.Reason),
             _ => throw new InvalidOperationException($"Unhandled {nameof(ConversationCommandOutcome)} '{result.Outcome}' for start."),
@@ -187,7 +235,7 @@ public static class ConversationApiEndpoints
         {
             ConversationCommandOutcome.Accepted => AcceptedWithHeaders(
                 new SubmitConversationCommandResponse(
-                    result.Acceptance!.ConversationId, result.Acceptance.RunId, result.Acceptance.AcceptedSequence, result.Acceptance.Status),
+                    result.Acceptance!.ConversationId, result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status),
                 $"/conversations/{result.Acceptance.ConversationId}"),
             ConversationCommandOutcome.Invalid => BadRequest(result.Reason),
             ConversationCommandOutcome.NotFound => NotFound(),
@@ -209,12 +257,52 @@ public static class ConversationApiEndpoints
         {
             ConversationCommandOutcome.Accepted => AcceptedWithHeaders(
                 new SubmitToolResultResponse(
-                    result.Acceptance!.ConversationId, result.Acceptance.RunId, result.Acceptance.AcceptedSequence, result.Acceptance.Status),
+                    result.Acceptance!.ConversationId, result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status),
                 $"/conversations/{result.Acceptance.ConversationId}"),
             ConversationCommandOutcome.Invalid => BadRequest(result.Reason),
             ConversationCommandOutcome.NotFound => NotFound(),
             ConversationCommandOutcome.Conflict => Conflict(result.Reason),
             _ => throw new InvalidOperationException($"Unhandled {nameof(ConversationCommandOutcome)} '{result.Outcome}' for tool-result."),
+        };
+    }
+
+    private static async Task<IResult> CreateProjectControlConversationAsync(
+        CreateProjectControlConversationRequest request, IGrainFactory grainFactory)
+    {
+        var result = await HandleCreateProjectControlConversationAsync(request, grainFactory);
+        return result.Outcome switch
+        {
+            ConversationCommandOutcome.Accepted => Results.Created(
+                $"/conversations/{result.Acceptance!.ConversationId}",
+                new CreateProjectControlConversationResponse(
+                    result.Acceptance.ConversationId, result.Acceptance.AcceptedSequence)),
+            ConversationCommandOutcome.Invalid => BadRequest(result.Reason),
+            ConversationCommandOutcome.Conflict => Conflict(result.Reason),
+            _ => throw new InvalidOperationException(
+                $"Unhandled {nameof(ConversationCommandOutcome)} '{result.Outcome}' for project-control create."),
+        };
+    }
+
+    private static async Task<IResult> SubmitProjectControlMessageAsync(
+        string conversationId, SubmitProjectControlMessageRequest request, IGrainFactory grainFactory)
+    {
+        if (!TryParseRouteId(conversationId, out var routeId))
+            return BadRequest("conversationId must be a valid, non-empty GUID.");
+        if (request.ConversationId != routeId)
+            return BadRequest("Route conversationId and request body ConversationId must agree.");
+
+        var result = await HandleSubmitProjectControlMessageAsync(request, grainFactory);
+        return result.Outcome switch
+        {
+            ConversationCommandOutcome.Accepted => AcceptedWithHeaders(
+                new SubmitProjectControlMessageResponse(
+                    result.Acceptance!.ConversationId, result.Acceptance.AcceptedSequence),
+                $"/conversations/{result.Acceptance.ConversationId}"),
+            ConversationCommandOutcome.Invalid => BadRequest(result.Reason),
+            ConversationCommandOutcome.NotFound => NotFound(),
+            ConversationCommandOutcome.Conflict => Conflict(result.Reason),
+            _ => throw new InvalidOperationException(
+                $"Unhandled {nameof(ConversationCommandOutcome)} '{result.Outcome}' for project-control message."),
         };
     }
 

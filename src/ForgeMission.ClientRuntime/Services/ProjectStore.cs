@@ -66,6 +66,81 @@ internal sealed class ProjectStore(string? projectsRoot = null)
         return new ProjectOpenResult(new ProjectRecord(Read(manifestPath, home), home), null);
     }
 
+    /// <summary>
+    /// Records the server-issued Mission Control conversation ID on an existing Project's manifest
+    /// (43.20 task 2) — the ONE place that field is ever written. Called only after the Conversation
+    /// service has accepted the create, so the durable conversation always exists before the local
+    /// record of it does.
+    ///
+    /// Idempotent and refusing rather than overwriting: the same ID is a no-op, and a DIFFERENT
+    /// non-null ID is refused outright, because a Project has exactly one control conversation and
+    /// silently repointing it would orphan a durable transcript. The write itself goes to a sibling
+    /// temporary file and is then moved over the manifest, so a crash mid-write can never leave a
+    /// half-written manifest — a reader sees either the old file or the new one.
+    /// </summary>
+    public ProjectRecord SetMissionControlConversationId(string home, Guid conversationId)
+    {
+        if (conversationId == Guid.Empty)
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                "A Mission Control conversation id is required.");
+
+        var root = ValidHome(home);
+        var manifestPath = Path.Combine(root, ManifestFileName);
+        if (!File.Exists(manifestPath))
+            throw new ProjectOperationException(ProjectOperationErrorCode.HomeNotFound,
+                $"No Forge Project manifest exists at {manifestPath}.");
+
+        var manifest = Read(manifestPath, root);
+
+        if (manifest.MissionControlConversationId is { } existing)
+        {
+            if (existing != conversationId)
+                throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                    $"{manifestPath} already names a different Mission Control conversation.");
+
+            return new ProjectRecord(manifest, root); // Same ID: already recorded, nothing to write.
+        }
+
+        var updated = manifest with { MissionControlConversationId = conversationId };
+        ReplaceManifest(manifestPath, updated);
+        return new ProjectRecord(updated, root);
+    }
+
+    // Write-then-move. File.Move with overwrite is rename(2) on Unix and MoveFileEx with
+    // MOVEFILE_REPLACE_EXISTING on Windows — File.Replace is deliberately not used, since it
+    // requires the destination to exist and is stricter cross-platform for no benefit here.
+    private static void ReplaceManifest(string manifestPath, ProjectManifest manifest)
+    {
+        var temporaryPath = manifestPath + ".tmp";
+        try
+        {
+            using (var file = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write))
+                JsonSerializer.Serialize(file, manifest, ProjectManifestJsonContext.Default.ProjectManifest);
+
+            File.Move(temporaryPath, manifestPath, overwrite: true);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            TryDelete(temporaryPath);
+            throw new ProjectOperationException(ProjectOperationErrorCode.ManifestWriteFailed,
+                $"Could not update {manifestPath}: {exception.Message}");
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Best effort: a leftover temporary file is untidy, never incorrect — the manifest
+            // itself is either the old one or the new one, and reporting the delete failure would
+            // mask the write failure that actually matters.
+        }
+    }
+
     // --- derivation (pure) ----------------------------------------------------------------------
 
     // The goal gate runs before anything else, including a title override. A supplied title says

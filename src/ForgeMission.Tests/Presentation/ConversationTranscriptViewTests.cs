@@ -145,4 +145,17 @@ public sealed class ConversationTranscriptViewTests : BunitContext
 
         Assert.Single(component.FindAll(".convo-user-bubble"));
     }
+
+    // Labelled as itself, never folded into a Janus participant.
+    [Fact]
+    public void AMissionControlMessage_IsLabelledMissionControl()
+    {
+        var view = Render<ConversationTranscriptView>(parameters => parameters.Add(
+            component => component.Entries,
+            [new ConversationEntry(ConversationEntryKind.ParticipantMessage,
+                ConversationParticipant.MissionControl, Text: "What would done look like?")]));
+
+        Assert.Equal("Mission Control", view.Find(".convo-participant-name").TextContent);
+        Assert.Contains("What would done look like?", view.Find(".convo-participant-text").TextContent);
+    }
 }

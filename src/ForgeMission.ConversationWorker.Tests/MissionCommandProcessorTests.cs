@@ -40,10 +40,10 @@ public class MissionCommandProcessorTests
         ["Implementer"] = new ExpertDefinition("Implementer", "in", "out", "prompt", Role: "agent"),
     };
 
-    private static JanusMissionContext BuildMission(IExpertRunner runner)
+    private static WorkerMissionContext BuildMission(IExpertRunner runner)
     {
         var ast = MclParser.Parse(MissionSource);
-        return new JanusMissionContext
+        return new WorkerMissionContext
         {
             Ast = ast,
             Experts = Experts,
@@ -51,6 +51,12 @@ public class MissionCommandProcessorTests
             Execution = new ExecutionConfig(),
         };
     }
+
+    // Wraps one Janus context in the named resolver the processor now takes. The MissionControl
+    // slot is the SAME context here: every test in this file exercises a Janus MissionRef, so the
+    // control slot is never resolved — a control turn is covered by its own dedicated tests, with a
+    // real MissionControl mission.
+    private static WorkerMissionResolver Resolver(WorkerMissionContext janus) => new(janus, janus);
 
     private static ConversationCommand StartCommand(Guid conversationId, Guid runId, Guid? commandId = null) => new(
         commandId ?? Guid.NewGuid(), conversationId, runId, ConversationCommandKind.StartMission, "Janus", "do the task", [], null);
@@ -91,7 +97,7 @@ public class MissionCommandProcessorTests
     public async Task FreshStartMission_NoToolCall_PublishesFactsAndEndsTerminalCompleted()
     {
         var mission = BuildMission(HappyPathRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -112,7 +118,7 @@ public class MissionCommandProcessorTests
     public async Task ToolPause_PublishesNoTerminalStatus_AndLeavesSessionWaitingForTool()
     {
         var mission = BuildMission(ToolPauseRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var command = StartCommand(conversationId, Guid.NewGuid());
@@ -141,7 +147,7 @@ public class MissionCommandProcessorTests
             return new StepEnvelope("done after tool", "pass");
         });
         var mission = BuildMission(runner);
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -198,7 +204,7 @@ public class MissionCommandProcessorTests
         });
 
         var mission = BuildMission(runner);
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -238,7 +244,7 @@ public class MissionCommandProcessorTests
     public async Task MismatchedContinuation_DoesNothing_NoExecutorCall()
     {
         var mission = BuildMission(new ThrowingExpertRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -263,7 +269,7 @@ public class MissionCommandProcessorTests
     public async Task DuplicateStartMission_WhileWaitingForTool_DoesNothing_NoExecutorCall()
     {
         var mission = BuildMission(new ThrowingExpertRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -285,7 +291,7 @@ public class MissionCommandProcessorTests
     public async Task RedeliveryWhileExecutingProvider_EmitsOneInterrupted_NoExecutorReplay()
     {
         var mission = BuildMission(new ThrowingExpertRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -306,7 +312,7 @@ public class MissionCommandProcessorTests
     public async Task RedeliveryWhileTerminal_IsPlainNoOp()
     {
         var mission = BuildMission(new ThrowingExpertRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -325,7 +331,7 @@ public class MissionCommandProcessorTests
     public async Task PendingProgressFromPriorCrash_ResendsBeforeAnythingElse_ThenClears()
     {
         var mission = BuildMission(new ThrowingExpertRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -359,7 +365,7 @@ public class MissionCommandProcessorTests
     public async Task ToolRequested_PersistsWaitingForToolStateBeforeThePublisherEverSeesTheFact()
     {
         var mission = BuildMission(ToolPauseRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var conversationId = Guid.NewGuid();
         var command = StartCommand(conversationId, Guid.NewGuid());
 
@@ -399,7 +405,7 @@ public class MissionCommandProcessorTests
         // before Implementer ever runs, so the ordinal in effect when Implementer's tool request
         // fires is well past 0.
         var mission = BuildMission(ToolPauseRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var command = StartCommand(conversationId, Guid.NewGuid());
@@ -435,7 +441,7 @@ public class MissionCommandProcessorTests
             _ => throw new InvalidOperationException($"Unexpected expert '{expert.Name}'."),
         });
         var mission = BuildMission(runner);
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var command = StartCommand(conversationId, Guid.NewGuid());
@@ -468,7 +474,7 @@ public class MissionCommandProcessorTests
             throw new InvalidOperationException($"Unexpected expert '{expert.Name}'.");
         });
         var mission = BuildMission(runner);
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var command = StartCommand(conversationId, Guid.NewGuid());
@@ -487,7 +493,7 @@ public class MissionCommandProcessorTests
     public async Task WrongMissionRef_FailsVisibly_NoExecutorCall()
     {
         var mission = BuildMission(new ThrowingExpertRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var (published, sessions) = NewSinks();
         var conversationId = Guid.NewGuid();
         var runId = Guid.NewGuid();
@@ -511,7 +517,7 @@ public class MissionCommandProcessorTests
     public async Task PublishFailureAfterPendingPersisted_PropagatesUnsettled_RetainsOriginalPendingFact_NoSyntheticOverwrite()
     {
         var mission = BuildMission(HappyPathRunner());
-        var processor = new MissionCommandProcessor(mission);
+        var processor = new MissionCommandProcessor(Resolver(mission));
         var conversationId = Guid.NewGuid();
         var command = StartCommand(conversationId, Guid.NewGuid());
 

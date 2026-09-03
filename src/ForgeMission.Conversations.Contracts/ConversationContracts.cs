@@ -9,14 +9,31 @@ namespace ForgeMission.Conversations.Contracts;
 // AOT-safe and free of any Host/Orleans/Azure/provider dependency. See
 // docs/design/durable-conversations.md and docs/phases/phase-43.16-janus-desktop-local-poc.md.
 
-/// <summary>Who produced a <see cref="ConversationEvent"/> or <see cref="ConversationProgress"/> fact.</summary>
+/// <summary>Who produced a <see cref="ConversationEvent"/> or <see cref="ConversationProgress"/> fact.
+/// <see cref="MissionControl"/> is appended last so no existing member's ordinal moves.</summary>
 public enum ConversationParticipant
 {
-    [JsonStringEnumMemberName("user")]        User,
-    [JsonStringEnumMemberName("proposer")]    Proposer,
-    [JsonStringEnumMemberName("approver")]    Approver,
-    [JsonStringEnumMemberName("implementer")] Implementer,
-    [JsonStringEnumMemberName("forge")]       Forge,
+    [JsonStringEnumMemberName("user")]           User,
+    [JsonStringEnumMemberName("proposer")]       Proposer,
+    [JsonStringEnumMemberName("approver")]       Approver,
+    [JsonStringEnumMemberName("implementer")]    Implementer,
+    [JsonStringEnumMemberName("forge")]          Forge,
+    // The zero-tool project-refinement mission's own voice (43.20 task 2). A control response is
+    // labelled as itself rather than mislabelled as a Janus participant.
+    [JsonStringEnumMemberName("missionControl")] MissionControl,
+}
+
+/// <summary>
+/// What a conversation is for. <see cref="MissionRun"/> MUST stay ordinal 0: every
+/// <c>ConversationCheckpoint</c> persisted before this field existed deserializes it as
+/// <c>default</c>, and that default has to keep meaning "the existing Janus run conversation".
+/// Reversing these two would make every historical conversation reactivate as
+/// <see cref="ProjectControl"/> and have its next progress fact rejected by the control guard.
+/// </summary>
+public enum ConversationPurpose
+{
+    [JsonStringEnumMemberName("missionRun")]     MissionRun,
+    [JsonStringEnumMemberName("projectControl")] ProjectControl,
 }
 
 /// <summary>The semantic kind of one durable conversation fact. Each kind has exactly one
@@ -130,6 +147,10 @@ public sealed record ConversationEvent(
 
 /// <summary>Compact operational checkpoint for a conversation — the projection returned by
 /// <c>GET /conversations/{conversationId}</c>. The event log, not this snapshot, is canonical.</summary>
+/// <param name="Purpose">Which kind of conversation this is. <see cref="Status"/>,
+/// <see cref="ActiveRunId"/> and <see cref="ExpectedToolRequestId"/> describe a run lifecycle and
+/// are therefore not meaningful for <see cref="ConversationPurpose.ProjectControl"/>, where they
+/// stay at their initial values by construction.</param>
 public sealed record ConversationSnapshot(
     Guid ConversationId,
     string MissionRef,
@@ -137,7 +158,8 @@ public sealed record ConversationSnapshot(
     long LastSequence,
     ConversationRunStatus Status,
     Guid? ExpectedToolRequestId,
-    DateTimeOffset UpdatedAtUtc);
+    DateTimeOffset UpdatedAtUtc,
+    ConversationPurpose Purpose = ConversationPurpose.MissionRun);
 
 /// <summary>
 /// Command queue body sent from the Conversation service to the Worker over the
@@ -146,15 +168,25 @@ public sealed record ConversationSnapshot(
 /// Carries mission, goal/continuation, and capability declarations so the Worker needs no
 /// conversation-store read. Contains neither credentials nor local workspace paths.
 /// </summary>
+/// <param name="RunId">Non-null for every <see cref="ConversationPurpose.MissionRun"/> command;
+/// null for a <see cref="ConversationPurpose.ProjectControl"/> command, which has no run.</param>
+/// <param name="ProjectGoal">The Project's pinned goal, supplied to the zero-tool MissionControl
+/// mission on every control turn. <b>Set only by <c>ConversationGrain</c></b>, read from
+/// <c>ConversationCheckpoint.ProjectGoal</c> — never caller input: no turn-submitting request or
+/// grain-interface DTO has a field able to carry it, and a MissionRun command presenting a
+/// non-null value is rejected as invalid. Null for every MissionRun command, so under this
+/// context's <c>WhenWritingNull</c> policy a Janus command's JSON is byte-identical to before
+/// this field existed.</param>
 public sealed record ConversationCommand(
     Guid CommandId,
     Guid ConversationId,
-    Guid RunId,
+    Guid? RunId,
     ConversationCommandKind Kind,
     string MissionRef,
     string Goal,
     ConversationCapabilityDeclaration[] Capabilities,
-    ConversationToolResult? ToolResult);
+    ConversationToolResult? ToolResult,
+    string? ProjectGoal = null);
 
 /// <summary>
 /// Progress queue body sent from the Worker to the Conversation service over the
@@ -163,10 +195,12 @@ public sealed record ConversationCommand(
 /// Deliberately has no sequence — the Conversation service assigns it when converting this fact
 /// into the canonical <see cref="ConversationEvent"/> through the grain.
 /// </summary>
+/// <param name="RunId">Non-null for a <see cref="ConversationPurpose.MissionRun"/> fact; null for
+/// a <see cref="ConversationPurpose.ProjectControl"/> fact, which belongs to no run.</param>
 public sealed record ConversationProgress(
     Guid EventId,
     Guid ConversationId,
-    Guid RunId,
+    Guid? RunId,
     ConversationEventKind Kind,
     ConversationParticipant Participant,
     int? Attempt,
@@ -239,3 +273,45 @@ public sealed record GetConversationResponse(ConversationSnapshot Snapshot);
 /// <summary><c>GET /conversations/{conversationId}/events?after={sequence}</c> request. Projected
 /// as an SSE stream by the HTTP adapter; the message itself carries no transport framing.</summary>
 public sealed record ReadConversationEventsRequest(Guid ConversationId, long After);
+
+// --- Project-control messages (43.20 task 2) ------------------------------------------------
+// A Project's Mission Control conversation is a zero-tool refinement conversation, deliberately
+// NOT the Janus start/follow-up path: StartConversationRequest pins a MissionRef and capability
+// declarations and returns a RunId, and every SubmitConversationCommandRequest becomes a new
+// StartMission command. Reusing either for ordinary Project refinement would silently start Janus
+// work and permit the wrong capability shape. These two messages therefore have no field able to
+// carry a capability, local path, tool, selected launch mission, credential, or run ID — a caller
+// cannot supply one even by hand-crafting the request body.
+
+/// <summary><c>POST /conversations/project-control</c> request. <see cref="CommandId"/> is derived
+/// deterministically by Client Runtime from the stable manifest project ID through
+/// <see cref="ConversationDeterministicIds.ProjectControlCreate"/>, so a retry after Host
+/// acceptance but before the manifest write returns the same server-issued conversation ID.
+/// This is the ONLY message that carries <see cref="ProjectGoal"/>; it is pinned on acceptance and
+/// thereafter sourced solely from the Conversation checkpoint.</summary>
+public sealed record CreateProjectControlConversationRequest(
+    Guid ProjectId,
+    Guid CommandId,
+    string ProjectGoal);
+
+/// <summary><c>POST /conversations/project-control</c> response. A newly created, still-empty
+/// control conversation returns <see cref="AcceptedSequence"/> <c>0</c> — create appends no
+/// event.</summary>
+public sealed record CreateProjectControlConversationResponse(
+    Guid ConversationId,
+    long AcceptedSequence);
+
+/// <summary><c>POST /conversations/{conversationId}/control-messages</c> request. <see cref="CommandId"/>
+/// is generated once per user submission and reused only for its retry; a duplicate carrying
+/// different <see cref="Text"/> is a conflict. Deliberately has no project-goal field: the goal
+/// reaches the mission from pinned checkpoint state, never from the submitter.</summary>
+public sealed record SubmitProjectControlMessageRequest(
+    Guid ConversationId,
+    Guid CommandId,
+    string Text);
+
+/// <summary><c>POST /conversations/{conversationId}/control-messages</c> response
+/// (<c>202 Accepted</c>) — the sequence of the single appended <c>UserMessage</c>.</summary>
+public sealed record SubmitProjectControlMessageResponse(
+    Guid ConversationId,
+    long AcceptedSequence);
