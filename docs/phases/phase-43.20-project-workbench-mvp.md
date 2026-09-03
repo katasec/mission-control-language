@@ -29,8 +29,8 @@ Read this spoke first. Then read only:
    Conversations](../design/durable-conversations.md), [Security
    Architecture](../design/security-architecture.md), and [Engineering
    Philosophy](../design/engineering-philosophy.md);
-2. `src/ForgeMission.ClientRuntime/Services/DefaultWorkspace.cs`,
-   `Transport/ClientRuntimeSessionStore.cs`, and
+2. `src/ForgeMission.ClientRuntime/Services/ProjectStore.cs`,
+   `ProjectManifest.cs`, `Transport/ClientRuntimeSessionStore.cs`, and
    `src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor` for the anonymous-workspace
    behaviour this replaces;
 3. `src/ForgeMission.Conversations.Contracts/ConversationContracts.cs`,
