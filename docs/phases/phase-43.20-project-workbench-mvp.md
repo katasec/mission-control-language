@@ -689,23 +689,53 @@ owns its first write-back.
 
 ### Task 2 — Durable Project Mission Control
 
-Make the Project's enduring human ↔ Forge conversation a first-class Conversation contract.
+Bind the existing durable Conversation service to a Project-scoped, zero-tool Mission Control
+conversation. This task does **not** build another transcript store, SSE protocol, replay mechanism,
+or conversation persistence layer.
+
+**Existing durable substrate — reuse, do not replace.**
+
+| Existing unit | Already owns | Task 2 boundary |
+|---|---|---|
+| `ForgeMission.ConversationHost.Persistence.AzureTableConversationEventStore` | Canonical ordered event persistence, event-ID idempotency, and `ReadAfterAsync` replay. | Reuse it through the Conversation grain; do not add a Project event store or a Presentation transcript cache. |
+| `ConversationGrain` / `ConversationSseWriter` | Durable append, snapshot, replay-then-live SSE ordering, and reconnect-safe event delivery. | Add the control-conversation acceptance/projection path through these owners; do not create a parallel event store or tail implementation. |
+| `ConversationHostClient` | Typed Client Runtime HTTP/SSE projection using `ConversationContractsJsonContext`. | Extend this one client with the named Project Control messages; Presentation continues to call Client Runtime only. |
+| `ConversationRuntimeSession` | In-process Janus start/follow-up choice, retained ID, tail cursor/event-ID dedupe, and local tool hand-off. | Reuse or narrowly factor its replay/tail mechanics for Project Control. A Project Control session has no capability declaration or tool hand-off. |
+| `ProjectManifest.MissionControlConversationId` | The local place for the server-issued control-conversation ID. Task 1 creates it as `null`. | Task 2 owns its first successful write and uses it to reopen the same durable conversation after Client Runtime restart. |
+
+The current Janus contract is deliberately **not** the control contract:
+`StartConversationRequest` pins `MissionRef` and capability declarations and returns a `RunId`; every
+`SubmitConversationCommandRequest` becomes a new `StartMission` command in `ConversationGrain`.
+Reusing either path for ordinary Project refinement would silently start Janus work and permit the
+wrong capability shape. Preserve that Janus behaviour for the existing durable-chat flow.
 
 - Add `ProjectControl` conversation purpose and named create/submit messages to
   `ForgeMission.Conversations.Contracts`; control messages/events have no `run_id` and cannot
   carry a local path or capability declaration.
 - ConversationHost creates the control conversation idempotently and persists only canonical
-  control events. Client Runtime writes the server-issued ID back to the manifest after acceptance.
+  control events through the existing grain/event store. The create command ID is stable for one
+  Project, so a retry after Host acceptance but before manifest write returns the same server-issued
+  conversation ID. Client Runtime writes that ID back to the manifest only after acceptance.
 - Replace `MissionCommandProcessor`'s hard-coded Janus dispatch with a named mission resolver.
   Its built-in zero-tool `MissionControl` mission serves refinement turns; Janus remains a selected
   execution mission and is never started by a control message.
-- Extend Client Runtime's relay/session model so reopening a Project replays and follows its
-  Mission Control event stream without creating a run.
+- Extend Client Runtime's relay/session model so an existing manifest ID starts from the existing
+  durable replay/tail path without issuing a create or submit request; a missing ID takes the
+  idempotent create path. Reopening a Project therefore replays and follows Mission Control without
+  creating a run.
+
+**Do not infer further scope:** no Project database, direct Presentation-to-Conversation call,
+new local transcript persistence, generic conversation browser, tool declaration, local-path
+transport, Janus run, or change to the existing Janus conversation flow. Before implementation
+handoff, the Task 2 plan must name the exact new contract types and prove their source-generated
+JSON registration; it must also show the existing units above that are being reused rather than
+copied.
 
 **Done when:** reopening a Project restores its same durable Mission Control conversation; a
 control turn produces durable Forge/user messages but no Run record or local tool request; retries
-are idempotent; Contracts retain no Host/Orleans/Azure/provider dependency; fresh-Host replay,
-contract round-trip, and full-suite tests pass.
+are idempotent even across the Host-accepted/manifest-write boundary; Contracts retain no
+Host/Orleans/Azure/provider dependency; fresh-Host replay, contract round-trip, existing Janus
+regression, and full-suite tests pass.
 
 ### Task 3 — Project Explorer and resolved dependencies
 
