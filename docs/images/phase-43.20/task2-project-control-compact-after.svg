@@ -1,0 +1,23 @@
+<svg viewBox="0 0 800 568" width="800" height="568" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Task 2 Project Control — compact after</title>
+<desc>The same Mission Control transcript and one-action composer at the 800 by 568 compact target viewport.</desc>
+<rect width="800" height="568" fill="#f7faff"/>
+<rect width="800" height="64" fill="#f6f8fd"/>
+<line x2="800" y1="64" y2="64" stroke="#c9d5e7"/>
+<text x="28" y="42" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#0468ed">Forge</text>
+<text x="112" y="40" font-family="system-ui, sans-serif" font-size="17" fill="#1d2c47">AI Workbench</text>
+<text x="28" y="91" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#1d2c47">Release planner</text>
+<rect x="28" y="136" width="420" height="73" rx="10" fill="#ffffff" stroke="#d5dae5"/>
+<text x="46" y="164" font-family="system-ui, sans-serif" font-size="12" fill="#5b6b83">You</text>
+<text x="46" y="190" font-family="system-ui, sans-serif" font-size="16" fill="#1d2c47">Help me shape the first release.</text>
+<rect x="28" y="228" width="606" height="102" rx="10" fill="#ffffff" stroke="#d5dae5"/>
+<text x="46" y="256" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#1d2c47">Mission Control</text>
+<text x="46" y="282" font-family="system-ui, sans-serif" font-size="16" fill="#1d2c47">Let’s clarify the outcome and</text>
+<text x="46" y="305" font-family="system-ui, sans-serif" font-size="16" fill="#1d2c47">smallest useful milestone.</text>
+<rect y="470" width="800" height="98" fill="#f6f8fd"/>
+<line x2="800" y1="470" y2="470" stroke="#c9d5e7"/>
+<rect x="24" y="504" width="606" height="40" rx="10" fill="#ffffff" stroke="#c1ccdc"/>
+<text x="40" y="530" font-family="system-ui, sans-serif" font-size="14" fill="#62748c">Describe what you want to refine</text>
+<rect x="646" y="504" width="104" height="40" rx="20" fill="#1d2c47"/>
+<text x="698" y="530" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Send</text>
+</svg>
