@@ -847,6 +847,82 @@ empty Project, local mission/expert assets, a valid pinned OCI dependency, and o
 document. Negative tests cover a missing/invalid lock file, a path escaping the Project home,
 an unknown entry, binary/oversized document content, and a stale/replaced session.
 
+**Resolved source identity.** The existing `LockFileExpert { source, path, hash }` makes the
+meaning of an entry conditional on `source`; `path` is either a Project-relative file or a local
+cache location. That is not a safe durable format. Lock file v2 replaces it with one canonical
+`source` URI and one distinct `contentDigest` for every expert:
+
+```yaml
+version: 2
+experts:
+  Answerer:
+    source: project:///experts/Answerer/expert.md
+    contentDigest: sha256:fa4d2a3f516ad0bab6ad98af5ff0e77ab16839a6ab3a62db785fe961ffa4c5cb
+
+  Architect:
+    source: oci://ghcr.io/acme/architect@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    contentDigest: sha256:4d2a3f516ad0bab6ad98af5ff0e77ab16839a6ab3a62db785fe961ffa4c5cb
+```
+
+`project:///` has no authority and its URI path, after the one leading slash, is a normalized
+POSIX Project-relative path: it must be non-empty and contain neither `..` nor a platform root.
+`oci://` has a registry authority, a non-empty repository path, and exactly one full lower-case
+`@sha256:<64-hex>` manifest digest. Thus the source alone is the stable, portable identity in both
+cases; its syntax—not a nullable sibling property—selects the resolver. `contentDigest` is always
+the full SHA-256 of the resolved `expert.md`, distinct from the manifest digest embedded in an OCI
+source. The Explorer renders the OCI source (without the scheme only as display formatting) and a
+separate textual **read-only** label. It never derives identity from a cache path, calls a registry,
+or treats the content digest as a manifest digest.
+
+Neither source stores a machine-local materialization path. Project sources resolve only from the
+Project home. OCI sources materialize only at the deterministic cache location
+`~/.forge/experts/<registry>/<repository>/sha256/<hex>/expert.md`, derived from the parsed source
+URI by `ForgeCache`; this derived path is never serialized or returned to Presentation. A malformed
+source, a content-digest mismatch, or a source whose derived materialization is absent fails the
+whole projection with named `InvalidDependency`; it is not guessed or partly rendered.
+
+The existing OCI client has the manifest in hand but does not expose the registry's
+`Docker-Content-Digest` response header. Before the MCL lock writer is changed, its sibling
+`oci-client-dotnet` repository must add an AOT-safe pull result that returns the expert text plus
+that header-derived manifest digest; the existing string-returning `PullExpertAsync` remains a
+compatibility wrapper. `forge init` then writes `oci://<registry>/<repository>@<manifest-digest>`
+and the content digest, and materializes the cache at the deterministic path above. This is a
+prerequisite data-source correction, not an Explorer registry feature: it makes no extra network
+call, pull, catalog, or update and the Explorer only reads the recorded local lock.
+
+`LockFileIO` reads v1 only to migrate a local `source: experts` + relative `path` + `hash` into the
+v2 Project URI/content-digest representation in memory; the next `forge init` writes v2. A v1 OCI
+entry cannot be migrated honestly because it lacks a manifest digest, so it fails with a named
+re-initialization diagnostic and is never reinterpreted from its cache path. All newly written
+locks are v2. This is the explicit compatibility boundary; do not allow a mixed v1/v2 record shape.
+
+The exact additive Task 3 transport types are:
+
+```text
+GetProjectWorkbenchRequest { sessionId }
+GetProjectWorkbenchResponse { workbench?, error? }
+ProjectWorkbenchProjection { project, assets[], context[], runs[] }
+ProjectExplorerEntry { entryId, displayName, kind, isReadOnly, source? }
+OpenProjectDocumentRequest { sessionId, entryId }
+OpenProjectDocumentResponse { document?, error? }
+ProjectDocument { title, contentType, text }
+```
+
+Exactly one payload is present in each response. A missing/replaced session remains transport
+`NotFound`; all expected manifest/asset/lock/document failures use `ProjectOperationError`. The
+entry kind is one of `Mission`, `Expert`, `LockFile`, `SourceRoot`, `File`, `Artifact`, `Run`, or
+`OciDependency`; only a returned `Mission`, `Expert`, `LockFile`, or `OciDependency` entry can
+open a document. Local entries remain home-relative. An OCI document must be the one cache file
+derived from a structurally valid OCI source URI and must resolve under `ForgeCache.ExpertsRoot`;
+no serialized absolute/home-relative cache path is accepted.
+
+`ProjectOperationErrorCode` gains `InvalidDependency` (malformed source URI, content-digest
+mismatch, or unsafe derived materialization), `DocumentNotFound` (unknown/stale entry), and
+`InvalidDocument` (binary, invalid UTF-8, or more than 1 MiB). Documents are returned as UTF-8
+`text/plain`; the Presentation does not infer a richer renderer. The Client Runtime performs the
+byte-size and UTF-8 validation before text allocation, then exposes only the typed document
+result—never a path.
+
 **Task 3 UI contract.** The binding large reference is
 [`mission-project-flow-03-mission-control.png`](../brainstorm/images/mission-project-flow-03-mission-control.png)
 at 1536×1024. This task owns only the three-entry dark rail in its shown order (Explorer, Mission
