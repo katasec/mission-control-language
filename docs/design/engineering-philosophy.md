@@ -58,6 +58,26 @@ An implementation task is not build-ready if a material smell remains unexplaine
 to implementation. The detailed code-reading rules live in [Code Style](code-style.md); tiering,
 data ownership, and identity rules live in [Security Architecture](security-architecture.md).
 
+## Default-path acceptance gate
+
+**Mandatory for every task that changes user-visible, runtime, integration, or deployment
+behaviour.** The default user configuration is part of the product contract. A test double,
+environment override, alternate endpoint, or manually substituted dependency may isolate a lower
+test layer; it cannot demonstrate that the product a person actually launches works.
+
+| Required answer | Passing evidence |
+|---|---|
+| What exact default path does the person use? | The source-controlled artifact, configuration with relevant overrides absent, normal dependency route, and starting data state are named before implementation. |
+| Was that exact path exercised end to end? | A named observation records the published artifact performing the task action against its normal dependency and the resulting durable/user-visible outcome. |
+| Did any lower-layer test replace the default? | It is labelled as a unit/component/controlled test and is not cited as completion evidence. |
+
+A default-path failure rejects the task even when tests, visual captures, or an overridden setup
+pass. Restore or fix the real default dependency/path first; do not close the work by routing
+around it. A temporary exception requires the Type-2 scope, reason, reversal path, and removal
+condition in the active spoke, and still cannot claim normal-path acceptance. The canonical facts,
+record shape, and Desktop baseline are in
+[Default-Path Acceptance](default-path-acceptance.md).
+
 ## Desktop Design and Implementation Quality Gate
 
 **Mandatory for every Desktop, native-host, WebView, or desktop-lifecycle design, implementation

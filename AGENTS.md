@@ -18,7 +18,10 @@ for the grammar and syntax decisions.
 
 ## How to orient at the start of a session
 
-1. Read this file.
+1. Read this file and [Default-Path Acceptance](docs/design/default-path-acceptance.md). It is the
+   repository-wide definition of the supported user defaults and the evidence required to prove
+   them. A documentation-only task records N/A; every other task first determines whether this
+   gate applies before taking action.
 2. Read [docs/plan.md](docs/plan.md) — the active-work hub. It's a **light table of contents**:
    links + a one-line status per active phase, nothing more. It answers only "what is next?".
    Read [docs/backlog.md](docs/backlog.md) or [docs/plan_completed.md](docs/plan_completed.md)
@@ -187,6 +190,13 @@ For every user-visible Desktop or ForgeUI change, read
 [UI Design System](docs/design/ui-design-system.md) before design or implementation. They govern
 the binding visual reference, responsive evidence, and theme/token ownership; the task assignment
 must name them explicitly rather than leaving their relevance to inference.
+
+For every task that changes user-visible, runtime, integration, or deployment behaviour, the
+already-required [Default-Path Acceptance](docs/design/default-path-acceptance.md) gate applies.
+The supported default configuration is a product fact, not a convenient test option: an overridden
+URL, stub, injected setting, or hand-prepared dependency may prove a lower test layer but can never
+close the task. The plan and completion evidence must name and exercise the applicable default path;
+a missing default definition is a design gap, not permission to substitute one.
 
 ### Architecture-security gate
 

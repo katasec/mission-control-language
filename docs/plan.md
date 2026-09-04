@@ -28,4 +28,5 @@
 | [Security Architecture](design/security-architecture.md) | Mandatory design gate. |
 | [Engineering Philosophy](design/engineering-philosophy.md) | Mandatory design and implementation gate. |
 | [Desktop Interaction Principles](design/desktop-interaction-principles.md) | Binding visual-reference acceptance for Desktop and ForgeUI changes. |
+| [Default-Path Acceptance](design/default-path-acceptance.md) | Mandatory real-user configuration and end-to-end acceptance gate. |
 | [Deploy Runbook](design/deploy.md) | Operational hosted-app deployment reference. |
