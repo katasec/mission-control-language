@@ -249,13 +249,8 @@ the exact viewport every state above was verified at. What is still missing is t
 rendered *inside* that WebView: reaching it needs a Project to be opened, the packaged window
 exposes no automation protocol (not CDP-attachable), and process-targeted `CGEvent` input had no
 effect. The remaining gap is three operator clicks — open an existing folder, paste a Project path,
-Open — after which the window capture can be taken and parity recorded. The Photino window is not CDP-attachable (a
-recorded Desktop gotcha), and the only remaining route was a full-screen capture, which would have
-captured the operator's own screen contents; that attempt was stopped rather than repeated. The
-packaged app was launched with zero arguments and started its Host process, but its rendered layout
-was not inspected. The measured default usable viewport is unchanged from 43.20 Task 1 at
-**800×568**, and every required state above was verified in the browser at exactly that viewport.
-Packaged parity remains owed, alongside the post-merge default-path observation.
+Open — after which the window capture can be taken and parity recorded. Packaged parity remains
+owed, alongside the post-merge default-path observation.
 
 **Done when:** browser and packaged Desktop show Janus visibly preselected, expose only Janus and Naive, persist deliberate selection, and submit both through the same named run action; both runs visibly have zero tool activity; TUI-equivalent contract tests pass and no Presentation code references provider, model, expert, or ProjectControl endpoint. After the combined replacement PR merges, the clean-main Kind rebuild plus zero-argument packaged Desktop prove default Janus and explicit Naive runs before the correction is marked complete or release-ready.
 
