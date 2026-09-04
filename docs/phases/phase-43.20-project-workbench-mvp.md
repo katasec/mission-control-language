@@ -384,6 +384,11 @@ sampled value, carried back into the SVG references so they stay binding.
 | `--ink` | `#0f6eeb` | S | solid action — the same blue family as `--accent` |
 | `--ink-hover` | `#0f56d2` | S | |
 | `--ink-contrast` | `#ffffff` | S | |
+| `--wb-rail-surface` | `#06284c` | S | persistent dark rail |
+| `--wb-rail-surface-selected` | `#0c4475` | S | selected rail destination |
+| `--wb-rail-text` | `#ffffff` | S | selected rail label/glyph |
+| `--wb-rail-text-muted` | `#b9d6f5` | S | idle rail label/glyph |
+| `--wb-rail-marker` | `#32d9f2` | S | selected marker and rail focus outline |
 | `--success` | `#4d7c0f` | N | |
 | `--success-bg` | `#f2fbe6` | N | |
 | `--success-border` | `#84cc16` | N | the locked language's lime |
@@ -422,7 +427,8 @@ adding them changes nothing that exists, and the Workbench map overrides them as
 
 **Workbench token map — dark.** Applies to both the automatic and forced-dark selectors. Radii,
 spacing, type sizes, fonts and transition are restated identically to the light map and are not
-repeated here; every token that differs is listed.
+repeated here; every token that differs is listed. The five `--wb-rail-*` tokens also retain their
+light-map values: the binding reference requires the same distinct dark rail in both modes.
 
 | Token | Dark value | Used for |
 |---|---|---|
@@ -474,6 +480,10 @@ pairing meets its applicable AA threshold in both maps:
 | `--accent` on `--surface` | 4.72 | 5.53 |
 | `--ink-contrast` on `--ink` | 4.72 | 6.69 |
 | `--ink-contrast` on `--ink-hover` | 6.40 | 8.58 |
+| `--wb-rail-text` on `--wb-rail-surface` | 14.83 | 14.83 |
+| `--wb-rail-text-muted` on `--wb-rail-surface` | 9.89 | 9.89 |
+| `--wb-rail-text` on `--wb-rail-surface-selected` | 10.00 | 10.00 |
+| `--wb-rail-text-muted` on `--wb-rail-surface-selected` | 6.67 | 6.67 |
 | `--danger` on `--danger-bg` | 6.05 | 8.11 |
 | `--success` on `--success-bg` | 4.69 | 9.53 |
 | `--warning` on `--warning-bg` | 5.51 | 7.87 |
@@ -844,7 +854,10 @@ contracts, never by opening a manifest, lock file, or Project path itself:
 `LockFileIO.Read` and maps its already-resolved `LockFile.Experts` values. This task only displays
 those records—there is no resolver, pull, update, or catalog call. The positive tests cover an
 empty Project, local mission/expert assets, a valid pinned OCI dependency, and opening an allowed
-document. Negative tests cover a missing/invalid lock file, a path escaping the Project home,
+document. `mcl.lock` is optional: its absence means the Project has no dependency evidence and
+renders that section empty. A declared `LockFile` asset that is missing, malformed, or unsafe is a
+named Runtime failure, not a partial list. Negative tests cover a declared-but-missing/invalid lock
+file, a path escaping the Project home,
 an unknown entry, binary/oversized document content, and a stale/replaced session.
 
 **Resolved source identity.** The existing `LockFileExpert { source, path, hash }` makes the
@@ -885,18 +898,24 @@ The existing OCI client has the manifest in hand but does not expose the registr
 `Docker-Content-Digest` response header. Before the MCL lock writer is changed, its sibling
 `oci-client-dotnet` repository must add `PulledExpert { Content, ManifestDigest }` and
 `PullExpertWithDigestAsync(registry, name, reference) -> PulledExpert`; it obtains the header from
-the same manifest response before pulling the expert layer. The existing string-returning
+the same manifest response before pulling the expert layer. If the registry omits that optional
+header, it computes the full lower-case SHA-256 from those exact manifest-response bytes; it never
+issues a second manifest request or substitutes a tag. The existing string-returning
 `PullExpertAsync` remains a compatibility wrapper over this method. `forge init` then writes
 `oci://<registry>/<repository>@<manifest-digest>` and the content digest, and materializes the cache
-at the deterministic path above. This is a prerequisite data-source correction, not an Explorer
-registry feature: it makes no extra network call, pull, catalog, or update and the Explorer only
-reads the recorded local lock.
+at the deterministic path above. Resolving an OCI tag intentionally uses the normal registry route
+on every `forge init`, even when a prior materialization exists: a tag cannot honestly become an
+immutable source without its current manifest. It is not an offline cache-success path. This is a
+prerequisite data-source correction, not an Explorer registry feature: **Explorer** makes no
+network call, pull, catalog, or update and only reads the recorded local lock.
 
 `LockFileIO` reads v1 only to migrate a local `source: experts` + relative `path` + `hash` into the
 v2 Project URI/content-digest representation in memory; the next `forge init` writes v2. A v1 OCI
 entry cannot be migrated honestly because it lacks a manifest digest, so it fails with a named
 re-initialization diagnostic and is never reinterpreted from its cache path. All newly written
-locks are v2. This is the explicit compatibility boundary; do not allow a mixed v1/v2 record shape.
+locks are v2. As this repository migration, every tracked lock is regenerated to v2; v1-local
+coverage remains in dedicated test fixtures, and no tracked v1 OCI lock remains for the reader to
+reject. This is the explicit compatibility boundary; do not allow a mixed v1/v2 record shape.
 
 The exact additive Task 3 transport types are:
 
@@ -928,11 +947,13 @@ result—never a path.
 **Task 3 default-path acceptance.** Source-lock evidence uses the published `forge` binary installed
 by `make install`, invoked as `forge init` (no mission argument and no `--refresh`) from a dedicated
 disposable directory containing `mission.mcl` and its normal `forge.toml`. The test manifest names
-one public `ghcr.io/katasec` expert by tag, so normal anonymous OCI bearer negotiation—not an
-injected registry URL, manual cache placement, `FORGE_REGISTRY_TOKEN`, or pre-written lock—resolves
-it. The observed PASS is a newly written v2 `mcl.lock` whose OCI source is the registry/repository
-plus the observed immutable manifest digest and whose content digest matches the resolved cached
-expert. The Desktop portion separately uses the published zero-argument Desktop with its normal
+one public `ghcr.io/katasec` expert by tag. Normal OCI authentication is the machine's existing
+stored registry credential when present, otherwise anonymous bearer negotiation—not an injected
+registry URL, manual cache placement, `FORGE_REGISTRY_TOKEN`, or pre-written lock. The acceptance
+record names which normal route was observed. The observed PASS is a newly written v2 `mcl.lock`
+whose OCI source is the registry/repository plus the observed immutable manifest digest and whose
+content digest matches the resolved cached expert. The Desktop portion separately uses the
+published zero-argument Desktop with its normal
 Conversation Runtime route, an explicitly new disposable Project, and no endpoint overrides; its
 PASS is the packaged workbench opening Mission Control by default, then accurately rendering that
 Project's v2 local/OCI source evidence. Unit fakes, hand-authored locks, and test registries are
@@ -968,13 +989,23 @@ pixel geometry, clipping, or a separate small-screen imitation of the large view
 | Document | Selecting a projection entry calls only `OpenProjectDocumentRequest`. Its ordinary document header has an accessible **Back to Explorer** action; the body uses a contained scroll area/wrapping strategy for long lines and exposes no path, raw OCI reference input, or direct local-file access. Named unavailable/invalid/oversized/stale-entry failures replace the document body with the Runtime's error. |
 
 The Workbench named theme remains the selector and owns all light/dark semantic colours, geometry,
-type, radii, and spacing. The rail uses `--surface-sunken` / `--text` / `--accent`; the selected
-marker and focus use `--accent` / `--focus-ring`; documents use `--bg`, `--surface`, `--border`,
-`--text`, and `--text-muted`; read-only dependency evidence uses `--surface-active` and
-`--text-muted`. These are existing Workbench-theme semantic tokens (the reference is derived from
-that theme), not sampled component-local values. Their paired foreground/background combinations
-must pass in both named colour modes. Rail/document controls require keyboard reachability, visible
-focus, labels, and text alternatives for icons.
+type, radii, and spacing. The rail is a distinct dark surface in both named colour modes, using
+the Workbench-theme rail tokens below—not the document `--surface-sunken`/`--accent` tokens:
+`--wb-rail-surface: #06284c`, `--wb-rail-surface-selected: #0c4475`,
+`--wb-rail-text: #ffffff`, `--wb-rail-text-muted: #b9d6f5`, and
+`--wb-rail-marker: #32d9f2`. All five are sampled from the binding compact references and hold
+their values in both modes; the marker is also the rail's visible focus outline. Their text-bearing
+pair contrasts are 14.83 (`rail-text`/surface), 9.89 (`rail-text-muted`/surface), 10.00
+(`rail-text`/selected), and 6.67 (`rail-text-muted`/selected). Documents use `--bg`, `--surface`,
+`--border`, `--text`, and `--text-muted`; read-only dependency evidence uses `--surface-active` and
+`--text-muted`. Components only consume these theme tokens—no component-local literals. Rail/document
+controls require keyboard reachability, visible focus, labels, and text alternatives for icons.
+
+**Open-Project shell disposition.** The verified Task 1 launcher header remains unchanged while no
+Project is open. Once a Project opens, the persistent rail owns the Forge wordmark and the content
+region owns its own title/subtitle header; the visible absolute Project-home line is removed. The
+local `ProjectSummary.Home` contract remains unchanged and unrendered. This makes the new shell
+match the binding Task 3 frames and preserves the rule that the workbench exposes no local path.
 
 **Interaction gate — PASS.** Cooper: the persistent rail serves the present Project-navigation
 goal without exposing a generic layout framework. Rams: three destinations, no duplicate Runs or
