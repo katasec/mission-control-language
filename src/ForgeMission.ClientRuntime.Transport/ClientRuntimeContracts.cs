@@ -185,11 +185,15 @@ public sealed record StartProjectMissionRunRequest(string SessionId, Guid Comman
 
 /// <summary>Exactly one of <see cref="RunId"/> and <see cref="Error"/> is populated.
 /// <see cref="Mission"/> names the mission that was actually started, so a surface reports
-/// "Starting Janus…" from the durable answer rather than from its own local state.</summary>
+/// "Starting Janus…" from the durable answer rather than from its own local state — the two can
+/// differ if the selection changed between render and press. <see cref="Status"/> is the run's
+/// durable status at acceptance.</summary>
 public sealed record StartProjectMissionRunResponse(
     Guid? RunId,
     string? Mission = null,
     long AcceptedSequence = 0,
+    ForgeMission.Conversations.Contracts.ConversationRunStatus Status =
+        ForgeMission.Conversations.Contracts.ConversationRunStatus.Queued,
     ProjectOperationError? Error = null);
 
 // --- Project workbench contracts (43.20 task 3) ----------------------------------------------

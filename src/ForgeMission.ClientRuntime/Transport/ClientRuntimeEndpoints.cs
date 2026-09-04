@@ -181,11 +181,12 @@ internal static class ClientRuntimeEndpoints
                     ct);
 
                 return Results.Ok(new StartProjectMissionRunResponse(
-                    accepted.RunId, accepted.Status.ToString(), accepted.AcceptedSequence));
+                    accepted.RunId, accepted.Mission, accepted.AcceptedSequence, accepted.Status));
             }
             catch (Exception exception) when (ToMissionRunError(exception) is { } error)
             {
-                return Results.Ok(new StartProjectMissionRunResponse(null, null, 0, error));
+                return Results.Ok(new StartProjectMissionRunResponse(
+                    null, null, 0, Conversations.Contracts.ConversationRunStatus.Failed, error));
             }
         });
 

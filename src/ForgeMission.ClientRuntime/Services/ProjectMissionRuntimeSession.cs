@@ -81,7 +81,7 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
     /// what this session authorizes, Naive is offered nothing at all, so its zero-tool contract
     /// holds before any provider sees a declaration rather than only at the executor's guard.
     /// </summary>
-    public async Task<Conversations.Contracts.StartProjectMissionRunResponse> StartRunAsync(
+    public async Task<StartedMissionRun> StartRunAsync(
         Guid commandId, string input, CancellationToken ct)
     {
         var containerId = _containerId ?? throw new ProjectMissionNotOpenedException();
@@ -89,9 +89,14 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
 
         var mission = ProjectMissions.RequireSelected(ReadProject().Manifest.SelectedMission);
 
-        return await _hostClient.StartProjectMissionRunAsync(
+        var accepted = await _hostClient.StartProjectMissionRunAsync(
             new Conversations.Contracts.StartProjectMissionRunRequest(
                 containerId, commandId, mission, input, CapabilitiesFor(mission)), ct);
+
+        // The mission is returned with the acceptance rather than left for a surface to remember:
+        // the selection can change between rendering a button and pressing it, and what a person
+        // is told started must be what actually started.
+        return new StartedMissionRun(accepted.RunId, mission, accepted.AcceptedSequence, accepted.Status);
     }
 
     /// <summary>
@@ -167,6 +172,11 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
 
     public ValueTask DisposeAsync() => _tail.DisposeAsync();
 }
+
+/// <summary>One accepted child Mission Run: the Host's durable answer plus the mission it was
+/// actually started for.</summary>
+internal sealed record StartedMissionRun(
+    Guid RunId, string Mission, long AcceptedSequence, ConversationRunStatus Status);
 
 /// <summary>A run submitted before the Project's Mission container was opened for this session. A
 /// dedicated type rather than a bare <see cref="InvalidOperationException"/>, for the same reason
