@@ -1,6 +1,9 @@
 # Phase 43.21 — Mission-run-first Project invocation
 
-> **Status: design ready; implementation pending (2026-09-04).** This replaces the user-facing execution model of 43.20 Tasks 2 and 4. It does not invalidate the durable Conversation substrate or Project Explorer work.
+> **Status: Task 1 implementation review passed (2026-09-04); Task 2 is next.** The combined
+> replacement remains unmerged and has no default-path acceptance yet. This replaces the
+> user-facing execution model of 43.20 Tasks 2 and 4 without invalidating the durable Conversation
+> substrate or Project Explorer work.
 
 ## Outcome
 
@@ -98,7 +101,7 @@ This is a Type-2 operational exception only for the pre-merge image provenance c
 
 ## Tasks
 
-### Task 1 — Universal durable Project Mission Run
+### Task 1 — Universal durable Project Mission Run — implementation review passed
 
 Add manifest v2 migration, Project Mission-container creation, selection persistence, and the two contracts above. Make `ConversationSnapshot.MissionRef` nullable so a Project Mission container reports no mission; existing Mission Run snapshots remain non-null. Declare zero capabilities for every Project Mission Run in this MVP. Generalize Host/Worker dispatch so Janus and Naive both create ordinary runs with durable `run_id` events. Retain the legacy route only as temporarily unreachable-from-new-contract compatibility until Task 3; Task 2 removes the current Presentation caller. Implement Task 1 and Task 2 on one branch and submit them as the replacement PR defined above.
 
@@ -108,7 +111,11 @@ Add manifest v2 migration, Project Mission-container creation, selection persist
 
 Replace Project Control with Missions and its exact two-name picker. Use only Task 1’s Client Runtime contracts. Rename the rail entry, remove `MissionControl` wording, and show live durable activity for the selected run.
 
-**Done when:** browser and packaged Desktop show Janus visibly preselected, expose only Janus and Naive, persist deliberate selection, and submit both through the same named run action; TUI-equivalent contract tests pass and no Presentation code references provider, model, expert, or ProjectControl endpoint.
+On first open, Missions is the active Project destination and Janus is visibly selected. A submit creates one run through `StartProjectMissionRunRequest`; Presentation records only the returned in-memory `runId` to filter the existing durable tail to that one live run. It shows a clean composer again once the run becomes terminal. There is no generic Project conversation, model/expert picker, direct provider call, historical run browser, or synthetic chat transcript. Full reopened history and exact durable Trace remain later work. If a migrated Project has legacy Project Control history, show only truthful static text that it is retained; do not render a dead link or reopen it as a current mission.
+
+The new picker-state SVG references are built before the implementation review. They bind the compact and wide first-open Janus state, open two-item picker, Naive selection, invalid input, start busy, Janus live activity, Naive result, typed start failure, and legacy-history notice. Explorer and Settings retain Task 3’s visual ownership.
+
+**Done when:** browser and packaged Desktop show Janus visibly preselected, expose only Janus and Naive, persist deliberate selection, and submit both through the same named run action; both runs visibly have zero tool activity; TUI-equivalent contract tests pass and no Presentation code references provider, model, expert, or ProjectControl endpoint. After the combined replacement PR merges, the clean-main Kind rebuild plus zero-argument packaged Desktop prove default Janus and explicit Naive runs before the correction is marked complete or release-ready.
 
 ### Task 3 — Legacy route removal
 
