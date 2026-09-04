@@ -25,19 +25,17 @@ public class ExpertResolverTests
         return dir;
     }
 
-    private static LockFile BuildLockFile(string missionDir, string? hash = null)
+    private static LockFile BuildLockFile(string missionDir, string? contentDigest = null)
     {
         var expertPath = Path.Combine(missionDir, "experts", "TestExpert", "expert.md");
-        var computedHash = hash ?? LockFileIO.ComputeHash(expertPath);
         return new LockFile
         {
             Experts =
             {
                 ["TestExpert"] = new LockFileExpert
                 {
-                    Source = "experts",
-                    Path   = "experts/TestExpert/expert.md",
-                    Hash   = computedHash,
+                    Source        = "project:///experts/TestExpert/expert.md",
+                    ContentDigest = contentDigest ?? LockFileIO.ComputeContentDigest(expertPath),
                 }
             }
         };
@@ -70,7 +68,8 @@ public class ExpertResolverTests
     public void HashMismatch_ThrowsExpertLoadException()
     {
         var dir      = CreateMissionDir();
-        var lockFile = BuildLockFile(dir, hash: "0000000000000000000000000000000000000000000000000000000000000000");
+        var lockFile = BuildLockFile(dir,
+            contentDigest: "sha256:0000000000000000000000000000000000000000000000000000000000000000");
 
         var ex = Assert.Throws<ExpertLoadException>(() => ExpertResolver.ResolveAll(lockFile, dir));
 
@@ -88,9 +87,8 @@ public class ExpertResolverTests
             {
                 ["TestExpert"] = new LockFileExpert
                 {
-                    Source = "experts",
-                    Path   = "experts/TestExpert/expert.md",
-                    Hash   = "abc123",
+                    Source        = "project:///experts/TestExpert/expert.md",
+                    ContentDigest = "sha256:" + new string('a', 64),
                 }
             }
         };
@@ -111,9 +109,8 @@ public class ExpertResolverTests
             {
                 ["TestExpert"] = new LockFileExpert
                 {
-                    Source = "experts",
-                    Path   = "experts/TestExpert/expert.md",
-                    Hash   = null, // legacy — no hash recorded
+                    Source        = "project:///experts/TestExpert/expert.md",
+                    ContentDigest = null, // migrated legacy entry — no digest was ever recorded
                 }
             }
         };
@@ -137,34 +134,32 @@ public class ExpertResolverTests
         Assert.Contains("local", output);
     }
 
+    // A local experts/<Name>/expert.md always wins over whatever the lock file recorded, and the
+    // warning is what stops that from being silent. The shadowed entry here is a project source
+    // pointing elsewhere in the mission rather than a registry one: an OCI source would resolve to
+    // the developer's real ~/.forge cache, and a unit test must not write there.
     [Fact]
-    public void LocalExpert_ShadowingCacheEntry_EmitsWarning()
+    public void LocalExpert_ShadowingAnotherRecordedLocation_EmitsWarning()
     {
-        // Two dirs: "cache" holds the OCI version, "mission" holds a local override.
-        var cacheDir   = Directory.CreateTempSubdirectory("forge-cache-").FullName;
         var missionDir = Directory.CreateTempSubdirectory("forge-mission-").FullName;
 
-        // Write an expert in the cache dir
-        var cacheExpertDir = Path.Combine(cacheDir, "TestExpert");
-        Directory.CreateDirectory(cacheExpertDir);
-        var cachePath = Path.Combine(cacheExpertDir, "expert.md");
-        File.WriteAllText(cachePath, ExpertMd);
+        var vendoredDir = Path.Combine(missionDir, "vendor", "TestExpert");
+        Directory.CreateDirectory(vendoredDir);
+        var vendoredPath = Path.Combine(vendoredDir, "expert.md");
+        File.WriteAllText(vendoredPath, ExpertMd);
 
-        // Write a different local expert with the same name
         var localExpertDir = Path.Combine(missionDir, "experts", "TestExpert");
         Directory.CreateDirectory(localExpertDir);
         File.WriteAllText(Path.Combine(localExpertDir, "expert.md"), ExpertMd.Replace("test expert", "local override"));
 
-        // Lock file points to the cache path
         var lockFile = new LockFile
         {
             Experts =
             {
                 ["TestExpert"] = new LockFileExpert
                 {
-                    Source = "cache",
-                    Path   = cachePath,
-                    Hash   = LockFileIO.ComputeHash(cachePath),
+                    Source        = "project:///vendor/TestExpert/expert.md",
+                    ContentDigest = LockFileIO.ComputeContentDigest(vendoredPath),
                 }
             }
         };
@@ -175,6 +170,54 @@ public class ExpertResolverTests
         Assert.Contains("MCL010", warnings.ToString());
         Assert.Contains("TestExpert", warnings.ToString());
         Assert.Contains("shadows", warnings.ToString());
+    }
+
+    // The recorded digest describes the recorded file, so it must not be applied to a local
+    // override that deliberately differs from it.
+    [Fact]
+    public void AShadowedEntrysDigest_IsNotAppliedToTheLocalOverride()
+    {
+        var missionDir = Directory.CreateTempSubdirectory("forge-mission-shadow-digest-").FullName;
+
+        var vendoredDir = Path.Combine(missionDir, "vendor", "TestExpert");
+        Directory.CreateDirectory(vendoredDir);
+        File.WriteAllText(Path.Combine(vendoredDir, "expert.md"), ExpertMd);
+
+        var localExpertDir = Path.Combine(missionDir, "experts", "TestExpert");
+        Directory.CreateDirectory(localExpertDir);
+        File.WriteAllText(Path.Combine(localExpertDir, "expert.md"), ExpertMd.Replace("test expert", "local override"));
+
+        var lockFile = new LockFile
+        {
+            Experts =
+            {
+                ["TestExpert"] = new LockFileExpert
+                {
+                    Source        = "project:///vendor/TestExpert/expert.md",
+                    ContentDigest = LockFileIO.ComputeContentDigest(
+                        Path.Combine(vendoredDir, "expert.md")),
+                }
+            }
+        };
+
+        Assert.Null(Record.Exception(() => ExpertResolver.ResolveAll(lockFile, missionDir)));
+    }
+
+    // An unparseable source is refused by name rather than surfacing later as a confusing
+    // missing-file error.
+    [Fact]
+    public void AnUnparseableSource_IsRefusedByName()
+    {
+        var dir = CreateMissionDir();
+        var lockFile = new LockFile
+        {
+            Experts = { ["TestExpert"] = new LockFileExpert { Source = "experts", ContentDigest = null } }
+        };
+
+        var failure = Assert.Throws<MclException>(() => ExpertResolver.ResolveAll(lockFile, dir));
+
+        Assert.Equal(MclErrorCode.InvalidLockSource, failure.Code);
+        Assert.Contains("TestExpert", failure.Message);
     }
 
     [Fact]
@@ -214,9 +257,8 @@ public class ExpertResolverTests
             var path = Path.Combine(dir, "experts", name, "expert.md");
             lockFile.Experts[name] = new LockFileExpert
             {
-                Source = "experts",
-                Path   = $"experts/{name}/expert.md",
-                Hash   = LockFileIO.ComputeHash(path),
+                Source        = $"project:///experts/{name}/expert.md",
+                ContentDigest = LockFileIO.ComputeContentDigest(path),
             };
         }
 

@@ -24,12 +24,11 @@ public class ExpertLoader(string expertsDirectory)
         var experts = new Dictionary<string, ExpertDefinition>(StringComparer.Ordinal);
         foreach (var (name, entry) in lockFile.Experts)
         {
-            var path = entry.Path.StartsWith("~/")
-                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), entry.Path[2..].Replace('/', Path.DirectorySeparatorChar))
-                : Path.IsPathRooted(entry.Path)
-                ? entry.Path
-                : Path.GetFullPath(Path.Combine(lockFileDirectory, entry.Path));
-            experts[name] = ParseFile(path);
+            // The path comes from the recorded source, never from the lock file itself: a
+            // project:/// source resolves beside the lock, an oci:// source resolves to the one
+            // cache location its immutable digest derives (43.20 task 3).
+            var source = ExpertSource.Parse(entry.Source, name);
+            experts[name] = ParseFile(ExpertResolver.RecordedPath(source, lockFileDirectory));
         }
         return experts;
     }

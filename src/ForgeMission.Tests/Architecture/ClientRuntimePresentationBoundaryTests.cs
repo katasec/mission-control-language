@@ -56,6 +56,30 @@ public sealed class ClientRuntimePresentationBoundaryTests
             ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoJanusOrMissionSwitchPath);
     }
 
+    // 43.20 task 3: the Explorer reads a manifest and a lock file — through the Client Runtime,
+    // which owns the file format, the source-URI rules, and the cache derivation. Presentation
+    // gets typed entries and a text document, so it has no reason to name any of those types and
+    // no way to widen an entry ID into a file read.
+    [Fact]
+    public void MarkedPresentationProjects_CannotReachTheLockFileOrTheExpertCache()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ClientRuntimePresentation>true</ClientRuntimePresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoResolutionTypes);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsLockFileAndCacheAccess()
+    {
+        var source = "class Ui { void Read() => LockFileIO.Read(\"mcl.lock\"); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoResolutionTypes(source, "Ui.cs"));
+    }
+
     [Fact]
     public void BoundaryRule_RejectsTheJanusPromptPath()
     {
@@ -101,6 +125,24 @@ public sealed class ClientRuntimePresentationBoundaryTests
                 throw new InvalidOperationException(
                     $"Presentation must not reference '{forbidden}' while Mission Control is the sole " +
                     $"active conversation (43.20 task 2): {sourceName}");
+        }
+    }
+
+    // Deliberately NOT the bare word "LockFile": ProjectExplorerEntryKind.LockFile is a legitimate
+    // transport kind Presentation must render. What is banned is reaching for the format, the
+    // resolver, the cache, or the file itself.
+    private static void AssertNoResolutionTypes(string source, string sourceName)
+    {
+        foreach (var forbidden in new[]
+                 {
+                     "LockFileIO", "LockFileExpert", "ExpertSource", "ExpertResolver",
+                     "ForgeCache", "ForgeMission.Core", "mcl.lock",
+                 })
+        {
+            if (source.Contains(forbidden, StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Presentation must not reference '{forbidden}': the Client Runtime owns the lock " +
+                    $"format, source URIs, and the expert cache (43.20 task 3): {sourceName}");
         }
     }
 

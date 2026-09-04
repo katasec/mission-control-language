@@ -28,6 +28,9 @@ internal sealed class Program
         // No projects root is configured: it is <user-profile>/Forge/Projects by fixed convention,
         // and nothing here is touched until a surface actually creates or opens a Project.
         builder.Services.AddSingleton(new ProjectStore());
+        // Reads the open Project's manifest and lock file for the Explorer (43.20 task 3). It is
+        // stateless and holds no cache, so a projection is always of the Project as it is now.
+        builder.Services.AddSingleton<ProjectWorkbenchProjector>();
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
         // Native AOT has no reflection fallback for minimal-API request/response JSON binding —
         // route it through the same source-generated context the transport channel already uses.

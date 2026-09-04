@@ -255,6 +255,18 @@
   --ink-hover:        #0f56d2;   /* S */
   --ink-contrast:     #ffffff;   /* S */
 
+  /* Rail (43.20 task 3). The persistent Project rail is a distinct dark surface in BOTH named
+     colour modes, so it reads through its own tokens rather than the document's
+     --surface-sunken/--text/--accent — which is why the dark maps restate these values unchanged
+     rather than inverting them. All five are sampled from the binding compact references. Their
+     text-bearing pairs clear AA in both maps: 14.83 and 9.89 on --wb-rail-surface, 10.00 and 6.67
+     on --wb-rail-surface-selected. */
+  --wb-rail-surface:          #06284c;   /* S */
+  --wb-rail-surface-selected: #0c4475;   /* S */
+  --wb-rail-text:             #ffffff;   /* S */
+  --wb-rail-text-muted:       #b9d6f5;   /* S */
+  --wb-rail-marker:           #32d9f2;   /* S — selected marker and rail focus outline */
+
   /* Semantic */
   --success:          #4d7c0f;   /* N */
   --success-bg:       #f2fbe6;   /* N */
@@ -335,6 +347,18 @@
   --wb-open-row-gap:      clamp(10px, calc(-3.7px + 2.412vh), 21px);
   --wb-open-action-width: clamp(84px, calc(66.61px + 2.174vw), 100px);
 
+  /* Workbench shell geometry (43.20 task 3). Width-driven, per the axis rule above: the rail is a
+     horizontal measure, so it ramps on vw and reaches the compact reference's width at the lower
+     bound. It is bounded rather than fixed precisely so no breakpoint is needed to preserve it. */
+  --wb-rail-width:        clamp(7.25rem, 14vw, 11.25rem);
+  --wb-rail-pad-x:        clamp(8px, calc(2.09px + 0.739vw), 14px);
+  --wb-rail-pad-y:        clamp(14px, calc(0.46px + 2.395vh), 36px);
+  --wb-rail-gap:          clamp(8px, calc(0.61px + 1.316vh), 20px);
+  --wb-rail-item-pad-x:   clamp(10px, calc(4.09px + 0.739vw), 16px);
+  --wb-rail-item-pad-y:   clamp(8px, calc(2.46px + 0.978vh), 17px);
+  --wb-rail-marker-width: 4px;
+  --wb-section-gap:       clamp(20px, calc(-8.32px + 4.978vh), 71px);
+
   /* Type. Height-driven: every size contributes to the vertical stack. */
   --font-size-display:    clamp(24px, calc(9.05px + 2.632vh), 36px);
   --font-size-title:      clamp(18px, calc(5.54px + 2.193vh), 28px);
@@ -388,6 +412,14 @@
     --warning:        #e8c06a;
     --warning-bg:     #3a2c10;
 
+    /* Unchanged from the light map on purpose: the rail is the same distinct dark surface in
+       both colour modes (43.20 task 3). */
+    --wb-rail-surface:          #06284c;
+    --wb-rail-surface-selected: #0c4475;
+    --wb-rail-text:             #ffffff;
+    --wb-rail-text-muted:       #b9d6f5;
+    --wb-rail-marker:           #32d9f2;
+
     --seal-official:  #e8c06a;
     --seal-verified:  #4d9bff;
     --seal-check:     #071426;
@@ -433,6 +465,14 @@
   --danger-border:  #b42318;
   --warning:        #e8c06a;
   --warning-bg:     #3a2c10;
+
+  /* Unchanged from the light map on purpose: the rail is the same distinct dark surface in both
+     colour modes (43.20 task 3). */
+  --wb-rail-surface:          #06284c;
+  --wb-rail-surface-selected: #0c4475;
+  --wb-rail-text:             #ffffff;
+  --wb-rail-text-muted:       #b9d6f5;
+  --wb-rail-marker:           #32d9f2;
 
   --seal-official:  #e8c06a;
   --seal-verified:  #4d9bff;

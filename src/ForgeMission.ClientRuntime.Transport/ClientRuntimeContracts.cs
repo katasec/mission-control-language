@@ -116,7 +116,87 @@ public enum ProjectOperationErrorCode
 
     /// <summary>The named control conversation does not exist.</summary>
     MissionControlNotFound,
+
+    // 43.20 task 3. Appended at the end deliberately: this enum serializes numerically under
+    // ClientRuntimeJsonContext, so inserting a member anywhere else would silently renumber every
+    // code after it and change what an existing surface reads off the wire.
+
+    /// <summary>A recorded expert dependency cannot be presented honestly: a malformed source URI,
+    /// a content digest that does not match the resolved file, or a source whose derived
+    /// materialization is absent. The whole projection fails rather than showing a partial or
+    /// invented dependency list.</summary>
+    InvalidDependency,
+
+    /// <summary>The named entry is not in the Project's current projection — unknown, or stale
+    /// because the Project changed since it was listed.</summary>
+    DocumentNotFound,
+
+    /// <summary>The entry exists but is not presentable as text: binary content, invalid UTF-8, or
+    /// larger than 1 MiB.</summary>
+    InvalidDocument,
 }
+
+// --- Project workbench contracts (43.20 task 3) ----------------------------------------------
+// Surface-neutral and deliberately path-free: a surface names its own session and, to open a
+// document, an entry ID the Runtime itself minted. It never supplies a path, an OCI reference, or
+// a registry credential, and none of those ever comes back. Reading the manifest and the lock
+// file, validating every source URI, deriving a materialization location, and validating document
+// content all live below this boundary.
+
+/// <summary>Reads the open Project's Explorer projection. Purely a read: it opens no registry
+/// connection, resolves no dependency, and changes no local state.</summary>
+public sealed record GetProjectWorkbenchRequest(string SessionId);
+
+/// <summary>Exactly one of <see cref="Workbench"/> and <see cref="Error"/> is populated.</summary>
+public sealed record GetProjectWorkbenchResponse(
+    ProjectWorkbenchProjection? Workbench,
+    ProjectOperationError? Error = null);
+
+public sealed record ProjectWorkbenchProjection(
+    ProjectSummary Project,
+    IReadOnlyList<ProjectExplorerEntry> Assets,
+    IReadOnlyList<ProjectExplorerEntry> Context,
+    IReadOnlyList<ProjectExplorerEntry> Runs);
+
+/// <summary>One listed item. <see cref="EntryId"/> is opaque and stable for the same Project state:
+/// a surface only ever hands it back, and the Runtime resolves it by matching a freshly built
+/// projection rather than by interpreting it as a location. <see cref="Source"/> is populated only
+/// for a resolved OCI dependency, where the pinned reference and digest ARE the evidence being
+/// shown; it is never a local path.</summary>
+public sealed record ProjectExplorerEntry(
+    string EntryId,
+    string DisplayName,
+    ProjectExplorerEntryKind Kind,
+    bool IsReadOnly,
+    string? Source = null);
+
+public enum ProjectExplorerEntryKind
+{
+    Mission,
+    Expert,
+    LockFile,
+    SourceRoot,
+    File,
+    Artifact,
+    Run,
+
+    /// <summary>An expert resolved from a registry and pinned to one immutable manifest digest.
+    /// Read-only dependency evidence, like an installed package — never an editable Project
+    /// asset.</summary>
+    OciDependency,
+}
+
+/// <summary>Opens one entry the projection returned. It accepts no arbitrary path and no OCI
+/// reference, so there is no input a surface could widen into a file read.</summary>
+public sealed record OpenProjectDocumentRequest(string SessionId, string EntryId);
+
+/// <summary>Exactly one of <see cref="Document"/> and <see cref="Error"/> is populated.</summary>
+public sealed record OpenProjectDocumentResponse(
+    ProjectDocument? Document,
+    ProjectOperationError? Error = null);
+
+/// <summary>Text only, and never the location it came from.</summary>
+public sealed record ProjectDocument(string Title, string ContentType, string Text);
 
 // --- Project Mission Control contracts (43.20 task 2) ---------------------------------------
 // Surface-neutral by construction, and deliberately narrow: a surface names only its own session

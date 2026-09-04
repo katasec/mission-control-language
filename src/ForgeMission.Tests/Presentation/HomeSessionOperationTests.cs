@@ -80,15 +80,16 @@ public sealed class HomeSessionOperationTests : BunitContext
     }
 
     [Fact]
-    public async Task ACreatedProject_RendersItsTitleAndHome_AndStartsExactlyOneSubscription()
+    public async Task ACreatedProject_RendersItsTitle_AndStartsExactlyOneSubscription()
     {
         var page = await OpenCreatedProjectAsync();
 
-        // The header band keeps its product identity; the open Project is named on its own line.
-        Assert.Equal("AI Workbench", page.Find(".subtitle").TextContent);
-        var openProject = page.Find(".workspace-path").TextContent;
-        Assert.Contains("Todos API", openProject);
-        Assert.Contains(FakeClientRuntimeChannel.DefaultHome, openProject);
+        // The rail now carries the product identity, and the content region names the Project.
+        // The Project's absolute home is deliberately absent from every open-Project view
+        // (43.20 task 3) — it stays in the contract and is simply not rendered.
+        Assert.Equal("AI Workbench", page.Find(".wb-brand-sub").TextContent);
+        Assert.Equal("Todos API", page.Find(".wb-subtitle").TextContent);
+        Assert.DoesNotContain(FakeClientRuntimeChannel.DefaultHome, page.Markup, StringComparison.Ordinal);
         Assert.Empty(page.FindAll(".pl-goal"));
         Assert.Equal(1, channel.SubscriptionsStarted);
         Assert.Equal(1, channel.ActiveSubscriptions);
@@ -451,6 +452,221 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Empty(page.FindAll(".connection-banner"));
     }
 
+    // --- 43.20 task 3: the rail, the Explorer, and project-scoped navigation -------------------
+
+    [Fact]
+    public async Task AnOpenedProject_ShowsMissionControlAndTheThreeEntryRailInOrder()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        Assert.Equal(
+            ["Explorer", "Mission Control", "Settings"],
+            page.FindAll(".wb-rail-label").Select(item => item.TextContent).ToArray());
+        Assert.Equal("Mission Control", page.Find(".wb-title").TextContent);
+        Assert.Single(page.FindAll(".composer-input"));
+        // No workbench read happens until the Explorer is actually opened.
+        Assert.Empty(channel.Requests.OfType<GetProjectWorkbenchRequest>());
+    }
+
+    [Fact]
+    public async Task TheSelectedDestination_IsMarkedForAssistiveTechnologyAndVisually()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        var current = Assert.Single(page.FindAll(".wb-rail-item[aria-current='page']"));
+        Assert.Contains("Mission Control", current.TextContent, StringComparison.Ordinal);
+        Assert.Contains("wb-rail-item-current", current.ClassName!, StringComparison.Ordinal);
+    }
+
+    // The core navigation invariant: switching destinations is a view change and nothing else.
+    // Measured on the channel rather than inferred from reading the page.
+    [Fact]
+    public async Task SwitchingDestinations_CreatesNoProjectSessionOrSubscription()
+    {
+        var page = await OpenCreatedProjectAsync();
+        var subscriptions = channel.SubscriptionsStarted;
+        var sessionId = channel.CurrentSessionId;
+
+        await SelectAsync(page, "Explorer");
+        await SelectAsync(page, "Settings");
+        await SelectAsync(page, "Mission Control");
+
+        Assert.Equal(subscriptions, channel.SubscriptionsStarted);
+        Assert.Equal(1, channel.ActiveSubscriptions);
+        Assert.Equal(sessionId, channel.CurrentSessionId);
+        Assert.Single(channel.Requests.OfType<ProjectCreateRequest>());
+        Assert.Single(channel.Requests.OfType<OpenProjectMissionControlRequest>());
+    }
+
+    [Fact]
+    public async Task AnEmptyExplorer_NamesEachSectionAndItsEmptyState()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        await SelectAsync(page, "Explorer");
+
+        Assert.Equal("Project Explorer", page.Find(".ex-title").TextContent);
+        Assert.Equal(
+            ["Project assets", "Source context", "Runs"],
+            page.FindAll(".ex-heading").Select(heading => heading.TextContent).ToArray());
+        Assert.Equal(
+            ["No local assets yet", "No context attached", "No runs yet"],
+            page.FindAll(".ex-empty").Select(empty => empty.TextContent).ToArray());
+    }
+
+    // Local assets are editable entries; a resolved OCI dependency is read-only evidence showing
+    // its pinned reference and digest, labelled in words rather than by colour alone.
+    [Fact]
+    public async Task ThePinnedDependency_RendersItsSourceAndAReadOnlyLabel()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbench = FakeClientRuntimeChannel.PopulatedWorkbench;
+
+        await SelectAsync(page, "Explorer");
+
+        Assert.Equal("· OCI dependency · read-only", page.Find(".ex-badge").TextContent);
+        Assert.Equal(FakeClientRuntimeChannel.OciDependency.Source, page.Find(".ex-source").TextContent);
+        // The editable local asset carries no source line and no read-only label.
+        Assert.Single(page.FindAll(".ex-badge"));
+        Assert.Single(page.FindAll(".ex-source"));
+    }
+
+    // A run is listed as a fact, not offered as an affordance that would fail when clicked.
+    [Fact]
+    public async Task ARunIsListedWithoutBeingOpenable()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbench = FakeClientRuntimeChannel.PopulatedWorkbench;
+
+        await SelectAsync(page, "Explorer");
+
+        Assert.Contains(page.FindAll(".ex-name, .ex-dependency-name"),
+            element => element.TextContent == "Draft the release plan");
+        Assert.DoesNotContain(page.FindAll(".ex-open"),
+            element => element.TextContent == "Draft the release plan");
+    }
+
+    [Fact]
+    public async Task AFailedProjection_ShowsTheRuntimesMessageInsteadOfAPartialList()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbenchError = new ProjectOperationError(
+            ProjectOperationErrorCode.InvalidDependency, "Expert 'Architect' has changed since it was locked.");
+
+        await SelectAsync(page, "Explorer");
+
+        Assert.Equal("Expert 'Architect' has changed since it was locked.", page.Find(".ex-error").TextContent);
+        Assert.Empty(page.FindAll(".ex-heading"));
+        Assert.Empty(page.FindAll(".ex-list"));
+    }
+
+    // The page hands back exactly the entry ID it was given. It builds none, and it has no path or
+    // reference it could send instead.
+    [Fact]
+    public async Task OpeningAnEntry_SendsBackTheRuntimesOwnEntryId()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbench = FakeClientRuntimeChannel.PopulatedWorkbench;
+        await SelectAsync(page, "Explorer");
+
+        await OpenEntryAsync(page, "mission.mcl");
+
+        var request = Assert.Single(channel.Requests.OfType<OpenProjectDocumentRequest>());
+        Assert.Equal(FakeClientRuntimeChannel.MissionAsset.EntryId, request.EntryId);
+        Assert.Equal("mission.mcl", page.Find(".wb-title").TextContent);
+        Assert.Equal("mission Demo", page.Find(".doc-body").TextContent);
+        // The composer belongs to Mission Control, so it is absent here rather than disabled.
+        Assert.Empty(page.FindAll(".composer-input"));
+    }
+
+    // An open document still belongs to the Explorer, so the rail keeps saying where you are.
+    [Fact]
+    public async Task AnOpenDocument_KeepsTheExplorerMarkedAsTheCurrentDestination()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbench = FakeClientRuntimeChannel.PopulatedWorkbench;
+        await SelectAsync(page, "Explorer");
+        await OpenEntryAsync(page, "mission.mcl");
+
+        Assert.Contains("Explorer",
+            Assert.Single(page.FindAll(".wb-rail-item[aria-current='page']")).TextContent, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BackToExplorer_ReturnsToTheListWithoutReopeningTheProject()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbench = FakeClientRuntimeChannel.PopulatedWorkbench;
+        await SelectAsync(page, "Explorer");
+        await OpenEntryAsync(page, "mission.mcl");
+
+        await page.InvokeAsync(() => page.Find(".doc-back").Click());
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".ex-title")));
+        Assert.Single(channel.Requests.OfType<ProjectCreateRequest>());
+        Assert.Equal(1, channel.ActiveSubscriptions);
+    }
+
+    [Fact]
+    public async Task AFailedDocumentOpen_ReplacesTheBodyWithTheRuntimesMessage()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.NextWorkbench = FakeClientRuntimeChannel.PopulatedWorkbench;
+        await SelectAsync(page, "Explorer");
+        channel.NextDocumentError = new ProjectOperationError(
+            ProjectOperationErrorCode.InvalidDocument, "mission.mcl is too large to open here.");
+
+        await OpenEntryAsync(page, "mission.mcl");
+
+        Assert.Equal("mission.mcl is too large to open here.", page.Find(".doc-error").TextContent);
+        Assert.Empty(page.FindAll(".doc-body"));
+    }
+
+    [Fact]
+    public async Task Settings_IsALabelledPlaceholderWithNoAction()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        await SelectAsync(page, "Settings");
+
+        Assert.Equal("Settings", page.Find(".set-title").TextContent);
+        Assert.Equal("Project preferences will appear here in a later task.", page.Find(".set-note").TextContent);
+        // Nothing on this view can be actioned: the rail's own three buttons are all that remain.
+        Assert.Equal(3, page.FindAll("button").Count);
+    }
+
+    // The workbench exposes no local path. Task 1's launcher header is unaffected, and the
+    // Project's home is still carried in the contract — it is simply never rendered.
+    [Fact]
+    public async Task AnOpenProject_NeverRendersItsHomePath()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        foreach (var destination in new[] { "Explorer", "Settings", "Mission Control" })
+        {
+            await SelectAsync(page, destination);
+            Assert.DoesNotContain(FakeClientRuntimeChannel.DefaultHome, page.Markup, StringComparison.Ordinal);
+        }
+    }
+
+    private async Task SelectAsync(IRenderedComponent<Home> page, string label)
+    {
+        await page.InvokeAsync(() => page.FindAll(".wb-rail-item")
+            .First(item => item.TextContent.Contains(label, StringComparison.Ordinal))
+            .Click());
+        page.WaitForState(() => true);
+    }
+
+    private async Task OpenEntryAsync(IRenderedComponent<Home> page, string displayName)
+    {
+        var before = channel.Requests.OfType<OpenProjectDocumentRequest>().Count();
+        await page.InvokeAsync(() => page.FindAll(".ex-open")
+            .First(item => item.TextContent.Contains(displayName, StringComparison.Ordinal))
+            .Click());
+        page.WaitForAssertion(() => Assert.True(
+            channel.Requests.OfType<OpenProjectDocumentRequest>().Count() > before));
+    }
+
     // Boot creates nothing, so every test that needs a workbench opens a Project first — through
     // the same two contract calls a TUI would make.
     private async Task<IRenderedComponent<Home>> OpenCreatedProjectAsync()
@@ -618,6 +834,8 @@ public sealed class HomeSessionOperationTests : BunitContext
                 ProjectOpenRequest open => nextProjectResponse ?? Opened(open.HomePath),
                 OpenProjectMissionControlRequest => await OpenMissionControlAsync().WaitAsync(ct),
                 SubmitProjectMissionControlTurnRequest => SubmitControlTurn(),
+                GetProjectWorkbenchRequest => WorkbenchResponse(),
+                OpenProjectDocumentRequest open => DocumentResponse(open.EntryId),
                 // PromptRequest and SessionSetupRequest are deliberately ABSENT. Mission Control is
                 // the sole active conversation while a Project is open (43.20 task 2), so a page
                 // that sent either would fail loudly here rather than quietly acquiring a second
@@ -637,6 +855,51 @@ public sealed class HomeSessionOperationTests : BunitContext
         public List<object> Requests { get; } = [];
 
         public void RespondWith(ProjectOperationResponse response) => nextProjectResponse = response;
+
+        // --- workbench (43.20 task 3) ----------------------------------------------------------
+        // The projection and the document both come from the Client Runtime, so the page can only
+        // render what it is given. What it does with an ENTRY ID is the interesting part: it hands
+        // back exactly what it received, which is why the fake records the id it was asked for.
+
+        public ProjectWorkbenchProjection? NextWorkbench { get; set; }
+        public ProjectOperationError? NextWorkbenchError { get; set; }
+        public ProjectOperationError? NextDocumentError { get; set; }
+        public string? LastOpenedEntryId { get; private set; }
+
+        public static ProjectExplorerEntry MissionAsset { get; } =
+            new("asset:mission.mcl", "mission.mcl", ProjectExplorerEntryKind.Mission, false);
+
+        public static ProjectExplorerEntry OciDependency { get; } =
+            new("dep:Architect", "Architect", ProjectExplorerEntryKind.OciDependency, true,
+                "oci://ghcr.io/katasec/forge-architect@sha256:" + new string('a', 64));
+
+        public static ProjectExplorerEntry RunEntry { get; } =
+            new("run:1", "Draft the release plan", ProjectExplorerEntryKind.Run, true);
+
+        public static ProjectWorkbenchProjection EmptyWorkbench { get; } =
+            new(new ProjectSummary(Guid.NewGuid(), "Todos API", "Todos API", DefaultHome), [], [], []);
+
+        public static ProjectWorkbenchProjection PopulatedWorkbench { get; } =
+            new(new ProjectSummary(Guid.NewGuid(), "Todos API", "Todos API", DefaultHome),
+                [MissionAsset, OciDependency], [], [RunEntry]);
+
+        private GetProjectWorkbenchResponse WorkbenchResponse()
+        {
+            if (NextWorkbenchError is { } error)
+                return new GetProjectWorkbenchResponse(null, error);
+
+            return new GetProjectWorkbenchResponse(NextWorkbench ?? EmptyWorkbench);
+        }
+
+        private OpenProjectDocumentResponse DocumentResponse(string entryId)
+        {
+            LastOpenedEntryId = entryId;
+            if (NextDocumentError is { } error)
+                return new OpenProjectDocumentResponse(null, error);
+
+            return new OpenProjectDocumentResponse(
+                new ProjectDocument(entryId["asset:".Length..], "text/plain", "mission Demo"));
+        }
 
         public void FailNextDraft(ProjectOperationErrorCode code, string message) =>
             nextDraftError = new ProjectOperationError(code, message);

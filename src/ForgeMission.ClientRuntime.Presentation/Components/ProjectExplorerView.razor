@@ -1,0 +1,82 @@
+@* The Project Explorer (43.20 task 3). It renders exactly what the Client Runtime's projection
+   returned and derives nothing: it opens no manifest, no lock file, and no path, and it never
+   reconstructs a dependency list from partial data. A named Runtime failure REPLACES the sections
+   rather than appearing beside a shorter list, because a list that silently omits what it could
+   not read reads as "these are the dependencies". *@
+
+<div class="ex-root">
+    <h2 class="ex-title">Project Explorer</h2>
+
+    @if (Error is { } error)
+    {
+        <p class="ex-error" role="alert">@error.Message</p>
+    }
+    else if (Workbench is null)
+    {
+        <p class="ex-empty">Loading this Project…</p>
+    }
+    else
+    {
+        @Section("Project assets", Workbench.Assets, "No local assets yet")
+        @Section("Source context", Workbench.Context, "No context attached")
+        @Section("Runs", Workbench.Runs, "No runs yet")
+    }
+</div>
+
+@code {
+    [Parameter] public ProjectWorkbenchProjection? Workbench { get; set; }
+
+    [Parameter] public ProjectOperationError? Error { get; set; }
+
+    [Parameter] public EventCallback<ProjectExplorerEntry> EntrySelected { get; set; }
+
+    // Only these kinds have a document surface in this task. A run's Trace, a source root, and an
+    // artifact are listed as facts, not offered as affordances that would fail when clicked.
+    private static bool CanOpen(ProjectExplorerEntry entry) => entry.Kind
+        is ProjectExplorerEntryKind.Mission
+        or ProjectExplorerEntryKind.Expert
+        or ProjectExplorerEntryKind.LockFile
+        or ProjectExplorerEntryKind.OciDependency;
+
+    private RenderFragment Section(
+        string heading, IReadOnlyList<ProjectExplorerEntry> entries, string emptyMessage) =>
+        @<section class="ex-section">
+            <h3 class="ex-heading">@heading</h3>
+            @if (entries.Count == 0)
+            {
+                <p class="ex-empty">@emptyMessage</p>
+            }
+            else
+            {
+                <ul class="ex-list">
+                    @foreach (var entry in entries)
+                    {
+                        <li class="ex-item" @key="entry.EntryId">@Entry(entry)</li>
+                    }
+                </ul>
+            }
+        </section>;
+
+    // A read-only dependency is evidence, so its pinned reference and digest are shown verbatim
+    // and labelled in words — the label is text, not a colour or an icon a person has to decode.
+    private RenderFragment Entry(ProjectExplorerEntry entry) =>
+        entry.Source is { Length: > 0 } source
+            ? @<div class="ex-dependency">
+                   @if (CanOpen(entry))
+                   {
+                       <button type="button" class="ex-open ex-dependency-name"
+                               @onclick="() => EntrySelected.InvokeAsync(entry)">@entry.DisplayName</button>
+                   }
+                   else
+                   {
+                       <span class="ex-dependency-name">@entry.DisplayName</span>
+                   }
+                   @* The reference's own words: what it is, then that it cannot be edited. Both
+                      are text, so neither depends on a colour or an icon to be understood. *@
+                   <span class="ex-badge">· OCI dependency · read-only</span>
+                   <p class="ex-source" title="@source">@source</p>
+               </div>
+            : CanOpen(entry)
+                ? @<button type="button" class="ex-open ex-name" @onclick="() => EntrySelected.InvokeAsync(entry)">@entry.DisplayName</button>
+                : @<span class="ex-name">@entry.DisplayName</span>;
+}

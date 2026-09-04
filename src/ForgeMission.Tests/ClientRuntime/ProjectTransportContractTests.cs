@@ -360,4 +360,181 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         // The rendered message names Mission Control, not an HTTP status or an internal service.
         Assert.DoesNotContain("HTTP", response.Error.Message, StringComparison.Ordinal);
     }
+
+    // --- workbench (43.20 task 3) -------------------------------------------------------------
+    // These run against the real Runtime process, whose user profile is redirected into this
+    // test's sandbox — which is what lets the OCI cases exercise the derived materialization path
+    // for real without ever touching the developer's own ~/.forge cache.
+
+    [Fact]
+    public async Task Workbench_ForANewProject_ReturnsThreeEmptySections()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await WorkbenchAsync(session.SessionId);
+
+        Assert.Null(response.Error);
+        Assert.Empty(response.Workbench!.Assets);
+        Assert.Empty(response.Workbench.Context);
+        Assert.Empty(response.Workbench.Runs);
+        Assert.Equal(session.Project.ProjectId, response.Workbench.Project.ProjectId);
+    }
+
+    // The whole point of the v2 source format, end to end through the transport: a lock file
+    // records a registry reference and a digest, the Runtime derives where that materializes,
+    // and the surface is shown the pinned reference — never the path.
+    [Fact]
+    public async Task Workbench_APinnedOciDependency_IsReadOnlyEvidenceWithNoPath()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        var source = MaterializeCachedExpert("Architect", ExpertMarkdown);
+        WriteLock(session.Project.Home, $$"""
+            version: 2
+            experts:
+              Architect:
+                source: {{source}}
+                contentDigest: {{Sha256(ExpertMarkdown)}}
+            """);
+
+        var entry = Assert.Single((await WorkbenchAsync(session.SessionId)).Workbench!.Assets);
+
+        Assert.Equal(ProjectExplorerEntryKind.OciDependency, entry.Kind);
+        Assert.True(entry.IsReadOnly);
+        Assert.Equal(source, entry.Source);
+        Assert.StartsWith("oci://", entry.Source!);
+        Assert.DoesNotContain(_profile, entry.Source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Workbench_APinnedOciDependency_OpensItsCachedDocument()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        var source = MaterializeCachedExpert("Architect", ExpertMarkdown);
+        WriteLock(session.Project.Home, $$"""
+            version: 2
+            experts:
+              Architect:
+                source: {{source}}
+                contentDigest: {{Sha256(ExpertMarkdown)}}
+            """);
+        var entry = Assert.Single((await WorkbenchAsync(session.SessionId)).Workbench!.Assets);
+
+        var response = await DocumentAsync(session.SessionId, entry.EntryId);
+
+        Assert.Null(response.Error);
+        Assert.Equal("Architect", response.Document!.Title);
+        Assert.Equal("text/plain", response.Document.ContentType);
+        Assert.Equal(ExpertMarkdown, response.Document.Text);
+    }
+
+    // A source that parses but whose artifact was never materialized: the projection fails by
+    // name rather than listing a dependency it cannot actually show.
+    [Fact]
+    public async Task Workbench_AnOciSourceThatWasNeverMaterialized_IsANamedDependencyFailure()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        WriteLock(session.Project.Home, $$"""
+            version: 2
+            experts:
+              Architect:
+                source: oci://ghcr.io/katasec/forge-architect@sha256:{{new string('b', 64)}}
+                contentDigest: sha256:{{new string('c', 64)}}
+            """);
+
+        var response = await WorkbenchAsync(session.SessionId);
+
+        Assert.Null(response.Workbench);
+        Assert.Equal(ProjectOperationErrorCode.InvalidDependency, response.Error!.Code);
+    }
+
+    [Fact]
+    public async Task Workbench_AV1OciLockFile_IsANamedDependencyFailure()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        WriteLock(session.Project.Home, """
+            version: 1
+            experts:
+              Architect:
+                source: ghcr.io/katasec/forge-architect:0.1.0
+                path: ~/.forge/experts/ghcr.io/katasec/forge-architect/0.1.0/expert.md
+            """);
+
+        var response = await WorkbenchAsync(session.SessionId);
+
+        Assert.Null(response.Workbench);
+        Assert.Equal(ProjectOperationErrorCode.InvalidDependency, response.Error!.Code);
+        Assert.Contains("forge init", response.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Document_AnUnknownEntry_IsATypedNotFound_NotATransportFailure()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await DocumentAsync(session.SessionId, "asset:mission.mcl");
+
+        Assert.Null(response.Document);
+        Assert.Equal(ProjectOperationErrorCode.DocumentNotFound, response.Error!.Code);
+    }
+
+    // A replaced or unknown session is a transport NotFound, exactly like the Mission Control
+    // routes — not a rendered domain outcome, because no correct surface sends one.
+    [Fact]
+    public async Task Workbench_ForAnUnknownSession_IsNotFound_AndTouchesNoProject()
+    {
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<GetProjectWorkbenchRequest, GetProjectWorkbenchResponse>(
+                new GetProjectWorkbenchRequest("not-a-session"), CancellationToken.None));
+
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<OpenProjectDocumentRequest, OpenProjectDocumentResponse>(
+                new OpenProjectDocumentRequest("not-a-session", "asset:mission.mcl"), CancellationToken.None));
+
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    // --- workbench helpers ---------------------------------------------------------------------
+
+    private const string ExpertMarkdown = """
+        ---
+        name: Architect
+        input: A goal
+        output: A design
+        ---
+
+        You design systems.
+        """;
+
+    private async Task<ProjectSession> OpenSessionAsync(string goal) =>
+        (await CreateAsync(new ProjectCreateRequest(goal))).Session!;
+
+    private Task<GetProjectWorkbenchResponse> WorkbenchAsync(string sessionId) =>
+        _channel.SendAsync<GetProjectWorkbenchRequest, GetProjectWorkbenchResponse>(
+            new GetProjectWorkbenchRequest(sessionId), CancellationToken.None);
+
+    private Task<OpenProjectDocumentResponse> DocumentAsync(string sessionId, string entryId) =>
+        _channel.SendAsync<OpenProjectDocumentRequest, OpenProjectDocumentResponse>(
+            new OpenProjectDocumentRequest(sessionId, entryId), CancellationToken.None);
+
+    private static void WriteLock(string home, string yaml) =>
+        File.WriteAllText(Path.Combine(home, "mcl.lock"), yaml);
+
+    // Writes the expert where the Runtime will DERIVE it from the returned source, mirroring what
+    // 'forge init' materializes. The layout is reproduced here on purpose: if the derivation ever
+    // changes, this test fails rather than silently passing against a stale assumption. It lands
+    // under the redirected profile, never the developer's real cache.
+    private string MaterializeCachedExpert(string repository, string content)
+    {
+        var digest = Sha256(content);
+        var path = Path.Combine(
+            _profile, ".forge", "experts", "ghcr.io", "katasec", repository,
+            "sha256", digest["sha256:".Length..], "expert.md");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, content);
+        return $"oci://ghcr.io/katasec/{repository}@{digest}";
+    }
+
+    private static string Sha256(string content) =>
+        "sha256:" + Convert.ToHexStringLower(
+            System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(content)));
 }

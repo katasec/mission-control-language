@@ -3,80 +3,113 @@
 @inject IClientRuntimeChannel ClientRuntime
 @implements IAsyncDisposable
 
-<div class="shell">
-    @* The Workbench header band, from the Task 1 reference: wordmark, hairline divider, product
-       name. An open Project adds its own line beneath rather than replacing any of it. *@
-    <header class="shell-header">
-        <div class="brand">
-            <h1>Forge</h1>
-            <span class="brand-divider"></span>
-            <p class="subtitle">AI Workbench</p>
-        </div>
-        @if (project is not null)
-        {
-            <p class="workspace-path">@project.Title · @project.Home</p>
-        }
-    </header>
-
 @if (project is null)
 {
-    <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value"
-                     Title="@titleInput" TitleChanged="value => titleInput = value"
-                     Home="@homeInput" HomeChanged="value => homeInput = value"
-                     Busy="busy" Error="@launcherError" Notice="@LauncherNotice"
-                     ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput"
-                     OpenPathChanged="value => openPathInput = value"
-                     GoalCommitted="DraftProjectAsync"
-                     Create="CreateProjectAsync"
-                     OpenRequested="ToggleOpenFolder"
-                     Open="OpenProjectAsync" />
+    <div class="shell">
+        @* The Workbench header band, from the Task 1 reference: wordmark, hairline divider, product
+           name. It belongs to the launcher only — once a Project is open the rail owns the
+           wordmark and the content region owns its own header (43.20 task 3). *@
+        <header class="shell-header">
+            <div class="brand">
+                <h1>Forge</h1>
+                <span class="brand-divider"></span>
+                <p class="subtitle">AI Workbench</p>
+            </div>
+        </header>
+
+        <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value"
+                         Title="@titleInput" TitleChanged="value => titleInput = value"
+                         Home="@homeInput" HomeChanged="value => homeInput = value"
+                         Busy="busy" Error="@launcherError" Notice="@LauncherNotice"
+                         ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput"
+                         OpenPathChanged="value => openPathInput = value"
+                         GoalCommitted="DraftProjectAsync"
+                         Create="CreateProjectAsync"
+                         OpenRequested="ToggleOpenFolder"
+                         Open="OpenProjectAsync" />
+    </div>
 }
 else
 {
-    <main class="turns">
-        @if (connectionError is not null)
-        {
-            <div class="connection-banner">
-                <span>Connection lost: @connectionError</span>
-                <button class="connection-retry" @onclick="RetryConnectionAsync">Retry</button>
-            </div>
-        }
-        @if (reconnectedWithGap)
-        {
-            <p class="gap-notice">Reconnected. Updates that arrived while disconnected are not shown.</p>
-        }
-        @if (sessionError is not null)
-        {
-            <p class="error-banner">@sessionError</p>
-        }
+    @* The open-Project workbench: a persistent rail and one content region that owns every
+       document. The Project's absolute home is deliberately not rendered anywhere — this surface
+       exposes no local path (43.20 task 3). *@
+    <div class="workbench">
+        <WorkbenchRail Selected="view" SelectedChanged="SelectViewAsync" />
 
-        @if (conversationError is not null)
-        {
-            <p class="error-banner">@conversationError</p>
-        }
-        <ConversationTranscriptView Entries="conversationTranscript.Entries" />
-    </main>
+        <div class="wb-content">
+            <header class="wb-header">
+                <h1 class="wb-title">@HeaderTitle</h1>
+                <p class="wb-subtitle">@HeaderSubtitle</p>
+            </header>
 
-    <footer class="composer-bar">
-        <div class="composer">
-            <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
-                   @ref="composerInput"
-                   placeholder="@ComposerPlaceholder"
-                   disabled="@(!missionControlReady || sending || PromptsBlocked)" />
-            <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
-                @(sending ? "Sending…" : "Send")
-            </button>
+            <main class="wb-document">
+                @switch (view)
+                {
+                    case WorkbenchView.Explorer:
+                        <ProjectExplorerView Workbench="workbench" Error="workbenchError"
+                                             EntrySelected="OpenDocumentAsync" />
+                        break;
+
+                    case WorkbenchView.Document:
+                        <ProjectDocumentView Document="document" Error="documentError"
+                                             Back="BackToExplorer" />
+                        break;
+
+                    case WorkbenchView.Settings:
+                        <WorkbenchSettings />
+                        break;
+
+                    default:
+                        @if (connectionError is not null)
+                        {
+                            <div class="connection-banner">
+                                <span>Connection lost: @connectionError</span>
+                                <button class="connection-retry" @onclick="RetryConnectionAsync">Retry</button>
+                            </div>
+                        }
+                        @if (reconnectedWithGap)
+                        {
+                            <p class="gap-notice">Reconnected. Updates that arrived while disconnected are not shown.</p>
+                        }
+                        @if (sessionError is not null)
+                        {
+                            <p class="error-banner">@sessionError</p>
+                        }
+                        @if (conversationError is not null)
+                        {
+                            <p class="error-banner">@conversationError</p>
+                        }
+                        <ConversationTranscriptView Entries="conversationTranscript.Entries" />
+                        break;
+                }
+            </main>
+
+            @* The composer belongs to Mission Control, so it is absent — not disabled — while
+               another document is shown. An action that cannot apply here should not be present. *@
+            @if (view == WorkbenchView.MissionControl)
+            {
+                <footer class="composer-bar">
+                    <div class="composer">
+                        <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
+                               @ref="composerInput"
+                               placeholder="@ComposerPlaceholder"
+                               disabled="@(!missionControlReady || sending || PromptsBlocked)" />
+                        <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
+                            @(sending ? "Sending…" : "Send")
+                        </button>
+                    </div>
+                </footer>
+            }
         </div>
-
-    </footer>
+    </div>
 }
-</div>
 
 <style>
-    /* The shell is the page's flex column: a fixed header band, then a flexible region that owns
-       any scrolling. min-height: 0 is what lets that region actually shrink in a short window
+    /* The shell is the launcher's flex column: a fixed header band, then a flexible region that
+       owns any scrolling. min-height: 0 is what lets that region actually shrink in a short window
        instead of overflowing the viewport. */
-    .shell { display: flex; flex-direction: column; height: 100vh; min-height: 0; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
+    .shell { display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-height: 0; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
 
     /* The band's height and inset are Workbench theme geometry (--wb-header-*), like every other
        measured value on this surface; nothing here is a literal. */
@@ -85,25 +118,35 @@ else
     .shell-header h1 { margin: 0; font-size: var(--font-size-display); font-weight: 700; color: var(--accent); }
     .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); }
     .subtitle { margin: 0; font-size: var(--font-size-title); color: var(--text); }
-    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .turns { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
+    /* The workbench is ONE grid for the whole viewport: a tokenized rail column and a content
+       column that is minmax(0, 1fr) so it can actually shrink. The content region — never the
+       page — owns vertical overflow, which is why there is no breakpoint here: the rail contracts
+       to its own lower bound and the content takes whatever is left, continuously. */
+    .workbench { display: grid; grid-template-columns: var(--wb-rail-width) minmax(0, 1fr); grid-template-areas: "rail content"; height: 100vh; height: 100dvh; min-height: 0; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
 
+    .wb-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-strong); }
 
+    .wb-header { flex: none; min-height: var(--wb-header-height); padding: var(--space-3) var(--wb-page-inset); display: flex; flex-direction: column; justify-content: center; gap: var(--space-1); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); min-width: 0; }
+    .wb-title { margin: 0; font-size: var(--font-size-title); font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+    .wb-subtitle { margin: 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); overflow-wrap: anywhere; }
 
-    .connection-banner { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
-    .connection-retry { flex-shrink: 0; height: 28px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-pill); background: var(--danger); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
-    .gap-notice { align-self: stretch; margin: 0; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-muted); font-size: 12.5px; text-align: center; }
+    /* min-height: 0 plus overflow-y here is what keeps a long transcript, a long Explorer list, or
+       a long document inside the content region instead of scrolling the document body. */
+    .wb-document { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; padding: var(--wb-page-inset); display: flex; flex-direction: column; gap: var(--space-5); }
 
-    .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; margin: 0; }
+    .connection-banner { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: var(--font-size-body); }
+    .connection-retry { flex-shrink: 0; padding: var(--space-1) var(--space-3); border: none; border-radius: var(--radius-pill); background: var(--danger); color: var(--accent-contrast); font-size: var(--font-size-meta); font-weight: 600; cursor: pointer; }
+    .gap-notice { align-self: stretch; margin: 0; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-muted); font-size: var(--font-size-meta); text-align: center; }
 
-    .composer-bar { position: relative; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--space-5) calc(var(--space-4) + var(--safe-bottom)); }
+    .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: var(--font-size-body); margin: 0; }
+
+    .composer-bar { flex: none; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--wb-page-inset) calc(var(--space-4) + var(--safe-bottom)); }
     .composer { display: flex; align-items: center; gap: var(--space-2); }
-    .composer-input { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 var(--space-3); font-size: 14px; background: var(--surface); color: var(--text); }
+    .composer-input { flex: 1; min-width: 0; height: var(--wb-location-height); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 var(--space-3); font-size: var(--font-size-body); background: var(--surface); color: var(--text); }
     .composer-input:disabled { color: var(--text-subtle); }
-    .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+    .composer-send { flex-shrink: 0; padding: var(--space-2) var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: var(--font-size-body); font-weight: 600; cursor: pointer; }
     .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
-
 </style>
 
 @code {
@@ -111,6 +154,15 @@ else
     // create/open contract returns — Desktop boot establishes neither.
     private ProjectSummary? project;
     private string? sessionId;
+
+    // Which document the workbench shows. It is presentation state ONLY: nothing in this file
+    // recreates a project, session, conversation, or subscription when it changes (43.20 task 3).
+    private WorkbenchView view = WorkbenchView.MissionControl;
+
+    private ProjectWorkbenchProjection? workbench;
+    private ProjectOperationError? workbenchError;
+    private ProjectDocument? document;
+    private ProjectOperationError? documentError;
 
     // Launcher state. Every value shown here came from the Client Runtime: this page derives no
     // title, slug, or home, and holds no filesystem rule.
@@ -137,6 +189,9 @@ else
     // is checked against before it may mutate anything; eventLoopTask is observed, never
     // fire-and-forget. Replacing a folder or mission cancels and awaits the old subscription
     // before creating the replacement, so two subscribers can never overlap.
+    //
+    // Rail navigation deliberately does NOT begin a view operation: the Project, its session, and
+    // its durable subscription outlive every switch.
     private CancellationTokenSource? viewCts;
     private Task? eventLoopTask;
     private int viewGeneration;
@@ -172,6 +227,23 @@ else
 
     private bool CanSend =>
         missionControlReady && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
+
+    // The header names the document you are in and the Project it belongs to — never the Project's
+    // location on disk.
+    private string HeaderTitle => view switch
+    {
+        WorkbenchView.Explorer => project?.Title ?? string.Empty,
+        WorkbenchView.Document => document?.Title ?? "Project document",
+        WorkbenchView.Settings => "Settings",
+        _ => "Mission Control",
+    };
+
+    private string HeaderSubtitle => view switch
+    {
+        WorkbenchView.Explorer => "Project Explorer",
+        WorkbenchView.Document => $"{project?.Title} · Project document",
+        _ => project?.Title ?? string.Empty,
+    };
 
     // Deliberately no OnInitializedAsync: opening Desktop issues no request, creates no session or
     // event subscription, and gives the Client Runtime no reason to touch the filesystem. The first
@@ -269,27 +341,27 @@ else
     // Project therefore restores its whole transcript without any local cache.
     private async Task EnterProjectAsync(ProjectSession opened)
     {
-        var view = await BeginViewAsync();
+        var operation = await BeginViewAsync();
         project = opened.Project;
         sessionId = opened.SessionId;
         focusComposerAfterRender = true;
-        StartEventLoop(view);
+        StartEventLoop(operation);
 
         // Render the workbench BEFORE awaiting the open. Without this the surface would sit on the
         // launcher for the whole open, then jump straight to a ready composer — so the disabled
         // "Opening Mission Control…" state, and an open failure's error, would never be seen.
         StateHasChanged();
 
-        await OpenMissionControlAsync(view);
+        await OpenMissionControlAsync(operation);
     }
 
-    private async Task OpenMissionControlAsync(ViewOperation view)
+    private async Task OpenMissionControlAsync(ViewOperation operation)
     {
         try
         {
             var response = await ClientRuntime.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(
-                new OpenProjectMissionControlRequest(sessionId!), view.Token);
-            if (!IsCurrent(view.Generation))
+                new OpenProjectMissionControlRequest(sessionId!), operation.Token);
+            if (!IsCurrent(operation.Generation))
                 return;
 
             // Ready ONLY on a conversation the Runtime actually opened. A typed error leaves the
@@ -306,14 +378,113 @@ else
         }
         catch (Exception exception)
         {
-            if (IsCurrent(view.Generation))
+            if (IsCurrent(operation.Generation))
                 conversationError = exception.Message;
         }
         finally
         {
-            if (IsCurrent(view.Generation))
+            if (IsCurrent(operation.Generation))
                 StateHasChanged();
         }
+    }
+
+    // --- workbench navigation (43.20 task 3) ----------------------------------------------------
+
+    // Selecting a rail destination changes the rendered view and, for the Explorer, reads the
+    // Project's current projection. It creates nothing: no project operation, no session, no
+    // Mission Control call, and no second event subscription — the one started when the Project
+    // opened keeps running underneath whichever document is shown.
+    private async Task SelectViewAsync(WorkbenchView selected)
+    {
+        view = selected;
+        if (selected == WorkbenchView.Explorer)
+            await LoadWorkbenchAsync();
+    }
+
+    // Read fresh on every visit rather than cached: the Project's files can change underneath an
+    // open workbench, and a stale list would invite opening something that is no longer there.
+    private async Task LoadWorkbenchAsync()
+    {
+        if (sessionId is null || viewCts is null)
+            return;
+
+        var operation = new ViewOperation(viewGeneration, viewCts.Token);
+        workbenchError = null;
+
+        try
+        {
+            var response = await ClientRuntime.SendAsync<GetProjectWorkbenchRequest, GetProjectWorkbenchResponse>(
+                new GetProjectWorkbenchRequest(sessionId), operation.Token);
+            if (!IsCurrent(operation.Generation))
+                return;
+
+            workbench = response.Workbench;
+            workbenchError = response.Error;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the Project was replaced while the read was in flight.
+        }
+        catch (Exception exception)
+        {
+            if (IsCurrent(operation.Generation))
+                workbenchError = new ProjectOperationError(
+                    ProjectOperationErrorCode.InvalidManifest, exception.Message);
+        }
+        finally
+        {
+            if (IsCurrent(operation.Generation))
+                StateHasChanged();
+        }
+    }
+
+    // The entry ID goes back exactly as it arrived. This page never interprets it, builds one, or
+    // sends anything else — there is no path or reference it could supply instead.
+    private async Task OpenDocumentAsync(ProjectExplorerEntry entry)
+    {
+        if (sessionId is null || viewCts is null)
+            return;
+
+        var operation = new ViewOperation(viewGeneration, viewCts.Token);
+        view = WorkbenchView.Document;
+        document = null;
+        documentError = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ClientRuntime.SendAsync<OpenProjectDocumentRequest, OpenProjectDocumentResponse>(
+                new OpenProjectDocumentRequest(sessionId, entry.EntryId), operation.Token);
+            if (!IsCurrent(operation.Generation))
+                return;
+
+            document = response.Document;
+            documentError = response.Error;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the Project was replaced while the open was in flight.
+        }
+        catch (Exception exception)
+        {
+            if (IsCurrent(operation.Generation))
+                documentError = new ProjectOperationError(
+                    ProjectOperationErrorCode.DocumentNotFound, exception.Message);
+        }
+        finally
+        {
+            if (IsCurrent(operation.Generation))
+                StateHasChanged();
+        }
+    }
+
+    // Returning re-reads, for the same reason opening does: the Project may have changed while the
+    // document was open.
+    private async Task BackToExplorer()
+    {
+        document = null;
+        documentError = null;
+        await SelectViewAsync(WorkbenchView.Explorer);
     }
 
     // The launcher's single busy/error boundary. An expected Project failure arrives as a typed
@@ -359,7 +530,7 @@ else
         if (!CanSend || sessionId is null || viewCts is null)
             return;
 
-        var view = new ViewOperation(viewGeneration, viewCts.Token);
+        var operation = new ViewOperation(viewGeneration, viewCts.Token);
         var text = composerText;
 
         // The command id is minted for a SPECIFIC piece of text and survives a failure with it,
@@ -383,9 +554,9 @@ else
         {
             var response = await ClientRuntime.SendAsync<
                 SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
-                new SubmitProjectMissionControlTurnRequest(sessionId, pendingCommandId.Value, text), view.Token);
+                new SubmitProjectMissionControlTurnRequest(sessionId, pendingCommandId.Value, text), operation.Token);
 
-            if (!IsCurrent(view.Generation))
+            if (!IsCurrent(operation.Generation))
                 return;
 
             // The response is an acceptance, not a rendered answer: the turn appears once its
@@ -408,12 +579,12 @@ else
         }
         catch (Exception exception)
         {
-            if (IsCurrent(view.Generation))
+            if (IsCurrent(operation.Generation))
                 conversationError = exception.Message;
         }
         finally
         {
-            if (IsCurrent(view.Generation))
+            if (IsCurrent(operation.Generation))
             {
                 sending = false;
                 StateHasChanged();
@@ -428,7 +599,8 @@ else
     private bool IsCurrent(int generation) => generation == viewGeneration;
 
     // Every replacement starts here: the previous subscription is cancelled and awaited before
-    // anything new exists, then this view's state is cleared and given a fresh identity.
+    // anything new exists, then this view's state is cleared and given a fresh identity. Only a
+    // Project create/open reaches this — rail navigation never does.
     private async Task<ViewOperation> BeginViewAsync()
     {
         await StopViewAsync();
@@ -437,6 +609,11 @@ else
         viewCts = new CancellationTokenSource();
 
         sessionId = null;
+        view = WorkbenchView.MissionControl;
+        workbench = null;
+        workbenchError = null;
+        document = null;
+        documentError = null;
         missionControlReady = false;
         pendingCommandId = null;
         pendingCommandText = null;
@@ -466,15 +643,15 @@ else
         eventLoopTask = null;
     }
 
-    private void StartEventLoop(ViewOperation view) => eventLoopTask = ConsumeEventsAsync(view);
+    private void StartEventLoop(ViewOperation operation) => eventLoopTask = ConsumeEventsAsync(operation);
 
-    private async Task ConsumeEventsAsync(ViewOperation view)
+    private async Task ConsumeEventsAsync(ViewOperation operation)
     {
         try
         {
-            await foreach (var evt in ClientRuntime.Subscribe(view.Token))
+            await foreach (var evt in ClientRuntime.Subscribe(operation.Token))
             {
-                if (!IsCurrent(view.Generation))
+                if (!IsCurrent(operation.Generation))
                     return;
 
                 ApplyEvent(evt);
@@ -483,21 +660,21 @@ else
 
             // The stream ended without an error. Nothing further will arrive on it, so this is a
             // disconnection like any other rather than a quietly finished page.
-            await ReportDisconnectedAsync(view, "the Client Runtime event stream ended.");
+            await ReportDisconnectedAsync(operation, "the Client Runtime event stream ended.");
         }
-        catch (OperationCanceledException) when (view.Token.IsCancellationRequested)
+        catch (OperationCanceledException) when (operation.Token.IsCancellationRequested)
         {
             // Expected: the view was replaced, or the page was disposed.
         }
         catch (Exception exception)
         {
-            await ReportDisconnectedAsync(view, exception.Message);
+            await ReportDisconnectedAsync(operation, exception.Message);
         }
     }
 
-    private async Task ReportDisconnectedAsync(ViewOperation view, string reason)
+    private async Task ReportDisconnectedAsync(ViewOperation operation, string reason)
     {
-        if (!IsCurrent(view.Generation))
+        if (!IsCurrent(operation.Generation))
             return;
 
         connectionError = reason;
