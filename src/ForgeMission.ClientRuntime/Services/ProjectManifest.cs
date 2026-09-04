@@ -1,13 +1,26 @@
 namespace ForgeMission.ClientRuntime.Services;
 
-// The local, Forge-owned Project record written to <project-home>/forge.project.json (43.20 task 1).
-// The complete v1 shape is defined here even though Task 1 only ever writes empty collections and a
-// null conversation ID: later tasks add facts to typed empty arrays instead of silently changing the
-// on-disk schema, and Task 2's conversation-ID write-back round-trips the whole graph.
+// The local, Forge-owned Project record written to <project-home>/forge.project.json (43.20 task 1,
+// schema v2 by 43.21 task 1). The complete shape is defined here even though a new Project is
+// written with empty collections and a null container ID: later tasks add facts to typed empty
+// arrays instead of silently changing the on-disk schema.
 //
 // It holds no credential, secret-derived value, transcript, or remote connection string. Absolute
 // local paths (a context SourceRoot/File reference) stay in this file; they never cross the
 // Conversation boundary.
+/// <param name="ProjectMissionContainerId">The Project's one durable Mission container — the
+/// ConversationHost conversation that orders and replays its child Mission Runs. Null until the
+/// first time the workbench opens it. It executes nothing itself.</param>
+/// <param name="LegacyProjectControlConversationId">A Project's former Mission Control
+/// conversation. Migration moves a v1 value here, and until 43.21 task 3 removes the legacy route
+/// the still-compiling ProjectControl session also records one here so an existing Desktop keeps
+/// working during that window. After task 3 it is a read-only pointer to durable history: those
+/// messages are never replayed as a current mission and never converted into runs.</param>
+/// <param name="MissionControlConversationId">v1 ONLY. It exists solely so a v1 file's value can
+/// be read and moved into <paramref name="LegacyProjectControlConversationId"/>; migration then
+/// nulls it, and being null it is omitted on write — so a v2 file never contains the old key. It
+/// is deliberately the one member with a WhenWritingNull condition, against this manifest's
+/// otherwise-explicit-nulls policy, because an absent key is exactly what "not v1" means.</param>
 internal sealed record ProjectManifest(
     int SchemaVersion,
     Guid ProjectId,
@@ -16,10 +29,17 @@ internal sealed record ProjectManifest(
     ProjectAssetDescriptor[] Assets,
     ProjectMissionReference SelectedMission,
     ProjectContextDescriptor[] AttachedContext,
-    Guid? MissionControlConversationId,
-    ProjectRunMetadata[] Runs)
+    Guid? ProjectMissionContainerId,
+    ProjectRunMetadata[] Runs,
+    Guid? LegacyProjectControlConversationId = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(
+        Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    Guid? MissionControlConversationId = null)
 {
-    public const int CurrentSchemaVersion = 1;
+    /// <summary>v2 (43.21 task 1): <c>missionControlConversationId</c> became
+    /// <see cref="ProjectMissionContainerId"/>, and a migrated Project keeps its old control
+    /// conversation in <see cref="LegacyProjectControlConversationId"/>.</summary>
+    public const int CurrentSchemaVersion = 2;
 }
 
 /// <summary>An editable local Forge asset. <paramref name="RelativePath"/> is normalized,

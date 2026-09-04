@@ -93,32 +93,92 @@ internal sealed class ProjectStore(string? projectsRoot = null)
     /// temporary file and is then moved over the manifest, so a crash mid-write can never leave a
     /// half-written manifest — a reader sees either the old file or the new one.
     /// </summary>
-    public ProjectRecord SetMissionControlConversationId(string home, Guid conversationId)
+    public ProjectRecord SetLegacyProjectControlConversationId(string home, Guid conversationId) =>
+        SetConversationId(home, conversationId, "Mission Control conversation",
+            manifest => manifest.LegacyProjectControlConversationId,
+            (manifest, id) => manifest with { LegacyProjectControlConversationId = id });
+
+    /// <summary>
+    /// Records the server-issued Project Mission container ID (43.21 task 1) — the ONE place that
+    /// field is ever written, and only after the Conversation service has accepted the create, so
+    /// the durable container always exists before the local record of it does. Same idempotent,
+    /// refusing, atomic semantics as the legacy setter above: a Project has exactly one container,
+    /// and silently repointing it would orphan every run recorded under the old one.
+    /// </summary>
+    public ProjectRecord SetProjectMissionContainerId(string home, Guid containerId) =>
+        SetConversationId(home, containerId, "Project Mission container",
+            manifest => manifest.ProjectMissionContainerId,
+            (manifest, id) => manifest with { ProjectMissionContainerId = id });
+
+    /// <summary>
+    /// Persists the Project's selected mission (43.21 task 1) and returns the canonical value.
+    ///
+    /// The allow-list lives HERE rather than at the transport edge: this is the only writer, so a
+    /// value that reaches disk has necessarily passed it — no surface, and no future second caller,
+    /// can persist a provider, model, expert, path, or unlisted mission by taking a different
+    /// route. Re-selecting the same mission is a no-op rather than a rewrite.
+    /// </summary>
+    /// <summary>Selects and returns the canonical reference, for callers that want the value
+    /// rather than the whole record.</summary>
+    public ProjectMissionReference SelectMissionFor(string home, string mission) =>
+        SetSelectedMission(home, mission).Manifest.SelectedMission;
+
+    public ProjectRecord SetSelectedMission(string home, string mission)
+    {
+        if (!ProjectMissions.IsAllowed(mission))
+            throw new ProjectOperationException(ProjectOperationErrorCode.UnknownMission,
+                $"'{mission}' is not a mission this Project can run.");
+
+        var (root, manifestPath, manifest) = ReadForWrite(home);
+        var selected = ProjectMissions.Reference(mission);
+
+        if (manifest.SelectedMission is { Origin: ProjectMissionOrigin.BuiltIn } current &&
+            string.Equals(current.Reference, selected.Reference, StringComparison.Ordinal))
+            return new ProjectRecord(manifest, root); // Already selected: nothing to write.
+
+        var updated = manifest with { SelectedMission = selected };
+        ReplaceManifest(manifestPath, updated);
+        return new ProjectRecord(updated, root);
+    }
+
+    // One atomic read-check-write for every "record a server-issued conversation id" setter. The
+    // refusal is the point: same id is a no-op, a different non-null id is refused outright.
+    private ProjectRecord SetConversationId(
+        string home,
+        Guid conversationId,
+        string what,
+        Func<ProjectManifest, Guid?> read,
+        Func<ProjectManifest, Guid, ProjectManifest> write)
     {
         if (conversationId == Guid.Empty)
             throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
-                "A Mission Control conversation id is required.");
+                $"A {what} id is required.");
 
+        var (root, manifestPath, manifest) = ReadForWrite(home);
+
+        if (read(manifest) is { } existing)
+        {
+            if (existing != conversationId)
+                throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                    $"{manifestPath} already names a different {what}.");
+
+            return new ProjectRecord(manifest, root); // Same ID: already recorded, nothing to write.
+        }
+
+        var updated = write(manifest, conversationId);
+        ReplaceManifest(manifestPath, updated);
+        return new ProjectRecord(updated, root);
+    }
+
+    private (string Root, string ManifestPath, ProjectManifest Manifest) ReadForWrite(string home)
+    {
         var root = ValidHome(home);
         var manifestPath = Path.Combine(root, ManifestFileName);
         if (!File.Exists(manifestPath))
             throw new ProjectOperationException(ProjectOperationErrorCode.HomeNotFound,
                 $"No Forge Project manifest exists at {manifestPath}.");
 
-        var manifest = Read(manifestPath, root);
-
-        if (manifest.MissionControlConversationId is { } existing)
-        {
-            if (existing != conversationId)
-                throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
-                    $"{manifestPath} already names a different Mission Control conversation.");
-
-            return new ProjectRecord(manifest, root); // Same ID: already recorded, nothing to write.
-        }
-
-        var updated = manifest with { MissionControlConversationId = conversationId };
-        ReplaceManifest(manifestPath, updated);
-        return new ProjectRecord(updated, root);
+        return (root, manifestPath, Read(manifestPath, root));
     }
 
     // Write-then-move. File.Move with overwrite is rename(2) on Unix and MoveFileEx with
@@ -285,7 +345,7 @@ internal sealed class ProjectStore(string? projectsRoot = null)
             [],
             ProjectMissionReference.BuiltInJanus,
             [],
-            MissionControlConversationId: null,
+            ProjectMissionContainerId: null,
             []);
 
         Directory.CreateDirectory(home);
@@ -341,9 +401,16 @@ internal sealed class ProjectStore(string? projectsRoot = null)
             throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
                 $"{manifestPath} is missing a required Project field.");
 
+        // The selection is deliberately NOT allow-listed here. It is a preference, not an identity
+        // field, and refusing to OPEN a Project because of one would strand it — its Explorer, its
+        // assets and its history would all become unreachable over a value a later selection can
+        // simply correct. The two places that matter enforce it instead: SetSelectedMission, which
+        // is the only writer, and starting a run, which is the only use. So an unrunnable selection
+        // fails at the moment it would otherwise cause work nobody chose, and nowhere else.
+
         // A missing collection is an older-but-valid hand edit, not a failure: the identity fields
         // above are what a Project cannot be without.
-        var normalized = manifest with
+        var normalized = MigrateToCurrentSchema(manifest) with
         {
             Assets = OrEmpty(manifest.Assets),
             AttachedContext = OrEmpty(manifest.AttachedContext),
@@ -356,6 +423,37 @@ internal sealed class ProjectStore(string? projectsRoot = null)
             ValidateContextReference(context, manifestPath);
 
         return normalized;
+    }
+
+    /// <summary>
+    /// Reads a v1 manifest forward (43.21 task 1). It does exactly two things: moves the old
+    /// Mission Control conversation ID into the legacy-history field, and stamps the current
+    /// schema version.
+    ///
+    /// What it deliberately does NOT do is as important. It creates no Mission container — the
+    /// workbench does that on first use, through the Host, so the local record can never claim a
+    /// durable container that does not exist. It converts no historic control message into a run,
+    /// and it does not carry the old conversation forward as the Project's current one: those
+    /// messages are history, not a mission in progress.
+    ///
+    /// Migration happens on READ and is persisted by the next authoritative write, so opening a
+    /// Project never mutates it. A v1 file left unopened stays exactly as it was.
+    /// </summary>
+    private static ProjectManifest MigrateToCurrentSchema(ProjectManifest manifest)
+    {
+        if (manifest.SchemaVersion >= ProjectManifest.CurrentSchemaVersion)
+            return manifest;
+
+        return manifest with
+        {
+            SchemaVersion = ProjectManifest.CurrentSchemaVersion,
+            // Only when the v2 field is empty: a partially migrated file that already carries a
+            // legacy id must not have it overwritten by a stale v1 key.
+            LegacyProjectControlConversationId =
+                manifest.LegacyProjectControlConversationId ?? manifest.MissionControlConversationId,
+            // Nulled so the old key is omitted on the next write — a v2 file never contains it.
+            MissionControlConversationId = null,
+        };
     }
 
     private static void ValidateAssetPath(ProjectAssetDescriptor asset, string manifestPath, string home)

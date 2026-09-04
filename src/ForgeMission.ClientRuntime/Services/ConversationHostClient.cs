@@ -47,6 +47,20 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
             ConversationContractsJsonContext.Default.SubmitProjectControlMessageRequest,
             ConversationContractsJsonContext.Default.SubmitProjectControlMessageResponse, ct);
 
+    // 43.21 task 1 — the universal Project Mission pair. Same generic PostAsync, same typed
+    // responses; nothing about the transport differs from the Janus start it replaces.
+    public Task<CreateProjectMissionContainerResponse> CreateProjectMissionContainerAsync(
+        CreateProjectMissionContainerRequest request, CancellationToken ct) =>
+        PostAsync("conversations/project-mission", request,
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerRequest,
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerResponse, ct);
+
+    public Task<StartProjectMissionRunResponse> StartProjectMissionRunAsync(
+        StartProjectMissionRunRequest request, CancellationToken ct) =>
+        PostAsync($"conversations/{request.ContainerId}/mission-runs", request,
+            ConversationContractsJsonContext.Default.StartProjectMissionRunRequest,
+            ConversationContractsJsonContext.Default.StartProjectMissionRunResponse, ct);
+
     public async IAsyncEnumerable<ConversationEvent> StreamEventsAsync(
         Guid conversationId, long after, [EnumeratorCancellation] CancellationToken ct)
     {

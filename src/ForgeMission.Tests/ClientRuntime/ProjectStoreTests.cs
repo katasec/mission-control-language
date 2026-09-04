@@ -132,19 +132,20 @@ public sealed class ProjectStoreTests : IDisposable
     // --- create ----------------------------------------------------------------------------
 
     [Fact]
-    public void Create_WritesTheCompleteV1Manifest()
+    public void Create_WritesTheCompleteCurrentManifest()
     {
         var created = _store.Create("Todos API", null, null);
 
         var manifest = created.Manifest;
-        Assert.Equal(1, manifest.SchemaVersion);
+        Assert.Equal(2, manifest.SchemaVersion);
+        Assert.Null(manifest.ProjectMissionContainerId);
         Assert.NotEqual(Guid.Empty, manifest.ProjectId);
         Assert.Equal("Todos API", manifest.Title);
         Assert.Equal("Todos API", manifest.Goal);
         Assert.Empty(manifest.Assets);
         Assert.Empty(manifest.AttachedContext);
         Assert.Empty(manifest.Runs);
-        Assert.Null(manifest.MissionControlConversationId);
+        Assert.Null(manifest.LegacyProjectControlConversationId);
         Assert.Equal(ProjectMissionOrigin.BuiltIn, manifest.SelectedMission.Origin);
         Assert.Equal("Janus", manifest.SelectedMission.Reference);
         Assert.Null(manifest.SelectedMission.Digest);
@@ -158,9 +159,11 @@ public sealed class ProjectStoreTests : IDisposable
 
         var json = File.ReadAllText(Path.Combine(created.Home, ProjectStore.ManifestFileName));
 
-        Assert.Contains("\"schemaVersion\": 1", json, StringComparison.Ordinal);
-        Assert.Contains("\"missionControlConversationId\": null", json, StringComparison.Ordinal);
+        Assert.Contains("\"schemaVersion\": 2", json, StringComparison.Ordinal);
+        Assert.Contains("\"projectMissionContainerId\": null", json, StringComparison.Ordinal);
         Assert.Contains("\"origin\": \"BuiltIn\"", json, StringComparison.Ordinal);
+        // The v1 key is gone from a newly written manifest, not merely unused.
+        Assert.DoesNotContain("missionControlConversationId", json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -298,7 +301,7 @@ public sealed class ProjectStoreTests : IDisposable
     public void Open_ANewerSchemaVersion_IsRefusedAndLeftUntouched()
     {
         var home = WriteManifest("""
-            { "schemaVersion": 2, "projectId": "f0a1b2c3-0000-0000-0000-000000000001",
+            { "schemaVersion": 3, "projectId": "f0a1b2c3-0000-0000-0000-000000000001",
               "title": "Future", "goal": "later", "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
             """);
 
@@ -377,7 +380,12 @@ public sealed class ProjectStoreTests : IDisposable
         var rewritten = JsonSerializer.Serialize(manifest, ProjectManifestJsonContext.Default.ProjectManifest);
         var reread = JsonSerializer.Deserialize(rewritten, ProjectManifestJsonContext.Default.ProjectManifest)!;
 
-        Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000aa"), reread.MissionControlConversationId);
+        // Migrated on the way through: the v1 control id lands in the legacy-history field, and
+        // the old key is gone from the rewritten JSON entirely.
+        Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000aa"), reread.LegacyProjectControlConversationId);
+        Assert.Null(reread.MissionControlConversationId);
+        Assert.Equal(2, reread.SchemaVersion);
+        Assert.DoesNotContain("missionControlConversationId", rewritten, StringComparison.Ordinal);
         Assert.Equal(ProjectAssetKind.LockFile, reread.Assets[1].Kind);
         Assert.Equal("mission/mission.mcl", reread.Assets[0].RelativePath);
         Assert.Equal("sha256:asset", reread.Assets[0].ContentHash);
@@ -457,16 +465,16 @@ public sealed class ProjectStoreTests : IDisposable
     // --- Mission Control conversation id write-back (43.20 task 2) --------------------------
 
     [Fact]
-    public void SetMissionControlConversationId_RecordsIt_AndRoundTripsThroughOpen()
+    public void SetLegacyProjectControlConversationId_RecordsIt_AndRoundTripsThroughOpen()
     {
         var project = _store.Create("Todos API", null, null);
-        Assert.Null(project.Manifest.MissionControlConversationId);
+        Assert.Null(project.Manifest.LegacyProjectControlConversationId);
         var conversationId = Guid.NewGuid();
 
-        var updated = _store.SetMissionControlConversationId(project.Home, conversationId);
+        var updated = _store.SetLegacyProjectControlConversationId(project.Home, conversationId);
 
-        Assert.Equal(conversationId, updated.Manifest.MissionControlConversationId);
-        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, updated.Manifest.LegacyProjectControlConversationId);
+        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
         // The rest of the v1 manifest survives the rewrite unchanged.
         Assert.Equal(project.Manifest.ProjectId, updated.Manifest.ProjectId);
         Assert.Equal(project.Manifest.Goal, updated.Manifest.Goal);
@@ -476,45 +484,45 @@ public sealed class ProjectStoreTests : IDisposable
     }
 
     [Fact]
-    public void SetMissionControlConversationId_WithTheSameId_IsAnIdempotentNoOp()
+    public void SetLegacyProjectControlConversationId_WithTheSameId_IsAnIdempotentNoOp()
     {
         var project = _store.Create("Todos API", null, null);
         var conversationId = Guid.NewGuid();
-        _store.SetMissionControlConversationId(project.Home, conversationId);
+        _store.SetLegacyProjectControlConversationId(project.Home, conversationId);
         var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
         var after = File.ReadAllText(manifestPath);
 
-        var again = _store.SetMissionControlConversationId(project.Home, conversationId);
+        var again = _store.SetLegacyProjectControlConversationId(project.Home, conversationId);
 
-        Assert.Equal(conversationId, again.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, again.Manifest.LegacyProjectControlConversationId);
         Assert.Equal(after, File.ReadAllText(manifestPath));
     }
 
     // A Project has exactly one control conversation. Repointing it would orphan a durable
     // transcript, so a different non-null id is refused rather than overwritten.
     [Fact]
-    public void SetMissionControlConversationId_WithADifferentId_IsRefused_AndLeavesTheFileUntouched()
+    public void SetLegacyProjectControlConversationId_WithADifferentId_IsRefused_AndLeavesTheFileUntouched()
     {
         var project = _store.Create("Todos API", null, null);
-        _store.SetMissionControlConversationId(project.Home, Guid.NewGuid());
+        _store.SetLegacyProjectControlConversationId(project.Home, Guid.NewGuid());
         var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
         var before = File.ReadAllText(manifestPath);
 
         var failure = Assert.Throws<ProjectOperationException>(
-            () => _store.SetMissionControlConversationId(project.Home, Guid.NewGuid()));
+            () => _store.SetLegacyProjectControlConversationId(project.Home, Guid.NewGuid()));
 
         Assert.Equal(ProjectOperationErrorCode.InvalidManifest, failure.Code);
         Assert.Equal(before, File.ReadAllText(manifestPath));
     }
 
     [Fact]
-    public void SetMissionControlConversationId_WithNoManifest_ReportsHomeNotFound()
+    public void SetLegacyProjectControlConversationId_WithNoManifest_ReportsHomeNotFound()
     {
         var empty = Path.Combine(_profile, "no-project");
         Directory.CreateDirectory(empty);
 
         var failure = Assert.Throws<ProjectOperationException>(
-            () => _store.SetMissionControlConversationId(empty, Guid.NewGuid()));
+            () => _store.SetLegacyProjectControlConversationId(empty, Guid.NewGuid()));
 
         Assert.Equal(ProjectOperationErrorCode.HomeNotFound, failure.Code);
     }
@@ -534,10 +542,186 @@ public sealed class ProjectStoreTests : IDisposable
         Directory.CreateDirectory(temporaryPath);
 
         var failure = Assert.Throws<ProjectOperationException>(
-            () => _store.SetMissionControlConversationId(project.Home, Guid.NewGuid()));
+            () => _store.SetLegacyProjectControlConversationId(project.Home, Guid.NewGuid()));
 
         Assert.Equal(ProjectOperationErrorCode.ManifestWriteFailed, failure.Code);
         Assert.Equal(before, File.ReadAllText(manifestPath));
-        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Null(_store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
+    // ── 43.21 task 1: manifest v2 migration and mission selection ──────────────────
+
+    // The migration's whole job is to lose nothing and invent nothing. A v1 Project's control
+    // conversation becomes history, and the Project gains no container and no runs from it.
+    [Fact]
+    public void OpeningAV1Manifest_MovesItsControlConversationIntoLegacyHistory()
+    {
+        var home = WriteManifest("""
+            { "schemaVersion": 1, "projectId": "f0a1b2c3-0000-0000-0000-0000000000b1",
+              "title": "Older", "goal": "still valid",
+              "missionControlConversationId": "9f000000-0000-0000-0000-0000000000ab",
+              "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
+            """);
+
+        var manifest = _store.Open(home).Project!.Manifest;
+
+        Assert.Equal(2, manifest.SchemaVersion);
+        Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000ab"), manifest.LegacyProjectControlConversationId);
+        // No container is invented locally: the workbench creates one through the Host, so the
+        // manifest can never claim a durable container that does not exist.
+        Assert.Null(manifest.ProjectMissionContainerId);
+        // And nothing became a run.
+        Assert.Empty(manifest.Runs);
+        Assert.Equal("Janus", manifest.SelectedMission.Reference);
+    }
+
+    [Fact]
+    public void OpeningAV1Manifest_DoesNotRewriteItOnDisk()
+    {
+        var home = WriteManifest("""
+            { "schemaVersion": 1, "projectId": "f0a1b2c3-0000-0000-0000-0000000000b2",
+              "title": "Older", "goal": "still valid",
+              "missionControlConversationId": "9f000000-0000-0000-0000-0000000000ab",
+              "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
+            """);
+        var before = File.ReadAllText(Path.Combine(home, ProjectStore.ManifestFileName));
+
+        _store.Open(home);
+
+        // Migration is in memory; the next authoritative write persists it. Reading a Project must
+        // never mutate it, or an unopened v1 file would silently change just by being looked at.
+        Assert.Equal(before, File.ReadAllText(Path.Combine(home, ProjectStore.ManifestFileName)));
+    }
+
+    [Fact]
+    public void AV1ManifestWithNoControlConversation_MigratesToAnEmptyLegacyField()
+    {
+        var home = WriteManifest("""
+            { "schemaVersion": 1, "projectId": "f0a1b2c3-0000-0000-0000-0000000000b3",
+              "title": "Older", "goal": "still valid",
+              "missionControlConversationId": null,
+              "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
+            """);
+
+        var manifest = _store.Open(home).Project!.Manifest;
+
+        Assert.Equal(2, manifest.SchemaVersion);
+        Assert.Null(manifest.LegacyProjectControlConversationId);
+        Assert.Null(manifest.ProjectMissionContainerId);
+    }
+
+    [Fact]
+    public void SetProjectMissionContainerId_RecordsIt_AndRoundTripsThroughOpen()
+    {
+        var project = _store.Create("Todos API", null, null);
+        var containerId = Guid.NewGuid();
+
+        var updated = _store.SetProjectMissionContainerId(project.Home, containerId);
+
+        Assert.Equal(containerId, updated.Manifest.ProjectMissionContainerId);
+        Assert.Equal(containerId, _store.Open(project.Home).Project!.Manifest.ProjectMissionContainerId);
+    }
+
+    [Fact]
+    public void SetProjectMissionContainerId_RefusesADifferentContainer_AndIsANoOpForTheSameOne()
+    {
+        var project = _store.Create("Todos API", null, null);
+        var containerId = Guid.NewGuid();
+        _store.SetProjectMissionContainerId(project.Home, containerId);
+
+        // Repointing would orphan every run recorded under the first container.
+        Assert.Throws<ProjectOperationException>(
+            () => _store.SetProjectMissionContainerId(project.Home, Guid.NewGuid()));
+        Assert.Equal(containerId,
+            _store.SetProjectMissionContainerId(project.Home, containerId).Manifest.ProjectMissionContainerId);
+    }
+
+    // A Project's two durable references are independent: migrating one must not disturb the other.
+    [Fact]
+    public void AMigratedProject_KeepsItsLegacyHistoryWhenItGainsAContainer()
+    {
+        var home = WriteManifest("""
+            { "schemaVersion": 1, "projectId": "f0a1b2c3-0000-0000-0000-0000000000b4",
+              "title": "Older", "goal": "still valid",
+              "missionControlConversationId": "9f000000-0000-0000-0000-0000000000ab",
+              "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
+            """);
+        var containerId = Guid.NewGuid();
+
+        _store.SetProjectMissionContainerId(home, containerId);
+        var manifest = _store.Open(home).Project!.Manifest;
+
+        Assert.Equal(containerId, manifest.ProjectMissionContainerId);
+        Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000ab"), manifest.LegacyProjectControlConversationId);
+        // The v1 key is gone from the rewritten file, not merely ignored.
+        Assert.DoesNotContain("missionControlConversationId",
+            File.ReadAllText(Path.Combine(home, ProjectStore.ManifestFileName)), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Janus")]
+    [InlineData("Naive")]
+    public void SelectingAnAllowedMission_PersistsIt_AndSurvivesReopening(string mission)
+    {
+        var project = _store.Create("Todos API", null, null);
+
+        var selected = _store.SelectMissionFor(project.Home, mission);
+
+        Assert.Equal(mission, selected.Reference);
+        Assert.Equal(ProjectMissionOrigin.BuiltIn, selected.Origin);
+        Assert.Null(selected.Digest);
+        Assert.Equal(mission, _store.Open(project.Home).Project!.Manifest.SelectedMission.Reference);
+    }
+
+    [Fact]
+    public void SwitchingBetweenTheTwoMissions_Persists()
+    {
+        var project = _store.Create("Todos API", null, null);
+
+        _store.SelectMissionFor(project.Home, "Naive");
+        Assert.Equal("Naive", _store.Open(project.Home).Project!.Manifest.SelectedMission.Reference);
+
+        _store.SelectMissionFor(project.Home, "Janus");
+        Assert.Equal("Janus", _store.Open(project.Home).Project!.Manifest.SelectedMission.Reference);
+    }
+
+    // Everything outside the closed pair, including the values a surface might plausibly send if
+    // the catalog ever leaked: a model, a provider, an expert, a path, and the legacy mission.
+    [Theory]
+    [InlineData("MissionControl")]
+    [InlineData("Default")]
+    [InlineData("janus")]
+    [InlineData("gpt-4o")]
+    [InlineData("openai")]
+    [InlineData("Controller")]
+    [InlineData("missions/naive/mission.mcl")]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void SelectingAnythingElse_IsRefused_AndPersistsNothing(string mission)
+    {
+        var project = _store.Create("Todos API", null, null);
+
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.SelectMissionFor(project.Home, mission));
+
+        Assert.Equal(ProjectOperationErrorCode.UnknownMission, failure.Code);
+        Assert.Equal("Janus", _store.Open(project.Home).Project!.Manifest.SelectedMission.Reference);
+    }
+
+    // A selection that is merely STORED wrong does not make a Project unopenable — its Explorer,
+    // assets and history stay reachable. It fails where it would otherwise cause work nobody chose.
+    [Fact]
+    public void AManifestSelectingAnUnrunnableMission_StillOpens()
+    {
+        var home = WriteManifest("""
+            { "schemaVersion": 2, "projectId": "f0a1b2c3-0000-0000-0000-0000000000b5",
+              "title": "Odd", "goal": "still valid",
+              "selectedMission": { "origin": "Local", "reference": "missions/custom/mission.mcl" } }
+            """);
+
+        var manifest = _store.Open(home).Project!.Manifest;
+
+        Assert.Equal("missions/custom/mission.mcl", manifest.SelectedMission.Reference);
+        Assert.Throws<ProjectOperationException>(() => ProjectMissions.RequireSelected(manifest.SelectedMission));
+    }
+
 }

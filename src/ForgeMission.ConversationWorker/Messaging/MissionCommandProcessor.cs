@@ -97,7 +97,7 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
             // control guard independently rejects a RunStatus on a control conversation, so a
             // regression here fails loudly at the sequence allocator rather than appending a
             // meaningless run status to a control transcript.
-            var interruptionFact = missionKind == WorkerMissionKind.MissionControl
+            var interruptionFact = missionKind == WorkerMissionKind.ProjectControl
                 ? BuildProgress(
                     command, redelivered.NextProgressOrdinal, ConversationEventKind.Error, ConversationParticipant.Forge,
                     reason: "This Mission Control turn was interrupted before it completed and produced no response.")
@@ -118,7 +118,7 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
             // Refusing it explicitly keeps that structural fact from depending on the nullable
             // RunId comparison inside ProcessContinuationAsync, where null == null would otherwise
             // read as a match.
-            if (missionKind == WorkerMissionKind.MissionControl)
+            if (missionKind == WorkerMissionKind.ProjectControl)
                 return await FailControlTurnAsync(
                     command, session, "A Mission Control conversation has no tool hand-off to continue.",
                     GuardedSaveAsync, PublishFactDurablyAsync, ct);
@@ -132,10 +132,56 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
 
         return missionKind switch
         {
-            WorkerMissionKind.MissionControl =>
+            WorkerMissionKind.ProjectControl =>
                 await ProcessControlTurnAsync(command, GuardedSaveAsync, PublishFactDurablyAsync, ct),
             _ => await ProcessFreshStartAsync(command, missionKind, GuardedSaveAsync, PublishFactDurablyAsync, ct),
         };
+    }
+
+    /// <summary>
+    /// One Naive Mission Run (43.21 task 1): a single-expert answer published as an ordinary run.
+    ///
+    /// It is deliberately the same shape as a Janus run — a <c>ParticipantMessage</c> carrying the
+    /// answer, then a terminal <c>RunStatus</c> through the shared
+    /// <see cref="HandleMissionResultAsync"/> — so nothing downstream can tell the two missions
+    /// apart structurally. The contrast with <see cref="ProcessControlTurnAsync"/> is the point:
+    /// that publishes one fact and no run status because a control turn has no run.
+    /// </summary>
+    private async Task<WorkerSessionState> ProcessNaiveRunAsync(
+        ConversationCommand command,
+        WorkerSessionState state,
+        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
+        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
+        CancellationToken ct)
+    {
+        MissionResult result;
+        try
+        {
+            // ProjectGoal is pinned container state set by ConversationGrain, never caller input.
+            // An empty one is tolerated rather than fatal: unlike a control turn, a Naive run's
+            // instruction is its own input, and a Project with a blank goal must still be able to
+            // run one.
+            result = await NaiveMissionExecutor.RunTurnAsync(
+                missions.Naive, command.ProjectGoal ?? "", command.Goal, ct);
+        }
+        catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
+        {
+            // Same classification rule as Janus: a caught executor/provider failure is a KNOWN
+            // outcome and resolves as Error+Failed, never as Interrupted.
+            return await HandleMissionResultAsync(
+                command, state, new MissionResult(command.MissionRef, "", MissionStatus.Fail, ex.Message),
+                publishFactDurablyAsync, saveSessionAsync, ct);
+        }
+
+        if (result.Status == MissionStatus.Pass)
+        {
+            var answer = BuildProgress(
+                command, state.NextProgressOrdinal, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Naive, text: result.Text);
+            state = await publishFactDurablyAsync(state, answer, ct);
+        }
+
+        return await HandleMissionResultAsync(command, state, result, publishFactDurablyAsync, saveSessionAsync, ct);
     }
 
     /// <summary>
@@ -165,8 +211,8 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
         MissionResult result;
         try
         {
-            result = await MissionControlMissionExecutor.RunTurnAsync(
-                missions.MissionControl, command.ProjectGoal, command.Goal, ct);
+            result = await NaiveMissionExecutor.RunTurnAsync(
+                missions.Naive, command.ProjectGoal, command.Goal, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
         {
@@ -236,6 +282,12 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
     {
         var state = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
         await saveSessionAsync(state, ct);
+
+        // A Naive run goes through the SAME start/terminal protocol as a Janus one — it differs
+        // only in what happens between them, which is the whole point of 43.21 task 1: two
+        // missions, one run shape.
+        if (missionKind == WorkerMissionKind.Naive)
+            return await ProcessNaiveRunAsync(command, state, saveSessionAsync, publishFactDurablyAsync, ct);
 
         if (missionKind != WorkerMissionKind.Janus)
             return await RejectUnsupportedMissionAsync(command, state, publishFactDurablyAsync, saveSessionAsync, ct);

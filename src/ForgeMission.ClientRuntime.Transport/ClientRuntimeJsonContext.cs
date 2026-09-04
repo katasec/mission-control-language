@@ -20,6 +20,11 @@ namespace ForgeMission.ClientRuntime.Transport;
 [JsonSerializable(typeof(OpenProjectMissionControlResponse))]
 [JsonSerializable(typeof(SubmitProjectMissionControlTurnRequest))]
 [JsonSerializable(typeof(SubmitProjectMissionControlTurnResponse))]
+// 43.21 task 1 — the universal Project Mission pair.
+[JsonSerializable(typeof(SelectProjectMissionRequest))]
+[JsonSerializable(typeof(SelectProjectMissionResponse))]
+[JsonSerializable(typeof(StartProjectMissionRunRequest))]
+[JsonSerializable(typeof(StartProjectMissionRunResponse))]
 // 43.20 task 3. Every payload type is registered explicitly rather than left to graph
 // reachability from its response root, so a later refactor that stops referencing one of them
 // from a registered type cannot silently drop its metadata and fail only at runtime under AOT.

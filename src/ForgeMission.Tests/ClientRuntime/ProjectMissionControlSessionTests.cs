@@ -47,7 +47,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
         Assert.Equal("Ship a todos API", create.Body.GetProperty("projectGoal").GetString());
 
         // Written back only after acceptance, and readable by the next open.
-        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
     {
         var project = _store.Create("Ship a todos API", null, null);
         var conversationId = Guid.NewGuid();
-        _store.SetMissionControlConversationId(project.Home, conversationId);
+        _store.SetLegacyProjectControlConversationId(project.Home, conversationId);
 
         var relayed = new List<ClientRuntimeEvent>();
         var handler = new ScriptedControlHostHandler(conversationId, ToSseBody(
@@ -96,7 +96,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
 
         // The durable conversation is valid; only the local record failed. Nothing was recorded,
         // and it was never reported as a successful write.
-        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Null(_store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
 
         Directory.Delete(temporaryPath);
         await using var retry = NewSession(handler, project.Home);
@@ -111,7 +111,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
             .Distinct()
             .ToList();
         Assert.Single(commandIds);
-        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
 
     // ── 3. A control turn carries nothing it should not ────────────────────────────
@@ -182,7 +182,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
         var failure = await Assert.ThrowsAsync<HttpRequestException>(() => session.OpenAsync(CancellationToken.None));
 
         Assert.Equal(HttpStatusCode.Conflict, failure.StatusCode);
-        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Null(_store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────────

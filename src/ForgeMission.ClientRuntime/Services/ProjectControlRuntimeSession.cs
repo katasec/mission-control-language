@@ -4,6 +4,11 @@ using ForgeMission.Conversations.Contracts;
 
 namespace ForgeMission.ClientRuntime.Services;
 
+// LEGACY (43.20 task 2), superseded by ProjectMissionRuntimeSession (43.21 task 1) and deleted by
+// 43.21 task 3. No new contract routes through it; it is retained only so an existing Desktop keeps
+// working between Task 1 and Task 2, and it now reads and writes the manifest's
+// LegacyProjectControlConversationId rather than a current-mission field.
+//
 // Owns one Project's Mission Control conversation on the Client Runtime side (43.20 task 2):
 // resolving the Project from the session's own root, creating the durable conversation only when
 // the manifest holds no ID yet, writing that ID back after Host acceptance, and following the
@@ -40,7 +45,7 @@ internal sealed class ProjectControlRuntimeSession(
             ?? throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
                 $"{projectHome} holds no Forge Project manifest.");
 
-        var conversationId = project.Manifest.MissionControlConversationId
+        var conversationId = project.Manifest.LegacyProjectControlConversationId
             ?? await CreateAndRecordAsync(project, ct);
 
         _conversationId = conversationId;
@@ -74,7 +79,7 @@ internal sealed class ProjectControlRuntimeSession(
 
         // Only after durable acceptance. A failed write leaves the conversation valid and reports
         // ManifestWriteFailed — never a new conversation, never a successful local write.
-        projects.SetMissionControlConversationId(project.Home, response.ConversationId);
+        projects.SetLegacyProjectControlConversationId(project.Home, response.ConversationId);
         return response.ConversationId;
     }
 

@@ -537,4 +537,146 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
     private static string Sha256(string content) =>
         "sha256:" + Convert.ToHexStringLower(
             System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(content)));
+    // --- Project Mission selection and invocation (43.21 task 1) --------------------------------
+    // Selection needs no Conversation service, so it is proven end to end here. Starting a run
+    // does need one, and none runs in this test — so the run assertions below deliberately test
+    // what the Runtime decides BEFORE it ever reaches the Host: the allow-list, the input bounds,
+    // and the session check. That is the part this layer owns.
+
+    [Theory]
+    [InlineData("Janus")]
+    [InlineData("Naive")]
+    public async Task SelectMission_PersistsTheChoice_AndReturnsTheCanonicalValue(string mission)
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await SelectAsync(session.SessionId, mission);
+
+        Assert.Null(response.Error);
+        Assert.Equal(mission, response.SelectedMission);
+        Assert.Contains($"\"reference\": \"{mission}\"",
+            await File.ReadAllTextAsync(Path.Combine(session.Project.Home, "forge.project.json")),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SelectMission_SurvivesReopeningTheProject()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        await SelectAsync(session.SessionId, "Naive");
+
+        var reopened = await OpenAsync(new ProjectOpenRequest(session.Project.Home));
+        var again = await SelectAsync(reopened.Session!.SessionId, "Naive");
+
+        Assert.Equal("Naive", again.SelectedMission);
+    }
+
+    // The closed catalog, over the wire. A surface cannot persist a provider, a model, an expert,
+    // a path, or the legacy mission by taking this route.
+    [Theory]
+    [InlineData("MissionControl")]
+    [InlineData("Default")]
+    [InlineData("gpt-4o")]
+    [InlineData("Controller")]
+    [InlineData("missions/naive/mission.mcl")]
+    [InlineData("")]
+    public async Task SelectMission_AnythingOutsideTheCatalog_IsATypedFailure_AndChangesNothing(string mission)
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await SelectAsync(session.SessionId, mission);
+
+        Assert.Null(response.SelectedMission);
+        Assert.Equal(ProjectOperationErrorCode.UnknownMission, response.Error!.Code);
+        Assert.Equal("Janus", (await SelectAsync(session.SessionId, "Janus")).SelectedMission);
+    }
+
+    [Fact]
+    public async Task SelectMission_ForAnUnknownSession_IsNotFound_AndTouchesNoProject()
+    {
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(
+                new SelectProjectMissionRequest("not-a-session", "Janus"), CancellationToken.None));
+
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task StartRun_BlankInput_IsATypedFailure_BeforeAnythingDurableHappens(string input)
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await StartRunAsync(session.SessionId, Guid.NewGuid(), input);
+
+        Assert.Null(response.RunId);
+        Assert.Equal(ProjectOperationErrorCode.InvalidMissionInput, response.Error!.Code);
+        // Refused locally, so the Project never even acquired a container id.
+        Assert.Null(await ContainerIdAsync(session.Project.Home));
+    }
+
+    [Fact]
+    public async Task StartRun_AnEmptyCommandId_IsATypedFailure()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await StartRunAsync(session.SessionId, Guid.Empty, "do the thing");
+
+        Assert.Null(response.RunId);
+        Assert.Equal(ProjectOperationErrorCode.InvalidMissionInput, response.Error!.Code);
+    }
+
+    [Fact]
+    public async Task StartRun_OversizedInput_IsATypedFailure()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await StartRunAsync(session.SessionId, Guid.NewGuid(), new string('a', 40_000));
+
+        Assert.Null(response.RunId);
+        Assert.Equal(ProjectOperationErrorCode.InvalidMissionInput, response.Error!.Code);
+    }
+
+    [Fact]
+    public async Task StartRun_ForAnUnknownSession_IsNotFound_AndTouchesNoProject()
+    {
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<StartProjectMissionRunRequest, StartProjectMissionRunResponse>(
+                new StartProjectMissionRunRequest("not-a-session", Guid.NewGuid(), "do the thing"),
+                CancellationToken.None));
+
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
+    // The contract itself is the guarantee: there is no member through which a surface could name a
+    // mission, a provider, a model, an expert, a path, or a run. The mission comes from the
+    // persisted selection and everything else from the Runtime.
+    [Fact]
+    public void TheRunContract_CarriesOnlyASessionACommandIdAndText()
+    {
+        Assert.Equal(
+            ["SessionId", "CommandId", "Input"],
+            typeof(StartProjectMissionRunRequest).GetProperties().Select(p => p.Name));
+
+        Assert.Equal(
+            ["SessionId", "Mission"],
+            typeof(SelectProjectMissionRequest).GetProperties().Select(p => p.Name));
+    }
+
+    private Task<SelectProjectMissionResponse> SelectAsync(string sessionId, string mission) =>
+        _channel.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(
+            new SelectProjectMissionRequest(sessionId, mission), CancellationToken.None);
+
+    private Task<StartProjectMissionRunResponse> StartRunAsync(string sessionId, Guid commandId, string input) =>
+        _channel.SendAsync<StartProjectMissionRunRequest, StartProjectMissionRunResponse>(
+            new StartProjectMissionRunRequest(sessionId, commandId, input), CancellationToken.None);
+
+    private static async Task<string?> ContainerIdAsync(string home)
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(
+            await File.ReadAllTextAsync(Path.Combine(home, "forge.project.json")));
+        return document.RootElement.GetProperty("projectMissionContainerId").GetString();
+    }
+
 }

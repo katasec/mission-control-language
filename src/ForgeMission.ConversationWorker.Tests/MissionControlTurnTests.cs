@@ -18,8 +18,10 @@ namespace ForgeMission.ConversationWorker.Tests;
 /// </summary>
 public class MissionControlTurnTests
 {
+    // The Naive asset now serves both the legacy control turn and a Naive run (43.21 task 1), so
+    // the fixture declares the mission under its real name.
     private const string ControlMissionSource = """
-        mission MissionControl(projectGoal, task) = {
+        mission Naive(projectGoal, task) = {
             Controller
         }
         """;
@@ -64,7 +66,7 @@ public class MissionControlTurnTests
         string? projectGoal = "Ship a todos API",
         ConversationCommandKind kind = ConversationCommandKind.StartMission) =>
         new(commandId ?? Guid.NewGuid(), conversationId, null, kind,
-            WorkerMissionResolver.MissionControlRef, text, [], null, projectGoal);
+            WorkerMissionResolver.LegacyProjectControlRef, text, [], null, projectGoal);
 
     private static Func<WorkerSessionState, CancellationToken, Task> SaveTo(List<WorkerSessionState> saved)
         => (state, _) => { saved.Add(state); return Task.CompletedTask; };
@@ -298,7 +300,7 @@ public class WorkerMissionResolverTests
 
     [Theory]
     [InlineData("Janus", WorkerMissionKind.Janus)]
-    [InlineData("MissionControl", WorkerMissionKind.MissionControl)]
+    [InlineData("MissionControl", WorkerMissionKind.ProjectControl)]
     [InlineData("janus", WorkerMissionKind.Unsupported)]
     [InlineData("SomethingElse", WorkerMissionKind.Unsupported)]
     [InlineData("", WorkerMissionKind.Unsupported)]
@@ -308,7 +310,8 @@ public class WorkerMissionResolverTests
 }
 
 /// <summary>
-/// Loads the REAL checked-in MissionControl mission asset from disk (43.20 task 2). This is what
+/// Loads the REAL checked-in Naive mission asset from disk (43.20 task 2, renamed by 43.21
+/// task 1). This is what
 /// proves the packaged mission is actually loadable — its mission/expert name pair, its generated
 /// mcl.lock, and its provider profile — rather than only exercising a hand-built context.
 /// </summary>
@@ -321,7 +324,7 @@ public class MissionControlMissionAssetTests
             dir = dir.Parent;
 
         Assert.NotNull(dir);
-        return Path.Combine(dir!.FullName, "missions", "mission-control");
+        return Path.Combine(dir!.FullName, "missions", "naive");
     }
 
     [Fact]
@@ -338,7 +341,7 @@ public class MissionControlMissionAssetTests
         Assert.NotEqual("agent", expert.Value.Role);
         // The mission and its expert are deliberately named differently, so the loader is never
         // asked to resolve a shared name.
-        Assert.Contains("mission MissionControl(projectGoal, task)",
+        Assert.Contains("mission Naive(projectGoal, task)",
             File.ReadAllText(Path.Combine(MissionDirectory(), "mission.mcl")));
     }
 

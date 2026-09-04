@@ -97,6 +97,28 @@ public sealed record ConversationControlMessageInput(
     [property: Id(0)] Guid CommandId,
     [property: Id(1)] string Text);
 
+/// <summary>Grain-interface wrapper for creating a Project's Mission container (43.21 task 1).
+/// Mirrors <see cref="ConversationControlCreateInput"/>'s content-comparison idempotency, and for
+/// the same reason omits any mission or capability member: a container pins neither.</summary>
+[GenerateSerializer]
+public sealed record ConversationProjectMissionCreateInput(
+    [property: Id(0)] Guid CommandId,
+    [property: Id(1)] Guid ProjectId,
+    [property: Id(2)] string ProjectGoal);
+
+/// <summary>Grain-interface wrapper for starting one child Mission Run under a Project's Mission
+/// container (43.21 task 1). Unlike <see cref="ConversationFollowupCommandInput"/>, the mission and
+/// capabilities travel WITH the command rather than being reconstructed from the container — that
+/// is precisely what lets one Project alternate between Janus and Naive. Both are allow-listed
+/// before they reach here and again by the Worker's closed catalog; there is still no member able
+/// to carry a project goal, path, provider, or run id.</summary>
+[GenerateSerializer]
+public sealed record ConversationProjectMissionRunInput(
+    [property: Id(0)] Guid CommandId,
+    [property: Id(1)] string Mission,
+    [property: Id(2)] string Input,
+    [property: Id(3)] string CapabilitiesJson);
+
 /// <summary>Grain-interface wrapper for an ordered <see cref="ConversationEvent"/> range; each
 /// element is deserialized individually by the caller with <see cref="ConversationContractsJsonContext"/>.</summary>
 [GenerateSerializer]
@@ -173,6 +195,12 @@ public enum ConversationCommandOutcome
     Conflict,
     Invalid,
     NotFound,
+
+    /// <summary>A Project already has a Mission Run that is queued, running, or awaiting a tool
+    /// (43.21 task 1). Distinct from <see cref="Conflict"/> because it is an ordinary, expected
+    /// product state a surface should explain — "one run at a time" — rather than a malformed or
+    /// contradictory request. It appends no event and creates no run.</summary>
+    RunAlreadyActive,
 }
 
 /// <summary>Result of <c>ConversationGrain.AcceptCommandAsync</c>,

@@ -134,7 +134,63 @@ public enum ProjectOperationErrorCode
     /// <summary>The entry exists but is not presentable as text: binary content, invalid UTF-8, or
     /// larger than 1 MiB.</summary>
     InvalidDocument,
+
+    // 43.21 task 1. Appended for the same wire-stability reason as the codes above.
+
+    /// <summary>A mission outside the closed Janus/Naive catalog was selected or started — or a
+    /// hand-edited manifest names one. Nothing is persisted and no run is created; the selection
+    /// is never silently defaulted to Janus, because running work nobody chose is worse than
+    /// refusing.</summary>
+    UnknownMission,
+
+    /// <summary>The instruction is missing, blank, or larger than the accepted bound. No run is
+    /// created.</summary>
+    InvalidMissionInput,
+
+    /// <summary>This Project already has a Mission Run that is queued, running, or awaiting a
+    /// tool. The MVP runs one at a time; the submission creates no run and appends no event.</summary>
+    RunAlreadyActive,
+
+    /// <summary>The Conversation service refused the run as conflicting — a reused command id with
+    /// different content, or a container that is not this Project's.</summary>
+    MissionRunConflict,
+
+    /// <summary>The Project's Mission container could not be found.</summary>
+    MissionRunNotFound,
 }
+
+// --- Project Mission contracts (43.21 task 1) ------------------------------------------------
+// The universal invocation path: a Project's selected mission is persistent and Project-scoped,
+// and every instruction a person submits starts one child Mission Run of it. Presentation never
+// branches execution — there is no field here through which it could name a provider, a model, an
+// expert, a path, or a run, and the mission a run uses is read from the Project rather than sent.
+// A TUI invokes both of these identically.
+
+/// <summary>Persists the Project's mission selection. Client Runtime allow-lists the value against
+/// the closed Janus/Naive catalog before writing and returns the canonical result, so a surface
+/// renders what was actually stored rather than what it asked for.</summary>
+public sealed record SelectProjectMissionRequest(string SessionId, string Mission);
+
+/// <summary>Exactly one of <see cref="SelectedMission"/> and <see cref="Error"/> is populated.</summary>
+public sealed record SelectProjectMissionResponse(
+    string? SelectedMission,
+    ProjectOperationError? Error = null);
+
+/// <summary>Starts one child Mission Run of the Project's selected mission.
+/// <see cref="CommandId"/> is generated once when the person submits and reused only for its
+/// retry: an equal retry returns the original run, and the same ID with different input is a typed
+/// conflict rather than a second run. <see cref="Input"/> is the instruction and is deliberately
+/// distinct from the Project goal, which the Runtime derives.</summary>
+public sealed record StartProjectMissionRunRequest(string SessionId, Guid CommandId, string Input);
+
+/// <summary>Exactly one of <see cref="RunId"/> and <see cref="Error"/> is populated.
+/// <see cref="Mission"/> names the mission that was actually started, so a surface reports
+/// "Starting Janus…" from the durable answer rather than from its own local state.</summary>
+public sealed record StartProjectMissionRunResponse(
+    Guid? RunId,
+    string? Mission = null,
+    long AcceptedSequence = 0,
+    ProjectOperationError? Error = null);
 
 // --- Project workbench contracts (43.20 task 3) ----------------------------------------------
 // Surface-neutral and deliberately path-free: a surface names its own session and, to open a

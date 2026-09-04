@@ -291,6 +291,113 @@ public sealed class ConversationGrain(
             null);
     }
 
+    // -- Project Mission acceptance (43.21 task 1) --
+
+    public async Task<ConversationCommandOutcomeResult> AcceptProjectMissionContainerCreateAsync(
+        ConversationProjectMissionCreateInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+
+        if (input.CommandId == Guid.Empty || input.ProjectId == Guid.Empty || string.IsNullOrWhiteSpace(input.ProjectGoal))
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Invalid, null,
+                "A Project Mission container requires a command id, a project id, and a non-blank goal.");
+
+        // Existence is read from purpose + Project ID, NOT from MissionRef: a container pins no
+        // mission, so MissionRef stays null and cannot serve as the "already created" signal the
+        // control path uses. An exact retry is recognised by the create's own content.
+        if (checkpoint.State.Purpose == ConversationPurpose.ProjectMission && checkpoint.State.ProjectId is not null)
+        {
+            var isSameContainer =
+                checkpoint.State.ProjectId == input.ProjectId &&
+                string.Equals(checkpoint.State.ProjectGoal, input.ProjectGoal, StringComparison.Ordinal);
+
+            return isSameContainer
+                ? ContainerAccepted()
+                : new ConversationCommandOutcomeResult(
+                    ConversationCommandOutcome.Conflict, null,
+                    "This container is already pinned to a different Project or goal.");
+        }
+
+        // Any OTHER already-initialised conversation — a Janus run, a control conversation — is a
+        // conflict rather than being converted. Nothing repoints an existing conversation.
+        if (!string.IsNullOrEmpty(checkpoint.State.MissionRef) || checkpoint.State.ProjectId is not null)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null,
+                "This conversation is already pinned to a different purpose.");
+
+        checkpoint.State.TenantId = Address.TenantId;
+        checkpoint.State.ConversationId = Address.ConversationId;
+        checkpoint.State.Purpose = ConversationPurpose.ProjectMission;
+        checkpoint.State.ProjectId = input.ProjectId;
+        checkpoint.State.ProjectGoal = input.ProjectGoal;
+        checkpoint.State.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await checkpoint.WriteStateAsync();
+
+        // No event, nothing to dispatch, no run to begin — a newly created container is empty.
+        return ContainerAccepted();
+
+        ConversationCommandOutcomeResult ContainerAccepted() =>
+            new(ConversationCommandOutcome.Accepted,
+                new ConversationCommandAcceptance(
+                    Address.ConversationId, null, checkpoint.State.LastSequence, checkpoint.State.Status),
+                null);
+    }
+
+    public async Task<ConversationCommandOutcomeResult> AcceptProjectMissionRunAsync(ConversationProjectMissionRunInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        await RepairPendingRunStartIfAnyAsync(ct);
+
+        // Message-shape validation first, for the same reason AcceptControlMessageAsync does it:
+        // these are properties of the message, and a malformed one must never reach the
+        // idempotency lookup under Guid.Empty where unrelated bad commands would collide.
+        if (input.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(input.Mission) || string.IsNullOrWhiteSpace(input.Input))
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Invalid, null,
+                "A Project Mission run requires a command id, a mission, and non-blank input.");
+
+        if (checkpoint.State.Purpose != ConversationPurpose.ProjectMission)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "This conversation is not a Project Mission container.");
+
+        var capabilities = JsonSerializer.Deserialize(
+            input.CapabilitiesJson, ConversationContractsJsonContext.Default.ConversationCapabilityDeclarationArray) ?? [];
+
+        // The command is built BEFORE the duplicate lookup so a retry can be compared against what
+        // this call would have produced — mission and input included, which is what makes "same
+        // command id, changed mission" a conflict rather than a silently accepted second run.
+        // ProjectGoal comes from the container's pinned checkpoint state and from nowhere else —
+        // StartProjectMissionRunRequest has no such member, so no caller can supply or replace it.
+        // It is set for BOTH missions rather than only the one that reads it: every child command
+        // of a Project is then identically shaped, which is the property this task exists to
+        // establish. Janus simply ignores a value it has no parameter for.
+        var command = new ConversationCommand(
+            input.CommandId, Address.ConversationId,
+            ConversationDeterministicIds.ProjectMissionRun(input.CommandId),
+            ConversationCommandKind.StartMission,
+            input.Mission, input.Input, capabilities, null, checkpoint.State.ProjectGoal);
+
+        var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
+        if (existing is not null)
+            return ResolveDuplicateStart(existing, command);
+
+        // One active run per Project (43.21 MVP). Reported as its own outcome rather than a
+        // generic conflict: it is an ordinary product state a surface explains, not a malformed
+        // request, and it appends nothing.
+        if (checkpoint.State.ActiveRunId is not null)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.RunAlreadyActive, null,
+                $"This Project already has an active mission run '{checkpoint.State.ActiveRunId}'.");
+
+        // Deliberately no MissionRef or PinnedCapabilitiesJson write: the container pins neither,
+        // and a run's mission lives in its own command. That is the whole reason a Project can
+        // alternate between Janus and Naive without a second container.
+        return await BeginRunAsync(command, ct);
+    }
+
     public async Task<ConversationCommandOutcomeResult> AcceptToolResultAsync(ConversationToolResultInput input)
     {
         var ct = CancellationToken.None;
@@ -465,10 +572,15 @@ public sealed class ConversationGrain(
 
     public Task<ConversationSnapshotResult> GetSnapshotAsync()
     {
+        // MissionRef is projected as NULL when unset rather than as the empty string the checkpoint
+        // initialises it to: a Project Mission container genuinely has no mission, and the snapshot
+        // must say so rather than offer an empty sentinel a caller has to interpret.
         var snapshot = new ConversationSnapshot(
-            Address.ConversationId, checkpoint.State.MissionRef, checkpoint.State.ActiveRunId,
+            Address.ConversationId,
+            string.IsNullOrEmpty(checkpoint.State.MissionRef) ? null : checkpoint.State.MissionRef,
+            checkpoint.State.ActiveRunId,
             checkpoint.State.LastSequence, checkpoint.State.Status, checkpoint.State.ExpectedToolRequestId,
-            checkpoint.State.UpdatedAtUtc, checkpoint.State.Purpose);
+            checkpoint.State.UpdatedAtUtc, checkpoint.State.Purpose, checkpoint.State.ProjectId);
 
         return Task.FromResult(new ConversationSnapshotResult(
             JsonSerializer.Serialize(snapshot, ConversationContractsJsonContext.Default.ConversationSnapshot)));

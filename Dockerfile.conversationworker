@@ -36,10 +36,10 @@ WORKDIR /app
 
 COPY --from=build /app/publish ./
 COPY missions/janus/ /app/missions/janus/
-COPY missions/mission-control/ /app/missions/mission-control/
+COPY missions/naive/ /app/missions/naive/
 
 ENV ConversationWorker__JanusMissionDirectory=/app/missions/janus \
-    ConversationWorker__MissionControlMissionDirectory=/app/missions/mission-control \
+    ConversationWorker__NaiveMissionDirectory=/app/missions/naive \
     DOTNET_ENVIRONMENT=Production \
     DOTNET_gcServer=0
 

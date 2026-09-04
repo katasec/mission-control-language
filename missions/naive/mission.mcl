@@ -1,0 +1,17 @@
+// Naive — the one-expert Project mission (43.21 task 1). It performs direct, single-expert
+// reasoning: no negotiation, no approval step, and no tool.
+//
+// It is deliberately NOT a small Janus, and it is deliberately not a fallback either — a person
+// picks it by name because they want a plain answer rather than a reviewed one. It has one expert,
+// no `role: agent`, and its runner is invoked with no tool declarations, so it cannot request a
+// tool, touch a file, or run a command.
+//
+// This asset replaces the former MissionControl mission. Until 43.21 task 3 removes the legacy
+// route, the Worker also resolves the old `MissionControl` key to this same asset rather than
+// keeping a second, near-identical copy checked in.
+
+mission Naive(projectGoal, task) = {
+    Controller
+}
+
+output(Naive)

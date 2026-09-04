@@ -116,6 +116,79 @@ internal static class ClientRuntimeEndpoints
             }
         });
 
+        // 43.21 task 1 — the universal Project Mission pair. Both take only the session and, to
+        // run, a command id and the person's instruction. The mission comes from the persisted
+        // selection and the Project goal from pinned Host state, so no surface can choose either.
+        app.MapPost("/transport/project/mission/select", (
+            SelectProjectMissionRequest request,
+            ClientRuntimeSessionStore sessions,
+            ProjectStore projects) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session?.Workspace.Root is not { } home)
+                return Results.NotFound();
+
+            try
+            {
+                // Deliberately does NOT go through the session slot: selection is manifest state,
+                // not conversation state, so it must work before the container has ever been
+                // opened — a person picks a mission and then runs it, in that order.
+                var selected = projects.SelectMissionFor(home, request.Mission);
+                return Results.Ok(new SelectProjectMissionResponse(selected.Reference));
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(new SelectProjectMissionResponse(null, ToError(exception)));
+            }
+        });
+
+        app.MapPost("/transport/project/mission/run", async (
+            StartProjectMissionRunRequest request,
+            ClientRuntimeSessionStore sessions,
+            ProjectStore projects,
+            IHttpClientFactory clients,
+            ClientRuntimeEventHub events,
+            IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) ||
+                session?.Workspace.Capabilities is null || session.Workspace.Dispatcher is null)
+                return Results.NotFound();
+
+            try
+            {
+                // Refused BEFORE the container is opened, so a blank or oversized instruction never
+                // creates durable state on its way to being rejected.
+                ProjectMissionRuntimeSession.ValidateSubmission(request.CommandId, request.Input);
+
+                // Open-and-start are ONE serialized slot call for the same reason the durable Janus
+                // prompt path is: a separate open-then-start could interleave with a concurrent
+                // session replacement and leave a container tail the store no longer tracks.
+                var accepted = await session.ProjectMission.InvokeAsync(
+                    () => new ProjectMissionRuntimeSession(
+                        request.SessionId,
+                        session.Workspace.Root!,
+                        projects,
+                        new ConversationHostClient(clients.CreateClient("conversation-host")),
+                        session.Workspace.Capabilities,
+                        session.Workspace.Dispatcher,
+                        events.Publish,
+                        lifetime.ApplicationStopping),
+                    async missions =>
+                    {
+                        await missions.OpenAsync(ct);
+                        return await missions.StartRunAsync(request.CommandId, request.Input, ct);
+                    },
+                    ct);
+
+                return Results.Ok(new StartProjectMissionRunResponse(
+                    accepted.RunId, accepted.Status.ToString(), accepted.AcceptedSequence));
+            }
+            catch (Exception exception) when (ToMissionRunError(exception) is { } error)
+            {
+                return Results.Ok(new StartProjectMissionRunResponse(null, null, 0, error));
+            }
+        });
+
         // 43.20 task 2. Both routes take only the session and what the person typed: the Runtime
         // resolves the Project from the session's own root and reads the manifest itself, so no
         // surface supplies a Project path, a conversation ID, or a project goal.
@@ -163,7 +236,8 @@ internal static class ClientRuntimeEndpoints
             try
             {
                 var accepted = await session.MissionControl.InvokeOpenedAsync(
-                    control => control.SubmitAsync(request.CommandId, request.Text, ct), ct);
+                    control => control.SubmitAsync(request.CommandId, request.Text, ct),
+                    () => new MissionControlNotOpenedException(), ct);
 
                 return Results.Ok(new SubmitProjectMissionControlTurnResponse(
                     accepted.ConversationId, accepted.AcceptedSequence));
@@ -317,6 +391,39 @@ internal static class ClientRuntimeEndpoints
             when ProjectControlRuntimeSession.ToErrorCode(status) is { } code =>
             new ProjectOperationError(code, MissionControlMessage(code)),
         _ => null,
+    };
+
+    // The two EXPECTED failure sources for a Project Mission run: a local Project/manifest problem
+    // (an unknown selection, blank or oversized input, a failed manifest write), and a
+    // Conversation-service rejection whose status names a domain outcome. Anything else returns
+    // null and is left to fail the transport rather than being laundered into a domain code.
+    private static ProjectOperationError? ToMissionRunError(Exception exception) => exception switch
+    {
+        ProjectOperationException project => ToError(project),
+        ProjectMissionNotOpenedException => new ProjectOperationError(
+            ProjectOperationErrorCode.MissionRunNotFound,
+            "This Project's missions are not open in this session."),
+        // "One run at a time" and a genuine conflict share HTTP 409, so the Host's own reason text
+        // is what separates them. Defaulting to the conflict rather than the busy state matters:
+        // telling someone a run is in flight when it is not would be a lie the UI would act on.
+        HttpRequestException { StatusCode: System.Net.HttpStatusCode.Conflict } conflict
+            when conflict.Message.Contains("already has an active mission run", StringComparison.Ordinal) =>
+            new ProjectOperationError(
+                ProjectOperationErrorCode.RunAlreadyActive,
+                "This Project already has a mission run in progress. Wait for it to finish."),
+        HttpRequestException { StatusCode: { } status }
+            when ProjectMissionRuntimeSession.ToErrorCode(status) is { } code =>
+            new ProjectOperationError(code, MissionRunMessage(code)),
+        _ => null,
+    };
+
+    private static string MissionRunMessage(ProjectOperationErrorCode code) => code switch
+    {
+        ProjectOperationErrorCode.InvalidMissionInput => "That instruction could not be accepted.",
+        ProjectOperationErrorCode.MissionRunNotFound => "This Project's missions could not be found.",
+        ProjectOperationErrorCode.MissionRunConflict =>
+            "That run conflicts with what is already recorded for this Project.",
+        _ => "The mission run could not be started.",
     };
 
     // A rendered message, not the transport exception's own text: a person reading the surface

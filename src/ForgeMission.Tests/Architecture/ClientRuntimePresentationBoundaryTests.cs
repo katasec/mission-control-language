@@ -80,6 +80,31 @@ public sealed class ClientRuntimePresentationBoundaryTests
         Assert.Throws<InvalidOperationException>(() => AssertNoResolutionTypes(source, "Ui.cs"));
     }
 
+    // 43.21 task 1: a person selects a named mission, never a provider, a model, or an expert.
+    // Presentation therefore has no reason to name any of the execution types those choices would
+    // be made with. The ProjectControl endpoints are NOT banned yet — Presentation still calls them
+    // so the shipped Desktop keeps working until task 2 replaces that route; task 2 adds that rule
+    // as part of removing the caller.
+    [Fact]
+    public void MarkedPresentationProjects_CannotNameAProviderModelOrExpert()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ClientRuntimePresentation>true</ClientRuntimePresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoExecutionChoice);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsNamingAnExecutionChoice()
+    {
+        var source = "class Ui { IChatClient Client; }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoExecutionChoice(source, "Ui.cs"));
+    }
+
     [Fact]
     public void BoundaryRule_RejectsTheJanusPromptPath()
     {
@@ -143,6 +168,24 @@ public sealed class ClientRuntimePresentationBoundaryTests
                 throw new InvalidOperationException(
                     $"Presentation must not reference '{forbidden}': the Client Runtime owns the lock " +
                     $"format, source URIs, and the expert cache (43.20 task 3): {sourceName}");
+        }
+    }
+
+    // Named types rather than the bare words "provider"/"model"/"expert": those appear in ordinary
+    // prose and would make the rule fire on a comment. What is banned is the machinery a surface
+    // would have to touch to CHOOSE one.
+    private static void AssertNoExecutionChoice(string source, string sourceName)
+    {
+        foreach (var forbidden in new[]
+                 {
+                     "IChatClient", "ProviderClientBuilder", "ChatClients",
+                     "ExpertDefinition", "IExpertRunner", "ProviderProfile",
+                 })
+        {
+            if (source.Contains(forbidden, StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Presentation must not reference '{forbidden}': a person selects a named mission, " +
+                    $"and mission assets own expert and provider composition (43.21 task 1): {sourceName}");
         }
     }
 

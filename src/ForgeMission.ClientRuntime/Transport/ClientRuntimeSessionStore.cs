@@ -37,8 +37,9 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
 
         _sessions.TryRemove(replacesSessionId, out _);
         await replaced.Conversation.DisposeAsync();
-        // Both slots, or the replaced session's Mission Control tail would outlive it.
+        // Every slot, or a replaced session's durable tail would outlive it.
         await replaced.MissionControl.DisposeAsync();
+        await replaced.ProjectMission.DisposeAsync();
         return Open(workspaceRoot, mission, runtime);
     }
 
@@ -96,27 +97,40 @@ internal sealed record ClientRuntimeSession(
     /// <summary>The Project's Mission Control conversation (43.20 task 2) — project-scoped, so it
     /// is deliberately a separate slot from the mission-scoped Janus one above. A mission switch
     /// replaces the session but keeps the same Project home, so the replacement simply reopens the
-    /// same durable control conversation from the manifest.</summary>
-    public ProjectControlSessionSlot MissionControl { get; } = new();
+    /// same durable control conversation from the manifest.
+    ///
+    /// LEGACY: superseded by <see cref="ProjectMission"/> (43.21 task 1) and removed by 43.21
+    /// task 3.</summary>
+    public ProjectSessionSlot<ProjectControlRuntimeSession> MissionControl { get; } = new();
+
+    /// <summary>The Project's Mission container (43.21 task 1) — the universal invocation path.
+    /// Serialized by the same slot type and for the same reason as the control one above: open,
+    /// start, and disposal must not interleave, so a concurrent session replacement can never
+    /// leave an orphaned tail the store no longer tracks.</summary>
+    public ProjectSessionSlot<ProjectMissionRuntimeSession> ProjectMission { get; } = new();
 }
 
 /// <summary>
-/// The Mission Control equivalent of <see cref="ConversationSessionSlot"/>, and serialized for the
+/// The project-scoped equivalent of <see cref="ConversationSessionSlot"/>, and serialized for the
 /// same reason: open, submit, and disposal must not interleave. One gate means a concurrent
-/// session replacement can never leave an orphaned control tail the store no longer tracks —
-/// whichever of admission or disposal reaches the gate first decides the outcome for the other.
+/// session replacement can never leave an orphaned tail the store no longer tracks — whichever of
+/// admission or disposal reaches the gate first decides the outcome for the other.
 /// Serializing every call (not only the first) also makes two concurrent opens resolve correctly:
 /// the second finds the conversation already opened and returns it without a second create.
+///
+/// Generic since 43.21 task 1 so the legacy control session and the Project Mission session share
+/// ONE implementation of this lifecycle rather than two copies that could diverge on the very
+/// races it exists to close.
 /// </summary>
-internal sealed class ProjectControlSessionSlot : IAsyncDisposable
+internal sealed class ProjectSessionSlot<TSession> : IAsyncDisposable where TSession : IAsyncDisposable
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private ProjectControlRuntimeSession? _session;
+    private TSession? _session;
     private bool _closed;
 
     public async Task<TResult> InvokeAsync<TResult>(
-        Func<ProjectControlRuntimeSession> factory,
-        Func<ProjectControlRuntimeSession, Task<TResult>> operation,
+        Func<TSession> factory,
+        Func<TSession, Task<TResult>> operation,
         CancellationToken ct)
     {
         await _gate.WaitAsync(ct);
@@ -134,11 +148,12 @@ internal sealed class ProjectControlSessionSlot : IAsyncDisposable
         }
     }
 
-    /// <summary>Runs <paramref name="operation"/> only if Mission Control has already been opened
-    /// for this session — a submit must never lazily create a session and skip the open path's
-    /// manifest read and replay.</summary>
+    /// <summary>Runs <paramref name="operation"/> only if this slot has already been opened — a
+    /// submit must never lazily create a session and skip the open path's manifest read and
+    /// replay. <paramref name="notOpened"/> supplies the caller's own typed exception, so each
+    /// endpoint keeps mapping its own failure rather than sharing one that means less.</summary>
     public async Task<TResult> InvokeOpenedAsync<TResult>(
-        Func<ProjectControlRuntimeSession, Task<TResult>> operation, CancellationToken ct)
+        Func<TSession, Task<TResult>> operation, Func<Exception> notOpened, CancellationToken ct)
     {
         await _gate.WaitAsync(ct);
         try
@@ -146,7 +161,7 @@ internal sealed class ProjectControlSessionSlot : IAsyncDisposable
             if (_closed)
                 throw new InvalidOperationException("This Client Runtime session has been replaced.");
             if (_session is null)
-                throw new MissionControlNotOpenedException();
+                throw notOpened();
 
             return await operation(_session);
         }
@@ -158,7 +173,7 @@ internal sealed class ProjectControlSessionSlot : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        ProjectControlRuntimeSession? toDispose;
+        TSession? toDispose;
         await _gate.WaitAsync();
         try
         {
