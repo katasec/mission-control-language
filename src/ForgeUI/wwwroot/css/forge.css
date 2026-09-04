@@ -359,6 +359,22 @@
   --wb-rail-marker-width: 4px;
   --wb-section-gap:       clamp(20px, calc(-8.32px + 4.978vh), 71px);
 
+  /* Missions composer geometry (43.21 task 2). Geometry only — the picker, its popup, and the
+     activity region take every colour from the semantic tokens above, so the dark maps inherit
+     this block unchanged like the rest of the ramps.
+
+     The picker is a horizontal measure and ramps on vw. Its lower bound is 172px, not the 150px
+     the references estimated: measured in the running surface, the longest label a Project can
+     produce ("Mission: none selected", when a manifest names a mission Forge cannot run) overflows
+     150px by 19.7px at 800 wide. The bound is set from that measurement so the label fits rather
+     than ellipsising in the one state a person most needs to read. The option row is a vertical
+     measure and ramps on vh. The action's width is a MINIMUM, not a size: the control grows with
+     its label so "Starting Janus…" widens it instead of clipping. */
+  --wb-picker-width:        clamp(172px, calc(139.39px + 4.076vw), 202px);
+  --wb-picker-option-height: clamp(34px, calc(28.75px + 0.921vh), 43px);
+  --wb-action-min-width:    clamp(114px, calc(94.4px + 2.446vw), 152px);
+  --wb-composer-gap:        clamp(8px, calc(3.65px + 0.543vw), 16px);
+
   /* Type. Height-driven: every size contributes to the vertical stack. */
   --font-size-display:    clamp(24px, calc(9.05px + 2.632vh), 36px);
   --font-size-title:      clamp(18px, calc(5.54px + 2.193vh), 28px);

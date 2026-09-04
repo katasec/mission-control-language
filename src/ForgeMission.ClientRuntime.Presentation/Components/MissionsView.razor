@@ -1,0 +1,35 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+@using ForgeMission.ClientRuntime.Presentation
+
+@* The Missions document region (43.21 task 2): the retained-history line, and one run's activity.
+
+   It is deliberately NOT a conversation. There is no history here, no run browser, and nothing
+   synthesised: the entries it renders are the durable events of the one run this surface started,
+   already filtered by its caller. With no run it says so in a line and stops.
+
+   It performs no Client Runtime call of its own — Home owns every request on this surface. *@
+
+<div class="mv">
+    @if (HasLegacyHistory)
+    {
+        @* Static text, and static on purpose: it is not a link, not a button, and reopens
+           nothing. An element that affords an action it cannot perform is the exact dishonesty
+           the interaction principles name. *@
+        <p class="mv-legacy">This Project has earlier legacy history. It is retained and is not shown here.</p>
+    }
+
+    @if (Entries.Count == 0)
+    {
+        <p class="mv-empty">Run a mission to see its activity here.</p>
+    }
+    else
+    {
+        <ConversationTranscriptView Entries="Entries" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+
+    [Parameter] public bool HasLegacyHistory { get; set; }
+}

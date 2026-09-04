@@ -24,6 +24,12 @@ internal static class ProjectMissions
     /// <summary>The mission a Project starts out on, and the one every migrated Project keeps.</summary>
     public const string Default = Janus;
 
+    /// <summary>The catalog in the order a picker shows it, default first. It exists so a surface
+    /// renders the two names without holding its own copy of them: this class stays the one place
+    /// that knows what the catalog is, and a TUI reads the same list through the same contract
+    /// (43.21 task 2).</summary>
+    public static IReadOnlyList<string> All { get; } = [Janus, Naive];
+
     /// <summary>Case-sensitive on purpose: <c>Janus</c> and <c>Naive</c> are names, and accepting
     /// "janus" would mean the persisted value depends on how it was typed.</summary>
     public static bool IsAllowed(string? mission) =>

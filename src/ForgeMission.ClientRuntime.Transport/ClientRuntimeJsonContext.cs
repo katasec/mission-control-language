@@ -20,7 +20,12 @@ namespace ForgeMission.ClientRuntime.Transport;
 [JsonSerializable(typeof(OpenProjectMissionControlResponse))]
 [JsonSerializable(typeof(SubmitProjectMissionControlTurnRequest))]
 [JsonSerializable(typeof(SubmitProjectMissionControlTurnResponse))]
-// 43.21 task 1 — the universal Project Mission pair.
+// 43.21 task 1 — the universal Project Mission pair, and task 2's picker read. Every payload
+// type is registered explicitly, for the same reason task 3's are.
+[JsonSerializable(typeof(GetProjectMissionsRequest))]
+[JsonSerializable(typeof(GetProjectMissionsResponse))]
+[JsonSerializable(typeof(ProjectMissionsView))]
+[JsonSerializable(typeof(IReadOnlyList<string>))]
 [JsonSerializable(typeof(SelectProjectMissionRequest))]
 [JsonSerializable(typeof(SelectProjectMissionResponse))]
 [JsonSerializable(typeof(StartProjectMissionRunRequest))]

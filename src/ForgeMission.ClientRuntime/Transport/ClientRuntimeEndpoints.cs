@@ -116,6 +116,47 @@ internal static class ClientRuntimeEndpoints
             }
         });
 
+        // 43.21 task 2 — everything a surface needs to render the mission picker, and nothing
+        // else. It is a pure read: no conversation is opened, no run is created, no local state
+        // changes. Like /mission/select it deliberately bypasses the session slot, because a
+        // person sees the picker before any container has ever been opened.
+        app.MapPost("/transport/project/missions", (
+            GetProjectMissionsRequest request,
+            ClientRuntimeSessionStore sessions,
+            ProjectStore projects) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session?.Workspace.Root is not { } home)
+                return Results.NotFound();
+
+            ProjectManifest manifest;
+            try
+            {
+                manifest = projects.ReadForHome(home).Manifest;
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(new GetProjectMissionsResponse(null, ToError(exception)));
+            }
+
+            // The catalog and the legacy flag are facts about the Project and the product; they do
+            // not depend on the selection being readable, so they are built before it is examined.
+            var view = new ProjectMissionsView(
+                ProjectMissions.All, null, manifest.LegacyProjectControlConversationId is not null);
+
+            try
+            {
+                return Results.Ok(new GetProjectMissionsResponse(
+                    view with { Selected = ProjectMissions.RequireSelected(manifest.SelectedMission) }));
+            }
+            catch (ProjectOperationException exception)
+            {
+                // The one case that returns BOTH payloads. A manifest naming something Forge
+                // cannot run is never quietly replaced with Janus — but the picker still has to
+                // arrive, or there would be no way to repair it (43.21 task 2).
+                return Results.Ok(new GetProjectMissionsResponse(view, ToError(exception)));
+            }
+        });
+
         // 43.21 task 1 — the universal Project Mission pair. Both take only the session and, to
         // run, a command id and the person's instruction. The mission comes from the persisted
         // selection and the Project goal from pinned Host state, so no surface can choose either.

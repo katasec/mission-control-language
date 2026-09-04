@@ -104,7 +104,7 @@
     line-height: 1;
 }
 
-/* The label wraps rather than truncating: "Mission Control" is two lines at the compact bound in
+/* The label wraps rather than truncating: "Project Explorer" is two lines at the compact bound in
    the binding reference, and a clipped destination name is worse than a taller entry. */
 .wb-rail-label {
     overflow-wrap: anywhere;

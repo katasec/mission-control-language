@@ -22,11 +22,11 @@
   <text x="858.0" y="530.5" font-family="system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#62748c">Run a mission to see its activity here.</text>
   <rect x="180" y="940" width="1356" height="84" fill="#f7faff"/>
   <line x1="180" y1="940" x2="1536" y2="940" stroke="#e7ecf4"/>
-  <rect x="204" y="959.0" width="190" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
+  <rect x="204" y="959.0" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
   <text x="216" y="987.0" font-family="system-ui, sans-serif" font-size="12" fill="#101d33">Mission: Janus</text>
-  <text x="382" y="986.0" font-family="system-ui, sans-serif" font-size="10" text-anchor="end" fill="#5b6b83">▾</text>
-  <rect x="406" y="959.0" width="962" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
-  <text x="418" y="987.0" font-family="system-ui, sans-serif" font-size="13" fill="#101d33">Draft the first release plan.</text>
+  <text x="394" y="986.0" font-family="system-ui, sans-serif" font-size="10" text-anchor="end" fill="#5b6b83">▾</text>
+  <rect x="418" y="959.0" width="950" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
+  <text x="430" y="987.0" font-family="system-ui, sans-serif" font-size="13" fill="#101d33">Draft the first release plan.</text>
   <rect x="1380" y="961.0" width="132" height="42" rx="21.0" fill="#0f6eeb"/>
   <text x="1446.0" y="987.0" font-family="system-ui, sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#ffffff">Run</text>
   <rect x="204" y="876" width="1308" height="44" rx="10" fill="#fef3f2" stroke="#fda29b"/>

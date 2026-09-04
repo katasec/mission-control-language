@@ -649,6 +649,94 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         Assert.False(Directory.Exists(ProjectsRoot));
     }
 
+    // --- the picker read (43.21 task 2) --------------------------------------------------------
+
+    [Fact]
+    public async Task Missions_ReturnsTheClosedCatalogInOrder_ThePersistedSelection_AndNoLegacyHistory()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+
+        var response = await MissionsAsync(session.SessionId);
+
+        Assert.Null(response.Error);
+        Assert.Equal(["Janus", "Naive"], response.Missions!.Missions);
+        Assert.Equal("Janus", response.Missions.Selected);
+        Assert.False(response.Missions.HasLegacyHistory);
+    }
+
+    [Fact]
+    public async Task Missions_ReportsWhatWasActuallySelected()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        await SelectAsync(session.SessionId, "Naive");
+
+        var reopened = await OpenAsync(new ProjectOpenRequest(session.Project.Home));
+
+        Assert.Equal("Naive", (await MissionsAsync(reopened.Session!.SessionId)).Missions!.Selected);
+    }
+
+    // A migrated Project keeps a pointer to its former control conversation. The flag is derived
+    // from that pointer, and it is the only thing about that history this contract exposes: no id,
+    // no messages, and nothing to reopen.
+    [Fact]
+    public async Task Missions_ReportsRetainedLegacyHistory_WithoutExposingAnyOfIt()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        MutateManifest(session.Project.Home, manifest => manifest.Replace(
+            "\"legacyProjectControlConversationId\": null",
+            $"\"legacyProjectControlConversationId\": \"{Guid.NewGuid()}\""));
+
+        var reopened = await OpenAsync(new ProjectOpenRequest(session.Project.Home));
+        var response = await MissionsAsync(reopened.Session!.SessionId);
+
+        Assert.True(response.Missions!.HasLegacyHistory);
+        Assert.Equal(3, typeof(ProjectMissionsView).GetProperties().Length);
+    }
+
+    // The one response that carries BOTH payloads. A hand-edited manifest naming something Forge
+    // cannot run is refused rather than quietly replaced with Janus — but the catalog still has to
+    // arrive, or the surface would have no way to offer the repair.
+    [Fact]
+    public async Task Missions_AnUnrunnableSelection_ReturnsTheCatalogWithTheError_AndNeverSubstitutesJanus()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        MutateManifest(session.Project.Home, manifest =>
+            manifest.Replace("\"reference\": \"Janus\"", "\"reference\": \"Sonnet\""));
+
+        var reopened = await OpenAsync(new ProjectOpenRequest(session.Project.Home));
+        var response = await MissionsAsync(reopened.Session!.SessionId);
+
+        Assert.Equal(ProjectOperationErrorCode.UnknownMission, response.Error!.Code);
+        Assert.Null(response.Missions!.Selected);
+        Assert.Equal(["Janus", "Naive"], response.Missions.Missions);
+        Assert.False(response.Missions.HasLegacyHistory);
+    }
+
+    [Fact]
+    public async Task Missions_AnUnrunnableSelection_IsRepairedByAnOrdinarySelection()
+    {
+        var session = await OpenSessionAsync("Ship a todos API");
+        MutateManifest(session.Project.Home, manifest =>
+            manifest.Replace("\"reference\": \"Janus\"", "\"reference\": \"Sonnet\""));
+        var reopened = await OpenAsync(new ProjectOpenRequest(session.Project.Home));
+
+        Assert.Equal("Naive", (await SelectAsync(reopened.Session!.SessionId, "Naive")).SelectedMission);
+
+        var repaired = await MissionsAsync(reopened.Session.SessionId);
+        Assert.Null(repaired.Error);
+        Assert.Equal("Naive", repaired.Missions!.Selected);
+    }
+
+    [Fact]
+    public async Task Missions_ForAnUnknownSession_IsNotFound_AndTouchesNoProject()
+    {
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            _channel.SendAsync<GetProjectMissionsRequest, GetProjectMissionsResponse>(
+                new GetProjectMissionsRequest("not-a-session"), CancellationToken.None));
+
+        Assert.False(Directory.Exists(ProjectsRoot));
+    }
+
     // The contract itself is the guarantee: there is no member through which a surface could name a
     // mission, a provider, a model, an expert, a path, or a run. The mission comes from the
     // persisted selection and everything else from the Runtime.
@@ -662,6 +750,25 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         Assert.Equal(
             ["SessionId", "Mission"],
             typeof(SelectProjectMissionRequest).GetProperties().Select(p => p.Name));
+
+        // The picker read carries a session and nothing else — no path, no filter, no catalog the
+        // caller could influence (43.21 task 2).
+        Assert.Equal(["SessionId"], typeof(GetProjectMissionsRequest).GetProperties().Select(p => p.Name));
+    }
+
+    private Task<GetProjectMissionsResponse> MissionsAsync(string sessionId) =>
+        _channel.SendAsync<GetProjectMissionsRequest, GetProjectMissionsResponse>(
+            new GetProjectMissionsRequest(sessionId), CancellationToken.None);
+
+    // Hand-editing the manifest is exactly the situation these cases exist for: a Project written
+    // by something other than this Runtime, or by a person.
+    private static void MutateManifest(string home, Func<string, string> edit)
+    {
+        var path = Path.Combine(home, "forge.project.json");
+        var before = File.ReadAllText(path);
+        var after = edit(before);
+        Assert.NotEqual(before, after); // A no-op edit would make the test prove nothing.
+        File.WriteAllText(path, after);
     }
 
     private Task<SelectProjectMissionResponse> SelectAsync(string sessionId, string mission) =>

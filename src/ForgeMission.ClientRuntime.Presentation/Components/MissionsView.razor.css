@@ -1,0 +1,26 @@
+/* The Missions document region (43.21 task 2). No literal colour, radius, type size, or geometry. */
+
+.mv {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-height: 0;
+    flex: 1;
+}
+
+/* Quiet by design: it is a statement of fact about the Project, not an offer. */
+.mv-legacy {
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+}
+
+.mv-empty {
+    margin: auto;
+    color: var(--text-subtle);
+    font-size: var(--font-size-label);
+    text-align: center;
+}

@@ -82,9 +82,7 @@ public sealed class ClientRuntimePresentationBoundaryTests
 
     // 43.21 task 1: a person selects a named mission, never a provider, a model, or an expert.
     // Presentation therefore has no reason to name any of the execution types those choices would
-    // be made with. The ProjectControl endpoints are NOT banned yet — Presentation still calls them
-    // so the shipped Desktop keeps working until task 2 replaces that route; task 2 adds that rule
-    // as part of removing the caller.
+    // be made with.
     [Fact]
     public void MarkedPresentationProjects_CannotNameAProviderModelOrExpert()
     {
@@ -96,6 +94,39 @@ public sealed class ClientRuntimePresentationBoundaryTests
         Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
         foreach (var project in projects)
             ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoExecutionChoice);
+    }
+
+    // 43.21 task 2: the legacy Project Control route is gone from this surface, and it is gone by
+    // DELETION rather than by no longer being called — there is no identifier, route, or string
+    // left to reach for. The rule reads raw source text on purpose: a comment or a field name that
+    // still says "Mission Control" would leave the old product name in the one place a person can
+    // actually see, and the visible notice for a migrated Project says "legacy history" for
+    // exactly that reason.
+    [Fact]
+    public void MarkedPresentationProjects_CannotReachOrNameTheLegacyControlRoute()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ClientRuntimePresentation>true</ClientRuntimePresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoLegacyControlRoute);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsTheLegacyControlRoute()
+    {
+        var source = "class Ui { void Open() => Channel.SendAsync<OpenProjectMissionControlRequest, X>(null); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoLegacyControlRoute(source, "Ui.cs"));
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsTheLegacyProductNameInVisibleText()
+    {
+        var source = "<p>This Project has earlier Mission Control history.</p>";
+        Assert.Throws<InvalidOperationException>(() => AssertNoLegacyControlRoute(source, "Ui.razor"));
     }
 
     [Fact]
@@ -186,6 +217,23 @@ public sealed class ClientRuntimePresentationBoundaryTests
                 throw new InvalidOperationException(
                     $"Presentation must not reference '{forbidden}': a person selects a named mission, " +
                     $"and mission assets own expert and provider composition (43.21 task 1): {sourceName}");
+        }
+    }
+
+    // Both spellings: "MissionControl" catches the contract types, the participant label and any
+    // field named after them, "mission-control" catches the route, and "Mission Control" catches
+    // the product name in prose a person reads.
+    private static void AssertNoLegacyControlRoute(string source, string sourceName)
+    {
+        foreach (var forbidden in new[]
+                 {
+                     "ProjectControl", "MissionControl", "mission-control", "Mission Control",
+                 })
+        {
+            if (source.Contains(forbidden, StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Presentation must not reference '{forbidden}': the Missions page replaced the " +
+                    $"Project Control route entirely (43.21 task 2): {sourceName}");
         }
     }
 

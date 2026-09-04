@@ -166,6 +166,35 @@ public enum ProjectOperationErrorCode
 // expert, a path, or a run, and the mission a run uses is read from the Project rather than sent.
 // A TUI invokes both of these identically.
 
+/// <summary>Reads what a surface needs to render the Project's mission picker (43.21 task 2): the
+/// closed catalog, the persisted selection, and whether this Project retains legacy history. Purely
+/// a read — it opens no conversation, starts no run, and changes nothing.</summary>
+public sealed record GetProjectMissionsRequest(string SessionId);
+
+/// <summary>Unlike every other Project response, this one can carry BOTH payloads — see
+/// <see cref="ProjectMissionsView"/> for the single case where it does and why.</summary>
+public sealed record GetProjectMissionsResponse(
+    ProjectMissionsView? Missions,
+    ProjectOperationError? Error = null);
+
+/// <summary>
+/// What the picker renders. <see cref="Missions"/> is the ordered closed catalog, so a surface
+/// holds no second copy of it and a TUI gets the same list; <see cref="HasLegacyHistory"/> is the
+/// truthful fact behind the retained-history notice.
+///
+/// <see cref="Selected"/> is null in exactly one situation: the manifest names a mission Forge
+/// cannot run (a hand edit, or a Project written by something else). That case returns this view
+/// AND an <see cref="ProjectOperationErrorCode.UnknownMission"/> error together — the deliberate
+/// exception to the one-payload-per-response convention, and the point of the design. The
+/// selection is never silently substituted with Janus, because running work nobody chose is worse
+/// than refusing; but the catalog still has to arrive, or the surface would have no way to offer
+/// the repair. Selecting either mission then writes a valid selection.
+/// </summary>
+public sealed record ProjectMissionsView(
+    IReadOnlyList<string> Missions,
+    string? Selected,
+    bool HasLegacyHistory);
+
 /// <summary>Persists the Project's mission selection. Client Runtime allow-lists the value against
 /// the closed Janus/Naive catalog before writing and returns the canonical result, so a surface
 /// renders what was actually stored rather than what it asked for.</summary>

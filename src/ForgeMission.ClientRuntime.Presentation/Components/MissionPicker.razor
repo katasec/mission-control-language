@@ -1,0 +1,159 @@
+@* The Project's mission picker (43.21 task 2): the two named missions, and nothing else.
+
+   It is a button plus a listbox rather than a native <select> for one reason that mattered more
+   than the extra code — the open state is a bound visual reference, and a native popup is drawn by
+   the operating system: it cannot take the Workbench tokens and cannot be captured in a browser, so
+   there would be no way to verify what a person actually sees.
+
+   It holds no catalog of its own. The names arrive from the Client Runtime, which owns the closed
+   list, so this component cannot show a mission Forge would refuse to run — and cannot fall behind
+   the real catalog either.
+
+   Real markup rather than a RenderTreeBuilder fragment: Blazor stamps a component's scoped-CSS
+   attribute onto template markup only, so a hand-built fragment renders unstyled. *@
+
+<div class="mp">
+    @if (open)
+    {
+        @* Above the button, not below it: the picker sits in the composer bar at the foot of the
+           window, so a downward popup would open off-screen. *@
+        <ul class="mp-list" role="listbox" aria-label="Mission" tabindex="-1"
+            aria-activedescendant="@OptionId(active)"
+            @ref="listElement" @onkeydown="OnListKeyDown">
+            @foreach (var (mission, index) in Missions.Select((name, index) => (name, index)))
+            {
+                <li id="@OptionId(index)" role="option"
+                    class="@OptionClass(mission, index)"
+                    aria-selected="@(IsSelected(mission) ? "true" : "false")"
+                    @onclick="() => CommitAsync(mission)">
+                    <span>@mission</span>
+                    @if (IsSelected(mission))
+                    {
+                        @* Decorative: aria-selected already carries this to a screen reader. *@
+                        <span class="mp-check" aria-hidden="true">✓</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    <button type="button" class="mp-button" aria-haspopup="listbox"
+            aria-expanded="@(open ? "true" : "false")" aria-label="Mission"
+            disabled="@Disabled" @ref="buttonElement"
+            @onclick="Toggle" @onkeydown="OnButtonKeyDown">
+        @* "none selected" is what a Project whose manifest names an unrunnable mission actually
+           has. Showing Janus there would claim a choice nobody made. *@
+        <span class="mp-value">Mission: @(Selected ?? "none selected")</span>
+        <span class="mp-chevron" aria-hidden="true">▾</span>
+    </button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> Missions { get; set; } = [];
+
+    /// <summary>The persisted selection, or null when the Project's manifest names a mission Forge
+    /// cannot run. Null is a real state here, not a missing parameter.</summary>
+    [Parameter] public string? Selected { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public EventCallback<string> SelectedChanged { get; set; }
+
+    private bool open;
+    private int active;
+    private ElementReference buttonElement;
+    private ElementReference listElement;
+    private FocusTarget focusAfterRender;
+
+    /// <summary>Which element to focus once the render that creates it has happened. It is a flag
+    /// rather than a captured reference because the list does not exist yet at the moment opening
+    /// decides to focus it — capturing there would hand out an unconfigured reference.</summary>
+    private enum FocusTarget { None, Button, List }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var target = focusAfterRender;
+        if (target == FocusTarget.None)
+            return;
+
+        focusAfterRender = FocusTarget.None;
+        await (target == FocusTarget.List ? listElement : buttonElement).FocusAsync();
+    }
+
+    private bool IsSelected(string mission) => string.Equals(mission, Selected, StringComparison.Ordinal);
+
+    private static string OptionId(int index) => $"mission-option-{index}";
+
+    private string OptionClass(string mission, int index) =>
+        (IsSelected(mission), index == active) switch
+        {
+            (true, true) => "mp-option mp-option-selected mp-option-active",
+            (true, false) => "mp-option mp-option-selected",
+            (false, true) => "mp-option mp-option-active",
+            _ => "mp-option",
+        };
+
+    private void Toggle()
+    {
+        if (open)
+        {
+            Close();
+            return;
+        }
+
+        // Opening starts on the current mission, so the first arrow press moves from where the
+        // person already is. A Project with no valid selection starts at the top instead.
+        var index = Missions.ToList().FindIndex(IsSelected);
+        active = index < 0 ? 0 : index;
+        open = true;
+        focusAfterRender = FocusTarget.List;
+    }
+
+    private void Close()
+    {
+        open = false;
+        focusAfterRender = FocusTarget.Button;
+    }
+
+    private void OnButtonKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or " " or "ArrowDown" or "ArrowUp" && !open)
+            Toggle();
+    }
+
+    private async Task OnListKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                active = Math.Min(active + 1, Missions.Count - 1);
+                break;
+            case "ArrowUp":
+                active = Math.Max(active - 1, 0);
+                break;
+            case "Home":
+                active = 0;
+                break;
+            case "End":
+                active = Missions.Count - 1;
+                break;
+            case "Enter" or " ":
+                await CommitAsync(Missions[active]);
+                break;
+            // Tab closes as well as Escape: leaving the control must not leave an open popup
+            // floating over the composer.
+            case "Escape" or "Tab":
+                Close();
+                break;
+        }
+    }
+
+    // Committing closes and returns focus BEFORE the caller persists, so the popup never sits open
+    // over a failure message. What the button then shows is whatever the caller renders back from
+    // the Client Runtime's canonical answer — never this component's own guess.
+    private async Task CommitAsync(string mission)
+    {
+        Close();
+        await SelectedChanged.InvokeAsync(mission);
+    }
+}

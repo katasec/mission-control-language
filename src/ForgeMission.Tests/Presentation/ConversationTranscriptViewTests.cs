@@ -146,16 +146,34 @@ public sealed class ConversationTranscriptViewTests : BunitContext
         Assert.Single(component.FindAll(".convo-user-bubble"));
     }
 
-    // Labelled as itself, never folded into a Janus participant.
+    // Labelled as itself, never folded into a Janus participant and never as the product.
     [Fact]
-    public void AMissionControlMessage_IsLabelledMissionControl()
+    public void ANaiveMessage_IsLabelledNaive()
     {
         var view = Render<ConversationTranscriptView>(parameters => parameters.Add(
             component => component.Entries,
             [new ConversationEntry(ConversationEntryKind.ParticipantMessage,
-                ConversationParticipant.MissionControl, Text: "What would done look like?")]));
+                ConversationParticipant.Naive, Text: "The importer is the release risk.")]));
 
-        Assert.Equal("Mission Control", view.Find(".convo-participant-name").TextContent);
-        Assert.Contains("What would done look like?", view.Find(".convo-participant-text").TextContent);
+        Assert.Equal("Naive", view.Find(".convo-participant-name").TextContent);
+        Assert.Contains("The importer is the release risk.", view.Find(".convo-participant-text").TextContent);
+    }
+
+    // "Forge" is gone from this renderer (43.21 task 2). It was only ever reachable on Error and
+    // RunStatus events, which render as status rows carrying no name — so removing the arm is what
+    // makes "a mission's output is never labelled as the product" structural rather than a habit.
+    // The legacy control label went with its route in the same change.
+    [Theory]
+    [InlineData(ConversationParticipant.Forge)]
+    [InlineData(ConversationParticipant.MissionControl)]
+    public void NoParticipant_IsLabelledForgeOrWithTheLegacyControlName(ConversationParticipant participant)
+    {
+        var view = Render<ConversationTranscriptView>(parameters => parameters.Add(
+            component => component.Entries,
+            [new ConversationEntry(ConversationEntryKind.ParticipantMessage, participant, Text: "…")]));
+
+        // Not the raw enum name either: that would put "Forge" and the retired control name back
+        // on screen through the back door.
+        Assert.Equal("Mission", view.Find(".convo-participant-name").TextContent);
     }
 }

@@ -2,13 +2,12 @@
 @using ForgeMission.ConversationPresentation
 
 @* Presentational renderer over one ConversationTranscript projection. Applies no HTTP/SSE logic
-   of its own — Entries is already deduplicated/ordered by the caller's ConversationTranscript. *@
+   of its own — Entries is already deduplicated/ordered by the caller's ConversationTranscript.
+
+   It renders entries and nothing else: the empty state belongs to whichever surface owns the
+   region, because "no activity yet" means something different there than here (43.21 task 2). *@
 
 <div class="conversation-transcript">
-    @if (Entries.Count == 0)
-    {
-        <p class="empty-state">What is this Project for?</p>
-    }
     @foreach (var entry in Entries)
     {
         @if (entry.Kind == ConversationEntryKind.UserMessage)
@@ -70,7 +69,6 @@
 
 <style>
     .conversation-transcript { display: flex; flex-direction: column; gap: var(--space-3); }
-    .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
 
     .convo-user-bubble { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
 
@@ -108,16 +106,25 @@
         => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Working,
                $"{entry.ToolName ?? "Tool"} running…");
 
+    // Only the participants a Project mission run can actually speak as. The legacy control
+    // participant is gone with its route (43.21 task 2), and "Forge" is gone because it was
+    // unreachable here: Forge appears only on Error and RunStatus events, which render as status
+    // rows carrying no name. Removing the arm is what makes "a mission's output is never labelled
+    // as the product" structural rather than a convention.
+    //
+    // The fallback is "Mission" — truthful for anything unexpected, because this surface renders
+    // exactly one mission's run and whatever spoke was part of it. It deliberately answers neither
+    // "User" (which would attribute a mission's words to the person who asked) nor the raw enum
+    // name (which would put "Forge" or the retired control name back on screen through the back
+    // door, undoing the two arms above it that were deleted).
     private static string ParticipantLabel(ConversationParticipant participant) => participant switch
     {
         ConversationParticipant.Proposer => "Proposer",
         ConversationParticipant.Approver => "Approver",
         ConversationParticipant.Implementer => "Implementer",
-        ConversationParticipant.Forge => "Forge",
-        // Labelled as itself, not folded into a Janus participant — a Project-refinement reply is
-        // not a proposal, an approval, or implementation work (43.20 task 2).
-        ConversationParticipant.MissionControl => "Mission Control",
-        _ => "User",
+        ConversationParticipant.Naive => "Naive",
+        ConversationParticipant.User => "User",
+        _ => "Mission",
     };
 
     private static string StatusLabel(ConversationEntry entry) => entry.StatusKind switch

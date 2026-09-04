@@ -76,27 +76,32 @@ else
                         {
                             <p class="error-banner">@sessionError</p>
                         }
-                        @if (conversationError is not null)
-                        {
-                            <p class="error-banner">@conversationError</p>
-                        }
-                        <ConversationTranscriptView Entries="conversationTranscript.Entries" />
+                        <MissionsView Entries="conversationTranscript.Entries" HasLegacyHistory="hasLegacyHistory" />
                         break;
                 }
             </main>
 
-            @* The composer belongs to Mission Control, so it is absent — not disabled — while
-               another document is shown. An action that cannot apply here should not be present. *@
-            @if (view == WorkbenchView.MissionControl)
+            @* The composer belongs to Missions, so it is absent — not disabled — while another
+               document is shown. An action that cannot apply here should not be present. *@
+            @if (view == WorkbenchView.Missions)
             {
                 <footer class="composer-bar">
+                    @* Beside the action that produced it, rather than at the top of a region the
+                       person is not looking at. *@
+                    @if (missionError is not null)
+                    {
+                        <p class="composer-error" role="alert">@missionError</p>
+                    }
                     <div class="composer">
+                        <MissionPicker Missions="missions" Selected="@selectedMission"
+                                       Disabled="@(RunBusy || PromptsBlocked)"
+                                       SelectedChanged="SelectMissionAsync" />
                         <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
                                @ref="composerInput"
                                placeholder="@ComposerPlaceholder"
-                               disabled="@(!missionControlReady || sending || PromptsBlocked)" />
-                        <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
-                            @(sending ? "Sending…" : "Send")
+                               disabled="@(RunBusy || PromptsBlocked)" />
+                        <button class="composer-run" @onclick="RunMissionAsync" disabled="@(!CanRun)">
+                            @RunLabel
                         </button>
                     </div>
                 </footer>
@@ -141,12 +146,17 @@ else
 
     .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: var(--font-size-body); margin: 0; }
 
-    .composer-bar { flex: none; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--wb-page-inset) calc(var(--space-4) + var(--safe-bottom)); }
-    .composer { display: flex; align-items: center; gap: var(--space-2); }
+    .composer-bar { flex: none; display: flex; flex-direction: column; gap: var(--space-2); border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--wb-page-inset) calc(var(--space-4) + var(--safe-bottom)); }
+    .composer { display: flex; align-items: center; gap: var(--wb-composer-gap); }
     .composer-input { flex: 1; min-width: 0; height: var(--wb-location-height); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 var(--space-3); font-size: var(--font-size-body); background: var(--surface); color: var(--text); }
-    .composer-input:disabled { color: var(--text-subtle); }
-    .composer-send { flex-shrink: 0; padding: var(--space-2) var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: var(--font-size-body); font-weight: 600; cursor: pointer; }
-    .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
+    .composer-input:disabled { background: var(--surface-active); color: var(--text-subtle); }
+
+    /* min-width, not width: the busy label ("Starting Janus…") is longer than "Run", and a fixed
+       action would clip it at the compact bound instead of growing. */
+    .composer-run { flex-shrink: 0; min-width: var(--wb-action-min-width); padding: var(--space-2) var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: var(--font-size-body); font-weight: 600; white-space: nowrap; cursor: pointer; }
+    .composer-run:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
+
+    .composer-error { margin: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-bg); color: var(--danger); font-size: var(--font-size-meta); }
 </style>
 
 @code {
@@ -157,7 +167,7 @@ else
 
     // Which document the workbench shows. It is presentation state ONLY: nothing in this file
     // recreates a project, session, conversation, or subscription when it changes (43.20 task 3).
-    private WorkbenchView view = WorkbenchView.MissionControl;
+    private WorkbenchView view = WorkbenchView.Missions;
 
     private ProjectWorkbenchProjection? workbench;
     private ProjectOperationError? workbenchError;
@@ -180,7 +190,6 @@ else
         : null;
 
     private string composerText = string.Empty;
-    private bool sending;
     private ElementReference composerInput;
     private bool focusComposerAfterRender;
 
@@ -196,10 +205,30 @@ else
     private Task? eventLoopTask;
     private int viewGeneration;
 
-    // True only once Mission Control has actually opened. The session id alone is NOT enough:
-    // EnterProjectAsync sets it before awaiting the open, so gating on it would leave a window
-    // where a person could submit a turn against a conversation that does not exist yet.
-    private bool missionControlReady;
+    // The mission picker's state, all of it read from the Client Runtime (43.21 task 2). The
+    // catalog is NOT declared here: this page holds no list of missions it could fall back to, so
+    // it cannot offer one the Runtime would refuse. A null selection is a real state — the
+    // Project's manifest names something Forge cannot run — and is never quietly replaced.
+    private IReadOnlyList<string> missions = [];
+    private string? selectedMission;
+    private bool hasLegacyHistory;
+
+    // The one error line this surface shows: a typed selection or run failure, beside the action
+    // that produced it.
+    private string? missionError;
+
+    // The accepted run being watched, and the mission the Runtime said it started. Both are
+    // in-memory only: nothing here browses past runs or restores one on reopen.
+    private Guid? activeRunId;
+    private string? activeRunMission;
+    private bool runInFlight;
+
+    // Durable events observed between pressing Run and its acceptance returning. The tail starts
+    // inside the SAME call that starts the run and replays the container from sequence 0, so this
+    // run's own first events can arrive before its id does; without this buffer they would be
+    // dropped and the first run of a session could render nothing. Cleared on both outcomes, so
+    // its lifetime is one request.
+    private readonly List<ConversationEvent> pendingEvents = [];
 
     // The in-flight turn's identity. Retained across a typed or transport failure so a retry of
     // unchanged text sends the identical request; released only on acceptance.
@@ -207,26 +236,40 @@ else
     private string? pendingCommandText;
 
     private ConversationTranscript conversationTranscript = new();
-    private string? conversationError;
     private string? sessionError;
     private string? connectionError;
     private bool reconnectedWithGap;
 
-    // Mission Control's transcript is built only from relayed durable events, so a turn submitted
-    // while the stream is down would add a second unrecoverable gap on top of the one the banner
-    // already reports.
+    // A run's activity is built only from relayed durable events, so starting one while the stream
+    // is down would add a second unrecoverable gap on top of the one the banner already reports.
     private bool PromptsBlocked => connectionError is not null;
+
+    // Busy from the moment Run is pressed until the run reaches a terminal status — one active run
+    // per Project, so a second submission has nowhere to go.
+    private bool RunBusy => runInFlight || activeRunId is not null;
+
+    // Named from the durable answer, not from the rendered selection: the two can differ if the
+    // selection changed between rendering the button and pressing it.
+    private string RunLabel => this switch
+    {
+        { runInFlight: true } => "Starting…",
+        { activeRunMission: { } mission } => $"Starting {mission}…",
+        _ => "Run",
+    };
 
     // A disabled composer says why it is disabled rather than looking broken.
     private string ComposerPlaceholder => this switch
     {
-        { PromptsBlocked: true } => "Reconnect to continue this conversation",
-        { missionControlReady: false, conversationError: null } => "Opening Mission Control…",
-        _ => "What is this Project for?",
+        { PromptsBlocked: true } => "Reconnect to run a mission",
+        { RunBusy: true } => "Waiting for this run to finish…",
+        _ => "What should this mission do?",
     };
 
-    private bool CanSend =>
-        missionControlReady && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
+    // No selection means no run: the Runtime would refuse it, and an action that cannot succeed
+    // should not look available.
+    private bool CanRun =>
+        selectedMission is not null && !RunBusy && !PromptsBlocked
+        && !string.IsNullOrWhiteSpace(composerText);
 
     // The header names the document you are in and the Project it belongs to — never the Project's
     // location on disk.
@@ -235,7 +278,7 @@ else
         WorkbenchView.Explorer => project?.Title ?? string.Empty,
         WorkbenchView.Document => document?.Title ?? "Project document",
         WorkbenchView.Settings => "Settings",
-        _ => "Mission Control",
+        _ => "Missions",
     };
 
     private string HeaderSubtitle => view switch
@@ -336,9 +379,9 @@ else
         }
     }
 
-    // Opening a Project opens its one Mission Control conversation. The event loop starts FIRST so
-    // the durable replay this call triggers is already being relayed when it arrives — a reopened
-    // Project therefore restores its whole transcript without any local cache.
+    // Opening a Project starts its event loop and reads what the Missions page needs to render.
+    // It opens no conversation and creates nothing durable: the Project's Mission container is
+    // opened by the first run, not by looking at the page.
     private async Task EnterProjectAsync(ProjectSession opened)
     {
         var operation = await BeginViewAsync();
@@ -347,39 +390,84 @@ else
         focusComposerAfterRender = true;
         StartEventLoop(operation);
 
-        // Render the workbench BEFORE awaiting the open. Without this the surface would sit on the
-        // launcher for the whole open, then jump straight to a ready composer — so the disabled
-        // "Opening Mission Control…" state, and an open failure's error, would never be seen.
+        // Render the workbench BEFORE awaiting the read, so the surface does not sit on the
+        // launcher until it completes.
         StateHasChanged();
 
-        await OpenMissionControlAsync(operation);
+        await LoadMissionsAsync(operation);
     }
 
-    private async Task OpenMissionControlAsync(ViewOperation operation)
+    // Reads the catalog, the persisted selection, and whether this Project retains legacy history.
+    // Both payloads can arrive together, and that pairing is the interesting case: a manifest
+    // naming a mission Forge cannot run returns the catalog WITH an UnknownMission error, so the
+    // picker stays usable and choosing either mission repairs the Project. Nothing invents a
+    // selection to fill the gap.
+    private async Task LoadMissionsAsync(ViewOperation operation)
     {
         try
         {
-            var response = await ClientRuntime.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(
-                new OpenProjectMissionControlRequest(sessionId!), operation.Token);
+            var response = await ClientRuntime.SendAsync<GetProjectMissionsRequest, GetProjectMissionsResponse>(
+                new GetProjectMissionsRequest(sessionId!), operation.Token);
             if (!IsCurrent(operation.Generation))
                 return;
 
-            // Ready ONLY on a conversation the Runtime actually opened. A typed error leaves the
-            // composer disabled with its message visible, rather than inviting a turn that has
-            // nowhere to go.
-            if (response.Error is { } error)
-                conversationError = error.Message;
-            else
-                missionControlReady = response.ConversationId is not null;
+            if (response.Missions is { } view)
+            {
+                missions = view.Missions;
+                selectedMission = view.Selected;
+                hasLegacyHistory = view.HasLegacyHistory;
+            }
+
+            missionError = response.Error?.Message;
         }
         catch (OperationCanceledException)
         {
-            // Expected: the view was replaced while the open was in flight.
+            // Expected: the view was replaced while the read was in flight.
         }
         catch (Exception exception)
         {
             if (IsCurrent(operation.Generation))
-                conversationError = exception.Message;
+                missionError = exception.Message;
+        }
+        finally
+        {
+            if (IsCurrent(operation.Generation))
+                StateHasChanged();
+        }
+    }
+
+    // Persists the choice at the moment it is made, and renders the value the Client Runtime
+    // actually stored. A failure keeps the previous selection on screen: a picker showing a
+    // mission the Project did not store would be a lie about what the next run will execute.
+    private async Task SelectMissionAsync(string mission)
+    {
+        if (sessionId is null || viewCts is null)
+            return;
+
+        var operation = new ViewOperation(viewGeneration, viewCts.Token);
+        missionError = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await ClientRuntime.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(
+                new SelectProjectMissionRequest(sessionId, mission), operation.Token);
+            if (!IsCurrent(operation.Generation))
+                return;
+
+            if (response.Error is { } error)
+                missionError = error.Message;
+            else
+                selectedMission = response.SelectedMission;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected: the view was replaced while the selection was in flight.
+        }
+        catch (Exception exception)
+        {
+            if (IsCurrent(operation.Generation))
+                missionError = exception.Message;
         }
         finally
         {
@@ -392,8 +480,8 @@ else
 
     // Selecting a rail destination changes the rendered view and, for the Explorer, reads the
     // Project's current projection. It creates nothing: no project operation, no session, no
-    // Mission Control call, and no second event subscription — the one started when the Project
-    // opened keeps running underneath whichever document is shown.
+    // mission call, and no second event subscription — the one started when the Project opened
+    // keeps running underneath whichever document is shown, including a live run's.
     private async Task SelectViewAsync(WorkbenchView selected)
     {
         view = selected;
@@ -516,77 +604,94 @@ else
 
     private async Task OnComposerKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && CanSend)
-            await SendAsync();
+        if (e.Key == "Enter" && CanRun)
+            await RunMissionAsync();
     }
 
-    // The one send path on this surface. Mission Control is the sole active conversation while a
-    // Project is open, so there is no mission to choose and no second path to fall back to. The
-    // Janus prompt flow lives on in Client Runtime and its own tests, and is unreachable from here
-    // — enforced by ClientRuntimePresentationBoundaryTests, which fails on the mere mention of its
-    // contract types in this project (43.20 task 2).
-    private async Task SendAsync()
+    // The one invocation path on this surface (43.21 task 2).
+    //
+    // It sends the session, a command id, and what the person typed. It does NOT send the mission:
+    // the Client Runtime reads that from the Project, which is what makes "Presentation never
+    // branches execution" structural rather than a rule someone has to follow — there is no
+    // argument here through which this page could choose one. The legacy control route is gone,
+    // and ClientRuntimePresentationBoundaryTests fails on the mere mention of it.
+    private async Task RunMissionAsync()
     {
-        if (!CanSend || sessionId is null || viewCts is null)
+        if (!CanRun || sessionId is null || viewCts is null)
             return;
 
         var operation = new ViewOperation(viewGeneration, viewCts.Token);
         var text = composerText;
 
         // The command id is minted for a SPECIFIC piece of text and survives a failure with it,
-        // so pressing Send again reproduces a byte-identical request and the Conversation service
-        // resolves the duplicate instead of appending a second message. Editing the text first is
-        // a different turn, so it mints a new id — that rule falls out of this comparison rather
-        // than needing separate edit tracking.
+        // so pressing Run again reproduces a byte-identical request and the Conversation service
+        // returns the original run instead of starting a second one. Editing the text first is a
+        // different instruction, so it mints a new id — that rule falls out of this comparison
+        // rather than needing separate edit tracking.
         if (pendingCommandId is null || !string.Equals(pendingCommandText, text, StringComparison.Ordinal))
         {
             pendingCommandId = Guid.NewGuid();
             pendingCommandText = text;
         }
 
-        // The composer is NOT cleared here: until the turn is accepted, the person's text is the
+        // The composer is NOT cleared here: until the run is accepted, the person's text is the
         // only copy of it that exists anywhere.
-        sending = true;
-        conversationError = null;
+        runInFlight = true;
+        missionError = null;
         StateHasChanged();
 
         try
         {
+            // Fully qualified: ConversationHost's own internal start request shares this name, and
+            // the surface must never be able to reach for that one by accident.
             var response = await ClientRuntime.SendAsync<
-                SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
-                new SubmitProjectMissionControlTurnRequest(sessionId, pendingCommandId.Value, text), operation.Token);
+                Transport.StartProjectMissionRunRequest, Transport.StartProjectMissionRunResponse>(
+                new Transport.StartProjectMissionRunRequest(sessionId, pendingCommandId.Value, text),
+                operation.Token);
 
             if (!IsCurrent(operation.Generation))
                 return;
 
-            // The response is an acceptance, not a rendered answer: the turn appears once its
-            // durable UserMessage — and everything after it — arrives through the relayed stream.
+            // The response is an acceptance, not a rendered answer: the run appears as its durable
+            // events arrive through the relayed stream.
             if (response.Error is { } error)
             {
-                conversationError = error.Message;
+                missionError = error.Message;
             }
-            else
+            else if (response.RunId is { } runId)
             {
-                // Accepted: only now is the pending turn released.
                 composerText = string.Empty;
                 pendingCommandId = null;
                 pendingCommandText = null;
+
+                // A new run replaces the previous one's activity rather than appending to it.
+                // Nothing accumulates here, and there is no way to browse back.
+                activeRunId = runId;
+                activeRunMission = response.Mission;
+                conversationTranscript = new();
             }
         }
         catch (OperationCanceledException)
         {
-            // Expected: the view was replaced while this turn was in flight.
+            // Expected: the view was replaced while this run was in flight.
         }
         catch (Exception exception)
         {
             if (IsCurrent(operation.Generation))
-                conversationError = exception.Message;
+                missionError = exception.Message;
         }
         finally
         {
             if (IsCurrent(operation.Generation))
             {
-                sending = false;
+                runInFlight = false;
+                // Now that the run's identity is known, the events that arrived while it was not
+                // go through the same filter as everything else — kept if they belong to this run,
+                // discarded otherwise, including when the start failed and there is no run at all.
+                foreach (var buffered in pendingEvents)
+                    ApplyConversationEvent(buffered);
+                pendingEvents.Clear();
+
                 StateHasChanged();
             }
         }
@@ -609,20 +714,25 @@ else
         viewCts = new CancellationTokenSource();
 
         sessionId = null;
-        view = WorkbenchView.MissionControl;
+        view = WorkbenchView.Missions;
         workbench = null;
         workbenchError = null;
         document = null;
         documentError = null;
-        missionControlReady = false;
+        missions = [];
+        selectedMission = null;
+        hasLegacyHistory = false;
+        missionError = null;
+        activeRunId = null;
+        activeRunMission = null;
+        runInFlight = false;
+        pendingEvents.Clear();
         pendingCommandId = null;
         pendingCommandText = null;
         conversationTranscript = new();
-        conversationError = null;
         sessionError = null;
         connectionError = null;
         reconnectedWithGap = false;
-        sending = false;
 
         return new ViewOperation(viewGeneration, viewCts.Token);
     }
@@ -703,11 +813,43 @@ else
         if (evt.SessionId != sessionId)
             return;
 
-        if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is not null)
-            conversationTranscript.Apply(evt.Conversation);
+        if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is { } conversation)
+            ApplyConversationEvent(conversation);
         else if (evt.Kind == ClientRuntimeEventKind.Error)
-            conversationError = evt.Error;
+            missionError = evt.Error;
     }
+
+    // One live run is shown, and only its own events. The Project's container orders every run it
+    // has ever had and the tail replays all of them, so without this filter a reopened Project
+    // would render its whole history as if it had just happened.
+    private void ApplyConversationEvent(ConversationEvent conversation)
+    {
+        // Between pressing Run and its acceptance the run's identity does not exist yet, so the
+        // events cannot be judged. Hold them; the acceptance drains them through this same method.
+        if (runInFlight)
+        {
+            pendingEvents.Add(conversation);
+            return;
+        }
+
+        if (activeRunId is not { } runId || conversation.RunId != runId)
+            return;
+
+        conversationTranscript.Apply(conversation);
+
+        // Terminal: the run is over, so the composer is clean and usable again. Its activity stays
+        // on screen — clearing it here would delete the answer at the instant it arrived.
+        if (conversation.Kind == ConversationEventKind.RunStatus && IsTerminal(conversation.RunStatus))
+        {
+            activeRunId = null;
+            activeRunMission = null;
+            focusComposerAfterRender = true;
+        }
+    }
+
+    private static bool IsTerminal(ConversationRunStatus? status) => status is
+        ConversationRunStatus.Completed or ConversationRunStatus.Rejected
+        or ConversationRunStatus.Interrupted or ConversationRunStatus.Failed;
 
     public async ValueTask DisposeAsync() => await StopViewAsync();
 }

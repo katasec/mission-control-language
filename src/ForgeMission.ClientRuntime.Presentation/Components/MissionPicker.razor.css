@@ -1,0 +1,108 @@
+/* The mission picker (43.21 task 2). No literal colour, radius, type size, or geometry: every
+   value resolves through the Workbench theme map in forge.css. */
+
+.mp {
+    position: relative;
+    flex: none;
+    min-width: 0;
+}
+
+.mp-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    width: var(--wb-picker-width);
+    height: var(--wb-location-height);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: var(--font-size-meta);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.mp-button:hover:not(:disabled) {
+    background: var(--surface-hover);
+}
+
+.mp-button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.mp-button:disabled {
+    background: var(--surface-active);
+    color: var(--text-subtle);
+    cursor: default;
+}
+
+/* The value may be longer than the control at the compact bound, so it ellipsises rather than
+   pushing the chevron out of the button. */
+.mp-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mp-chevron {
+    flex: none;
+    font-size: var(--font-size-mono);
+    color: var(--text-muted);
+}
+
+/* Anchored above the button because the composer sits at the foot of the window. */
+.mp-list {
+    position: absolute;
+    bottom: calc(100% + var(--space-2));
+    inset-inline-start: 0;
+    z-index: 1;
+    min-width: 100%;
+    margin: 0;
+    padding: var(--space-1);
+    list-style: none;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+}
+
+.mp-list:focus-visible {
+    outline: none;
+}
+
+.mp-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: var(--wb-picker-option-height);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: var(--font-size-body);
+    cursor: pointer;
+}
+
+.mp-option:hover {
+    background: var(--surface-hover);
+}
+
+.mp-option-selected {
+    background: var(--accent-soft);
+    font-weight: 600;
+}
+
+/* The active option is where the keyboard is. The list itself holds DOM focus, so without this
+   there would be no visible focus at all while arrowing through the options. */
+.mp-option-active {
+    box-shadow: var(--focus-ring);
+}
+
+.mp-check {
+    color: var(--accent);
+}

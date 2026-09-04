@@ -1,8 +1,7 @@
 # Phase 43.21 — Mission-run-first Project invocation
 
-> **Status: Task 1 implementation review passed (2026-09-04); Task 2's plan is approved and its
-> visual references and component specification are built (2026-09-05), awaiting sign-off before
-> implementation.** The combined
+> **Status: Task 1 implementation review passed (2026-09-04); Task 2 implemented (2026-09-05) and
+> awaiting review — its packaged-app parity check is still owed.** The combined
 > replacement remains unmerged and has no default-path acceptance yet. This replaces the
 > user-facing execution model of 43.20 Tasks 2 and 4 without invalidating the durable Conversation
 > substrate or Project Explorer work.
@@ -192,6 +191,43 @@ Desktop, no Conversation/Mission Runtime overrides, Host and Worker rebuilt from
 brand-new disposable Project, submitting without touching the picker and then with `Naive` selected,
 and reopening to confirm the selection persisted — each producing durable child-run activity with
 zero `ToolRequested`/`ToolResult` events.
+
+#### Task 2 implementation evidence (2026-09-05) — awaiting review
+
+**Tests.** Full solution suite **1158 passed, 0 failed, 11 skipped** (ForgeMission.Tests 789/11,
+ConversationHost 191, Rooms 97, ConversationWorker 76, Runner 5). `make desktop` AOT publish clean.
+New coverage: `MissionPickerTests` (18, keyboard/ARIA/catalog), the rewritten 43.21 section of
+`HomeSessionOperationTests` (selection, corrupted selection, invalid input, busy, run filtering,
+pre-acceptance buffering, terminal, retry identity, legacy notice, absence of every legacy request),
+five `ProjectTransportContractTests` cases for the new read against the real out-of-process Client
+Runtime, and a boundary rule banning `ProjectControl` / `MissionControl` / `mission-control` /
+`Mission Control` anywhere in Presentation source text — identifiers, routes, comments and visible
+strings alike.
+
+**Browser acceptance — CONTROLLED, and labelled as such.** Run against the published Client Runtime
+with `ConversationRuntime__BaseUrl` set to a port-forwarded Kind Host, and with Host/Worker on
+branch-built images. Both are overrides; this cannot close default-path acceptance. The cluster was
+restored to the clean-`main` images (`767c2891…`) afterwards and the rollout verified.
+
+| Check | Result |
+|---|---|
+| First open, picker open, Naive selected, busy, Janus activity, Naive result, invalid input, legacy notice, corrupted selection | PASS against their bound references, all through real pointer activation |
+| Keyboard | PASS — `ArrowDown` moves the active option, `Enter` commits and closes, focus returns to the button |
+| Live Naive run | PASS — one bubble labelled `Naive`, `Status: Completed`, composer clean, **0 tool rows** |
+| Live Janus run | PASS — Proposer → Approver → Approved → Implementer → `Status: Completed`, **0 tool rows**, and the Implementer said it would "use Bash" and could not: the run holds no tool authority |
+| Four corners 800×568 / 800×1024 / 1536×568 / 1536×1024 | PASS — no document scrolling at any corner; the activity region owns overflow (`scrollHeight` 1099 inside `clientHeight` 426) |
+| Continuous resize 1536→1440→1280→1024→900→800 | PASS — no overflow, no clipping |
+| Zoom 125% / 150% / 200% | PASS — no overflow at 125/150; at 200% (an effective viewport below the supported rectangle) the page degrades by scrolling, with every control's text still fitting |
+| Both colour modes | PASS — dark renders entirely through the named token map; no component-local literal |
+| Text fit | **One measured failure, fixed.** `Mission: none selected` overflowed the 150px the references estimated by 19.7px at 800 wide. `--wb-picker-width`'s lower bound is now **172px**, set from that measurement, and the references were regenerated to match. |
+
+**Packaged-app parity — NOT completed this session.** The Photino window is not CDP-attachable (a
+recorded Desktop gotcha), and the only remaining route was a full-screen capture, which would have
+captured the operator's own screen contents; that attempt was stopped rather than repeated. The
+packaged app was launched with zero arguments and started its Host process, but its rendered layout
+was not inspected. The measured default usable viewport is unchanged from 43.20 Task 1 at
+**800×568**, and every required state above was verified in the browser at exactly that viewport.
+Packaged parity remains owed, alongside the post-merge default-path observation.
 
 **Done when:** browser and packaged Desktop show Janus visibly preselected, expose only Janus and Naive, persist deliberate selection, and submit both through the same named run action; both runs visibly have zero tool activity; TUI-equivalent contract tests pass and no Presentation code references provider, model, expert, or ProjectControl endpoint. After the combined replacement PR merges, the clean-main Kind rebuild plus zero-argument packaged Desktop prove default Janus and explicit Naive runs before the correction is marked complete or release-ready.
 
