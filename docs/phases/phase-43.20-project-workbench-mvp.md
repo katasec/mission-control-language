@@ -907,7 +907,9 @@ at the deterministic path above. Resolving an OCI tag intentionally uses the nor
 on every `forge init`, even when a prior materialization exists: a tag cannot honestly become an
 immutable source without its current manifest. It is not an offline cache-success path. This is a
 prerequisite data-source correction, not an Explorer registry feature: **Explorer** makes no
-network call, pull, catalog, or update and only reads the recorded local lock.
+network call, pull, catalog, or update and only reads the recorded local lock. The `forge init`
+line says **resolved** when the digest-derived materialization already holds identical content and
+**pulled** otherwise; neither word claims an offline cache success.
 
 `LockFileIO` reads v1 only to migrate a local `source: experts` + relative `path` + `hash` into the
 v2 Project URI/content-digest representation in memory; the next `forge init` writes v2. A v1 OCI
