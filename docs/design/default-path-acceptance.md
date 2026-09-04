@@ -16,6 +16,32 @@ then names the same facts, the actual action performed, and its observed outcome
 path fails, the task fails: repair the default route or its real dependency before marking the work
 complete. Do not replace it with a custom configuration and describe that result as parity.
 
+## Candidate-stack gate — mandatory for every cross-process change
+
+**A change that spans process boundaries is only proven when every process in the path runs the
+same candidate revision, together, exercising the real user flow.** Components verified separately
+at different revisions prove nothing about the product: the surface can be correct against a
+Runtime that has not shipped, and a Runtime can be correct against a surface nobody built. Both
+"pass", and the thing a person launches is broken.
+
+Before a PR is approved, a cross-process change must therefore record:
+
+| Required answer | Passing evidence |
+|---|---|
+| What is the candidate revision? | One commit. Every participating artifact is built from it — no mixed shas, no "that component did not change". |
+| Was the whole stack run together? | Each process — published Desktop and its supervised Client Runtime, plus the Host and Worker images actually rolled — is named with the revision it was built from. |
+| Was the real user flow exercised? | The action a person performs, driven end to end through the product surface, with its durable or user-visible result named. |
+| Was the environment restored? | A candidate stack is a deliberate, temporary substitution. The record names what was rolled back and confirms the rollback. |
+
+This gate is **not** default-path acceptance and cannot substitute for it: a candidate stack is by
+definition built outside the sanctioned provenance route, so it is a controlled test. It sits
+earlier, and it catches a different failure — the integration gap that unit, contract and
+single-component browser evidence are all structurally blind to. Default-path acceptance still runs
+after merge, from the sanctioned build.
+
+A cross-process change that has not passed this gate is not ready for PR approval, even when every
+component's own tests pass.
+
 ## Evidence layers
 
 | Layer | Purpose | Can close the task? |

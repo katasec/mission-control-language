@@ -241,6 +241,34 @@ zero clicks from it. So "let the button be a button" would have left the whole k
 unverifiable here. Handling the keys and suppressing the duplicate is correct in a real browser and
 provable in this one.
 
+**Candidate-stack gate — PASS (2026-09-05), candidate revision `7b7c7a2`.** Every process in the
+path was built from that one commit and run together, and the whole thing was driven through the
+product's own flow. This is the check the rest of the evidence is structurally blind to: components
+verified separately at different revisions say nothing about whether the product works.
+
+| Process | Built from | How it ran |
+|---|---|---|
+| Desktop + supervised Client Runtime | `7b7c7a2` (`make desktop`) | The published `dist/forge-desktop/ForgeMission.Desktop`, launched with **zero arguments**. It started its own Kind bridge and its own Client Runtime child — no endpoint override anywhere. |
+| ConversationHost | `forge-conversation-host:7b7c7a2` | Built from this commit and rolled into Kind. |
+| Worker | `forge-conversation-worker:7b7c7a2` | Same. |
+
+Both flows were driven end to end and produced durable child runs of the Project's Mission
+container (`missionRef: null`, `purpose: projectMission`, `projectId` set):
+
+- **Janus** — run `cc043d1e`, 15 events: `userMessage → runStatus(queued) → proposer → approver →
+  approval(revisionRequested) → proposer → approver → approval(approved) → implementer →
+  runStatus(completed)`. **ToolRequested 0, ToolResult 0.**
+- **Naive** — run `05902c7b`, 4 events: `userMessage → runStatus(queued) →
+  participantMessage(naive) → runStatus(completed)`. **ToolRequested 0, ToolResult 0.**
+
+The surface driven was the packaged Desktop's *own* supervised Client Runtime, rendered in the
+browser; the packaged WebView's rendering of the same page is proved separately below. Kind was
+restored to the clean-`main` images (`767c2891…`) afterwards and the rollout verified.
+
+Still a controlled test, by construction: the images were built from a branch rather than through
+the sanctioned clean-`main` route, so this cannot close default-path acceptance — which remains the
+post-merge observation.
+
 **Packaged-app parity — PASS (2026-09-05).** The published `dist/forge-desktop/ForgeMission.Desktop`
 was launched with zero arguments and its normal configuration; the operator opened a Project in it,
 and the window alone was captured by window id, so none of the operator's screen is in the image.

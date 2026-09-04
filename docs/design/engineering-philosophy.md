@@ -112,6 +112,16 @@ For a **design or plan** review, a single FAIL stops handoff and must be resolve
 an **implementation** review, a single FAIL rejects the diff even if its tests pass. This is a
 quality gate, not a reminder or a suggestion.
 
+## Candidate-stack gate
+
+**Mandatory for every change that spans process boundaries.** Build and run every participating
+process — published surface, its supervised runtime, and every service image it talks to — from one
+candidate revision, and exercise the real user flow through it before approving the PR. Components
+verified separately at different revisions prove nothing about the product; that gap is invisible to
+unit, contract and single-component browser evidence alike. It is a controlled test and never
+replaces default-path acceptance. The required answers and record shape are in
+[Default-Path Acceptance](default-path-acceptance.md#candidate-stack-gate--mandatory-for-every-cross-process-change).
+
 ## Presentation-surface parity gate
 
 **Mandatory for every new or changed Desktop product action.** Desktop and TUI are Presentation

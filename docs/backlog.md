@@ -18,6 +18,7 @@
 | [Phase 41 — Live retrieval](phases/phase-41-live-retrieval-scout.md) | Live work exists; roll the search-front template only when selected. |
 | [Phase 42 — Forge Cloud](phases/phase-42-forge-cloud.md) | Local leg done; hosted work remains deferred. |
 | [Phase 42.6 task 5b](phases/phase-42.6-hosted-endpoint-ttfa.md#tasks--status) | Hosted `forge claude @websearch` chat-wire adapter remains on hold. |
+| Desktop startup compatibility preflight | Design candidate. Before exposing a runnable Workbench, the supervised Client Runtime validates typed Host/Worker protocol compatibility and readiness. A mismatched or unavailable stack shows a clear blocked state, never a raw transport failure. Deployment owns atomic backend release; this does not replace the candidate-stack or post-merge default-path gates. |
 | Durable run control and enforcement | **Next after the Phase 43.4 UI exercise.** Add user-triggered `StopMission`, run-ID cancellation-source ownership, `Stopping`/`Stopped by user` durable outcomes, terminal process-tree cancellation, and auditable best-effort cancellation results. Recovery must create a new named run and retain stopped/failed/interrupted history; later checkpoint resume is explicit only from a verified safe boundary. The current workbench mock is design only; see [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). |
 
 ## UI plans that are no longer implementation work
