@@ -1,0 +1,31 @@
+<svg viewBox="0 0 800 568" width="800" height="568" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Task 3 Project Workbench — empty Explorer at the compact baseline</title>
+  <desc>One representative compact responsive state. A three-entry rail remains usable while the empty Project Explorer occupies the available document area.</desc>
+  <rect width="800" height="568" fill="#f7faff"/>
+  <rect width="116" height="568" fill="#06284c"/>
+  <text x="18" y="35" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#ffffff">Forge</text>
+  <text x="18" y="54" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">AI Workbench</text>
+  <rect x="4" y="110" width="108" height="64" rx="8" fill="#0c4475"/>
+  <rect x="4" y="110" width="4" height="64" rx="2" fill="#32d9f2"/>
+  <text x="22" y="138" font-family="system-ui, sans-serif" font-size="18" fill="#ffffff">□</text>
+  <text x="22" y="160" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#ffffff">Explorer</text>
+  <text x="22" y="214" font-family="system-ui, sans-serif" font-size="18" fill="#b9d6f5">◎</text>
+  <text x="22" y="236" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">Mission</text>
+  <text x="22" y="251" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">Control</text>
+  <text x="22" y="525" font-family="system-ui, sans-serif" font-size="18" fill="#b9d6f5">⚙</text>
+  <text x="22" y="547" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">Settings</text>
+  <rect x="116" width="684" height="568" fill="#ffffff"/>
+  <line x1="116" x2="116" y2="568" stroke="#d5dae5"/>
+  <rect x="116" width="684" height="70" fill="#f6f8fd"/>
+  <line x1="116" x2="800" y1="70" y2="70" stroke="#d5dae5"/>
+  <text x="144" y="35" font-family="system-ui, sans-serif" font-size="19" font-weight="700" fill="#101d33">Release planner</text>
+  <text x="144" y="55" font-family="ui-monospace, monospace" font-size="10" fill="#5b6b83">Project Explorer</text>
+  <text x="144" y="123" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#101d33">Project Explorer</text>
+  <line x1="144" x2="772" y1="143" y2="143" stroke="#e7ecf4"/>
+  <text x="144" y="194" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Project assets</text>
+  <text x="144" y="219" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">No local assets yet</text>
+  <text x="144" y="283" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Source context</text>
+  <text x="144" y="308" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">No context attached</text>
+  <text x="144" y="372" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Runs</text>
+  <text x="144" y="397" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">No runs yet</text>
+</svg>

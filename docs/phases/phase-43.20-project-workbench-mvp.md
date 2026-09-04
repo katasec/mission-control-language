@@ -853,13 +853,53 @@ at 1536×1024. This task owns only the three-entry dark rail in its shown order 
 Control, bottom-fixed Settings), the selected state, and the light Explorer list for Project
 assets/context/runs. The Mission Control conversation body, right inspector, add-source action,
 new-run action, Project chooser, and all activity not backed by this task are deferred and absent.
-Before Task 3 handoff, add a task-owned 800×568 compact SVG for its empty, selected-Explorer,
-selected-Mission-Control, selected-Settings, and document-open states; that is a prerequisite,
-not an implementation discovery. The Workbench named theme remains the selector and owns all
-light/dark semantic colours, geometry, type, radii, and spacing; rail/document controls require
-keyboard reachability, visible focus, labels, and text alternatives for icons. Browser-first
-acceptance covers the four 800/1536 × 568/1024 corners, continuous resize, long asset/digest text,
-125/150/200% scaling, both colour modes, and packaged parity last.
+
+The binding compact references are [empty Explorer](../images/phase-43.20/task3-workbench-empty-compact.svg),
+[selected Explorer](../images/phase-43.20/task3-workbench-explorer-compact.svg), [selected Mission
+Control](../images/phase-43.20/task3-workbench-mission-control-compact.svg), [selected
+Settings](../images/phase-43.20/task3-workbench-settings-compact.svg), and [opened
+document](../images/phase-43.20/task3-workbench-document-compact.svg), each at 800×568.
+**800×568 is a compact responsive acceptance baseline, never a prescribed Desktop window size.**
+The layout must be fluid and bounded across the complete 800–1536 × 568–1024 acceptance rectangle,
+its continuous intermediate sizes, zoom/text scaling, and larger real Desktop windows. The five
+frames define the information priority and structural compact state; they do not authorize fixed
+pixel geometry, clipping, or a separate small-screen imitation of the large view.
+
+#### Task 3 component and responsive specification
+
+| Surface / state | Structure and exact behaviour |
+|---|---|
+| Workbench shell | One `100dvh` grid: a persistent rail and a `minmax(0, 1fr)` content document region. The rail is `clamp(7.25rem, 14vw, 11.25rem)` wide, so it reaches the compact reference at the lower bound and expands only within its tokenized bounds; the content region, never the page, owns vertical overflow. A breakpoint is not permitted merely to preserve a fixed width. |
+| Rail | Three real buttons, in this order: **Explorer**, **Mission Control**, **Settings**. Settings is bottom-aligned. A selection has both a visible accent marker and `aria-current="page"`; the glyph has an accessible text alternative and the visible text label remains present. Changing selection changes only the document view—never the Project, session, control conversation, or event subscription. |
+| Explorer | Heading **Project Explorer** then the sections **Project assets**, **Source context**, and **Runs**. Assets show local Mission/Expert/LockFile items as editable local entries; resolved OCI dependencies show their pinned reference and digest with a textual **read-only** label. Empty sections state **No local assets yet**, **No context attached**, or **No runs yet**. A malformed or missing manifest/lock file shows its named Runtime failure instead of a partial invented list. |
+| Mission Control | This is the initial selected view after Project open and reuses Task 2's existing transcript/composer renderer without a second transcript, event loop, or navigation-specific conversation call. |
+| Settings | A selected, accessible placeholder only: **Settings** / **Project preferences will appear here in a later task.** It has no hidden settings mutation, chooser, or Project operation. |
+| Document | Selecting a projection entry calls only `OpenProjectDocumentRequest`. Its ordinary document header has an accessible **Back to Explorer** action; the body uses a contained scroll area/wrapping strategy for long lines and exposes no path, raw OCI reference input, or direct local-file access. Named unavailable/invalid/oversized/stale-entry failures replace the document body with the Runtime's error. |
+
+The Workbench named theme remains the selector and owns all light/dark semantic colours, geometry,
+type, radii, and spacing. The rail uses `--surface-sunken` / `--text` / `--accent`; the selected
+marker and focus use `--accent` / `--focus-ring`; documents use `--bg`, `--surface`, `--border`,
+`--text`, and `--text-muted`; read-only dependency evidence uses `--surface-active` and
+`--text-muted`. These are existing Workbench-theme semantic tokens (the reference is derived from
+that theme), not sampled component-local values. Their paired foreground/background combinations
+must pass in both named colour modes. Rail/document controls require keyboard reachability, visible
+focus, labels, and text alternatives for icons.
+
+**Interaction gate — PASS.** Cooper: the persistent rail serves the present Project-navigation
+goal without exposing a generic layout framework. Rams: three destinations, no duplicate Runs or
+Notifications entry, and designed empty/error/read-only states are the smallest durable chrome.
+Norman: the selected marker, labels, read-only dependency text, and named errors make navigation
+and document limits visible; unavailable actions are absent rather than styled as affordances.
+
+**Operator visual sign-off: PASS (2026-09-04).** The compact references are approved as responsive
+baseline states, not fixed window dimensions. Implementation may proceed only through the
+Claude/Codex plan-review loop below.
+
+Browser-first acceptance covers the four 800/1536 × 568/1024 corners, continuous resize, long
+asset/digest text, 125/150/200% scaling, both colour modes, and packaged parity last. Record each
+reference comparison under `docs/images/phase-43.20/task3-workbench-*.svg`; the packaged Desktop
+check uses its measured default usable viewport and default configuration, not one of these fixed
+reference dimensions.
 
 **Done when:** a created Project opens Mission Control by default; the rail switches to Explorer
 and Settings without creating a new project/session; Explorer accurately distinguishes local and
