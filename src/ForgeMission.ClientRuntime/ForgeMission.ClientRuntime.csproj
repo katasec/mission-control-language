@@ -6,6 +6,17 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- The Project Explorer reads mcl.lock (43.20 task 3), so YamlDotNet's reflection-based
+         Serializer/DeserializerBuilder are now rooted in this AOT image too. These are the same
+         three warnings, for the same reason and with the same justification, that ForgeMission.Cli
+         already suppresses: every POCO that flows through those builders — LockFile,
+         LockFileExpert, and LockFileIO's two on-disk document types — is preserved by an explicit
+         [DynamicDependency] on the builder fields in LockFile.cs, so the reflection ILC cannot
+         prove safe does in fact resolve. Verified at runtime, not assumed: the AOT `forge` binary
+         published from this same Core code reads and writes v2 locks, including a real OCI resolve
+         and a `forge run` that loads experts from their digest-derived cache locations. -->
+    <IlcSuppressWarnings>IL3050</IlcSuppressWarnings>
+    <NoWarn>$(NoWarn);IL3050;IL2104;IL3053</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,7 +1,8 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 is next.** The Project home
-> and durable Mission Control now pass browser-first and default-config packaged Desktop acceptance.
+> **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 implemented and awaiting
+> review.** The Project home and durable Mission Control pass browser-first and default-config
+> packaged Desktop acceptance.
 > Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
@@ -829,7 +830,13 @@ are idempotent even across the Host-accepted/manifest-write boundary; Contracts 
 Host/Orleans/Azure/provider dependency; fresh-Host replay, contract round-trip, existing Janus
 regression, and full-suite tests pass.
 
-### Task 3 — Project Explorer and resolved dependencies
+### Task 3 — Project Explorer and resolved dependencies — implemented, review pending
+
+**Implemented.** Lock file v2, the two Client Runtime contracts, and the rail/Explorer/document/
+Settings workbench are on `codex/task-43-20-task3-project-explorer`. The prerequisite
+`Katasec.OciClient` 0.3.0 is published and consumed. Evidence, the observed-state captures, and the
+two gaps that remain open are in
+[the completion record](phase-43.20-project-workbench-mvp_completed.md#task-3--project-explorer-and-resolved-dependencies).
 
 Build the small navigation surface over the manifest and durable projections.
 

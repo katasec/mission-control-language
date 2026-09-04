@@ -1,0 +1,20 @@
+<svg viewBox="0 0 800 568" width="800" height="568" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Observed — selected Explorer with local and pinned OCI evidence at 800x568</title>
+  <desc>Traced from the running Client Runtime Presentation at commit e463534, 800x568, light mode. The Project declares three local assets and an mcl.lock holding one project:/// and one oci:// expert; the OCI entry renders read-only with its full pinned reference. Compare with task3-workbench-explorer-compact.svg.</desc>
+  <rect width="800" height="568" fill="#f7faff"/><rect width="116" height="568" fill="#06284c"/>
+  <text x="18" y="35" font-family="system-ui, sans-serif" font-size="24" font-weight="700" fill="#fff">Forge</text><text x="18" y="54" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">AI Workbench</text>
+  <rect x="8" y="64" width="100" height="43" rx="8" fill="#0c4475"/><rect x="8" y="64" width="4" height="43" rx="2" fill="#32d9f2"/>
+  <text x="22" y="80" font-family="system-ui, sans-serif" font-size="18" fill="#fff">□</text><text x="22" y="96" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#fff">Explorer</text>
+  <text x="22" y="130" font-family="system-ui, sans-serif" font-size="18" fill="#b9d6f5">◎</text><text x="22" y="146" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">Mission</text><text x="22" y="160" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">Control</text>
+  <text x="22" y="444" font-family="system-ui, sans-serif" font-size="18" fill="#b9d6f5">⚙</text><text x="22" y="460" font-family="system-ui, sans-serif" font-size="12" fill="#b9d6f5">Settings</text>
+  <rect x="116" width="684" height="568" fill="#fff"/><line x1="116" x2="116" y2="568" stroke="#d5dae5"/><rect x="116" width="684" height="57" fill="#f6f8fd"/><line x1="116" x2="800" y1="57" y2="57" stroke="#d5dae5"/>
+  <text x="144" y="27" font-family="system-ui, sans-serif" font-size="19" font-weight="700" fill="#101d33">Release planner</text><text x="144" y="46" font-family="ui-monospace, monospace" font-size="10" fill="#5b6b83">Project Explorer</text>
+  <text x="144" y="87" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#101d33">Project Explorer</text><line x1="144" x2="772" y1="96" y2="96" stroke="#e7ecf4"/>
+  <text x="144" y="127" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Project assets</text>
+  <text x="144" y="152" font-family="ui-monospace, monospace" font-size="13" fill="#101d33">mission.mcl</text><text x="144" y="177" font-family="ui-monospace, monospace" font-size="13" fill="#101d33">experts/Planner/expert.md</text><text x="144" y="202" font-family="ui-monospace, monospace" font-size="13" fill="#101d33">mcl.lock</text><text x="144" y="227" font-family="ui-monospace, monospace" font-size="13" fill="#101d33">Planner</text>
+  <rect x="144" y="240" width="628" height="76" rx="8" fill="#e4ecf8" stroke="#e7ecf4"/>
+  <text x="160" y="264" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Architect</text><text x="228" y="264" font-family="system-ui, sans-serif" font-size="12" fill="#5b6b83">· OCI dependency · read-only</text>
+  <text x="160" y="288" font-family="ui-monospace, monospace" font-size="12" fill="#5b6b83">oci://ghcr.io/katasec/forge-</text><text x="160" y="303" font-family="ui-monospace, monospace" font-size="12" fill="#5b6b83">architect@sha256:7e1f1353070637c56f91e1110a277d5dda15bcb007790bde308d26603213db2c</text>
+  <text x="144" y="350" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Source context</text><text x="144" y="374" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">No context attached</text>
+  <text x="144" y="408" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Runs</text><text x="144" y="432" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">No runs yet</text>
+</svg>
