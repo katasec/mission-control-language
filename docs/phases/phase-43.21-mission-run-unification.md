@@ -1,6 +1,8 @@
 # Phase 43.21 — Mission-run-first Project invocation
 
-> **Status: Task 1 implementation review passed (2026-09-04); Task 2 is next.** The combined
+> **Status: Task 1 implementation review passed (2026-09-04); Task 2's plan is approved and its
+> visual references and component specification are built (2026-09-05), awaiting sign-off before
+> implementation.** The combined
 > replacement remains unmerged and has no default-path acceptance yet. This replaces the
 > user-facing execution model of 43.20 Tasks 2 and 4 without invalidating the durable Conversation
 > substrate or Project Explorer work.
@@ -43,11 +45,14 @@ Presentation owns selection rendering, text entry, busy/error display, and navig
 
 | Action | Surface-neutral Client Runtime contract | Owner and rule |
 |---|---|---|
+| Read | `GetProjectMissionsRequest { sessionId }` → `{ missions { missions[], selected?, hasLegacyHistory }, error? }` | Client Runtime returns the ordered closed catalog `[Janus, Naive]`, the persisted selection, and whether this Project retains legacy history. A surface renders a picker without holding a second copy of the catalog and learns the persisted selection on open rather than assuming one. See the corrupted-selection rule below. |
 | Select | `SelectProjectMissionRequest { sessionId, mission }` → `{ selectedMission }` | Client Runtime allow-lists only `Janus` and `Naive`, atomically persists `ProjectManifest.SelectedMission`, and returns the canonical value. Presentation never supplies a path, digest, provider, or expert. |
 | Invoke | `StartProjectMissionRunRequest { sessionId, commandId, input }` → `{ runId, acceptedSequence, status }` | Client Runtime derives the persisted mission, Project goal, and parent durable container. `commandId` is generated once at press and reused only for retry. |
 | Execute | Host-internal `StartProjectMissionRun { containerId, commandId, mission, projectGoal, input }` | ConversationHost creates/idempotently returns the child run and orders events. It declares zero capabilities for this MVP. Worker resolves the named mission and executes it. Neither accepts an arbitrary provider/model. |
 
 `input` is required bounded user text, distinct from the Project goal. Equal retries return the original run; changed mission or input under the same `commandId` is `Conflict`. Unknown/replaced sessions, unknown mission, blank/oversized input, terminal parent, and undeclared capability/context return typed errors and create no run.
+
+**Corrupted selection — locked.** A manifest whose `selectedMission` is not an allowed built-in mission is the one case where the read returns **both** payloads: `missions[]` is still the ordered `[Janus, Naive]`, `hasLegacyHistory` is still the real flag, `selected` is null, and `error` is `UnknownMission`. This is a deliberate exception to the one-payload-per-response convention every other Project contract follows, and it is the point of the design: if the catalog arrived only on success, the surface would have no way to offer the repair. The selection is never silently substituted with `Janus`. Presentation then shows the typed error, renders no invented selection, keeps the picker usable and keyboard-operable, and disables the run action until an ordinary `SelectProjectMissionRequest` repairs the manifest.
 
 The Worker owns the built-in catalog and resolves only `Janus` and `Naive`. `Naive` is the renamed checked-in zero-tool asset, `mission Naive(projectGoal, task) = { Controller }`; its executor rejects every tool request. Janus remains its existing checked-in mission and provider routing. No UI, Client Runtime, or Host component chooses an expert or provider.
 
@@ -63,7 +68,9 @@ The Worker owns the built-in catalog and resolves only `Janus` and `Naive`. `Nai
 
 ## UI contract
 
-Retain the Task 3 rail but rename `Mission Control` to **Missions**. Its entries are **Project Explorer**, **Missions**, and **Settings**.
+Retain the Task 3 rail structure. Its three entries read exactly **Project Explorer**, **Missions**, and **Settings**, with Settings bottom-aligned as Task 3 fixed it.
+
+**Rail reference ownership.** Task 2 owns the rail's *labels*; its own frames below are the binding reference for them. The 43.20 Task 3 frames remain binding for everything else they show — the Explorer list body, the opened document, and Settings — and their older `Explorer` / `Mission Control` rail text is superseded here rather than left to disagree. At the rail's tokenized lower bound (`--wb-rail-width`, 7.25rem) `Project Explorer` wraps to two lines exactly as `Mission Control` did; wrapping is accepted, clipping and truncation are not, and the fit is a measured browser observation rather than an assumption.
 
 The Missions page has one compact picker associated with the mission-input composer:
 
@@ -75,7 +82,7 @@ Mission: Janus ▼
 
 Janus is visibly selected on a new Project. The popup contains only those two names: no descriptions, model names, expert names, or “Default” row. The accessible label is `Mission`. The primary action is **Run**; it reports `Starting Janus…` or `Starting Naive…`, then renders only that run’s durable activity. It never calls a generic chat/control endpoint or labels a response “Forge”.
 
-Required states: first open with Janus selected; picker open; Naive selected; invalid input; accepted/busy; Janus participant activity; Naive output; typed start failure; selection persistence after reopen; and v1 migration notice/history link when history exists. Add responsive SVG references before implementation. The Task 3 Explorer/Settings references remain binding for their owned slices. Use Workbench tokens and repeat four-corner, continuous-resize, long-text, 125/150/200% zoom, both-mode, and packaged parity checks.
+Required states: first open with Janus selected; picker open; Naive selected; invalid input; accepted/busy; Janus participant activity; Naive output; typed start failure; selection persistence after reopen; and the retained-history notice when a migrated Project has legacy history. That notice is static text with **no link and no action** — it is never reopened as a current mission. The Task 3 Explorer/Settings references remain binding for their owned slices. Use Workbench tokens and repeat four-corner, continuous-resize, long-text, 125/150/200% zoom, both-mode, and packaged parity checks.
 
 ## Architecture and engineering gates
 
@@ -109,11 +116,82 @@ Add manifest v2 migration, Project Mission-container creation, selection persist
 
 ### Task 2 — Mission-first Desktop and TUI surface
 
-Replace Project Control with Missions and its exact two-name picker. Use only Task 1’s Client Runtime contracts. Rename the rail entry, remove `MissionControl` wording, and show live durable activity for the selected run.
+Replace Project Control with Missions and its exact two-name picker. Task 2’s contract set is Task 1’s `SelectProjectMissionRequest` and `StartProjectMissionRunRequest` **plus** the `GetProjectMissionsRequest` read defined above; it uses no other Client Runtime contract, and in particular no control-conversation route. Rename the rail entry, remove the legacy wording, and show live durable activity for the selected run.
 
 On first open, Missions is the active Project destination and Janus is visibly selected. A submit creates one run through `StartProjectMissionRunRequest`; Presentation records only the returned in-memory `runId` to filter the existing durable tail to that one live run. It shows a clean composer again once the run becomes terminal. There is no generic Project conversation, model/expert picker, direct provider call, historical run browser, or synthetic chat transcript. Full reopened history and exact durable Trace remain later work. If a migrated Project has legacy Project Control history, show only truthful static text that it is retained; do not render a dead link or reopen it as a current mission.
 
-The new picker-state SVG references are built before the implementation review. They bind the compact and wide first-open Janus state, open two-item picker, Naive selection, invalid input, start busy, Janus live activity, Naive result, typed start failure, and legacy-history notice. Explorer and Settings retain Task 3’s visual ownership.
+#### Task 2 binding visual references — built 2026-09-05, awaiting sign-off
+
+Eighteen frames under `docs/images/phase-43.21/`, named `task2-missions-{wide,compact}-<state>.svg`.
+Wide is **1536×1024**, compact is **800×568** — the same acceptance rectangle 43.20 fixed, where
+800×568 is the packaged Desktop’s measured usable viewport and a responsive baseline, never a
+prescribed window size. The layout must be fluid and bounded across the whole 800–1536 × 568–1024
+range and its continuous intermediate sizes; these frames define information priority and
+structure, not fixed pixel geometry.
+
+| State | Frames | What it binds |
+|---|---|---|
+| First open, Janus | [wide](../images/phase-43.21/task2-missions-wide-first-open-janus.svg) · [compact](../images/phase-43.21/task2-missions-compact-first-open-janus.svg) | Missions is the opened view, Janus visibly selected, empty activity line, run action disabled while the instruction is blank. |
+| Picker open | [wide](../images/phase-43.21/task2-missions-wide-picker-open.svg) · [compact](../images/phase-43.21/task2-missions-compact-picker-open.svg) | Exactly two rows, current mission checked, active option focus-ringed, popup opens upward and never covers the composer. |
+| Naive selected | [wide](../images/phase-43.21/task2-missions-wide-naive-selected.svg) · [compact](../images/phase-43.21/task2-missions-compact-naive-selected.svg) | The button renders the persisted canonical value; focus has returned to the button. |
+| Invalid input | [wide](../images/phase-43.21/task2-missions-wide-invalid-input.svg) · [compact](../images/phase-43.21/task2-missions-compact-invalid-input.svg) | The typed Client Runtime failure beside the action that caused it; the instruction is kept. |
+| Busy | [wide](../images/phase-43.21/task2-missions-wide-busy.svg) · [compact](../images/phase-43.21/task2-missions-compact-busy.svg) | Accepted: user message, queued status, `Starting Janus…`, composer disabled. |
+| Janus activity | [wide](../images/phase-43.21/task2-missions-wide-janus-activity.svg) · [compact](../images/phase-43.21/task2-missions-compact-janus-activity.svg) | The multi-expert exchange filtered to one run, with **no tool row anywhere**. |
+| Naive result | [wide](../images/phase-43.21/task2-missions-wide-naive-result.svg) · [compact](../images/phase-43.21/task2-missions-compact-naive-result.svg) | One bubble labelled `Naive`, terminal status, composer clean and usable while the answer stays readable. |
+| Start failure | [wide](../images/phase-43.21/task2-missions-wide-start-failure.svg) · [compact](../images/phase-43.21/task2-missions-compact-start-failure.svg) | A typed start failure with no run and no invented transcript. |
+| Legacy notice | [wide](../images/phase-43.21/task2-missions-wide-legacy-notice.svg) · [compact](../images/phase-43.21/task2-missions-compact-legacy-notice.svg) | The retained-history line, static, above an otherwise ordinary empty Missions page. |
+
+The frames are light-mode, exactly as Task 3’s were: colour is owned by the named Workbench theme’s
+token map, which already defines both modes, so a second set of dark frames would duplicate values
+the theme owns rather than add evidence. Dark mode is proved by browser inspection instead.
+
+The corrupted-selection repair state has no frame. It differs from the first-open frame only in the
+button label (`Mission: none selected`), the error row already bound by the start-failure frame, and
+the disabled run action already bound by the first-open frame — it is specified below and covered by
+endpoint and component tests rather than by a redundant nineteenth image.
+
+#### Task 2 component and responsive specification
+
+| Surface / element | Structure and exact behaviour |
+|---|---|
+| Rail | Unchanged Task 3 structure; the three labels are **Project Explorer**, **Missions**, **Settings**, Settings bottom-aligned, selection marked by the accent marker plus `aria-current="page"`. `Project Explorer` wraps at the rail's lower bound; it must never clip or truncate. |
+| Content header | Title **Missions**, subtitle the Project title. No Project path is rendered anywhere, as Task 3 fixed. |
+| Activity region | The existing shared transcript renderer, filtered to one run ID. With no run it shows one quiet line: **Run a mission to see its activity here.** It is not a chat surface, a history browser, or a synthetic transcript. |
+| Legacy notice | Shown only when `hasLegacyHistory`, above the activity region, reading exactly: **This Project has earlier legacy history. It is retained and is not shown here.** Static text, no link, no action, no call. |
+| Composer row | One row inside the composer bar: mission picker, instruction field, primary action. One row rather than two because the compact baseline is 568px tall and vertical space is the scarce axis; it also puts the picker literally beside the action it governs. |
+| Mission picker | A button (`Mission: <name>`, chevron) plus a `role="listbox"` popup of exactly `Janus` and `Naive` — no `Default` row, description, model, provider, or expert name. Accessible label `Mission`; `aria-expanded` and `aria-activedescendant`; the current mission carries a check. Keyboard: `Enter`/`Space`/`ArrowDown` open, `ArrowUp`/`ArrowDown`/`Home`/`End` move, `Enter`/`Space` commit, `Escape` closes and returns focus to the button. A commit sends `SelectProjectMissionRequest` and renders only the canonical response value. It is a custom control, not a native `<select>`, because the required open state must be styleable with Workbench tokens and capturable in the browser. |
+| Instruction field | Placeholder **What should this mission do?**; while a run is active it is disabled and reads **Waiting for this run to finish…**, so a disabled control says why. `Enter` submits when the action is enabled. |
+| Primary action | **Run**, disabled while the instruction is blank or no mission is selected. In flight it reads **Starting…**; on acceptance **Starting Janus…** / **Starting Naive…**, taken from the response's mission rather than local state, because the selection can change between render and press. Its width is content-driven above a tokenized minimum so the longer busy label widens the control instead of clipping. |
+| Errors | Typed `ProjectOperationError` messages render in one row directly above the composer — beside the action that produced them — using `--danger`, `--danger-bg`, `--danger-border`. A failure never clears the instruction and never fabricates activity. |
+| Corrupted selection | Per the locked rule above: error row shown, button reads **Mission: none selected**, nothing invented, picker fully usable and keyboard-operable, run action disabled until a selection repairs the manifest. |
+| Run filtering | Presentation applies only durable events whose run ID equals the accepted run's. Because the tail starts inside the same call that starts the run and replays from sequence 0, events can arrive before the acceptance returns; those observed between press and acceptance are buffered and drained through the same filter once the run ID is known, and discarded on failure. On a terminal status the composer becomes empty, enabled and refocused while the finished run's activity stays readable until the next run replaces it. |
+
+All colour, radius, spacing and type values come from the Workbench theme tokens
+(`--bg`, `--surface`, `--surface-active`, `--border`, `--border-strong`, `--text`, `--text-muted`,
+`--text-subtle`, `--accent`, `--accent-soft`, `--accent-contrast`, `--success`, `--danger`,
+`--danger-bg`, `--danger-border`, `--shadow-lg`, `--focus-ring`, the `--wb-rail-*` family, and the
+`--wb-*` geometry ramps). New values are **geometry only** — picker and popup measurements — added
+to the existing mode-independent geometry group, so no colour is duplicated into a dark map.
+Contrast pairs in play: `--text` on `--surface` 15.9, `--text-muted` on `--surface` 6.9,
+`--text-subtle` on `--surface` 4.78, `--accent-contrast` on `--accent` 4.6, `--danger` on
+`--danger-bg` 6.8, `--success` on `--surface` 4.9, and the four rail pairs Task 3 recorded.
+
+**Interaction gate — PASS.** *Cooper:* the picker serves the developer's actual moment — pick a
+named mission, state the instruction, watch it run — and exposes no provider, model or expert
+machinery; the perpetual-intermediate check is met because the choice is two visible names, not a
+shortcut. *Rams:* one row of chrome, the smallest that can carry a choice and an action; empty,
+disabled, busy, error and corrupted states are all designed, not just the happy path. *Norman:* the
+selected mission is always the persisted one, the action states which mission actually started,
+impossible actions are disabled rather than failing silently, and the retained-history line promises
+nothing because it affords nothing.
+
+**Task 2 default fact — new.** Opening a Project now lands on **Missions** with **Janus** selected,
+and the first user action is a named mission run rather than a control turn. Its acceptance is the
+post-merge observation defined in the sequencing exception above: the published zero-argument
+Desktop, no Conversation/Mission Runtime overrides, Host and Worker rebuilt from clean `main`, one
+brand-new disposable Project, submitting without touching the picker and then with `Naive` selected,
+and reopening to confirm the selection persisted — each producing durable child-run activity with
+zero `ToolRequested`/`ToolResult` events.
 
 **Done when:** browser and packaged Desktop show Janus visibly preselected, expose only Janus and Naive, persist deliberate selection, and submit both through the same named run action; both runs visibly have zero tool activity; TUI-equivalent contract tests pass and no Presentation code references provider, model, expert, or ProjectControl endpoint. After the combined replacement PR merges, the clean-main Kind rebuild plus zero-argument packaged Desktop prove default Janus and explicit Naive runs before the correction is marked complete or release-ready.
 
