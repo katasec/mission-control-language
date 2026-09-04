@@ -1,8 +1,7 @@
 # Phase 43 — Forge Desktop
 
-> **Status: Project Workbench MVP in progress (2026-09-03).** Task 1's responsive Project home is
-> verified and merged; Task 2's Project-control contract is design-ready for the implementation-plan
-> gate.
+> **Status: Project Workbench MVP in progress (2026-09-04).** Tasks 1 and 2 are verified and
+> merged; Task 3 is next.
 
 ## Purpose
 
@@ -31,7 +30,7 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) | In progress. Task 1 is verified and merged; Task 2 is ready for implementation-plan review. |
+| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) | In progress. Tasks 1 and 2 are verified and merged; Task 3 is next. |
 | [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |

@@ -1,8 +1,8 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Task 1 verified and merged (2026-08-31); Task 2 is ready for implementation-plan
-> review (2026-09-03).** The Project home now passes browser-first and packaged Desktop visual
-> acceptance at both 800×568 and 1536×1024. Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 is next.** The Project home
+> and durable Mission Control now pass browser-first and default-config packaged Desktop acceptance.
+> Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
 
@@ -687,7 +687,15 @@ supplied; `SessionSetupRequest` is replacement-only and enforced in Client Runti
 create/open establish a session and root; `MissionControlConversationId` is still `null` and Task 2
 owns its first write-back.
 
-### Task 2 — Durable Project Mission Control
+### Task 2 — Durable Project Mission Control — verified and merged
+
+**Done.** PR #90 merged as `767c289` after the full suite (925 passed, 0 failed, 11 skipped), AOT
+publish, browser-first reference checks, and a default-config packaged Desktop round-trip against
+the real Kind Conversation service. The local Host and Worker were then rebuilt from that exact
+clean `main` commit; a reopened throwaway Project accepted control sequence 3 and received the
+durable `MissionControl` reply at sequence 4, with no Run record. See
+[the completion record](phase-43.20-project-workbench-mvp_completed.md#task-2--durable-project-mission-control)
+for evidence and the operational correction.
 
 Bind the existing durable Conversation service to a Project-scoped, zero-tool Mission Control
 conversation. This task does **not** build another transcript store, SSE protocol, replay mechanism,

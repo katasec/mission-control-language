@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** approve and implement Task 2, durable Project Mission Control, using the locked Project-control contract and existing durable-conversation substrate. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** continue the Project Workbench MVP from its active spoke. |
 
 ## Active phases
 
