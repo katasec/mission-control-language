@@ -13,10 +13,23 @@
    attribute onto template markup only, so a hand-built fragment renders unstyled. *@
 
 <div class="mp">
+    <button type="button" class="mp-button" aria-haspopup="listbox"
+            aria-expanded="@(open ? "true" : "false")" aria-label="Mission"
+            disabled="@Disabled" @ref="buttonElement"
+            @onpointerdown="() => suppressNextClick = false"
+            @onclick="OnButtonClick" @onkeydown="OnButtonKeyDown">
+        @* "none selected" is what a Project whose manifest names an unrunnable mission actually
+           has. Showing Janus there would claim a choice nobody made. *@
+        <span class="mp-value">Mission: @(Selected ?? "none selected")</span>
+        <span class="mp-chevron" aria-hidden="true">▾</span>
+    </button>
+
+    @* Rendered AFTER the button, and positioned above it by CSS. The order is deliberate: an
+       absolutely positioned popup can sit anywhere on screen, but tabbing out of the open list has
+       to reach the NEXT control — and a list written before the button would send focus straight
+       back into the picker it was leaving. *@
     @if (open)
     {
-        @* Above the button, not below it: the picker sits in the composer bar at the foot of the
-           window, so a downward popup would open off-screen. *@
         <ul class="mp-list" role="listbox" aria-label="Mission" tabindex="-1"
             aria-activedescendant="@OptionId(active)"
             @ref="listElement" @onkeydown="OnListKeyDown">
@@ -36,16 +49,6 @@
             }
         </ul>
     }
-
-    <button type="button" class="mp-button" aria-haspopup="listbox"
-            aria-expanded="@(open ? "true" : "false")" aria-label="Mission"
-            disabled="@Disabled" @ref="buttonElement"
-            @onclick="Toggle" @onkeydown="OnButtonKeyDown">
-        @* "none selected" is what a Project whose manifest names an unrunnable mission actually
-           has. Showing Janus there would claim a choice nobody made. *@
-        <span class="mp-value">Mission: @(Selected ?? "none selected")</span>
-        <span class="mp-chevron" aria-hidden="true">▾</span>
-    </button>
 </div>
 
 @code {
@@ -61,6 +64,7 @@
 
     private bool open;
     private int active;
+    private bool suppressNextClick;
     private ElementReference buttonElement;
     private ElementReference listElement;
     private FocusTarget focusAfterRender;
@@ -109,16 +113,49 @@
         focusAfterRender = FocusTarget.List;
     }
 
-    private void Close()
+    /// <summary>Closes the popup. <paramref name="returnFocus"/> is false only for Tab, which is
+    /// the one way out of this control that is ALREADY moving focus somewhere on purpose — pulling
+    /// it back to the button there would trap the person in the picker.</summary>
+    private void Close(bool returnFocus = true)
     {
         open = false;
-        focusAfterRender = FocusTarget.Button;
+        if (returnFocus)
+            focusAfterRender = FocusTarget.Button;
     }
 
+    // Enter and Space are handled here AND arrive again as the click a browser synthesises from
+    // activating a button. Left alone that pair opens the popup and closes it again in one press,
+    // so the keyboard could never open it at all. The duplicate is suppressed rather than the key
+    // handling dropped, because a listbox has to answer its own keys — and because the browser
+    // driver this is verified in does not synthesise that click, so relying on it would leave the
+    // whole keyboard path unprovable.
+    //
+    // The suppression is exact, not a guess: a real pointer activation always begins with
+    // pointerdown, and a keyboard-synthesised click never does. So pointerdown clears the flag
+    // before its own click arrives, and no genuine click can ever be swallowed.
     private void OnButtonKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key is "Enter" or " " or "ArrowDown" or "ArrowUp" && !open)
-            Toggle();
+        if (e.Key is not ("Enter" or " " or "ArrowDown" or "ArrowUp"))
+            return;
+
+        if (e.Key is "Enter" or " ")
+            suppressNextClick = true;
+
+        if (e.Key is "ArrowDown" or "ArrowUp" && open)
+            return;
+
+        Toggle();
+    }
+
+    private void OnButtonClick()
+    {
+        if (suppressNextClick)
+        {
+            suppressNextClick = false;
+            return;
+        }
+
+        Toggle();
     }
 
     private async Task OnListKeyDown(KeyboardEventArgs e)
@@ -140,10 +177,14 @@
             case "Enter" or " ":
                 await CommitAsync(Missions[active]);
                 break;
-            // Tab closes as well as Escape: leaving the control must not leave an open popup
-            // floating over the composer.
-            case "Escape" or "Tab":
+            case "Escape":
                 Close();
+                break;
+            // Tab closes too — leaving the control must not leave a popup floating over the
+            // composer — but it keeps its own default, so focus lands on the next control rather
+            // than being dragged back to the button behind it.
+            case "Tab":
+                Close(returnFocus: false);
                 break;
         }
     }

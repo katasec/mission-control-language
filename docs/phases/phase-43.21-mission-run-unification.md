@@ -1,7 +1,7 @@
 # Phase 43.21 — Mission-run-first Project invocation
 
 > **Status: Task 1 implementation review passed (2026-09-04); Task 2 implemented (2026-09-05) and
-> awaiting review — its packaged-app parity check is still owed.** The combined
+> awaiting review — its packaged-app parity check is partially done.** The combined
 > replacement remains unmerged and has no default-path acceptance yet. This replaces the
 > user-facing execution model of 43.20 Tasks 2 and 4 without invalidating the durable Conversation
 > substrate or Project Explorer work.
@@ -212,7 +212,7 @@ restored to the clean-`main` images (`767c2891…`) afterwards and the rollout v
 | Check | Result |
 |---|---|
 | First open, picker open, Naive selected, busy, Janus activity, Naive result, invalid input, legacy notice, corrupted selection | PASS against their bound references, all through real pointer activation |
-| Keyboard | PASS — `ArrowDown` moves the active option, `Enter` commits and closes, focus returns to the button |
+| Keyboard | PASS — `Enter` on the button opens, arrows move the active option, `Enter` commits, `Escape` returns focus to the button, `Tab` closes and moves on to the composer |
 | Live Naive run | PASS — one bubble labelled `Naive`, `Status: Completed`, composer clean, **0 tool rows** |
 | Live Janus run | PASS — Proposer → Approver → Approved → Implementer → `Status: Completed`, **0 tool rows**, and the Implementer said it would "use Bash" and could not: the run holds no tool authority |
 | Four corners 800×568 / 800×1024 / 1536×568 / 1536×1024 | PASS — no document scrolling at any corner; the activity region owns overflow (`scrollHeight` 1099 inside `clientHeight` 426) |
@@ -221,7 +221,35 @@ restored to the clean-`main` images (`767c2891…`) afterwards and the rollout v
 | Both colour modes | PASS — dark renders entirely through the named token map; no component-local literal |
 | Text fit | **One measured failure, fixed.** `Mission: none selected` overflowed the 150px the references estimated by 19.7px at 800 wide. `--wb-picker-width`'s lower bound is now **172px**, set from that measurement, and the references were regenerated to match. |
 
-**Packaged-app parity — NOT completed this session.** The Photino window is not CDP-attachable (a
+**Keyboard correction (2026-09-05).** Two defects, both fixed and both proved in the browser:
+
+1. A browser turns Enter/Space on a button into a click, so handling those keys *and* receiving
+   that click opened the popup and closed it again in one press — a keyboard user could never open
+   it. The duplicate click is now suppressed exactly once, keyed on `pointerdown`: a real pointer
+   activation always begins with one and a synthesised click never does, so no genuine click can be
+   swallowed. Proved live: Enter on the focused button leaves `aria-expanded="true"`, the popup
+   open and focus in the list; a pointer click straight after a key press still toggles normally.
+2. `Tab` out of the open list returned focus to the picker button, trapping the person in the
+   control. `Tab` now closes without touching focus, and the popup is rendered **after** the button
+   in the DOM (it is absolutely positioned, so its order is free) — without that reorder the
+   browser's own next-focusable was the button itself. Proved live: `Tab` in the open list leaves
+   `document.activeElement === .composer-input`. `Escape` still returns focus to the button.
+
+Worth recording because it changed the design: the browser driver used for this evidence does not
+synthesise the native click for Enter on **any** button — a plain, freshly created `<button>` got
+zero clicks from it. So "let the button be a button" would have left the whole keyboard path
+unverifiable here. Handling the keys and suppressing the duplicate is correct in a real browser and
+provable in this one.
+
+**Packaged-app parity — partially completed.** The packaged app, launched with zero arguments and
+its normal configuration, starts and renders the Presentation; its window alone was captured by
+window id, so nothing of the operator's screen was included. Its outer window is 800×600 with a
+32px title bar, which corroborates the 43.20 Task 1 measurement of a **800×568** usable viewport —
+the exact viewport every state above was verified at. What is still missing is the Missions surface
+rendered *inside* that WebView: reaching it needs a Project to be opened, the packaged window
+exposes no automation protocol (not CDP-attachable), and process-targeted `CGEvent` input had no
+effect. The remaining gap is three operator clicks — open an existing folder, paste a Project path,
+Open — after which the window capture can be taken and parity recorded. The Photino window is not CDP-attachable (a
 recorded Desktop gotcha), and the only remaining route was a full-screen capture, which would have
 captured the operator's own screen contents; that attempt was stopped rather than repeated. The
 packaged app was launched with zero arguments and started its Host process, but its rendered layout

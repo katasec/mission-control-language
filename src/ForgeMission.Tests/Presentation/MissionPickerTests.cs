@@ -42,11 +42,9 @@ public sealed class MissionPickerTests : BunitContext
     }
 
     [Theory]
-    [InlineData("Enter")]
-    [InlineData(" ")]
     [InlineData("ArrowDown")]
     [InlineData("ArrowUp")]
-    public void TheButton_OpensOnEveryKeyANativeSelectWould(string key)
+    public void TheButton_OpensOnAnArrowKey(string key)
     {
         var picker = RenderPicker("Janus");
 
@@ -54,6 +52,42 @@ public sealed class MissionPickerTests : BunitContext
 
         Assert.Equal(2, picker.FindAll(".mp-option").Count);
         Assert.Equal("true", picker.Find(".mp-button").GetAttribute("aria-expanded"));
+    }
+
+    // The exact bug this guards: a browser turns Enter/Space on a button into a click, so the key
+    // handler and that click would open the popup and close it again in the same press. The
+    // synthesised click is suppressed once, and the popup stays open.
+    [Theory]
+    [InlineData("Enter")]
+    [InlineData(" ")]
+    public void TheButton_OpensOnActivationKeys_AndTheSynthesisedClickDoesNotCloseItAgain(string key)
+    {
+        var picker = RenderPicker("Janus");
+        var button = picker.Find(".mp-button");
+
+        button.KeyDown(new KeyboardEventArgs { Key = key });
+        Assert.Equal(2, picker.FindAll(".mp-option").Count);
+
+        // Exactly what a browser sends next: a click with no pointerdown before it.
+        picker.Find(".mp-button").Click();
+        Assert.Equal(2, picker.FindAll(".mp-option").Count);
+        Assert.Equal("true", picker.Find(".mp-button").GetAttribute("aria-expanded"));
+    }
+
+    // And the suppression cannot leak onto a real click. A pointer activation always begins with
+    // pointerdown, which clears the flag before its own click arrives.
+    [Fact]
+    public void APointerClickAfterAKeyPress_StillToggles()
+    {
+        var picker = RenderPicker("Janus");
+
+        picker.Find(".mp-button").KeyDown(new KeyboardEventArgs { Key = "Enter" });
+        Assert.Equal(2, picker.FindAll(".mp-option").Count);
+
+        picker.Find(".mp-button").PointerDown();
+        picker.Find(".mp-button").Click();
+
+        Assert.Empty(picker.FindAll(".mp-option"));
     }
 
     // Opening starts on the mission already selected, so the first arrow press moves from where the
@@ -128,6 +162,28 @@ public sealed class MissionPickerTests : BunitContext
         Assert.Empty(committed);
         Assert.Empty(picker.FindAll(".mp-list"));
     }
+
+    // Escape returns focus to the button, as a listbox should. Tab must NOT: it is already moving
+    // focus somewhere on purpose, and pulling it back would trap a keyboard user inside the picker.
+    // Measured as the focus call the component actually makes, not inferred from reading it.
+    [Fact]
+    public void Escape_ReturnsFocusToTheButton_ButTab_LeavesFocusAlone()
+    {
+        var escape = RenderPicker("Janus");
+        escape.Find(".mp-button").Click();
+        var beforeEscape = FocusCalls();
+        escape.Find(".mp-list").KeyDown(new KeyboardEventArgs { Key = "Escape" });
+        Assert.Equal(beforeEscape + 1, FocusCalls());
+
+        var tab = RenderPicker("Janus");
+        tab.Find(".mp-button").Click();
+        var beforeTab = FocusCalls();
+        tab.Find(".mp-list").KeyDown(new KeyboardEventArgs { Key = "Tab" });
+        Assert.Equal(beforeTab, FocusCalls());
+    }
+
+    private int FocusCalls() => JSInterop.Invocations
+        .Count(invocation => invocation.Identifier == "Blazor._internal.domWrapper.focus");
 
     // The listbox itself holds DOM focus, so the option a screen reader announces has to be named
     // explicitly — and the selected one has to be distinguishable from the merely active one.
