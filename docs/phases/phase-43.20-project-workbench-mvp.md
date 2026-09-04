@@ -883,12 +883,14 @@ whole projection with named `InvalidDependency`; it is not guessed or partly ren
 
 The existing OCI client has the manifest in hand but does not expose the registry's
 `Docker-Content-Digest` response header. Before the MCL lock writer is changed, its sibling
-`oci-client-dotnet` repository must add an AOT-safe pull result that returns the expert text plus
-that header-derived manifest digest; the existing string-returning `PullExpertAsync` remains a
-compatibility wrapper. `forge init` then writes `oci://<registry>/<repository>@<manifest-digest>`
-and the content digest, and materializes the cache at the deterministic path above. This is a
-prerequisite data-source correction, not an Explorer registry feature: it makes no extra network
-call, pull, catalog, or update and the Explorer only reads the recorded local lock.
+`oci-client-dotnet` repository must add `PulledExpert { Content, ManifestDigest }` and
+`PullExpertWithDigestAsync(registry, name, reference) -> PulledExpert`; it obtains the header from
+the same manifest response before pulling the expert layer. The existing string-returning
+`PullExpertAsync` remains a compatibility wrapper over this method. `forge init` then writes
+`oci://<registry>/<repository>@<manifest-digest>` and the content digest, and materializes the cache
+at the deterministic path above. This is a prerequisite data-source correction, not an Explorer
+registry feature: it makes no extra network call, pull, catalog, or update and the Explorer only
+reads the recorded local lock.
 
 `LockFileIO` reads v1 only to migrate a local `source: experts` + relative `path` + `hash` into the
 v2 Project URI/content-digest representation in memory; the next `forge init` writes v2. A v1 OCI
