@@ -923,6 +923,19 @@ mismatch, or unsafe derived materialization), `DocumentNotFound` (unknown/stale 
 byte-size and UTF-8 validation before text allocation, then exposes only the typed document
 result—never a path.
 
+**Task 3 default-path acceptance.** Source-lock evidence uses the published `forge` binary installed
+by `make install`, invoked as `forge init` (no mission argument and no `--refresh`) from a dedicated
+disposable directory containing `mission.mcl` and its normal `forge.toml`. The test manifest names
+one public `ghcr.io/katasec` expert by tag, so normal anonymous OCI bearer negotiation—not an
+injected registry URL, manual cache placement, `FORGE_REGISTRY_TOKEN`, or pre-written lock—resolves
+it. The observed PASS is a newly written v2 `mcl.lock` whose OCI source is the registry/repository
+plus the observed immutable manifest digest and whose content digest matches the resolved cached
+expert. The Desktop portion separately uses the published zero-argument Desktop with its normal
+Conversation Runtime route, an explicitly new disposable Project, and no endpoint overrides; its
+PASS is the packaged workbench opening Mission Control by default, then accurately rendering that
+Project's v2 local/OCI source evidence. Unit fakes, hand-authored locks, and test registries are
+controlled checks only and cannot close either default path.
+
 **Task 3 UI contract.** The binding large reference is
 [`mission-project-flow-03-mission-control.png`](../brainstorm/images/mission-project-flow-03-mission-control.png)
 at 1536×1024. This task owns only the three-entry dark rail in its shown order (Explorer, Mission
