@@ -1,7 +1,7 @@
 # Phase 43.21 — Mission-run-first Project invocation
 
 > **Status: Task 1 implementation review passed (2026-09-04); Task 2 implemented (2026-09-05) and
-> awaiting review — its packaged-app parity check is partially done.** The combined
+> awaiting review.** The combined
 > replacement remains unmerged and has no default-path acceptance yet. This replaces the
 > user-facing execution model of 43.20 Tasks 2 and 4 without invalidating the durable Conversation
 > substrate or Project Explorer work.
@@ -241,16 +241,29 @@ zero clicks from it. So "let the button be a button" would have left the whole k
 unverifiable here. Handling the keys and suppressing the duplicate is correct in a real browser and
 provable in this one.
 
-**Packaged-app parity — partially completed.** The packaged app, launched with zero arguments and
-its normal configuration, starts and renders the Presentation; its window alone was captured by
-window id, so nothing of the operator's screen was included. Its outer window is 800×600 with a
-32px title bar, which corroborates the 43.20 Task 1 measurement of a **800×568** usable viewport —
-the exact viewport every state above was verified at. What is still missing is the Missions surface
-rendered *inside* that WebView: reaching it needs a Project to be opened, the packaged window
-exposes no automation protocol (not CDP-attachable), and process-targeted `CGEvent` input had no
-effect. The remaining gap is three operator clicks — open an existing folder, paste a Project path,
-Open — after which the window capture can be taken and parity recorded. Packaged parity remains
-owed, alongside the post-merge default-path observation.
+**Packaged-app parity — PASS (2026-09-05).** The published `dist/forge-desktop/ForgeMission.Desktop`
+was launched with zero arguments and its normal configuration; the operator opened a Project in it,
+and the window alone was captured by window id, so none of the operator's screen is in the image.
+Its outer window is 800×600 with a 32px title bar, corroborating the 43.20 Task 1 measurement of a
+**800×568** usable viewport — the exact viewport every browser state was verified at.
+
+The packaged WebView renders the Missions page as the references bind it: the three-entry rail with
+`Project Explorer` wrapped and unclipped at the rail's lower bound, `Missions` selected and marked,
+the header naming the Project, the empty-activity line, and the composer's picker / instruction /
+`Run` on one row with the error row above it. No clipping, no overlap, no document scrolling.
+
+**The parity check earned its place: it found a defect nothing else could.** The run failed against
+the clean-`main` Host (which predates Task 1's endpoints, so a pre-merge failure is expected there)
+— but it rendered as `net_http_message_not_success_statuscode_reason, 500, Internal Server Error`.
+AOT trims the framework's resource strings, so raw exception text is *unreadable specifically in
+the packaged build*, which is the one a person uses. The browser never showed this. Unexpected
+faults on this surface now read as a sentence — "Forge could not start this run. The runtime did not
+answer." — with the cause left to the Client Runtime's log, where it is complete. Every failure a
+Project can actually have was already a typed `ProjectOperationError` with its own wording; this
+covers only the fault path.
+
+Known and out of scope: the connection-lost banner still appends its raw reason and would read the
+same way in the packaged build. It belongs to the 43.17 stream-supervision work, not to this task.
 
 **Done when:** browser and packaged Desktop show Janus visibly preselected, expose only Janus and Naive, persist deliberate selection, and submit both through the same named run action; both runs visibly have zero tool activity; TUI-equivalent contract tests pass and no Presentation code references provider, model, expert, or ProjectControl endpoint. After the combined replacement PR merges, the clean-main Kind rebuild plus zero-argument packaged Desktop prove default Janus and explicit Naive runs before the correction is marked complete or release-ready.
 

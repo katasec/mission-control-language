@@ -462,7 +462,7 @@ public sealed class HomeSessionOperationTests : BunitContext
         channel.ThrowOnNextRun(new IOException("socket reset"));
 
         await RunAsync(page, "narrow the scope");
-        page.WaitForAssertion(() => Assert.Contains("socket reset", page.Find(".composer-error").TextContent, StringComparison.Ordinal));
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".composer-error")));
         Assert.Equal("narrow the scope", page.Find(".composer-input").GetAttribute("value"));
 
         await ClickAsync(page, ".composer-run");
@@ -474,6 +474,24 @@ public sealed class HomeSessionOperationTests : BunitContext
 
     // A migrated Project states its retained history once, and offers nothing: no link, no button,
     // nothing to click that would reopen it as a current mission.
+    // An unexpected fault says what did not happen, in a sentence. It never shows the exception's
+    // own text: in the packaged AOT build a plain HTTP failure renders as
+    // "net_http_message_not_success_statuscode_reason, 500, Internal Server Error" — observed in
+    // the packaged Desktop, which is exactly where a person meets it.
+    [Fact]
+    public async Task AnUnexpectedFault_ReadsAsASentence_NeverAsTheFrameworksOwnText()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.ThrowOnNextRun(new IOException("net_http_message_not_success_statuscode_reason, 500, Internal Server Error"));
+
+        await RunAsync(page, "Draft the first release plan.");
+
+        page.WaitForAssertion(() => Assert.Equal(
+            "Forge could not start this run. The runtime did not answer.",
+            page.Find(".composer-error").TextContent.Trim()));
+        Assert.DoesNotContain("net_http", page.Markup, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ALegacyProject_StatesItsRetainedHistory_AndOffersNoAction()
     {

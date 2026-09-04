@@ -424,10 +424,10 @@ else
         {
             // Expected: the view was replaced while the read was in flight.
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             if (IsCurrent(operation.Generation))
-                missionError = exception.Message;
+                missionError = RuntimeDidNotAnswer("read this Project's missions");
         }
         finally
         {
@@ -464,10 +464,10 @@ else
         {
             // Expected: the view was replaced while the selection was in flight.
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             if (IsCurrent(operation.Generation))
-                missionError = exception.Message;
+                missionError = RuntimeDidNotAnswer("save that selection");
         }
         finally
         {
@@ -475,6 +475,20 @@ else
                 StateHasChanged();
         }
     }
+
+    /// <summary>
+    /// What an UNEXPECTED failure says. Every failure a Project can actually have is already a
+    /// typed <see cref="ProjectOperationError"/> with its own sentence; anything reaching here is a
+    /// fault, and the exception's own text is not something to put in front of a person.
+    ///
+    /// It is also actively misleading in the packaged app: with AOT's trimmed resource strings a
+    /// plain HTTP failure renders as "net_http_message_not_success_statuscode_reason, 500,
+    /// Internal Server Error" — observed in the packaged Desktop, which is exactly where a person
+    /// meets it. The cause belongs in the Client Runtime's log, where it is complete; the surface
+    /// says what did not happen.
+    /// </summary>
+    private static string RuntimeDidNotAnswer(string action) =>
+        $"Forge could not {action}. The runtime did not answer.";
 
     // --- workbench navigation (43.20 task 3) ----------------------------------------------------
 
@@ -675,10 +689,10 @@ else
         {
             // Expected: the view was replaced while this run was in flight.
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             if (IsCurrent(operation.Generation))
-                missionError = exception.Message;
+                missionError = RuntimeDidNotAnswer("start this run");
         }
         finally
         {
