@@ -30,7 +30,9 @@ Selecting a mission is Project-scoped and persistent. Submitting the composer st
 
 This is a semantic child process, not a requirement to spawn an OS process per invocation. The durable Host/Worker queue remains the execution topology. Both choices must produce the same durable run identity and event stream.
 
-The Project may retain a ConversationHost container only to order and replay its runs. That container executes no provider request and is never shown or named as a mission. A run is the sole user-visible unit that invokes reasoning.
+The Project may retain a ConversationHost container only to order and replay its runs. That container executes no provider request and is never shown or named as a mission. A run is the sole user-visible unit that invokes reasoning. A Project Mission container pins **no** `MissionRef` and no capabilities: its snapshot reports a null mission reference, while each child command carries its own allow-listed mission and per-run capability declaration. `ProjectMission` purpose plus a non-null Project ID is its existence invariant; an empty mission string is never used as an ambiguous sentinel.
+
+This MVP permits **one active Mission Run per Project**. A second submit while a child run is queued, running, or awaiting a tool returns the typed `RunAlreadyActive` result and creates no event. Queuing or parallel Project runs is deliberately deferred; it needs a separate run-addressing and UI design.
 
 ### Contract and ownership
 
@@ -50,8 +52,8 @@ The Worker owns the built-in catalog and resolves only `Janus` and `Naive`. `Nai
 
 `MissionControl` / `ProjectControl` is a legacy compatibility route, not a third mission. Neither new Project nor Presentation surface may use it.
 
-1. Manifest v2 replaces `missionControlConversationId` with `projectMissionContainerId`; `selectedMission` remains and defaults to built-in `Janus`.
-2. Reading v1 preserves its old control-conversation ID only as legacy durable history. Client Runtime creates one new Project Mission container deterministically for later runs; it neither replays old control messages as a current mission nor converts them into runs.
+1. Manifest v2 replaces `missionControlConversationId` with `projectMissionContainerId` and adds `legacyProjectControlConversationId`; `selectedMission` remains and defaults to built-in `Janus`.
+2. Reading v1 moves its old control-conversation ID into `legacyProjectControlConversationId`. The field remains as a read-only durable-history pointer after legacy-route deletion. Client Runtime creates one new Project Mission container deterministically for later runs; it neither replays old control messages as a current mission nor converts them into runs.
 3. After Desktop and TUI use the new contracts, remove the ProjectControl endpoints, Client Runtime session, fixed `MissionControl` Worker resolver/executor, participant label, and user-facing strings in one deletion task. No dual user-facing path or compatibility picker is permitted.
 
 ## UI contract
@@ -81,11 +83,22 @@ Required states: first open with Janus selected; picker open; Naive selected; in
 | Engineering philosophy | PASS — one invocation contract replaces adjacent user paths; selection has one persistent owner; legacy compatibility has one removal task. |
 | Default path | Applies — zero-argument published Desktop, normal local ConversationHost/Worker, and a disposable new Project visibly start default Janus and produce durable activity. |
 
+### Default-path sequencing exception
+
+The sanctioned local Kind build deliberately accepts only a clean `main` checkout. A branch-built Host or Worker image is therefore a controlled test and cannot close default-path acceptance. The correction has one bounded sequencing exception:
+
+1. Implement and review Task 1 and Task 2 on one descendant branch of this design branch; run their full suite and controlled component/Host tests there.
+2. Open one replacement PR that includes the reusable Task 3 Explorer work plus both new tasks. Do **not** merge PR #94 separately.
+3. Merge only after code review and all branch-verifiable checks pass. Then rebuild Host/Worker from clean `main` with the sanctioned Kind target and run the zero-argument packaged Desktop through default Janus and explicit Naive invocation.
+4. If that observation fails, the correction is not release-ready or complete; repair through a new PR before release. This exception expires when that observation is recorded. It is not a permanent alternate route.
+
+This is a Type-2 operational exception only for the pre-merge image provenance constraint. It changes no production endpoint, credential, or product default.
+
 ## Tasks
 
 ### Task 1 — Universal durable Project Mission Run
 
-Add manifest v2 migration, Project Mission-container creation, selection persistence, and the two contracts above. Generalize Host/Worker dispatch so Janus and Naive both create ordinary runs with durable `run_id` events. Retain the legacy route only as unreachable compatibility until Task 3.
+Add manifest v2 migration, Project Mission-container creation, selection persistence, and the two contracts above. Make `ConversationSnapshot.MissionRef` nullable so a Project Mission container reports no mission; existing Mission Run snapshots remain non-null. Generalize Host/Worker dispatch so Janus and Naive both create ordinary runs with durable `run_id` events. Retain the legacy route only as temporarily unreachable-from-new-contract compatibility until Task 3; Task 2 removes the current Presentation caller. Implement Task 1 and Task 2 on one branch and submit them as the replacement PR defined above.
 
 **Done when:** contract/migration/idempotency tests prove either allow-listed selection creates exactly one identically-shaped child run; invalid selection/input and changed retries produce typed failures with no run; Worker rejects every mission outside the closed catalog; and the full suite passes.
 
