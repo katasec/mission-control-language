@@ -73,6 +73,8 @@ public sealed class HttpClientRuntimeChannel : IClientRuntimeChannel, IDisposabl
         ProjectDraftRequest => "transport/project/draft",
         ProjectCreateRequest => "transport/project/create",
         ProjectOpenRequest => "transport/project/open",
+        OpenProjectMissionControlRequest => "transport/project/mission-control/open",
+        SubmitProjectMissionControlTurnRequest => "transport/project/mission-control/submit",
         CapabilityDispatchRequest => "transport/capability/dispatch",
         PromptRequest => "transport/prompt",
         ConfirmationResponseRequest => "transport/confirmation/respond",

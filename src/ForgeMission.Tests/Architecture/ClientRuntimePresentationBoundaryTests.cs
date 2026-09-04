@@ -38,6 +38,31 @@ public sealed class ClientRuntimePresentationBoundaryTests
             ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoFilesystemAccess);
     }
 
+    // 43.20 task 2: Mission Control is the sole active conversation while a Project is open. The
+    // rule is enforced by DELETION, not by routing — Presentation no longer references the Janus
+    // prompt path, the mission-switch path, or the picker at all, so there is no code path to fall
+    // back through. A reintroduction fails here, at review time, rather than quietly becoming a
+    // second surface behaviour.
+    [Fact]
+    public void MarkedPresentationProjects_CannotReachTheJanusPromptOrMissionSwitchPath()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ClientRuntimePresentation>true</ClientRuntimePresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoJanusOrMissionSwitchPath);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsTheJanusPromptPath()
+    {
+        var source = "class Ui { void Send() => Channel.SendAsync<PromptRequest, PromptResponse>(null); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoJanusOrMissionSwitchPath(source, "Ui.cs"));
+    }
+
     [Fact]
     public void BoundaryRule_RejectsFilesystemUsage()
     {
@@ -60,6 +85,23 @@ public sealed class ClientRuntimePresentationBoundaryTests
     {
         if (System.Text.RegularExpressions.Regex.IsMatch(source, @"\b(HttpClient|IHttpClientFactory)\b"))
             throw new InvalidOperationException($"Presentation must use IClientRuntimeChannel, not direct HTTP: {sourceName}");
+    }
+
+    // Presentation also never reaches the Conversation service itself: it calls Client Runtime,
+    // which owns the manifest read, the deterministic create, and the durable tail.
+    private static void AssertNoJanusOrMissionSwitchPath(string source, string sourceName)
+    {
+        foreach (var forbidden in new[]
+                 {
+                     "PromptRequest", "SessionSetupRequest", "AttachableMission",
+                     "ConversationHostClient", "conversations/",
+                 })
+        {
+            if (source.Contains(forbidden, StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Presentation must not reference '{forbidden}' while Mission Control is the sole " +
+                    $"active conversation (43.20 task 2): {sourceName}");
+        }
     }
 
     private static void AssertNoFilesystemAccess(string source, string sourceName)

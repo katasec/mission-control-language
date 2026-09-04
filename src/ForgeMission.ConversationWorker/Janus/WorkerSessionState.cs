@@ -33,9 +33,15 @@ public sealed record OutstandingToolCall(Guid RequestId, string ProviderCallId, 
 /// only after the publisher accepts it, so a restart resends the identical fact under its already
 /// -assigned deterministic ID rather than skipping or duplicating it.
 /// </summary>
+/// <param name="RunId">Non-null for a Janus mission-run session; null for a Project-control
+/// session, which has no run (43.20 task 2). Widening this to nullable is what lets one session
+/// record serve both without a second state shape. A session persisted before this change always
+/// carries a non-null value and deserializes unchanged — there is no migration and no version
+/// field, because the source-generated context reads an absent-or-present GUID into
+/// <c>Guid?</c> either way.</param>
 public sealed record WorkerSessionState(
     Guid CurrentCommandId,
-    Guid RunId,
+    Guid? RunId,
     WorkerSessionPhase Phase,
     int NextProgressOrdinal,
     string? PendingProgressJson,

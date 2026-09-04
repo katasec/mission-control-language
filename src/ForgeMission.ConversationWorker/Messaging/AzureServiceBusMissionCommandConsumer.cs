@@ -24,12 +24,12 @@ namespace ForgeMission.ConversationWorker.Messaging;
 public sealed class AzureServiceBusMissionCommandConsumer(
     ServiceBusClient client,
     ConversationServiceBusOptions options,
-    JanusMissionContext mission,
+    WorkerMissionResolver missions,
     IConversationProgressPublisher publisher,
     ILogger<AzureServiceBusMissionCommandConsumer> logger)
     : BackgroundService
 {
-    private readonly MissionCommandProcessor _processor = new(mission);
+    private readonly MissionCommandProcessor _processor = new(missions);
     private readonly ConversationCommandDeadLetterHandler _deadLetterHandler = new(publisher);
 
     private ServiceBusSessionProcessor? _commandProcessor;

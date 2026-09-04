@@ -94,7 +94,60 @@ public enum ProjectOperationErrorCode
     UnsupportedManifestVersion,
     InvalidPath,
     CollisionAttemptsExhausted,
+
+    // 43.20 task 2. Mission Control failures are project-scoped operation failures, so they join
+    // this one vocabulary rather than introducing a second enum and error record every surface
+    // would have to learn.
+
+    /// <summary>The atomic manifest replacement failed after the Host had already accepted the
+    /// control conversation. The durable conversation remains valid and the same deterministic
+    /// create retry returns its ID — this is never reported as a new conversation, and never as a
+    /// successful local write.</summary>
+    ManifestWriteFailed,
+
+    /// <summary>The Conversation service rejected the control request as malformed (blank IDs or
+    /// text).</summary>
+    MissionControlInvalid,
+
+    /// <summary>The Conversation service reported a conflict: a reused command ID with different
+    /// content, a create naming a different Project or goal, or a control message against a
+    /// conversation that is not a Project-control conversation.</summary>
+    MissionControlConflict,
+
+    /// <summary>The named control conversation does not exist.</summary>
+    MissionControlNotFound,
 }
+
+// --- Project Mission Control contracts (43.20 task 2) ---------------------------------------
+// Surface-neutral by construction, and deliberately narrow: a surface names only its own session
+// and what the person typed. It supplies no Project path, no conversation ID, no project goal, no
+// mission, and no capability — the Runtime resolves the Project from the session it already owns,
+// reads the manifest itself, and the Conversation service sources the goal from pinned state.
+// A TUI invokes both of these identically.
+
+/// <summary>Opens the Project's one Mission Control conversation, creating it only when the
+/// manifest holds no ID yet, then starts the existing durable replay/tail. Reopening a Project
+/// therefore restores the same conversation without creating anything.</summary>
+public sealed record OpenProjectMissionControlRequest(string SessionId);
+
+/// <summary>Exactly one of <see cref="ConversationId"/> and <see cref="Error"/> is populated.</summary>
+public sealed record OpenProjectMissionControlResponse(
+    Guid? ConversationId,
+    ProjectOperationError? Error = null);
+
+/// <summary>Submits one refinement turn against the session's opened control conversation. This is
+/// the TUI-equivalent action; <see cref="PromptRequest"/> remains the Janus path.
+/// <see cref="CommandId"/> is generated once per user submission and reused only for its retry.</summary>
+public sealed record SubmitProjectMissionControlTurnRequest(
+    string SessionId,
+    Guid CommandId,
+    string Text);
+
+/// <summary>Exactly one of <see cref="ConversationId"/> and <see cref="Error"/> is populated.</summary>
+public sealed record SubmitProjectMissionControlTurnResponse(
+    Guid? ConversationId,
+    long AcceptedSequence,
+    ProjectOperationError? Error = null);
 
 public sealed record CapabilityDispatchRequest(string SessionId, CapabilityRequestData Request);
 public sealed record CapabilityDispatchResponse(string Content, bool IsError);

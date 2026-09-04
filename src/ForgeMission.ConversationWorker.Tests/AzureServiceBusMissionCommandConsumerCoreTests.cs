@@ -50,7 +50,7 @@ public class AzureServiceBusMissionCommandConsumerCoreTests
     {
         var fakeClient = new ServiceBusClient(
             "Endpoint=sb://fake.servicebus.windows.net/;SharedAccessKeyName=fake;SharedAccessKey=ZmFrZQ==");
-        var mission = new JanusMissionContext
+        var mission = new WorkerMissionContext
         {
             Ast = MclParser.Parse(MissionSource),
             Experts = Experts(),
@@ -58,7 +58,7 @@ public class AzureServiceBusMissionCommandConsumerCoreTests
             Execution = new ExecutionConfig(),
         };
         return new AzureServiceBusMissionCommandConsumer(
-            fakeClient, new ConversationServiceBusOptions(), mission,
+            fakeClient, new ConversationServiceBusOptions(), new WorkerMissionResolver(mission, mission),
             new NoOpPublisher(), NullLogger<AzureServiceBusMissionCommandConsumer>.Instance);
     }
 

@@ -92,4 +92,22 @@ public sealed class ClientRuntimeSessionStoreTests : IDisposable
             Directory.Delete(elsewhere, recursive: true);
         }
     }
+
+    // 43.20 task 2: a replacement must dispose BOTH slots, or the replaced session's Mission
+    // Control tail would outlive the session the store no longer tracks.
+    [Fact]
+    public async Task ReplaceAsync_DisposesTheMissionControlSlotToo()
+    {
+        var session = _store.CreateForProject(_workspace);
+
+        await _store.ReplaceAsync(session.Id, _workspace);
+
+        // The slot is closed: a later admission through it is refused outright rather than
+        // creating a session the store cannot dispose.
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            session.MissionControl.InvokeAsync(
+                () => throw new InvalidOperationException("factory must not run for a closed slot"),
+                _ => Task.FromResult(0),
+                CancellationToken.None));
+    }
 }

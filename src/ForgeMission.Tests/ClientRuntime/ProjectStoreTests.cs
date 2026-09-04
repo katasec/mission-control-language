@@ -453,4 +453,91 @@ public sealed class ProjectStoreTests : IDisposable
         // A refused manifest is the user's data, never a corrupt cache to overwrite or repair.
         Assert.Equal(before, File.ReadAllText(manifestPath));
     }
+
+    // --- Mission Control conversation id write-back (43.20 task 2) --------------------------
+
+    [Fact]
+    public void SetMissionControlConversationId_RecordsIt_AndRoundTripsThroughOpen()
+    {
+        var project = _store.Create("Todos API", null, null);
+        Assert.Null(project.Manifest.MissionControlConversationId);
+        var conversationId = Guid.NewGuid();
+
+        var updated = _store.SetMissionControlConversationId(project.Home, conversationId);
+
+        Assert.Equal(conversationId, updated.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        // The rest of the v1 manifest survives the rewrite unchanged.
+        Assert.Equal(project.Manifest.ProjectId, updated.Manifest.ProjectId);
+        Assert.Equal(project.Manifest.Goal, updated.Manifest.Goal);
+        Assert.Equal(ProjectManifest.CurrentSchemaVersion, updated.Manifest.SchemaVersion);
+        // No temporary file is left behind.
+        Assert.Empty(Directory.GetFiles(project.Home, "*.tmp"));
+    }
+
+    [Fact]
+    public void SetMissionControlConversationId_WithTheSameId_IsAnIdempotentNoOp()
+    {
+        var project = _store.Create("Todos API", null, null);
+        var conversationId = Guid.NewGuid();
+        _store.SetMissionControlConversationId(project.Home, conversationId);
+        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var after = File.ReadAllText(manifestPath);
+
+        var again = _store.SetMissionControlConversationId(project.Home, conversationId);
+
+        Assert.Equal(conversationId, again.Manifest.MissionControlConversationId);
+        Assert.Equal(after, File.ReadAllText(manifestPath));
+    }
+
+    // A Project has exactly one control conversation. Repointing it would orphan a durable
+    // transcript, so a different non-null id is refused rather than overwritten.
+    [Fact]
+    public void SetMissionControlConversationId_WithADifferentId_IsRefused_AndLeavesTheFileUntouched()
+    {
+        var project = _store.Create("Todos API", null, null);
+        _store.SetMissionControlConversationId(project.Home, Guid.NewGuid());
+        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var before = File.ReadAllText(manifestPath);
+
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.SetMissionControlConversationId(project.Home, Guid.NewGuid()));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidManifest, failure.Code);
+        Assert.Equal(before, File.ReadAllText(manifestPath));
+    }
+
+    [Fact]
+    public void SetMissionControlConversationId_WithNoManifest_ReportsHomeNotFound()
+    {
+        var empty = Path.Combine(_profile, "no-project");
+        Directory.CreateDirectory(empty);
+
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.SetMissionControlConversationId(empty, Guid.NewGuid()));
+
+        Assert.Equal(ProjectOperationErrorCode.HomeNotFound, failure.Code);
+    }
+
+    // A failed replacement is named ManifestWriteFailed and leaves the original manifest intact —
+    // the durable conversation stays valid, and the retry re-derives the same id.
+    [Fact]
+    public void AFailedReplacement_ReportsManifestWriteFailed_AndLeavesTheOriginalManifestIntact()
+    {
+        var project = _store.Create("Todos API", null, null);
+        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var before = File.ReadAllText(manifestPath);
+
+        // A directory where the temporary file must be written makes the write fail without
+        // touching the manifest itself.
+        var temporaryPath = manifestPath + ".tmp";
+        Directory.CreateDirectory(temporaryPath);
+
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => _store.SetMissionControlConversationId(project.Home, Guid.NewGuid()));
+
+        Assert.Equal(ProjectOperationErrorCode.ManifestWriteFailed, failure.Code);
+        Assert.Equal(before, File.ReadAllText(manifestPath));
+        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+    }
 }

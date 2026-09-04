@@ -164,4 +164,28 @@ public sealed class ConversationTranscriptTests
         ConversationToolResult? toolResult = null, ConversationRunStatus? runStatus = null) =>
         new(Guid.NewGuid(), 1, ConversationId, RunId, sequence, kind, participant, attempt, text, reason,
             approval, toolRequest, toolResult, Artifact: null, runStatus, DateTimeOffset.UtcNow);
+
+    // 43.20 task 2: the zero-tool control mission publishes a ParticipantMessage with NO preceding
+    // ParticipantStarted, so the transcript must render it as its own bubble rather than needing a
+    // typing indicator to attach to.
+    [Fact]
+    public void ABareMissionControlMessage_BecomesOneParticipantBubble()
+    {
+        var transcript = new ConversationTranscript();
+        var conversationId = Guid.NewGuid();
+
+        transcript.Apply(new ConversationEvent(
+            Guid.NewGuid(), 1, conversationId, null, 1, ConversationEventKind.UserMessage,
+            ConversationParticipant.User, null, "refine", null, null, null, null, null, null, DateTimeOffset.UtcNow));
+        transcript.Apply(new ConversationEvent(
+            Guid.NewGuid(), 1, conversationId, null, 2, ConversationEventKind.ParticipantMessage,
+            ConversationParticipant.MissionControl, null, "What would done look like?", null,
+            null, null, null, null, null, DateTimeOffset.UtcNow));
+
+        Assert.Equal(2, transcript.Entries.Count);
+        Assert.Equal(ConversationEntryKind.UserMessage, transcript.Entries[0].Kind);
+        Assert.Equal(ConversationEntryKind.ParticipantMessage, transcript.Entries[1].Kind);
+        Assert.Equal(ConversationParticipant.MissionControl, transcript.Entries[1].Participant);
+        Assert.Equal("What would done look like?", transcript.Entries[1].Text);
+    }
 }

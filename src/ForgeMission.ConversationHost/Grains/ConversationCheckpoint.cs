@@ -38,4 +38,23 @@ public sealed class ConversationCheckpoint
     /// <summary>Non-null while a start pair (<c>UserMessage</c> + paired <c>RunStatus(Queued)</c>)
     /// is in flight for the current run — see the <see cref="PendingRunStart"/> record.</summary>
     [Id(11)] public PendingRunStart? PendingRunStart { get; set; }
+
+    /// <summary>What this conversation is for (43.20 task 2). Appended as a NEW Orleans ID rather
+    /// than renumbering: a checkpoint persisted before this field existed reads it as
+    /// <see cref="ConversationPurpose.MissionRun"/> (ordinal 0), which is exactly what such a
+    /// conversation is — so no migration is needed and no existing conversation can silently
+    /// acquire control semantics.</summary>
+    [Id(12)] public ConversationPurpose Purpose { get; set; }
+
+    /// <summary>The Project this control conversation belongs to. Non-null only for
+    /// <see cref="ConversationPurpose.ProjectControl"/>. Together with <see cref="ProjectGoal"/> it
+    /// IS the create command's content, so an exact retry is recognised by content equality and a
+    /// create naming a different Project or goal is a conflict.</summary>
+    [Id(13)] public Guid? ProjectId { get; set; }
+
+    /// <summary>The Project's goal, pinned on the control conversation's create and thereafter the
+    /// ONLY source of a control command's <c>ConversationCommand.ProjectGoal</c>. A turn submission
+    /// can never supply or replace it — no turn-submitting request or grain-interface DTO has a
+    /// field able to carry one.</summary>
+    [Id(14)] public string? ProjectGoal { get; set; }
 }

@@ -18,10 +18,14 @@ serviceBusOptions.ValidateDirection(serviceBusOptions.MissionCommandListenConnec
 serviceBusOptions.ValidateDirection(serviceBusOptions.ProgressSendConnectionString, "ProgressSend");
 builder.Services.AddSingleton(serviceBusOptions);
 
-var missionDirectory = builder.Configuration["ConversationWorker:JanusMissionDirectory"]
+// Both packaged missions are loaded once at startup and reached only through the named resolver —
+// a Worker executes what is baked into its image, never a directory a command names (43.20 task 2).
+var janusDirectory = builder.Configuration["ConversationWorker:JanusMissionDirectory"]
     ?? throw new InvalidOperationException("ConversationWorker:JanusMissionDirectory is required.");
-var mission = JanusMissionExecutor.Load(missionDirectory);
-builder.Services.AddSingleton(mission);
+var missionControlDirectory = builder.Configuration["ConversationWorker:MissionControlMissionDirectory"]
+    ?? throw new InvalidOperationException("ConversationWorker:MissionControlMissionDirectory is required.");
+builder.Services.AddSingleton(new WorkerMissionResolver(
+    WorkerMissionLoader.Load(janusDirectory), WorkerMissionLoader.Load(missionControlDirectory)));
 
 var commandListenClient = BuildServiceBusClient(
     serviceBusOptions.MissionCommandListenConnectionString, serviceBusOptions.FullyQualifiedNamespace);

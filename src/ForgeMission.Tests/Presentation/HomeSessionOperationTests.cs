@@ -3,6 +3,7 @@ using System.Threading.Channels;
 using Bunit;
 using ForgeMission.ClientRuntime.Presentation.Pages;
 using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Conversations.Contracts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -146,45 +147,219 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Empty(channel.Requests.OfType<ProjectCreateRequest>());
     }
 
-    // Replacement only: the request carries the open Project's own home and the session it
-    // replaces. The Client Runtime enforces the same rule (ProjectTransportContractTests).
+    // --- 43.20 task 2: Mission Control is the sole active conversation --------------------------
+
     [Fact]
-    public async Task AMissionSwitch_ReplacesTheSession_WithinTheOpenProjectsHome()
+    public async Task OpeningAProject_OpensMissionControl_WithNothingButItsSessionId()
     {
         var page = await OpenCreatedProjectAsync();
-        var openedSessionId = channel.CurrentSessionId;
 
-        await SelectMissionAsync(page, "Janus");
+        var open = Assert.Single(channel.Requests.OfType<OpenProjectMissionControlRequest>());
+        Assert.Equal(channel.CurrentSessionId, open.SessionId);
+        // Everything else the conversation needs — the Project home, the manifest ID, the goal —
+        // is resolved below Presentation. The contract has no field to carry any of it.
+        Assert.Single(typeof(OpenProjectMissionControlRequest).GetProperties());
+        _ = page;
+    }
 
-        var setup = Assert.Single(channel.Requests.OfType<SessionSetupRequest>());
-        Assert.Equal(FakeClientRuntimeChannel.DefaultHome, setup.WorkspaceRoot);
-        Assert.Equal(openedSessionId, setup.ReplacesSessionId);
+    // The one send path. There is no mission to choose, so there is nothing to fall back to.
+    [Fact]
+    public async Task AComposerTurn_SendsExactlyOneControlTurn_AndNoPromptRequest()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        await SendTurnAsync(page, "narrow this to the API only");
+
+        var turn = Assert.Single(channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>());
+        Assert.Equal(channel.CurrentSessionId, turn.SessionId);
+        Assert.Equal("narrow this to the API only", turn.Text);
+        Assert.NotEqual(Guid.Empty, turn.CommandId);
+    }
+
+    // Structural, not behavioural: the page cannot reach the Janus prompt path or the mission-switch
+    // path because it no longer references either contract. The fake channel below throws on both,
+    // so any reintroduction fails here rather than silently becoming a second surface behaviour.
+    [Fact]
+    public async Task ThePage_NeverSendsAPromptRequestOrASessionSetupRequest()
+    {
+        var page = await OpenCreatedProjectAsync();
+        await SendTurnAsync(page, "refine it");
+
+        Assert.Empty(channel.Requests.OfType<PromptRequest>());
+        Assert.Empty(channel.Requests.OfType<SessionSetupRequest>());
+        // No picker exists to render in any state.
+        Assert.Empty(page.FindAll(".mission-trigger"));
+        Assert.Empty(page.FindAll(".mission-menu"));
+    }
+
+    // --- 43.20 task 2 corrections: readiness gate and idempotent retry ------------------------
+
+    // The session id alone is not readiness: EnterProjectAsync sets it before awaiting the open,
+    // so gating on it would leave a window in which a turn could be submitted against a
+    // conversation that does not exist yet.
+    [Fact]
+    public async Task BeforeMissionControlOpens_TheComposerIsDisabled_AndNoTurnCanBeSent()
+    {
+        channel.HoldNextMissionControlOpen();
+        var page = await OpenCreatedProjectAsync();
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".composer-input")));
+        Assert.True(page.Find(".composer-input").HasAttribute("disabled"));
+        Assert.True(page.Find(".composer-send").HasAttribute("disabled"));
+        Assert.Contains("Opening Mission Control", page.Find(".composer-input").GetAttribute("placeholder")!);
+
+        await InputAsync(page, ".composer-input", "too early");
+        await ClickAsync(page, ".composer-send");
+        Assert.Empty(channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>());
+
+        channel.ReleaseHeldMissionControlOpen();
+
+        page.WaitForAssertion(() => Assert.False(page.Find(".composer-input").HasAttribute("disabled")));
     }
 
     [Fact]
-    public void WithNoProjectOpen_NoSessionSetupRequestCanBeSent()
+    public async Task AFailedMissionControlOpen_LeavesTheComposerDisabled_WithItsErrorVisible()
+    {
+        channel.FailNextMissionControlOpen(
+            ProjectOperationErrorCode.ManifestWriteFailed, "Could not update forge.project.json.");
+
+        var page = await OpenCreatedProjectAsync();
+
+        page.WaitForAssertion(() => Assert.Contains(
+            "Could not update forge.project.json.", page.Find(".error-banner").TextContent));
+        // The error is shown AND the input stays blocked — one assertion pair, not two hopes.
+        Assert.True(page.Find(".composer-input").HasAttribute("disabled"));
+        Assert.True(page.Find(".composer-send").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task AFailedTurn_KeepsTheTypedText_AndRetryingSendsTheIdenticalRequest()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.FailNextControlTurn(
+            ProjectOperationErrorCode.MissionControlConflict, "CommandId already used with different content.");
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".error-banner")));
+
+        // The text is still on screen — it was the only copy of it that existed.
+        Assert.Equal("narrow the scope", page.Find(".composer-input").GetAttribute("value"));
+
+        await ClickAsync(page, ".composer-send");
+        page.WaitForAssertion(() =>
+            Assert.Equal(2, channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count()));
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        Assert.Equal(turns[0].CommandId, turns[1].CommandId);
+        Assert.Equal(turns[0].Text, turns[1].Text);
+    }
+
+    [Fact]
+    public async Task EditingAfterAFailure_SendsANewCommandId()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.FailNextControlTurn(ProjectOperationErrorCode.MissionControlInvalid, "rejected");
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".error-banner")));
+
+        await InputAsync(page, ".composer-input", "narrow the scope, but only the API");
+        await ClickAsync(page, ".composer-send");
+        page.WaitForAssertion(() =>
+            Assert.Equal(2, channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count()));
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        Assert.NotEqual(turns[0].CommandId, turns[1].CommandId);
+        Assert.Equal("narrow the scope, but only the API", turns[1].Text);
+    }
+
+    [Fact]
+    public async Task AnAcceptedTurn_ClearsTheComposer_AndTheNextTurnUsesADifferentCommandId()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Equal("", page.Find(".composer-input").GetAttribute("value")));
+        Assert.Empty(page.FindAll(".error-banner"));
+
+        await SendTurnAsync(page, "and name the success criteria");
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        // Clearing is proved by the NEXT send minting a fresh id, not by inspecting private state.
+        Assert.NotEqual(turns[0].CommandId, turns[1].CommandId);
+    }
+
+    [Fact]
+    public async Task ATransportExceptionOnSubmit_BehavesLikeATypedFailure_ForRetryPurposes()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.ThrowOnNextControlTurn(new IOException("socket reset"));
+
+        await SendTurnAsync(page, "narrow the scope");
+        page.WaitForAssertion(() => Assert.Contains("socket reset", page.Find(".error-banner").TextContent));
+        Assert.Equal("narrow the scope", page.Find(".composer-input").GetAttribute("value"));
+
+        await ClickAsync(page, ".composer-send");
+        page.WaitForAssertion(() =>
+            Assert.Equal(2, channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count()));
+
+        var turns = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().ToList();
+        Assert.Equal(turns[0].CommandId, turns[1].CommandId);
+    }
+
+    [Fact]
+    public void WithNoProjectOpen_NoMissionControlRequestCanBeSent()
     {
         var page = Render<Home>();
 
-        Assert.Empty(page.FindAll(".mission-trigger"));
-        Assert.Empty(channel.Requests.OfType<SessionSetupRequest>());
+        Assert.Empty(page.FindAll(".composer-input"));
+        Assert.Empty(channel.Requests.OfType<OpenProjectMissionControlRequest>());
+        Assert.Empty(channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>());
     }
 
-    // --- 43.17 task 3: one cancellable session/view operation ----------------------------------
+    [Fact]
+    public async Task AFailedMissionControlOpen_RendersItsTypedMessage()
+    {
+        channel.FailNextMissionControlOpen(
+            ProjectOperationErrorCode.ManifestWriteFailed, "Could not update forge.project.json.");
+
+        var page = await OpenCreatedProjectAsync();
+
+        page.WaitForAssertion(() => Assert.Contains(
+            "Could not update forge.project.json.", page.Find(".error-banner").TextContent));
+    }
 
     [Fact]
-    public async Task RepeatedMissionReplacement_LeavesExactlyOneSubscription()
+    public async Task AFailedControlTurn_RendersItsTypedMessage()
+    {
+        var page = await OpenCreatedProjectAsync();
+        channel.FailNextControlTurn(
+            ProjectOperationErrorCode.MissionControlConflict, "CommandId already used with different content.");
+
+        await SendTurnAsync(page, "refine it");
+
+        page.WaitForAssertion(() => Assert.Contains(
+            "CommandId already used with different content.", page.Find(".error-banner").TextContent));
+    }
+
+    // The turn renders from the relayed durable stream, not from the submit response — the same
+    // rule the Janus path already followed, now the only rule on this surface.
+    [Fact]
+    public async Task ADurableControlEvent_RendersThroughTheExistingTranscript()
     {
         var page = await OpenCreatedProjectAsync();
 
-        await SelectMissionAsync(page, "Janus");
-        await SelectMissionAsync(page, "ChatGPT");
-        await SelectMissionAsync(page, "Websearch");
+        channel.Publish(ControlEvent(1, ConversationEventKind.UserMessage, ConversationParticipant.User, "refine it"));
+        channel.Publish(ControlEvent(2, ConversationEventKind.ParticipantMessage,
+            ConversationParticipant.MissionControl, "What outcome would count as done?"));
 
-        Assert.Equal(4, channel.SubscriptionsStarted);
-        Assert.Equal(1, channel.ActiveSubscriptions);
-        Assert.Equal(1, channel.PeakSubscriptions);
+        page.WaitForAssertion(() => Assert.Contains(
+            "What outcome would count as done?", page.Find(".convo-participant-text").TextContent));
+        Assert.Equal("Mission Control", page.Find(".convo-participant-name").TextContent);
+        Assert.Contains("refine it", page.Find(".convo-user-bubble").TextContent);
     }
+
+    // --- 43.17 task 3: one cancellable session/view operation ----------------------------------
 
     [Fact]
     public async Task OpenedProject_FocusesTheComposer()
@@ -193,70 +368,6 @@ public sealed class HomeSessionOperationTests : BunitContext
 
         Assert.Contains(JSInterop.Invocations,
             invocation => invocation.Identifier == "Blazor._internal.domWrapper.focus");
-    }
-
-    [Fact]
-    public async Task Replacement_AwaitsTheOldSubscription_SoEachEventIsAppliedOnce()
-    {
-        var page = await OpenCreatedProjectAsync();
-        await SelectMissionAsync(page, "Websearch");
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "build it");
-        channel.Publish(Delta("answer"));
-
-        page.WaitForAssertion(() => Assert.Contains("answer", page.Find(".response-card").TextContent));
-        // A surviving second subscriber would have applied the same delta twice.
-        Assert.Equal("answer", page.Find(".response-card").TextContent);
-    }
-
-    [Fact]
-    public async Task ReplacementWhileEventsAreRendering_CompletesWithoutDeadlock()
-    {
-        var page = await OpenCreatedProjectAsync();
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "streaming");
-        for (var index = 0; index < 200; index++)
-            channel.Publish(Delta("x"));
-
-        // The replacement cancels and awaits a subscription that is mid-render. If awaiting the
-        // event loop from a UI handler could deadlock, this never returns.
-        await SelectMissionAsync(page, "Websearch");
-
-        Assert.Equal(1, channel.ActiveSubscriptions);
-        Assert.Empty(page.FindAll(".response-card"));
-    }
-
-    [Fact]
-    public async Task StalePromptResult_AfterReplacement_CannotMutateTheNewSession()
-    {
-        var page = await OpenCreatedProjectAsync();
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "slow prompt");
-        await SelectMissionAsync(page, "Websearch");
-
-        channel.ReleaseHeldPrompt(new PromptResponse("stale answer"));
-        await Task.Delay(50);
-
-        Assert.DoesNotContain("stale answer", page.Markup);
-        Assert.DoesNotContain("slow prompt", page.Markup);
-        Assert.Empty(page.FindAll(".error-banner"));
-        Assert.Empty(page.FindAll(".connection-banner"));
-        // The discarded operation did not clear the replacement's own sending state.
-        Assert.Equal("Send", page.Find(".composer-send").TextContent.Trim());
-    }
-
-    [Fact]
-    public async Task ExpectedCancellation_IsSilent()
-    {
-        var page = await OpenCreatedProjectAsync();
-        await SelectMissionAsync(page, "Janus");
-
-        Assert.Empty(page.FindAll(".error-banner"));
-        Assert.Empty(page.FindAll(".connection-banner"));
-        Assert.Empty(page.FindAll(".gap-notice"));
     }
 
     [Fact]
@@ -285,14 +396,18 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.Contains("Updates that arrived while disconnected are not shown",
             page.Find(".gap-notice").TextContent);
 
-        // The notice records a permanent gap, so later successful events do not retract it.
-        channel.Publish(Delta("later"));
-        await Task.Delay(50);
-        Assert.Single(page.FindAll(".gap-notice"));
+        // Persistence across later events is asserted on its own below.
     }
 
+    // The notice records a permanent gap in a transcript built only from relayed events, so nothing
+    // short of a new view retracts it — not later events, and not a further successful retry.
+    //
+    // Its clearing half is deliberately NOT asserted here: BeginViewAsync still clears it, but with
+    // the mission picker removed (43.20 task 2) no action on this surface begins a second view
+    // while a Project is open. Switching Projects is Task 3 rail work; asserting it now would mean
+    // testing a path a person cannot reach.
     [Fact]
-    public async Task GapNotice_ClearsOnlyWhenANewViewBegins()
+    public async Task GapNotice_PersistsAcrossLaterEventsAndFurtherRetries()
     {
         channel.FaultNextSubscription(new IOException("stream reset"));
         var page = await OpenCreatedProjectAsync();
@@ -300,29 +415,31 @@ public sealed class HomeSessionOperationTests : BunitContext
         await ClickAsync(page, ".connection-retry");
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".gap-notice")));
 
-        await SelectMissionAsync(page, "Websearch");
+        channel.Publish(ControlEvent(1, ConversationEventKind.ParticipantMessage,
+            ConversationParticipant.MissionControl, "still here"));
+        page.WaitForAssertion(() => Assert.Contains("still here", page.Find(".convo-participant-text").TextContent));
 
-        Assert.Empty(page.FindAll(".gap-notice"));
+        Assert.Single(page.FindAll(".gap-notice"));
     }
 
+    // Mission Control's transcript is built only from relayed durable events, so a turn submitted
+    // while the stream is down would add a second unrecoverable gap.
     [Fact]
-    public async Task WhileDisconnected_DurableConversationPromptsAreBlocked_AndMissionPromptsAreNot()
+    public async Task WhileDisconnected_ControlTurnsAreBlocked()
     {
+        channel.FaultNextSubscription(new IOException("stream reset"));
         var page = await OpenCreatedProjectAsync();
 
-        channel.FaultNextSubscription(new IOException("stream reset"));
-        await SelectMissionAsync(page, "Janus");
         page.WaitForAssertion(() => Assert.Single(page.FindAll(".connection-banner")));
         Assert.True(page.Find(".composer-input").HasAttribute("disabled"));
-
-        channel.FaultNextSubscription(new IOException("stream reset"));
-        await SelectMissionAsync(page, "ChatGPT");
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".connection-banner")));
-        Assert.False(page.Find(".composer-input").HasAttribute("disabled"));
+        Assert.True(page.Find(".composer-send").HasAttribute("disabled"));
     }
 
+    // Disposal cancels the subscription and any in-flight call. That cancellation is EXPECTED, so
+    // it leaves no error banner behind — the silent-cancellation guarantee, asserted where the
+    // cancellation actually happens now that no mission switch exists to trigger one.
     [Fact]
-    public async Task DisposeAsync_LeavesNoActiveSubscription()
+    public async Task DisposeAsync_LeavesNoActiveSubscription_AndIsSilent()
     {
         var page = await OpenCreatedProjectAsync();
         Assert.Equal(1, channel.ActiveSubscriptions);
@@ -330,69 +447,8 @@ public sealed class HomeSessionOperationTests : BunitContext
         await page.Instance.DisposeAsync();
 
         Assert.Equal(0, channel.ActiveSubscriptions);
-    }
-
-    // --- 43.18 task 3: the ordinary mission turn's shared activity states -----------------------
-
-    [Fact]
-    public async Task ActiveTurnWithNoToolAndNoText_ShowsThinkingForTheSelectedMission()
-    {
-        var page = await OpenCreatedProjectAsync();
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "build it");
-
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-thinking")));
-        Assert.Contains("ChatGPT is thinking…", page.Find(".convo-activity-text").TextContent);
-    }
-
-    [Fact]
-    public async Task RunningTool_BecomesWorkingWithItsLabel_AndNoRunningToolRow()
-    {
-        var page = await OpenCreatedProjectAsync();
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "build it");
-        channel.Publish(ToolStatus("Read", "running", "src/Program.cs"));
-
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-working")));
-        Assert.Contains("ChatGPT Reading src/Program.cs…", page.Find(".convo-activity-text").TextContent);
-        // The shared activity replaces the running row rather than sitting beside it.
-        Assert.Empty(page.FindAll(".tool-row"));
-    }
-
-    [Fact]
-    public async Task RunningToolOutranksStreamingText_WhileBothFactsArePresent()
-    {
-        var page = await OpenCreatedProjectAsync();
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "build it");
-        channel.Publish(ToolStatus("Read", "running", "src/Program.cs"));
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-working")));
-
-        channel.Publish(Delta("partial answer"));
-
-        page.WaitForAssertion(() => Assert.Contains("partial answer", page.Find(".response-card").TextContent));
-        Assert.Single(page.FindAll(".convo-activity-working"));
-        Assert.Empty(page.FindAll(".convo-activity-streaming"));
-    }
-
-    [Fact]
-    public async Task TextDeltaAfterTheToolCompletes_BecomesStreaming_AndKeepsTheCompletedRow()
-    {
-        var page = await OpenCreatedProjectAsync();
-
-        channel.HoldNextPrompt();
-        await SendPromptAsync(page, "build it");
-        channel.Publish(ToolStatus("Read", "running", "src/Program.cs"));
-        channel.Publish(Delta("partial answer"));
-        channel.Publish(ToolStatus("Read", "completed", "src/Program.cs"));
-
-        page.WaitForAssertion(() => Assert.Single(page.FindAll(".convo-activity-streaming")));
-        Assert.Contains("ChatGPT is responding…", page.Find(".convo-activity-text").TextContent);
-        // The finished call stays as transcript history.
-        Assert.Contains("Read src/Program.cs", page.Find(".tool-row").TextContent);
+        Assert.Empty(page.FindAll(".error-banner"));
+        Assert.Empty(page.FindAll(".connection-banner"));
     }
 
     // Boot creates nothing, so every test that needs a workbench opens a Project first — through
@@ -423,18 +479,13 @@ public sealed class HomeSessionOperationTests : BunitContext
             field.Change(new ChangeEventArgs { Value = goal });
         });
 
-    private ClientRuntimeEvent Delta(string text) =>
-        new(ClientRuntimeEventKind.MissionTextDelta, channel.CurrentSessionId, Text: text);
-
-    private ClientRuntimeEvent ToolStatus(string toolName, string status, string? target = null) =>
-        new(ClientRuntimeEventKind.ToolCallStatus, channel.CurrentSessionId,
-            ToolName: toolName, ToolStatus: status, ToolTarget: target);
-
-    private async Task SelectMissionAsync(IRenderedComponent<Home> page, string missionName)
-    {
-        await ClickAsync(page, ".mission-trigger");
-        await StartReplacementAsync(page, ".mission-item", missionName);
-    }
+    // One durable control fact, exactly as the Client Runtime relays it — no run, no tool.
+    private ClientRuntimeEvent ControlEvent(
+        long sequence, ConversationEventKind kind, ConversationParticipant participant, string text) =>
+        new(ClientRuntimeEventKind.ConversationEvent, channel.CurrentSessionId,
+            Conversation: new ConversationEvent(
+                Guid.NewGuid(), 1, channel.ControlConversationId, null, sequence, kind, participant,
+                null, text, null, null, null, null, null, null, DateTimeOffset.UtcNow));
 
     // The click itself only starts the replacement; its async handler completes later, so the
     // helper waits for the new subscription (or a surfaced failure) before returning.
@@ -446,11 +497,13 @@ public sealed class HomeSessionOperationTests : BunitContext
             channel.SubscriptionsStarted > before || page.FindAll(".pl-error").Count > 0));
     }
 
-    private static async Task SendPromptAsync(IRenderedComponent<Home> page, string prompt)
+    private async Task SendTurnAsync(IRenderedComponent<Home> page, string text)
     {
-        await InputAsync(page, ".composer-input", prompt);
+        var before = channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count();
+        await InputAsync(page, ".composer-input", text);
         await ClickAsync(page, ".composer-send");
-        page.WaitForAssertion(() => Assert.Contains("Sending", page.Find(".composer-send").TextContent));
+        page.WaitForAssertion(() => Assert.True(
+            channel.Requests.OfType<SubmitProjectMissionControlTurnRequest>().Count() > before));
     }
 
     // Find and dispatch inside one dispatcher turn: a concurrent stream render between the two
@@ -470,8 +523,12 @@ public sealed class HomeSessionOperationTests : BunitContext
     {
         private readonly Lock gate = new();
         private readonly List<Channel<ClientRuntimeEvent>> streams = [];
-        private TaskCompletionSource<PromptResponse>? heldPrompt;
         private Exception? nextSubscriptionFault;
+        private ProjectOperationError? nextOpenError;
+        private ProjectOperationError? nextTurnError;
+        private Exception? nextTurnFault;
+        private TaskCompletionSource<OpenProjectMissionControlResponse>? heldOpen;
+        private long acceptedSequence;
         private ProjectOperationResponse? nextProjectResponse;
         private ProjectOperationError? nextDraftError;
         private int sessionCounter;
@@ -483,14 +540,63 @@ public sealed class HomeSessionOperationTests : BunitContext
 
         public void FaultNextSubscription(Exception fault) => nextSubscriptionFault = fault;
 
-        public void HoldNextPrompt() =>
-            heldPrompt = new TaskCompletionSource<PromptResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Guid ControlConversationId { get; } = Guid.NewGuid();
 
-        public void ReleaseHeldPrompt(PromptResponse response)
+        public void FailNextMissionControlOpen(ProjectOperationErrorCode code, string message) =>
+            nextOpenError = new ProjectOperationError(code, message);
+
+        public void FailNextControlTurn(ProjectOperationErrorCode code, string message) =>
+            nextTurnError = new ProjectOperationError(code, message);
+
+        public void ThrowOnNextControlTurn(Exception fault) => nextTurnFault = fault;
+
+        // Holds the OPEN response so a test can observe the window between "a session exists" and
+        // "Mission Control is actually open" — the window the readiness gate closes.
+        public void HoldNextMissionControlOpen() =>
+            heldOpen = new TaskCompletionSource<OpenProjectMissionControlResponse>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void ReleaseHeldMissionControlOpen()
         {
-            var held = heldPrompt ?? throw new InvalidOperationException("No prompt is being held.");
-            heldPrompt = null;
-            held.SetResult(response);
+            var held = heldOpen ?? throw new InvalidOperationException("No Mission Control open is being held.");
+            heldOpen = null;
+            held.SetResult(new OpenProjectMissionControlResponse(ControlConversationId));
+        }
+
+        private Task<OpenProjectMissionControlResponse> OpenMissionControlAsync()
+        {
+            if (heldOpen is { } held)
+                return held.Task;
+
+            return Task.FromResult(OpenMissionControl());
+        }
+
+        private OpenProjectMissionControlResponse OpenMissionControl()
+        {
+            if (nextOpenError is { } error)
+            {
+                nextOpenError = null;
+                return new OpenProjectMissionControlResponse(null, error);
+            }
+
+            return new OpenProjectMissionControlResponse(ControlConversationId);
+        }
+
+        private SubmitProjectMissionControlTurnResponse SubmitControlTurn()
+        {
+            if (nextTurnFault is { } fault)
+            {
+                nextTurnFault = null;
+                throw fault;
+            }
+
+            if (nextTurnError is { } error)
+            {
+                nextTurnError = null;
+                return new SubmitProjectMissionControlTurnResponse(null, 0, error);
+            }
+
+            return new SubmitProjectMissionControlTurnResponse(ControlConversationId, ++acceptedSequence);
         }
 
         public void Publish(ClientRuntimeEvent message)
@@ -510,8 +616,12 @@ public sealed class HomeSessionOperationTests : BunitContext
                 ProjectDraftRequest draft => DraftResponse(draft),
                 ProjectCreateRequest create => nextProjectResponse ?? Created(create.Title ?? "Todos API", create.HomePath ?? DefaultHome),
                 ProjectOpenRequest open => nextProjectResponse ?? Opened(open.HomePath),
-                SessionSetupRequest => new SessionSetupResponse(NextSession(), []),
-                PromptRequest => await PromptAsync(ct),
+                OpenProjectMissionControlRequest => await OpenMissionControlAsync().WaitAsync(ct),
+                SubmitProjectMissionControlTurnRequest => SubmitControlTurn(),
+                // PromptRequest and SessionSetupRequest are deliberately ABSENT. Mission Control is
+                // the sole active conversation while a Project is open (43.20 task 2), so a page
+                // that sent either would fail loudly here rather than quietly acquiring a second
+                // surface behaviour. Both contracts live on in Client Runtime and its own tests.
                 _ => throw new InvalidOperationException($"Unexpected request: {typeof(TRequest).Name}."),
             };
 
@@ -589,9 +699,6 @@ public sealed class HomeSessionOperationTests : BunitContext
                 }
             }
         }
-
-        private async Task<PromptResponse> PromptAsync(CancellationToken ct) =>
-            heldPrompt is null ? new PromptResponse(string.Empty) : await heldPrompt.Task.WaitAsync(ct);
 
         private string NextSession() => CurrentSessionId = $"session-{++sessionCounter}";
     }

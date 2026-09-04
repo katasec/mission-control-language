@@ -11,6 +11,7 @@ namespace ForgeMission.Conversations.Contracts;
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     UseStringEnumConverter = true)]
 [JsonSerializable(typeof(ConversationParticipant))]
+[JsonSerializable(typeof(ConversationPurpose))]
 [JsonSerializable(typeof(ConversationEventKind))]
 [JsonSerializable(typeof(ConversationRunStatus))]
 [JsonSerializable(typeof(ConversationApprovalOutcome))]
@@ -34,5 +35,9 @@ namespace ForgeMission.Conversations.Contracts;
 [JsonSerializable(typeof(GetConversationRequest))]
 [JsonSerializable(typeof(GetConversationResponse))]
 [JsonSerializable(typeof(ReadConversationEventsRequest))]
+[JsonSerializable(typeof(CreateProjectControlConversationRequest))]
+[JsonSerializable(typeof(CreateProjectControlConversationResponse))]
+[JsonSerializable(typeof(SubmitProjectControlMessageRequest))]
+[JsonSerializable(typeof(SubmitProjectControlMessageResponse))]
 [JsonSerializable(typeof(JsonElement))]
 public partial class ConversationContractsJsonContext : JsonSerializerContext;

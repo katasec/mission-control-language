@@ -7,7 +7,7 @@
 <div class="conversation-transcript">
     @if (Entries.Count == 0)
     {
-        <p class="empty-state">Describe what you want Janus to do.</p>
+        <p class="empty-state">What is this Project for?</p>
     }
     @foreach (var entry in Entries)
     {
@@ -114,6 +114,9 @@
         ConversationParticipant.Approver => "Approver",
         ConversationParticipant.Implementer => "Implementer",
         ConversationParticipant.Forge => "Forge",
+        // Labelled as itself, not folded into a Janus participant — a Project-refinement reply is
+        // not a proposal, an approval, or implementation work (43.20 task 2).
+        ConversationParticipant.MissionControl => "Mission Control",
         _ => "User",
     };
 

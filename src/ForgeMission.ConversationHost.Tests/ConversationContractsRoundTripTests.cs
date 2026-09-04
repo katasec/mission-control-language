@@ -276,4 +276,77 @@ public class ConversationContractsRoundTripTests
     [Fact]
     public void JsonElement_RoundTripsThroughContext()
         => AssertRoundTrips(SampleJson("""{"path":"mission/notes.md","recursive":true}"""));
+
+    // --- 43.20 task 2 -------------------------------------------------------------------------
+
+    [Fact]
+    public void ProjectControlMessages_RoundTrip()
+    {
+        var projectId = Guid.NewGuid();
+        var conversationId = Guid.NewGuid();
+
+        AssertRoundTrips(new CreateProjectControlConversationRequest(
+            projectId, ConversationDeterministicIds.ProjectControlCreate(projectId), "Ship a todos API"));
+        AssertRoundTrips(new CreateProjectControlConversationResponse(conversationId, 0));
+        AssertRoundTrips(new SubmitProjectControlMessageRequest(conversationId, Guid.NewGuid(), "narrow the scope"));
+        AssertRoundTrips(new SubmitProjectControlMessageResponse(conversationId, 1));
+    }
+
+    [Fact]
+    public void AProjectControlSnapshotAndNullRunFacts_RoundTrip()
+    {
+        var conversationId = Guid.NewGuid();
+
+        AssertRoundTrips(new ConversationSnapshot(
+            conversationId, "MissionControl", null, 2, ConversationRunStatus.Queued, null,
+            DateTimeOffset.UtcNow, ConversationPurpose.ProjectControl));
+
+        AssertRoundTrips(new ConversationCommand(
+            Guid.NewGuid(), conversationId, null, ConversationCommandKind.StartMission,
+            "MissionControl", "narrow the scope", [], null, "Ship a todos API"));
+
+        AssertRoundTrips(new ConversationProgress(
+            Guid.NewGuid(), conversationId, null, ConversationEventKind.ParticipantMessage,
+            ConversationParticipant.MissionControl, null, "What would done look like?", null,
+            null, null, null, null, null, DateTimeOffset.UtcNow));
+    }
+
+    // The defaults are the backward-compatibility hinge: MissionRun must be ordinal 0 so a
+    // checkpoint persisted before the field existed keeps meaning "Janus run", and ProjectGoal must
+    // default to null so every existing Janus construction site stays correct without being edited.
+    [Fact]
+    public void TheAdditiveDefaults_AreMissionRunAndANullProjectGoal()
+    {
+        Assert.Equal(ConversationPurpose.MissionRun, default(ConversationPurpose));
+        Assert.Equal(0, (int)ConversationPurpose.MissionRun);
+
+        var janusCommand = new ConversationCommand(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), ConversationCommandKind.StartMission,
+            "Janus", "do the work", [], null);
+        Assert.Null(janusCommand.ProjectGoal);
+    }
+
+    // The two purposes serialize as exact complements, and the Janus shape is unchanged: it still
+    // carries runId and simply omits the new optional projectGoal under WhenWritingNull.
+    [Fact]
+    public void MissionRunJsonKeepsRunIdAndOmitsProjectGoal_WhileProjectControlJsonIsTheComplement()
+    {
+        var missionRun = JsonSerializer.Serialize(
+            new ConversationCommand(
+                Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), ConversationCommandKind.StartMission,
+                "Janus", "do the work", [], null),
+            ConversationContractsJsonContext.Default.ConversationCommand);
+
+        var projectControl = JsonSerializer.Serialize(
+            new ConversationCommand(
+                Guid.NewGuid(), Guid.NewGuid(), null, ConversationCommandKind.StartMission,
+                "MissionControl", "narrow the scope", [], null, "Ship a todos API"),
+            ConversationContractsJsonContext.Default.ConversationCommand);
+
+        Assert.Contains("\"runId\"", missionRun);
+        Assert.DoesNotContain("projectGoal", missionRun);
+
+        Assert.DoesNotContain("\"runId\"", projectControl);
+        Assert.Contains("\"projectGoal\"", projectControl);
+    }
 }

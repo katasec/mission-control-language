@@ -22,6 +22,22 @@ public interface IConversationGrain : Orleans.IGrainWithStringKey
     /// request (Task 6). Same conflict/duplicate semantics as <see cref="AcceptCommandAsync"/>.</summary>
     Task<ConversationCommandOutcomeResult> AcceptToolResultAsync(ConversationToolResultInput input);
 
+    /// <summary>Creates this conversation as a Project's zero-tool Mission Control conversation
+    /// (43.20 task 2), pinning its purpose, Project ID and goal in ONE checkpoint write and
+    /// appending NO event — a newly created control conversation is empty, so its accepted
+    /// sequence is <c>0</c>. An exact retry (same Project and goal) returns the same answer; a
+    /// create naming a different Project or goal, or one against a conversation already pinned to
+    /// a Janus run, is a typed <see cref="ConversationCommandOutcome.Conflict"/>.</summary>
+    Task<ConversationCommandOutcomeResult> AcceptControlCreateAsync(ConversationControlCreateInput input);
+
+    /// <summary>Records one Project-control turn (43.20 task 2): appends exactly one
+    /// <c>UserMessage</c> with a null <c>RunId</c> and dispatches exactly one zero-tool
+    /// MissionControl command. It starts no run, allocates no run ID, appends no
+    /// <c>RunStatus</c>, and never notifies <c>MissionRunGrain</c>. The dispatched command's
+    /// <c>ProjectGoal</c> comes from pinned checkpoint state, never from
+    /// <paramref name="input"/>, which has no such member.</summary>
+    Task<ConversationCommandOutcomeResult> AcceptControlMessageAsync(ConversationControlMessageInput input);
+
     Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgressInput progress);
 
     /// <summary>Appends the matching deterministic <c>RunStatus(Interrupted)</c> fact through the
