@@ -363,9 +363,6 @@ public sealed class ConversationGrain(
             return new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Conflict, null, "This conversation is not a Project Mission container.");
 
-        var capabilities = JsonSerializer.Deserialize(
-            input.CapabilitiesJson, ConversationContractsJsonContext.Default.ConversationCapabilityDeclarationArray) ?? [];
-
         // The command is built BEFORE the duplicate lookup so a retry can be compared against what
         // this call would have produced — mission and input included, which is what makes "same
         // command id, changed mission" a conflict rather than a silently accepted second run.
@@ -378,7 +375,12 @@ public sealed class ConversationGrain(
             input.CommandId, Address.ConversationId,
             ConversationDeterministicIds.ProjectMissionRun(input.CommandId),
             ConversationCommandKind.StartMission,
-            input.Mission, input.Input, capabilities, null, checkpoint.State.ProjectGoal);
+            // ZERO capabilities, always. Opening or invoking a Project grants no local tool
+            // authority (43.21), so this is an empty literal rather than a value read from
+            // anywhere: there is no member on the input, and no checkpoint state, that could make
+            // it non-empty. A direct Host caller therefore has nothing to smuggle a tool
+            // declaration through.
+            input.Mission, input.Input, [], null, checkpoint.State.ProjectGoal);
 
         var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
         if (existing is not null)

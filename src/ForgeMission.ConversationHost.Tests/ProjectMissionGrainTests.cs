@@ -44,9 +44,9 @@ public class ProjectMissionGrainTests(AzuriteFixture fixture)
     }
 
     private static Task<ConversationCommandOutcomeResult> StartRunAsync(
-        IConversationGrain grain, Guid commandId, string mission, string input, string capabilitiesJson = "[]")
+        IConversationGrain grain, Guid commandId, string mission, string input)
         => grain.AcceptProjectMissionRunAsync(
-            new ConversationProjectMissionRunInput(commandId, mission, input, capabilitiesJson));
+            new ConversationProjectMissionRunInput(commandId, mission, input));
 
     // ── Container: no event, no run, no pinned mission ─────────────────────────────
 
@@ -153,6 +153,45 @@ public class ProjectMissionGrainTests(AzuriteFixture fixture)
         Assert.Equal(ConversationCommandKind.StartMission, dispatched.Kind);
         Assert.Equal(runId, dispatched.RunId);
         Assert.Equal(Goal, dispatched.ProjectGoal);
+        // No local tool authority, for EITHER mission. Opening or invoking a Project must not let
+        // a default run probe the machine.
+        Assert.Empty(dispatched.Capabilities);
+    }
+
+    /// <summary>
+    /// The capability baseline, stated as its own test rather than left as one assertion inside a
+    /// broader one: starting a Project Mission Run grants NO local tool authority, for either
+    /// mission. This is the rule a live Janus run violated before the correction — it was handed
+    /// the session's real capabilities and used them to run `ls /` on the machine.
+    /// </summary>
+    [Theory]
+    [InlineData(Janus)]
+    [InlineData(Naive)]
+    public async Task NeitherMissionIsDeclaredAnyCapability(string mission)
+    {
+        await using var host = await fixture.StartHostAsync();
+        var grain = host.GetConversationGrain(NewAddress());
+        await CreateContainerAsync(grain, Guid.NewGuid());
+
+        await StartRunAsync(grain, Guid.NewGuid(), mission, "do the thing");
+
+        Assert.Empty(Assert.Single(host.Dispatcher.Sent).Command.Capabilities);
+    }
+
+    /// <summary>The enforcement is the ABSENCE of a field, not a validation rule — a rule can be
+    /// forgotten or bypassed by a direct Host caller, a missing member cannot. This asserts the
+    /// shape of the two messages a caller could reach, so re-adding a capability field to either
+    /// one fails here rather than silently restoring tool authority.</summary>
+    [Fact]
+    public void NoProjectMissionMessageCanCarryACapability()
+    {
+        Assert.Equal(
+            ["ContainerId", "CommandId", "Mission", "Input"],
+            typeof(StartProjectMissionRunRequest).GetProperties().Select(p => p.Name));
+
+        Assert.Equal(
+            ["CommandId", "Mission", "Input"],
+            typeof(ConversationProjectMissionRunInput).GetProperties().Select(p => p.Name));
     }
 
     /// <summary>The equivalence asserted directly, rather than inferred from two separate

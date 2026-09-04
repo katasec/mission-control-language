@@ -1,7 +1,6 @@
 using System.Net;
 using ForgeMission.ClientRuntime.Transport;
 using ForgeMission.Conversations.Contracts;
-using ForgeMission.Core.Tools;
 
 namespace ForgeMission.ClientRuntime.Services;
 
@@ -12,9 +11,14 @@ namespace ForgeMission.ClientRuntime.Services;
 //
 // The whole point of this class is that it derives everything a run needs and a surface supplies
 // almost nothing. A caller sends a command ID and the person's text; the mission comes from the
-// persisted selection, the Project goal from the container's pinned Host state, and the
-// capabilities from what the session actually authorizes. There is no parameter here through which
-// a provider, model, expert, path, or credential could arrive.
+// persisted selection and the Project goal from the container's pinned Host state. There is no
+// parameter here through which a provider, model, expert, path, or credential could arrive.
+//
+// It also holds NO capability registry, dispatcher, or tool executor, and takes none in its
+// constructor. Starting a Project Mission Run grants no local tool authority (43.21), and that is
+// enforced by absence: there is no expression in this class able to reach local execution. A tool
+// request that somehow arrives is refused in writing by ProjectMissionToolRefusal, which is
+// likewise built without any of that machinery.
 internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
 {
     /// <summary>A bound on the instruction, not on the answer. It exists so an accidental paste of
@@ -24,7 +28,7 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
     private readonly string _projectHome;
     private readonly ProjectStore _projects;
     private readonly ConversationHostClient _hostClient;
-    private readonly ConversationToolHandOff _tools;
+    private readonly ProjectMissionToolRefusal _refusal;
     private readonly ConversationTailReader _tail;
 
     private Guid? _containerId;
@@ -34,18 +38,15 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
         string projectHome,
         ProjectStore projects,
         ConversationHostClient hostClient,
-        CapabilityRegistry capabilities,
-        ICapabilityDispatcher dispatcher,
         Action<ClientRuntimeEvent> publish,
         CancellationToken applicationStopping)
     {
         _projectHome = projectHome;
         _projects = projects;
         _hostClient = hostClient;
-        _tools = new ConversationToolHandOff(sessionId, hostClient, capabilities, dispatcher, publish);
-        // A Janus child run can request a tool, so this session — unlike the legacy control one —
-        // does supply the hand-off hook. A Naive run never reaches it: it is declared zero
-        // capabilities and its executor refuses a tool request outright.
+        _refusal = new ProjectMissionToolRefusal(sessionId, hostClient, publish);
+        // The hook REFUSES rather than executes. Supplying one at all is deliberate: without it a
+        // stray tool request would leave the run waiting for a result that never comes.
         _tail = new ConversationTailReader(sessionId, hostClient, publish, applicationStopping, OnTailEventAsync);
     }
 
@@ -77,9 +78,9 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
     ///
     /// The mission is read from the manifest rather than accepted from the caller — that is what
     /// makes "Presentation never branches execution" structural: there is no argument here it could
-    /// pass to choose one. Capabilities are per-run and derived from the mission: Janus is offered
-    /// what this session authorizes, Naive is offered nothing at all, so its zero-tool contract
-    /// holds before any provider sees a declaration rather than only at the executor's guard.
+    /// pass to choose one. No capabilities are sent for either mission: the request has no field
+    /// for them and this class has none to offer, so neither Janus nor Naive is given local tool
+    /// authority merely because someone pressed Run.
     /// </summary>
     public async Task<StartedMissionRun> StartRunAsync(
         Guid commandId, string input, CancellationToken ct)
@@ -91,7 +92,7 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
 
         var accepted = await _hostClient.StartProjectMissionRunAsync(
             new Conversations.Contracts.StartProjectMissionRunRequest(
-                containerId, commandId, mission, input, CapabilitiesFor(mission)), ct);
+                containerId, commandId, mission, input), ct);
 
         // The mission is returned with the acceptance rather than left for a surface to remember:
         // the selection can change between rendering a button and pressing it, and what a person
@@ -123,11 +124,6 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
                 $"That instruction is too long ({input.Length} characters); the limit is {MaxInputCharacters}.");
     }
 
-    // Janus may request a tool and is therefore told what this session can execute. Naive declares
-    // none: nothing is offered to the provider, so there is nothing for it to ask for.
-    private ConversationCapabilityDeclaration[] CapabilitiesFor(string mission) =>
-        mission == ProjectMissions.Janus ? _tools.Declarations : [];
-
     private ProjectRecord ReadProject() =>
         _projects.Open(_projectHome).Project
             ?? throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
@@ -153,7 +149,7 @@ internal sealed class ProjectMissionRuntimeSession : IAsyncDisposable
     }
 
     private Task OnTailEventAsync(ConversationEvent evt, CancellationToken ct) =>
-        _tools.OnTailEventAsync(_containerId!.Value, evt, ct);
+        _refusal.OnTailEventAsync(_containerId!.Value, evt, ct);
 
     /// <summary>Maps an expected Conversation-service rejection to this Project's typed error
     /// vocabulary. An unexpected status is left to fail the transport normally rather than being

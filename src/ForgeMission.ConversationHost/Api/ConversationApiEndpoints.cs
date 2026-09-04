@@ -198,7 +198,11 @@ public static class ConversationApiEndpoints
     /// well as in Client Runtime and again by the Worker's closed catalog — the Host is a public
     /// entry point, so it does not rely on a caller having validated anything. A container that
     /// exists but is a run or control conversation is a conflict, not a not-found: it is
-    /// addressable, it is simply not a Project Mission container.</summary>
+    /// addressable, it is simply not a Project Mission container.
+    ///
+    /// This route grants no local tool authority. That is enforced by absence rather than by a
+    /// check: the request carries no capability field, so a direct Host caller — the one this
+    /// method exists to distrust — has nothing to put a tool declaration in.</summary>
     public static async Task<ConversationCommandOutcomeResult> HandleStartProjectMissionRunAsync(
         StartProjectMissionRunRequest request, IGrainFactory grainFactory)
     {
@@ -220,11 +224,10 @@ public static class ConversationApiEndpoints
             return new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Conflict, null, "This conversation is not a Project Mission container.");
 
-        var capabilitiesJson = JsonSerializer.Serialize(
-            request.Capabilities ?? [], ConversationContractsJsonContext.Default.ConversationCapabilityDeclarationArray);
-
+        // No capabilities are read, because the request has none to read and the grain declares
+        // zero for every run on this route.
         return await grain.AcceptProjectMissionRunAsync(
-            new ConversationProjectMissionRunInput(request.CommandId, request.Mission, request.Input, capabilitiesJson));
+            new ConversationProjectMissionRunInput(request.CommandId, request.Mission, request.Input));
     }
 
     public static async Task<GetConversationOutcomeResult> HandleGetConversationAsync(

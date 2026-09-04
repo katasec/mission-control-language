@@ -369,18 +369,20 @@ public sealed record CreateProjectMissionContainerResponse(
 ///
 /// <see cref="Mission"/> is allow-listed by Client Runtime before it is sent and again by the
 /// Worker's closed catalog, so no caller can name a provider, model, expert, or arbitrary mission.
-/// <see cref="Capabilities"/> is per-run rather than pinned on the container: a Janus run declares
-/// the session's capabilities, a Naive run declares none.
 /// <see cref="CommandId"/> is generated once at submission and reused only for its retry; an equal
 /// retry returns the original run, and the same ID with a different mission or input is a conflict.
-/// There is deliberately no field for a project goal, a path, a run ID, or a credential.
+///
+/// There is deliberately NO capability field, and no field for a project goal, a path, a run ID, or
+/// a credential. Starting a Project Mission Run grants no local tool authority: the Host declares
+/// zero capabilities for every run on this route, so a direct Host caller cannot smuggle tool
+/// declarations in through a message that has nowhere to put them. Removing the field is the
+/// enforcement — a validation rule could be forgotten, an absent member cannot.
 /// </summary>
 public sealed record StartProjectMissionRunRequest(
     Guid ContainerId,
     Guid CommandId,
     string Mission,
-    string Input,
-    ConversationCapabilityDeclaration[] Capabilities);
+    string Input);
 
 /// <summary><c>POST /conversations/{containerId}/mission-runs</c> response
 /// (<c>202 Accepted</c>) — the same shape a Janus start already returns.</summary>

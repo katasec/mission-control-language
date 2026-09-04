@@ -150,8 +150,7 @@ internal static class ClientRuntimeEndpoints
             IHostApplicationLifetime lifetime,
             CancellationToken ct) =>
         {
-            if (!sessions.TryGet(request.SessionId, out var session) ||
-                session?.Workspace.Capabilities is null || session.Workspace.Dispatcher is null)
+            if (!sessions.TryGet(request.SessionId, out var session) || session?.Workspace.Root is null)
                 return Results.NotFound();
 
             try
@@ -169,8 +168,6 @@ internal static class ClientRuntimeEndpoints
                         session.Workspace.Root!,
                         projects,
                         new ConversationHostClient(clients.CreateClient("conversation-host")),
-                        session.Workspace.Capabilities,
-                        session.Workspace.Dispatcher,
                         events.Publish,
                         lifetime.ApplicationStopping),
                     async missions =>
