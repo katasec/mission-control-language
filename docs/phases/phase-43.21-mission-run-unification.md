@@ -41,8 +41,8 @@ Presentation owns selection rendering, text entry, busy/error display, and navig
 | Action | Surface-neutral Client Runtime contract | Owner and rule |
 |---|---|---|
 | Select | `SelectProjectMissionRequest { sessionId, mission }` → `{ selectedMission }` | Client Runtime allow-lists only `Janus` and `Naive`, atomically persists `ProjectManifest.SelectedMission`, and returns the canonical value. Presentation never supplies a path, digest, provider, or expert. |
-| Invoke | `StartProjectMissionRunRequest { sessionId, commandId, input }` → `{ runId, acceptedSequence, status }` | Client Runtime derives the persisted mission, Project goal, allowed context/capabilities, and parent durable container. `commandId` is generated once at press and reused only for retry. |
-| Execute | Host-internal `StartProjectMissionRun { containerId, commandId, mission, projectGoal, input, capabilities }` | ConversationHost creates/idempotently returns the child run and orders events. Worker resolves the named mission and executes it. Neither accepts an arbitrary provider/model. |
+| Invoke | `StartProjectMissionRunRequest { sessionId, commandId, input }` → `{ runId, acceptedSequence, status }` | Client Runtime derives the persisted mission, Project goal, and parent durable container. `commandId` is generated once at press and reused only for retry. |
+| Execute | Host-internal `StartProjectMissionRun { containerId, commandId, mission, projectGoal, input }` | ConversationHost creates/idempotently returns the child run and orders events. It declares zero capabilities for this MVP. Worker resolves the named mission and executes it. Neither accepts an arbitrary provider/model. |
 
 `input` is required bounded user text, distinct from the Project goal. Equal retries return the original run; changed mission or input under the same `commandId` is `Conflict`. Unknown/replaced sessions, unknown mission, blank/oversized input, terminal parent, and undeclared capability/context return typed errors and create no run.
 
