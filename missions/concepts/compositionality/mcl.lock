@@ -1,22 +1,17 @@
-version: 1
+version: 2
 experts:
   Composer:
-    source: experts
-    path: experts/Composer/expert.md
-    hash: 489991e33d1da82a9b8395946f1174e864f189d6a48cd3f433620a7573e7d98f
+    source: project:///experts/Composer/expert.md
+    contentDigest: sha256:489991e33d1da82a9b8395946f1174e864f189d6a48cd3f433620a7573e7d98f
   FactAnalyst:
-    source: experts
-    path: experts/FactAnalyst/expert.md
-    hash: d6c5d525de15d543df47c79d46ee703e9b73cf94800402fdcbe77056a260c99a
+    source: project:///experts/FactAnalyst/expert.md
+    contentDigest: sha256:d6c5d525de15d543df47c79d46ee703e9b73cf94800402fdcbe77056a260c99a
   NumberChecker:
-    source: experts
-    path: experts/NumberChecker/expert.md
-    hash: a94a6c0c924bdc071c5ed6a34ea313769e1c83fcbc35802d91a2270a1e72762c
+    source: project:///experts/NumberChecker/expert.md
+    contentDigest: sha256:a94a6c0c924bdc071c5ed6a34ea313769e1c83fcbc35802d91a2270a1e72762c
   TaskDecomposer:
-    source: experts
-    path: experts/TaskDecomposer/expert.md
-    hash: c7289bd184aeb7dfebbbde0254ede8d95892306fd1237a3e022b927724da3371
+    source: project:///experts/TaskDecomposer/expert.md
+    contentDigest: sha256:c7289bd184aeb7dfebbbde0254ede8d95892306fd1237a3e022b927724da3371
   ToneReviewer:
-    source: experts
-    path: experts/ToneReviewer/expert.md
-    hash: 3f45519ff27886fa83949d4696fb3e9e850b674023b4fb1ac76062cf752ec45c
+    source: project:///experts/ToneReviewer/expert.md
+    contentDigest: sha256:3f45519ff27886fa83949d4696fb3e9e850b674023b4fb1ac76062cf752ec45c

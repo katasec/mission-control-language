@@ -1,10 +1,8 @@
-version: 1
+version: 2
 experts:
   Drafter:
-    source: experts
-    path: experts/Drafter/expert.md
-    hash: 01c819a7e09d2324583b6f62685e0d3ae15dfbee28154290395b76296d075dc2
+    source: project:///experts/Drafter/expert.md
+    contentDigest: sha256:01c819a7e09d2324583b6f62685e0d3ae15dfbee28154290395b76296d075dc2
   ReferenceJudge:
-    source: experts
-    path: experts/ReferenceJudge/expert.md
-    hash: 512450da77f9a46d78d621d425e99fca43248052967e0e8156e34025ac112977
+    source: project:///experts/ReferenceJudge/expert.md
+    contentDigest: sha256:512450da77f9a46d78d621d425e99fca43248052967e0e8156e34025ac112977

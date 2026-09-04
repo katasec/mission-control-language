@@ -1,5 +1,5 @@
-version: 1
+version: 2
 experts:
-  OcrExec:
-    source: experts
-    path: experts/Ocr/expert.md
+  Ocr:
+    source: project:///experts/Ocr/expert.md
+    contentDigest: sha256:23084414acddf3215e6dec4c1ee9f31afeb9264f23dc2ea1535f5541f88a4436

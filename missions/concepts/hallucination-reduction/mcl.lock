@@ -1,10 +1,8 @@
-version: 1
+version: 2
 experts:
   FactChecker:
-    source: experts
-    path: experts/FactChecker/expert.md
-    hash: 95ba105233af975621297856d783923e66c8d26d97cc86406c95894ad6cdff03
+    source: project:///experts/FactChecker/expert.md
+    contentDigest: sha256:95ba105233af975621297856d783923e66c8d26d97cc86406c95894ad6cdff03
   LLMDrafter:
-    source: experts
-    path: experts/LLMDrafter/expert.md
-    hash: fa43d8b1aa69ce632163471f4782d7325eba4b2597ef10d1d04acebefd3df177
+    source: project:///experts/LLMDrafter/expert.md
+    contentDigest: sha256:fa43d8b1aa69ce632163471f4782d7325eba4b2597ef10d1d04acebefd3df177

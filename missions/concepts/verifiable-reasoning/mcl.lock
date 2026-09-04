@@ -1,18 +1,14 @@
-version: 1
+version: 2
 experts:
   ConclusionWriter:
-    source: experts
-    path: experts/ConclusionWriter/expert.md
-    hash: eb1ddada29373900a1a383ec4ec0ac1cfdb3a087bb0f0d31e51a1de974b87d73
+    source: project:///experts/ConclusionWriter/expert.md
+    contentDigest: sha256:eb1ddada29373900a1a383ec4ec0ac1cfdb3a087bb0f0d31e51a1de974b87d73
   ProblemFramer:
-    source: experts
-    path: experts/ProblemFramer/expert.md
-    hash: aed364c736cb9fa51ade60a343f450cc4512118091008b31e87616094901488d
+    source: project:///experts/ProblemFramer/expert.md
+    contentDigest: sha256:aed364c736cb9fa51ade60a343f450cc4512118091008b31e87616094901488d
   ReasoningProposer:
-    source: experts
-    path: experts/ReasoningProposer/expert.md
-    hash: ad65b4bc93da736b579c9be0465a5e04991c4d038a3983083d01d8d807d27e48
+    source: project:///experts/ReasoningProposer/expert.md
+    contentDigest: sha256:ad65b4bc93da736b579c9be0465a5e04991c4d038a3983083d01d8d807d27e48
   StepVerifier:
-    source: experts
-    path: experts/StepVerifier/expert.md
-    hash: 6f741d032992784222772b0a3e8f73bdf505f6e535cf7cce971a0b452a06e59d
+    source: project:///experts/StepVerifier/expert.md
+    contentDigest: sha256:6f741d032992784222772b0a3e8f73bdf505f6e535cf7cce971a0b452a06e59d

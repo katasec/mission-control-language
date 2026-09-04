@@ -1,14 +1,11 @@
-version: 1
+version: 2
 experts:
   ConstitutionalCritic:
-    source: experts
-    path: experts/ConstitutionalCritic/expert.md
-    hash: de1277dd184548565628815f6d6ad42220cef60c98b0b2d1532da3c70f852240
+    source: project:///experts/ConstitutionalCritic/expert.md
+    contentDigest: sha256:de1277dd184548565628815f6d6ad42220cef60c98b0b2d1532da3c70f852240
   Drafter:
-    source: experts
-    path: experts/Drafter/expert.md
-    hash: 0b0586f2e55fb56fa77d09d9aaac0c0d901069168b5016c5b66ae92c662574c5
+    source: project:///experts/Drafter/expert.md
+    contentDigest: sha256:0b0586f2e55fb56fa77d09d9aaac0c0d901069168b5016c5b66ae92c662574c5
   Reviser:
-    source: experts
-    path: experts/Reviser/expert.md
-    hash: b722600deb9e6fd4a3c99aba0b28745c83ecd8a4dff1d0943a33fd7a81a5ad72
+    source: project:///experts/Reviser/expert.md
+    contentDigest: sha256:b722600deb9e6fd4a3c99aba0b28745c83ecd8a4dff1d0943a33fd7a81a5ad72

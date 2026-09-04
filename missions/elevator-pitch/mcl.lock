@@ -1,6 +1,5 @@
-version: 1
+version: 2
 experts:
   PitchWriter:
-    source: experts
-    path: experts/PitchWriter/expert.md
-    hash: 0b7ba565e1599f6f508d883a3028c8f4ae04549782bc9d4994366d880b1a8656
+    source: project:///experts/PitchWriter/expert.md
+    contentDigest: sha256:0b7ba565e1599f6f508d883a3028c8f4ae04549782bc9d4994366d880b1a8656

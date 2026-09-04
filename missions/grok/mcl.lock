@@ -1,22 +1,17 @@
-version: 1
+version: 2
 experts:
   DirectAnswer:
-    source: experts
-    path: experts/DirectAnswer/expert.md
-    hash: 34bc14a143dc9b0772c0f3cf77d20582e30e11f3166e1b1d32c4ed8aea0948f9
+    source: project:///experts/DirectAnswer/expert.md
+    contentDigest: sha256:34bc14a143dc9b0772c0f3cf77d20582e30e11f3166e1b1d32c4ed8aea0948f9
   ExtractRoute:
-    source: experts
-    path: experts/ExtractRoute/expert.md
-    hash: fd53d762540bc93ea3494536b5daa7a69c6247d9f4f7a929f4b30ca32bf0eba3
+    source: project:///experts/ExtractRoute/expert.md
+    contentDigest: sha256:fd53d762540bc93ea3494536b5daa7a69c6247d9f4f7a929f4b30ca32bf0eba3
   GroundedAnswer:
-    source: experts
-    path: experts/GroundedAnswer/expert.md
-    hash: 49381ca5ec2d09d4eb972509baee4baab1e4379a354bb0992955d8c3ca40c025
+    source: project:///experts/GroundedAnswer/expert.md
+    contentDigest: sha256:49381ca5ec2d09d4eb972509baee4baab1e4379a354bb0992955d8c3ca40c025
   SearchRouter:
-    source: experts
-    path: experts/SearchRouter/expert.md
-    hash: c3e735bf393ed050efb9310dcbf0724bab61ed9cfe8b94039418ff3d6619b873
+    source: project:///experts/SearchRouter/expert.md
+    contentDigest: sha256:c3e735bf393ed050efb9310dcbf0724bab61ed9cfe8b94039418ff3d6619b873
   WebSearch:
-    source: experts
-    path: experts/WebSearch/expert.md
-    hash: ceb653d63b61af31965cae3b5b72e44d86bf5750bb70bd6b35b5d5d79a3fda73
+    source: project:///experts/WebSearch/expert.md
+    contentDigest: sha256:ceb653d63b61af31965cae3b5b72e44d86bf5750bb70bd6b35b5d5d79a3fda73

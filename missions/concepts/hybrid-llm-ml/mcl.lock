@@ -1,18 +1,14 @@
-version: 1
+version: 2
 experts:
   ExtractFeatures:
-    source: experts
-    path: experts/ExtractFeatures/expert.md
-    hash: b9721bb5a499d8bfb7ffb73b0e6a08653dcd230a4787a743a256f7ae5fdd62ee
+    source: project:///experts/ExtractFeatures/expert.md
+    contentDigest: sha256:b9721bb5a499d8bfb7ffb73b0e6a08653dcd230a4787a743a256f7ae5fdd62ee
   LLMAnalyst:
-    source: experts
-    path: experts/LLMAnalyst/expert.md
-    hash: a0cbf92d65f7c9283324fc2c5154c49d3efda27ed2252006e74814615b6978bc
+    source: project:///experts/LLMAnalyst/expert.md
+    contentDigest: sha256:a0cbf92d65f7c9283324fc2c5154c49d3efda27ed2252006e74814615b6978bc
   LLMInterpreter:
-    source: experts
-    path: experts/LLMInterpreter/expert.md
-    hash: ee5eb91498becc59123d6ebd2ff362eeeb84ac0bb69826d00d5478e069649116
+    source: project:///experts/LLMInterpreter/expert.md
+    contentDigest: sha256:ee5eb91498becc59123d6ebd2ff362eeeb84ac0bb69826d00d5478e069649116
   Scorer:
-    source: experts
-    path: experts/Scorer/expert.md
-    hash: 39d4332d32e9a8567a9d7c7d1e64cefed7e11f03c345c72135780ef0386f8f20
+    source: project:///experts/Scorer/expert.md
+    contentDigest: sha256:a78284e4c9e04c02130e131fd932cc510dc0a2c48d39559d640b6129be5fd1fb

@@ -1,18 +1,14 @@
-version: 1
+version: 2
 experts:
   Analyst:
-    source: experts
-    path: experts/Analyst/expert.md
-    hash: dbfb0cc5ae934d9af29f072a56548e3fe514fbde85e8136d226d688afd46221e
+    source: project:///experts/Analyst/expert.md
+    contentDigest: sha256:dbfb0cc5ae934d9af29f072a56548e3fe514fbde85e8136d226d688afd46221e
   Implementer:
-    source: experts
-    path: experts/Implementer/expert.md
-    hash: 52fd116dae8bc1aa9739893f9d0969b51289a087f3583e3fd49ac49080c65fe3
+    source: project:///experts/Implementer/expert.md
+    contentDigest: sha256:52fd116dae8bc1aa9739893f9d0969b51289a087f3583e3fd49ac49080c65fe3
   Reviewer:
-    source: experts
-    path: experts/Reviewer/expert.md
-    hash: 15c5a17098bd73c1a504aeef1eaaa501ad366af45e7e303ccb823499f13b4900
+    source: project:///experts/Reviewer/expert.md
+    contentDigest: sha256:15c5a17098bd73c1a504aeef1eaaa501ad366af45e7e303ccb823499f13b4900
   Strategist:
-    source: experts
-    path: experts/Strategist/expert.md
-    hash: 2a34ae3bb16edf65127434c1b05fc7556805bbbd0e674f1f0c34a15abd1e2844
+    source: project:///experts/Strategist/expert.md
+    contentDigest: sha256:2a34ae3bb16edf65127434c1b05fc7556805bbbd0e674f1f0c34a15abd1e2844

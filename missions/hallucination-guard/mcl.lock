@@ -1,10 +1,8 @@
-version: 1
+version: 2
 experts:
   Answerer:
-    source: experts
-    path: experts/Answerer/expert.md
-    hash: 05720174715689b75e1b6de069074868fc388ea693e6120688c9a555ace69687
+    source: project:///experts/Answerer/expert.md
+    contentDigest: sha256:05720174715689b75e1b6de069074868fc388ea693e6120688c9a555ace69687
   Verifier:
-    source: experts
-    path: experts/Verifier/expert.md
-    hash: 6bd8137e59a3296a287fd591021ed4c69520a74075a2b1874c196ba1c71cb644
+    source: project:///experts/Verifier/expert.md
+    contentDigest: sha256:6bd8137e59a3296a287fd591021ed4c69520a74075a2b1874c196ba1c71cb644
