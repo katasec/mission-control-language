@@ -1,8 +1,9 @@
 # Phase 43.20 — Project Workbench MVP
 
 > **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 implemented and awaiting
-> review.** The Project home and durable Mission Control pass browser-first and default-config
-> packaged Desktop acceptance.
+> review.** Its Project Control user path and old Task 4 launch design are superseded by
+> [43.21 — Mission-run-first Project invocation](phase-43.21-mission-run-unification.md). Do not
+> merge the current Task 3 branch as the final Project interaction model.
 > Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
@@ -698,7 +699,11 @@ supplied; `SessionSetupRequest` is replacement-only and enforced in Client Runti
 create/open establish a session and root; `MissionControlConversationId` is still `null` and Task 2
 owns its first write-back.
 
-### Task 2 — Durable Project Mission Control — verified and merged
+### Task 2 — Durable Project Mission Control — verified and merged, user-facing route superseded
+
+**Superseded product behaviour.** This remains the verified historical compatibility route, but it
+is not the direction for new Project interaction. Do not extend it: 43.21 replaces the visible
+Project Control conversation with universal named Mission Runs.
 
 **Done.** PR #90 merged as `767c289` after the full suite (925 passed, 0 failed, 11 skipped), AOT
 publish, browser-first reference checks, and a default-config packaged Desktop round-trip against
@@ -831,6 +836,10 @@ Host/Orleans/Azure/provider dependency; fresh-Host replay, contract round-trip, 
 regression, and full-suite tests pass.
 
 ### Task 3 — Project Explorer and resolved dependencies — implemented, review pending
+
+**Supersession boundary.** Explorer, read-only document, lock, and Settings work remain reusable.
+The rail’s `Mission Control` destination and any implicit project-control opening are superseded by
+43.21 and cannot be accepted or merged as the final user-facing flow.
 
 **Implemented.** Lock file v2, the two Client Runtime contracts, and the rail/Explorer/document/
 Settings workbench are on `codex/task-43-20-task3-project-explorer`. The prerequisite
@@ -1037,7 +1046,11 @@ and Settings without creating a new project/session; Explorer accurately disting
 pinned OCI expert/mission evidence; and browser/component tests prove the three-entry order and
 project-scoped navigation.
 
-### Task 4 — Named run launch and immutable snapshot
+### Task 4 — Named run launch and immutable snapshot — superseded by 43.21
+
+43.21’s universal `StartProjectMissionRun` replaces this task’s control-conversation launch shape.
+Keep the immutable snapshot requirements as input to its Task 1; do not implement this obsolete
+Presentation action.
 
 Launch a selected mission from Project Mission Control without a configuration wizard.
 

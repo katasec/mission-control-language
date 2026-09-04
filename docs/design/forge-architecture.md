@@ -143,8 +143,8 @@ See [43.11](../phases/phase-43.11-wasm-photino-shell.md) for the desktop-specifi
 ### Presentation-surface parity — non-negotiable
 
 Desktop and TUI are interchangeable Presentation surfaces over the same Client Runtime capabilities.
-Every product action—creating/opening a Project, selecting a mission, submitting a control turn,
-launching/stopping/guiding a run, and reading its trace—must be expressible through a named Client
+Every product action—creating/opening a Project, selecting a mission, starting/stopping/guiding a
+named mission run, and reading its trace—must be expressible through a named Client
 Runtime contract and have no Desktop/Blazor/Host-only business path. A surface may choose its own
 layout, input, focus, and accessibility behaviour; those presentation details are not a separate
 product capability. A new Desktop action is not ready until a TUI could invoke its underlying
