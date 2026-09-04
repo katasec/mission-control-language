@@ -26,7 +26,8 @@ To revert: swap "Codex" and "Claude" back in the Roles section, the loop, both t
   before approving the task as done.
 - **Claude** — implementer. Never writes or modifies code without an explicitly approved plan.
   Always replies to a task assignment with a plan first, and to a finished implementation with a
-  completion summary Codex can review.
+  completion summary Codex can review. Every reply intended for human relay uses the mandatory
+  relay shape below.
 
 **If you are Claude reading this because you just opened this repo:** this is your role. Wait for a
 task assignment from Codex before doing anything else — do not start implementing on your own
@@ -52,6 +53,28 @@ initiative, even if a gap looks obvious.
    Verification means a named check (test result, command output, a live run) — matching AGENTS.md's
    status-honesty rule — not "looks complete."
 
+### Mandatory relay shape (Codex → Claude, then Claude → operator → Codex)
+
+Every relay prompt from Codex begins with this instruction, before the task-specific content:
+
+```
+RELAY FORMAT — MANDATORY
+
+This message is from Codex and your reply will be copied by a human back to Codex.
+Reply with exactly one fenced code block. Inside that block, put your complete response in a
+simple ASCII text box. Do not put prose, a Markdown table, or any other content outside that box.
+
+Use this shape (replace the content, keep the box):
++----------------------------------------------------------------------------+
+| [YOUR RESPONSE]                                                            |
++----------------------------------------------------------------------------+
+```
+
+Codex includes it on assignments, plan approvals, revision requests, corrections, review requests,
+and completion-summary requests. Claude follows it for every corresponding reply. If the reply is
+not in that shape, Codex asks Claude to re-send it in that shape; the operator never has to manually
+reformat a response.
+
 ---
 
 ## Task assignment template (Codex → Claude)
@@ -60,6 +83,17 @@ Copy/paste and fill in the bracketed parts. Point at docs rather than restating 
 there is exactly one place each decision can drift out of date.
 
 ```
+RELAY FORMAT — MANDATORY
+
+This message is from Codex and your reply will be copied by a human back to Codex.
+Reply with exactly one fenced code block. Inside that block, put your complete response in a
+simple ASCII text box. Do not put prose, a Markdown table, or any other content outside that box.
+
+Use this shape (replace the content, keep the box):
++----------------------------------------------------------------------------+
+| [YOUR RESPONSE]                                                            |
++----------------------------------------------------------------------------+
+
 TASK ASSIGNMENT
 
 Role: implementer. Do not write or modify any code until I approve your plan.
@@ -181,13 +215,15 @@ UI visual acceptance (user-visible Desktop/ForgeUI tasks only):
   spoke's task list, not one assignment for the whole spoke.
 - The templates are copy/paste-shaped for a human relaying between two chat surfaces; nothing here
   assumes Claude and Codex are wired together programmatically.
+- **Relay shape is a protocol, not a preference.** The mandatory relay instruction appears in every
+  Codex → Claude prompt, including a short follow-up that approves a plan or requests a correction.
+  It avoids responses such as Markdown tables that are hard for the operator to relay intact.
 - **A revision is a delta, not a retransmission.** Lead every revised plan with its changed
   decisions, files, and evidence plus the prior artifact title/version. If that delta is empty,
   report that no revised artifact exists; do not consume a review turn with an identical relay.
-- **Always output the filled-in template inside a fenced code block**, not as plain prose — that's
-  what makes it a single clean copy/paste between desktop apps. Codex in particular tends to forget
-  this; if a task assignment or completion summary shows up unfenced, re-send it fenced rather than
-  relaying it as-is.
+- **Always output the filled-in template inside a fenced code block containing an ASCII text box,**
+  not as plain prose — that is what makes it a single clean copy/paste between desktop apps. If a
+  response is not in that shape, re-send it correctly rather than relaying it as-is.
 - Scope: this doc governs Claude/Codex handoff mechanics only. General design-before-implementation
   policy lives in [AGENTS.md → Design first](../../AGENTS.md#design-first); general response-shape
   conventions (independent of who's implementing) live in

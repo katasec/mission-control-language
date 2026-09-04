@@ -237,6 +237,13 @@ block containing an ASCII text box; never leave the only relay copy in commentar
 is collapsed after the turn. Do not say that Codex is awaiting Claude's plan/summary unless that same
 final response contains the exact relay prompt the operator can send. The next step is then Claude's
 reply to that prompt, not an assumption that a relay happened.
+
+**Claude's relayed replies must be copy/paste-ready.** Every Codex → Claude relay prompt must state
+that it is from Codex and that Claude's entire reply is for human relay: one fenced code block, with
+a simple ASCII text box inside it, and no prose, Markdown table, or other content outside the box.
+This applies to plans, revisions, approvals, corrections, and completion summaries. Codex must
+re-send any reply that misses this shape rather than asking the operator to clean it up manually.
+
 **If you are Claude and you just opened this repo: read that doc now.** It defines your role and the
 approval gates you operate under — do not start implementing anything until a task assignment
 following that protocol arrives.
