@@ -217,6 +217,11 @@ acceptance. This governs visual surfaces; the cross-surface capability requireme
 Presentation-surface parity gate in
 [Engineering Philosophy](engineering-philosophy.md#presentation-surface-parity-gate).
 
+Visual parity is not normal-path acceptance: a rendered capture using an overridden service or
+configuration proves only that controlled setup. User-visible Desktop work must additionally pass
+the [Default-Path Acceptance](default-path-acceptance.md) gate using the published app's ordinary
+configuration.
+
 ## AI-assisted design & verification tooling (updated 2026-07-27 — this is the reason for the pivot)
 
 For a web-rendered UI (Electron's local Blazor Server host, or `forge webui`'s browser tab), Claude's

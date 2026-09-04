@@ -67,6 +67,7 @@ Role: implementer. Do not write or modify any code until I approve your plan.
 Read first (do not summarize these back to me):
 - AGENTS.md
 - docs/plan.md
+- docs/design/default-path-acceptance.md
 - [docs/phases/phase-N.M-<slug>.md]
 - [docs/design/<relevant>.md]
 - For every user-visible Desktop or ForgeUI change: also
@@ -84,6 +85,13 @@ Scope card:
 
 Done when:
 [the "Done when" condition from the spoke, or "see spoke doc, task N"]
+
+Default-path acceptance (every task):
+- Default facts: [published artifact, relevant overrides explicitly absent, normal dependency
+  route, and starting-state fact from default-path-acceptance.md; or N/A for documentation-only
+  work]
+- End-to-end action and named success/failure observation:
+- Controlled/stubbed tests, if any, and why they are not acceptance evidence:
 
 Shared-action ownership (when the task adds or changes a user action):
 [for each action: shared contract, outcome/failure semantics, authorization
@@ -139,6 +147,11 @@ Verification:
 Precondition test matrix:
 [named positive and negative result for every precondition in the approved plan,
  or N/A with a reason]
+
+Default-path acceptance (every task):
+[published artifact and defaults actually used; normal dependency/version; action and named
+result; PASS/FAIL. For documentation-only work, N/A. List every override/test double separately
+and confirm it is not cited as acceptance evidence.]
 
 Done when - met?
 [yes/no against the spoke's "Done when" condition, with the evidence above]
