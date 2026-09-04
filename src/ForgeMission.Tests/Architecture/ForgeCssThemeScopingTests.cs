@@ -68,8 +68,49 @@ public sealed class ForgeCssThemeScopingTests
                      "--wb-name-height", "--wb-location-height", "--wb-gap-title", "--wb-gap-field",
                      "--wb-gap-rule", "--wb-gap-action", "--wb-band-gap", "--wb-band-pad", "--wb-band-max",
                      "--wb-action-width", "--wb-action-height", "--wb-action-pad-x", "--wb-link-gap", "--wb-open-row-gap",
+                     // 43.20 task 3 — the workbench shell's own geometry.
+                     "--wb-rail-width", "--wb-rail-pad-x", "--wb-rail-pad-y", "--wb-rail-gap",
+                     "--wb-rail-item-pad-x", "--wb-rail-item-pad-y", "--wb-rail-marker-width",
+                     "--wb-section-gap",
                  })
             Assert.Contains(token, light.Body, StringComparison.Ordinal);
+    }
+
+    // 43.20 task 3 — the rail is a distinct dark surface in BOTH colour modes, so unlike every
+    // other colour token its dark values are deliberately IDENTICAL to its light ones. The general
+    // pairing test above only proves each token is restated; this proves it is restated unchanged,
+    // which is the actual design decision and the thing a later "fix the dark mode" edit would
+    // silently undo.
+    [Fact]
+    public void TheRailTokens_HoldTheSameValuesInBothColourModes()
+    {
+        var workbench = TokenBlocks()
+            .Where(block => block.Selector.Contains(SurfaceThemeAttribute, StringComparison.Ordinal))
+            .ToList();
+
+        var expected = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["--wb-rail-surface"] = "#06284c",
+            ["--wb-rail-surface-selected"] = "#0c4475",
+            ["--wb-rail-text"] = "#ffffff",
+            ["--wb-rail-text-muted"] = "#b9d6f5",
+            ["--wb-rail-marker"] = "#32d9f2",
+        };
+
+        Assert.Equal(3, workbench.Count); // light, automatic dark, forced dark
+        foreach (var block in workbench)
+        {
+            foreach (var (token, value) in expected)
+                Assert.Equal(value, Declared(block.Body, token));
+        }
+    }
+
+    private static string Declared(string body, string token)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            body, $@"{System.Text.RegularExpressions.Regex.Escape(token)}\s*:\s*([^;]+);");
+        Assert.True(match.Success, $"{token} is not declared in this Workbench block.");
+        return match.Groups[1].Value.Trim();
     }
 
     [Fact]

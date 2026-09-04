@@ -1,0 +1,31 @@
+@* One opened Project document (43.20 task 3). It shows the text the Client Runtime returned and
+   nothing about where it came from: no path, no raw OCI reference input, no local-file access.
+   A named failure replaces the body entirely rather than sitting above an empty frame. *@
+
+<div class="doc-root">
+    <button type="button" class="doc-back" @onclick="() => Back.InvokeAsync()">
+        <span class="doc-back-glyph" aria-hidden="true">‹</span>
+        <span>Back to Explorer</span>
+    </button>
+
+    @if (Error is { } error)
+    {
+        <p class="doc-error" role="alert">@error.Message</p>
+    }
+    else if (Document is { } document)
+    {
+        <pre class="doc-body">@document.Text</pre>
+    }
+    else
+    {
+        <p class="doc-pending">Opening…</p>
+    }
+</div>
+
+@code {
+    [Parameter] public ProjectDocument? Document { get; set; }
+
+    [Parameter] public ProjectOperationError? Error { get; set; }
+
+    [Parameter] public EventCallback Back { get; set; }
+}

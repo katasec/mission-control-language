@@ -1,22 +1,17 @@
-version: 1
+version: 2
 experts:
   ArchitectureAdvisor:
-    source: experts
-    path: experts/ArchitectureAdvisor/expert.md
-    hash: 153fa48ef9aa992531bf5f32d516ac8e64e1fa4ef9bcc5147ab44875d51313e4
+    source: project:///experts/ArchitectureAdvisor/expert.md
+    contentDigest: sha256:153fa48ef9aa992531bf5f32d516ac8e64e1fa4ef9bcc5147ab44875d51313e4
   CodeAdvisor:
-    source: experts
-    path: experts/CodeAdvisor/expert.md
-    hash: 6d3f3d4fa8b49502a627aa9b0a56ce9bd26eca67756fe6eac3ac42001ea742aa
+    source: project:///experts/CodeAdvisor/expert.md
+    contentDigest: sha256:6d3f3d4fa8b49502a627aa9b0a56ce9bd26eca67756fe6eac3ac42001ea742aa
   GeneralAdvisor:
-    source: experts
-    path: experts/GeneralAdvisor/expert.md
-    hash: f72fbb5399b7d33afcb3b5b1f11ff1e0c2b8382d5c542492e3ce0e594c472a30
+    source: project:///experts/GeneralAdvisor/expert.md
+    contentDigest: sha256:f72fbb5399b7d33afcb3b5b1f11ff1e0c2b8382d5c542492e3ce0e594c472a30
   OperationsAdvisor:
-    source: experts
-    path: experts/OperationsAdvisor/expert.md
-    hash: 7401e626ef9a8845d61bd474d4b2f4b5347cb21f5f4f2349ea5c62e768740095
+    source: project:///experts/OperationsAdvisor/expert.md
+    contentDigest: sha256:7401e626ef9a8845d61bd474d4b2f4b5347cb21f5f4f2349ea5c62e768740095
   RequestClassifier:
-    source: experts
-    path: experts/RequestClassifier/expert.md
-    hash: 50c9efde947f717c0ab72fd634dbc02e285d370c2f3bd4767488f7db22e5bc96
+    source: project:///experts/RequestClassifier/expert.md
+    contentDigest: sha256:50c9efde947f717c0ab72fd634dbc02e285d370c2f3bd4767488f7db22e5bc96

@@ -52,6 +52,12 @@ zero-argument launch, absent external configuration changes, the normal route an
 provenance, the Project action initiated through the product surface, and the durable/user-visible
 result. A health check alone is insufficient.
 
+### Forge CLI — resolved OCI experts
+
+| Component / owner | Default fact | Configuration that would change it | Defining authority |
+|---|---|---|---|
+| OCI expert resolution | The published `forge` installed by `make install`, run as plain `forge init` in a Project containing normal `forge.toml`, resolves an OCI tag through its normal registry route and writes its immutable manifest digest to `mcl.lock`. A pre-existing local materialization does not make this an offline-success path: resolving the tag still needs the registry. | An injected registry URL/token, `--refresh`, manual cache placement, pre-written lock, or an altered manifest. A stored machine registry credential is normal configuration; acceptance records it when used. | `ForgeMission.Cli/Program.cs`, `OciExpertPuller`, and the Task 3 spoke. |
+
 ## New or changed defaults
 
 Before a task changes a supported path—or introduces a new one—the active spoke must add or revise

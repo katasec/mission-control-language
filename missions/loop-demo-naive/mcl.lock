@@ -1,6 +1,5 @@
-version: 1
+version: 2
 experts:
   ContextOverloaded:
-    source: experts
-    path: experts/ContextOverloaded/expert.md
-    hash: 185a8258b9560b93853c2a48901276b42b12bede547ec80aa40a5635e6a2f158
+    source: project:///experts/ContextOverloaded/expert.md
+    contentDigest: sha256:185a8258b9560b93853c2a48901276b42b12bede547ec80aa40a5635e6a2f158

@@ -1,14 +1,11 @@
-version: 1
+version: 2
 experts:
   Approver:
-    source: experts
-    path: experts/Approver/expert.md
-    hash: 1027242b340f1c88b145d7e1271029a9dcb97f3974901679f7c95cf2c637d9dd
+    source: project:///experts/Approver/expert.md
+    contentDigest: sha256:1027242b340f1c88b145d7e1271029a9dcb97f3974901679f7c95cf2c637d9dd
   Implementer:
-    source: experts
-    path: experts/Implementer/expert.md
-    hash: 6b1a6db95c6ef6f7085008cb054c2effff26754254cfb3892afb672ce158b67a
+    source: project:///experts/Implementer/expert.md
+    contentDigest: sha256:008f744e0b564ab61908a31dcae6e2c91e8d1e6721616305f1bc1dfc81cc76c0
   Proposer:
-    source: experts
-    path: experts/Proposer/expert.md
-    hash: f9bdaf827c2b0a701a7775cfede43c3844304b26456aacc11fa08e47029265e7
+    source: project:///experts/Proposer/expert.md
+    contentDigest: sha256:f9bdaf827c2b0a701a7775cfede43c3844304b26456aacc11fa08e47029265e7

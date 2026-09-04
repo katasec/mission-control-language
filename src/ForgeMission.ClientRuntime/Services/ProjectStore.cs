@@ -66,6 +66,21 @@ internal sealed class ProjectStore(string? projectsRoot = null)
         return new ProjectOpenResult(new ProjectRecord(Read(manifestPath, home), home), null);
     }
 
+    /// <summary>Reads and validates the manifest of a home this Runtime already opened (43.20
+    /// task 3). It is deliberately not a second way to open a Project: the caller must already
+    /// hold the home from an existing session, and nothing here creates a session, a directory, or
+    /// a capability authority.</summary>
+    public ProjectRecord ReadForHome(string home)
+    {
+        var root = ValidHome(home);
+        var manifestPath = Path.Combine(root, ManifestFileName);
+        if (!File.Exists(manifestPath))
+            throw new ProjectOperationException(ProjectOperationErrorCode.HomeNotFound,
+                $"No Forge Project manifest exists at {manifestPath}.");
+
+        return new ProjectRecord(Read(manifestPath, root), root);
+    }
+
     /// <summary>
     /// Records the server-issued Mission Control conversation ID on an existing Project's manifest
     /// (43.20 task 2) — the ONE place that field is ever written. Called only after the Conversation

@@ -1,14 +1,11 @@
-version: 1
+version: 2
 experts:
   KubernetesArchitect:
-    source: experts
-    path: experts/KubernetesArchitect/expert.md
-    hash: 12e1947f9a619c7f52d33db3a23c2d8caba68e864b23935747eeb75f0a8d2e1e
+    source: project:///experts/KubernetesArchitect/expert.md
+    contentDigest: sha256:12e1947f9a619c7f52d33db3a23c2d8caba68e864b23935747eeb75f0a8d2e1e
   PrincipalReviewer:
-    source: experts
-    path: experts/PrincipalReviewer/expert.md
-    hash: 281e6646cf9e63c9e2f41cf2b1335e8b9b1c723dc0fd3d8cd85d358d4d802596
+    source: project:///experts/PrincipalReviewer/expert.md
+    contentDigest: sha256:281e6646cf9e63c9e2f41cf2b1335e8b9b1c723dc0fd3d8cd85d358d4d802596
   SecurityArchitect:
-    source: experts
-    path: experts/SecurityArchitect/expert.md
-    hash: 5840399b4e68cdb041a2a2e34e68e29981206becbed6cd53c19fb1048dd4a993
+    source: project:///experts/SecurityArchitect/expert.md
+    contentDigest: sha256:5840399b4e68cdb041a2a2e34e68e29981206becbed6cd53c19fb1048dd4a993

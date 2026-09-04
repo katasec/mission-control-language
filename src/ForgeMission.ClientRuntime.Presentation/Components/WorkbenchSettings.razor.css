@@ -1,0 +1,21 @@
+/* Settings placeholder (43.20 task 3). No custom property, no literal visual value. */
+
+.set-root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.set-title {
+    margin: 0;
+    font-size: var(--font-size-lead);
+    font-weight: 700;
+    color: var(--text);
+}
+
+.set-note {
+    margin: 0;
+    font-size: var(--font-size-body);
+    color: var(--text-subtle);
+}

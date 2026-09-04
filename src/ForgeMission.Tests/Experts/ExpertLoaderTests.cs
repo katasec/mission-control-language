@@ -417,16 +417,15 @@ public class ExpertLoaderTests : IDisposable
     // Lock file loading
 
     [Fact]
-    public void LoadFromLockFile_ReadsExpertsByPath()
+    public void LoadFromLockFile_ReadsExpertsByRecordedSource()
     {
         WriteDirExpert("KubernetesArchitect", ValidExpertMarkdown());
-        var relativePath = Path.Combine("KubernetesArchitect", "expert.md");
 
         var lockFile = new LockFile
         {
             Experts = new Dictionary<string, LockFileExpert>
             {
-                ["KubernetesArchitect"] = new() { Source = "experts", Path = relativePath }
+                ["KubernetesArchitect"] = new() { Source = "project:///KubernetesArchitect/expert.md" }
             }
         };
 

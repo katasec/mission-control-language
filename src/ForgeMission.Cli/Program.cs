@@ -89,20 +89,24 @@ static Command BuildInitCommand()
         var lockFile = LockFileIO.Build(localCatalog, missionDir);
 
         foreach (var (name, entry) in lockFile.Experts.OrderBy(k => k.Key))
-            Console.WriteLine($"  ✓ {name,-30} local    {entry.Path}");
+            Console.WriteLine($"  ✓ {name,-30} local    {entry.Source}");
 
-        // --- OCI experts: pull from registry and add to lock file
+        // --- OCI experts: resolve against the registry and add to lock file. Resolution runs every
+        // time, including when the materialization already exists: a tag cannot honestly become an
+        // immutable oci://…@sha256:… source without its current manifest (43.20 task 3).
         if (manifest?.Experts.Count > 0)
         {
             foreach (var (name, ociRef) in manifest.Experts.OrderBy(k => k.Key))
             {
                 try
                 {
-                    var (cachePath, status) = await OciExpertPuller.PullAsync(ociRef, refresh);
-                    var lockPath2           = OciExpertPuller.ToLockPath(cachePath);
-                    var hash                = LockFileIO.ComputeHash(cachePath);
-                    lockFile.Experts[name]  = new LockFileExpert { Source = "oci", Path = lockPath2, Hash = hash };
-                    Console.WriteLine($"  ✓ {name,-30} {status,-8} {ociRef}");
+                    var resolved = await OciExpertPuller.PullAsync(ociRef, refresh);
+                    lockFile.Experts[name] = new LockFileExpert
+                    {
+                        Source = resolved.Source,
+                        ContentDigest = resolved.ContentDigest,
+                    };
+                    Console.WriteLine($"  ✓ {name,-30} {resolved.Status,-8} {ociRef}");
                 }
                 catch (Exception ex)
                 {

@@ -1,18 +1,14 @@
-version: 1
+version: 2
 experts:
   PitchCritic:
-    source: experts
-    path: experts/PitchCritic/expert.md
-    hash: fdafe257dc4b6b2f34a720641facc9c27e8de92eee1a3e90d526dd8d42b35ec9
+    source: project:///experts/PitchCritic/expert.md
+    contentDigest: sha256:fdafe257dc4b6b2f34a720641facc9c27e8de92eee1a3e90d526dd8d42b35ec9
   PitchDrafter:
-    source: experts
-    path: experts/PitchDrafter/expert.md
-    hash: 1e8c8f498d2fcc8d616002ba48a7447fb56f890e38f30f2de48f630f5ff1e6cc
+    source: project:///experts/PitchDrafter/expert.md
+    contentDigest: sha256:1e8c8f498d2fcc8d616002ba48a7447fb56f890e38f30f2de48f630f5ff1e6cc
   PitchJudge:
-    source: experts
-    path: experts/PitchJudge/expert.md
-    hash: 17bed8dd14d9eb5002bc01c893ec812f7cdcd041bc4c6fcec32341fb9089295a
+    source: project:///experts/PitchJudge/expert.md
+    contentDigest: sha256:17bed8dd14d9eb5002bc01c893ec812f7cdcd041bc4c6fcec32341fb9089295a
   PitchReviser:
-    source: experts
-    path: experts/PitchReviser/expert.md
-    hash: 4b353cbeb777d9899454d644a718a345b685afacfbbbdc8418f4a9b4e5e0909c
+    source: project:///experts/PitchReviser/expert.md
+    contentDigest: sha256:4b353cbeb777d9899454d644a718a345b685afacfbbbdc8418f4a9b4e5e0909c

@@ -1,0 +1,71 @@
+/* Document layout (43.20 task 3). No custom property and no literal visual value: colour, radius,
+   type and spacing all resolve through the Workbench theme map. */
+
+.doc-root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+}
+
+.doc-back {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) 0;
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: var(--font-size-body);
+    cursor: pointer;
+}
+
+.doc-back:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--radius-sm);
+}
+
+.doc-back-glyph {
+    line-height: 1;
+}
+
+/* The scroll lives here, not on the page: a long document must not make the whole workbench
+   scroll, and a long line must not make the page scroll sideways — hence pre-wrap plus a
+   contained horizontal overflow for content that genuinely cannot wrap. */
+.doc-body {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-sunken);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: auto;
+}
+
+.doc-error {
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius);
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: var(--font-size-body);
+}
+
+.doc-pending {
+    margin: 0;
+    color: var(--text-subtle);
+    font-size: var(--font-size-body);
+}

@@ -1,10 +1,8 @@
-version: 1
+version: 2
 experts:
   Drafter:
-    source: experts
-    path: experts/Drafter/expert.md
-    hash: abf21f2c325684ce871d90fa25729d7d0f3792e73da3bea57d574335962aec39
+    source: project:///experts/Drafter/expert.md
+    contentDigest: sha256:abf21f2c325684ce871d90fa25729d7d0f3792e73da3bea57d574335962aec39
   QualityJudge:
-    source: experts
-    path: experts/QualityJudge/expert.md
-    hash: 6c4cc05f8be50f022c67ecb1e22bad92854180d3b5d7c519f540ffec73a53f42
+    source: project:///experts/QualityJudge/expert.md
+    contentDigest: sha256:6c4cc05f8be50f022c67ecb1e22bad92854180d3b5d7c519f540ffec73a53f42

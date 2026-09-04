@@ -77,6 +77,45 @@ internal static class ClientRuntimeEndpoints
             }
         });
 
+        // 43.20 task 3. Both routes take only the session — and, to open, an entry ID this Runtime
+        // itself minted. The Project home comes from the session's own root, never from the
+        // caller, so no surface can name a Project or a path it did not already have open.
+        app.MapPost("/transport/project/workbench", (
+            GetProjectWorkbenchRequest request,
+            ClientRuntimeSessionStore sessions,
+            ProjectWorkbenchProjector workbench) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session?.Workspace.Root is not { } home)
+                return Results.NotFound();
+
+            try
+            {
+                return Results.Ok(new GetProjectWorkbenchResponse(workbench.Project(home)));
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(new GetProjectWorkbenchResponse(null, ToError(exception)));
+            }
+        });
+
+        app.MapPost("/transport/project/document", (
+            OpenProjectDocumentRequest request,
+            ClientRuntimeSessionStore sessions,
+            ProjectWorkbenchProjector workbench) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session?.Workspace.Root is not { } home)
+                return Results.NotFound();
+
+            try
+            {
+                return Results.Ok(new OpenProjectDocumentResponse(workbench.OpenDocument(home, request.EntryId)));
+            }
+            catch (ProjectOperationException exception)
+            {
+                return Results.Ok(new OpenProjectDocumentResponse(null, ToError(exception)));
+            }
+        });
+
         // 43.20 task 2. Both routes take only the session and what the person typed: the Runtime
         // resolves the Project from the session's own root and reads the manifest itself, so no
         // surface supplies a Project path, a conversation ID, or a project goal.

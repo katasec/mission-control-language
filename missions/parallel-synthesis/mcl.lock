@@ -1,18 +1,14 @@
-version: 1
+version: 2
 experts:
   BusinessAnalyst:
-    source: experts
-    path: experts/BusinessAnalyst/expert.md
-    hash: 66e8a122ceaca4e3c96b60b192fe47a019adb8e9a0f1a0aca32f208ff3fcc3be
+    source: project:///experts/BusinessAnalyst/expert.md
+    contentDigest: sha256:66e8a122ceaca4e3c96b60b192fe47a019adb8e9a0f1a0aca32f208ff3fcc3be
   RiskAnalyst:
-    source: experts
-    path: experts/RiskAnalyst/expert.md
-    hash: e5050939d8d753167f89005f68bb6b7e8dbb297ff383a285c3abcd6f835f80b0
+    source: project:///experts/RiskAnalyst/expert.md
+    contentDigest: sha256:e5050939d8d753167f89005f68bb6b7e8dbb297ff383a285c3abcd6f835f80b0
   Synthesiser:
-    source: experts
-    path: experts/Synthesiser/expert.md
-    hash: 5301c20d42c3bf297f62b41fae8790aee537c2de5d022a5c49f5d4826f8a95c1
+    source: project:///experts/Synthesiser/expert.md
+    contentDigest: sha256:5301c20d42c3bf297f62b41fae8790aee537c2de5d022a5c49f5d4826f8a95c1
   TechnicalReviewer:
-    source: experts
-    path: experts/TechnicalReviewer/expert.md
-    hash: 20b8c43e5a436e0309206cd20fbd6b8bb31752915749fabb6fa81918371a69ea
+    source: project:///experts/TechnicalReviewer/expert.md
+    contentDigest: sha256:20b8c43e5a436e0309206cd20fbd6b8bb31752915749fabb6fa81918371a69ea

@@ -1,7 +1,8 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 is next.** The Project home
-> and durable Mission Control now pass browser-first and default-config packaged Desktop acceptance.
+> **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 implemented and awaiting
+> review.** The Project home and durable Mission Control pass browser-first and default-config
+> packaged Desktop acceptance.
 > Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
 
 ## Outcome
@@ -384,6 +385,11 @@ sampled value, carried back into the SVG references so they stay binding.
 | `--ink` | `#0f6eeb` | S | solid action — the same blue family as `--accent` |
 | `--ink-hover` | `#0f56d2` | S | |
 | `--ink-contrast` | `#ffffff` | S | |
+| `--wb-rail-surface` | `#06284c` | S | persistent dark rail |
+| `--wb-rail-surface-selected` | `#0c4475` | S | selected rail destination |
+| `--wb-rail-text` | `#ffffff` | S | selected rail label/glyph |
+| `--wb-rail-text-muted` | `#b9d6f5` | S | idle rail label/glyph |
+| `--wb-rail-marker` | `#32d9f2` | S | selected marker and rail focus outline |
 | `--success` | `#4d7c0f` | N | |
 | `--success-bg` | `#f2fbe6` | N | |
 | `--success-border` | `#84cc16` | N | the locked language's lime |
@@ -422,7 +428,8 @@ adding them changes nothing that exists, and the Workbench map overrides them as
 
 **Workbench token map — dark.** Applies to both the automatic and forced-dark selectors. Radii,
 spacing, type sizes, fonts and transition are restated identically to the light map and are not
-repeated here; every token that differs is listed.
+repeated here; every token that differs is listed. The five `--wb-rail-*` tokens also retain their
+light-map values: the binding reference requires the same distinct dark rail in both modes.
 
 | Token | Dark value | Used for |
 |---|---|---|
@@ -474,6 +481,10 @@ pairing meets its applicable AA threshold in both maps:
 | `--accent` on `--surface` | 4.72 | 5.53 |
 | `--ink-contrast` on `--ink` | 4.72 | 6.69 |
 | `--ink-contrast` on `--ink-hover` | 6.40 | 8.58 |
+| `--wb-rail-text` on `--wb-rail-surface` | 14.83 | 14.83 |
+| `--wb-rail-text-muted` on `--wb-rail-surface` | 9.89 | 9.89 |
+| `--wb-rail-text` on `--wb-rail-surface-selected` | 10.00 | 10.00 |
+| `--wb-rail-text-muted` on `--wb-rail-surface-selected` | 6.67 | 6.67 |
 | `--danger` on `--danger-bg` | 6.05 | 8.11 |
 | `--success` on `--success-bg` | 4.69 | 9.53 |
 | `--warning` on `--warning-bg` | 5.51 | 7.87 |
@@ -819,7 +830,13 @@ are idempotent even across the Host-accepted/manifest-write boundary; Contracts 
 Host/Orleans/Azure/provider dependency; fresh-Host replay, contract round-trip, existing Janus
 regression, and full-suite tests pass.
 
-### Task 3 — Project Explorer and resolved dependencies
+### Task 3 — Project Explorer and resolved dependencies — implemented, review pending
+
+**Implemented.** Lock file v2, the two Client Runtime contracts, and the rail/Explorer/document/
+Settings workbench are on `codex/task-43-20-task3-project-explorer`. The prerequisite
+`Katasec.OciClient` 0.3.0 is published and consumed. Evidence, the observed-state captures, and the
+two gaps that remain open are in
+[the completion record](phase-43.20-project-workbench-mvp_completed.md#task-3--project-explorer-and-resolved-dependencies).
 
 Build the small navigation surface over the manifest and durable projections.
 
@@ -844,8 +861,112 @@ contracts, never by opening a manifest, lock file, or Project path itself:
 `LockFileIO.Read` and maps its already-resolved `LockFile.Experts` values. This task only displays
 those records—there is no resolver, pull, update, or catalog call. The positive tests cover an
 empty Project, local mission/expert assets, a valid pinned OCI dependency, and opening an allowed
-document. Negative tests cover a missing/invalid lock file, a path escaping the Project home,
+document. `mcl.lock` is optional: its absence means the Project has no dependency evidence and
+renders that section empty. A declared `LockFile` asset that is missing, malformed, or unsafe is a
+named Runtime failure, not a partial list. Negative tests cover a declared-but-missing/invalid lock
+file, a path escaping the Project home,
 an unknown entry, binary/oversized document content, and a stale/replaced session.
+
+**Resolved source identity.** The existing `LockFileExpert { source, path, hash }` makes the
+meaning of an entry conditional on `source`; `path` is either a Project-relative file or a local
+cache location. That is not a safe durable format. Lock file v2 replaces it with one canonical
+`source` URI and one distinct `contentDigest` for every expert:
+
+```yaml
+version: 2
+experts:
+  Answerer:
+    source: project:///experts/Answerer/expert.md
+    contentDigest: sha256:fa4d2a3f516ad0bab6ad98af5ff0e77ab16839a6ab3a62db785fe961ffa4c5cb
+
+  Architect:
+    source: oci://ghcr.io/acme/architect@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    contentDigest: sha256:4d2a3f516ad0bab6ad98af5ff0e77ab16839a6ab3a62db785fe961ffa4c5cb
+```
+
+`project:///` has no authority and its URI path, after the one leading slash, is a normalized
+POSIX Project-relative path: it must be non-empty and contain neither `..` nor a platform root.
+`oci://` has a registry authority, a non-empty repository path, and exactly one full lower-case
+`@sha256:<64-hex>` manifest digest. Thus the source alone is the stable, portable identity in both
+cases; its syntax—not a nullable sibling property—selects the resolver. `contentDigest` is always
+the full SHA-256 of the resolved `expert.md`, distinct from the manifest digest embedded in an OCI
+source. The Explorer renders the OCI source (without the scheme only as display formatting) and a
+separate textual **read-only** label. It never derives identity from a cache path, calls a registry,
+or treats the content digest as a manifest digest.
+
+Neither source stores a machine-local materialization path. Project sources resolve only from the
+Project home. OCI sources materialize only at the deterministic cache location
+`~/.forge/experts/<registry>/<repository>/sha256/<hex>/expert.md`, derived from the parsed source
+URI by `ForgeCache`; this derived path is never serialized or returned to Presentation. A malformed
+source, a content-digest mismatch, or a source whose derived materialization is absent fails the
+whole projection with named `InvalidDependency`; it is not guessed or partly rendered.
+
+The existing OCI client has the manifest in hand but does not expose the registry's
+`Docker-Content-Digest` response header. Before the MCL lock writer is changed, its sibling
+`oci-client-dotnet` repository must add `PulledExpert { Content, ManifestDigest }` and
+`PullExpertWithDigestAsync(registry, name, reference) -> PulledExpert`; it obtains the header from
+the same manifest response before pulling the expert layer. If the registry omits that optional
+header, it computes the full lower-case SHA-256 from those exact manifest-response bytes; it never
+issues a second manifest request or substitutes a tag. The existing string-returning
+`PullExpertAsync` remains a compatibility wrapper over this method. `forge init` then writes
+`oci://<registry>/<repository>@<manifest-digest>` and the content digest, and materializes the cache
+at the deterministic path above. Resolving an OCI tag intentionally uses the normal registry route
+on every `forge init`, even when a prior materialization exists: a tag cannot honestly become an
+immutable source without its current manifest. It is not an offline cache-success path. This is a
+prerequisite data-source correction, not an Explorer registry feature: **Explorer** makes no
+network call, pull, catalog, or update and only reads the recorded local lock. The `forge init`
+line says **resolved** when the digest-derived materialization already holds identical content and
+**pulled** otherwise; neither word claims an offline cache success.
+
+`LockFileIO` reads v1 only to migrate a local `source: experts` + relative `path` + `hash` into the
+v2 Project URI/content-digest representation in memory; the next `forge init` writes v2. A v1 OCI
+entry cannot be migrated honestly because it lacks a manifest digest, so it fails with a named
+re-initialization diagnostic and is never reinterpreted from its cache path. All newly written
+locks are v2. As this repository migration, every tracked lock is regenerated to v2; v1-local
+coverage remains in dedicated test fixtures, and no tracked v1 OCI lock remains for the reader to
+reject. This is the explicit compatibility boundary; do not allow a mixed v1/v2 record shape.
+
+The exact additive Task 3 transport types are:
+
+```text
+GetProjectWorkbenchRequest { sessionId }
+GetProjectWorkbenchResponse { workbench?, error? }
+ProjectWorkbenchProjection { project, assets[], context[], runs[] }
+ProjectExplorerEntry { entryId, displayName, kind, isReadOnly, source? }
+OpenProjectDocumentRequest { sessionId, entryId }
+OpenProjectDocumentResponse { document?, error? }
+ProjectDocument { title, contentType, text }
+```
+
+Exactly one payload is present in each response. A missing/replaced session remains transport
+`NotFound`; all expected manifest/asset/lock/document failures use `ProjectOperationError`. The
+entry kind is one of `Mission`, `Expert`, `LockFile`, `SourceRoot`, `File`, `Artifact`, `Run`, or
+`OciDependency`; only a returned `Mission`, `Expert`, `LockFile`, or `OciDependency` entry can
+open a document. Local entries remain home-relative. An OCI document must be the one cache file
+derived from a structurally valid OCI source URI and must resolve under `ForgeCache.ExpertsRoot`;
+no serialized absolute/home-relative cache path is accepted.
+
+`ProjectOperationErrorCode` gains `InvalidDependency` (malformed source URI, content-digest
+mismatch, or unsafe derived materialization), `DocumentNotFound` (unknown/stale entry), and
+`InvalidDocument` (binary, invalid UTF-8, or more than 1 MiB). Documents are returned as UTF-8
+`text/plain`; the Presentation does not infer a richer renderer. The Client Runtime performs the
+byte-size and UTF-8 validation before text allocation, then exposes only the typed document
+result—never a path.
+
+**Task 3 default-path acceptance.** Source-lock evidence uses the published `forge` binary installed
+by `make install`, invoked as `forge init` (no mission argument and no `--refresh`) from a dedicated
+disposable directory containing `mission.mcl` and its normal `forge.toml`. The test manifest names
+one public `ghcr.io/katasec` expert by tag. Normal OCI authentication is the machine's existing
+stored registry credential when present, otherwise anonymous bearer negotiation—not an injected
+registry URL, manual cache placement, `FORGE_REGISTRY_TOKEN`, or pre-written lock. The acceptance
+record names which normal route was observed. The observed PASS is a newly written v2 `mcl.lock`
+whose OCI source is the registry/repository plus the observed immutable manifest digest and whose
+content digest matches the resolved cached expert. The Desktop portion separately uses the
+published zero-argument Desktop with its normal
+Conversation Runtime route, an explicitly new disposable Project, and no endpoint overrides; its
+PASS is the packaged workbench opening Mission Control by default, then accurately rendering that
+Project's v2 local/OCI source evidence. Unit fakes, hand-authored locks, and test registries are
+controlled checks only and cannot close either default path.
 
 **Task 3 UI contract.** The binding large reference is
 [`mission-project-flow-03-mission-control.png`](../brainstorm/images/mission-project-flow-03-mission-control.png)
@@ -853,13 +974,63 @@ at 1536×1024. This task owns only the three-entry dark rail in its shown order 
 Control, bottom-fixed Settings), the selected state, and the light Explorer list for Project
 assets/context/runs. The Mission Control conversation body, right inspector, add-source action,
 new-run action, Project chooser, and all activity not backed by this task are deferred and absent.
-Before Task 3 handoff, add a task-owned 800×568 compact SVG for its empty, selected-Explorer,
-selected-Mission-Control, selected-Settings, and document-open states; that is a prerequisite,
-not an implementation discovery. The Workbench named theme remains the selector and owns all
-light/dark semantic colours, geometry, type, radii, and spacing; rail/document controls require
-keyboard reachability, visible focus, labels, and text alternatives for icons. Browser-first
-acceptance covers the four 800/1536 × 568/1024 corners, continuous resize, long asset/digest text,
-125/150/200% scaling, both colour modes, and packaged parity last.
+
+The binding compact references are [empty Explorer](../images/phase-43.20/task3-workbench-empty-compact.svg),
+[selected Explorer](../images/phase-43.20/task3-workbench-explorer-compact.svg), [selected Mission
+Control](../images/phase-43.20/task3-workbench-mission-control-compact.svg), [selected
+Settings](../images/phase-43.20/task3-workbench-settings-compact.svg), and [opened
+document](../images/phase-43.20/task3-workbench-document-compact.svg), each at 800×568.
+**800×568 is a compact responsive acceptance baseline, never a prescribed Desktop window size.**
+The layout must be fluid and bounded across the complete 800–1536 × 568–1024 acceptance rectangle,
+its continuous intermediate sizes, zoom/text scaling, and larger real Desktop windows. The five
+frames define the information priority and structural compact state; they do not authorize fixed
+pixel geometry, clipping, or a separate small-screen imitation of the large view.
+
+#### Task 3 component and responsive specification
+
+| Surface / state | Structure and exact behaviour |
+|---|---|
+| Workbench shell | One `100dvh` grid: a persistent rail and a `minmax(0, 1fr)` content document region. The rail is `clamp(7.25rem, 14vw, 11.25rem)` wide, so it reaches the compact reference at the lower bound and expands only within its tokenized bounds; the content region, never the page, owns vertical overflow. A breakpoint is not permitted merely to preserve a fixed width. |
+| Rail | Three real buttons, in this order: **Explorer**, **Mission Control**, **Settings**. Settings is bottom-aligned. A selection has both a visible accent marker and `aria-current="page"`; the glyph has an accessible text alternative and the visible text label remains present. Changing selection changes only the document view—never the Project, session, control conversation, or event subscription. |
+| Explorer | Heading **Project Explorer** then the sections **Project assets**, **Source context**, and **Runs**. Assets show local Mission/Expert/LockFile items as editable local entries; resolved OCI dependencies show their pinned reference and digest with a textual **read-only** label. Empty sections state **No local assets yet**, **No context attached**, or **No runs yet**. A malformed or missing manifest/lock file shows its named Runtime failure instead of a partial invented list. |
+| Mission Control | This is the initial selected view after Project open and reuses Task 2's existing transcript/composer renderer without a second transcript, event loop, or navigation-specific conversation call. |
+| Settings | A selected, accessible placeholder only: **Settings** / **Project preferences will appear here in a later task.** It has no hidden settings mutation, chooser, or Project operation. |
+| Document | Selecting a projection entry calls only `OpenProjectDocumentRequest`. Its ordinary document header has an accessible **Back to Explorer** action; the body uses a contained scroll area/wrapping strategy for long lines and exposes no path, raw OCI reference input, or direct local-file access. Named unavailable/invalid/oversized/stale-entry failures replace the document body with the Runtime's error. |
+
+The Workbench named theme remains the selector and owns all light/dark semantic colours, geometry,
+type, radii, and spacing. The rail is a distinct dark surface in both named colour modes, using
+the Workbench-theme rail tokens below—not the document `--surface-sunken`/`--accent` tokens:
+`--wb-rail-surface: #06284c`, `--wb-rail-surface-selected: #0c4475`,
+`--wb-rail-text: #ffffff`, `--wb-rail-text-muted: #b9d6f5`, and
+`--wb-rail-marker: #32d9f2`. All five are sampled from the binding compact references and hold
+their values in both modes; the marker is also the rail's visible focus outline. Their text-bearing
+pair contrasts are 14.83 (`rail-text`/surface), 9.89 (`rail-text-muted`/surface), 10.00
+(`rail-text`/selected), and 6.67 (`rail-text-muted`/selected). Documents use `--bg`, `--surface`,
+`--border`, `--text`, and `--text-muted`; read-only dependency evidence uses `--surface-active` and
+`--text-muted`. Components only consume these theme tokens—no component-local literals. Rail/document
+controls require keyboard reachability, visible focus, labels, and text alternatives for icons.
+
+**Open-Project shell disposition.** The verified Task 1 launcher header remains unchanged while no
+Project is open. Once a Project opens, the persistent rail owns the Forge wordmark and the content
+region owns its own title/subtitle header; the visible absolute Project-home line is removed. The
+local `ProjectSummary.Home` contract remains unchanged and unrendered. This makes the new shell
+match the binding Task 3 frames and preserves the rule that the workbench exposes no local path.
+
+**Interaction gate — PASS.** Cooper: the persistent rail serves the present Project-navigation
+goal without exposing a generic layout framework. Rams: three destinations, no duplicate Runs or
+Notifications entry, and designed empty/error/read-only states are the smallest durable chrome.
+Norman: the selected marker, labels, read-only dependency text, and named errors make navigation
+and document limits visible; unavailable actions are absent rather than styled as affordances.
+
+**Operator visual sign-off: PASS (2026-09-04).** The compact references are approved as responsive
+baseline states, not fixed window dimensions. Implementation may proceed only through the
+Claude/Codex plan-review loop below.
+
+Browser-first acceptance covers the four 800/1536 × 568/1024 corners, continuous resize, long
+asset/digest text, 125/150/200% scaling, both colour modes, and packaged parity last. Record each
+reference comparison under `docs/images/phase-43.20/task3-workbench-*.svg`; the packaged Desktop
+check uses its measured default usable viewport and default configuration, not one of these fixed
+reference dimensions.
 
 **Done when:** a created Project opens Mission Control by default; the rail switches to Explorer
 and Settings without creating a new project/session; Explorer accurately distinguishes local and

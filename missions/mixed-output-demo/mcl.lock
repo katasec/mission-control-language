@@ -1,14 +1,11 @@
-version: 1
+version: 2
 experts:
   SentimentAnalyser:
-    source: experts
-    path: experts/SentimentAnalyser/expert.md
-    hash: b4d79bceb4728a81f8b250436f97b3d5201f25c6c5fe3319221477ed8a91313f
+    source: project:///experts/SentimentAnalyser/expert.md
+    contentDigest: sha256:b4d79bceb4728a81f8b250436f97b3d5201f25c6c5fe3319221477ed8a91313f
   SummaryWriter:
-    source: experts
-    path: experts/SummaryWriter/expert.md
-    hash: 9e5b6ba8976dc4e1ef91a9537185bf7439a1da392a876d0e1999f376f90ecea6
+    source: project:///experts/SummaryWriter/expert.md
+    contentDigest: sha256:9e5b6ba8976dc4e1ef91a9537185bf7439a1da392a876d0e1999f376f90ecea6
   VerdictExtractor:
-    source: experts
-    path: experts/VerdictExtractor/expert.md
-    hash: 5ba96c932dd42dbfbc5dd10b193c56ae932d0e5a23a5b12e0f24f5c38e3e205f
+    source: project:///experts/VerdictExtractor/expert.md
+    contentDigest: sha256:5ba96c932dd42dbfbc5dd10b193c56ae932d0e5a23a5b12e0f24f5c38e3e205f

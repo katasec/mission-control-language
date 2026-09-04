@@ -1,6 +1,5 @@
-version: 1
+version: 2
 experts:
   Responder:
-    source: experts
-    path: experts/Responder/expert.md
-    hash: 585b1b461a6fecabcb5ab0d590834050276d62775079a95782f63b1441163795
+    source: project:///experts/Responder/expert.md
+    contentDigest: sha256:585b1b461a6fecabcb5ab0d590834050276d62775079a95782f63b1441163795

@@ -1,0 +1,111 @@
+/* The rail (43.20 task 3). Like every other surface here this file declares no custom property
+   and contains no literal colour, radius, type size, or reference geometry: all of it resolves
+   through the Workbench theme map in forge.css.
+
+   The rail is a distinct dark surface in BOTH colour modes, so it reads through its own
+   --wb-rail-* tokens rather than the document's --surface-sunken/--text/--accent. That is why
+   those tokens hold the same values in the light and dark maps. */
+
+.wb-rail {
+    grid-area: rail;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--wb-rail-pad-y) var(--wb-rail-pad-x);
+    gap: var(--wb-rail-gap);
+    background: var(--wb-rail-surface);
+    color: var(--wb-rail-text);
+}
+
+.wb-brand {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.wb-brand-name {
+    font-size: var(--font-size-title);
+    font-weight: 700;
+    color: var(--wb-rail-text);
+}
+
+.wb-brand-sub {
+    font-size: var(--font-size-meta);
+    color: var(--wb-rail-text-muted);
+}
+
+.wb-rail-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wb-rail-gap);
+    min-width: 0;
+}
+
+/* margin-top:auto rather than an absolute position: Settings sits at the foot of whatever height
+   the rail actually has, so a short window pushes it up instead of overlapping the entries above. */
+.wb-rail-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.wb-rail-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+    padding: var(--wb-rail-item-pad-y) var(--wb-rail-item-pad-x);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--wb-rail-text-muted);
+    font-family: inherit;
+    font-size: var(--font-size-meta);
+    text-align: left;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.wb-rail-item:hover {
+    color: var(--wb-rail-text);
+}
+
+/* The marker doubles as the focus outline, so a keyboard user sees the same accent the selected
+   entry uses rather than a second competing signal. */
+.wb-rail-item:focus-visible {
+    outline: 2px solid var(--wb-rail-marker);
+    outline-offset: 2px;
+}
+
+.wb-rail-item-current {
+    background: var(--wb-rail-surface-selected);
+    color: var(--wb-rail-text);
+    font-weight: 600;
+}
+
+.wb-rail-item-current::before {
+    content: "";
+    position: absolute;
+    inset-block: var(--space-1);
+    inset-inline-start: 0;
+    width: var(--wb-rail-marker-width);
+    border-radius: var(--radius-pill);
+    background: var(--wb-rail-marker);
+}
+
+.wb-rail-glyph {
+    font-size: var(--font-size-lead);
+    line-height: 1;
+}
+
+/* The label wraps rather than truncating: "Mission Control" is two lines at the compact bound in
+   the binding reference, and a clipped destination name is worse than a taller entry. */
+.wb-rail-label {
+    overflow-wrap: anywhere;
+}

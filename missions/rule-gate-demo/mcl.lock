@@ -1,10 +1,8 @@
-version: 1
+version: 2
 experts:
   Drafter:
-    source: experts
-    path: experts/Drafter/expert.md
-    hash: b1c4b705406d633f8f4ab64ad0f430402208933456b30113f75c661dfb018191
+    source: project:///experts/Drafter/expert.md
+    contentDigest: sha256:b1c4b705406d633f8f4ab64ad0f430402208933456b30113f75c661dfb018191
   WordCountGate:
-    source: experts
-    path: experts/WordCountGate/expert.md
-    hash: 1fa29925297e44b9270cbc50d40a7ab806edbf17d8f451df0b95ff46a5d46dce
+    source: project:///experts/WordCountGate/expert.md
+    contentDigest: sha256:1fa29925297e44b9270cbc50d40a7ab806edbf17d8f451df0b95ff46a5d46dce

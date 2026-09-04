@@ -1,18 +1,14 @@
-version: 1
+version: 2
 experts:
   Optimist:
-    source: experts
-    path: experts/Optimist/expert.md
-    hash: 0076152859b1c35153db0b9e67046424b47f4dcf2e32f37a2cd6cca7dd5b6b31
+    source: project:///experts/Optimist/expert.md
+    contentDigest: sha256:0076152859b1c35153db0b9e67046424b47f4dcf2e32f37a2cd6cca7dd5b6b31
   Pragmatist:
-    source: experts
-    path: experts/Pragmatist/expert.md
-    hash: 7d95eeaf5dc59a1f17bf3230b1180eea88640f6b5acf0f78670ead92b9d0fea8
+    source: project:///experts/Pragmatist/expert.md
+    contentDigest: sha256:7d95eeaf5dc59a1f17bf3230b1180eea88640f6b5acf0f78670ead92b9d0fea8
   Sceptic:
-    source: experts
-    path: experts/Sceptic/expert.md
-    hash: 63386548fbabfd733cd4dd927d4986f7a080b1dfe052a6d1d1d90701f78bcefc
+    source: project:///experts/Sceptic/expert.md
+    contentDigest: sha256:63386548fbabfd733cd4dd927d4986f7a080b1dfe052a6d1d1d90701f78bcefc
   Synthesiser:
-    source: experts
-    path: experts/Synthesiser/expert.md
-    hash: 627884d1816dc03263a00173b4fbf58ab3b099ad60811bf55f2bc21fbb4fbbc7
+    source: project:///experts/Synthesiser/expert.md
+    contentDigest: sha256:627884d1816dc03263a00173b4fbf58ab3b099ad60811bf55f2bc21fbb4fbbc7
