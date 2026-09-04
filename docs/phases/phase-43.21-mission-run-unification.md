@@ -48,6 +48,8 @@ Presentation owns selection rendering, text entry, busy/error display, and navig
 
 The Worker owns the built-in catalog and resolves only `Janus` and `Naive`. `Naive` is the renamed checked-in zero-tool asset, `mission Naive(projectGoal, task) = { Controller }`; its executor rejects every tool request. Janus remains its existing checked-in mission and provider routing. No UI, Client Runtime, or Host component chooses an expert or provider.
 
+**Capability baseline — locked.** Starting a Project Mission Run grants **no local tool authority**. In this MVP, Client Runtime declares zero capabilities to both Janus and Naive; attached assets/context are descriptive evidence, not execution permission. A later explicit capability-selection and authorization task may introduce a Project-scoped declaration, but it must name the selectable scope, approval, and failure semantics first. Until then, an unexpected tool request is reported as refused and never reaches a local executor. This prevents a default Janus run from probing the machine merely because a Project was opened.
+
 ### Migration and removal
 
 `MissionControl` / `ProjectControl` is a legacy compatibility route, not a third mission. Neither new Project nor Presentation surface may use it.
@@ -98,9 +100,9 @@ This is a Type-2 operational exception only for the pre-merge image provenance c
 
 ### Task 1 — Universal durable Project Mission Run
 
-Add manifest v2 migration, Project Mission-container creation, selection persistence, and the two contracts above. Make `ConversationSnapshot.MissionRef` nullable so a Project Mission container reports no mission; existing Mission Run snapshots remain non-null. Generalize Host/Worker dispatch so Janus and Naive both create ordinary runs with durable `run_id` events. Retain the legacy route only as temporarily unreachable-from-new-contract compatibility until Task 3; Task 2 removes the current Presentation caller. Implement Task 1 and Task 2 on one branch and submit them as the replacement PR defined above.
+Add manifest v2 migration, Project Mission-container creation, selection persistence, and the two contracts above. Make `ConversationSnapshot.MissionRef` nullable so a Project Mission container reports no mission; existing Mission Run snapshots remain non-null. Declare zero capabilities for every Project Mission Run in this MVP. Generalize Host/Worker dispatch so Janus and Naive both create ordinary runs with durable `run_id` events. Retain the legacy route only as temporarily unreachable-from-new-contract compatibility until Task 3; Task 2 removes the current Presentation caller. Implement Task 1 and Task 2 on one branch and submit them as the replacement PR defined above.
 
-**Done when:** contract/migration/idempotency tests prove either allow-listed selection creates exactly one identically-shaped child run; invalid selection/input and changed retries produce typed failures with no run; Worker rejects every mission outside the closed catalog; and the full suite passes.
+**Done when:** contract/migration/idempotency tests prove either allow-listed selection creates exactly one identically-shaped child run; invalid selection/input and changed retries produce typed failures with no run; Worker rejects every mission outside the closed catalog; both Project missions receive zero capability declarations and an unexpected tool request is refused without local dispatch; and the full suite passes.
 
 ### Task 2 — Mission-first Desktop and TUI surface
 
