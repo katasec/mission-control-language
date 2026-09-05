@@ -14,6 +14,11 @@ The default is deliberately boring: small components, fixed conventions, explici
 named failure modes. Sophistication belongs in the composed behaviour, never in an opaque or
 clever individual part.
 
+Ownership, separation of concerns, explicit contracts and failure semantics, structural
+containment, progressive disclosure, and verification remain primary. The
+[complexity review gate](code-style.md#complexity-review-gate) is a lightweight final code-review
+sanity signal, not an architectural goal, a substitute for design, or proof of correctness.
+
 ## Design sensibilities
 
 1. **One concern, one owner, one clear failure mode.** Split conceptually different work into
@@ -26,6 +31,8 @@ clever individual part.
    human remembering the right sequence.
 4. **Trust authoritative boundaries.** Use the OS, database, provider SDK, or platform to enforce
    what it owns. Do not add stale pre-checks or duplicate validation that creates false confidence.
+   Do not add defensive branches for states those boundaries make impossible; handle the actual
+   failures their contracts permit at the owning seam.
 5. **Make consequential behaviour explicit.** State ownership, mutation, control-flow changes,
    retries, and failure semantics in contracts. Default to opt-in for behaviour that can alter
    control flow or shared state; fail loudly rather than silently falling through.
@@ -33,7 +40,9 @@ clever individual part.
    workflow reveal *what* first and expose *how* through named steps. A reader should isolate the
    relevant problem without reconstructing the whole system.
 7. **Extract for a real seam, not anticipated reuse.** Introduce an interface, helper, package,
-   or service when it improves present readability or enforces a real boundary. Three similar
+   or service only when it improves readability of intent, creates a real ownership, side-effect,
+   or failure boundary, or improves testability. Preserve functional cohesion and single
+   responsibility; lowering a complexity score alone never justifies extraction. Three similar
    lines are preferable to a speculative framework.
 8. **Verification is part of the design.** Define the observation that proves the important
    outcome: test result, live log, deployed-resource query, or user-visible behaviour. Written or
@@ -51,12 +60,46 @@ spoke. “Not applicable” is acceptable only with a reason.
 | Does safety rely on warning, cleanup, or memory? | A structural boundary contains the risk, or a temporary exception has an explicit removal path. |
 | Is an external dependency accessed from multiple places? | One narrow adapter/seam owns it. |
 | Is consequential behaviour implicit? | Contract, ownership, ordering, retry, and failure semantics are explicit. |
+| What proves failure containment? | The [failure-boundary gate](#failure-boundary-gate) names the expected failure, owners, visible result, recovery, and focused negative-path evidence. |
 | Can a fresh reader locate the main flow? | Intent is visible first; detail is behind small named steps. |
 | What proves success? | A named, proportionate verification observation is part of “Done when.” |
 
 An implementation task is not build-ready if a material smell remains unexplained or is deferred
 to implementation. The detailed code-reading rules live in [Code Style](code-style.md); tiering,
 data ownership, and identity rules live in [Security Architecture](security-architecture.md).
+
+## Failure-boundary gate
+
+For every new or changed external dependency, mutation, process boundary, destructive operation,
+or consequential workflow, the active task's design and review material must record the following
+before implementation. Completion review records the actual observation against that design.
+Keep the record proportionate to the meaningful failures introduced or changed; an existing
+contract or evidence record can be linked when it still covers the change.
+
+| Required fact | Passing answer |
+|---|---|
+| Expected failure | Names the failure permitted by the boundary's contract and the operation/state it affects. |
+| Owner and containment boundary | Names the component responsible and the boundary that limits propagation or partial effects. |
+| Caller/user-visible result | States the explicit error or outcome the caller/user receives, including any partial state needed to understand it. |
+| Recovery owner and action | Names who recovers and how; if recovery is unavailable, states who owns the terminal outcome and why. |
+| Verification | Names an observation or focused negative-path test proving both containment and an intelligible result. |
+
+Failures must remain explicit: no silent swallowing, accidental fallback, or recovery hidden
+inside an unrelated component. Logging alone does not satisfy a caller's failure contract.
+Recovery must respect existing component, tier, data, and identity ownership; it cannot bypass
+the [Security Architecture](security-architecture.md) gate.
+
+Apply structural containment from the design sensibilities above: a transaction, queue, bounded
+identity, sandbox, separate deliberate operation, or platform boundary is preferable to warnings,
+cleanup procedures, or operator memory. Select the boundary that addresses the present failure;
+do not introduce speculative abstractions, strategies, maps, wrappers, configuration knobs, or
+defensive branches for impossible states to satisfy this gate.
+
+A normal-path or default-path success alone does not prove failure containment. Use proportionate
+negative-path verification whenever the task creates or changes a meaningful failure boundary.
+A controlled failure test may prove containment at its named layer; it does not replace
+[default-path acceptance](default-path-acceptance.md). Missing design answers block handoff;
+missing or failed containment evidence blocks completion.
 
 ## Default-path acceptance gate
 
@@ -142,7 +185,7 @@ tasks must explicitly allocate the visible elements; an implementer cannot infer
 A visual FAIL rejects the implementation even if its tests pass. Update the scoped design and repeat
 the comparison before approval or merge. Agent review must record PASS before requesting the
 operator's final independent visual acceptance. The detailed UI workflow is in
-[Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate).
+[Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate--non-negotiable).
 
 ## Working consequences
 
