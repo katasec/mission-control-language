@@ -9,6 +9,7 @@ public enum ClientRuntimeEventKind
     ConfirmationRequest,
     Error,
     ConversationEvent,
+    ProjectMissionChanged,
 }
 
 // One stable wire envelope keeps SSE deserialization simple and leaves room for transport swaps.
@@ -27,4 +28,7 @@ public sealed record ClientRuntimeEvent(
     string? CapabilityName = null,
     string? RequestSummary = null,
     string? Error = null,
-    ConversationEvent? Conversation = null);
+    ConversationEvent? Conversation = null,
+    ProjectMissionChange? ProjectMission = null);
+
+public sealed record ProjectMissionChange(Guid ContainerId, long LastSequence);

@@ -127,7 +127,46 @@ public enum ProjectOperationErrorCode
     InvalidMissionInput,
     UnknownMission,
     MissionRunConflict,
+    // Phase 43.22 task 3. Appended because the transport serializes this enum numerically.
+    InvalidRunQuery,
+    MissionRunNotFound,
+    RunAlreadyActive,
+    HistoryUnavailable,
+    HistoryInvalid,
+    HistorySynchronizing,
 }
+
+// --- Project Mission run contracts (43.22 task 3) ------------------------------------------
+// The surface supplies a live session and a durable command identity. Project home, goal,
+// selected mission, container and all Host details remain Runtime-owned.
+public enum ProjectSubmissionState { Prepared, Accepted, Rejected }
+
+public sealed record ProjectSubmissionView(
+    Guid CommandId, string Mission, string Input, ProjectSubmissionState State,
+    Guid? RunId, long? AcceptedSequence, ProjectOperationError? Rejection);
+
+public sealed record StartProjectMissionRunRequest(
+    string SessionId, Guid CommandId, Guid? PreviousCommandId, string Input);
+public sealed record RetryProjectMissionSubmissionRequest(string SessionId, Guid CommandId);
+public sealed record ProjectSubmissionResponse(
+    ProjectSubmissionView? Submission, ProjectOperationError? Error);
+public sealed record GetProjectMissionStateRequest(string SessionId);
+public sealed record ProjectMissionState(
+    ProjectMissionsView Missions, ProjectSubmissionView? Submission,
+    ForgeMission.Conversations.Contracts.ProjectRunPage? Runs, ProjectOperationError? HistoryError);
+public sealed record GetProjectMissionStateResponse(
+    ProjectMissionState? State, ProjectOperationError? Error);
+public sealed record GetProjectRunsRequest(string SessionId, ForgeMission.Conversations.Contracts.ProjectRunCursor? Cursor);
+public sealed record GetProjectRunsResponse(ForgeMission.Conversations.Contracts.ProjectRunPage? Page, ProjectOperationError? Error);
+public sealed record GetProjectRunRequest(string SessionId, Guid RunId);
+public sealed record GetProjectRunResponse(ForgeMission.Conversations.Contracts.ProjectRunDetail? Run, ProjectOperationError? Error);
+public sealed record GetProjectRunEventsRequest(
+    string SessionId, Guid RunId, long AfterSequence, long? ThroughSequence);
+public sealed record GetProjectRunEventsResponse(
+    ForgeMission.Conversations.Contracts.ProjectRunEventPage? Page, ProjectOperationError? Error);
+
+public sealed record ProjectMissionsView(
+    IReadOnlyList<string> Available, string? Selected, bool HasLegacyHistory);
 
 // --- Project Mission Control contracts (43.20 task 2) ---------------------------------------
 // Surface-neutral by construction, and deliberately narrow: a surface names only its own session

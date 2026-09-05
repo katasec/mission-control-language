@@ -135,6 +135,70 @@ internal static class ClientRuntimeEndpoints
             }
         });
 
+        // Project Mission is a distinct application boundary from the historical Project Control
+        // conversation: handlers only bind the live session and delegate one typed operation.
+        app.MapPost("/transport/project/mission/run", async (
+            StartProjectMissionRunRequest request, ClientRuntimeSessionStore sessions,
+            ProjectMissionApplication application, CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await application.StartAsync(session, request, ct));
+        });
+
+        app.MapPost("/transport/project/mission/retry", async (
+            RetryProjectMissionSubmissionRequest request, ClientRuntimeSessionStore sessions,
+            ProjectMissionApplication application, CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await application.RetryAsync(session, request, ct));
+        });
+
+        app.MapPost("/transport/project/mission/state", async (
+            GetProjectMissionStateRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetStateAsync(ct), ct));
+        });
+
+        app.MapPost("/transport/project/runs", async (
+            GetProjectRunsRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetRunsAsync(request.Cursor, ct), ct));
+        });
+
+        app.MapPost("/transport/project/run", async (
+            GetProjectRunRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetRunAsync(request.RunId, ct), ct));
+        });
+
+        app.MapPost("/transport/project/run/events", async (
+            GetProjectRunEventsRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetEventsAsync(request.RunId, request.AfterSequence, request.ThroughSequence, ct), ct));
+        });
+
         app.MapPost("/transport/capability/dispatch", async (
             CapabilityDispatchRequest request,
             ClientRuntimeSessionStore sessions,
@@ -251,6 +315,15 @@ internal static class ClientRuntimeEndpoints
             new ProjectSummary(project.Manifest.ProjectId, project.Manifest.Title,
                 project.Manifest.Goal, project.Home));
     }
+
+    private static Task<TResult> InvokeProjectReadAsync<TResult>(ClientRuntimeSession session, string sessionId,
+        ProjectStore projects, IHttpClientFactory clients, ClientRuntimeEventHub events,
+        IHostApplicationLifetime lifetime, Func<ProjectMissionReadSession, Task<TResult>> operation,
+        CancellationToken ct) =>
+        session.ProjectMission.InvokeAsync(
+            () => new ProjectMissionReadSession(sessionId, session.Workspace.Root!, projects,
+                new ConversationHostClient(clients.CreateClient("conversation-host")), events.Publish,
+                lifetime.ApplicationStopping), operation, ct);
 
     // Expected Project domain failures become one typed response every surface renders the same
     // way. Unexpected faults are deliberately not caught here: they fail the transport instead of

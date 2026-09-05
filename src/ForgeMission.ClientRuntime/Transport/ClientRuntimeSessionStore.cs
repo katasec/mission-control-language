@@ -39,6 +39,7 @@ internal sealed class ClientRuntimeSessionStore(ClientRuntimeEventHub events, IC
         await replaced.Conversation.DisposeAsync();
         // Both slots, or the replaced session's Mission Control tail would outlive it.
         await replaced.MissionControl.DisposeAsync();
+        await replaced.ProjectMission.DisposeAsync();
         return Open(workspaceRoot, mission, runtime);
     }
 
@@ -98,6 +99,11 @@ internal sealed record ClientRuntimeSession(
     /// replaces the session but keeps the same Project home, so the replacement simply reopens the
     /// same durable control conversation from the manifest.</summary>
     public ProjectControlSessionSlot MissionControl { get; } = new();
+
+    /// <summary>One bounded Project Mission read owner per live session. It has no workspace
+    /// capability dependency and is disposed with the same replacement boundary as the legacy
+    /// conversation slots.</summary>
+    public ProjectMissionReadSessionSlot ProjectMission { get; } = new();
 }
 
 /// <summary>

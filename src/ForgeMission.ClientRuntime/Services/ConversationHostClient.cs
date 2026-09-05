@@ -73,8 +73,12 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
     public Task<ProjectCommandReceipt> ReadProjectCommandAsync(Guid containerId, Guid commandId, CancellationToken ct) =>
         GetProjectAsync($"conversations/{containerId}/project-commands/{commandId}", ConversationContractsJsonContext.Default.ProjectCommandReceipt, ct);
 
+    public Task<GetConversationResponse> ReadConversationAsync(Guid conversationId, CancellationToken ct) =>
+        GetProjectAsync($"conversations/{conversationId}", ConversationContractsJsonContext.Default.GetConversationResponse, ct);
+
     public async IAsyncEnumerable<ConversationEvent> StreamEventsAsync(
-        Guid conversationId, long after, [EnumeratorCancellation] CancellationToken ct)
+        Guid conversationId, long after, Action? onConnected = null,
+        [EnumeratorCancellation] CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"conversations/{conversationId}/events?after={after}");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -84,6 +88,8 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
             var errorBody = await response.Content.ReadAsStringAsync(ct);
             throw new HttpRequestException($"ConversationHost returned HTTP {(int)response.StatusCode}: {errorBody}");
         }
+
+        onConnected?.Invoke();
 
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);

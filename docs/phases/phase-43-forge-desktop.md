@@ -1,7 +1,7 @@
 # Phase 43 — Forge Desktop
 
 > **Status: Project Mission reconstruction in progress (2026-09-05).**
-> Next: Codex begins runtime application work from the replacement design.
+> Next: Codex begins workbench presentation from the replacement design.
 
 ## Purpose
 
@@ -30,7 +30,7 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.22 — Project Mission reconstruction](phase-43.22-project-mission-reconstruction.md) | Project-state and Host-history foundations verified; runtime application is next. |
+| [43.22 — Project Mission reconstruction](phase-43.22-project-mission-reconstruction.md) | State, Host-history and runtime foundations verified; workbench presentation is next. |
 | [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) / [43.21 — candidate](phase-43.21-mission-run-unification.md) | Superseded by 43.22. Keep verified baseline facts; do not execute the old remaining task lists. |
 | [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |

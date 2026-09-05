@@ -1,6 +1,6 @@
 # Phase 43.22 — Project Mission reconstruction
 
-> **Codex-only reconstruction in progress, 2026-09-05.** Project state and Host history are verified; runtime application is next.
+> **Codex-only reconstruction in progress, 2026-09-05.** State, Host history and runtime application are verified; workbench presentation is next.
 > This phase uses the user-directed execution protocol below; it does not use a Claude relay or
 > copy/paste handoff.
 
@@ -44,7 +44,7 @@ feature completion. No row is complete today.
 |---|---|---|---|
 | 1 | [Project state](phase-43.22-project-state.md) | Serialized project transactions and bounded immutable submission journal | Verified — [evidence](phase-43.22-project-state_completed.md) |
 | 2 | [Host history](phase-43.22-host-history.md) | Typed outcomes, bounded run index and exact event pages over existing data | Verified — [evidence](phase-43.22-host-history_completed.md) |
-| 3 | [Runtime application](phase-43.22-runtime-application.md) | Surface-neutral submission/recovery/read actions; one subscription lifecycle | Depends on 1–2 |
+| 3 | [Runtime application](phase-43.22-runtime-application.md) | Surface-neutral submission/recovery/read actions; one subscription lifecycle | Verified — [evidence](phase-43.22-runtime-application_completed.md) |
 | 4 | [Workbench presentation](phase-43.22-workbench-presentation.md) | Small composer and views; shared Runs list; reopenable trace; focused local Explorer | Depends on 1–3 |
 | 5 | [Retirement and acceptance](phase-43.22-retirement-acceptance.md) | Remove legacy writers, correct Naive, verify whole product and publish evidence | Depends on 1–4 |
 
