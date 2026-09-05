@@ -1,7 +1,17 @@
 # Phase 43.22 task 5 — Retire old writers and prove the product
 
-> **Design locked; Codex implementation/rollout pending, after tasks 1–4.**
+> **Source retirement and local verification complete.** The controlled deployment drain,
+> default-path journey, browser/native acceptance and operator review remain open.
 > Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+
+## Current status (2026-09-05)
+
+| Item | Observation | Status |
+|---|---|---|
+| Source boundary | Old Project Control HTTP/Runtime/Host/Worker writers and Mission Control executor/assets are removed. Historical manifests and conversation records remain read-only; direct old-purpose progress is rejected at the Host owner boundary. | Verified locally |
+| Naive | The packaged single-expert asset and Worker resolver replace the old control path; tool requests fail at the executor boundary. | Verified locally |
+| Required checks | `dotnet test src/ForgeMission.slnx --no-restore --nologo`: 591 passed, 6 conditionally skipped. `make desktop`: published `dist/forge-desktop/ForgeMission.Desktop` without warnings. | Verified locally |
+| Rollout/product | Stages A–D, clean-main dependency provenance, default-path journey, browser/native visual matrix and independent operator acceptance need the controlled candidate deployment. | Open |
 
 ## Delete, preserve and correct
 

@@ -30,23 +30,6 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
             ConversationContractsJsonContext.Default.SubmitToolResultRequest,
             ConversationContractsJsonContext.Default.SubmitToolResultResponse, ct);
 
-    // 43.20 task 2 — the Project-control pair. They reuse the same generic PostAsync and the same
-    // source-generated context as the Janus methods above; only their routes and message types
-    // differ. StreamEventsAsync below is NOT duplicated for them: a control conversation replays
-    // and tails through that identical SSE projection.
-
-    public Task<CreateProjectControlConversationResponse> CreateProjectControlAsync(
-        CreateProjectControlConversationRequest request, CancellationToken ct) =>
-        PostAsync("conversations/project-control", request,
-            ConversationContractsJsonContext.Default.CreateProjectControlConversationRequest,
-            ConversationContractsJsonContext.Default.CreateProjectControlConversationResponse, ct);
-
-    public Task<SubmitProjectControlMessageResponse> SubmitProjectControlMessageAsync(
-        SubmitProjectControlMessageRequest request, CancellationToken ct) =>
-        PostAsync($"conversations/{request.ConversationId}/control-messages", request,
-            ConversationContractsJsonContext.Default.SubmitProjectControlMessageRequest,
-            ConversationContractsJsonContext.Default.SubmitProjectControlMessageResponse, ct);
-
     // 43.21 task 1 — the universal Project Mission pair. Same generic PostAsync, same typed
     // responses; nothing about the transport differs from the Janus start it replaces.
     public Task<CreateProjectMissionContainerResponse> CreateProjectMissionContainerAsync(

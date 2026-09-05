@@ -35,10 +35,6 @@ namespace ForgeMission.Conversations.Contracts;
 [JsonSerializable(typeof(GetConversationRequest))]
 [JsonSerializable(typeof(GetConversationResponse))]
 [JsonSerializable(typeof(ReadConversationEventsRequest))]
-[JsonSerializable(typeof(CreateProjectControlConversationRequest))]
-[JsonSerializable(typeof(CreateProjectControlConversationResponse))]
-[JsonSerializable(typeof(SubmitProjectControlMessageRequest))]
-[JsonSerializable(typeof(SubmitProjectControlMessageResponse))]
 // 43.21 task 1 — the universal Project Mission invocation pair.
 [JsonSerializable(typeof(CreateProjectMissionContainerRequest))]
 [JsonSerializable(typeof(CreateProjectMissionContainerResponse))]

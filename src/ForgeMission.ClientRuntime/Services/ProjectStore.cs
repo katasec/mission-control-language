@@ -83,21 +83,6 @@ internal sealed class ProjectStore
         return new ProjectRecord(Read(_manifestFile.Read(root), root), root);
     }
 
-    // Kept as a compatibility facade until task 5 removes the old Project Control route. The
-    // migrated field is historical data only; all writes still use the transaction below.
-    public ProjectRecord SetMissionControlConversationId(string home, Guid conversationId) =>
-        SetLegacyProjectControlConversationIdAsync(home, conversationId, CancellationToken.None).GetAwaiter().GetResult();
-
-    public Task<ProjectRecord> SetLegacyProjectControlConversationIdAsync(
-        string home, Guid conversationId, CancellationToken cancellationToken) =>
-        SetStableIdAsync(
-            home,
-            conversationId,
-            "Mission Control conversation",
-            manifest => manifest.LegacyProjectControlConversationId,
-            (manifest, id) => manifest with { LegacyProjectControlConversationId = id },
-            cancellationToken);
-
     public ProjectRecord SetProjectMissionContainerId(string home, Guid containerId) =>
         SetProjectMissionContainerIdAsync(home, containerId, CancellationToken.None).GetAwaiter().GetResult();
 
@@ -110,12 +95,6 @@ internal sealed class ProjectStore
             manifest => manifest.ProjectMissionContainerId,
             (manifest, id) => manifest with { ProjectMissionContainerId = id },
             cancellationToken);
-
-    public ProjectMissionReference SelectMissionFor(string home, string mission) =>
-        SelectMissionAsync(home, mission, CancellationToken.None).GetAwaiter().GetResult().Manifest.SelectedMission;
-
-    public ProjectRecord SetSelectedMission(string home, string mission) =>
-        SelectMissionAsync(home, mission, CancellationToken.None).GetAwaiter().GetResult();
 
     public Task<ProjectRecord> SelectMissionAsync(string home, string mission, CancellationToken cancellationToken)
     {

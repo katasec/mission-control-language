@@ -22,9 +22,8 @@ public sealed class WorkerMissionContext
 
 /// <summary>
 /// Loads one packaged mission directory into a <see cref="WorkerMissionContext"/>. Extracted from
-/// <see cref="JanusMissionExecutor"/> when the Worker gained its second mission (43.20 task 2), so
-/// Janus and MissionControl share one loading path instead of duplicating the AST/lock/expert/
-/// provider sequence.
+/// <see cref="JanusMissionExecutor"/> so Janus and Naive share one loading path instead of
+/// duplicating the AST/lock/expert/provider sequence.
 /// </summary>
 public static class WorkerMissionLoader
 {

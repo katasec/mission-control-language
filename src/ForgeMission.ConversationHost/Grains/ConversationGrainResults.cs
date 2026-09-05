@@ -72,34 +72,9 @@ public sealed record ConversationToolResultInput(
     [property: Id(2)] string Content,
     [property: Id(3)] bool IsError);
 
-/// <summary>Grain-interface wrapper for creating a Project's Mission Control conversation
-/// (43.20 task 2). <see cref="ProjectId"/>/<see cref="ProjectGoal"/> are the create command's
-/// content: an exact retry is recognised by comparing them, and a create naming a different
-/// Project or goal against an already-pinned conversation is a conflict rather than a silent
-/// overwrite.
-///
-/// <see cref="CommandId"/> is validated as non-empty but is deliberately NOT part of that content
-/// comparison: the conversation id is derived from it one layer up, so two different command ids
-/// address two different grains and no grain can ever see a second one. Comparing it here would
-/// be a check that cannot fail.</summary>
-[GenerateSerializer]
-public sealed record ConversationControlCreateInput(
-    [property: Id(0)] Guid CommandId,
-    [property: Id(1)] Guid ProjectId,
-    [property: Id(2)] string ProjectGoal);
-
-/// <summary>Grain-interface wrapper for one Project-control turn (43.20 task 2). Deliberately has
-/// NO project-goal, capability, mission, path, tool, or run member: the grain sources the goal
-/// from <see cref="ConversationCheckpoint.ProjectGoal"/>, so there is no expression in
-/// <c>AcceptControlMessageAsync</c> that could read one from the caller.</summary>
-[GenerateSerializer]
-public sealed record ConversationControlMessageInput(
-    [property: Id(0)] Guid CommandId,
-    [property: Id(1)] string Text);
-
 /// <summary>Grain-interface wrapper for creating a Project's Mission container (43.21 task 1).
-/// Mirrors <see cref="ConversationControlCreateInput"/>'s content-comparison idempotency, and for
-/// the same reason omits any mission or capability member: a container pins neither.</summary>
+/// It compares the pinned Project identity and goal on an exact retry and omits any mission or
+/// capability member because a container pins neither.</summary>
 [GenerateSerializer]
 public sealed record ConversationProjectMissionCreateInput(
     [property: Id(0)] Guid CommandId,

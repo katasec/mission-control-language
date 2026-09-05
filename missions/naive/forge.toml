@@ -1,4 +1,4 @@
-# One provider profile: the MissionControl mission has a single expert and no `using` clause, so
+# One provider profile: the Naive mission has a single expert and no `using` clause, so
 # `default` is the profile it selects. It reuses the MCL_API_KEY the Worker container already
 # receives for Janus — this mission introduces no new secret, Key Vault role, or identity.
 [providers.default]

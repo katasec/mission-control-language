@@ -280,19 +280,6 @@ public class ConversationContractsRoundTripTests
     // --- 43.20 task 2 -------------------------------------------------------------------------
 
     [Fact]
-    public void ProjectControlMessages_RoundTrip()
-    {
-        var projectId = Guid.NewGuid();
-        var conversationId = Guid.NewGuid();
-
-        AssertRoundTrips(new CreateProjectControlConversationRequest(
-            projectId, ConversationDeterministicIds.ProjectControlCreate(projectId), "Ship a todos API"));
-        AssertRoundTrips(new CreateProjectControlConversationResponse(conversationId, 0));
-        AssertRoundTrips(new SubmitProjectControlMessageRequest(conversationId, Guid.NewGuid(), "narrow the scope"));
-        AssertRoundTrips(new SubmitProjectControlMessageResponse(conversationId, 1));
-    }
-
-    [Fact]
     public void AProjectControlSnapshotAndNullRunFacts_RoundTrip()
     {
         var conversationId = Guid.NewGuid();

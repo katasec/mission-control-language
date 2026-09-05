@@ -45,20 +45,10 @@ public static class ConversationDeterministicIds
     public static Guid ClientToolResult(Guid toolRequestId)
         => Generate($"client-tool-result:{toolRequestId:N}");
 
-    /// <summary>The <c>CommandId</c> Client Runtime sends to create a Project's Mission Control
-    /// conversation — derived from the stable local manifest <c>projectId</c>, so a retry after
-    /// Host acceptance but before the manifest write re-derives the same command ID, lands on the
-    /// same deterministic conversation, and returns its original acceptance instead of creating a
-    /// second control conversation for the same Project (43.20 task 2).</summary>
-    public static Guid ProjectControlCreate(Guid projectId)
-        => Generate($"project-control-create:{projectId:N}");
-
     /// <summary>The <c>CommandId</c> Client Runtime sends to create a Project's Mission container
-    /// (43.21 task 1) — derived from the stable local manifest <c>projectId</c> for the same reason
-    /// as <see cref="ProjectControlCreate"/>: a retry after Host acceptance but before the manifest
-    /// write re-derives the same command ID and lands on the same container. Deliberately a
-    /// DIFFERENT name prefix from the control create, so a migrated Project's new container can
-    /// never collide with the control conversation it is replacing.</summary>
+    /// (43.21 task 1) — derived from the stable local manifest <c>projectId</c>, so a retry after
+    /// Host acceptance but before the manifest write re-derives the same command ID and lands on
+    /// the same container.</summary>
     public static Guid ProjectMissionContainerCreate(Guid projectId)
         => Generate($"project-mission-container-create:{projectId:N}");
 

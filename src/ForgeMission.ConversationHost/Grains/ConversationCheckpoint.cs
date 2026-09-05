@@ -46,15 +46,12 @@ public sealed class ConversationCheckpoint
     /// acquire control semantics.</summary>
     [Id(12)] public ConversationPurpose Purpose { get; set; }
 
-    /// <summary>The Project this control conversation belongs to. Non-null only for
-    /// <see cref="ConversationPurpose.ProjectControl"/>. Together with <see cref="ProjectGoal"/> it
-    /// IS the create command's content, so an exact retry is recognised by content equality and a
-    /// create naming a different Project or goal is a conflict.</summary>
+    /// <summary>The Project associated with a Project Mission container or a historical Project
+    /// Control record. Project Control fields remain only so existing checkpoint rows deserialize;
+    /// they are never written by the active product.</summary>
     [Id(13)] public Guid? ProjectId { get; set; }
 
-    /// <summary>The Project's goal, pinned on the control conversation's create and thereafter the
-    /// ONLY source of a control command's <c>ConversationCommand.ProjectGoal</c>. A turn submission
-    /// can never supply or replace it — no turn-submitting request or grain-interface DTO has a
-    /// field able to carry one.</summary>
+    /// <summary>The pinned Project goal. Historic Project Control rows retain it for readback;
+    /// active Project Mission containers use it when starting their child runs.</summary>
     [Id(14)] public string? ProjectGoal { get; set; }
 }
