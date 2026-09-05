@@ -1,8 +1,9 @@
 # Phase 43.20 — Project Workbench MVP
 
-> **Status: Tasks 1 and 2 verified and merged (2026-09-04); Task 3 is next.** The Project home
-> and durable Mission Control now pass browser-first and default-config packaged Desktop acceptance.
-> Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> **Superseded for remaining implementation, 2026-09-05.** Tasks 1–2 retain their historical
+> verified baseline evidence. Do not implement this remaining task list: the replacement is
+> [43.22 — Project Mission reconstruction](phase-43.22-project-mission-reconstruction.md).
+> The following is prior design/reference, not the current build contract.
 
 ## Outcome
 

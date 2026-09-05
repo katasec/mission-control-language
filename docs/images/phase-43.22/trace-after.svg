@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="568" viewBox="0 0 800 568" role="img">
+<title>Project Mission reconstruction: trace</title>
+<rect x="0" y="0" width="800" height="568" fill="#f7faff" stroke="none" rx="0"/>
+<rect x="0" y="0" width="116" height="568" fill="#06284c" stroke="none" rx="0"/>
+<text x="16" y="36" font-family="system-ui,sans-serif" font-size="24" fill="#fff" font-weight="700">Forge</text>
+<text x="16" y="56" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">AI Workbench</text>
+<text x="16" y="133" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">Project</text>
+<text x="16" y="150" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">Explorer</text>
+<rect x="6" y="177" width="104" height="54" fill="#0c4475" stroke="none" rx="8"/>
+<text x="18" y="210" font-family="system-ui,sans-serif" font-size="13" fill="#fff" font-weight="600">Missions</text>
+<text x="18" y="537" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">Settings</text>
+<text x="138" y="34" font-family="system-ui,sans-serif" font-size="13" fill="#155d9a" font-weight="400">← Back to Missions</text>
+<text x="138" y="63" font-family="system-ui,sans-serif" font-size="21" fill="#172d49" font-weight="700">Run trace · Janus · Completed</text>
+<text x="138" y="87" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="400">Exact expert dialogue — events 2–8</text>
+<rect x="138" y="102" width="114" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="150" y="123" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Earlier events</text>
+<rect x="262" y="102" width="110" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="274" y="123" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Later events</text>
+<rect x="382" y="102" width="112" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="394" y="123" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Latest events</text>
+<rect x="138" y="150" width="640" height="364" fill="#fff" stroke="#d9e4ef" rx="12"/>
+<text x="154" y="180" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="600">Proposer</text>
+<text x="154" y="208" font-family="system-ui,sans-serif" font-size="14" fill="#172d49" font-weight="400">Here is the proposed implementation.</text>
+<text x="154" y="246" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="600">Approver</text>
+<text x="154" y="275" font-family="system-ui,sans-serif" font-size="14" fill="#172d49" font-weight="400">The proposal meets the stated requirement.</text>
+<text x="154" y="314" font-family="system-ui,sans-serif" font-size="12" fill="#227241" font-weight="600">Approved</text>
+<text x="154" y="350" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="600">Implementer</text>
+<text x="154" y="380" font-family="system-ui,sans-serif" font-size="14" fill="#172d49" font-weight="400">Here is the code to use for the task.</text>
+<text x="154" y="410" font-family="system-ui,sans-serif" font-size="14" fill="#172d49" font-weight="400">No local files were changed or tests executed.</text>
+<text x="138" y="544" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="400">All expert messages in this range are shown.</text>
+</svg>

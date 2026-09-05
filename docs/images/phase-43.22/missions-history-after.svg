@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="568" viewBox="0 0 800 568" role="img">
+<title>Project Mission reconstruction: history</title>
+<rect x="0" y="0" width="800" height="568" fill="#f7faff" stroke="none" rx="0"/>
+<rect x="0" y="0" width="116" height="568" fill="#06284c" stroke="none" rx="0"/>
+<text x="16" y="36" font-family="system-ui,sans-serif" font-size="24" fill="#fff" font-weight="700">Forge</text>
+<text x="16" y="56" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">AI Workbench</text>
+<text x="16" y="133" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">Project</text>
+<text x="16" y="150" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">Explorer</text>
+<rect x="6" y="177" width="104" height="54" fill="#0c4475" stroke="none" rx="8"/>
+<text x="18" y="210" font-family="system-ui,sans-serif" font-size="13" fill="#fff" font-weight="600">Missions</text>
+<text x="18" y="537" font-family="system-ui,sans-serif" font-size="12" fill="#b9d6f5" font-weight="400">Settings</text>
+<text x="138" y="41" font-family="system-ui,sans-serif" font-size="24" fill="#172d49" font-weight="700">Missions</text>
+<text x="138" y="66" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="400">Example Project</text>
+<rect x="138" y="82" width="104" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="150" y="103" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Latest runs</text>
+<rect x="252" y="82" width="104" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="264" y="103" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Older runs</text>
+<rect x="138" y="130" width="640" height="138" fill="#fff" stroke="#d9e4ef" rx="12"/>
+<text x="154" y="157" font-family="system-ui,sans-serif" font-size="16" fill="#172d49" font-weight="600">Naive run completed</text>
+<text x="154" y="183" font-family="system-ui,sans-serif" font-size="14" fill="#172d49" font-weight="400">Write a small sorting function.</text>
+<text x="154" y="207" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="400">1 expert turn · 0 tool calls</text>
+<rect x="154" y="221" width="125" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="166" y="242" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">View run trace</text>
+<rect x="290" y="221" width="131" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="302" y="242" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Show instruction</text>
+<rect x="138" y="282" width="640" height="138" fill="#fff" stroke="#d9e4ef" rx="12"/>
+<text x="154" y="309" font-family="system-ui,sans-serif" font-size="16" fill="#172d49" font-weight="600">Janus run completed</text>
+<text x="154" y="335" font-family="system-ui,sans-serif" font-size="14" fill="#172d49" font-weight="400">Propose a simple todo service.</text>
+<text x="154" y="359" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="400">3 expert turns · 0 tool calls</text>
+<rect x="154" y="373" width="125" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="166" y="394" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">View run trace</text>
+<rect x="290" y="373" width="131" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="302" y="394" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Show instruction</text>
+<text x="138" y="442" font-family="system-ui,sans-serif" font-size="12" fill="#526985" font-weight="400">Earlier runs remain available when you reopen this Project.</text>
+<rect x="132" y="459" width="652" height="91" fill="#fff" stroke="#d9e4ef" rx="12"/>
+<rect x="144" y="487" width="119" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="156" y="508" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Mission: Janus</text>
+<rect x="273" y="476" width="407" height="57" fill="#f7faff" stroke="#c3d2e4" rx="6"/>
+<text x="284" y="510" font-family="system-ui,sans-serif" font-size="13" fill="#526985" font-weight="400">What should this mission do?</text>
+<rect x="691" y="487" width="78" height="32" fill="#ffffff" stroke="#176aba" rx="6"/><text x="703" y="508" font-family="system-ui,sans-serif" font-size="12" fill="#155d9a" font-weight="600">Run</text>
+</svg>
