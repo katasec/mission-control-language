@@ -16,7 +16,7 @@
 #
 # The checked-in, read-only mission directories are baked into the image (not local-machine paths).
 # Only a MissionRef the named WorkerMissionResolver recognises — "Janus" or the zero-tool
-# "MissionControl" (43.20 task 2) — is ever executed.
+# "Naive" — is ever executed.
 
 # ---- build --------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -36,10 +36,10 @@ WORKDIR /app
 
 COPY --from=build /app/publish ./
 COPY missions/janus/ /app/missions/janus/
-COPY missions/mission-control/ /app/missions/mission-control/
+COPY missions/naive/ /app/missions/naive/
 
 ENV ConversationWorker__JanusMissionDirectory=/app/missions/janus \
-    ConversationWorker__MissionControlMissionDirectory=/app/missions/mission-control \
+    ConversationWorker__NaiveMissionDirectory=/app/missions/naive \
     DOTNET_ENVIRONMENT=Production \
     DOTNET_gcServer=0
 

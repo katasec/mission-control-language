@@ -1,6 +1,7 @@
 # Phase 43.22 — Project Mission reconstruction
 
-> **Design ready for Codex-only execution, 2026-09-05. Implementation not started.**
+> **Codex-only reconstruction, 2026-09-05.** Source implementation and local verification are complete;
+> controlled rollout, default-path and independent visible acceptance remain.
 > This phase uses the user-directed execution protocol below; it does not use a Claude relay or
 > copy/paste handoff.
 
@@ -38,15 +39,15 @@ main. After implementation, Codex reviews the resulting diff and evidence agains
 when` conditions before starting the next task. All five tasks belong to one replacement feature
 branch/PR; intermediate feature commits are not separately deployed. Task 5 also defines a narrowly
 scoped prerequisite admission-fence PR for safe retirement. A task's component evidence is not
-feature completion. No row is complete today.
+feature completion. Only the phase's rollout and visible-product requirements remain open.
 
 | Order | Spoke | Deliverable | Status |
 |---|---|---|---|
-| 1 | [Project state](phase-43.22-project-state.md) | Serialized project transactions and bounded immutable submission journal | Ready for Codex execution |
-| 2 | [Host history](phase-43.22-host-history.md) | Typed outcomes, bounded run index and exact event pages over existing data | Depends on 1 |
-| 3 | [Runtime application](phase-43.22-runtime-application.md) | Surface-neutral submission/recovery/read actions; one subscription lifecycle | Depends on 1–2 |
-| 4 | [Workbench presentation](phase-43.22-workbench-presentation.md) | Small composer and views; shared Runs list; reopenable trace; focused local Explorer | Depends on 1–3 |
-| 5 | [Retirement and acceptance](phase-43.22-retirement-acceptance.md) | Remove legacy writers, correct Naive, verify whole product and publish evidence | Depends on 1–4 |
+| 1 | [Project state](phase-43.22-project-state.md) | Serialized project transactions and bounded immutable submission journal | Verified — [evidence](phase-43.22-project-state_completed.md) |
+| 2 | [Host history](phase-43.22-host-history.md) | Typed outcomes, bounded run index and exact event pages over existing data | Verified — [evidence](phase-43.22-host-history_completed.md) |
+| 3 | [Runtime application](phase-43.22-runtime-application.md) | Surface-neutral submission/recovery/read actions; one subscription lifecycle | Verified — [evidence](phase-43.22-runtime-application_completed.md) |
+| 4 | [Workbench presentation](phase-43.22-workbench-presentation.md) | Small composer and views; shared Runs list; reopenable trace; focused local Explorer | Implemented and locally verified; browser/native visual acceptance pending |
+| 5 | [Retirement and acceptance](phase-43.22-retirement-acceptance.md) | Remove legacy writers, correct Naive, verify whole product and publish evidence | Source retirement and local checks verified; controlled rollout and product acceptance pending |
 
 ## Ownership and failure boundaries — locked
 
@@ -128,6 +129,5 @@ production lines separately; there is no deletion quota and no claim that retain
 | Legacy commands in flight | Permanent admission-fence prerequisite before consumer removal; per-command durable output plus actual latest Worker session state, not an invented receipt ledger. |
 | Focus blast radius | Only mounted composer may request focus; no terminal-event handler owns it. |
 
-This is design review, not evidence that implementation passes. Fresh task plans and completion
-results must still be reviewed. New source changes are authorized only after the per-task plan
-approval required by the repository workflow.
+This is design review, not evidence that implementation passes. Codex records and reviews each
+task's completion evidence directly under this phase's user-directed execution protocol.

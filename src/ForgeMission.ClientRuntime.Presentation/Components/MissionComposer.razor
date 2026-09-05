@@ -1,0 +1,98 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+@using Microsoft.AspNetCore.Components.Web
+@implements IDisposable
+
+<div class="mc">
+    @if (Submission is { State: ProjectSubmissionState.Prepared } pending)
+    {
+        <section class="mc-recovery" aria-live="polite">
+            <p>The outcome of this submission is not confirmed.</p>
+            <p><strong>@pending.Mission</strong></p>
+            <pre>@pending.Input</pre>
+            <button type="button" @onclick="() => Retry.InvokeAsync(pending.CommandId)" disabled="@Busy">Retry submission</button>
+        </section>
+    }
+    @if (Error is not null)
+    {
+        <p class="mc-error" role="alert">@Error.Message</p>
+    }
+    <div class="mc-row">
+        <MissionPicker Missions="Missions.Available" Selected="@Missions.Selected" Disabled="@Busy" SelectedChanged="SelectedChanged" />
+        <textarea class="mc-input" @bind="draft" @bind:event="oninput" @onkeydown="KeyDown" @ref="input"
+                  placeholder="What should this mission do?" disabled="@InputDisabled" aria-label="Mission instruction"></textarea>
+        <button type="button" class="mc-run" @onclick="RunAsync" disabled="@(!CanRun)">@ButtonText</button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ProjectMissionsView Missions { get; set; } = new([], null, false);
+    [Parameter] public ProjectSubmissionView? Submission { get; set; }
+    [Parameter] public ProjectOperationError? Error { get; set; }
+    [Parameter] public bool HistoryAvailable { get; set; }
+    [Parameter] public bool ActiveRun { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<string> MissionSelected { get; set; }
+    [Parameter] public EventCallback<string> Run { get; set; }
+    [Parameter] public EventCallback<Guid> Retry { get; set; }
+
+    private string draft = string.Empty;
+    private ElementReference input;
+    private string? submittedDraft;
+    private bool focusAfterAcceptedRun;
+    private bool disposed;
+
+    private bool InputDisabled => Busy || !HistoryAvailable || ActiveRun || Submission?.State == ProjectSubmissionState.Prepared;
+    private bool CanRun => !Busy && HistoryAvailable && !ActiveRun && Submission?.State != ProjectSubmissionState.Prepared &&
+        Missions.Selected is not null && !string.IsNullOrWhiteSpace(draft);
+    private string ButtonText => Busy ? "Starting…" : ActiveRun ? "Waiting for this run to finish…" : "Run";
+
+    protected override void OnParametersSet()
+    {
+        if (submittedDraft is null)
+            return;
+
+        if (Submission is { State: ProjectSubmissionState.Accepted } accepted && accepted.Input == submittedDraft)
+        {
+            if (draft == submittedDraft)
+                draft = string.Empty;
+            submittedDraft = null;
+            focusAfterAcceptedRun = true;
+        }
+        else if (Submission is { State: ProjectSubmissionState.Prepared or ProjectSubmissionState.Rejected })
+        {
+            submittedDraft = null;
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed || !focusAfterAcceptedRun)
+            return;
+        focusAfterAcceptedRun = false;
+        await input.FocusAsync();
+    }
+
+    private async Task SelectedChanged(string mission) => await MissionSelected.InvokeAsync(mission);
+    private async Task RunAsync()
+    {
+        if (!CanRun)
+            return;
+        submittedDraft = draft;
+        await Run.InvokeAsync(draft);
+    }
+
+    public void Dispose()
+    {
+        disposed = true;
+        submittedDraft = null;
+        focusAfterAcceptedRun = false;
+    }
+
+    private async Task KeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await RunAsync();
+    }
+}
+
+
+

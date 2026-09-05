@@ -1,0 +1,9 @@
+// Naive is the one-expert Project mission. It produces a direct answer without negotiation,
+// approval, or tools. The Worker provides no tool declarations, so this asset cannot inspect or
+// change a person's local project.
+
+mission Naive(projectGoal, task) = {
+    Controller
+}
+
+output(Naive)

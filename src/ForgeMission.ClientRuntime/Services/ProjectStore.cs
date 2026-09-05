@@ -11,7 +11,7 @@ namespace ForgeMission.ClientRuntime.Services;
 //
 // Expected domain failures throw ProjectOperationException and are mapped to a typed
 // ProjectOperationError once, at the transport endpoint. The exception never leaves Client Runtime.
-internal sealed class ProjectStore(string? projectsRoot = null)
+internal sealed class ProjectStore
 {
     public const string ManifestFileName = "forge.project.json";
 
@@ -20,7 +20,14 @@ internal sealed class ProjectStore(string? projectsRoot = null)
     private const int MaxCollisionAttempts = 100;
     private const string SlugFallback = "project";
 
-    private readonly string _projectsRoot = projectsRoot ?? DefaultProjectsRoot();
+    private readonly string _projectsRoot;
+    private readonly ProjectManifestFile _manifestFile;
+
+    public ProjectStore(string? projectsRoot = null, ProjectManifestFile? manifestFile = null)
+    {
+        _projectsRoot = projectsRoot ?? DefaultProjectsRoot();
+        _manifestFile = manifestFile ?? new ProjectManifestFile();
+    }
 
     /// <summary>Pure: what a create would use, for display before confirmation. It performs no
     /// filesystem work at all — not even a collision probe, which would be both an access and an
@@ -32,7 +39,7 @@ internal sealed class ProjectStore(string? projectsRoot = null)
         return new ProjectHomeProposal(home, title);
     }
 
-    /// <summary>Creates the Project home and its v1 manifest. Create — never a draft, and never a
+    /// <summary>Creates the Project home and its current manifest. Create — never a draft, and never a
     /// surface — owns the final home: inside Forge's own projects root it takes the next free
     /// -2/-3 suffix, so confirming a drafted location that has since been taken still lands
     /// somewhere valid. A home outside that root is a directory the person named themselves and is
@@ -59,85 +66,305 @@ internal sealed class ProjectStore(string? projectsRoot = null)
             throw new ProjectOperationException(ProjectOperationErrorCode.HomeNotFound,
                 $"No directory exists at {home}.");
 
-        var manifestPath = Path.Combine(home, ManifestFileName);
-        if (!File.Exists(manifestPath))
+        if (!File.Exists(Path.Combine(home, ManifestFileName)))
             return new ProjectOpenResult(null, new ProjectHomeProposal(home, TitleFromDirectory(home)));
 
-        return new ProjectOpenResult(new ProjectRecord(Read(manifestPath, home), home), null);
+        return new ProjectOpenResult(new ProjectRecord(Read(_manifestFile.Read(home), home), home), null);
     }
 
-    /// <summary>
-    /// Records the server-issued Mission Control conversation ID on an existing Project's manifest
-    /// (43.20 task 2) — the ONE place that field is ever written. Called only after the Conversation
-    /// service has accepted the create, so the durable conversation always exists before the local
-    /// record of it does.
-    ///
-    /// Idempotent and refusing rather than overwriting: the same ID is a no-op, and a DIFFERENT
-    /// non-null ID is refused outright, because a Project has exactly one control conversation and
-    /// silently repointing it would orphan a durable transcript. The write itself goes to a sibling
-    /// temporary file and is then moved over the manifest, so a crash mid-write can never leave a
-    /// half-written manifest — a reader sees either the old file or the new one.
-    /// </summary>
-    public ProjectRecord SetMissionControlConversationId(string home, Guid conversationId)
+    /// <summary>Reads a manifest for a Project session that is already open. It creates neither a
+    /// directory nor any conversation/capability authority.</summary>
+    public ProjectRecord ReadForHome(string home)
     {
-        if (conversationId == Guid.Empty)
-            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
-                "A Mission Control conversation id is required.");
-
         var root = ValidHome(home);
-        var manifestPath = Path.Combine(root, ManifestFileName);
-        if (!File.Exists(manifestPath))
-            throw new ProjectOperationException(ProjectOperationErrorCode.HomeNotFound,
-                $"No Forge Project manifest exists at {manifestPath}.");
+        if (!Directory.Exists(root) || !File.Exists(Path.Combine(root, ManifestFileName)))
+            throw MissingManifest(root);
 
-        var manifest = Read(manifestPath, root);
-
-        if (manifest.MissionControlConversationId is { } existing)
-        {
-            if (existing != conversationId)
-                throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
-                    $"{manifestPath} already names a different Mission Control conversation.");
-
-            return new ProjectRecord(manifest, root); // Same ID: already recorded, nothing to write.
-        }
-
-        var updated = manifest with { MissionControlConversationId = conversationId };
-        ReplaceManifest(manifestPath, updated);
-        return new ProjectRecord(updated, root);
+        return new ProjectRecord(Read(_manifestFile.Read(root), root), root);
     }
 
-    // Write-then-move. File.Move with overwrite is rename(2) on Unix and MoveFileEx with
-    // MOVEFILE_REPLACE_EXISTING on Windows — File.Replace is deliberately not used, since it
-    // requires the destination to exist and is stricter cross-platform for no benefit here.
-    private static void ReplaceManifest(string manifestPath, ProjectManifest manifest)
+    public ProjectRecord SetProjectMissionContainerId(string home, Guid containerId) =>
+        SetProjectMissionContainerIdAsync(home, containerId, CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task<ProjectRecord> SetProjectMissionContainerIdAsync(
+        string home, Guid containerId, CancellationToken cancellationToken) =>
+        SetStableIdAsync(
+            home,
+            containerId,
+            "Project Mission container",
+            manifest => manifest.ProjectMissionContainerId,
+            (manifest, id) => manifest with { ProjectMissionContainerId = id },
+            cancellationToken);
+
+    public Task<ProjectRecord> SelectMissionAsync(string home, string mission, CancellationToken cancellationToken)
     {
-        var temporaryPath = manifestPath + ".tmp";
+        if (!ProjectMissions.IsAllowed(mission))
+            throw new ProjectOperationException(ProjectOperationErrorCode.UnknownMission,
+                $"'{mission}' is not a mission this Project can run.");
+
+        var selected = ProjectMissions.Reference(mission);
+        return UpdateAsync(home, manifest =>
+        {
+            if (manifest.SelectedMission is { Origin: ProjectMissionOrigin.BuiltIn } current &&
+                string.Equals(current.Reference, selected.Reference, StringComparison.Ordinal))
+                return manifest;
+
+            return manifest with { SelectedMission = selected };
+        }, cancellationToken);
+    }
+
+    public Task<ProjectRecord> PrepareSubmissionAsync(
+        string home,
+        Guid commandId,
+        Guid? previousCommandId,
+        string input,
+        CancellationToken cancellationToken)
+    {
+        ValidateSubmissionRequest(commandId, input);
+        return UpdateAsync(home, manifest =>
+        {
+            var prepared = PrepareSubmission(manifest, commandId, previousCommandId, input);
+            EnsureJournalFitsInput(prepared.Submission);
+            return prepared;
+        }, cancellationToken);
+    }
+
+    public async Task<ProjectRecord> RecordSubmissionAcceptedAsync(
+        string home,
+        Guid commandId,
+        ProjectSubmissionAcceptance acceptance,
+        CancellationToken cancellationToken)
+    {
+        ValidateAcceptance(acceptance);
         try
         {
-            using (var file = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write))
-                JsonSerializer.Serialize(file, manifest, ProjectManifestJsonContext.Default.ProjectManifest);
-
-            File.Move(temporaryPath, manifestPath, overwrite: true);
+            return await UpdateAsync(home, manifest => RecordAcceptance(manifest, commandId, acceptance), cancellationToken);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (ProjectOperationException exception) when (exception.Code is
+            ProjectOperationErrorCode.ManifestWriteFailed or ProjectOperationErrorCode.ProjectChanged)
         {
-            TryDelete(temporaryPath);
-            throw new ProjectOperationException(ProjectOperationErrorCode.ManifestWriteFailed,
-                $"Could not update {manifestPath}: {exception.Message}");
+            throw SubmissionUncertain();
         }
     }
 
-    private static void TryDelete(string path)
+    public async Task<ProjectRecord> RecordSubmissionRejectedAsync(
+        string home,
+        Guid commandId,
+        ProjectSubmissionRejection rejection,
+        CancellationToken cancellationToken)
     {
+        ValidateRejection(rejection);
         try
         {
-            File.Delete(path);
+            return await UpdateAsync(home, manifest => RecordRejection(manifest, commandId, rejection), cancellationToken);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (ProjectOperationException exception) when (exception.Code is
+            ProjectOperationErrorCode.ManifestWriteFailed or ProjectOperationErrorCode.ProjectChanged)
         {
-            // Best effort: a leftover temporary file is untidy, never incorrect — the manifest
-            // itself is either the old one or the new one, and reporting the delete failure would
-            // mask the write failure that actually matters.
+            throw SubmissionUncertain();
+        }
+    }
+
+    private Task<ProjectRecord> SetStableIdAsync(
+        string home,
+        Guid id,
+        string description,
+        Func<ProjectManifest, Guid?> read,
+        Func<ProjectManifest, Guid, ProjectManifest> write,
+        CancellationToken cancellationToken)
+    {
+        if (id == Guid.Empty)
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                $"A {description} id is required.");
+
+        return UpdateAsync(home, manifest =>
+        {
+            if (read(manifest) is not { } existing)
+                return write(manifest, id);
+
+            if (existing == id)
+                return manifest;
+
+            throw new ProjectOperationException(ProjectOperationErrorCode.MissionRunConflict,
+                $"This Project already names a different {description}.");
+        }, cancellationToken);
+    }
+
+    private async Task<ProjectRecord> UpdateAsync(
+        string home,
+        Func<ProjectManifest, ProjectManifest> transform,
+        CancellationToken cancellationToken)
+    {
+        var root = ValidHome(home);
+        if (!Directory.Exists(root) || !File.Exists(Path.Combine(root, ManifestFileName)))
+            throw MissingManifest(root);
+
+        return await _manifestFile.UpdateAsync(root, snapshot =>
+        {
+            var current = Read(snapshot, root);
+            var updated = transform(current);
+            if (ReferenceEquals(current, updated))
+                return new ProjectManifestFileUpdate<ProjectRecord>(new ProjectRecord(current, root), null);
+
+            Validate(updated, snapshot.Path, root);
+            return new ProjectManifestFileUpdate<ProjectRecord>(
+                new ProjectRecord(updated, root),
+                SerializeManifest(updated));
+        }, cancellationToken);
+    }
+
+    private static ProjectManifest PrepareSubmission(
+        ProjectManifest manifest,
+        Guid commandId,
+        Guid? previousCommandId,
+        string input)
+    {
+        var existing = manifest.Submission;
+        if (existing is null)
+        {
+            if (previousCommandId is not null)
+                throw SubmissionChanged();
+
+            return manifest with
+            {
+                Submission = new ProjectSubmission(
+                    commandId,
+                    previousCommandId,
+                    ProjectMissions.RequireSelected(manifest.SelectedMission),
+                    input,
+                    manifest.Goal,
+                    ProjectSubmissionPhase.Prepared,
+                    Acceptance: null,
+                    Rejection: null),
+            };
+        }
+
+        if (existing.CommandId == commandId)
+        {
+            if (existing.PreviousCommandId == previousCommandId && string.Equals(existing.Input, input, StringComparison.Ordinal))
+                return manifest;
+
+            throw new ProjectOperationException(ProjectOperationErrorCode.MissionRunConflict,
+                "This command id was already prepared with different immutable content.");
+        }
+
+        if (existing.Phase == ProjectSubmissionPhase.Prepared)
+            throw new ProjectOperationException(ProjectOperationErrorCode.SubmissionPending,
+                "A Project Mission submission is still awaiting its acceptance result.");
+
+        if (previousCommandId != existing.CommandId)
+            throw SubmissionChanged();
+
+        return manifest with
+        {
+            Submission = new ProjectSubmission(
+                commandId,
+                previousCommandId,
+                ProjectMissions.RequireSelected(manifest.SelectedMission),
+                input,
+                manifest.Goal,
+                ProjectSubmissionPhase.Prepared,
+                Acceptance: null,
+                Rejection: null),
+        };
+    }
+
+    private static ProjectManifest RecordAcceptance(
+        ProjectManifest manifest,
+        Guid commandId,
+        ProjectSubmissionAcceptance acceptance)
+    {
+        var submission = RequireSubmission(manifest, commandId);
+        if (submission.Phase == ProjectSubmissionPhase.Accepted && Equals(submission.Acceptance, acceptance))
+            return manifest;
+        if (submission.Phase != ProjectSubmissionPhase.Prepared)
+            throw ConflictingReceipt();
+
+        return manifest with
+        {
+            Submission = submission with
+            {
+                Phase = ProjectSubmissionPhase.Accepted,
+                Acceptance = acceptance,
+                Rejection = null,
+            },
+        };
+    }
+
+    private static ProjectManifest RecordRejection(
+        ProjectManifest manifest,
+        Guid commandId,
+        ProjectSubmissionRejection rejection)
+    {
+        var submission = RequireSubmission(manifest, commandId);
+        if (submission.Phase == ProjectSubmissionPhase.Rejected && Equals(submission.Rejection, rejection))
+            return manifest;
+        if (submission.Phase != ProjectSubmissionPhase.Prepared)
+            throw ConflictingReceipt();
+
+        return manifest with
+        {
+            Submission = submission with
+            {
+                Phase = ProjectSubmissionPhase.Rejected,
+                Acceptance = null,
+                Rejection = rejection,
+            },
+        };
+    }
+
+    private static ProjectSubmission RequireSubmission(ProjectManifest manifest, Guid commandId)
+    {
+        if (commandId == Guid.Empty || manifest.Submission is not { } submission || submission.CommandId != commandId)
+            throw new ProjectOperationException(ProjectOperationErrorCode.MissionRunConflict,
+                "This submission receipt does not match the Project's current immutable intent.");
+
+        return submission;
+    }
+
+    private static ProjectOperationException SubmissionChanged() =>
+        new(ProjectOperationErrorCode.SubmissionChanged,
+            "The Project submission changed before this request could be prepared. Refresh and retry.");
+
+    private static ProjectOperationException ConflictingReceipt() =>
+        new(ProjectOperationErrorCode.MissionRunConflict,
+            "This submission already has a different terminal receipt.");
+
+    private static ProjectOperationException SubmissionUncertain() =>
+        new(ProjectOperationErrorCode.SubmissionUncertain,
+            "The Host result may be durable, but Forge could not record its receipt. Retry the same command id.");
+
+    private static void ValidateSubmissionRequest(Guid commandId, string input)
+    {
+        if (commandId == Guid.Empty)
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidMissionInput,
+                "A Project Mission command id is required.");
+        if (string.IsNullOrWhiteSpace(input) || input.Length > 32_000 || Encoding.UTF8.GetByteCount(input) > 16_384)
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidMissionInput,
+                "A Project Mission instruction must be nonblank and within the supported size limit.");
+    }
+
+    private static void ValidateAcceptance(ProjectSubmissionAcceptance acceptance)
+    {
+        if (acceptance.ContainerId == Guid.Empty || acceptance.RunId == Guid.Empty || acceptance.AcceptedSequence <= 0)
+            throw new ProjectOperationException(ProjectOperationErrorCode.MissionRunConflict,
+                "A Project Mission acceptance receipt is incomplete.");
+    }
+
+    private static void ValidateRejection(ProjectSubmissionRejection rejection)
+    {
+        if (string.IsNullOrWhiteSpace(rejection.Code) || string.IsNullOrWhiteSpace(rejection.Message))
+            throw new ProjectOperationException(ProjectOperationErrorCode.MissionRunConflict,
+                "A Project Mission rejection receipt is incomplete.");
+    }
+
+    private static void EnsureJournalFitsInput(ProjectSubmission? submission)
+    {
+        if (submission is not null &&
+            JsonSerializer.SerializeToUtf8Bytes(submission, ProjectManifestJsonContext.Default.ProjectSubmission).Length > 96 * 1024)
+        {
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidMissionInput,
+                "The Project Mission submission receipt exceeds its bounded size.");
         }
     }
 
@@ -270,47 +497,40 @@ internal sealed class ProjectStore(string? projectsRoot = null)
             [],
             ProjectMissionReference.BuiltInJanus,
             [],
+            ProjectMissionContainerId: null,
+            [],
+            LegacyProjectControlConversationId: null,
             MissionControlConversationId: null,
-            []);
+            Submission: null);
 
-        Directory.CreateDirectory(home);
-        try
-        {
-            using var file = new FileStream(Path.Combine(home, ManifestFileName), FileMode.CreateNew, FileAccess.Write);
-            JsonSerializer.Serialize(file, manifest, ProjectManifestJsonContext.Default.ProjectManifest);
-        }
-        catch (IOException) when (File.Exists(Path.Combine(home, ManifestFileName)))
-        {
-            // Another writer won this home between the free-candidate check and this write. Any
-            // other IOException (permissions, full disk) is a real fault and must not be reported
-            // as a collision, so it stays unhandled here.
-            return null;
-        }
-
-        return new ProjectRecord(manifest, home);
+        // The same owner used by every update also creates the initial manifest. A competing
+        // process sees the manifest under the lease and moves to its next candidate; it never
+        // sees a half-written file or writes around the transaction boundary.
+        var created = _manifestFile.CreateIfAbsentAsync(home, SerializeManifest(manifest), CancellationToken.None)
+            .GetAwaiter().GetResult();
+        return created ? new ProjectRecord(manifest, home) : null;
     }
 
     // --- reading and validation -----------------------------------------------------------------
 
-    private static ProjectManifest Read(string manifestPath, string home)
+    private static ProjectManifest Read(ProjectManifestFileSnapshot snapshot, string home)
     {
         ProjectManifest? manifest;
         try
         {
-            using var file = File.OpenRead(manifestPath);
-            manifest = JsonSerializer.Deserialize(file, ProjectManifestJsonContext.Default.ProjectManifest);
+            manifest = JsonSerializer.Deserialize(snapshot.Bytes, ProjectManifestJsonContext.Default.ProjectManifest);
         }
         catch (JsonException exception)
         {
             throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
-                $"{manifestPath} is not readable as a Forge Project manifest: {exception.Message}");
+                $"{snapshot.Path} is not readable as a Forge Project manifest: {exception.Message}");
         }
 
         if (manifest is null)
             throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
-                $"{manifestPath} is empty.");
+                $"{snapshot.Path} is empty.");
 
-        return Validate(manifest, manifestPath, home);
+        return Validate(manifest, snapshot.Path, home);
     }
 
     // A manifest that fails validation is refused and left exactly as it is — never overwritten or
@@ -327,8 +547,9 @@ internal sealed class ProjectStore(string? projectsRoot = null)
                 $"{manifestPath} is missing a required Project field.");
 
         // A missing collection is an older-but-valid hand edit, not a failure: the identity fields
-        // above are what a Project cannot be without.
-        var normalized = manifest with
+        // above are what a Project cannot be without. Migration is in-memory only; Open does not
+        // rewrite a person's manifest, and the next successful mutation publishes v3.
+        var normalized = MigrateToCurrentSchema(manifest) with
         {
             Assets = OrEmpty(manifest.Assets),
             AttachedContext = OrEmpty(manifest.AttachedContext),
@@ -339,9 +560,87 @@ internal sealed class ProjectStore(string? projectsRoot = null)
             ValidateAssetPath(asset, manifestPath, home);
         foreach (var context in normalized.AttachedContext)
             ValidateContextReference(context, manifestPath);
+        ValidateSubmission(normalized.Submission, manifestPath);
 
         return normalized;
     }
+
+    private static ProjectManifest MigrateToCurrentSchema(ProjectManifest manifest)
+    {
+        var legacy = MergeLegacyIds(manifest, manifest.SchemaVersion);
+        return manifest with
+        {
+            SchemaVersion = ProjectManifest.CurrentSchemaVersion,
+            ProjectMissionContainerId = manifest.SchemaVersion == 1 ? null : manifest.ProjectMissionContainerId,
+            LegacyProjectControlConversationId = legacy,
+            MissionControlConversationId = null,
+            Submission = manifest.SchemaVersion < 3 ? null : manifest.Submission,
+        };
+    }
+
+    private static Guid? MergeLegacyIds(ProjectManifest manifest, int schemaVersion)
+    {
+        if (manifest.LegacyProjectControlConversationId is { } legacy &&
+            manifest.MissionControlConversationId is { } v1 && legacy != v1)
+        {
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                "The Project manifest contains conflicting legacy Mission Control conversation ids.");
+        }
+
+        if (schemaVersion == 1 && manifest.ProjectMissionContainerId is not null)
+        {
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                "A v1 Project manifest cannot name a Project Mission container.");
+        }
+
+        return manifest.LegacyProjectControlConversationId ?? manifest.MissionControlConversationId;
+    }
+
+    private static void ValidateSubmission(ProjectSubmission? submission, string manifestPath)
+    {
+        if (submission is null)
+            return;
+
+        var validIdentity = submission.CommandId != Guid.Empty &&
+                            ProjectMissions.IsAllowed(submission.Mission) &&
+                            !string.IsNullOrWhiteSpace(submission.Input) &&
+                            !string.IsNullOrWhiteSpace(submission.ProjectGoal) &&
+                            submission.Input.Length <= 32_000 &&
+                            Encoding.UTF8.GetByteCount(submission.Input) <= 16_384 &&
+                            JsonSerializer.SerializeToUtf8Bytes(submission, ProjectManifestJsonContext.Default.ProjectSubmission).Length <= 96 * 1024;
+        if (!validIdentity)
+            throw InvalidSubmission(manifestPath);
+
+        var validPhase = submission.Phase switch
+        {
+            ProjectSubmissionPhase.Prepared => submission.Acceptance is null && submission.Rejection is null,
+            ProjectSubmissionPhase.Accepted => IsCompleteAcceptance(submission.Acceptance) && submission.Rejection is null,
+            ProjectSubmissionPhase.Rejected => submission.Acceptance is null && submission.Rejection is { Code.Length: > 0, Message.Length: > 0 },
+            _ => false,
+        };
+        if (!validPhase)
+            throw InvalidSubmission(manifestPath);
+    }
+
+    private static ProjectOperationException InvalidSubmission(string manifestPath) =>
+        new(ProjectOperationErrorCode.InvalidManifest,
+            $"{manifestPath} contains an invalid Project Mission submission record.");
+
+    private static bool IsCompleteAcceptance(ProjectSubmissionAcceptance? acceptance) =>
+        acceptance is { AcceptedSequence: > 0 } &&
+        acceptance.ContainerId != Guid.Empty &&
+        acceptance.RunId != Guid.Empty;
+
+    private static byte[] SerializeManifest(ProjectManifest manifest)
+    {
+        EnsureJournalFitsInput(manifest.Submission);
+
+        return JsonSerializer.SerializeToUtf8Bytes(manifest, ProjectManifestJsonContext.Default.ProjectManifest);
+    }
+
+    private static ProjectOperationException MissingManifest(string root) =>
+        new(ProjectOperationErrorCode.HomeNotFound,
+            $"No Forge Project manifest exists at {Path.Combine(root, ManifestFileName)}.");
 
     private static void ValidateAssetPath(ProjectAssetDescriptor asset, string manifestPath, string home)
     {

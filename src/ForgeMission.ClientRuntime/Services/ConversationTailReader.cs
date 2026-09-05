@@ -23,11 +23,12 @@ internal sealed class ConversationTailReader : IAsyncDisposable
     private readonly CancellationTokenSource _lifetimeCts;
 
     // Tail-loop-only state: touched exclusively by the single TailAsync loop, never concurrently
-    // with a send, so no additional locking is needed.
-    private readonly HashSet<Guid> _seenEventIds = [];
+    // with a send, so no additional locking is needed. Sequence is the durable dedupe key; an
+    // unbounded EventId set would retain every historical trace for the whole session lifetime.
     private long _lastSequence;
 
     private Task? _tailTask;
+    private TaskCompletionSource _connected = NewConnectedSignal();
 
     public ConversationTailReader(
         string sessionId,
@@ -43,15 +44,25 @@ internal sealed class ConversationTailReader : IAsyncDisposable
         _lifetimeCts = CancellationTokenSource.CreateLinkedTokenSource(applicationStopping);
     }
 
-    /// <summary>Starts following <paramref name="conversationId"/> from sequence 0, so a reopened
+    /// <summary>Starts following <paramref name="conversationId"/> from <paramref name="afterSequence"/>, so a reopened
     /// conversation replays its whole durable history before live events arrive. Idempotent: a
     /// second call while a tail is already running is a no-op.</summary>
-    public void Start(Guid conversationId)
+    public void Start(Guid conversationId, long afterSequence = 0)
     {
         if (_tailTask is not null)
             return;
 
+        _lastSequence = afterSequence;
         _tailTask = Task.Run(() => TailAsync(conversationId, _lifetimeCts.Token));
+    }
+
+    /// <summary>Starts the SSE subscription and waits until Host accepted it. Read owners use
+    /// this before their first page request so an event between page-read and subscription cannot
+    /// be missed; legacy callers may retain the non-blocking <see cref="Start"/> entry point.</summary>
+    public async Task StartAsync(Guid conversationId, long afterSequence, CancellationToken ct)
+    {
+        Start(conversationId, afterSequence);
+        await _connected.Task.WaitAsync(ct);
     }
 
     private async Task TailAsync(Guid conversationId, CancellationToken ct)
@@ -60,17 +71,21 @@ internal sealed class ConversationTailReader : IAsyncDisposable
         {
             try
             {
-                await foreach (var evt in _hostClient.StreamEventsAsync(conversationId, _lastSequence, ct))
+                await foreach (var evt in _hostClient.StreamEventsAsync(conversationId, _lastSequence,
+                    () => _connected.TrySetResult(), ct))
                     await ApplyAsync(evt, ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 return;
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                // Normal SSE completion or a transient HTTP failure — reconnect below with the
-                // same cursor. No retry-count/configuration knob: this is a fixed policy.
+                _connected.TrySetException(exception);
+                _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, _sessionId,
+                    Error: "Forge lost the durable conversation stream and is reconnecting."));
+                // A normal SSE completion, protocol fault, or transient HTTP failure reconnects
+                // from the last committed cursor. No retry-count/configuration knob exists.
             }
 
             try
@@ -84,28 +99,26 @@ internal sealed class ConversationTailReader : IAsyncDisposable
         }
     }
 
-    // Relay-dedupe by EventId gates _publish, so an event the UI has already seen never renders
-    // twice across a replay/live overlap or a reconnect. The hook runs regardless of that dedupe:
-    // its own idempotency is its consumer's concern, because a side effect whose report never
-    // durably landed must still be retryable.
+    // A duplicate replay is harmless. A gap is a protocol fault: reconnect from the last durable
+    // sequence instead of advancing over a fact that may contain a pending tool request. The hook
+    // executes before the cursor advances, so a failed zero-authority refusal is retried.
     private async Task ApplyAsync(ConversationEvent evt, CancellationToken ct)
     {
-        if (_seenEventIds.Add(evt.EventId))
+        if (evt.Sequence <= _lastSequence)
+            return;
+
+        if (evt.Sequence != _lastSequence + 1)
         {
-            if (evt.Sequence <= _lastSequence)
-            {
-                _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, _sessionId,
-                    Error: $"Conversation protocol error: received unseen event at sequence {evt.Sequence}, already past {_lastSequence}."));
-            }
-            else
-            {
-                _lastSequence = evt.Sequence;
-                _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ConversationEvent, _sessionId, Conversation: evt));
-            }
+            _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.Error, _sessionId,
+                Error: $"Conversation protocol error: expected sequence {_lastSequence + 1}, received {evt.Sequence}."));
+            throw new ConversationTailGapException();
         }
 
         if (_onEventAsync is not null)
             await _onEventAsync(evt, ct);
+
+        _publish(new ClientRuntimeEvent(ClientRuntimeEventKind.ConversationEvent, _sessionId, Conversation: evt));
+        _lastSequence = evt.Sequence;
     }
 
     public async ValueTask DisposeAsync()
@@ -125,4 +138,9 @@ internal sealed class ConversationTailReader : IAsyncDisposable
 
         _lifetimeCts.Dispose();
     }
+
+    private static TaskCompletionSource NewConnectedSignal() =>
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
 }
+
+internal sealed class ConversationTailGapException : InvalidOperationException;

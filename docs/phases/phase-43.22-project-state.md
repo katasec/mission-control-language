@@ -1,6 +1,6 @@
 # Phase 43.22 task 1 — Project state and submission journal
 
-> **Design ready for Codex-only execution; implementation pending.** Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+> **Verified 2026-09-05.** Evidence: [task completion record](phase-43.22-project-state_completed.md). Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 > Non-visual component work; default-path proof is aggregated in task 5, not waived.
 
 ## Task and files

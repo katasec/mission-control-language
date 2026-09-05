@@ -95,59 +95,76 @@ public enum ProjectOperationErrorCode
     InvalidPath,
     CollisionAttemptsExhausted,
 
-    // 43.20 task 2. Mission Control failures are project-scoped operation failures, so they join
-    // this one vocabulary rather than introducing a second enum and error record every surface
-    // would have to learn.
-
-    /// <summary>The atomic manifest replacement failed after the Host had already accepted the
-    /// control conversation. The durable conversation remains valid and the same deterministic
-    /// create retry returns its ID — this is never reported as a new conversation, and never as a
-    /// successful local write.</summary>
+    /// <summary>The atomic manifest replacement failed after a durable Host acceptance. The
+    /// durable record remains valid; no local write is reported as successful.</summary>
     ManifestWriteFailed,
 
-    /// <summary>The Conversation service rejected the control request as malformed (blank IDs or
-    /// text).</summary>
-    MissionControlInvalid,
-
-    /// <summary>The Conversation service reported a conflict: a reused command ID with different
-    /// content, a create naming a different Project or goal, or a control message against a
-    /// conversation that is not a Project-control conversation.</summary>
-    MissionControlConflict,
-
-    /// <summary>The named control conversation does not exist.</summary>
-    MissionControlNotFound,
+    // Phase 43.22 task 1. Appended because this enum is serialized numerically by the transport.
+    ProjectBusy,
+    ProjectChanged,
+    ManifestReadFailed,
+    SubmissionPending,
+    SubmissionChanged,
+    SubmissionUncertain,
+    InvalidMissionInput,
+    UnknownMission,
+    MissionRunConflict,
+    // Phase 43.22 task 3. Appended because the transport serializes this enum numerically.
+    InvalidRunQuery,
+    MissionRunNotFound,
+    RunAlreadyActive,
+    HistoryUnavailable,
+    HistoryInvalid,
+    HistorySynchronizing,
+    DocumentUnavailable,
+    DocumentTooLarge,
+    DocumentChanged,
+    DocumentBinary,
 }
 
-// --- Project Mission Control contracts (43.20 task 2) ---------------------------------------
-// Surface-neutral by construction, and deliberately narrow: a surface names only its own session
-// and what the person typed. It supplies no Project path, no conversation ID, no project goal, no
-// mission, and no capability — the Runtime resolves the Project from the session it already owns,
-// reads the manifest itself, and the Conversation service sources the goal from pinned state.
-// A TUI invokes both of these identically.
+// --- Project Mission run contracts (43.22 task 3) ------------------------------------------
+// The surface supplies a live session and a durable command identity. Project home, goal,
+// selected mission, container and all Host details remain Runtime-owned.
+public enum ProjectSubmissionState { Prepared, Accepted, Rejected }
 
-/// <summary>Opens the Project's one Mission Control conversation, creating it only when the
-/// manifest holds no ID yet, then starts the existing durable replay/tail. Reopening a Project
-/// therefore restores the same conversation without creating anything.</summary>
-public sealed record OpenProjectMissionControlRequest(string SessionId);
+public sealed record ProjectSubmissionView(
+    Guid CommandId, string Mission, string Input, ProjectSubmissionState State,
+    Guid? RunId, long? AcceptedSequence, ProjectOperationError? Rejection);
 
-/// <summary>Exactly one of <see cref="ConversationId"/> and <see cref="Error"/> is populated.</summary>
-public sealed record OpenProjectMissionControlResponse(
-    Guid? ConversationId,
-    ProjectOperationError? Error = null);
+public sealed record StartProjectMissionRunRequest(
+    string SessionId, Guid CommandId, Guid? PreviousCommandId, string Input);
+public sealed record RetryProjectMissionSubmissionRequest(string SessionId, Guid CommandId);
+public sealed record ProjectSubmissionResponse(
+    ProjectSubmissionView? Submission, ProjectOperationError? Error);
+public sealed record GetProjectMissionStateRequest(string SessionId);
+public sealed record ProjectMissionState(
+    ProjectMissionsView Missions, ProjectSubmissionView? Submission,
+    ForgeMission.Conversations.Contracts.ProjectRunPage? Runs, ProjectOperationError? HistoryError);
+public sealed record GetProjectMissionStateResponse(
+    ProjectMissionState? State, ProjectOperationError? Error);
+public sealed record GetProjectRunsRequest(string SessionId, ForgeMission.Conversations.Contracts.ProjectRunCursor? Cursor);
+public sealed record GetProjectRunsResponse(ForgeMission.Conversations.Contracts.ProjectRunPage? Page, ProjectOperationError? Error);
+public sealed record GetProjectRunRequest(string SessionId, Guid RunId);
+public sealed record GetProjectRunResponse(ForgeMission.Conversations.Contracts.ProjectRunDetail? Run, ProjectOperationError? Error);
+public sealed record GetProjectRunEventsRequest(
+    string SessionId, Guid RunId, long AfterSequence, long? ThroughSequence);
+public sealed record GetProjectRunEventsResponse(
+    ForgeMission.Conversations.Contracts.ProjectRunEventPage? Page, ProjectOperationError? Error);
 
-/// <summary>Submits one refinement turn against the session's opened control conversation. This is
-/// the TUI-equivalent action; <see cref="PromptRequest"/> remains the Janus path.
-/// <see cref="CommandId"/> is generated once per user submission and reused only for its retry.</summary>
-public sealed record SubmitProjectMissionControlTurnRequest(
-    string SessionId,
-    Guid CommandId,
-    string Text);
+public sealed record ProjectMissionsView(
+    IReadOnlyList<string> Available, string? Selected, bool HasLegacyHistory);
 
-/// <summary>Exactly one of <see cref="ConversationId"/> and <see cref="Error"/> is populated.</summary>
-public sealed record SubmitProjectMissionControlTurnResponse(
-    Guid? ConversationId,
-    long AcceptedSequence,
-    ProjectOperationError? Error = null);
+public sealed record SelectProjectMissionRequest(string SessionId, string Mission);
+public sealed record SelectProjectMissionResponse(ProjectMissionsView? Missions, ProjectOperationError? Error);
+
+public sealed record GetProjectWorkbenchRequest(string SessionId);
+public sealed record ProjectWorkbenchEntry(string Id, string Label, string Kind);
+public sealed record ProjectWorkbenchProjection(
+    IReadOnlyList<ProjectWorkbenchEntry> Assets, IReadOnlyList<ProjectWorkbenchEntry> Context);
+public sealed record GetProjectWorkbenchResponse(ProjectWorkbenchProjection? Projection, ProjectOperationError? Error);
+public sealed record OpenProjectDocumentRequest(string SessionId, string EntryId);
+public sealed record ProjectDocument(string Label, string Content, bool IsPlainText);
+public sealed record OpenProjectDocumentResponse(ProjectDocument? Document, ProjectOperationError? Error);
 
 public sealed record CapabilityDispatchRequest(string SessionId, CapabilityRequestData Request);
 public sealed record CapabilityDispatchResponse(string Content, bool IsError);

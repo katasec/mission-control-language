@@ -14,4 +14,7 @@ namespace ForgeMission.ClientRuntime.Services;
     UseStringEnumConverter = true,
     WriteIndented = true)]
 [JsonSerializable(typeof(ProjectManifest))]
+[JsonSerializable(typeof(ProjectSubmission))]
+[JsonSerializable(typeof(ProjectSubmissionAcceptance))]
+[JsonSerializable(typeof(ProjectSubmissionRejection))]
 internal partial class ProjectManifestJsonContext : JsonSerializerContext;

@@ -52,10 +52,8 @@ public class MissionCommandProcessorTests
         };
     }
 
-    // Wraps one Janus context in the named resolver the processor now takes. The MissionControl
-    // slot is the SAME context here: every test in this file exercises a Janus MissionRef, so the
-    // control slot is never resolved — a control turn is covered by its own dedicated tests, with a
-    // real MissionControl mission.
+    // Wraps one Janus context in the named resolver. The Naive context is intentionally the same
+    // fixture because every test in this file exercises Janus; Naive has its own run tests.
     private static WorkerMissionResolver Resolver(WorkerMissionContext janus) => new(janus, janus);
 
     private static ConversationCommand StartCommand(Guid conversationId, Guid runId, Guid? commandId = null) => new(

@@ -34,6 +34,7 @@ namespace ForgeMission.ConversationHost.Grains;
 public sealed class ConversationGrain(
     [PersistentState("conversation-checkpoint", "conversation-checkpoint")] IPersistentState<ConversationCheckpoint> checkpoint,
     IConversationEventStore eventStore,
+    IProjectRunIndexStore projectRunIndexStore,
     IGrainFactory grainFactory,
     IConversationCommandDispatcher dispatcher,
     IConversationEventNotifier notifier)
@@ -41,14 +42,11 @@ public sealed class ConversationGrain(
 {
     private const string OutboxReminderName = "mission-command-outbox";
 
-    /// <summary>The fixed resolver key a Project-control command carries. Grain-set, never
-    /// caller-supplied, so a control message can never select Janus.</summary>
-    private const string ProjectControlMissionRef = "MissionControl";
-
     private static readonly TimeSpan OutboxReminderDueTime = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan OutboxReminderPeriod = TimeSpan.FromMinutes(1);
 
     private ConversationAddress Address => ConversationAddress.Parse(this.GetPrimaryKeyString());
+    private ProjectRunIndex ProjectRuns => new(eventStore, projectRunIndexStore);
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -104,7 +102,7 @@ public sealed class ConversationGrain(
         if (checkpoint.State.Purpose == ConversationPurpose.ProjectControl)
             return new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Conflict, null,
-                "This conversation is a Project-control conversation; it cannot start a mission run.");
+                "This legacy Project Control conversation is read-only.");
 
         // A MissionRun command names a run and carries no project goal. Both are guaranteed by the
         // HTTP adapter (StartConversationRequest has neither field), so these guard any OTHER
@@ -116,7 +114,7 @@ public sealed class ConversationGrain(
         if (command.ProjectGoal is not null)
             return new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Invalid, null,
-                "A mission-run command cannot carry a project goal; that value is Project-control state.");
+                "A mission-run command cannot carry a project goal.");
 
         // Duplicate command acceptance resolves through the durable event-ID row (the UserMessage
         // event's EventId is the command's CommandId) — checked before allocating any new
@@ -161,7 +159,7 @@ public sealed class ConversationGrain(
         if (checkpoint.State.Purpose == ConversationPurpose.ProjectControl)
             return new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Conflict, null,
-                "This conversation is a Project-control conversation; it cannot start a mission run.");
+                "This legacy Project Control conversation is read-only.");
 
         var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
         if (existing is not null)
@@ -188,9 +186,10 @@ public sealed class ConversationGrain(
         return await BeginRunAsync(command, ct);
     }
 
-    // -- Project-control acceptance (43.20 task 2) --
+    // -- Project Mission acceptance (43.21 task 1) --
 
-    public async Task<ConversationCommandOutcomeResult> AcceptControlCreateAsync(ConversationControlCreateInput input)
+    public async Task<ConversationCommandOutcomeResult> AcceptProjectMissionContainerCreateAsync(
+        ConversationProjectMissionCreateInput input)
     {
         var ct = CancellationToken.None;
         await RepairPendingTransitionIfAnyAsync(ct);
@@ -198,97 +197,112 @@ public sealed class ConversationGrain(
         if (input.CommandId == Guid.Empty || input.ProjectId == Guid.Empty || string.IsNullOrWhiteSpace(input.ProjectGoal))
             return new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Invalid, null,
-                "A Project-control create requires a command id, a project id, and a non-blank goal.");
+                "A Project Mission container requires a command id, a project id, and a non-blank goal.");
 
-        // Already pinned: recognise an exact retry by the create command's own CONTENT, mirroring
-        // ResolveDuplicateStart. A create naming a different Project or goal must never silently
-        // repoint an existing control conversation.
-        if (!string.IsNullOrEmpty(checkpoint.State.MissionRef))
+        if (input.CommandId != ConversationDeterministicIds.ProjectMissionContainerCreate(input.ProjectId))
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Invalid, null,
+                "The Project Mission container command id does not match its Project id.");
+
+        // Existence is read from purpose + Project ID, NOT from MissionRef: a container pins no
+        // mission, so MissionRef stays null and cannot serve as the "already created" signal the
+        // control path uses. An exact retry is recognised by the create's own content.
+        if (checkpoint.State.Purpose == ConversationPurpose.ProjectMission && checkpoint.State.ProjectId is not null)
         {
-            var isSameControlConversation =
-                checkpoint.State.Purpose == ConversationPurpose.ProjectControl &&
+            var isSameContainer =
                 checkpoint.State.ProjectId == input.ProjectId &&
                 string.Equals(checkpoint.State.ProjectGoal, input.ProjectGoal, StringComparison.Ordinal);
 
-            return isSameControlConversation
-                ? Accepted(checkpoint.State.LastSequence)
+            return isSameContainer
+                ? ContainerAccepted()
                 : new ConversationCommandOutcomeResult(
                     ConversationCommandOutcome.Conflict, null,
-                    "This conversation is already pinned to a different purpose, Project, or goal.");
+                    "This container is already pinned to a different Project or goal.");
         }
 
-        // Pinning MissionRef is what keeps the existing snapshot-based existence check working
-        // unchanged for a control conversation: a created one is found, a never-created one is not.
+        // Any OTHER already-initialised conversation — a Janus run, a control conversation — is a
+        // conflict rather than being converted. Nothing repoints an existing conversation.
+        if (!string.IsNullOrEmpty(checkpoint.State.MissionRef) || checkpoint.State.ProjectId is not null)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null,
+                "This conversation is already pinned to a different purpose.");
+
         checkpoint.State.TenantId = Address.TenantId;
         checkpoint.State.ConversationId = Address.ConversationId;
-        checkpoint.State.MissionRef = ProjectControlMissionRef;
-        checkpoint.State.Purpose = ConversationPurpose.ProjectControl;
+        checkpoint.State.Purpose = ConversationPurpose.ProjectMission;
         checkpoint.State.ProjectId = input.ProjectId;
         checkpoint.State.ProjectGoal = input.ProjectGoal;
-        checkpoint.State.PinnedCapabilitiesJson = "[]";
         checkpoint.State.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await checkpoint.WriteStateAsync();
 
-        // Deliberately appends NO event: a newly created control conversation is empty, so its
-        // accepted sequence is the current LastSequence (0). There is nothing to dispatch and no
-        // run to begin, which is why this path needs neither the outbox nor PendingRunStart.
-        return Accepted(checkpoint.State.LastSequence);
+        // No event, nothing to dispatch, no run to begin — a newly created container is empty.
+        return ContainerAccepted();
 
-        ConversationCommandOutcomeResult Accepted(long sequence) =>
+        ConversationCommandOutcomeResult ContainerAccepted() =>
             new(ConversationCommandOutcome.Accepted,
-                new ConversationCommandAcceptance(Address.ConversationId, null, sequence, checkpoint.State.Status),
+                new ConversationCommandAcceptance(
+                    Address.ConversationId, null, checkpoint.State.LastSequence, checkpoint.State.Status),
                 null);
     }
 
-    public async Task<ConversationCommandOutcomeResult> AcceptControlMessageAsync(ConversationControlMessageInput input)
+    public async Task<ConversationCommandOutcomeResult> AcceptProjectMissionRunAsync(ConversationProjectMissionRunInput input)
     {
         var ct = CancellationToken.None;
         await RepairPendingTransitionIfAnyAsync(ct);
+        await RepairPendingRunStartIfAnyAsync(ct);
 
-        // Message-shape validation comes FIRST — before the purpose check, the duplicate lookup,
-        // and any append. These are properties of the message itself, not of conversation state,
-        // so the grain refuses them without consulting the conversation at all. It also keeps a
-        // malformed message from ever reaching FindByEventIdAsync under Guid.Empty, where two
-        // unrelated malformed commands would otherwise collide on the same idempotency row.
-        if (input.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(input.Text))
+        // Message-shape validation comes first, before state and duplicate checks:
+        // these are properties of the message, and a malformed one must never reach the
+        // idempotency lookup under Guid.Empty where unrelated bad commands would collide.
+        if (input.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(input.Mission) || string.IsNullOrWhiteSpace(input.Input))
             return new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Invalid, null, "A control message requires a command id and non-blank text.");
+                ConversationCommandOutcome.Invalid, null,
+                "A Project Mission run requires a command id, a mission, and non-blank input.");
 
-        if (checkpoint.State.Purpose != ConversationPurpose.ProjectControl)
+        if (!ProjectMissionNames.IsKnown(input.Mission))
             return new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Conflict, null, "This conversation is not a Project-control conversation.");
+                ConversationCommandOutcome.Invalid, null,
+                "The Project Mission is not supported.");
+
+        if (checkpoint.State.Purpose != ConversationPurpose.ProjectMission)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "This conversation is not a Project Mission container.");
+
+        // The command is built BEFORE the duplicate lookup so a retry can be compared against what
+        // this call would have produced — mission and input included, which is what makes "same
+        // command id, changed mission" a conflict rather than a silently accepted second run.
+        // ProjectGoal comes from the container's pinned checkpoint state and from nowhere else —
+        // StartProjectMissionRunRequest has no such member, so no caller can supply or replace it.
+        // It is set for BOTH missions rather than only the one that reads it: every child command
+        // of a Project is then identically shaped, which is the property this task exists to
+        // establish. Janus simply ignores a value it has no parameter for.
+        var command = new ConversationCommand(
+            input.CommandId, Address.ConversationId,
+            ConversationDeterministicIds.ProjectMissionRun(input.CommandId),
+            ConversationCommandKind.StartMission,
+            // ZERO capabilities, always. Opening or invoking a Project grants no local tool
+            // authority (43.21), so this is an empty literal rather than a value read from
+            // anywhere: there is no member on the input, and no checkpoint state, that could make
+            // it non-empty. A direct Host caller therefore has nothing to smuggle a tool
+            // declaration through.
+            input.Mission, input.Input, [], null, checkpoint.State.ProjectGoal);
 
         var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
         if (existing is not null)
-            return ResolveDuplicateControlMessage(existing, input);
+            return ResolveDuplicateStart(existing, command);
 
-        // ProjectGoal is read from pinned checkpoint state and from nowhere else — the input has
-        // no such member, so no expression here can source it from the caller.
-        var command = new ConversationCommand(
-            input.CommandId, Address.ConversationId, null, ConversationCommandKind.StartMission,
-            ProjectControlMissionRef, input.Text, [], null, checkpoint.State.ProjectGoal);
-
-        var commandJson = JsonSerializer.Serialize(command, ConversationContractsJsonContext.Default.ConversationCommand);
-        var byteCount = Encoding.UTF8.GetByteCount(commandJson);
-        if (byteCount > ConversationJsonLimits.MaxStartCommandJsonBytes)
+        // One active run per Project (43.21 MVP). Reported as its own outcome rather than a
+        // generic conflict: it is an ordinary product state a surface explains, not a malformed
+        // request, and it appends nothing.
+        if (checkpoint.State.ActiveRunId is not null)
             return new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Invalid, null,
-                $"Control command JSON ({byteCount} bytes) exceeds the {ConversationJsonLimits.MaxStartCommandJsonBytes}-byte limit.");
+                ConversationCommandOutcome.RunAlreadyActive, null,
+                $"This Project already has an active mission run '{checkpoint.State.ActiveRunId}'.");
 
-        var planned = new ConversationEvent(
-            input.CommandId, 1, Address.ConversationId, null, checkpoint.State.LastSequence + 1,
-            ConversationEventKind.UserMessage, ConversationParticipant.User, null, input.Text, null,
-            null, null, null, null, null, DateTimeOffset.UtcNow);
-
-        // ONE event and ONE dispatch through the existing pending-transition/outbox protocol.
-        // notifyMissionRun: false is belt-and-braces — AdvanceAsync already cannot notify for a
-        // null-run event — but persisting the intent keeps a repaired transition truthful.
-        var stored = await PlanAppendAdvanceAsync(planned, command, notifyMissionRun: false, command, ct);
-
-        return new ConversationCommandOutcomeResult(
-            ConversationCommandOutcome.Accepted,
-            new ConversationCommandAcceptance(Address.ConversationId, null, stored.Sequence, checkpoint.State.Status),
-            null);
+        // Deliberately no MissionRef or PinnedCapabilitiesJson write: the container pins neither,
+        // and a run's mission lives in its own command. That is the whole reason a Project can
+        // alternate between Janus and Naive without a second container.
+        return await BeginRunAsync(command, ct);
     }
 
     public async Task<ConversationCommandOutcomeResult> AcceptToolResultAsync(ConversationToolResultInput input)
@@ -299,6 +313,10 @@ public sealed class ConversationGrain(
         // Resolved BEFORE checking current run state — an exact replay of an already-accepted tool
         // result must return its original acceptance even after the run has since gone terminal and
         // ExpectedToolRequestId/ActiveRunId no longer reflect it.
+        if (checkpoint.State.Purpose == ConversationPurpose.ProjectControl)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "This legacy Project Control conversation is read-only.");
+
         var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
         if (existing is not null)
             return ResolveDuplicateToolResult(existing, input);
@@ -355,16 +373,14 @@ public sealed class ConversationGrain(
             return new ConversationProgressAcceptance(
                 ConversationProgressOutcome.Rejected, null, "Progress does not match this conversation.");
 
-        // Purpose-aware admission, BEFORE the run match below. This is the structural containment
-        // behind the Worker's own control rules: even a regressed or compromised Worker cannot
-        // land a run, a run status, or a tool request on a control conversation — the sequence
-        // allocator refuses it rather than trusting Worker discipline.
+        // A persisted Project Control transcript remains readable, but after retirement no
+        // generic progress command may mutate it. This check is at the Host owner boundary,
+        // ahead of idempotency and sequence allocation, so an old queue body cannot revive it.
         if (checkpoint.State.Purpose == ConversationPurpose.ProjectControl)
-        {
-            if (RejectControlProgress(progress) is { } controlRejection)
-                return new ConversationProgressAcceptance(ConversationProgressOutcome.Rejected, null, controlRejection);
-        }
-        else if (progress.RunId is null || progress.RunId != checkpoint.State.ActiveRunId)
+            return new ConversationProgressAcceptance(
+                ConversationProgressOutcome.Rejected, null, "Legacy Project Control is read-only.");
+
+        if (progress.RunId is null || progress.RunId != checkpoint.State.ActiveRunId)
         {
             return new ConversationProgressAcceptance(
                 ConversationProgressOutcome.Rejected, null, "Progress does not match this conversation's active run.");
@@ -419,29 +435,9 @@ public sealed class ConversationGrain(
             };
         }
 
-        // A control fact belongs to no run, so it owes no MissionRunGrain notification. Stated
-        // explicitly (rather than relying on AdvanceAsync's own null-RunId guard) so a repaired
-        // transition persists the same truthful intent.
-        var notifyMissionRun = checkpoint.State.Purpose != ConversationPurpose.ProjectControl;
-        var stored = await PlanAppendAdvanceAsync(planned, null, notifyMissionRun, dispatchCommand, ct);
+        var stored = await PlanAppendAdvanceAsync(planned, null, notifyMissionRun: true, dispatchCommand, ct);
         return new ConversationProgressAcceptance(ConversationProgressOutcome.Appended, stored.Sequence, null);
     }
-
-    /// <summary>The admissible shape of a Project-control progress fact: null run, and only the
-    /// two facts the zero-tool MissionControl mission may report. Returns the rejection reason, or
-    /// null when the fact is admissible. A <c>RunStatus</c> is refused outright — a control turn
-    /// has no run whose status could be reported, so an interrupted turn is an <c>Error</c>.</summary>
-    private static string? RejectControlProgress(ConversationProgress progress) => progress switch
-    {
-        { RunId: not null } => "A Project-control fact cannot name a run.",
-        { Kind: not (ConversationEventKind.ParticipantMessage or ConversationEventKind.Error) } =>
-            $"A Project-control fact cannot be '{progress.Kind}'; only participant messages and errors are control facts.",
-        { ToolRequest: not null } or { ToolResult: not null } => "A Project-control fact cannot carry tool content.",
-        { RunStatus: not null } => "A Project-control fact cannot carry a run status.",
-        { Approval: not null } => "A Project-control fact cannot carry an approval.",
-        { Artifact: not null } => "A Project-control fact cannot carry an artifact reference.",
-        _ => null,
-    };
 
     public async Task RecordRunInterruptionAsync(MissionRunInterruption interruption)
     {
@@ -465,10 +461,15 @@ public sealed class ConversationGrain(
 
     public Task<ConversationSnapshotResult> GetSnapshotAsync()
     {
+        // MissionRef is projected as NULL when unset rather than as the empty string the checkpoint
+        // initialises it to: a Project Mission container genuinely has no mission, and the snapshot
+        // must say so rather than offer an empty sentinel a caller has to interpret.
         var snapshot = new ConversationSnapshot(
-            Address.ConversationId, checkpoint.State.MissionRef, checkpoint.State.ActiveRunId,
+            Address.ConversationId,
+            string.IsNullOrEmpty(checkpoint.State.MissionRef) ? null : checkpoint.State.MissionRef,
+            checkpoint.State.ActiveRunId,
             checkpoint.State.LastSequence, checkpoint.State.Status, checkpoint.State.ExpectedToolRequestId,
-            checkpoint.State.UpdatedAtUtc, checkpoint.State.Purpose);
+            checkpoint.State.UpdatedAtUtc, checkpoint.State.Purpose, checkpoint.State.ProjectId);
 
         return Task.FromResult(new ConversationSnapshotResult(
             JsonSerializer.Serialize(snapshot, ConversationContractsJsonContext.Default.ConversationSnapshot)));
@@ -482,6 +483,110 @@ public sealed class ConversationGrain(
 
         return new ConversationEventBatch([.. events]);
     }
+
+    public async Task<ConversationProjectReadResult> ReadProjectRunsAsync(long? anchor, long? before)
+    {
+        if (!IsProjectMissionContainer())
+            return ProjectError("wrongPurpose", "This conversation is not a Project Mission container.");
+        if (!ValidCursor(anchor, before, checkpoint.State.LastSequence))
+            return ProjectError("invalidRequest", "The runs cursor is invalid.");
+        try
+        {
+            var target = checkpoint.State.LastSequence;
+            var current = await ProjectRuns.AdvanceOnceAsync(Address, target, CancellationToken.None);
+            if (anchor is { } requestedAnchor && requestedAnchor > current.IndexedSequence)
+                return ProjectError("invalidRequest", "The runs cursor is ahead of indexed history.");
+            var pageAnchor = anchor ?? current.IndexedSequence;
+            var summaries = await ProjectRuns.ReadPageAsync(Address, pageAnchor, before, CancellationToken.None);
+            var visible = summaries.Take(20).ToArray();
+            var next = summaries.Length > 20 && visible.Length > 0 ? new ProjectRunCursor(pageAnchor, visible[^1].AcceptedSequence) : null;
+            return ProjectPayload(
+                new ProjectRunPage(Address.ConversationId, current.IndexedSequence, target, current.IndexedSequence < target, visible, next),
+                ConversationContractsJsonContext.Default.ProjectRunPage);
+        }
+        catch (ProjectHistoryInvalidException ex)
+        {
+            return ProjectError("historyInvalid", ex.Message);
+        }
+    }
+
+    public async Task<ConversationProjectReadResult> ReadProjectRunAsync(Guid runId)
+    {
+        if (runId == Guid.Empty)
+            return ProjectError("invalidRequest", "A run id is required.");
+        if (!IsProjectMissionContainer())
+            return ProjectError("wrongPurpose", "This conversation is not a Project Mission container.");
+        try
+        {
+            var target = checkpoint.State.LastSequence;
+            var current = await ProjectRuns.AdvanceOnceAsync(Address, target, CancellationToken.None);
+            var summary = await ProjectRuns.FindAsync(Address, runId, CancellationToken.None);
+            if (summary is null)
+                return MissingRun(current, target);
+            var receipt = await ProjectRuns.FindCommandAsync(Address, summary.CommandId, CancellationToken.None)
+                ?? throw new ProjectHistoryInvalidException("Run input is missing its accepted command.");
+            return ProjectPayload(
+                new ProjectRunDetail(summary, receipt.Input, current.IndexedSequence, target),
+                ConversationContractsJsonContext.Default.ProjectRunDetail);
+        }
+        catch (ProjectHistoryInvalidException ex)
+        {
+            return ProjectError("historyInvalid", ex.Message);
+        }
+    }
+
+    public async Task<ConversationProjectReadResult> ReadProjectRunEventsAsync(Guid runId, long after, long? through)
+    {
+        if (runId == Guid.Empty || after < 0)
+            return ProjectError("invalidRequest", "The trace range is invalid.");
+        if (!IsProjectMissionContainer())
+            return ProjectError("wrongPurpose", "This conversation is not a Project Mission container.");
+        var target = through ?? checkpoint.State.LastSequence;
+        if (target < after || target > checkpoint.State.LastSequence)
+            return ProjectError("invalidRequest", "The trace range is invalid.");
+        try
+        {
+            var current = await ProjectRuns.AdvanceOnceAsync(Address, checkpoint.State.LastSequence, CancellationToken.None);
+            if (await ProjectRuns.FindAsync(Address, runId, CancellationToken.None) is null)
+                return MissingRun(current, target);
+            var page = await ProjectRuns.ReadEventsAsync(Address, runId, after, target, CancellationToken.None);
+            return ProjectPayload(page, ConversationContractsJsonContext.Default.ProjectRunEventPage);
+        }
+        catch (ProjectHistoryInvalidException ex)
+        {
+            return ProjectError("historyInvalid", ex.Message);
+        }
+    }
+
+    public async Task<ConversationProjectReadResult> ReadProjectCommandAsync(Guid commandId)
+    {
+        if (commandId == Guid.Empty)
+            return ProjectError("invalidRequest", "A command id is required.");
+        if (!IsProjectMissionContainer())
+            return ProjectError("wrongPurpose", "This conversation is not a Project Mission container.");
+        try
+        {
+            var receipt = await ProjectRuns.FindCommandAsync(Address, commandId, CancellationToken.None);
+            return receipt is null
+                ? ProjectError("notFound", "The command was not found.")
+                : ProjectPayload(receipt, ConversationContractsJsonContext.Default.ProjectCommandReceipt);
+        }
+        catch (ProjectHistoryInvalidException ex)
+        {
+            return ProjectError("historyInvalid", ex.Message);
+        }
+    }
+
+    private bool IsProjectMissionContainer() => checkpoint.State.Purpose == ConversationPurpose.ProjectMission && checkpoint.State.ProjectId is not null;
+    private static bool ValidCursor(long? anchor, long? before, long last) =>
+        (anchor is null && before is null) ||
+        (anchor is { } a && before is { } b && a > 0 && a <= last && b > 0 && b <= a);
+    private static ConversationProjectReadResult ProjectError(string code, string message) => new(null, code, message);
+    private static ConversationProjectReadResult ProjectPayload<T>(T value, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type) => new(JsonSerializer.Serialize(value, type), null, null);
+    private static ConversationProjectReadResult MissingRun(ProjectRunIndexCheckpoint current, long target) =>
+        current.IndexedSequence < target
+            ? ProjectError("historySynchronizing", "Run history is synchronizing; retry shortly.")
+            : ProjectError("notFound", "The run was not found.");
 
     // -- start-pair (UserMessage + paired RunStatus(Queued)) protocol --
 
@@ -609,28 +714,6 @@ public sealed class ConversationGrain(
                 ConversationCommandOutcome.Accepted,
                 new ConversationCommandAcceptance(
                     Address.ConversationId, existing.Event.RunId!.Value, existing.Event.Sequence + 1, ConversationRunStatus.Queued),
-                null)
-            : new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Conflict, null, "CommandId already used with different content.");
-    }
-
-    private ConversationCommandOutcomeResult ResolveDuplicateControlMessage(
-        StoredConversationEvent existing, ConversationControlMessageInput input)
-    {
-        var isEqual =
-            existing.Event.ConversationId == Address.ConversationId &&
-            existing.Event.RunId is null &&
-            existing.Event.Kind == ConversationEventKind.UserMessage &&
-            existing.Event.Participant == ConversationParticipant.User &&
-            existing.Event.Text == input.Text;
-
-        // The control turn appends exactly ONE event, so its own sequence is the acceptance —
-        // unlike a run start, whose acceptance names the paired RunStatus(Queued) at sequence + 1.
-        return isEqual
-            ? new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Accepted,
-                new ConversationCommandAcceptance(
-                    Address.ConversationId, null, existing.Event.Sequence, checkpoint.State.Status),
                 null)
             : new ConversationCommandOutcomeResult(
                 ConversationCommandOutcome.Conflict, null, "CommandId already used with different content.");

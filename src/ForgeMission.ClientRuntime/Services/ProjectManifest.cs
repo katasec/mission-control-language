@@ -1,9 +1,7 @@
 namespace ForgeMission.ClientRuntime.Services;
 
-// The local, Forge-owned Project record written to <project-home>/forge.project.json (43.20 task 1).
-// The complete v1 shape is defined here even though Task 1 only ever writes empty collections and a
-// null conversation ID: later tasks add facts to typed empty arrays instead of silently changing the
-// on-disk schema, and Task 2's conversation-ID write-back round-trips the whole graph.
+// The local, Forge-owned Project record written to <project-home>/forge.project.json. v3 retains
+// v1/v2 fields for read compatibility, then adds one bounded, immutable submission receipt.
 //
 // It holds no credential, secret-derived value, transcript, or remote connection string. Absolute
 // local paths (a context SourceRoot/File reference) stay in this file; they never cross the
@@ -16,11 +14,41 @@ internal sealed record ProjectManifest(
     ProjectAssetDescriptor[] Assets,
     ProjectMissionReference SelectedMission,
     ProjectContextDescriptor[] AttachedContext,
-    Guid? MissionControlConversationId,
-    ProjectRunMetadata[] Runs)
+    Guid? ProjectMissionContainerId,
+    ProjectRunMetadata[] Runs,
+    Guid? LegacyProjectControlConversationId = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(
+        Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    Guid? MissionControlConversationId = null,
+    ProjectSubmission? Submission = null)
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 3;
 }
+
+internal enum ProjectSubmissionPhase
+{
+    Prepared,
+    Accepted,
+    Rejected,
+}
+
+internal sealed record ProjectSubmission(
+    Guid CommandId,
+    Guid? PreviousCommandId,
+    string Mission,
+    string Input,
+    string ProjectGoal,
+    ProjectSubmissionPhase Phase,
+    ProjectSubmissionAcceptance? Acceptance,
+    ProjectSubmissionRejection? Rejection);
+
+internal sealed record ProjectSubmissionAcceptance(
+    Guid ContainerId,
+    Guid RunId,
+    long AcceptedSequence,
+    Conversations.Contracts.ConversationRunStatus Status);
+
+internal sealed record ProjectSubmissionRejection(string Code, string Message);
 
 /// <summary>An editable local Forge asset. <paramref name="RelativePath"/> is normalized,
 /// home-relative, and never escapes the Project home.</summary>
@@ -45,7 +73,7 @@ internal sealed record ProjectMissionReference(
     string? Digest)
 {
     public static ProjectMissionReference BuiltInJanus { get; } =
-        new(ProjectMissionOrigin.BuiltIn, "Janus", null);
+        new(ProjectMissionOrigin.BuiltIn, Conversations.Contracts.ProjectMissionNames.Janus, null);
 }
 
 internal enum ProjectMissionOrigin

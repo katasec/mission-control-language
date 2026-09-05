@@ -1,6 +1,6 @@
 # Phase 43.22 task 3 — Mission application and read session
 
-> **Design locked; Codex implements after tasks 1–2.** Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+> **Verified 2026-09-05.** Evidence: [task completion record](phase-43.22-runtime-application_completed.md). Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 > Product operations below Presentation; no native/visual change in this task.
 
 ## File and responsibility boundary

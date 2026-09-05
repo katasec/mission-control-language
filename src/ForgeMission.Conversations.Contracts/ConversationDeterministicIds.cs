@@ -45,13 +45,21 @@ public static class ConversationDeterministicIds
     public static Guid ClientToolResult(Guid toolRequestId)
         => Generate($"client-tool-result:{toolRequestId:N}");
 
-    /// <summary>The <c>CommandId</c> Client Runtime sends to create a Project's Mission Control
-    /// conversation — derived from the stable local manifest <c>projectId</c>, so a retry after
-    /// Host acceptance but before the manifest write re-derives the same command ID, lands on the
-    /// same deterministic conversation, and returns its original acceptance instead of creating a
-    /// second control conversation for the same Project (43.20 task 2).</summary>
-    public static Guid ProjectControlCreate(Guid projectId)
-        => Generate($"project-control-create:{projectId:N}");
+    /// <summary>The <c>CommandId</c> Client Runtime sends to create a Project's Mission container
+    /// (43.21 task 1) — derived from the stable local manifest <c>projectId</c>, so a retry after
+    /// Host acceptance but before the manifest write re-derives the same command ID and lands on
+    /// the same container.</summary>
+    public static Guid ProjectMissionContainerCreate(Guid projectId)
+        => Generate($"project-mission-container-create:{projectId:N}");
+
+    /// <summary>The child Mission Run a Project Mission command starts (43.21 task 1). Derived
+    /// from the submission's own <c>CommandId</c> rather than freshly generated, because the
+    /// duplicate-resolution path compares a RECONSTRUCTED command against the stored one: a fresh
+    /// run id would make every legitimate retry look like a conflicting reuse of the command id.
+    /// Deterministic here means an equal retry returns the original run, which is exactly the
+    /// contract.</summary>
+    public static Guid ProjectMissionRun(Guid commandId)
+        => Generate($"project-mission-run:{commandId:N}");
 
     /// <summary>The Nth progress fact the Worker sends while processing one command.</summary>
     public static Guid Progress(Guid commandId, int ordinal)

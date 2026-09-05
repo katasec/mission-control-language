@@ -22,10 +22,10 @@ builder.Services.AddSingleton(serviceBusOptions);
 // a Worker executes what is baked into its image, never a directory a command names (43.20 task 2).
 var janusDirectory = builder.Configuration["ConversationWorker:JanusMissionDirectory"]
     ?? throw new InvalidOperationException("ConversationWorker:JanusMissionDirectory is required.");
-var missionControlDirectory = builder.Configuration["ConversationWorker:MissionControlMissionDirectory"]
-    ?? throw new InvalidOperationException("ConversationWorker:MissionControlMissionDirectory is required.");
+var naiveDirectory = builder.Configuration["ConversationWorker:NaiveMissionDirectory"]
+    ?? throw new InvalidOperationException("ConversationWorker:NaiveMissionDirectory is required.");
 builder.Services.AddSingleton(new WorkerMissionResolver(
-    WorkerMissionLoader.Load(janusDirectory), WorkerMissionLoader.Load(missionControlDirectory)));
+    WorkerMissionLoader.Load(janusDirectory), WorkerMissionLoader.Load(naiveDirectory)));
 
 var commandListenClient = BuildServiceBusClient(
     serviceBusOptions.MissionCommandListenConnectionString, serviceBusOptions.FullyQualifiedNamespace);

@@ -1,0 +1,68 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+@using ForgeMission.Conversations.Contracts
+
+<section class="mv">
+    @if (HasLegacyHistory)
+    {
+        <p class="mv-legacy">This Project has earlier legacy history. It is retained and is not shown here.</p>
+    }
+    @if (Loading)
+    {
+        <p class="mv-empty">Loading runs…</p>
+    }
+    else if (HistoryError is not null)
+    {
+        <section class="mv-fault" aria-live="polite"><p>Runs are temporarily unavailable.</p><button type="button" @onclick="Refresh">Refresh</button></section>
+    }
+    else if (Page is { Synchronizing: true })
+    {
+        <p class="mv-empty">Loading earlier runs…</p>
+    }
+    else if (Page is null || Page.Runs.Length == 0)
+    {
+        <p class="mv-empty">Run a mission to see it here.</p>
+    }
+    else
+    {
+        <ol class="mv-thread">
+            @foreach (var run in Page!.Runs)
+            {
+                <li class="mv-turn" @key="run.RunId">
+                    <article class="mv-outcome">
+                        <header class="mv-outcome-head"><h2>@run.Mission</h2><span class="mv-status @StatusClass(run.Status)">@StatusWord(run.Status)</span></header>
+                        <p class="mv-title">@run.Title</p>
+                        <p class="mv-facts">@run.ExpertTurns expert @(run.ExpertTurns == 1 ? "turn" : "turns") · @run.ToolCalls tool @(run.ToolCalls == 1 ? "call" : "calls")</p>
+                        <div class="mv-actions"><button type="button" @onclick="() => TraceRequested.InvokeAsync(run.RunId)">View run trace</button>@if (ShowInstruction) { <button type="button" @onclick="() => InstructionRequested.InvokeAsync(run.RunId)">Show instruction</button> }</div>
+                    </article>
+                </li>
+            }
+        </ol>
+        @if (AllowPaging && Page.Next is not null) { <button class="mv-page" type="button" @onclick="Older">Older runs</button> }
+        @if (AllowPaging && OlderPage) { <button class="mv-page" type="button" @onclick="Latest">Latest runs</button> }
+    }
+</section>
+
+@code {
+    [Parameter] public ProjectRunPage? Page { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool OlderPage { get; set; }
+    [Parameter] public ProjectOperationError? HistoryError { get; set; }
+    [Parameter] public bool HasLegacyHistory { get; set; }
+    [Parameter] public bool ShowInstruction { get; set; } = true;
+    [Parameter] public bool AllowPaging { get; set; } = true;
+    [Parameter] public EventCallback<Guid> TraceRequested { get; set; }
+    [Parameter] public EventCallback<Guid> InstructionRequested { get; set; }
+    [Parameter] public EventCallback Refresh { get; set; }
+    [Parameter] public EventCallback Older { get; set; }
+    [Parameter] public EventCallback Latest { get; set; }
+
+    private static string StatusWord(ConversationRunStatus status) => status.ToString();
+    private static string StatusClass(ConversationRunStatus status) => status switch
+    {
+        ConversationRunStatus.Completed => "mv-status-done",
+        ConversationRunStatus.Failed or ConversationRunStatus.Interrupted or ConversationRunStatus.Rejected => "mv-status-bad",
+        _ => "mv-status-live",
+    };
+}
+
+

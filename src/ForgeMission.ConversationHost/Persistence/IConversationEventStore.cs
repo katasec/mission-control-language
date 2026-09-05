@@ -39,6 +39,25 @@ public interface IConversationEventStore
     /// <summary>Ascending order, only <c>Sequence &gt; after</c>. Idempotency rows are never transcript data.</summary>
     IAsyncEnumerable<ConversationEvent> ReadAfterAsync(ConversationAddress address, long sequence, CancellationToken ct);
 
+    /// <summary>Bounded, contiguous canonical-event range. Implementations must not return
+    /// idempotency or derived-index rows. The default keeps decorators source-compatible while
+    /// preserving the range contract; the Azure implementation owns the efficient Table query.</summary>
+    async Task<ConversationEvent[]> ReadRangeAsync(
+        ConversationAddress address, long after, long through, int count, CancellationToken ct)
+    {
+        if (after < 0 || through < after || count <= 0)
+            throw new ArgumentOutOfRangeException();
+
+        var result = new List<ConversationEvent>(count);
+        await foreach (var item in ReadAfterAsync(address, after, ct))
+        {
+            if (item.Sequence > through) break;
+            result.Add(item);
+            if (result.Count == count) break;
+        }
+        return [.. result];
+    }
+
     /// <summary>Enumerates the ordered conversation range and retains the last event for
     /// <paramref name="runId"/> whose <c>Kind</c> is <see cref="ConversationEventKind.RunStatus"/>.</summary>
     Task<ConversationEvent?> ReadLatestForRunAsync(ConversationAddress address, Guid runId, CancellationToken ct);

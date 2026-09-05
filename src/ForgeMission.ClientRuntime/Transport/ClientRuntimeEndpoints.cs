@@ -77,62 +77,93 @@ internal static class ClientRuntimeEndpoints
             }
         });
 
-        // 43.20 task 2. Both routes take only the session and what the person typed: the Runtime
-        // resolves the Project from the session's own root and reads the manifest itself, so no
-        // surface supplies a Project path, a conversation ID, or a project goal.
-        app.MapPost("/transport/project/mission-control/open", async (
-            OpenProjectMissionControlRequest request,
-            ClientRuntimeSessionStore sessions,
-            ProjectStore projects,
-            IHttpClientFactory clients,
-            ClientRuntimeEventHub events,
-            IHostApplicationLifetime lifetime,
-            CancellationToken ct) =>
+        // Project Mission is a distinct application boundary from the historical Project Control
+        // conversation: handlers only bind the live session and delegate one typed operation.
+        app.MapPost("/transport/project/mission/run", async (
+            StartProjectMissionRunRequest request, ClientRuntimeSessionStore sessions,
+            ProjectMissionApplication application, CancellationToken ct) =>
         {
             if (!sessions.TryGet(request.SessionId, out var session) || session is null)
                 return Results.NotFound();
-
-            try
-            {
-                var conversationId = await session.MissionControl.InvokeAsync(
-                    () => new ProjectControlRuntimeSession(
-                        request.SessionId,
-                        session.Workspace.Root!,
-                        projects,
-                        new ConversationHostClient(clients.CreateClient("conversation-host")),
-                        events.Publish,
-                        lifetime.ApplicationStopping),
-                    control => control.OpenAsync(ct),
-                    ct);
-
-                return Results.Ok(new OpenProjectMissionControlResponse(conversationId));
-            }
-            catch (Exception exception) when (ToMissionControlError(exception) is { } error)
-            {
-                return Results.Ok(new OpenProjectMissionControlResponse(null, error));
-            }
+            return Results.Ok(await application.StartAsync(session, request, ct));
         });
 
-        app.MapPost("/transport/project/mission-control/submit", async (
-            SubmitProjectMissionControlTurnRequest request,
-            ClientRuntimeSessionStore sessions,
+        app.MapPost("/transport/project/mission/retry", async (
+            RetryProjectMissionSubmissionRequest request, ClientRuntimeSessionStore sessions,
+            ProjectMissionApplication application, CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await application.RetryAsync(session, request, ct));
+        });
+
+        app.MapPost("/transport/project/mission/select", async (
+            SelectProjectMissionRequest request, ClientRuntimeSessionStore sessions,
+            ProjectWorkbenchService workbench, CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await workbench.SelectMissionAsync(session.Workspace.Root!, request.Mission, ct));
+        });
+
+        app.MapPost("/transport/project/workbench", (
+            GetProjectWorkbenchRequest request, ClientRuntimeSessionStore sessions, ProjectWorkbenchService workbench) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(workbench.GetProjection(session.Workspace.Root!));
+        });
+
+        app.MapPost("/transport/project/document", (
+            OpenProjectDocumentRequest request, ClientRuntimeSessionStore sessions, ProjectWorkbenchService workbench) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(workbench.OpenDocument(session.Workspace.Root!, request.EntryId));
+        });
+
+        app.MapPost("/transport/project/mission/state", async (
+            GetProjectMissionStateRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
             CancellationToken ct) =>
         {
             if (!sessions.TryGet(request.SessionId, out var session) || session is null)
                 return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetStateAsync(ct), ct));
+        });
 
-            try
-            {
-                var accepted = await session.MissionControl.InvokeOpenedAsync(
-                    control => control.SubmitAsync(request.CommandId, request.Text, ct), ct);
+        app.MapPost("/transport/project/runs", async (
+            GetProjectRunsRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetRunsAsync(request.Cursor, ct), ct));
+        });
 
-                return Results.Ok(new SubmitProjectMissionControlTurnResponse(
-                    accepted.ConversationId, accepted.AcceptedSequence));
-            }
-            catch (Exception exception) when (ToMissionControlError(exception) is { } error)
-            {
-                return Results.Ok(new SubmitProjectMissionControlTurnResponse(null, 0, error));
-            }
+        app.MapPost("/transport/project/run", async (
+            GetProjectRunRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetRunAsync(request.RunId, ct), ct));
+        });
+
+        app.MapPost("/transport/project/run/events", async (
+            GetProjectRunEventsRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
+            IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
+            CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await InvokeProjectReadAsync(session, request.SessionId, projects, clients, events, lifetime,
+                read => read.GetEventsAsync(request.RunId, request.AfterSequence, request.ThroughSequence, ct), ct));
         });
 
         app.MapPost("/transport/capability/dispatch", async (
@@ -252,6 +283,15 @@ internal static class ClientRuntimeEndpoints
                 project.Manifest.Goal, project.Home));
     }
 
+    private static Task<TResult> InvokeProjectReadAsync<TResult>(ClientRuntimeSession session, string sessionId,
+        ProjectStore projects, IHttpClientFactory clients, ClientRuntimeEventHub events,
+        IHostApplicationLifetime lifetime, Func<ProjectMissionReadSession, Task<TResult>> operation,
+        CancellationToken ct) =>
+        session.ProjectMission.InvokeAsync(
+            () => new ProjectMissionReadSession(sessionId, session.Workspace.Root!, projects,
+                new ConversationHostClient(clients.CreateClient("conversation-host")), events.Publish,
+                lifetime.ApplicationStopping), operation, ct);
+
     // Expected Project domain failures become one typed response every surface renders the same
     // way. Unexpected faults are deliberately not caught here: they fail the transport instead of
     // being laundered into a domain code.
@@ -260,39 +300,6 @@ internal static class ClientRuntimeEndpoints
 
     private static ProjectOperationError ToError(ProjectOperationException exception) =>
         new(exception.Code, exception.Message);
-
-    // The two EXPECTED failure sources for a Mission Control operation: a local Project/manifest
-    // problem (including ManifestWriteFailed), and a Conversation-service rejection whose status
-    // names a domain outcome. Anything else — a socket reset, an unexpected 5xx — returns null and
-    // is left to fail the transport, rather than being laundered into a domain code.
-    private static ProjectOperationError? ToMissionControlError(Exception exception) => exception switch
-    {
-        ProjectOperationException project => ToError(project),
-        // Submitting before Mission Control has opened. Desktop's composer stays disabled until
-        // it has, but a TUI could still order the two calls this way, and surface parity says both
-        // get the same typed outcome rather than one getting an escaping transport failure.
-        MissionControlNotOpenedException => new ProjectOperationError(
-            ProjectOperationErrorCode.MissionControlInvalid,
-            MissionControlMessage(ProjectOperationErrorCode.MissionControlInvalid)),
-        HttpRequestException { StatusCode: { } status }
-            when ProjectControlRuntimeSession.ToErrorCode(status) is { } code =>
-            new ProjectOperationError(code, MissionControlMessage(code)),
-        _ => null,
-    };
-
-    // A rendered message, not the transport exception's own text: a person reading the surface
-    // should not be shown "returned HTTP 409" or the name of an internal service. The typed code
-    // carries the precise outcome; this carries what it means.
-    private static string MissionControlMessage(ProjectOperationErrorCode code) => code switch
-    {
-        ProjectOperationErrorCode.MissionControlConflict =>
-            "Mission Control could not accept that — it conflicts with what is already recorded for this Project.",
-        ProjectOperationErrorCode.MissionControlNotFound =>
-            "This Project's Mission Control conversation could not be found.",
-        ProjectOperationErrorCode.MissionControlInvalid =>
-            "Mission Control could not accept that message.",
-        _ => "Mission Control is unavailable.",
-    };
 
     internal static bool UsesCloudMissionRuntime(string? mode) =>
         mode is null || mode.Equals("cloud", StringComparison.OrdinalIgnoreCase);

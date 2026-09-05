@@ -1,0 +1,23 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+
+<section class="ex-root">
+    <h2 class="ex-title">Project Explorer</h2>
+    @if (Error is not null) { <p class="ex-error" role="alert">@Error.Message</p> }
+    else if (Projection is null) { <p class="ex-empty">Loading this Project…</p> }
+    else
+    {
+        @Section("Project assets", Projection.Assets, "No local assets yet")
+        @Section("Source context", Projection.Context, "No context attached")
+        <section class="ex-section"><h3 class="ex-heading">Runs</h3><MissionsView Page="Runs" HasLegacyHistory="false" TraceRequested="TraceRequested" ShowInstruction="false" AllowPaging="false" /></section>
+    }
+</section>
+
+@code {
+    [Parameter] public ProjectWorkbenchProjection? Projection { get; set; }
+    [Parameter] public ProjectRunPage? Runs { get; set; }
+    [Parameter] public ProjectOperationError? Error { get; set; }
+    [Parameter] public EventCallback<ProjectWorkbenchEntry> EntrySelected { get; set; }
+    [Parameter] public EventCallback<Guid> TraceRequested { get; set; }
+
+    private RenderFragment Section(string heading, IReadOnlyList<ProjectWorkbenchEntry> entries, string empty) => @<section class="ex-section"><h3 class="ex-heading">@heading</h3>@if (entries.Count == 0) { <p class="ex-empty">@empty</p> } else { <ul class="ex-list">@foreach (var item in entries) { <li><button type="button" class="ex-open" @onclick="() => EntrySelected.InvokeAsync(item)"><span>@item.Label</span><small>@item.Kind</small></button></li> }</ul> }</section>;
+}

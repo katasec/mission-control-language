@@ -1,6 +1,7 @@
 # Phase 43.22 task 4 — Compose the workbench from focused views
 
-> **Design locked; Codex implements after tasks 1–3 and rechecks this task's reference contract.**
+> **Implementation and local checks complete.** Browser/reference matrix, packaged native parity and
+> independent visible acceptance remain open.
 > Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 
 ## Components and scope

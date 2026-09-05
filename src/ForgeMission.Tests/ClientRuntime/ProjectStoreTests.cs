@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using ForgeMission.ClientRuntime.Services;
 using ForgeMission.ClientRuntime.Transport;
@@ -132,19 +133,21 @@ public sealed class ProjectStoreTests : IDisposable
     // --- create ----------------------------------------------------------------------------
 
     [Fact]
-    public void Create_WritesTheCompleteV1Manifest()
+    public void Create_WritesTheCompleteV3Manifest()
     {
         var created = _store.Create("Todos API", null, null);
 
         var manifest = created.Manifest;
-        Assert.Equal(1, manifest.SchemaVersion);
+        Assert.Equal(3, manifest.SchemaVersion);
         Assert.NotEqual(Guid.Empty, manifest.ProjectId);
         Assert.Equal("Todos API", manifest.Title);
         Assert.Equal("Todos API", manifest.Goal);
         Assert.Empty(manifest.Assets);
         Assert.Empty(manifest.AttachedContext);
         Assert.Empty(manifest.Runs);
-        Assert.Null(manifest.MissionControlConversationId);
+        Assert.Null(manifest.LegacyProjectControlConversationId);
+        Assert.Null(manifest.ProjectMissionContainerId);
+        Assert.Null(manifest.Submission);
         Assert.Equal(ProjectMissionOrigin.BuiltIn, manifest.SelectedMission.Origin);
         Assert.Equal("Janus", manifest.SelectedMission.Reference);
         Assert.Null(manifest.SelectedMission.Digest);
@@ -158,8 +161,9 @@ public sealed class ProjectStoreTests : IDisposable
 
         var json = File.ReadAllText(Path.Combine(created.Home, ProjectStore.ManifestFileName));
 
-        Assert.Contains("\"schemaVersion\": 1", json, StringComparison.Ordinal);
-        Assert.Contains("\"missionControlConversationId\": null", json, StringComparison.Ordinal);
+        Assert.Contains("\"schemaVersion\": 3", json, StringComparison.Ordinal);
+        Assert.Contains("\"legacyProjectControlConversationId\": null", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("missionControlConversationId", json, StringComparison.Ordinal);
         Assert.Contains("\"origin\": \"BuiltIn\"", json, StringComparison.Ordinal);
     }
 
@@ -298,7 +302,7 @@ public sealed class ProjectStoreTests : IDisposable
     public void Open_ANewerSchemaVersion_IsRefusedAndLeftUntouched()
     {
         var home = WriteManifest("""
-            { "schemaVersion": 2, "projectId": "f0a1b2c3-0000-0000-0000-000000000001",
+            { "schemaVersion": 4, "projectId": "f0a1b2c3-0000-0000-0000-000000000001",
               "title": "Future", "goal": "later", "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
             """);
 
@@ -309,6 +313,17 @@ public sealed class ProjectStoreTests : IDisposable
     public void Open_MalformedJson_IsRefusedAndLeftUntouched()
     {
         AssertRefused(WriteManifest("{ not json"), ProjectOperationErrorCode.InvalidManifest);
+    }
+
+    [Fact]
+    public void ManifestFile_ReadFailure_IsMappedWithoutCallingItMissing()
+    {
+        var home = Directory.CreateDirectory(Path.Combine(_profile, "unreadable", Guid.NewGuid().ToString("N"))).FullName;
+        Directory.CreateDirectory(Path.Combine(home, ProjectStore.ManifestFileName));
+
+        var failure = Assert.Throws<ProjectOperationException>(() => new ProjectManifestFile().Read(home));
+
+        Assert.Equal(ProjectOperationErrorCode.ManifestReadFailed, failure.Code);
     }
 
     [Fact]
@@ -363,21 +378,360 @@ public sealed class ProjectStoreTests : IDisposable
         Assert.Empty(manifest.Runs);
     }
 
+    // --- v3 migration and immutable submission journal -----------------------------------------
+
+    [Fact]
+    public async Task OpeningV1_IsNonMutating_AndTheNextMutationPublishesV3WithLegacyHistory()
+    {
+        var legacyId = Guid.NewGuid();
+        var home = WriteManifest($$"""
+            { "schemaVersion": 1, "projectId": "{{Guid.NewGuid()}}", "title": "Legacy", "goal": "keep history",
+              "selectedMission": { "origin": "BuiltIn", "reference": "Janus" },
+              "missionControlConversationId": "{{legacyId}}" }
+            """);
+        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var before = File.ReadAllText(manifestPath);
+
+        var opened = _store.Open(home).Project!.Manifest;
+
+        Assert.Equal(3, opened.SchemaVersion);
+        Assert.Equal(legacyId, opened.LegacyProjectControlConversationId);
+        Assert.Equal(before, File.ReadAllText(manifestPath));
+
+        await _store.SelectMissionAsync(home, "Naive", CancellationToken.None);
+
+        var rewritten = File.ReadAllText(manifestPath);
+        Assert.Contains("\"schemaVersion\": 3", rewritten, StringComparison.Ordinal);
+        Assert.Contains(legacyId.ToString(), rewritten, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("missionControlConversationId", rewritten, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task OpeningV2_PreservesContainerAndLegacyData_WhenItsNextWritePublishesV3()
+    {
+        var containerId = Guid.NewGuid();
+        var legacyId = Guid.NewGuid();
+        var home = WriteManifest(FullyPopulatedV2ManifestJson(containerId, legacyId));
+
+        var opened = _store.Open(home).Project!.Manifest;
+        Assert.Equal(containerId, opened.ProjectMissionContainerId);
+        Assert.Equal(legacyId, opened.LegacyProjectControlConversationId);
+
+        var updated = await _store.SelectMissionAsync(home, "Janus", CancellationToken.None);
+
+        Assert.Equal(3, updated.Manifest.SchemaVersion);
+        Assert.Equal(containerId, updated.Manifest.ProjectMissionContainerId);
+        Assert.Equal(legacyId, updated.Manifest.LegacyProjectControlConversationId);
+        Assert.Equal(2, updated.Manifest.Assets.Length);
+        Assert.Equal(2, updated.Manifest.AttachedContext.Length);
+        Assert.Single(updated.Manifest.Runs);
+    }
+
+    [Fact]
+    public async Task PreparedSubmission_RemainsImmutable_WhenSelectionChangesBeforeRetry()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var commandId = Guid.NewGuid();
+        var prepared = await _store.PrepareSubmissionAsync(
+            project.Home, commandId, null, "write release notes", CancellationToken.None);
+
+        await _store.SelectMissionAsync(project.Home, "Naive", CancellationToken.None);
+        var retried = await _store.PrepareSubmissionAsync(
+            project.Home, commandId, null, "write release notes", CancellationToken.None);
+
+        Assert.Equal("Janus", prepared.Manifest.Submission!.Mission);
+        Assert.Equal(prepared.Manifest.Submission, retried.Manifest.Submission);
+        Assert.Equal("Naive", retried.Manifest.SelectedMission.Reference);
+    }
+
+    [Fact]
+    public async Task PreparedSubmission_RejectsChangedContentAndASecondIntent()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var commandId = Guid.NewGuid();
+        await _store.PrepareSubmissionAsync(project.Home, commandId, null, "first", CancellationToken.None);
+
+        var changed = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _store.PrepareSubmissionAsync(project.Home, commandId, null, "changed", CancellationToken.None));
+        var second = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _store.PrepareSubmissionAsync(project.Home, Guid.NewGuid(), commandId, "second", CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.MissionRunConflict, changed.Code);
+        Assert.Equal(ProjectOperationErrorCode.SubmissionPending, second.Code);
+        Assert.Equal("first", _store.Open(project.Home).Project!.Manifest.Submission!.Input);
+    }
+
+    [Fact]
+    public async Task AcceptanceReceipt_IsIdempotent_AndPermitsTheNextDeliberateSubmission()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var firstId = Guid.NewGuid();
+        await _store.PrepareSubmissionAsync(project.Home, firstId, null, "first", CancellationToken.None);
+        var acceptance = new ProjectSubmissionAcceptance(
+            Guid.NewGuid(), Guid.NewGuid(), 7, ConversationRunStatus.Queued);
+
+        var accepted = await _store.RecordSubmissionAcceptedAsync(project.Home, firstId, acceptance, CancellationToken.None);
+        var repeated = await _store.RecordSubmissionAcceptedAsync(project.Home, firstId, acceptance, CancellationToken.None);
+        var nextId = Guid.NewGuid();
+        var next = await _store.PrepareSubmissionAsync(project.Home, nextId, firstId, "second", CancellationToken.None);
+
+        Assert.Equal(ProjectSubmissionPhase.Accepted, accepted.Manifest.Submission!.Phase);
+        Assert.Equal(accepted.Manifest.Submission, repeated.Manifest.Submission);
+        Assert.Equal(nextId, next.Manifest.Submission!.CommandId);
+        Assert.Equal(firstId, next.Manifest.Submission.PreviousCommandId);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task PrepareSubmission_RejectsBlankInputWithoutWriting(string input)
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var before = File.ReadAllText(Path.Combine(project.Home, ProjectStore.ManifestFileName));
+
+        var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _store.PrepareSubmissionAsync(project.Home, Guid.NewGuid(), null, input, CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidMissionInput, failure.Code);
+        Assert.Equal(before, File.ReadAllText(Path.Combine(project.Home, ProjectStore.ManifestFileName)));
+    }
+
+    [Fact]
+    public async Task PrepareSubmission_RejectsAnOversizedJournalBeforePublication()
+    {
+        var project = _store.Create(new string('g', 100_000), null, null);
+        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var before = File.ReadAllText(manifestPath);
+
+        var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _store.PrepareSubmissionAsync(project.Home, Guid.NewGuid(), null, "small input", CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidMissionInput, failure.Code);
+        Assert.Equal(before, File.ReadAllText(manifestPath));
+    }
+
+    [Fact]
+    public async Task AFailedReceiptPublication_LeavesPreparedIntentAndReportsSubmissionUncertain()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var commandId = Guid.NewGuid();
+        await _store.PrepareSubmissionAsync(project.Home, commandId, null, "first", CancellationToken.None);
+        var temporaryId = Guid.NewGuid();
+        Directory.CreateDirectory(Path.Combine(project.Home, $".forge-project.{temporaryId:N}.tmp"));
+        var failingStore = new ProjectStore(ProjectsRoot, new ProjectManifestFile(() => temporaryId));
+
+        var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            failingStore.RecordSubmissionAcceptedAsync(
+                project.Home,
+                commandId,
+                new ProjectSubmissionAcceptance(Guid.NewGuid(), Guid.NewGuid(), 1, ConversationRunStatus.Queued),
+                CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.SubmissionUncertain, failure.Code);
+        Assert.Equal(ProjectSubmissionPhase.Prepared, _store.Open(project.Home).Project!.Manifest.Submission!.Phase);
+    }
+
+    [Fact]
+    public async Task ConcurrentSelectionAndContainerWrites_PreserveBothValues()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var secondStore = new ProjectStore(ProjectsRoot);
+        var containerId = Guid.NewGuid();
+
+        await Task.WhenAll(
+            _store.SelectMissionAsync(project.Home, "Naive", CancellationToken.None),
+            secondStore.SetProjectMissionContainerIdAsync(project.Home, containerId, CancellationToken.None));
+
+        var manifest = _store.Open(project.Home).Project!.Manifest;
+        Assert.Equal("Naive", manifest.SelectedMission.Reference);
+        Assert.Equal(containerId, manifest.ProjectMissionContainerId);
+        Assert.Empty(Directory.GetFiles(project.Home, "*.tmp"));
+    }
+
+    [Fact]
+    public async Task AHeldProjectLease_ReturnsProjectBusy_WithoutChangingTheManifest()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var before = File.ReadAllText(manifestPath);
+        await using var heldLease = new FileStream(
+            Path.Combine(project.Home, ProjectManifestFile.LockFileName),
+            FileMode.OpenOrCreate,
+            FileAccess.ReadWrite,
+            FileShare.None);
+
+        var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _store.SelectMissionAsync(project.Home, "Naive", CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.ProjectBusy, failure.Code);
+        Assert.Equal(before, File.ReadAllText(manifestPath));
+    }
+
+    [Fact]
+    public async Task WaitingForAProjectLease_HonoursCancellationWithoutChangingTheManifest()
+    {
+        var project = _store.Create("Ship a release", null, null);
+        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var before = File.ReadAllText(manifestPath);
+        await using var heldLease = new FileStream(
+            Path.Combine(project.Home, ProjectManifestFile.LockFileName),
+            FileMode.OpenOrCreate,
+            FileAccess.ReadWrite,
+            FileShare.None);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            _store.SelectMissionAsync(project.Home, "Naive", cancellation.Token));
+
+        Assert.Equal(before, File.ReadAllText(manifestPath));
+    }
+
+    [Fact]
+    public async Task SeparateProcesses_UpdateSixtyProjectsWithoutLosingEitherValue()
+    {
+        const int projectCount = 60;
+        var homes = new List<string>(projectCount);
+        for (var index = 0; index < projectCount; index++)
+        {
+            var project = _store.Create($"Process {index}", null, null);
+            await _store.PrepareSubmissionAsync(project.Home, Guid.NewGuid(), null, "record receipt", CancellationToken.None);
+            homes.Add(project.Home);
+        }
+
+        var containerId = Guid.NewGuid();
+        var receipt = StartProcessWorker("receipt", containerId, projectCount);
+        var container = StartProcessWorker("container", containerId, projectCount);
+        await Task.WhenAll(WaitForExitAsync(receipt), WaitForExitAsync(container));
+
+        foreach (var home in homes)
+        {
+            var manifest = _store.Open(home).Project!.Manifest;
+            Assert.Equal(containerId, manifest.ProjectMissionContainerId);
+            Assert.Equal(ProjectSubmissionPhase.Accepted, manifest.Submission!.Phase);
+            Assert.Equal(containerId, manifest.Submission.Acceptance!.ContainerId);
+            Assert.Empty(Directory.GetFiles(home, "*.tmp"));
+        }
+    }
+
+    [Theory]
+    [InlineData("BeforeFlush")]
+    [InlineData("BeforeRename")]
+    [InlineData("AfterRename")]
+    public void PublicationFaults_LeaveEitherTheOldOrNewValidManifest_AndOnlyCleanTheirOwnTemporaryFile(
+        string boundaryName)
+    {
+        var boundary = Enum.Parse<ProjectManifestPublicationBoundary>(boundaryName);
+        var project = _store.Create("Ship a release", null, null);
+        var containerId = Guid.NewGuid();
+        var temporaryId = Guid.NewGuid();
+        var ownTemporaryPath = Path.Combine(project.Home, $".forge-project.{temporaryId:N}.tmp");
+        var otherTemporaryPath = Path.Combine(project.Home, $".forge-project.{Guid.NewGuid():N}.tmp");
+        File.WriteAllText(otherTemporaryPath, "another operation's stale temp");
+        var faultingStore = new ProjectStore(
+            ProjectsRoot,
+            new ProjectManifestFile(
+                () => temporaryId,
+                reached =>
+                {
+                    if (reached == boundary)
+                        throw new IOException($"Injected {boundary} publication fault.");
+                }));
+
+        var failure = Assert.Throws<ProjectOperationException>(
+            () => faultingStore.SetProjectMissionContainerId(project.Home, containerId));
+
+        Assert.Equal(ProjectOperationErrorCode.ManifestWriteFailed, failure.Code);
+        var reread = _store.Open(project.Home).Project!.Manifest;
+        if (boundary == ProjectManifestPublicationBoundary.AfterRename)
+            Assert.Equal(containerId, reread.ProjectMissionContainerId);
+        else
+            Assert.Null(reread.ProjectMissionContainerId);
+        Assert.False(File.Exists(ownTemporaryPath));
+        Assert.True(File.Exists(otherTemporaryPath));
+    }
+
+    [Theory]
+    [InlineData("crash-before-flush", false, true)]
+    [InlineData("crash-before-rename", false, true)]
+    [InlineData("crash-after-rename", true, false)]
+    public async Task CrashAtPublicationBoundary_LeavesAnOldOrNewValidManifest_AndNeverPromotesStaleTemps(
+        string operation,
+        bool writesNewManifest,
+        bool leavesStaleTemporaryFile)
+    {
+        var project = _store.Create("Process 0", null, null);
+        var containerId = Guid.NewGuid();
+        var crashing = StartProcessWorker(operation, containerId, projectCount: 1);
+
+        await WaitForCrashAsync(crashing);
+
+        var afterCrash = _store.Open(project.Home).Project!.Manifest;
+        Assert.Equal(writesNewManifest ? containerId : null, afterCrash.ProjectMissionContainerId);
+        var staleFiles = Directory.GetFiles(project.Home, ".forge-project.*.tmp");
+        Assert.Equal(leavesStaleTemporaryFile, staleFiles.Length == 1);
+
+        // Reopening and a later unrelated mutation read only forge.project.json. A crash-left
+        // temporary file stays ignored rather than being promoted or cleaned by another operation.
+        await _store.SelectMissionAsync(project.Home, "Naive", CancellationToken.None);
+        var afterRecovery = _store.Open(project.Home).Project!.Manifest;
+        Assert.Equal("Naive", afterRecovery.SelectedMission.Reference);
+        Assert.Equal(writesNewManifest ? containerId : null, afterRecovery.ProjectMissionContainerId);
+        Assert.Equal(leavesStaleTemporaryFile, Directory.GetFiles(project.Home, ".forge-project.*.tmp").Length == 1);
+    }
+
+    private Process StartProcessWorker(string operation, Guid containerId, int projectCount)
+    {
+        var configuration = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Name;
+        var probeAssembly = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "ForgeMission.ProjectStoreProbe", "bin", configuration, "net10.0",
+            "ForgeMission.ProjectStoreProbe.dll"));
+        Assert.True(File.Exists(probeAssembly), $"The ProjectStore process probe was not built at {probeAssembly}.");
+        var start = new ProcessStartInfo("dotnet")
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = Path.GetDirectoryName(probeAssembly)!,
+        };
+        start.ArgumentList.Add(probeAssembly);
+        start.ArgumentList.Add(ProjectsRoot);
+        start.ArgumentList.Add(operation);
+        start.ArgumentList.Add(containerId.ToString());
+        start.ArgumentList.Add(projectCount.ToString());
+        return Process.Start(start) ?? throw new InvalidOperationException("Could not start the process probe.");
+    }
+
+    private static async Task WaitForExitAsync(Process process)
+    {
+        await process.WaitForExitAsync();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        Assert.True(process.ExitCode == 0, $"Process probe failed:{Environment.NewLine}{output}{error}");
+    }
+
+    private static async Task WaitForCrashAsync(Process process)
+    {
+        await process.WaitForExitAsync();
+        Assert.NotEqual(0, process.ExitCode);
+    }
+
     // --- v1 completeness ----------------------------------------------------------------------
 
     // Tasks 3/4 add facts to these collections. Proving the full graph round-trips now is what
     // makes that an append rather than a silent schema change — and Task 2's conversation-ID
     // write-back depends on nothing being dropped on the way through.
     [Fact]
-    public void AFullyPopulatedV1Manifest_RoundTripsLosslessly()
+    public async Task AFullyPopulatedV1Manifest_NextSuccessfulMutationWritesV3WithoutDroppingData()
     {
         var home = WriteManifest(FullyPopulatedManifestJson);
 
-        var manifest = _store.Open(home).Project!.Manifest;
-        var rewritten = JsonSerializer.Serialize(manifest, ProjectManifestJsonContext.Default.ProjectManifest);
-        var reread = JsonSerializer.Deserialize(rewritten, ProjectManifestJsonContext.Default.ProjectManifest)!;
+        await _store.SelectMissionAsync(home, "Naive", CancellationToken.None);
+        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var rewritten = File.ReadAllText(manifestPath);
+        var reread = _store.Open(home).Project!.Manifest;
 
-        Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000aa"), reread.MissionControlConversationId);
+        Assert.Equal(3, reread.SchemaVersion);
+        Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000aa"), reread.LegacyProjectControlConversationId);
         Assert.Equal(ProjectAssetKind.LockFile, reread.Assets[1].Kind);
         Assert.Equal("mission/mission.mcl", reread.Assets[0].RelativePath);
         Assert.Equal("sha256:asset", reread.Assets[0].ContentHash);
@@ -395,6 +749,7 @@ public sealed class ProjectStoreTests : IDisposable
         Assert.Equal("c1", Assert.Single(run.LaunchSnapshot.Context).ContextId);
         Assert.Equal("artifact-77", Assert.Single(run.LaunchSnapshot.Artifacts).ArtifactId);
         Assert.Equal("abc1234", run.LaunchSnapshot.GitRevision);
+        Assert.Equal("Naive", reread.SelectedMission.Reference);
         // The durable status keeps the wire spelling ConversationHost produces, not a local one.
         Assert.Contains("\"status\": \"completed\"", rewritten, StringComparison.Ordinal);
     }
@@ -434,6 +789,14 @@ public sealed class ProjectStoreTests : IDisposable
         }
         """;
 
+    private static string FullyPopulatedV2ManifestJson(Guid containerId, Guid legacyId) =>
+        FullyPopulatedManifestJson
+            .Replace("\"schemaVersion\": 1", "\"schemaVersion\": 2", StringComparison.Ordinal)
+            .Replace(
+                "\"missionControlConversationId\": \"9f000000-0000-0000-0000-0000000000aa\"",
+                $"\"projectMissionContainerId\": \"{containerId}\", \"legacyProjectControlConversationId\": \"{legacyId}\"",
+                StringComparison.Ordinal);
+
     private string WriteManifest(string json)
     {
         var home = Directory.CreateDirectory(Path.Combine(_profile, "manifests", Guid.NewGuid().ToString("N"))).FullName;
@@ -454,90 +817,5 @@ public sealed class ProjectStoreTests : IDisposable
         Assert.Equal(before, File.ReadAllText(manifestPath));
     }
 
-    // --- Mission Control conversation id write-back (43.20 task 2) --------------------------
 
-    [Fact]
-    public void SetMissionControlConversationId_RecordsIt_AndRoundTripsThroughOpen()
-    {
-        var project = _store.Create("Todos API", null, null);
-        Assert.Null(project.Manifest.MissionControlConversationId);
-        var conversationId = Guid.NewGuid();
-
-        var updated = _store.SetMissionControlConversationId(project.Home, conversationId);
-
-        Assert.Equal(conversationId, updated.Manifest.MissionControlConversationId);
-        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
-        // The rest of the v1 manifest survives the rewrite unchanged.
-        Assert.Equal(project.Manifest.ProjectId, updated.Manifest.ProjectId);
-        Assert.Equal(project.Manifest.Goal, updated.Manifest.Goal);
-        Assert.Equal(ProjectManifest.CurrentSchemaVersion, updated.Manifest.SchemaVersion);
-        // No temporary file is left behind.
-        Assert.Empty(Directory.GetFiles(project.Home, "*.tmp"));
-    }
-
-    [Fact]
-    public void SetMissionControlConversationId_WithTheSameId_IsAnIdempotentNoOp()
-    {
-        var project = _store.Create("Todos API", null, null);
-        var conversationId = Guid.NewGuid();
-        _store.SetMissionControlConversationId(project.Home, conversationId);
-        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
-        var after = File.ReadAllText(manifestPath);
-
-        var again = _store.SetMissionControlConversationId(project.Home, conversationId);
-
-        Assert.Equal(conversationId, again.Manifest.MissionControlConversationId);
-        Assert.Equal(after, File.ReadAllText(manifestPath));
-    }
-
-    // A Project has exactly one control conversation. Repointing it would orphan a durable
-    // transcript, so a different non-null id is refused rather than overwritten.
-    [Fact]
-    public void SetMissionControlConversationId_WithADifferentId_IsRefused_AndLeavesTheFileUntouched()
-    {
-        var project = _store.Create("Todos API", null, null);
-        _store.SetMissionControlConversationId(project.Home, Guid.NewGuid());
-        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
-        var before = File.ReadAllText(manifestPath);
-
-        var failure = Assert.Throws<ProjectOperationException>(
-            () => _store.SetMissionControlConversationId(project.Home, Guid.NewGuid()));
-
-        Assert.Equal(ProjectOperationErrorCode.InvalidManifest, failure.Code);
-        Assert.Equal(before, File.ReadAllText(manifestPath));
-    }
-
-    [Fact]
-    public void SetMissionControlConversationId_WithNoManifest_ReportsHomeNotFound()
-    {
-        var empty = Path.Combine(_profile, "no-project");
-        Directory.CreateDirectory(empty);
-
-        var failure = Assert.Throws<ProjectOperationException>(
-            () => _store.SetMissionControlConversationId(empty, Guid.NewGuid()));
-
-        Assert.Equal(ProjectOperationErrorCode.HomeNotFound, failure.Code);
-    }
-
-    // A failed replacement is named ManifestWriteFailed and leaves the original manifest intact —
-    // the durable conversation stays valid, and the retry re-derives the same id.
-    [Fact]
-    public void AFailedReplacement_ReportsManifestWriteFailed_AndLeavesTheOriginalManifestIntact()
-    {
-        var project = _store.Create("Todos API", null, null);
-        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
-        var before = File.ReadAllText(manifestPath);
-
-        // A directory where the temporary file must be written makes the write fail without
-        // touching the manifest itself.
-        var temporaryPath = manifestPath + ".tmp";
-        Directory.CreateDirectory(temporaryPath);
-
-        var failure = Assert.Throws<ProjectOperationException>(
-            () => _store.SetMissionControlConversationId(project.Home, Guid.NewGuid()));
-
-        Assert.Equal(ProjectOperationErrorCode.ManifestWriteFailed, failure.Code);
-        Assert.Equal(before, File.ReadAllText(manifestPath));
-        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
-    }
 }

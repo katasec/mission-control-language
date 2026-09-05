@@ -334,6 +334,22 @@
   --wb-link-glyph:        clamp(18px, calc(13.65px + 0.543vw), 22px);
   --wb-open-row-gap:      clamp(10px, calc(-3.7px + 2.412vh), 21px);
   --wb-open-action-width: clamp(84px, calc(66.61px + 2.174vw), 100px);
+  /* Rail geometry is D (derived from the binding frame); the palette is S (sampled).
+     Text and marker pairs are accessibility-checked against both rail surfaces. */
+  --wb-rail-width: min(12rem, 25vw); /* D */
+  --wb-rail-pad-y: var(--space-5); /* D */
+  --wb-rail-pad-x: var(--space-3); /* D */
+  --wb-rail-gap: var(--space-4); /* D */
+  --wb-rail-item-pad-y: var(--space-2); /* D */
+  --wb-rail-item-pad-x: var(--space-3); /* D */
+  --wb-rail-marker-width: 3px; /* D */
+  --wb-rail-surface: #08294a; /* S */
+  --wb-rail-surface-selected: #124e82; /* S */
+  --wb-rail-text: #ffffff; /* S */
+  --wb-rail-text-muted: #c5d8ec; /* S */
+  --wb-rail-marker: #24d5ee; /* S */
+  --wb-section-gap: var(--space-5); /* D */
+  --wb-run-content-width: min(40rem, 100%); /* D — 40rem/640px at standard root size */
 
   /* Type. Height-driven: every size contributes to the vertical stack. */
   --font-size-display:    clamp(24px, calc(9.05px + 2.632vh), 36px);
@@ -392,6 +408,12 @@
     --seal-verified:  #4d9bff;
     --seal-check:     #071426;
 
+    --wb-rail-surface:          #061a30;
+    --wb-rail-surface-selected: #123b63;
+    --wb-rail-text:             #f4f8ff;
+    --wb-rail-text-muted:       #b7cbe2;
+    --wb-rail-marker:           #57d9ee;
+
     --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45);
     --shadow:     0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40);
     --shadow-lg:  0 8px 30px rgba(0, 0, 0, 0.55);
@@ -437,6 +459,12 @@
   --seal-official:  #e8c06a;
   --seal-verified:  #4d9bff;
   --seal-check:     #071426;
+
+  --wb-rail-surface:          #061a30;
+  --wb-rail-surface-selected: #123b63;
+  --wb-rail-text:             #f4f8ff;
+  --wb-rail-text-muted:       #b7cbe2;
+  --wb-rail-marker:           #57d9ee;
 
   --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45);
   --shadow:     0 1px 3px rgba(0, 0, 0, 0.50), 0 4px 12px rgba(0, 0, 0, 0.40);

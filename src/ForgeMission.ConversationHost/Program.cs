@@ -37,6 +37,7 @@ var blobServiceClient = BuildBlobServiceClient(storageOptions);
 builder.Services.AddSingleton(tableServiceClient);
 builder.Services.AddSingleton(blobServiceClient);
 builder.Services.AddSingleton<IConversationEventStore, AzureTableConversationEventStore>();
+builder.Services.AddSingleton<IProjectRunIndexStore, AzureTableProjectRunIndexStore>();
 builder.Services.AddSingleton<IConversationArtifactStore, AzureBlobConversationArtifactStore>();
 
 var commandSendClient = BuildServiceBusClient(

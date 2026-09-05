@@ -15,5 +15,6 @@ namespace ForgeMission.ClientRuntime.Transport;
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     UseStringEnumConverter = true)]
 [JsonSerializable(typeof(ClientRuntimeEvent))]
+[JsonSerializable(typeof(ProjectMissionChange))]
 [JsonSerializable(typeof(ConversationEvent))]
 public partial class ConversationRelayJsonContext : JsonSerializerContext;

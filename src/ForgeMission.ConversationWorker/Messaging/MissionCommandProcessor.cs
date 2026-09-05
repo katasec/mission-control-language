@@ -86,24 +86,12 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
             if (redelivered.Phase != WorkerSessionPhase.ExecutingProvider)
                 return redelivered; // WaitingForTool or Terminal: a plain redelivery — no-op.
 
-            // A caught exception during the ORIGINAL attempt already resolved to Error/Failed
-            // below (never leaving ExecutingProvider pending) — a redelivery landing here means
-            // the process died or was cancelled with no chance to run that handler.
-            //
-            // The reported fact is purpose-aware. A mission run reports RunStatus(Interrupted).
-            // A Project-control turn has NO RUN whose status could be interrupted, so it reports a
-            // truthful Error instead: it states the turn did not complete, and deliberately does
-            // not claim the turn was stopped, cancelled, or rolled back. ConversationGrain's
-            // control guard independently rejects a RunStatus on a control conversation, so a
-            // regression here fails loudly at the sequence allocator rather than appending a
-            // meaningless run status to a control transcript.
-            var interruptionFact = missionKind == WorkerMissionKind.MissionControl
-                ? BuildProgress(
-                    command, redelivered.NextProgressOrdinal, ConversationEventKind.Error, ConversationParticipant.Forge,
-                    reason: "This Mission Control turn was interrupted before it completed and produced no response.")
-                : BuildProgress(
-                    command, redelivered.NextProgressOrdinal, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
-                    runStatus: ConversationRunStatus.Interrupted);
+            // A redelivery after a process failure is an interrupted mission run. Unknown
+            // historical command refs are already resolved as Unsupported and still receive the
+            // same durable terminal fact; no legacy control branch can execute here.
+            var interruptionFact = BuildProgress(
+                command, redelivered.NextProgressOrdinal, ConversationEventKind.RunStatus, ConversationParticipant.Forge,
+                runStatus: ConversationRunStatus.Interrupted);
 
             var afterInterrupt = await PublishFactDurablyAsync(redelivered, interruptionFact, ct);
             afterInterrupt = afterInterrupt with { Phase = WorkerSessionPhase.Terminal };
@@ -112,119 +100,59 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
         }
 
         if (command.Kind == ConversationCommandKind.ContinueAfterTool)
-        {
-            // A control conversation never publishes a ToolRequested fact, so ConversationGrain
-            // never holds an expected tool request for one and can never derive a continuation.
-            // Refusing it explicitly keeps that structural fact from depending on the nullable
-            // RunId comparison inside ProcessContinuationAsync, where null == null would otherwise
-            // read as a match.
-            if (missionKind == WorkerMissionKind.MissionControl)
-                return await FailControlTurnAsync(
-                    command, session, "A Mission Control conversation has no tool hand-off to continue.",
-                    GuardedSaveAsync, PublishFactDurablyAsync, ct);
-
             return await ProcessContinuationAsync(command, session, GuardedSaveAsync, PublishFactDurablyAsync, ct);
-        }
 
         // command.Kind == StartMission.
         if (session is { Phase: not WorkerSessionPhase.Terminal })
             return session; // A duplicate/second StartMission while work is already active — no-op.
 
-        return missionKind switch
-        {
-            WorkerMissionKind.MissionControl =>
-                await ProcessControlTurnAsync(command, GuardedSaveAsync, PublishFactDurablyAsync, ct),
-            _ => await ProcessFreshStartAsync(command, missionKind, GuardedSaveAsync, PublishFactDurablyAsync, ct),
-        };
+        return await ProcessFreshStartAsync(command, missionKind, GuardedSaveAsync, PublishFactDurablyAsync, ct);
     }
 
     /// <summary>
-    /// One zero-tool Project-control refinement turn (43.20 task 2). It publishes EXACTLY ONE fact:
-    /// a <c>ParticipantMessage</c> from <see cref="ConversationParticipant.MissionControl"/> on
-    /// success, or an <c>Error</c> on failure. It never publishes a <c>RunStatus</c> of any status,
-    /// never requests a tool, and never allocates a run — a control command carries a null
-    /// <c>RunId</c> from the grain and keeps it.
+    /// One Naive Mission Run (43.21 task 1): a single-expert answer published as an ordinary run.
+    ///
+    /// It is deliberately the same shape as a Janus run — a <c>ParticipantMessage</c> carrying the
+    /// answer, then a terminal <c>RunStatus</c> through the shared
+    /// <see cref="HandleMissionResultAsync"/> — so nothing downstream can tell the two missions
+    /// apart structurally. It publishes one mission-owned message fact and then the shared terminal
+    /// status, with no separate execution path.
     /// </summary>
-    private async Task<WorkerSessionState> ProcessControlTurnAsync(
+    private async Task<WorkerSessionState> ProcessNaiveRunAsync(
         ConversationCommand command,
+        WorkerSessionState state,
         Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
         Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
         CancellationToken ct)
     {
-        var state = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
-        await saveSessionAsync(state, ct);
-
-        // ConversationGrain is the only writer of ProjectGoal and always sets a pinned, non-empty
-        // value, so a blank one here is a corrupted command — named as such rather than silently
-        // substituted with an empty string the mission would then reason over.
-        if (string.IsNullOrWhiteSpace(command.ProjectGoal))
-            return await CompleteControlTurnAsync(
-                command, state, null, "This Mission Control turn carried no Project goal and could not be run.",
-                saveSessionAsync, publishFactDurablyAsync, ct);
-
         MissionResult result;
         try
         {
-            result = await MissionControlMissionExecutor.RunTurnAsync(
-                missions.MissionControl, command.ProjectGoal, command.Goal, ct);
+            // ProjectGoal is pinned container state set by ConversationGrain, never caller input.
+            // An empty one is tolerated rather than fatal: unlike a control turn, a Naive run's
+            // instruction is its own input, and a Project with a blank goal must still be able to
+            // run one.
+            result = await NaiveMissionExecutor.RunTurnAsync(
+                missions.Naive, command.ProjectGoal ?? "", command.Goal, ct);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested && ex is not WorkerOutboxFailureException)
         {
-            return await CompleteControlTurnAsync(
-                command, state, null, ex.Message, saveSessionAsync, publishFactDurablyAsync, ct);
+            // Same classification rule as Janus: a caught executor/provider failure is a KNOWN
+            // outcome and resolves as Error+Failed, never as Interrupted.
+            return await HandleMissionResultAsync(
+                command, state, new MissionResult(command.MissionRef, "", MissionStatus.Fail, ex.Message),
+                publishFactDurablyAsync, saveSessionAsync, ct);
         }
 
-        return result.Status == MissionStatus.Pass
-            ? await CompleteControlTurnAsync(command, state, result.Text, null, saveSessionAsync, publishFactDurablyAsync, ct)
-            : await CompleteControlTurnAsync(
-                command, state, null, result.FailReason ?? "The Mission Control turn failed.",
-                saveSessionAsync, publishFactDurablyAsync, ct);
-    }
-
-    /// <summary>The single exit point of a control turn, so exactly one fact is published for it
-    /// whichever way it ended. Exactly one of <paramref name="text"/> and
-    /// <paramref name="failReason"/> is non-null.</summary>
-    private static async Task<WorkerSessionState> CompleteControlTurnAsync(
-        ConversationCommand command,
-        WorkerSessionState state,
-        string? text,
-        string? failReason,
-        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
-        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
-        CancellationToken ct)
-    {
-        var fact = failReason is null
-            ? BuildProgress(
+        if (result.Status == MissionStatus.Pass)
+        {
+            var answer = BuildProgress(
                 command, state.NextProgressOrdinal, ConversationEventKind.ParticipantMessage,
-                ConversationParticipant.MissionControl, text: text)
-            : BuildProgress(
-                command, state.NextProgressOrdinal, ConversationEventKind.Error,
-                ConversationParticipant.Forge, reason: failReason);
+                ConversationParticipant.Naive, text: result.Text);
+            state = await publishFactDurablyAsync(state, answer, ct);
+        }
 
-        state = await publishFactDurablyAsync(state, fact, ct);
-        state = state with { Phase = WorkerSessionPhase.Terminal };
-        await saveSessionAsync(state, ct);
-        return state;
-    }
-
-    /// <summary>A control command that cannot be executed at all (today: a continuation, which a
-    /// control conversation can never legitimately produce). Resolves through the same
-    /// single-Error exit as any other control failure.</summary>
-    private static async Task<WorkerSessionState> FailControlTurnAsync(
-        ConversationCommand command,
-        WorkerSessionState? session,
-        string reason,
-        Func<WorkerSessionState, CancellationToken, Task> saveSessionAsync,
-        Func<WorkerSessionState, ConversationProgress, CancellationToken, Task<WorkerSessionState>> publishFactDurablyAsync,
-        CancellationToken ct)
-    {
-        var state = session ?? new WorkerSessionState(
-            command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
-        state = state with { CurrentCommandId = command.CommandId, Phase = WorkerSessionPhase.ExecutingProvider };
-        await saveSessionAsync(state, ct);
-
-        return await CompleteControlTurnAsync(
-            command, state, null, reason, saveSessionAsync, publishFactDurablyAsync, ct);
+        return await HandleMissionResultAsync(command, state, result, publishFactDurablyAsync, saveSessionAsync, ct);
     }
 
     private async Task<WorkerSessionState> ProcessFreshStartAsync(
@@ -236,6 +164,12 @@ public sealed class MissionCommandProcessor(WorkerMissionResolver missions)
     {
         var state = new WorkerSessionState(command.CommandId, command.RunId, WorkerSessionPhase.ExecutingProvider, 0, null, null, null);
         await saveSessionAsync(state, ct);
+
+        // A Naive run goes through the SAME start/terminal protocol as a Janus one — it differs
+        // only in what happens between them, which is the whole point of 43.21 task 1: two
+        // missions, one run shape.
+        if (missionKind == WorkerMissionKind.Naive)
+            return await ProcessNaiveRunAsync(command, state, saveSessionAsync, publishFactDurablyAsync, ct);
 
         if (missionKind != WorkerMissionKind.Janus)
             return await RejectUnsupportedMissionAsync(command, state, publishFactDurablyAsync, saveSessionAsync, ct);
