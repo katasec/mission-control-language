@@ -1,6 +1,6 @@
 # Phase 43.22 task 1 — Project state and submission journal
 
-> **Design ready for plan review; implementation pending.** Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+> **Design ready for Codex-only execution; implementation pending.** Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 > Non-visual component work; default-path proof is aggregated in task 5, not waived.
 
 ## Task and files

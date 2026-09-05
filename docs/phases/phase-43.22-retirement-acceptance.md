@@ -1,6 +1,6 @@
 # Phase 43.22 task 5 — Retire old writers and prove the product
 
-> **Design locked; implementation/rollout pending, after tasks 1–4.**
+> **Design locked; Codex implementation/rollout pending, after tasks 1–4.**
 > Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 
 ## Delete, preserve and correct
