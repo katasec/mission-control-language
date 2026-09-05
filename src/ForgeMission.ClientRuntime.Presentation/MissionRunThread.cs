@@ -70,9 +70,12 @@ public sealed class MissionRunThread
             || !_traceByRun.TryGetValue(runId, out var trace))
             return;
 
-        // The prompt is the control thread's, not an expert turn. Everything else the run produced
-        // is trace evidence and is passed through unread.
-        if (evt.Kind != ConversationEventKind.UserMessage)
+        // Two kinds never reach the trace, and for the same reason: they are not things an expert
+        // said. The prompt belongs to the control thread — repeating it here would present the
+        // person's own words as a turn — and the run's lifecycle is already the outcome's job and
+        // the trace header's live badge. What is left is exactly the exchange, passed through
+        // unread.
+        if (evt.Kind is not (ConversationEventKind.UserMessage or ConversationEventKind.RunStatus))
             trace.Apply(evt);
 
         _entries[index] = evt.Kind switch

@@ -307,22 +307,34 @@ Runtime, and a boundary rule banning `ProjectControl` / `MissionControl` / `miss
 `Mission Control` anywhere in Presentation source text — identifiers, routes, comments and visible
 strings alike.
 
-**Browser acceptance — CONTROLLED, and labelled as such.** Run against the published Client Runtime
-with `ConversationRuntime__BaseUrl` set to a port-forwarded Kind Host, and with Host/Worker on
-branch-built images. Both are overrides; this cannot close default-path acceptance. The cluster was
-restored to the clean-`main` images (`767c2891…`) afterwards and the rollout verified.
+**Browser acceptance — CONTROLLED, and labelled as such.** Driven through the packaged Desktop's
+own supervised Client Runtime and its own Kind bridge, with Host and Worker on candidate images
+built from this branch. The images are branch-built, so this cannot close default-path acceptance.
+Kind was restored to the clean-`main` images (`767c2891…`) afterwards and the rollout verified.
 
 | Check | Result |
 |---|---|
-| First open, picker open, Naive selected, busy, Janus activity, Naive result, invalid input, legacy notice, corrupted selection | PASS against their bound references, all through real pointer activation |
+| First open, picker open, Naive selected, invalid input, start failure, legacy notice, corrupted selection | PASS against their bound references, all through real pointer activation |
 | Keyboard | PASS — `Enter` on the button opens, arrows move the active option, `Enter` commits, `Escape` returns focus to the button, `Tab` closes and moves on to the composer |
-| Live Naive run | PASS — one bubble labelled `Naive`, `Status: Completed`, composer clean, **0 tool rows** |
-| Live Janus run | PASS — Proposer → Approver → Approved → Implementer → `Status: Completed`, **0 tool rows**, and the Implementer said it would "use Bash" and could not: the run holds no tool authority |
-| Four corners 800×568 / 800×1024 / 1536×568 / 1536×1024 | PASS — no document scrolling at any corner; the activity region owns overflow (`scrollHeight` 1099 inside `clientHeight` 426) |
-| Continuous resize 1536→1440→1280→1024→900→800 | PASS — no overflow, no clipping |
-| Zoom 125% / 150% / 200% | PASS — no overflow at 125/150; at 200% (an effective viewport below the supported rectangle) the page degrades by scrolling, with every control's text still fitting |
-| Both colour modes | PASS — dark renders entirely through the named token map; no component-local literal |
-| Text fit | **One measured failure, fixed.** `Mission: none selected` overflowed the 150px the references estimated by 19.7px at 800 wide. `--wb-picker-width`'s lower bound is now **172px**, set from that measurement, and the references were regenerated to match. |
+| Live Janus run, control thread | PASS — `Janus run completed`, `completed` pill, `5 expert turns · 0 tool calls`, one `View run trace`. **Zero expert bubbles, approvals, tool rows or activity rows in the Missions markup**, measured, not eyeballed. |
+| Live Janus run, trace | PASS — `Janus run trace`, participants in order `Proposer → Approver → Proposer → Approver → Implementer`, no user bubble, no lifecycle rows, no composer, rail still marking `Missions` |
+| Live Naive runs | PASS — two in one session, each with its own thread entry and its own trace; `1 expert turn · 0 tool calls`; the answer readable only in the trace, exactly as the no-exception rule requires |
+| Busy | PASS — instruction plus a `queued` outcome, `Starting Naive…`, composer disabled, and **no trace offered** until the run has produced something to read |
+| Back to Missions | PASS — returns to the same two-entry thread with its composer; the trace document is gone |
+| Four corners 800×568 / 800×1024 / 1536×568 / 1536×1024 | PASS — no horizontal or vertical document scrolling at any corner; the content region owns overflow |
+| Zoom 125% / 150% / 200% | PASS — no overflow at 125/150; at 200% (an effective viewport below the supported rectangle) the page degrades by scrolling, with the outcome title, the trace action and the rail labels all still unclipped |
+| Both colour modes | PASS — dark renders the outcome card, status pill and trace action entirely through the named token map; no component-local literal |
+| Text fit | PASS — outcome title, counts, status pill and `View run trace` all fit at every corner and every zoom step |
+
+**Packaged-app parity — PASS for the Run Trace (2026-09-05).** Captured by window id from the
+zero-argument packaged Desktop, so none of the operator's screen is in the image: the WKWebView
+renders the corrected `Run trace` document — its header naming the Project and mission, the ordered
+expert turns, and the `Revision requested` row — with the rail still marking `Missions`. That
+capture came from the operator driving the app, not from me: the packaged window exposes no
+automation protocol, which remains the standing limitation. The Missions control thread's own
+packaged rendering has not been captured in this round; its shell, rail, picker and composer are
+unchanged from the parity capture already recorded below, but the outcome card has not been seen in
+WKWebView.
 
 **Keyboard correction (2026-09-05).** Two defects, both fixed and both proved in the browser:
 
@@ -344,7 +356,21 @@ zero clicks from it. So "let the button be a button" would have left the whole k
 unverifiable here. Handling the keys and suppressing the duplicate is correct in a real browser and
 provable in this one.
 
-**Candidate-stack gate — PASS (2026-09-05), candidate revision `7b7c7a2`.** Every process in the
+**Candidate-stack gate — PASS for the correction (2026-09-05), candidate revision `e400e78`.**
+Desktop and its supervised Client Runtime from `make desktop` at that commit;
+`forge-conversation-host:e400e78` and `forge-conversation-worker:e400e78` built from it and rolled
+into Kind. The zero-argument packaged Desktop started its own Kind bridge and its own Client Runtime
+child — no endpoint override anywhere — and Janus and Naive were both driven end to end through that
+stack, producing durable child runs whose control-thread outcomes and traces are the evidence above.
+Kind restored to the clean-`main` images afterwards, rollout verified.
+
+One observation worth recording, not a defect of this task: restarting the packaged Desktop while a
+previous instance's Kind bridge was still closing left the new Supervisor with no bridge of its own —
+it probed `18080`, found the dying forward still answering, and skipped starting one. The first run
+then failed with the correct typed message. A clean start recovers it. That belongs to the
+Supervisor's bridge readiness (43.19/43.17), not to Presentation.
+
+**Earlier candidate-stack pass, revision `7b7c7a2`.** Every process in the
 path was built from that one commit and run together, and the whole thing was driven through the
 product's own flow. This is the check the rest of the evidence is structurally blind to: components
 verified separately at different revisions say nothing about whether the product works.

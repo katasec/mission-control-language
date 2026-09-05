@@ -91,6 +91,22 @@ public class MissionRunThreadTests
             entry.Kind == ConversationEntryKind.ParticipantMessage && entry.Text == "Ship the importer first.");
     }
 
+    // The run's lifecycle is the outcome's job and the trace header's live badge. A "Status:
+    // Queued" row above a finished exchange is noise the reference timeline does not carry.
+    [Fact]
+    public void TheTrace_CarriesNoRunStatusRows()
+    {
+        var thread = Started("Janus");
+
+        foreach (var evt in JanusRun())
+            thread.Apply(evt);
+
+        Assert.DoesNotContain(thread.Trace(Run)!.Entries, entry =>
+            entry.StatusKind == ConversationEventKind.RunStatus);
+        // The status still reaches the control thread, which is where it belongs.
+        Assert.Equal(ConversationRunStatus.Completed, Assert.Single(thread.Entries).Status);
+    }
+
     // Exactness is the trace's whole purpose: a message reaches it as the durable event stored it.
     [Fact]
     public void ATraceMessage_IsTheDurableTextUnchanged()
