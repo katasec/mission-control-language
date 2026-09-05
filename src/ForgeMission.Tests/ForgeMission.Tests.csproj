@@ -28,6 +28,7 @@
     <ProjectReference Include="..\ForgeMission.ClientRuntime.Presentation\ForgeMission.ClientRuntime.Presentation.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationPresentation\ForgeMission.ConversationPresentation.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime.TransportProbe\ForgeMission.ClientRuntime.TransportProbe.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ForgeMission.ProjectStoreProbe\ForgeMission.ProjectStoreProbe.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ForgeMission.Desktop\ForgeMission.Desktop.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
     <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />

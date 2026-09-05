@@ -116,6 +116,17 @@ public enum ProjectOperationErrorCode
 
     /// <summary>The named control conversation does not exist.</summary>
     MissionControlNotFound,
+
+    // Phase 43.22 task 1. Appended because this enum is serialized numerically by the transport.
+    ProjectBusy,
+    ProjectChanged,
+    ManifestReadFailed,
+    SubmissionPending,
+    SubmissionChanged,
+    SubmissionUncertain,
+    InvalidMissionInput,
+    UnknownMission,
+    MissionRunConflict,
 }
 
 // --- Project Mission Control contracts (43.20 task 2) ---------------------------------------

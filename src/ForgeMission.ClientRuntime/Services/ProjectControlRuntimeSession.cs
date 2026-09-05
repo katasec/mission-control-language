@@ -40,7 +40,7 @@ internal sealed class ProjectControlRuntimeSession(
             ?? throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
                 $"{projectHome} holds no Forge Project manifest.");
 
-        var conversationId = project.Manifest.MissionControlConversationId
+        var conversationId = project.Manifest.LegacyProjectControlConversationId
             ?? await CreateAndRecordAsync(project, ct);
 
         _conversationId = conversationId;
@@ -74,7 +74,7 @@ internal sealed class ProjectControlRuntimeSession(
 
         // Only after durable acceptance. A failed write leaves the conversation valid and reports
         // ManifestWriteFailed — never a new conversation, never a successful local write.
-        projects.SetMissionControlConversationId(project.Home, response.ConversationId);
+        await projects.SetLegacyProjectControlConversationIdAsync(project.Home, response.ConversationId, ct);
         return response.ConversationId;
     }
 

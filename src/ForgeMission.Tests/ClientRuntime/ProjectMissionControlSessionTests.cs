@@ -47,7 +47,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
         Assert.Equal("Ship a todos API", create.Body.GetProperty("projectGoal").GetString());
 
         // Written back only after acceptance, and readable by the next open.
-        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
 
     [Fact]
@@ -83,11 +83,16 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
         var conversationId = Guid.NewGuid();
         var handler = new ScriptedControlHostHandler(conversationId);
 
-        // Make the manifest replacement fail without touching the manifest itself.
-        var temporaryPath = Path.Combine(project.Home, ProjectStore.ManifestFileName + ".tmp");
+        // Reproduce a create-new temporary-file failure at the publication boundary without
+        // touching the current manifest.
+        var temporaryId = Guid.NewGuid();
+        var temporaryPath = Path.Combine(project.Home, $".forge-project.{temporaryId:N}.tmp");
         Directory.CreateDirectory(temporaryPath);
+        var failingStore = new ProjectStore(
+            Path.Combine(_profile, "Forge", "Projects"),
+            new ProjectManifestFile(() => temporaryId));
 
-        await using (var failing = NewSession(handler, project.Home))
+        await using (var failing = NewSession(handler, project.Home, store: failingStore))
         {
             var failure = await Assert.ThrowsAsync<ProjectOperationException>(
                 () => failing.OpenAsync(CancellationToken.None));
@@ -96,7 +101,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
 
         // The durable conversation is valid; only the local record failed. Nothing was recorded,
         // and it was never reported as a successful write.
-        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Null(_store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
 
         Directory.Delete(temporaryPath);
         await using var retry = NewSession(handler, project.Home);
@@ -111,7 +116,7 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
             .Distinct()
             .ToList();
         Assert.Single(commandIds);
-        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Equal(conversationId, _store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
 
     // ── 3. A control turn carries nothing it should not ────────────────────────────
@@ -182,17 +187,20 @@ public sealed class ProjectMissionControlSessionTests : IDisposable
         var failure = await Assert.ThrowsAsync<HttpRequestException>(() => session.OpenAsync(CancellationToken.None));
 
         Assert.Equal(HttpStatusCode.Conflict, failure.StatusCode);
-        Assert.Null(_store.Open(project.Home).Project!.Manifest.MissionControlConversationId);
+        Assert.Null(_store.Open(project.Home).Project!.Manifest.LegacyProjectControlConversationId);
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────────
 
     private ProjectControlRuntimeSession NewSession(
-        HttpMessageHandler handler, string home, Action<ClientRuntimeEvent>? publish = null)
+        HttpMessageHandler handler,
+        string home,
+        Action<ClientRuntimeEvent>? publish = null,
+        ProjectStore? store = null)
     {
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") };
         return new ProjectControlRuntimeSession(
-            "session-1", home, _store, new ConversationHostClient(http), publish ?? (_ => { }), CancellationToken.None);
+            "session-1", home, store ?? _store, new ConversationHostClient(http), publish ?? (_ => { }), CancellationToken.None);
     }
 
     private static ConversationEvent ControlEvent(
