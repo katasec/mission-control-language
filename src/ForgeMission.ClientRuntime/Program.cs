@@ -29,6 +29,7 @@ internal sealed class Program
         // and nothing here is touched until a surface actually creates or opens a Project.
         builder.Services.AddSingleton(new ProjectStore());
         builder.Services.AddSingleton<ProjectMissionApplication>();
+        builder.Services.AddSingleton<ProjectWorkbenchService>();
         builder.Services.AddSingleton<ClientRuntimeSessionStore>();
         // Native AOT has no reflection fallback for minimal-API request/response JSON binding —
         // route it through the same source-generated context the transport channel already uses.

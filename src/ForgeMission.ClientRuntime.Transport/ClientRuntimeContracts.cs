@@ -134,6 +134,10 @@ public enum ProjectOperationErrorCode
     HistoryUnavailable,
     HistoryInvalid,
     HistorySynchronizing,
+    DocumentUnavailable,
+    DocumentTooLarge,
+    DocumentChanged,
+    DocumentBinary,
 }
 
 // --- Project Mission run contracts (43.22 task 3) ------------------------------------------
@@ -167,6 +171,18 @@ public sealed record GetProjectRunEventsResponse(
 
 public sealed record ProjectMissionsView(
     IReadOnlyList<string> Available, string? Selected, bool HasLegacyHistory);
+
+public sealed record SelectProjectMissionRequest(string SessionId, string Mission);
+public sealed record SelectProjectMissionResponse(ProjectMissionsView? Missions, ProjectOperationError? Error);
+
+public sealed record GetProjectWorkbenchRequest(string SessionId);
+public sealed record ProjectWorkbenchEntry(string Id, string Label, string Kind);
+public sealed record ProjectWorkbenchProjection(
+    IReadOnlyList<ProjectWorkbenchEntry> Assets, IReadOnlyList<ProjectWorkbenchEntry> Context);
+public sealed record GetProjectWorkbenchResponse(ProjectWorkbenchProjection? Projection, ProjectOperationError? Error);
+public sealed record OpenProjectDocumentRequest(string SessionId, string EntryId);
+public sealed record ProjectDocument(string Label, string Content, bool IsPlainText);
+public sealed record OpenProjectDocumentResponse(ProjectDocument? Document, ProjectOperationError? Error);
 
 // --- Project Mission Control contracts (43.20 task 2) ---------------------------------------
 // Surface-neutral by construction, and deliberately narrow: a surface names only its own session

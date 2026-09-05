@@ -155,6 +155,31 @@ internal static class ClientRuntimeEndpoints
             return Results.Ok(await application.RetryAsync(session, request, ct));
         });
 
+        app.MapPost("/transport/project/mission/select", async (
+            SelectProjectMissionRequest request, ClientRuntimeSessionStore sessions,
+            ProjectWorkbenchService workbench, CancellationToken ct) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(await workbench.SelectMissionAsync(session.Workspace.Root!, request.Mission, ct));
+        });
+
+        app.MapPost("/transport/project/workbench", (
+            GetProjectWorkbenchRequest request, ClientRuntimeSessionStore sessions, ProjectWorkbenchService workbench) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(workbench.GetProjection(session.Workspace.Root!));
+        });
+
+        app.MapPost("/transport/project/document", (
+            OpenProjectDocumentRequest request, ClientRuntimeSessionStore sessions, ProjectWorkbenchService workbench) =>
+        {
+            if (!sessions.TryGet(request.SessionId, out var session) || session is null)
+                return Results.NotFound();
+            return Results.Ok(workbench.OpenDocument(session.Workspace.Root!, request.EntryId));
+        });
+
         app.MapPost("/transport/project/mission/state", async (
             GetProjectMissionStateRequest request, ClientRuntimeSessionStore sessions, ProjectStore projects,
             IHttpClientFactory clients, ClientRuntimeEventHub events, IHostApplicationLifetime lifetime,
