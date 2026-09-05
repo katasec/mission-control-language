@@ -1,0 +1,59 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+@using ForgeMission.ClientRuntime.Presentation
+@using ForgeMission.Conversations.Contracts
+
+<section class="rt">
+    <header class="rt-head">
+        <button type="button" class="rt-back" @onclick="Back">← Back to Missions</button>
+        @if (Run is { } detail)
+        {
+            <div class="rt-title-row"><h2>@detail.Run.Title</h2>@if (!Terminal(detail.Run.Status)) { <span class="rt-live">Live</span> }</div>
+            <p>@detail.Run.Mission · @detail.Run.Status</p>
+        }
+    </header>
+    @if (Error is not null) { <p class="rt-error" role="alert">@Error.Message</p> }
+    else if (Run is null || Events is null) { <p class="rt-empty">Loading run trace…</p> }
+    else
+    {
+        <p class="rt-range">Events @RangeStart–@RangeEnd @if (AfterSequence > Run.Run.AcceptedSequence - 1) { <span>· Earlier events are not loaded</span> }</p>
+        <div class="rt-body">
+            @if (Transcript.Entries.Count == 0) { <p class="rt-empty">@(Terminal(Run.Run.Status) ? "This run did not produce expert activity." : "Waiting for the first expert response…")</p> }
+            else { <ConversationTranscriptView Entries="Transcript.Entries" /> }
+        </div>
+        <nav class="rt-pages" aria-label="Trace pages">
+            <button type="button" @onclick="Earlier" disabled="@(!CanEarlier)">Earlier events</button>
+            <button type="button" @onclick="Later" disabled="@(!CanLater)">Later events</button>
+            <button type="button" @onclick="Latest">Latest events</button>
+        </nav>
+    }
+</section>
+
+@code {
+    [Parameter] public ProjectRunDetail? Run { get; set; }
+    [Parameter] public ProjectRunEventPage? Events { get; set; }
+    [Parameter] public long AfterSequence { get; set; }
+    [Parameter] public long ThroughSequence { get; set; }
+    [Parameter] public ProjectOperationError? Error { get; set; }
+    [Parameter] public EventCallback Back { get; set; }
+    [Parameter] public EventCallback Earlier { get; set; }
+    [Parameter] public EventCallback Later { get; set; }
+    [Parameter] public EventCallback Latest { get; set; }
+
+    private ConversationTranscript Transcript { get; set; } = new();
+    private ProjectRunEventPage? applied;
+    private long RangeStart => Events?.Events.FirstOrDefault()?.Sequence ?? AfterSequence + 1;
+    private long RangeEnd => Events?.Events.LastOrDefault()?.Sequence ?? ThroughSequence;
+    private bool CanEarlier => AfterSequence > (Run?.Run.AcceptedSequence ?? 1) - 1;
+    private bool CanLater => Events?.HasMore == true;
+
+    protected override void OnParametersSet()
+    {
+        if (Events is null || ReferenceEquals(applied, Events)) return;
+        applied = Events;
+        Transcript = new ConversationTranscript();
+        foreach (var item in Events.Events.Where(item => item.Kind != ConversationEventKind.UserMessage))
+            Transcript.Apply(item);
+    }
+
+    private static bool Terminal(ConversationRunStatus status) => status is ConversationRunStatus.Completed or ConversationRunStatus.Failed or ConversationRunStatus.Interrupted or ConversationRunStatus.Rejected;
+}

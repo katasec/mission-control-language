@@ -1,0 +1,137 @@
+/* Explorer layout (43.20 task 3). No custom property, no literal colour/type/geometry: everything
+   resolves through the Workbench theme map. The list is content-led so it reflows continuously
+   across the acceptance rectangle rather than switching between two fixed compositions. */
+
+.ex-root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wb-section-gap);
+    min-width: 0;
+}
+
+.ex-title {
+    margin: 0;
+    font-size: var(--font-size-lead);
+    font-weight: 700;
+    color: var(--text);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border);
+}
+
+.ex-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.ex-heading {
+    margin: 0;
+    font-size: var(--font-size-label);
+    font-weight: 600;
+    color: var(--text);
+}
+
+.ex-empty {
+    margin: 0;
+    font-size: var(--font-size-body);
+    color: var(--text-subtle);
+}
+
+.ex-error {
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius);
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: var(--font-size-body);
+}
+
+.ex-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.ex-item {
+    min-width: 0;
+}
+
+.ex-name {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    color: var(--text);
+    /* A long asset path wraps instead of forcing the document to scroll sideways. */
+    overflow-wrap: anywhere;
+}
+
+/* An openable entry is a real button, so it is keyboard reachable and announced as an action;
+   a non-openable one renders as plain text and offers no affordance at all. */
+.ex-open {
+    width: 100%;
+    padding: var(--space-1) 0;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.ex-open.ex-name {
+    font-family: var(--font-mono);
+}
+
+.ex-open:hover {
+    color: var(--accent);
+}
+
+.ex-open:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--radius-sm);
+}
+
+.ex-dependency {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-active);
+    min-width: 0;
+}
+
+.ex-dependency-name {
+    width: auto;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+/* Words, not a colour: "read-only" is the claim, and it must survive greyscale and a colour
+   vision difference. */
+.ex-badge {
+    font-size: var(--font-size-meta);
+    color: var(--text-muted);
+}
+
+/* The pinned reference and its digest are the evidence, so the whole value is shown and wrapped
+   rather than truncated — a shortened digest cannot be checked against anything. */
+.ex-source {
+    flex-basis: 100%;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}

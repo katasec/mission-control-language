@@ -1,0 +1,12 @@
+.mc { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.mc-row { display: flex; align-items: end; gap: var(--space-2); min-width: 0; }
+.mc-input { flex: 1; min-width: 0; min-height: var(--wb-location-height); max-height: 10rem; padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: var(--font-size-body); line-height: 1.4; resize: vertical; }
+.mc-input:focus-visible, .mc-run:focus-visible, .mc-recovery button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.mc-input:disabled { background: var(--surface-active); color: var(--text-subtle); }
+.mc-run, .mc-recovery button { flex: none; min-height: var(--wb-location-height); padding: var(--space-2) var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font: inherit; font-size: var(--font-size-meta); font-weight: 600; cursor: pointer; }
+.mc-run:disabled, .mc-recovery button:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
+.mc-error, .mc-recovery { margin: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-bg); color: var(--danger); font-size: var(--font-size-meta); }
+.mc-recovery { display: flex; flex-direction: column; gap: var(--space-2); }
+.mc-recovery p, .mc-recovery pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mc-recovery pre { max-height: 8rem; overflow: auto; color: var(--text); }
+@media (max-width: 639px) { .mc-row { align-items: stretch; flex-wrap: wrap; } .mc-input { flex-basis: 100%; } }

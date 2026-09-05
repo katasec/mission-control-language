@@ -1,0 +1,63 @@
+@* The persistent Project rail (43.20 task 3): three destinations, in the order the binding
+   reference fixes, and nothing else. It is a navigation aid, not a docking or layout framework —
+   it holds no Project state and performs no Project operation. Selecting a destination raises an
+   event; what that means is Home's decision, and it never replaces a session or a conversation.
+
+   A document opened from the Explorer is deliberately NOT a fourth rail entry: it is reached by
+   selecting something, and while it is open the Explorer stays marked as the current destination
+   so the rail keeps saying where in the Project you are. *@
+
+<nav class="wb-rail" aria-label="Project">
+    <div class="wb-brand">
+        <span class="wb-brand-name">Forge</span>
+        <span class="wb-brand-sub">AI Workbench</span>
+    </div>
+
+    <div class="wb-rail-group">
+        @foreach (var destination in Destinations)
+        {
+            @Item(destination)
+        }
+    </div>
+
+    @* Bottom-aligned, as the reference fixes it: settings is the destination you reach for least. *@
+    <div class="wb-rail-foot">
+        @Item(SettingsDestination)
+    </div>
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public WorkbenchView Selected { get; set; }
+
+    [Parameter] public EventCallback<WorkbenchView> SelectedChanged { get; set; }
+
+    private sealed record Destination(WorkbenchView View, string Glyph, string Label);
+
+    private static readonly Destination[] Destinations =
+    [
+        new(WorkbenchView.Explorer, "□", "Project Explorer"),
+        new(WorkbenchView.Missions, "◎", "Missions"),
+    ];
+
+    private static readonly Destination SettingsDestination = new(WorkbenchView.Settings, "⚙", "Settings");
+
+    // A document belongs to the destination it was opened from, so that destination stays current
+    // while it is shown: an Explorer entry to the Explorer, a run's trace to Missions.
+    private bool IsCurrent(WorkbenchView view) => view == Selected
+        || (view == WorkbenchView.Explorer && Selected == WorkbenchView.Document)
+        || (view == WorkbenchView.Missions && Selected == WorkbenchView.RunTrace);
+
+    // Real markup rather than a RenderTreeBuilder fragment: Blazor stamps a component's scoped-CSS
+    // attribute onto elements written in the template only, so a hand-built fragment would render
+    // with no styling at all.
+    private RenderFragment Item(Destination destination) =>
+        @<button type="button"
+                 class="@(IsCurrent(destination.View) ? "wb-rail-item wb-rail-item-current" : "wb-rail-item")"
+                 aria-current="@(IsCurrent(destination.View) ? "page" : null)"
+                 @onclick="() => SelectedChanged.InvokeAsync(destination.View)">
+             @* The glyph is decorative: the visible text label beside it is the button's accessible
+                name, so announcing the glyph as well would only repeat it. *@
+             <span class="wb-rail-glyph" aria-hidden="true">@destination.Glyph</span>
+             <span class="wb-rail-label">@destination.Label</span>
+         </button>;
+}

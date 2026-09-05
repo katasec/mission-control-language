@@ -1,0 +1,15 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+
+<section class="doc-root">
+    <button type="button" class="doc-back" @onclick="Back">‹ Back to Explorer</button>
+    @if (Error is not null) { <p class="doc-error" role="alert">@Error.Message</p> }
+    else if (Document is null) { <p class="doc-pending">Opening…</p> }
+    else if (Document.IsPlainText) { <p class="doc-pending">@Document.Content</p> }
+    else { <pre class="doc-body">@Document.Content</pre> }
+</section>
+
+@code {
+    [Parameter] public ProjectDocument? Document { get; set; }
+    [Parameter] public ProjectOperationError? Error { get; set; }
+    [Parameter] public EventCallback Back { get; set; }
+}

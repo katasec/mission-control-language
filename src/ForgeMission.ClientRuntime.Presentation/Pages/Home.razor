@@ -1,119 +1,74 @@
 @page "/"
-@using ForgeMission.ConversationPresentation
 @inject IClientRuntimeChannel ClientRuntime
 @implements IAsyncDisposable
 
-<div class="shell">
-    @* The Workbench header band, from the Task 1 reference: wordmark, hairline divider, product
-       name. An open Project adds its own line beneath rather than replacing any of it. *@
-    <header class="shell-header">
-        <div class="brand">
-            <h1>Forge</h1>
-            <span class="brand-divider"></span>
-            <p class="subtitle">AI Workbench</p>
-        </div>
-        @if (project is not null)
-        {
-            <p class="workspace-path">@project.Title · @project.Home</p>
-        }
-    </header>
-
 @if (project is null)
 {
-    <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value"
-                     Title="@titleInput" TitleChanged="value => titleInput = value"
-                     Home="@homeInput" HomeChanged="value => homeInput = value"
-                     Busy="busy" Error="@launcherError" Notice="@LauncherNotice"
-                     ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput"
-                     OpenPathChanged="value => openPathInput = value"
-                     GoalCommitted="DraftProjectAsync"
-                     Create="CreateProjectAsync"
-                     OpenRequested="ToggleOpenFolder"
-                     Open="OpenProjectAsync" />
+    <div class="shell launcher-shell">
+        <header class="shell-header"><div class="brand"><h1>Forge</h1><span class="brand-divider"></span><p class="subtitle">AI Workbench</p></div></header>
+        <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value" Title="@titleInput" TitleChanged="value => titleInput = value" Home="@homeInput" HomeChanged="value => homeInput = value" Busy="busy" Error="@launcherError" Notice="@LauncherNotice" ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput" OpenPathChanged="value => openPathInput = value" GoalCommitted="DraftProjectAsync" Create="CreateProjectAsync" OpenRequested="ToggleOpenFolder" Open="OpenProjectAsync" />
+    </div>
 }
 else
 {
-    <main class="turns">
-        @if (connectionError is not null)
-        {
-            <div class="connection-banner">
-                <span>Connection lost: @connectionError</span>
-                <button class="connection-retry" @onclick="RetryConnectionAsync">Retry</button>
-            </div>
-        }
-        @if (reconnectedWithGap)
-        {
-            <p class="gap-notice">Reconnected. Updates that arrived while disconnected are not shown.</p>
-        }
-        @if (sessionError is not null)
-        {
-            <p class="error-banner">@sessionError</p>
-        }
-
-        @if (conversationError is not null)
-        {
-            <p class="error-banner">@conversationError</p>
-        }
-        <ConversationTranscriptView Entries="conversationTranscript.Entries" />
-    </main>
-
-    <footer class="composer-bar">
-        <div class="composer">
-            <input class="composer-input" @bind="composerText" @bind:event="oninput" @onkeydown="OnComposerKeyDown"
-                   @ref="composerInput"
-                   placeholder="@ComposerPlaceholder"
-                   disabled="@(!missionControlReady || sending || PromptsBlocked)" />
-            <button class="composer-send" @onclick="SendAsync" disabled="@(!CanSend)">
-                @(sending ? "Sending…" : "Send")
-            </button>
-        </div>
-
-    </footer>
+    <div class="workbench">
+        <WorkbenchRail Selected="view" SelectedChanged="ChangeViewAsync" />
+        <section class="wb-content">
+            <header class="wb-header"><h1>@HeaderTitle</h1><p>@project.Title</p></header>
+            @if (connectionError is not null) { <div class="connection-banner"><span>Connection lost: @connectionError</span><button type="button" @onclick="RestartSubscriptionAsync">Retry</button></div> }
+            <main class="wb-document">
+                @switch (view)
+                {
+                    case WorkbenchView.Explorer:
+                        <ProjectExplorerView Projection="workbench" Runs="runs" Error="workbenchError" EntrySelected="OpenDocumentAsync" TraceRequested="OpenTraceAsync" />
+                        break;
+                    case WorkbenchView.Document:
+                        <ProjectDocumentView Document="document" Error="documentError" Back="BackToExplorer" />
+                        break;
+                    case WorkbenchView.Settings:
+                        <WorkbenchSettings />
+                        break;
+                    case WorkbenchView.RunTrace:
+                        <RunTraceView Run="selectedRun" Events="traceEvents" AfterSequence="traceAfter" ThroughSequence="traceThrough" Error="traceError" Back="BackToMissions" Earlier="EarlierTraceAsync" Later="LaterTraceAsync" Latest="LatestTraceAsync" />
+                        break;
+                    default:
+                        <MissionsView Page="runs" Loading="loadingState" OlderPage="@(runCursor is not null)" HistoryError="historyError" HasLegacyHistory="@(missionState?.Missions.HasLegacyHistory ?? false)" TraceRequested="OpenTraceAsync" InstructionRequested="ShowInstructionAsync" Refresh="LatestRunsAsync" Older="OlderRunsAsync" Latest="LatestRunsAsync" />
+                        @if (expandedInstruction is not null) { <section class="instruction-detail"><button type="button" @onclick="HideInstruction">Hide instruction</button><pre>@expandedInstruction</pre></section> }
+                        @if (newRunsAvailable) { <button type="button" class="new-runs" @onclick="LatestRunsAsync">New runs available</button> }
+                        break;
+                }
+            </main>
+            @if (view == WorkbenchView.Missions && missionState is { } state)
+            {
+                <footer class="composer-bar"><MissionComposer Missions="state.Missions" Submission="state.Submission" Error="submissionError" HistoryAvailable="@HistoryAvailable" ActiveRun="@HasActiveRun" Busy="submissionBusy" MissionSelected="SelectMissionAsync" Run="StartRunAsync" Retry="RetrySubmissionAsync" /></footer>
+            }
+        </section>
+    </div>
 }
-</div>
-
-<style>
-    /* The shell is the page's flex column: a fixed header band, then a flexible region that owns
-       any scrolling. min-height: 0 is what lets that region actually shrink in a short window
-       instead of overflowing the viewport. */
-    .shell { display: flex; flex-direction: column; height: 100vh; min-height: 0; background: var(--bg); font-family: var(--font-sans); color: var(--text); }
-
-    /* The band's height and inset are Workbench theme geometry (--wb-header-*), like every other
-       measured value on this surface; nothing here is a literal. */
-    .shell-header { flex: none; min-height: var(--wb-header-height); padding: 0 var(--wb-page-inset) 0 var(--wb-header-inset); display: flex; flex-direction: column; justify-content: center; background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); }
-    .brand { display: flex; align-items: baseline; gap: var(--space-5); min-width: 0; }
-    .shell-header h1 { margin: 0; font-size: var(--font-size-display); font-weight: 700; color: var(--accent); }
-    .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); }
-    .subtitle { margin: 0; font-size: var(--font-size-title); color: var(--text); }
-    .workspace-path { margin: var(--space-2) 0 0; font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    .turns { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
-
-
-
-    .connection-banner { align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; }
-    .connection-retry { flex-shrink: 0; height: 28px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-pill); background: var(--danger); color: var(--accent-contrast); font-size: 12.5px; font-weight: 600; cursor: pointer; }
-    .gap-notice { align-self: stretch; margin: 0; padding: var(--space-2) var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-muted); font-size: 12.5px; text-align: center; }
-
-    .error-banner { align-self: stretch; background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); border-radius: var(--radius); padding: var(--space-3); font-size: 13.5px; margin: 0; }
-
-    .composer-bar { position: relative; border-top: 1px solid var(--border); background: var(--bg); padding: var(--space-4) var(--space-5) calc(var(--space-4) + var(--safe-bottom)); }
-    .composer { display: flex; align-items: center; gap: var(--space-2); }
-    .composer-input { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 var(--space-3); font-size: 14px; background: var(--surface); color: var(--text); }
-    .composer-input:disabled { color: var(--text-subtle); }
-    .composer-send { flex-shrink: 0; height: 36px; padding: 0 var(--space-4); border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: 13.5px; font-weight: 600; cursor: pointer; }
-    .composer-send:disabled { background: var(--surface-active); color: var(--text-subtle); cursor: default; }
-
-</style>
 
 @code {
-    // The open Project and its one Client Runtime session. Both are null until a project
-    // create/open contract returns — Desktop boot establishes neither.
     private ProjectSummary? project;
     private string? sessionId;
+    private WorkbenchView view = WorkbenchView.Missions;
+    private ProjectMissionState? missionState;
+    private ProjectRunPage? runs;
+    private ProjectRunCursor? runCursor;
+    private ProjectOperationError? historyError;
+    private ProjectOperationError? submissionError;
+    private bool loadingState;
+    private bool submissionBusy;
+    private bool newRunsAvailable;
+    private ProjectWorkbenchProjection? workbench;
+    private ProjectOperationError? workbenchError;
+    private ProjectDocument? document;
+    private ProjectOperationError? documentError;
+    private ProjectRunDetail? selectedRun;
+    private ProjectRunEventPage? traceEvents;
+    private ProjectOperationError? traceError;
+    private long traceAfter;
+    private long traceThrough;
+    private string? expandedInstruction;
 
-    // Launcher state. Every value shown here came from the Client Runtime: this page derives no
-    // title, slug, or home, and holds no filesystem rule.
     private string goalInput = string.Empty;
     private string titleInput = string.Empty;
     private string homeInput = string.Empty;
@@ -122,415 +77,204 @@ else
     private bool showOpenFolder;
     private bool busy;
     private string? launcherError;
+    private string? LauncherNotice => goalRequired ? "That folder is not a Forge Project yet. Enter a goal to create one there." : null;
 
-    private string? LauncherNotice => goalRequired
-        ? "That folder is not a Forge Project yet. Enter a goal to create one there."
-        : null;
-
-    private string composerText = string.Empty;
-    private bool sending;
-    private ElementReference composerInput;
-    private bool focusComposerAfterRender;
-
-    // One view operation at a time (43.17 task 3). viewCts cancels this view's setup/prompt
-    // requests and its event subscription together; viewGeneration is the identity a late result
-    // is checked against before it may mutate anything; eventLoopTask is observed, never
-    // fire-and-forget. Replacing a folder or mission cancels and awaits the old subscription
-    // before creating the replacement, so two subscribers can never overlap.
-    private CancellationTokenSource? viewCts;
-    private Task? eventLoopTask;
-    private int viewGeneration;
-
-    // True only once Mission Control has actually opened. The session id alone is NOT enough:
-    // EnterProjectAsync sets it before awaiting the open, so gating on it would leave a window
-    // where a person could submit a turn against a conversation that does not exist yet.
-    private bool missionControlReady;
-
-    // The in-flight turn's identity. Retained across a typed or transport failure so a retry of
-    // unchanged text sends the identical request; released only on acceptance.
-    private Guid? pendingCommandId;
-    private string? pendingCommandText;
-
-    private ConversationTranscript conversationTranscript = new();
-    private string? conversationError;
-    private string? sessionError;
+    private CancellationTokenSource? lifetime;
+    private Task? subscription;
+    private int generation;
     private string? connectionError;
-    private bool reconnectedWithGap;
 
-    // Mission Control's transcript is built only from relayed durable events, so a turn submitted
-    // while the stream is down would add a second unrecoverable gap on top of the one the banner
-    // already reports.
-    private bool PromptsBlocked => connectionError is not null;
+    private bool HistoryAvailable => missionState?.Runs is not null && historyError is null && !missionState.Runs.Synchronizing;
+    private bool HasActiveRun => runs?.Runs.Any(run => !Terminal(run.Status)) == true;
+    private string HeaderTitle => view switch { WorkbenchView.Explorer or WorkbenchView.Document => "Project Explorer", WorkbenchView.Settings => "Settings", WorkbenchView.RunTrace => "Run trace", _ => "Missions" };
 
-    // A disabled composer says why it is disabled rather than looking broken.
-    private string ComposerPlaceholder => this switch
-    {
-        { PromptsBlocked: true } => "Reconnect to continue this conversation",
-        { missionControlReady: false, conversationError: null } => "Opening Mission Control…",
-        _ => "What is this Project for?",
-    };
-
-    private bool CanSend =>
-        missionControlReady && !sending && !PromptsBlocked && !string.IsNullOrWhiteSpace(composerText);
-
-    // Deliberately no OnInitializedAsync: opening Desktop issues no request, creates no session or
-    // event subscription, and gives the Client Runtime no reason to touch the filesystem. The first
-    // channel call is the one a person triggers by entering a goal or naming a folder.
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!focusComposerAfterRender)
-            return;
-
-        focusComposerAfterRender = false;
-        await composerInput.FocusAsync();
-    }
-
-    private void ToggleOpenFolder()
-    {
-        showOpenFolder = !showOpenFolder;
-        launcherError = null;
-    }
-
-    // Asks the Client Runtime what it would name this Project and where it would put it. The call
-    // creates nothing; its answer is shown in editable fields and sent straight back to create.
+    private void ToggleOpenFolder() { showOpenFolder = !showOpenFolder; launcherError = null; }
     private async Task DraftProjectAsync()
     {
-        if (string.IsNullOrWhiteSpace(goalInput))
-        {
-            launcherError = "Enter a goal to start.";
-            return;
-        }
-
-        var response = await RunLauncherOperationAsync(token =>
-            ClientRuntime.SendAsync<ProjectDraftRequest, ProjectDraftResponse>(
-                new ProjectDraftRequest(goalInput, NullIfBlank(titleInput), NullIfBlank(homeInput)), token));
-        if (response?.Draft is not { } draft)
-        {
-            launcherError = response?.Error?.Message ?? launcherError;
-            return;
-        }
-
-        titleInput = draft.ProposedTitle;
-        homeInput = draft.HomePath;
+        if (string.IsNullOrWhiteSpace(goalInput)) { launcherError = "Enter a goal to start."; return; }
+        var response = await LauncherAsync(token => ClientRuntime.SendAsync<ProjectDraftRequest, ProjectDraftResponse>(new(goalInput, Blank(titleInput), Blank(homeInput)), token));
+        if (response?.Draft is { } draft) { titleInput = draft.ProposedTitle; homeInput = draft.HomePath; }
+        else if (response?.Error is { } error) launcherError = error.Message;
     }
-
     private async Task CreateProjectAsync()
     {
-        var response = await RunLauncherOperationAsync(token =>
-            ClientRuntime.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
-                new ProjectCreateRequest(goalInput, NullIfBlank(titleInput), NullIfBlank(homeInput)), token));
-        if (response is not null)
-            await ApplyProjectOutcomeAsync(response);
+        var response = await LauncherAsync(token => ClientRuntime.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(new(goalInput, Blank(titleInput), Blank(homeInput)), token));
+        if (response is not null) await ApplyProjectAsync(response);
     }
-
     private async Task OpenProjectAsync()
     {
-        if (string.IsNullOrWhiteSpace(openPathInput))
-        {
-            launcherError = "Enter a folder to open.";
-            return;
-        }
-
-        var response = await RunLauncherOperationAsync(token =>
-            ClientRuntime.SendAsync<ProjectOpenRequest, ProjectOperationResponse>(
-                new ProjectOpenRequest(openPathInput), token));
-        if (response is not null)
-            await ApplyProjectOutcomeAsync(response);
+        if (string.IsNullOrWhiteSpace(openPathInput)) { launcherError = "Enter a folder to open."; return; }
+        var response = await LauncherAsync(token => ClientRuntime.SendAsync<ProjectOpenRequest, ProjectOperationResponse>(new(openPathInput), token));
+        if (response is not null) await ApplyProjectAsync(response);
     }
-
-    // One place decides what a project outcome means for this page. GoalRequired is not a failure:
-    // the folder simply has no manifest yet, so the same goal-confirmation fields reopen with the
-    // Client Runtime's own proposal already filled in.
-    private async Task ApplyProjectOutcomeAsync(ProjectOperationResponse response)
+    private async Task<T?> LauncherAsync<T>(Func<CancellationToken, Task<T>> operation) where T : class
     {
-        switch (response.Outcome)
-        {
-            case ProjectOperationOutcome.Created or ProjectOperationOutcome.Opened when response.Session is not null:
-                await EnterProjectAsync(response.Session);
-                break;
-            case ProjectOperationOutcome.GoalRequired when response.Proposal is not null:
-                goalRequired = true;
-                showOpenFolder = false;
-                titleInput = response.Proposal.ProposedTitle;
-                homeInput = response.Proposal.HomePath;
-                break;
-            default:
-                // The row closes on a failure, as the reference frame shows: the message explains
-                // what happened, and the typed path is kept so reopening the link restores it.
-                showOpenFolder = false;
-                launcherError = response.Error?.Message ?? "The Client Runtime returned no Project.";
-                break;
-        }
+        busy = true; launcherError = null;
+        try { return await operation(CancellationToken.None); }
+        catch (Exception exception) { launcherError = exception.Message; return null; }
+        finally { busy = false; }
     }
-
-    // Opening a Project opens its one Mission Control conversation. The event loop starts FIRST so
-    // the durable replay this call triggers is already being relayed when it arrives — a reopened
-    // Project therefore restores its whole transcript without any local cache.
+    private async Task ApplyProjectAsync(ProjectOperationResponse response)
+    {
+        if (response.Outcome is ProjectOperationOutcome.Created or ProjectOperationOutcome.Opened && response.Session is { } opened) { await EnterProjectAsync(opened); return; }
+        if (response.Outcome == ProjectOperationOutcome.GoalRequired && response.Proposal is { } proposal) { goalRequired = true; showOpenFolder = false; titleInput = proposal.ProposedTitle; homeInput = proposal.HomePath; return; }
+        showOpenFolder = false; launcherError = response.Error?.Message ?? "The Client Runtime returned no Project.";
+    }
     private async Task EnterProjectAsync(ProjectSession opened)
     {
-        var view = await BeginViewAsync();
-        project = opened.Project;
-        sessionId = opened.SessionId;
-        focusComposerAfterRender = true;
-        StartEventLoop(view);
-
-        // Render the workbench BEFORE awaiting the open. Without this the surface would sit on the
-        // launcher for the whole open, then jump straight to a ready composer — so the disabled
-        // "Opening Mission Control…" state, and an open failure's error, would never be seen.
-        StateHasChanged();
-
-        await OpenMissionControlAsync(view);
+        await StopLifetimeAsync();
+        generation++;
+        project = opened.Project; sessionId = opened.SessionId; view = WorkbenchView.Missions;
+        lifetime = new CancellationTokenSource();
+        subscription = ConsumeEventsAsync(generation, lifetime.Token);
+        await RefreshStateAsync(forceLatest: true);
     }
-
-    private async Task OpenMissionControlAsync(ViewOperation view)
+    private async Task ChangeViewAsync(WorkbenchView next)
     {
+        view = next; expandedInstruction = null;
+        if (next == WorkbenchView.Explorer) await LoadWorkbenchAsync();
+    }
+    private async Task RefreshStateAsync(bool forceLatest = false)
+    {
+        if (sessionId is null || lifetime is null) return;
+        loadingState = true;
         try
         {
-            var response = await ClientRuntime.SendAsync<OpenProjectMissionControlRequest, OpenProjectMissionControlResponse>(
-                new OpenProjectMissionControlRequest(sessionId!), view.Token);
-            if (!IsCurrent(view.Generation))
-                return;
-
-            // Ready ONLY on a conversation the Runtime actually opened. A typed error leaves the
-            // composer disabled with its message visible, rather than inviting a turn that has
-            // nowhere to go.
-            if (response.Error is { } error)
-                conversationError = error.Message;
-            else
-                missionControlReady = response.ConversationId is not null;
+            var response = await ClientRuntime.SendAsync<GetProjectMissionStateRequest, GetProjectMissionStateResponse>(new(sessionId), lifetime.Token);
+            if (response.Error is { } error) { historyError = error; return; }
+            if (response.State is not { } state) return;
+            missionState = state;
+            historyError = state.HistoryError;
+            if (state.Runs is { } page && (forceLatest || runCursor is null)) { runs = page; runCursor = null; newRunsAvailable = false; }
+            else if (state.Runs is not null) newRunsAvailable = true;
         }
-        catch (OperationCanceledException)
-        {
-            // Expected: the view was replaced while the open was in flight.
-        }
-        catch (Exception exception)
-        {
-            if (IsCurrent(view.Generation))
-                conversationError = exception.Message;
-        }
-        finally
-        {
-            if (IsCurrent(view.Generation))
-                StateHasChanged();
-        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception) { historyError = new(ProjectOperationErrorCode.HistoryUnavailable, exception.Message); }
+        finally { loadingState = false; await InvokeAsync(StateHasChanged); }
     }
-
-    // The launcher's single busy/error boundary. An expected Project failure arrives as a typed
-    // response rather than an exception, so only a transport/process fault lands in the catch.
-    private async Task<TResponse?> RunLauncherOperationAsync<TResponse>(
-        Func<CancellationToken, Task<TResponse>> operation) where TResponse : class
+    private async Task SelectMissionAsync(string mission)
     {
-        busy = true;
-        launcherError = null;
-        StateHasChanged();
-
+        if (sessionId is null || lifetime is null) return;
+        var response = await ClientRuntime.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(new(sessionId, mission), lifetime.Token);
+        if (response.Error is { } error) submissionError = error;
+        else if (response.Missions is { } missions && missionState is { } state) { missionState = state with { Missions = missions }; submissionError = null; }
+    }
+    private async Task StartRunAsync(string input)
+    {
+        if (sessionId is null || lifetime is null || missionState is null) return;
+        submissionBusy = true;
+        Guid? previous = missionState.Submission is { State: ProjectSubmissionState.Rejected } prior ? prior.CommandId : null;
         try
         {
-            return await operation(CancellationToken.None);
+            var response = await ClientRuntime.SendAsync<ForgeMission.ClientRuntime.Transport.StartProjectMissionRunRequest, ProjectSubmissionResponse>(new ForgeMission.ClientRuntime.Transport.StartProjectMissionRunRequest(sessionId, Guid.NewGuid(), previous, input), lifetime.Token);
+            submissionError = response.Error;
+            await RefreshStateAsync();
         }
-        catch (Exception exception)
-        {
-            launcherError = exception.Message;
-            return null;
-        }
-        finally
-        {
-            busy = false;
-            StateHasChanged();
-        }
+        catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
+        finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
     }
-
-    private static string? NullIfBlank(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
-
-    private async Task OnComposerKeyDown(KeyboardEventArgs e)
+    private async Task RetrySubmissionAsync(Guid commandId)
     {
-        if (e.Key == "Enter" && CanSend)
-            await SendAsync();
+        if (sessionId is null || lifetime is null) return;
+        submissionBusy = true;
+        try { var response = await ClientRuntime.SendAsync<RetryProjectMissionSubmissionRequest, ProjectSubmissionResponse>(new(sessionId, commandId), lifetime.Token); submissionError = response.Error; await RefreshStateAsync(); }
+        catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
+        finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
     }
-
-    // The one send path on this surface. Mission Control is the sole active conversation while a
-    // Project is open, so there is no mission to choose and no second path to fall back to. The
-    // Janus prompt flow lives on in Client Runtime and its own tests, and is unreachable from here
-    // — enforced by ClientRuntimePresentationBoundaryTests, which fails on the mere mention of its
-    // contract types in this project (43.20 task 2).
-    private async Task SendAsync()
+    private async Task OlderRunsAsync()
     {
-        if (!CanSend || sessionId is null || viewCts is null)
-            return;
-
-        var view = new ViewOperation(viewGeneration, viewCts.Token);
-        var text = composerText;
-
-        // The command id is minted for a SPECIFIC piece of text and survives a failure with it,
-        // so pressing Send again reproduces a byte-identical request and the Conversation service
-        // resolves the duplicate instead of appending a second message. Editing the text first is
-        // a different turn, so it mints a new id — that rule falls out of this comparison rather
-        // than needing separate edit tracking.
-        if (pendingCommandId is null || !string.Equals(pendingCommandText, text, StringComparison.Ordinal))
-        {
-            pendingCommandId = Guid.NewGuid();
-            pendingCommandText = text;
-        }
-
-        // The composer is NOT cleared here: until the turn is accepted, the person's text is the
-        // only copy of it that exists anywhere.
-        sending = true;
-        conversationError = null;
-        StateHasChanged();
-
-        try
-        {
-            var response = await ClientRuntime.SendAsync<
-                SubmitProjectMissionControlTurnRequest, SubmitProjectMissionControlTurnResponse>(
-                new SubmitProjectMissionControlTurnRequest(sessionId, pendingCommandId.Value, text), view.Token);
-
-            if (!IsCurrent(view.Generation))
-                return;
-
-            // The response is an acceptance, not a rendered answer: the turn appears once its
-            // durable UserMessage — and everything after it — arrives through the relayed stream.
-            if (response.Error is { } error)
-            {
-                conversationError = error.Message;
-            }
-            else
-            {
-                // Accepted: only now is the pending turn released.
-                composerText = string.Empty;
-                pendingCommandId = null;
-                pendingCommandText = null;
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected: the view was replaced while this turn was in flight.
-        }
-        catch (Exception exception)
-        {
-            if (IsCurrent(view.Generation))
-                conversationError = exception.Message;
-        }
-        finally
-        {
-            if (IsCurrent(view.Generation))
-            {
-                sending = false;
-                StateHasChanged();
-            }
-        }
+        if (sessionId is null || lifetime is null || runs?.Next is not { } next) return;
+        await LoadRunsAsync(next);
     }
-
-    // The identity a long operation carries: the generation it belongs to, checked before any
-    // state mutation, and the token that cancels it when that view is replaced.
-    private readonly record struct ViewOperation(int Generation, CancellationToken Token);
-
-    private bool IsCurrent(int generation) => generation == viewGeneration;
-
-    // Every replacement starts here: the previous subscription is cancelled and awaited before
-    // anything new exists, then this view's state is cleared and given a fresh identity.
-    private async Task<ViewOperation> BeginViewAsync()
+    private async Task LatestRunsAsync() { runCursor = null; await RefreshStateAsync(forceLatest: true); }
+    private async Task LoadRunsAsync(ProjectRunCursor? cursor)
     {
-        await StopViewAsync();
-
-        viewGeneration++;
-        viewCts = new CancellationTokenSource();
-
-        sessionId = null;
-        missionControlReady = false;
-        pendingCommandId = null;
-        pendingCommandText = null;
-        conversationTranscript = new();
-        conversationError = null;
-        sessionError = null;
+        if (sessionId is null || lifetime is null) return;
+        var response = await ClientRuntime.SendAsync<GetProjectRunsRequest, GetProjectRunsResponse>(new(sessionId, cursor), lifetime.Token);
+        if (response.Error is { } error) historyError = error;
+        else if (response.Page is { } page) { runs = page; runCursor = cursor; historyError = null; }
+    }
+    private async Task LoadWorkbenchAsync()
+    {
+        if (sessionId is null || lifetime is null) return;
+        var response = await ClientRuntime.SendAsync<GetProjectWorkbenchRequest, GetProjectWorkbenchResponse>(new(sessionId), lifetime.Token);
+        workbench = response.Projection; workbenchError = response.Error;
+    }
+    private async Task OpenDocumentAsync(ProjectWorkbenchEntry entry)
+    {
+        if (sessionId is null || lifetime is null) return;
+        view = WorkbenchView.Document; document = null; documentError = null;
+        var response = await ClientRuntime.SendAsync<OpenProjectDocumentRequest, OpenProjectDocumentResponse>(new(sessionId, entry.Id), lifetime.Token);
+        document = response.Document; documentError = response.Error;
+    }
+    private Task BackToExplorer() { view = WorkbenchView.Explorer; return Task.CompletedTask; }
+    private async Task ShowInstructionAsync(Guid runId)
+    {
+        if (sessionId is null || lifetime is null) return;
+        var response = await ClientRuntime.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
+        if (response.Run is { } detail) expandedInstruction = detail.Input; else historyError = response.Error;
+    }
+    private void HideInstruction() => expandedInstruction = null;
+    private async Task OpenTraceAsync(Guid runId)
+    {
+        if (sessionId is null || lifetime is null) return;
+        view = WorkbenchView.RunTrace; selectedRun = null; traceEvents = null; traceError = null;
+        var response = await ClientRuntime.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
+        if (response.Run is not { } detail) { traceError = response.Error; return; }
+        selectedRun = detail;
+        await LatestTraceAsync();
+    }
+    private async Task LatestTraceAsync()
+    {
+        if (selectedRun is null) return;
+        traceThrough = selectedRun.Run.LastSequence;
+        traceAfter = Math.Max(selectedRun.Run.AcceptedSequence - 1, traceThrough - 200);
+        await LoadTraceAsync();
+    }
+    private async Task EarlierTraceAsync()
+    {
+        if (selectedRun is null || traceAfter <= selectedRun.Run.AcceptedSequence - 1) return;
+        traceThrough = traceAfter; traceAfter = Math.Max(selectedRun.Run.AcceptedSequence - 1, traceThrough - 200); await LoadTraceAsync();
+    }
+    private async Task LaterTraceAsync()
+    {
+        if (selectedRun is null || traceEvents?.HasMore != true) return;
+        traceAfter = traceThrough; traceThrough = Math.Min(selectedRun.Run.LastSequence, traceAfter + 200); await LoadTraceAsync();
+    }
+    private async Task LoadTraceAsync()
+    {
+        if (sessionId is null || lifetime is null || selectedRun is null) return;
+        var response = await ClientRuntime.SendAsync<GetProjectRunEventsRequest, GetProjectRunEventsResponse>(new(sessionId, selectedRun.Run.RunId, traceAfter, traceThrough), lifetime.Token);
+        traceEvents = response.Page; traceError = response.Error;
+    }
+    private Task BackToMissions() { view = WorkbenchView.Missions; return Task.CompletedTask; }
+    private async Task ConsumeEventsAsync(int ownerGeneration, CancellationToken ct)
+    {
+        try { await foreach (var evt in ClientRuntime.Subscribe(ct)) if (ownerGeneration == generation && evt.SessionId == sessionId && evt.Kind == ClientRuntimeEventKind.ProjectMissionChanged) await RefreshStateAsync(); }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch (Exception exception) { if (ownerGeneration == generation) { connectionError = exception.Message; await InvokeAsync(StateHasChanged); } }
+    }
+    private async Task RestartSubscriptionAsync()
+    {
+        if (lifetime is null) return;
         connectionError = null;
-        reconnectedWithGap = false;
-        sending = false;
-
-        return new ViewOperation(viewGeneration, viewCts.Token);
+        if (subscription is not null) await subscription;
+        subscription = ConsumeEventsAsync(generation, lifetime.Token);
+        await RefreshStateAsync();
     }
-
-    // ConsumeEventsAsync records its own failures instead of rethrowing, so awaiting the loop here
-    // cannot throw and cannot leave a subscription alive past this point.
-    private async Task StopViewAsync()
+    private async Task StopLifetimeAsync()
     {
-        if (viewCts is null)
-            return;
-
-        await viewCts.CancelAsync();
-        if (eventLoopTask is not null)
-            await eventLoopTask;
-
-        viewCts.Dispose();
-        viewCts = null;
-        eventLoopTask = null;
+        if (lifetime is null) return;
+        await lifetime.CancelAsync(); if (subscription is not null) await subscription; lifetime.Dispose(); lifetime = null; subscription = null;
     }
-
-    private void StartEventLoop(ViewOperation view) => eventLoopTask = ConsumeEventsAsync(view);
-
-    private async Task ConsumeEventsAsync(ViewOperation view)
-    {
-        try
-        {
-            await foreach (var evt in ClientRuntime.Subscribe(view.Token))
-            {
-                if (!IsCurrent(view.Generation))
-                    return;
-
-                ApplyEvent(evt);
-                await InvokeAsync(StateHasChanged);
-            }
-
-            // The stream ended without an error. Nothing further will arrive on it, so this is a
-            // disconnection like any other rather than a quietly finished page.
-            await ReportDisconnectedAsync(view, "the Client Runtime event stream ended.");
-        }
-        catch (OperationCanceledException) when (view.Token.IsCancellationRequested)
-        {
-            // Expected: the view was replaced, or the page was disposed.
-        }
-        catch (Exception exception)
-        {
-            await ReportDisconnectedAsync(view, exception.Message);
-        }
-    }
-
-    private async Task ReportDisconnectedAsync(ViewOperation view, string reason)
-    {
-        if (!IsCurrent(view.Generation))
-            return;
-
-        connectionError = reason;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    // Retry opens a new subscription for the same session, generation, and token. It never
-    // recreates the session, resends a prompt, or replays what was missed — no cursor or replay
-    // route exists below IClientRuntimeChannel — so the gap notice below is set as the honest
-    // record that this transcript is now incomplete. It clears only when a new view begins.
-    private async Task RetryConnectionAsync()
-    {
-        if (viewCts is null || connectionError is null)
-            return;
-
-        if (eventLoopTask is not null)
-            await eventLoopTask;
-
-        connectionError = null;
-        reconnectedWithGap = true;
-        StartEventLoop(new ViewOperation(viewGeneration, viewCts.Token));
-    }
-
-    private void ApplyEvent(ClientRuntimeEvent evt)
-    {
-        if (evt.SessionId != sessionId)
-            return;
-
-        if (evt.Kind == ClientRuntimeEventKind.ConversationEvent && evt.Conversation is not null)
-            conversationTranscript.Apply(evt.Conversation);
-        else if (evt.Kind == ClientRuntimeEventKind.Error)
-            conversationError = evt.Error;
-    }
-
-    public async ValueTask DisposeAsync() => await StopViewAsync();
+    private static bool Terminal(ConversationRunStatus status) => status is ConversationRunStatus.Completed or ConversationRunStatus.Failed or ConversationRunStatus.Interrupted or ConversationRunStatus.Rejected;
+    private static string? Blank(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
+    public async ValueTask DisposeAsync() => await StopLifetimeAsync();
 }
+<style>
+.shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+.shell-header { min-height: var(--wb-header-height); display: flex; align-items: center; padding: 0 var(--wb-page-inset) 0 var(--wb-header-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .brand { display: flex; align-items: baseline; gap: var(--space-4); } .brand h1, .subtitle { margin: 0; } .brand h1 { color: var(--accent); font-size: var(--font-size-display); } .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); } .subtitle { font-size: var(--font-size-title); }
+.workbench { display: grid; grid-template-columns: var(--wb-rail-width) minmax(0, 1fr); grid-template-areas: "rail content"; min-height: 100vh; min-height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font-sans); } .wb-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-strong); } .wb-header { flex: none; min-width: 0; padding: var(--space-3) var(--wb-page-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .wb-header h1, .wb-header p { margin: 0; overflow-wrap: anywhere; } .wb-header h1 { font-size: var(--font-size-title); } .wb-header p { color: var(--text-muted); font-size: var(--font-size-mono); }
+.wb-document { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; padding: var(--wb-page-inset); } .composer-bar { flex: none; padding: var(--space-3) var(--wb-page-inset) calc(var(--space-3) + var(--safe-bottom)); border-top: 1px solid var(--border); background: var(--bg); } .connection-banner { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--wb-page-inset); border-bottom: 1px solid var(--danger-border); background: var(--danger-bg); color: var(--danger); font-size: var(--font-size-meta); } .connection-banner button, .instruction-detail button, .new-runs { border: none; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; } .instruction-detail { width: var(--wb-run-content-width); max-width: 100%; align-self: center; margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); } .instruction-detail pre { max-height: 12rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; } .new-runs { align-self: center; margin-top: var(--space-3); }
+@@media (max-width: 639px) { .workbench { grid-template-columns: minmax(7rem, 28%) minmax(0, 1fr); } }
+</style>
