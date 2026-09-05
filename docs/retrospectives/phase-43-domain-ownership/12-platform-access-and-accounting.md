@@ -1,5 +1,7 @@
 # Concern 12 — Platform access and accounting
 
+> **2026-09-06 disposition:** resolved in the [finalized end state](end-state.md#disposition-of-all-fourteen-concerns); implementation follows [43.23](../../phases/phase-43.23-domain-ownership.md). The original inventory below is historical.
+
 Recorded: 2026-09-05. Status: cross-cutting ownership review candidate; revisit after Project Mission reconstruction reaches a verified baseline. History and code inspected through reconstruction commit `5faf6f2`. This note does not assert a current billing or authentication defect.
 
 ## Responsibilities and present owners

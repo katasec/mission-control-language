@@ -1,5 +1,7 @@
 # Concern 10 — Runtime supervision versus execution
 
+> **2026-09-06 disposition:** resolved in the [finalized end state](end-state.md#disposition-of-all-fourteen-concerns); implementation follows [43.23](../../phases/phase-43.23-domain-ownership.md). The original inventory below is historical.
+
 Recorded: 2026-09-05. Status: boundary already substantially separated; preserve and review after Project Mission reconstruction reaches a verified baseline. Evidence inspected through reconstruction commit `5faf6f2`. This is not an approved refactoring plan.
 
 ## Responsibilities and present owners

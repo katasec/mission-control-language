@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-05)
+## Now (2026-09-06)
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** source reconstruction is locally verified; complete the controlled rollout, default-path journey, visual review and operator acceptance from its active spoke. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** reconstruction is merged; prepare the implementation plan for the finalized domain ownership design routed by the phase hub. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Reconstruction source is locally verified; rollout and visible default-path acceptance remain |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Reconstruction merged; domain ownership design finalized, implementation planning next |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
 
 ## Design docs

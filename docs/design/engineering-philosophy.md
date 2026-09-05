@@ -163,7 +163,7 @@ or completion summary, record this answer with **PASS** or **FAIL**:
 
 | Required answer | Passing evidence |
 |---|---|
-| Could a TUI invoke this same product action with the same authorization, outcome, and failure semantics? | The action is a named Client Runtime contract; its business rule, filesystem/process work, and capability authorization live below Presentation. A surface-neutral contract test proves the path without Desktop/Blazor/Host types. |
+| Could a TUI invoke this same product action with the same authorization, outcome, and failure semantics? | The action is a named shared Application contract (currently packaged as ClientRuntime.Transport). Application owns its domain rules and persistence; Client Runtime owns capability authorization/execution, all below Presentation. A surface-neutral contract test proves the path without Desktop/Blazor/native-Host types. See the [ownership amendment](../retrospectives/phase-43-domain-ownership/end-state.md). |
 
 Surface-specific layout, keyboard handling, focus, accessibility, and window behavior do not need
 a TUI equivalent. A rule that affects a Project, mission, run, capability, or durable conversation
