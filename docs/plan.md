@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 43 — Forge Desktop:** review the implementer plan for the Project Mission reconstruction linked from the phase hub. |
+| **NEXT STEP** | **Phase 43 — Forge Desktop:** Codex begins task 1 of the Project Mission reconstruction from its active spoke. |
 
 ## Active phases
 

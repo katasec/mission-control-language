@@ -1,6 +1,6 @@
 # Phase 43.22 task 4 — Compose the workbench from focused views
 
-> **Design locked; implement after tasks 1–3 and approval of this task's plan/reference contract.**
+> **Design locked; Codex implements after tasks 1–3 and rechecks this task's reference contract.**
 > Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 
 ## Components and scope

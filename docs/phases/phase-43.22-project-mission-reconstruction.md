@@ -1,8 +1,8 @@
 # Phase 43.22 — Project Mission reconstruction
 
-> **Design ready for implementer plan review, 2026-09-05. Implementation not started.**
-> Codex owns this design and its completion review. Follow the per-task approval loop in
-> [Claude/Codex workflow](../design/claude-codex-workflow.md).
+> **Design ready for Codex-only execution, 2026-09-05. Implementation not started.**
+> This phase uses the user-directed execution protocol below; it does not use a Claude relay or
+> copy/paste handoff.
 
 ## Outcome and scope
 
@@ -32,14 +32,17 @@ Naive must answer the actual instruction, not inherit Mission Control's goal-ref
 
 ## Dependency-ordered implementation
 
-Each row is one task assignment and one implementation-plan approval. All five tasks belong to
-one replacement feature branch/PR; intermediate feature commits are not separately deployed.
-Task 5 also defines a narrowly scoped prerequisite admission-fence PR for safe retirement. A task's
-component evidence is not feature completion. No row is complete today.
+Each row is one Codex-owned implementation task. Before a task begins, Codex rechecks its locked
+contracts, file boundary, failure-boundary record, complexity risks and test matrix against current
+main. After implementation, Codex reviews the resulting diff and evidence against the same `Done
+when` conditions before starting the next task. All five tasks belong to one replacement feature
+branch/PR; intermediate feature commits are not separately deployed. Task 5 also defines a narrowly
+scoped prerequisite admission-fence PR for safe retirement. A task's component evidence is not
+feature completion. No row is complete today.
 
 | Order | Spoke | Deliverable | Status |
 |---|---|---|---|
-| 1 | [Project state](phase-43.22-project-state.md) | Serialized project transactions and bounded immutable submission journal | Ready for plan review |
+| 1 | [Project state](phase-43.22-project-state.md) | Serialized project transactions and bounded immutable submission journal | Ready for Codex execution |
 | 2 | [Host history](phase-43.22-host-history.md) | Typed outcomes, bounded run index and exact event pages over existing data | Depends on 1 |
 | 3 | [Runtime application](phase-43.22-runtime-application.md) | Surface-neutral submission/recovery/read actions; one subscription lifecycle | Depends on 1–2 |
 | 4 | [Workbench presentation](phase-43.22-workbench-presentation.md) | Small composer and views; shared Runs list; reopenable trace; focused local Explorer | Depends on 1–3 |
@@ -94,9 +97,17 @@ Feature implementation must pass [task 5's acceptance matrix](phase-43.22-retire
 The existing clean-main-only Kind provenance rule requires the narrowly scoped post-merge
 default-path sequencing exception defined there. Merged is not release-ready or complete.
 
-Before implementation, Claude returns the task's concrete file/test plan. Codex reviews it against
-these contracts. Discovery of a conflicting type or behaviour returns to this design for correction;
-it is not permission to improvise. After each task, retain one status/evidence pointer here and move
+### Codex-only execution protocol
+
+This is a user-directed exception limited to Phase 43.22. Codex performs the implementation and
+the documented self-review directly in this task, with no Claude assignment, no relay prompt and
+no separate copy/paste planning turn. The repository-wide Claude/Codex workflow remains unchanged
+for other phases.
+
+At each task boundary, Codex records the concrete files, changed contracts, relevant failure
+boundaries, complexity review and verification results in the task's completion companion before
+advancing. A discovered conflict with the locked design returns to this design for correction; it
+is not permission to improvise. After each task, retain one status/evidence pointer here and move
 verified narrative to a `_completed` companion; keep dependent contracts in the active spokes.
 
 **Feature done when:** all five task conditions pass, obsolete writers are absent, full required
