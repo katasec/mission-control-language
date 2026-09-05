@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1536 1024" width="1536" height="1024" xmlns="http://www.w3.org/2000/svg" role="img">
-  <title>43.21 task 2 Missions surface — Janus live activity at 1536x1024</title>
-  <desc>Janus's live multi-expert exchange, filtered to this one run. There is no tool row anywhere: a Project mission run is declared zero capabilities, so it has no local tool authority to show. Workbench theme, light mode; the named token map owns the dark values. 1536x1024.</desc>
+  <title>43.21 task 2 Missions surface — finished Janus run in the control thread at 1536x1024</title>
+  <desc>A finished Janus run in the human control thread: the instruction, a concise durable outcome, and one way into the experts' own exchange. Not one expert word appears here - that belongs to the trace. The zero tool calls is a durable fact worth showing: this route grants no local tool authority. Workbench theme, light mode; the named token map owns the dark values. 1536x1024.</desc>
   <rect x="0" y="0" width="1536" height="1024" fill="#f7faff"/>
   <rect x="0" y="0" width="180" height="1024" fill="#06284c"/>
   <text x="20" y="44" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#ffffff">Forge</text>
@@ -21,19 +21,19 @@
   <text x="204" y="70" font-family="ui-monospace, monospace" font-size="12" fill="#5b6b83">Release planner</text>
   <rect x="1042" y="121" width="470" height="48" rx="12" fill="#eff5fe" stroke="#c7ddff"/>
   <text x="1058" y="150.0" font-family="system-ui, sans-serif" font-size="13" fill="#101d33">Draft the first release plan.</text>
-  <rect x="204" y="185" width="640" height="84" rx="14" fill="#ffffff" stroke="#e7ecf4"/>
-  <text x="222" y="211" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#5b6b83">Proposer</text>
-  <text x="222" y="237" font-family="system-ui, sans-serif" font-size="14" fill="#101d33">Ship the importer first; it unblocks</text>
-  <text x="222" y="259" font-family="system-ui, sans-serif" font-size="14" fill="#101d33">everything else in the milestone.</text>
-  <text x="204" y="299" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#4d7c0f">Approved</text>
-  <text x="204" y="330" font-family="system-ui, sans-serif" font-size="13" fill="#5b6b83">Implementer is thinking…</text>
+  <rect x="204" y="185" width="1308" height="108" rx="16" fill="#ffffff" stroke="#e7ecf4"/>
+  <text x="220" y="215" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Janus run completed</text>
+  <rect x="1418" y="199" width="78" height="22" rx="11" fill="#eef8e0"/>
+  <text x="1457.0" y="215" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#4d7c0f">completed</text>
+  <text x="220" y="241" font-family="system-ui, sans-serif" font-size="12" fill="#5b6b83">5 expert turns · 0 tool calls</text>
+  <text x="220" y="271" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f6eeb">View run trace</text>
   <rect x="180" y="940" width="1356" height="84" fill="#f7faff"/>
   <line x1="180" y1="940" x2="1536" y2="940" stroke="#e7ecf4"/>
   <rect x="204" y="959.0" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
   <text x="216" y="987.0" font-family="system-ui, sans-serif" font-size="12" fill="#101d33">Mission: Janus</text>
   <text x="394" y="986.0" font-family="system-ui, sans-serif" font-size="10" text-anchor="end" fill="#5b6b83">▾</text>
-  <rect x="418" y="959.0" width="931" height="46" rx="10" fill="#e4ecf8" stroke="#e7ecf4"/>
-  <text x="430" y="987.0" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">Waiting for this run to finish…</text>
-  <rect x="1361" y="961.0" width="151" height="42" rx="21.0" fill="#e4ecf8"/>
-  <text x="1436.5" y="987.0" font-family="system-ui, sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#62748c">Starting Janus…</text>
+  <rect x="418" y="959.0" width="950" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
+  <text x="430" y="987.0" font-family="system-ui, sans-serif" font-size="13" fill="#62748c">What should this mission do?</text>
+  <rect x="1380" y="961.0" width="132" height="42" rx="21.0" fill="#e4ecf8"/>
+  <text x="1446.0" y="987.0" font-family="system-ui, sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#62748c">Run</text>
 </svg>

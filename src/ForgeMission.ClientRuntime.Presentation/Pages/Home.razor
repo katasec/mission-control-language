@@ -60,6 +60,16 @@ else
                         <WorkbenchSettings />
                         break;
 
+                    case WorkbenchView.RunTrace:
+                        @* A separate document, reached by selecting a run's outcome. Opening it
+                           changes nothing but which projection is rendered — the Project, the
+                           session and the one durable subscription all outlive it. *@
+                        <RunTraceView Mission="@(OpenTrace?.Mission ?? string.Empty)"
+                                      Entries="OpenTraceEntries"
+                                      IsLive="@(OpenTrace is { } trace && !MissionRunThread.IsTerminal(trace.Status))"
+                                      Back="BackToMissions" />
+                        break;
+
                     default:
                         @if (connectionError is not null)
                         {
@@ -76,13 +86,15 @@ else
                         {
                             <p class="error-banner">@sessionError</p>
                         }
-                        <MissionsView Entries="conversationTranscript.Entries" HasLegacyHistory="hasLegacyHistory" />
+                        <MissionsView Entries="runThread.Entries" HasLegacyHistory="hasLegacyHistory"
+                                      TraceRequested="OpenRunTrace" />
                         break;
                 }
             </main>
 
-            @* The composer belongs to Missions, so it is absent — not disabled — while another
-               document is shown. An action that cannot apply here should not be present. *@
+            @* The composer belongs to the control thread, so it is absent — not disabled — while
+               another document is shown, the run's own trace included. An action that cannot apply
+               here should not be present. *@
             @if (view == WorkbenchView.Missions)
             {
                 <footer class="composer-bar">
@@ -223,6 +235,9 @@ else
     private string? activeRunMission;
     private bool runInFlight;
 
+    // Which run's trace is open, when the RunTrace document is shown. Presentation state only.
+    private Guid? openTraceRunId;
+
     // Durable events observed between pressing Run and its acceptance returning. The tail starts
     // inside the SAME call that starts the run and replays the container from sequence 0, so this
     // run's own first events can arrive before its id does; without this buffer they would be
@@ -235,7 +250,10 @@ else
     private Guid? pendingCommandId;
     private string? pendingCommandText;
 
-    private ConversationTranscript conversationTranscript = new();
+    // The session's runs, split into the two things they are: a control thread of instructions and
+    // outcomes, and one exact expert transcript per run. A run enters it only because this session
+    // started it, which is what keeps a reopened Project's replayed history out.
+    private MissionRunThread runThread = new();
     private string? sessionError;
     private string? connectionError;
     private bool reconnectedWithGap;
@@ -278,6 +296,7 @@ else
         WorkbenchView.Explorer => project?.Title ?? string.Empty,
         WorkbenchView.Document => document?.Title ?? "Project document",
         WorkbenchView.Settings => "Settings",
+        WorkbenchView.RunTrace => "Run trace",
         _ => "Missions",
     };
 
@@ -285,8 +304,14 @@ else
     {
         WorkbenchView.Explorer => "Project Explorer",
         WorkbenchView.Document => $"{project?.Title} · Project document",
+        WorkbenchView.RunTrace => $"{project?.Title} · {OpenTrace?.Mission}",
         _ => project?.Title ?? string.Empty,
     };
+
+    private MissionRunEntry? OpenTrace => openTraceRunId is { } runId ? runThread.Entry(runId) : null;
+
+    private IReadOnlyList<ConversationEntry> OpenTraceEntries =>
+        openTraceRunId is { } runId ? runThread.Trace(runId)?.Entries ?? [] : [];
 
     // Deliberately no OnInitializedAsync: opening Desktop issues no request, creates no session or
     // event subscription, and gives the Client Runtime no reason to touch the filesystem. The first
@@ -503,6 +528,20 @@ else
             await LoadWorkbenchAsync();
     }
 
+    // Opening a run's trace is a view change and nothing else: no request, no session, no second
+    // subscription. The events are already here — this only says which projection to render.
+    private void OpenRunTrace(Guid runId)
+    {
+        openTraceRunId = runId;
+        view = WorkbenchView.RunTrace;
+    }
+
+    private void BackToMissions()
+    {
+        openTraceRunId = null;
+        view = WorkbenchView.Missions;
+    }
+
     // Read fresh on every visit rather than cached: the Project's files can change underneath an
     // open workbench, and a stale list would invite opening something that is no longer there.
     private async Task LoadWorkbenchAsync()
@@ -678,11 +717,13 @@ else
                 pendingCommandId = null;
                 pendingCommandText = null;
 
-                // A new run replaces the previous one's activity rather than appending to it.
-                // Nothing accumulates here, and there is no way to browse back.
                 activeRunId = runId;
                 activeRunMission = response.Mission;
-                conversationTranscript = new();
+
+                // The run joins this session's control thread. The mission comes from the Host's
+                // acceptance, not the rendered selection: the two differ if the selection changed
+                // between drawing the button and pressing it.
+                runThread.Accept(runId, response.Mission ?? string.Empty, text);
             }
         }
         catch (OperationCanceledException)
@@ -739,11 +780,12 @@ else
         missionError = null;
         activeRunId = null;
         activeRunMission = null;
+        openTraceRunId = null;
         runInFlight = false;
         pendingEvents.Clear();
         pendingCommandId = null;
         pendingCommandText = null;
-        conversationTranscript = new();
+        runThread = new();
         sessionError = null;
         connectionError = null;
         reconnectedWithGap = false;
@@ -833,9 +875,10 @@ else
             missionError = evt.Error;
     }
 
-    // One live run is shown, and only its own events. The Project's container orders every run it
-    // has ever had and the tail replays all of them, so without this filter a reopened Project
-    // would render its whole history as if it had just happened.
+    // Every durable fact goes to the projection, which files it under the run it belongs to and
+    // drops anything from a run this session did not start. The Project's container orders every
+    // run it has ever had and the tail replays all of them, so without that filter a reopened
+    // Project would render its whole history as if it had just happened.
     private void ApplyConversationEvent(ConversationEvent conversation)
     {
         // Between pressing Run and its acceptance the run's identity does not exist yet, so the
@@ -846,24 +889,18 @@ else
             return;
         }
 
-        if (activeRunId is not { } runId || conversation.RunId != runId)
-            return;
+        runThread.Apply(conversation);
 
-        conversationTranscript.Apply(conversation);
-
-        // Terminal: the run is over, so the composer is clean and usable again. Its activity stays
-        // on screen — clearing it here would delete the answer at the instant it arrived.
-        if (conversation.Kind == ConversationEventKind.RunStatus && IsTerminal(conversation.RunStatus))
+        // Terminal: the run is over, so the composer is clean and usable again.
+        if (conversation.RunId == activeRunId
+            && conversation.Kind == ConversationEventKind.RunStatus
+            && conversation.RunStatus is { } status && MissionRunThread.IsTerminal(status))
         {
             activeRunId = null;
             activeRunMission = null;
             focusComposerAfterRender = true;
         }
     }
-
-    private static bool IsTerminal(ConversationRunStatus? status) => status is
-        ConversationRunStatus.Completed or ConversationRunStatus.Rejected
-        or ConversationRunStatus.Interrupted or ConversationRunStatus.Failed;
 
     public async ValueTask DisposeAsync() => await StopViewAsync();
 }

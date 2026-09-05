@@ -1,4 +1,5 @@
-/* The Missions document region (43.21 task 2). No literal colour, radius, type size, or geometry. */
+/* The Project control thread (43.21 task 2, corrected). No literal colour, radius, type size or
+   geometry: every value resolves through the Workbench theme map in forge.css. */
 
 .mv {
     display: flex;
@@ -23,4 +24,105 @@
     color: var(--text-subtle);
     font-size: var(--font-size-label);
     text-align: center;
+}
+
+.mv-thread {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mv-turn {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+/* The person's own words, on their own side, exactly as the launcher's reference frames the
+   human half of a conversation. */
+.mv-instruction {
+    align-self: flex-end;
+    max-width: 70%;
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--accent-soft);
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    color: var(--text);
+    font-size: var(--font-size-body);
+    overflow-wrap: anywhere;
+}
+
+.mv-outcome {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+
+.mv-outcome-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.mv-outcome-title {
+    margin: 0;
+    font-size: var(--font-size-label);
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.mv-status {
+    flex: none;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-meta);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mv-status-live { background: var(--surface-active); color: var(--text-muted); }
+.mv-status-done { background: var(--success-bg); color: var(--success); }
+.mv-status-bad  { background: var(--danger-bg);  color: var(--danger); }
+
+.mv-facts {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+}
+
+/* A quiet text action, not a second primary: running is the primary act on this surface, reading
+   the trace is the occasional one. */
+.mv-trace {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: var(--font-size-meta);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mv-trace:hover { color: var(--accent-hover); }
+
+.mv-trace:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
 }

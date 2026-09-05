@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1536 1024" width="1536" height="1024" xmlns="http://www.w3.org/2000/svg" role="img">
-  <title>43.21 task 2 Missions surface — Naive result at 1536x1024</title>
-  <desc>Naive's one-expert result, labelled as Naive rather than as the product. The run is terminal, so the composer is clean, empty and usable again while the answer stays readable. Workbench theme, light mode; the named token map owns the dark values. 1536x1024.</desc>
+  <title>43.21 task 2 Missions surface — finished Naive run in the control thread at 1536x1024</title>
+  <desc>Naive reads the same way, deliberately. Its single answer is an expert turn like any other, so it lives in the trace and the control thread states the outcome. Workbench theme, light mode; the named token map owns the dark values. 1536x1024.</desc>
   <rect x="0" y="0" width="1536" height="1024" fill="#f7faff"/>
   <rect x="0" y="0" width="180" height="1024" fill="#06284c"/>
   <text x="20" y="44" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#ffffff">Forge</text>
@@ -21,11 +21,12 @@
   <text x="204" y="70" font-family="ui-monospace, monospace" font-size="12" fill="#5b6b83">Release planner</text>
   <rect x="1042" y="121" width="470" height="48" rx="12" fill="#eff5fe" stroke="#c7ddff"/>
   <text x="1058" y="150.0" font-family="system-ui, sans-serif" font-size="13" fill="#101d33">Summarise the release risks.</text>
-  <rect x="204" y="185" width="640" height="84" rx="14" fill="#ffffff" stroke="#e7ecf4"/>
-  <text x="222" y="211" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#5b6b83">Naive</text>
-  <text x="222" y="237" font-family="system-ui, sans-serif" font-size="14" fill="#101d33">The importer is the only item without an</text>
-  <text x="222" y="259" font-family="system-ui, sans-serif" font-size="14" fill="#101d33">owner, which makes it the release risk.</text>
-  <text x="204" y="299" font-family="system-ui, sans-serif" font-size="12.5" fill="#62748c">Status: Completed</text>
+  <rect x="204" y="185" width="1308" height="108" rx="16" fill="#ffffff" stroke="#e7ecf4"/>
+  <text x="220" y="215" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Naive run completed</text>
+  <rect x="1418" y="199" width="78" height="22" rx="11" fill="#eef8e0"/>
+  <text x="1457.0" y="215" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#4d7c0f">completed</text>
+  <text x="220" y="241" font-family="system-ui, sans-serif" font-size="12" fill="#5b6b83">1 expert turn · 0 tool calls</text>
+  <text x="220" y="271" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f6eeb">View run trace</text>
   <rect x="180" y="940" width="1356" height="84" fill="#f7faff"/>
   <line x1="180" y1="940" x2="1536" y2="940" stroke="#e7ecf4"/>
   <rect x="204" y="959.0" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>

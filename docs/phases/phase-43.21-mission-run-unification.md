@@ -115,13 +115,84 @@ Add manifest v2 migration, Project Mission-container creation, selection persist
 
 ### Task 2 — Mission-first Desktop and TUI surface
 
+> **Corrective status — 2026-09-05: not approved for merge or release.** The Task 2 frames and
+> current implementation were reviewed only against their task-local references and did not close
+> reference traversal into [Phase 43.4](phase-43.4-ide-trace-surface.md) and the
+> [Project Mission Control / Janus-runs artifact](../brainstorm/mission-conversations/README.md).
+> Those sources establish that the enduring human ↔ Forge conversation receives concise run
+> outcomes, while the chronological expert dialogue belongs in a selected, inspectable Run Trace.
+> A corrective design must record the required reference-closure table before any further UI
+> implementation is accepted. The current inline expert transcript is not the approved product
+> experience; no PR or release gate may treat it as such.
+
 Replace Project Control with Missions and its exact two-name picker. Task 2’s contract set is Task 1’s `SelectProjectMissionRequest` and `StartProjectMissionRunRequest` **plus** the `GetProjectMissionsRequest` read defined above; it uses no other Client Runtime contract, and in particular no control-conversation route. Rename the rail entry, remove the legacy wording, and show live durable activity for the selected run.
 
 On first open, Missions is the active Project destination and Janus is visibly selected. A submit creates one run through `StartProjectMissionRunRequest`; Presentation records only the returned in-memory `runId` to filter the existing durable tail to that one live run. It shows a clean composer again once the run becomes terminal. There is no generic Project conversation, model/expert picker, direct provider call, historical run browser, or synthetic chat transcript. Full reopened history and exact durable Trace remain later work. If a migrated Project has legacy Project Control history, show only truthful static text that it is retained; do not render a dead link or reopen it as a current mission.
 
-#### Task 2 binding visual references — built 2026-09-05, awaiting sign-off
+#### Task 2 corrective implementation — separate control thread and Run Trace
 
-Eighteen frames under `docs/images/phase-43.21/`, named `task2-missions-{wide,compact}-<state>.svg`.
+**Scope:** preserve Task 1's mission-only invocation and its existing durable events; correct only
+their Presentation ownership. This is deliberately not the deferred rich workbench: no historical
+run browser, replay after reopening, dock rearrangement, source/artifact panes, stop control, or
+new Host/Worker/Client Runtime contract is added here.
+
+| Upstream reference | Behaviour it establishes | Disposition here |
+|---|---|---|
+| [Mission conversations](../brainstorm/mission-conversations/README.md#inspect-and-steer-the-janus-trace) | The human-facing Project conversation lists named runs; choosing a run opens its trace. | **Binding** for control-thread versus trace ownership. |
+| [Expanded Janus trace](../brainstorm/images/mission-project-flow-06-run-trace.png) | Expert turns are read chronologically in a selected Run Trace, not in the human conversation. | **Binding** for the trace's information ownership; current Workbench theme/tokens remain authoritative. |
+| [Phase 43.4](phase-43.4-ide-trace-surface.md#expert-dialogue-is-first-class-trace-evidence) | Project conversation receives concise run outcomes; exact expert dialogue is trace evidence. | **Binding** for behaviour. Its dockable/history features remain **deferred**. |
+| Task 2 frames in `docs/images/phase-43.21/` | Rail, picker, composer, tokens, error handling, and responsive bounds. | **Owned** except the inline transcript portion, which is **superseded** by this correction. |
+| 43.20 Task 3 references | Explorer, Project document, and Settings slices. | **Deferred/unchanged**; this task does not alter them. |
+
+**Interaction contract.** `Missions` remains the Project's human control thread and the only
+composer/picker surface. It renders the person's submitted instruction and an honest, concise
+durable run outcome (mission name plus lifecycle status); it never renders a Proposer, Approver,
+Implementer, Naive, approval, or tool event. Each accepted current-session run has one `View run
+trace` action. Selecting it opens a `Run Trace` document state with a clear return to `Missions`.
+That trace renders the existing exact, chronological durable expert events for that one run,
+including live activity and approval/revision rows; it does not rewrite them into a summary. The
+prompt itself remains owned by the control thread rather than being duplicated as an expert turn.
+
+**Boundary.** The run already exists and is already identified by `StartProjectMissionRunResponse`;
+the existing tail already carries its durable events. Presentation must split those facts into a
+control-thread projection and a selected-run trace projection. It must make no direct provider,
+expert, model, filesystem, or legacy Project-Control call. Because Task 1 does not yet retain
+reopenable run metadata or a trace-read contract, a reopened Project truthfully has no selectable
+prior trace in this correction; adding that durable navigation belongs to Phase 43.4.
+
+**Required gates — PASS for this design.** Product behaviour: a person controls a Mission from a
+human thread and inspects its experts in a separately opened trace. Owner: Presentation alone;
+the Client Runtime's existing surface-neutral start/tail contracts and the Desktop Supervisor/Host
+remain untouched. Adapter: no Photino/Host callback, process, credential, or lifecycle change is
+proposed; the changed files must stay in Presentation and its tests. Replacement boundary: the
+same WebView client can render both projections, while the Supervisor remains framework-free.
+Proof: Presentation split tests plus the zero-argument packaged Desktop observation below.
+Architecture/security: no bounded context, public entry point, datastore, transport, or credential
+changes; Presentation consumes the same Client Runtime channel and cannot access the Conversation
+store. This is a Presentation-only Type-2 rendering change. Presentation parity: `View run trace`
+changes only local document state; the sole product action remains the existing surface-neutral
+`StartProjectMissionRunRequest`, so no TUI capability diverges.
+
+**Default/candidate evidence plan.** Default path remains the zero-argument published Desktop,
+its supervised Client Runtime, and normal local Kind ConversationHost/Worker with no endpoint
+override, using a dedicated disposable Project. Before PR approval, Desktop, Client Runtime, Host,
+and Worker all run from one candidate revision: submit Janus and Naive in the actual Desktop,
+open each current-session trace, and observe the distinct control outcome and exact trace events.
+After merge, rebuild normal clean-main service provenance and repeat the zero-argument Desktop
+action. Browser-first evidence covers 1536×1024 and 800×568, four-corner/continuous resize,
+long expert messages, 125/150/200% zoom, both themes, then packaged parity at 800×568.
+
+**Done when:** at the current-session default path, submitting Janus or Naive leaves `Missions`
+free of expert turns, shows the submitted instruction and typed lifecycle outcome, and exposes one
+named `View run trace` action. That action opens a separate Run Trace which shows the exact ordered
+expert dialogue and live state for that run only; return restores the same Project control thread
+and composer. Component tests prove the split, no legacy/control/provider/model/expert endpoint is
+called, and browser-first responsive plus packaged candidate-stack and post-merge default-path
+checks pass against the reference closure above.
+
+#### Task 2 binding visual references — corrected 2026-09-05
+
+Twenty-two frames under `docs/images/phase-43.21/`, named `task2-missions-{wide,compact}-<state>.svg`.
 Wide is **1536×1024**, compact is **800×568** — the same acceptance rectangle 43.20 fixed, where
 800×568 is the packaged Desktop’s measured usable viewport and a responsive baseline, never a
 prescribed window size. The layout must be fluid and bounded across the whole 800–1536 × 568–1024
@@ -130,15 +201,21 @@ structure, not fixed pixel geometry.
 
 | State | Frames | What it binds |
 |---|---|---|
-| First open, Janus | [wide](../images/phase-43.21/task2-missions-wide-first-open-janus.svg) · [compact](../images/phase-43.21/task2-missions-compact-first-open-janus.svg) | Missions is the opened view, Janus visibly selected, empty activity line, run action disabled while the instruction is blank. |
+| First open, Janus | [wide](../images/phase-43.21/task2-missions-wide-first-open-janus.svg) · [compact](../images/phase-43.21/task2-missions-compact-first-open-janus.svg) | Missions is the opened view, Janus visibly selected, empty control thread, run action disabled while the instruction is blank. |
 | Picker open | [wide](../images/phase-43.21/task2-missions-wide-picker-open.svg) · [compact](../images/phase-43.21/task2-missions-compact-picker-open.svg) | Exactly two rows, current mission checked, active option focus-ringed, popup opens upward and never covers the composer. |
 | Naive selected | [wide](../images/phase-43.21/task2-missions-wide-naive-selected.svg) · [compact](../images/phase-43.21/task2-missions-compact-naive-selected.svg) | The button renders the persisted canonical value; focus has returned to the button. |
 | Invalid input | [wide](../images/phase-43.21/task2-missions-wide-invalid-input.svg) · [compact](../images/phase-43.21/task2-missions-compact-invalid-input.svg) | The typed Client Runtime failure beside the action that caused it; the instruction is kept. |
-| Busy | [wide](../images/phase-43.21/task2-missions-wide-busy.svg) · [compact](../images/phase-43.21/task2-missions-compact-busy.svg) | Accepted: user message, queued status, `Starting Janus…`, composer disabled. |
-| Janus activity | [wide](../images/phase-43.21/task2-missions-wide-janus-activity.svg) · [compact](../images/phase-43.21/task2-missions-compact-janus-activity.svg) | The multi-expert exchange filtered to one run, with **no tool row anywhere**. |
-| Naive result | [wide](../images/phase-43.21/task2-missions-wide-naive-result.svg) · [compact](../images/phase-43.21/task2-missions-compact-naive-result.svg) | One bubble labelled `Naive`, terminal status, composer clean and usable while the answer stays readable. |
-| Start failure | [wide](../images/phase-43.21/task2-missions-wide-start-failure.svg) · [compact](../images/phase-43.21/task2-missions-compact-start-failure.svg) | A typed start failure with no run and no invented transcript. |
-| Legacy notice | [wide](../images/phase-43.21/task2-missions-wide-legacy-notice.svg) · [compact](../images/phase-43.21/task2-missions-compact-legacy-notice.svg) | The retained-history line, static, above an otherwise ordinary empty Missions page. |
+| Busy | [wide](../images/phase-43.21/task2-missions-wide-busy.svg) · [compact](../images/phase-43.21/task2-missions-compact-busy.svg) | Accepted: the instruction, a queued outcome, `Starting Janus…`, composer disabled. No trace is offered — the run has produced nothing to read. |
+| Janus outcome | [wide](../images/phase-43.21/task2-missions-wide-janus-outcome.svg) · [compact](../images/phase-43.21/task2-missions-compact-janus-outcome.svg) | The control thread after a finished Janus run: instruction, concise outcome, durable counts including **0 tool calls**, and one `View run trace`. **No expert word appears here.** |
+| Naive outcome | [wide](../images/phase-43.21/task2-missions-wide-naive-outcome.svg) · [compact](../images/phase-43.21/task2-missions-compact-naive-outcome.svg) | Naive reads identically — its single answer is an expert turn, so it lives in the trace. No exception. |
+| Run Trace, live | [wide](../images/phase-43.21/task2-missions-wide-run-trace-live.svg) · [compact](../images/phase-43.21/task2-missions-compact-run-trace-live.svg) | A separate document: back action, run title, live state, the ordered expert turns and approval rows. No composer. |
+| Run Trace, completed | [wide](../images/phase-43.21/task2-missions-wide-run-trace-completed.svg) · [compact](../images/phase-43.21/task2-missions-compact-run-trace-completed.svg) | The finished exchange, exactly as the durable events stored it — never summarised or shortened. |
+| Start failure | [wide](../images/phase-43.21/task2-missions-wide-start-failure.svg) · [compact](../images/phase-43.21/task2-missions-compact-start-failure.svg) | A typed start failure with no run and no invented outcome. |
+| Legacy notice | [wide](../images/phase-43.21/task2-missions-wide-legacy-notice.svg) · [compact](../images/phase-43.21/task2-missions-compact-legacy-notice.svg) | The retained-history line, static, above an otherwise ordinary empty control thread. |
+
+The superseded `janus-activity` and `naive-result` frames are **deleted**, not left to disagree with
+the correction: they bound an inline expert transcript on Missions, which is no longer where that
+content belongs.
 
 The frames are light-mode, exactly as Task 3’s were: colour is owned by the named Workbench theme’s
 token map, which already defines both modes, so a second set of dark frames would duplicate values
@@ -149,21 +226,47 @@ button label (`Mission: none selected`), the error row already bound by the star
 the disabled run action already bound by the first-open frame — it is specified below and covered by
 endpoint and component tests rather than by a redundant nineteenth image.
 
+#### Task 2 reference closure
+
+Recorded per the [reference-closure gate](../design/desktop-interaction-principles.md#reference-closure--preserve-product-intent-across-spokes).
+The first review of this task did not traverse these links, which is exactly how an inline expert
+transcript reached Missions without anyone deciding it should.
+
+| Source | Behaviour it establishes | Classification |
+|---|---|---|
+| [Mission conversations §6](../brainstorm/mission-conversations/README.md#6-inspect-and-steer-the-janus-trace) | The human-facing Project surface lists runs; selecting one opens its trace, which is not turned into a generic chat room. | **Binding** — control thread vs trace ownership. |
+| [The expert conversation is the trace's primary evidence](../brainstorm/mission-conversations/README.md#the-expert-conversation-is-the-traces-primary-evidence) | Expert turns are read chronologically inside the selected trace, and a turn is the original durable message — never summarised, shortened, or substituted. | **Binding** — exactness, and where the turns live. |
+| [Expanded Janus trace](../brainstorm/images/mission-project-flow-06-run-trace.png) | The trace's information: role, message, outcome, live state, chronological order. | **Binding** for that content. Its tabs, run inspector, stop-run, add-guidance, source/artifact panes and runs tree are **deferred** to 43.4 and absent rather than drawn. |
+| [Phase 43.4 — expert dialogue is first-class trace evidence](phase-43.4-ide-trace-surface.md#expert-dialogue-is-first-class-trace-evidence) | The Project conversation receives concise run outcomes; the exact dialogue is trace evidence. | **Binding** for behaviour; its dockable/history features **deferred**. |
+| Task 2 frames in `docs/images/phase-43.21/` | Rail, picker, composer, tokens, error handling, responsive bounds. | **Owned**. The inline-transcript frames are **superseded** and deleted. |
+| [Project conversation / Run trace concept](../images/phase-43.21/task2-project-conversation-run-trace-concept.svg) | That the two concerns are separate, and what each holds. | **Binding for intent, not layout** — it draws a side-by-side pane, which is 43.4's deferred docking; this task opens the trace as a separate document instead. |
+| 43.20 Task 3 references | Explorer, Project document, Settings. | **Unchanged** — untouched by this task. |
+
+Two consequences recorded rather than left implied:
+
+- **No Naive exception.** Naive's single answer is an expert turn, so it lives in the trace like any
+  other. The control thread states `Naive run completed` and the counts; reading the answer is one
+  action away. Exempting Naive would have put an expert's exact words back on the control surface.
+- **No duration.** The only available source is the spread between durable timestamps written by two
+  processes; a figure that can go backwards under clock skew is worse than none, so the outcome
+  reports counts and status only.
+
 #### Task 2 component and responsive specification
 
 | Surface / element | Structure and exact behaviour |
 |---|---|
 | Rail | Unchanged Task 3 structure; the three labels are **Project Explorer**, **Missions**, **Settings**, Settings bottom-aligned, selection marked by the accent marker plus `aria-current="page"`. `Project Explorer` wraps at the rail's lower bound; it must never clip or truncate. |
 | Content header | Title **Missions**, subtitle the Project title. No Project path is rendered anywhere, as Task 3 fixed. |
-| Activity region | The existing shared transcript renderer, filtered to one run ID. With no run it shows one quiet line: **Run a mission to see its activity here.** It is not a chat surface, a history browser, or a synthetic transcript. |
-| Legacy notice | Shown only when `hasLegacyHistory`, above the activity region, reading exactly: **This Project has earlier legacy history. It is retained and is not shown here.** Static text, no link, no action, no call. |
+| Control thread | One entry per run this session started: the person's instruction, then a concise outcome card — **`<Mission>` run `<status>`**, a status pill, durable counts (**`N expert turns · N tool calls`**), and one **View run trace** action once the run has produced something to read. It renders no expert message, approval, tool or activity row; that is structural, because the projection it is handed has no field for one. With no run it shows one quiet line: **Run a mission to see it here.** |
+| Run Trace | A separate document state reached from an outcome, not from the rail. Header: **← Back to Missions**, the run's title, a **Live** badge until the run is terminal, and one line saying what the surface is. Body: the existing shared transcript renderer over that run's durable events, so a turn reaches the screen byte-identical to what was stored — never summarised or shortened. The submitted prompt is not repeated here; it belongs to the control thread. The composer is **absent**, not disabled. Deferred and therefore not drawn: tabs, run inspector, stop-run, add-guidance, artifact panes, run history. |
+| Legacy notice | Shown only when `hasLegacyHistory`, above the control thread, reading exactly: **This Project has earlier legacy history. It is retained and is not shown here.** Static text, no link, no action, no call. |
 | Composer row | One row inside the composer bar: mission picker, instruction field, primary action. One row rather than two because the compact baseline is 568px tall and vertical space is the scarce axis; it also puts the picker literally beside the action it governs. |
 | Mission picker | A button (`Mission: <name>`, chevron) plus a `role="listbox"` popup of exactly `Janus` and `Naive` — no `Default` row, description, model, provider, or expert name. Accessible label `Mission`; `aria-expanded` and `aria-activedescendant`; the current mission carries a check. Keyboard: `Enter`/`Space`/`ArrowDown` open, `ArrowUp`/`ArrowDown`/`Home`/`End` move, `Enter`/`Space` commit, `Escape` closes and returns focus to the button. A commit sends `SelectProjectMissionRequest` and renders only the canonical response value. It is a custom control, not a native `<select>`, because the required open state must be styleable with Workbench tokens and capturable in the browser. |
 | Instruction field | Placeholder **What should this mission do?**; while a run is active it is disabled and reads **Waiting for this run to finish…**, so a disabled control says why. `Enter` submits when the action is enabled. |
 | Primary action | **Run**, disabled while the instruction is blank or no mission is selected. In flight it reads **Starting…**; on acceptance **Starting Janus…** / **Starting Naive…**, taken from the response's mission rather than local state, because the selection can change between render and press. Its width is content-driven above a tokenized minimum so the longer busy label widens the control instead of clipping. |
 | Errors | Typed `ProjectOperationError` messages render in one row directly above the composer — beside the action that produced them — using `--danger`, `--danger-bg`, `--danger-border`. A failure never clears the instruction and never fabricates activity. |
 | Corrupted selection | Per the locked rule above: error row shown, button reads **Mission: none selected**, nothing invented, picker fully usable and keyboard-operable, run action disabled until a selection repairs the manifest. |
-| Run filtering | Presentation applies only durable events whose run ID equals the accepted run's. Because the tail starts inside the same call that starts the run and replays from sequence 0, events can arrive before the acceptance returns; those observed between press and acceptance are buffered and drained through the same filter once the run ID is known, and discarded on failure. On a terminal status the composer becomes empty, enabled and refocused while the finished run's activity stays readable until the next run replaces it. |
+| Run filtering | A run enters the projection only because this session started it, and a durable event is filed under its run or dropped — which is what keeps a reopened Project's replayed history from rendering as though it had just happened. Because the tail starts inside the same call that starts the run and replays from sequence 0, events can arrive before the acceptance returns; those observed between press and acceptance are buffered and drained through the same path once the run ID is known, and discarded on failure. On a terminal status the composer becomes empty, enabled and refocused, and the run's outcome and trace stay available for the rest of the session. |
 
 All colour, radius, spacing and type values come from the Workbench theme tokens
 (`--bg`, `--surface`, `--surface-active`, `--border`, `--border-strong`, `--text`, `--text-muted`,

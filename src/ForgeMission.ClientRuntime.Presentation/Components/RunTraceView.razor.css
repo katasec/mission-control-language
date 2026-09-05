@@ -1,0 +1,78 @@
+/* One run's trace (43.21 task 2). No literal colour, radius, type size or geometry. */
+
+.rt {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-height: 0;
+    flex: 1;
+}
+
+.rt-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.rt-back {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: var(--font-size-meta);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rt-back:hover { color: var(--accent-hover); }
+
+.rt-back:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
+}
+
+.rt-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.rt-title {
+    margin: 0;
+    font-size: var(--font-size-lead);
+    font-weight: 700;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.rt-live {
+    flex: none;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--font-size-meta);
+    font-weight: 600;
+}
+
+.rt-sub {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+}
+
+.rt-body {
+    min-height: 0;
+    min-width: 0;
+}
+
+.rt-empty {
+    margin: 0;
+    color: var(--text-subtle);
+    font-size: var(--font-size-label);
+}

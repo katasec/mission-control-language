@@ -340,9 +340,10 @@ public sealed class HomeSessionOperationTests : BunitContext
     }
 
     // The container orders every run the Project has ever had and the tail replays all of them, so
-    // without the run filter a reopened Project would render its whole history as if it were live.
+    // without the run filter a reopened Project would render another run's exchange as if it were
+    // this one's. Read in the trace, because that is where expert turns live now.
     [Fact]
-    public async Task OnlyTheAcceptedRunsEventsRender()
+    public async Task OnlyTheStartedRunsEventsReachItsTrace()
     {
         var page = await OpenCreatedProjectAsync();
         await RunAsync(page, "Draft the first release plan.");
@@ -351,6 +352,8 @@ public sealed class HomeSessionOperationTests : BunitContext
             ConversationParticipant.Proposer, "from an older run"));
         channel.Publish(RunEvent(channel.RunId, 2, ConversationEventKind.ParticipantMessage,
             ConversationParticipant.Proposer, "from this run"));
+
+        await OpenTraceAsync(page);
 
         page.WaitForAssertion(() => Assert.Contains(
             "from this run", page.Find(".convo-participant-text").TextContent, StringComparison.Ordinal));
@@ -369,21 +372,25 @@ public sealed class HomeSessionOperationTests : BunitContext
         await ClickAsync(page, ".composer-run");
         page.WaitForAssertion(() => Assert.Contains("Starting", page.Find(".composer-run").TextContent, StringComparison.Ordinal));
 
-        // Published while the start request is still in flight.
-        channel.Publish(RunEvent(channel.RunId, 1, ConversationEventKind.ParticipantMessage,
+        // Published while the start request is still in flight, for the id it is about to hand out.
+        channel.Publish(RunEvent(channel.NextRunId, 1, ConversationEventKind.ParticipantMessage,
             ConversationParticipant.Proposer, "arrived early"));
         channel.ReleaseHeldRun();
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".mv-trace")));
+        await OpenTraceAsync(page);
 
         page.WaitForAssertion(() => Assert.Contains(
             "arrived early", page.Find(".convo-participant-text").TextContent, StringComparison.Ordinal));
     }
 
-    // Terminal means the composer is usable again — and the answer is still readable. Clearing it
-    // here would delete the result at the instant it arrived.
+    // Terminal means the composer is usable again, and the control thread states the outcome — the
+    // expert's own words stay in the trace, one action away.
     [Fact]
-    public async Task ATerminalRunStatus_ReturnsACleanComposer_AndKeepsTheAnswerOnScreen()
+    public async Task ATerminalRunStatus_ReturnsACleanComposer_AndStatesTheOutcome()
     {
         var page = await OpenCreatedProjectAsync();
+        await SelectMissionAsync(page, "Naive");
         await RunAsync(page, "Summarise the release risks.");
 
         channel.Publish(RunEvent(channel.RunId, 1, ConversationEventKind.ParticipantMessage,
@@ -394,8 +401,12 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.False(page.Find(".mp-button").HasAttribute("disabled"));
         Assert.Equal("Run", page.Find(".composer-run").TextContent.Trim());
         Assert.Equal("", page.Find(".composer-input").GetAttribute("value"));
-        Assert.Contains("The importer is the release risk.", page.Find(".convo-participant-text").TextContent, StringComparison.Ordinal);
-        Assert.Equal("Naive", page.Find(".convo-participant-name").TextContent);
+
+        Assert.Equal("Naive run completed", page.Find(".mv-outcome-title").TextContent.Trim());
+        Assert.Equal("completed", page.Find(".mv-status").TextContent.Trim());
+        Assert.Equal("Summarise the release risks.", page.Find(".mv-instruction").TextContent.Trim());
+        // The expert's sentence is NOT here.
+        Assert.DoesNotContain("The importer is the release risk.", page.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -470,6 +481,137 @@ public sealed class HomeSessionOperationTests : BunitContext
 
         var runs = channel.Requests.OfType<StartRunRequest>().ToList();
         Assert.Equal(runs[0].CommandId, runs[1].CommandId);
+    }
+
+    // --- 43.21 task 2 corrected: the control thread and the Run Trace are separate documents ----
+
+    // The rule, checked where a person would see it broken: the human thread carries the
+    // instruction and the outcome, and not one word any expert said.
+    [Theory]
+    [InlineData("Janus")]
+    [InlineData("Naive")]
+    public async Task Missions_ShowsTheInstructionAndOutcome_AndNeverAnExpertTurn(string mission)
+    {
+        var page = await OpenCreatedProjectAsync();
+        if (mission == "Naive")
+            await SelectMissionAsync(page, "Naive");
+
+        await RunAsync(page, "Draft the first release plan.");
+        PublishRun(mission);
+
+        page.WaitForAssertion(() => Assert.Equal(
+            $"{mission} run completed", page.Find(".mv-outcome-title").TextContent.Trim()));
+        Assert.Equal("Draft the first release plan.", page.Find(".mv-instruction").TextContent.Trim());
+
+        // Nothing the experts produced is on this surface — not their words, not the approval,
+        // not the thinking indicator.
+        Assert.Empty(page.FindAll(".convo-participant-bubble"));
+        Assert.Empty(page.FindAll(".convo-approval"));
+        Assert.Empty(page.FindAll(".convo-tool-row"));
+        Assert.Empty(page.FindAll(".convo-activity"));
+        Assert.DoesNotContain("Ship the importer first.", page.Markup, StringComparison.Ordinal);
+    }
+
+    // Durable counts, not a reading. The zero tools is the point: this route grants no local tool
+    // authority, and this is where a person can see that none was used.
+    [Fact]
+    public async Task TheOutcome_StatesDurableCountsIncludingZeroTools()
+    {
+        var page = await OpenCreatedProjectAsync();
+        await RunAsync(page, "Draft the first release plan.");
+        PublishRun("Janus");
+
+        page.WaitForAssertion(() => Assert.Equal(
+            "5 expert turns · 0 tool calls", page.Find(".mv-facts").TextContent.Trim()));
+    }
+
+    [Fact]
+    public async Task BeforeAnyExpertActivity_NoTraceIsOffered()
+    {
+        var page = await OpenCreatedProjectAsync();
+
+        await RunAsync(page, "Draft the first release plan.");
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".mv-outcome")));
+        Assert.Empty(page.FindAll(".mv-trace"));
+    }
+
+    [Fact]
+    public async Task ViewRunTrace_OpensTheExactExchange_AndBackReturnsToTheThread()
+    {
+        var page = await OpenCreatedProjectAsync();
+        await RunAsync(page, "Draft the first release plan.");
+        PublishRun("Janus");
+
+        await OpenTraceAsync(page);
+
+        // The experts' own words, in order, exactly as the durable events carried them.
+        Assert.Equal(
+            ["Proposer", "Approver", "Proposer", "Approver", "Implementer"],
+            page.FindAll(".convo-participant-name").Select(name => name.TextContent));
+        Assert.Contains("Ship the importer first.",
+            page.FindAll(".convo-participant-text")[0].TextContent, StringComparison.Ordinal);
+        // The prompt is the control thread's; it is not repeated here as an expert turn.
+        Assert.Empty(page.FindAll(".convo-user-bubble"));
+        // Running is a control-thread action, so the composer is absent, not disabled.
+        Assert.Empty(page.FindAll(".composer-input"));
+
+        await ClickAsync(page, ".rt-back");
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".mv-outcome")));
+        Assert.Single(page.FindAll(".composer-input"));
+        Assert.Empty(page.FindAll(".rt"));
+    }
+
+    // Opening a trace is a view change and nothing else — the same invariant the rail already has.
+    [Fact]
+    public async Task OpeningATrace_CreatesNoRequestSessionOrSubscription()
+    {
+        var page = await OpenCreatedProjectAsync();
+        await RunAsync(page, "Draft the first release plan.");
+        PublishRun("Janus");
+        var requests = channel.Requests.Count;
+        var subscriptions = channel.SubscriptionsStarted;
+
+        await OpenTraceAsync(page);
+        await ClickAsync(page, ".rt-back");
+
+        Assert.Equal(requests, channel.Requests.Count);
+        Assert.Equal(subscriptions, channel.SubscriptionsStarted);
+        Assert.Equal(1, channel.ActiveSubscriptions);
+    }
+
+    // The rail keeps saying where in the Project you are, exactly as it does for an opened
+    // Explorer document.
+    [Fact]
+    public async Task WhileATraceIsOpen_TheRailStillMarksMissions()
+    {
+        var page = await OpenCreatedProjectAsync();
+        await RunAsync(page, "Draft the first release plan.");
+        PublishRun("Janus");
+
+        await OpenTraceAsync(page);
+
+        var current = Assert.Single(page.FindAll(".wb-rail-item[aria-current='page']"));
+        Assert.Contains("Missions", current.TextContent, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASecondRun_AddsASecondThreadEntryWithItsOwnTrace()
+    {
+        var page = await OpenCreatedProjectAsync();
+        await RunAsync(page, "First instruction.");
+        PublishRun("Janus");
+
+        // A person cannot submit again until the first run ends — the composer says so, and the
+        // product refuses it. Waiting for that is the flow, not a test convenience.
+        page.WaitForAssertion(() => Assert.False(page.Find(".composer-input").HasAttribute("disabled")));
+
+        await RunAsync(page, "Second instruction.");
+
+        page.WaitForAssertion(() => Assert.Equal(2, page.FindAll(".mv-turn").Count));
+        Assert.Equal(["First instruction.", "Second instruction."],
+            page.FindAll(".mv-instruction").Select(item => item.TextContent.Trim()));
     }
 
     // A migrated Project states its retained history once, and offers nothing: no link, no button,
@@ -915,6 +1057,40 @@ public sealed class HomeSessionOperationTests : BunitContext
             channel.Requests.OfType<StartRunRequest>().Count() > before));
     }
 
+    // One whole run's durable events, as the Client Runtime relays them: a Janus exchange with a
+    // revision round, or Naive's single turn.
+    private void PublishRun(string mission)
+    {
+        channel.Publish(RunStatusEvent(channel.RunId, 1, ConversationRunStatus.Queued));
+        if (mission == "Naive")
+        {
+            channel.Publish(RunEvent(channel.RunId, 2, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Naive, "The importer is the release risk."));
+        }
+        else
+        {
+            channel.Publish(RunEvent(channel.RunId, 2, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Proposer, "Ship the importer first."));
+            channel.Publish(RunEvent(channel.RunId, 3, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Approver, "Add a rollback gate."));
+            channel.Publish(RunEvent(channel.RunId, 4, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Proposer, "Revised with a rollback gate."));
+            channel.Publish(RunEvent(channel.RunId, 5, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Approver, "Approved."));
+            channel.Publish(RunEvent(channel.RunId, 6, ConversationEventKind.ParticipantMessage,
+                ConversationParticipant.Implementer, "Starting."));
+        }
+
+        channel.Publish(RunStatusEvent(channel.RunId, 7, ConversationRunStatus.Completed));
+    }
+
+    private async Task OpenTraceAsync(IRenderedComponent<Home> page)
+    {
+        page.WaitForAssertion(() => Assert.NotEmpty(page.FindAll(".mv-trace")));
+        await ClickAsync(page, ".mv-trace");
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".rt")));
+    }
+
     // Opening the popup and choosing, exactly as a person does — never by invoking the callback.
     private async Task SelectMissionAsync(IRenderedComponent<Home> page, string mission)
     {
@@ -966,9 +1142,14 @@ public sealed class HomeSessionOperationTests : BunitContext
         /// nothing; every event a test publishes belongs to a run inside it.</summary>
         public Guid ContainerId { get; } = Guid.NewGuid();
 
-        /// <summary>Minted up front rather than at acceptance, so a test can publish an event for
-        /// the run BEFORE the start request returns — the ordering the surface has to survive.</summary>
-        public Guid RunId { get; } = Guid.NewGuid();
+        /// <summary>The id the NEXT start will hand out. Minted up front so a test can publish an
+        /// event for a run BEFORE its start request returns — the ordering the surface has to
+        /// survive.</summary>
+        public Guid NextRunId { get; private set; } = Guid.NewGuid();
+
+        /// <summary>The id the most recent start actually handed out. Each run gets its own, so a
+        /// session with two runs has two threads and two traces rather than one of each.</summary>
+        public Guid RunId { get; private set; }
 
         /// <summary>What the manifest already holds when the Project opens.</summary>
         public string PersistedMission { get; set; } = "Janus";
@@ -1051,6 +1232,9 @@ public sealed class HomeSessionOperationTests : BunitContext
                 nextRunError = null;
                 return new StartRunResponse(null, null, 0, ConversationRunStatus.Failed, error);
             }
+
+            RunId = NextRunId;
+            NextRunId = Guid.NewGuid();
 
             // The mission comes back with the acceptance, as the real contract does: what a person
             // is told started must be what actually started.

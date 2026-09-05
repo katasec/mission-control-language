@@ -1,0 +1,51 @@
+@namespace ForgeMission.ClientRuntime.Presentation.Components
+@using ForgeMission.ClientRuntime.Presentation
+@using ForgeMission.Conversations.Contracts
+
+@* One run's Run Trace (43.21 task 2, corrected): the place the experts speak.
+
+   It renders the durable events exactly as stored, in the order they happened, through the same
+   renderer the Janus conversation has always used — so a proposal, a revision request, a revised
+   proposal, an approval and the implementation start are read as their authors wrote them. There
+   is no summarising path in or out of here; that is the whole point of the surface.
+
+   Deferred, and therefore absent rather than drawn: run history, reopening a past run, docking or
+   tabs, the run inspector, source and artifact panes, stop-run and add-guidance. Those belong to
+   Phase 43.4. *@
+
+<section class="rt">
+    <header class="rt-head">
+        <button type="button" class="rt-back" @onclick="Back">← Back to Missions</button>
+        <div class="rt-title-row">
+            <h2 class="rt-title">@Mission run trace</h2>
+            @if (IsLive)
+            {
+                <span class="rt-live">Live</span>
+            }
+        </div>
+        <p class="rt-sub">The experts' own exchange for this run, exactly as recorded.</p>
+    </header>
+
+    <div class="rt-body">
+        @if (Entries.Count == 0)
+        {
+            <p class="rt-empty">This run has not produced any expert activity yet.</p>
+        }
+        else
+        {
+            <ConversationTranscriptView Entries="Entries" />
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Mission { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired] public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+
+    /// <summary>True while the run has not reached a terminal status. The trace says so in its
+    /// header rather than leaving a half-finished exchange looking finished.</summary>
+    [Parameter] public bool IsLive { get; set; }
+
+    [Parameter] public EventCallback Back { get; set; }
+}

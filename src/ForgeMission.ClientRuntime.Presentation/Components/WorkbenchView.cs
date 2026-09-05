@@ -19,4 +19,9 @@ public enum WorkbenchView
     /// <summary>One entry opened from the Explorer. Reached only by selecting an entry, never from
     /// the rail, which is why it is not a rail destination.</summary>
     Document,
+
+    /// <summary>One run's expert trace, opened from its outcome in the Missions control thread
+    /// (43.21 task 2). Like Document it is reached by selecting something, not from the rail, and
+    /// the rail keeps saying Missions while it is open.</summary>
+    RunTrace,
 }

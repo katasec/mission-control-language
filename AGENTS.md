@@ -191,6 +191,16 @@ For every user-visible Desktop or ForgeUI change, read
 the binding visual reference, responsive evidence, and theme/token ownership; the task assignment
 must name them explicitly rather than leaving their relevance to inference.
 
+**Reference closure is a build-readiness gate.** Before approving a user-visible change, follow the
+links from its active spoke and governing design docs to every prior product-flow, interaction, and
+visual artifact that defines the affected journey. Record those sources in the task's visual
+contract and classify each as binding, owned, deferred, superseded, or unrelated, with a reason.
+A narrower task may defer implementation, but it may not silently change where a user-facing
+behavior belongs (for example, moving expert dialogue from a Run Trace into the Project
+conversation). A new task-local mockup never supersedes prior product intent by implication. If
+scope, references, or product behavior conflict, stop and obtain an explicit supersession decision
+before implementation or approval.
+
 For every task that changes user-visible, runtime, integration, or deployment behaviour, the
 already-required [Default-Path Acceptance](docs/design/default-path-acceptance.md) gate applies.
 The supported default configuration is a product fact, not a convenient test option: an overridden

@@ -172,6 +172,22 @@ A non-visual task may record a concise N/A rationale instead. A task that reuses
 without changing its visual behaviour records that reuse explicitly rather than silently bypassing
 the gate.
 
+### Reference closure — preserve product intent across spokes
+
+The named mockup is not the whole contract. Before a visual task is build-ready, follow the links
+from its active spoke and governing design docs to prior product-flow, interaction, and visual
+artifacts that define the same journey. Add a compact **reference-closure table** to the task:
+source path, behavior it establishes, and one classification — **binding**, **owned**, **deferred**,
+**superseded**, or **unrelated** — with a reason. This is a traversal requirement, not a request to
+load the entire documentation tree.
+
+Deferring a surface may defer its implementation; it cannot quietly relocate or redefine its
+product responsibility. For example, a task may defer opening a full Run Trace, but it cannot put
+the experts' chronological discussion in the human-facing Project conversation unless an explicit
+decision supersedes the trace architecture. A new task-local mockup is subordinate to established
+product intent unless the spoke records that supersession, its owner, and its migration path. Any
+unresolved conflict blocks implementation and review approval.
+
 For Desktop, the task must also name the packaged app's **default usable viewport**, measured from
 the running window rather than guessed from its outer chrome. It must show the initial task action
 and every required input without document scrolling at that viewport. Large-canvas fidelity does

@@ -1,13 +1,16 @@
 @namespace ForgeMission.ClientRuntime.Presentation.Components
 @using ForgeMission.ClientRuntime.Presentation
+@using ForgeMission.Conversations.Contracts
 
-@* The Missions document region (43.21 task 2): the retained-history line, and one run's activity.
+@* The Project's human control thread (43.21 task 2, corrected).
 
-   It is deliberately NOT a conversation. There is no history here, no run browser, and nothing
-   synthesised: the entries it renders are the durable events of the one run this surface started,
-   already filtered by its caller. With no run it says so in a line and stops.
+   This is the enduring human ↔ Forge conversation: what a person asked, and how each run ended.
+   It is NOT where the experts speak. A Proposer's proposal, an Approver's revision request, an
+   Implementer's work and any tool call are that run's evidence and are read in its Run Trace —
+   which is a different document, reached from here.
 
-   It performs no Client Runtime call of its own — Home owns every request on this surface. *@
+   The separation is structural rather than remembered: this component is handed
+   MissionRunEntry values, and that type has no field an expert's words could arrive in. *@
 
 <div class="mv">
     @if (HasLegacyHistory)
@@ -20,16 +23,72 @@
 
     @if (Entries.Count == 0)
     {
-        <p class="mv-empty">Run a mission to see its activity here.</p>
+        <p class="mv-empty">Run a mission to see it here.</p>
     }
     else
     {
-        <ConversationTranscriptView Entries="Entries" />
+        <ol class="mv-thread">
+            @foreach (var entry in Entries)
+            {
+                <li class="mv-turn">
+                    <p class="mv-instruction">@entry.Instruction</p>
+
+                    <article class="mv-outcome">
+                        <header class="mv-outcome-head">
+                            <h2 class="mv-outcome-title">@entry.Mission run @StatusWord(entry.Status)</h2>
+                            <span class="mv-status @StatusClass(entry.Status)">@StatusWord(entry.Status)</span>
+                        </header>
+
+                        @* Counts of durable events, never a reading of them. The zero tools is
+                           worth saying out loud: a Project mission run holds no local tool
+                           authority, and this is where a person can see that it used none. *@
+                        <p class="mv-facts">@Facts(entry)</p>
+
+                        @if (entry.HasTrace)
+                        {
+                            <button type="button" class="mv-trace"
+                                    @onclick="() => TraceRequested.InvokeAsync(entry.RunId)">
+                                View run trace
+                            </button>
+                        }
+                    </article>
+                </li>
+            }
+        </ol>
     }
 </div>
 
 @code {
-    [Parameter, EditorRequired] public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<MissionRunEntry> Entries { get; set; } = [];
 
     [Parameter] public bool HasLegacyHistory { get; set; }
+
+    [Parameter] public EventCallback<Guid> TraceRequested { get; set; }
+
+    private static string StatusWord(ConversationRunStatus status) => status switch
+    {
+        ConversationRunStatus.Queued => "queued",
+        ConversationRunStatus.Running => "running",
+        ConversationRunStatus.WaitingForTool => "waiting",
+        ConversationRunStatus.Completed => "completed",
+        ConversationRunStatus.Rejected => "not approved",
+        ConversationRunStatus.Interrupted => "interrupted",
+        _ => "failed",
+    };
+
+    private static string StatusClass(ConversationRunStatus status) => status switch
+    {
+        ConversationRunStatus.Completed => "mv-status-done",
+        ConversationRunStatus.Rejected or ConversationRunStatus.Interrupted
+            or ConversationRunStatus.Failed => "mv-status-bad",
+        _ => "mv-status-live",
+    };
+
+    // No duration: the only source would be the spread between durable timestamps written by two
+    // different processes, and a number that can go backwards on clock skew is worse than none.
+    private static string Facts(MissionRunEntry entry) =>
+        $"{Count(entry.ExpertTurns, "expert turn")} · {Count(entry.ToolCalls, "tool call")}";
+
+    private static string Count(int value, string noun) =>
+        value == 1 ? $"1 {noun}" : $"{value} {noun}s";
 }

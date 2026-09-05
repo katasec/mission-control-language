@@ -41,9 +41,11 @@
 
     private static readonly Destination SettingsDestination = new(WorkbenchView.Settings, "⚙", "Settings");
 
-    // An open document belongs to the Explorer, so the Explorer stays current while one is shown.
-    private bool IsCurrent(WorkbenchView view) =>
-        view == Selected || (view == WorkbenchView.Explorer && Selected == WorkbenchView.Document);
+    // A document belongs to the destination it was opened from, so that destination stays current
+    // while it is shown: an Explorer entry to the Explorer, a run's trace to Missions.
+    private bool IsCurrent(WorkbenchView view) => view == Selected
+        || (view == WorkbenchView.Explorer && Selected == WorkbenchView.Document)
+        || (view == WorkbenchView.Missions && Selected == WorkbenchView.RunTrace);
 
     // Real markup rather than a RenderTreeBuilder fragment: Blazor stamps a component's scoped-CSS
     // attribute onto elements written in the template only, so a hand-built fragment would render

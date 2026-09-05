@@ -21,7 +21,7 @@
   <text x="204" y="70" font-family="ui-monospace, monospace" font-size="12" fill="#5b6b83">Release planner</text>
   <rect x="204" y="121" width="1308" height="40" rx="10" fill="#f7faff" stroke="#d5dae5" stroke-dasharray="4 3"/>
   <text x="218" y="146.0" font-family="system-ui, sans-serif" font-size="13" fill="#5b6b83">This Project has earlier legacy history. It is retained and is not shown here.</text>
-  <text x="858.0" y="562.5" font-family="system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#62748c">Run a mission to see its activity here.</text>
+  <text x="858.0" y="562.5" font-family="system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#62748c">Run a mission to see it here.</text>
   <rect x="180" y="940" width="1356" height="84" fill="#f7faff"/>
   <line x1="180" y1="940" x2="1536" y2="940" stroke="#e7ecf4"/>
   <rect x="204" y="959.0" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>

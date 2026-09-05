@@ -1,6 +1,6 @@
 <svg viewBox="0 0 1536 1024" width="1536" height="1024" xmlns="http://www.w3.org/2000/svg" role="img">
   <title>43.21 task 2 Missions surface — run accepted and starting at 1536x1024</title>
-  <desc>Accepted and starting. The action names the mission the durable answer reported, not the locally rendered selection, and the composer is disabled while one run is active. Workbench theme, light mode; the named token map owns the dark values. 1536x1024.</desc>
+  <desc>Accepted and starting. The control thread already holds the instruction and the run's state; no trace is offered yet because the run has produced nothing to read. Workbench theme, light mode; the named token map owns the dark values. 1536x1024.</desc>
   <rect x="0" y="0" width="1536" height="1024" fill="#f7faff"/>
   <rect x="0" y="0" width="180" height="1024" fill="#06284c"/>
   <text x="20" y="44" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#ffffff">Forge</text>
@@ -21,7 +21,11 @@
   <text x="204" y="70" font-family="ui-monospace, monospace" font-size="12" fill="#5b6b83">Release planner</text>
   <rect x="1042" y="121" width="470" height="48" rx="12" fill="#eff5fe" stroke="#c7ddff"/>
   <text x="1058" y="150.0" font-family="system-ui, sans-serif" font-size="13" fill="#101d33">Draft the first release plan.</text>
-  <text x="204" y="199" font-family="system-ui, sans-serif" font-size="12.5" fill="#62748c">Status: Queued</text>
+  <rect x="204" y="185" width="1308" height="78" rx="16" fill="#ffffff" stroke="#e7ecf4"/>
+  <text x="220" y="215" font-family="system-ui, sans-serif" font-size="14" font-weight="600" fill="#101d33">Janus run queued</text>
+  <rect x="1418" y="199" width="78" height="22" rx="11" fill="#e4ecf8"/>
+  <text x="1457.0" y="215" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#5b6b83">queued</text>
+  <text x="220" y="241" font-family="system-ui, sans-serif" font-size="12" fill="#5b6b83">0 expert turns · 0 tool calls</text>
   <rect x="180" y="940" width="1356" height="84" fill="#f7faff"/>
   <line x1="180" y1="940" x2="1536" y2="940" stroke="#e7ecf4"/>
   <rect x="204" y="959.0" width="202" height="46" rx="10" fill="#ffffff" stroke="#e7ecf4"/>
