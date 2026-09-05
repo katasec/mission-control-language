@@ -1,7 +1,7 @@
 # Phase 43 — Forge Desktop
 
-> **Status: Project Workbench MVP in progress (2026-09-04).** Tasks 1 and 2 are verified and
-> merged; Task 3 is next.
+> **Status: Project Mission reconstruction design ready (2026-09-05); implementation pending.**
+> Next: implementer plan for task 1 of the replacement design.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ is a replaceable presentation client over the Mission Runtime (reasoning) and Cl
 
 | If working on… | Read… |
 |---|---|
-| Current Project/Conversation/Run workbench MVP | [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md). |
+| Current Project/Conversation/Run workbench MVP | [43.22 — Project Mission reconstruction](phase-43.22-project-mission-reconstruction.md). |
 | Shared in-chat activity visual (complete; read only if changing it) | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md), then only its named design sections and source files. |
 | Deferred rich trace/workbench UX | [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md). |
 | Deferred responsiveness/lifecycle work | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md). |
@@ -30,7 +30,8 @@ items. Their history is either in the individual spoke or the
 
 | Work | Status |
 |---|---|
-| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) | In progress. Tasks 1 and 2 are verified and merged; Task 3 is next. |
+| [43.22 — Project Mission reconstruction](phase-43.22-project-mission-reconstruction.md) | Design ready for task 1 plan review; implementation and acceptance pending. |
+| [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) / [43.21 — candidate](phase-43.21-mission-run-unification.md) | Superseded by 43.22. Keep verified baseline facts; do not execute the old remaining task lists. |
 | [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |

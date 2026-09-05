@@ -10,6 +10,7 @@ relocated so `plan.md` only shows what's still active.
 
 | Plan | Replacement / status |
 |------|----------------------|
+| [Phase 43.20 workbench](phases/phase-43.20-project-workbench-mvp.md) and [43.21 candidate](phases/phase-43.21-mission-run-unification.md) | Remaining implementation superseded by [43.22 reconstruction](phases/phase-43.22-project-mission-reconstruction.md), 2026-09-05. Verified baseline evidence remains; candidate is not release-ready. |
 | [Phase 35 — Forge UI (Blazor Server)](phases/phase-35-forge-ui-blazor.md) | **Superseded 2026-08-16 — do not implement as a new phase.** Desktop is [Phase 43.11](phases/phase-43.11-wasm-photino-shell.md) + [Phase 43.16](phases/phase-43.16-janus-desktop-local-poc.md), with future trace/workbench work in [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). Hosted ForgeUI/Rooms work evolved through [Phase 38](phases/phase-38-forge-rooms.md) + [Phase 40](phases/phase-40-forge-ui-shell.md). |
 
 ## Completed phases
