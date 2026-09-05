@@ -19,8 +19,13 @@ public enum ConversationParticipant
     [JsonStringEnumMemberName("implementer")]    Implementer,
     [JsonStringEnumMemberName("forge")]          Forge,
     // The zero-tool project-refinement mission's own voice (43.20 task 2). A control response is
-    // labelled as itself rather than mislabelled as a Janus participant.
+    // labelled as itself rather than mislabelled as a Janus participant. Retained for historic
+    // records only; 43.21 task 3 removes it once no legacy transcript needs reading back.
     [JsonStringEnumMemberName("missionControl")] MissionControl,
+    // The one-expert Naive mission's own voice (43.21 task 1). Appended last so no existing
+    // member's ordinal moves, and deliberately not "forge": a mission's output is labelled as
+    // that mission, never as the product.
+    [JsonStringEnumMemberName("naive")]          Naive,
 }
 
 /// <summary>
@@ -34,6 +39,13 @@ public enum ConversationPurpose
 {
     [JsonStringEnumMemberName("missionRun")]     MissionRun,
     [JsonStringEnumMemberName("projectControl")] ProjectControl,
+
+    /// <summary>A Project's Mission container (43.21 task 1): it orders and replays that
+    /// Project's child mission runs and executes nothing itself. Appended last for the same
+    /// ordinal-stability reason as the members above. Unlike <see cref="MissionRun"/> it pins no
+    /// mission and no capabilities — each child run carries its own — so its snapshot reports a
+    /// null mission reference rather than an empty string standing in for one.</summary>
+    [JsonStringEnumMemberName("projectMission")]  ProjectMission,
 }
 
 /// <summary>The semantic kind of one durable conversation fact. Each kind has exactly one
@@ -153,13 +165,22 @@ public sealed record ConversationEvent(
 /// stay at their initial values by construction.</param>
 public sealed record ConversationSnapshot(
     Guid ConversationId,
-    string MissionRef,
+    /// <summary>The pinned mission for a <see cref="ConversationPurpose.MissionRun"/> conversation.
+    /// Null for a Project Mission container, which pins none (43.21 task 1) — a null says "this
+    /// conversation has no mission" where an empty string would be an ambiguous sentinel.</summary>
+    string? MissionRef,
     Guid? ActiveRunId,
     long LastSequence,
     ConversationRunStatus Status,
     Guid? ExpectedToolRequestId,
     DateTimeOffset UpdatedAtUtc,
-    ConversationPurpose Purpose = ConversationPurpose.MissionRun);
+    ConversationPurpose Purpose = ConversationPurpose.MissionRun,
+    /// <summary>The Project a <see cref="ConversationPurpose.ProjectControl"/> or
+    /// <see cref="ConversationPurpose.ProjectMission"/> conversation belongs to; null otherwise.
+    /// Appended last so an older snapshot's positional shape is unchanged. For a Project Mission
+    /// container this is what makes existence checkable at all: it pins no mission, so a non-null
+    /// Project ID paired with that purpose IS its existence invariant (43.21 task 1).</summary>
+    Guid? ProjectId = null);
 
 /// <summary>
 /// Command queue body sent from the Conversation service to the Worker over the
@@ -315,3 +336,84 @@ public sealed record SubmitProjectControlMessageRequest(
 public sealed record SubmitProjectControlMessageResponse(
     Guid ConversationId,
     long AcceptedSequence);
+
+// --- Project Mission messages (43.21 task 1) ------------------------------------------------
+// The universal invocation path: a Project owns one Mission container, and every instruction a
+// person submits becomes one child Mission Run of the Project's selected mission. Unlike the
+// Project-control pair above, these produce ORDINARY runs — a run ID, a paired RunStatus, and
+// run-scoped events — so Janus and Naive are indistinguishable in shape downstream.
+//
+// The container itself pins no mission and no capabilities. That is what lets a Project switch
+// between Janus and Naive without a second container, and it is why the mission travels on the
+// child command rather than on the container.
+
+/// <summary><c>POST /conversations/project-mission</c> request. <see cref="CommandId"/> is derived
+/// deterministically by Client Runtime from the stable manifest project ID through
+/// <see cref="ConversationDeterministicIds.ProjectMissionContainerCreate"/>, so a retry after Host
+/// acceptance but before the manifest write returns the same server-issued container ID instead of
+/// creating a second one. <see cref="ProjectGoal"/> is pinned here and thereafter sourced solely
+/// from the Conversation checkpoint — no run-starting message can carry or replace it.</summary>
+public sealed record CreateProjectMissionContainerRequest(
+    Guid ProjectId,
+    Guid CommandId,
+    string ProjectGoal);
+
+/// <summary><c>POST /conversations/project-mission</c> response. A newly created container is
+/// empty, so its accepted sequence is <c>0</c> — create appends no event.</summary>
+public sealed record CreateProjectMissionContainerResponse(
+    Guid ContainerId,
+    long AcceptedSequence);
+
+/// <summary>
+/// <c>POST /conversations/{containerId}/mission-runs</c> request — start one child Mission Run.
+///
+/// <see cref="Mission"/> is allow-listed by Client Runtime before it is sent and again by the
+/// Worker's closed catalog, so no caller can name a provider, model, expert, or arbitrary mission.
+/// <see cref="CommandId"/> is generated once at submission and reused only for its retry; an equal
+/// retry returns the original run, and the same ID with a different mission or input is a conflict.
+///
+/// There is deliberately NO capability field, and no field for a project goal, a path, a run ID, or
+/// a credential. Starting a Project Mission Run grants no local tool authority: the Host declares
+/// zero capabilities for every run on this route, so a direct Host caller cannot smuggle tool
+/// declarations in through a message that has nowhere to put them. Removing the field is the
+/// enforcement — a validation rule could be forgotten, an absent member cannot.
+/// </summary>
+public sealed record StartProjectMissionRunRequest(
+    Guid ContainerId,
+    Guid CommandId,
+    string Mission,
+    string Input);
+
+/// <summary><c>POST /conversations/{containerId}/mission-runs</c> response
+/// (<c>202 Accepted</c>) — the same shape a Janus start already returns.</summary>
+public sealed record StartProjectMissionRunResponse(
+    Guid ContainerId,
+    Guid RunId,
+    long AcceptedSequence,
+    ConversationRunStatus Status);
+
+/// <summary>Stable, machine-readable failure returned by Project Mission routes.</summary>
+public sealed record ConversationApiError(string Code, string Message);
+
+/// <summary>One rebuildable Project Mission run summary. Input and expert output never live in this index.</summary>
+public sealed record ProjectRunSummary(
+    Guid RunId, Guid CommandId, string Mission, string Title,
+    long AcceptedSequence, long LastSequence, ConversationRunStatus Status,
+    int ExpertTurns, int ToolCalls, DateTimeOffset AcceptedAtUtc);
+
+public sealed record ProjectRunCursor(long AnchorSequence, long BeforeAcceptedSequence);
+
+public sealed record ProjectRunPage(
+    Guid ContainerId, long IndexedSequence, long TargetSequence, bool Synchronizing,
+    ProjectRunSummary[] Runs, ProjectRunCursor? Next);
+
+public sealed record ProjectRunDetail(
+    ProjectRunSummary Run, string Input, long IndexedSequence, long TargetSequence);
+
+public sealed record ProjectRunEventPage(
+    Guid ContainerId, Guid RunId, long ThroughSequence,
+    long ScannedThroughSequence, ConversationEvent[] Events, bool HasMore);
+
+public sealed record ProjectCommandReceipt(
+    Guid ContainerId, Guid RunId, string Mission, string Input, string ProjectGoal,
+    long AcceptedSequence, ConversationRunStatus Status);

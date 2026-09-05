@@ -97,6 +97,7 @@ public sealed class AzuriteFixture : IAsyncLifetime
                 sp.GetRequiredService<TableServiceClient>(), sp.GetRequiredService<ConversationStorageOptions>());
             return decorateEventStore is null ? real : decorateEventStore(real);
         });
+        builder.Services.AddSingleton<IProjectRunIndexStore, AzureTableProjectRunIndexStore>();
         builder.Services.AddSingleton<IConversationArtifactStore, AzureBlobConversationArtifactStore>();
 
         // The small in-memory dispatcher seam the Task 5 spoke calls for in place of a real Azure
@@ -206,6 +207,8 @@ public sealed class ConversationHostInstance(WebApplication app, Uri baseAddress
         => app.Services.GetRequiredService<IGrainFactory>().GetGrain<IMissionRunGrain>($"{tenantId}|{runId:N}");
 
     public IConversationEventStore EventStore => app.Services.GetRequiredService<IConversationEventStore>();
+
+    public IProjectRunIndexStore ProjectRunIndexStore => app.Services.GetRequiredService<IProjectRunIndexStore>();
 
     public IConversationArtifactStore ArtifactStore => app.Services.GetRequiredService<IConversationArtifactStore>();
 

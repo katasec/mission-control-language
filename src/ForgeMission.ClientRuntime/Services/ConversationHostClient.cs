@@ -47,6 +47,32 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
             ConversationContractsJsonContext.Default.SubmitProjectControlMessageRequest,
             ConversationContractsJsonContext.Default.SubmitProjectControlMessageResponse, ct);
 
+    // 43.21 task 1 — the universal Project Mission pair. Same generic PostAsync, same typed
+    // responses; nothing about the transport differs from the Janus start it replaces.
+    public Task<CreateProjectMissionContainerResponse> CreateProjectMissionContainerAsync(
+        CreateProjectMissionContainerRequest request, CancellationToken ct) =>
+        PostProjectAsync("conversations/project-mission", request,
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerRequest,
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerResponse, ct);
+
+    public Task<StartProjectMissionRunResponse> StartProjectMissionRunAsync(
+        StartProjectMissionRunRequest request, CancellationToken ct) =>
+        PostProjectAsync($"conversations/{request.ContainerId}/mission-runs", request,
+            ConversationContractsJsonContext.Default.StartProjectMissionRunRequest,
+            ConversationContractsJsonContext.Default.StartProjectMissionRunResponse, ct);
+
+    public Task<ProjectRunPage> ReadProjectRunsAsync(Guid containerId, long? anchor, long? before, CancellationToken ct) =>
+        GetProjectAsync($"conversations/{containerId}/runs{Cursor(anchor, before)}", ConversationContractsJsonContext.Default.ProjectRunPage, ct);
+
+    public Task<ProjectRunDetail> ReadProjectRunAsync(Guid containerId, Guid runId, CancellationToken ct) =>
+        GetProjectAsync($"conversations/{containerId}/runs/{runId}", ConversationContractsJsonContext.Default.ProjectRunDetail, ct);
+
+    public Task<ProjectRunEventPage> ReadProjectRunEventsAsync(Guid containerId, Guid runId, long after, long? through, CancellationToken ct) =>
+        GetProjectAsync($"conversations/{containerId}/runs/{runId}/events?after={after}{(through is null ? "" : $"&through={through}")}", ConversationContractsJsonContext.Default.ProjectRunEventPage, ct);
+
+    public Task<ProjectCommandReceipt> ReadProjectCommandAsync(Guid containerId, Guid commandId, CancellationToken ct) =>
+        GetProjectAsync($"conversations/{containerId}/project-commands/{commandId}", ConversationContractsJsonContext.Default.ProjectCommandReceipt, ct);
+
     public async IAsyncEnumerable<ConversationEvent> StreamEventsAsync(
         Guid conversationId, long after, [EnumeratorCancellation] CancellationToken ct)
     {
@@ -102,4 +128,56 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
         return JsonSerializer.Deserialize(body, responseType)
             ?? throw new InvalidOperationException("ConversationHost returned an empty response.");
     }
+
+    private async Task<TResponse> PostProjectAsync<TRequest, TResponse>(
+        string route, TRequest request, JsonTypeInfo<TRequest> requestType, JsonTypeInfo<TResponse> responseType, CancellationToken ct)
+    {
+        var json = JsonSerializer.Serialize(request, requestType);
+        using var response = await httpClient.PostAsync(route, new StringContent(json, Encoding.UTF8, "application/json"), ct);
+        return await DecodeProjectAsync(response, responseType, ct);
+    }
+
+    private async Task<TResponse> GetProjectAsync<TResponse>(string route, JsonTypeInfo<TResponse> responseType, CancellationToken ct)
+    {
+        using var response = await httpClient.GetAsync(route, ct);
+        return await DecodeProjectAsync(response, responseType, ct);
+    }
+
+    private static async Task<TResponse> DecodeProjectAsync<TResponse>(HttpResponseMessage response, JsonTypeInfo<TResponse> responseType, CancellationToken ct)
+    {
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (response.IsSuccessStatusCode)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize(body, responseType)
+                    ?? throw new ConversationHostProtocolException("ConversationHost returned an empty or invalid Project response.");
+            }
+            catch (JsonException ex)
+            {
+                throw new ConversationHostProtocolException("ConversationHost returned an invalid Project response.", ex);
+            }
+        }
+
+        ConversationApiError? error;
+        try { error = JsonSerializer.Deserialize(body, ConversationContractsJsonContext.Default.ConversationApiError); }
+        catch (JsonException ex) { throw new ConversationHostProtocolException($"ConversationHost returned malformed Project error HTTP {(int)response.StatusCode}.", ex); }
+        if (error is null || string.IsNullOrWhiteSpace(error.Code) || string.IsNullOrWhiteSpace(error.Message))
+            throw new ConversationHostProtocolException($"ConversationHost returned malformed Project error HTTP {(int)response.StatusCode}.");
+        throw new ConversationHostProjectException(error, response.StatusCode);
+    }
+
+    private static string Cursor(long? anchor, long? before) => anchor is null && before is null ? "" : $"?anchor={anchor}&before={before}";
+}
+
+internal sealed class ConversationHostProjectException(ConversationApiError error, System.Net.HttpStatusCode status)
+    : HttpRequestException(error.Message, null, status)
+{
+    public ConversationApiError Error { get; } = error;
+}
+
+internal sealed class ConversationHostProtocolException : InvalidOperationException
+{
+    public ConversationHostProtocolException(string message) : base(message) { }
+    public ConversationHostProtocolException(string message, Exception inner) : base(message, inner) { }
 }

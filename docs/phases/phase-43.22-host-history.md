@@ -1,6 +1,6 @@
 # Phase 43.22 task 2 — Host outcomes and bounded history
 
-> **Design locked; Codex implements after task 1.** Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+> **Verified 2026-09-05.** Evidence: [task completion record](phase-43.22-host-history_completed.md). Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
 > No visual change. Default-path acceptance remains task 5's gate.
 
 ## Existing code to reuse and change

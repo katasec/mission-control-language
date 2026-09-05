@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text;
+using Azure;
 using ForgeMission.ConversationHost.Grains;
 using ForgeMission.Conversations.Contracts;
 using Orleans;
@@ -45,6 +47,9 @@ public static class ConversationApiEndpoints
     private const string DevTenantId = "dev";
     private const string SupportedMissionRef = "Janus";
 
+    /// <summary>The closed Project mission catalog (43.21 task 1). Re-checked here because the
+    /// Host is a public entry point and must not depend on a caller having validated its input;
+    /// the Worker's own resolver is the third and final check.</summary>
     public static void MapConversationApi(this WebApplication app)
     {
         app.MapPost("/conversations", StartConversationAsync);
@@ -58,6 +63,21 @@ public static class ConversationApiEndpoints
         // duplicated — a control conversation replays and tails through that same one.
         app.MapPost("/conversations/project-control", CreateProjectControlConversationAsync);
         app.MapPost("/conversations/{conversationId}/control-messages", SubmitProjectControlMessageAsync);
+
+        // 43.21 task 1 — the universal Project Mission invocation pair. Both produce ordinary
+        // runs, so their responses are the same shape a Janus start already returns.
+        app.MapPost("/conversations/project-mission", (CreateProjectMissionContainerRequest request, IGrainFactory grains) =>
+            ProjectRouteAsync(() => CreateProjectMissionContainerAsync(request, grains)));
+        app.MapPost("/conversations/{containerId}/mission-runs", (string containerId, StartProjectMissionRunRequest request, IGrainFactory grains) =>
+            ProjectRouteAsync(() => StartProjectMissionRunAsync(containerId, request, grains)));
+        app.MapGet("/conversations/{containerId}/runs", (string containerId, string? anchor, string? before, IGrainFactory grains) =>
+            ProjectRouteAsync(() => ReadProjectRunsAsync(containerId, anchor, before, grains)));
+        app.MapGet("/conversations/{containerId}/runs/{runId}", (string containerId, string runId, IGrainFactory grains) =>
+            ProjectRouteAsync(() => ReadProjectRunAsync(containerId, runId, grains)));
+        app.MapGet("/conversations/{containerId}/runs/{runId}/events", (string containerId, string runId, string? after, string? through, IGrainFactory grains) =>
+            ProjectRouteAsync(() => ReadProjectRunEventsAsync(containerId, runId, after, through, grains)));
+        app.MapGet("/conversations/{containerId}/project-commands/{commandId}", (string containerId, string commandId, IGrainFactory grains) =>
+            ProjectRouteAsync(() => ReadProjectCommandAsync(containerId, commandId, grains)));
     }
 
     // ═══════════════════════════ Transport-neutral message handlers ═══════════════════════════
@@ -164,6 +184,66 @@ public static class ConversationApiEndpoints
 
         return await grain.AcceptControlMessageAsync(
             new ConversationControlMessageInput(request.CommandId, request.Text));
+    }
+
+    /// <summary>Creates a Project's Mission container idempotently. The container and its required
+    /// create command are both derived from the stable Project ID, so every retry reaches the same
+    /// grain and another caller cannot mint a second container for that Project.</summary>
+    public static async Task<ConversationCommandOutcomeResult> HandleCreateProjectMissionContainerAsync(
+        CreateProjectMissionContainerRequest request, IGrainFactory grainFactory)
+    {
+        if (request.ProjectId == Guid.Empty || request.CommandId == Guid.Empty || string.IsNullOrWhiteSpace(request.ProjectGoal))
+            return Invalid("projectId, commandId, and a non-empty projectGoal are required.");
+
+        var createCommandId = ConversationDeterministicIds.ProjectMissionContainerCreate(request.ProjectId);
+        if (request.CommandId != createCommandId)
+            return Invalid("commandId must be the deterministic Project Mission container command for projectId.");
+
+        var containerId = ConversationDeterministicIds.Conversation(createCommandId);
+        var address = new ConversationAddress(DevTenantId, containerId);
+
+        var grain = grainFactory.GetGrain<IConversationGrain>(address.PartitionKey);
+        return await grain.AcceptProjectMissionContainerCreateAsync(
+            new ConversationProjectMissionCreateInput(request.CommandId, request.ProjectId, request.ProjectGoal));
+    }
+
+    /// <summary>Starts one child Mission Run (43.21 task 1). The mission is allow-listed HERE as
+    /// well as in Client Runtime and again by the Worker's closed catalog — the Host is a public
+    /// entry point, so it does not rely on a caller having validated anything. A container that
+    /// exists but is a run or control conversation is a conflict, not a not-found: it is
+    /// addressable, it is simply not a Project Mission container.
+    ///
+    /// This route grants no local tool authority. That is enforced by absence rather than by a
+    /// check: the request carries no capability field, so a direct Host caller — the one this
+    /// method exists to distrust — has nothing to put a tool declaration in.</summary>
+    public static async Task<ConversationCommandOutcomeResult> HandleStartProjectMissionRunAsync(
+        StartProjectMissionRunRequest request, IGrainFactory grainFactory)
+    {
+        if (request.ContainerId == Guid.Empty || request.CommandId == Guid.Empty ||
+            string.IsNullOrWhiteSpace(request.Mission) || string.IsNullOrWhiteSpace(request.Input))
+            return Invalid("containerId, commandId, mission, and non-blank input are required.");
+
+        if (!ProjectMissionNames.IsKnown(request.Mission))
+            return Invalid(
+                $"Unsupported mission '{request.Mission}'; only {string.Join(" and ", ProjectMissionNames.All)} are accepted.");
+
+        if (request.Input.Length > 32_000 || Encoding.UTF8.GetByteCount(request.Input) > 16_384)
+            return Invalid("Project Mission input exceeds its supported size.");
+
+        var address = new ConversationAddress(DevTenantId, request.ContainerId);
+        var grain = grainFactory.GetGrain<IConversationGrain>(address.PartitionKey);
+
+        if (await TryGetExistingSnapshotAsync(grain) is not { } snapshot)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.NotFound, null, "Container not found.");
+
+        if (snapshot.Purpose != ConversationPurpose.ProjectMission)
+            return new ConversationCommandOutcomeResult(
+                ConversationCommandOutcome.Conflict, null, "This conversation is not a Project Mission container.");
+
+        // No capabilities are read, because the request has none to read and the grain declares
+        // zero for every run on this route.
+        return await grain.AcceptProjectMissionRunAsync(
+            new ConversationProjectMissionRunInput(request.CommandId, request.Mission, request.Input));
     }
 
     public static async Task<GetConversationOutcomeResult> HandleGetConversationAsync(
@@ -308,6 +388,96 @@ public static class ConversationApiEndpoints
         };
     }
 
+    private static async Task<IResult> CreateProjectMissionContainerAsync(
+        CreateProjectMissionContainerRequest request, IGrainFactory grainFactory)
+    {
+        var result = await HandleCreateProjectMissionContainerAsync(request, grainFactory);
+        return result.Outcome switch
+        {
+            ConversationCommandOutcome.Accepted => Results.Created(
+                $"/conversations/{result.Acceptance!.ConversationId}",
+                new CreateProjectMissionContainerResponse(
+                    result.Acceptance.ConversationId, result.Acceptance.AcceptedSequence)),
+            ConversationCommandOutcome.Invalid => ProjectError("invalidRequest", result.Reason ?? "Invalid Project Mission create.", StatusCodes.Status400BadRequest),
+            ConversationCommandOutcome.Conflict => ProjectError("commandConflict", result.Reason ?? "Project Mission create conflicts.", StatusCodes.Status409Conflict),
+            _ => throw new InvalidOperationException(
+                $"Unhandled {nameof(ConversationCommandOutcome)} '{result.Outcome}' for project-mission create."),
+        };
+    }
+
+    private static async Task<IResult> StartProjectMissionRunAsync(
+        string containerId, StartProjectMissionRunRequest request, IGrainFactory grainFactory)
+    {
+        if (!TryParseRouteId(containerId, out var routeId))
+            return ProjectError("invalidRequest", "containerId must be a valid, non-empty GUID.", StatusCodes.Status400BadRequest);
+        if (request.ContainerId != routeId)
+            return ProjectError("invalidRequest", "Route containerId and request body ContainerId must agree.", StatusCodes.Status400BadRequest);
+        if (!ProjectMissionNames.IsKnown(request.Mission))
+            return ProjectError("unknownMission", "The selected mission is not supported.", StatusCodes.Status400BadRequest);
+        if (string.IsNullOrWhiteSpace(request.Input) || request.Input.Length > 32_000 || Encoding.UTF8.GetByteCount(request.Input) > 16_384)
+            return ProjectError("invalidRequest", "Project Mission input is invalid.", StatusCodes.Status400BadRequest);
+
+        var result = await HandleStartProjectMissionRunAsync(request, grainFactory);
+        return result.Outcome switch
+        {
+            ConversationCommandOutcome.Accepted => AcceptedWithHeaders(
+                new StartProjectMissionRunResponse(
+                    result.Acceptance!.ConversationId, result.Acceptance.RunId!.Value,
+                    result.Acceptance.AcceptedSequence, result.Acceptance.Status),
+                $"/conversations/{result.Acceptance.ConversationId}"),
+            ConversationCommandOutcome.Invalid => ProjectError("invalidRequest", result.Reason ?? "Invalid Project Mission run.", StatusCodes.Status400BadRequest),
+            ConversationCommandOutcome.NotFound => ProjectError("notFound", "The Project Mission container was not found.", StatusCodes.Status404NotFound),
+            // Both map to 409, but they are kept as separate arms rather than merged: a surface
+            // needs to tell "one run at a time" apart from a genuinely contradictory request, and
+            // the reason text is what carries that.
+            ConversationCommandOutcome.RunAlreadyActive => ProjectError("runAlreadyActive", result.Reason ?? "A run is active.", StatusCodes.Status409Conflict),
+            ConversationCommandOutcome.Conflict => ProjectError("commandConflict", result.Reason ?? "Project Mission run conflicts.", StatusCodes.Status409Conflict),
+            _ => throw new InvalidOperationException(
+                $"Unhandled {nameof(ConversationCommandOutcome)} '{result.Outcome}' for project-mission run."),
+        };
+    }
+
+    private static async Task<IResult> ReadProjectRunsAsync(string containerId, string? anchor, string? before, IGrainFactory grainFactory)
+    {
+        if (!TryParseRouteId(containerId, out var id) || !TryParseCursor(anchor, before, out var parsedAnchor, out var parsedBefore))
+            return ProjectError("invalidRequest", "The runs cursor is invalid.", StatusCodes.Status400BadRequest);
+        var grain = ProjectGrain(id, grainFactory);
+        if (await ProjectContainerErrorAsync(grain) is { } error) return error;
+        var result = await grain.ReadProjectRunsAsync(parsedAnchor, parsedBefore);
+        return ProjectReadResult(result, ConversationContractsJsonContext.Default.ProjectRunPage);
+    }
+
+    private static async Task<IResult> ReadProjectRunAsync(string containerId, string runId, IGrainFactory grainFactory)
+    {
+        if (!TryParseRouteId(containerId, out var container) || !TryParseRouteId(runId, out var run))
+            return ProjectError("invalidRequest", "Container and run ids are required.", StatusCodes.Status400BadRequest);
+        var grain = ProjectGrain(container, grainFactory);
+        if (await ProjectContainerErrorAsync(grain) is { } error) return error;
+        var result = await grain.ReadProjectRunAsync(run);
+        return ProjectReadResult(result, ConversationContractsJsonContext.Default.ProjectRunDetail);
+    }
+
+    private static async Task<IResult> ReadProjectRunEventsAsync(string containerId, string runId, string? after, string? through, IGrainFactory grainFactory)
+    {
+        if (!TryParseRouteId(containerId, out var container) || !TryParseRouteId(runId, out var run) ||
+            !TryParseRange(after, through, out var parsedAfter, out var parsedThrough))
+            return ProjectError("invalidRequest", "The trace range is invalid.", StatusCodes.Status400BadRequest);
+        var grain = ProjectGrain(container, grainFactory);
+        if (await ProjectContainerErrorAsync(grain) is { } error) return error;
+        var result = await grain.ReadProjectRunEventsAsync(run, parsedAfter, parsedThrough);
+        return ProjectReadResult(result, ConversationContractsJsonContext.Default.ProjectRunEventPage);
+    }
+
+    private static async Task<IResult> ReadProjectCommandAsync(string containerId, string commandId, IGrainFactory grainFactory)
+    {
+        if (!TryParseRouteId(containerId, out var container) || !TryParseRouteId(commandId, out var command))
+            return ProjectError("invalidRequest", "Container and command ids are required.", StatusCodes.Status400BadRequest);
+        var grain = ProjectGrain(container, grainFactory);
+        if (await ProjectContainerErrorAsync(grain) is { } error) return error;
+        var result = await grain.ReadProjectCommandAsync(command);
+        return ProjectReadResult(result, ConversationContractsJsonContext.Default.ProjectCommandReceipt);
+    }
+
     private static async Task<IResult> GetConversationAsync(string conversationId, IGrainFactory grainFactory)
     {
         if (!TryParseRouteId(conversationId, out var id))
@@ -358,13 +528,90 @@ public static class ConversationApiEndpoints
 
     private static bool TryParseRouteId(string raw, out Guid id) => Guid.TryParse(raw, out id) && id != Guid.Empty;
 
-    /// <summary>Null for an uninitialized/no-mission grain — a snapshot alone can never distinguish
-    /// that from a genuinely empty checkpoint, so callers must never leak it as <c>200</c>.</summary>
+    private static IConversationGrain ProjectGrain(Guid id, IGrainFactory factory) =>
+        factory.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey);
+
+    private static async Task<IResult?> ProjectContainerErrorAsync(IConversationGrain grain)
+    {
+        var snapshot = await TryGetExistingSnapshotAsync(grain);
+        if (snapshot is null) return ProjectError("notFound", "The Project Mission container was not found.", StatusCodes.Status404NotFound);
+        return snapshot.Purpose == ConversationPurpose.ProjectMission
+            ? null
+            : ProjectError("wrongPurpose", "This conversation is not a Project Mission container.", StatusCodes.Status409Conflict);
+    }
+
+    private static bool TryParseCursor(string? anchor, string? before, out long? parsedAnchor, out long? parsedBefore)
+    {
+        parsedAnchor = null; parsedBefore = null;
+        if (string.IsNullOrEmpty(anchor) && string.IsNullOrEmpty(before)) return true;
+        if (string.IsNullOrEmpty(anchor) || string.IsNullOrEmpty(before) ||
+            !long.TryParse(anchor, out var a) || !long.TryParse(before, out var b) || a <= 0 || b <= 0)
+            return false;
+        parsedAnchor = a; parsedBefore = b; return true;
+    }
+
+    private static bool TryParseRange(string? after, string? through, out long parsedAfter, out long? parsedThrough)
+    {
+        parsedAfter = 0; parsedThrough = null;
+        if (!string.IsNullOrEmpty(after) && (!long.TryParse(after, out parsedAfter) || parsedAfter < 0)) return false;
+        if (!string.IsNullOrEmpty(through) && (!long.TryParse(through, out var t) || t < 0)) return false;
+        if (!string.IsNullOrEmpty(through)) parsedThrough = long.Parse(through!);
+        return true;
+    }
+
+    private static IResult ProjectReadResult<T>(ConversationProjectReadResult result, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type) =>
+        result.ErrorCode is { } code ? ProjectError(code, result.ErrorMessage ?? "Project history request failed.", ProjectErrorStatus(code)) :
+        JsonSerializer.Deserialize(result.PayloadJson ?? "", type) is { } payload ? Results.Ok(payload) :
+        ProjectError("serviceUnavailable", "Project history response was invalid.", StatusCodes.Status503ServiceUnavailable);
+
+    private static IResult ProjectError(string code, string message, int status) =>
+        Results.Json(new ConversationApiError(code, message), ConversationContractsJsonContext.Default.ConversationApiError, statusCode: status);
+
+    private static async Task<IResult> ProjectRouteAsync(Func<Task<IResult>> action)
+    {
+        try
+        {
+            return await action();
+        }
+        catch (RequestFailedException)
+        {
+            return ProjectError("serviceUnavailable", "Project Mission storage is temporarily unavailable.", StatusCodes.Status503ServiceUnavailable);
+        }
+        catch (TimeoutException)
+        {
+            return ProjectError("serviceUnavailable", "Project Mission service is temporarily unavailable.", StatusCodes.Status503ServiceUnavailable);
+        }
+        catch (HttpRequestException)
+        {
+            return ProjectError("serviceUnavailable", "Project Mission service is temporarily unavailable.", StatusCodes.Status503ServiceUnavailable);
+        }
+    }
+
+    private static int ProjectErrorStatus(string code) => code switch
+    {
+        "invalidRequest" or "unknownMission" => StatusCodes.Status400BadRequest,
+        "notFound" => StatusCodes.Status404NotFound,
+        "legacyReadOnly" => StatusCodes.Status410Gone,
+        "serviceUnavailable" => StatusCodes.Status503ServiceUnavailable,
+        _ => StatusCodes.Status409Conflict,
+    };
+
+    /// <summary>Null for an uninitialized grain — a snapshot alone can never distinguish that from
+    /// a genuinely empty checkpoint, so callers must never leak it as <c>200</c>.
+    ///
+    /// A pinned mission is what proves a run or control conversation exists. A Project Mission
+    /// container pins none by design (43.21 task 1), so its existence invariant is instead its
+    /// purpose paired with a non-null Project ID — checking only the mission would report every
+    /// created container as missing.</summary>
     private static async Task<ConversationSnapshot?> TryGetExistingSnapshotAsync(IConversationGrain grain)
     {
         var result = await grain.GetSnapshotAsync();
         var snapshot = JsonSerializer.Deserialize(result.SnapshotJson, ConversationContractsJsonContext.Default.ConversationSnapshot)!;
-        return string.IsNullOrEmpty(snapshot.MissionRef) ? null : snapshot;
+
+        var exists = !string.IsNullOrEmpty(snapshot.MissionRef) ||
+            (snapshot.Purpose == ConversationPurpose.ProjectMission && snapshot.ProjectId is not null);
+
+        return exists ? snapshot : null;
     }
 
     private static ConversationCommandOutcomeResult Invalid(string reason)

@@ -109,6 +109,25 @@ public sealed class AzureTableConversationEventStore : IConversationEventStore
             yield return DeserializeEvent(entity.GetString("EventJson")!);
     }
 
+    public async Task<ConversationEvent[]> ReadRangeAsync(
+        ConversationAddress address, long after, long through, int count, CancellationToken ct)
+    {
+        if (after < 0 || through < after || count <= 0)
+            throw new ArgumentOutOfRangeException();
+
+        var lowerBound = EventRowKey(after + 1);
+        var upperBound = EventRowKey(through + 1);
+        var filter = TableClient.CreateQueryFilter(
+            $"PartitionKey eq {address.PartitionKey} and RowKey ge {lowerBound} and RowKey lt {upperBound}");
+        var events = new List<ConversationEvent>(count);
+        await foreach (var entity in _table.QueryAsync<TableEntity>(filter, cancellationToken: ct))
+        {
+            events.Add(DeserializeEvent(entity.GetString("EventJson")!));
+            if (events.Count == count) break;
+        }
+        return [.. events];
+    }
+
     public async Task<ConversationEvent?> ReadLatestForRunAsync(ConversationAddress address, Guid runId, CancellationToken ct)
     {
         var filter = TableClient.CreateQueryFilter(
