@@ -1,5 +1,7 @@
 # Forge Architecture — Mission Runtime, Client Runtime, Presentation
 
+> **Ownership amendment, 2026-09-06:** the finalized [domain ownership end state](../retrospectives/phase-43-domain-ownership/end-state.md) governs the planned extraction in [43.23](../phases/phase-43.23-domain-ownership.md). It separates Application services/API hosting from Client Runtime's local capability execution. In particular, “all local execution” below means agent capability execution in the target; Project persistence/content access has its own Application owner. The three-layer/process/naming descriptions below record the pre-extraction implementation and remain current deployment guidance until migrated. The linked amendment takes precedence for new ownership decisions; it does not claim the new projects already exist.
+
 **Status: Locked 2026-08-01; durable-conversation extension locked 2026-08-12;
 Desktop Supervisor/Host boundary locked 2026-08-17; durable local-runtime bootstrap locked
 2026-08-18.** This is the canonical, durable architecture doc for Forge as a
@@ -143,9 +145,9 @@ See [43.11](../phases/phase-43.11-wasm-photino-shell.md) for the desktop-specifi
 ### Presentation-surface parity — non-negotiable
 
 Desktop and TUI are interchangeable Presentation surfaces over the same Client Runtime capabilities.
-Every product action—creating/opening a Project, selecting a mission, submitting a control turn,
-launching/stopping/guiding a run, and reading its trace—must be expressible through a named Client
-Runtime contract and have no Desktop/Blazor/Host-only business path. A surface may choose its own
+Every supported product action—creating/opening a Project, selecting a mission, submitting an instruction,
+launching a run, and reading its trace—must be expressible through a named shared Application
+contract (currently packaged as ClientRuntime.Transport) and have no Desktop/Blazor/native-Host-only business path. Future stop/guidance actions must satisfy the same rule when designed. A surface may choose its own
 layout, input, focus, and accessibility behaviour; those presentation details are not a separate
 product capability. A new Desktop action is not ready until a TUI could invoke its underlying
 contract with the same authorization, outcome, and failure semantics.
