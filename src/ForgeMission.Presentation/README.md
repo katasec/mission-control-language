@@ -1,0 +1,59 @@
+---
+type: software-component
+title: Presentation
+description: Blazor WebAssembly rendering, navigation, focus, and view state for Forge.
+resource: src/ForgeMission.Presentation
+tags: [ui, blazor, presentation]
+---
+
+# Presentation
+
+## Purpose
+
+Renders the Forge launcher and workbench and translates user intent into typed Application Transport actions.
+
+## Why this exists
+
+View state and interaction must remain replaceable without becoming a second owner of Project, mission, or capability rules.
+
+## Owns
+
+- The WebAssembly entry point and channel registration in [`Program`](Program.cs).
+- Components, rendering, navigation, focus, subscriptions, and local view state, centered on [`Home`](Pages/Home.razor) and [`WorkbenchView`](Components/WorkbenchView.cs).
+
+## Does not own
+
+- Project validation or manifest I/O, selection/submission rules, run durability, local capability authority, HTTP endpoint binding, or native-host lifecycle.
+
+## Change admission
+
+A change belongs here only if it advances rendering, navigation, focus, or view state. For a domain decision compose with Application through `IApplicationChannel`; do not reproduce it in a component.
+
+## Use these pieces
+
+- [`Program`](Program.cs) installs the scoped [`IApplicationChannel`](../ForgeMission.Application.Transport/IApplicationChannel.cs).
+- [`Home`](Pages/Home.razor) is the routed application surface and subscribes to application events.
+- [`WorkbenchView`](Components/WorkbenchView.cs) names presentation-only view states.
+
+## Communicates with
+
+```mermaid
+flowchart LR
+  User[User] -->|interaction| UI[Blazor Presentation]
+  UI -->|typed actions| Transport[Application Transport]
+  Transport -->|loopback HTTP| Host[Application Host]
+  Host -->|SSE ApplicationEvent| Transport
+  Transport --> UI
+```
+
+## Important flows and constraints
+
+- A Project session starts an event subscription and is stopped before a replacement session takes over.
+- Presentation renders durable conversation/run facts returned by the Application; it does not synthesize them.
+- Static assets are served by Application Host, not by the native Host.
+
+## Related documentation
+
+- [Desktop interaction principles](../../docs/design/desktop-interaction-principles.md)
+- [UI design system](../../docs/design/ui-design-system.md)
+- [Ownership end state](../../docs/retrospectives/phase-43-domain-ownership/end-state.md#actors-and-boundaries)
