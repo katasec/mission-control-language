@@ -1,8 +1,9 @@
 # Phase 43.22 task 4 — Compose the workbench from focused views
 
-> **Implementation and local checks complete.** Browser/reference matrix, packaged native parity and
-> independent visible acceptance remain open.
-> Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+> **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> The Presentation paths and task instructions below describe the reconstruction baseline, not a
+> current implementation assignment. Read the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) before changing the workbench.
 
 ## Components and scope
 

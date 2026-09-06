@@ -1,5 +1,10 @@
 # Phase 43.22 — audited source boundary
 
+> **Historical reconstruction audit — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> The paths and owner names below describe the 43.22 baseline, not current implementation. Do
+> **not** recreate or extend them; use the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) for current ownership.
+
 All 88 changed files are classified: 33 C#/Razor sources, five stylesheets, six asset/build changes, twelve tests, and thirty-two documentation/reference files. Renames count once.
 
 Application source disposition: ten retain, seventeen revise, five reconstruct named responsibilities, one delete.

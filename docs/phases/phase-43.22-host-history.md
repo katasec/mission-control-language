@@ -1,7 +1,9 @@
 # Phase 43.22 task 2 — Host outcomes and bounded history
 
-> **Verified 2026-09-05.** Evidence: [task completion record](phase-43.22-host-history_completed.md). Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
-> No visual change. Default-path acceptance remains task 5's gate.
+> **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> The Host paths and ownership instructions below are reconstruction evidence, not current guidance.
+> Read the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) for current work.
 
 ## Existing code to reuse and change
 
