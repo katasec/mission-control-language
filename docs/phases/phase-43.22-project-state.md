@@ -1,7 +1,9 @@
 # Phase 43.22 task 1 — Project state and submission journal
 
-> **Verified 2026-09-05.** Evidence: [task completion record](phase-43.22-project-state_completed.md). Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
-> Non-visual component work; default-path proof is aggregated in task 5, not waived.
+> **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> Its `ProjectStore` instructions and source paths are not current implementation guidance. Read
+> the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) before changing Project code.
 
 ## Task and files
 

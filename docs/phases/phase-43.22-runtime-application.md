@@ -1,7 +1,9 @@
 # Phase 43.22 task 3 — Mission application and read session
 
-> **Verified 2026-09-05.** Evidence: [task completion record](phase-43.22-runtime-application_completed.md). Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
-> Product operations below Presentation; no native/visual change in this task.
+> **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> `ProjectMissionApplication`, `ProjectMissionReadSession`, and their paths below were replaced;
+> do **not** recreate them. Read the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) for current ownership.
 
 ## File and responsibility boundary
 

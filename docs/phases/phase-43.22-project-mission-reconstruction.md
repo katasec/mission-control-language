@@ -1,9 +1,11 @@
 # Phase 43.22 — Project Mission reconstruction
 
-> **Codex-only reconstruction, 2026-09-05.** Source implementation and local verification are complete;
-> controlled rollout, default-path and independent visible acceptance remain.
-> This phase uses the user-directed execution protocol below; it does not use a Claude relay or
-> copy/paste handoff.
+> **Historical reconstruction record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> Phase 43.23 verified the current ownership end state, default journey, and acceptance evidence.
+> Do **not** use the owner, class, file, or implementation instructions below to plan new work;
+> read the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) instead. This document preserves
+> the 43.22 reconstruction baseline and its evidence only.
 
 ## Outcome and scope
 
@@ -49,7 +51,10 @@ feature completion. Only the phase's rollout and visible-product requirements re
 | 4 | [Workbench presentation](phase-43.22-workbench-presentation.md) | Small composer and views; shared Runs list; reopenable trace; focused local Explorer | Implemented and locally verified; browser/native visual acceptance pending |
 | 5 | [Retirement and acceptance](phase-43.22-retirement-acceptance.md) | Remove legacy writers, correct Naive, verify whole product and publish evidence | Source retirement and local checks verified; controlled rollout and product acceptance pending |
 
-## Ownership and failure boundaries — locked
+## Historical 43.22 ownership and failure boundaries
+
+The names in this table were replaced by Phase 43.23; they are retained only to explain the
+reconstruction baseline. The current owner map is in the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06).
 
 | Owner | Sole responsibility / seam | Must not own |
 |---|---|---|

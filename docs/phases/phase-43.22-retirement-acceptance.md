@@ -1,8 +1,10 @@
 # Phase 43.22 task 5 — Retire old writers and prove the product
 
-> **Source retirement and local verification complete.** The controlled deployment drain,
-> default-path journey, browser/native acceptance and operator review remain open.
-> Parent: [reconstruction hub](phase-43.22-project-mission-reconstruction.md).
+> **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
+> Phase 43.23 contains the verified final acceptance evidence. The retirement instructions below
+> are preserved to explain the reconstruction baseline; do **not** execute them as a current task.
+> Use the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+> and the nearest [source component README](../../src/README.md) instead.
 
 ## Current status (2026-09-05)
 
