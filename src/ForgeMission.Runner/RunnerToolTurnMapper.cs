@@ -94,7 +94,7 @@ internal static class RunnerToolTurnMapper
             ? throw new ArgumentException($"A {field} is required.")
             : value;
 
-    // Mirrors MissionRuntimeSession's JSON-element conversion in the opposite direction. The
+    // Mirrors LegacyMissionProtocolClient's JSON-element conversion in the opposite direction. The
     // canonical values below are the only values this mapper creates, so no reflection serializer
     // is needed (or permitted in the Native AOT runner).
     private static IDictionary<string, object?> ToArguments(JsonElement? input)

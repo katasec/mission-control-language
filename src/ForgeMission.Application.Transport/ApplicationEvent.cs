@@ -14,7 +14,7 @@ public enum ApplicationEventKind
 
 // One stable wire envelope keeps SSE deserialization simple and leaves room for transport swaps.
 // Conversation carries one complete durable ConversationEvent (relayed verbatim by
-// ConversationRuntimeSession) whenever Kind is ConversationEvent; every other kind leaves it
+// ConversationScope) whenever Kind is ConversationEvent; every other kind leaves it
 // null. Serialized/deserialized through ConversationRelayJsonContext, not ApplicationJsonContext
 // — see that file for why.
 public sealed record ApplicationEvent(

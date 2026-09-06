@@ -9,7 +9,7 @@ namespace ForgeMission.Application;
 
 // The only Client Runtime class that knows the Task 6 HTTP/SSE projection: route formatting,
 // ConversationContractsJsonContext (de)serialization, and SSE event:/id:/data: frame parsing.
-// ConversationRuntimeSession owns session state, reconnect policy, and tool hand-off; it never
+// ConversationScope owns session state, reconnect policy, and tool hand-off; it never
 // touches HttpClient itself.
 internal sealed class ConversationHostClient(HttpClient httpClient)
 {

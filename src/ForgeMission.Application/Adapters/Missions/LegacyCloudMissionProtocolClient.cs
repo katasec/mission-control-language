@@ -11,8 +11,8 @@ namespace ForgeMission.Application;
 /// Drives Forge API A's buffered ExecuteMission tool round-trip. The client owns the transcript:
 /// ForgeAPI is stateless between calls, so tool continuations replay every prior turn locally.
 /// </summary>
-public sealed partial class CloudMissionRuntimeSession(
-    HttpClient httpClient, string mission = CloudMissionRuntimeSession.DefaultMission, ToolExecutorRegistry? toolExecutors = null)
+public sealed partial class LegacyCloudMissionProtocolClient(
+    HttpClient httpClient, string mission = LegacyCloudMissionProtocolClient.DefaultMission, ToolExecutorRegistry? toolExecutors = null)
 {
     private const string DefaultMission = "vanilla";
 

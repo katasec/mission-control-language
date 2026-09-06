@@ -8,12 +8,12 @@ using ForgeMission.Core.Tools;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
-// Exercises ConversationRuntimeSession/ConversationHostClient against a scripted HttpMessageHandler
+// Exercises ConversationScope/ConversationHostClient against a scripted HttpMessageHandler
 // standing in for the Task 6 HTTP/SSE contract — no ConversationHost/Azurite dependency, matching
 // the project-boundary rule that Client Runtime's own test project never references Host. A real
 // LocalDiskWorkspace/CapabilityDispatcher/ToolExecutorRegistry proves the local tool hand-off,
-// mirroring MissionRuntimeSessionTests' own real-workspace pattern.
-public sealed class ConversationRuntimeSessionTests : IDisposable
+// mirroring LegacyMissionProtocolClientTests' own real-workspace pattern.
+public sealed class ConversationServiceTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-conversation-session-").FullName;
 
@@ -168,6 +168,30 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task ForeignParticipantToolRequest_ReturnsAnErrorResult_WithoutReachingBob()
+    {
+        var conversationId = Guid.NewGuid();
+        var runId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
+        var toolRequested = NewEvent(conversationId, runId, 1, ConversationEventKind.ToolRequested,
+            ConversationParticipant.Proposer,
+            toolRequest: new ConversationToolRequest(requestId, "Read", JsonDocument.Parse("{}").RootElement.Clone()));
+        var handler = new ScriptedConversationHostHandler(
+            conversationId, runId, new Queue<string>([ToSseBody(toolRequested)]));
+        var (capabilities, dispatcher, executionCount) = BuildCountingWorkspace();
+
+        await using var session = NewSession(handler, capabilities, dispatcher, _ => { });
+        await session.SendAsync("Build the thing.", CancellationToken.None);
+
+        await WaitUntilAsync(() => handler.PostBodies.Count(IsToolResultBody) >= 1);
+
+        var toolResultBody = handler.PostBodies.First(IsToolResultBody);
+        Assert.True(toolResultBody.GetProperty("isError").GetBoolean());
+        Assert.Contains("Unsupported or invalid tool request", toolResultBody.GetProperty("content").GetString());
+        Assert.Equal(0, executionCount.Value);
+    }
+
+    [Fact]
     public async Task DisposeAsync_CancelsAnInFlightTail_AndNoFurtherToolExecutesAfterward()
     {
         var conversationId = Guid.NewGuid();
@@ -200,12 +224,12 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
 
     private static bool IsToolResultBody(JsonElement body) => body.TryGetProperty("toolRequestId", out _);
 
-    private ConversationRuntimeSession NewSession(
+    private ConversationScope NewSession(
         HttpMessageHandler handler, CapabilityRegistry capabilities, ICapabilityDispatcher dispatcher,
         Action<ApplicationEvent> publish)
     {
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") };
-        return new ConversationRuntimeSession(
+        return new ConversationScope(
             "session-1", "Janus", new ConversationHostClient(http), capabilities, dispatcher, publish, CancellationToken.None);
     }
 

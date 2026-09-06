@@ -8,7 +8,7 @@ using ForgeMission.Core.Tools;
 namespace ForgeMission.Tests.ClientRuntime;
 
 // Covers the ConversationSessionSlot lifecycle fix: durable prompt admission, lazy
-// ConversationRuntimeSession creation, and SendAsync are one operation serialized by the slot's
+// ConversationScope creation, and SendAsync are one operation serialized by the slot's
 // own gate, never exposed as separate GetOrCreate/SendAsync steps a caller could interleave with
 // a mission-switch replacement's disposal. See ApplicationSessionService.cs for the full race
 // this closes.
@@ -54,7 +54,7 @@ public sealed class ConversationSessionSlotTests : IDisposable
         var session = _store.CreateForProject(_workspace, "Janus", SessionRuntimeKind.DurableConversation);
         var factoryCallCount = 0;
 
-        ConversationRuntimeSession Factory()
+        ConversationScope Factory()
         {
             Interlocked.Increment(ref factoryCallCount);
             return NewSession(handler, session.Id);
@@ -92,21 +92,21 @@ public sealed class ConversationSessionSlotTests : IDisposable
         var first = session.Conversation.DisposeAsync().AsTask();
         var second = session.Conversation.DisposeAsync().AsTask();
         // Must not throw — a naive implementation double-disposing the underlying
-        // ConversationRuntimeSession would surface as ObjectDisposedException from its already-
+        // ConversationScope would surface as ObjectDisposedException from its already-
         // disposed CancellationTokenSource here.
         await Task.WhenAll(first, second);
 
         await session.Conversation.DisposeAsync(); // a third, later call is also a safe no-op
     }
 
-    private ConversationRuntimeSession NewSession(HttpMessageHandler handler, string sessionId)
+    private ConversationScope NewSession(HttpMessageHandler handler, string sessionId)
     {
         var workspace = new LocalDiskWorkspace(_workspace);
         var capabilities = new CapabilityRegistry([new WorkspaceFileProvider(workspace), new WorkspaceTerminalProvider(workspace)]);
         var dispatcher = new CapabilityDispatcher(
             capabilities, new PolicyCapabilityAuthorizer(CapabilityAuthorizationPolicy.Default), new InMemoryCapabilityAuditLog());
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") };
-        return new ConversationRuntimeSession(
+        return new ConversationScope(
             sessionId, "Janus", new ConversationHostClient(http), capabilities, dispatcher, _ => { }, CancellationToken.None);
     }
 

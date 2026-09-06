@@ -8,7 +8,7 @@ namespace ForgeMission.Tests.ClientRuntime;
 
 // Task 2a's real client/server proof: the Client Runtime talks HTTP + SSE to an in-process
 // AnthropicServer, then uses the production Edit executor against a real temporary workspace.
-public sealed class MissionRuntimeSessionTests : IDisposable
+public sealed class LegacyMissionProtocolClientTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-client-runtime-session-").FullName;
 
@@ -23,7 +23,7 @@ public sealed class MissionRuntimeSessionTests : IDisposable
         var client = new ScriptedAgentClient(notesPath);
         await using var fixture = await AnthropicServerFixture.StartAsync(client);
         using var http = new HttpClient { BaseAddress = new Uri(fixture.BaseUrl) };
-        var session = new MissionRuntimeSession(http);
+        var session = new LegacyMissionProtocolClient(http);
         var workspace = new LocalDiskWorkspace(_workspace);
         var capabilities = new CapabilityRegistry(
         [
