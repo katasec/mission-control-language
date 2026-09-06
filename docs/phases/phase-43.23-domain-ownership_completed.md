@@ -16,3 +16,9 @@
 | Runtime acceptance | N/A — Markdown-only change. No build, tests, model runs or deployment performed for this design task. Implementation must provide the separate acceptance evidence in the active spoke. |
 
 Review corrections incorporated before handoff: distinguish Application hosting from Bob; keep internal state behind a typed public facade; retain the two different event JSON enum settings; preserve legacy mode/default/error behavior; keep zero-authority refusal before tail cursor advance; document actual legacy result-delivery limits; use the merged reconstruction baseline without inventing another prerequisite.
+
+## Amendment — 2026-09-06
+
+The transport contract is now explicitly Type 1: shared action/event vocabulary, request/response fields, wire enum values, error semantics and identity/retry meaning are expensive product commitments. The Application.Transport assembly rename remains Type 2.
+
+The proposed generic `ApplicationApi.InvokeAsync<TRequest, TResponse>` dispatcher was removed. ApplicationComposition retains Create and DisposeAsync as the composition/lifetime owner; Application Host calls public typed owner interfaces over Transport DTOs. This preserves compile-time request/response pairing and keeps internal domain/session types non-public.

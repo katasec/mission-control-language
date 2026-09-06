@@ -27,34 +27,84 @@ The complete existing wire vocabulary is [ClientRuntimeContracts.cs](../../../sr
 
 Expected domain outcomes remain typed. Preserve existing HTTP 400/404 misuse/not-found behavior and unexpected transport failures rather than converting every exception to a generic success response. Application owns domain-error mapping and session lookup; endpoints bind requests, delegate and encode responses.
 
-### Public library entry point
+### Public composition and typed service seams
 
-Host must not require public exposure of ProjectRecord, ApplicationSession or the internal service graph. `ApplicationApi` is a thin, closed request dispatcher in Application, not another domain owner. It uses explicit request-type cases for the table above (no reflection or dynamic discovery), resolves the internal session, and delegates. The route adapter therefore does not construct or manipulate application state. Its complete public surface is:
+Application Host needs public typed services, not public ProjectRecord, ApplicationSession or the internal service graph. It receives one interface for each owner with a real transport-facing consumer. Each method accepts and returns the existing public Transport DTOs; all manifest records, session slots, workspace objects and protocol implementation types stay internal. This gives C# compile-time checking of every request/response pair and leaves no generic dispatcher to reject valid-looking combinations at runtime.
 
 ```csharp
-public sealed class ApplicationApi : IAsyncDisposable
+public interface IProjectService
 {
-    public static ApplicationApi Create(
+    Task<ProjectDraftResponse> DraftAsync(ProjectDraftRequest request, CancellationToken ct);
+    Task<ProjectOperationResponse> CreateAsync(ProjectCreateRequest request, CancellationToken ct);
+    Task<ProjectOperationResponse> OpenAsync(ProjectOpenRequest request, CancellationToken ct);
+    Task<SelectProjectMissionResponse> SelectMissionAsync(SelectProjectMissionRequest request, CancellationToken ct);
+}
+
+public interface IMissionSubmissionService
+{
+    Task<ProjectSubmissionResponse> StartAsync(StartProjectMissionRunRequest request, CancellationToken ct);
+    Task<ProjectSubmissionResponse> RetryAsync(RetryProjectMissionSubmissionRequest request, CancellationToken ct);
+}
+
+public interface IRunHistoryService
+{
+    Task<GetProjectMissionStateResponse> GetStateAsync(GetProjectMissionStateRequest request, CancellationToken ct);
+    Task<GetProjectRunsResponse> GetRunsAsync(GetProjectRunsRequest request, CancellationToken ct);
+    Task<GetProjectRunResponse> GetRunAsync(GetProjectRunRequest request, CancellationToken ct);
+    Task<GetProjectRunEventsResponse> GetEventsAsync(GetProjectRunEventsRequest request, CancellationToken ct);
+}
+
+public interface IProjectContentService
+{
+    Task<GetProjectWorkbenchResponse> GetWorkbenchAsync(GetProjectWorkbenchRequest request, CancellationToken ct);
+    Task<OpenProjectDocumentResponse> OpenDocumentAsync(OpenProjectDocumentRequest request, CancellationToken ct);
+}
+
+public interface IConversationService
+{
+    Task<PromptResponse> PromptAsync(PromptRequest request, CancellationToken ct);
+}
+
+public interface ICapabilityActionService
+{
+    Task<CapabilityDispatchResponse> DispatchAsync(CapabilityDispatchRequest request, CancellationToken ct);
+}
+
+public interface IInteractionService
+{
+    ConfirmationResponse Respond(ConfirmationResponseRequest request);
+}
+```
+
+`ApplicationComposition` is the composition and lifetime owner, not an API or request dispatcher. Its static Create and DisposeAsync are the only application-wide lifecycle operations. It constructs the concrete internal services, owns the shared ApplicationSessionService and joins all session disposal. It exposes the typed interfaces above for Host registration.
+
+```csharp
+public sealed class ApplicationComposition : IAsyncDisposable
+{
+    public static ApplicationComposition Create(
         IHttpClientFactory clients,
         string? missionRuntimeMode,
         CapabilityAuthorizationPolicy policy,
         Action<ApplicationEvent> publish,
         CancellationToken applicationStopping);
 
-    public Task<TResponse> InvokeAsync<TRequest, TResponse>(
-        TRequest request, CancellationToken ct);
+    public IProjectService Projects { get; }
+    public IMissionSubmissionService MissionSubmissions { get; }
+    public IRunHistoryService RunHistory { get; }
+    public IProjectContentService ProjectContent { get; }
+    public IConversationService Conversations { get; }
+    public ICapabilityActionService Capabilities { get; }
+    public IInteractionService Interactions { get; }
 
     public ValueTask DisposeAsync();
 }
-
-public sealed class ApplicationSessionNotFoundException : Exception;
-public sealed class SessionReplacementRejectedException(string message) : Exception(message);
-public sealed class ApplicationRequestRejectedException(string message) : Exception(message);
 ```
 
-`IHttpClientFactory` is the existing System.Net.Http abstraction; policy is the existing Core type and ApplicationEvent is the renamed transport event record. Create composes the concrete internal owners, with the existing default Project root and named `mission-runtime`/`conversation-host` clients; it performs no Project I/O or execution-session creation. Host supplies those clients with already-resolved endpoints/credentials, passes the existing MissionRuntime:Mode value and registers one API instance for process lifetime. Preserve `UsesCloudMissionRuntime`: null or case-insensitive cloud selects the cloud adapter; other values select the existing compatibility adapter. Null mission keeps each adapter's existing default. The test harness can supply controlled clients, explicitly non-acceptance. Domain classes and their Project/session types remain internal.
+`IHttpClientFactory` is the existing System.Net.Http abstraction; policy is the existing Core type and ApplicationEvent is the renamed transport event record. Create composes the concrete internal owners, with the existing default Project root and named `mission-runtime`/`conversation-host` clients; it performs no Project I/O or execution-session creation. Host supplies those clients with already-resolved endpoints/credentials, passes the existing MissionRuntime:Mode value and registers the composition and its typed interfaces for process lifetime. Preserve `UsesCloudMissionRuntime`: null or case-insensitive cloud selects the cloud adapter; other values select the existing compatibility adapter. Null mission keeps each adapter's existing default. The test harness can supply controlled clients, explicitly non-acceptance.
 
-Missing sessions raise ApplicationSessionNotFoundException, mapped by Host to the existing 404, except confirmation lookup, which preserves Accepted=false. Invalid replacement raises the existing exception made public, mapped to 400. An unsupported capability operation raises ApplicationRequestRejectedException with the existing `Unsupported capability request.` message, also mapped to 400. Expected Project failures use their existing response payloads; legacy prompt HttpRequestException/InvalidOperationException handling still emits Error and returns PromptResponse(IsError=true). Unsupported request/response generic pairs are a programming error (`ArgumentException`), not an extensibility path. API disposal closes and joins all owned session disposal before completing. It contains request routing and composition only; journal, history, policy, protocol and lifecycle algorithms remain with the owners named above. Host's event hub receives the injected callback and owns SSE clients, not domain decisions.
+Each Host endpoint injects and calls only its matching interface. For example, project routes call IProjectService, run/retry routes call IMissionSubmissionService, history routes call IRunHistoryService, and direct local capability dispatch calls ICapabilityActionService. The Host binds HTTP/SSE and encodes results; it does not coordinate multi-owner workflows. IProjectService internally coordinates create/open with the internal ApplicationSessionService, so the Host never receives a ProjectRecord or attaches Bob itself.
+
+Missing sessions are translated by the typed owner to the existing 404, except confirmation lookup, which preserves Accepted=false. Invalid replacement remains the existing typed 400 result. An unsupported capability operation retains the existing 400 `Unsupported capability request.` response. Expected Project failures use their existing response payloads; legacy prompt HttpRequestException/InvalidOperationException handling still emits Error and returns PromptResponse(IsError=true). ApplicationComposition disposal closes and joins all owned session disposal before completing. Host's event hub receives the injected callback and owns SSE clients, not domain decisions.
 
 ## Local execution boundary
 
