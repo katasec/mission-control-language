@@ -1,7 +1,9 @@
 # Phase 43.24 — Conversation Markdown rendering
 
-> **Status: design ready (2026-09-06).** Part of [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
-> Next: Claude supplies an implementation plan for Task 1; no code changes are approved yet.
+> **Status: Task 1 implemented (2026-09-07); default-path acceptance outstanding.** Part of
+> [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
+> Next: one operator action in the already-running packaged Desktop closes the default-path row —
+> see [phase-43.24-conversation-markdown-rendering_completed.md](phase-43.24-conversation-markdown-rendering_completed.md#default-path-acceptance--incomplete-blocked-on-a-host-permission).
 
 ## Outcome
 
@@ -138,6 +140,14 @@ used here.
 | Presentation-surface parity | **PASS / N/A.** This adds no product action, authorization, or outcome. It is surface-specific semantic rendering, so no Application Transport action is required. |
 
 ## Task 1 — Render durable participant Markdown safely
+
+**Implemented on `codex/desktop-markdown-rendering` (`f91bc6a`); build, tests, publish and browser
+visual evidence pass; the packaged zero-argument observation is still outstanding. Detail, evidence
+and two open design observations: [phase-43.24-conversation-markdown-rendering_completed.md](phase-43.24-conversation-markdown-rendering_completed.md#task-1--render-durable-participant-markdown-safely).**
+
+**Pipeline ordering is load-bearing and stays in the active design:** `DisableHtml()` must be the
+**last** builder call. Verified on Markdig 1.3.2 — any `Use<>()` placed after it silently restores
+the raw-HTML parsers and a response's `<script>` reaches the DOM live.
 
 ### Change
 
