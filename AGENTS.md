@@ -22,13 +22,17 @@ for the grammar and syntax decisions.
    repository-wide definition of the supported user defaults and the evidence required to prove
    them. A documentation-only task records N/A; every other task first determines whether this
    gate applies before taking action.
-2. Read [docs/plan.md](docs/plan.md) — the active-work hub. It's a **light table of contents**:
+2. Before planning a code change, read the [Source Component Atlas](src/README.md), then the
+   nearest component README for every affected path. The task plan or PR description must state
+   why the change advances that component's "Why this exists"; if it cannot, stop and locate the
+   correct owner.
+3. Read [docs/plan.md](docs/plan.md) — the active-work hub. It's a **light table of contents**:
    links + a one-line status per active phase, nothing more. It answers only "what is next?".
    Read [docs/backlog.md](docs/backlog.md) or [docs/plan_completed.md](docs/plan_completed.md)
    only when the task requires deferred or historical context.
-3. Read the spoke doc for the current phase — linked from `docs/plan.md` — for the actual detail:
+4. Read the spoke doc for the current phase — linked from `docs/plan.md` — for the actual detail:
    design, decisions, task status.
-4. Read [docs/design/architecture.md](docs/design/architecture.md) if you need component
+5. Read [docs/design/architecture.md](docs/design/architecture.md) if you need component
    boundaries, or another `docs/design/*.md` file if the task touches that area.
 
 Do not load everything at once. Start from the hub and follow links only when the task requires it.
