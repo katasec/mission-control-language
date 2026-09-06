@@ -7,7 +7,7 @@ namespace ForgeMission.Orchestration;
 
 // Owns the local Docker Mission Runtime lifecycle — a local hosting target for the Mission Runtime,
 // not to be confused with IDockerProvider (a Client Runtime capability the Mission Runtime can
-// request, e.g. sandboxed container execution — see forge-architecture.md). MissionRuntimeSession
+// request, e.g. sandboxed container execution — see forge-architecture.md). LegacyMissionProtocolClient
 // sees only BaseUrl, exactly as it does for an in-process or hosted runtime.
 internal sealed class LocalDockerMissionRuntimeLauncher(string containerName, int hostPort) : IMissionRuntimeLauncher
 {

@@ -1,8 +1,8 @@
 namespace ForgeMission.Application.Transport;
 
-// Mission: today's stateless per-prompt tool round-trip (MissionRuntimeSession/
-// CloudMissionRuntimeSession). DurableConversation: the Client Runtime-owned durable Janus
-// session (ConversationRuntimeSession) reached through the Task 6 Conversation API.
+// Mission: today's stateless per-prompt tool round-trip (LegacyMissionProtocolClient/
+// LegacyCloudMissionProtocolClient). DurableConversation: the Application-owned Janus
+// ConversationService/ConversationScope reached through the Task 6 Conversation API.
 public enum SessionRuntimeKind
 {
     Mission,

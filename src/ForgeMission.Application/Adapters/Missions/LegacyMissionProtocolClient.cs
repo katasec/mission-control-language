@@ -15,7 +15,7 @@ namespace ForgeMission.Application;
 // already-established wire contract.
 // ChatGPT is the public runner's vanilla built-in label. A MissionRef runner has one loaded mission
 // and therefore ignores this model id through its single-mission fallback.
-public sealed partial class MissionRuntimeSession(HttpClient httpClient, string model = "ChatGPT", ToolExecutorRegistry? toolExecutors = null)
+public sealed partial class LegacyMissionProtocolClient(HttpClient httpClient, string model = "ChatGPT", ToolExecutorRegistry? toolExecutors = null)
 {
     private readonly ToolExecutorRegistry _toolExecutors = toolExecutors ?? new ToolExecutorRegistry();
     private readonly List<WireMessage> _messages = [];

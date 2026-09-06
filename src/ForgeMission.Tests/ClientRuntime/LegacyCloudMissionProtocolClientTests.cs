@@ -7,7 +7,7 @@ using ForgeMission.Core.Tools;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
-public sealed class CloudMissionRuntimeSessionTests : IDisposable
+public sealed class LegacyCloudMissionProtocolClientTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-cloud-session-").FullName;
 
@@ -21,7 +21,7 @@ public sealed class CloudMissionRuntimeSessionTests : IDisposable
 
         var handler = new ScriptedForgeApiHandler(notesPath);
         using var http = new HttpClient(handler) { BaseAddress = new Uri("https://forge.test/") };
-        var session = new CloudMissionRuntimeSession(http);
+        var session = new LegacyCloudMissionProtocolClient(http);
         var capabilities = new CapabilityRegistry([new WorkspaceFileProvider(new LocalDiskWorkspace(_workspace))]);
         var dispatcher = new CapabilityDispatcher(
             capabilities,
@@ -70,7 +70,7 @@ public sealed class CloudMissionRuntimeSessionTests : IDisposable
     {
         var handler = new RecordingForgeApiHandler();
         using var http = new HttpClient(handler) { BaseAddress = new Uri("https://forge.test/") };
-        var session = new CloudMissionRuntimeSession(http);
+        var session = new LegacyCloudMissionProtocolClient(http);
         var capabilities = new CapabilityRegistry([new WorkspaceFileProvider(new LocalDiskWorkspace(_workspace))]);
         var dispatcher = new CapabilityDispatcher(
             capabilities,
@@ -87,7 +87,7 @@ public sealed class CloudMissionRuntimeSessionTests : IDisposable
     {
         var handler = new RecordingForgeApiHandler();
         using var http = new HttpClient(handler) { BaseAddress = new Uri("https://forge.test/") };
-        var session = new CloudMissionRuntimeSession(http, mission: "websearch");
+        var session = new LegacyCloudMissionProtocolClient(http, mission: "websearch");
         var capabilities = new CapabilityRegistry([new WorkspaceFileProvider(new LocalDiskWorkspace(_workspace))]);
         var dispatcher = new CapabilityDispatcher(
             capabilities,

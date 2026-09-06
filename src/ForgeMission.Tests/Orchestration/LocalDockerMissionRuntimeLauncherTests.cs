@@ -38,7 +38,7 @@ public sealed class LocalDockerMissionRuntimeLauncherTests
         Skip.If(string.IsNullOrWhiteSpace(workspaceRoot), "FORGE_DOCKER_WORKSPACE_ROOT not set");
 
         using var http = new HttpClient { BaseAddress = new Uri(baseUrl!) };
-        var session = new MissionRuntimeSession(http);
+        var session = new LegacyMissionProtocolClient(http);
         var workspace = new LocalDiskWorkspace(workspaceRoot!);
         var capabilities = new CapabilityRegistry(
         [

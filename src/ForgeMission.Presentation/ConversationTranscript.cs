@@ -38,7 +38,7 @@ public sealed record ConversationEntry(
 /// never produces a second bubble/tool row. Entries are only ever appended or replaced in place
 /// (never removed), so an index recorded for an in-progress typing indicator or tool row always
 /// stays valid. Owns no HTTP, SSE parsing, or ConversationHost knowledge; Client Runtime's
-/// ConversationRuntimeSession relays already-decoded ConversationEvent values here.
+/// ConversationScope relays already-decoded ConversationEvent values here.
 /// </summary>
 public sealed class ConversationTranscript
 {

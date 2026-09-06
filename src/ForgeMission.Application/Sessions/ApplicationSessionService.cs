@@ -32,7 +32,7 @@ internal sealed class ApplicationSessionService(
 
     // Replacement only: a mission switch inside an already-open Project. Removing and disposing the
     // outgoing entry first is what stops an abandoned Janus session's durable tail before it can
-    // execute a later local tool — see ConversationRuntimeSession.DisposeAsync. Requiring the
+    // execute a later local tool — see ConversationScope.DisposeAsync. Requiring the
     // outgoing session to exist, and its root to match, is what stops this path from quietly
     // becoming a second way to open an arbitrary folder.
     public Task<ApplicationSession> ReplaceAsync(
@@ -177,12 +177,12 @@ internal sealed record ApplicationSession(
 }
 
 // The sole entry point for a durable Client Runtime session's prompt lifecycle. Admission, lazy
-// ConversationRuntimeSession creation, and SendAsync are one operation serialized by _gate — never
+// ConversationScope creation, and SendAsync are one operation serialized by _gate — never
 // exposed as separate GetOrCreate/SendAsync steps a caller could interleave with disposal. This
 // closes a real race: a /transport/prompt request can call ApplicationSessionService.TryGet and
 // obtain this slot's owning ApplicationSession just before a mission switch replaces and
 // disposes that same session. Without one serialized lifecycle, that prompt could still create
-// and start a ConversationRuntimeSession after replacement — an orphaned durable session and tail
+// and start a ConversationScope after replacement — an orphaned durable session and tail
 // the store no longer tracks or can ever dispose, free to execute a local tool after the user
 // switched away. With SendPromptAsync as the only entry point: whichever of admission or
 // disposal reaches _gate first decides the outcome for the other. If disposal wins, it closes the
@@ -197,12 +197,12 @@ internal sealed class ConversationSessionSlot : IAsyncDisposable
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _disposeGate = new();
-    private ConversationRuntimeSession? _session;
+    private ConversationScope? _session;
     private Task? _dispose;
     private bool _closed;
 
     public async Task<Guid> SendPromptAsync(
-        Func<ConversationRuntimeSession> factory, string prompt, CancellationToken ct)
+        Func<ConversationScope> factory, string prompt, CancellationToken ct)
     {
         await _gate.WaitAsync(ct);
         try
@@ -230,7 +230,7 @@ internal sealed class ConversationSessionSlot : IAsyncDisposable
 
     private async Task DisposeCoreAsync()
     {
-        ConversationRuntimeSession? toDispose;
+        ConversationScope? toDispose;
         await _gate.WaitAsync();
         try
         {
