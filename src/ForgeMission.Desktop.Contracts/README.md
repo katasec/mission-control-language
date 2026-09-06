@@ -43,7 +43,8 @@ flowchart LR
   Protocol --> Host[Desktop Host]
   Host -->|RetryRequested| Protocol
   Protocol --> Supervisor
-  Host -->|implements| Contract[IDesktopHost]
+  Host -->|composes and consumes| Adapter[PhotinoDesktopHost]
+  Adapter -->|implements| Contract[IDesktopHost]
 ```
 
 ## Important flows and constraints
