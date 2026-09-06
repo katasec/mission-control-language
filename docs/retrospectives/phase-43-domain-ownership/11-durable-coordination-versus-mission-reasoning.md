@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: ownership review candidate; revisit after Project 
 
 Accept and deduplicate commands, serialize state transitions, persist ordered events and run checkpoints, dispatch work, handle progress delivery, and recover failed attempts. These responsibilities are separate from interpreting a mission, invoking experts/models, and deciding subsequent reasoning steps.
 
-Current locations: `src/ForgeMission.ConversationHost/Grains/`, `Persistence/`, and `Messaging/`; `src/ForgeMission.ConversationWorker/Messaging/`; mission executors under `src/ForgeMission.ConversationWorker/Janus/`; shared execution machinery in Core.
+Baseline locations at PR #99: `src/ForgeMission.ConversationHost/Grains/`, `Persistence/`, and `Messaging/`; `src/ForgeMission.ConversationWorker/Messaging/`; mission executors under `src/ForgeMission.ConversationWorker/Janus/`; shared execution machinery in Core.
 
 ## Boundary concern
 

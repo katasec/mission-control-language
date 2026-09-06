@@ -4,9 +4,9 @@ using ForgeMission.Core.Tools;
 using ForgeMission.Tests.Integration;
 using Microsoft.Extensions.AI;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
-// Task 2a's real client/server proof: the Client Runtime talks HTTP + SSE to an in-process
+// Task 2a's real client/server proof: Application talks HTTP + SSE to an in-process
 // AnthropicServer, then uses the production Edit executor against a real temporary workspace.
 public sealed class LegacyMissionProtocolClientTests : IDisposable
 {

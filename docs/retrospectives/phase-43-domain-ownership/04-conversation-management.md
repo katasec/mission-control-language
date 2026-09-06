@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Create or reopen conversations; associate conversation identities with Projects; distinguish a first prompt from a follow-up; submit user messages; retain client-side conversation identity and lifetime.
 
-Current locations: `src/ForgeMission.ClientRuntime/Services/ProjectControlRuntimeSession.cs` and parts of `ConversationRuntimeSession.cs`. `ConversationHostClient.cs` supplies the remote API adapter. Project Control includes a legacy path; its existence does not establish its future role.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Services/ProjectControlRuntimeSession.cs` and parts of `ConversationRuntimeSession.cs`. `ConversationHostClient.cs` supplies the remote API adapter. Project Control includes a legacy path; its existence does not establish its future role.
 
 ## Boundary concern
 

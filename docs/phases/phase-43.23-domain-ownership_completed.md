@@ -47,7 +47,7 @@ The deliberately retained limits remain unchanged: no durable local tool-result 
 
 | Check | Observation |
 |---|---|
-| Read ownership and protocol | A scoped `RunHistoryService` owns verified state/list/detail/event reads. `ProjectMissionReadScope` composes that reader, `RunObservationService`, and a scope-owned `ProjectMissionToolRefusal`; refusal runs before the tail cursor advances. The transport-facing `ProjectMissionHistoryEndpointService` performs only live-session lookup and scope entry. Observation retains the existing one-queued-invalidation plus dirty-replacement bound. |
+| Read ownership and protocol | **Task 2 state:** a scoped `RunHistoryService` owned verified state/list/detail/event reads, while `ProjectMissionReadScope` composed it with `RunObservationService` and a scope-owned `ProjectMissionToolRefusal`; refusal ran before the tail cursor advanced. Task 4 finalized the boundary as host-facing `RunHistoryService` plus scoped `ProjectMissionHistoryReader`, removing the transitional endpoint wrapper. Observation retains the existing one-queued-invalidation plus dirty-replacement bound. |
 | Failure and retry boundaries | Focused Project, submission, history, session, tail, and refusal checks passed. Lost-response/same-command retry coverage remains on `MissionSubmissionService`; a deliberately changed second intent was refused with the existing “submission changed” result rather than overwriting the accepted journal. |
 | Root review | Review removed stale duplicate Project/session/submission/history/content workflows from `ApplicationInteractionServices`, restored bounded invalidation, and required the final scoped History/Observation/refusal split. `git diff --check` passed. |
 | Automated verification | `dotnet build src/ForgeMission.slnx --no-restore`: 0 warnings/0 errors. `dotnet test src/ForgeMission.slnx --no-build --no-restore`: passed. Focused final `RunHistoryServiceTests|ClientRuntimeEndpointsTests`: 3 passed; prior owner/history/session/refusal focused set: 76 passed. |
@@ -67,3 +67,38 @@ The deliberately retained limits remain unchanged: no durable local tool-result 
 | AOT package | `make desktop-publish` passed. The only linker output was the pre-existing macOS Homebrew OpenSSL/Brotli minimum-OS warnings. |
 | Default product journey | Zero-argument published Desktop, with no positional/runtime URL override, started the normal owned bridge, Application Host `127.0.0.1:49703`, and native Host. Dedicated Project `97992919-0a59-4271-8b8b-403e74db5d84` (schema 3) used Naive after the default Janus selection; command `a2095ec0-e4d8-458f-ba96-f7456006c326` created run `31b6b2f1-c103-5b22-8123-df7652ca40c3`. The UI showed Completed, one expert turn, zero tools, and trace events 1–4 with user text `TASK3-PASS`. Reload/open preserved selection and history; Project Explorer opened the dedicated `mcl.lock` asset. |
 | UI and lifecycle | Existing Mission, trace, Explorer, persisted run/history, and document states rendered without a Task 3 visual or interaction change. Forced native Host exit removed Desktop `90229`, native Host `90249`, Application Host `90251`, and bridge `90250`. A separate normal window close removed Desktop `91943`, native Host `91944`, Application Host `91951`, and bridge `91945`. |
+
+## Task 4 — ownership acceptance and documentation (2026-09-06)
+
+**Complete and verified.** The final review removed the transitional history endpoint wrapper. The
+typed host boundary is now `RunHistoryService`; its explicitly bounded
+`ProjectMissionHistoryReader` remains inside the existing read scope so observation and replacement
+lifetime do not become a second session store. Current architecture, default-path documentation,
+diagnostics and tests use Application/Application Host terminology. The deliberate
+`FORGE_CLIENT_RUNTIME_URL=` readiness wire marker and named legacy protocol clients remain.
+
+| # | Disposition | Current source or preserved authority | Evidence |
+|---|---|---|---|
+| 1 | Project management | `Application/Projects/ProjectService` and its private manifest adapters | Project/transport tests; default Project create/open |
+| 2 | Mission selection | `ProjectService.SelectMissionAsync` plus `Missions/MissionCatalog` | Naive selection persisted through reopen |
+| 3 | Submission/recovery | `Missions/MissionSubmissionService` and Host adapter | existing retry/journal focused coverage; full suite |
+| 4 | Conversation management | `Conversations/ConversationService`, `Adapters/Conversations/ConversationHostClient` | conversation lifecycle focused coverage |
+| 5 | History/observation | host-bound `Runs/RunHistoryService`; scoped `ProjectMissionHistoryReader` and `RunObservationService` | 42 focused architecture/history/transport/Desktop checks |
+| 6 | Workbench content | `Projects/ProjectContentService` | Project Explorer opened the dedicated `mcl.lock` asset |
+| 7 | Compatibility protocol | named `LegacyMissionProtocolClient`, `LegacyCloudMissionProtocolClient`, `LegacyJanusToolDelivery` | compatibility and direct-dispatch coverage remains in full suite |
+| 8 | Application sessions | `Sessions/ApplicationSessionService` | session/replacement focused coverage |
+| 9 | Presentation hosting | `Application.Host/Program.cs`, `Application.Transport`, `Presentation` | published static application and existing workbench states rendered |
+| 10 | Supervision | Desktop `ApplicationHostProcess` and existing Orchestration | forced native Host and normal window-close cleanup |
+| 11 | Durability/reasoning | existing Conversation Host and Worker | no source relocation; full suite preserved their boundary |
+| 12 | Platform access/accounting | existing platform/API/Billing owners and cloud adapter token path | no new credential/grant source; full suite |
+| 13 | Janus/generic infrastructure | Worker Janus mapping; `LegacyJanusToolDelivery`; Application refusal path; Bob policy | Bob boundary and hostile-tool/direct-dispatch coverage |
+| 14 | Shared API/ownership | `Application.Transport`, typed Application owners, `ApplicationComposition` | architecture route/compatibility checks reject the removed wrapper/generic boundary |
+
+| Check | Observation |
+|---|---|
+| Cleanup review | Obsolete Application-facing Client Runtime diagnostics/names moved to Application or Application Host; clear Application and Host test fixtures moved accordingly. Genuine Bob package references and capability tests remain. `git diff --check` passed. |
+| Automated verification | `dotnet build src/ForgeMission.slnx --no-restore`: 0 warnings/0 errors. Focused architecture/history/transport/Desktop coverage: 42 passed. `dotnet test src/ForgeMission.slnx --no-build --no-restore`: passed (the existing integration skips remain intentional). |
+| AOT package | `make desktop-publish` passed. Published `ForgeMission.Desktop` and `ForgeMission.Application.Host` were produced. The only linker output was the existing macOS Homebrew OpenSSL/Brotli minimum-OS warnings. |
+| Default product journey | Zero-argument published Desktop, without positional/runtime URL overrides, created dedicated Project `ce7870e2-5c30-4529-abca-dc7052ed9330` (schema 3) at `/Users/ameerdeen/Forge/Projects/task-4-final-ownership-acceptance`. Default Janus was switched to Naive; command `8762ac1d-2d14-456b-8ed1-a9b50269a435` created run `1f4c2cdf-c18e-57bf-b2fb-1041c121c0a1`, completed as one expert turn and zero tool calls. Its trace showed events 1–4, user text `TASK4-PASS`, and Completed. Reload then explicit open preserved Naive selection and history; Project Explorer displayed the dedicated `mcl.lock` asset. |
+| Visual regression | Existing Forge Workbench navigation, Missions, completed run, trace, Explorer, persisted history/selection and text-asset states rendered with the existing theme. No Task 4 visual or interaction regression was observed. |
+| Lifecycle | Before forced exit: Desktop `98388`, native Host `98392`, Application Host `98395`, owned bridge `98394`. Killing native Host removed all four after 12 seconds. A separate zero-argument launch followed by normal window close left no Desktop, native Host, Application Host, or owned bridge process. |

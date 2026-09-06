@@ -9,7 +9,7 @@ using Microsoft.Extensions.AI;
 
 namespace ForgeMission.Application;
 
-// Drives the existing Anthropic /v1/messages tool-round-trip from the local Client Runtime.
+// Drives the existing Anthropic /v1/messages tool-round-trip from the local Application layer.
 // The Mission Runtime remains responsible for deciding which tool to call; this class only
 // executes that request against the user's selected workspace and returns its result over the
 // already-established wire contract.

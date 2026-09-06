@@ -1,5 +1,5 @@
 @page "/"
-@inject IApplicationChannel ClientRuntime
+@inject IApplicationChannel ApplicationChannel
 @implements IAsyncDisposable
 
 @if (project is null)
@@ -92,19 +92,19 @@ else
     private async Task DraftProjectAsync()
     {
         if (string.IsNullOrWhiteSpace(goalInput)) { launcherError = "Enter a goal to start."; return; }
-        var response = await LauncherAsync(token => ClientRuntime.SendAsync<ProjectDraftRequest, ProjectDraftResponse>(new(goalInput, Blank(titleInput), Blank(homeInput)), token));
+        var response = await LauncherAsync(token => ApplicationChannel.SendAsync<ProjectDraftRequest, ProjectDraftResponse>(new(goalInput, Blank(titleInput), Blank(homeInput)), token));
         if (response?.Draft is { } draft) { titleInput = draft.ProposedTitle; homeInput = draft.HomePath; }
         else if (response?.Error is { } error) launcherError = error.Message;
     }
     private async Task CreateProjectAsync()
     {
-        var response = await LauncherAsync(token => ClientRuntime.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(new(goalInput, Blank(titleInput), Blank(homeInput)), token));
+        var response = await LauncherAsync(token => ApplicationChannel.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(new(goalInput, Blank(titleInput), Blank(homeInput)), token));
         if (response is not null) await ApplyProjectAsync(response);
     }
     private async Task OpenProjectAsync()
     {
         if (string.IsNullOrWhiteSpace(openPathInput)) { launcherError = "Enter a folder to open."; return; }
-        var response = await LauncherAsync(token => ClientRuntime.SendAsync<ProjectOpenRequest, ProjectOperationResponse>(new(openPathInput), token));
+        var response = await LauncherAsync(token => ApplicationChannel.SendAsync<ProjectOpenRequest, ProjectOperationResponse>(new(openPathInput), token));
         if (response is not null) await ApplyProjectAsync(response);
     }
     private async Task<T?> LauncherAsync<T>(Func<CancellationToken, Task<T>> operation) where T : class
@@ -118,7 +118,7 @@ else
     {
         if (response.Outcome is ProjectOperationOutcome.Created or ProjectOperationOutcome.Opened && response.Session is { } opened) { await EnterProjectAsync(opened); return; }
         if (response.Outcome == ProjectOperationOutcome.GoalRequired && response.Proposal is { } proposal) { goalRequired = true; showOpenFolder = false; titleInput = proposal.ProposedTitle; homeInput = proposal.HomePath; return; }
-        showOpenFolder = false; launcherError = response.Error?.Message ?? "The Client Runtime returned no Project.";
+        showOpenFolder = false; launcherError = response.Error?.Message ?? "The application returned no Project.";
     }
     private async Task EnterProjectAsync(ProjectSession opened)
     {
@@ -140,7 +140,7 @@ else
         loadingState = true;
         try
         {
-            var response = await ClientRuntime.SendAsync<GetProjectMissionStateRequest, GetProjectMissionStateResponse>(new(sessionId), lifetime.Token);
+            var response = await ApplicationChannel.SendAsync<GetProjectMissionStateRequest, GetProjectMissionStateResponse>(new(sessionId), lifetime.Token);
             if (response.Error is { } error) { historyError = error; return; }
             if (response.State is not { } state) return;
             missionState = state;
@@ -155,7 +155,7 @@ else
     private async Task SelectMissionAsync(string mission)
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ClientRuntime.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(new(sessionId, mission), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(new(sessionId, mission), lifetime.Token);
         if (response.Error is { } error) submissionError = error;
         else if (response.Missions is { } missions && missionState is { } state) { missionState = state with { Missions = missions }; submissionError = null; }
     }
@@ -166,7 +166,7 @@ else
         Guid? previous = missionState.Submission is { State: ProjectSubmissionState.Rejected } prior ? prior.CommandId : null;
         try
         {
-            var response = await ClientRuntime.SendAsync<ForgeMission.Application.Transport.StartProjectMissionRunRequest, ProjectSubmissionResponse>(new ForgeMission.Application.Transport.StartProjectMissionRunRequest(sessionId, Guid.NewGuid(), previous, input), lifetime.Token);
+            var response = await ApplicationChannel.SendAsync<ForgeMission.Application.Transport.StartProjectMissionRunRequest, ProjectSubmissionResponse>(new ForgeMission.Application.Transport.StartProjectMissionRunRequest(sessionId, Guid.NewGuid(), previous, input), lifetime.Token);
             submissionError = response.Error;
             await RefreshStateAsync();
         }
@@ -177,7 +177,7 @@ else
     {
         if (sessionId is null || lifetime is null) return;
         submissionBusy = true;
-        try { var response = await ClientRuntime.SendAsync<RetryProjectMissionSubmissionRequest, ProjectSubmissionResponse>(new(sessionId, commandId), lifetime.Token); submissionError = response.Error; await RefreshStateAsync(); }
+        try { var response = await ApplicationChannel.SendAsync<RetryProjectMissionSubmissionRequest, ProjectSubmissionResponse>(new(sessionId, commandId), lifetime.Token); submissionError = response.Error; await RefreshStateAsync(); }
         catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
         finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
     }
@@ -190,28 +190,28 @@ else
     private async Task LoadRunsAsync(ProjectRunCursor? cursor)
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ClientRuntime.SendAsync<GetProjectRunsRequest, GetProjectRunsResponse>(new(sessionId, cursor), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<GetProjectRunsRequest, GetProjectRunsResponse>(new(sessionId, cursor), lifetime.Token);
         if (response.Error is { } error) historyError = error;
         else if (response.Page is { } page) { runs = page; runCursor = cursor; historyError = null; }
     }
     private async Task LoadWorkbenchAsync()
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ClientRuntime.SendAsync<GetProjectWorkbenchRequest, GetProjectWorkbenchResponse>(new(sessionId), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<GetProjectWorkbenchRequest, GetProjectWorkbenchResponse>(new(sessionId), lifetime.Token);
         workbench = response.Projection; workbenchError = response.Error;
     }
     private async Task OpenDocumentAsync(ProjectWorkbenchEntry entry)
     {
         if (sessionId is null || lifetime is null) return;
         view = WorkbenchView.Document; document = null; documentError = null;
-        var response = await ClientRuntime.SendAsync<OpenProjectDocumentRequest, OpenProjectDocumentResponse>(new(sessionId, entry.Id), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<OpenProjectDocumentRequest, OpenProjectDocumentResponse>(new(sessionId, entry.Id), lifetime.Token);
         document = response.Document; documentError = response.Error;
     }
     private Task BackToExplorer() { view = WorkbenchView.Explorer; return Task.CompletedTask; }
     private async Task ShowInstructionAsync(Guid runId)
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ClientRuntime.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
         if (response.Run is { } detail) expandedInstruction = detail.Input; else historyError = response.Error;
     }
     private void HideInstruction() => expandedInstruction = null;
@@ -219,7 +219,7 @@ else
     {
         if (sessionId is null || lifetime is null) return;
         view = WorkbenchView.RunTrace; selectedRun = null; traceEvents = null; traceError = null;
-        var response = await ClientRuntime.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
         if (response.Run is not { } detail) { traceError = response.Error; return; }
         selectedRun = detail;
         await LatestTraceAsync();
@@ -244,13 +244,13 @@ else
     private async Task LoadTraceAsync()
     {
         if (sessionId is null || lifetime is null || selectedRun is null) return;
-        var response = await ClientRuntime.SendAsync<GetProjectRunEventsRequest, GetProjectRunEventsResponse>(new(sessionId, selectedRun.Run.RunId, traceAfter, traceThrough), lifetime.Token);
+        var response = await ApplicationChannel.SendAsync<GetProjectRunEventsRequest, GetProjectRunEventsResponse>(new(sessionId, selectedRun.Run.RunId, traceAfter, traceThrough), lifetime.Token);
         traceEvents = response.Page; traceError = response.Error;
     }
     private Task BackToMissions() { view = WorkbenchView.Missions; return Task.CompletedTask; }
     private async Task ConsumeEventsAsync(int ownerGeneration, CancellationToken ct)
     {
-        try { await foreach (var evt in ClientRuntime.Subscribe(ct)) if (ownerGeneration == generation && evt.SessionId == sessionId && evt.Kind == ApplicationEventKind.ProjectMissionChanged) await RefreshStateAsync(); }
+        try { await foreach (var evt in ApplicationChannel.Subscribe(ct)) if (ownerGeneration == generation && evt.SessionId == sessionId && evt.Kind == ApplicationEventKind.ProjectMissionChanged) await RefreshStateAsync(); }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception exception) { if (ownerGeneration == generation) { connectionError = exception.Message; await InvokeAsync(StateHasChanged); } }
     }

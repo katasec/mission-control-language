@@ -4,7 +4,7 @@ using System.Text.Json;
 using ForgeMission.Application;
 using ForgeMission.Conversations.Contracts;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 public sealed class ConversationHostClientProjectTests
 {

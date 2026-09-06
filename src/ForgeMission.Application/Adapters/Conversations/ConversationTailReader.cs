@@ -3,7 +3,7 @@ using ForgeMission.Conversations.Contracts;
 
 namespace ForgeMission.Application;
 
-// The durable replay/tail half of a Client Runtime conversation session, factored out of
+// The durable replay/tail half of an Application conversation session, factored out of
 // ConversationScope when Project Mission Control became its second consumer (43.20 task 2).
 // Owns exactly one thing: following a conversation's ordered ConversationEvent stream and relaying
 // each event onward once, reconnecting from the last delivered sequence.

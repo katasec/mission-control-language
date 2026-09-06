@@ -158,7 +158,7 @@ Closing a Project attachment, changing its legacy session or losing a UI subscri
 
 ## Submission and durable ownership
 
-Preserve [ProjectManifest.cs](../../../src/ForgeMission.ClientRuntime/Services/ProjectManifest.cs), schema version 3, v1/v2 reads and legacy read-only fields. ProjectService is the sole manifest transaction owner, including submission journal writes; MissionSubmissionService decides when to invoke those named operations. No second manifest writer, local run ledger or new schema version.
+Preserve [ProjectManifest.cs](../../../src/ForgeMission.Application/Projects/ProjectManifest.cs), schema version 3, v1/v2 reads and legacy read-only fields. ProjectService is the sole manifest transaction owner, including submission journal writes; MissionSubmissionService decides when to invoke those named operations. No second manifest writer, local run ledger or new schema version.
 
 1. Start reads the validated Project and checks the existing Host active-run state. Host admission remains the final arbiter against races.
 2. ProjectService prepares the immutable journal using CommandId, PreviousCommandId and input under the existing lease. Mission, input and Project goal are captured exactly as today. Release the lease before HTTP.

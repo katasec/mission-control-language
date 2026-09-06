@@ -1,9 +1,9 @@
 using System.Diagnostics;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.ApplicationHost;
 
 /// <summary>
-/// Starts the real ForgeMission.ClientRuntime process and reports the URL it printed. One owner for
+/// Starts the real ForgeMission.Application.Host process and reports the URL it printed. One owner for
 /// process start-up, shared by the out-of-process transport probe tests and the Project transport
 /// contract tests.
 /// </summary>
@@ -52,7 +52,7 @@ internal sealed class ApplicationHostProcess(Process process, string baseUrl) : 
 
         var error = await process.StandardError.ReadToEndAsync();
         process.Kill(entireProcessTree: true);
-        throw new InvalidOperationException($"Client Runtime did not start. {error}");
+        throw new InvalidOperationException($"Application Host did not start. {error}");
     }
 
     public static string RepositoryRoot()

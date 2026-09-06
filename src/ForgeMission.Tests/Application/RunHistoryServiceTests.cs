@@ -5,7 +5,7 @@ using ForgeMission.Application;
 using ForgeMission.Application.Transport;
 using ForgeMission.ClientRuntime;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 public sealed class RunHistoryServiceTests : IDisposable
 {
@@ -58,7 +58,7 @@ public sealed class RunHistoryServiceTests : IDisposable
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
             .Select(field => field.FieldType).ToArray();
 
-        Assert.Contains(typeof(RunHistoryService), fields);
+        Assert.Contains(typeof(ProjectMissionHistoryReader), fields);
         Assert.Contains(typeof(RunObservationService), fields);
         Assert.Contains(typeof(ProjectMissionToolRefusal), fields);
         Assert.DoesNotContain(typeof(ClientExecutionSession), fields);

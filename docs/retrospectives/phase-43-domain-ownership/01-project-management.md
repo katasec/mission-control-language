@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Draft Project titles and home locations; create and open Projects; validate goals, identities, and manifest schemas; maintain Project metadata and serialize manifest updates.
 
-Current locations: `src/ForgeMission.ClientRuntime/Services/ProjectStore.cs`, `ProjectManifest.cs`, `ProjectManifestFile.cs`, and `ProjectManifestJsonContext.cs` in the same directory.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Services/ProjectStore.cs`, `ProjectManifest.cs`, `ProjectManifestFile.cs`, and `ProjectManifestJsonContext.cs` in the same directory.
 
 ## Boundary concern
 

@@ -9,9 +9,9 @@ var channel = new HttpApplicationChannel(http);
 // non-Desktop surface opens one the same way Desktop does — proof in itself that the contract is
 // surface-neutral, since nothing here references Blazor or a Host.
 var opened = await channel.SendAsync<ProjectCreateRequest, ProjectOperationResponse>(
-    new ProjectCreateRequest("Client Runtime transport probe", HomePath: args[1]), CancellationToken.None);
+    new ProjectCreateRequest("Application transport probe", HomePath: args[1]), CancellationToken.None);
 var session = opened.Session
-    ?? throw new InvalidOperationException(opened.Error?.Message ?? "Client Runtime returned no Project session.");
+    ?? throw new InvalidOperationException(opened.Error?.Message ?? "The application returned no Project session.");
 
 if (args.Length == 4 && args[3].Equals("confirm", StringComparison.OrdinalIgnoreCase))
 {
@@ -37,12 +37,12 @@ if (args.Length == 4 && args[3].Equals("confirm", StringComparison.OrdinalIgnore
     }
 
     if (!receivedConfirmation || events.Current.ConfirmationId is null)
-        throw new InvalidOperationException("Client Runtime did not publish a confirmation request.");
+        throw new InvalidOperationException("The application did not publish a confirmation request.");
 
     var confirmation = await channel.SendAsync<ConfirmationResponseRequest, ConfirmationResponse>(
         new ConfirmationResponseRequest(session.SessionId, events.Current.ConfirmationId, Approved: true), eventsCancellation.Token);
     if (!confirmation.Accepted)
-        throw new InvalidOperationException("Client Runtime did not accept the confirmation response.");
+        throw new InvalidOperationException("The application did not accept the confirmation response.");
 
     Console.WriteLine((await dispatch).Content);
     return;

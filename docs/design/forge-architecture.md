@@ -1,15 +1,45 @@
-# Forge Architecture — Mission Runtime, Client Runtime, Presentation
+# Forge Architecture — Mission Runtime, Application, Client Runtime, Presentation
 
-> **Ownership amendment, 2026-09-06:** the finalized [domain ownership end state](../retrospectives/phase-43-domain-ownership/end-state.md) governs the planned extraction in [43.23](../phases/phase-43.23-domain-ownership.md). It separates Application services/API hosting from Client Runtime's local capability execution. In particular, “all local execution” below means agent capability execution in the target; Project persistence/content access has its own Application owner. The three-layer/process/naming descriptions below record the pre-extraction implementation and remain current deployment guidance until migrated. The linked amendment takes precedence for new ownership decisions; it does not claim the new projects already exist.
+**Status: current 2026-09-06.** This is the canonical architecture for Forge. The completed
+[domain ownership end state](../retrospectives/phase-43-domain-ownership/end-state.md) and its
+[contracts](../retrospectives/phase-43-domain-ownership/contracts.md) define the concrete owners.
+The prior three-layer description is retained below as a historical record, not current deployment
+guidance.
 
-**Status: Locked 2026-08-01; durable-conversation extension locked 2026-08-12;
-Desktop Supervisor/Host boundary locked 2026-08-17; durable local-runtime bootstrap locked
-2026-08-18.** This is the canonical, durable architecture doc for Forge as a
-whole, not just Forge Desktop. It supersedes the general-architecture parts of
-[forge-desktop-client-runtime.md](forge-desktop-client-runtime.md), which now covers only what's
-genuinely desktop-specific (see that doc's updated status line). If this doc and any other doc
-disagree on the Mission Runtime / Client Runtime / Presentation split, this doc wins — point
-other docs here rather than restating the architecture.
+## Current Desktop architecture
+
+```text
+Desktop Supervisor ──starts/owns──> Application Host (loopback, static assets, HTTP/SSE)
+native Host <──ready URL───────────┘
+                                      ├─> Application services
+Presentation ─Application.Transport──┤    Project, content, selection, submission,
+                                      │    conversation, sessions, history/observation
+                                      └─> Client Runtime (Bob)
+                                           local capability policy, confirmation, execution, audit
+```
+
+- `ForgeMission.Application.Host` is the one local HTTP/static-asset process. It binds typed
+  Application owners and emits the deliberately retained `FORGE_CLIENT_RUNTIME_URL=` readiness
+  marker; the marker is a wire compatibility token, not a second runtime.
+- `ForgeMission.Application` owns Project lifecycle/content, mission selection/submission,
+  conversation lifetime, session attachment, and history/observation. It uses remote protocol
+  adapters but owns neither a durable remote store nor mission reasoning.
+- `ForgeMission.ClientRuntime` is Bob: the local capability execution and authorization library.
+  It has no HTTP, UI, Project, conversation, credential, or provider dependency.
+- `ForgeMission.Application.Transport` is the shared action/event vocabulary used by Presentation
+  and any future surface. `ForgeMission.Presentation` owns rendering only.
+- The Desktop Supervisor resolves Mission and Conversation Runtime dependencies, starts and stops
+  `ApplicationHostProcess`, and supplies its resolved addresses. It owns neither Project use cases
+  nor capability authorization. Host, Worker, API, Billing, and their durable stores keep their
+  existing authority.
+
+Current source anchors are [`Application.Host/Program.cs`](../../src/ForgeMission.Application.Host/Program.cs),
+[`ApplicationComposition.cs`](../../src/ForgeMission.Application/ApplicationComposition.cs),
+[`ClientExecutionSession.cs`](../../src/ForgeMission.ClientRuntime/ClientExecutionSession.cs),
+[`ApplicationHostProcess.cs`](../../src/ForgeMission.Desktop/ApplicationHostProcess.cs), and
+[`ApplicationContracts.cs`](../../src/ForgeMission.Application.Transport/ApplicationContracts.cs).
+
+## Historical pre-43.23 architecture record
 
 Emerged from the Phase 43 desktop-technology discussion (Tauri vs. Avalonia vs. Electron vs.
 native .NET), but the discussion repeatedly exposed questions bigger than "which desktop

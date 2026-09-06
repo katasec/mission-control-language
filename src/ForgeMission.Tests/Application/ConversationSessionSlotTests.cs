@@ -5,7 +5,7 @@ using ForgeMission.Application;
 using ForgeMission.Application.Transport;
 using ForgeMission.Core.Tools;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 // Covers the ConversationSessionSlot lifecycle fix: durable prompt admission, lazy
 // ConversationScope creation, and SendAsync are one operation serialized by the slot's

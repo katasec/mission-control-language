@@ -5,7 +5,7 @@ using ForgeMission.Application;
 using ForgeMission.Core.Runtime;
 using ForgeMission.Core.Tools;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 public sealed class LegacyCloudMissionProtocolClientTests : IDisposable
 {

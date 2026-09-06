@@ -12,22 +12,22 @@ public sealed class DesktopBootTests
     private const string MissionRuntimeUrl = "https://forge.katasec.com/";
     private const string MissionRuntimeMode = "cloud";
     private const string DurableUrl = "http://127.0.0.1:18080/";
-    private const string ClientRuntimeUrl = "http://127.0.0.1:5001/";
+    private const string ApplicationHostUrl = "http://127.0.0.1:5001/";
 
     [Fact]
-    public async Task StartsClientRuntimeWithTheResolvedDurableUrl()
+    public async Task StartsApplicationHostWithTheResolvedDurableUrl()
     {
         var log = new List<string>();
-        var client = new RecordingClientRuntime(log);
+        var applicationHost = new RecordingApplicationHost(log);
 
         var runtimes = await DesktopBoot.ComposeAsync(
-            MissionRuntime(), DurableRuntime(), client.Start, CancellationToken.None);
+            MissionRuntime(), DurableRuntime(), applicationHost.Start, CancellationToken.None);
 
-        Assert.Equal(1, client.StartCount);
-        Assert.Equal(DurableUrl, client.ConversationRuntimeBaseUrl);
-        Assert.Equal(MissionRuntimeUrl, client.MissionRuntimeBaseUrl);
-        Assert.Equal(MissionRuntimeMode, client.MissionRuntimeMode);
-        Assert.Equal(ClientRuntimeUrl, runtimes.Url);
+        Assert.Equal(1, applicationHost.StartCount);
+        Assert.Equal(DurableUrl, applicationHost.ConversationRuntimeBaseUrl);
+        Assert.Equal(MissionRuntimeUrl, applicationHost.MissionRuntimeBaseUrl);
+        Assert.Equal(MissionRuntimeMode, applicationHost.MissionRuntimeMode);
+        Assert.Equal(ApplicationHostUrl, runtimes.Url);
     }
 
     [Fact]
@@ -36,36 +36,36 @@ public sealed class DesktopBootTests
         var log = new List<string>();
         var tunnel = new FakeTunnel(log);
         var launcher = new FakeMissionRuntimeLauncher(log);
-        var client = new RecordingClientRuntime(log);
+        var applicationHost = new RecordingApplicationHost(log);
 
         var runtimes = await DesktopBoot.ComposeAsync(
-            MissionRuntime(launcher), DurableRuntime(tunnel), client.Start, CancellationToken.None);
+            MissionRuntime(launcher), DurableRuntime(tunnel), applicationHost.Start, CancellationToken.None);
 
         Assert.Empty(log);
 
         await runtimes.DisposeAsync();
 
-        Assert.Equal(["client", "conversation", "mission"], log);
-        Assert.Equal(1, client.StopCount);
+        Assert.Equal(["application-host", "conversation", "mission"], log);
+        Assert.Equal(1, applicationHost.StopCount);
         Assert.Equal(1, tunnel.DisposeCount);
         Assert.Equal(1, launcher.DisposeCount);
     }
 
     [Fact]
-    public async Task DurableReadinessFailure_StartsNoClientRuntime_AndDisposesTheMissionLauncher()
+    public async Task DurableReadinessFailure_StartsNoApplicationHost_AndDisposesTheMissionLauncher()
     {
         var log = new List<string>();
         var launcher = new FakeMissionRuntimeLauncher(log);
-        var client = new RecordingClientRuntime(log);
+        var applicationHost = new RecordingApplicationHost(log);
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => DesktopBoot.ComposeAsync(
             MissionRuntime(launcher),
             _ => throw new InvalidOperationException("Conversation Runtime did not become healthy."),
-            client.Start,
+            applicationHost.Start,
             CancellationToken.None));
 
         Assert.Contains("did not become healthy", error.Message);
-        Assert.Equal(0, client.StartCount);
+        Assert.Equal(0, applicationHost.StartCount);
         Assert.Equal(["mission"], log);
         Assert.Equal(1, launcher.DisposeCount);
     }
@@ -74,27 +74,27 @@ public sealed class DesktopBootTests
     // leave nothing running — this is the case an "await the ready URL, then take ownership" design
     // would silently orphan.
     [Fact]
-    public async Task ApplicationHostStartedThenReadinessFails_StopsTheStartedClientRuntimeThenLeaseThenLauncher_ExactlyOnce()
+    public async Task ApplicationHostStartedThenReadinessFails_StopsTheStartedApplicationHostThenLeaseThenLauncher_ExactlyOnce()
     {
         var log = new List<string>();
         var tunnel = new FakeTunnel(log);
         var launcher = new FakeMissionRuntimeLauncher(log);
-        var client = new RecordingClientRuntime(log,
-            Task.FromException<string>(new InvalidOperationException("Client Runtime did not start within 20s.")));
+        var applicationHost = new RecordingApplicationHost(log,
+            Task.FromException<string>(new InvalidOperationException("Application Host did not start within 20s.")));
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => DesktopBoot.ComposeAsync(
-            MissionRuntime(launcher), DurableRuntime(tunnel), client.Start, CancellationToken.None));
+            MissionRuntime(launcher), DurableRuntime(tunnel), applicationHost.Start, CancellationToken.None));
 
         Assert.Contains("did not start within", error.Message);
-        Assert.Equal(1, client.StartCount);
-        Assert.Equal(["client", "conversation", "mission"], log);
-        Assert.Equal(1, client.StopCount);
+        Assert.Equal(1, applicationHost.StartCount);
+        Assert.Equal(["application-host", "conversation", "mission"], log);
+        Assert.Equal(1, applicationHost.StopCount);
         Assert.Equal(1, tunnel.DisposeCount);
         Assert.Equal(1, launcher.DisposeCount);
     }
 
     [Fact]
-    public async Task ChildSpawnFailure_DisposesLeaseAndLauncherExactlyOnce_AndStopsNoClientRuntime()
+    public async Task ChildSpawnFailure_DisposesLeaseAndLauncherExactlyOnce_AndStopsNoApplicationHost()
     {
         var log = new List<string>();
         var tunnel = new FakeTunnel(log);
@@ -103,7 +103,7 @@ public sealed class DesktopBootTests
         await Assert.ThrowsAsync<FileNotFoundException>(() => DesktopBoot.ComposeAsync(
             MissionRuntime(launcher),
             DurableRuntime(tunnel),
-            (_, _, _, _) => throw new FileNotFoundException("Could not find ForgeMission.ClientRuntime."),
+            (_, _, _, _) => throw new FileNotFoundException("Could not find ForgeMission.Application.Host."),
             CancellationToken.None));
 
         Assert.Equal(["conversation", "mission"], log);
@@ -116,27 +116,27 @@ public sealed class DesktopBootTests
     {
         var log = new List<string>();
         var durablePrepared = 0;
-        var client = new RecordingClientRuntime(log);
+        var applicationHost = new RecordingApplicationHost(log);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => DesktopBoot.ComposeAsync(
             _ => throw new InvalidOperationException("Docker prerequisite failed."),
             _ => { durablePrepared++; return Task.FromResult(new ConversationRuntimeLease(DurableUrl, null)); },
-            client.Start,
+            applicationHost.Start,
             CancellationToken.None));
 
         Assert.Equal(0, durablePrepared);
-        Assert.Equal(0, client.StartCount);
+        Assert.Equal(0, applicationHost.StartCount);
         Assert.Empty(log);
     }
 
     // The window can close between preparing the durable runtime and starting the child.
     [Fact]
-    public async Task CancellationBeforeClientStart_StartsNoClientRuntime_AndDisposesWhatWasPrepared()
+    public async Task CancellationBeforeApplicationHostStart_StartsNoApplicationHost_AndDisposesWhatWasPrepared()
     {
         var log = new List<string>();
         var tunnel = new FakeTunnel(log);
         var launcher = new FakeMissionRuntimeLauncher(log);
-        var client = new RecordingClientRuntime(log);
+        var applicationHost = new RecordingApplicationHost(log);
         using var cancellation = new CancellationTokenSource();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => DesktopBoot.ComposeAsync(
@@ -146,10 +146,10 @@ public sealed class DesktopBootTests
                 cancellation.Cancel();
                 return DurableRuntime(tunnel)(ct);
             },
-            client.Start,
+            applicationHost.Start,
             cancellation.Token));
 
-        Assert.Equal(0, client.StartCount);
+        Assert.Equal(0, applicationHost.StartCount);
         Assert.Equal(["conversation", "mission"], log);
         Assert.Equal(1, tunnel.DisposeCount);
         Assert.Equal(1, launcher.DisposeCount);
@@ -164,7 +164,7 @@ public sealed class DesktopBootTests
         FakeTunnel? tunnel = null) =>
         _ => Task.FromResult(new ConversationRuntimeLease(DurableUrl, tunnel));
 
-    private sealed class RecordingClientRuntime(List<string> log, Task<string>? readyUrl = null)
+    private sealed class RecordingApplicationHost(List<string> log, Task<string>? readyUrl = null)
     {
         public int StartCount { get; private set; }
         public int StopCount { get; private set; }
@@ -179,13 +179,13 @@ public sealed class DesktopBootTests
             MissionRuntimeBaseUrl = missionRuntimeBaseUrl;
             MissionRuntimeMode = missionRuntimeMode;
             ConversationRuntimeBaseUrl = conversationRuntimeBaseUrl;
-            return new ApplicationHostStart(readyUrl ?? Task.FromResult(ClientRuntimeUrl), StopAsync);
+            return new ApplicationHostStart(readyUrl ?? Task.FromResult(ApplicationHostUrl), StopAsync);
         }
 
         private ValueTask StopAsync()
         {
             StopCount++;
-            log.Add("client");
+            log.Add("application-host");
             return ValueTask.CompletedTask;
         }
     }

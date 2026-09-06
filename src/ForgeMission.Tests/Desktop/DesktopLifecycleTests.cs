@@ -62,7 +62,7 @@ public sealed class DesktopLifecycleTests
         Assert.Equal(DesktopState.Stopped, lifecycle.State);
     }
 
-    // The window can close while Docker or the Client Runtime is still starting. Whatever that boot
+    // The window can close while Docker or the Application Host is still starting. Whatever that boot
     // finishes producing must still be stopped, or it outlives the app.
     [Fact]
     public async Task HostExitDuringBootCancelsBootAndStillStopsWhatItStarted()

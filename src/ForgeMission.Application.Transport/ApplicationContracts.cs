@@ -13,7 +13,7 @@ public enum SessionRuntimeKind
 // root — only ProjectCreateRequest/ProjectOpenRequest can. ReplacesSessionId is the outgoing
 // session's ID (a mission switch), so the store can cancel/dispose that session's durable tail
 // instead of abandoning it, and WorkspaceRoot must equal that same session's Project home. The
-// Client Runtime endpoint enforces both, so every surface — Desktop today, a TUI later — is bound
+// Application endpoint enforces both, so every surface — Desktop today, a TUI later — is bound
 // by the rule rather than trusted to follow it.
 public sealed record SessionSetupRequest(
     string WorkspaceRoot,
@@ -24,7 +24,7 @@ public sealed record SessionSetupResponse(string SessionId, IReadOnlyList<string
 
 // --- Project contracts (43.20 task 1) -------------------------------------------------------
 // Surface-neutral by construction: derivation, filesystem work, collision handling, and manifest
-// validation all live in Client Runtime, and every expected domain failure is a typed
+// validation all live in Application, and every expected domain failure is a typed
 // ProjectOperationError rather than an exception each surface interprets its own way.
 
 /// <summary>Side-effect-free: returns the title/home Forge would use so a surface can show them

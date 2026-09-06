@@ -1,8 +1,8 @@
 using System.Diagnostics;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.ApplicationHost;
 
-public sealed class ClientRuntimeTransportOutOfProcessTests : IDisposable
+public sealed class ApplicationHostTransportOutOfProcessTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-transport-").FullName;
 

@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Retrieve run lists, run details, and events; paginate history; maintain bounded read state; follow replayable progress streams; reconnect and invalidate or refresh client views.
 
-Current locations: `src/ForgeMission.ClientRuntime/Services/ProjectMissionReadSession.cs`, `ProjectRunReadState.cs`, and `ConversationTailReader.cs`.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Services/ProjectMissionReadSession.cs`, `ProjectRunReadState.cs`, and `ConversationTailReader.cs`.
 
 ## Boundary concern
 

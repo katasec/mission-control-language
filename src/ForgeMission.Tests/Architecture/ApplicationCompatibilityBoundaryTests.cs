@@ -38,6 +38,7 @@ public sealed class ApplicationCompatibilityBoundaryTests
             Assert.DoesNotContain("MissionRuntimeSession", text, StringComparison.Ordinal);
             Assert.DoesNotContain("CloudMissionRuntimeSession", text, StringComparison.Ordinal);
             Assert.DoesNotContain("ApplicationInteractionServices", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("ProjectMissionHistoryEndpointService", text, StringComparison.Ordinal);
         }
     }
 

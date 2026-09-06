@@ -2,7 +2,7 @@ namespace ForgeMission.Presentation.Components;
 
 /// <summary>
 /// Which document the workbench is showing (43.20 task 3). It is presentation state and nothing
-/// else: changing it changes the rendered view only — never the Project, the Client Runtime
+/// else: changing it changes the rendered view only — never the Project, the Application layer
 /// session, the durable Mission container, or the event subscription, all of which outlive every
 /// switch.
 /// </summary>

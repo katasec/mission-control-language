@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: boundary already substantially separated; preserve
 
 Resolve runtime endpoints, start required processes or containers, check readiness, establish local tunnels, and clean up owned children on shutdown or failure.
 
-Current locations: `src/ForgeMission.Orchestration/` and `src/ForgeMission.Desktop/`, particularly `MissionRuntimeResolver`, `ConversationRuntimeBootstrap`, `DesktopBoot`, and `DesktopLifecycle`. The native Host owns the window separately.
+Baseline locations at PR #99: `src/ForgeMission.Orchestration/` and `src/ForgeMission.Desktop/`, particularly `MissionRuntimeResolver`, `ConversationRuntimeBootstrap`, `DesktopBoot`, and `DesktopLifecycle`. The native Host owns the window separately.
 
 ## Boundary concern
 

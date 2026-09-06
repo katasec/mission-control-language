@@ -2,7 +2,7 @@ using ForgeMission.Application.Transport;
 using ForgeMission.Application;
 using ForgeMission.Core.Tools;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 public sealed class ApplicationSessionServiceTests : IDisposable
 {

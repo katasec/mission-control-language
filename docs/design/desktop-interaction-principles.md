@@ -252,8 +252,8 @@ revisit if it does.
 
 - **Electron's `BrowserWindow` is not CDP-attachable as launched.** `main.cjs` starts it with no
   `--remote-debugging-port`, so browser tooling cannot screenshot/inspect the native Electron window
-  directly. This doesn't block verification — the Client Runtime underneath is a plain
-  `dotnet run --project src/ForgeMission.ClientRuntime/...` ASP.NET host that prints
+  directly. This doesn't block verification — the Application Host underneath is a plain
+  `dotnet run --project src/ForgeMission.Application.Host/...` ASP.NET host that prints
   `FORGE_CLIENT_RUNTIME_URL=<url>`; run it directly (same env vars as `scripts/desktop.ps1`:
   `MISSIONRUNTIME__MODE`, `MISSIONRUNTIME__DOCKER__MISSIONREF`, `WORKSPACE__INITIALROOT`) and point
   browser tooling at that URL instead of trying to reach into Electron's window. Confirmed working

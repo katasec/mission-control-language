@@ -1,6 +1,7 @@
 # Phase 43 — domain ownership
 
-**Recommended end state finalized 2026-09-06. Implementation has not started.**
+**Recommended end state implemented and verified 2026-09-06.** Completion evidence is in
+[Phase 43.23's completed record](../../phases/phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06).
 
 Client Runtime means the local capability execution and authorization library (Bob). The Application layer owns Project, submission, conversation and history use cases. A thin Application Host exposes their shared API and serves Presentation in the existing local child process. Fourteen concerns do not imply fourteen libraries, services or processes.
 

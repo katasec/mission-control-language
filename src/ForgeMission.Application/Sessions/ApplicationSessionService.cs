@@ -90,7 +90,7 @@ internal sealed class ApplicationSessionService(
         var execution = ClientExecutionSession.Create(workspaceRoot, policy, confirmation, applicationStopping);
         var session = new ApplicationSession(sessionId, workspaceRoot, execution, confirmation, mission, runtime);
         if (!_sessions.TryAdd(sessionId, session))
-            throw new InvalidOperationException("Unable to create Client Runtime session.");
+            throw new InvalidOperationException("Unable to create application session.");
         return session;
     }
 
@@ -176,7 +176,7 @@ internal sealed record ApplicationSession(
     }
 }
 
-// The sole entry point for a durable Client Runtime session's prompt lifecycle. Admission, lazy
+// The sole entry point for a durable application session's prompt lifecycle. Admission, lazy
 // ConversationScope creation, and SendAsync are one operation serialized by _gate — never
 // exposed as separate GetOrCreate/SendAsync steps a caller could interleave with disposal. This
 // closes a real race: a /transport/prompt request can call ApplicationSessionService.TryGet and
@@ -208,7 +208,7 @@ internal sealed class ConversationSessionSlot : IAsyncDisposable
         try
         {
             if (_closed)
-                throw new InvalidOperationException("This Client Runtime session has been replaced.");
+                throw new InvalidOperationException("This application session has been replaced.");
 
             _session ??= factory();
             return await _session.SendAsync(prompt, ct);

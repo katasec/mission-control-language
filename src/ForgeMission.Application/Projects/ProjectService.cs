@@ -10,7 +10,7 @@ namespace ForgeMission.Application;
 // this class only through the project transport contracts, so they get identical results.
 //
 // Expected domain failures throw ProjectOperationException and are mapped to a typed
-// ProjectOperationError once, at the transport endpoint. The exception never leaves Client Runtime.
+// ProjectOperationError once, at the transport endpoint. The exception never leaves Application.
 internal sealed class ProjectService : IProjectService
 {
     public const string ManifestFileName = "forge.project.json";
@@ -496,7 +496,7 @@ internal sealed class ProjectService : IProjectService
                 "A Project home path is required.");
 
         // Rootedness is checked before normalizing: Path.GetFullPath would silently resolve a
-        // relative path against the Client Runtime's own working directory, which is never a
+        // relative path against the Application Host's own working directory, which is never a
         // Project home a caller meant to name.
         var trimmed = homePath.Trim();
         if (!Path.IsPathRooted(trimmed))

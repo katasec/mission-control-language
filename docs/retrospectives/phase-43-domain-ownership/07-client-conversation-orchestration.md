@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Maintain client transcripts/history; dispatch through different mission API protocols; coordinate successive prompt, assistant response, tool-request, and tool-result turns until an answer is returned.
 
-Current locations: `src/ForgeMission.ClientRuntime/Services/MissionRuntimeSession.cs`, `CloudMissionRuntimeSession.cs`, parts of `ConversationRuntimeSession.cs`, and runtime-path selection in `Transport/ClientRuntimeEndpoints.cs`. Overall runtime resolution/startup also exists outside this project; this concern concerns the client loop and dispatch logic actually present here.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Services/MissionRuntimeSession.cs`, `CloudMissionRuntimeSession.cs`, parts of `ConversationRuntimeSession.cs`, and runtime-path selection in `Transport/ClientRuntimeEndpoints.cs`. Overall runtime resolution/startup also exists outside this project; this concern concerns the client loop and dispatch logic actually present here.
 
 ## Boundary concern
 
