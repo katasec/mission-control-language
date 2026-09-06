@@ -9,22 +9,15 @@ namespace ForgeMission.Application;
 /// a freshly read manifest; callers never pass a file path. It neither crawls source roots nor
 /// resolves dependencies, registry data, OCI content, or network resources.
 /// </summary>
-internal sealed class ProjectWorkbenchService(ProjectStore projects)
+internal sealed class ProjectContentService(ProjectService projects, ApplicationSessionService? sessions = null) : IProjectContentService
 {
     private const int MaximumDocumentBytes = 1024 * 1024;
 
-    public async Task<SelectProjectMissionResponse> SelectMissionAsync(string home, string mission, CancellationToken ct)
-    {
-        try
-        {
-            var project = await projects.SelectMissionAsync(home, mission, ct);
-            return new SelectProjectMissionResponse(Missions(project.Manifest), null);
-        }
-        catch (ProjectOperationException exception)
-        {
-            return new SelectProjectMissionResponse(null, ProjectMissionApplication.ToError(exception));
-        }
-    }
+    public Task<GetProjectWorkbenchResponse> GetWorkbenchAsync(GetProjectWorkbenchRequest request, CancellationToken ct) =>
+        Task.FromResult(GetProjection(RequiredSession(request.SessionId).ProjectHome));
+
+    public Task<OpenProjectDocumentResponse> OpenDocumentAsync(OpenProjectDocumentRequest request, CancellationToken ct) =>
+        Task.FromResult(OpenDocument(RequiredSession(request.SessionId).ProjectHome, request.EntryId));
 
     public GetProjectWorkbenchResponse GetProjection(string home)
     {
@@ -35,7 +28,7 @@ internal sealed class ProjectWorkbenchService(ProjectStore projects)
         }
         catch (ProjectOperationException exception)
         {
-            return new GetProjectWorkbenchResponse(null, ProjectMissionApplication.ToError(exception));
+            return new GetProjectWorkbenchResponse(null, MissionSubmissionService.ToError(exception));
         }
     }
 
@@ -48,8 +41,15 @@ internal sealed class ProjectWorkbenchService(ProjectStore projects)
         }
         catch (ProjectOperationException exception)
         {
-            return new OpenProjectDocumentResponse(null, ProjectMissionApplication.ToError(exception));
+            return new OpenProjectDocumentResponse(null, MissionSubmissionService.ToError(exception));
         }
+    }
+
+    private ApplicationSession RequiredSession(string sessionId)
+    {
+        if (sessions is null || !sessions.TryGet(sessionId, out var session) || session is null)
+            throw new KeyNotFoundException();
+        return session;
     }
 
     private static ProjectWorkbenchProjection BuildProjection(ProjectRecord project)
@@ -155,7 +155,7 @@ internal sealed class ProjectWorkbenchService(ProjectStore projects)
     private static OpenProjectDocumentResponse PlainText(string label, string content) =>
         new(new ProjectDocument(label, content, IsPlainText: true), null);
     private static OpenProjectDocumentResponse Failure(ProjectOperationErrorCode code, string message) =>
-        new(null, ProjectMissionApplication.Error(code, message));
+        new(null, MissionSubmissionService.Error(code, message));
     private static string AssetId(int index) => $"asset:{index}";
     private static string ContextId(int index) => $"context:{index}";
     private static bool TryIndex(string id, string prefix, int count, out int index)
@@ -165,8 +165,4 @@ internal sealed class ProjectWorkbenchService(ProjectStore projects)
             index >= 0 && index < count;
     }
 
-    private static ProjectMissionsView Missions(ProjectManifest manifest) => new(ProjectMissions.All,
-        manifest.SelectedMission is { Origin: ProjectMissionOrigin.BuiltIn } selected && ProjectMissions.IsAllowed(selected.Reference)
-            ? selected.Reference : null,
-        manifest.LegacyProjectControlConversationId is not null || manifest.MissionControlConversationId is not null);
 }

@@ -4,7 +4,7 @@ using ForgeMission.Conversations.Contracts;
 namespace ForgeMission.Application;
 
 /// <summary>Validates the fixed Project mission catalog at the local manifest boundary.</summary>
-internal static class ProjectMissions
+internal static class MissionCatalog
 {
     public static IReadOnlyList<string> All => ProjectMissionNames.All;
 

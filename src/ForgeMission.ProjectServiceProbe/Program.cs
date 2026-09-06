@@ -1,9 +1,9 @@
 using ForgeMission.Application;
 using ForgeMission.Conversations.Contracts;
 
-return await ProjectStoreProbe.RunAsync(args);
+return await ProjectServiceProbe.RunAsync(args);
 
-internal static class ProjectStoreProbe
+internal static class ProjectServiceProbe
 {
     public static async Task<int> RunAsync(string[] args)
     {
@@ -12,7 +12,7 @@ internal static class ProjectStoreProbe
 
         if (TryParseCrashBoundary(args[1], out var crashBoundary))
         {
-            var crashStore = new ProjectStore(
+            var crashStore = new ProjectService(
                 args[0],
                 new ProjectManifestFile(publicationBoundary: reached =>
                 {
@@ -24,7 +24,7 @@ internal static class ProjectStoreProbe
             return 3;
         }
 
-        var store = new ProjectStore(args[0]);
+        var store = new ProjectService(args[0]);
         for (var index = 0; index < count; index++)
         {
             var home = Path.Combine(args[0], $"process-{index}");

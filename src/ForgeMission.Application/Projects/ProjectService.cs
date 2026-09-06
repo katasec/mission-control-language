@@ -11,7 +11,7 @@ namespace ForgeMission.Application;
 //
 // Expected domain failures throw ProjectOperationException and are mapped to a typed
 // ProjectOperationError once, at the transport endpoint. The exception never leaves Client Runtime.
-internal sealed class ProjectStore
+internal sealed class ProjectService : IProjectService
 {
     public const string ManifestFileName = "forge.project.json";
 
@@ -22,11 +22,54 @@ internal sealed class ProjectStore
 
     private readonly string _projectsRoot;
     private readonly ProjectManifestFile _manifestFile;
+    private readonly ApplicationSessionService? _sessions;
 
-    public ProjectStore(string? projectsRoot = null, ProjectManifestFile? manifestFile = null)
+    public ProjectService(string? projectsRoot = null, ProjectManifestFile? manifestFile = null)
     {
         _projectsRoot = projectsRoot ?? DefaultProjectsRoot();
         _manifestFile = manifestFile ?? new ProjectManifestFile();
+    }
+
+    public ProjectService(ApplicationSessionService sessions)
+    {
+        _projectsRoot = DefaultProjectsRoot();
+        _manifestFile = new ProjectManifestFile();
+        _sessions = sessions;
+    }
+
+    public Task<ProjectDraftResponse> DraftAsync(ProjectDraftRequest request, CancellationToken ct)
+    {
+        try { return Task.FromResult(new ProjectDraftResponse(Draft(request.Goal, request.TitleOverride, request.HomeOverride), null)); }
+        catch (ProjectOperationException exception) { return Task.FromResult(new ProjectDraftResponse(null, ToError(exception))); }
+    }
+
+    public Task<ProjectOperationResponse> CreateAsync(ProjectCreateRequest request, CancellationToken ct)
+    {
+        try { return Task.FromResult(OpenForApplication(Create(request.Goal, request.Title, request.HomePath), request.Mission, request.Runtime, ProjectOperationOutcome.Created)); }
+        catch (ProjectOperationException exception) { return Task.FromResult(new ProjectOperationResponse(ProjectOperationOutcome.Failed, Error: ToError(exception))); }
+    }
+
+    public Task<ProjectOperationResponse> OpenAsync(ProjectOpenRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var opened = Open(request.HomePath);
+            return Task.FromResult(opened.Project is { } project
+                ? OpenForApplication(project, request.Mission, request.Runtime, ProjectOperationOutcome.Opened)
+                : new ProjectOperationResponse(ProjectOperationOutcome.GoalRequired, Proposal: opened.GoalRequired));
+        }
+        catch (ProjectOperationException exception) { return Task.FromResult(new ProjectOperationResponse(ProjectOperationOutcome.Failed, Error: ToError(exception))); }
+    }
+
+    public async Task<SelectProjectMissionResponse> SelectMissionAsync(SelectProjectMissionRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var session = RequiredSession(request.SessionId);
+            var project = await SelectMissionAsync(session.ProjectHome, request.Mission, ct);
+            return new SelectProjectMissionResponse(Missions(project.Manifest), null);
+        }
+        catch (ProjectOperationException exception) { return new SelectProjectMissionResponse(null, ToError(exception)); }
     }
 
     /// <summary>Pure: what a create would use, for display before confirmation. It performs no
@@ -98,11 +141,11 @@ internal sealed class ProjectStore
 
     public Task<ProjectRecord> SelectMissionAsync(string home, string mission, CancellationToken cancellationToken)
     {
-        if (!ProjectMissions.IsAllowed(mission))
+        if (!MissionCatalog.IsAllowed(mission))
             throw new ProjectOperationException(ProjectOperationErrorCode.UnknownMission,
                 $"'{mission}' is not a mission this Project can run.");
 
-        var selected = ProjectMissions.Reference(mission);
+        var selected = MissionCatalog.Reference(mission);
         return UpdateAsync(home, manifest =>
         {
             if (manifest.SelectedMission is { Origin: ProjectMissionOrigin.BuiltIn } current &&
@@ -112,6 +155,29 @@ internal sealed class ProjectStore
             return manifest with { SelectedMission = selected };
         }, cancellationToken);
     }
+
+    private ProjectOperationResponse OpenForApplication(ProjectRecord project, string? mission, SessionRuntimeKind runtime, ProjectOperationOutcome outcome)
+    {
+        var session = (_sessions ?? throw new InvalidOperationException("Project transport requires application sessions."))
+            .CreateForProject(project.Home, mission, runtime);
+        var summary = new ProjectSummary(project.Manifest.ProjectId, project.Manifest.Title, project.Manifest.Goal, project.Home);
+        return new ProjectOperationResponse(outcome, new ProjectSession(session.Id, session.Execution.AvailableCapabilities, summary));
+    }
+
+    private ApplicationSession RequiredSession(string sessionId)
+    {
+        if (_sessions is null || !_sessions.TryGet(sessionId, out var session) || session is null)
+            throw new KeyNotFoundException();
+        return session;
+    }
+
+    private static ProjectOperationError ToError(ProjectOperationException exception) => new(exception.Code, exception.Message);
+
+    private static ProjectMissionsView Missions(ProjectManifest manifest) => new(
+        MissionCatalog.All,
+        manifest.SelectedMission is { Origin: ProjectMissionOrigin.BuiltIn } selected && MissionCatalog.IsAllowed(selected.Reference)
+            ? selected.Reference : null,
+        manifest.LegacyProjectControlConversationId is not null || manifest.MissionControlConversationId is not null);
 
     public Task<ProjectRecord> PrepareSubmissionAsync(
         string home,
@@ -230,7 +296,7 @@ internal sealed class ProjectStore
                 Submission = new ProjectSubmission(
                     commandId,
                     previousCommandId,
-                    ProjectMissions.RequireSelected(manifest.SelectedMission),
+                    MissionCatalog.RequireSelected(manifest.SelectedMission),
                     input,
                     manifest.Goal,
                     ProjectSubmissionPhase.Prepared,
@@ -260,7 +326,7 @@ internal sealed class ProjectStore
             Submission = new ProjectSubmission(
                 commandId,
                 previousCommandId,
-                ProjectMissions.RequireSelected(manifest.SelectedMission),
+                MissionCatalog.RequireSelected(manifest.SelectedMission),
                 input,
                 manifest.Goal,
                 ProjectSubmissionPhase.Prepared,
@@ -602,7 +668,7 @@ internal sealed class ProjectStore
             return;
 
         var validIdentity = submission.CommandId != Guid.Empty &&
-                            ProjectMissions.IsAllowed(submission.Mission) &&
+                            MissionCatalog.IsAllowed(submission.Mission) &&
                             !string.IsNullOrWhiteSpace(submission.Input) &&
                             !string.IsNullOrWhiteSpace(submission.ProjectGoal) &&
                             submission.Input.Length <= 32_000 &&

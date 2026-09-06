@@ -6,12 +6,23 @@ using HostStartProjectMissionRunRequest = ForgeMission.Conversations.Contracts.S
 namespace ForgeMission.Application;
 
 /// <summary>
-/// Coordinates one immutable Project Mission submission. The ProjectStore owns file transactions;
+/// Coordinates one immutable Project Mission submission. The ProjectService owns file transactions;
 /// ConversationHostClient owns HTTP. This class deliberately releases the manifest lease before
 /// every Host call, and has no capability, provider, or presentation dependency.
 /// </summary>
-internal sealed class ProjectMissionApplication(ProjectStore projects, IHttpClientFactory clients)
+internal sealed class MissionSubmissionService(
+    ProjectService projects,
+    IHttpClientFactory clients,
+    ApplicationSessionService? sessions = null) : IMissionSubmissionService
 {
+    public Task<ProjectSubmissionResponse> StartAsync(
+        ForgeMission.Application.Transport.StartProjectMissionRunRequest request,
+        CancellationToken ct) => StartAsync(RequiredSession(request.SessionId), request, ct);
+
+    public Task<ProjectSubmissionResponse> RetryAsync(
+        RetryProjectMissionSubmissionRequest request,
+        CancellationToken ct) => RetryAsync(RequiredSession(request.SessionId), request, ct);
+
     public async Task<ProjectSubmissionResponse> StartAsync(
         ApplicationSession session, ForgeMission.Application.Transport.StartProjectMissionRunRequest request, CancellationToken ct)
     {
@@ -50,6 +61,13 @@ internal sealed class ProjectMissionApplication(ProjectStore projects, IHttpClie
             return new ProjectSubmissionResponse(ToView(submission), null);
 
         return await DispatchAsync(session.ProjectHome, current, retry: true, ct);
+    }
+
+    private ApplicationSession RequiredSession(string sessionId)
+    {
+        if (sessions is null || !sessions.TryGet(sessionId, out var session) || session is null)
+            throw new KeyNotFoundException();
+        return session;
     }
 
     private async Task<ProjectSubmissionResponse> DispatchAsync(

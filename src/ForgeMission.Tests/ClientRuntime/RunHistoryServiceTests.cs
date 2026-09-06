@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.Json;
 using ForgeMission.Application;
 using ForgeMission.Application.Transport;
+using ForgeMission.ClientRuntime;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
-public sealed class ProjectMissionReadSessionTests : IDisposable
+public sealed class RunHistoryServiceTests : IDisposable
 {
     private readonly string _profile = Directory.CreateTempSubdirectory("forge-project-read-").FullName;
 
@@ -15,13 +16,13 @@ public sealed class ProjectMissionReadSessionTests : IDisposable
     [Fact]
     public async Task StateRead_EstablishesSubscriptionBeforeTheInitialRunPage()
     {
-        var projects = new ProjectStore(Path.Combine(_profile, "Forge", "Projects"));
+        var projects = new ProjectService(Path.Combine(_profile, "Forge", "Projects"));
         var project = projects.Create("Read Project Mission history.", null, null);
         var containerId = Guid.NewGuid();
         await projects.SetProjectMissionContainerIdAsync(project.Home, containerId, CancellationToken.None);
         var handler = new ReadHandler(containerId, project.Manifest.ProjectId);
         var host = new ConversationHostClient(new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") });
-        await using var read = new ProjectMissionReadSession("session", project.Home, projects, host, _ => { }, CancellationToken.None);
+        await using var read = new ProjectMissionReadScope("session", project.Home, projects, host, _ => { }, CancellationToken.None);
 
         var response = await read.GetStateAsync(CancellationToken.None);
 
@@ -33,13 +34,13 @@ public sealed class ProjectMissionReadSessionTests : IDisposable
     [Fact]
     public async Task InitialSubscriptionFailure_ReturnsAvailabilityMetadata_ThenALaterReadReconnects()
     {
-        var projects = new ProjectStore(Path.Combine(_profile, "Forge", "Projects"));
+        var projects = new ProjectService(Path.Combine(_profile, "Forge", "Projects"));
         var project = projects.Create("Recover Project Mission history.", null, null);
         var containerId = Guid.NewGuid();
         await projects.SetProjectMissionContainerIdAsync(project.Home, containerId, CancellationToken.None);
         var handler = new ReadHandler(containerId, project.Manifest.ProjectId) { FailFirstSubscription = true };
         var host = new ConversationHostClient(new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") });
-        await using var read = new ProjectMissionReadSession("session", project.Home, projects, host, _ => { }, CancellationToken.None);
+        await using var read = new ProjectMissionReadScope("session", project.Home, projects, host, _ => { }, CancellationToken.None);
 
         var unavailable = await read.GetStateAsync(CancellationToken.None);
         var recovered = await read.GetStateAsync(CancellationToken.None);
@@ -48,6 +49,19 @@ public sealed class ProjectMissionReadSessionTests : IDisposable
         Assert.Null(recovered.Error);
         Assert.NotNull(recovered.State!.Runs);
         Assert.True(handler.Calls.Count(call => call == "events") >= 2);
+    }
+
+    [Fact]
+    public void Scope_ComposesHistoryObservationAndRequiredRefusal_WithoutExecutionAuthority()
+    {
+        var fields = typeof(ProjectMissionReadScope).GetFields(
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .Select(field => field.FieldType).ToArray();
+
+        Assert.Contains(typeof(RunHistoryService), fields);
+        Assert.Contains(typeof(RunObservationService), fields);
+        Assert.Contains(typeof(ProjectMissionToolRefusal), fields);
+        Assert.DoesNotContain(typeof(ClientExecutionSession), fields);
     }
 
     private sealed class ReadHandler(Guid containerId, Guid projectId) : HttpMessageHandler
