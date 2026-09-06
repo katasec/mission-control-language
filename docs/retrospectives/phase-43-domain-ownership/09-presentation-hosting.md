@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Serve the Blazor WebAssembly interface, framework/static assets, and the fallback page alongside the local API. The project references Presentation to include its published assets.
 
-Current locations: `src/ForgeMission.ClientRuntime/Program.cs` and `ForgeMission.ClientRuntime.csproj`. Rendering itself lives in the separate `ForgeMission.ClientRuntime.Presentation` project.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Program.cs` and `ForgeMission.ClientRuntime.csproj`. Rendering itself lives in the separate `ForgeMission.ClientRuntime.Presentation` project.
 
 ## Boundary concern
 

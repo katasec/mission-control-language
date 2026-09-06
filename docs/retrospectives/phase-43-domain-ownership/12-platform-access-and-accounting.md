@@ -10,7 +10,7 @@ Obtain and forward platform credentials, authenticate service requests, integrat
 
 Phase 43.14 extended the cloud mission path and specified terminal-only settlement with a stable client token. It explicitly distinguishes billing/idempotency identity from enrichment re-entrancy correlation. See the [cloud-mission design and evidence](../../phases/phase-43.14-desktop-cloud-missions.md).
 
-Relevant locations include `src/ForgeMission.Api/`, `src/ForgeMission.Billing/`, `src/ForgeMission.Desktop/DesktopBoot.cs`, and `src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs`.
+Relevant baseline locations at PR #99 include `src/ForgeMission.Api/`, `src/ForgeMission.Billing/`, `src/ForgeMission.Desktop/DesktopBoot.cs`, and `src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs`.
 
 ## Boundary concern
 

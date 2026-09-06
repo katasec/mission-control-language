@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Require Project creation/opening before establishing an initial session; bind workspace, selected mission, runtime kind, and conversation/read lifetimes to that session; replace and dispose those lifetimes on a mission switch.
 
-Current location: `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeSessionStore.cs`, including `ClientRuntimeSession` and the Project-only initial-session path.
+Baseline location at PR #99: `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeSessionStore.cs`, including `ClientRuntimeSession` and the Project-only initial-session path.
 
 ## Boundary concern
 

@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Build the Project Explorer projection; interpret Project assets and attached context; resolve an opaque entry identity to a document; return document content and product-specific availability errors.
 
-Current location: `src/ForgeMission.ClientRuntime/Services/ProjectWorkbenchService.cs`. This service also exposes mission selection, recorded separately in concern 2.
+Baseline location at PR #99: `src/ForgeMission.ClientRuntime/Services/ProjectWorkbenchService.cs`. This service also exposes mission selection, recorded separately in concern 2.
 
 ## Boundary concern
 

@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: cross-cutting architectural hypothesis; review aft
 
 Commit `ed0616f` added presentation-surface parity on August 30: every product action must be expressible through a named Client Runtime contract. The same change introduced Project records and made Project opening the only route to an initial execution session.
 
-See [Forge Architecture](../../design/forge-architecture.md#presentation-surface-parity--non-negotiable), `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs`, `src/ForgeMission.ClientRuntime.Transport/ClientRuntimeContracts.cs`, and `src/ForgeMission.Tests/Architecture/ClientRuntimePresentationBoundaryTests.cs`.
+For the baseline, see the prior [Forge Architecture](../../design/forge-architecture.md#historical-pre-4323-architecture-record), `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs`, `src/ForgeMission.ClientRuntime.Transport/ClientRuntimeContracts.cs`, and `src/ForgeMission.Tests/Architecture/ClientRuntimePresentationBoundaryTests.cs`.
 
 ## Boundary concern
 

@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <!-- Contracts (the pipe protocol), Orchestration (Mission Runtime resolution) and Core (the
-       platform credential this process hands to the Client Runtime, and to nothing else).
+       platform credential this process hands to the Application Host, and to nothing else).
        Deliberately no reference to a concrete native host or to ForgeMission.Desktop.Host: the Host
        is started as a sibling binary by path, which keeps its dependencies out of this process. -->
   <ItemGroup>

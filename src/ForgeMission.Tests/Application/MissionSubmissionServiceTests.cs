@@ -9,7 +9,7 @@ using ForgeMission.Core.Tools;
 using Microsoft.Extensions.Configuration;
 using RuntimeStartProjectMissionRunRequest = ForgeMission.Application.Transport.StartProjectMissionRunRequest;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 public sealed class MissionSubmissionServiceTests : IDisposable
 {

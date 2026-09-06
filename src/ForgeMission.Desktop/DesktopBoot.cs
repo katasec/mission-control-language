@@ -28,8 +28,8 @@ internal delegate ApplicationHostStart StartApplicationHost(
 
 // The potentially slow work the Supervisor performs while the Host is already on screen: resolve
 // where the Mission Runtime lives and prepare the durable Conversation Runtime (both Orchestration's
-// decisions to carry out, never the Desktop's or the Application Host's), then start the Client
-// Runtime with both verified URLs and wait for its ready URL.
+// decisions to carry out, never the Desktop's or the Application Host's), then start the Application
+// Host with both verified URLs and wait for its ready URL.
 //
 // A boot either returns fully-started runtimes or throws having stopped whatever it partially
 // started — the lifecycle never inherits a half-built runtime set.

@@ -1,6 +1,6 @@
 using ForgeMission.Application;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 public sealed class ApplicationEndpointsTests
 {

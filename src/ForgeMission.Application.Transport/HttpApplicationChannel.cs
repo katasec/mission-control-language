@@ -34,7 +34,7 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         var requestType = ApplicationJsonContext.Default.GetTypeInfo(typeof(TRequest));
         var responseType = ApplicationJsonContext.Default.GetTypeInfo(typeof(TResponse));
         if (requestType is null || responseType is null)
-            throw new InvalidOperationException($"Unsupported Client Runtime transport type: {typeof(TRequest).Name}.");
+            throw new InvalidOperationException($"Unsupported application transport type: {typeof(TRequest).Name}.");
 
         var json = JsonSerializer.Serialize(request, requestType);
         using var response = await httpClient.PostAsync(route,
@@ -42,7 +42,7 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         var body = await response.Content.ReadAsStringAsync(ct);
         response.EnsureSuccessStatusCode();
         return (TResponse)(JsonSerializer.Deserialize(body, responseType)
-            ?? throw new InvalidOperationException("Client Runtime returned an empty response."));
+            ?? throw new InvalidOperationException("The Application Host returned an empty response."));
     }
 
     public async IAsyncEnumerable<ApplicationEvent> Subscribe(
@@ -62,7 +62,7 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
                 continue;
 
             var message = JsonSerializer.Deserialize(line["data: ".Length..], ConversationRelayJsonContext.Default.ApplicationEvent)
-                ?? throw new InvalidOperationException("Client Runtime sent an invalid event.");
+                ?? throw new InvalidOperationException("The Application Host sent an invalid event.");
             yield return message;
         }
     }
@@ -85,7 +85,7 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         CapabilityDispatchRequest => "transport/capability/dispatch",
         PromptRequest => "transport/prompt",
         ConfirmationResponseRequest => "transport/confirmation/respond",
-        _ => throw new InvalidOperationException($"Unsupported Client Runtime request: {typeof(TRequest).Name}."),
+        _ => throw new InvalidOperationException($"Unsupported application request: {typeof(TRequest).Name}."),
     };
 
     public void Dispose()

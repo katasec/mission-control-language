@@ -1,6 +1,9 @@
 # Recommended end state
 
-**Design complete; implementation pending.** Baseline and provenance: [index](README.md). Contracts: [contracts](contracts.md). Evidence keys below refer to [reference evidence](references.md). These are fixed decisions for the ownership refactor, not a description of already-extracted code.
+**Design complete and implementation verified 2026-09-06.** Baseline and provenance:
+[index](README.md). Contracts: [contracts](contracts.md). Evidence keys below refer to
+[reference evidence](references.md). The [Phase 43.23 completed record](../../phases/phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
+records the verified current source and evidence pointers.
 
 ## Actors and boundaries
 

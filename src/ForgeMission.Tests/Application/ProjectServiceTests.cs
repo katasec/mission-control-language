@@ -4,7 +4,7 @@ using ForgeMission.Application;
 using ForgeMission.Application.Transport;
 using ForgeMission.Conversations.Contracts;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 /// <summary>
 /// Phase 43.20 Task 1 — every Project rule lives here, so every rule is asserted here: derivation,

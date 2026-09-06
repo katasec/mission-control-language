@@ -6,11 +6,11 @@ using ForgeMission.Application.Transport;
 using ForgeMission.Conversations.Contracts;
 using ForgeMission.Core.Tools;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 // Exercises ConversationScope/ConversationHostClient against a scripted HttpMessageHandler
 // standing in for the Task 6 HTTP/SSE contract — no ConversationHost/Azurite dependency, matching
-// the project-boundary rule that Client Runtime's own test project never references Host. A real
+// the project-boundary rule that Application's own test project never references Host. A real
 // LocalDiskWorkspace/CapabilityDispatcher/ToolExecutorRegistry proves the local tool hand-off,
 // mirroring LegacyMissionProtocolClientTests' own real-workspace pattern.
 public sealed class ConversationServiceTests : IDisposable

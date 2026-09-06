@@ -5,7 +5,7 @@
    the operating system: it cannot take the Workbench tokens and cannot be captured in a browser, so
    there would be no way to verify what a person actually sees.
 
-   It holds no catalog of its own. The names arrive from the Client Runtime, which owns the closed
+   It holds no catalog of its own. The names arrive from Application, which owns the closed
    list, so this component cannot show a mission Forge would refuse to run — and cannot fall behind
    the real catalog either.
 
@@ -191,7 +191,7 @@
 
     // Committing closes and returns focus BEFORE the caller persists, so the popup never sits open
     // over a failure message. What the button then shows is whatever the caller renders back from
-    // the Client Runtime's canonical answer — never this component's own guess.
+    // Application's canonical answer — never this component's own guess.
     private async Task CommitAsync(string mission)
     {
         Close();

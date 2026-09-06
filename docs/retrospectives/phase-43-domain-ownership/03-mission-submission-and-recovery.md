@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Prepare immutable commands; check for active runs; create or resolve remote Project Mission containers; submit missions; reconcile receipts; record acceptance or rejection; retry uncertain submissions using the existing command identity.
 
-Current locations: `src/ForgeMission.ClientRuntime/Services/ProjectMissionApplication.cs` and submission state/transition logic in `ProjectStore.cs` and `ProjectManifest.cs` in the same directory.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Services/ProjectMissionApplication.cs` and submission state/transition logic in `ProjectStore.cs` and `ProjectManifest.cs` in the same directory.
 
 ## Boundary concern
 

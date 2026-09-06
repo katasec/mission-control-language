@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential responsibility mismatch; review after Pr
 
 Expose the allowed Project missions; validate a selected mission; persist selection and enforce restrictions on changing it.
 
-Current locations: `src/ForgeMission.ClientRuntime/Services/ProjectMissions.cs`, `ProjectStore.cs`, and `ProjectWorkbenchService.cs` in the same directory. The local catalog wrapper delegates to shared `ProjectMissionNames` contracts.
+Baseline locations at PR #99: `src/ForgeMission.ClientRuntime/Services/ProjectMissions.cs`, `ProjectStore.cs`, and `ProjectWorkbenchService.cs` in the same directory. The local catalog wrapper delegates to shared `ProjectMissionNames` contracts.
 
 ## Boundary concern
 

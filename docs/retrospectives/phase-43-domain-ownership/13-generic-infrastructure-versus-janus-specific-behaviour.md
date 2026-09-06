@@ -8,7 +8,7 @@ Recorded: 2026-09-05. Status: potential mission-specific coupling; review after 
 
 Shared conversation contracts name roles such as Proposer and Implementer. A Worker mapper translates Janus expert trace facts into conversation events. The client durable tool path checks the participant is Implementer before dispatching. Worker mission resolution selects explicitly packaged missions.
 
-Current locations: `src/ForgeMission.Conversations.Contracts/ConversationContracts.cs`, `src/ForgeMission.ConversationWorker/Janus/JanusPipelineProgressMapper.cs`, `src/ForgeMission.ConversationWorker/Messaging/WorkerMissionResolver.cs`, and `src/ForgeMission.ClientRuntime/Services/ConversationRuntimeSession.cs`.
+Baseline locations at PR #99: `src/ForgeMission.Conversations.Contracts/ConversationContracts.cs`, `src/ForgeMission.ConversationWorker/Janus/JanusPipelineProgressMapper.cs`, `src/ForgeMission.ConversationWorker/Messaging/WorkerMissionResolver.cs`, and `src/ForgeMission.ClientRuntime/Services/ConversationRuntimeSession.cs`.
 
 ## Boundary concern
 

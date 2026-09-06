@@ -8,7 +8,7 @@ namespace ForgeMission.Application;
 internal sealed class ProjectMissionReadScope : IAsyncDisposable
 {
     private readonly RunObservationService _observation;
-    private readonly RunHistoryService _history;
+    private readonly ProjectMissionHistoryReader _history;
     private readonly ProjectMissionToolRefusal _refusal;
 
     public ProjectMissionReadScope(string sessionId, string home, ProjectService projects,
@@ -16,7 +16,7 @@ internal sealed class ProjectMissionReadScope : IAsyncDisposable
     {
         _refusal = new ProjectMissionToolRefusal(host);
         _observation = new RunObservationService(sessionId, home, projects, host, publish, _refusal.ApplyAsync, applicationStopping);
-        _history = new RunHistoryService(home, projects, host, _observation);
+        _history = new ProjectMissionHistoryReader(home, projects, host, _observation);
     }
 
     public Task<GetProjectMissionStateResponse> GetStateAsync(CancellationToken ct) => _history.GetStateAsync(ct);
@@ -47,7 +47,7 @@ internal sealed class ProjectMissionReadScopeSlot : IAsyncDisposable
         await _gate.WaitAsync(ct);
         try
         {
-            if (_closed) throw new InvalidOperationException("This Client Runtime session has been replaced.");
+            if (_closed) throw new InvalidOperationException("This application session has been replaced.");
             _session ??= factory();
             return await operation(_session);
         }

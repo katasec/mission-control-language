@@ -1,11 +1,12 @@
 using System.Net;
 using ForgeMission.Application.Transport;
+using ForgeMission.Tests.ApplicationHost;
 
-namespace ForgeMission.Tests.ClientRuntime;
+namespace ForgeMission.Tests.Application;
 
 /// <summary>
 /// Phase 43.20 Task 1 — the Presentation-surface parity proof. This class is itself a second,
-/// non-Desktop surface: it drives the real Client Runtime process through the production
+/// non-Desktop surface: it drives the real Application Host through the production
 /// <see cref="IApplicationChannel"/> and the shared transport DTOs, and references no Blazor,
 /// bunit, Photino, Desktop, or Host type. Every Project action a TUI would need — draft, create,
 /// open, and session replacement — is exercised here with the authorization, outcomes, and failure
@@ -62,7 +63,7 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
     }
 
     // A title override must not let an empty goal through: the goal gate runs first, on every
-    // surface, because only Client Runtime decides what a valid Project is.
+    // surface, because only Application decides what a valid Project is.
     [Fact]
     public async Task Draft_AnEmptyGoalWithATitleOverride_IsStillATypedFailure()
     {
