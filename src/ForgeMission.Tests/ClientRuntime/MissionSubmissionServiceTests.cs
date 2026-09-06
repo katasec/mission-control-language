@@ -11,7 +11,7 @@ using RuntimeStartProjectMissionRunRequest = ForgeMission.Application.Transport.
 
 namespace ForgeMission.Tests.ClientRuntime;
 
-public sealed class ProjectMissionApplicationTests : IDisposable
+public sealed class MissionSubmissionServiceTests : IDisposable
 {
     private readonly string _profile = Directory.CreateTempSubdirectory("forge-project-mission-").FullName;
 
@@ -90,17 +90,17 @@ public sealed class ProjectMissionApplicationTests : IDisposable
 
     private Fixture NewFixture()
     {
-        var projects = new ProjectStore(Path.Combine(_profile, "Forge", "Projects"));
+        var projects = new ProjectService(Path.Combine(_profile, "Forge", "Projects"));
         var project = projects.Create("Build a reliable Project Mission.", null, null);
         var sessions = new ApplicationSessionService(CapabilityAuthorizationPolicy.Default, _ => { }, CancellationToken.None);
         var session = sessions.CreateForProject(project.Home);
         var handler = new ProjectMissionHandler(project.Manifest.ProjectId, project.Manifest.Goal);
-        var application = new ProjectMissionApplication(projects, new HandlerFactory(handler));
+        var application = new MissionSubmissionService(projects, new HandlerFactory(handler));
         return new Fixture(projects, project, session, application, handler);
     }
 
-    private sealed record Fixture(ProjectStore Projects, ProjectRecord Project, ApplicationSession Session,
-        ProjectMissionApplication Application, ProjectMissionHandler Handler)
+    private sealed record Fixture(ProjectService Projects, ProjectRecord Project, ApplicationSession Session,
+        MissionSubmissionService Application, ProjectMissionHandler Handler)
     {
         public Guid ContainerId => Handler.ContainerId;
         public Guid RunId => Handler.RunId;

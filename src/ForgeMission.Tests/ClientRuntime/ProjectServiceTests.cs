@@ -11,12 +11,12 @@ namespace ForgeMission.Tests.ClientRuntime;
 /// the collision-safe write, manifest validation, and the draft's total absence of side effects.
 /// No Presentation type appears in this file; a TUI would exercise the same class the same way.
 /// </summary>
-public sealed class ProjectStoreTests : IDisposable
+public sealed class ProjectServiceTests : IDisposable
 {
     private readonly string _profile = Directory.CreateTempSubdirectory("forge-project-store-").FullName;
-    private readonly ProjectStore _store;
+    private readonly ProjectService _store;
 
-    public ProjectStoreTests() => _store = new ProjectStore(ProjectsRoot);
+    public ProjectServiceTests() => _store = new ProjectService(ProjectsRoot);
 
     private string ProjectsRoot => Path.Combine(_profile, "Forge", "Projects");
 
@@ -151,7 +151,7 @@ public sealed class ProjectStoreTests : IDisposable
         Assert.Equal(ProjectMissionOrigin.BuiltIn, manifest.SelectedMission.Origin);
         Assert.Equal("Janus", manifest.SelectedMission.Reference);
         Assert.Null(manifest.SelectedMission.Digest);
-        Assert.True(File.Exists(Path.Combine(created.Home, ProjectStore.ManifestFileName)));
+        Assert.True(File.Exists(Path.Combine(created.Home, ProjectService.ManifestFileName)));
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public sealed class ProjectStoreTests : IDisposable
     {
         var created = _store.Create("Todos API", null, null);
 
-        var json = File.ReadAllText(Path.Combine(created.Home, ProjectStore.ManifestFileName));
+        var json = File.ReadAllText(Path.Combine(created.Home, ProjectService.ManifestFileName));
 
         Assert.Contains("\"schemaVersion\": 3", json, StringComparison.Ordinal);
         Assert.Contains("\"legacyProjectControlConversationId\": null", json, StringComparison.Ordinal);
@@ -200,7 +200,7 @@ public sealed class ProjectStoreTests : IDisposable
             () => _store.Create("   ", "Todos API", chosen));
 
         Assert.Equal(ProjectOperationErrorCode.InvalidGoal, failure.Code);
-        Assert.False(File.Exists(Path.Combine(chosen, ProjectStore.ManifestFileName)));
+        Assert.False(File.Exists(Path.Combine(chosen, ProjectService.ManifestFileName)));
     }
 
     [Fact]
@@ -319,7 +319,7 @@ public sealed class ProjectStoreTests : IDisposable
     public void ManifestFile_ReadFailure_IsMappedWithoutCallingItMissing()
     {
         var home = Directory.CreateDirectory(Path.Combine(_profile, "unreadable", Guid.NewGuid().ToString("N"))).FullName;
-        Directory.CreateDirectory(Path.Combine(home, ProjectStore.ManifestFileName));
+        Directory.CreateDirectory(Path.Combine(home, ProjectService.ManifestFileName));
 
         var failure = Assert.Throws<ProjectOperationException>(() => new ProjectManifestFile().Read(home));
 
@@ -389,7 +389,7 @@ public sealed class ProjectStoreTests : IDisposable
               "selectedMission": { "origin": "BuiltIn", "reference": "Janus" },
               "missionControlConversationId": "{{legacyId}}" }
             """);
-        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(home, ProjectService.ManifestFileName);
         var before = File.ReadAllText(manifestPath);
 
         var opened = _store.Open(home).Project!.Manifest;
@@ -487,20 +487,20 @@ public sealed class ProjectStoreTests : IDisposable
     public async Task PrepareSubmission_RejectsBlankInputWithoutWriting(string input)
     {
         var project = _store.Create("Ship a release", null, null);
-        var before = File.ReadAllText(Path.Combine(project.Home, ProjectStore.ManifestFileName));
+        var before = File.ReadAllText(Path.Combine(project.Home, ProjectService.ManifestFileName));
 
         var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
             _store.PrepareSubmissionAsync(project.Home, Guid.NewGuid(), null, input, CancellationToken.None));
 
         Assert.Equal(ProjectOperationErrorCode.InvalidMissionInput, failure.Code);
-        Assert.Equal(before, File.ReadAllText(Path.Combine(project.Home, ProjectStore.ManifestFileName)));
+        Assert.Equal(before, File.ReadAllText(Path.Combine(project.Home, ProjectService.ManifestFileName)));
     }
 
     [Fact]
     public async Task PrepareSubmission_RejectsAnOversizedJournalBeforePublication()
     {
         var project = _store.Create(new string('g', 100_000), null, null);
-        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(project.Home, ProjectService.ManifestFileName);
         var before = File.ReadAllText(manifestPath);
 
         var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
@@ -518,7 +518,7 @@ public sealed class ProjectStoreTests : IDisposable
         await _store.PrepareSubmissionAsync(project.Home, commandId, null, "first", CancellationToken.None);
         var temporaryId = Guid.NewGuid();
         Directory.CreateDirectory(Path.Combine(project.Home, $".forge-project.{temporaryId:N}.tmp"));
-        var failingStore = new ProjectStore(ProjectsRoot, new ProjectManifestFile(() => temporaryId));
+        var failingStore = new ProjectService(ProjectsRoot, new ProjectManifestFile(() => temporaryId));
 
         var failure = await Assert.ThrowsAsync<ProjectOperationException>(() =>
             failingStore.RecordSubmissionAcceptedAsync(
@@ -535,7 +535,7 @@ public sealed class ProjectStoreTests : IDisposable
     public async Task ConcurrentSelectionAndContainerWrites_PreserveBothValues()
     {
         var project = _store.Create("Ship a release", null, null);
-        var secondStore = new ProjectStore(ProjectsRoot);
+        var secondStore = new ProjectService(ProjectsRoot);
         var containerId = Guid.NewGuid();
 
         await Task.WhenAll(
@@ -552,7 +552,7 @@ public sealed class ProjectStoreTests : IDisposable
     public async Task AHeldProjectLease_ReturnsProjectBusy_WithoutChangingTheManifest()
     {
         var project = _store.Create("Ship a release", null, null);
-        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(project.Home, ProjectService.ManifestFileName);
         var before = File.ReadAllText(manifestPath);
         await using var heldLease = new FileStream(
             Path.Combine(project.Home, ProjectManifestFile.LockFileName),
@@ -571,7 +571,7 @@ public sealed class ProjectStoreTests : IDisposable
     public async Task WaitingForAProjectLease_HonoursCancellationWithoutChangingTheManifest()
     {
         var project = _store.Create("Ship a release", null, null);
-        var manifestPath = Path.Combine(project.Home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(project.Home, ProjectService.ManifestFileName);
         var before = File.ReadAllText(manifestPath);
         await using var heldLease = new FileStream(
             Path.Combine(project.Home, ProjectManifestFile.LockFileName),
@@ -627,7 +627,7 @@ public sealed class ProjectStoreTests : IDisposable
         var ownTemporaryPath = Path.Combine(project.Home, $".forge-project.{temporaryId:N}.tmp");
         var otherTemporaryPath = Path.Combine(project.Home, $".forge-project.{Guid.NewGuid():N}.tmp");
         File.WriteAllText(otherTemporaryPath, "another operation's stale temp");
-        var faultingStore = new ProjectStore(
+        var faultingStore = new ProjectService(
             ProjectsRoot,
             new ProjectManifestFile(
                 () => temporaryId,
@@ -683,9 +683,9 @@ public sealed class ProjectStoreTests : IDisposable
     {
         var configuration = Directory.GetParent(AppContext.BaseDirectory)!.Parent!.Name;
         var probeAssembly = Path.GetFullPath(Path.Combine(
-            AppContext.BaseDirectory, "..", "..", "..", "..", "ForgeMission.ProjectStoreProbe", "bin", configuration, "net10.0",
-            "ForgeMission.ProjectStoreProbe.dll"));
-        Assert.True(File.Exists(probeAssembly), $"The ProjectStore process probe was not built at {probeAssembly}.");
+            AppContext.BaseDirectory, "..", "..", "..", "..", "ForgeMission.ProjectServiceProbe", "bin", configuration, "net10.0",
+            "ForgeMission.ProjectServiceProbe.dll"));
+        Assert.True(File.Exists(probeAssembly), $"The ProjectService process probe was not built at {probeAssembly}.");
         var start = new ProcessStartInfo("dotnet")
         {
             UseShellExecute = false,
@@ -726,7 +726,7 @@ public sealed class ProjectStoreTests : IDisposable
         var home = WriteManifest(FullyPopulatedManifestJson);
 
         await _store.SelectMissionAsync(home, "Naive", CancellationToken.None);
-        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(home, ProjectService.ManifestFileName);
         var rewritten = File.ReadAllText(manifestPath);
         var reread = _store.Open(home).Project!.Manifest;
 
@@ -800,13 +800,13 @@ public sealed class ProjectStoreTests : IDisposable
     private string WriteManifest(string json)
     {
         var home = Directory.CreateDirectory(Path.Combine(_profile, "manifests", Guid.NewGuid().ToString("N"))).FullName;
-        File.WriteAllText(Path.Combine(home, ProjectStore.ManifestFileName), json);
+        File.WriteAllText(Path.Combine(home, ProjectService.ManifestFileName), json);
         return home;
     }
 
     private void AssertRefused(string home, ProjectOperationErrorCode expected)
     {
-        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(home, ProjectService.ManifestFileName);
         var before = File.ReadAllText(manifestPath);
 
         var failure = Assert.Throws<ProjectOperationException>(() => _store.Open(home));

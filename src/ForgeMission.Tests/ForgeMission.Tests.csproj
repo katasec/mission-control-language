@@ -30,7 +30,7 @@
     <ProjectReference Include="..\ForgeMission.Presentation\ForgeMission.Presentation.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationPresentation\ForgeMission.ConversationPresentation.csproj" />
     <ProjectReference Include="..\ForgeMission.Application.TransportProbe\ForgeMission.Application.TransportProbe.csproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\ForgeMission.ProjectStoreProbe\ForgeMission.ProjectStoreProbe.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ForgeMission.ProjectServiceProbe\ForgeMission.ProjectServiceProbe.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ForgeMission.Desktop\ForgeMission.Desktop.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
     <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />

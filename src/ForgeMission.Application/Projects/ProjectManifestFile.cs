@@ -5,7 +5,7 @@ namespace ForgeMission.Application;
 /// <summary>
 /// Owns the filesystem part of a Project manifest transaction: one stable OS lease, bounded byte
 /// reads, and atomic publication. It deliberately knows nothing about manifest meaning, missions,
-/// or network work; <see cref="ProjectStore"/> supplies the pure transformation while this lease is held.
+/// or network work; <see cref="ProjectService"/> supplies the pure transformation while this lease is held.
 /// </summary>
 internal sealed class ProjectManifestFile
 {
@@ -29,7 +29,7 @@ internal sealed class ProjectManifestFile
 
     public ProjectManifestFileSnapshot Read(string home)
     {
-        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(home, ProjectService.ManifestFileName);
         return new ProjectManifestFileSnapshot(manifestPath, ReadBytes(manifestPath));
     }
 
@@ -51,7 +51,7 @@ internal sealed class ProjectManifestFile
     {
         Directory.CreateDirectory(home);
         await using var lease = await AcquireLeaseAsync(home, cancellationToken);
-        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(home, ProjectService.ManifestFileName);
         if (File.Exists(manifestPath))
             return false;
 
@@ -105,7 +105,7 @@ internal sealed class ProjectManifestFile
             throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
                 $"The Project manifest at {home} exceeds {MaximumManifestBytes} bytes.");
 
-        var manifestPath = Path.Combine(home, ProjectStore.ManifestFileName);
+        var manifestPath = Path.Combine(home, ProjectService.ManifestFileName);
         var temporaryPath = Path.Combine(home, $".forge-project.{_temporaryId():N}.tmp");
         try
         {

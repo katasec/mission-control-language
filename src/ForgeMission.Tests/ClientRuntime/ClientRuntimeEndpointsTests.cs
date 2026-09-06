@@ -10,7 +10,7 @@ public sealed class ApplicationEndpointsTests
     [InlineData("CLOUD")]
     public void UsesCloudMissionRuntime_CloudOrUnsetMode_ReturnsTrue(string? mode)
     {
-        Assert.True(ApplicationActions.UsesCloudMissionRuntime(mode));
+        Assert.True(ApplicationInteractionServices.UsesCloudMissionRuntime(mode));
     }
 
     [Theory]
@@ -18,6 +18,6 @@ public sealed class ApplicationEndpointsTests
     [InlineData("remote")]
     public void UsesCloudMissionRuntime_DockerOrUnrecognizedMode_ReturnsFalse(string mode)
     {
-        Assert.False(ApplicationActions.UsesCloudMissionRuntime(mode));
+        Assert.False(ApplicationInteractionServices.UsesCloudMissionRuntime(mode));
     }
 }

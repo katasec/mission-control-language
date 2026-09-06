@@ -25,7 +25,7 @@ The proposed generic `ApplicationApi.InvokeAsync<TRequest, TResponse>` dispatche
 
 ## Task 1 — library and Host boundaries (2026-09-06)
 
-**Complete; merge evidence pending the Task 1 PR.** The existing combined Client Runtime executable was separated into `ForgeMission.Application`, Bob (`ForgeMission.ClientRuntime`), `ForgeMission.Application.Host`, `ForgeMission.Application.Transport`, `ForgeMission.Presentation`, and `ForgeMission.Application.TransportProbe`. The exact action/event contract, numeric DTO enums, route/error behavior, readiness marker, manifest schema, Host/Worker ownership, and Desktop Supervisor/native Host boundary remain compatible.
+**Complete and merged in PR #103, commit `9d663ff`.** The existing combined Client Runtime executable was separated into `ForgeMission.Application`, Bob (`ForgeMission.ClientRuntime`), `ForgeMission.Application.Host`, `ForgeMission.Application.Transport`, `ForgeMission.Presentation`, and `ForgeMission.Application.TransportProbe`. The exact action/event contract, numeric DTO enums, route/error behavior, readiness marker, manifest schema, Host/Worker ownership, and Desktop Supervisor/native Host boundary remain compatible.
 
 | Check | Observation |
 |---|---|
@@ -40,3 +40,17 @@ The proposed generic `ApplicationApi.InvokeAsync<TRequest, TResponse>` dispatche
 | Controlled tests | Fake HTTP/temp-profile/out-of-process, policy, stale-session, malformed/foreign-history, refusal, confirmation, readiness, and race tests are controlled evidence only; they do not replace the preceding default journey. |
 
 The deliberately retained limits remain unchanged: no durable local tool-result ledger, cross-restart exactly-once local effects, new mission grant, stop/resume, catalog, billing redesign, or legacy protocol retirement.
+
+## Task 2 — separate Application owners (2026-09-06)
+
+**Complete and verified.** `ProjectService` is the sole Project/manifest/journal-write owner; `MissionCatalog`, `MissionSubmissionService`, and `ProjectContentService` now carry their named application responsibilities. `ApplicationSessionService` owns attachment admission/replacement/disposal. The former combined interaction implementation retains only conversation, direct capability, and confirmation behavior.
+
+| Check | Observation |
+|---|---|
+| Read ownership and protocol | A scoped `RunHistoryService` owns verified state/list/detail/event reads. `ProjectMissionReadScope` composes that reader, `RunObservationService`, and a scope-owned `ProjectMissionToolRefusal`; refusal runs before the tail cursor advances. The transport-facing `ProjectMissionHistoryEndpointService` performs only live-session lookup and scope entry. Observation retains the existing one-queued-invalidation plus dirty-replacement bound. |
+| Failure and retry boundaries | Focused Project, submission, history, session, tail, and refusal checks passed. Lost-response/same-command retry coverage remains on `MissionSubmissionService`; a deliberately changed second intent was refused with the existing “submission changed” result rather than overwriting the accepted journal. |
+| Root review | Review removed stale duplicate Project/session/submission/history/content workflows from `ApplicationInteractionServices`, restored bounded invalidation, and required the final scoped History/Observation/refusal split. `git diff --check` passed. |
+| Automated verification | `dotnet build src/ForgeMission.slnx --no-restore`: 0 warnings/0 errors. `dotnet test src/ForgeMission.slnx --no-build --no-restore`: passed. Focused final `RunHistoryServiceTests|ClientRuntimeEndpointsTests`: 3 passed; prior owner/history/session/refusal focused set: 76 passed. |
+| AOT package | `make desktop-publish` produced Desktop, Application Host, and native Host. The only output was the existing macOS Homebrew OpenSSL/Brotli minimum-OS linker warnings. |
+| Default product journey | Zero-argument published Desktop, with no positional/runtime URL override, started the Supervisor-owned bridge, Application Host `127.0.0.1:64929`, and native Host. Dedicated Project `9e09096f-59de-404a-9dea-7554dc4ff9fd` (schema 3) selected Janus, created command `d61f6927-a279-459c-8b16-dde4480dc7d2` and run `835dedd8-8c66-56d1-bf75-11727c74420a`, then selected Naive. After reload/open, the UI showed persisted Naive selection and the completed Janus run: 5 expert turns, 0 tool calls; trace events 1–15 contained `Return exactly PASS.` Project Explorer opened the dedicated `mcl.lock` text asset. |
+| UI and lifecycle | The existing Forge Workbench renderer showed the unchanged Missions, trace, Explorer, persisted selection/history, and text-document states. Forced native Host exit removed Desktop `76985`, native Host `76986`, Application Host `76991`, and owned bridge `76987`. A separate normal window close removed Desktop `80756`, native Host `80757`, Application Host `80778`, and owned bridge `80758`. |

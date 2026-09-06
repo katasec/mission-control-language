@@ -7,6 +7,7 @@ namespace ForgeMission.Application;
 
 internal sealed class ApplicationSessionService(
     CapabilityAuthorizationPolicy policy, Action<ApplicationEvent> publish, CancellationToken applicationStopping)
+    : IApplicationSessionService
 {
     private readonly ConcurrentDictionary<string, ApplicationSession> _sessions = [];
     private readonly object _lifecycleGate = new();
@@ -15,7 +16,7 @@ internal sealed class ApplicationSessionService(
     private bool _closing;
 
     // The only way a first session and local execution root come into existence (43.20 task 1).
-    // Its caller is always a project create/open endpoint, after ProjectStore has produced and
+    // Its caller is always the ProjectService create/open owner, after that owner has produced and
     // validated that home — which is what makes "no session or tool authority at Desktop boot"
     // structural rather than a rule Presentation has to remember.
     public ApplicationSession CreateForProject(
@@ -58,6 +59,16 @@ internal sealed class ApplicationSessionService(
             _operations = Task.WhenAll(_operations, replacement);
             return replacement;
         }
+    }
+
+    public async Task<SessionSetupResponse> ReplaceAsync(SessionSetupRequest request, CancellationToken ct)
+    {
+        var session = await ReplaceAsync(
+            request.ReplacesSessionId,
+            request.WorkspaceRoot,
+            request.Mission,
+            request.Runtime);
+        return new SessionSetupResponse(session.Id, session.Execution.AvailableCapabilities);
     }
 
     private async Task<ApplicationSession> ReplaceCoreAsync(
@@ -146,7 +157,7 @@ internal sealed record ApplicationSession(
     /// <summary>One bounded Project Mission read owner per live session. It has no workspace
     /// capability dependency and is disposed with the same replacement boundary as the legacy
     /// conversation slots.</summary>
-    public ProjectMissionReadSessionSlot ProjectMission { get; } = new();
+    public ProjectMissionReadScopeSlot ProjectMission { get; } = new();
 
     public ValueTask DisposeAsync()
     {
