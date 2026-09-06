@@ -131,7 +131,7 @@ internal sealed class DesktopLifecycle(IHostChannel host, Func<CancellationToken
         State = DesktopState.Stopped;
     }
 
-    // Awaits the boot rather than abandoning it: a Client Runtime or container that finished
+    // Awaits the boot rather than abandoning it: a Application Host or container that finished
     // starting just after the trigger must still be stopped. Boot honours its cancellation token,
     // so this settles quickly; correctness here outranks exit latency in a process whose window has
     // already gone.

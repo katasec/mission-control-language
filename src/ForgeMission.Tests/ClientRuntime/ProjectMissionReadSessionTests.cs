@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Services;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Application;
+using ForgeMission.Application.Transport;
 
 namespace ForgeMission.Tests.ClientRuntime;
 

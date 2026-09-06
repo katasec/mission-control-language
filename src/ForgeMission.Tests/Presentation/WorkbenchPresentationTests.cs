@@ -1,7 +1,7 @@
 using Bunit;
-using ForgeMission.ClientRuntime.Presentation;
-using ForgeMission.ClientRuntime.Presentation.Components;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Presentation;
+using ForgeMission.Presentation.Components;
+using ForgeMission.Application.Transport;
 using ForgeMission.Conversations.Contracts;
 
 namespace ForgeMission.Tests.Presentation;

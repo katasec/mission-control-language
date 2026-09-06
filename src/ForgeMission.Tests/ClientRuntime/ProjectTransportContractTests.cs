@@ -1,12 +1,12 @@
 using System.Net;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Application.Transport;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
 /// <summary>
 /// Phase 43.20 Task 1 — the Presentation-surface parity proof. This class is itself a second,
 /// non-Desktop surface: it drives the real Client Runtime process through the production
-/// <see cref="IClientRuntimeChannel"/> and the shared transport DTOs, and references no Blazor,
+/// <see cref="IApplicationChannel"/> and the shared transport DTOs, and references no Blazor,
 /// bunit, Photino, Desktop, or Host type. Every Project action a TUI would need — draft, create,
 /// open, and session replacement — is exercised here with the authorization, outcomes, and failure
 /// semantics Desktop gets.
@@ -19,15 +19,15 @@ namespace ForgeMission.Tests.ClientRuntime;
 public sealed class ProjectTransportContractTests : IAsyncLifetime
 {
     private readonly string _profile = Directory.CreateTempSubdirectory("forge-project-contract-").FullName;
-    private ClientRuntimeHostProcess _host = null!;
-    private HttpClientRuntimeChannel _channel = null!;
+    private ApplicationHostProcess _host = null!;
+    private HttpApplicationChannel _channel = null!;
 
     private string ProjectsRoot => Path.Combine(_profile, "Forge", "Projects");
 
     public async Task InitializeAsync()
     {
-        _host = await ClientRuntimeHostProcess.StartAsync(profileRoot: _profile);
-        _channel = new HttpClientRuntimeChannel(new Uri(_host.BaseUrl, UriKind.Absolute));
+        _host = await ApplicationHostProcess.StartAsync(profileRoot: _profile);
+        _channel = new HttpApplicationChannel(new Uri(_host.BaseUrl, UriKind.Absolute));
     }
 
     public async Task DisposeAsync()

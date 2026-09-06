@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Services;
+using ForgeMission.Application;
 using ForgeMission.Conversations.Contracts;
 
 namespace ForgeMission.Tests.ClientRuntime;

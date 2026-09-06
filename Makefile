@@ -18,7 +18,7 @@ endif
 
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
-CLIENT_RUNTIME := src/ForgeMission.ClientRuntime
+APPLICATION_HOST := src/ForgeMission.Application.Host
 DESKTOP_SUPERVISOR := src/ForgeMission.Desktop
 DESKTOP_HOST := src/ForgeMission.Desktop.Host
 DESKTOP_DIR := dist/forge-desktop
@@ -64,9 +64,9 @@ dev-down: ## Stop local dev environment (keeps data)
 dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
 	./scripts/dev-reset.sh
 
-desktop-publish: ## Publish the desktop app (Client Runtime + supervisor + native host) as one self-contained folder
+desktop-publish: ## Publish the desktop app (Application Host + supervisor + native host) as one self-contained folder
 	rm -rf $(DESKTOP_DIR)
-	dotnet publish $(CLIENT_RUNTIME) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
+	dotnet publish $(APPLICATION_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	# Last on purpose: publishing into a shared folder prunes files a project published before but
 	# no longer owns, and the native host's Photino.Native.dylib is the one asset another project

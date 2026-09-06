@@ -4,7 +4,7 @@ Companion to [end state](end-state.md). The source baseline is `ef2e636cd37db670
 
 ## Shared application actions
 
-The complete existing wire vocabulary is [ClientRuntimeContracts.cs](../../../src/ForgeMission.ClientRuntime.Transport/ClientRuntimeContracts.cs), its JSON registration is [ClientRuntimeJsonContext.cs](../../../src/ForgeMission.ClientRuntime.Transport/ClientRuntimeJsonContext.cs), and route/error behavior is [ClientRuntimeEndpoints.cs](../../../src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs). Event serialization separately uses [ConversationRelayJsonContext.cs](../../../src/ForgeMission.ClientRuntime.Transport/ConversationRelayJsonContext.cs), including the embedded conversation string-enum options; do not merge those settings with numeric application DTO enums. These become Application.Transport / Application.Host sources during implementation. References in this historical baseline table are updated to their destination paths in the same implementation commit that moves them.
+The complete existing wire vocabulary is [ApplicationContracts.cs](../../../src/ForgeMission.Application.Transport/ApplicationContracts.cs), its JSON registration is [ApplicationJsonContext.cs](../../../src/ForgeMission.Application.Transport/ApplicationJsonContext.cs), and route/error behavior is [ApplicationEndpoints.cs](../../../src/ForgeMission.Application.Host/Transport/ApplicationEndpoints.cs). Event serialization separately uses [ConversationRelayJsonContext.cs](../../../src/ForgeMission.Application.Transport/ConversationRelayJsonContext.cs), including the embedded conversation string-enum options; do not merge those settings with numeric application DTO enums. These are the Application.Transport / Application.Host sources after Task 1.
 
 | Existing request → response | Owner / local call | Preserved semantics |
 |---|---|---|
@@ -38,6 +38,11 @@ public interface IProjectService
     Task<ProjectOperationResponse> CreateAsync(ProjectCreateRequest request, CancellationToken ct);
     Task<ProjectOperationResponse> OpenAsync(ProjectOpenRequest request, CancellationToken ct);
     Task<SelectProjectMissionResponse> SelectMissionAsync(SelectProjectMissionRequest request, CancellationToken ct);
+}
+
+public interface IApplicationSessionService
+{
+    Task<SessionSetupResponse> ReplaceAsync(SessionSetupRequest request, CancellationToken ct);
 }
 
 public interface IMissionSubmissionService
@@ -89,6 +94,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         CancellationToken applicationStopping);
 
     public IProjectService Projects { get; }
+    public IApplicationSessionService Sessions { get; }
     public IMissionSubmissionService MissionSubmissions { get; }
     public IRunHistoryService RunHistory { get; }
     public IProjectContentService ProjectContent { get; }

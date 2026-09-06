@@ -45,9 +45,9 @@ public sealed class ForgeCssThemeScopingTests
     // The launcher's geometry lives in the Workbench map, so the surface that renders it must
     // actually select the theme; without the attribute those tokens resolve to nothing.
     [Fact]
-    public void TheClientRuntimePresentation_SelectsTheWorkbenchSurfaceTheme()
+    public void ThePresentation_SelectsTheWorkbenchSurfaceTheme()
     {
-        var index = Path.Combine(RepositoryRoot(), "src", "ForgeMission.ClientRuntime.Presentation",
+        var index = Path.Combine(RepositoryRoot(), "src", "ForgeMission.Presentation",
             "wwwroot", "index.html");
 
         Assert.Contains("data-surface-theme=\"workbench\"", File.ReadAllText(index), StringComparison.Ordinal);

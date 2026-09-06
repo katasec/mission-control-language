@@ -19,9 +19,11 @@ public sealed class DesktopSupervisorHostBoundaryTests
     [
         "ForgeMission.Core",
         "ForgeMission.Orchestration",
+        "ForgeMission.Application",
+        "ForgeMission.Application.Host",
         "ForgeMission.ClientRuntime",
-        "ForgeMission.ClientRuntime.Transport",
-        "ForgeMission.ClientRuntime.Presentation",
+        "ForgeMission.Application.Transport",
+        "ForgeMission.Presentation",
         "ForgeMission.Docker",
     ];
 
@@ -44,12 +46,14 @@ public sealed class DesktopSupervisorHostBoundaryTests
     }
 
     [Fact]
-    public void Supervisor_DoesNotReferenceClientRuntimeImplementation()
+    public void Supervisor_DoesNotReferenceApplicationImplementation()
     {
         var references = ProjectReferences(Supervisor);
 
         Assert.DoesNotContain("ForgeMission.ClientRuntime", references);
-        Assert.DoesNotContain("ForgeMission.ClientRuntime.Transport", references);
+        Assert.DoesNotContain("ForgeMission.Application", references);
+        Assert.DoesNotContain("ForgeMission.Application.Host", references);
+        Assert.DoesNotContain("ForgeMission.Application.Transport", references);
     }
 
     [Theory]

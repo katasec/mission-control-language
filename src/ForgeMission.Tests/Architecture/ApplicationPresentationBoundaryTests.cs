@@ -1,0 +1,123 @@
+namespace ForgeMission.Tests.Architecture;
+
+// Any future Presentation project opts in with <ApplicationPresentation>true</...>. The
+// contract test then rejects raw HTTP use, leaving IApplicationChannel as its only Application path.
+public sealed class ApplicationPresentationBoundaryTests
+{
+    [Fact]
+    public void MarkedPresentationProjects_CannotUseHttpClientDirectly()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ApplicationPresentation>true</ApplicationPresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        foreach (var project in projects)
+            AssertNoDirectHttpClient(Directory.GetParent(project)!.FullName);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsRawHttpClientUsage()
+    {
+        var source = "using System.Net.Http; class Ui { HttpClient Client = new(); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoDirectHttpClient(source, "Ui.cs"));
+    }
+
+    // 43.20 task 1: local execution — including deriving a Project home or reading a manifest —
+    // belongs to the Application. Presentation cannot hold a filesystem rule it has no API for.
+    [Fact]
+    public void MarkedPresentationProjects_CannotUseTheFilesystem()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ApplicationPresentation>true</ApplicationPresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoFilesystemAccess);
+    }
+
+    // 43.20 task 2: Mission Control is the sole active conversation while a Project is open. The
+    // rule is enforced by DELETION, not by routing — Presentation no longer references the Janus
+    // prompt path, the mission-switch path, or the picker at all, so there is no code path to fall
+    // back through. A reintroduction fails here, at review time, rather than quietly becoming a
+    // second surface behaviour.
+    [Fact]
+    public void MarkedPresentationProjects_CannotReachTheJanusPromptOrMissionSwitchPath()
+    {
+        var root = RepositoryRoot();
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Where(project => File.ReadAllText(project).Contains("<ApplicationPresentation>true</ApplicationPresentation>", StringComparison.Ordinal))
+            .ToList();
+
+        Assert.NotEmpty(projects); // A rule that matches no project proves nothing.
+        foreach (var project in projects)
+            ForEachSourceFile(Directory.GetParent(project)!.FullName, AssertNoJanusOrMissionSwitchPath);
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsTheJanusPromptPath()
+    {
+        var source = "class Ui { void Send() => Channel.SendAsync<PromptRequest, PromptResponse>(null); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoJanusOrMissionSwitchPath(source, "Ui.cs"));
+    }
+
+    [Fact]
+    public void BoundaryRule_RejectsFilesystemUsage()
+    {
+        var source = "class Ui { string Read() => File.ReadAllText(Path.Combine(\"a\", \"b\")); }";
+        Assert.Throws<InvalidOperationException>(() => AssertNoFilesystemAccess(source, "Ui.cs"));
+    }
+
+    private static void AssertNoDirectHttpClient(string directory) =>
+        ForEachSourceFile(directory, AssertNoDirectHttpClient);
+
+    private static void ForEachSourceFile(string directory, Action<string, string> assert)
+    {
+        foreach (var file in Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories)
+                     .Where(file => Path.GetExtension(file) is ".cs" or ".razor")
+                     .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)))
+            assert(File.ReadAllText(file), file);
+    }
+
+    private static void AssertNoDirectHttpClient(string source, string sourceName)
+    {
+        if (System.Text.RegularExpressions.Regex.IsMatch(source, @"\b(HttpClient|IHttpClientFactory)\b"))
+            throw new InvalidOperationException($"Presentation must use IApplicationChannel, not direct HTTP: {sourceName}");
+    }
+
+    // Presentation also never reaches the Conversation service itself: it calls Application,
+    // which owns the manifest read, the deterministic create, and the durable tail.
+    private static void AssertNoJanusOrMissionSwitchPath(string source, string sourceName)
+    {
+        foreach (var forbidden in new[]
+                 {
+                     "PromptRequest", "SessionSetupRequest", "AttachableMission",
+                     "ConversationHostClient", "conversations/",
+                 })
+        {
+            if (source.Contains(forbidden, StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Presentation must not reference '{forbidden}' while Mission Control is the sole " +
+                    $"active conversation (43.20 task 2): {sourceName}");
+        }
+    }
+
+    private static void AssertNoFilesystemAccess(string source, string sourceName)
+    {
+        if (System.Text.RegularExpressions.Regex.IsMatch(source, @"\b(System\.IO|File|Directory|Path|FileStream|StreamReader|StreamWriter)\s*\."))
+            throw new InvalidOperationException($"Presentation must not touch the filesystem: {sourceName}");
+    }
+
+    private static string RepositoryRoot()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "src", "ForgeMission.slnx")))
+                return directory.FullName;
+        }
+
+        throw new InvalidOperationException("Could not locate the repository root.");
+    }
+}

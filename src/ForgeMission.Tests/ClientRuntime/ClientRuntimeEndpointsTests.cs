@@ -1,8 +1,8 @@
-using ForgeMission.ClientRuntime.TransportHost;
+using ForgeMission.Application;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
-public sealed class ClientRuntimeEndpointsTests
+public sealed class ApplicationEndpointsTests
 {
     [Theory]
     [InlineData(null)]
@@ -10,7 +10,7 @@ public sealed class ClientRuntimeEndpointsTests
     [InlineData("CLOUD")]
     public void UsesCloudMissionRuntime_CloudOrUnsetMode_ReturnsTrue(string? mode)
     {
-        Assert.True(ClientRuntimeEndpoints.UsesCloudMissionRuntime(mode));
+        Assert.True(ApplicationActions.UsesCloudMissionRuntime(mode));
     }
 
     [Theory]
@@ -18,6 +18,6 @@ public sealed class ClientRuntimeEndpointsTests
     [InlineData("remote")]
     public void UsesCloudMissionRuntime_DockerOrUnrecognizedMode_ReturnsFalse(string mode)
     {
-        Assert.False(ClientRuntimeEndpoints.UsesCloudMissionRuntime(mode));
+        Assert.False(ApplicationActions.UsesCloudMissionRuntime(mode));
     }
 }

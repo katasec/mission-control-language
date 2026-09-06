@@ -5,12 +5,12 @@ namespace ForgeMission.Tests.Desktop;
 // Exactly what the Supervisor tells its child. Both runtime URLs are already resolved and verified
 // by the time the child is launched, so the durable one is passed every time — asserted against the
 // start info rather than a spawned process.
-public sealed class ClientRuntimeProcessTests
+public sealed class ApplicationHostProcessTests
 {
     [Fact]
     public void BuildStartInfo_CarriesBothRuntimesIntoTheChildEnvironment()
     {
-        var startInfo = ClientRuntimeProcess.BuildStartInfo(
+        var startInfo = ApplicationHostProcess.BuildStartInfo(
             "https://forge.katasec.com/", "cloud", "platform-key", "http://127.0.0.1:18080/");
 
         Assert.Equal("https://forge.katasec.com/", startInfo.EnvironmentVariables["MissionRuntime__BaseUrl"]);
@@ -27,9 +27,9 @@ public sealed class ClientRuntimeProcessTests
     [Fact]
     public void BuildStartInfo_SetsTheDurableUrlUnconditionally()
     {
-        var fromDefault = ClientRuntimeProcess.BuildStartInfo(
+        var fromDefault = ApplicationHostProcess.BuildStartInfo(
             "https://forge.katasec.com/", "cloud", "platform-key", "http://127.0.0.1:18080/");
-        var fromConfiguration = ClientRuntimeProcess.BuildStartInfo(
+        var fromConfiguration = ApplicationHostProcess.BuildStartInfo(
             "https://forge.katasec.com/", "cloud", "platform-key", "https://durable.forge.example/");
 
         Assert.Equal("http://127.0.0.1:18080/", fromDefault.EnvironmentVariables["ConversationRuntime__BaseUrl"]);

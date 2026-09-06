@@ -1,0 +1,130 @@
+@namespace ForgeMission.Presentation
+@using ForgeMission.ConversationPresentation
+
+@* Presentational renderer over one ConversationTranscript projection. Applies no HTTP/SSE logic
+   of its own — Entries is already deduplicated/ordered by the caller's ConversationTranscript. *@
+
+<div class="conversation-transcript">
+    @if (Entries.Count == 0)
+    {
+        <p class="empty-state">What is this Project for?</p>
+    }
+    @foreach (var entry in Entries)
+    {
+        @if (entry.Kind == ConversationEntryKind.UserMessage)
+        {
+            <p class="convo-user-bubble">@entry.Text</p>
+        }
+        else if (entry.Kind == ConversationEntryKind.Typing)
+        {
+            <ConversationActivity State="Thinking(entry)" />
+        }
+        else if (entry.Kind == ConversationEntryKind.ParticipantMessage)
+        {
+            <article class="convo-participant-bubble">
+                <p class="convo-participant-name">@ParticipantLabel(entry.Participant)</p>
+                <p class="convo-participant-text">@entry.Text</p>
+            </article>
+        }
+        else if (entry.Kind == ConversationEntryKind.Approval)
+        {
+            <p class="convo-approval @(entry.ApprovalOutcome == ConversationApprovalOutcome.Approved ? "approved" : "revision")">
+                @(entry.ApprovalOutcome == ConversationApprovalOutcome.Approved ? "Approved" : "Revision requested")
+                @if (!string.IsNullOrEmpty(entry.Feedback))
+                {
+                    <span class="convo-feedback">— @entry.Feedback</span>
+                }
+            </p>
+        }
+        else if (entry.Kind == ConversationEntryKind.NotApproved)
+        {
+            <p class="convo-not-approved">
+                Not approved
+                @if (!string.IsNullOrEmpty(entry.Feedback))
+                {
+                    <span class="convo-feedback">— @entry.Feedback</span>
+                }
+            </p>
+        }
+        else if (entry.Kind == ConversationEntryKind.ToolCall && !entry.ToolCompleted)
+        {
+            <ConversationActivity State="Working(entry)" />
+        }
+        else if (entry.Kind == ConversationEntryKind.ToolCall)
+        {
+            <p class="convo-tool-row">
+                <span class="convo-tool-glyph @(entry.ToolIsError ? "error" : "done")">
+                    @(entry.ToolIsError ? "✗" : "✓")
+                </span>
+                <span>@(entry.ToolName ?? "Tool") completed</span>
+            </p>
+        }
+        else if (entry.Kind == ConversationEntryKind.Status)
+        {
+            <p class="convo-status @(entry.StatusKind == ConversationEventKind.Error ? "error" : "")">
+                @StatusLabel(entry)
+            </p>
+        }
+    }
+</div>
+
+<style>
+    .conversation-transcript { display: flex; flex-direction: column; gap: var(--space-3); }
+    .empty-state { color: var(--text-subtle); font-size: 14px; text-align: center; margin-top: var(--space-6); }
+
+    .convo-user-bubble { align-self: flex-end; max-width: 70%; margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius); background: var(--accent-soft); font-size: 14px; }
+
+    .convo-participant-bubble { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-3) var(--space-4); }
+    .convo-participant-name { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .convo-participant-text { margin: 0; font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
+
+    .convo-approval { margin: 0; font-size: 13px; font-weight: 600; }
+    .convo-approval.approved { color: var(--success); }
+    .convo-approval.revision { color: var(--accent); }
+    .convo-not-approved { margin: 0; font-size: 13px; font-weight: 600; color: var(--danger); }
+    .convo-feedback { font-weight: 400; color: var(--text-muted); }
+
+    /* Completed calls only — a running call is the shared ConversationActivity (43.18), styled and
+       animated from forge.css. */
+    .convo-tool-row { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: 12.5px; color: var(--text-muted); }
+    .convo-tool-glyph { display: inline-flex; width: 14px; justify-content: center; }
+    .convo-tool-glyph.done { color: var(--success); }
+    .convo-tool-glyph.error { color: var(--danger); }
+
+    .convo-status { margin: 0; font-size: 12.5px; color: var(--text-subtle); }
+    .convo-status.error { color: var(--danger); }
+</style>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+
+    // The two live entry kinds map to the shared activity states (43.18); a durable entry exposes
+    // no distinct live-delta fact, so this view never claims Streaming.
+    private static ConversationActivityState Thinking(ConversationEntry entry)
+        => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Thinking, null);
+
+    private static ConversationActivityState Working(ConversationEntry entry)
+        => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Working,
+               $"{entry.ToolName ?? "Tool"} running…");
+
+    private static string ParticipantLabel(ConversationParticipant participant) => participant switch
+    {
+        ConversationParticipant.Proposer => "Proposer",
+        ConversationParticipant.Approver => "Approver",
+        ConversationParticipant.Implementer => "Implementer",
+        ConversationParticipant.Forge => "Forge",
+        // Labelled as itself, not folded into a Janus participant — a Project-refinement reply is
+        // not a proposal, an approval, or implementation work (43.20 task 2).
+        ConversationParticipant.MissionControl => "Mission Control",
+        _ => "User",
+    };
+
+    private static string StatusLabel(ConversationEntry entry) => entry.StatusKind switch
+    {
+        ConversationEventKind.Error => entry.Text ?? "An error occurred.",
+        ConversationEventKind.Artifact => $"Artifact: {entry.ArtifactId}",
+        ConversationEventKind.RunStatus => $"Status: {entry.RunStatus}",
+        _ => entry.Text ?? string.Empty,
+    };
+}

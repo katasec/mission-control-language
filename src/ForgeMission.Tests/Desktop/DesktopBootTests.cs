@@ -74,7 +74,7 @@ public sealed class DesktopBootTests
     // leave nothing running — this is the case an "await the ready URL, then take ownership" design
     // would silently orphan.
     [Fact]
-    public async Task ClientRuntimeStartedThenReadinessFails_StopsTheStartedClientRuntimeThenLeaseThenLauncher_ExactlyOnce()
+    public async Task ApplicationHostStartedThenReadinessFails_StopsTheStartedClientRuntimeThenLeaseThenLauncher_ExactlyOnce()
     {
         var log = new List<string>();
         var tunnel = new FakeTunnel(log);
@@ -172,14 +172,14 @@ public sealed class DesktopBootTests
         public string? MissionRuntimeMode { get; private set; }
         public string? ConversationRuntimeBaseUrl { get; private set; }
 
-        public ClientRuntimeStart Start(
+        public ApplicationHostStart Start(
             string missionRuntimeBaseUrl, string missionRuntimeMode, string conversationRuntimeBaseUrl, CancellationToken ct)
         {
             StartCount++;
             MissionRuntimeBaseUrl = missionRuntimeBaseUrl;
             MissionRuntimeMode = missionRuntimeMode;
             ConversationRuntimeBaseUrl = conversationRuntimeBaseUrl;
-            return new ClientRuntimeStart(readyUrl ?? Task.FromResult(ClientRuntimeUrl), StopAsync);
+            return new ApplicationHostStart(readyUrl ?? Task.FromResult(ClientRuntimeUrl), StopAsync);
         }
 
         private ValueTask StopAsync()

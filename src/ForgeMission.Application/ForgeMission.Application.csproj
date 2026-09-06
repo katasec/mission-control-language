@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ForgeMission.Application.Transport\ForgeMission.Application.Transport.csproj" />
+    <ProjectReference Include="..\ForgeMission.ClientRuntime\ForgeMission.ClientRuntime.csproj" />
+    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

@@ -1,5 +1,5 @@
-using ForgeMission.ClientRuntime.Services;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Application;
+using ForgeMission.Application.Transport;
 
 namespace ForgeMission.Tests.ClientRuntime;
 

@@ -23,11 +23,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.Application\ForgeMission.Application.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime\ForgeMission.ClientRuntime.csproj" />
-    <ProjectReference Include="..\ForgeMission.ClientRuntime.Transport\ForgeMission.ClientRuntime.Transport.csproj" />
-    <ProjectReference Include="..\ForgeMission.ClientRuntime.Presentation\ForgeMission.ClientRuntime.Presentation.csproj" />
+    <ProjectReference Include="..\ForgeMission.Application.Host\ForgeMission.Application.Host.csproj" />
+    <ProjectReference Include="..\ForgeMission.Application.Transport\ForgeMission.Application.Transport.csproj" />
+    <ProjectReference Include="..\ForgeMission.Presentation\ForgeMission.Presentation.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationPresentation\ForgeMission.ConversationPresentation.csproj" />
-    <ProjectReference Include="..\ForgeMission.ClientRuntime.TransportProbe\ForgeMission.ClientRuntime.TransportProbe.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\ForgeMission.Application.TransportProbe\ForgeMission.Application.TransportProbe.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ForgeMission.ProjectStoreProbe\ForgeMission.ProjectStoreProbe.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ForgeMission.Desktop\ForgeMission.Desktop.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
