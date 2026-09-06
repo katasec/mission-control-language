@@ -43,7 +43,8 @@ For persistence, UI delivery, authentication, or model execution, compose with R
 ```mermaid
 flowchart LR
   ForgeUI -->|constructs and applies domain facts| Rooms
-  Rooms -->|mapped by persistence seam| RoomsData[Rooms.Data]
+  ForgeUI -->|IReadStore / IWriteStore| RoomsData[Rooms.Data]
+  RoomsData -->|maps and persists domain types| Rooms
   ForgeUI -->|renders domain facts| Browser
   ForgeUI -->|optional agent invocation| Runner[Mission Runner]
 ```

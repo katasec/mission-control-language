@@ -41,10 +41,10 @@ For execution behavior or caller-side identity/accounting, compose with the Runn
 
 ```mermaid
 flowchart LR
-  UI[ForgeUI / platform caller] -->|RunRequest| Contracts
-  Contracts -->|HTTP or stream projection| Runner[Mission Runner]
-  Runner -->|RunResponse + RunUsage| Contracts
-  Contracts -->|settlement input| Billing[Billing]
+  Caller[ForgeUI / platform caller] -->|RunRequest| Runner[Mission Runner]
+  Runner -->|RunResponse + RunUsage| Caller
+  Contracts[Runner Contracts] -.defines shared DTOs used by.-> Caller
+  Contracts -.defines shared DTOs used by.-> Runner
 ```
 
 ## Important flows and constraints
