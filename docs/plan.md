@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 44 — Local development bootstrap integrity:** implement the design-ready fresh-start database bootstrap. |
+| **NEXT STEP** | **Forge Desktop conversation Markdown rendering:** obtain Claude's implementation plan for the design-ready, presentation-only task. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Domain ownership refactor complete and verified; deferred Desktop follow-ups remain in their spokes |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Domain ownership refactor complete and verified; the selected conversation-Markdown follow-up is design ready |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
 
 ## Design docs

@@ -1,7 +1,7 @@
 # Phase 43 — Forge Desktop
 
 > **Status: reconstruction and domain-ownership refactor verified (2026-09-06).**
-> Next: selected Desktop follow-up must be taken from its own deferred spoke.
+> Next: conversation Markdown rendering is design ready; obtain Claude's implementation plan.
 
 ## Purpose
 
@@ -17,6 +17,7 @@ is a replaceable presentation client over the Mission Runtime (reasoning) and Cl
 | Completed ownership record | [43.23 — Domain ownership](phase-43.23-domain-ownership.md) and its [completed evidence](phase-43.23-domain-ownership_completed.md). |
 | Current Project/Conversation/Run workbench ownership | [43.23 — Domain ownership](phase-43.23-domain-ownership.md), then the nearest [source component README](../../src/README.md). [43.22](phase-43.22-project-mission-reconstruction.md) is historical reconstruction evidence only. |
 | Shared in-chat activity visual (complete; read only if changing it) | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md), then only its named design sections and source files. |
+| Conversation Markdown rendering | [43.24 — Conversation Markdown rendering](phase-43.24-conversation-markdown-rendering.md), then `ForgeMission.Presentation`'s README and only the named source/test files. |
 | Deferred rich trace/workbench UX | [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md). |
 | Deferred responsiveness/lifecycle work | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md). |
 | Human approval/suspend/resume | [43.5 — Human-in-the-loop](phase-43.5-human-in-the-loop.md). |
@@ -36,6 +37,7 @@ items. Their history is either in the individual spoke or the
 | [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) / [43.21 — candidate](phase-43.21-mission-run-unification.md) | Superseded by 43.22. Keep verified baseline facts; do not execute the old remaining task lists. |
 | [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
+| [43.24 — Conversation Markdown rendering](phase-43.24-conversation-markdown-rendering.md) | Design ready. Renders durable participant Markdown safely in the packaged Desktop transcript; no new action, transport, or runtime ownership. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |
 | [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Core product proof done and verified 2026-08-16. |
 | 43.3 mission catalog/OCI follow-up; 43.4 rich workbench; 43.5 human gates | Deferred follow-up work; each owns its own design and readiness. |

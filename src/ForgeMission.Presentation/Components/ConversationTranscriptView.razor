@@ -23,7 +23,7 @@
         {
             <article class="convo-participant-bubble">
                 <p class="convo-participant-name">@ParticipantLabel(entry.Participant)</p>
-                <p class="convo-participant-text">@entry.Text</p>
+                <div class="convo-participant-markdown">@ConversationMarkdownRenderer.Render(entry.Text)</div>
             </article>
         }
         else if (entry.Kind == ConversationEntryKind.Approval)
@@ -76,7 +76,76 @@
 
     .convo-participant-bubble { align-self: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: var(--space-3) var(--space-4); }
     .convo-participant-name { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
-    .convo-participant-text { margin: 0; font-size: 15px; line-height: 1.55; white-space: pre-wrap; }
+
+    /* Rendered participant Markdown (43.24). The container replaces the former pre-wrap raw-text
+       paragraph; every value below resolves to an existing forge.css token. */
+    .convo-participant-markdown { font-size: var(--font-size-body); line-height: 1.55; }
+    .convo-participant-markdown > :first-child { margin-top: 0; }
+    .convo-participant-markdown > :last-child { margin-bottom: 0; }
+    .convo-participant-markdown p { margin: 0 0 var(--space-3); }
+
+    /* A Markdown heading is a sectional cue inside one message, not a second page title. */
+    .convo-participant-markdown h1,
+    .convo-participant-markdown h2,
+    .convo-participant-markdown h3,
+    .convo-participant-markdown h4,
+    .convo-participant-markdown h5,
+    .convo-participant-markdown h6 {
+        margin: var(--space-4) 0 var(--space-2);
+        font-size: var(--font-size-lead);
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .convo-participant-markdown ul,
+    .convo-participant-markdown ol { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+    .convo-participant-markdown li { margin-bottom: var(--space-1); }
+    .convo-participant-markdown li > ul,
+    .convo-participant-markdown li > ol { margin: var(--space-1) 0 0; }
+    .convo-participant-markdown li > input[type="checkbox"] { margin-right: var(--space-1); }
+
+    .convo-participant-markdown blockquote {
+        margin: 0 0 var(--space-3);
+        padding-left: var(--space-3);
+        border-left: 2px solid var(--border);
+        color: var(--text-muted);
+    }
+
+    .convo-participant-markdown code {
+        padding: 1px var(--space-1);
+        border-radius: var(--radius-sm);
+        background: var(--surface-sunken);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-mono);
+    }
+
+    /* Long code and long tables scroll inside the message; the workbench document never does.
+       Markdig emits an unwrapped table element, so the table itself is the scroll container. */
+    .convo-participant-markdown pre {
+        margin: 0 0 var(--space-3);
+        padding: var(--space-3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-sunken);
+        overflow-x: auto;
+        max-width: 100%;
+    }
+    .convo-participant-markdown pre code { padding: 0; border-radius: 0; background: none; }
+
+    .convo-participant-markdown table {
+        display: block;
+        overflow-x: auto;
+        max-width: 100%;
+        margin: 0 0 var(--space-3);
+        border-collapse: collapse;
+    }
+    .convo-participant-markdown th,
+    .convo-participant-markdown td {
+        padding: var(--space-1) var(--space-2);
+        border: 1px solid var(--border);
+        text-align: left;
+    }
+    .convo-participant-markdown th { font-size: var(--font-size-meta); color: var(--text-muted); }
 
     .convo-approval { margin: 0; font-size: 13px; font-weight: 600; }
     .convo-approval.approved { color: var(--success); }
