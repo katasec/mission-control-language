@@ -2,12 +2,12 @@ using System.Diagnostics;
 
 namespace ForgeMission.Desktop;
 
-// One owner for "stop a child this Supervisor started" — the Client Runtime and the Host both go
+// One owner for "stop a child this Supervisor started" — the Application Host and the Host both go
 // through here.
 //
 // Graceful-first, hard-kill as a fallback. Confirmed live: a hard Process.Kill() sends SIGKILL on
 // Unix, giving a child no chance to run its own shutdown path. ASP.NET Core's generic host handles
-// SIGTERM by draining and shutting down gracefully, which is what lets the Client Runtime's Main()
+// SIGTERM by draining and shutting down gracefully, which is what lets the Application Host's Main()
 // continue past app.RunAsync(). Windows has no direct SIGTERM equivalent for another process
 // without much more Win32 plumbing (matches this project's "Mac first, Windows/Linux validated
 // periodically" priority) — it falls straight to the hard kill.

@@ -12,7 +12,7 @@ public sealed class ClientRuntimeTransportOutOfProcessTests : IDisposable
     public async Task Probe_ReadsRealFile_ThroughLoopbackChannel()
     {
         await File.WriteAllTextAsync(Path.Combine(_workspace, "proof.txt"), "loopback-provider-result");
-        await using var host = await ClientRuntimeHostProcess.StartAsync();
+        await using var host = await ApplicationHostProcess.StartAsync();
 
         var result = await RunProbeAsync(host.BaseUrl, "proof.txt");
 
@@ -23,7 +23,7 @@ public sealed class ClientRuntimeTransportOutOfProcessTests : IDisposable
     [Fact]
     public async Task Probe_ConfirmationEvent_Response_ThenRealProviderExecution()
     {
-        await using var host = await ClientRuntimeHostProcess.StartAsync("RequiresUserConfirmation");
+        await using var host = await ApplicationHostProcess.StartAsync("RequiresUserConfirmation");
 
         var result = await RunProbeAsync(host.BaseUrl, "unused.txt", confirm: true);
 
@@ -57,13 +57,13 @@ public sealed class ClientRuntimeTransportOutOfProcessTests : IDisposable
         return new ProcessResult(process.ExitCode, await standardOutput, await standardError);
     }
 
-    private static string RepositoryRoot() => ClientRuntimeHostProcess.RepositoryRoot();
+    private static string RepositoryRoot() => ApplicationHostProcess.RepositoryRoot();
 
     private static string ProbeAssembly() => Path.Combine(
-        RepositoryRoot(), "src", "ForgeMission.ClientRuntime.TransportProbe", "bin", "Debug", "net10.0",
-        "ForgeMission.ClientRuntime.TransportProbe.dll");
+        RepositoryRoot(), "src", "ForgeMission.Application.TransportProbe", "bin", "Debug", "net10.0",
+        "ForgeMission.Application.TransportProbe.dll");
 
-    private static string DotnetHost() => ClientRuntimeHostProcess.DotnetHost();
+    private static string DotnetHost() => ApplicationHostProcess.DotnetHost();
 
     private sealed record ProcessResult(int ExitCode, string StandardOutput, string StandardError);
 }

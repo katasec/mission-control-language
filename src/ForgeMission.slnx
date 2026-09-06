@@ -3,10 +3,12 @@
   <Project Path="ForgeMission.Billing/ForgeMission.Billing.csproj" />
   <Project Path="ForgeMission.Cli/ForgeMission.Cli.csproj" />
   <Project Path="ForgeMission.ChatClients/ForgeMission.ChatClients.csproj" />
+  <Project Path="ForgeMission.Application/ForgeMission.Application.csproj" />
   <Project Path="ForgeMission.ClientRuntime/ForgeMission.ClientRuntime.csproj" />
-  <Project Path="ForgeMission.ClientRuntime.Transport/ForgeMission.ClientRuntime.Transport.csproj" />
-  <Project Path="ForgeMission.ClientRuntime.TransportProbe/ForgeMission.ClientRuntime.TransportProbe.csproj" />
-  <Project Path="ForgeMission.ClientRuntime.Presentation/ForgeMission.ClientRuntime.Presentation.csproj" />
+  <Project Path="ForgeMission.Application.Host/ForgeMission.Application.Host.csproj" />
+  <Project Path="ForgeMission.Application.Transport/ForgeMission.Application.Transport.csproj" />
+  <Project Path="ForgeMission.Application.TransportProbe/ForgeMission.Application.TransportProbe.csproj" />
+  <Project Path="ForgeMission.Presentation/ForgeMission.Presentation.csproj" />
   <Project Path="ForgeMission.Conversations.Contracts/ForgeMission.Conversations.Contracts.csproj" />
   <Project Path="ForgeMission.ConversationPresentation/ForgeMission.ConversationPresentation.csproj" />
   <Project Path="ForgeMission.ConversationHost/ForgeMission.ConversationHost.csproj" />

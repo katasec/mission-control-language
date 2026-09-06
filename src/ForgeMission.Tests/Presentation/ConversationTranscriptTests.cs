@@ -1,5 +1,5 @@
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Presentation;
+using ForgeMission.Presentation;
 using ForgeMission.Conversations.Contracts;
 
 namespace ForgeMission.Tests.Presentation;

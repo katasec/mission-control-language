@@ -4,12 +4,12 @@ using Microsoft.Extensions.Configuration;
 namespace ForgeMission.Desktop;
 
 // The Desktop Supervisor: the process the user launches. It owns Mission Runtime resolution, the
-// Client Runtime child, the native Host child, and every cleanup path — and it deliberately owns no
+// Application Host child, the native Host child, and every cleanup path — and it deliberately owns no
 // window. The native host is a separate, disposable process (ForgeMission.Desktop.Host); this file
 // never names a concrete host or the host contract. See
 // docs/design/forge-architecture.md#desktop-supervisor-and-native-host-are-separate-processes.
 //
-// Two ways to run: pass a Client Runtime URL explicitly (dev/test convenience — points at a Client
+// Two ways to run: pass a Application Host URL explicitly (dev/test convenience — points at a Client
 // Runtime already running elsewhere), or pass nothing and this process owns the whole runtime
 // lifecycle (the real, double-click desktop experience — publish every project into one folder and
 // run only this one).

@@ -1,23 +1,21 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Services;
-using ForgeMission.ClientRuntime.Transport;
-using ForgeMission.ClientRuntime.TransportHost;
+using ForgeMission.Application;
+using ForgeMission.Application.Transport;
 using ForgeMission.Core.Tools;
-using Microsoft.Extensions.Configuration;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
 // Covers the ConversationSessionSlot lifecycle fix: durable prompt admission, lazy
 // ConversationRuntimeSession creation, and SendAsync are one operation serialized by the slot's
 // own gate, never exposed as separate GetOrCreate/SendAsync steps a caller could interleave with
-// a mission-switch replacement's disposal. See ClientRuntimeSessionStore.cs for the full race
+// a mission-switch replacement's disposal. See ApplicationSessionService.cs for the full race
 // this closes.
 public sealed class ConversationSessionSlotTests : IDisposable
 {
     private readonly string _workspace = Directory.CreateTempSubdirectory("forge-conversation-slot-").FullName;
-    private readonly ClientRuntimeSessionStore _store = new(new ClientRuntimeEventHub(), new ConfigurationBuilder().Build());
+    private readonly ApplicationSessionService _store = new(CapabilityAuthorizationPolicy.Default, _ => { }, CancellationToken.None);
 
     public void Dispose() => Directory.Delete(_workspace, recursive: true);
 
@@ -29,7 +27,7 @@ public sealed class ConversationSessionSlotTests : IDisposable
         var factoryCalled = false;
 
         // Simulates the exact race: a /transport/prompt request already obtained oldSession via
-        // ClientRuntimeSessionStore.TryGet (this same reference) but had not yet called
+        // ApplicationSessionService.TryGet (this same reference) but had not yet called
         // SendPromptAsync when the mission switch below fully replaces (and disposes) it.
         await _store.ReplaceAsync(oldSession.Id, _workspace, "Janus", SessionRuntimeKind.DurableConversation);
 

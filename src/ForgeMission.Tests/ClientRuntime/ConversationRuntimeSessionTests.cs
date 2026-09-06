@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Services;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Application;
+using ForgeMission.Application.Transport;
 using ForgeMission.Conversations.Contracts;
 using ForgeMission.Core.Tools;
 
@@ -26,7 +26,7 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
         var runId = Guid.NewGuid();
         var handler = new ScriptedConversationHostHandler(conversationId, runId, new Queue<string>());
         var (capabilities, dispatcher) = BuildWorkspace();
-        var published = new List<ClientRuntimeEvent>();
+        var published = new List<ApplicationEvent>();
 
         await using var session = NewSession(handler, capabilities, dispatcher, published.Add);
 
@@ -65,14 +65,14 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
         var sse = ToSseBody(userEvent, startedEvent, messageEvent);
         var handler = new ScriptedConversationHostHandler(conversationId, runId, new Queue<string>([sse]));
         var (capabilities, dispatcher) = BuildWorkspace();
-        var published = new List<ClientRuntimeEvent>();
+        var published = new List<ApplicationEvent>();
 
         await using var session = NewSession(handler, capabilities, dispatcher, published.Add);
         await session.SendAsync("Build the thing.", CancellationToken.None);
 
-        await WaitUntilAsync(() => published.Count(p => p.Kind == ClientRuntimeEventKind.ConversationEvent) >= 3);
+        await WaitUntilAsync(() => published.Count(p => p.Kind == ApplicationEventKind.ConversationEvent) >= 3);
 
-        var relayed = published.Where(p => p.Kind == ClientRuntimeEventKind.ConversationEvent)
+        var relayed = published.Where(p => p.Kind == ApplicationEventKind.ConversationEvent)
             .Select(p => p.Conversation!.EventId).ToList();
         Assert.Equal([userEvent.EventId, startedEvent.EventId, messageEvent.EventId], relayed);
     }
@@ -94,18 +94,18 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
         var handler = new ScriptedConversationHostHandler(
             conversationId, runId, new Queue<string>([firstConnectionBody, secondConnectionBody]));
         var (capabilities, dispatcher) = BuildWorkspace();
-        var published = new List<ClientRuntimeEvent>();
+        var published = new List<ApplicationEvent>();
 
         await using var session = NewSession(handler, capabilities, dispatcher, published.Add);
         await session.SendAsync("Build the thing.", CancellationToken.None);
 
         await WaitUntilAsync(() => handler.SseAfterValues.Count >= 2);
-        await WaitUntilAsync(() => published.Count(p => p.Kind == ClientRuntimeEventKind.ConversationEvent) >= 2);
+        await WaitUntilAsync(() => published.Count(p => p.Kind == ApplicationEventKind.ConversationEvent) >= 2);
 
         Assert.Equal(0, handler.SseAfterValues[0]);
         Assert.Equal(1, handler.SseAfterValues[1]); // reconnected using the last delivered sequence
 
-        var relayedEventIds = published.Where(p => p.Kind == ClientRuntimeEventKind.ConversationEvent)
+        var relayedEventIds = published.Where(p => p.Kind == ApplicationEventKind.ConversationEvent)
             .Select(p => p.Conversation!.EventId).ToList();
         Assert.Equal([firstEvent.EventId, secondEvent.EventId], relayedEventIds); // no duplicate
     }
@@ -202,7 +202,7 @@ public sealed class ConversationRuntimeSessionTests : IDisposable
 
     private ConversationRuntimeSession NewSession(
         HttpMessageHandler handler, CapabilityRegistry capabilities, ICapabilityDispatcher dispatcher,
-        Action<ClientRuntimeEvent> publish)
+        Action<ApplicationEvent> publish)
     {
         var http = new HttpClient(handler) { BaseAddress = new Uri("https://conversation-host.test/") };
         return new ConversationRuntimeSession(

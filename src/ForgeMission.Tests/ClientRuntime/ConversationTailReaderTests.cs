@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Services;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Application;
+using ForgeMission.Application.Transport;
 using ForgeMission.Conversations.Contracts;
 
 namespace ForgeMission.Tests.ClientRuntime;
@@ -15,15 +15,15 @@ public sealed class ConversationTailReaderTests
     {
         var conversationId = Guid.NewGuid();
         var handler = new TailHandler(conversationId, [Sse(Event(conversationId, 2)), Sse(Event(conversationId, 1))]);
-        var events = new ConcurrentQueue<ClientRuntimeEvent>();
+        var events = new ConcurrentQueue<ApplicationEvent>();
         await using var tail = NewTail(handler, events.Enqueue);
 
         tail.Start(conversationId);
-        await WaitUntilAsync(() => handler.After.Count >= 2 && events.Any(x => x.Kind == ClientRuntimeEventKind.ConversationEvent));
+        await WaitUntilAsync(() => handler.After.Count >= 2 && events.Any(x => x.Kind == ApplicationEventKind.ConversationEvent));
 
         Assert.Equal([0L, 0L], handler.After.Take(2));
-        Assert.Contains(events, x => x.Kind == ClientRuntimeEventKind.Error);
-        Assert.Single(events, x => x.Kind == ClientRuntimeEventKind.ConversationEvent);
+        Assert.Contains(events, x => x.Kind == ApplicationEventKind.Error);
+        Assert.Single(events, x => x.Kind == ApplicationEventKind.ConversationEvent);
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public sealed class ConversationTailReaderTests
             field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(HashSet<>));
     }
 
-    private static ConversationTailReader NewTail(HttpMessageHandler handler, Action<ClientRuntimeEvent> publish) =>
+    private static ConversationTailReader NewTail(HttpMessageHandler handler, Action<ApplicationEvent> publish) =>
         new("session", Host(handler), publish, CancellationToken.None);
 
     private static ConversationHostClient Host(HttpMessageHandler handler) =>

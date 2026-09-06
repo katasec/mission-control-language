@@ -1,12 +1,13 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using ForgeMission.ClientRuntime.Services;
-using ForgeMission.ClientRuntime.Transport;
-using ForgeMission.ClientRuntime.TransportHost;
+using ForgeMission.Application;
+using ForgeMission.Application.Transport;
+using ForgeMission.Application.Host;
 using ForgeMission.Conversations.Contracts;
+using ForgeMission.Core.Tools;
 using Microsoft.Extensions.Configuration;
-using RuntimeStartProjectMissionRunRequest = ForgeMission.ClientRuntime.Transport.StartProjectMissionRunRequest;
+using RuntimeStartProjectMissionRunRequest = ForgeMission.Application.Transport.StartProjectMissionRunRequest;
 
 namespace ForgeMission.Tests.ClientRuntime;
 
@@ -91,14 +92,14 @@ public sealed class ProjectMissionApplicationTests : IDisposable
     {
         var projects = new ProjectStore(Path.Combine(_profile, "Forge", "Projects"));
         var project = projects.Create("Build a reliable Project Mission.", null, null);
-        var sessions = new ClientRuntimeSessionStore(new ClientRuntimeEventHub(), new ConfigurationBuilder().Build());
+        var sessions = new ApplicationSessionService(CapabilityAuthorizationPolicy.Default, _ => { }, CancellationToken.None);
         var session = sessions.CreateForProject(project.Home);
         var handler = new ProjectMissionHandler(project.Manifest.ProjectId, project.Manifest.Goal);
         var application = new ProjectMissionApplication(projects, new HandlerFactory(handler));
         return new Fixture(projects, project, session, application, handler);
     }
 
-    private sealed record Fixture(ProjectStore Projects, ProjectRecord Project, ClientRuntimeSession Session,
+    private sealed record Fixture(ProjectStore Projects, ProjectRecord Project, ApplicationSession Session,
         ProjectMissionApplication Application, ProjectMissionHandler Handler)
     {
         public Guid ContainerId => Handler.ContainerId;

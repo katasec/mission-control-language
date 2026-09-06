@@ -1,7 +1,7 @@
 using Bunit;
-using ForgeMission.ClientRuntime.Presentation.Components;
-using ForgeMission.ClientRuntime.Presentation.Pages;
-using ForgeMission.ClientRuntime.Transport;
+using ForgeMission.Presentation.Components;
+using ForgeMission.Presentation.Pages;
+using ForgeMission.Application.Transport;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ForgeMission.Tests.Presentation;
@@ -12,7 +12,7 @@ public sealed class HomeSessionOperationTests : BunitContext
     public void Boot_OnlyRendersTheZeroAuthorityLauncher()
     {
         var channel = new NoCallsChannel();
-        Services.AddSingleton<IClientRuntimeChannel>(channel);
+        Services.AddSingleton<IApplicationChannel>(channel);
 
         var page = Render<Home>();
 
@@ -21,11 +21,11 @@ public sealed class HomeSessionOperationTests : BunitContext
         Assert.DoesNotContain("Project Explorer", page.Markup);
     }
 
-    private sealed class NoCallsChannel : IClientRuntimeChannel
+    private sealed class NoCallsChannel : IApplicationChannel
     {
         public List<object> Requests { get; } = [];
         public Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
         { Requests.Add(request!); throw new InvalidOperationException("The launcher must not make a call before a person acts."); }
-        public async IAsyncEnumerable<ClientRuntimeEvent> Subscribe([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct) { await Task.Delay(Timeout.Infinite, ct); yield break; }
+        public async IAsyncEnumerable<ApplicationEvent> Subscribe([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct) { await Task.Delay(Timeout.Infinite, ct); yield break; }
     }
 }
