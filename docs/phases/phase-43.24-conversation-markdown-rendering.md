@@ -1,9 +1,11 @@
 # Phase 43.24 — Conversation Markdown rendering
 
-> **Status: Task 1 implemented (2026-09-07); default-path acceptance outstanding.** Part of
+> **Status: complete and verified (2026-09-07).** Part of
 > [Phase 43 — Forge Desktop](phase-43-forge-desktop.md).
-> Next: one operator action in the already-running packaged Desktop closes the default-path row —
-> see [phase-43.24-conversation-markdown-rendering_completed.md](phase-43.24-conversation-markdown-rendering_completed.md#default-path-acceptance--incomplete-blocked-on-a-host-permission).
+> Zero-argument packaged-Desktop default-path acceptance passed on the operator's native-window
+> observation; evidence in
+> [phase-43.24-conversation-markdown-rendering_completed.md](phase-43.24-conversation-markdown-rendering_completed.md#default-path-acceptance--pass).
+> Nothing here is outstanding.
 
 ## Outcome
 
@@ -141,55 +143,20 @@ used here.
 
 ## Task 1 — Render durable participant Markdown safely
 
-**Implemented on `codex/desktop-markdown-rendering` (`f91bc6a`); build, tests, publish and browser
-visual evidence pass; the packaged zero-argument observation is still outstanding. Detail, evidence
-and two open design observations: [phase-43.24-conversation-markdown-rendering_completed.md](phase-43.24-conversation-markdown-rendering_completed.md#task-1--render-durable-participant-markdown-safely).**
+**Done and verified (2026-09-07).** The packaged zero-argument Desktop renders the proposal's
+supported Markdown structurally in the durable participant transcript; the operator confirmed it in
+the native window. The task's specification, evidence, and the operator's acceptance record are in
+[phase-43.24-conversation-markdown-rendering_completed.md](phase-43.24-conversation-markdown-rendering_completed.md#task-1--render-durable-participant-markdown-safely).
 
-**Pipeline ordering is load-bearing and stays in the active design:** `DisableHtml()` must be the
-**last** builder call. Verified on Markdig 1.3.2 — any `Use<>()` placed after it silently restores
-the raw-HTML parsers and a response's `<script>` reaches the DOM live.
+**One constraint stays here, because the shipped code depends on it:** `DisableHtml()` must be the
+**last** call on the pipeline builder. Verified on Markdig 1.3.2 — any `Use<>()` placed after it
+silently restores the raw-HTML parsers and a participant response's `<script>` reaches the DOM live.
+`AParticipantMessage_ContainingRawHtml_ShowsItAsTextWithNoLiveElement` fails if the line is moved.
 
-### Change
+## Done when
 
-1. Add Markdig `1.3.2` to `ForgeMission.Presentation` and create the internal, fixed
-   `ConversationMarkdownRenderer` described above.
-2. Render its `MarkupString` in the participant-message branch only, using a block container that
-   permits generated block elements.
-3. Add the token-only local styles from the visual contract. Preserve the proposal card, author
-   label, transcript spacing, and all non-participant rows.
-4. Extend `ConversationTranscriptViewTests` with the reference fixture and focused negatives.
-
-### Precondition and test matrix
-
-| Input / precondition | Positive observation | Negative observation |
-|---|---|---|
-| Participant response contains `###`, ordered/nested lists, `**strong**`, and backticks | DOM contains the corresponding semantic heading/list/strong/code elements and no literal markers in its text. | A user-message bubble with the same source remains plain Razor text; only participant messages are in scope. |
-| Participant response contains a fenced block, table, task list, or blockquote | DOM contains the supported structural element inside `.convo-participant-markdown`. | Wide code/table content is contained by its message, not the workbench document. |
-| Participant response contains raw HTML | The source is visible as escaped text. | No `script`, event-handler, or supplied raw element is present. |
-| Participant response contains Markdown links/images, including `javascript:` or remote URLs | Label/alt text remains visible as inert text. | No `a`, `img`, `href`, `src`, navigation, or remote fetch is emitted. |
-| Markdown is malformed | Readable literal text remains in the participant card. | No rendering exception, blank card, or transcript mutation occurs. |
-
-### Verification and acceptance
-
-1. Run the focused bUnit tests, then `dotnet build src/ForgeMission.slnx` and
-   `dotnet test src/ForgeMission.slnx` with zero failures/warnings.
-2. Run `make desktop-publish`; record its result and the Native-AOT warning count.
-3. Browser-first, inspect the real Presentation at the reference viewport and all four corners of
-   the supported viewport rectangle, followed by continuous resize. Check the supplied proposal
-   fixture, long code/table overflow, text zoom/scaling, theme contrast, and no document-level
-   horizontal scroll. Save screenshots under `docs/images/phase-43.24/` and record reviewer PASS.
-4. Default-path acceptance: launch `dist/forge-desktop/ForgeMission.Desktop` with zero arguments,
-   with `MissionRuntime:Mode`, `MissionRuntime:BaseUrl`, `FORGE_API_ENDPOINT`, and
-   `ConversationRuntime:BaseUrl` absent; use the normal cloud Mission Runtime and loopback
-   Conversation Runtime/owned Kind tunnel. In a dedicated disposable Project, run a mission that
-   returns the reference Markdown and observe the rendered durable participant transcript in the
-   packaged app. Record the published artifact, defaults, dependency provenance, Project, action,
-   visible result, and PASS/FAIL. Any controlled browser fixture is labelled non-acceptance.
-
-### Done when
-
-The packaged Desktop renders the supplied proposal's supported Markdown structurally in the durable
-participant transcript, preserves all nonparticipant transcript content, and exposes no executable
-HTML, image fetch, or navigation from response content. Focused negatives, solution build/tests,
-zero-warning Desktop publish, browser-first visual PASS, and the named zero-argument Desktop
-default-path observation are recorded in this phase's completed record.
+**Met.** The packaged Desktop renders the supplied proposal's supported Markdown structurally in the
+durable participant transcript, preserves all nonparticipant transcript content, and exposes no
+executable HTML, image fetch, or navigation from response content. Focused negatives, solution
+build/tests, zero-warning Desktop publish, browser visual PASS, and the named zero-argument Desktop
+default-path observation are recorded in the completed record.

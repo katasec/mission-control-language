@@ -1,8 +1,10 @@
 # Phase 43 — Forge Desktop
 
 > **Status: reconstruction and domain-ownership refactor verified (2026-09-06).**
-> Next: conversation Markdown rendering is implemented; its packaged zero-argument default-path
-> acceptance is the one outstanding step.
+> Conversation Markdown rendering is complete and verified on the packaged zero-argument default
+> path (2026-09-07).
+> Next: no Phase 43 work is active. The remaining rows below are deferred follow-ups, each owning
+> its own design and readiness.
 
 ## Purpose
 
@@ -38,7 +40,7 @@ items. Their history is either in the individual spoke or the
 | [43.20 — Project Workbench MVP](phase-43.20-project-workbench-mvp.md) / [43.21 — candidate](phase-43.21-mission-run-unification.md) | Superseded by 43.22. Keep verified baseline facts; do not execute the old remaining task lists. |
 | [43.19 — Durable conversation runtime supervision](phase-43.19-conversation-runtime-supervision.md) | Verified complete 2026-08-20. Supervisor resolves, health-checks, and injects the current local Conversation Runtime before Client Runtime starts. |
 | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md) | Verified complete 2026-08-17. One renderer live in Rooms and the packaged Desktop; no new event or trace transport. |
-| [43.24 — Conversation Markdown rendering](phase-43.24-conversation-markdown-rendering.md) | Task 1 implemented; default-path acceptance outstanding. Renders durable participant Markdown safely in the packaged Desktop transcript; no new action, transport, or runtime ownership. |
+| [43.24 — Conversation Markdown rendering](phase-43.24-conversation-markdown-rendering.md) | Complete and verified. Renders durable participant Markdown safely in the packaged Desktop transcript; no new action, transport, or runtime ownership. |
 | [43.17 — Responsive Desktop lifecycle and UI](phase-43.17-responsive-desktop.md) | Lifecycle and session ownership are done. Bounded delivery and progressive rendering remain deferred. |
 | [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md) | Core product proof done and verified 2026-08-16. |
 | 43.3 mission catalog/OCI follow-up; 43.4 rich workbench; 43.5 human gates | Deferred follow-up work; each owns its own design and readiness. |

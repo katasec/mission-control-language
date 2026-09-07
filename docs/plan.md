@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Forge Desktop conversation Markdown rendering:** close the outstanding packaged zero-argument default-path observation, then merge. |
+| **NEXT STEP** | **Phase 44 — Local development bootstrap integrity:** implement the design-ready fresh-start database bootstrap. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Domain ownership refactor complete and verified; the selected conversation-Markdown follow-up is implemented pending default-path acceptance |
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Domain ownership refactor and the selected conversation-Markdown follow-up complete and verified; remaining Desktop follow-ups are deferred in their spokes |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
 
 ## Design docs
