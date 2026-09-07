@@ -260,10 +260,16 @@ public sealed class ConversationGrain(
                 ConversationCommandOutcome.Invalid, null,
                 "A Project Mission run requires a command id, a mission, and non-blank input.");
 
-        if (!ProjectMissionNames.IsKnown(input.Mission))
-            return new ConversationCommandOutcomeResult(
-                ConversationCommandOutcome.Invalid, null,
+        var launch = string.IsNullOrWhiteSpace(input.LaunchJson) ? null : JsonSerializer.Deserialize(
+            input.LaunchJson, ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        string? packageReason = null;
+        if (launch is null && !ProjectMissionNames.IsKnown(input.Mission))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null,
                 "The Project Mission is not supported.");
+        if (launch is not null && (!string.Equals(input.Mission, "Durable", StringComparison.Ordinal) ||
+            !DurableMissionPackageAdmission.TryValidate(launch, out packageReason)))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null,
+                packageReason ?? "The immutable durable package is invalid.");
 
         if (checkpoint.State.Purpose != ConversationPurpose.ProjectMission)
             return new ConversationCommandOutcomeResult(
@@ -286,7 +292,7 @@ public sealed class ConversationGrain(
             // anywhere: there is no member on the input, and no checkpoint state, that could make
             // it non-empty. A direct Host caller therefore has nothing to smuggle a tool
             // declaration through.
-            input.Mission, input.Input, [], null, checkpoint.State.ProjectGoal);
+            input.Mission, input.Input, [], null, checkpoint.State.ProjectGoal, launch);
 
         var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
         if (existing is not null)
@@ -374,7 +380,7 @@ public sealed class ConversationGrain(
             return MissionHandsReject("Invalid mission hands attachment.");
         var pinned = DeserializeMissionHands(checkpoint.State.MissionHandsLaunchJson,
             ConversationContractsJsonContext.Default.DurableMissionLaunch);
-        if (pinned is not null && !Equals(pinned, attachment.Launch))
+        if (pinned is not null && !SameApprovedLaunch(pinned, attachment.Launch))
             return MissionHandsReject("The attachment launch does not match the pinned approved launch.");
 
         checkpoint.State.MissionHandsLaunchJson ??= JsonSerializer.Serialize(
@@ -501,11 +507,25 @@ public sealed class ConversationGrain(
             !checkpoint.State.MissionHandsInFlight)
             return MissionHandsReject("The mission hands result is wrong, late, or detached.");
 
+        var startCommand = JsonSerializer.Deserialize(checkpoint.State.ActiveStartCommandJson
+                ?? throw new InvalidOperationException("No active generic start command for a mission hands result."),
+            ConversationContractsJsonContext.Default.ConversationCommand)
+            ?? throw new InvalidOperationException("Active generic start command deserialized to null.");
+        var continuation = startCommand with
+        {
+            CommandId = ConversationDeterministicIds.MissionHandsContinuation(result.ToolRequestId),
+            Kind = ConversationCommandKind.ContinueAfterTool,
+            ToolResult = new ConversationToolResult(result.ToolRequestId, result.Content ?? result.Reason ?? string.Empty,
+                result.Outcome != MissionToolOutcome.Succeeded),
+            OpaqueContinuation = outstanding.OpaqueContinuation,
+            ProviderToolCallId = outstanding.ProviderToolCallId,
+        };
+        checkpoint.State.MissionHandsExpectedCommandId = continuation.CommandId;
         var fact = new ConversationEvent(result.CommandId, 1, Address.ConversationId, checkpoint.State.ActiveRunId,
             checkpoint.State.LastSequence + 1, ConversationEventKind.MissionHandsResult, ConversationParticipant.Forge,
             null, result.Content, result.Reason, null, null, null, null, null, DateTimeOffset.UtcNow,
             MissionHandsOutcome: result.Outcome);
-        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: continuation, ct);
         checkpoint.State.MissionHandsRequestJson = null;
         checkpoint.State.MissionHandsAwaitingToolConfirmation = false;
         checkpoint.State.MissionHandsInFlight = false;
@@ -727,6 +747,29 @@ public sealed class ConversationGrain(
                 ConversationProgressOutcome.Rejected, null, "Progress does not match this conversation's active run.");
         }
 
+        // A Core root pause is represented as a Worker progress fact, but only the Host turns it
+        // into the canonical MissionHandsRequested/AwaitingHands sequence. The Worker supplies
+        // opaque continuation content; it cannot sequence, attach Bob, or dispatch a result.
+        if (progress.Kind == ConversationEventKind.MissionHandsRequested)
+        {
+            if (progress.MissionHandsRequest is null || progress.EventId != progress.MissionHandsRequest.ToolRequestId)
+                return new ConversationProgressAcceptance(ConversationProgressOutcome.Rejected, null, "Invalid generic mission hands request.");
+            var activeStart = checkpoint.State.ActiveStartCommandJson is { } activeStartJson
+                ? JsonSerializer.Deserialize(activeStartJson, ConversationContractsJsonContext.Default.ConversationCommand)
+                : null;
+            var pinnedLaunch = DeserializeMissionHands(checkpoint.State.MissionHandsLaunchJson,
+                ConversationContractsJsonContext.Default.DurableMissionLaunch);
+            if (checkpoint.State.MissionHandsExpectedCommandId != progress.MissionHandsRequest.TurnAttemptId ||
+                activeStart?.Launch is null || pinnedLaunch is null || !SameApprovedLaunch(activeStart.Launch, pinnedLaunch))
+                return new ConversationProgressAcceptance(ConversationProgressOutcome.Rejected, null,
+                    "The mission hands request is not correlated to the current Host-dispatched generic command.");
+            var hands = await RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                progress.MissionHandsRequest, ConversationContractsJsonContext.Default.MissionToolRequest)));
+            return hands.Accepted
+                ? new ConversationProgressAcceptance(ConversationProgressOutcome.Appended, checkpoint.State.LastSequence, null)
+                : new ConversationProgressAcceptance(ConversationProgressOutcome.Rejected, null, "Mission hands request was rejected.");
+        }
+
         if (progress.Kind == ConversationEventKind.ToolResult)
         {
             var expected = checkpoint.State.ExpectedToolRequestId;
@@ -740,7 +783,7 @@ public sealed class ConversationGrain(
             progress.EventId, 1, progress.ConversationId, progress.RunId, checkpoint.State.LastSequence + 1,
             progress.Kind, progress.Participant, progress.Attempt, progress.Text, progress.Reason,
             progress.Approval, progress.ToolRequest, progress.ToolResult, progress.Artifact, progress.RunStatus,
-            progress.OccurredAtUtc);
+            progress.OccurredAtUtc, MissionHandsRequest: progress.MissionHandsRequest);
 
         var existing = await eventStore.FindByEventIdAsync(Address, progress.EventId, ct);
         if (existing is not null)
@@ -1012,6 +1055,7 @@ public sealed class ConversationGrain(
         // command as the active run's copy and release PendingRunStart, in ONE checkpoint write.
         checkpoint.State.ActiveStartCommandJson = pendingStart.StartCommandJson;
         checkpoint.State.PendingRunStart = null;
+        checkpoint.State.MissionHandsExpectedCommandId = command.Launch?.Package is null ? null : command.CommandId;
         await checkpoint.WriteStateAsync();
 
         return new ConversationCommandAcceptance(Address.ConversationId, command.RunId, queuedEvent.Sequence, ConversationRunStatus.Queued);
@@ -1218,7 +1262,38 @@ public sealed class ConversationGrain(
             string.IsNullOrWhiteSpace(launch.Definition) || launch.Definition.Length > 256 * 1024 || !Enum.IsDefined(launch.Profile))
             return false;
         var expected = "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(launch.Definition))).ToLowerInvariant();
-        return string.Equals(expected, launch.DefinitionHash, StringComparison.Ordinal);
+        return string.Equals(expected, launch.DefinitionHash, StringComparison.Ordinal) &&
+            // Schema-4 pre-generic launches remain attachable for historic read/reconnect. Any
+            // package-bearing attachment is independently parsed before Host persists it.
+            (launch.Package is null || DurableMissionPackageAdmission.TryValidate(launch, out _));
+    }
+
+    // Arrays in the transport package have reference equality under the generated record
+    // comparer. Attachment re-registration crosses JSON, so compare the approved immutable
+    // value structurally rather than rejecting the same package after deserialization.
+    private static bool SameApprovedLaunch(DurableMissionLaunch left, DurableMissionLaunch right) =>
+        left.MissionVersionId == right.MissionVersionId &&
+        left.VersionNumber == right.VersionNumber &&
+        string.Equals(left.DefinitionHash, right.DefinitionHash, StringComparison.Ordinal) &&
+        string.Equals(left.Definition, right.Definition, StringComparison.Ordinal) &&
+        left.Profile == right.Profile &&
+        SamePackage(left.Package, right.Package);
+
+    private static bool SamePackage(DurableMissionPackage? left, DurableMissionPackage? right)
+    {
+        if (left is null || right is null) return left is null && right is null;
+        return left.FormatVersion == right.FormatVersion &&
+            string.Equals(left.PackageHash, right.PackageHash, StringComparison.Ordinal) &&
+            string.Equals(left.MissionSource, right.MissionSource, StringComparison.Ordinal) &&
+            string.Equals(left.RootMissionName, right.RootMissionName, StringComparison.Ordinal) &&
+            string.Equals(left.RootInputName, right.RootInputName, StringComparison.Ordinal) &&
+            left.ResolvedExperts.Length == right.ResolvedExperts.Length &&
+            left.ResolvedExperts.Zip(right.ResolvedExperts).All(pair =>
+                string.Equals(pair.First.Name, pair.Second.Name, StringComparison.Ordinal) &&
+                string.Equals(pair.First.LockSource, pair.Second.LockSource, StringComparison.Ordinal) &&
+                string.Equals(pair.First.LockPath, pair.Second.LockPath, StringComparison.Ordinal) &&
+                string.Equals(pair.First.LockHash, pair.Second.LockHash, StringComparison.Ordinal) &&
+                string.Equals(pair.First.ExpertMarkdown, pair.Second.ExpertMarkdown, StringComparison.Ordinal));
     }
 
     private MissionHandsGrainResult MissionHandsAccept(MissionHandsStatus status, long? sequence) => new(

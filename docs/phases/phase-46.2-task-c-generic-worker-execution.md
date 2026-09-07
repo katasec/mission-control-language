@@ -1,6 +1,6 @@
 # Phase 46.2 Task C — generic durable Worker execution and progress
 
-> **Status:** approved for implementation 2026-09-07. Findings: F46.1-02/F46.1-03.
+> **Status:** implementation accepted 2026-09-07. Findings: F46.1-02/F46.1-03.
 > Parent: [Phase 46.2](phase-46.2-codex-supervised-remediation.md). Prerequisites: Task A and Task B accepted.
 
 ## Scope card
@@ -36,7 +36,10 @@ ConversationWorker__DefaultApiKey         # scoped secret; optional only where t
 Startup validation builds one `ProviderProfile`/`IExpertRunner` under `default`. A durable package may use
 only omitted `using` for its LLM steps. Named `using <profile>` is rejected before any provider call. Package,
 launch, queue, Host checkpoint, trace, and Core continuation contain no provider/model/endpoint/credential,
-Project root, Bob handle, or local-capability authority.
+Project root, Bob handle, local-capability authority, or provider-message transcript. The opaque continuation retains
+only declaration/runtime checkpoint data plus the exact provider-issued tool-call ID/name/arguments required to submit
+the one correlated tool result; Host and Worker do not interpret, project, replay into a later run, or retain it after
+terminal/cancel/interruption.
 
 ## Immutable package and admission
 
@@ -125,3 +128,18 @@ task makes no UI change.
   edge/Host feature is independent of this task.
 - Heterogeneous durable provider profiles, profile maps/fallbacks, arbitrary network/process expert kinds,
   capability escalation, Worker-to-Bob access, or Worker datastore permissions.
+
+## Completion evidence — 2026-09-07
+
+Independent review accepted the generic path after adversarial corrections to Host admission/correlation,
+launch bounds, exact profile acknowledgement, provisional Bob cleanup, opaque continuation lifetime, and
+infrastructure documentation. The Worker has no compiled Janus/Naive resolver, executor, mapper, mission
+asset, or directory configuration; historic records remain readable only.
+
+| Evidence | Observation |
+|---|---|
+| Build | `dotnet build src/ForgeMission.slnx --no-restore`: 0 warnings, 0 errors. |
+| Deterministic full tests | Provider/runtime keys absent in the child process: ForgeMission.Tests 622 passed / 11 intended skips; Host 172; Worker 18; Runner 5; Rooms 97. |
+| AOT and image | Worker Native AOT publish passed; `make install` completed and installed `forge`; current Worker image built successfully. macOS linker emitted platform dylib-version warnings only. |
+| Infrastructure | Changed Bicep compiled successfully; scoped Worker configuration has one deployment-owned OpenAI provider/model binding. |
+| Default path | Controlled Kind rollout remains pending clean merged `main`; final zero-argument Desktop/TUI proof remains Phase 45.3 work, not claimed here. |

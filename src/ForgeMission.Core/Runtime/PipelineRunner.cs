@@ -603,23 +603,6 @@ public class PipelineRunner
             call.Name,
             ToolArgumentsToJsonElement(call.Arguments))).ToList();
 
-    private static IReadOnlyList<PipelineProviderMessage> ProviderMessages(Dictionary<string, object> context)
-    {
-        if (context.TryGetValue(PipelineToolContinuationInstructions.ProviderToolTurn, out var raw)
-            && raw is PipelineProviderToolTurn { CheckpointMessages: { } messages })
-            return messages;
-
-        var userText = context.TryGetValue("output", out var output) ? output?.ToString() ?? "Begin." : "Begin.";
-        return [new PipelineProviderMessage("user", userText)];
-    }
-
-    private static ChatMessage ToChatMessage(PipelineProviderMessage message) => message.Role switch
-    {
-        "system" => new ChatMessage(ChatRole.System, message.Text),
-        "assistant" => new ChatMessage(ChatRole.Assistant, message.Text),
-        _ => new ChatMessage(ChatRole.User, message.Text),
-    };
-
     private static IDictionary<string, object?> JsonToArguments(JsonElement arguments)
     {
         if (arguments.ValueKind != JsonValueKind.Object) return new Dictionary<string, object?>();
@@ -917,13 +900,12 @@ public class PipelineRunner
 
         private MissionResult Pause(Frame frame, string expertName, PipelineToolCall call, Dictionary<string, object> context)
         {
-            var messages = ProviderMessages(context);
             var snapshot = _frames.Select(frame => frame.ToCheckpoint()).ToList();
             var ordinal = ++_nextContinuationOrdinal;
             _owner.RegisterIssuedContinuation(_rootExecutionId, ordinal);
             var checkpoint = new PipelineContinuationCheckpoint(CheckpointVersion, Guid.NewGuid().ToString("N"), _rootExecutionId, ordinal,
                 _options.MissionName, _definitionFingerprint, _fingerprint, _declarations, Path(), expertName,
-                frame.Attempt, call, _rootInputs, messages, snapshot);
+                frame.Attempt, call, _rootInputs, snapshot);
             var payload = JsonSerializer.Serialize(checkpoint, PipelineContinuationJsonContext.Default.PipelineContinuationCheckpoint);
             var pause = new PipelineToolPause(_options.MissionName, Path(), expertName, frame.Attempt, call,
                 new PipelineContinuation(CheckpointVersion, payload));
@@ -1058,8 +1040,8 @@ public class PipelineRunner
         private static string ScopeFingerprint(IEnumerable<PipelineToolDeclaration> declarations) => Convert.ToHexString(
             System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", declarations.Select(d => $"{d.Name}\u001f{d.Description}\u001f{d.InputSchema.GetRawText()}")))));
         private static PipelineProviderToolTurn ProviderTurn(PipelineContinuationCheckpoint checkpoint, PipelineToolResult result) => new(
-            checkpoint.ProviderMessages.Select(ToChatMessage).ToList(), new FunctionCallContent(checkpoint.ToolCall.CallId,
-                checkpoint.ToolCall.Name, JsonToArguments(checkpoint.ToolCall.Arguments)), result, checkpoint.ProviderMessages);
+            new FunctionCallContent(checkpoint.ToolCall.CallId,
+                checkpoint.ToolCall.Name, JsonToArguments(checkpoint.ToolCall.Arguments)), result);
 
         private sealed class Frame(string missionName, int elementIndex, int attempt, Dictionary<string, string> context,
             Dictionary<string, string> initialContext)

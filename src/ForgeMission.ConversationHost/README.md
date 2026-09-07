@@ -54,6 +54,8 @@ flowchart LR
 
 - The Host is the sole Conversation-store writer and grain caller; other bounded contexts do not query its stores directly.
 - Queue delivery is at least once; stable IDs and grain acceptance make recovery idempotent.
+- Host independently validates a generic immutable package before queueing it and again at the grain boundary; malformed or inconsistent content cannot reach Worker/provider execution.
+- A Worker hands pause becomes one canonical `MissionHandsRequested` fact. After the exact correlated result is committed, Host dispatches its one deterministic generic continuation.
 - Current routes are an adapter projection, not the semantic definition of the shared messages. Tier-1 callers must supply identity through their own boundary; the current local API has a development tenant seam.
 
 ## Related documentation

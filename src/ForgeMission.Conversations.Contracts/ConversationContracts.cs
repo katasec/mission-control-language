@@ -211,7 +211,10 @@ public sealed record ConversationCommand(
     string Goal,
     ConversationCapabilityDeclaration[] Capabilities,
     ConversationToolResult? ToolResult,
-    string? ProjectGoal = null);
+    string? ProjectGoal = null,
+    DurableMissionLaunch? Launch = null,
+    string? OpaqueContinuation = null,
+    string? ProviderToolCallId = null);
 
 /// <summary>
 /// Progress queue body sent from the Worker to the Conversation service over the
@@ -236,7 +239,8 @@ public sealed record ConversationProgress(
     ConversationToolResult? ToolResult,
     ConversationArtifactReference? Artifact,
     ConversationRunStatus? RunStatus,
-    DateTimeOffset OccurredAtUtc);
+    DateTimeOffset OccurredAtUtc,
+    MissionToolRequest? MissionHandsRequest = null);
 
 // --- HTTP request/response contract -------------------------------------------------------
 // Tenant/user identity is authenticated at Tier 1 (a later ForgeUI/ForgeAPI adapter) and is
@@ -344,7 +348,8 @@ public sealed record StartProjectMissionRunRequest(
     Guid ContainerId,
     Guid CommandId,
     string Mission,
-    string Input);
+    string Input,
+    DurableMissionLaunch? Launch = null);
 
 /// <summary><c>POST /conversations/{containerId}/mission-runs</c> response
 /// (<c>202 Accepted</c>) — the same shape a Janus start already returns.</summary>

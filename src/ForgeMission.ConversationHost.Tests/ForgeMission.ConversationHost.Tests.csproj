@@ -30,6 +30,7 @@
     <ProjectReference Include="..\ForgeMission.ConversationHost\ForgeMission.ConversationHost.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime\ForgeMission.ClientRuntime.csproj" />
     <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\ForgeMission.ConversationWorker\ForgeMission.ConversationWorker.csproj" />
   </ItemGroup>
 
 </Project>

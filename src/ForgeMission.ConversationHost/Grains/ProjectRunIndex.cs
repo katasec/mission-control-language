@@ -66,7 +66,7 @@ internal sealed class ProjectRunIndex(IConversationEventStore events, IProjectRu
         var command = DeserializeCommand(stored.AcceptedCommandJson);
         if (command.Kind != ConversationCommandKind.StartMission || command.RunId is not { } runId ||
             command.CommandId != commandId || command.ConversationId != address.ConversationId ||
-            !ProjectMissionNames.IsKnown(command.MissionRef) || command.Capabilities.Length != 0 || command.ProjectGoal is null)
+            !IsProjectStart(command) || command.Capabilities.Length != 0 || command.ProjectGoal is null)
             throw new ProjectHistoryInvalidException("Stored Project command is invalid.");
         return new ProjectCommandReceipt(address.ConversationId, runId, command.MissionRef, command.Goal,
             command.ProjectGoal, stored.Event.Sequence + 1, ConversationRunStatus.Queued);
@@ -129,10 +129,18 @@ internal sealed class ProjectRunIndex(IConversationEventStore events, IProjectRu
     private static void ValidateStart(ConversationAddress address, ConversationEvent item, ConversationCommand command, Guid runId)
     {
         if (command.CommandId != item.EventId || command.ConversationId != address.ConversationId || command.RunId != runId ||
-            command.Kind != ConversationCommandKind.StartMission || !ProjectMissionNames.IsKnown(command.MissionRef) ||
+            command.Kind != ConversationCommandKind.StartMission || !IsProjectStart(command) ||
             command.Capabilities.Length != 0 || command.ProjectGoal is null)
             throw new ProjectHistoryInvalidException("Project run input does not match its accepted command.");
     }
+
+    // Historic named Project Mission records remain readable. New generic records are valid only
+    // with the same fully admitted immutable launch Host dispatches, never merely the string
+    // "Durable".
+    private static bool IsProjectStart(ConversationCommand command) =>
+        ProjectMissionNames.IsKnown(command.MissionRef) ||
+        (string.Equals(command.MissionRef, "Durable", StringComparison.Ordinal) &&
+         DurableMissionPackageAdmission.TryValidate(command.Launch, out _));
 
     private static string Title(string input)
     {

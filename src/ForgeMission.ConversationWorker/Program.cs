@@ -1,13 +1,12 @@
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
-using ForgeMission.ConversationWorker.Janus;
 using ForgeMission.ConversationWorker.Messaging;
+using ForgeMission.Core.Runtime;
 using Microsoft.Extensions.Hosting;
 
-// ConversationWorker — the Janus mission executor half of Phase 43.16 Task 5. Listens the
-// mission-command queue, runs the checked-in read-only Janus mission via PipelineRunner, and sends
-// conversation-progress facts back to ConversationHost. Never references ConversationHost, Orleans,
-// Azure Storage, Client Runtime, Presentation, Rooms, a Desktop workspace, or a capability executor.
+// ConversationWorker runs admitted immutable generic packages through one deployment-owned default
+// runner. It never references ConversationHost, Orleans, Azure Storage, Client Runtime,
+// Presentation, Rooms, a Desktop workspace, or a capability executor.
 var builder = Host.CreateApplicationBuilder(args);
 
 var serviceBusOptions = builder.Configuration.GetSection("ConversationServiceBus").Get<ConversationServiceBusOptions>()
@@ -18,14 +17,15 @@ serviceBusOptions.ValidateDirection(serviceBusOptions.MissionCommandListenConnec
 serviceBusOptions.ValidateDirection(serviceBusOptions.ProgressSendConnectionString, "ProgressSend");
 builder.Services.AddSingleton(serviceBusOptions);
 
-// Both packaged missions are loaded once at startup and reached only through the named resolver —
-// a Worker executes what is baked into its image, never a directory a command names (43.20 task 2).
-var janusDirectory = builder.Configuration["ConversationWorker:JanusMissionDirectory"]
-    ?? throw new InvalidOperationException("ConversationWorker:JanusMissionDirectory is required.");
-var naiveDirectory = builder.Configuration["ConversationWorker:NaiveMissionDirectory"]
-    ?? throw new InvalidOperationException("ConversationWorker:NaiveMissionDirectory is required.");
-builder.Services.AddSingleton(new WorkerMissionResolver(
-    WorkerMissionLoader.Load(janusDirectory), WorkerMissionLoader.Load(naiveDirectory)));
+var providerOptions = new WorkerProviderOptions
+{
+    DefaultProvider = builder.Configuration["ConversationWorker:DefaultProvider"],
+    DefaultModel = builder.Configuration["ConversationWorker:DefaultModel"],
+    DefaultEndpoint = builder.Configuration["ConversationWorker:DefaultEndpoint"],
+    DefaultApiKey = builder.Configuration["ConversationWorker:DefaultApiKey"],
+};
+builder.Services.AddSingleton(providerOptions);
+builder.Services.AddSingleton<IExpertRunner>(providerOptions.BuildDefaultRunner());
 
 var commandListenClient = BuildServiceBusClient(
     serviceBusOptions.MissionCommandListenConnectionString, serviceBusOptions.FullyQualifiedNamespace);

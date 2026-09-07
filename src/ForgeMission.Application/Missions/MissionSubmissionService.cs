@@ -13,7 +13,8 @@ namespace ForgeMission.Application;
 internal sealed class MissionSubmissionService(
     ProjectService projects,
     IHttpClientFactory clients,
-    ApplicationSessionService? sessions = null) : IMissionSubmissionService
+    ApplicationSessionService? sessions = null,
+    MissionHandsConversationService? missionHands = null) : IMissionSubmissionService
 {
     public Task<ProjectSubmissionResponse> StartAsync(
         ForgeMission.Application.Transport.StartProjectMissionRunRequest request,
@@ -33,6 +34,17 @@ internal sealed class MissionSubmissionService(
         if (busy is not null)
             return new ProjectSubmissionResponse(null, busy);
 
+        // A generic launch is only eligible after the caller explicitly acknowledges the
+        // exact profile already approved in the manifest. The caller still cannot provide or
+        // alter a package/profile: DispatchAsync re-resolves that immutable launch below.
+        var genericLaunches = before.Manifest.ApprovedMissionLaunches?.Where(candidate => candidate.Package is not null).ToArray() ?? [];
+        if (genericLaunches.Length > 1)
+            return new ProjectSubmissionResponse(null, Error(ProjectOperationErrorCode.MissionRunConflict,
+                "Exactly one approved generic mission launch must be active before starting."));
+        if (genericLaunches.Length == 1 && !request.ProfileAccepted)
+            return new ProjectSubmissionResponse(null, Error(ProjectOperationErrorCode.MissionRunConflict,
+                "The exact approved mission capability profile must be acknowledged before starting."));
+
         ProjectRecord prepared;
         try
         {
@@ -44,7 +56,7 @@ internal sealed class MissionSubmissionService(
             return new ProjectSubmissionResponse(null, ToError(exception));
         }
 
-        return await DispatchAsync(session.ProjectHome, prepared, retry: false, ct);
+        return await DispatchAsync(session, prepared, retry: false, ct);
     }
 
     public async Task<ProjectSubmissionResponse> RetryAsync(
@@ -60,7 +72,7 @@ internal sealed class MissionSubmissionService(
         if (submission.Phase != ProjectSubmissionPhase.Prepared)
             return new ProjectSubmissionResponse(ToView(submission), null);
 
-        return await DispatchAsync(session.ProjectHome, current, retry: true, ct);
+        return await DispatchAsync(session, current, retry: true, ct);
     }
 
     private ApplicationSession RequiredSession(string sessionId)
@@ -71,10 +83,12 @@ internal sealed class MissionSubmissionService(
     }
 
     private async Task<ProjectSubmissionResponse> DispatchAsync(
-        string home, ProjectRecord prepared, bool retry, CancellationToken ct)
+        ApplicationSession session, ProjectRecord prepared, bool retry, CancellationToken ct)
     {
+        var home = session.ProjectHome;
         var submission = prepared.Manifest.Submission!;
         var host = new ConversationHostClient(clients.CreateClient("conversation-host"));
+        var genericAttachmentCreated = false;
         try
         {
             var containerId = await EnsureContainerAsync(home, prepared.Manifest, host, ct);
@@ -85,10 +99,32 @@ internal sealed class MissionSubmissionService(
                     return await CommitReceiptAsync(home, submission, receipt, ct);
             }
 
+            // The caller never supplies a package/profile. Application re-resolves the approved
+            // local launch from the manifest and can therefore send only that immutable value.
+            var launches = prepared.Manifest.ApprovedMissionLaunches?.Where(candidate => candidate.Package is not null).ToArray() ?? [];
+            if (launches.Length > 1)
+                return new ProjectSubmissionResponse(ToView(submission), Error(ProjectOperationErrorCode.MissionRunConflict,
+                    "Exactly one approved generic mission launch must be active before starting."));
+            var launch = launches.SingleOrDefault();
+            var durableLaunch = launch is null ? null : new DurableMissionLaunch(launch.MissionVersionId,
+                launch.VersionNumber, launch.DefinitionHash, launch.Definition, ToDurableProfile(launch.CapabilityProfile), launch.Package);
+            if (launch is not null)
+            {
+                if (missionHands is null)
+                    return new ProjectSubmissionResponse(ToView(submission), Error(ProjectOperationErrorCode.MissionRunConflict,
+                        "Generic mission hands are not composed in this Application."));
+                var attachmentError = await missionHands.AttachApprovedForRunAsync(session, containerId, launch, ct);
+                if (attachmentError is not null)
+                    return new ProjectSubmissionResponse(ToView(submission), Error(ProjectOperationErrorCode.MissionRunConflict, attachmentError));
+                genericAttachmentCreated = true;
+            }
             var accepted = await host.StartProjectMissionRunAsync(new HostStartProjectMissionRunRequest(
-                containerId, submission.CommandId, submission.Mission, submission.Input), ct);
+                containerId, submission.CommandId, durableLaunch is null ? submission.Mission : "Durable", submission.Input, durableLaunch), ct);
             if (accepted.ContainerId != containerId || accepted.RunId == Guid.Empty || accepted.AcceptedSequence <= 0)
+            {
+                await RevokeProvisionalGenericHandsAsync(session, genericAttachmentCreated);
                 return Uncertain(submission);
+            }
 
             return await CommitReceiptAsync(home, submission, new ProjectCommandReceipt(
                 accepted.ContainerId, accepted.RunId, submission.Mission, submission.Input, submission.ProjectGoal,
@@ -96,6 +132,7 @@ internal sealed class MissionSubmissionService(
         }
         catch (ConversationHostProjectException exception) when (IsDefinitive(exception.StatusCode))
         {
+            await RevokeProvisionalGenericHandsAsync(session, genericAttachmentCreated);
             var rejection = new ProjectSubmissionRejection(exception.Error.Code, SafeHostMessage(exception.Error.Code));
             try
             {
@@ -109,12 +146,23 @@ internal sealed class MissionSubmissionService(
         }
         catch (ProjectOperationException exception)
         {
+            await RevokeProvisionalGenericHandsAsync(session, genericAttachmentCreated);
             return new ProjectSubmissionResponse(ToView(submission), ToError(exception));
         }
         catch (Exception exception) when (IsUncertain(exception))
         {
+            await RevokeProvisionalGenericHandsAsync(session, genericAttachmentCreated);
             return Uncertain(submission);
         }
+    }
+
+    private static async Task RevokeProvisionalGenericHandsAsync(ApplicationSession session, bool created)
+    {
+        if (!created) return;
+        try { await session.MissionHands.RevokeAsync(CancellationToken.None); }
+        // Host uncertainty must never leave a locally authoritative Bob live. A later explicit
+        // retry creates a fresh attachment; cleanup failure cannot rewrite the original result.
+        catch { }
     }
 
     private async Task<ProjectSubmissionResponse> CommitReceiptAsync(
@@ -186,6 +234,14 @@ internal sealed class MissionSubmissionService(
     private static ProjectSubmissionResponse Uncertain(ProjectSubmission submission) =>
         new(ToView(submission), Error(ProjectOperationErrorCode.SubmissionUncertain,
             "Forge could not confirm the Project Mission result. Retry the same command."));
+
+    private static MissionHandsProfile ToDurableProfile(MissionCapabilityProfile profile) => profile switch
+    {
+        MissionCapabilityProfile.NoHands => MissionHandsProfile.NoHands,
+        MissionCapabilityProfile.ProjectWorkspace => MissionHandsProfile.ProjectWorkspace,
+        MissionCapabilityProfile.ProjectWorkspaceAndTerminal => MissionHandsProfile.ProjectWorkspaceAndTerminal,
+        _ => throw new ArgumentOutOfRangeException(nameof(profile)),
+    };
 
     internal static ProjectSubmissionView ToView(ProjectSubmission submission) => submission.Phase switch
     {

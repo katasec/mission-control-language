@@ -51,7 +51,6 @@ internal sealed record PipelineContinuationCheckpoint(
     int Attempt,
     PipelineToolCall ToolCall,
     IReadOnlyDictionary<string, string> RootInputs,
-    IReadOnlyList<PipelineProviderMessage> ProviderMessages,
     IReadOnlyList<PipelineExecutionFrame> Frames);
 
 /// <summary>
@@ -99,12 +98,8 @@ internal static class PipelineCheckpointCodec
 
 // Provider-neutral in-memory instruction used only between PipelineRunner and DirectExpertRunner.
 internal sealed record PipelineProviderToolTurn(
-    IReadOnlyList<ChatMessage> OriginalMessages,
     FunctionCallContent FunctionCall,
-    PipelineToolResult? Result = null,
-    IReadOnlyList<PipelineProviderMessage>? CheckpointMessages = null);
-
-internal sealed record PipelineProviderMessage(string Role, string Text);
+    PipelineToolResult? Result = null);
 
 internal static class PipelineToolContinuationInstructions
 {

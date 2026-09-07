@@ -84,13 +84,13 @@ public sealed class ApplicationComposition : IAsyncDisposable
         _sessions = new ApplicationSessionService(policy, publish, applicationStopping);
 
         var projects = new ProjectService(_sessions);
-        var submissions = new MissionSubmissionService(projects, clients, _sessions);
+        var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
+        var submissions = new MissionSubmissionService(projects, clients, _sessions, hands);
         var content = new ProjectContentService(projects, _sessions);
         var history = new RunHistoryService(_sessions, projects, clients, publish, applicationStopping);
         var conversations = new ConversationService(_sessions, clients, missionRuntimeMode, publish, applicationStopping);
         var capabilities = new CapabilityActionService(_sessions, publish);
         var interactions = new InteractionService(_sessions);
-        var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
         Projects = projects;
         Sessions = _sessions;
         MissionSubmissions = submissions;

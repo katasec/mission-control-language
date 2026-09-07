@@ -10,7 +10,7 @@ tags: [worker, conversations, missions, service-bus]
 
 ## Purpose
 
-Execute the closed durable mission catalog and report semantic progress back to the Conversation service.
+Execute admitted immutable durable packages and report generic semantic progress back to the Conversation service.
 
 ## Why this exists
 
@@ -18,8 +18,9 @@ Mission/provider work must be independently restartable while the durable Host r
 
 ## Owns
 
-- Service Bus command consumption, worker session/retry state, Janus/Naive mission execution, and progress publishing.
-- Mapping pipeline traces and tool requests into shared `ConversationProgress` facts.
+- Service Bus command consumption, worker session/retry state, generic Core execution, and progress publishing.
+- One deployment-owned `default` provider runner; package content cannot select a provider or credential.
+- Mapping generic Core traces and root pauses into shared `ConversationProgress` and Mission Hands facts.
 
 ## Does not own
 
@@ -36,15 +37,15 @@ For durable state, user-facing transport, or local tool authority, compose with 
 
 - [Worker composition](Program.cs)
 - [Command-to-progress orchestration](Messaging/MissionCommandProcessor.cs)
-- [Janus executor](Janus/JanusMissionExecutor.cs) and [closed mission resolver](Messaging/WorkerMissionResolver.cs)
-- Boundary coverage: [command processing](../ForgeMission.ConversationWorker.Tests/MissionCommandProcessorTests.cs), [redelivery safety](../ForgeMission.ConversationWorker.Tests/AzureServiceBusMissionCommandConsumerCoreTests.cs), and [Janus tool mapping](../ForgeMission.ConversationWorker.Tests/JanusMissionExecutorToolCallOptionsTests.cs)
+- [Generic executor](Messaging/GenericDurableMissionExecutor.cs) and [command processing](Messaging/MissionCommandProcessor.cs)
+- Boundary coverage: [generic command processing](../ForgeMission.ConversationWorker.Tests/GenericDurableMissionProcessorTests.cs)
 
 ## Communicates with
 
 ```mermaid
 flowchart LR
   Host[Conversation Host] -->|mission-command, session ordered| Worker
-  Worker -->|loads closed mission| Engine[Core + ChatClients]
+  Worker -->|validates supplied package| Engine[Core + ChatClients]
   Engine -->|trace / tool request| Worker
   Worker -->|conversation-progress, stable event ID| Host
 ```
