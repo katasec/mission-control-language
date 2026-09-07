@@ -102,6 +102,9 @@
     .convo-participant-markdown li { margin-bottom: var(--space-1); }
     .convo-participant-markdown li > ul,
     .convo-participant-markdown li > ol { margin: var(--space-1) 0 0; }
+    /* Markdig marks a task-list item with .task-list-item and keeps the list marker; the
+       checkbox already carries the item, so the bullet is redundant chrome. */
+    .convo-participant-markdown li.task-list-item { list-style: none; }
     .convo-participant-markdown li > input[type="checkbox"] { margin-right: var(--space-1); }
 
     .convo-participant-markdown blockquote {
@@ -112,7 +115,7 @@
     }
 
     .convo-participant-markdown code {
-        padding: 1px var(--space-1);
+        padding: 0 var(--space-1);
         border-radius: var(--radius-sm);
         background: var(--surface-sunken);
         font-family: var(--font-mono);

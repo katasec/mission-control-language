@@ -243,6 +243,26 @@ public sealed class ConversationTranscriptViewTests : BunitContext
         Assert.All(checkboxes, checkbox => Assert.True(checkbox.HasAttribute("disabled")));
     }
 
+    // The local rule that hides the redundant marker keys off Markdig's own class, so this pins the
+    // class contract the stylesheet depends on — a Markdig change that renamed it would fail here
+    // rather than silently restoring a bullet beside every checkbox.
+    [Fact]
+    public void AParticipantTaskList_MarksItsItemsSoTheRedundantBulletCanBeHidden()
+    {
+        var view = RenderParticipant("- [x] Define the Task struct\n- [ ] Persist to disk\n\n- an ordinary bullet", this);
+
+        var taskItems = view.FindAll(".convo-participant-markdown li.task-list-item");
+        Assert.Equal(2, taskItems.Count);
+        Assert.All(taskItems, item => Assert.NotEmpty(item.QuerySelectorAll("input[type=\"checkbox\"]")));
+
+        // Scoped to task-list items only: an ordinary bullet in the same list keeps its marker.
+        var plain = view.FindAll(".convo-participant-markdown li").Where(li => !li.ClassList.Contains("task-list-item")).ToList();
+        Assert.Single(plain);
+        Assert.Empty(plain[0].QuerySelectorAll("input[type=\"checkbox\"]"));
+
+        Assert.Contains(".convo-participant-markdown li.task-list-item { list-style: none; }", view.Markup);
+    }
+
     [Fact]
     public void AParticipantMessage_ContainingRawHtml_ShowsItAsTextWithNoLiveElement()
     {

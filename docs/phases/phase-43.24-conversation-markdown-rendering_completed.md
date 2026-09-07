@@ -16,7 +16,10 @@ a host permission the operator must grant.** Branch `codex/desktop-markdown-rend
 | `src/ForgeMission.Presentation/ForgeMission.Presentation.csproj` | `Markdig` `1.3.2`, the version ForgeUI already adopted. Presentation only. |
 | `src/ForgeMission.Presentation/Components/ConversationMarkdownRenderer.cs` | New internal seam: one fixed pipeline, `Render(string?) -> MarkupString`, private `InertLinkExtension` + `InertLinkRenderer`. |
 | `src/ForgeMission.Presentation/Components/ConversationTranscriptView.razor` | `ParticipantMessage` branch only: `<p class="convo-participant-text">` → `<div class="convo-participant-markdown">`; token-only local styles added, the old raw-text rule retired. |
-| `src/ForgeMission.Tests/Presentation/ConversationTranscriptViewTests.cs` | Existing selector updated; five matrix tests added. |
+| `src/ForgeMission.Tests/Presentation/ConversationTranscriptViewTests.cs` | Existing selector updated; six matrix/contract tests added. |
+
+Inline `code` uses `padding: 0 var(--space-1)` — a zero reset plus tokenized inline padding, so the
+component carries no literal length.
 
 Type tokens per the approved resolution: container and block content `--font-size-body`, headings
 `--font-size-lead`, code `--font-size-mono`, table header `--font-size-meta`. No literal colour,
@@ -59,7 +62,7 @@ check can never shadow an inertness check.
 | Check | Observation |
 |---|---|
 | Solution build | `dotnet build src/ForgeMission.slnx` — 0 errors, 0 warnings. |
-| Full test suite | `dotnet test src/ForgeMission.slnx` — 916 passed, 0 failed, 11 skipped (pre-existing live-provider skips). `ConversationTranscriptViewTests` is 16 of those. |
+| Full test suite | `dotnet test src/ForgeMission.slnx` — 916 passed, 0 failed, 11 skipped (pre-existing live-provider skips). `ConversationTranscriptViewTests` is 17 of those. |
 | Desktop publish | `make desktop-publish` succeeded. 15 warning lines, 5 distinct — all the known macOS Homebrew OpenSSL/Brotli `minimum-OS` linker warnings across 3 native links. **Zero ILC/IL/trim warnings and zero Markdig-related warnings**; the WASM trim concern raised at plan time did not materialise. |
 | Publish closure | `dist/forge-desktop/wwwroot/_framework/Markdig.yudascw6lc.wasm` present (492,821 b served). The served `ForgeMission.Presentation.c6p35kctr3.wasm` contains `ConversationMarkdownRenderer` and `InertLinkRenderer` and no longer contains `convo-participant-text`. |
 
@@ -153,7 +156,11 @@ Markdown. **Until that is recorded, Task 1's default-path row is FAIL-by-absence
    heading still reads as a heading, but the size step the after reference shows (17 px vs 15 px)
    does not survive at the compact corner. Flagged rather than changed, since the token was an
    explicit design resolution.
-2. **Task-list items render a bullet *and* a checkbox.** Markdig keeps the `<ul>` marker on
-   task-list items. The after reference contains no task list, so there is no binding target;
-   suppressing the redundant marker would be a one-line local rule. Left as Markdig emits it and
-   raised here rather than decided unilaterally.
+2. **Task-list bullet — resolved in review, not open.** Markdig emits
+   `<li class="task-list-item">` and keeps the `<ul>` marker, so every checkbox sat beside a
+   redundant bullet. A local `li.task-list-item { list-style: none; }` now hides it, keyed off
+   Markdig's own class rather than a `:has()` selector or a renderer change.
+   `AParticipantTaskList_MarksItsItemsSoTheRedundantBulletCanBeHidden` pins that class contract and
+   proves the rule stays scoped: an ordinary bullet in the same list keeps its marker. Live
+   computed values on the real response: 4 `li.task-list-item` at `list-style-type: none`, a
+   non-task item still `decimal`, all checkboxes `disabled`.
