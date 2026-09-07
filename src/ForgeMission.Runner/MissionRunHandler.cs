@@ -12,7 +12,7 @@ namespace ForgeMission.Runner;
 /// <summary>
 /// Executes a mission run for one <see cref="RunRequest"/> and shapes the result into a
 /// <see cref="RunResponse"/>. This is the extracted core of ForgeUI's old <c>MissionService</c>:
-/// same display-selection and trust logic, now running container-side and emitting cost signals.
+/// terminal-result projection and trust logic, now running container-side and emitting cost signals.
 /// Stateless — one instance is fine for the whole (concurrent) process; per-run state lives in
 /// locals and a per-run <see cref="UsageAccumulator"/>.
 /// </summary>
@@ -175,7 +175,7 @@ internal sealed class MissionRunHandler(
 
         var toolUse   = RunnerToolTurnMapper.ToToolUse(result.ToolCalls);
         var verified  = toolUse is null && result.Status == MissionStatus.Pass;
-        var agentText = toolUse is null ? BuildAgentText(verified, trace, result) : string.Empty;
+        var agentText = toolUse is null ? BuildAgentText(trace, result) : string.Empty;
 
         var usage = new RunUsage(
             InputTokens:    accumulator.InputTokens,
@@ -231,10 +231,10 @@ internal sealed class MissionRunHandler(
         return vars;
     }
 
-    private static string BuildAgentText(bool verified, List<RunTraceStep> trace, MissionResult result)
+    private static string BuildAgentText(List<RunTraceStep> trace, MissionResult result)
     {
-        if (verified)
-            return trace.LastOrDefault(e => e.ExpertName == "Answerer")?.Text ?? result.Text;
+        if (result.Status == MissionStatus.Pass)
+            return result.Text;
 
         var lastFailReason = trace.LastOrDefault(e => e.Status == "fail")?.Reason;
         if (string.IsNullOrWhiteSpace(lastFailReason))

@@ -1,6 +1,6 @@
 # Phase 46.2 Task D — terminal mission result projection
 
-> **Status:** approved for implementation 2026-09-08. Finding: Q46.1-03.
+> **Status:** implementation submitted for independent review 2026-09-08. Finding: Q46.1-03.
 > Parent: [Phase 46.2](phase-46.2-codex-supervised-remediation.md).
 
 ## Decision and scope
@@ -50,3 +50,13 @@ interaction, and visual tokens are reused, so visual implementation is N/A.
 - No output-selection grammar, metadata field, mission registry, or Rooms-level output selector.
 - No generic Worker, durable conversation, Project manifest, Desktop/TUI, Bob, identity, or legacy route work.
 - No change to verification/trust semantics, trace retention, or raw model agent behavior.
+
+## Implementation record — pending independent acceptance
+
+| Check | Observation |
+|---|---|
+| Terminal projection | `MissionRunHandler` now returns terminal `MissionResult.Text` on a pass. Its focused regression uses a prior expert literally named `Answerer` with different text, and proves the terminal verifier result wins while a pending tool turn remains blank. |
+| Guard content/package | `Verifier` returns the original answer as its pass verdict; `forge init` regenerated `mcl.lock`; `forge validate` reported `OK — mission is valid.` The immutable package was published as `ghcr.io/katasec/forge-mission-hallucination-guard:0.2.1` at `sha256:4020a035d14b00a76f723e1c147205316cbbba81c627e6fd6c920d0feddd3424`, and the built-in pin now uses that digest. |
+| Focused and deterministic tests | Focused `MissionRunHandlerTests`: 2 passed. The terminal-failure regression proves the public response remains the generic safe projection and does not expose raw provider detail. With optional provider keys absent only in the child test environment: Core/CLI suite 622 passed, 11 intentional external skips; Conversation Host 172 passed; Worker 18 passed; Runner 5 passed; Rooms 97 passed. |
+| Build and AOT | `dotnet build src/ForgeMission.slnx --no-restore`: 0 warnings, 0 errors. Final-tree `make install` completed its Native AOT compilation and updated `~/.local/bin/forge`; the final binary then validated the guard package successfully. |
+| Default path | Not yet executed. The required signed-in Room `@guard` proof needs the reviewed branch to be committed, the normal Runner image workflow to publish an image, and the infrastructure repository's `what-if` then deploy workflow. No image or deployment was claimed from this unreviewed implementation branch. |
