@@ -17,6 +17,48 @@ internal sealed class MissionHandsConversationService(
     CapabilityAuthorizationPolicy policy,
     CancellationToken applicationStopping) : IMissionHandsConversationService
 {
+    /// <summary>Application's generic-start path creates the one live Bob attachment before it
+    /// releases the immutable package to Host. This internal operation has no transport request,
+    /// so a caller cannot select its package, profile, or capability set.</summary>
+    internal async Task<string?> AttachApprovedForRunAsync(ApplicationSession session, Guid conversationId,
+        MissionVersionLaunch launch, CancellationToken ct)
+    {
+        var attachmentId = Guid.NewGuid();
+        ClientExecutionSession execution;
+        try
+        {
+            execution = ClientExecutionSession.CreateForMission(session.ProjectHome, ToExecutionProfile(launch.CapabilityProfile),
+                policy, session.Confirmation, applicationStopping);
+        }
+        catch (PlatformNotSupportedException exception)
+        {
+            return exception.Message;
+        }
+
+        var durableLaunch = new DurableMissionLaunch(launch.MissionVersionId, launch.VersionNumber, launch.DefinitionHash,
+            launch.Definition, ToDurableProfile(launch.CapabilityProfile), launch.Package);
+        var host = new ConversationHostClient(clients.CreateClient("conversation-host"));
+        try
+        {
+            await session.MissionHands.RevokeAsync(ct);
+            var attached = await host.AttachMissionHandsAsync(new AttachMissionHandsRequest(conversationId, attachmentId,
+                Guid.ParseExact(session.Id, "N"), durableLaunch), ct);
+            if (attached.Status is not (MissionHandsStatus.Attached or MissionHandsStatus.AwaitingHands or MissionHandsStatus.InFlight))
+            {
+                await execution.DisposeAsync();
+                return attached.Reason ?? "Host rejected the generic mission hands attachment.";
+            }
+            await session.MissionHands.ReplaceAsync(conversationId, attachmentId, Guid.ParseExact(session.Id, "N"),
+                launch.CapabilityProfile.ToString(), execution, host, ct);
+            return null;
+        }
+        catch
+        {
+            await execution.DisposeAsync();
+            throw;
+        }
+    }
+
     public async Task<AcknowledgeMissionHandsResponse> AcknowledgeAsync(AcknowledgeMissionHandsRequest request, CancellationToken ct)
     {
         if (!request.ProfileAccepted)
@@ -43,7 +85,7 @@ internal sealed class MissionHandsConversationService(
 
         var durableLaunch = new DurableMissionLaunch(
             launch.MissionVersionId, launch.VersionNumber, launch.DefinitionHash, launch.Definition,
-            ToDurableProfile(launch.CapabilityProfile));
+            ToDurableProfile(launch.CapabilityProfile), launch.Package);
         var host = new ConversationHostClient(clients.CreateClient("conversation-host"));
         try
         {

@@ -7,6 +7,7 @@ using ForgeMission.ConversationHost.Api;
 using ForgeMission.ConversationHost.Grains;
 using ForgeMission.ConversationHost.Persistence;
 using ForgeMission.Conversations.Contracts;
+using ForgeMission.Core.Runtime;
 
 namespace ForgeMission.ConversationHost.Tests;
 
@@ -84,6 +85,121 @@ public class ConversationApiTests(AzuriteFixture fixture)
         Assert.True(create.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed);
         Assert.True(submit.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed);
     }
+
+    [Fact]
+    public async Task Invalid_generic_package_is_rejected_before_any_worker_dispatch()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var projectId = Guid.NewGuid();
+        var created = await client.PostAsJsonAsync("/conversations/project-mission",
+            new CreateProjectMissionContainerRequest(projectId, ConversationDeterministicIds.ProjectMissionContainerCreate(projectId), "goal"),
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerRequest);
+        var container = await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateProjectMissionContainerResponse);
+        Assert.NotNull(container);
+
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        const string source = "mission Durable(task) = {\n Researcher using forbidden\n}\n";
+        var packageInput = new DurableMissionPackageInput(1, "", source, "Durable", "task", [
+            new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(packageInput), source, "Durable", "task", [resolved]);
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, "sha256:definition", "definition", MissionHandsProfile.NoHands, package);
+
+        var response = await client.PostAsJsonAsync($"/conversations/{container!.ContainerId}/mission-runs",
+            new StartProjectMissionRunRequest(container.ContainerId, Guid.NewGuid(), "Durable", "input", launch),
+            ConversationContractsJsonContext.Default.StartProjectMissionRunRequest);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(host.Dispatcher.Sent);
+    }
+
+    [Fact]
+    public async Task Null_generic_definition_is_a_bad_request_before_dispatch()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var projectId = Guid.NewGuid();
+        var created = await client.PostAsJsonAsync("/conversations/project-mission",
+            new CreateProjectMissionContainerRequest(projectId, ConversationDeterministicIds.ProjectMissionContainerCreate(projectId), "goal"),
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerRequest);
+        var container = await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateProjectMissionContainerResponse);
+        const string source = "mission Durable(task) = {\n Researcher\n}\n";
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var input = new DurableMissionPackageInput(1, "", source, "Durable", "task", [new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, "sha256:x", null!, MissionHandsProfile.NoHands, package);
+        var response = await client.PostAsJsonAsync($"/conversations/{container!.ContainerId}/mission-runs",
+            new StartProjectMissionRunRequest(container.ContainerId, Guid.NewGuid(), "Durable", "input", launch), ConversationContractsJsonContext.Default.StartProjectMissionRunRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(host.Dispatcher.Sent);
+    }
+
+    [Fact]
+    public async Task Valid_generic_package_starts_and_is_readable_as_a_project_run()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var projectId = Guid.NewGuid();
+        var created = await client.PostAsJsonAsync("/conversations/project-mission",
+            new CreateProjectMissionContainerRequest(projectId, ConversationDeterministicIds.ProjectMissionContainerCreate(projectId), "goal"),
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerRequest);
+        var container = await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateProjectMissionContainerResponse);
+        Assert.NotNull(container);
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+        const string source = "mission Durable(task) = {\n Researcher\n}\n";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var input = new DurableMissionPackageInput(1, "", source, "Durable", "task", [
+            new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
+        const string definition = "approved durable profile";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.NoHands, package);
+        var commandId = Guid.NewGuid();
+
+        var response = await client.PostAsJsonAsync($"/conversations/{container!.ContainerId}/mission-runs",
+            new StartProjectMissionRunRequest(container.ContainerId, commandId, "Durable", "input", launch),
+            ConversationContractsJsonContext.Default.StartProjectMissionRunRequest);
+
+        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        var dispatch = Assert.Single(host.Dispatcher.Sent).Command;
+        Assert.Equal("Durable", dispatch.MissionRef);
+        Assert.Equal(package.PackageHash, dispatch.Launch!.Package!.PackageHash);
+        var grain = host.GetConversationGrain(new ConversationAddress("dev", container.ContainerId));
+        var receipt = await grain.ReadProjectCommandAsync(commandId);
+        Assert.Null(receipt.ErrorCode);
+        Assert.NotNull(receipt.PayloadJson);
+    }
+
+    [Fact]
+    public async Task Generic_package_over_checkpoint_budget_is_rejected_before_dispatch()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var projectId = Guid.NewGuid();
+        var created = await client.PostAsJsonAsync("/conversations/project-mission",
+            new CreateProjectMissionContainerRequest(projectId, ConversationDeterministicIds.ProjectMissionContainerCreate(projectId), "goal"),
+            ConversationContractsJsonContext.Default.CreateProjectMissionContainerRequest);
+        var container = await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateProjectMissionContainerResponse);
+        const string source = "mission Durable(task) = {\n Researcher\n}\n";
+        var expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n" + new string('x', 8_100);
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var input = new DurableMissionPackageInput(1, "", source, "Durable", "task", [
+            new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
+        const string definition = "approved";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.NoHands, package);
+
+        var response = await client.PostAsJsonAsync($"/conversations/{container!.ContainerId}/mission-runs",
+            new StartProjectMissionRunRequest(container.ContainerId, Guid.NewGuid(), "Durable", new string('i', 4_096), launch),
+            ConversationContractsJsonContext.Default.StartProjectMissionRunRequest);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(host.Dispatcher.Sent);
+    }
+
+    private static string Hash(string content) => "sha256:" + Convert.ToHexString(
+        System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
 
     // ── 2. Follow-up: pinned mission/capabilities, not client-supplied ──────────────
 

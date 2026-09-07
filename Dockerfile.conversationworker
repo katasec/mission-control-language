@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# ForgeMission.ConversationWorker — the Janus mission executor (Phase 43.16 Task 8a). No HTTP
+# ForgeMission.ConversationWorker — the generic durable mission executor. No HTTP
 # surface: a generic-host background service that only consumes/produces Service Bus messages, so
 # unlike Dockerfile.conversationhost this image exposes no port.
 #
@@ -14,9 +14,8 @@
 #   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
 #     -f Dockerfile.conversationworker -t forge-conversation-worker:local .
 #
-# The checked-in, read-only mission directories are baked into the image (not local-machine paths).
-# Only a MissionRef the named WorkerMissionResolver recognises — "Janus" or the zero-tool
-# "Naive" — is ever executed.
+# The image contains no mission directories or mission-specific configuration. Each accepted
+# immutable package arrives as a bounded queue value; the deployment supplies one default runner.
 
 # ---- build --------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -35,12 +34,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 COPY --from=build /app/publish ./
-COPY missions/janus/ /app/missions/janus/
-COPY missions/naive/ /app/missions/naive/
-
-ENV ConversationWorker__JanusMissionDirectory=/app/missions/janus \
-    ConversationWorker__NaiveMissionDirectory=/app/missions/naive \
-    DOTNET_ENVIRONMENT=Production \
+ENV DOTNET_ENVIRONMENT=Production \
     DOTNET_gcServer=0
 
 ENTRYPOINT ["dotnet", "ForgeMission.ConversationWorker.dll"]

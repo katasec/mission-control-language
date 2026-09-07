@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Azure.Messaging.ServiceBus;
-using ForgeMission.ConversationWorker.Janus;
+using ForgeMission.Core.Runtime;
 using ForgeMission.Conversations.Contracts;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,7 +11,7 @@ namespace ForgeMission.ConversationWorker.Messaging;
 /// The Service Bus SDK adapter for the <c>mission-command</c> queue, and — folded into the same
 /// class per the locked design — its own dead-letter sub-queue. Both are session processors:
 /// peek-lock, auto-complete false, one concurrent session and one concurrent call per session (a
-/// single Janus run per conversation at a time). Every message is classified first
+/// single generic durable run per conversation at a time). Every message is classified first
 /// (<see cref="ConversationCommandMessageClassifier"/>, Phase 43.16 Task 8c): unaddressable poison
 /// input is completed with no session-state load, no <see cref="MissionCommandProcessor"/> call,
 /// and no publish — proven by <see cref="ProcessCommandCoreAsync"/> taking session load/save as
@@ -24,12 +24,12 @@ namespace ForgeMission.ConversationWorker.Messaging;
 public sealed class AzureServiceBusMissionCommandConsumer(
     ServiceBusClient client,
     ConversationServiceBusOptions options,
-    WorkerMissionResolver missions,
+    IExpertRunner defaultRunner,
     IConversationProgressPublisher publisher,
     ILogger<AzureServiceBusMissionCommandConsumer> logger)
     : BackgroundService
 {
-    private readonly MissionCommandProcessor _processor = new(missions);
+    private readonly MissionCommandProcessor _processor = new(defaultRunner);
     private readonly ConversationCommandDeadLetterHandler _deadLetterHandler = new(publisher);
 
     private ServiceBusSessionProcessor? _commandProcessor;

@@ -63,8 +63,9 @@ Respond with this exact JSON format and nothing else — status must always be "
             && providerTurn.Result is not null)
         {
             context.Remove(PipelineToolContinuationInstructions.ProviderToolTurn);
-            messages = [new ChatMessage(ChatRole.System, systemPrompt)];
-            messages.AddRange(providerTurn.OriginalMessages.Where(message => message.Role != ChatRole.System));
+            // A durable continuation intentionally restores declaration/runtime state, not a
+            // provider transcript. Rebuild the stable expert prompt, then provide only the
+            // correlated tool call/result pair that the provider protocol requires.
             messages.Add(new ChatMessage(ChatRole.Assistant, [providerTurn.FunctionCall]));
             messages.Add(new ChatMessage(ChatRole.Tool,
                 [new FunctionResultContent(providerTurn.FunctionCall.CallId,
@@ -113,8 +114,7 @@ Respond with this exact JSON format and nothing else — status must always be "
             // continuation payload.
             if (toolCalls.Count == 1)
                 context[PipelineToolContinuationInstructions.ProviderToolTurn] =
-                    new PipelineProviderToolTurn(messages.Where(message => message.Role != ChatRole.System).ToList(), toolCalls[0],
-                        CheckpointMessages: ToCheckpointMessages(messages.Where(message => message.Role != ChatRole.System)));
+                    new PipelineProviderToolTurn(toolCalls[0]);
             var text = response.Messages.LastOrDefault()?.Contents
                 .OfType<TextContent>().Select(c => c.Text).FirstOrDefault() ?? string.Empty;
             return new StepEnvelope(text);
@@ -152,8 +152,6 @@ Respond with this exact JSON format and nothing else — status must always be "
             && providerTurn.Result is not null)
         {
             context.Remove(PipelineToolContinuationInstructions.ProviderToolTurn);
-            messages = [new ChatMessage(ChatRole.System, systemPrompt)];
-            messages.AddRange(providerTurn.OriginalMessages.Where(message => message.Role != ChatRole.System));
             messages.Add(new ChatMessage(ChatRole.Assistant, [providerTurn.FunctionCall]));
             messages.Add(new ChatMessage(ChatRole.Tool,
                 [new FunctionResultContent(providerTurn.FunctionCall.CallId,
@@ -201,8 +199,7 @@ Respond with this exact JSON format and nothing else — status must always be "
             context["tool_calls"] = toolCalls;
             if (toolCalls.Count == 1)
                 context[PipelineToolContinuationInstructions.ProviderToolTurn] =
-                    new PipelineProviderToolTurn(messages.Where(message => message.Role != ChatRole.System).ToList(), toolCalls[0],
-                        CheckpointMessages: ToCheckpointMessages(messages.Where(message => message.Role != ChatRole.System)));
+                    new PipelineProviderToolTurn(toolCalls[0]);
         }
     }
 
@@ -227,6 +224,4 @@ Respond with this exact JSON format and nothing else — status must always be "
         return ([new(ChatRole.System, systemPrompt), new(ChatRole.User, userMessage)], systemPrompt);
     }
 
-    private static IReadOnlyList<PipelineProviderMessage> ToCheckpointMessages(IEnumerable<ChatMessage> messages)
-        => messages.Select(message => new PipelineProviderMessage(message.Role.ToString().ToLowerInvariant(), message.Text)).ToList();
 }

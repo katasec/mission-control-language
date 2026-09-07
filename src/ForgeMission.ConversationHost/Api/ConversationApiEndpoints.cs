@@ -190,11 +190,17 @@ public static class ConversationApiEndpoints
             string.IsNullOrWhiteSpace(request.Mission) || string.IsNullOrWhiteSpace(request.Input))
             return Invalid("containerId, commandId, mission, and non-blank input are required.");
 
-        if (!ProjectMissionNames.IsKnown(request.Mission))
-            return Invalid(
-                $"Unsupported mission '{request.Mission}'; only {string.Join(" and ", ProjectMissionNames.All)} are accepted.");
+        string? packageReason = null;
+        if (request.Launch is null)
+        {
+            if (!ProjectMissionNames.IsKnown(request.Mission))
+                return Invalid($"Unsupported mission '{request.Mission}'; only {string.Join(" and ", ProjectMissionNames.All)} are accepted.");
+        }
+        else if (!string.Equals(request.Mission, "Durable", StringComparison.Ordinal) ||
+                 !DurableMissionPackageAdmission.TryValidate(request.Launch, out packageReason))
+            return Invalid(packageReason ?? "Generic durable runs use the fixed Durable mission reference.");
 
-        if (request.Input.Length > 32_000 || Encoding.UTF8.GetByteCount(request.Input) > 16_384)
+        if (request.Input.Length > 32_000 || Encoding.UTF8.GetByteCount(request.Input) > (request.Launch is null ? 16_384 : 4_096))
             return Invalid("Project Mission input exceeds its supported size.");
 
         var address = new ConversationAddress(DevTenantId, request.ContainerId);
@@ -210,7 +216,8 @@ public static class ConversationApiEndpoints
         // No capabilities are read, because the request has none to read and the grain declares
         // zero for every run on this route.
         return await grain.AcceptProjectMissionRunAsync(
-            new ConversationProjectMissionRunInput(request.CommandId, request.Mission, request.Input));
+            new ConversationProjectMissionRunInput(request.CommandId, request.Mission, request.Input,
+                request.Launch is null ? null : JsonSerializer.Serialize(request.Launch, ConversationContractsJsonContext.Default.DurableMissionLaunch)));
     }
 
     public static async Task<GetConversationOutcomeResult> HandleGetConversationAsync(
@@ -397,8 +404,12 @@ public static class ConversationApiEndpoints
             return ProjectError("invalidRequest", "containerId must be a valid, non-empty GUID.", StatusCodes.Status400BadRequest);
         if (request.ContainerId != routeId)
             return ProjectError("invalidRequest", "Route containerId and request body ContainerId must agree.", StatusCodes.Status400BadRequest);
-        if (!ProjectMissionNames.IsKnown(request.Mission))
+        string? packageReason = null;
+        if (request.Launch is null && !ProjectMissionNames.IsKnown(request.Mission))
             return ProjectError("unknownMission", "The selected mission is not supported.", StatusCodes.Status400BadRequest);
+        if (request.Launch is not null && (!string.Equals(request.Mission, "Durable", StringComparison.Ordinal) ||
+            !DurableMissionPackageAdmission.TryValidate(request.Launch, out packageReason)))
+            return ProjectError("invalidRequest", packageReason ?? "The immutable durable package is invalid.", StatusCodes.Status400BadRequest);
         if (string.IsNullOrWhiteSpace(request.Input) || request.Input.Length > 32_000 || Encoding.UTF8.GetByteCount(request.Input) > 16_384)
             return ProjectError("invalidRequest", "Project Mission input is invalid.", StatusCodes.Status400BadRequest);
 

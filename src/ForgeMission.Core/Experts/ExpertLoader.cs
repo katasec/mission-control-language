@@ -317,10 +317,16 @@ public class ExpertLoader(string expertsDirectory)
 
     private sealed record MissionReferenceEdge(string FromMission, string ToMission, Step Step);
 
-    internal static ExpertDefinition ParseFile(string path)
+    internal static ExpertDefinition ParseFile(string path) => ParseContent(path, File.ReadAllText(path));
+
+    /// <summary>
+    /// Parses one expert definition supplied as immutable value content. Hosts that admit an
+    /// already-resolved package use this rather than materialising a temporary expert directory;
+    /// Core remains the single YAML/frontmatter parser.
+    /// </summary>
+    public static ExpertDefinition ParseContent(string sourceName, string content)
     {
-        var content = File.ReadAllText(path);
-        var (frontmatter, body, frontmatterStartLine) = SplitFrontmatter(path, content);
+        var (frontmatter, body, frontmatterStartLine) = SplitFrontmatter(sourceName, content);
 
         ExpertFrontmatter meta;
         try
@@ -331,7 +337,7 @@ public class ExpertLoader(string expertsDirectory)
         {
             var line = frontmatterStartLine + (int)ex.Start.Line - 1;
             var col  = (int)ex.Start.Column - 1;
-            throw new ExpertLoadException(ex.InnerException?.Message ?? ex.Message, path, line, col);
+            throw new ExpertLoadException(ex.InnerException?.Message ?? ex.Message, sourceName, line, col);
         }
 
         // Collect all semantic errors before surfacing them
@@ -340,49 +346,50 @@ public class ExpertLoader(string expertsDirectory)
         if (string.IsNullOrWhiteSpace(meta.Name))
         {
             var (l, c, ec) = FindField(frontmatter, "name", frontmatterStartLine);
-            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'name' in {Path.GetFileName(path)}", path, l, c, ec));
+            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'name' in {Path.GetFileName(sourceName)}", sourceName, l, c, ec));
         }
         if (string.IsNullOrWhiteSpace(meta.Input))
         {
             var (l, c, ec) = FindField(frontmatter, "input", frontmatterStartLine);
-            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'input' in {Path.GetFileName(path)}", path, l, c, ec));
+            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'input' in {Path.GetFileName(sourceName)}", sourceName, l, c, ec));
         }
         if (string.IsNullOrWhiteSpace(meta.Output))
         {
             var (l, c, ec) = FindField(frontmatter, "output", frontmatterStartLine);
-            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'output' in {Path.GetFileName(path)}", path, l, c, ec));
+            errors.Add(new ExpertLoadException($"Missing required frontmatter field 'output' in {Path.GetFileName(sourceName)}", sourceName, l, c, ec));
         }
 
         // Use filename as fallback name in kind messages if name field is missing
-        var expertName = string.IsNullOrWhiteSpace(meta.Name) ? Path.GetFileNameWithoutExtension(path) : meta.Name;
+        var expertName = string.IsNullOrWhiteSpace(meta.Name) ? Path.GetFileNameWithoutExtension(sourceName) : meta.Name;
         var kindLine   = FindField(frontmatter, "kind", frontmatterStartLine);
 
         if (meta.Kind.Equals("http", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(meta.Endpoint))
-            errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:http but is missing required field 'endpoint'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+            errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:http but is missing required field 'endpoint'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
 
         if (meta.Kind.Equals("rule", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(meta.Check))
-            errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:rule but is missing required field 'check'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+            errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:rule but is missing required field 'check'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
 
         if (meta.Kind.Equals("onnx", StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(meta.Model))
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'model'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'model'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
             if (meta.Inputs.Count == 0)
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'inputs'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'inputs'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
             if (string.IsNullOrWhiteSpace(meta.OutputKey))
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'outputKey'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'outputKey'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
             if (string.IsNullOrWhiteSpace(meta.Threshold))
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'threshold'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:onnx but is missing required field 'threshold'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
         }
 
         if (meta.Kind.Equals("exec", StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(meta.Command))
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:exec but is missing required field 'command'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:exec but is missing required field 'command'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
             if (meta.Inputs.Count == 0)
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:exec but is missing required field 'inputs'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:exec but is missing required field 'inputs'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
             if (string.IsNullOrWhiteSpace(meta.OutputKey))
-                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:exec but is missing required field 'outputKey'.", path, kindLine.line, kindLine.col, kindLine.endCol));
+                errors.Add(new ExpertLoadException($"Expert '{expertName}' has kind:exec but is missing required field 'outputKey'.", sourceName, kindLine.line, kindLine.col, kindLine.endCol));
+
         }
 
         if (errors.Count > 0)
@@ -391,7 +398,7 @@ public class ExpertLoader(string expertsDirectory)
         return new ExpertDefinition(meta.Name, meta.Input, meta.Output, body.Trim(), meta.Role, meta.Kind,
             meta.Endpoint, meta.Check, meta.OnFail, meta.Model, meta.Inputs, meta.OutputKey, meta.Threshold,
             meta.Command, meta.Args, meta.Timeout,
-            ExpertDirectory: Path.GetDirectoryName(path) ?? "",
+            ExpertDirectory: Path.GetDirectoryName(sourceName) ?? "",
             OutputKeys: meta.OutputKeys.Count > 0 ? meta.OutputKeys : null,
             InputKeys:  meta.InputKeys.Count  > 0 ? meta.InputKeys  : null);
     }

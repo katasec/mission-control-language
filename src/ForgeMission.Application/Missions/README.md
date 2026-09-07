@@ -54,6 +54,7 @@ flowchart LR
 
 - Start validates and prepares local intent before network work; it does not hold a manifest lease across HTTP.
 - A lost acceptance response produces uncertainty; retry reconciles the same command rather than issuing another start.
+- A generic durable start requires acknowledgement of the manifest-approved capability profile. Application then re-resolves that exact immutable package, attaches a fresh Bob for that profile, and only then releases the typed start to Host; callers cannot submit a package or tool list.
 - MissionCatalog describes supported selection references only. It is not a dynamic catalog, download service, or provider registry.
 
 ## Related documentation

@@ -66,15 +66,16 @@ public class ConversationContractsBoundaryTests
     }
 
     [Fact]
-    public void ConversationHost_ReferencesOnlyContracts_AndNamesTheApprovedOrleansAzurePackages()
+    public void ConversationHost_ReferencesContractsAndCoreForPackageAdmission_AndNamesTheApprovedOrleansAzurePackages()
     {
         var text = ReadCsproj("ForgeMission.ConversationHost", "ForgeMission.ConversationHost.csproj");
 
-        // Exactly one ProjectReference — Contracts. A second project reference here would be an
-        // undocumented dependency Task 4/5 did not add.
+        // Core is the one approved MCL/package parser. Host uses it only to reject immutable
+        // durable package content before queue dispatch; it still owns no provider composition.
         var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
-        Assert.Equal(1, projectReferenceCount);
+        Assert.Equal(2, projectReferenceCount);
         Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
+        Assert.Contains("ForgeMission.Core.csproj", text);
 
         // The Task-4-approved packages plus Task 5's reminder/Service Bus additions, at their
         // pinned versions — no other Orleans/Azure package, no serializer package/codec of any kind.

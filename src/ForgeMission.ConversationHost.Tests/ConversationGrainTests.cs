@@ -5,7 +5,12 @@ using ForgeMission.ConversationHost.Grains;
 using ForgeMission.ConversationHost.Persistence;
 using ForgeMission.Conversations.Contracts;
 using ForgeMission.ClientRuntime;
+using ForgeMission.Core.Runtime;
 using ForgeMission.Core.Tools;
+using ForgeMission.Core.Experts;
+using ForgeMission.ConversationWorker.Messaging;
+using Microsoft.Extensions.AI;
+using System.Runtime.CompilerServices;
 
 namespace ForgeMission.ConversationHost.Tests;
 
@@ -42,16 +47,31 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         return result.Acceptance!;
     }
 
+    private static DurableMissionLaunch DurableLaunch(MissionHandsProfile profile)
+    {
+        const string source = "mission Durable(task) = {\n    Researcher\n}\n";
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\nrole: agent\n---\n{{task}}";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var packageInput = new DurableMissionPackageInput(1, "", source, "Durable", "task", [
+            new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(packageInput), source,
+            "Durable", "task", [resolved]);
+        const string definition = "mission Example";
+        return new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, profile, package);
+    }
+
     [Fact]
     public async Task GenericHands_UsesCanonicalConversationSequence_AndAcceptsOneCorrelatedResult()
     {
         await using var host = await fixture.StartHostAsync();
         var address = NewAddress();
         var grain = host.GetConversationGrain(address);
-        await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
-
-        const string definition = "mission Example";
-        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var runId = Guid.NewGuid();
+        var launch = DurableLaunch(MissionHandsProfile.ProjectWorkspace);
+        var genericStart = new ConversationCommand(Guid.NewGuid(), address.ConversationId, runId,
+            ConversationCommandKind.StartMission, "Durable", "goal", [], null, Launch: launch);
+        Assert.Equal(ConversationCommandOutcome.Accepted,
+            (await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(genericStart)))).Outcome);
         var invalidLaunch = launch with { DefinitionHash = "sha256:deadbeef" };
         var invalidAttachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), invalidLaunch);
         Assert.False((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
@@ -63,15 +83,23 @@ public class ConversationGrainTests(AzuriteFixture fixture)
             new DetachMissionHandsRequest(address.ConversationId, firstAttachment.AttachmentId),
             ConversationContractsJsonContext.Default.DetachMissionHandsRequest)))).Accepted);
 
-        var turnAttemptId = Guid.NewGuid();
+        var turnAttemptId = genericStart.CommandId;
         var request = new MissionToolRequest(ConversationDeterministicIds.MissionHandsRequest(address.ConversationId, turnAttemptId, 0),
             address.ConversationId, turnAttemptId, "root", "agent", "call", "read", JsonDocument.Parse("{}").RootElement.Clone(), "opaque");
-        var awaiting = await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
-            request, ConversationContractsJsonContext.Default.MissionToolRequest)));
-        Assert.True(awaiting.Accepted);
-        var awaitingResult = JsonSerializer.Deserialize(awaiting.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)!;
-        Assert.Equal(MissionHandsStatus.AwaitingHands, awaitingResult.Status);
-        Assert.Equal(4, awaitingResult.AcceptedSequence);
+        var forgedRequest = request with { ToolRequestId = Guid.NewGuid(), TurnAttemptId = Guid.NewGuid() };
+        var forgedPause = new ConversationProgress(forgedRequest.ToolRequestId, address.ConversationId, runId,
+            ConversationEventKind.MissionHandsRequested, ConversationParticipant.Forge, 1, null, null, null,
+            null, null, null, null, DateTimeOffset.UtcNow, forgedRequest);
+        Assert.Equal(ConversationProgressOutcome.Rejected,
+            (await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(forgedPause)))).Outcome);
+        // This is the Worker queue fact, not a direct Host-private request. Host accepts it only
+        // because its attempt ID is the generic start command it dispatched.
+        var workerPause = new ConversationProgress(request.ToolRequestId, address.ConversationId, runId,
+            ConversationEventKind.MissionHandsRequested, ConversationParticipant.Forge, 1, null, null, null,
+            null, null, null, null, DateTimeOffset.UtcNow, request);
+        var awaiting = await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(workerPause)));
+        Assert.Equal(ConversationProgressOutcome.Appended, awaiting.Outcome);
+        Assert.Equal(4, awaiting.Sequence);
 
         var freshAttachment = firstAttachment with { AttachmentId = Guid.NewGuid(), ApplicationSessionId = Guid.NewGuid() };
         Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
@@ -131,6 +159,16 @@ public class ConversationGrainTests(AzuriteFixture fixture)
             ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
         Assert.False(mismatchedReplay.Accepted);
 
+        // The Host appends one canonical result before it emits exactly one deterministic
+        // generic continuation. A replay cannot enqueue a second provider resume.
+        var continuation = Assert.Single(host.Dispatcher.Sent,
+            sent => sent.Command.Kind == ConversationCommandKind.ContinueAfterTool).Command;
+        Assert.Equal(ConversationDeterministicIds.MissionHandsContinuation(request.ToolRequestId), continuation.CommandId);
+        Assert.Equal(runId, continuation.RunId);
+        Assert.Equal(launch.Package!.PackageHash, continuation.Launch!.Package!.PackageHash);
+        Assert.Equal(request.OpaqueContinuation, continuation.OpaqueContinuation);
+        Assert.Equal(request.ProviderToolCallId, continuation.ProviderToolCallId);
+
         var events = DeserializeEvents(await grain.ReadAfterAsync(0));
         Assert.Equal([1L, 2L, 3L, 4L, 5L, 6L, 7L], events.Select(@event => @event.Sequence));
         Assert.Equal(ConversationEventKind.MissionHandsRequested, events[2].Kind);
@@ -138,6 +176,56 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         Assert.Equal(ConversationEventKind.MissionHandsAwaitingToolConfirmation, events[4].Kind);
         Assert.Equal(ConversationEventKind.MissionHandsInFlight, events[5].Kind);
         Assert.Equal(ConversationEventKind.MissionHandsResult, events[6].Kind);
+    }
+
+    [Fact]
+    public async Task Worker_pause_host_result_one_continuation_and_worker_resume_form_one_chain()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        var launch = DurableLaunch(MissionHandsProfile.ProjectWorkspace);
+        var projectId = Guid.NewGuid();
+        Assert.Equal(ConversationCommandOutcome.Accepted, (await grain.AcceptProjectMissionContainerCreateAsync(
+            new ConversationProjectMissionCreateInput(ConversationDeterministicIds.ProjectMissionContainerCreate(projectId), projectId, "goal"))).Outcome);
+        var commandId = Guid.NewGuid();
+        Assert.Equal(ConversationCommandOutcome.Accepted,
+            (await grain.AcceptProjectMissionRunAsync(new ConversationProjectMissionRunInput(commandId, "Durable", "input",
+                JsonSerializer.Serialize(launch, ConversationContractsJsonContext.Default.DurableMissionLaunch)))).Outcome);
+        var start = Assert.Single(host.Dispatcher.Sent, item => item.Command.Kind == ConversationCommandKind.StartMission).Command;
+        var attachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(attachment,
+            ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        var calls = 0;
+        var processor = new MissionCommandProcessor(new ChainRunner((_, context) =>
+        {
+            if (calls++ == 0) { context["tool_calls"] = (IReadOnlyList<FunctionCallContent>)[new FunctionCallContent("call", "Read", new Dictionary<string, object?>())]; return new StepEnvelope("pause"); }
+            return new StepEnvelope("done");
+        }));
+        var workerFacts = new List<ConversationProgress>();
+        var waiting = await processor.ProcessAsync(start, "dev", null, (_, _) => Task.CompletedTask,
+            (fact, _, _) => { workerFacts.Add(fact); return Task.CompletedTask; }, CancellationToken.None);
+        var pause = Assert.Single(workerFacts, fact => fact.Kind == ConversationEventKind.MissionHandsRequested);
+        Assert.Equal(ConversationProgressOutcome.Appended, (await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(pause)))).Outcome);
+        var claim = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, attachment.AttachmentId, attachment.ApplicationSessionId), ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.True(claim.Accepted);
+        var request = pause.MissionHandsRequest!;
+        Assert.True((await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new SubmitMissionToolResultRequest(address.ConversationId, attachment.AttachmentId, request.TurnAttemptId, Guid.NewGuid(), request.ToolRequestId, MissionToolOutcome.Succeeded, "ok", null), ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)))).Accepted);
+        var continuation = Assert.Single(host.Dispatcher.Sent, item => item.Command.Kind == ConversationCommandKind.ContinueAfterTool).Command;
+        var resumed = new List<ConversationProgress>();
+        var terminal = await processor.ProcessAsync(continuation, "dev", waiting, (_, _) => Task.CompletedTask,
+            (fact, _, _) => { resumed.Add(fact); return Task.CompletedTask; }, CancellationToken.None);
+        Assert.Equal(WorkerSessionPhase.Terminal, terminal.Phase);
+        Assert.Equal(2, calls);
+        Assert.Equal(ConversationRunStatus.Completed, resumed[^1].RunStatus);
+    }
+
+    private sealed class ChainRunner(Func<ExpertDefinition, Dictionary<string, object>, StepEnvelope> run) : IExpertRunner
+    {
+        public Task<StepEnvelope> RunAsync(ExpertDefinition expert, Dictionary<string, object> context, CancellationToken ct = default) => Task.FromResult(run(expert, context));
+        public async IAsyncEnumerable<string> StreamAsync(ExpertDefinition expert, Dictionary<string, object> context, [EnumeratorCancellation] CancellationToken ct = default) { yield return run(expert, context).Text; await Task.CompletedTask; }
     }
 
     [Fact]

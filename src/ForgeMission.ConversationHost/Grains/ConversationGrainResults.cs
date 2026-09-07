@@ -103,7 +103,8 @@ public sealed record ConversationProjectMissionCreateInput(
 public sealed record ConversationProjectMissionRunInput(
     [property: Id(0)] Guid CommandId,
     [property: Id(1)] string Mission,
-    [property: Id(2)] string Input);
+    [property: Id(2)] string Input,
+    [property: Id(3)] string? LaunchJson = null);
 
 /// <summary>Grain-interface wrapper for an ordered <see cref="ConversationEvent"/> range; each
 /// element is deserialized individually by the caller with <see cref="ConversationContractsJsonContext"/>.</summary>

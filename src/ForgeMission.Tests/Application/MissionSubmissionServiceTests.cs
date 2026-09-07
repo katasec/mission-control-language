@@ -88,16 +88,55 @@ public sealed class MissionSubmissionServiceTests : IDisposable
         Assert.Equal(ProjectSubmissionPhase.Rejected, fixture.Projects.ReadForHome(fixture.Project.Home).Manifest.Submission!.Phase);
     }
 
-    private Fixture NewFixture()
+    [Fact]
+    public async Task Generic_acknowledged_start_rejection_revokes_the_provisional_hands_attachment()
+    {
+        var fixture = NewFixture(genericHands: true);
+        fixture.Handler.RejectStart = true;
+        var manifest = fixture.Projects.ReadForHome(fixture.Project.Home).Manifest with
+        {
+            ApprovedMissionLaunches = [GenericLaunch()],
+        };
+        File.WriteAllText(Path.Combine(fixture.Project.Home, "forge.project.json"),
+            JsonSerializer.Serialize(manifest, ProjectManifestJsonContext.Default.ProjectManifest));
+
+        var response = await fixture.Application.StartAsync(fixture.Session,
+            new RuntimeStartProjectMissionRunRequest(fixture.Session.Id, Guid.NewGuid(), null, "generic input", ProfileAccepted: true),
+            CancellationToken.None);
+
+        Assert.Null(response.Error);
+        Assert.Equal(ProjectSubmissionState.Rejected, response.Submission!.State);
+        Assert.Equal(1, fixture.Handler.AttachCount);
+        Assert.Equal(1, fixture.Handler.DetachCount);
+    }
+
+    private Fixture NewFixture(bool genericHands = false)
     {
         var projects = new ProjectService(Path.Combine(_profile, "Forge", "Projects"));
         var project = projects.Create("Build a reliable Project Mission.", null, null);
         var sessions = new ApplicationSessionService(CapabilityAuthorizationPolicy.Default, _ => { }, CancellationToken.None);
         var session = sessions.CreateForProject(project.Home);
         var handler = new ProjectMissionHandler(project.Manifest.ProjectId, project.Manifest.Goal);
-        var application = new MissionSubmissionService(projects, new HandlerFactory(handler));
+        var factory = new HandlerFactory(handler);
+        var hands = genericHands ? new MissionHandsConversationService(projects, sessions, factory,
+            CapabilityAuthorizationPolicy.Default, CancellationToken.None) : null;
+        var application = new MissionSubmissionService(projects, factory, sessions, hands);
         return new Fixture(projects, project, session, application, handler);
     }
+
+    private static MissionVersionLaunch GenericLaunch()
+    {
+        const string source = "mission Durable(task) = {\n Researcher\n}\n";
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var input = new ForgeMission.Core.Runtime.DurableMissionPackageInput(1, "", source, "Durable", "task", [
+            new ForgeMission.Core.Runtime.DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, ForgeMission.Core.Runtime.DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
+        const string definition = "approved";
+        return new MissionVersionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionCapabilityProfile.NoHands, DateTimeOffset.UtcNow, package);
+    }
+
+    private static string Hash(string value) => "sha256:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
     private sealed record Fixture(ProjectService Projects, ProjectRecord Project, ApplicationSession Session,
         MissionSubmissionService Application, ProjectMissionHandler Handler)
@@ -122,6 +161,8 @@ public sealed class MissionSubmissionServiceTests : IDisposable
         public bool ThrowAfterAccept { get; set; }
         public bool RejectStart { get; set; }
         public int StartCount { get; private set; }
+        public int AttachCount { get; private set; }
+        public int DetachCount { get; private set; }
         private Guid? _commandId;
         private string? _mission;
         private string? _input;
@@ -144,6 +185,16 @@ public sealed class MissionSubmissionServiceTests : IDisposable
                 { Content = new StringContent("{\"code\":\"notFound\",\"message\":\"missing\"}", Encoding.UTF8, "application/json") };
                 return Json(new { containerId = ContainerId, runId = RunId, mission = _mission, input = _input,
                     projectGoal, acceptedSequence = 1, status = "queued" });
+            }
+            if (request.Method == HttpMethod.Post && path == "/mission-hands/attach")
+            {
+                AttachCount++;
+                return Json(new MissionHandsResult(MissionHandsStatus.Attached, 1));
+            }
+            if (request.Method == HttpMethod.Post && path == "/mission-hands/detach")
+            {
+                DetachCount++;
+                return Json(new MissionHandsResult(MissionHandsStatus.Completed, 1));
             }
             if (request.Method == HttpMethod.Post && path == $"/conversations/{ContainerId}/mission-runs")
             {

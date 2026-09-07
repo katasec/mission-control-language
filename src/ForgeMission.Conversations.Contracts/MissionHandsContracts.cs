@@ -17,7 +17,30 @@ public sealed record DurableMissionLaunch(
     int VersionNumber,
     string DefinitionHash,
     string Definition,
-    MissionHandsProfile Profile);
+    MissionHandsProfile Profile,
+    DurableMissionPackage? Package = null);
+
+/// <summary>
+/// Immutable value package supplied with a generic durable launch.  It deliberately contains
+/// executable declaration and resolved expert content only: provider selection, credentials,
+/// filesystem roots and capability handles are not representable here.
+/// </summary>
+public sealed record DurableMissionPackage(
+    int FormatVersion,
+    string PackageHash,
+    string MissionSource,
+    string RootMissionName,
+    string RootInputName,
+    DurableResolvedExpert[] ResolvedExperts);
+
+/// <summary>One already-resolved expert, retained as bounded immutable content rather than a
+/// Worker image path or a registry reference.</summary>
+public sealed record DurableResolvedExpert(
+    string Name,
+    string LockSource,
+    string LockPath,
+    string LockHash,
+    string ExpertMarkdown);
 
 public enum MissionHandsStatus
 {

@@ -11,4 +11,5 @@ internal sealed record MissionVersionLaunch(
     string DefinitionHash,
     string Definition,
     MissionCapabilityProfile CapabilityProfile,
-    DateTimeOffset ApprovedAtUtc);
+    DateTimeOffset ApprovedAtUtc,
+    ForgeMission.Conversations.Contracts.DurableMissionPackage? Package = null);

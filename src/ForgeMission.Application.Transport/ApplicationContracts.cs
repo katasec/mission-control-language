@@ -132,7 +132,8 @@ public sealed record ProjectSubmissionView(
     Guid? RunId, long? AcceptedSequence, ProjectOperationError? Rejection);
 
 public sealed record StartProjectMissionRunRequest(
-    string SessionId, Guid CommandId, Guid? PreviousCommandId, string Input);
+    string SessionId, Guid CommandId, Guid? PreviousCommandId, string Input,
+    bool ProfileAccepted = false);
 public sealed record RetryProjectMissionSubmissionRequest(string SessionId, Guid CommandId);
 public sealed record ProjectSubmissionResponse(
     ProjectSubmissionView? Submission, ProjectOperationError? Error);

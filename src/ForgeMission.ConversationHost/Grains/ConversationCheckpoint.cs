@@ -70,4 +70,8 @@ public sealed class ConversationCheckpoint
     [Id(25)] public string? MissionHandsPendingAttachmentJson { get; set; }
     [Id(26)] public bool MissionHandsInterrupted { get; set; }
     [Id(27)] public string? MissionHandsTerminalReason { get; set; }
+
+    // Only a Host-dispatched generic command may originate a hands pause. This prevents an
+    // arbitrary queue publisher from manufacturing Bob work with a plausible-looking request.
+    [Id(28)] public Guid? MissionHandsExpectedCommandId { get; set; }
 }
