@@ -71,6 +71,24 @@ public static class ConversationApiEndpoints
             ProjectRouteAsync(() => ReadProjectRunEventsAsync(containerId, runId, after, through, grains)));
         app.MapGet("/conversations/{containerId}/project-commands/{commandId}", (string containerId, string commandId, IGrainFactory grains) =>
             ProjectRouteAsync(() => ReadProjectCommandAsync(containerId, commandId, grains)));
+        // Generic mission hands is additive. It deliberately does not alter the legacy
+        // /conversations adapter, which is removed only after Task C's generic Worker route lands.
+        app.MapPost("/mission-hands/attach", (AttachMissionHandsRequest request, IGrainFactory grains) =>
+            MissionHandsRouteAsync(() => HandleAttachMissionHandsAsync(request, grains)));
+        app.MapPost("/mission-hands/detach", (DetachMissionHandsRequest request, IGrainFactory grains) =>
+            MissionHandsRouteAsync(() => HandleDetachMissionHandsAsync(request, grains)));
+        app.MapPost("/mission-hands/result", (SubmitMissionToolResultRequest request, IGrainFactory grains) =>
+            MissionHandsRouteAsync(() => HandleSubmitMissionHandsResultAsync(request, grains)));
+        app.MapPost("/mission-hands/work", (GetMissionHandsWorkRequest request, IGrainFactory grains) =>
+            MissionHandsWorkRouteAsync(() => HandleGetMissionHandsWorkAsync(request, grains)));
+        app.MapPost("/mission-hands/claim", (ClaimMissionHandsWorkRequest request, IGrainFactory grains) =>
+            MissionHandsWorkRouteAsync(() => HandleClaimMissionHandsWorkAsync(request, grains)));
+        app.MapPost("/mission-hands/confirmation", (BeginMissionHandsConfirmationRequest request, IGrainFactory grains) =>
+            MissionHandsRouteAsync(() => HandleBeginMissionHandsConfirmationAsync(request, grains)));
+        app.MapPost("/mission-hands/cancel", (CancelMissionHandsAttemptRequest request, IGrainFactory grains) =>
+            MissionHandsRouteAsync(() => HandleCancelMissionHandsAttemptAsync(request, grains)));
+        app.MapPost("/mission-hands/recover", (RecoverMissionHandsInFlightRequest request, IGrainFactory grains) =>
+            MissionHandsRouteAsync(() => HandleRecoverMissionHandsInFlightAsync(request, grains)));
     }
 
     // ═══════════════════════════ Transport-neutral message handlers ═══════════════════════════
@@ -234,6 +252,64 @@ public static class ConversationApiEndpoints
             .Select(json => JsonSerializer.Deserialize(json, ConversationContractsJsonContext.Default.ConversationEvent)!)
             .ToArray();
         return new ReadConversationEventsOutcomeResult(ConversationQueryOutcome.Found, events, null);
+    }
+
+    public static Task<MissionHandsResult> HandleAttachMissionHandsAsync(AttachMissionHandsRequest request, IGrainFactory grains) =>
+        HandleMissionHandsAsync(request.ConversationId, request, ConversationContractsJsonContext.Default.AttachMissionHandsRequest,
+            static (grain, input) => grain.AttachMissionHandsAsync(input), grains);
+
+    public static Task<MissionHandsResult> HandleDetachMissionHandsAsync(DetachMissionHandsRequest request, IGrainFactory grains) =>
+        HandleMissionHandsAsync(request.ConversationId, request, ConversationContractsJsonContext.Default.DetachMissionHandsRequest,
+            static (grain, input) => grain.DetachMissionHandsAsync(input), grains);
+
+    public static Task<MissionHandsResult> HandleSubmitMissionHandsResultAsync(SubmitMissionToolResultRequest request, IGrainFactory grains) =>
+        HandleMissionHandsAsync(request.ConversationId, request, ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest,
+            static (grain, input) => grain.AcceptMissionHandsResultAsync(input), grains);
+
+    public static async Task<MissionHandsWorkItem> HandleGetMissionHandsWorkAsync(GetMissionHandsWorkRequest request, IGrainFactory grains)
+    {
+        if (request.ConversationId == Guid.Empty)
+            return new MissionHandsWorkItem(MissionHandsStatus.AwaitingHands, null, null, null, "conversationId is required.");
+        var grain = grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, request.ConversationId).PartitionKey);
+        var result = await grain.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            request, ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        return JsonSerializer.Deserialize(result.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)
+            ?? throw new InvalidOperationException("Mission hands grain returned an invalid work item.");
+    }
+
+    public static async Task<MissionHandsWorkItem> HandleClaimMissionHandsWorkAsync(ClaimMissionHandsWorkRequest request, IGrainFactory grains)
+    {
+        if (request.ConversationId == Guid.Empty)
+            return new MissionHandsWorkItem(MissionHandsStatus.AwaitingHands, null, null, null, "conversationId is required.");
+        var grain = grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, request.ConversationId).PartitionKey);
+        var result = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            request, ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        return JsonSerializer.Deserialize(result.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)
+            ?? throw new InvalidOperationException("Mission hands grain returned an invalid work item.");
+    }
+
+    public static Task<MissionHandsResult> HandleBeginMissionHandsConfirmationAsync(BeginMissionHandsConfirmationRequest request, IGrainFactory grains) =>
+        HandleMissionHandsAsync(request.ConversationId, request, ConversationContractsJsonContext.Default.BeginMissionHandsConfirmationRequest,
+            static (grain, input) => grain.BeginMissionHandsConfirmationAsync(input), grains);
+
+    public static Task<MissionHandsResult> HandleCancelMissionHandsAttemptAsync(CancelMissionHandsAttemptRequest request, IGrainFactory grains) =>
+        HandleMissionHandsAsync(request.ConversationId, request, ConversationContractsJsonContext.Default.CancelMissionHandsAttemptRequest,
+            static (grain, input) => grain.CancelMissionHandsAttemptAsync(input), grains);
+
+    public static Task<MissionHandsResult> HandleRecoverMissionHandsInFlightAsync(RecoverMissionHandsInFlightRequest request, IGrainFactory grains) =>
+        HandleMissionHandsAsync(request.ConversationId, request, ConversationContractsJsonContext.Default.RecoverMissionHandsInFlightRequest,
+            static (grain, input) => grain.RecoverMissionHandsInFlightAsync(input), grains);
+
+    private static async Task<MissionHandsResult> HandleMissionHandsAsync<T>(Guid conversationId, T request,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type,
+        Func<IConversationGrain, MissionHandsJsonInput, Task<MissionHandsGrainResult>> operation, IGrainFactory grains)
+    {
+        if (conversationId == Guid.Empty)
+            return new MissionHandsResult(MissionHandsStatus.AwaitingHands, null, "conversationId is required.");
+        var grain = grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, conversationId).PartitionKey);
+        var result = await operation(grain, new MissionHandsJsonInput(JsonSerializer.Serialize(request, type)));
+        return JsonSerializer.Deserialize(result.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)
+            ?? throw new InvalidOperationException("Mission hands grain returned an invalid result.");
     }
 
     // ══════════════════════════════ HTTP route delegates (thin) ═══════════════════════════════
@@ -493,6 +569,36 @@ public static class ConversationApiEndpoints
         catch (HttpRequestException)
         {
             return ProjectError("serviceUnavailable", "Project Mission service is temporarily unavailable.", StatusCodes.Status503ServiceUnavailable);
+        }
+    }
+
+    private static async Task<IResult> MissionHandsRouteAsync(Func<Task<MissionHandsResult>> action)
+    {
+        try
+        {
+            var result = await action();
+            return result.AcceptedSequence is null && result.Reason is not null
+                ? ProjectError("missionHandsConflict", result.Reason, StatusCodes.Status409Conflict)
+                : Results.Ok(result);
+        }
+        catch (TimeoutException)
+        {
+            return ProjectError("serviceUnavailable", "Mission hands service is temporarily unavailable.", StatusCodes.Status503ServiceUnavailable);
+        }
+    }
+
+    private static async Task<IResult> MissionHandsWorkRouteAsync(Func<Task<MissionHandsWorkItem>> action)
+    {
+        try
+        {
+            var result = await action();
+            // A missing/stale work lease is an ordinary poll result, not a transport failure.
+            // Returning its typed reason lets Application reject it before Bob admission.
+            return Results.Ok(result);
+        }
+        catch (TimeoutException)
+        {
+            return ProjectError("serviceUnavailable", "Mission hands service is temporarily unavailable.", StatusCodes.Status503ServiceUnavailable);
         }
     }
 

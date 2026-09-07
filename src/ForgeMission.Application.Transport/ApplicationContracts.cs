@@ -179,6 +179,33 @@ public sealed record PromptResponse(string Content, bool IsError = false, Guid? 
 public sealed record ConfirmationResponseRequest(string SessionId, string ConfirmationId, bool Approved);
 public sealed record ConfirmationResponse(bool Accepted);
 
+// Generic mission hands lifecycle. ProfileAccepted is an acknowledgement of the resolved launch
+// shown by a surface; it is never a caller-selected capability profile or tool declaration.
+public sealed record AcknowledgeMissionHandsRequest(
+    string SessionId, Guid ConversationId, Guid MissionVersionId, int VersionNumber,
+    string DefinitionHash, bool ProfileAccepted);
+public sealed record AcknowledgeMissionHandsResponse(
+    Guid? AttachmentId, string? Profile, IReadOnlyList<string>? AvailableCapabilities, string? Error);
+public sealed record DetachMissionHandsRequest(string SessionId, Guid ConversationId, Guid AttachmentId);
+public sealed record DetachMissionHandsResponse(bool Detached, string? Error);
+/// <summary>Reads the locally held attachment state.  This is intentionally an Application
+/// projection: a surface never reads Bob or the Conversation Host directly.</summary>
+public sealed record GetMissionHandsStatusRequest(string SessionId, Guid ConversationId, Guid AttachmentId);
+public sealed record GetMissionHandsStatusResponse(
+    Guid? AttachmentId, string? Profile, IReadOnlyList<string>? AvailableCapabilities,
+    ForgeMission.Conversations.Contracts.MissionHandsStatus? Status, string? Error);
+public sealed record ExecuteMissionHandsRequest(
+    string SessionId, Guid ConversationId, Guid AttachmentId);
+public sealed record ExecuteMissionHandsResponse(
+    ForgeMission.Conversations.Contracts.MissionToolOutcome? Outcome, string? Content, string? Reason, long? AcceptedSequence, string? Error);
+public sealed record CancelMissionHandsRequest(string SessionId, Guid ConversationId, Guid AttachmentId, string Reason);
+public sealed record CancelMissionHandsResponse(bool Cancelled, long? AcceptedSequence, string? Error);
+/// <summary>Explicitly terminalizes a Host-owned operation whose old Bob could not durably
+/// detach. It carries correlation only; Host derives the interrupted request and outcome.</summary>
+public sealed record RecoverMissionHandsRequest(string SessionId, Guid ConversationId, Guid AttachmentId);
+public sealed record RecoverMissionHandsResponse(
+    ForgeMission.Conversations.Contracts.MissionHandsStatus? Status, long? AcceptedSequence, string? Error);
+
 public sealed record CapabilityRequestData(
     string CapabilityName,
     CapabilityOperation Operation,

@@ -159,6 +159,10 @@ internal sealed record ApplicationSession(
     /// conversation slots.</summary>
     public ProjectMissionReadScopeSlot ProjectMission { get; } = new();
 
+    /// <summary>One fresh Bob attachment for a pinned generic mission launch. It is separate from
+    /// the legacy session execution root and is always drained on session replacement/disposal.</summary>
+    public MissionHandsSlot MissionHands { get; } = new();
+
     public ValueTask DisposeAsync()
     {
         lock (_disposeGate)
@@ -172,9 +176,152 @@ internal sealed record ApplicationSession(
     {
         await Conversation.DisposeAsync();
         await ProjectMission.DisposeAsync();
+        await MissionHands.DisposeAsync();
         await Execution.DisposeAsync();
     }
 }
+
+internal sealed class MissionHandsSlot : IAsyncDisposable
+{
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private ClientExecutionSession? _execution;
+    private Guid _conversationId;
+    private Guid _attachmentId;
+    private Guid _applicationSessionId;
+    private string? _profile;
+    private ConversationHostClient? _host;
+    private bool _closed;
+
+    public async Task ReplaceAsync(Guid conversationId, Guid attachmentId, Guid applicationSessionId, string profile, ClientExecutionSession execution,
+        ConversationHostClient host, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (_closed)
+                throw new InvalidOperationException("This application session has been replaced.");
+            await DetachCoreAsync(ct);
+            _conversationId = conversationId;
+            _attachmentId = attachmentId;
+            _applicationSessionId = applicationSessionId;
+            _profile = profile;
+            _execution = execution;
+            _host = host;
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<bool> DetachAsync(Guid conversationId, Guid attachmentId, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (_attachmentId != attachmentId || _conversationId != conversationId || _execution is null)
+                return false;
+            await DetachCoreAsync(ct);
+            return true;
+        }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>Drains the current Bob and waits for Host's durable detach before a fresh
+    /// acknowledgement may attach another Bob. This is a handoff, not best-effort cleanup.</summary>
+    public async Task RevokeAsync(CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+        try { await DetachCoreAsync(ct); }
+        finally { _gate.Release(); }
+    }
+
+    public async Task<MissionHandsExecution> ExecuteAsync(Guid conversationId, Guid attachmentId,
+        string capabilityName, ICapabilityRequest request, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+        ClientExecutionSession? execution;
+        try
+        {
+            if (_attachmentId != attachmentId || _conversationId != conversationId || _execution is null)
+                return new MissionHandsExecution(false, null, []);
+            execution = _execution;
+        }
+        finally { _gate.Release(); }
+
+        // Do not hold the attachment gate across Bob's confirmation or provider call: Host can
+        // terminalize cancellation, then this slot can cancel/drain the admitted Bob work. A
+        // raced result is rejected by Host's exact terminal correlation before any continuation.
+        return new MissionHandsExecution(true, await execution.DispatchAsync(capabilityName, request, ct), execution.AvailableCapabilities);
+    }
+
+    public async Task<MissionHandsAttachmentState> GetStateAsync(Guid conversationId, Guid attachmentId, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (_conversationId != conversationId || _attachmentId != attachmentId || _execution is null)
+                return new MissionHandsAttachmentState(null, Guid.Empty, null, null);
+            return new MissionHandsAttachmentState(_attachmentId, _applicationSessionId, _profile, _execution.AvailableCapabilities);
+        }
+        finally { _gate.Release(); }
+    }
+
+    /// <summary>Cancellation is ordered by Host first; this only stops/drains Bob so a cancelled
+    /// attempt cannot later gain a local side effect or resume.</summary>
+    public async Task<bool> CancelAsync(Guid conversationId, Guid attachmentId, CancellationToken ct)
+    {
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (_conversationId != conversationId || _attachmentId != attachmentId || _execution is null)
+                return false;
+            await DetachCoreAsync(ct);
+            return true;
+        }
+        finally { _gate.Release(); }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            if (_closed)
+                return;
+            _closed = true;
+            await DetachCoreAsync(CancellationToken.None);
+        }
+        finally { _gate.Release(); }
+    }
+
+    private async Task DetachCoreAsync(CancellationToken ct)
+    {
+        var execution = _execution;
+        var host = _host;
+        var conversationId = _conversationId;
+        var attachmentId = _attachmentId;
+        _execution = null;
+        _host = null;
+        _conversationId = Guid.Empty;
+        _attachmentId = Guid.Empty;
+        _applicationSessionId = Guid.Empty;
+        _profile = null;
+        try
+        {
+            // Drain/cancel Bob before releasing its durable claim. A new attachment can never
+            // receive this request while the old process could still produce a local effect.
+            if (execution is not null)
+                await execution.DisposeAsync();
+        }
+        finally
+        {
+            if (host is not null && attachmentId != Guid.Empty)
+                await host.DetachMissionHandsAsync(new ForgeMission.Conversations.Contracts.DetachMissionHandsRequest(conversationId, attachmentId), ct);
+        }
+    }
+}
+
+internal sealed record MissionHandsExecution(bool Attached, ToolExecutionResult? Result, IReadOnlyList<string> AvailableCapabilities);
+internal sealed record MissionHandsAttachmentState(Guid? AttachmentId, Guid ApplicationSessionId, string? Profile,
+    IReadOnlyList<string>? AvailableCapabilities);
 
 // The sole entry point for a durable application session's prompt lifecycle. Admission, lazy
 // ConversationScope creation, and SendAsync are one operation serialized by _gate — never

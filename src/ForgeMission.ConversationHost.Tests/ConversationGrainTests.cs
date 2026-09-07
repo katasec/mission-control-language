@@ -1,7 +1,11 @@
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 using ForgeMission.ConversationHost.Grains;
 using ForgeMission.ConversationHost.Persistence;
 using ForgeMission.Conversations.Contracts;
+using ForgeMission.ClientRuntime;
+using ForgeMission.Core.Tools;
 
 namespace ForgeMission.ConversationHost.Tests;
 
@@ -36,6 +40,448 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         var result = await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(command)));
         Assert.Equal(ConversationCommandOutcome.Accepted, result.Outcome);
         return result.Acceptance!;
+    }
+
+    [Fact]
+    public async Task GenericHands_UsesCanonicalConversationSequence_AndAcceptsOneCorrelatedResult()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+
+        const string definition = "mission Example";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var invalidLaunch = launch with { DefinitionHash = "sha256:deadbeef" };
+        var invalidAttachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), invalidLaunch);
+        Assert.False((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            invalidAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        var firstAttachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            firstAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        Assert.True((await grain.DetachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new DetachMissionHandsRequest(address.ConversationId, firstAttachment.AttachmentId),
+            ConversationContractsJsonContext.Default.DetachMissionHandsRequest)))).Accepted);
+
+        var turnAttemptId = Guid.NewGuid();
+        var request = new MissionToolRequest(ConversationDeterministicIds.MissionHandsRequest(address.ConversationId, turnAttemptId, 0),
+            address.ConversationId, turnAttemptId, "root", "agent", "call", "read", JsonDocument.Parse("{}").RootElement.Clone(), "opaque");
+        var awaiting = await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            request, ConversationContractsJsonContext.Default.MissionToolRequest)));
+        Assert.True(awaiting.Accepted);
+        var awaitingResult = JsonSerializer.Deserialize(awaiting.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)!;
+        Assert.Equal(MissionHandsStatus.AwaitingHands, awaitingResult.Status);
+        Assert.Equal(4, awaitingResult.AcceptedSequence);
+
+        var freshAttachment = firstAttachment with { AttachmentId = Guid.NewGuid(), ApplicationSessionId = Guid.NewGuid() };
+        Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            freshAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        var work = await grain.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new GetMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        var workItem = JsonSerializer.Deserialize(work.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!;
+        Assert.True(work.Accepted);
+        Assert.NotNull(workItem.Request);
+        Assert.Equal(request.ToolRequestId, workItem.Request!.ToolRequestId);
+        Assert.Equal(request.TurnAttemptId, workItem.Request.TurnAttemptId);
+        Assert.Equal(request.ToolName, workItem.Request.ToolName);
+        Assert.True(JsonElement.DeepEquals(request.Arguments, workItem.Request.Arguments));
+        var forgedWork = await grain.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new GetMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, Guid.NewGuid()),
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        Assert.False(forgedWork.Accepted);
+        var confirmation = await grain.BeginMissionHandsConfirmationAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new BeginMissionHandsConfirmationRequest(address.ConversationId, freshAttachment.AttachmentId, request.ToolRequestId),
+            ConversationContractsJsonContext.Default.BeginMissionHandsConfirmationRequest)));
+        Assert.True(confirmation.Accepted);
+        var awaitingConfirmation = await grain.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new GetMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        Assert.Equal(MissionHandsStatus.AwaitingToolConfirmation,
+            JsonSerializer.Deserialize(awaitingConfirmation.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Status);
+        var claimed = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        var duplicateClaim = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.Equal(request.ToolRequestId,
+            JsonSerializer.Deserialize(claimed.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request!.ToolRequestId);
+        var duplicateClaimItem = JsonSerializer.Deserialize(duplicateClaim.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!;
+        Assert.Equal(MissionHandsStatus.InFlight, duplicateClaimItem.Status);
+        Assert.Null(duplicateClaimItem.Request);
+        var result = new SubmitMissionToolResultRequest(address.ConversationId, freshAttachment.AttachmentId,
+            request.TurnAttemptId, Guid.NewGuid(), request.ToolRequestId, MissionToolOutcome.Succeeded, "done", null);
+        var wrongAttachment = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            result with { AttachmentId = Guid.NewGuid() }, ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        var wrongAttempt = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            result with { TurnAttemptId = Guid.NewGuid() }, ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        Assert.False(wrongAttachment.Accepted);
+        Assert.False(wrongAttempt.Accepted);
+        var accepted = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            result, ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        var replay = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            result, ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        Assert.True(accepted.Accepted);
+        Assert.True(replay.Accepted);
+        Assert.Equal(7, JsonSerializer.Deserialize(accepted.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)!.AcceptedSequence);
+        Assert.Equal(7, JsonSerializer.Deserialize(replay.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)!.AcceptedSequence);
+        var mismatchedReplay = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            result with { Outcome = MissionToolOutcome.Failed, Reason = "altered" },
+            ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        Assert.False(mismatchedReplay.Accepted);
+
+        var events = DeserializeEvents(await grain.ReadAfterAsync(0));
+        Assert.Equal([1L, 2L, 3L, 4L, 5L, 6L, 7L], events.Select(@event => @event.Sequence));
+        Assert.Equal(ConversationEventKind.MissionHandsRequested, events[2].Kind);
+        Assert.Equal(ConversationEventKind.MissionHandsAwaiting, events[3].Kind);
+        Assert.Equal(ConversationEventKind.MissionHandsAwaitingToolConfirmation, events[4].Kind);
+        Assert.Equal(ConversationEventKind.MissionHandsInFlight, events[5].Kind);
+        Assert.Equal(ConversationEventKind.MissionHandsResult, events[6].Kind);
+    }
+
+    [Fact]
+    public async Task GenericHands_CancellationTerminalizesTheHostRequest_AndRejectsLateResult()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+        const string definition = "mission Cancel";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var attachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            attachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        var attempt = Guid.NewGuid();
+        var request = new MissionToolRequest(Guid.NewGuid(), address.ConversationId, attempt, "mission", "agent", "call", "Read",
+            JsonDocument.Parse("""{"file_path":"notes.md"}""").RootElement.Clone(), "continuation");
+        Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            request, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+
+        var cancelled = await grain.CancelMissionHandsAttemptAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new CancelMissionHandsAttemptRequest(address.ConversationId, attachment.AttachmentId, attempt, request.ToolRequestId, "operator cancelled"),
+            ConversationContractsJsonContext.Default.CancelMissionHandsAttemptRequest)));
+        Assert.True(cancelled.Accepted);
+        Assert.Equal(MissionHandsStatus.Cancelled,
+            JsonSerializer.Deserialize(cancelled.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)!.Status);
+        var late = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new SubmitMissionToolResultRequest(address.ConversationId, attachment.AttachmentId, attempt, Guid.NewGuid(), request.ToolRequestId,
+                MissionToolOutcome.Succeeded, "must not resume", null), ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        Assert.False(late.Accepted);
+        var work = await grain.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new GetMissionHandsWorkRequest(address.ConversationId, attachment.AttachmentId, attachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        Assert.Equal(MissionHandsStatus.Cancelled,
+            JsonSerializer.Deserialize(work.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Status);
+        var nextRequest = request with { ToolRequestId = Guid.NewGuid(), TurnAttemptId = Guid.NewGuid(), ProviderToolCallId = "next" };
+        Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            nextRequest, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+        var nextClaim = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, attachment.AttachmentId, attachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.Equal(nextRequest.ToolRequestId,
+            JsonSerializer.Deserialize(nextClaim.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request!.ToolRequestId);
+        var nextResult = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new SubmitMissionToolResultRequest(address.ConversationId, attachment.AttachmentId, nextRequest.TurnAttemptId,
+                Guid.NewGuid(), nextRequest.ToolRequestId, MissionToolOutcome.Succeeded, "next succeeds", null),
+            ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        Assert.True(nextResult.Accepted);
+        Assert.Equal(7, DeserializeEvents(await grain.ReadAfterAsync(0)).Count);
+    }
+
+    [Fact]
+    public async Task GenericHands_ReactivationRedeliversOnlyTheExactOutstandingRequest()
+    {
+        var address = NewAddress();
+        var attachmentId = Guid.NewGuid();
+        var applicationSessionId = Guid.NewGuid();
+        var attempt = Guid.NewGuid();
+        var request = new MissionToolRequest(Guid.NewGuid(), address.ConversationId, attempt, "mission", "agent", "call", "Read",
+            JsonDocument.Parse("""{"file_path":"notes.md"}""").RootElement.Clone(), "continuation");
+        await using (var firstHost = await fixture.StartHostAsync())
+        {
+            var grain = firstHost.GetConversationGrain(address);
+            await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+            const string definition = "mission Recovery";
+            var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+            var attachment = new AttachMissionHandsRequest(address.ConversationId, attachmentId, applicationSessionId, launch);
+            Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                attachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+            Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                request, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+        }
+
+        await using var recoveredHost = await fixture.StartHostAsync();
+        var recovered = recoveredHost.GetConversationGrain(address);
+        var work = await recovered.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new GetMissionHandsWorkRequest(address.ConversationId, attachmentId, applicationSessionId),
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        var item = JsonSerializer.Deserialize(work.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!;
+        Assert.True(work.Accepted);
+        Assert.Equal(request.ToolRequestId, item.Request!.ToolRequestId);
+        Assert.Equal(request.TurnAttemptId, item.Request.TurnAttemptId);
+    }
+
+    [Fact]
+    public async Task GenericHands_ConcurrentClaimsInvokeBobOnceAndAppendOneResult()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+        const string definition = "mission Claim";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var attachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            attachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        using var arguments = JsonDocument.Parse("""{"file_path":"effect.txt","content":"one"}""");
+        var request = new MissionToolRequest(Guid.NewGuid(), address.ConversationId, Guid.NewGuid(), "mission", "agent", "call", "Write",
+            arguments.RootElement.Clone(), "continuation");
+        Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            request, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+
+        var claimInput = new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, attachment.AttachmentId, attachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest));
+        var claims = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => grain.ClaimMissionHandsWorkAsync(claimInput)));
+        var claimed = claims.Select(claim => JsonSerializer.Deserialize(claim.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem)!).Where(item => item.Request is not null).ToArray();
+        Assert.Single(claimed);
+
+        var root = Path.Combine(Path.GetTempPath(), $"forge-claim-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            await using var bob = ClientExecutionSession.CreateForMission(root, MissionExecutionProfile.ProjectWorkspace,
+                CapabilityAuthorizationPolicy.Default, AcceptingConfirmation.Instance, CancellationToken.None);
+            var execution = await bob.DispatchAsync("file", new WriteFileCapabilityRequest("effect.txt", "one"), CancellationToken.None);
+            Assert.False(execution.IsError, execution.Content);
+            var accepted = await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new SubmitMissionToolResultRequest(address.ConversationId, attachment.AttachmentId, request.TurnAttemptId,
+                    ConversationDeterministicIds.ClientToolResult(request.ToolRequestId), request.ToolRequestId,
+                    MissionToolOutcome.Succeeded, execution.Content, null),
+                ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+            Assert.True(accepted.Accepted);
+            Assert.Equal("one", await File.ReadAllTextAsync(Path.Combine(root, "effect.txt")));
+            Assert.Single(DeserializeEvents(await grain.ReadAfterAsync(0)), @event => @event.Kind == ConversationEventKind.MissionHandsResult);
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
+    [Fact]
+    public async Task GenericHands_FreshAttachmentWaitsForOldBobDrainBeforeExactRedelivery()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+        const string definition = "mission Handoff";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var oldAttachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            oldAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+        using var args = JsonDocument.Parse("""{"file_path":"handoff.txt","content":"fresh only"}""");
+        var request = new MissionToolRequest(Guid.NewGuid(), address.ConversationId, Guid.NewGuid(), "mission", "agent", "call", "Write",
+            args.RootElement.Clone(), "continuation");
+        Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            request, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+        var oldClaim = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, oldAttachment.AttachmentId, oldAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.NotNull(JsonSerializer.Deserialize(oldClaim.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request);
+
+        var root = Path.Combine(Path.GetTempPath(), $"forge-handoff-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        var confirmation = new BlockingConfirmation();
+        var oldBob = ClientExecutionSession.CreateForMission(root, MissionExecutionProfile.ProjectWorkspace,
+            new CapabilityAuthorizationPolicy([new KeyValuePair<string, CapabilityAuthorizationRule>("file",
+                new CapabilityAuthorizationRule(AuthorizationOutcome.RequiresUserConfirmation))]), confirmation, CancellationToken.None);
+        var oldWork = oldBob.DispatchAsync("file", new WriteFileCapabilityRequest("handoff.txt", "old must not write"), CancellationToken.None);
+        await confirmation.Started.Task;
+        try
+        {
+            var freshAttachment = oldAttachment with { AttachmentId = Guid.NewGuid(), ApplicationSessionId = Guid.NewGuid() };
+            var attached = await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                freshAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)));
+            Assert.Equal(MissionHandsStatus.InFlight,
+                JsonSerializer.Deserialize(attached.ResultJson, ConversationContractsJsonContext.Default.MissionHandsResult)!.Status);
+            var held = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+                ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+            var heldItem = JsonSerializer.Deserialize(held.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!;
+            Assert.Equal(MissionHandsStatus.InFlight, heldItem.Status);
+            Assert.Null(heldItem.Request);
+            Assert.False(File.Exists(Path.Combine(root, "handoff.txt")));
+
+            await oldBob.DisposeAsync();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => oldWork);
+            Assert.True((await grain.DetachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new DetachMissionHandsRequest(address.ConversationId, oldAttachment.AttachmentId),
+                ConversationContractsJsonContext.Default.DetachMissionHandsRequest)))).Accepted);
+
+            var redelivered = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+                ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+            Assert.Equal(request.ToolRequestId,
+                JsonSerializer.Deserialize(redelivered.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request!.ToolRequestId);
+            await using var freshBob = ClientExecutionSession.CreateForMission(root, MissionExecutionProfile.ProjectWorkspace,
+                CapabilityAuthorizationPolicy.Default, AcceptingConfirmation.Instance, CancellationToken.None);
+            var result = await freshBob.DispatchAsync("file", new WriteFileCapabilityRequest("handoff.txt", "fresh only"), CancellationToken.None);
+            Assert.False(result.IsError, result.Content);
+            Assert.True((await grain.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new SubmitMissionToolResultRequest(address.ConversationId, freshAttachment.AttachmentId, request.TurnAttemptId,
+                    ConversationDeterministicIds.ClientToolResult(request.ToolRequestId), request.ToolRequestId,
+                    MissionToolOutcome.Succeeded, result.Content, null), ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)))).Accepted);
+            Assert.Equal("fresh only", await File.ReadAllTextAsync(Path.Combine(root, "handoff.txt")));
+        }
+        finally
+        {
+            await oldBob.DisposeAsync();
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task GenericHands_ReactivationKeepsFreshAttachmentPayloadFreeUntilOldDetach()
+    {
+        var address = NewAddress();
+        const string definition = "mission SafeHandoffRecovery";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var oldAttachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        var freshAttachment = oldAttachment with { AttachmentId = Guid.NewGuid(), ApplicationSessionId = Guid.NewGuid() };
+        var request = new MissionToolRequest(Guid.NewGuid(), address.ConversationId, Guid.NewGuid(), "mission", "agent", "call", "Read",
+            JsonDocument.Parse("""{"file_path":"handoff.md"}""").RootElement.Clone(), "continuation");
+
+        await using (var firstHost = await fixture.StartHostAsync())
+        {
+            var grain = firstHost.GetConversationGrain(address);
+            await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+            Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                oldAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+            Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                request, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+            var oldClaim = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new ClaimMissionHandsWorkRequest(address.ConversationId, oldAttachment.AttachmentId, oldAttachment.ApplicationSessionId),
+                ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+            Assert.NotNull(JsonSerializer.Deserialize(oldClaim.ResultJson,
+                ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request);
+            Assert.Equal(MissionHandsStatus.InFlight, JsonSerializer.Deserialize((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                freshAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).ResultJson,
+                ConversationContractsJsonContext.Default.MissionHandsResult)!.Status);
+        }
+
+        await using var recoveredHost = await fixture.StartHostAsync();
+        var recovered = recoveredHost.GetConversationGrain(address);
+        var held = await recovered.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        var heldItem = JsonSerializer.Deserialize(held.ResultJson, ConversationContractsJsonContext.Default.MissionHandsWorkItem)!;
+        Assert.Equal(MissionHandsStatus.InFlight, heldItem.Status);
+        Assert.Null(heldItem.Request);
+
+        Assert.True((await recovered.DetachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new DetachMissionHandsRequest(address.ConversationId, oldAttachment.AttachmentId),
+            ConversationContractsJsonContext.Default.DetachMissionHandsRequest)))).Accepted);
+        var redelivered = await recovered.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.Equal(request.ToolRequestId, JsonSerializer.Deserialize(redelivered.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request!.ToolRequestId);
+    }
+
+    [Fact]
+    public async Task GenericHands_CrashRecoveryInterruptsUnknownClaimWithoutRedelivery()
+    {
+        var address = NewAddress();
+        const string definition = "mission InterruptedHandoff";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.ProjectWorkspace);
+        var oldAttachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        var freshAttachment = oldAttachment with { AttachmentId = Guid.NewGuid(), ApplicationSessionId = Guid.NewGuid() };
+        var interruptedRequest = new MissionToolRequest(Guid.NewGuid(), address.ConversationId, Guid.NewGuid(), "mission", "agent", "call", "Write",
+            JsonDocument.Parse("""{"file_path":"unknown.txt","content":"could have run"}""").RootElement.Clone(), "continuation");
+
+        await using (var firstHost = await fixture.StartHostAsync())
+        {
+            var grain = firstHost.GetConversationGrain(address);
+            await AcceptStartCommandAsync(grain, address, Guid.NewGuid());
+            Assert.True((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                oldAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).Accepted);
+            Assert.True((await grain.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                interruptedRequest, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+            var oldClaim = await grain.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                new ClaimMissionHandsWorkRequest(address.ConversationId, oldAttachment.AttachmentId, oldAttachment.ApplicationSessionId),
+                ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+            Assert.NotNull(JsonSerializer.Deserialize(oldClaim.ResultJson,
+                ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request);
+            Assert.Equal(MissionHandsStatus.InFlight, JsonSerializer.Deserialize((await grain.AttachMissionHandsAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+                freshAttachment, ConversationContractsJsonContext.Default.AttachMissionHandsRequest)))).ResultJson,
+                ConversationContractsJsonContext.Default.MissionHandsResult)!.Status);
+        }
+
+        await using var recoveredHost = await fixture.StartHostAsync();
+        var recovered = recoveredHost.GetConversationGrain(address);
+        var recovery = new RecoverMissionHandsInFlightRequest(address.ConversationId, freshAttachment.AttachmentId,
+            freshAttachment.ApplicationSessionId);
+        var interrupted = await recovered.RecoverMissionHandsInFlightAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            recovery, ConversationContractsJsonContext.Default.RecoverMissionHandsInFlightRequest)));
+        var interruptedResult = JsonSerializer.Deserialize(interrupted.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsResult)!;
+        Assert.True(interrupted.Accepted);
+        Assert.Equal(MissionHandsStatus.Interrupted, interruptedResult.Status);
+
+        var status = await recovered.GetMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new GetMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest)));
+        var interruptedWork = JsonSerializer.Deserialize(status.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem)!;
+        Assert.Equal(MissionHandsStatus.Interrupted, interruptedWork.Status);
+        Assert.Null(interruptedWork.Request);
+        Assert.Contains("interrupted", interruptedWork.Reason, StringComparison.Ordinal);
+
+        var noRedelivery = await recovered.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.Null(JsonSerializer.Deserialize(noRedelivery.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request);
+        var late = await recovered.AcceptMissionHandsResultAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new SubmitMissionToolResultRequest(address.ConversationId, oldAttachment.AttachmentId, interruptedRequest.TurnAttemptId,
+                ConversationDeterministicIds.ClientToolResult(interruptedRequest.ToolRequestId), interruptedRequest.ToolRequestId,
+                MissionToolOutcome.Succeeded, "too late", null), ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest)));
+        Assert.False(late.Accepted);
+        var duplicateRecovery = await recovered.RecoverMissionHandsInFlightAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            recovery, ConversationContractsJsonContext.Default.RecoverMissionHandsInFlightRequest)));
+        Assert.Equal(interruptedResult.AcceptedSequence, JsonSerializer.Deserialize(duplicateRecovery.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsResult)!.AcceptedSequence);
+        Assert.Single(DeserializeEvents(await recovered.ReadAfterAsync(0)), @event => @event.Kind == ConversationEventKind.MissionHandsInterrupted);
+
+        var retry = interruptedRequest with { ToolRequestId = Guid.NewGuid(), TurnAttemptId = Guid.NewGuid(), ProviderToolCallId = "retry" };
+        Assert.True((await recovered.RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            retry, ConversationContractsJsonContext.Default.MissionToolRequest)))).Accepted);
+        var retryClaim = await recovered.ClaimMissionHandsWorkAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
+            new ClaimMissionHandsWorkRequest(address.ConversationId, freshAttachment.AttachmentId, freshAttachment.ApplicationSessionId),
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest)));
+        Assert.Equal(retry.ToolRequestId, JsonSerializer.Deserialize(retryClaim.ResultJson,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem)!.Request!.ToolRequestId);
+    }
+
+    private static string Hash(string definition) => "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(definition))).ToLowerInvariant();
+
+    private sealed class AcceptingConfirmation : ICapabilityConfirmationHandler
+    {
+        public static readonly AcceptingConfirmation Instance = new();
+        public Task<bool> ConfirmAsync(CapabilityConfirmationRequest request, CancellationToken ct) => Task.FromResult(true);
+    }
+
+    private sealed class BlockingConfirmation : ICapabilityConfirmationHandler
+    {
+        public TaskCompletionSource<bool> Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public async Task<bool> ConfirmAsync(CapabilityConfirmationRequest request, CancellationToken ct)
+        {
+            Started.TrySetResult(true);
+            await Task.Delay(Timeout.InfiniteTimeSpan, ct);
+            return false;
+        }
     }
 
     // ── 1. Ordered events, fresh-Host replay ────────────────────────────────────

@@ -62,7 +62,7 @@ assigned:
 | Task | Finding | Status | Supervisor approval | Acceptance evidence |
 |---|---|---|---|---|
 | [Task A — Core generic root-scoped continuation](phase-46.2-task-a-core-continuation.md) | F46.1-01 | Core implementation accepted; dependent durable migration remains. | Approved 2026-09-07 after independent planning and adversarial review. | Focused, full-suite, AOT, and independent-review evidence accepted; integrated default path remains pending Phase 45/46. |
-| [Task B — immutable profiles and durable hands](phase-46.2-task-b-profile-hands.md) | D46.1-01/D46.1-02 | Approved for bounded implementation. | Approved 2026-09-07 after scope correction: profile/attachment/Bob/Host facts only. | Pending implementation, independent review, and required checks; final Desktop default path remains dependent on Task C and Phase 45.3. |
+| [Task B — immutable profiles and durable hands](phase-46.2-task-b-profile-hands.md) | D46.1-01/D46.1-02 | Implementation accepted; Worker/default-Desktop integration remains. | Approved 2026-09-07 after scope correction: profile/attachment/Bob/Host facts only. | Independent review accepted; focused, full-suite, and AOT evidence recorded. Final Desktop default path remains dependent on Task C and Phase 45.3. |
 
 ## Step 2 done when
 

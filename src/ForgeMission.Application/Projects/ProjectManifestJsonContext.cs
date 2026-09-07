@@ -17,4 +17,6 @@ namespace ForgeMission.Application;
 [JsonSerializable(typeof(ProjectSubmission))]
 [JsonSerializable(typeof(ProjectSubmissionAcceptance))]
 [JsonSerializable(typeof(ProjectSubmissionRejection))]
+[JsonSerializable(typeof(MissionVersionLaunch))]
+[JsonSerializable(typeof(MissionVersionLaunch[]))]
 internal partial class ProjectManifestJsonContext : JsonSerializerContext;

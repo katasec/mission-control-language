@@ -59,6 +59,46 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
     public Task<GetConversationResponse> ReadConversationAsync(Guid conversationId, CancellationToken ct) =>
         GetProjectAsync($"conversations/{conversationId}", ConversationContractsJsonContext.Default.GetConversationResponse, ct);
 
+    public Task<MissionHandsResult> AttachMissionHandsAsync(AttachMissionHandsRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/attach", request,
+            ConversationContractsJsonContext.Default.AttachMissionHandsRequest,
+            ConversationContractsJsonContext.Default.MissionHandsResult, ct);
+
+    public Task<MissionHandsResult> DetachMissionHandsAsync(ForgeMission.Conversations.Contracts.DetachMissionHandsRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/detach", request,
+            ConversationContractsJsonContext.Default.DetachMissionHandsRequest,
+            ConversationContractsJsonContext.Default.MissionHandsResult, ct);
+
+    public Task<MissionHandsResult> SubmitMissionHandsResultAsync(SubmitMissionToolResultRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/result", request,
+            ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest,
+            ConversationContractsJsonContext.Default.MissionHandsResult, ct);
+
+    public Task<MissionHandsWorkItem> GetMissionHandsWorkAsync(GetMissionHandsWorkRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/work", request,
+            ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem, ct);
+
+    public Task<MissionHandsWorkItem> ClaimMissionHandsWorkAsync(ClaimMissionHandsWorkRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/claim", request,
+            ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest,
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem, ct);
+
+    public Task<MissionHandsResult> BeginMissionHandsConfirmationAsync(BeginMissionHandsConfirmationRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/confirmation", request,
+            ConversationContractsJsonContext.Default.BeginMissionHandsConfirmationRequest,
+            ConversationContractsJsonContext.Default.MissionHandsResult, ct);
+
+    public Task<MissionHandsResult> CancelMissionHandsAttemptAsync(CancelMissionHandsAttemptRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/cancel", request,
+            ConversationContractsJsonContext.Default.CancelMissionHandsAttemptRequest,
+            ConversationContractsJsonContext.Default.MissionHandsResult, ct);
+
+    public Task<MissionHandsResult> RecoverMissionHandsInFlightAsync(RecoverMissionHandsInFlightRequest request, CancellationToken ct) =>
+        PostAsync("mission-hands/recover", request,
+            ConversationContractsJsonContext.Default.RecoverMissionHandsInFlightRequest,
+            ConversationContractsJsonContext.Default.MissionHandsResult, ct);
+
     public async IAsyncEnumerable<ConversationEvent> StreamEventsAsync(
         Guid conversationId, long after, Action? onConnected = null,
         [EnumeratorCancellation] CancellationToken ct = default)

@@ -54,4 +54,20 @@ public sealed class ConversationCheckpoint
     /// <summary>The pinned Project goal. Historic Project Control rows retain it for readback;
     /// active Project Mission containers use it when starting their child runs.</summary>
     [Id(14)] public string? ProjectGoal { get; set; }
+
+    // Task B generic hands state. These are additions to the canonical conversation checkpoint,
+    // never a second ledger or sequence owner.
+    [Id(15)] public string? MissionHandsLaunchJson { get; set; }
+    [Id(16)] public string? MissionHandsAttachmentJson { get; set; }
+    [Id(17)] public string? MissionHandsRequestJson { get; set; }
+    [Id(18)] public Guid? MissionHandsCompletedToolRequestId { get; set; }
+    [Id(19)] public Guid? MissionHandsCompletedCommandId { get; set; }
+    [Id(20)] public long? MissionHandsResultSequence { get; set; }
+    [Id(21)] public string? MissionHandsCompletedResultJson { get; set; }
+    [Id(22)] public bool MissionHandsAwaitingToolConfirmation { get; set; }
+    [Id(23)] public bool MissionHandsCancelled { get; set; }
+    [Id(24)] public bool MissionHandsInFlight { get; set; }
+    [Id(25)] public string? MissionHandsPendingAttachmentJson { get; set; }
+    [Id(26)] public bool MissionHandsInterrupted { get; set; }
+    [Id(27)] public string? MissionHandsTerminalReason { get; set; }
 }

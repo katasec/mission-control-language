@@ -43,6 +43,16 @@ public interface IConversationGrain : Orleans.IGrainWithStringKey
     /// active is <see cref="ConversationCommandOutcome.RunAlreadyActive"/> and appends nothing.</summary>
     Task<ConversationCommandOutcomeResult> AcceptProjectMissionRunAsync(ConversationProjectMissionRunInput input);
 
+    Task<MissionHandsGrainResult> AttachMissionHandsAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> DetachMissionHandsAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> RecordMissionHandsRequestAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> AcceptMissionHandsResultAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> GetMissionHandsWorkAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> ClaimMissionHandsWorkAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> BeginMissionHandsConfirmationAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> CancelMissionHandsAttemptAsync(MissionHandsJsonInput input);
+    Task<MissionHandsGrainResult> RecoverMissionHandsInFlightAsync(MissionHandsJsonInput input);
+
     Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgressInput progress);
 
     /// <summary>Appends the matching deterministic <c>RunStatus(Interrupted)</c> fact through the

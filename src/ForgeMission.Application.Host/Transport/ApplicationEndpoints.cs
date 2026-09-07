@@ -32,6 +32,12 @@ internal static class ApplicationEndpoints
             catch (ArgumentException exception) { return Results.BadRequest(exception.Message); }
         });
         app.MapPost("/transport/confirmation/respond", (ConfirmationResponseRequest request, IInteractionService service) => Results.Ok(service.Respond(request)));
+        app.MapPost("/transport/mission-hands/acknowledge", (AcknowledgeMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.AcknowledgeAsync(request, ct)));
+        app.MapPost("/transport/mission-hands/detach", (DetachMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.DetachAsync(request, ct)));
+        app.MapPost("/transport/mission-hands/status", (GetMissionHandsStatusRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.GetStatusAsync(request, ct)));
+        app.MapPost("/transport/mission-hands/execute", (ExecuteMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.ExecuteAsync(request, ct)));
+        app.MapPost("/transport/mission-hands/cancel", (CancelMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.CancelAsync(request, ct)));
+        app.MapPost("/transport/mission-hands/recover", (RecoverMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.RecoverAsync(request, ct)));
         app.MapPost("/transport/prompt", (PromptRequest request, IConversationService service, CancellationToken ct) => Result(service.PromptAsync(request, ct)));
         app.MapGet("/transport/events", async (HttpContext context, ApplicationEventHub events, CancellationToken ct) =>
         {

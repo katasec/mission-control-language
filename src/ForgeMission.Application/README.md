@@ -21,6 +21,7 @@ The Desktop needs one place for its Project-facing use cases and compatibility p
 - Composition and application-lifetime disposal through [ApplicationComposition](ApplicationComposition.cs).
 - [Projects](Projects/README.md), [Missions](Missions/README.md), [Conversations](Conversations/README.md), [Runs](Runs/README.md), and [Sessions](Sessions/README.md).
 - The thin interaction bridges for capability dispatch and pending confirmations in [Interaction](Interaction/CapabilityActionService.cs); policy and execution stay in Client Runtime.
+- Exact approved-launch acknowledgement and fresh generic hands attachment in [Missions](Missions/MissionHandsConversationService.cs); it grants no caller-selected profile or tool list.
 - Concrete compatibility protocol adapters: [Conversation Host](Adapters/Conversations/ConversationHostClient.cs), [legacy mission](Adapters/Missions/LegacyMissionProtocolClient.cs), [cloud mission](Adapters/Missions/LegacyCloudMissionProtocolClient.cs), and [legacy Janus delivery](Adapters/Janus/LegacyJanusToolDelivery.cs).
 
 ## Does not own

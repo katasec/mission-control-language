@@ -1,6 +1,6 @@
 # Phase 46.2 Task B — immutable profiles and durable hands
 
-> **Status:** approved for implementation 2026-09-07. Finding: D46.1-01/D46.1-02.
+> **Status:** implementation accepted 2026-09-07. Finding: D46.1-01/D46.1-02.
 > Parent: [Phase 46.2](phase-46.2-codex-supervised-remediation.md).
 
 ## Scope card
@@ -114,3 +114,27 @@ against its actual containment boundary.
 Run \`dotnet build src/ForgeMission.slnx\`, \`dotnet test src/ForgeMission.slnx\`, and \`make install\`
 for Native AOT. Acceptance requires zero new managed warnings, updated component ownership docs,
 an independent review, and truthful deferred final default-path evidence.
+
+## Completion evidence — 2026-09-07
+
+Task B now stores and validates a schema-4 immutable approved launch/profile, grants one fresh
+Application-to-Bob attachment, and keeps generic request, result, confirmation, cancellation,
+claim, handoff, and crash-interruption facts in the canonical Conversation owner. Bob derives its
+declarations from the fixed profile and its macOS terminal path uses OS sandbox containment. A
+caller cannot supply mission work: Application first claims the exact Host-owned request, then
+dispatches it through the attached Bob. A clean drained detach permits one redelivery; an
+unprovable in-flight crash records \`Interrupted\` and never replays the unknown local effect.
+
+An independent adversarial reviewer accepted the final code after rejecting and correcting
+authority ordering, launch integrity, exact replay, containment, claim concurrency, policy,
+handoff, and crash-recovery defects. It found no Worker/Bob bridge, legacy-route change, UI scope
+drift, or new reflection/suppression.
+
+| Evidence | Observation |
+|---|---|
+| Focused Application/profile/schema | 64 passed. |
+| Focused Host/contracts | 72 passed; includes concurrent claim, clean handoff, restart, and crash-interruption coverage. |
+| Build | \`dotnet build src/ForgeMission.slnx --no-restore\`: 0 warnings, 0 errors. |
+| Full tests | \`dotnet test src/ForgeMission.slnx --no-restore\` with optional live-provider keys absent: exit 0; ForgeMission.Tests 621 passed / 11 intentional external-integration skips; Conversation Host 167; Worker 60; Runner 5; Rooms 97. Running those optional live tests with installed provider credentials exposed external xAI/Claude-CLI drift, which is not Task B evidence. |
+| Native AOT | \`make install\` exit 0 and installed \`~/.local/bin/forge\`. macOS linker emitted existing platform-library compatibility warnings; no managed build warnings. |
+| Default path | Still deferred, not passed: Task C's generic Worker execution and Phase 45.3's published Desktop/TUI surface are required before the zero-argument durable-hands journey can occur. |

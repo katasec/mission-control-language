@@ -8,6 +8,8 @@ internal sealed class PendingConfirmationHandler(string sessionId, Action<Applic
 {
     private readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> _pending = [];
 
+    internal bool HasPending => !_pending.IsEmpty;
+
     public async Task<bool> ConfirmAsync(CapabilityConfirmationRequest request, CancellationToken ct)
     {
         var confirmationId = Guid.NewGuid().ToString("N");

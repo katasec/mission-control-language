@@ -19,6 +19,7 @@ One service must serialize conversation mutation and retain canonical state so r
 ## Owns
 
 - Orleans grains, sequence allocation, command/progress acceptance, Table/Blob persistence, and Project Mission indexes.
+- Generic mission-hands attachment liveness and request/result correlation on the canonical Conversation grain; `AwaitingHands` is an ordered durable fact, never a fallback.
 - HTTP/SSE projections and Service Bus dispatch/consumption for the Conversation bounded context.
 
 ## Does not own

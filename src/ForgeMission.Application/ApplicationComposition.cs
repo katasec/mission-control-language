@@ -60,6 +60,16 @@ public interface IInteractionService
     ConfirmationResponse Respond(ConfirmationResponseRequest request);
 }
 
+public interface IMissionHandsConversationService
+{
+    Task<AcknowledgeMissionHandsResponse> AcknowledgeAsync(AcknowledgeMissionHandsRequest request, CancellationToken ct);
+    Task<DetachMissionHandsResponse> DetachAsync(DetachMissionHandsRequest request, CancellationToken ct);
+    Task<GetMissionHandsStatusResponse> GetStatusAsync(GetMissionHandsStatusRequest request, CancellationToken ct);
+    Task<ExecuteMissionHandsResponse> ExecuteAsync(ExecuteMissionHandsRequest request, CancellationToken ct);
+    Task<CancelMissionHandsResponse> CancelAsync(CancelMissionHandsRequest request, CancellationToken ct);
+    Task<RecoverMissionHandsResponse> RecoverAsync(RecoverMissionHandsRequest request, CancellationToken ct);
+}
+
 public sealed class ApplicationComposition : IAsyncDisposable
 {
     private readonly ApplicationSessionService _sessions;
@@ -80,6 +90,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         var conversations = new ConversationService(_sessions, clients, missionRuntimeMode, publish, applicationStopping);
         var capabilities = new CapabilityActionService(_sessions, publish);
         var interactions = new InteractionService(_sessions);
+        var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
         Projects = projects;
         Sessions = _sessions;
         MissionSubmissions = submissions;
@@ -88,6 +99,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         Conversations = conversations;
         Capabilities = capabilities;
         Interactions = interactions;
+        MissionHands = hands;
     }
 
     public IProjectService Projects { get; }
@@ -105,6 +117,8 @@ public sealed class ApplicationComposition : IAsyncDisposable
     public ICapabilityActionService Capabilities { get; }
 
     public IInteractionService Interactions { get; }
+
+    public IMissionHandsConversationService MissionHands { get; }
 
     public static ApplicationComposition Create(
         IHttpClientFactory clients,

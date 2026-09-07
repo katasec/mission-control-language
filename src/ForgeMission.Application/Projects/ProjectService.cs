@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using ForgeMission.Application.Transport;
 
 namespace ForgeMission.Application;
@@ -70,6 +71,28 @@ internal sealed class ProjectService : IProjectService
             return new SelectProjectMissionResponse(Missions(project.Manifest), null);
         }
         catch (ProjectOperationException exception) { return new SelectProjectMissionResponse(null, ToError(exception)); }
+    }
+
+    /// <summary>Re-reads the Project-owned manifest before granting hands; no caller value selects
+    /// a profile or substitutes a definition hash.</summary>
+    internal MissionVersionLaunch? ResolveApprovedLaunch(
+        ApplicationSession session, Guid missionVersionId, int versionNumber, string definitionHash)
+    {
+        if (missionVersionId == Guid.Empty || versionNumber <= 0 || string.IsNullOrWhiteSpace(definitionHash))
+            return null;
+
+        try
+        {
+            var manifest = Read(_manifestFile.Read(session.ProjectHome), session.ProjectHome);
+            return manifest.ApprovedMissionLaunches?.SingleOrDefault(launch =>
+                launch.MissionVersionId == missionVersionId &&
+                launch.VersionNumber == versionNumber &&
+                string.Equals(launch.DefinitionHash, definitionHash, StringComparison.Ordinal));
+        }
+        catch (ProjectOperationException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Pure: what a create would use, for display before confirmation. It performs no
@@ -567,7 +590,8 @@ internal sealed class ProjectService : IProjectService
             [],
             LegacyProjectControlConversationId: null,
             MissionControlConversationId: null,
-            Submission: null);
+            Submission: null,
+            ApprovedMissionLaunches: []);
 
         // The same owner used by every update also creates the initial manifest. A competing
         // process sees the manifest under the lease and moves to its next candidate; it never
@@ -620,6 +644,7 @@ internal sealed class ProjectService : IProjectService
             Assets = OrEmpty(manifest.Assets),
             AttachedContext = OrEmpty(manifest.AttachedContext),
             Runs = OrEmpty(manifest.Runs),
+            ApprovedMissionLaunches = OrEmpty(manifest.ApprovedMissionLaunches),
         };
 
         foreach (var asset in normalized.Assets)
@@ -627,6 +652,7 @@ internal sealed class ProjectService : IProjectService
         foreach (var context in normalized.AttachedContext)
             ValidateContextReference(context, manifestPath);
         ValidateSubmission(normalized.Submission, manifestPath);
+        ValidateApprovedLaunches(normalized.ApprovedMissionLaunches, manifestPath);
 
         return normalized;
     }
@@ -641,6 +667,7 @@ internal sealed class ProjectService : IProjectService
             LegacyProjectControlConversationId = legacy,
             MissionControlConversationId = null,
             Submission = manifest.SchemaVersion < 3 ? null : manifest.Submission,
+            ApprovedMissionLaunches = manifest.SchemaVersion < 4 ? [] : manifest.ApprovedMissionLaunches,
         };
     }
 
@@ -686,6 +713,33 @@ internal sealed class ProjectService : IProjectService
         };
         if (!validPhase)
             throw InvalidSubmission(manifestPath);
+    }
+
+    private static void ValidateApprovedLaunches(MissionVersionLaunch[] launches, string manifestPath)
+    {
+        var ids = new HashSet<Guid>();
+        foreach (var launch in launches)
+        {
+            var valid = launch.MissionVersionId != Guid.Empty &&
+                        launch.VersionNumber > 0 &&
+                        IsDefinitionHash(launch.DefinitionHash, launch.Definition) &&
+                        !string.IsNullOrWhiteSpace(launch.Definition) &&
+                        launch.Definition.Length <= 256 * 1024 &&
+                        launch.ApprovedAtUtc != default &&
+                        Enum.IsDefined(launch.CapabilityProfile) &&
+                        ids.Add(launch.MissionVersionId);
+            if (!valid)
+                throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                    $"{manifestPath} contains an invalid approved mission launch.");
+        }
+    }
+
+    internal static bool IsDefinitionHash(string hash, string definition)
+    {
+        if (string.IsNullOrWhiteSpace(hash) || string.IsNullOrWhiteSpace(definition) || definition.Length > 256 * 1024)
+            return false;
+        var expected = "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(definition))).ToLowerInvariant();
+        return string.Equals(hash, expected, StringComparison.Ordinal);
     }
 
     private static ProjectOperationException InvalidSubmission(string manifestPath) =>

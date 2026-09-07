@@ -20,6 +20,7 @@ Capability execution needs a narrow, disposable authority boundary. Keeping poli
 
 - Creation, admission, cancellation, drain, and disposal of [`ClientExecutionSession`](ClientExecutionSession.cs).
 - The local workspace file and terminal capability registry, policy enforcement, confirmation bridge, and in-memory audit used by that session.
+- The closed mission profiles. `ProjectWorkspaceAndTerminal` runs only through the macOS deny-default sandbox boundary; unsupported platforms fail closed rather than treating a working directory as containment.
 
 ## Does not own
 
