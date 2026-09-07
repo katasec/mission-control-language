@@ -35,7 +35,7 @@ ProjectMissionDefinition
 
 MissionVersion
   MissionVersionId, VersionNumber, State, DefinitionHash, DefinitionAssetId,
-  ParentVersionId?, CandidateRevision, CreatedAtUtc, EvaluatedAtUtc?, ApprovedAtUtc?
+  CapabilityProfile, ParentVersionId?, CandidateRevision, CreatedAtUtc, EvaluatedAtUtc?, ApprovedAtUtc?
 
 EvaluationCase
   EvaluationCaseId, MissionVersionId, Input,
@@ -47,6 +47,14 @@ EvaluationResult
   DefinitionHash, ObservedOutcome, ObservedOutputSummary, State,
   TraceOrigin, CompletedAtUtc
 ```
+
+`MissionCapabilityProfile` is an append-only string-enum contract with exactly `NoHands`,
+`ProjectWorkspace`, and `ProjectWorkspaceAndTerminal`. It is selected when a new mission version
+is created and cannot be changed by save/promote/evaluate/publish; changing it creates a successor
+version. It is not a list of caller-selected tools. A version with `NoHands` declares no mission
+tools; `ProjectWorkspace` requests only bounded Project-workspace file capabilities; and
+`ProjectWorkspaceAndTerminal` requests that boundary plus a structurally Project-contained terminal.
+No profile names network, credentials, publishing/push, arbitrary host/path access or Full Access.
 
 `ExpectedSuccess` and `ExpectedFailure` are author-visible criteria. `ExpectedOutcome` is
 exactly `Succeeded` or `Failed`; result `Passed` requires that outcome plus every required
@@ -71,7 +79,8 @@ matching typed Application interface. `ProjectOperationErrorCode` appends `Missi
 record ListMissionVersionsRequest(string SessionId);
 record MissionVersionView(Guid MissionId, Guid MissionVersionId, int VersionNumber,
     MissionVersionState State, string DefinitionHash, int CandidateRevision, bool Selectable);
-record CreateMissionDraftRequest(string SessionId, string Name, Guid? DerivedFromVersionId);
+record CreateMissionDraftRequest(string SessionId, string Name, MissionCapabilityProfile CapabilityProfile,
+    Guid? DerivedFromVersionId);
 record SaveMissionDraftRequest(string SessionId, Guid MissionId, string DefinitionText, int Revision);
 record PromoteMissionCandidateRequest(string SessionId, Guid MissionId, int DraftRevision);
 record GetMissionAuthoringRequest(string SessionId, Guid MissionId, Guid? MissionVersionId);
@@ -82,12 +91,16 @@ record StartEvaluationRequest(string SessionId, Guid MissionVersionId, Guid Eval
 record GetEvaluationResultsRequest(string SessionId, Guid MissionVersionId, int CandidateRevision);
 record PublishMissionVersionRequest(string SessionId, Guid MissionVersionId,
     int CandidateRevision, string DefinitionHash);
+record CreateMissionConversationRequest(string SessionId, Guid MissionVersionId,
+    int VersionNumber, string DefinitionHash, bool ProfileAccepted);
 ```
 
 `StartEvaluationRequest` creates immutable local intent here; 45.2 supplies durable execution.
-`PublishMissionVersionRequest` contains no caller-provided state/result. Internal
-`MissionVersionLaunch` is defined now with ID/version/hash/artifact/text; only Application computes
-it, so a caller cannot substitute a hash or artifact.
+`PublishMissionVersionRequest` contains no caller-provided state/result. `ProfileAccepted` is only
+the operator's acknowledgement of the displayed version; it is never a caller-supplied profile.
+Application re-resolves the version/number/hash and declared profile before creating the conversation.
+Internal `MissionVersionLaunch` is defined now with ID/version/hash/artifact/text/profile; only
+Application computes it, so a caller cannot substitute a hash, artifact or capability profile.
 
 ### Validation and failure boundaries
 
@@ -95,12 +108,14 @@ it, so a caller cannot substitute a hash or artifact.
 |---|---|---|
 | Malformed MCL draft | Version service parses before Candidate/evaluation/publish; returns source-span diagnostic and makes no version/result mutation. | Edit/save valid revision; parser/transport negative tests. |
 | Stale save/evaluate/publish | Revision/hash comparison happens inside manifest transaction; returns `VersionChanged`/conflict and never overwrites newer content. | Refresh/retry deliberately; concurrent-write test. |
+| Profile absent, changed, or unaccepted | Version creation requires one known profile; save cannot mutate it. Conversation creation rechecks the pinned version/hash/profile and rejects an unaccepted or mismatched acknowledgement without durable creation or hands attachment. | Refresh/reselect and explicitly accept the displayed profile; lifecycle/profile-tamper tests. |
 | Evaluation launch uncertainty | Project records Pending intent with one CommandId; 45.2 reconciles it, not a second run. | Retry same request; lost-response controlled test. |
 | Manifest write failure | Existing `ManifestWriteFailed`; no claim of Candidate/Evaluated/Approved success. | Repair/retry through owner; atomic-write failure test. |
 
 No public ingress, credential, Tier-3 grant, direct Host/Worker Project read, or Client Runtime
-capability is added. Project is sole author-data owner. JSON remains source-generated; parser use
-adds no reflection.
+authority is added by a version declaration. Project is sole author-data owner; Application later
+owns conversation-specific attachment, and Bob later enforces the bounded profile. JSON remains
+source-generated; parser use adds no reflection.
 
 ### Default path, verification, and done when
 
@@ -110,13 +125,16 @@ route, Supervisor-owned Kind bridge, and disposable Project. Through ordinary UI
 MCL, create candidate/cases, and reopen it. Fixture endpoints/test Projects are controlled evidence.
 
 - Unit/contract: schema-3 migration, enum/JSON compatibility, parser diagnostics, lifecycle table,
-  result invalidation, deterministic criteria and stale paths.
+  profile immutability/unknown-profile rejection, result invalidation, deterministic criteria and
+  stale paths.
 - Integration: Host routes call typed owners; a surface-neutral channel performs each action with no
   Presentation types.
 - Visual: N/A—existing renderer reuse only.
 - Default: record artifact, defaults, dependency provenance, Project, action and reopened durable
-  manifest observation.
+  manifest observation, including the exact approved version/profile shown before conversation
+  creation.
 
-**Done when:** schema 4 and source-generated contracts enforce all listed invariants; schema-3
-history remains readable; focused checks pass; normal Desktop path reopens candidate/cases; Codex
-accepts Claude’s evidence summary.
+**Done when:** schema 4 and source-generated contracts enforce all listed invariants, including one
+immutable profile per version and no caller profile substitution; schema-3 history remains readable;
+focused checks pass; normal Desktop path reopens candidate/cases and displays the exact profile;
+Codex accepts Claude’s evidence summary.
