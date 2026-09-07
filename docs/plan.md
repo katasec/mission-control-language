@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | **Phase 44 — Local development bootstrap integrity:** implement the design-ready fresh-start database bootstrap. |
+| **NEXT STEP** | Deliberately select and design the next item from the [backlog](backlog.md). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Design ready; implementation pending |
+| — | No active phase selected. | Select an item from the [backlog](backlog.md). |
 
 ## Design docs
 
