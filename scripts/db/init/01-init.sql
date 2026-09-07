@@ -1,7 +1,8 @@
 -- Runs once, on first container init (empty data volume), as the postgres superuser.
--- Owns: the database, the least-privilege app role, and extensions (none needed —
--- postgres:16 has gen_random_uuid() built in).
--- EF Core migrations own everything from tables onward.
+-- Owns: both local databases (forge_rooms, authbilling_db), the least-privilege app
+-- role, and extensions (none needed — postgres:16 has gen_random_uuid() built in).
+-- Tables onward are owned elsewhere: EF Core migrations for forge_rooms, and
+-- AuthBillingSchema's idempotent CREATE TABLE IF NOT EXISTS for authbilling_db.
 
 CREATE ROLE forge_app WITH LOGIN PASSWORD 'forge_app_dev' NOSUPERUSER NOCREATEDB NOCREATEROLE;
 
