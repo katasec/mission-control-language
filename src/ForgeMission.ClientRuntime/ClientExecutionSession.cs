@@ -13,14 +13,11 @@ public sealed class ClientExecutionSession : ICapabilityDispatcher, IAsyncDispos
     private bool _closed;
 
     private ClientExecutionSession(string root, CapabilityAuthorizationPolicy policy,
-        ICapabilityConfirmationHandler confirmation, CancellationToken lifetime)
+        ICapabilityConfirmationHandler confirmation, CancellationToken lifetime, MissionExecutionProfile? missionProfile = null)
     {
         Root = root;
         var workspace = new LocalDiskWorkspace(root);
-        Capabilities = new CapabilityRegistry([
-            new WorkspaceFileProvider(workspace),
-            new WorkspaceTerminalProvider(workspace),
-        ]);
+        Capabilities = new CapabilityRegistry(ProvidersFor(workspace, root, missionProfile));
         _lifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime);
         _dispatcher = new CapabilityDispatcher(Capabilities, new PolicyCapabilityAuthorizer(policy),
             new InMemoryCapabilityAuditLog(), confirmation);
@@ -42,6 +39,28 @@ public sealed class ClientExecutionSession : ICapabilityDispatcher, IAsyncDispos
         ArgumentNullException.ThrowIfNull(confirmation);
         return new ClientExecutionSession(root, policy, confirmation, lifetime);
     }
+
+    /// <summary>Creates a fresh, profile-bound Bob root for one immutable mission launch.</summary>
+    public static ClientExecutionSession CreateForMission(
+        string root, MissionExecutionProfile profile, CapabilityAuthorizationPolicy policy,
+        ICapabilityConfirmationHandler confirmation, CancellationToken lifetime)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+        ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(confirmation);
+        return new ClientExecutionSession(root, policy, confirmation, lifetime, profile);
+    }
+
+    private static IEnumerable<ICapabilityProvider> ProvidersFor(
+        LocalDiskWorkspace workspace, string root, MissionExecutionProfile? missionProfile) => missionProfile switch
+    {
+        null => [new WorkspaceFileProvider(workspace), new WorkspaceTerminalProvider(workspace)],
+        MissionExecutionProfile.NoHands => [],
+        MissionExecutionProfile.ProjectWorkspace => [new WorkspaceFileProvider(workspace)],
+        MissionExecutionProfile.ProjectWorkspaceAndTerminal => [
+            new WorkspaceFileProvider(workspace), new ProjectBoundTerminalProvider(root)],
+        _ => throw new ArgumentOutOfRangeException(nameof(missionProfile)),
+    };
 
     public Task<ToolExecutionResult> DispatchAsync(string capabilityName, object request, CancellationToken ct)
     {

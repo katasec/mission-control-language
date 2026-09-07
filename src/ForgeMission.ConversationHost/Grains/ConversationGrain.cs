@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using ForgeMission.ConversationHost.Messaging;
 using ForgeMission.ConversationHost.Persistence;
 using ForgeMission.Conversations.Contracts;
@@ -359,6 +360,346 @@ public sealed class ConversationGrain(
                 new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, progressAcceptance.RejectionReason),
             _ => throw new InvalidOperationException($"Unhandled {nameof(ConversationProgressOutcome)} '{progressAcceptance.Outcome}'."),
         };
+    }
+
+    // Generic mission hands is deliberately part of this grain: ConversationGrain remains the
+    // sole canonical event/sequence owner. Task C supplies requests from the generic Worker; it
+    // cannot create a second durable ledger or bypass these exact correlation checks.
+    public async Task<MissionHandsGrainResult> AttachMissionHandsAsync(MissionHandsJsonInput input)
+    {
+        await RepairPendingTransitionIfAnyAsync(CancellationToken.None);
+        var attachment = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.AttachMissionHandsRequest);
+        if (!Exists || attachment is null || attachment.ConversationId != Address.ConversationId || attachment.AttachmentId == Guid.Empty ||
+            attachment.ApplicationSessionId == Guid.Empty || !ValidMissionHandsLaunch(attachment.Launch))
+            return MissionHandsReject("Invalid mission hands attachment.");
+        var pinned = DeserializeMissionHands(checkpoint.State.MissionHandsLaunchJson,
+            ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        if (pinned is not null && !Equals(pinned, attachment.Launch))
+            return MissionHandsReject("The attachment launch does not match the pinned approved launch.");
+
+        checkpoint.State.MissionHandsLaunchJson ??= JsonSerializer.Serialize(
+            attachment.Launch, ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        var priorAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var freshAttachment = new MissionHandsAttachment(
+            attachment.ConversationId, attachment.AttachmentId, attachment.ApplicationSessionId, attachment.Launch, DateTimeOffset.UtcNow);
+        if (priorAttachment is null || priorAttachment.AttachmentId == attachment.AttachmentId)
+        {
+            checkpoint.State.MissionHandsAttachmentJson = JsonSerializer.Serialize(freshAttachment,
+                ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        }
+        else if (checkpoint.State.MissionHandsInFlight)
+        {
+            // The old Bob may still hold a real side effect. Preserve its active attachment and
+            // retain the claim; this fresh registration has no work until old Bob drains and the
+            // old attachment durably detaches.
+            var pendingAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsPendingAttachmentJson,
+                ConversationContractsJsonContext.Default.MissionHandsAttachment);
+            if (pendingAttachment is not null && pendingAttachment.AttachmentId != freshAttachment.AttachmentId)
+                return MissionHandsReject("A mission hands attachment handoff is already pending.");
+            checkpoint.State.MissionHandsPendingAttachmentJson = JsonSerializer.Serialize(freshAttachment,
+                ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        }
+        else
+        {
+            checkpoint.State.MissionHandsAttachmentJson = JsonSerializer.Serialize(freshAttachment,
+                ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        }
+        checkpoint.State.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await checkpoint.WriteStateAsync();
+        return MissionHandsAccept(checkpoint.State.MissionHandsInFlight ? MissionHandsStatus.InFlight : MissionHandsStatus.Attached,
+            checkpoint.State.LastSequence);
+    }
+
+    public async Task<MissionHandsGrainResult> DetachMissionHandsAsync(MissionHandsJsonInput input)
+    {
+        await RepairPendingTransitionIfAnyAsync(CancellationToken.None);
+        var request = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.DetachMissionHandsRequest);
+        var attachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        if (request is null || request.ConversationId != Address.ConversationId || attachment?.AttachmentId != request.AttachmentId)
+            return MissionHandsReject("The mission hands attachment is stale or foreign.");
+        var pendingAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsPendingAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        checkpoint.State.MissionHandsAttachmentJson = pendingAttachment is null ? null : JsonSerializer.Serialize(
+            pendingAttachment, ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        checkpoint.State.MissionHandsPendingAttachmentJson = null;
+        // A detach is the durable acknowledgement that Application has already cancelled/drained
+        // this attachment's Bob. Only here may its claim be requeued for a pending fresh attach.
+        checkpoint.State.MissionHandsInFlight = false;
+        checkpoint.State.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await checkpoint.WriteStateAsync();
+        return MissionHandsAccept(checkpoint.State.MissionHandsRequestJson is null ? MissionHandsStatus.Completed :
+            pendingAttachment is null ? MissionHandsStatus.AwaitingHands : MissionHandsStatus.Attached,
+            checkpoint.State.LastSequence);
+    }
+
+    public async Task<MissionHandsGrainResult> RecordMissionHandsRequestAsync(MissionHandsJsonInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var request = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (!Exists || request is null || request.ConversationId != Address.ConversationId || request.ToolRequestId == Guid.Empty ||
+            request.TurnAttemptId == Guid.Empty || string.IsNullOrWhiteSpace(request.ToolName) ||
+            string.IsNullOrWhiteSpace(request.OpaqueContinuation) || checkpoint.State.MissionHandsLaunchJson is null)
+            return MissionHandsReject("Invalid mission hands request.");
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (outstanding is not null)
+            return outstanding.ToolRequestId == request.ToolRequestId
+                ? MissionHandsAccept(checkpoint.State.MissionHandsAttachmentJson is null ? MissionHandsStatus.AwaitingHands : MissionHandsStatus.Attached,
+                    checkpoint.State.LastSequence)
+                : MissionHandsReject("A mission attempt already has an outstanding hands request.");
+        if (checkpoint.State.MissionHandsCompletedToolRequestId == request.ToolRequestId)
+            return MissionHandsReject("The mission hands request is late.");
+
+        checkpoint.State.MissionHandsRequestJson = JsonSerializer.Serialize(request,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        checkpoint.State.MissionHandsCancelled = false;
+        checkpoint.State.MissionHandsInterrupted = false;
+        checkpoint.State.MissionHandsTerminalReason = null;
+        checkpoint.State.MissionHandsInFlight = false;
+        var requested = new ConversationEvent(request.ToolRequestId, 1, Address.ConversationId, checkpoint.State.ActiveRunId,
+            checkpoint.State.LastSequence + 1, ConversationEventKind.MissionHandsRequested, ConversationParticipant.Forge,
+            null, null, null, null, null, null, null, null, DateTimeOffset.UtcNow, MissionHandsRequest: request);
+        await PlanAppendAdvanceAsync(requested, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        if (checkpoint.State.MissionHandsAttachmentJson is not null)
+            return MissionHandsAccept(MissionHandsStatus.Attached, checkpoint.State.LastSequence);
+
+        var awaiting = new ConversationEvent(ConversationDeterministicIds.MissionHandsAwaiting(request.ToolRequestId), 1,
+            Address.ConversationId, checkpoint.State.ActiveRunId, checkpoint.State.LastSequence + 1,
+            ConversationEventKind.MissionHandsAwaiting, ConversationParticipant.Forge, null, null,
+            "Awaiting a live Application/Bob attachment.", null, null, null, null, null, DateTimeOffset.UtcNow);
+        await PlanAppendAdvanceAsync(awaiting, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        return MissionHandsAccept(MissionHandsStatus.AwaitingHands, checkpoint.State.LastSequence);
+    }
+
+    public async Task<MissionHandsGrainResult> AcceptMissionHandsResultAsync(MissionHandsJsonInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var result = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest);
+        if (!Exists || result is null || result.ConversationId != Address.ConversationId || result.AttachmentId == Guid.Empty ||
+            result.TurnAttemptId == Guid.Empty || result.CommandId == Guid.Empty || result.ToolRequestId == Guid.Empty ||
+            !Enum.IsDefined(result.Outcome))
+            return MissionHandsReject("Invalid mission hands result.");
+        var canonicalResult = JsonSerializer.Serialize(result,
+            ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest);
+        if (checkpoint.State.MissionHandsCompletedCommandId == result.CommandId &&
+            checkpoint.State.MissionHandsCompletedToolRequestId == result.ToolRequestId)
+            return checkpoint.State.MissionHandsCompletedResultJson == canonicalResult
+                ? MissionHandsAccept(MissionHandsStatus.Completed, checkpoint.State.MissionHandsResultSequence)
+                : MissionHandsReject("A replayed mission hands result does not exactly match the accepted result.");
+        if (checkpoint.State.MissionHandsCompletedToolRequestId == result.ToolRequestId)
+            return MissionHandsReject("The mission hands result is late or uses a different command.");
+        var attachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (attachment?.AttachmentId != result.AttachmentId || outstanding is null ||
+            outstanding.ToolRequestId != result.ToolRequestId || outstanding.TurnAttemptId != result.TurnAttemptId ||
+            !checkpoint.State.MissionHandsInFlight)
+            return MissionHandsReject("The mission hands result is wrong, late, or detached.");
+
+        var fact = new ConversationEvent(result.CommandId, 1, Address.ConversationId, checkpoint.State.ActiveRunId,
+            checkpoint.State.LastSequence + 1, ConversationEventKind.MissionHandsResult, ConversationParticipant.Forge,
+            null, result.Content, result.Reason, null, null, null, null, null, DateTimeOffset.UtcNow,
+            MissionHandsOutcome: result.Outcome);
+        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        checkpoint.State.MissionHandsRequestJson = null;
+        checkpoint.State.MissionHandsAwaitingToolConfirmation = false;
+        checkpoint.State.MissionHandsInFlight = false;
+        checkpoint.State.MissionHandsCompletedToolRequestId = result.ToolRequestId;
+        checkpoint.State.MissionHandsCompletedCommandId = result.CommandId;
+        checkpoint.State.MissionHandsResultSequence = checkpoint.State.LastSequence;
+        checkpoint.State.MissionHandsCompletedResultJson = canonicalResult;
+        await checkpoint.WriteStateAsync();
+        // Task C uses MissionHandsContinuation(toolRequestId) once, after this canonical fact;
+        // no second result can reach that later dispatch because this state is terminalized here.
+        return MissionHandsAccept(MissionHandsStatus.Completed, checkpoint.State.LastSequence);
+    }
+
+    /// <summary>Returns the one Host-owned outstanding request only to its exact live
+    /// Application attachment.  This is deliberately a grain query rather than an adapter
+    /// reconstruction: a caller cannot manufacture a tool name, arguments, continuation, or
+    /// correlation that Bob might execute.</summary>
+    public async Task<MissionHandsGrainResult> GetMissionHandsWorkAsync(MissionHandsJsonInput input)
+    {
+        await RepairPendingTransitionIfAnyAsync(CancellationToken.None);
+        var query = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.GetMissionHandsWorkRequest);
+        var attachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var pendingAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsPendingAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (!Exists || query is null || query.ConversationId != Address.ConversationId)
+            return MissionHandsWorkReject("The mission hands attachment is stale or foreign.");
+        if (checkpoint.State.MissionHandsInFlight && pendingAttachment?.AttachmentId == query.AttachmentId &&
+            pendingAttachment.ApplicationSessionId == query.ApplicationSessionId)
+            return MissionHandsWork(MissionHandsStatus.InFlight, pendingAttachment, null, checkpoint.State.LastSequence);
+        if (attachment?.AttachmentId != query.AttachmentId || attachment.ApplicationSessionId != query.ApplicationSessionId)
+            return MissionHandsWorkReject("The mission hands attachment is stale or foreign.");
+
+        var status = checkpoint.State.MissionHandsCancelled ? MissionHandsStatus.Cancelled :
+            checkpoint.State.MissionHandsInterrupted ? MissionHandsStatus.Interrupted :
+            outstanding is null ? MissionHandsStatus.Completed :
+            checkpoint.State.MissionHandsInFlight ? MissionHandsStatus.InFlight :
+            checkpoint.State.MissionHandsAwaitingToolConfirmation ? MissionHandsStatus.AwaitingToolConfirmation : MissionHandsStatus.Attached;
+        return MissionHandsWork(status, attachment, outstanding, checkpoint.State.LastSequence, checkpoint.State.MissionHandsTerminalReason);
+    }
+
+    /// <summary>Atomically transitions the exact Host-owned outstanding request to in-flight.
+    /// Only the caller receiving its payload may admit Bob; concurrent callers receive no
+    /// payload. A replacement attachment remains payload-free until Application has drained Bob
+    /// and the active attachment has durably detached.</summary>
+    public async Task<MissionHandsGrainResult> ClaimMissionHandsWorkAsync(MissionHandsJsonInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var query = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.ClaimMissionHandsWorkRequest);
+        var attachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var pendingAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsPendingAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (!Exists || query is null || query.ConversationId != Address.ConversationId)
+            return MissionHandsWorkReject("There is no current mission hands request for this attachment.");
+        if (checkpoint.State.MissionHandsInFlight && pendingAttachment?.AttachmentId == query.AttachmentId &&
+            pendingAttachment.ApplicationSessionId == query.ApplicationSessionId)
+            return MissionHandsWork(MissionHandsStatus.InFlight, pendingAttachment, null, checkpoint.State.LastSequence);
+        if (attachment?.AttachmentId != query.AttachmentId || attachment.ApplicationSessionId != query.ApplicationSessionId ||
+            outstanding is null || checkpoint.State.MissionHandsCancelled)
+            return MissionHandsWorkReject("There is no current mission hands request for this attachment.");
+        if (checkpoint.State.MissionHandsInFlight)
+            return MissionHandsWork(MissionHandsStatus.InFlight, attachment, null, checkpoint.State.LastSequence);
+
+        checkpoint.State.MissionHandsInFlight = true;
+        var fact = new ConversationEvent(ConversationDeterministicIds.MissionHandsClaim(outstanding.ToolRequestId, attachment.AttachmentId), 1,
+            Address.ConversationId, checkpoint.State.ActiveRunId, checkpoint.State.LastSequence + 1,
+            ConversationEventKind.MissionHandsInFlight, ConversationParticipant.Forge, null,
+            "Mission hands request claimed for Bob.", null, null, null, null, null, null, DateTimeOffset.UtcNow);
+        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        return MissionHandsWork(MissionHandsStatus.InFlight, attachment, outstanding, checkpoint.State.LastSequence);
+    }
+
+    public async Task<MissionHandsGrainResult> BeginMissionHandsConfirmationAsync(MissionHandsJsonInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var request = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.BeginMissionHandsConfirmationRequest);
+        var attachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (!Exists || request is null || request.ConversationId != Address.ConversationId ||
+            attachment?.AttachmentId != request.AttachmentId || outstanding?.ToolRequestId != request.ToolRequestId || checkpoint.State.MissionHandsCancelled)
+            return MissionHandsReject("The mission hands confirmation is stale, foreign, or already terminal.");
+        if (checkpoint.State.MissionHandsAwaitingToolConfirmation)
+            return MissionHandsAccept(MissionHandsStatus.AwaitingToolConfirmation, checkpoint.State.LastSequence);
+
+        checkpoint.State.MissionHandsAwaitingToolConfirmation = true;
+        var fact = new ConversationEvent(ConversationDeterministicIds.MissionHandsConfirmation(request.ToolRequestId), 1,
+            Address.ConversationId, checkpoint.State.ActiveRunId, checkpoint.State.LastSequence + 1,
+            ConversationEventKind.MissionHandsAwaitingToolConfirmation, ConversationParticipant.Forge, null,
+            "Awaiting local Bob confirmation.", null, null, null, null, null, null, DateTimeOffset.UtcNow);
+        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        return MissionHandsAccept(MissionHandsStatus.AwaitingToolConfirmation, checkpoint.State.LastSequence);
+    }
+
+    public async Task<MissionHandsGrainResult> CancelMissionHandsAttemptAsync(MissionHandsJsonInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var request = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.CancelMissionHandsAttemptRequest);
+        var attachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (!Exists || request is null || request.ConversationId != Address.ConversationId || string.IsNullOrWhiteSpace(request.Reason) ||
+            attachment?.AttachmentId != request.AttachmentId)
+            return MissionHandsReject("The mission hands cancellation is stale, foreign, or already terminal.");
+        if (checkpoint.State.MissionHandsCancelled)
+            return checkpoint.State.MissionHandsCompletedToolRequestId == request.ToolRequestId
+                ? MissionHandsAccept(MissionHandsStatus.Cancelled, checkpoint.State.MissionHandsResultSequence)
+                : MissionHandsReject("The mission hands cancellation is stale, foreign, or already terminal.");
+        if (outstanding?.ToolRequestId != request.ToolRequestId || outstanding.TurnAttemptId != request.TurnAttemptId)
+            return MissionHandsReject("The mission hands cancellation is stale, foreign, or already terminal.");
+
+        var cancellation = new SubmitMissionToolResultRequest(Address.ConversationId, request.AttachmentId, request.TurnAttemptId,
+            ConversationDeterministicIds.MissionHandsCancellation(request.ToolRequestId), request.ToolRequestId,
+            MissionToolOutcome.Cancelled, null, request.Reason);
+        checkpoint.State.MissionHandsRequestJson = null;
+        checkpoint.State.MissionHandsAwaitingToolConfirmation = false;
+        checkpoint.State.MissionHandsInFlight = false;
+        checkpoint.State.MissionHandsCancelled = true;
+        checkpoint.State.MissionHandsCompletedToolRequestId = request.ToolRequestId;
+        checkpoint.State.MissionHandsCompletedCommandId = cancellation.CommandId;
+        checkpoint.State.MissionHandsCompletedResultJson = JsonSerializer.Serialize(cancellation,
+            ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest);
+        var fact = new ConversationEvent(cancellation.CommandId, 1, Address.ConversationId, checkpoint.State.ActiveRunId,
+            checkpoint.State.LastSequence + 1, ConversationEventKind.MissionHandsCancelled, ConversationParticipant.Forge,
+            null, null, request.Reason, null, null, null, null, null, DateTimeOffset.UtcNow, MissionHandsOutcome: MissionToolOutcome.Cancelled);
+        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        checkpoint.State.MissionHandsResultSequence = checkpoint.State.LastSequence;
+        await checkpoint.WriteStateAsync();
+        return MissionHandsAccept(MissionHandsStatus.Cancelled, checkpoint.State.LastSequence);
+    }
+
+    /// <summary>Terminalizes unknown in-flight work after a fresh attachment has reconnected but
+    /// cannot prove the old Bob drained. Unlike a clean detach, this never redelivers the request:
+    /// a possibly executed operation is recorded once as interrupted and any old late result is
+    /// conflict/no-op.</summary>
+    public async Task<MissionHandsGrainResult> RecoverMissionHandsInFlightAsync(MissionHandsJsonInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var recovery = JsonSerializer.Deserialize(input.Json, ConversationContractsJsonContext.Default.RecoverMissionHandsInFlightRequest);
+        var activeAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var pendingAttachment = DeserializeMissionHands(checkpoint.State.MissionHandsPendingAttachmentJson,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        var outstanding = DeserializeMissionHands(checkpoint.State.MissionHandsRequestJson,
+            ConversationContractsJsonContext.Default.MissionToolRequest);
+        if (!Exists || recovery is null || recovery.ConversationId != Address.ConversationId)
+            return MissionHandsReject("The mission hands recovery attachment is stale or foreign.");
+        if (checkpoint.State.MissionHandsInterrupted && activeAttachment?.AttachmentId == recovery.AttachmentId &&
+            activeAttachment.ApplicationSessionId == recovery.ApplicationSessionId)
+            return MissionHandsAccept(MissionHandsStatus.Interrupted, checkpoint.State.MissionHandsResultSequence);
+        if (pendingAttachment?.AttachmentId != recovery.AttachmentId ||
+            pendingAttachment.ApplicationSessionId != recovery.ApplicationSessionId)
+            return MissionHandsReject("The mission hands recovery attachment is stale or foreign.");
+        if (!checkpoint.State.MissionHandsInFlight || outstanding is null)
+            return MissionHandsReject("There is no unknown in-flight mission hands request to recover.");
+
+        const string reason = "Mission hands execution was interrupted before Host could prove the prior Bob stopped.";
+        var terminal = new SubmitMissionToolResultRequest(Address.ConversationId, recovery.AttachmentId,
+            outstanding.TurnAttemptId, ConversationDeterministicIds.MissionHandsInterruption(outstanding.ToolRequestId),
+            outstanding.ToolRequestId, MissionToolOutcome.Interrupted, null, reason);
+        var fact = new ConversationEvent(terminal.CommandId, 1, Address.ConversationId, checkpoint.State.ActiveRunId,
+            checkpoint.State.LastSequence + 1, ConversationEventKind.MissionHandsInterrupted, ConversationParticipant.Forge,
+            null, null, reason, null, null, null, null, null, DateTimeOffset.UtcNow,
+            MissionHandsOutcome: MissionToolOutcome.Interrupted);
+        await PlanAppendAdvanceAsync(fact, null, notifyMissionRun: false, dispatchCommand: null, ct);
+        // Promote the fresh attachment only after the terminal fact has been ordered. It can
+        // observe the outcome and later receive a newly requested operation, never this one.
+        checkpoint.State.MissionHandsAttachmentJson = JsonSerializer.Serialize(pendingAttachment,
+            ConversationContractsJsonContext.Default.MissionHandsAttachment);
+        checkpoint.State.MissionHandsPendingAttachmentJson = null;
+        checkpoint.State.MissionHandsRequestJson = null;
+        checkpoint.State.MissionHandsAwaitingToolConfirmation = false;
+        checkpoint.State.MissionHandsInFlight = false;
+        checkpoint.State.MissionHandsCancelled = false;
+        checkpoint.State.MissionHandsInterrupted = true;
+        checkpoint.State.MissionHandsTerminalReason = reason;
+        checkpoint.State.MissionHandsCompletedToolRequestId = outstanding.ToolRequestId;
+        checkpoint.State.MissionHandsCompletedCommandId = terminal.CommandId;
+        checkpoint.State.MissionHandsCompletedResultJson = JsonSerializer.Serialize(terminal,
+            ConversationContractsJsonContext.Default.SubmitMissionToolResultRequest);
+        checkpoint.State.MissionHandsResultSequence = checkpoint.State.LastSequence;
+        await checkpoint.WriteStateAsync();
+        return MissionHandsAccept(MissionHandsStatus.Interrupted, checkpoint.State.LastSequence);
     }
 
     public async Task<ConversationProgressAcceptance> RecordProgressAsync(ConversationProgressInput input)
@@ -867,6 +1208,38 @@ public sealed class ConversationGrain(
     private static bool IsTerminal(ConversationRunStatus status) => status is
         ConversationRunStatus.Completed or ConversationRunStatus.Rejected or
         ConversationRunStatus.Interrupted or ConversationRunStatus.Failed;
+
+    private bool Exists => !string.IsNullOrEmpty(checkpoint.State.MissionRef) ||
+        (checkpoint.State.Purpose == ConversationPurpose.ProjectMission && checkpoint.State.ProjectId is not null);
+
+    private static bool ValidMissionHandsLaunch(DurableMissionLaunch launch)
+    {
+        if (launch.MissionVersionId == Guid.Empty || launch.VersionNumber <= 0 ||
+            string.IsNullOrWhiteSpace(launch.Definition) || launch.Definition.Length > 256 * 1024 || !Enum.IsDefined(launch.Profile))
+            return false;
+        var expected = "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(launch.Definition))).ToLowerInvariant();
+        return string.Equals(expected, launch.DefinitionHash, StringComparison.Ordinal);
+    }
+
+    private MissionHandsGrainResult MissionHandsAccept(MissionHandsStatus status, long? sequence) => new(
+        JsonSerializer.Serialize(new MissionHandsResult(status, sequence), ConversationContractsJsonContext.Default.MissionHandsResult), true);
+
+    private MissionHandsGrainResult MissionHandsReject(string reason) => new(
+        JsonSerializer.Serialize(new MissionHandsResult(MissionHandsStatus.AwaitingHands, null, reason),
+            ConversationContractsJsonContext.Default.MissionHandsResult), false);
+
+    private MissionHandsGrainResult MissionHandsWork(MissionHandsStatus status, MissionHandsAttachment attachment,
+        MissionToolRequest? request, long sequence, string? reason = null) => new(
+        JsonSerializer.Serialize(new MissionHandsWorkItem(status, attachment, request, sequence, reason),
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem), true);
+
+    private MissionHandsGrainResult MissionHandsWorkReject(string reason) => new(
+        JsonSerializer.Serialize(new MissionHandsWorkItem(MissionHandsStatus.AwaitingHands, null, null, null, reason),
+            ConversationContractsJsonContext.Default.MissionHandsWorkItem), false);
+
+    private static T? DeserializeMissionHands<T>(string? json,
+        System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type) where T : class =>
+        string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize(json, type);
 
     private static string MissionRunGrainKey(string tenantId, Guid runId) => $"{tenantId}|{runId:N}";
 }

@@ -61,6 +61,13 @@ public enum ConversationEventKind
     [JsonStringEnumMemberName("runStatus")]          RunStatus,
     [JsonStringEnumMemberName("artifact")]           Artifact,
     [JsonStringEnumMemberName("error")]              Error,
+    [JsonStringEnumMemberName("missionHandsRequested")] MissionHandsRequested,
+    [JsonStringEnumMemberName("missionHandsAwaiting")] MissionHandsAwaiting,
+    [JsonStringEnumMemberName("missionHandsResult")] MissionHandsResult,
+    [JsonStringEnumMemberName("missionHandsAwaitingToolConfirmation")] MissionHandsAwaitingToolConfirmation,
+    [JsonStringEnumMemberName("missionHandsCancelled")] MissionHandsCancelled,
+    [JsonStringEnumMemberName("missionHandsInFlight")] MissionHandsInFlight,
+    [JsonStringEnumMemberName("missionHandsInterrupted")] MissionHandsInterrupted,
 }
 
 /// <summary>Terminal/in-flight status of one Janus run.</summary>
@@ -154,7 +161,9 @@ public sealed record ConversationEvent(
     ConversationToolResult? ToolResult,
     ConversationArtifactReference? Artifact,
     ConversationRunStatus? RunStatus,
-    DateTimeOffset OccurredAtUtc);
+    DateTimeOffset OccurredAtUtc,
+    MissionToolRequest? MissionHandsRequest = null,
+    MissionToolOutcome? MissionHandsOutcome = null);
 
 /// <summary>Compact operational checkpoint for a conversation — the projection returned by
 /// <c>GET /conversations/{conversationId}</c>. The event log, not this snapshot, is canonical.</summary>

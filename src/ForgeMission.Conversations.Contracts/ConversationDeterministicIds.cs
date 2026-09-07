@@ -72,6 +72,29 @@ public static class ConversationDeterministicIds
     public static Guid ToolRequest(Guid commandId, int ordinal)
         => Generate($"tool-request:{commandId:N}:{ordinal}");
 
+    /// <summary>Stable durable fact identity for a generic mission hands request.</summary>
+    public static Guid MissionHandsRequest(Guid conversationId, Guid turnAttemptId, int ordinal)
+        => Generate($"mission-hands-request:{conversationId:N}:{turnAttemptId:N}:{ordinal}");
+
+    /// <summary>Stable continuation identity for the one accepted generic hands result.</summary>
+    public static Guid MissionHandsContinuation(Guid toolRequestId)
+        => Generate($"mission-hands-continuation:{toolRequestId:N}");
+
+    public static Guid MissionHandsAwaiting(Guid toolRequestId)
+        => Generate($"mission-hands-awaiting:{toolRequestId:N}");
+
+    public static Guid MissionHandsConfirmation(Guid toolRequestId)
+        => Generate($"mission-hands-confirmation:{toolRequestId:N}");
+
+    public static Guid MissionHandsCancellation(Guid toolRequestId)
+        => Generate($"mission-hands-cancellation:{toolRequestId:N}");
+
+    public static Guid MissionHandsInterruption(Guid toolRequestId)
+        => Generate($"mission-hands-interruption:{toolRequestId:N}");
+
+    public static Guid MissionHandsClaim(Guid toolRequestId, Guid attachmentId)
+        => Generate($"mission-hands-claim:{toolRequestId:N}:{attachmentId:N}");
+
     /// <summary>A dead-letter-derived fact (Host progress DLQ or Worker command DLQ).</summary>
     public static Guid DeadLetter(Guid eventId, string kind)
         => Generate($"dead-letter:{kind}:{eventId:N}");

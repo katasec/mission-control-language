@@ -72,6 +72,15 @@ public sealed record ConversationToolResultInput(
     [property: Id(2)] string Content,
     [property: Id(3)] bool IsError);
 
+/// <summary>Source-generated generic hands input retained at the canonical Conversation grain boundary.</summary>
+[GenerateSerializer]
+public sealed record MissionHandsJsonInput([property: Id(0)] string Json);
+
+[GenerateSerializer]
+public sealed record MissionHandsGrainResult(
+    [property: Id(0)] string ResultJson,
+    [property: Id(1)] bool Accepted);
+
 /// <summary>Grain-interface wrapper for creating a Project's Mission container (43.21 task 1).
 /// It compares the pinned Project identity and goal on an exact retry and omits any mission or
 /// capability member because a container pins neither.</summary>

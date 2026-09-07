@@ -19,6 +19,7 @@ Durable conversation facts need stable identities and shapes without coupling ev
 ## Owns
 
 - Versioned conversation commands, event/snapshot/projection records, JSON source generation, and deterministic IDs.
+- Additive generic mission-hands launch, attachment, request, and typed-result records. They contain no Project root, credential, Bob handle, or Worker transcript.
 - The intentionally narrow Project Mission route messages and closed mission-name catalog.
 
 ## Does not own

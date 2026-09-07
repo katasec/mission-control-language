@@ -85,6 +85,12 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         CapabilityDispatchRequest => "transport/capability/dispatch",
         PromptRequest => "transport/prompt",
         ConfirmationResponseRequest => "transport/confirmation/respond",
+        AcknowledgeMissionHandsRequest => "transport/mission-hands/acknowledge",
+        DetachMissionHandsRequest => "transport/mission-hands/detach",
+        GetMissionHandsStatusRequest => "transport/mission-hands/status",
+        ExecuteMissionHandsRequest => "transport/mission-hands/execute",
+        CancelMissionHandsRequest => "transport/mission-hands/cancel",
+        RecoverMissionHandsRequest => "transport/mission-hands/recover",
         _ => throw new InvalidOperationException($"Unsupported application request: {typeof(TRequest).Name}."),
     };
 

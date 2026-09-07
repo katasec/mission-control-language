@@ -1,7 +1,7 @@
 namespace ForgeMission.Application;
 
-// The local, Forge-owned Project record written to <project-home>/forge.project.json. v3 retains
-// v1/v2 fields for read compatibility, then adds one bounded, immutable submission receipt.
+// The local, Forge-owned Project record written to <project-home>/forge.project.json. v4 retains
+// earlier fields for read compatibility, then adds immutable approved mission-launch provenance.
 //
 // It holds no credential, secret-derived value, transcript, or remote connection string. Absolute
 // local paths (a context SourceRoot/File reference) stay in this file; they never cross the
@@ -20,9 +20,10 @@ internal sealed record ProjectManifest(
     [property: System.Text.Json.Serialization.JsonIgnore(
         Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     Guid? MissionControlConversationId = null,
-    ProjectSubmission? Submission = null)
+    ProjectSubmission? Submission = null,
+    MissionVersionLaunch[]? ApprovedMissionLaunches = null)
 {
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 }
 
 internal enum ProjectSubmissionPhase

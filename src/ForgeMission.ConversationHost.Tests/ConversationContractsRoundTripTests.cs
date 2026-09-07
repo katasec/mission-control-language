@@ -73,6 +73,39 @@ public class ConversationContractsRoundTripTests
                 Guid.NewGuid(), 1, conversationId, runId, 9, kind, ConversationParticipant.Forge,
                 null, null, "provider request failed", null, null, null, null, null, occurredAt),
 
+            ConversationEventKind.MissionHandsRequested => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 10, kind, ConversationParticipant.Forge,
+                null, null, null, null, null, null, null, null, occurredAt,
+                new MissionToolRequest(Guid.NewGuid(), conversationId, Guid.NewGuid(), "root", "agent", "call", "read",
+                    SampleJson("{}"), "opaque")),
+
+            ConversationEventKind.MissionHandsAwaiting => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 11, kind, ConversationParticipant.Forge,
+                null, null, "Awaiting hands", null, null, null, null, null, occurredAt),
+
+            ConversationEventKind.MissionHandsResult => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 12, kind, ConversationParticipant.Forge,
+                null, "done", null, null, null, null, null, null, occurredAt,
+                MissionHandsOutcome: MissionToolOutcome.Succeeded),
+
+            ConversationEventKind.MissionHandsAwaitingToolConfirmation => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 13, kind, ConversationParticipant.Forge,
+                null, "Awaiting local confirmation", null, null, null, null, null, null, occurredAt),
+
+            ConversationEventKind.MissionHandsCancelled => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 14, kind, ConversationParticipant.Forge,
+                null, null, "operator cancelled", null, null, null, null, null, occurredAt,
+                MissionHandsOutcome: MissionToolOutcome.Cancelled),
+
+            ConversationEventKind.MissionHandsInFlight => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 15, kind, ConversationParticipant.Forge,
+                null, "Mission hands request claimed", null, null, null, null, null, null, occurredAt),
+
+            ConversationEventKind.MissionHandsInterrupted => new ConversationEvent(
+                Guid.NewGuid(), 1, conversationId, runId, 16, kind, ConversationParticipant.Forge,
+                null, null, "old Bob could not be proven stopped", null, null, null, null, null, occurredAt,
+                MissionHandsOutcome: MissionToolOutcome.Interrupted),
+
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "unhandled ConversationEventKind"),
         };
     }
