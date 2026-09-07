@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"><style>
+body{margin:0;background:#efeae1;font-family:'IBM Plex Sans',system-ui,sans-serif}
+a{color:oklch(0.5 0.16 48);text-decoration:none}
+a:hover{color:oklch(0.42 0.16 48)}
+.fg-dark{--s0:#191612;--s1:#211d17;--s2:#2a241c;--s3:#332b21;--line:rgba(255,240,220,.11);--line2:rgba(255,240,220,.055);--ink:#f3ede3;--ink2:rgba(243,237,227,.84);--ink3:rgba(243,237,227,.68);--ember:oklch(0.76 0.15 55);--emberq:oklch(0.76 0.15 55 / .16);--ok:oklch(0.78 0.13 152);--okq:oklch(0.78 0.13 152 / .15);--warn:oklch(0.84 0.13 88);--warnq:oklch(0.84 0.13 88 / .15);--bad:oklch(0.7 0.17 25);--badq:oklch(0.7 0.17 25 / .15);--info:oklch(0.76 0.11 240);--infoq:oklch(0.76 0.11 240 / .15);--btn:#f3ede3;--btnink:#191612}
+.fg-light{--s0:#f6f1e8;--s1:#fffdf8;--s2:#efe8db;--s3:#e5dccc;--line:rgba(45,33,16,.14);--line2:rgba(45,33,16,.07);--ink:#1f1a13;--ink2:rgba(31,26,19,.86);--ink3:rgba(31,26,19,.74);--ember:oklch(0.53 0.16 48);--emberq:oklch(0.53 0.16 48 / .1);--ok:oklch(0.47 0.13 152);--okq:oklch(0.47 0.13 152 / .1);--warn:oklch(0.5 0.13 72);--warnq:oklch(0.5 0.13 72 / .11);--bad:oklch(0.5 0.18 25);--badq:oklch(0.5 0.18 25 / .1);--info:oklch(0.48 0.13 250);--infoq:oklch(0.48 0.13 250 / .1);--btn:#1f1a13;--btnink:#fffdf8}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px 'IBM Plex Mono',monospace;padding:3px 7px;background:#1f1a13;color:#fffdf8;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 'IBM Plex Sans',sans-serif;color:#1f1a13}
+.dv-opts{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(45,33,16,.09);color:#1f1a13;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:rgba(45,33,16,.6)}
+.dv-card{max-width:100%;border:1px solid rgba(45,33,16,.13);border-radius:8px;box-shadow:0 1px 3px rgba(45,33,16,.08);overflow:hidden}
+.dv-opt:target .dv-oid{background:oklch(0.53 0.16 48);color:#fffdf8}
+.dv-next{margin:22px 0 0;font:12px/1.5 'IBM Plex Sans',sans-serif;color:rgba(45,33,16,.55)}
+</style></helmet>
+
+<section class="dv-turn" id="t4">
+<div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Forge Desktop — Dark implementation reference v1 · four application frames, 1440×960</span></div>
+
+<div style="display:grid;grid-template-columns:1440px 1440px;gap:48px 40px;align-items:start;width:max-content">
+
+<div class="dv-opt" id="4a">
+<div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:oklch(0.53 0.16 48 / .1);border:1px solid oklch(0.53 0.16 48);color:oklch(0.5 0.16 48)">Proposed</span><span>Missions — conversation selection · mission picker open · <span style="font-family:'IBM Plex Mono',monospace">1440×960</span></span></div>
+<div class="dv-card fg-dark" style="width:1440px">
+<div style="height:960px;background:var(--s0);color:var(--ink);display:flex;font-family:'IBM Plex Sans',sans-serif">
+
+<div style="width:212px;flex:none;background:var(--s1);border-right:1px solid var(--line);display:flex;flex-direction:column">
+<div style="padding:16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:8px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">Project</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:6px;background:var(--emberq);border:1px solid var(--ember);flex:none"></div>
+<div style="font:600 14px 'IBM Plex Sans',sans-serif">Northstar</div>
+<div style="margin-left:auto;font:400 10px 'IBM Plex Mono',monospace;color:var(--ink3)">SWITCH</div>
+</div>
+</div>
+<div style="padding:12px 8px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Project Explorer</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--s3);color:var(--ink);box-shadow:inset 2px 0 0 var(--ember);font:600 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ember);flex:none"></span>Missions</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Settings</div>
+</div>
+<div style="margin-top:auto;padding:14px 16px;border-top:1px solid var(--line2);display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:50%;background:var(--s3);border:1px solid var(--line);flex:none"></div>
+<div style="font:400 12px 'IBM Plex Sans',sans-serif;color:var(--ink3)">A. Mensah</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:72px;flex:none;padding:0 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<div style="font:600 18px 'IBM Plex Sans',sans-serif;letter-spacing:-.01em">Missions</div>
+<div style="font:400 12px 'IBM Plex Sans',sans-serif;color:var(--ink3)">Work with an approved mission over time, or author one.</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="padding:9px 14px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif">Author a mission</div>
+<div style="padding:9px 14px;border-radius:6px;background:var(--ember);color:#1b1206;font:600 12.5px 'IBM Plex Sans',sans-serif">New mission conversation</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 408px;gap:24px">
+
+<div style="min-width:0;background:var(--s1);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
+<div style="font:600 13px 'IBM Plex Sans',sans-serif">Mission conversations</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">4 open</div>
+<div style="margin-left:auto;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--s2);font:400 11.5px 'IBM Plex Sans',sans-serif;color:var(--ink3);width:180px">Filter conversations</div>
+</div>
+<div style="padding:8px 16px;display:grid;grid-template-columns:minmax(0,1.15fr) 176px minmax(0,1.5fr) 96px;gap:12px;border-bottom:1px solid var(--line2);font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">
+<div>Conversation</div><div>Mission · version</div><div>Last message</div><div style="text-align:right">Updated</div>
+</div>
+
+<div style="padding:14px 16px;display:grid;grid-template-columns:minmax(0,1.15fr) 176px minmax(0,1.5fr) 96px;gap:12px;align-items:center;background:var(--s2);box-shadow:inset 2px 0 0 var(--ember);border-bottom:1px solid var(--line2)">
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font:600 13.5px 'IBM Plex Sans',sans-serif">Launch plan</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--info)">Turn 5 running</div></div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 12px 'IBM Plex Mono',monospace">Janus v1.4</div><div style="display:flex;gap:4px"><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink3)">Pinned</span></div></div>
+<div style="font:400 12.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">You — “Re-rank without the register; use what is in the plan.”</div>
+<div style="text-align:right;font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">now</div>
+</div>
+
+<div style="padding:14px 16px;display:grid;grid-template-columns:minmax(0,1.15fr) 176px minmax(0,1.5fr) 96px;gap:12px;align-items:center;border-bottom:1px solid var(--line2)">
+<div style="font:600 13.5px 'IBM Plex Sans',sans-serif">Onboarding review</div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 12px 'IBM Plex Mono',monospace">Naive v2.1</div><div style="display:flex;gap:4px"><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink3)">Pinned</span></div></div>
+<div style="font:400 12.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Naive — “The three friction points are activation, seat invites and the first export.”</div>
+<div style="text-align:right;font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">16:20 Fri</div>
+</div>
+
+<div style="padding:14px 16px;display:grid;grid-template-columns:minmax(0,1.15fr) 176px minmax(0,1.5fr) 96px;gap:12px;align-items:center;border-bottom:1px solid var(--line2)">
+<div style="font:600 13.5px 'IBM Plex Sans',sans-serif">Pricing objections</div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 12px 'IBM Plex Mono',monospace">Janus v1.4</div><div style="display:flex;gap:4px"><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink3)">Pinned</span></div></div>
+<div style="font:400 12.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Janus — “Two objections survive the discount: migration effort and audit scope.”</div>
+<div style="text-align:right;font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">2 Sep</div>
+</div>
+
+<div style="padding:14px 16px;display:grid;grid-template-columns:minmax(0,1.15fr) 176px minmax(0,1.5fr) 96px;gap:12px;align-items:center">
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font:600 13.5px 'IBM Plex Sans',sans-serif">Support triage rules</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--bad)">Turn 7 failed · retry available</div></div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 12px 'IBM Plex Mono',monospace">Naive v2.1</div><div style="display:flex;gap:4px"><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink3)">Pinned</span></div></div>
+<div style="font:400 12.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">You — “Split the P2 rules by channel.”</div>
+<div style="text-align:right;font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">28 Aug</div>
+</div>
+
+<div style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--line2);font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">Opening a conversation continues it at its last turn. Nothing is discarded.</div>
+</div>
+
+<div style="min-width:0;background:var(--s1);border:1px solid var(--ember);border-radius:8px;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px">
+<div style="font:600 13.5px 'IBM Plex Sans',sans-serif">New mission conversation</div>
+<div style="font:400 11.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink3)">Choose the mission version this conversation will run on.</div>
+</div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Mission version</div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved only</div></div>
+
+<div style="padding:12px 14px;border-radius:7px;border:1px solid var(--ember);background:var(--emberq);display:flex;align-items:flex-start;gap:10px">
+<span style="width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ember);display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px"><span style="width:6px;height:6px;border-radius:50%;background:var(--ember)"></span></span>
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<div style="font:600 13px 'IBM Plex Sans',sans-serif">Janus <span style="font-family:'IBM Plex Mono',monospace;font-weight:500">v1.4</span></div>
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Approved 3 Sep · 7 conversations · 4 experts</div>
+<div style="font:400 11.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Sequenced launch planning with risk and comms review.</div>
+</div>
+</div>
+
+<div style="padding:12px 14px;border-radius:7px;border:1px solid var(--line);background:var(--s2);display:flex;align-items:flex-start;gap:10px">
+<span style="width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ink3);flex:none;margin-top:2px"></span>
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<div style="font:600 13px 'IBM Plex Sans',sans-serif">Naive <span style="font-family:'IBM Plex Mono',monospace;font-weight:500">v2.1</span></div>
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Approved 21 Aug · 12 conversations · 1 expert</div>
+<div style="font:400 11.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Single-expert baseline for summarising and triage.</div>
+</div>
+</div>
+
+<div style="padding:10px 14px;border-radius:7px;border:1px dashed var(--line);display:flex;align-items:center;gap:8px">
+<span style="width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);flex:none"></span>
+<div style="font:400 11px/1.4 'IBM Plex Mono',monospace;color:rgba(243,237,227,.42)">Janus v1.5 — Candidate · not selectable</div>
+</div>
+
+<div style="padding:12px 14px;border-radius:7px;background:var(--s2);box-shadow:inset 2px 0 0 var(--ember);display:flex;flex-direction:column;gap:6px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ember)">Version pinning</div>
+<div style="font:400 11.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink2)">Starting this conversation <b>pins Janus v1.4</b> to it. If v1.5 is published later it applies to <b>new conversations only</b> — this one keeps v1.4 until you change it deliberately.</div>
+</div>
+</div>
+<div style="margin-top:auto;padding:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+<div style="padding:11px 14px;border-radius:6px;background:var(--ember);color:#1b1206;font:600 13px 'IBM Plex Sans',sans-serif;text-align:center">Start conversation on Janus v1.4</div>
+<div style="padding:10px 14px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif;text-align:center">Author a mission instead</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="4b">
+<div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:oklch(0.53 0.16 48 / .1);border:1px solid oklch(0.53 0.16 48);color:oklch(0.5 0.16 48)">Proposed</span><span>Mission Conversation — “Launch plan” · running turn + failed turn · <span style="font-family:'IBM Plex Mono',monospace">1440×960</span></span></div>
+<div class="dv-card fg-dark" style="width:1440px">
+<div style="height:960px;background:var(--s0);color:var(--ink);display:flex;font-family:'IBM Plex Sans',sans-serif">
+
+<div style="width:212px;flex:none;background:var(--s1);border-right:1px solid var(--line);display:flex;flex-direction:column">
+<div style="padding:16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:8px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">Project</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:6px;background:var(--emberq);border:1px solid var(--ember);flex:none"></div>
+<div style="font:600 14px 'IBM Plex Sans',sans-serif">Northstar</div>
+</div>
+</div>
+<div style="padding:12px 8px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Project Explorer</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--s3);color:var(--ink);box-shadow:inset 2px 0 0 var(--ember);font:600 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ember);flex:none"></span>Missions</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Settings</div>
+</div>
+<div style="padding:8px 16px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line2);margin-top:8px;padding-top:14px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">This conversation</div>
+<div style="font:400 10.5px/1.6 'IBM Plex Mono',monospace;color:var(--ink3)">Started 09:18<br>5 turns · 3 traces<br>Janus v1.4 pinned</div>
+</div>
+<div style="margin-top:auto;padding:14px 16px;border-top:1px solid var(--line2);display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:50%;background:var(--s3);border:1px solid var(--line);flex:none"></div>
+<div style="font:400 12px 'IBM Plex Sans',sans-serif;color:var(--ink3)">A. Mensah</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:72px;flex:none;padding:0 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;background:var(--s1)">
+<div style="padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:var(--s2);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif;flex:none">‹ Missions</div>
+<div style="width:1px;height:32px;background:var(--line)"></div>
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<div style="font:600 17px 'IBM Plex Sans',sans-serif;letter-spacing:-.01em">Launch plan</div>
+<div style="display:flex;align-items:center;gap:6px">
+<span style="font:500 11.5px 'IBM Plex Mono',monospace;color:var(--ink2)">Janus v1.4</span>
+<span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span>
+<span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--ink3)">Pinned</span>
+</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Turn 5 · started 09:41</div>
+<div style="padding:8px 12px;border-radius:6px;border:1px solid var(--line);color:var(--ink3);font:500 12px 'IBM Plex Sans',sans-serif">Change version</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;overflow:hidden;padding:20px 24px 0">
+<div style="max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+
+<div style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:1px;background:var(--line2)"></div><div style="font:400 10px 'IBM Plex Mono',monospace;color:var(--ink3)">Conversation started 09:18 · Janus v1.4 pinned</div><div style="flex:1;height:1px;background:var(--line2)"></div></div>
+
+<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;border:1px dashed var(--line);background:var(--s1)">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Turn 1 · 09:18 — “Cutover has moved to 12 October…” · 4 participants · approved · 26s</span>
+<span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Turn 2 · 09:24 — “Assume migration cannot start before 6 October.” · 5 participants · approved · 34s</span>
+</div>
+<span style="margin-left:auto;flex:none;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">Show earlier turns ›</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">You · 09:31 · Turn 3</div>
+<div style="padding:11px 14px;border-radius:8px;background:var(--s2);border:1px solid var(--line);font:400 13.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink)">Where does that leave the comms freeze?</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;background:var(--ember);transform:rotate(45deg)"></span><span style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Janus v1.4 · 09:31</span></div>
+<div style="padding:12px 14px;border-radius:8px;background:var(--s1);border:1px solid var(--line);font:400 13.5px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink2)">The freeze shortens to 8–12 Oct and starts after rehearsal, not before it. That keeps the board review outside the freeze, so no announcement needs re-approval.</div>
+<div style="display:inline-flex;align-self:flex-start;align-items:center;gap:10px;padding:6px 10px;border-radius:6px;background:var(--s2);border:1px solid var(--ember)">
+<span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink2)">3 participants · approved · 18s</span>
+<span style="font:600 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">View trace ›</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">You · 09:36 · Turn 4</div>
+<div style="padding:11px 14px;border-radius:8px;background:var(--s2);border:1px solid var(--line);font:400 13.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink)">Pull in the risk register and re-rank the top five.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:8px;background:var(--s1);border:1px solid var(--bad);box-shadow:inset 2px 0 0 var(--bad)">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--badq);color:var(--bad)">Turn 4 failed</span>
+<span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">4.2s · 2 of 4 participants completed</span>
+</div>
+<div style="font:400 13px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink2)">Janus stopped at <span style="font-family:'IBM Plex Mono',monospace">RiskReviewer</span> — the linked risk register could not be read. Your message is kept and the rest of the conversation is unaffected.</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="padding:7px 12px;border-radius:6px;border:1px solid var(--ember);color:var(--ember);font:600 12px 'IBM Plex Sans',sans-serif">Retry turn 4</div>
+<div style="padding:7px 12px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12px 'IBM Plex Sans',sans-serif">Edit message and resend</div>
+<div style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">View partial trace ›</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">You · 09:41 · Turn 5</div>
+<div style="padding:11px 14px;border-radius:8px;background:var(--s2);border:1px solid var(--line);font:400 13.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink)">Re-rank without the register; use what is in the plan.</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:8px;background:var(--s1);border:1px solid var(--info);box-shadow:inset 2px 0 0 var(--info)">
+<span style="width:12px;height:12px;border-radius:3px;border:2px solid var(--info);border-right-color:transparent;flex:none"></span>
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<div style="font:600 13px 'IBM Plex Sans',sans-serif">Janus is working on turn 5</div>
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Sequencer complete · RiskReviewer running · 2 of 4 participants · 7s elapsed</div>
+</div>
+<div style="margin-left:auto;padding:7px 12px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12px 'IBM Plex Sans',sans-serif;flex:none">Cancel turn</div>
+</div>
+
+</div>
+</div>
+
+<div style="flex:none;padding:16px 24px 20px;border-top:1px solid var(--line);background:var(--s1)">
+<div style="max-width:840px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:flex-end;gap:10px">
+<div style="flex:1;min-width:0;min-height:60px;padding:12px 14px;border-radius:8px;background:var(--s2);border:1px solid var(--line2);font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:rgba(243,237,227,.38)">Janus is answering turn 5 — the composer re-enables when this turn finishes.</div>
+<div style="padding:11px 18px;border-radius:6px;background:var(--s3);border:1px solid var(--line2);color:rgba(243,237,227,.34);font:600 12.5px 'IBM Plex Sans',sans-serif;flex:none">Send</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Pinned to Janus v1.4 · one message = one turn</div>
+<div style="margin-left:auto;font:400 10.5px 'IBM Plex Mono',monospace;color:rgba(243,237,227,.34)">Enter to send · Shift+Enter for a new line</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="4c">
+<div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:oklch(0.53 0.16 48 / .1);border:1px solid oklch(0.53 0.16 48);color:oklch(0.5 0.16 48)">Proposed</span><span>Forge Trace — turn 3 of “Launch plan” · read-only chronological · <span style="font-family:'IBM Plex Mono',monospace">1440×960</span></span></div>
+<div class="dv-card fg-dark" style="width:1440px">
+<div style="height:960px;background:var(--s0);color:var(--ink);display:flex;font-family:'IBM Plex Sans',sans-serif">
+
+<div style="width:212px;flex:none;background:var(--s1);border-right:1px solid var(--line);display:flex;flex-direction:column">
+<div style="padding:16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:8px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">Project</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:6px;background:var(--emberq);border:1px solid var(--ember);flex:none"></div>
+<div style="font:600 14px 'IBM Plex Sans',sans-serif">Northstar</div>
+</div>
+</div>
+<div style="padding:12px 8px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Project Explorer</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--s3);color:var(--ink);box-shadow:inset 2px 0 0 var(--ember);font:600 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ember);flex:none"></span>Missions</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Settings</div>
+</div>
+<div style="padding:14px 16px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line2);margin-top:8px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Viewing</div>
+<div style="font:400 10.5px/1.6 'IBM Plex Mono',monospace;color:var(--ink3)">Trace of turn 3<br>Launch plan<br>Janus v1.4</div>
+</div>
+<div style="margin-top:auto;padding:14px 16px;border-top:1px solid var(--line2);display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:50%;background:var(--s3);border:1px solid var(--line);flex:none"></div>
+<div style="font:400 12px 'IBM Plex Sans',sans-serif;color:var(--ink3)">A. Mensah</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:72px;flex:none;padding:0 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;background:var(--s1)">
+<div style="padding:9px 14px;border-radius:6px;border:1px solid var(--ember);background:var(--emberq);color:var(--ember);font:600 12.5px 'IBM Plex Sans',sans-serif;flex:none">‹ Back to Launch plan · Turn 3</div>
+<div style="width:1px;height:32px;background:var(--line)"></div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="font:600 17px 'IBM Plex Sans',sans-serif;letter-spacing:-.01em">Forge Trace</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">trace_8f21c4b · Janus v1.4 · read-only</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="padding:8px 12px;border-radius:6px;border:1px solid var(--line);color:var(--ink3);font:500 12px 'IBM Plex Sans',sans-serif">Copy trace id</div>
+<div style="padding:8px 12px;border-radius:6px;border:1px solid var(--line);color:var(--ink3);font:500 12px 'IBM Plex Sans',sans-serif">Export</div>
+</div>
+</div>
+
+<div style="flex:none;padding:16px 24px;background:var(--s1);border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px">
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Outcome</div><div style="display:flex"><span style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span></div></div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Duration</div><div style="font:500 14px 'IBM Plex Mono',monospace">18.360s</div></div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Participants</div><div style="font:500 14px 'IBM Plex Mono',monospace">3</div></div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Events</div><div style="font:500 14px 'IBM Plex Mono',monospace">12</div></div>
+<div style="display:flex;flex-direction:column;gap:5px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Started</div><div style="font:500 14px 'IBM Plex Mono',monospace">09:31:07</div></div>
+</div>
+
+<div style="flex:1;min-height:0;overflow:hidden;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+<div style="padding:12px 14px;border-radius:8px;background:var(--s1);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Originating user message · turn 3</div><div style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">Jump to message ›</div></div>
+<div style="font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink);padding-left:10px;box-shadow:inset 2px 0 0 var(--line)">“Where does that leave the comms freeze?”</div>
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">received 09:31:07 · 214 input tokens</div>
+</div>
+<div style="padding:12px 14px;border-radius:8px;background:var(--s1);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Answer delivered · turn 3</div><div style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">Jump to answer ›</div></div>
+<div style="font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink);padding-left:10px;box-shadow:inset 2px 0 0 var(--line)">“The freeze shortens to 8–12 Oct and starts after rehearsal, not before it…”</div>
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">emitted 09:31:25 · 412 output tokens</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;background:var(--s1);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:10px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;border-bottom:1px solid var(--line);font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">
+<div>t +</div><div>Participant</div><div>Event</div><div>Detail</div><div style="text-align:right">Duration</div>
+</div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">0.000</div><div style="color:var(--ink)">mission Janus</div><div>turn.received</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Turn 3 accepted · 214 input tokens</div><div style="text-align:right;color:var(--ink3)">—</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">0.012</div><div style="color:var(--ink)">mission Janus</div><div>context.assembled</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">2 prior turns carried into this turn</div><div style="text-align:right;color:var(--ink3)">0.01s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">0.048</div><div style="color:var(--ink)">Sequencer</div><div>expert.started</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Received turn input and prior sequence</div><div style="text-align:right;color:var(--ink3)">—</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">2.310</div><div style="color:var(--ink)">Sequencer</div><div>expert.completed</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Freeze placed after rehearsal, 8–12 Oct</div><div style="text-align:right">2.26s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">2.318</div><div style="color:var(--ink)">RiskReviewer</div><div>expert.started</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Reviewing proposed freeze window</div><div style="text-align:right;color:var(--ink3)">—</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">7.902</div><div style="color:var(--ink)">RiskReviewer</div><div>expert.completed</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">2 objections: board review overlap, approval lag</div><div style="text-align:right">5.58s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">7.910</div><div style="color:var(--ink)">debate</div><div>debate.round.1</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Sequencer and RiskReviewer exchanged positions</div><div style="text-align:right">2.41s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">10.320</div><div style="color:var(--ink)">debate</div><div>debate.resolved</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Converged: freeze starts 8 Oct, review excluded</div><div style="text-align:right">2.33s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">12.650</div><div style="color:var(--ink)">CommsLead</div><div>expert.started</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Drafting freeze consequences for stakeholders</div><div style="text-align:right;color:var(--ink3)">—</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">16.980</div><div style="color:var(--ink)">CommsLead</div><div>expert.completed</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">No announcement requires re-approval</div><div style="text-align:right">4.33s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;border-bottom:1px solid var(--line2);font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2)"><div style="color:var(--ink3)">17.002</div><div style="color:var(--ink)">mission Janus</div><div>answer.composed</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Single answer assembled from 3 participants</div><div style="text-align:right">1.34s</div></div>
+<div style="padding:11px 16px;display:grid;grid-template-columns:80px 132px 176px minmax(0,1fr) 84px;gap:12px;align-items:center;font:400 12px 'IBM Plex Mono',monospace;color:var(--ink2);background:var(--s2)"><div style="color:var(--ink3)">18.360</div><div style="color:var(--ink)">mission Janus</div><div style="color:var(--ok)">turn.approved</div><div style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px">Validation passed · answer delivered to turn 3</div><div style="text-align:right">18.36s</div></div>
+</div>
+
+</div>
+
+<div style="flex:none;padding:14px 24px;border-top:1px solid var(--line);background:var(--s1);display:flex;align-items:center;gap:16px">
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Exact durable evidence for one turn. Read-only; nothing here can be edited or re-run.</div>
+<div style="margin-left:auto;padding:8px 12px;border-radius:6px;border:1px solid var(--ember);color:var(--ember);font:600 12px 'IBM Plex Sans',sans-serif">‹ Back to Launch plan · Turn 3</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="4d">
+<div class="dv-olabel"><a class="dv-oid" href="#4d">4d</a><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:oklch(0.53 0.16 48 / .1);border:1px solid oklch(0.53 0.16 48);color:oklch(0.5 0.16 48)">Proposed</span><span>Authoring &amp; evidence — Candidate Janus v1.5 · publish blocked · <span style="font-family:'IBM Plex Mono',monospace">1440×960</span></span></div>
+<div class="dv-card fg-dark" style="width:1440px">
+<div style="height:960px;background:var(--s0);color:var(--ink);display:flex;font-family:'IBM Plex Sans',sans-serif">
+
+<div style="width:212px;flex:none;background:var(--s1);border-right:1px solid var(--line);display:flex;flex-direction:column">
+<div style="padding:16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:8px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">Project</div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:6px;background:var(--emberq);border:1px solid var(--ember);flex:none"></div>
+<div style="font:600 14px 'IBM Plex Sans',sans-serif">Northstar</div>
+</div>
+</div>
+<div style="padding:12px 8px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--s3);color:var(--ink);box-shadow:inset 2px 0 0 var(--ember);font:600 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ember);flex:none"></span>Project Explorer</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Missions</div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink3);font:500 13px 'IBM Plex Sans',sans-serif"><span style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--ink3);flex:none"></span>Settings</div>
+</div>
+<div style="margin-top:auto;padding:14px 16px;border-top:1px solid var(--line2);display:flex;align-items:center;gap:8px">
+<div style="width:22px;height:22px;border-radius:50%;background:var(--s3);border:1px solid var(--line);flex:none"></div>
+<div style="font:400 12px 'IBM Plex Sans',sans-serif;color:var(--ink3)">A. Mensah</div>
+</div>
+</div>
+
+<div style="width:232px;flex:none;background:var(--s1);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px;gap:10px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);padding:0 4px">Northstar · assets</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="padding:6px 8px;font:600 12px 'IBM Plex Mono',monospace;color:var(--ink2)">Missions</div>
+<div style="padding:6px 8px 6px 18px;font:600 12.5px 'IBM Plex Sans',sans-serif;color:var(--ink)">Janus</div>
+<div style="padding:7px 8px 7px 30px;border-radius:5px;background:var(--s3);box-shadow:inset 2px 0 0 var(--ember);display:flex;align-items:center;gap:6px"><span style="font:500 11.5px 'IBM Plex Mono',monospace;color:var(--ink)">v1.5</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 5px;border-radius:3px;background:var(--emberq);color:var(--ember)">Candidate</span></div>
+<div style="padding:7px 8px 7px 30px;display:flex;align-items:center;gap:6px"><span style="font:500 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">v1.4</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 5px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span></div>
+<div style="padding:7px 8px 7px 30px;display:flex;align-items:center;gap:6px"><span style="font:500 11.5px 'IBM Plex Mono',monospace;color:rgba(243,237,227,.42)">v1.3</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 5px;border-radius:3px;border:1px solid var(--line2);color:rgba(243,237,227,.42)">Superseded</span></div>
+<div style="padding:6px 8px 6px 18px;font:500 12.5px 'IBM Plex Sans',sans-serif;color:var(--ink3)">Naive</div>
+<div style="padding:7px 8px 7px 30px;display:flex;align-items:center;gap:6px"><span style="font:500 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">v2.1</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 5px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line2);padding-top:10px">
+<div style="padding:6px 8px;font:600 12px 'IBM Plex Mono',monospace;color:var(--ink2)">Experts</div>
+<div style="padding:5px 8px 5px 18px;font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Sequencer</div>
+<div style="padding:5px 8px 5px 18px;font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">RiskReviewer</div>
+<div style="padding:5px 8px 5px 18px;font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">CommsLead</div>
+<div style="padding:6px 8px;font:600 12px 'IBM Plex Mono',monospace;color:var(--ink2);margin-top:6px">Traces</div>
+<div style="padding:5px 8px 5px 18px;font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">42 stored</div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:72px;flex:none;padding:0 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;background:var(--s1)">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:600 17px 'IBM Plex Sans',sans-serif;letter-spacing:-.01em">Janus</div><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);color:var(--ember)">Candidate v1.5</span></div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">derived from Approved v1.4 · editable · <span style="color:var(--ok)">saved 14:02</span></div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="padding:9px 14px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif">Run evaluation</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+<div style="padding:9px 14px;border-radius:6px;background:var(--s3);border:1px solid var(--line2);color:rgba(243,237,227,.34);font:600 12.5px 'IBM Plex Sans',sans-serif">Publish v1.5</div>
+<div style="font:400 10px 'IBM Plex Mono',monospace;color:var(--bad)">blocked · 1 of 4 cases failing</div>
+</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;padding:20px 24px;display:grid;grid-template-columns:452px minmax(0,1fr);gap:20px;overflow:hidden">
+
+<div style="min-width:0;display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid var(--line);font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Version history</div>
+<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line2);background:var(--s2)"><span style="font:500 12px 'IBM Plex Mono',monospace">v1.5</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);color:var(--ember)">Candidate</span><span style="font:400 11.5px 'IBM Plex Sans',sans-serif;color:var(--ink2)">Editing now — adds a decline path for unresolvable conflicts</span><span style="margin-left:auto;font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">14:02</span></div>
+<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line2)"><span style="font:500 12px 'IBM Plex Mono',monospace;color:var(--ink2)">v1.4</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Approved</span><span style="font:400 11.5px 'IBM Plex Sans',sans-serif;color:var(--ink3)">In use by 7 conversations</span><span style="margin-left:auto;font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">3 Sep</span></div>
+<div style="padding:10px 14px;display:flex;align-items:center;gap:10px"><span style="font:500 12px 'IBM Plex Mono',monospace;color:rgba(243,237,227,.42)">v1.3</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid var(--line2);color:rgba(243,237,227,.42)">Superseded</span><span style="font:400 11.5px 'IBM Plex Sans',sans-serif;color:rgba(243,237,227,.42)">No new conversations</span><span style="margin-left:auto;font:400 10.5px 'IBM Plex Mono',monospace;color:rgba(243,237,227,.42)">12 Aug</span></div>
+</div>
+
+<div style="flex:1;min-height:0;background:var(--s1);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:11px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Mission definition</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--ok)"></span><span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">All changes saved</span></div>
+</div>
+<div style="flex:1;min-height:0;display:flex;overflow:hidden">
+<div style="flex:none;width:38px;padding:14px 0;background:var(--s2);border-right:1px solid var(--line2);font:400 11.5px/1.85 'IBM Plex Mono',monospace;color:rgba(243,237,227,.34);text-align:right;padding-right:8px">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12</div>
+<div style="flex:1;min-width:0;padding:14px 16px;font:400 12.5px/1.85 'IBM Plex Mono',monospace;color:var(--ink2);white-space:pre">mission Janus(input) loop(2) = {
+  -&gt; Sequencer
+
+  when conflict_unresolvable
+    -&gt; Decline
+
+  parallel {
+    -&gt; RiskReviewer
+    -&gt; CommsLead
+  }
+
+  debate { Sequencer, RiskReviewer }
+}</div>
+</div>
+<div style="padding:10px 14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px">
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">Ln 4, Col 24 · diff vs v1.4: +4 lines</div>
+<div style="margin-left:auto;padding:6px 10px;border-radius:5px;border:1px solid var(--line);color:var(--ink3);font:500 11.5px 'IBM Plex Sans',sans-serif">Revert to v1.4</div>
+</div>
+</div>
+</div>
+
+<div style="min-width:0;background:var(--s1);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;overflow:hidden">
+<div style="padding:10px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px">
+<div style="font:600 13px 'IBM Plex Sans',sans-serif">Evaluation cases</div>
+<div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">4 cases · evaluated 13:58 · 3 pass · 1 fail</div>
+<div style="margin-left:auto;padding:6px 10px;border-radius:5px;border:1px solid var(--line);color:var(--ink3);font:500 11.5px 'IBM Plex Sans',sans-serif">Add case</div>
+</div>
+
+<div style="padding:9px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:600 12.5px 'IBM Plex Sans',sans-serif">C1 · Date slip with hard dependency</div><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c0e2 ›</span></div>
+<div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:3px 10px;font:400 11.5px/1.4 'IBM Plex Sans',sans-serif;color:var(--ink2)">
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Input</div><div>“Cutover moves +14 days; migration blocked for 6 days.”</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Expect</div><div>Pass: sequence re-ordered, freeze restated · Fail: declines if the dependency cannot be satisfied</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Observed</div><div style="color:var(--ok)">Re-ordered sequence, freeze restated — matched expected success.</div>
+</div>
+</div>
+
+<div style="padding:9px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:600 12.5px 'IBM Plex Sans',sans-serif">C2 · Missing attachment</div><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c0e3 ›</span></div>
+<div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:3px 10px;font:400 11.5px/1.4 'IBM Plex Sans',sans-serif;color:var(--ink2)">
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Input</div><div>“Re-rank the risks using the register.” Register unreadable.</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Expect</div><div>Pass: names the missing input, offers to proceed without it · Fail: never invents register contents</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Observed</div><div style="color:var(--ok)">Named the missing input, no invented content — matched.</div>
+</div>
+</div>
+
+<div style="padding:10px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:6px;background:var(--s2);box-shadow:inset 2px 0 0 var(--bad)">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:600 12.5px 'IBM Plex Sans',sans-serif">C3 · Unresolvable conflict</div><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--badq);color:var(--bad)">Fail</span><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c0e5 ›</span></div>
+<div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 10px;font:400 12px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);padding-top:2px">Input</div><div>“Ship on 1 Oct with a 3-week migration that cannot compress.”</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);padding-top:2px">Expect</div><div>Pass: not applicable — this case must fail correctly · Fail: declines and names the conflict rather than producing a plan</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);padding-top:2px">Observed</div><div style="color:var(--bad)">Produced a compressed plan instead of declining — the <span style="font-family:'IBM Plex Mono',monospace">when conflict_unresolvable</span> branch was not reached.</div>
+</div>
+</div>
+
+<div style="padding:9px 16px;border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:600 12.5px 'IBM Plex Sans',sans-serif">C4 · Two owners, one deadline</div><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c0e7 ›</span></div>
+<div style="display:grid;grid-template-columns:96px minmax(0,1fr);gap:3px 10px;font:400 11.5px/1.4 'IBM Plex Sans',sans-serif;color:var(--ink2)">
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Input</div><div>“Both teams claim the 9 Oct slot.”</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Expect</div><div>Pass: surfaces contention with a named cost · Fail: does not silently pick one owner</div>
+<div style="font:400 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)">Observed</div><div style="color:var(--ok)">Contention surfaced with cost stated — matched.</div>
+</div>
+</div>
+
+<div style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--line);background:var(--s2);display:flex;align-items:center;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<div style="font:600 12px 'IBM Plex Sans',sans-serif;color:var(--bad)">Publish unavailable</div>
+<div style="font:400 11.5px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Case C3 “Unresolvable conflict” does not fail as expected. Edit the definition, then re-evaluate.</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex:none">
+<div style="padding:9px 14px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif">Re-evaluate</div>
+<div style="padding:9px 14px;border-radius:6px;background:var(--s3);border:1px solid var(--line2);color:rgba(243,237,227,.34);font:600 12.5px 'IBM Plex Sans',sans-serif">Publish v1.5</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="4e" style="grid-column:1 / -1;width:1440px">
+<div class="dv-olabel"><a class="dv-oid" href="#4e">4d-ii</a><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:oklch(0.53 0.16 48 / .1);border:1px solid oklch(0.53 0.16 48);color:oklch(0.5 0.16 48)">Proposed</span><span>Same screen after the fix — evaluated, publish enabled, confirmation · <span style="font-family:'IBM Plex Mono',monospace">1440×392</span></span></div>
+<div class="dv-card fg-dark" style="width:1440px">
+<div style="height:392px;background:var(--s0);color:var(--ink);display:flex;flex-direction:column;font-family:'IBM Plex Sans',sans-serif">
+<div style="height:72px;flex:none;padding:0 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;background:var(--s1)">
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:600 17px 'IBM Plex Sans',sans-serif;letter-spacing:-.01em">Janus</div><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);color:var(--ember)">Candidate v1.5</span><span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Evaluated</span></div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">4 of 4 cases matched · evaluated 14:26 · saved 14:24</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<div style="padding:9px 14px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif">Re-evaluate</div>
+<div style="padding:9px 14px;border-radius:6px;background:var(--ember);color:#1b1206;font:600 12.5px 'IBM Plex Sans',sans-serif">Publish v1.5</div>
+</div>
+</div>
+<div style="flex:1;min-height:0;padding:20px 24px;display:grid;grid-template-columns:minmax(0,1fr) 520px;gap:20px">
+
+<div style="min-width:0;background:var(--s1);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+<div style="padding:11px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px"><div style="font:600 12.5px 'IBM Plex Sans',sans-serif">Evaluation cases</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ok)">4 pass · 0 fail</div></div>
+<div style="padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line2)"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><div style="font:400 12.5px 'IBM Plex Sans',sans-serif;color:var(--ink2)">C1 · Date slip with hard dependency</div><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c1a0 ›</span></div>
+<div style="padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line2)"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><div style="font:400 12.5px 'IBM Plex Sans',sans-serif;color:var(--ink2)">C2 · Missing attachment</div><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c1a1 ›</span></div>
+<div style="padding:11px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line2);background:var(--s2)"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><div style="font:400 12.5px 'IBM Plex Sans',sans-serif;color:var(--ink)">C3 · Unresolvable conflict — declined and named the conflict, as expected</div><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c1a3 ›</span></div>
+<div style="padding:11px 16px;display:flex;align-items:center;gap:10px"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--okq);color:var(--ok)">Pass</span><div style="font:400 12.5px 'IBM Plex Sans',sans-serif;color:var(--ink2)">C4 · Two owners, one deadline</div><span style="margin-left:auto;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)">trace_11c1a5 ›</span></div>
+</div>
+
+<div style="min-width:0;background:var(--s1);border:1px solid var(--ember);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="font:600 13.5px 'IBM Plex Sans',sans-serif">Publish Janus v1.5 as Approved?</div>
+<div style="font:400 12.5px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink2)">v1.5 becomes selectable for <b>new</b> mission conversations. Existing conversations keep the version they pinned — <b>“Launch plan” stays on Janus v1.4</b> and is not changed by this.</div>
+<div style="font:400 10.5px/1.6 'IBM Plex Mono',monospace;color:var(--ink3)">v1.4 → Superseded for new conversations only · 7 open conversations unaffected</div>
+<div style="margin-top:auto;display:flex;align-items:center;gap:8px">
+<div style="padding:9px 14px;border-radius:6px;border:1px solid var(--line);color:var(--ink2);font:500 12.5px 'IBM Plex Sans',sans-serif">Cancel</div>
+<div style="padding:9px 14px;border-radius:6px;background:var(--ember);color:#1b1206;font:600 12.5px 'IBM Plex Sans',sans-serif">Publish v1.5</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<div style="margin-top:26px;max-width:1180px;background:#fffdf8;border:1px solid rgba(45,33,16,.13);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:rgba(45,33,16,.55)">Screen index · implementation handoff</div>
+<div style="display:grid;grid-template-columns:120px 190px minmax(0,1fr) minmax(0,1fr);gap:8px 14px;font:400 11.5px/1.45 'IBM Plex Sans',sans-serif;color:#2a2118">
+<div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:rgba(45,33,16,.55)">Screen</div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:rgba(45,33,16,.55)">Rail selection</div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:rgba(45,33,16,.55)">Stateful controls</div><div style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:rgba(45,33,16,.55)">Navigates to</div>
+<div><a href="#4a">4a</a> Missions</div><div style="font-family:'IBM Plex Mono',monospace">Missions</div><div>Conversation list rows; version picker limited to Approved (v1.4, v1.5 Candidate disabled); Start pins the selected version.</div><div>Row → <a href="#4b">4b</a> · Author a mission → <a href="#4d">4d</a></div>
+<div><a href="#4b">4b</a> Mission Conversation</div><div style="font-family:'IBM Plex Mono',monospace">Missions</div><div>Composer enabled/disabled by turn state; Cancel on running turn; Retry / Edit-and-resend on failed turn; collapsed evidence row per answer.</div><div>Back → <a href="#4a">4a</a> · View trace → <a href="#4c">4c</a></div>
+<div><a href="#4c">4c</a> Forge Trace</div><div style="font-family:'IBM Plex Mono',monospace">Missions</div><div>Read-only event list; anchors jump to the originating message and the delivered answer of the same turn.</div><div>Back to Launch plan · Turn 3 → <a href="#4b">4b</a></div>
+<div><a href="#4d">4d</a> Authoring &amp; evidence</div><div style="font-family:'IBM Plex Mono',monospace">Project Explorer</div><div>Editable candidate document with saved state; per-case observed outcome; Publish disabled with stated reason, enabled once all cases match (<a href="#4e">4d-ii</a>).</div><div>Case trace → <a href="#4c">4c</a> · Publish → confirmation, then <a href="#4a">4a</a></div>
+</div>
+<div style="font:400 11px/1.5 'IBM Plex Mono',monospace;color:rgba(45,33,16,.55);border-top:1px solid rgba(45,33,16,.09);padding-top:9px">Frames are 1440×960 (4d-ii is a 392px-tall state of 4d). Rail is exactly three entries in every frame. All copy, states and transitions shown are the intended build; nothing outside these frames is part of the screen.</div>
+</div>
+</section>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Product Flows v1.1 — continuous mission conversations · two flows, one workspace</span></div>
+
+<div class="dv-opts">
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Flow map for review · not application screens · light</div>
+<div class="dv-card fg-light" style="width:1360px">
+<div style="background:var(--s0);color:var(--ink);padding:26px 28px 30px;display:flex;flex-direction:column;gap:20px">
+
+<div style="display:flex;align-items:flex-start;gap:26px;flex-wrap:wrap">
+<div style="max-width:660px">
+<div style="font:600 17px 'IBM Plex Mono',monospace;letter-spacing:-.01em">Product Flows v1.1 — continuous mission conversations</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2);font-size:12px;margin-top:6px">People converse with a <b>Mission</b>, not a naked LLM. A Mission makes its reasoning and expert structure available so the answer is better than a chat reply. One app, one Project workspace; author and operator are modes of work, not two products.</div>
+</div>
+<div style="margin-left:auto;display:flex;flex-direction:column;gap:7px">
+<div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2)">Provenance key</div>
+<div style="display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;align-items:center;gap:7px;font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current</span> verified shipped in Forge Desktop today</div>
+<div style="display:flex;align-items:center;gap:7px;font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span> intended corrective experience — designed, not built</div>
+<div style="display:flex;align-items:center;gap:7px;font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--badq);border:1px solid var(--bad);color:var(--bad)">Blocked</span> needs a runtime contract before any UI</div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;align-items:stretch;padding:13px 15px;background:var(--s2);border:1px solid var(--line);border-radius:7px">
+<div style="flex:none;width:96px;display:flex;flex-direction:column;gap:4px"><div style="font:600 12px 'IBM Plex Mono',monospace">Shared start</div><div style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3)">Both flows begin identically</div></div>
+<div style="flex:1;min-width:0;display:flex;gap:9px;align-items:stretch">
+<div style="flex:1;background:var(--s1);border:1px solid var(--line);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:7px"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">S1</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current</span></div>
+<div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">Project Launcher</div>
+<div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">The only way in. A Project is the unit of context.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Create a Project, or open an existing one.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ S2 Missions</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">None — this is the root.</span></div>
+</div>
+<div style="flex:none;align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2)">→</div>
+<div style="flex:1.35;background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">S2</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current · destination + default</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed · what it offers</span></div>
+<div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">Missions is home</div>
+<div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Plain language: <b>work with a mission over time.</b> Shows the selected Project and a clear mission choice.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Automatic — a Project opens at Missions.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Two explicit, readable actions: <b>“Continue / start a mission conversation”</b> and <b>“Author a mission”</b>.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Fork ↓ left to the operator flow · ↓ right to the author flow</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Home. Rail is unchanged: <span style="font-family:'IBM Plex Mono',monospace">Project Explorer · Missions · Settings</span> — the two actions are navigation inside Missions, not a new rail entry.</span></div>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:9px;padding-bottom:7px;border-bottom:2px solid var(--ember)">
+<div style="font:600 14px 'IBM Plex Mono',monospace">1 · Operator flow</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Works with an Approved mission over many turns</div>
+</div>
+
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">1.1</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current · insufficient</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">What I see at start</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Project Launcher, then Missions as home — nothing else.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">S2.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Read the mission choice; pick one of the two actions.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 1.2</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Home.</span></div></div>
+<div style="background:var(--badq);border:1px dashed var(--bad);border-radius:7px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-style:dashed;border-color:var(--ink3);background:var(--s2)">
+<div style="display:flex;align-items:center;gap:7px"><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current, being corrected</span></div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Today a mission is <b>one-shot</b>: pick a mission → type an instruction → get a terminal run card (a completed Naive card) → open its trace. The interaction ends there. That is real and shipped, and it is <b>insufficient</b> — it is superseded by 1.3 below, which is the point of this revision.</div>
+</div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">1.2</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">How I pick a mission</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Choose what I am conversing with — never a generic LLM chat.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From 1.1 in Missions.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Select an <b>Approved</b> mission version to start a new conversation, or continue an existing mission conversation from the list.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 1.3 Mission Conversation</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ Missions.</span></div></div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--s1);border-color:var(--ember)">
+<div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ember)">Version pinning rule</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">A conversation <b>pins</b> the mission version it started with. A newer published version is used only when a person starts a new conversation, or deliberately changes version on this one. An ongoing conversation is <b>never silently changed</b>.</div>
+</div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+
+<div style="background:var(--s1);border:2px dashed var(--ember);border-radius:9px;padding:14px 15px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">1.3</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed · the centre of the product</span></div>
+<div style="font:600 15px 'IBM Plex Mono',monospace">Mission Conversation · persistent</div>
+<div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Converse with the mission over time. <b>The transcript is primary.</b></span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From 1.2 — starting a new conversation or continuing an existing one.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ Missions (the conversation is kept, not discarded).</span></div>
+<div style="border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2)">One turn · repeats</div><div style="flex:1;height:1px;background:var(--line2)"></div><div style="font:400 13px 'IBM Plex Mono',monospace;color:var(--ember)">↻</div></div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="background:var(--s2);border:1px solid var(--line);border-radius:6px;padding:9px 11px"><div style="font:600 11.5px 'IBM Plex Mono',monospace">a · I send a message</div><div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:3px">One user message is <b>one turn</b>. Sending it runs the mission for that turn.</div></div>
+<div style="background:var(--s2);border:1px solid var(--line);border-radius:6px;padding:9px 11px"><div style="font:600 11.5px 'IBM Plex Mono',monospace">b · The mission answers</div><div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:3px">A readable answer appears in the transcript, plus one <b>compact expandable evidence card</b>: participants, outcome, trace link. Collapsed by default — progressive disclosure.</div></div>
+<div style="background:var(--s2);border:1px solid var(--line);border-radius:6px;padding:9px 11px"><div style="font:600 11.5px 'IBM Plex Mono',monospace">c · I can go deeper, or just carry on</div><div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:3px"><b>“Open trace”</b> on the card → 1.4. Or send the next message: that continues the <b>same</b> conversation and creates a later turn and run. All earlier turns stay visible in the transcript.</div></div>
+</div>
+</div>
+</div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">1.4</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current · trace itself</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">Forge Trace for that one turn</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">See exactly what happened — durable exact participant evidence, read-only and chronological, not a summary.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">“Open trace” on that turn’s evidence card.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Read it.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)"><b>Must return to the same conversation at the same turn</b> — not merely to Missions. <span style="font-family:'IBM Plex Mono',monospace">Proposed:</span> today Back from a trace lands on Missions; turn-anchored return is new.</span></div></div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">1.5</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">End state — there isn’t a terminal one</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">A conversation can continue indefinitely.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Keep sending messages.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">An individual turn may be <b>Completed</b> or <b>Failed</b> without ending the conversation; a failed turn can be retried as another turn.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Starting a <b>new</b> conversation is an explicit, separate action — never automatic.</span></div></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:9px;padding-bottom:7px;border-bottom:2px solid var(--ink)">
+<div style="font:600 14px 'IBM Plex Mono',monospace">2 · Author flow</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Improves a mission through evaluation, then publishes it</div>
+</div>
+
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">2.1</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--ink2)">Current</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">What I see at start — identical</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">The same Project Launcher → Missions start as the operator.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">S2.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">None special.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 2.2</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Home.</span></div></div>
+<div style="background:var(--s1);border:1px solid var(--line);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--s2)">
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">No author-only application, no separate install, and <b>no mandatory role choice on launch</b>. Authoring is a mode of work reached by an action, so the same person can move between the two flows freely.</div>
+</div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">2.2</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">How I reach authoring</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Get to the mission definition itself.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Either the visible <b>“Author a mission”</b> action in Missions, or <span style="font-family:'IBM Plex Mono',monospace">Project Explorer → the mission asset</span>.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Open the authoring document / workspace, hosted inside Project Explorer.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 2.3</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ Project Explorer, or → Missions if entered from there.</span></div></div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--s1);border-color:var(--ember)">
+<div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ember)">Two things this is not</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">It is a <b>proposed document destination</b>, <b>not a fourth rail entry</b> — the rail stays exactly three. And Project Explorer documents are <b>read-only today</b>; making one <b>editable is Proposed</b>, not current behaviour.</div>
+</div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">2.3</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">How I author</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Produce a candidate worth proving.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From 2.2.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Open an existing mission, or create a candidate from an Approved version. Edit the candidate definition using grounded MCL concepts only: <span style="font-family:'IBM Plex Mono',monospace">mission Name(input) loop(n) = { -&gt; Expert }</span>, <span style="font-family:'IBM Plex Mono',monospace">when</span>, <span style="font-family:'IBM Plex Mono',monospace">parallel</span>, <span style="font-family:'IBM Plex Mono',monospace">debate</span>.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 2.4</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ Project Explorer. <b>A candidate is never operator-selectable.</b></span></div></div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">2.4</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">How I say what “good” means</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Make quality checkable rather than felt.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From 2.3, same document.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Define evaluation cases. Each names its input, its <b>expected success</b> and its <b>expected failure</b> — a mission that cannot fail correctly is not proven.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 2.5</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">→ 2.3.</span></div></div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;border-width:2px">
+<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">2.5</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed · repeats until satisfied</span><span style="font:400 13px 'IBM Plex Mono',monospace;color:var(--ember)">↻</span></div>
+<div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">How I prove it</div>
+<div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Turn opinion into evidence.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From 2.4.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Evaluate the candidate against the case set → read per-case outcomes and the <b>exact trace</b> for each case → revise the definition or the cases → evaluate again.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Loop back to 2.3 / 2.4 as needed, or → 2.6 when the evidence is good enough.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From a case trace → the evaluation result it came from, then → the authoring document.</span></div>
+</div>
+<div style="align-self:center;font:400 15px 'IBM Plex Mono',monospace;color:var(--ink2);padding:1px 0">↓</div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">2.6</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--emberq);border:1px solid var(--ember);color:var(--ember)">Proposed</span></div><div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">How I publish</div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">purpose</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Make a proven version reusable by operators.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">entry</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">From 2.5.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">action</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)"><b>Promote / Publish</b> the version as <b>Approved</b>.</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">transition</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">That version becomes selectable for <b>new</b> operator conversations (→ 1.2).</span></div><div style="display:flex;gap:7px"><span style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);flex:none;width:64px;text-transform:uppercase;letter-spacing:.08em">back</span><span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)"><b>Publishing does not mutate any existing pinned conversation.</b> Nobody in mid-conversation is moved onto new behaviour.</span></div></div>
+<div style="background:var(--emberq);border:1px dashed var(--ember);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;padding:11px 12px;background:var(--s2);border-color:var(--ember)">
+<div style="display:flex;align-items:center;gap:8px"><div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ember)">Shared evidence loop</div><div style="font:400 13px 'IBM Plex Mono',monospace;color:var(--ember)">↺</div></div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">The two flows are one loop, not two products. Operator turns produce real traces and outcomes; those become author learning and feed the next candidate (→ 2.3 / 2.4). Selected Project and its evidence stay in context throughout.</div>
+</div>
+</div>
+
+</div>
+
+<div style="display:flex;flex-direction:column;gap:9px;padding:14px 15px;background:var(--s1);border:1px solid var(--line);border-radius:7px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2)">Version state machine</div>
+<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;font:500 11.5px 'IBM Plex Mono',monospace">
+<span style="padding:3px 9px;border:1px solid var(--line);border-radius:5px;background:var(--s2)">Draft</span><span style="color:var(--ink2)">→</span>
+<span style="padding:3px 9px;border:1px solid var(--line);border-radius:5px;background:var(--s2)">Candidate</span><span style="color:var(--ink2)">→</span>
+<span style="padding:3px 9px;border:1px solid var(--line);border-radius:5px;background:var(--s2)">Evaluated</span><span style="color:var(--ink2)">→</span>
+<span style="padding:3px 9px;border-radius:5px;background:var(--btn);color:var(--btnink)">Approved</span><span style="color:var(--ink2)">→</span>
+<span style="padding:3px 9px;border:1px dashed var(--ink3);border-radius:5px;color:var(--ink2)">Superseded</span>
+<span style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-left:6px">Only <b>Approved</b> is operator-selectable, and only for new conversations.</span>
+</div>
+</div>
+<div style="border-top:1px solid var(--line2);padding-top:9px">
+<div style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2)">Actions requiring new typed shared <span style="font-family:'IBM Plex Mono',monospace;text-transform:none;letter-spacing:0">Application.Transport</span> contracts</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;font:500 11px 'IBM Plex Mono',monospace">
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">create / save candidate</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">define / store evaluations</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">evaluate candidate</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">list versions by state</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">promote / publish version</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">create / continue mission conversation</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">submit conversation turn</span>
+<span style="padding:3px 8px;border:1px dashed var(--ember);border-radius:5px;background:var(--emberq);color:var(--ink)">navigate trace → originating turn</span>
+</div>
+<div style="font:400 10px/1.5 'IBM Plex Mono',monospace;color:var(--ink3);margin-top:7px">Presentation owns rendering and navigation only. Every action above is a product action, so none of it may be UI-only behaviour.</div>
+</div>
+</div>
+
+<div style="display:flex;gap:10px;align-items:stretch">
+<div style="flex:1;background:var(--badq);border:1px dashed var(--bad);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:7px"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">X1</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--badq);border:1px solid var(--bad);color:var(--bad)">Blocked</span></div>
+<div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">Human suspend / resume gate</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Not product behaviour and not drawn in either flow. Blocked until the runtime suspend/resume contract exists: what suspends a turn, what persists while suspended, what a decision carries, and whether a suspended turn survives restart.</div>
+</div>
+<div style="flex:1;background:var(--badq);border:1px dashed var(--bad);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:7px"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">X2</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--badq);border:1px solid var(--bad);color:var(--bad)">Blocked · future</span></div>
+<div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">Docked source · diff · inspector</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">Rich source-anchored panes, version diffs and a docked inspector beside the trace are future capability. A trace today is one read-only chronological document, and 1.4 shows only that.</div>
+</div>
+<div style="flex:1;background:var(--s1);border:1px solid var(--line);border-radius:7px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;background:var(--s2)">
+<div style="display:flex;align-items:center;gap:7px"><span style="font:600 10px 'IBM Plex Mono',monospace;color:var(--ink2)">X3</span><span style="font:500 8.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--badq);border:1px solid var(--bad);color:var(--bad)">Blocked · out of scope</span></div>
+<div style="font:600 13px 'IBM Plex Mono',monospace;letter-spacing:-.005em">Explicitly not designed</div>
+<div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:var(--ink2)">No dashboard, no notification inbox, no standalone Runs rail, no fourth rail entry, no editable expert registry, and no MCL construct beyond the grounded four. The named Workbench theme and token boundary is preserved in light and dark.</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+<p class="dv-next">3a is a two-flow review artifact, not application screens: boxes stand for destinations, actions and transitions only. Nothing here is implementation authority.</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">MCL workbench — run-detail first, Forge tokens, light + dark</span></div>
+
+<div class="dv-opts">
+<sc-for list="{{ wb }}" as="t" hint-placeholder-count="2">
+<div class="dv-opt" id="{{ t.id }}">
+<div class="dv-olabel"><a class="dv-oid" href="#{{ t.id }}">{{ t.id }}</a>Mission workbench · primary · {{ t.mode }}</div>
+<div class="dv-card {{ t.cls }}" style="width:1440px;border-color:{{ t.edge }}">
+<div style="height:1180px;display:flex;flex-direction:column;background:var(--s0);color:var(--ink)">
+
+<div style="flex:none;padding:14px 20px 13px;background:var(--s1);border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:24px">
+<div style="min-width:0">
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">runs / <span style="color:var(--ink)">019a3f</span> / ShipDesign</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:7px">
+<div style="font:600 20px 'IBM Plex Mono',monospace;letter-spacing:-.01em">ShipDesign</div>
+<span style="padding:2px 8px;border-radius:4px;background:var(--infoq);color:var(--info);font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em">RUNNING</span>
+<span style="padding:2px 8px;border-radius:4px;background:var(--emberq);color:var(--ember);font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em">RESUMED AFTER GATE</span>
+<span style="padding:2px 8px;border-radius:4px;background:var(--warnq);color:var(--warn);font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em">2 RETRIES</span>
+</div>
+<div style="font:400 12px 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:6px">input: “Onboarding v3 — reduce first-run drop-off” · entry <span style="font-family:'IBM Plex Mono',monospace">ship_design.mcl:1</span> · started 14:22:07</div>
+</div>
+<div style="margin-left:auto;display:flex;align-items:flex-start;gap:26px">
+<div><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Elapsed</div><div style="font:500 18px 'IBM Plex Mono',monospace;margin-top:5px">4m 11s</div></div>
+<div><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Compute</div><div style="font:500 18px 'IBM Plex Mono',monospace;margin-top:5px">1m 30s</div></div>
+<div><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Suspended</div><div style="font:500 18px 'IBM Plex Mono',monospace;margin-top:5px;color:var(--ember)">2m 41s</div></div>
+<div><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Tokens</div><div style="font:500 18px 'IBM Plex Mono',monospace;margin-top:5px">145.6k</div></div>
+<div><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Cost</div><div style="font:500 18px 'IBM Plex Mono',monospace;margin-top:5px">$1.47</div></div>
+<div style="display:flex;gap:7px;padding-top:14px">
+<div style="padding:6px 10px;border:1px solid var(--line);border-radius:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:var(--ink2)">pause</div>
+<div style="padding:6px 10px;border:1px solid var(--line);border-radius:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:var(--ink2)">re-run from :3</div>
+<div style="padding:6px 11px;border-radius:6px;background:var(--btn);color:var(--btnink);font:600 11.5px 'IBM Plex Mono',monospace">diff vs 019a2e</div>
+</div>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:296px 1fr 404px">
+
+<div style="min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--s1)">
+<div style="padding:12px 16px 10px;display:flex;align-items:baseline;gap:8px;border-bottom:1px solid var(--line2)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Pipeline</div>
+<div style="margin-left:auto;font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">10 nodes · 1 skipped</div>
+</div>
+<div style="padding:10px 0;font:400 12px 'IBM Plex Mono',monospace">
+
+<div style="display:flex;align-items:center;gap:8px;padding:6px 16px"><div style="width:6px;height:6px;border-radius:2px;background:var(--info)"></div><span style="font-weight:500">ShipDesign</span><span style="margin-left:auto;color:var(--ink3);font-size:10.5px">:1</span></div>
+
+<div style="padding-left:26px;border-left:1px solid var(--line);margin-left:19px">
+<div style="display:flex;align-items:center;gap:8px;padding:6px 16px 6px 0"><div style="width:6px;height:6px;border-radius:2px;background:var(--ok)"></div><span style="font-weight:500">DesignMode</span><span style="padding:1px 5px;border-radius:3px;background:var(--s3);font-size:9.5px;color:var(--ink2)">loop(2)</span><span style="margin-left:auto;color:var(--ink3);font-size:10.5px">:2</span></div>
+
+<div style="padding-left:18px;border-left:1px solid var(--line2);margin-left:2px">
+<div style="display:flex;align-items:center;gap:7px;padding:5px 8px 5px 0;color:var(--ink2)"><span style="font-size:10.5px;color:var(--ink3)">round 1</span><span style="margin-left:auto;font-size:10.5px;color:var(--ok)">verdict 0.71</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--ok);font-size:10px">✓</span><span>Architect</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--ok);font-size:10px">✓</span><span>CriticalReviewer</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--ok);font-size:10px">✓</span><span>Synthesiser</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--ok);font-size:10px">✓</span><span>QualityJudge</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:9px 8px 5px 0;color:var(--ink2)"><span style="font-size:10.5px;color:var(--ink3)">round 2</span><span style="margin-left:auto;font-size:10.5px;color:var(--ok)">verdict 0.88</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--ok);font-size:10px">✓</span><span>Architect</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0;background:var(--emberq);border-left:2px solid var(--ember);margin-left:-2px;padding-left:8px"><span style="color:var(--warn);font-size:10px">↺</span><span style="font-weight:500">CriticalReviewer</span><span style="margin-left:auto;font-size:9.5px;color:var(--warn)">2/3</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--warn);font-size:10px">↺</span><span>Synthesiser</span><span style="margin-left:auto;font-size:9.5px;color:var(--warn)">2/2</span></div>
+<div style="display:flex;align-items:center;gap:7px;padding:4px 8px 4px 0"><span style="color:var(--ok);font-size:10px">✓</span><span>QualityJudge</span></div>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;padding:10px 16px 6px 0"><div style="width:6px;height:6px;border-radius:2px;background:var(--ember)"></div><span style="font-weight:500">HumanGate</span><span style="padding:1px 5px;border-radius:3px;background:var(--emberq);color:var(--ember);font-size:9.5px;letter-spacing:.04em">GATE</span><span style="margin-left:auto;color:var(--ink3);font-size:10.5px">:3</span></div>
+<div style="padding:0 16px 6px 14px;font:400 10.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink3)">suspended 2m 41s → approved</div>
+
+<div style="display:flex;align-items:center;gap:8px;padding:8px 16px 6px 0"><div style="width:6px;height:6px;border-radius:2px;background:var(--info)"></div><span style="color:var(--ink2)">when</span><span style="font-weight:500">approved</span><span style="color:var(--ink3)">→</span><span style="font-weight:500">Publisher</span><span style="margin-left:auto;color:var(--ink3);font-size:10.5px">:4</span></div>
+<div style="padding:0 16px 6px 14px;font:400 10.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--info)">taken · running 18.3s</div>
+
+<div style="display:flex;align-items:center;gap:8px;padding:8px 16px 6px 0"><div style="width:6px;height:6px;border-radius:2px;border:1px dashed var(--ink3);box-sizing:border-box"></div><span style="color:var(--ink2)">when</span><span style="color:var(--ink2)">rejected</span><span style="color:var(--ink2)">→</span><span style="color:var(--ink2)">Reviser</span><span style="margin-left:auto;color:var(--ink2);font-size:10.5px">:5</span></div>
+<div style="padding:0 16px 6px 14px;font:400 10.5px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink2)">skipped · condition false</div>
+</div>
+</div>
+</div>
+
+<div style="min-width:0;min-height:0;display:flex;flex-direction:column">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:none;padding:11px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:var(--s1)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Trace</div>
+<div style="display:flex;gap:5px;font:400 11px 'IBM Plex Mono',monospace">
+<span style="padding:2px 8px;border-radius:4px;background:var(--s3);color:var(--ink)">all 14</span>
+<span style="padding:2px 8px;border-radius:4px;color:var(--ink3)">experts</span>
+<span style="padding:2px 8px;border-radius:4px;color:var(--ink3)">gates 2</span>
+<span style="padding:2px 8px;border-radius:4px;color:var(--warn)">retries 4</span>
+<span style="padding:2px 8px;border-radius:4px;color:var(--ink3)">skipped 1</span>
+</div>
+<div style="margin-left:auto;font:400 11px 'IBM Plex Mono',monospace;color:var(--ink3)">anchors → ./missions</div>
+</div>
+<div style="display:grid;grid-template-columns:74px 148px 1fr 168px 62px 66px;padding:7px 18px;border-bottom:1px solid var(--line);font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);background:var(--s1)">
+<div>Time</div><div>Anchor</div><div>Node</div><div>State</div><div style="text-align:right">Dur</div><div style="text-align:right">Tok</div>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden">
+<div style="padding:7px 18px;background:var(--s2);border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ink2)"><span>ROUND 1 / 2</span><span style="color:var(--ink3);font-weight:400">DesignMode loop(2) · 33.5s · 68.3k</span><span style="margin-left:auto;color:var(--ok)">verdict 0.71 — loop continues</span></div>
+<sc-for list="{{ tr1 }}" as="r" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:74px 148px 1fr 168px 62px 66px;padding:8px 18px;border-bottom:1px solid var(--line2);align-items:center;background:{{ r.bg }}">
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink2)">{{ r.t }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ember)">{{ r.anchor }}</div>
+<div style="font:400 12.5px 'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px">{{ r.node }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:{{ r.sc }}">{{ r.state }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.dur }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.tok }}</div>
+</div>
+</sc-for>
+<div style="padding:7px 18px;background:var(--s2);border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ink2)"><span>ROUND 2 / 2</span><span style="color:var(--ink3);font-weight:400">2 experts retried · 39.4s · 73.9k</span><span style="margin-left:auto;color:var(--ok)">verdict 0.88 — loop complete</span></div>
+<sc-for list="{{ tr2 }}" as="r" hint-placeholder-count="7">
+<div style="display:grid;grid-template-columns:74px 148px 1fr 168px 62px 66px;padding:8px 18px;border-bottom:1px solid var(--line2);align-items:center;background:{{ r.bg }}">
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink2)">{{ r.t }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ember)">{{ r.anchor }}</div>
+<div style="font:400 12.5px 'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px">{{ r.node }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:{{ r.sc }}">{{ r.state }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.dur }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.tok }}</div>
+</div>
+</sc-for>
+<div style="padding:7px 18px;background:var(--emberq);border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--ember)"><span>GATE + BRANCHES</span><span style="color:var(--ink3);font-weight:400">execution left MCL and waited on a person</span></div>
+<sc-for list="{{ tr3 }}" as="r" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:74px 148px 1fr 168px 62px 66px;padding:8px 18px;border-bottom:1px solid var(--line2);align-items:center;background:{{ r.bg }}">
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink2)">{{ r.t }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ember)">{{ r.anchor }}</div>
+<div style="font:400 12.5px 'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px">{{ r.node }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:{{ r.sc }}">{{ r.state }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.dur }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.tok }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:none;height:392px;border-top:1px solid var(--line);background:var(--s1);display:flex;flex-direction:column">
+<div style="flex:none;display:flex;align-items:center;gap:0;border-bottom:1px solid var(--line);font:500 11.5px 'IBM Plex Mono',monospace">
+<div style="padding:9px 14px;color:var(--ink);border-bottom:2px solid var(--ember);margin-bottom:-1px">design_mode.mcl</div>
+<div style="padding:9px 14px;color:var(--ink3)">ship_design.mcl</div>
+<div style="margin-left:auto;padding-right:14px;font-weight:400;color:var(--ink3)">line 3 · selected from trace</div>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:10px 0;font:400 13px/1.85 'IBM Plex Mono',monospace">
+<div style="display:grid;grid-template-columns:46px 1fr">
+<div style="text-align:right;padding-right:14px;color:var(--ink3);opacity:.6">1</div><div><span style="color:var(--ember)">mission</span> <span style="color:var(--ink)">DesignMode</span>(<span style="color:var(--info)">input</span>) <span style="color:var(--ember)">loop</span>(<span style="color:var(--warn)">2</span>) = {</div>
+<div style="text-align:right;padding-right:14px;color:var(--ink3);opacity:.6">2</div><div>    <span style="color:var(--ink3)">-&gt;</span> <span style="color:var(--info)">Architect</span></div>
+<div style="text-align:right;padding-right:14px;color:var(--ember)">3</div><div style="background:var(--emberq);border-left:2px solid var(--ember);margin-left:-2px;padding-left:2px">    <span style="color:var(--ink3)">-&gt;</span> <span style="color:var(--info)">CriticalReviewer</span>   <span style="color:var(--warn);font-size:11.5px">← executing, attempt 2 of 3</span></div>
+<div style="text-align:right;padding-right:14px;color:var(--ink3);opacity:.6">4</div><div>    <span style="color:var(--ink3)">-&gt;</span> <span style="color:var(--info)">Synthesiser</span></div>
+<div style="text-align:right;padding-right:14px;color:var(--ink3);opacity:.6">5</div><div>    <span style="color:var(--ink3)">-&gt;</span> <span style="color:var(--info)">QualityJudge</span></div>
+<div style="text-align:right;padding-right:14px;color:var(--ink3);opacity:.6">6</div><div>}</div>
+</div>
+<div style="margin-top:12px;padding:10px 18px 0;border-top:1px solid var(--line2)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px">Called from ship_design.mcl</div>
+<div style="font:400 12.5px/1.75 'IBM Plex Mono',monospace;color:var(--ink2)">
+<div><span style="color:var(--ember)">mission</span> <span style="color:var(--ink)">ShipDesign</span>(<span style="color:var(--info)">input</span>) = {</div>
+<div>    <span style="color:var(--ink3)">-&gt;</span> <span style="color:var(--info)">DesignMode</span></div>
+<div>    <span style="color:var(--ink3)">-&gt;</span> <span style="border-bottom:1px dotted var(--warn)">HumanGate(reviewer)</span></div>
+<div>    <span style="border-bottom:1px dotted var(--warn)">when approved</span> <span style="color:var(--ink3)">-&gt;</span> <span style="color:var(--info)">Publisher</span></div>
+<div>}</div>
+</div>
+<sc-if value="{{ showExtrapolated }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:9px;font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:var(--warn)">Dotted = syntax extrapolated past the sample you gave me. <span style="color:var(--ink3)">Confirm gate and branch keywords against the real MCL grammar before this ships.</span></div>
+</sc-if>
+</div>
+</div>
+</div>
+</div>
+
+<div style="min-width:0;min-height:0;overflow:hidden;border-left:1px solid var(--line);background:var(--s1);display:flex;flex-direction:column">
+
+<div style="padding:13px 18px;border-bottom:1px solid var(--line)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)">Selected node</div>
+<div style="display:flex;align-items:baseline;gap:9px;margin-top:8px"><div style="font:600 15px 'IBM Plex Mono',monospace">CriticalReviewer</div><div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ember)">design_mode.mcl:3</div></div>
+<div style="font:400 11.5px 'IBM Plex Sans',sans-serif;color:var(--ink3);margin-top:4px">round 2 of 2 · resolved from ./missions/design_mode.mcl</div>
+<div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:12px;font:400 11.5px 'IBM Plex Mono',monospace">
+<span style="color:var(--ink3)">state</span><span style="color:var(--ok)">done on attempt 2</span>
+<span style="color:var(--ink3)">wall clock</span><span>13.6s</span>
+<span style="color:var(--ink3)">tokens</span><span>21.4k in / 4.7k out</span>
+<span style="color:var(--ink3)">carried in</span><span>Architect r2 output</span>
+</div>
+<div style="margin-top:12px;padding-top:11px;border-top:1px solid var(--line2)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:9px">Attempts</div>
+<div style="display:flex;flex-direction:column;gap:7px;font:400 11.5px 'IBM Plex Mono',monospace">
+<div style="display:flex;align-items:center;gap:9px"><span style="width:5px;height:5px;border-radius:50%;background:var(--bad);flex:none"></span><span style="color:var(--bad)">1 failed</span><span style="color:var(--ink3)">429 rate_limit</span><span style="margin-left:auto;color:var(--ink3)">0.4s</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:5px;height:5px;border-radius:50%;background:var(--warn);flex:none"></span><span style="color:var(--warn)">backoff</span><span style="color:var(--ink3)">policy: exponential</span><span style="margin-left:auto;color:var(--ink3)">2.0s</span></div>
+<div style="display:flex;align-items:center;gap:9px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok);flex:none"></span><span style="color:var(--ok)">2 done</span><span style="color:var(--ink3)">no further retry</span><span style="margin-left:auto;color:var(--ink3)">13.6s</span></div>
+</div>
+</div>
+</div>
+
+<div style="padding:13px 18px;border-bottom:1px solid var(--line);background:var(--s2)">
+<div style="display:flex;align-items:baseline;gap:9px"><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ember)">Human gate</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">ship_design.mcl:3</div><div style="margin-left:auto;padding:2px 7px;border-radius:4px;background:var(--emberq);color:var(--ember);font:600 9.5px 'IBM Plex Mono',monospace;letter-spacing:.05em">DECLARED IN SOURCE</div></div>
+
+<div style="margin-top:13px;display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:16px 1fr;gap:11px">
+<div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink3)"></div><div style="flex:1;width:1px;background:var(--line);min-height:24px"></div></div>
+<div style="padding-bottom:14px"><div style="font:600 11.5px 'IBM Plex Mono',monospace;color:var(--ink2)">1 · PLANNED</div><div style="font:400 11.5px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink3);margin-top:3px">Gate is part of the pipeline, not an error path. Reviewer group <span style="font-family:'IBM Plex Mono',monospace">design-council</span>, no timeout set.</div></div>
+</div>
+<div style="display:grid;grid-template-columns:16px 1fr;gap:11px">
+<div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:var(--ember)"></div><div style="flex:1;width:1px;background:var(--line);min-height:24px"></div></div>
+<div style="padding-bottom:14px"><div style="display:flex;align-items:baseline;gap:8px"><div style="font:600 11.5px 'IBM Plex Mono',monospace;color:var(--ember)">2 · SUSPENDED</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">14:23:19 → 14:26:00 · 2m 41s</div></div><div style="font:400 11.5px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink3);margin-top:3px">Run state checkpointed after round 2. No compute billed while waiting.</div></div>
+</div>
+<div style="display:grid;grid-template-columns:16px 1fr;gap:11px">
+<div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:var(--ok)"></div><div style="flex:1;width:1px;background:var(--line);min-height:24px"></div></div>
+<div style="padding-bottom:14px">
+<div style="display:flex;align-items:baseline;gap:8px"><div style="font:600 11.5px 'IBM Plex Mono',monospace;color:var(--ok)">3 · FEEDBACK</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">14:26:00 · P. Adeyemi · approved</div></div>
+<div style="margin-top:7px;padding:10px 11px;border:1px solid var(--line);border-radius:6px;background:var(--s1);font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:var(--ink2);text-wrap:pretty">“Round 2 fixed the empty-state gap. Ship it, but Publisher must use the shorter headline — the long one breaks on mobile.”</div>
+<div style="margin-top:7px;font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">feedback injected into Publisher input · 214 tokens</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:16px 1fr;gap:11px">
+<div style="display:flex;flex-direction:column;align-items:center"><div style="width:9px;height:9px;border-radius:50%;background:var(--info)"></div></div>
+<div><div style="display:flex;align-items:baseline;gap:8px"><div style="font:600 11.5px 'IBM Plex Mono',monospace;color:var(--info)">4 · RESUMED</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">14:26:00 · from checkpoint</div></div><div style="font:400 11.5px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink3);margin-top:3px">Continued at <span style="font-family:'IBM Plex Mono',monospace">:4</span> without replaying rounds 1–2.</div></div>
+</div>
+</div>
+</div>
+
+<div style="padding:13px 18px;flex:1;min-height:0;overflow:hidden">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);margin-bottom:11px">Branches</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="padding:10px 11px;border:1px solid var(--info);border-radius:6px;background:var(--infoq)">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 12px 'IBM Plex Mono',monospace"><span style="color:var(--ink2)">when</span><span style="font-weight:500">approved</span><span style="color:var(--ink3)">→ Publisher</span><span style="margin-left:auto;font-size:10px;font-weight:600;color:var(--info);letter-spacing:.05em">TAKEN</span></div>
+<div style="font:400 11px 'IBM Plex Sans',sans-serif;color:var(--ink3);margin-top:5px">running 18.3s · 3.4k tokens so far</div>
+</div>
+<div style="padding:10px 11px;border:1px dashed var(--line);border-radius:6px;background:var(--s2)">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 12px 'IBM Plex Mono',monospace"><span style="color:var(--ink2)">when</span><span style="font-weight:500;color:var(--ink2)">rejected</span><span style="color:var(--ink2)">→ Reviser</span><span style="margin-left:auto;padding:1px 6px;border-radius:3px;background:var(--s3);font-size:10px;font-weight:600;color:var(--ink);letter-spacing:.05em">SKIPPED</span></div>
+<div style="font:400 11px 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:5px">condition false at 14:26:00 · never entered</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="flex:none;height:28px;padding:0 18px;border-top:1px solid var(--line);background:var(--s2);display:flex;align-items:center;gap:16px;font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink3)">
+<span>mcl trace 019a3f</span><span>14 events</span><span>2 anchors extrapolated</span>
+<span style="margin-left:auto">⏎ step into · ⌥⏎ re-run node · ⌘G jump to gate</span>
+</div>
+
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div class="dv-opts" style="margin-top:34px">
+<sc-for list="{{ ov }}" as="t" hint-placeholder-count="2">
+<div class="dv-opt" id="{{ t.id }}">
+<div class="dv-olabel"><a class="dv-oid" href="#{{ t.id }}">{{ t.id }}</a>Overview · secondary, routes into the workbench · {{ t.mode }}</div>
+<div class="dv-card {{ t.cls }}" style="width:1180px;border-color:{{ t.edge }}">
+<div style="height:560px;display:flex;flex-direction:column;background:var(--s0);color:var(--ink)">
+<div style="flex:none;height:44px;padding:0 18px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--line);background:var(--s1)">
+<div style="font:600 12.5px 'IBM Plex Mono',monospace">mcl</div>
+<div style="display:flex;gap:2px;font:400 12px 'IBM Plex Sans',sans-serif">
+<span style="padding:5px 10px;border-radius:5px;background:var(--s3);font-weight:500">Runs</span>
+<span style="padding:5px 10px;color:var(--ink2)">Missions</span>
+<span style="padding:5px 10px;color:var(--ink2)">Experts</span>
+</div>
+<div style="margin-left:auto;font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink3)">workspace ./missions · mcl 0.9.4</div>
+</div>
+<div style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);background:var(--s1)">
+<div style="padding:13px 18px;border-right:1px solid var(--line2)"><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Runs today</div><div style="font:500 21px 'IBM Plex Mono',monospace;margin-top:5px">12</div></div>
+<div style="padding:13px 18px;border-right:1px solid var(--line2)"><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">At a human gate</div><div style="font:500 21px 'IBM Plex Mono',monospace;margin-top:5px;color:var(--ember)">1</div></div>
+<div style="padding:13px 18px;border-right:1px solid var(--line2)"><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Retried nodes</div><div style="font:500 21px 'IBM Plex Mono',monospace;margin-top:5px;color:var(--warn)">4</div></div>
+<div style="padding:13px 18px"><div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)">Spend today</div><div style="font:500 21px 'IBM Plex Mono',monospace;margin-top:5px">$18.40</div></div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 336px">
+<div style="min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line);display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:96px 1fr 132px 88px 74px 62px;padding:8px 18px;border-bottom:1px solid var(--line);font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);background:var(--s1)">
+<div>Run</div><div>Mission</div><div>State</div><div style="text-align:right">Elapsed</div><div style="text-align:right">Tok</div><div style="text-align:right">Cost</div>
+</div>
+<sc-for list="{{ runs }}" as="r" hint-placeholder-count="5">
+<div style="display:grid;grid-template-columns:96px 1fr 132px 88px 74px 62px;padding:11px 18px;border-bottom:1px solid var(--line2);align-items:center;background:{{ r.bg }}">
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink2)">{{ r.id }}</div>
+<div style="min-width:0;padding-right:12px"><div style="font:500 12.5px 'IBM Plex Mono',monospace">{{ r.mission }}</div><div style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--ink2);margin-top:2px">{{ r.anchor }}</div></div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:{{ r.sc }}">{{ r.state }}</div>
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.dur }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.tok }}</div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ r.cost }}</div>
+</div>
+</sc-for>
+</div>
+<div style="min-width:0;min-height:0;overflow:hidden;padding:14px 18px;background:var(--s1)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ember)">Waiting on you</div>
+<div style="margin-top:12px;padding:13px 14px;border:1px solid var(--ember);border-radius:7px;background:var(--emberq)">
+<div style="display:flex;align-items:baseline;gap:8px"><div style="font:600 13px 'IBM Plex Mono',monospace">019a41</div><div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ink2)">ShipDesign</div></div>
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ember);margin-top:6px">suspended at ship_design.mcl:3</div>
+<div style="font:400 12px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:7px;text-wrap:pretty">Rounds 1–2 complete, verdict 0.82. Waiting 6m 02s for design-council.</div>
+<div style="margin-top:11px;padding:7px 0;text-align:center;border-radius:6px;background:var(--btn);color:var(--btnink);font:600 12px 'IBM Plex Mono',monospace">open in workbench</div>
+</div>
+<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line2)">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px">Needs a look</div>
+<div style="display:flex;flex-direction:column;gap:9px;font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:var(--ink2)">
+<div style="display:flex;gap:9px"><span style="color:var(--warn);font-family:'IBM Plex Mono',monospace;font-size:11px;flex:none">↺ 4</span><span>CriticalReviewer hit <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">429 rate_limit</span> in 3 of today's runs.</span></div>
+<div style="display:flex;gap:9px"><span style="color:var(--ink3);font-family:'IBM Plex Mono',monospace;font-size:11px;flex:none">skip</span><span>Reviser has never been entered — <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">when rejected</span> is untested.</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div class="dv-opts" style="margin-top:34px">
+<sc-for list="{{ lib }}" as="t" hint-placeholder-count="2">
+<div class="dv-opt" id="{{ t.id }}">
+<div class="dv-olabel"><a class="dv-oid" href="#{{ t.id }}">{{ t.id }}</a>Expert library · read-only · {{ t.mode }}</div>
+<div class="dv-card {{ t.cls }}" style="width:1180px;border-color:{{ t.edge }}">
+<div style="height:510px;display:flex;flex-direction:column;background:var(--s0);color:var(--ink)">
+<div style="flex:none;padding:16px 20px;border-bottom:1px solid var(--line);background:var(--s1);display:flex;align-items:flex-end;gap:20px">
+<div style="min-width:0">
+<div style="font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)">Expert library</div>
+<div style="font:600 20px 'IBM Plex Mono',monospace;letter-spacing:-.01em;margin-top:7px">6 experts referenced by 2 missions</div>
+<div style="font:400 12px/1.55 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:6px;max-width:640px;text-wrap:pretty">Every row is derived from the <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">-&gt;</span> references found in your <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">.mcl</span> files. Names resolve to definitions that live outside MCL, so this view reports — it does not edit.</div>
+</div>
+<div style="margin-left:auto;padding:5px 10px;border:1px solid var(--line);border-radius:5px;font:600 10.5px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:var(--ink3)">READ-ONLY</div>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
+<div style="display:grid;grid-template-columns:1fr 168px 116px 92px 80px 78px;padding:8px 20px;border-bottom:1px solid var(--line);font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);background:var(--s1)">
+<div>Expert</div><div>First reference</div><div>Missions</div><div style="text-align:right">Calls</div><div style="text-align:right">Avg tok</div><div style="text-align:right">Retried</div>
+</div>
+<sc-for list="{{ experts }}" as="e" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:1fr 168px 116px 92px 80px 78px;padding:11px 20px;border-bottom:1px solid var(--line2);align-items:center;background:{{ e.bg }}">
+<div style="min-width:0;padding-right:14px"><div style="font:500 13px 'IBM Plex Mono',monospace">{{ e.name }}</div><div style="font:400 11px 'IBM Plex Sans',sans-serif;color:var(--ink2);margin-top:2px">{{ e.note }}</div></div>
+<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--ember)">{{ e.anchor }}</div>
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;color:var(--ink2)">{{ e.missions }}</div>
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ e.calls }}</div>
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;text-align:right;color:var(--ink2)">{{ e.tok }}</div>
+<div style="font:400 11.5px 'IBM Plex Mono',monospace;text-align:right;color:{{ e.rc }}">{{ e.retry }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<p class="dv-next">Try next: "confirm the gate + branch syntax — here's the real grammar" · "add a failed-run state to <a class="dv-oid" href="#2a">2a</a>" · "make the trace filter chips actually filter"</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;themeMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;both&quot;,&quot;dark only&quot;,&quot;light only&quot;],&quot;default&quot;:&quot;both&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Doc&quot;},&quot;showExtrapolated&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Doc&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const mode = this.props.themeMode ?? "both";
+    const pair = (a, b) => {
+      const dark = { id: a, cls: "fg-dark", mode: "dark", edge: "rgba(0,0,0,.55)" };
+      const light = { id: b, cls: "fg-light", mode: "light", edge: "rgba(45,33,16,.13)" };
+      if (mode === "dark only") return [dark];
+      if (mode === "light only") return [light];
+      return [dark, light];
+    };
+
+    const row = (t, anchor, node, state, sc, dur, tok, sel) => ({
+      t, anchor, node, state, sc, dur, tok, bg: sel ? "var(--emberq)" : "transparent"
+    });
+
+    const tr1 = [
+      row("14:22:07", "design_mode.mcl:2", "Architect", "done", "var(--ok)", "9.4s", "18.2k"),
+      row("14:22:16", "design_mode.mcl:3", "CriticalReviewer", "done", "var(--ok)", "12.1s", "24.6k"),
+      row("14:22:28", "design_mode.mcl:4", "Synthesiser", "done", "var(--ok)", "7.8s", "16.1k"),
+      row("14:22:36", "design_mode.mcl:5", "QualityJudge", "done · verdict 0.71", "var(--ok)", "4.2s", "9.4k")
+    ];
+
+    const tr2 = [
+      row("14:22:40", "design_mode.mcl:2", "Architect", "done", "var(--ok)", "8.1s", "19.0k"),
+      row("14:22:48", "design_mode.mcl:3", "CriticalReviewer", "failed · 429 rate_limit", "var(--bad)", "0.4s", "—"),
+      row("14:22:48", "—", "backoff", "retry 2 of 3", "var(--warn)", "2.0s", "—"),
+      row("14:22:50", "design_mode.mcl:3", "CriticalReviewer", "done on attempt 2", "var(--ok)", "13.6s", "26.1k", true),
+      row("14:23:04", "design_mode.mcl:4", "Synthesiser", "failed · tool timeout", "var(--bad)", "3.1s", "1.2k"),
+      row("14:23:07", "design_mode.mcl:4", "Synthesiser", "done on attempt 2", "var(--ok)", "6.9s", "17.4k"),
+      row("14:23:14", "design_mode.mcl:5", "QualityJudge", "done · verdict 0.88", "var(--ok)", "4.6s", "10.2k")
+    ];
+
+    const tr3 = [
+      row("14:23:19", "ship_design.mcl:3", "HumanGate(reviewer)", "suspended · awaiting", "var(--ember)", "2m 41s", "—"),
+      row("14:26:00", "ship_design.mcl:3", "HumanGate(reviewer)", "approved · resumed", "var(--ok)", "0.1s", "214"),
+      row("14:26:00", "ship_design.mcl:4", "when approved → Publisher", "running", "var(--info)", "18.3s", "3.4k"),
+      row("14:26:00", "ship_design.mcl:5", "when rejected → Reviser", "skipped · false", "var(--ink3)", "—", "—")
+    ];
+
+    const runs = [
+      ["019a41","ShipDesign","ship_design.mcl:1","suspended at gate","var(--ember)","6m 02s","98.1k","$1.02", true],
+      ["019a3f","ShipDesign","ship_design.mcl:1","running · resumed","var(--info)","4m 11s","145.6k","$1.47", false],
+      ["019a2e","ShipDesign","ship_design.mcl:1","passed","var(--ok)","3m 48s","132.0k","$1.31", false],
+      ["019a1c","DesignMode","design_mode.mcl:1","passed · 2 rounds","var(--ok)","1m 12s","61.4k","$0.58", false],
+      ["019a0d","DesignMode","design_mode.mcl:1","failed · budget","var(--bad)","2m 05s","210.7k","$2.14", false]
+    ].map(r => ({ id:r[0], mission:r[1], anchor:r[2], state:r[3], sc:r[4], dur:r[5], tok:r[6], cost:r[7], bg: r[8] ? "var(--emberq)" : "transparent" }));
+
+    const experts = [
+      ["Architect","opens each round","design_mode.mcl:2","DesignMode","8","18.6k","0 of 8","var(--ink2)","transparent"],
+      ["CriticalReviewer","critiques the round's draft","design_mode.mcl:3","DesignMode","8","25.4k","3 of 8","var(--warn)","transparent"],
+      ["Synthesiser","merges critique into the draft","design_mode.mcl:4","DesignMode","8","16.8k","1 of 8","var(--warn)","transparent"],
+      ["QualityJudge","emits the round verdict","design_mode.mcl:5","DesignMode","8","9.8k","0 of 8","var(--ink2)","transparent"],
+      ["Publisher","runs only when approved","ship_design.mcl:4","ShipDesign","3","4.1k","0 of 3","var(--ink2)","transparent"],
+      ["Reviser","never entered in any run","ship_design.mcl:5","ShipDesign","0","—","—","var(--ink2)","var(--s2)"]
+    ].map(e => ({ name:e[0], note:e[1], anchor:e[2], missions:e[3], calls:e[4], tok:e[5], retry:e[6], rc:e[7], bg:e[8] }));
+
+    return {
+      wb: pair("2a","2b"), ov: pair("2c","2d"), lib: pair("2e","2f"),
+      tr1, tr2, tr3, runs, experts,
+      showExtrapolated: this.props.showExtrapolated ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

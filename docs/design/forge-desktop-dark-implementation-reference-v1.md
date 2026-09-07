@@ -10,6 +10,20 @@ This is the durable implementation reference for the proposed Forge Desktop miss
 
 Use it with [Desktop Interaction Principles](desktop-interaction-principles.md), [UI Design System](ui-design-system.md), and the durable-conversation design before implementing. A planning agent should turn this reference into the relevant phase hub and spoke before code starts.
 
+## Visual export
+
+The rendered visual source is checked into this repository. Open the [interactive HTML export](assets/forge-desktop-dark-implementation-reference-v1/index.html) for the complete canvas, or use the individual frames below during implementation and visual acceptance.
+
+![4a — Missions and mission picker](assets/forge-desktop-dark-implementation-reference-v1/4a-missions.png)
+
+![4b — persistent Mission Conversation](assets/forge-desktop-dark-implementation-reference-v1/4b-mission-conversation.png)
+
+![4c — turn-specific Forge Trace](assets/forge-desktop-dark-implementation-reference-v1/4c-forge-trace.png)
+
+![4d — authoring and evaluation evidence](assets/forge-desktop-dark-implementation-reference-v1/4d-authoring-evidence.png)
+
+![4d-ii — publish-ready confirmation](assets/forge-desktop-dark-implementation-reference-v1/4d-ii-publish-ready.png)
+
 ## Product model
 
 There is one combined Project workspace, not separate author and operator products. Authoring and operating share Project context, mission versions, evaluation evidence, conversations, turns, and traces.
@@ -114,3 +128,5 @@ The canonical visual source remains the Claude Design project linked above. Its 
 3. 4c — Forge Trace
 4. 4d — Authoring and evaluation evidence
 5. 4d-ii — publish-enabled state and confirmation
+
+The repository export at `assets/forge-desktop-dark-implementation-reference-v1/` contains the original project HTML (`index.html`), its runtime helper (`support.js`), the source thumbnail, and the five rendered PNG frames above. The HTML is a faithful source export, including historical canvas sections; the five PNGs are the scoped section-4 implementation reference.
