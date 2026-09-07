@@ -63,6 +63,7 @@ assigned:
 |---|---|---|---|---|
 | [Task A — Core generic root-scoped continuation](phase-46.2-task-a-core-continuation.md) | F46.1-01 | Core implementation accepted; dependent durable migration remains. | Approved 2026-09-07 after independent planning and adversarial review. | Focused, full-suite, AOT, and independent-review evidence accepted; integrated default path remains pending Phase 45/46. |
 | [Task B — immutable profiles and durable hands](phase-46.2-task-b-profile-hands.md) | D46.1-01/D46.1-02 | Implementation accepted; Worker/default-Desktop integration remains. | Approved 2026-09-07 after scope correction: profile/attachment/Bob/Host facts only. | Independent review accepted; focused, full-suite, and AOT evidence recorded. Final Desktop default path remains dependent on Task C and Phase 45.3. |
+| [Task C — generic durable Worker execution and progress](phase-46.2-task-c-generic-worker-execution.md) | F46.1-02/F46.1-03 | Approved for implementation. | Approved 2026-09-07: generic immutable package, default durable execution, one Worker-owned provider binding, generic facts, and removal of compiled mission branches. | Pending separate implementation and adversarial acceptance; Desktop/TUI default-path proof remains Phase 45.3 work. |
 
 ## Step 2 done when
 
