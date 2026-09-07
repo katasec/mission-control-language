@@ -10,4 +10,6 @@ public record MissionResult(
     int Attempts = 1,
     // Set when the agent expert asked the CLIENT to run tools (Phase 42.3): the run ended at the
     // agent segment; post-agent steps did not run and will run on the final continuation instead.
-    IReadOnlyList<Microsoft.Extensions.AI.FunctionCallContent>? ToolCalls = null);
+    IReadOnlyList<Microsoft.Extensions.AI.FunctionCallContent>? ToolCalls = null,
+    PipelineFailure? Failure = null,
+    PipelineToolPause? Pause = null);

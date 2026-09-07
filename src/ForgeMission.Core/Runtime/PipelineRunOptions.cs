@@ -44,4 +44,9 @@ public record PipelineRunOptions(
     // PipelineRuntimeInstructions) — never a mission-authorable variable, and deliberately not
     // inherited by CreateChildOptions, matching Tools' own non-inheritance rule (it is meaningless
     // without Tools alongside it).
-    bool? AllowMultipleToolCalls = null);
+    bool? AllowMultipleToolCalls = null,
+    // Explicit opt-in for a root-scoped, generic tool pause. Unlike Tools, this declaration scope
+    // is retained by Core while declared child missions run; a child receives neither a dispatcher
+    // nor a capability handle. A call pauses the root run and must be resumed through
+    // PipelineRunner.ResumeAsync.
+    IList<AITool>? RootTools = null);

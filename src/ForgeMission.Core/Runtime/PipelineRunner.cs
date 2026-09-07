@@ -14,6 +14,9 @@ public class PipelineRunner
 {
     private readonly IReadOnlyDictionary<string, IExpertRunner> _runners;
     private readonly ExecutionConfig _execution;
+    private readonly HashSet<string> _locallyResumedContinuations = new(StringComparer.Ordinal);
+    private readonly object _localResumeGate = new();
+    private readonly Dictionary<string, LocalContinuationState> _localContinuations = new(StringComparer.Ordinal);
     // Optional live-retrieval backend for kind:search experts (Scout). Null ⇒ kind:search fails clearly.
     // Injected here (not on ExecutionConfig, a TOML POCO) because it is a runtime service like _runners.
     private readonly IWebSearch? _webSearch;
@@ -43,7 +46,112 @@ public class PipelineRunner
                 $"Add [providers.{key}] to forge.toml. Available: {string.Join(", ", _runners.Keys)}");
     }
 
+    private static string RootDefinitionFingerprint(Program ast, IReadOnlyDictionary<string, ExpertDefinition> experts, string rootMission)
+    {
+        var bindings = ast.Bindings.OrderBy(binding => binding.Name, StringComparer.Ordinal)
+            .Select(binding => $"L:{binding.Name}:{binding.Value}");
+        var missions = ast.Declarations.OfType<MissionDeclaration>().OrderBy(m => m.Name, StringComparer.Ordinal)
+            .Select(m => $"M:{m.Name}:{m.MaxLoops}:{string.Join(',', m.Params)}:{string.Join(';', m.Pipeline.Elements.Select(e => e.ToString()))}");
+        var definitions = experts.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => $"E:{pair.Key}:{pair.Value.Kind}:{pair.Value.Role}:{pair.Value.SystemPrompt}");
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(
+            $"{rootMission}\n{string.Join('\n', bindings)}\n{string.Join('\n', missions)}\n{string.Join('\n', definitions)}")));
+    }
+
+    private PipelineFailure? ConsumeLocalContinuation(PipelineContinuationCheckpoint checkpoint)
+    {
+        lock (_localResumeGate)
+        {
+            if (!_localContinuations.TryGetValue(checkpoint.RootExecutionId, out var state))
+                return _locallyResumedContinuations.Add(checkpoint.SessionId) ? null : PipelineFailure.DuplicateContinuation;
+            if (checkpoint.ContinuationOrdinal < state.CurrentOrdinal) return PipelineFailure.LateContinuation;
+            if (checkpoint.ContinuationOrdinal > state.CurrentOrdinal) return PipelineFailure.InvalidContinuation;
+            if (!state.Consumed.Add(checkpoint.ContinuationOrdinal)) return PipelineFailure.DuplicateContinuation;
+            return null;
+        }
+    }
+
+    private void RegisterIssuedContinuation(string rootExecutionId, int ordinal)
+    {
+        lock (_localResumeGate)
+        {
+            if (!_localContinuations.TryGetValue(rootExecutionId, out var state))
+                _localContinuations[rootExecutionId] = state = new LocalContinuationState();
+            state.CurrentOrdinal = ordinal;
+        }
+    }
+
+    private sealed class LocalContinuationState
+    {
+        public int CurrentOrdinal { get; set; }
+        public HashSet<int> Consumed { get; } = [];
+    }
+
     public async Task<MissionResult> RunAsync(
+        Program ast,
+        Dictionary<string, ExpertDefinition> experts,
+        PipelineRunOptions options,
+        CancellationToken ct = default)
+    {
+        // Root-scoped tools use a serializable frame interpreter.  It is intentionally a separate
+        // path: legacy per-call Tools, AgenticSession, and MissionChatClient keep their established
+        // caller-owned continuation semantics.
+        if (options.RootTools is { Count: > 0 } && options.MissionPath is null)
+            return await new RootScopedExecution(this, ast, experts, options, options.RootTools, ct).RunAsync();
+
+        return await RunCoreAsync(ast, experts, options, ct);
+    }
+
+    /// <summary>Resumes a root-scoped Core checkpoint after a fresh runner has been composed.</summary>
+    public async Task<MissionResult> ResumeAsync(
+        Program ast,
+        Dictionary<string, ExpertDefinition> experts,
+        PipelineResumeRequest request,
+        PipelineRunOptions observers,
+        CancellationToken ct = default)
+    {
+        if (!PipelineCheckpointCodec.TryRead(request.Continuation, out var checkpoint))
+            return new MissionResult(string.Empty, string.Empty, MissionStatus.Fail,
+                PipelineFailure.InvalidContinuation.ToString(), Failure: PipelineFailure.InvalidContinuation);
+
+        if (!string.Equals(checkpoint.ToolCall.CallId, request.Result.CallId, StringComparison.Ordinal)
+            || !checkpoint.ToolDeclarations.Any(tool => string.Equals(tool.Name, checkpoint.ToolCall.Name, StringComparison.Ordinal)))
+            return new MissionResult(checkpoint.RootMissionName, string.Empty, MissionStatus.Fail,
+                PipelineFailure.InvalidContinuation.ToString(), Failure: PipelineFailure.InvalidContinuation);
+
+        if (!string.Equals(checkpoint.RootToolScopeFingerprint,
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(
+                    string.Join("\n", checkpoint.ToolDeclarations.Select(d => $"{d.Name}\u001f{d.Description}\u001f{d.InputSchema.GetRawText()}"))))),
+                StringComparison.Ordinal))
+            return new MissionResult(checkpoint.RootMissionName, string.Empty, MissionStatus.Fail,
+                PipelineFailure.InvalidContinuation.ToString(), Failure: PipelineFailure.InvalidContinuation);
+
+        if (!string.Equals(checkpoint.RootDefinitionFingerprint,
+                RootDefinitionFingerprint(ast, experts, checkpoint.RootMissionName), StringComparison.Ordinal)
+            || checkpoint.Frames.Count == 0
+            || !string.Equals(checkpoint.Frames[0].MissionName, checkpoint.RootMissionName, StringComparison.Ordinal))
+            return new MissionResult(checkpoint.RootMissionName, string.Empty, MissionStatus.Fail,
+                PipelineFailure.InvalidContinuation.ToString(), Failure: PipelineFailure.InvalidContinuation);
+
+        var localFailure = ConsumeLocalContinuation(checkpoint);
+        if (localFailure is not null)
+            return new MissionResult(checkpoint.RootMissionName, string.Empty, MissionStatus.Fail,
+                localFailure.Value.ToString(), Failure: localFailure);
+
+        if (checkpoint.Frames.Count == 0
+            || !ast.Declarations.OfType<MissionDeclaration>().Any(m => m.Name == checkpoint.RootMissionName)
+            || checkpoint.Frames.Any(frame => !ast.Declarations.OfType<MissionDeclaration>()
+                .Any(mission => mission.Name == frame.MissionName)))
+            return new MissionResult(checkpoint.RootMissionName, string.Empty, MissionStatus.Fail,
+                PipelineFailure.InvalidContinuation.ToString(), Failure: PipelineFailure.InvalidContinuation);
+
+        var resumedTools = checkpoint.ToolDeclarations.Select(tool => (AITool)new Katasec.AITools.DeclaredTool(
+            tool.Name, tool.Description, tool.InputSchema)).ToList();
+        return await new RootScopedExecution(this, ast, experts, observers with { MissionName = checkpoint.RootMissionName }, resumedTools, ct,
+            checkpoint, request.Result).RunAsync();
+    }
+
+    private async Task<MissionResult> RunCoreAsync(
         Program ast,
         Dictionary<string, ExpertDefinition> experts,
         PipelineRunOptions options,
@@ -117,7 +225,6 @@ public class PipelineRunner
                         await psw.WriteLineAsync($"→ parallel {{ {pnames} }}");
                     }
 
-                    // Snapshot context so all parallel steps read the same base state.
                     var snapshot = new Dictionary<string, object>(context, StringComparer.Ordinal);
                     using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                     var tasks = parallel.Steps
@@ -133,17 +240,13 @@ public class PipelineRunner
                     }
                     catch (OperationCanceledException) when (!ct.IsCancellationRequested)
                     {
-                        // A step failed and cancelled siblings — collect completed results.
                         foreach (var ptask in tasks.Where(t => t.IsCompletedSuccessfully))
                         {
                             var (_, pkey, pout) = ptask.Result;
                             context[pkey] = pout;
                         }
-                        failReason = tasks
-                            .Where(t => t.IsCompletedSuccessfully)
-                            .Select(t => t.Result.failReason)
-                            .FirstOrDefault(r => r is not null)
-                            ?? "a parallel step was cancelled";
+                        failReason = tasks.Where(t => t.IsCompletedSuccessfully).Select(t => t.Result.failReason)
+                            .FirstOrDefault(r => r is not null) ?? "a parallel step was cancelled";
                     }
 
                     if (options.StepWriter is { } psw2)
@@ -177,29 +280,29 @@ public class PipelineRunner
                         if (anyGuardedStepMatched) continue;
                     }
 
-                    failReason = await ExecuteStepAsync(step, ast, experts, context, options, missionPath, attempt, ct);
-                    if (failReason is not null) break;
-
-                    // Agent expert asked for a tool (42.3): return the tool_use to the client NOW.
-                    // Post-agent steps (verify/judge) run on the final continuation — the request
-                    // whose agent segment terminates without a tool call — never on this one.
-                    if (context.TryGetValue("tool_calls", out var tc)
-                        && tc is IReadOnlyList<FunctionCallContent> toolCalls)
+                    while (true)
                     {
-                        // Emitted after that step's completed fact (already awaited inside
-                        // ExecuteStepAsync above), once for the non-empty tool-call set that makes
-                        // the pipeline return early (Phase 43.16 Task 3).
-                        if (options.OnTrace is { } onToolRequested
-                            && experts.TryGetValue(step.ExpertName, out var toolExpert))
+                        failReason = await ExecuteStepAsync(step, ast, experts, context, options, missionPath, attempt, ct);
+                        if (failReason is not null) break;
+
+                        if (context.TryGetValue("tool_calls", out var tc)
+                            && tc is IReadOnlyList<FunctionCallContent> toolCalls)
                         {
-                            await onToolRequested(new PipelineToolRequested(
-                                options.MissionName, missionPath, step.ExpertName, toolExpert.Kind,
-                                attempt, ToPipelineToolCalls(toolCalls)), ct);
+                            if (options.OnTrace is { } onToolRequested
+                                && experts.TryGetValue(step.ExpertName, out var toolExpert))
+                            {
+                                await onToolRequested(new PipelineToolRequested(
+                                    options.MissionName, missionPath, step.ExpertName, toolExpert.Kind,
+                                    attempt, ToPipelineToolCalls(toolCalls)), ct);
+                            }
+
+                            var toolText = context.TryGetValue("output", out var o) ? o?.ToString() ?? string.Empty : string.Empty;
+                            return new MissionResult(options.MissionName, toolText, MissionStatus.Pass, null, attempt, toolCalls);
                         }
 
-                        var toolText = context.TryGetValue("output", out var o) ? o?.ToString() ?? string.Empty : string.Empty;
-                        return new MissionResult(options.MissionName, toolText, MissionStatus.Pass, null, attempt, toolCalls);
+                        break;
                     }
+                    if (failReason is not null) break;
                 }
             }
 
@@ -500,6 +603,41 @@ public class PipelineRunner
             call.Name,
             ToolArgumentsToJsonElement(call.Arguments))).ToList();
 
+    private static IReadOnlyList<PipelineProviderMessage> ProviderMessages(Dictionary<string, object> context)
+    {
+        if (context.TryGetValue(PipelineToolContinuationInstructions.ProviderToolTurn, out var raw)
+            && raw is PipelineProviderToolTurn { CheckpointMessages: { } messages })
+            return messages;
+
+        var userText = context.TryGetValue("output", out var output) ? output?.ToString() ?? "Begin." : "Begin.";
+        return [new PipelineProviderMessage("user", userText)];
+    }
+
+    private static ChatMessage ToChatMessage(PipelineProviderMessage message) => message.Role switch
+    {
+        "system" => new ChatMessage(ChatRole.System, message.Text),
+        "assistant" => new ChatMessage(ChatRole.Assistant, message.Text),
+        _ => new ChatMessage(ChatRole.User, message.Text),
+    };
+
+    private static IDictionary<string, object?> JsonToArguments(JsonElement arguments)
+    {
+        if (arguments.ValueKind != JsonValueKind.Object) return new Dictionary<string, object?>();
+        return arguments.EnumerateObject().ToDictionary(property => property.Name,
+            property => JsonArgumentValue(property.Value), StringComparer.Ordinal);
+    }
+
+    private static object? JsonArgumentValue(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        JsonValueKind.Number when value.TryGetInt64(out var integer) => integer,
+        JsonValueKind.Number => value.GetDouble(),
+        JsonValueKind.Null => null,
+        _ => value.Clone(),
+    };
+
     private static JsonElement ToolArgumentsToJsonElement(IDictionary<string, object?>? arguments)
     {
         var buffer = new ArrayBufferWriter<byte>();
@@ -586,6 +724,370 @@ public class PipelineRunner
         catch (JsonException)
         {
             return new StepEnvelope(raw);
+        }
+    }
+
+    // This interpreter is deliberately small and explicit.  A root-scoped call is a durable
+    // boundary, so it cannot borrow the normal recursive call stack or a live Task while waiting
+    // for a tool result.  Every parent activation and eligible-parallel branch is represented here.
+    private sealed class RootScopedExecution
+    {
+        private const int CheckpointVersion = 1;
+        private readonly PipelineRunner _owner;
+        private readonly Program _ast;
+        private readonly Dictionary<string, ExpertDefinition> _experts;
+        private readonly PipelineRunOptions _options;
+        private readonly IList<AITool> _tools;
+        private readonly CancellationToken _ct;
+        private readonly List<Frame> _frames;
+        private readonly PipelineContinuationCheckpoint? _resumeCheckpoint;
+        private readonly PipelineToolResult? _resumeResult;
+        private readonly IReadOnlyList<PipelineToolDeclaration> _declarations;
+        private readonly string _fingerprint;
+        private readonly string _definitionFingerprint;
+        private readonly IReadOnlyDictionary<string, string> _rootInputs;
+        private readonly string _rootExecutionId;
+        private int _nextContinuationOrdinal;
+
+        public RootScopedExecution(PipelineRunner owner, Program ast, Dictionary<string, ExpertDefinition> experts,
+            PipelineRunOptions options, IList<AITool> tools, CancellationToken ct,
+            PipelineContinuationCheckpoint? resumeCheckpoint = null, PipelineToolResult? resumeResult = null)
+        {
+            _owner = owner; _ast = ast; _experts = experts; _options = options; _tools = tools; _ct = ct;
+            _resumeCheckpoint = resumeCheckpoint; _resumeResult = resumeResult;
+            _declarations = tools.Select(ToDeclaration).ToList();
+            _fingerprint = ScopeFingerprint(_declarations);
+            _definitionFingerprint = DefinitionFingerprint(ast, experts, options.MissionName);
+            _rootInputs = resumeCheckpoint?.RootInputs ?? RootInputs(options.MissionName, options.Vars);
+            _rootExecutionId = resumeCheckpoint?.RootExecutionId ?? Guid.NewGuid().ToString("N");
+            _nextContinuationOrdinal = resumeCheckpoint?.ContinuationOrdinal ?? 0;
+            _frames = resumeCheckpoint is null ? [NewFrame(options.MissionName, _rootInputs)]
+                : resumeCheckpoint.Frames.Select(RestoreFrame).ToList();
+        }
+
+        public async Task<MissionResult> RunAsync()
+        {
+            try
+            {
+                while (_frames.Count > 0)
+                {
+                    _ct.ThrowIfCancellationRequested();
+                    var frame = _frames[^1];
+                    var mission = Mission(frame.MissionName);
+                    if (frame.ElementIndex >= mission.Pipeline.Elements.Count)
+                    {
+                        var text = Text(frame.Context, "output");
+                        _frames.RemoveAt(_frames.Count - 1);
+                        if (_frames.Count == 0)
+                            return new MissionResult(_options.MissionName, text, MissionStatus.Pass, Attempts: frame.Attempt);
+                        CompleteChild(_frames[^1], frame, text);
+                        continue;
+                    }
+
+                    var element = mission.Pipeline.Elements[frame.ElementIndex];
+                    if (element is ParallelElement parallel)
+                    {
+                        var paused = await AdvanceParallelAsync(frame, parallel);
+                        if (paused is not null) return paused;
+                        continue;
+                    }
+
+                    var step = ((StepElement)element).Step;
+                    if (!ShouldRun(step, frame)) { frame.ElementIndex++; continue; }
+                    var pausedResult = await AdvanceStepAsync(frame, step, false);
+                    if (pausedResult is not null) return pausedResult;
+                }
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception) { return Failure(PipelineFailure.ProviderFailed); }
+            return Failure(PipelineFailure.InvalidContinuation);
+        }
+
+        private async Task<MissionResult?> AdvanceParallelAsync(Frame parent, ParallelElement parallel)
+        {
+            if (!parallel.Steps.Any(CanReachRootToolAgent))
+            {
+                var snapshot = parent.Context.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal);
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+                var results = await Task.WhenAll(parallel.Steps.Select(step => _owner.ExecuteParallelStepAsync(
+                    step, _ast, _experts, snapshot, _options, Path(), parent.Attempt, linked)));
+                foreach (var (_, key, output) in results) parent.Context[key] = output;
+                var failure = results.Select(result => result.failReason).FirstOrDefault(reason => reason is not null);
+                if (failure is not null)
+                    return new MissionResult(_options.MissionName, Text(parent.Context, "output"), MissionStatus.Fail, failure, parent.Attempt);
+                parent.ElementIndex++;
+                return null;
+            }
+            parent.ParallelBranchIndex ??= 0;
+            parent.CompletedParallelOutputs ??= new Dictionary<string, string>(StringComparer.Ordinal);
+            if (parent.ParallelBranchIndex >= parallel.Steps.Count)
+            {
+                foreach (var (key, value) in parent.CompletedParallelOutputs)
+                    parent.Context[key] = value;
+                parent.ParallelBranchIndex = null;
+                parent.CompletedParallelOutputs = null;
+                parent.ElementIndex++;
+                return null;
+            }
+
+            // Root tools make eligible branches deterministic.  Non-agent branches can still run
+            // immediately, but an eligible child mission gets its own durable frame before it runs.
+            var step = parallel.Steps[parent.ParallelBranchIndex.Value];
+            var childMission = FindMission(step.ExpertName);
+            if (childMission is null)
+            {
+                var paused = await AdvanceStepAsync(parent, step, true);
+                if (paused is not null) return paused;
+                parent.CompletedParallelOutputs[$"{step.ExpertName}.output"] = Text(parent.Context, "output");
+                parent.ParallelBranchIndex++;
+                return null;
+            }
+
+            var child = NewFrame(childMission.Name, Bindings(step, parent.Context));
+            RecordEnvironmentBindings(child, step);
+            child.ReturnsToParallel = true;
+            _frames.Add(child);
+            return null;
+        }
+
+        private async Task<MissionResult?> AdvanceStepAsync(Frame frame, Step step, bool parallelDirect)
+        {
+            var childMission = FindMission(step.ExpertName);
+            if (childMission is not null)
+            {
+                frame.ElementIndex++;
+                _frames.Add(NewFrame(childMission.Name, Bindings(step, frame.Context)));
+                RecordEnvironmentBindings(_frames[^1], step);
+                return null;
+            }
+            if (!_experts.TryGetValue(step.ExpertName, out var expert))
+                throw new InvalidOperationException($"Expert '{step.ExpertName}' not found. Run 'forge validate' to check your mission before running.");
+
+            foreach (var (key, value) in Bindings(step, frame.Context)) frame.Context[key] = value;
+            RecordEnvironmentBindings(frame, step);
+            var context = frame.Context.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal);
+            if (expert.IsAgent) context["tools"] = _tools;
+            if (frame.ResumePausedAgent)
+            {
+                if (_resumeCheckpoint is null || _resumeResult is null) return Failure(PipelineFailure.InvalidContinuation);
+                context[PipelineToolContinuationInstructions.ProviderToolTurn] = ProviderTurn(_resumeCheckpoint, _resumeResult);
+                frame.ResumePausedAgent = false;
+            }
+
+            await Trace(new PipelineStepStarted(_options.MissionName, Path(), step.ExpertName, expert.Kind, frame.Attempt));
+            StepEnvelope envelope;
+            try { envelope = await RunnerFor(expert, step).RunAsync(expert, context, _ct); }
+            catch (Exception ex) when (ex is not OperationCanceledException) { return Failure(PipelineFailure.ProviderFailed); }
+            await Trace(new PipelineStepCompleted(_options.MissionName, Path(), step.ExpertName, expert.Kind, frame.Attempt, envelope));
+            frame.Context["output"] = envelope.Text;
+
+            if (envelope.Status == "fail")
+            {
+                var mission = Mission(frame.MissionName);
+                if (frame.Attempt < mission.MaxLoops)
+                {
+                    frame.LoopFeedback = frame.Context.TryGetValue("feedback", out var feedback) ? feedback : null;
+                    frame.Attempt++;
+                    frame.ElementIndex = 0;
+                    frame.AnyGuardedStepMatched = false;
+                    frame.Context.Clear();
+                    foreach (var (key, value) in frame.InitialContext) frame.Context[key] = value;
+                    frame.Context["attempt"] = frame.Attempt.ToString();
+                    frame.Context["max_loops"] = mission.MaxLoops.ToString();
+                    if (frame.LoopFeedback is not null) frame.Context["feedback"] = frame.LoopFeedback;
+                    return null;
+                }
+                return new MissionResult(_options.MissionName, envelope.Text, MissionStatus.Fail,
+                    $"[{step.ExpertName}] {envelope.Reason ?? "step failed"}", frame.Attempt);
+            }
+
+            if (context.TryGetValue("tool_calls", out var raw) && raw is IReadOnlyList<FunctionCallContent> calls)
+            {
+                if (calls.Count != 1) return Failure(PipelineFailure.MultipleOutstandingTools);
+                var call = ToPipelineToolCalls(calls).Single();
+                if (!_declarations.Any(d => d.Name == call.Name)) return Failure(PipelineFailure.UnsupportedTool);
+                frame.ResumePausedAgent = true;
+                await Trace(new PipelineRootToolCheckpointed(_options.MissionName, Path(), step.ExpertName, expert.Kind, frame.Attempt, call));
+                return Pause(frame, step.ExpertName, call, context);
+            }
+
+            if (!parallelDirect) frame.ElementIndex++;
+            return null;
+        }
+
+        private MissionResult Pause(Frame frame, string expertName, PipelineToolCall call, Dictionary<string, object> context)
+        {
+            var messages = ProviderMessages(context);
+            var snapshot = _frames.Select(frame => frame.ToCheckpoint()).ToList();
+            var ordinal = ++_nextContinuationOrdinal;
+            _owner.RegisterIssuedContinuation(_rootExecutionId, ordinal);
+            var checkpoint = new PipelineContinuationCheckpoint(CheckpointVersion, Guid.NewGuid().ToString("N"), _rootExecutionId, ordinal,
+                _options.MissionName, _definitionFingerprint, _fingerprint, _declarations, Path(), expertName,
+                frame.Attempt, call, _rootInputs, messages, snapshot);
+            var payload = JsonSerializer.Serialize(checkpoint, PipelineContinuationJsonContext.Default.PipelineContinuationCheckpoint);
+            var pause = new PipelineToolPause(_options.MissionName, Path(), expertName, frame.Attempt, call,
+                new PipelineContinuation(CheckpointVersion, payload));
+            return new MissionResult(_options.MissionName, string.Empty, MissionStatus.Pass, Attempts: frame.Attempt, Pause: pause);
+        }
+
+        private void CompleteChild(Frame parent, Frame child, string text)
+        {
+            if (child.ReturnsToParallel)
+            {
+                parent.CompletedParallelOutputs![$"{child.MissionName}.output"] = text;
+                parent.ParallelBranchIndex++;
+            }
+            else parent.Context["output"] = text;
+        }
+
+        private Frame NewFrame(string missionName, IReadOnlyDictionary<string, string>? vars)
+        {
+            var context = InitialContext(missionName, vars);
+            var mission = Mission(missionName);
+            context["attempt"] = "1"; context["max_loops"] = mission.MaxLoops.ToString();
+            return new Frame(missionName, 0, 1, context, new Dictionary<string, string>(context, StringComparer.Ordinal));
+        }
+
+        private Frame RestoreFrame(PipelineExecutionFrame checkpoint)
+        {
+            var initial = InitialContext(checkpoint.MissionName,
+                checkpoint.MissionName == _options.MissionName ? _rootInputs : null);
+            var context = new Dictionary<string, string>(initial, StringComparer.Ordinal);
+            foreach (var (key, value) in checkpoint.RuntimeDelta) context[key] = value;
+            foreach (var (key, binding) in checkpoint.EnvironmentBindings)
+                context[key] = ContextBuilder.ResolveEnv(binding.VariableName, binding.DefaultValue, key);
+            return Frame.FromCheckpoint(checkpoint, context, initial);
+        }
+
+        private Dictionary<string, string> InitialContext(string missionName, IReadOnlyDictionary<string, string>? vars)
+        {
+            var allowed = RootInputs(missionName, vars);
+            return StringSnapshot(ContextBuilder.Seed(_ast, allowed, null));
+        }
+
+        private IReadOnlyDictionary<string, string> RootInputs(string missionName, IReadOnlyDictionary<string, string>? vars)
+        {
+            var parameters = Mission(missionName).Params;
+            return (vars ?? new Dictionary<string, string>()).Where(pair => parameters.Contains(pair.Key, StringComparer.Ordinal)
+                && !IsSensitiveKey(pair.Key)).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+        }
+
+        private static bool IsSensitiveKey(string key) => key.Equals("apiKey", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("provider", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("endpoint", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("model", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("credential", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("secret", StringComparison.OrdinalIgnoreCase)
+            || key.Contains("token", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("authorization", StringComparison.OrdinalIgnoreCase);
+
+        private static string DefinitionFingerprint(Program ast, IReadOnlyDictionary<string, ExpertDefinition> experts, string rootMission)
+        {
+            var bindings = ast.Bindings.OrderBy(binding => binding.Name, StringComparer.Ordinal)
+                .Select(binding => $"L:{binding.Name}:{binding.Value}");
+            var missions = ast.Declarations.OfType<MissionDeclaration>().OrderBy(m => m.Name, StringComparer.Ordinal)
+                .Select(m => $"M:{m.Name}:{m.MaxLoops}:{string.Join(',', m.Params)}:{string.Join(';', m.Pipeline.Elements.Select(e => e.ToString()))}");
+            var definitions = experts.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                .Select(pair => $"E:{pair.Key}:{pair.Value.Kind}:{pair.Value.Role}:{pair.Value.SystemPrompt}");
+            return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(
+                $"{rootMission}\n{string.Join('\n', bindings)}\n{string.Join('\n', missions)}\n{string.Join('\n', definitions)}")));
+        }
+
+        private Dictionary<string, string> Bindings(Step step, Dictionary<string, string> context)
+        {
+            var objects = context.ToDictionary(pair => pair.Key, pair => (object)pair.Value, StringComparer.Ordinal);
+            return step.Context.ToDictionary(binding => binding.Key,
+                binding => ContextBuilder.ResolveBindingValue(binding.Value, objects), StringComparer.Ordinal);
+        }
+
+        private static void RecordEnvironmentBindings(Frame frame, Step step)
+        {
+            foreach (var binding in step.Context)
+            {
+                if (binding.Value is EnvBindingValue environment)
+                    frame.EnvironmentBindings[binding.Key] = new PipelineEnvironmentBinding(environment.VarName, environment.DefaultValue);
+            }
+        }
+
+        private IExpertRunner RunnerFor(ExpertDefinition expert, Step step) => expert.Kind switch
+        {
+            "http" => new HttpExpertRunner(), "rule" => new RuleExpertRunner(), "onnx" => new OnnxExpertRunner(),
+            "json_extract" => new JsonExtractExpertRunner(), "exec" => new ExecExpertRunner(_owner._execution.DefaultTimeout),
+            "search" => new SearchExpertRunner(_owner._webSearch ?? throw new InvalidOperationException("kind: search requires a configured IWebSearch (Scout). Pass one to the PipelineRunner constructor."), _options.OnSearchProgress),
+            _ => _owner.ResolveRunner(step.Using),
+        };
+
+        private MissionDeclaration Mission(string name) => FindMission(name)
+            ?? throw new InvalidOperationException($"Mission '{name}' not found in .mcl file");
+        private MissionDeclaration? FindMission(string name) => _ast.Declarations.OfType<MissionDeclaration>().FirstOrDefault(m => m.Name == name);
+        private bool CanReachRootToolAgent(Step step)
+        {
+            if (_experts.TryGetValue(step.ExpertName, out var expert)) return expert.IsAgent;
+            var mission = FindMission(step.ExpertName);
+            return mission is not null && mission.Pipeline.Elements.Any(element => element switch
+            {
+                StepElement child => CanReachRootToolAgent(child.Step),
+                ParallelElement child => child.Steps.Any(CanReachRootToolAgent),
+                _ => false,
+            });
+        }
+        private IReadOnlyList<string> Path() => _frames.Select(frame => frame.MissionName).ToList();
+        private async Task Trace(PipelineTraceEvent trace)
+        { if (_options.OnTrace is not null) await _options.OnTrace(trace, _ct); }
+        private MissionResult Failure(PipelineFailure failure) => new(_options.MissionName, string.Empty, MissionStatus.Fail, failure.ToString(), Failure: failure);
+        private static string Text(IReadOnlyDictionary<string, string> context, string key) => context.TryGetValue(key, out var value) ? value : string.Empty;
+        private static bool ShouldRun(Step step, Frame frame)
+        {
+            var matched = step.When switch
+            {
+                null => true,
+                StringEqualsWhen equals => frame.Context.TryGetValue(equals.Key, out var value) && value == equals.Value,
+                NumericCompareWhen numeric => frame.Context.TryGetValue(numeric.Key, out var raw) && TryParseDouble(raw, out var value) && EvaluateNumericOp(value, numeric.Op, numeric.Threshold),
+                ElseWhen => !frame.AnyGuardedStepMatched,
+                _ => false,
+            };
+            if (matched && step.When is StringEqualsWhen or NumericCompareWhen)
+                frame.AnyGuardedStepMatched = true;
+            return matched;
+        }
+        private static PipelineToolDeclaration ToDeclaration(AITool tool)
+        {
+            if (tool is not AIFunction function) throw new InvalidOperationException($"Root tool '{tool.Name}' must be an AIFunction declaration.");
+            return new PipelineToolDeclaration(function.Name, function.Description ?? string.Empty, function.JsonSchema.Clone());
+        }
+        private static string ScopeFingerprint(IEnumerable<PipelineToolDeclaration> declarations) => Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", declarations.Select(d => $"{d.Name}\u001f{d.Description}\u001f{d.InputSchema.GetRawText()}")))));
+        private static PipelineProviderToolTurn ProviderTurn(PipelineContinuationCheckpoint checkpoint, PipelineToolResult result) => new(
+            checkpoint.ProviderMessages.Select(ToChatMessage).ToList(), new FunctionCallContent(checkpoint.ToolCall.CallId,
+                checkpoint.ToolCall.Name, JsonToArguments(checkpoint.ToolCall.Arguments)), result, checkpoint.ProviderMessages);
+
+        private sealed class Frame(string missionName, int elementIndex, int attempt, Dictionary<string, string> context,
+            Dictionary<string, string> initialContext)
+        {
+            public string MissionName { get; } = missionName;
+            public int ElementIndex { get; set; } = elementIndex;
+            public int Attempt { get; set; } = attempt;
+            public Dictionary<string, string> Context { get; } = context;
+            public Dictionary<string, string> InitialContext { get; } = initialContext;
+            public Dictionary<string, PipelineEnvironmentBinding> EnvironmentBindings { get; set; } = new(StringComparer.Ordinal);
+            public string? LoopFeedback { get; set; }
+            public bool AnyGuardedStepMatched { get; set; }
+            public bool ResumePausedAgent { get; set; }
+            public int? ParallelBranchIndex { get; set; }
+            public Dictionary<string, string>? CompletedParallelOutputs { get; set; }
+            public bool ReturnsToParallel { get; set; }
+            public PipelineExecutionFrame ToCheckpoint() => new(MissionName, ElementIndex, Attempt,
+                Context.Where(pair => !InitialContext.TryGetValue(pair.Key, out var initial) || initial != pair.Value)
+                    .Where(pair => !EnvironmentBindings.ContainsKey(pair.Key))
+                    .Where(pair => !IsSensitiveKey(pair.Key))
+                    .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal),
+                EnvironmentBindings, LoopFeedback, AnyGuardedStepMatched, ResumePausedAgent,
+                ParallelBranchIndex, CompletedParallelOutputs, ReturnsToParallel);
+            public static Frame FromCheckpoint(PipelineExecutionFrame checkpoint, Dictionary<string, string> context,
+                Dictionary<string, string> initial) => new(checkpoint.MissionName,
+                checkpoint.ElementIndex, checkpoint.Attempt, context, initial)
+            { ResumePausedAgent = checkpoint.ResumePausedAgent, ParallelBranchIndex = checkpoint.ParallelBranchIndex,
+              CompletedParallelOutputs = checkpoint.CompletedParallelOutputs is null ? null : new Dictionary<string, string>(checkpoint.CompletedParallelOutputs, StringComparer.Ordinal), EnvironmentBindings = new Dictionary<string, PipelineEnvironmentBinding>(checkpoint.EnvironmentBindings, StringComparer.Ordinal), ReturnsToParallel = checkpoint.ReturnsToParallel, LoopFeedback = checkpoint.LoopFeedback, AnyGuardedStepMatched = checkpoint.AnyGuardedStepMatched };
         }
     }
 }

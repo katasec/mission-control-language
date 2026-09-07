@@ -61,7 +61,7 @@ assigned:
 
 | Task | Finding | Status | Supervisor approval | Acceptance evidence |
 |---|---|---|---|---|
-| [Task A — Core generic root-scoped continuation](phase-46.2-task-a-core-continuation.md) | F46.1-01 | Plan approved; implementation has not started. | Approved 2026-09-07 after independent planning and adversarial review. | Pending implementation, independent verification, and later default-path acceptance. |
+| [Task A — Core generic root-scoped continuation](phase-46.2-task-a-core-continuation.md) | F46.1-01 | Core implementation accepted; dependent durable migration remains. | Approved 2026-09-07 after independent planning and adversarial review. | Focused, full-suite, AOT, and independent-review evidence accepted; integrated default path remains pending Phase 45/46. |
 
 ## Step 2 done when
 

@@ -33,7 +33,7 @@ A change belongs here only if it advances provider-neutral MCL execution, resolu
 
 ## Use these pieces
 
-- [`PipelineRunner`](Runtime/PipelineRunner.cs) executes a parsed mission with resolved experts and named runners.
+- [`PipelineRunner`](Runtime/PipelineRunner.cs) executes a parsed mission with resolved experts and named runners; its root-scoped continuation seam pauses and resumes declared nested tool requests without holding capability authority.
 - [`IExpertRunner`](Runtime/IExpertRunner.cs) is the only runner abstraction used by the pipeline.
 - [`ExpertResolver`](Resolution/ExpertResolver.cs), [`ExpertLoader`](Experts/ExpertLoader.cs), and [`ForgeTomlReader`](Manifest/ForgeTomlReader.cs) provide the resolution inputs.
 - [`PipelineRunnerTests`](../ForgeMission.Tests/Runtime/PipelineRunnerTests.cs) and [`CapabilityDispatcherTests`](../ForgeMission.Tests/Tools/CapabilityDispatcherTests.cs) cover execution and capability contracts.

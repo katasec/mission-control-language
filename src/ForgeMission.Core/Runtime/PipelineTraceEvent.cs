@@ -62,5 +62,16 @@ public sealed record PipelineToolRequested(
     IReadOnlyList<PipelineToolCall> Calls)
     : PipelineTraceEvent(MissionName, MissionPath, ExpertName, ExpertKind, Attempt);
 
+/// <summary>Core checkpoint provenance for a root-scoped pause. The opaque payload and any durable
+/// correlation remain outside the trace; this fact identifies only the paused declared call.</summary>
+public sealed record PipelineRootToolCheckpointed(
+    string MissionName,
+    IReadOnlyList<string> MissionPath,
+    string ExpertName,
+    string ExpertKind,
+    int Attempt,
+    PipelineToolCall Call)
+    : PipelineTraceEvent(MissionName, MissionPath, ExpertName, ExpertKind, Attempt);
+
 /// <summary>Closed tool-call shape — carries no provider SDK object.</summary>
 public sealed record PipelineToolCall(string CallId, string Name, JsonElement Arguments);

@@ -58,6 +58,18 @@ Respond with this exact JSON format and nothing else — status must always be "
         CancellationToken ct = default)
     {
         var (messages, systemPrompt) = BuildMessages(expert, context);
+        if (context.TryGetValue(PipelineToolContinuationInstructions.ProviderToolTurn, out var pending)
+            && pending is PipelineProviderToolTurn providerTurn
+            && providerTurn.Result is not null)
+        {
+            context.Remove(PipelineToolContinuationInstructions.ProviderToolTurn);
+            messages = [new ChatMessage(ChatRole.System, systemPrompt)];
+            messages.AddRange(providerTurn.OriginalMessages.Where(message => message.Role != ChatRole.System));
+            messages.Add(new ChatMessage(ChatRole.Assistant, [providerTurn.FunctionCall]));
+            messages.Add(new ChatMessage(ChatRole.Tool,
+                [new FunctionResultContent(providerTurn.FunctionCall.CallId,
+                    ToolResultText(providerTurn.Result))]));
+        }
         // Non-generic call with an explicit closed schema (see _stepFormat) rather than
         // GetResponseAsync<StepEnvelope>, whose derived schema is rejected by Anthropic. Deserialize
         // via the source-gen context (AOT-safe); fall back to the raw text if the model returns
@@ -96,6 +108,13 @@ Respond with this exact JSON format and nothing else — status must always be "
         if (toolCalls is { Count: > 0 })
         {
             context["tool_calls"] = toolCalls;
+            // Retain only the provider-visible first turn and exact call. PipelineRunner replaces
+            // the result after the external owner correlates it; neither object enters the opaque
+            // continuation payload.
+            if (toolCalls.Count == 1)
+                context[PipelineToolContinuationInstructions.ProviderToolTurn] =
+                    new PipelineProviderToolTurn(messages.Where(message => message.Role != ChatRole.System).ToList(), toolCalls[0],
+                        CheckpointMessages: ToCheckpointMessages(messages.Where(message => message.Role != ChatRole.System)));
             var text = response.Messages.LastOrDefault()?.Contents
                 .OfType<TextContent>().Select(c => c.Text).FirstOrDefault() ?? string.Empty;
             return new StepEnvelope(text);
@@ -116,12 +135,30 @@ Respond with this exact JSON format and nothing else — status must always be "
         return expert.IsJudge ? envelope : envelope with { Status = "pass", Reason = null };
     }
 
+    private static string ToolResultText(PipelineToolResult result) => result.Status switch
+    {
+        PipelineToolResultStatus.Succeeded => result.Content ?? string.Empty,
+        _ => $"ERROR [{result.Status}]: {result.Content ?? "Tool did not complete."}",
+    };
+
     public async IAsyncEnumerable<string> StreamAsync(
         ExpertDefinition expert,
         Dictionary<string, object> context,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         var (messages, systemPrompt) = BuildMessages(expert, context);
+        if (context.TryGetValue(PipelineToolContinuationInstructions.ProviderToolTurn, out var pending)
+            && pending is PipelineProviderToolTurn providerTurn
+            && providerTurn.Result is not null)
+        {
+            context.Remove(PipelineToolContinuationInstructions.ProviderToolTurn);
+            messages = [new ChatMessage(ChatRole.System, systemPrompt)];
+            messages.AddRange(providerTurn.OriginalMessages.Where(message => message.Role != ChatRole.System));
+            messages.Add(new ChatMessage(ChatRole.Assistant, [providerTurn.FunctionCall]));
+            messages.Add(new ChatMessage(ChatRole.Tool,
+                [new FunctionResultContent(providerTurn.FunctionCall.CallId,
+                    ToolResultText(providerTurn.Result))]));
+        }
 
         var options = new ChatOptions();
         IList<AITool>? tools = null;
@@ -160,7 +197,13 @@ Respond with this exact JSON format and nothing else — status must always be "
         var response = ChatResponseExtensions.ToChatResponse(updates);
         var toolCalls = response.Messages.LastOrDefault()?.Contents.OfType<FunctionCallContent>().ToList();
         if (toolCalls is { Count: > 0 })
+        {
             context["tool_calls"] = toolCalls;
+            if (toolCalls.Count == 1)
+                context[PipelineToolContinuationInstructions.ProviderToolTurn] =
+                    new PipelineProviderToolTurn(messages.Where(message => message.Role != ChatRole.System).ToList(), toolCalls[0],
+                        CheckpointMessages: ToCheckpointMessages(messages.Where(message => message.Role != ChatRole.System)));
+        }
     }
 
     private static (List<ChatMessage> messages, string systemPrompt) BuildMessages(
@@ -183,4 +226,7 @@ Respond with this exact JSON format and nothing else — status must always be "
             : "Begin.";
         return ([new(ChatRole.System, systemPrompt), new(ChatRole.User, userMessage)], systemPrompt);
     }
+
+    private static IReadOnlyList<PipelineProviderMessage> ToCheckpointMessages(IEnumerable<ChatMessage> messages)
+        => messages.Select(message => new PipelineProviderMessage(message.Role.ToString().ToLowerInvariant(), message.Text)).ToList();
 }
