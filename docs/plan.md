@@ -8,14 +8,14 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Complete the evidence-led inventory in [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) before approving further implementation that could depend on its findings. |
+| **NEXT STEP** | Have a separate supervising Codex agent adversarially review the evidence-led [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) inventory before approving implementation that could depend on its findings. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Design complete — held pending the Phase 46 ownership inventory. |
-| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Step 1 inventory is next; no remediation implementation is approved yet. |
+| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Inventory complete — pending separate supervisory review; no remediation implementation is approved. |
 
 ## Design docs
 

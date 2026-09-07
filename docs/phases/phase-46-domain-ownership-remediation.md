@@ -1,7 +1,7 @@
 # Phase 46 — domain-ownership remediation
 
-> **Status:** Step 1 inventory is active. No source behavior changes are authorized by this phase
-> until an individual inventory finding has a Codex-supervisor-approved implementation plan.
+> **Status:** Step 1 inventory is complete and awaiting separate Codex-supervisor review. No source
+> behavior changes are authorized until an individual finding has an approved implementation plan.
 
 ## Why this phase exists
 
