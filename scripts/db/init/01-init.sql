@@ -14,3 +14,11 @@ GRANT CONNECT ON DATABASE forge_rooms TO forge_app;
 -- The app role applies EF migrations in dev, so it needs CREATE on the schema;
 -- it still cannot create databases or roles.
 GRANT USAGE, CREATE ON SCHEMA public TO forge_app;
+
+CREATE DATABASE authbilling_db OWNER postgres;
+
+GRANT CONNECT ON DATABASE authbilling_db TO forge_app;
+
+\connect authbilling_db
+
+GRANT USAGE, CREATE ON SCHEMA public TO forge_app;

@@ -15,7 +15,7 @@ Read this spoke first. Then read only:
 
 1. `scripts/db/init/01-init.sql` — the local PostgreSQL initialization owner;
 2. `scripts/dev-up.sh` and `docker-compose.yml` — the local lifecycle and its named data volume;
-3. `src/ForgeUI/Program.cs` and `src/ForgeMission.AuthBilling/AuthBillingSchema.cs` — the existing
+3. `src/ForgeUI/Program.cs` and `src/ForgeMission.Billing/AuthBillingSchema.cs` — the existing
    application schema bootstrap and connection derivation; and
 4. [Security Architecture](../design/security-architecture.md) and
    [Engineering Philosophy](../design/engineering-philosophy.md) — the required design gates.
