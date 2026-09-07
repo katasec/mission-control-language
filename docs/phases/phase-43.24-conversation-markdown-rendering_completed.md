@@ -62,7 +62,7 @@ check can never shadow an inertness check.
 | Check | Observation |
 |---|---|
 | Solution build | `dotnet build src/ForgeMission.slnx` — 0 errors, 0 warnings. |
-| Full test suite | `dotnet test src/ForgeMission.slnx` — 916 passed, 0 failed, 11 skipped (pre-existing live-provider skips). `ConversationTranscriptViewTests` is 17 of those. |
+| Full test suite | `dotnet test src/ForgeMission.slnx` — 917 passed, 0 failed, 11 skipped (pre-existing live-provider skips). `ConversationTranscriptViewTests` is 17 of those. |
 | Desktop publish | `make desktop-publish` succeeded. 15 warning lines, 5 distinct — all the known macOS Homebrew OpenSSL/Brotli `minimum-OS` linker warnings across 3 native links. **Zero ILC/IL/trim warnings and zero Markdig-related warnings**; the WASM trim concern raised at plan time did not materialise. |
 | Publish closure | `dist/forge-desktop/wwwroot/_framework/Markdig.yudascw6lc.wasm` present (492,821 b served). The served `ForgeMission.Presentation.c6p35kctr3.wasm` contains `ConversationMarkdownRenderer` and `InertLinkRenderer` and no longer contains `convo-participant-text`. |
 
@@ -147,15 +147,16 @@ remaining step is therefore one operator action in the already-running window: o
 "View run trace", and confirm the Proposer card renders the structured proposal rather than raw
 Markdown. **Until that is recorded, Task 1's default-path row is FAIL-by-absence, not PASS.**
 
-### Open observations for design review
+### Review observations — both closed
 
 1. **Heading size collapses at short viewports.** `--font-size-lead` and `--font-size-body` are
    both `clamp(15px, …, …)` and converge at the bottom of the height range: at 568 px tall both
    compute to `15px`, so a Markdown heading is distinguished from body text only by weight 600 and
    its margins. At 820 px tall they are 18.87 px vs 18.32 px; at 1024 px, 22.00 px vs 21.00 px. The
    heading still reads as a heading, but the size step the after reference shows (17 px vs 15 px)
-   does not survive at the compact corner. Flagged rather than changed, since the token was an
-   explicit design resolution.
+   does not survive at the compact corner. **Closed in review: `--font-size-lead` stays exactly as
+   shipped and this decision is not reopened.** Recorded here so a later reader meets the measured
+   numbers rather than rediscovering them.
 2. **Task-list bullet — resolved in review, not open.** Markdig emits
    `<li class="task-list-item">` and keeps the `<ul>` marker, so every checkbox sat beside a
    redundant bullet. A local `li.task-list-item { list-style: none; }` now hides it, keyed off
