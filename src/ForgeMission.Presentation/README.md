@@ -34,6 +34,10 @@ A change belongs here only if it advances rendering, navigation, focus, or view 
 - [`Program`](Program.cs) installs the scoped [`IApplicationChannel`](../ForgeMission.Application.Transport/IApplicationChannel.cs).
 - [`Home`](Pages/Home.razor) is the routed application surface and subscribes to application events.
 - [`WorkbenchView`](Components/WorkbenchView.cs) names presentation-only view states.
+- [`ConversationTranscriptView`](Components/ConversationTranscriptView.razor) renders one durable
+  conversation transcript projection — user, participant, activity, approval, tool and status rows.
+- [`ConversationMarkdownRenderer`](Components/ConversationMarkdownRenderer.cs) is the **sole** Markdig
+  seam: a fixed, inert pipeline used only for participant messages.
 
 ## Communicates with
 
@@ -51,6 +55,12 @@ flowchart LR
 - A Project session starts an event subscription and is stopped before a replacement session takes over.
 - Presentation renders durable conversation/run facts returned by the Application; it does not synthesize them.
 - Static assets are served by Application Host, not by the native Host.
+- `ConversationMarkdownRenderer` owns no transport, conversation facts, navigation, or media. Its
+  pipeline is fixed (pipe tables and task lists only, never `UseAdvancedExtensions()`), links and
+  images render as escaped text, and `DisableHtml()` must stay the **last** builder call — on
+  Markdig 1.3.2 any `Use<>()` after it silently restores the raw-HTML parsers. It is the only source
+  whose output may bypass Razor encoding; every other transcript row stays Razor-encoded. See
+  [43.24](../../docs/phases/phase-43.24-conversation-markdown-rendering.md).
 
 ## Related documentation
 

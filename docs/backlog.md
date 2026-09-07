@@ -34,6 +34,7 @@
 | Item | Status / pointer |
 |------|------------------|
 | [Phase 43.17 Tasks 4–5 — bounded event delivery and progressive rendering](phases/phase-43.17-responsive-desktop.md#task-4--bounded-frame-friendly-event-delivery) | Deferred by operator direction on 2026-08-17 after Task 3. Reselect explicitly before implementation. |
+| [Phase 43 — remaining Desktop follow-ups](phases/phase-43-forge-desktop.md#current-routing) | Phase 43's selected work is verified complete (2026-09-07) and its row now sits in [plan_completed.md](plan_completed.md). Its hub's routing table remains the single list of what is still deferred under that number — mission catalog/OCI, rich workbench, human gates. Reselect one explicitly before implementation. |
 
 ## External conditions and future design candidates
 

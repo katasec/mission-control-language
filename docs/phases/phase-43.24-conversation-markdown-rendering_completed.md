@@ -18,6 +18,7 @@ fetch, or navigation from response content.
 | `src/ForgeMission.Presentation/Components/ConversationMarkdownRenderer.cs` | New internal seam: one fixed pipeline, `Render(string?) -> MarkupString`, private `InertLinkExtension` + `InertLinkRenderer`. |
 | `src/ForgeMission.Presentation/Components/ConversationTranscriptView.razor` | `ParticipantMessage` branch only: `<p class="convo-participant-text">` → `<div class="convo-participant-markdown">`; token-only local styles added, the old raw-text rule retired. |
 | `src/ForgeMission.Tests/Presentation/ConversationTranscriptViewTests.cs` | Existing selector updated; six matrix/contract tests added. |
+| `src/ForgeMission.Presentation/README.md` | Component map gains `ConversationTranscriptView` and `ConversationMarkdownRenderer`; the constraints list records that the renderer owns no transport, conversation facts, navigation, or media, and that `DisableHtml()` must stay last. |
 
 Inline `code` uses `padding: 0 var(--space-1)` — a zero reset plus tokenized inline padding, so the
 component carries no literal length.
