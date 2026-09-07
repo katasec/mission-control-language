@@ -61,7 +61,7 @@ assigned:
 
 | Task | Finding | Status | Supervisor approval | Acceptance evidence |
 |---|---|---|---|---|
-| — | — | No implementation task may be created until Phase 46.1 has an approved finding. | — | — |
+| [Task A — Core generic root-scoped continuation](phase-46.2-task-a-core-continuation.md) | F46.1-01 | Plan approved; implementation has not started. | Approved 2026-09-07 after independent planning and adversarial review. | Pending implementation, independent verification, and later default-path acceptance. |
 
 ## Step 2 done when
 
