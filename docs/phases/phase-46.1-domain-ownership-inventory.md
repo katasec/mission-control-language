@@ -1,6 +1,7 @@
 # Phase 46.1 — repository-wide ownership inventory and end state
 
-> **Status:** inventory and self-adversarial pass complete; awaiting independent supervising-Codex review.
+> **Status:** inventory, self-adversarial pass, and operator-approved generic mission-to-hands
+> design closure complete; awaiting independent supervising-Codex review.
 > Parent: [Phase 46 — domain-ownership remediation](phase-46-domain-ownership-remediation.md).
 > This is documentation-only work: build, test, and default-path acceptance are **N/A** until a
 > proposed remediation changes executable behavior.
@@ -82,14 +83,14 @@ records, including components with no defect.
 
 | ID | Slice | Status | Current owner/path | Proposed end state | Next decision |
 |---|---|---|---|---|---|
-| F46.1-01 | Generic execution / Worker | **Confirmed defect — P0, design-blocked** | Nested `ToolCalls` are dropped; child options deliberately withhold tools and continuation state; Janus hand-runs `Negotiate` then `Implement`. | Core owns an explicit generic nested tool delegation/pause/continuation semantic; Worker invokes a declaration once. | Q46.1-02 must lock delegated capability scope and resumable state before any Core edit. |
-| F46.1-02 | Durable Worker catalog | **Confirmed defect — P0, dependency-blocked** | Resolver, startup config, image, and processor select `Janus`/`Naive` concrete executors. | Application/Host use Phase 45's immutable verified launch snapshot; Worker executes its supplied declaration through one generic path. | Depends on existing Phase 45 launch-snapshot contract and F46.1-01; no registry/framework substitute. |
-| F46.1-03 | Durable progress contract | **Confirmed defect — P0, dependency-blocked** | Janus mapper and contract participants encode particular experts/approval; Naive emits its own path. | Additive generic trace facts carry declared mission path/expert/attempt/tool/status data; historic Janus events remain readable. | Lock the additive wire/projection contract with Phase 45 before implementation. |
+| F46.1-01 | Generic execution / Worker | **Confirmed defect — P0, design complete** | Nested `ToolCalls` are dropped; child options deliberately withhold tools and continuation state; Janus hand-runs `Negotiate` then `Implement`. | Core owns a generic root-scoped tool pause and opaque continuation; a child request never inherits Bob or a tool dispatcher. Worker invokes a declaration once. | Ready for a separately supervised Core-only plan; D46.1-02 fixes the capability/continuation contract. |
+| F46.1-02 | Durable Worker catalog | **Confirmed defect — P0, dependency-blocked** | Resolver, startup config, image, and processor select `Janus`/`Naive` concrete executors. | Application/Host use Phase 45's immutable verified launch/profile snapshot; Worker executes supplied declaration and generic tool facts through one path. | Depends on F46.1-01 and Phase 45's profile, durable-tool, and bounded-Bob implementation; no registry/framework substitute. |
+| F46.1-03 | Durable progress contract | **Confirmed defect — P0, dependency-blocked** | Janus mapper and contract participants encode particular experts/approval; Naive emits its own path. | Additive generic trace/tool facts carry mission path, expert, attempt, correlation, ordered status and result; historic Janus events remain readable. | Depends on D46.1-02's durable request/result contract and the F46.1-02 migration. |
 | F46.1-05 | Project manifest model | **Duplicate/dead code — P2, deferred** | Local/OCI mission-origin and snapshot fields have no production consumer; Phase 45 explicitly excludes OCI/catalog installation. | Remove through a compatible Application/Projects migration after Phase 45's version model lands, unless a later approved OCI design needs it. | Do not retain speculative origin fields by default. |
 | R46.1-01 | Legacy conversation API | **Retained deliberate boundary, with limit** | Legacy `/conversations` accepts Janus and its adapter validates Janus tool delivery through Bob. | Retain its external protocol/failure containment only; its downstream Worker branch remains F46.1-02. | Do not broaden the wire; review retirement only with an explicit client migration decision. |
 | R46.1-02 | CLI and Runner | **Retained / positive evidence** | Both parse, resolve, and execute declarations through `PipelineRunner` without Janus/Naive branches. | Preserve as the generic reference path. | Use its seams when designing F46.1-01/02. |
 | D46.1-01 | Durable Project admission | **Retained deliberate boundary / locked Type-1 dependency** | Current shared two-name allow-list is the present boundary; Phase 45's `MissionVersionLaunch` is the already-designed replacement chain. | Application owns version content; Host verifies/stores bounded content; Worker receives verified value only, with no path, credential, provider selection, or capability. | Phase 45 implementation is a prerequisite, not a new Phase 46 architecture decision. |
-| Q46.1-02 | Nested tool delegation | **Unresolved design question — Type 1** | Core intentionally does not inherit `Tools`, `StartAtAgent`, or continuation callbacks into a declared child mission. | One Core-owned continuation model must make permitted nested tool delegation explicit and preserve least privilege. | Supervisor must choose the supported delegation/resume rule; blocks F46.1-01. |
+| D46.1-02 | Generic mission-to-hands | **Locked Type-1 design / implementation pending** | Core intentionally isolates child tools/continuations; current durable tool handling is Janus-specific. | Version declares one immutable profile; Application grants one live conversation attachment to Bob; Host owns ordered request/result facts; Worker carries generic facts; Core resumes only the root scope. | Implement F46.1-01 first, then Phase 45's profile and durable-tool path; no runtime escalation, implicit inheritance, or Worker-side transcript. |
 | Q46.1-03 | Hosted answer selection | **Unresolved design question — Type 2** | Runner's `Answerer` convention displays the pre-verifier answer; MCL has no declared step-output selector. | Either document the convention as built-in content policy or design an explicit generic result-selection semantic. | Does not block generic execution or F46.1-01–03; do not delete the behavior blindly. |
 
 Detailed evidence and the proposed, unapproved dispositions are in the
@@ -108,19 +109,19 @@ Detailed evidence and the proposed, unapproved dispositions are in the
 | Docker | Narrow Docker operations. | CLI and Orchestration. | None |
 | Runner.Contracts | Run/progress/artifact/usage wire. | Runner, API, ForgeUI. | Q46.1-03 consumer contract |
 | Runner | Stateless load/execute/artifact/cache host. | Core/ChatClients/Serve; API/ForgeUI callers. | Q46.1-03, R46.1-02 |
-| Application | Project, submission, session, conversation, history owners. | Host, Client Runtime, Conversation adapter. | D46.1-01, F46.1-05 |
-| Application.Transport | Typed action/event/JSON/channel vocabulary. | Presentation and Application Host. | None |
+| Application | Project, submission, session, conversation, history owners. | Host, Client Runtime, Conversation adapter. | D46.1-01, D46.1-02, F46.1-05 |
+| Application.Transport | Typed action/event/JSON/channel vocabulary. | Presentation and Application Host. | D46.1-02 |
 | Application.Host | Loopback HTTP/SSE composition. | Desktop starts it; Presentation calls it. | None |
-| ClientRuntime | Scoped local capability policy/execution. | Application only. | None; Worker has no local-capability path. |
-| Presentation | Rendering/navigation/view state. | Application Transport. | F46.1-03 consumer |
+| ClientRuntime | Scoped local capability policy/execution. | Application only. | D46.1-02; Worker has no local-capability path. |
+| Presentation | Rendering/navigation/view state. | Application Transport. | D46.1-02, F46.1-03 consumer |
 | Desktop | User-launched process supervision. | Starts Application Host/native Host. | None |
 | Desktop.Contracts | Native-host and Supervisor pipe contract. | Desktop Host/Photino/Supervisor. | None |
 | Desktop.Host | Disposable native-window process. | Desktop Contracts/Photino. | None |
 | Desktop.Photino | Photino native-host implementation. | Desktop.Host. | None |
 | Orchestration | Runtime endpoint/readiness/owned adapters. | Desktop/Application Host startup. | None; Vanilla is deployment default, not Core selection. |
-| Conversations.Contracts | Versioned durable messages/projections. | Application Transport, Host, Worker, Presentation. | F46.1-03, D46.1-01 |
-| ConversationHost | Sole durable command/event/store owner. | Application adapter and Worker queue boundary. | R46.1-01, D46.1-01 |
-| ConversationWorker | Restartable reasoning/progress publisher. | Conversation queues; Core/ChatClients. | F46.1-01, F46.1-02, F46.1-03 |
+| Conversations.Contracts | Versioned durable messages/projections. | Application Transport, Host, Worker, Presentation. | F46.1-03, D46.1-01, D46.1-02 |
+| ConversationHost | Sole durable command/event/store owner. | Application adapter and Worker queue boundary. | R46.1-01, D46.1-01, D46.1-02 |
+| ConversationWorker | Restartable reasoning/progress publisher. | Conversation queues; Core/ChatClients. | F46.1-01, F46.1-02, F46.1-03, D46.1-02 |
 | ConversationPresentation | Presentation-only activity rendering. | Presentation. | F46.1-03 consumer |
 | API | Platform-key ingress and settlement composition. | Billing and Runner. | None; static catalog is edge policy. |
 | Billing | Accounts, keys, pricing, ledgers. | API/ForgeUI. | None |
@@ -137,9 +138,9 @@ only relevant execution divergence.
 
 | Order | Candidate disposition | Dependency / gate |
 |---|---|---|
-| 1 | Supervising design decision for nested tool delegation (Q46.1-02). | Lock tool grant inheritance, opaque continuation state, resume target, trace ordering, and failure proof; no code task yet. |
-| 2 | Implement Phase 45's immutable launch-snapshot chain (D46.1-01). | Existing Type-1 design: Project content → Host verification/Blob → verified Worker value, with no capability/path/credential grant. |
-| 3 | Replace Worker name resolver/concrete executors and persona mapper (F46.1-01–03). | Depends on 1–2; retain Worker outbox and Host store ownership; use additive generic trace facts. |
+| 1 | Plan Core's generic root-scoped pause/continuation (F46.1-01). | D46.1-02 is locked; the independently supervised plan must not grant a child Bob authority or absorb any durable/profile work. |
+| 2 | Implement Phase 45's immutable launch/profile and durable tool path (D46.1-01/D46.1-02). | Project version → Application attachment → bounded Bob; Host verifies/orders; Worker receives verified value and generic facts only. |
+| 3 | Replace Worker name resolver/concrete executors and persona mapper (F46.1-02/03). | Depends on 1–2; retain Worker outbox and Host store ownership; use additive generic trace/tool facts. |
 | 4 | Resolve hosted answer selection (Q46.1-03). | Type-2 content/response decision; do not delete the current convention without a visible-result contract. |
 | 5 | Remove inactive Project mission origins (F46.1-05). | After Phase 45 migration unless a separately approved OCI design needs them. |
 
@@ -147,28 +148,27 @@ only relevant execution divergence.
 
 | Criterion | Result | Evidence / gap |
 |---|---|---|
-| Single owner | **FAIL** | F46.1-01 and F46.1-03 give Core/Janus and Worker/persona mapping competing ownership; D46.1-01 supplies the Phase 45 launch-content owner chain. |
-| Simple composition | **FAIL** | F46.1-02's resolver/executors are a second declaration interpreter; the existing Worker outbox and Host store boundary remain narrow. |
-| Failure locality | **FAIL** | Worker recovery and legacy tool-report failure are explicit, but Q46.1-02 lacks one Core-owned capability scope/resume/failure contract. |
-| Extension path | **FAIL** for durable Worker; **PASS** for CLI/Runner | Durable additions require code/image branches; CLI/Runner execute declarations generically. |
-| Progressive disclosure and narrowness | **FAIL** | The readable Janus executor still combines topology, approval capture, continuation reconstruction, and progress adaptation. |
-| No disguised complexity | **PASS, conditional** | The proposed path reuses Core, Phase 45 snapshots, queue/outbox and additive contracts; it rejects a registry, dispatcher, framework, wrapper stack, and settings mode. |
-| Evidence and implementation readiness | **FAIL** | Q46.1-02 is Type 1; no implementation card is ready. |
+| Single owner | **PASS (locked design); FAIL (current source)** | Application grants the profile-bound attachment; Bob enforces/executes; Host orders durable facts; Worker reasons/publishes; Core pauses/resumes. Janus and persona ownership remain until F46.1-01–03 land. |
+| Simple composition | **PASS (locked design); FAIL (current source)** | The one typed path composes Transport, Application, Bob, Host, Worker, and Core. The current named resolver/executors remain a second interpreter. |
+| Failure locality | **PASS (locked design); FAIL (current source)** | D46.1-02 names correlation, `AwaitingHands`, typed denial/cancel/failure, and recovery owners. Current Janus continuation has no such generic contract. |
+| Extension path | **PASS (locked design); FAIL (current durable Worker)** | A new version declares one fixed profile and generic MCL/expert content; no catalog image branch or executor. Current durable additions still require branches. |
+| Progressive disclosure and narrowness | **PASS (locked design); FAIL (current source)** | Each boundary has one concern; Core receives an opaque pause, not a transcript. The Janus executor still combines topology, continuation, and projection. |
+| No disguised complexity | **PASS** | Three fixed profiles, one attachment, one outstanding request, and existing queue/outbox boundaries replace no behavior with a registry, dispatcher, wrapper stack, dial, or hidden Full Access mode. |
+| Evidence and implementation readiness | **PASS (design); FAIL (implementation)** | The contract, negative cases, and default-path observation are named. F46.1-01 is now plan-ready but remains unapproved; the code gaps F46.1-01–03 remain. |
 
-Detailed second-pass evidence, including F46.1-04's reclassification as Q46.1-03 and the resolved former
-durable-admission question, is in the [evidence record](phase-46.1-domain-ownership-inventory_evidence.md#adversarial-second-pass-result).
-Remaining gaps: Q46.1-02 (Type 1 nested tool delegation/continuation) and Q46.1-03 (Type 2 hosted
-answer selection).
+The [evidence record](phase-46.1-domain-ownership-inventory_evidence.md#d461-02--locked-generic-mission-to-hands-contract)
+holds D46.1-02's exact protocol, failure and proof records. Q46.1-03 remains the only independent
+Type-2 design question; the remaining gaps in F46.1-01–03 are implementation, not architecture.
 
 ### Step 1 done when
 
 The inventory **disproves** the premise for the durable Worker: `Janus`/`Naive` select concrete
 executors, and Janus manually splits its declared pipeline because Core deliberately isolates child
-tools/continuations and drops child tool pauses. It confirms generic execution for CLI and hosted
-Runner, subject to the non-blocking hosted-output convention in Q46.1-03. A separate supervising
-Codex agent must adversarially review these proposed dispositions before any work is approved.
+tools/continuations and drops child pauses. D46.1-02 now locks the generic root-scoped replacement.
+It confirms generic execution for CLI and hosted Runner, subject to the non-blocking hosted-output
+convention in Q46.1-03. A separate supervising Codex agent must adversarially review this design
+closure before any work is approved.
 
-There is **no implementation-ready Phase 46.2 task yet**. The former F46.1-01 candidate is too
-small only superficially: Q46.1-02 must first decide generic nested tool delegation and resume
-semantics. After that decision, the smallest implementation card is Core-only F46.1-01; it must
-not absorb Worker catalog, durable-wire, or Phase 45 launch-snapshot work.
+The first implementation-ready **candidate** is Core-only F46.1-01: generic root-scoped
+pause/result/opaque-continuation semantics. It is not approved and must not absorb profile
+admission, Bob enforcement, Host/Worker durable facts, catalog migration, or legacy routing.

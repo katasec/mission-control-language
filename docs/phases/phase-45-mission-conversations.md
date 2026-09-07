@@ -19,6 +19,7 @@ transcript store, runtime, nor presentation-owned product state.
 |---|---|
 | Workspace and navigation | One Project workspace serves operators and authors. The persistent rail remains exactly **Project Explorer**, **Missions**, and **Settings**. Opening a Project selects Missions. Authoring is a Project Explorer document, not a fourth rail entry. |
 | Version lifecycle | A mission version moves only `Draft → Candidate → Evaluated → Approved → Superseded`. A candidate is editable; editing invalidates prior evaluations. An evaluated version is immutable. Publishing approves it and supersedes the prior approved version for *new* conversations only. |
+| Mission hands profile | Every mission version declares exactly one immutable `NoHands`, `ProjectWorkspace`, or `ProjectWorkspaceAndTerminal` profile; changing it creates a new version. The profile is a bounded request, not authority. Creation of a Mission Conversation shows the exact profile and records the operator's acceptance; there are no per-tool checkboxes, profile narrowing controls, runtime escalation, network, credential, publishing/push, arbitrary-path or Full Access profile. |
 | Operator selection | Missions lists persistent Mission Conversations and starts a new one. The picker exposes Approved versions only. Starting stores an immutable version launch snapshot and pins it to that conversation. Candidate, Evaluated, Draft, and Superseded versions cannot be selected by an operator. |
 | Turns and failure | One submitted user message creates one turn. The transcript is primary. Each answer has compact evidence and a turn-specific trace link. A failed turn preserves its message, failure and partial trace; it does not end the conversation. Retry creates a new attempt of that turn. Cancel is an explicit durable request/outcome, never implied rollback. |
 | Trace | Forge Trace is chronological exact evidence for one turn. It has origin `(conversation_id, turn_id, attempt_id)` and returns to that exact transcript anchor, never a generic Missions route. An evaluation trace also retains `(mission_version_id, evaluation_case_id)`. |
@@ -40,7 +41,7 @@ currently unsupported status of `debate {}`.
 | MCL execution and progress | `ForgeMission.ConversationWorker`; it receives an immutable launch snapshot and never reads a Project manifest or local path. |
 | HTTP/SSE and source-generated JSON | `ForgeMission.Application.Host`; every route remains one concrete typed action. |
 | Layout, navigation, form/focus state and responsive rendering | `ForgeMission.Presentation`; it does not calculate lifecycle, mutate Project state, or invent a transcript. |
-| Local capabilities | `ForgeMission.ClientRuntime` only. Version/evaluation commands declare no new capability. |
+| Mission-to-hands grant and local capabilities | Application approves and binds a new/reconnected conversation/session to one fresh, ephemeral Bob attachment constrained to its pinned profile. `ForgeMission.ClientRuntime` alone owns capability policy, confirmation, structural containment, audit, execution, cancellation and cleanup. Version declaration and Desktop/TUI display grant nothing; Worker never receives Bob/local authority. |
 
 The Type-1 boundary remains `Desktop Presentation → Application/Conversation service →
 Conversation Table/Blob and Service Bus`. Application Host holds no data-plane credential. Project
@@ -64,10 +65,17 @@ source-generated JSON; serialized enum values append only.
 | `TraceOrigin` | `(conversation_id, turn_id?, turn_attempt_id?, evaluation_case_id?, run_id, first_sequence, last_sequence)`. Exactly one of turn/evaluation case is populated. |
 
 `MissionVersionLaunch` is the only Project-to-conversation execution snapshot: `mission_id`,
-`mission_version_id`, `version_number`, `definition_hash`, `definition_artifact_ref`, and immutable
-resolved MCL/expert-package content. Conversation Host stores a bounded launch artifact under its
-own Blob ownership before queueing work; Worker receives verified content/value in its command. No
-command contains Project path, credential, provider selection, or local capability.
+`mission_version_id`, `version_number`, `definition_hash`, `definition_artifact_ref`, immutable
+resolved MCL/expert-package content, and exactly one immutable `capability_profile`. Conversation
+Host stores a bounded launch artifact and the accepted profile under its own Blob/store ownership
+before queueing work; Worker receives verified content/value and profile-limited generic tool
+declarations only. No command contains Project path, credential, provider selection, Bob handle,
+local root or local capability.
+
+The durable conversation records the approved profile with the pinned launch. Application alone
+can create a live `(conversation, version, profile, session)` attachment; reconnect creates a new
+ephemeral Bob attachment under that same durable approval. A missing attachment is an explicit
+durable `AwaitingHands` state, not an authority grant, remote fallback, or successful result.
 
 ## Dependency-ordered spokes
 

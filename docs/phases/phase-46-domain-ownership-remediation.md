@@ -1,7 +1,8 @@
 # Phase 46 — domain-ownership remediation
 
-> **Status:** Step 1 inventory is complete and awaiting separate Codex-supervisor review. No source
-> behavior changes are authorized until an individual finding has an approved implementation plan.
+> **Status:** Step 1 inventory and the generic mission-to-hands design closure are complete; both
+> await separate Codex-supervisor review. No source behavior changes are authorized until an
+> individual finding has an approved implementation plan.
 
 ## Why this phase exists
 
@@ -32,7 +33,7 @@ policy, side effect, or failure boundary with a named owner.
 
 | Order | Spoke | Deliverable | Gate before next spoke |
 |---|---|---|---|
-| 46.1 | [Repository-wide inventory and end state](phase-46.1-domain-ownership-inventory.md) | Evidence-backed ownership ledger, proposed target owner/action for every confirmed finding, and dependency-ordered remediation backlog. | Codex supervisor approves each finding's design disposition and task boundary. |
+| 46.1 | [Repository-wide inventory and end state](phase-46.1-domain-ownership-inventory.md) | Evidence-backed ownership ledger, including the locked generic mission-to-hands boundary, and dependency-ordered remediation backlog. | Codex supervisor approves each finding's design disposition and task boundary. |
 | 46.2 | [Codex-supervised remediation](phase-46.2-codex-supervised-remediation.md) | One bounded, reviewed implementation task per approved finding, followed by adversarial review and acceptance evidence. | Every approved task is complete, or any remaining item is explicitly deferred with a rationale and removal condition. |
 
 ## Scope and non-goals
