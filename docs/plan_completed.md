@@ -22,6 +22,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Done — selected work verified 2026-09-07. Remaining follow-ups are deferred in [backlog.md](backlog.md); the hub keeps their routing. |
 | [Phase 1 — Project Scaffold](phases/phase-1-scaffold.md) | Solution structure, projects, package references | Done |
 | [Phase 2 — Parser](phases/phase-2-parser.md) | Lexer, token stream, recursive-descent parser, AST | Done |
 | [Phase 3 — Expert Loader](phases/phase-3-expert-loader.md) | Resolve expert names to markdown, parse frontmatter, validate | Done |

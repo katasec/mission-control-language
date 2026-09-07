@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="808" height="820" viewBox="0 0 808 820" role="img">
+  <title>Before: proposal Markdown is shown as literal markers</title>
+  <rect width="808" height="820" fill="#f6f8fc"/>
+  <text x="60" y="52" font-family="system-ui,sans-serif" font-size="16" fill="#176aba">← Back to Missions</text>
+  <text x="60" y="88" font-family="system-ui,sans-serif" font-size="21" font-weight="700" fill="#172d49">todo list app in go</text>
+  <rect x="232" y="69" width="43" height="22" rx="11" fill="#eaf3ff"/><text x="241" y="85" font-family="system-ui,sans-serif" font-size="13" fill="#176aba">Live</text>
+  <text x="60" y="118" font-family="system-ui,sans-serif" font-size="15" fill="#526985">Janus · Queued</text>
+  <text x="60" y="154" font-family="system-ui,sans-serif" font-size="15" fill="#526985">Events 1–5</text>
+  <text x="60" y="186" font-family="system-ui,sans-serif" font-size="13" fill="#6d819d">Status: Queued</text>
+  <rect x="60" y="204" width="640" height="562" rx="16" fill="#fff" stroke="#d9e4ef"/>
+  <text x="76" y="230" font-family="system-ui,sans-serif" font-size="13" font-weight="600" fill="#526985">Proposer</text>
+  <text x="76" y="255" font-family="system-ui,sans-serif" font-size="15" fill="#172d49">To build a simple todo list application in Go, we will create a command-line application</text>
+  <text x="76" y="279" font-family="system-ui,sans-serif" font-size="15" fill="#172d49">that allows users to add, remove, list, and mark tasks as complete.</text>
+  <text x="76" y="347" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">### Step 1: Setup Project Structure</text>
+  <text x="76" y="394" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">1. **Create Project Directory**</text>
+  <text x="92" y="418" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">- Create a directory named `todolist`.</text>
+  <text x="76" y="467" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">2. **Initialize Go Module**</text>
+  <text x="92" y="491" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">- Inside the `todolist` directory, run `go mod init todolist`.</text>
+  <text x="76" y="540" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">3. **Create Required Files**</text>
+  <text x="92" y="564" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">- Create main.go: This will be the entry point for the application.</text>
+  <text x="76" y="632" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">### Step 2: Implement Todo Logic in todo.go</text>
+  <text x="76" y="679" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">1. **Define a `Task` Struct**</text>
+  <text x="92" y="703" font-family="system-ui,sans-serif" font-size="16" fill="#172d49">- Fields: `ID`, `Description`, `Completed` (boolean).</text>
+</svg>

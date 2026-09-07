@@ -1,0 +1,209 @@
+[
+ [
+  "ref-808x820",
+  {
+   "viewport": "808x820",
+   "docHScroll": false,
+   "cardW": 573,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "18.3212px",
+   "h3": "18.867px",
+   "mono": "13.6556px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "corner-800x568",
+  {
+   "viewport": "800x568",
+   "docHScroll": false,
+   "cardW": 565,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "15.0049px",
+   "h3": "15px",
+   "mono": "12px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "corner-800x1024",
+  {
+   "viewport": "800x1024",
+   "docHScroll": false,
+   "cardW": 565,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "21px",
+   "h3": "21.9984px",
+   "mono": "14.9979px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "corner-1536x568",
+  {
+   "viewport": "1536x568",
+   "docHScroll": false,
+   "cardW": 640,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "15.0049px",
+   "h3": "15px",
+   "mono": "12px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "corner-1536x1024",
+  {
+   "viewport": "1536x1024",
+   "docHScroll": false,
+   "cardW": 640,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "21px",
+   "h3": "21.9984px",
+   "mono": "14.9979px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "sweep-breaks",
+  []
+ ],
+ [
+  "zoom-1.25",
+  {
+   "viewport": "800x568",
+   "docHScroll": false,
+   "cardW": 507,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "15.0049px",
+   "h3": "15px",
+   "mono": "12px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "zoom-1.5",
+  {
+   "viewport": "800x568",
+   "docHScroll": false,
+   "cardW": 448,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 3,
+   "body": "15.0049px",
+   "h3": "15px",
+   "mono": "12px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "zoom-2",
+  {
+   "viewport": "800x568",
+   "docHScroll": false,
+   "cardW": 330,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 4,
+   "body": "15.0049px",
+   "h3": "15px",
+   "mono": "12px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "theme-light",
+  {
+   "viewport": "808x820",
+   "docHScroll": false,
+   "cardW": 573,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "18.3212px",
+   "h3": "18.867px",
+   "mono": "13.6556px",
+   "color": "rgb(16, 29, 51)",
+   "bg": "rgb(255, 255, 255)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "theme-dark",
+  {
+   "viewport": "808x820",
+   "docHScroll": false,
+   "cardW": 573,
+   "widestChildOverflowsCard": false,
+   "selfScrolling": 1,
+   "body": "18.3212px",
+   "h3": "18.867px",
+   "mono": "13.6556px",
+   "color": "rgb(230, 237, 247)",
+   "bg": "rgb(15, 36, 64)",
+   "liveEls": 0,
+   "attrs": "class,disabled,type"
+  }
+ ],
+ [
+  "long-content-800x568",
+  [
+   {
+    "tag": "TABLE",
+    "rendered": 507,
+    "content": 507,
+    "scrollsItself": false,
+    "withinCard": true
+   },
+   {
+    "tag": "PRE",
+    "rendered": 507,
+    "content": 505,
+    "scrollsItself": false,
+    "withinCard": true
+   },
+   {
+    "tag": "PRE",
+    "rendered": 507,
+    "content": 609,
+    "scrollsItself": true,
+    "withinCard": true
+   },
+   {
+    "tag": "PRE",
+    "rendered": 507,
+    "content": 505,
+    "scrollsItself": false,
+    "withinCard": true
+   }
+  ]
+ ]
+]
