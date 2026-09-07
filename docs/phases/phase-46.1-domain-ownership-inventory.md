@@ -1,6 +1,7 @@
 # Phase 46.1 — repository-wide ownership inventory and end state
 
-> **Status:** active design/investigation. Parent: [Phase 46 — domain-ownership remediation](phase-46-domain-ownership-remediation.md).
+> **Status:** inventory complete; awaiting adversarial review by a separate supervising Codex agent.
+> Parent: [Phase 46 — domain-ownership remediation](phase-46-domain-ownership-remediation.md).
 > This is documentation-only work: build, test, and default-path acceptance are **N/A** until a
 > proposed remediation changes executable behavior.
 
@@ -81,18 +82,74 @@ records, including components with no defect.
 
 | ID | Slice | Status | Current owner/path | Proposed end state | Next decision |
 |---|---|---|---|---|---|
-| — | — | No inventory evidence recorded yet. | — | — | Begin at the component/dependency graph, then trace generic execution before judging Janus or Naive. |
+| F46.1-01 | Generic execution / Worker | **Confirmed defect — P0** | Nested `ToolCalls` are dropped by Core; Janus manually runs `Negotiate` then `Implement`. | Core owns generic nested pause/continuation semantics; Worker invokes a declaration once. | Approve a continuation/result contract before any Core edit. |
+| F46.1-02 | Durable Worker catalog | **Confirmed defect — P0** | Resolver, startup config, image, and processor select `Janus`/`Naive` concrete executors. | Worker loads an authorized packaged declaration through one generic path. | Blocked by Q46.1-01; no registry/framework substitute. |
+| F46.1-03 | Durable progress contract | **Confirmed defect — P0** | Janus mapper and contract participants encode particular experts/approval; Naive emits its own path. | Versioned generic pipeline-progress projection at Conversation contract/Worker boundary. | Lock wire/storage compatibility before implementation. |
+| F46.1-04 | Runner result projection | **Confirmed defect — P1** | `BuildAgentText` privileges an expert literally named `Answerer`. | Runner returns declared result or an explicit generic result-selection contract. | Review API/ForgeUI `AgentText` compatibility. |
+| F46.1-05 | Project manifest model | **Duplicate/dead code — P2, deferred** | Local/OCI mission-origin and snapshot fields have no production consumer; reads/writes only allow built-ins. | Retain only if the approved package model needs them; otherwise migrate/remove. | Depends on Q46.1-01 and Phase 45 authoring design. |
+| R46.1-01 | Legacy conversation API | **Retained deliberate boundary** | Legacy `/conversations` accepts Janus and its compatibility adapter preserves that protocol. | Keep isolated; Project Mission is the candidate generic route. | Do not broaden this legacy wire. |
+| R46.1-02 | CLI and Runner | **Retained / positive evidence** | Both parse, resolve, and execute declarations through `PipelineRunner` without Janus/Naive branches. | Preserve as the generic reference path. | Use its seams when designing F46.1-01/02. |
+| Q46.1-01 | Durable Project admission | **Unresolved design question — Type 1** | Shared `ProjectMissionNames` two-name allow-list is enforced by Application, Host, and Worker. | One owner must authorize immutable packaged mission identity before Worker execution. | Decide trust proof, identity, zero-capability policy, and migration/rejection behavior. Blocks F46.1-02/03. |
+
+Detailed evidence and the proposed, unapproved dispositions are in the
+[Phase 46.1 evidence record](phase-46.1-domain-ownership-inventory_evidence.md).
 
 ### Component ownership map
 
 | Component | Why it exists / owner | Consumers and dependencies | Findings |
 |---|---|---|---|
-| — | To be established from the Source Component Atlas and nearest README during Slice 1. | To be established from the solution/dependency and call-path trace. | No inventory evidence recorded yet. |
+| Parser | MCL source spans/syntax. | Core. | R46.1-02 |
+| Core | Provider-neutral resolution, execution, trace and primitive contracts. | CLI, Runner, Worker, Application/Client Runtime. | F46.1-01 |
+| ChatClients | Provider-SDK adapter. | CLI, Runner, Worker. | R46.1-02 |
+| Scout | Web-search contract/adapter. | Core; composed by CLI/Runner. | R46.1-02 |
+| CLI | Native-AOT command composition. | Core, ChatClients, Scout, Serve, Docker. | R46.1-02 |
+| Serve | Shared OpenAI/Anthropic wire mapping. | CLI and Runner. | None |
+| Docker | Narrow Docker operations. | CLI and Orchestration. | None |
+| Runner.Contracts | Run/progress/artifact/usage wire. | Runner, API, ForgeUI. | F46.1-04 consumer contract |
+| Runner | Stateless load/execute/artifact/cache host. | Core/ChatClients/Serve; API/ForgeUI callers. | F46.1-04, R46.1-02 |
+| Application | Project, submission, session, conversation, history owners. | Host, Client Runtime, Conversation adapter. | Q46.1-01, F46.1-05 |
+| Application.Transport | Typed action/event/JSON/channel vocabulary. | Presentation and Application Host. | None |
+| Application.Host | Loopback HTTP/SSE composition. | Desktop starts it; Presentation calls it. | None |
+| ClientRuntime | Scoped local capability policy/execution. | Application only. | None; Worker has no local-capability path. |
+| Presentation | Rendering/navigation/view state. | Application Transport. | F46.1-03 consumer |
+| Desktop | User-launched process supervision. | Starts Application Host/native Host. | None |
+| Desktop.Contracts | Native-host and Supervisor pipe contract. | Desktop Host/Photino/Supervisor. | None |
+| Desktop.Host | Disposable native-window process. | Desktop Contracts/Photino. | None |
+| Desktop.Photino | Photino native-host implementation. | Desktop.Host. | None |
+| Orchestration | Runtime endpoint/readiness/owned adapters. | Desktop/Application Host startup. | None; Vanilla is deployment default, not Core selection. |
+| Conversations.Contracts | Versioned durable messages/projections. | Application Transport, Host, Worker, Presentation. | F46.1-03, Q46.1-01 |
+| ConversationHost | Sole durable command/event/store owner. | Application adapter and Worker queue boundary. | R46.1-01, Q46.1-01 |
+| ConversationWorker | Restartable reasoning/progress publisher. | Conversation queues; Core/ChatClients. | F46.1-01, F46.1-02, F46.1-03 |
+| ConversationPresentation | Presentation-only activity rendering. | Presentation. | F46.1-03 consumer |
+| API | Platform-key ingress and settlement composition. | Billing and Runner. | None; static catalog is edge policy. |
+| Billing | Accounts, keys, pricing, ledgers. | API/ForgeUI. | None |
+| Rooms | Collaboration facts/invariants. | Rooms.Data and ForgeUI. | None |
+| Rooms.Data | Rooms EF persistence/schema owner. | ForgeUI. | None |
+| ForgeUI | Authenticated Rooms/Runner surface. | Rooms, Rooms.Data, Billing, Runner. | None; agent directory is UI policy. |
+| TransportProbe / ProjectServiceProbe | Diagnostic executables owned by Transport/Application. | Diagnostic-only. | Retained evidence, no second owner. |
+
+The actual solution graph matches the atlas's 28 production components and two excluded diagnostic
+probes. The evidence record contains exact references, entry/process paths, test anchors, and the
+only relevant execution divergence.
+
+### Proposed remediation order — not approved work
+
+| Order | Candidate disposition | Dependency / gate |
+|---|---|---|
+| 1 | Specify generic nested mission tool-pause/continuation semantics (F46.1-01). | Lock result propagation, continuation scope, trace ordering, and failure proof. |
+| 2 | Resolve durable packaged-mission admission/trust and generic progress contract (Q46.1-01/F46.1-03). | Type-1 identity, authorization, zero-capability, wire/storage, rejection/recovery decision. |
+| 3 | Replace Worker name resolver/concrete executors (F46.1-02). | Depends on 1–2; preserve Worker outbox and Host store ownership. |
+| 4 | Remove Runner `Answerer` heuristic (F46.1-04). | Verify API/ForgeUI visible result compatibility. |
+| 5 | Decide inactive Project mission origins (F46.1-05). | Depends on 2 and Phase 45 authoring design. |
 
 ### Step 1 done when
 
-The ledger covers every required slice; each confirmed finding has the complete required record;
-and a Codex supervisor has adversarially reviewed the proposed owners, deletions, compatibility,
-failure boundaries, and remediation order. The result explicitly proves or disproves the premise
-that Janus/Naive select mission-specific core execution paths. It then names the first smallest
-remediation task for Phase 46.2, if any.
+The inventory **disproves** the premise for the durable Worker: `Janus`/`Naive` select concrete
+executors, and Janus manually splits its declared pipeline because nested tool calls do not
+propagate through Core. It confirms the premise for CLI and hosted Runner execution. A separate
+supervising Codex agent must adversarially review these proposed dispositions before any work is
+approved.
+
+The first smallest Phase 46.2 candidate is **F46.1-01 only**: a plan for generic nested
+tool-pause/continuation propagation in Core. It is not approved and must not absorb Worker catalog
+or durable-wire redesign.
