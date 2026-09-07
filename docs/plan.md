@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Deliberately select and design the next item from the [backlog](backlog.md). |
+| **NEXT STEP** | Obtain Codex approval, then implement [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) in spoke order. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| — | No active phase selected. | Select an item from the [backlog](backlog.md). |
+| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Design complete — awaiting Codex approval and Claude implementation plans. |
 
 ## Design docs
 
