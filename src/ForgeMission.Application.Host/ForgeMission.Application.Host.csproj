@@ -6,10 +6,6 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
     <IsAotCompatible>true</IsAotCompatible>
-    <!-- YamlDotNet uses reflection-based builders; Core preserves every reachable YAML POCO
-         with DynamicDependency, so only its conservative AOT/trim diagnostics are suppressed. -->
-    <IlcSuppressWarnings>IL3050</IlcSuppressWarnings>
-    <NoWarn>$(NoWarn);IL3050;IL2104;IL3053</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

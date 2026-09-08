@@ -1,7 +1,9 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** surface design complete; implementation remains blocked by independent review and
-> delivery of [45.2](phase-45.2-durable-conversation-turns.md).
+> **Status:** 45.2 is accepted. The prior 45.3 implementation was reverted after a supervisor
+> browser comparison found it materially unlike the binding reference. Claude now implements the
+> replacement under the bounded [Claude ↔ Codex workflow](../design/claude-codex-workflow.md);
+> Codex retains design, browser/default-path acceptance, and integration authority.
 
 ## Task 3 — make Missions a persistent conversation experience
 
@@ -47,6 +49,23 @@ profile value, tool selection or grant. `GetMissionHandsStatus` returns the dura
 choice for one correlation to Application; Application returns it to the same Bob attachment.
 Presentation never calls Bob, dispatches a tool, makes a policy decision or converts a denial into a
 prompt. TUI uses the same actions and outcomes.
+
+### Conversation title (locked 2026-09-08)
+
+Creating a conversation never asks for a name. On its first accepted, non-retry turn, the Worker
+uses one fixed-prompt, no-tools `IMissionConversationTitleInferrer` over that turn's immutable
+message. Its concrete default shares the Worker's existing deployment-configured `IChatClient`;
+the interface is the sole substitution seam should product evidence later favour another strategy.
+There is no deterministic name, random word pair, retry control, or fallback chain.
+
+The Host records title inference request, source turn/attempt, inferred title, and explicit state
+(`Pending`, `Inferred`, or `Unavailable`) as durable checkpoint facts. The Worker returns one typed
+result through the existing `mission-command` / `conversation-progress` path; the Host validates
+its deterministic request ID and assigns the canonical event sequence. A provider timeout, invalid
+title, exception, crash after the provider boundary, or terminal source turn becomes durable
+`Unavailable` without exposing provider text or re-invoking inference. Presentation renders the
+typed state only: **New mission conversation** while pending and **Title generation unavailable**
+when unavailable. It never derives, persists, retries, or reconciles a name itself.
 
 ### Visual and interaction contract
 
