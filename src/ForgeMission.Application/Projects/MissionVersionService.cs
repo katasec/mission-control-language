@@ -271,8 +271,10 @@ internal static class MissionPackageBuilder
                 return new DurableResolvedExpert(name, locked.Source, locked.Path, hash, markdown);
             }).ToArray();
             var program = MclParser.Parse(definitionText);
-            var mission = program.Declarations.OfType<MissionDeclaration>().SingleOrDefault()
-                ?? throw Invalid("A durable candidate must contain exactly one mission declaration.");
+            var roots = program.Declarations.OfType<MissionDeclaration>().ToArray();
+            if (roots.Length != 1)
+                throw Invalid("A durable candidate must contain exactly one mission declaration.");
+            var mission = roots[0];
             var input = mission.Params.FirstOrDefault() ?? throw Invalid("The durable mission must declare an input.");
             var inputs = experts.Select(expert => new DurableResolvedExpertInput(expert.Name, expert.LockSource, expert.LockPath, expert.LockHash, expert.ExpertMarkdown)).ToArray();
             var raw = new DurableMissionPackageInput(DurableMissionPackageValidator.CurrentFormatVersion, "", definitionText, mission.Name, input, inputs);

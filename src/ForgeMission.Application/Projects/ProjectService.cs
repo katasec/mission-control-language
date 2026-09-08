@@ -779,7 +779,7 @@ internal sealed class ProjectService : IProjectService
                     !numbers.Add(version.VersionNumber) || version.CandidateRevision <= 0 || version.CreatedAtUtc == default ||
                     !Enum.IsDefined(version.State) || !Enum.IsDefined(version.CapabilityProfile) ||
                     !IsDefinitionHash(version.DefinitionHash, version.DefinitionText) || version.Package is null ||
-                    !ValidPackage(version.Package) || !ValidVersionState(version))
+                    !ValidPackage(version.Package))
                     throw InvalidDefinitions(manifestPath);
                 var cases = OrEmpty(version.EvaluationCases);
                 if (cases.Select(item => item.EvaluationCaseId).Distinct().Count() != cases.Length) throw InvalidDefinitions(manifestPath);
@@ -791,10 +791,13 @@ internal sealed class ProjectService : IProjectService
                 var results = OrEmpty(version.EvaluationResults);
                 if (results.Select(item => item.EvaluationResultId).Distinct().Count() != results.Length ||
                     results.Any(result => !ValidResult(result, version, cases))) throw InvalidDefinitions(manifestPath);
+                if (!ValidVersionState(version, cases, results)) throw InvalidDefinitions(manifestPath);
             }
-            if (definition.ActiveApprovedVersionId is { } active && versions.SingleOrDefault(version => version.MissionVersionId == active) is not { State: MissionVersionState.Approved })
+            ValidateVersionLineage(versions, manifestPath);
+            var approved = versions.Where(version => version.State == MissionVersionState.Approved).ToArray();
+            if (approved.Length > 1 || approved.Length == 1 && definition.ActiveApprovedVersionId != approved[0].MissionVersionId ||
+                approved.Length == 0 && definition.ActiveApprovedVersionId is not null)
                 throw InvalidDefinitions(manifestPath);
-            if (versions.Count(version => version.State == MissionVersionState.Approved) > 1) throw InvalidDefinitions(manifestPath);
         }
     }
 
@@ -812,14 +815,34 @@ internal sealed class ProjectService : IProjectService
         return ForgeMission.Core.Runtime.DurableMissionPackageValidator.TryValidate(raw, out _, out _);
     }
 
-    private static bool ValidVersionState(MissionVersion version) => version.State switch
+    private static bool ValidVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) => version.State switch
     {
         MissionVersionState.Candidate => version.EvaluatedAtUtc is null && version.ApprovedAtUtc is null,
-        MissionVersionState.Evaluated => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is null,
-        MissionVersionState.Approved => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null,
-        MissionVersionState.Superseded => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null,
+        MissionVersionState.Evaluated => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is null && AllCurrentCasesPassed(version, cases, results),
+        MissionVersionState.Approved => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
+        MissionVersionState.Superseded => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
         _ => false,
     };
+
+    private static bool AllCurrentCasesPassed(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
+        cases.Length > 0 && cases.All(evaluationCase => results.Any(result =>
+            result.EvaluationCaseId == evaluationCase.EvaluationCaseId && result.CandidateRevision == version.CandidateRevision &&
+            string.Equals(result.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal) && result.State == EvaluationResultState.Passed));
+
+    private static void ValidateVersionLineage(MissionVersion[] versions, string manifestPath)
+    {
+        var ordered = versions.OrderBy(version => version.VersionNumber).ToArray();
+        for (var index = 0; index < ordered.Length; index++)
+        {
+            var version = ordered[index];
+            if (version.VersionNumber != index + 1)
+                throw InvalidDefinitions(manifestPath);
+            if (version.ParentVersionId is not { } parent) continue;
+            var parentVersion = ordered.SingleOrDefault(candidate => candidate.MissionVersionId == parent);
+            if (parentVersion is null || parentVersion.VersionNumber >= version.VersionNumber)
+                throw InvalidDefinitions(manifestPath);
+        }
+    }
 
     private static bool ValidResult(EvaluationResult result, MissionVersion version, EvaluationCase[] cases) =>
         result.EvaluationResultId != Guid.Empty && result.EvaluationCaseId != Guid.Empty && result.MissionVersionId == version.MissionVersionId &&
