@@ -1,7 +1,7 @@
 # Phase 45.1 — Version and evaluation contracts
 
-> **Status:** implementation-ready, independently re-reviewed 2026-09-08. It depends on no
-> unmerged Phase 45 code. Parent: [Phase 45](phase-45-mission-conversations.md).
+> **Status:** accepted 2026-09-08 after independent review. It depends on no unmerged Phase 45
+> code. Parent: [Phase 45](phase-45-mission-conversations.md).
 
 ## Task 1 — Project-owned authored versions and deterministic evaluation
 
@@ -162,3 +162,14 @@ focused Application tests; full solution build/test; and Native-AOT `make instal
 generic submission remain readable; Candidate freezes executable content; focused/full/AOT checks
 pass; an independent reviewer accepts evidence; and Phase 45.4's UI/default-path obligation remains
 active rather than claimed here.
+
+## Accepted evidence
+
+Implementation commits `24643b3`, `6b42659`, `02dd82c`, `8bfcc1e`, and `c1e595f` add schema-5
+records/migration, frozen Core-validated package input, lifecycle/evaluation services, the shared
+`MissionHandsProfile`, and no-write lifecycle/lineage hardening. Independent review initially
+rejected missing persisted-state safeguards; the final review accepted the corrected immediate,
+active-Approved parent chain and unapproved-candidate guard. Focused version tests passed 19/19,
+the full solution suite passed 645 with 7 intentional skips, `dotnet build` completed with zero
+warnings/errors, and `make install` completed Native-AOT publish. The user-facing Desktop authoring
+and default-path observation remains Phase 45.4 work exactly as allocated above.
