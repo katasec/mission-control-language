@@ -257,7 +257,9 @@ internal static class MissionPackageBuilder
             var root = Path.GetFullPath(home);
             var lockAsset = (manifest.Assets ?? []).SingleOrDefault(asset => asset.Kind == ProjectAssetKind.LockFile)
                 ?? throw Invalid("The Project does not list a lock file for this mission.");
-            var lockFile = LockFileIO.Read(Readable(root, lockAsset.RelativePath));
+            var lockPath = Readable(root, lockAsset.RelativePath);
+            if (new FileInfo(lockPath).Length > 64 * 1024) throw Invalid("The Project lock file is too large.");
+            var lockFile = LockFileIO.Read(lockPath);
             var experts = (manifest.Assets ?? []).Where(asset => asset.Kind == ProjectAssetKind.Expert).Select(asset =>
             {
                 var path = Readable(root, asset.RelativePath);
@@ -279,7 +281,7 @@ internal static class MissionPackageBuilder
             return new DurableMissionPackage(raw.FormatVersion, raw.PackageHash, raw.MissionSource, raw.RootMissionName, raw.RootInputName, experts);
         }
         catch (ProjectOperationException) { throw; }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or MclException or ArgumentException)
+        catch (Exception exception) when (exception is not OperationCanceledException and not OutOfMemoryException)
         { throw Invalid($"The durable package could not be created: {exception.Message}"); }
     }
 
