@@ -222,28 +222,20 @@ abstractions, prefer structural containment to warnings or remembered procedures
 verification observation in “Done when.” Record any material exception and its removal path in the
 active spoke; do not defer it to implementation.
 
-### Roles — Codex (architect) / Claude (implementer)
-**Trial mode since 2026-08-11**, running for a few weeks as a manual test of MCL's own premise that
-models and roles should be swappable — see
-[docs/design/claude-codex-workflow.md](docs/design/claude-codex-workflow.md) for the reasoning and
-a revert path back to the original split.
+### Roles — Codex supervisor / Codex subagent implementer
 
-Codex owns design, review, and approval. Claude owns implementation. Claude never writes or modifies
-code without an explicitly approved plan, and a task is never marked done without Codex reviewing
-Claude's completion summary against the spoke's "Done when" condition. The handoff mechanics — the
-task-assignment and completion-summary templates, the plan → approve → implement → summarize →
-approve loop — are in
-[docs/design/claude-codex-workflow.md](docs/design/claude-codex-workflow.md).
-**Human-relayed handoffs are a delivery step, not an internal note.** When Codex needs the operator
-to relay an assignment, plan approval, correction, or review request to Claude, include the complete
-copy/paste prompt in the **final user-visible response for that turn**. Put it inside a fenced code
-block containing an ASCII text box; never leave the only relay copy in commentary, because commentary
-is collapsed after the turn. Do not say that Codex is awaiting Claude's plan/summary unless that same
-final response contains the exact relay prompt the operator can send. The next step is then Claude's
-reply to that prompt, not an assumption that a relay happened.
-**If you are Claude and you just opened this repo: read that doc now.** It defines your role and the
-approval gates you operate under — do not start implementing anything until a task assignment
-following that protocol arrives.
+All implementation work follows the internal
+[Codex supervisor workflow](docs/design/codex-supervisor-workflow.md). The supervising Codex agent
+owns design, scope, adversarial plan review, and final acceptance. A bounded Codex subagent owns
+implementation of one explicitly approved task. The supervisor may write or correct design and
+planning documentation; a subagent may investigate without edits, but may not modify code,
+infrastructure, or executable configuration until the supervisor has explicitly approved its plan.
+
+The required loop is **scope → subagent plan → supervisor adversarial approval → implementation →
+subagent evidence summary → supervisor acceptance review**. The implementer never approves its own
+plan, resolves an open design question by inference, broadens scope, or marks a task complete. The
+supervisor independently checks the diff and evidence against the task's `Done when` condition.
+Internal supervisor/subagent handoffs use the collaboration tools and do not need a human relay.
 
 ### Phases and tasks
 Work is broken into phases, each with a spoke document in `docs/phases/`. Phases have a
