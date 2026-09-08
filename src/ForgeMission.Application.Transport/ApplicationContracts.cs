@@ -120,6 +120,10 @@ public enum ProjectOperationErrorCode
     DocumentTooLarge,
     DocumentChanged,
     DocumentBinary,
+    // Phase 45.1: intentionally append-only; evaluation execution arrives with 45.2.
+    EvaluationUnavailable,
+    VersionChanged,
+    PublishConflict,
 }
 
 // --- Project Mission run contracts (43.22 task 3) ------------------------------------------

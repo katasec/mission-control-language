@@ -36,7 +36,7 @@ internal sealed class MissionHandsConversationService(
         }
 
         var durableLaunch = new DurableMissionLaunch(launch.MissionVersionId, launch.VersionNumber, launch.DefinitionHash,
-            launch.Definition, ToDurableProfile(launch.CapabilityProfile), launch.Package);
+            launch.Definition, launch.CapabilityProfile, launch.Package);
         var host = new ConversationHostClient(clients.CreateClient("conversation-host"));
         try
         {
@@ -85,7 +85,7 @@ internal sealed class MissionHandsConversationService(
 
         var durableLaunch = new DurableMissionLaunch(
             launch.MissionVersionId, launch.VersionNumber, launch.DefinitionHash, launch.Definition,
-            ToDurableProfile(launch.CapabilityProfile), launch.Package);
+            launch.CapabilityProfile, launch.Package);
         var host = new ConversationHostClient(clients.CreateClient("conversation-host"));
         try
         {
@@ -248,19 +248,11 @@ internal sealed class MissionHandsConversationService(
         result.Content.Contains("denied by the user", StringComparison.OrdinalIgnoreCase) ? MissionToolOutcome.DeniedByOperator :
         result.Content.Contains("cancel", StringComparison.OrdinalIgnoreCase) ? MissionToolOutcome.Cancelled : MissionToolOutcome.Failed;
 
-    private static MissionExecutionProfile ToExecutionProfile(MissionCapabilityProfile profile) => profile switch
+    private static MissionExecutionProfile ToExecutionProfile(MissionHandsProfile profile) => profile switch
     {
-        MissionCapabilityProfile.NoHands => MissionExecutionProfile.NoHands,
-        MissionCapabilityProfile.ProjectWorkspace => MissionExecutionProfile.ProjectWorkspace,
-        MissionCapabilityProfile.ProjectWorkspaceAndTerminal => MissionExecutionProfile.ProjectWorkspaceAndTerminal,
-        _ => throw new ArgumentOutOfRangeException(nameof(profile)),
-    };
-
-    private static MissionHandsProfile ToDurableProfile(MissionCapabilityProfile profile) => profile switch
-    {
-        MissionCapabilityProfile.NoHands => MissionHandsProfile.NoHands,
-        MissionCapabilityProfile.ProjectWorkspace => MissionHandsProfile.ProjectWorkspace,
-        MissionCapabilityProfile.ProjectWorkspaceAndTerminal => MissionHandsProfile.ProjectWorkspaceAndTerminal,
+        MissionHandsProfile.NoHands => MissionExecutionProfile.NoHands,
+        MissionHandsProfile.ProjectWorkspace => MissionExecutionProfile.ProjectWorkspace,
+        MissionHandsProfile.ProjectWorkspaceAndTerminal => MissionExecutionProfile.ProjectWorkspaceAndTerminal,
         _ => throw new ArgumentOutOfRangeException(nameof(profile)),
     };
 }

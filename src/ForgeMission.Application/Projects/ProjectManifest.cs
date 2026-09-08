@@ -1,7 +1,7 @@
 namespace ForgeMission.Application;
 
-// The local, Forge-owned Project record written to <project-home>/forge.project.json. v4 retains
-// earlier fields for read compatibility, then adds immutable approved mission-launch provenance.
+// The local, Forge-owned Project record written to <project-home>/forge.project.json. v5 retains
+// earlier fields for read compatibility, adds authored definitions, and keeps the v4 launch lane.
 //
 // It holds no credential, secret-derived value, transcript, or remote connection string. Absolute
 // local paths (a context SourceRoot/File reference) stay in this file; they never cross the
@@ -21,10 +21,72 @@ internal sealed record ProjectManifest(
         Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     Guid? MissionControlConversationId = null,
     ProjectSubmission? Submission = null,
-    MissionVersionLaunch[]? ApprovedMissionLaunches = null)
+    MissionVersionLaunch[]? ApprovedMissionLaunches = null,
+    ProjectMissionDefinition[]? MissionDefinitions = null)
 {
-    public const int CurrentSchemaVersion = 4;
+    public const int CurrentSchemaVersion = 5;
 }
+
+// Authored definitions are a Project concern.  They deliberately sit beside, rather than inside,
+// the v4 compatibility launch lane: an old launch has no authored identity or evaluation facts.
+internal sealed record ProjectMissionDefinition(
+    Guid MissionId,
+    string Name,
+    Guid? ActiveApprovedVersionId,
+    MissionDraft? Draft,
+    MissionVersion[]? Versions);
+
+internal sealed record MissionDraft(
+    Guid DraftId,
+    string DefinitionText,
+    string DefinitionHash,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile CapabilityProfile,
+    int Revision,
+    DateTimeOffset UpdatedAtUtc);
+
+internal sealed record MissionVersion(
+    Guid MissionVersionId,
+    int VersionNumber,
+    MissionVersionState State,
+    string DefinitionText,
+    string DefinitionHash,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile CapabilityProfile,
+    ForgeMission.Conversations.Contracts.DurableMissionPackage Package,
+    Guid? ParentVersionId,
+    int CandidateRevision,
+    DateTimeOffset CreatedAtUtc,
+    DateTimeOffset? EvaluatedAtUtc,
+    DateTimeOffset? ApprovedAtUtc,
+    EvaluationCase[]? EvaluationCases,
+    EvaluationResult[]? EvaluationResults);
+
+internal enum MissionVersionState { Candidate, Evaluated, Approved, Superseded }
+
+internal sealed record EvaluationCase(
+    Guid EvaluationCaseId,
+    string Input,
+    string ExpectedSuccess,
+    string ExpectedFailure,
+    EvaluationOutcome ExpectedOutcome,
+    string[]? RequiredOutputFragments,
+    string[]? ForbiddenOutputFragments,
+    int Revision);
+
+internal sealed record EvaluationResult(
+    Guid EvaluationResultId,
+    Guid EvaluationCaseId,
+    Guid MissionVersionId,
+    int CandidateRevision,
+    string DefinitionHash,
+    EvaluationOutcome ObservedOutcome,
+    string ObservedOutputSummary,
+    EvaluationResultState State,
+    EvaluationTraceOrigin? TraceOrigin,
+    DateTimeOffset? CompletedAtUtc);
+
+internal enum EvaluationOutcome { Succeeded, Failed }
+internal enum EvaluationResultState { Pending, Passed, Failed }
+internal sealed record EvaluationTraceOrigin(Guid ConversationId, Guid TurnId, Guid TurnAttemptId);
 
 internal enum ProjectSubmissionPhase
 {

@@ -133,12 +133,12 @@ public sealed class ProjectServiceTests : IDisposable
     // --- create ----------------------------------------------------------------------------
 
     [Fact]
-    public void Create_WritesTheCompleteV4Manifest()
+    public void Create_WritesTheCompleteV5Manifest()
     {
         var created = _store.Create("Todos API", null, null);
 
         var manifest = created.Manifest;
-        Assert.Equal(4, manifest.SchemaVersion);
+        Assert.Equal(5, manifest.SchemaVersion);
         Assert.NotEqual(Guid.Empty, manifest.ProjectId);
         Assert.Equal("Todos API", manifest.Title);
         Assert.Equal("Todos API", manifest.Goal);
@@ -149,6 +149,7 @@ public sealed class ProjectServiceTests : IDisposable
         Assert.Null(manifest.ProjectMissionContainerId);
         Assert.Null(manifest.Submission);
         Assert.Empty(manifest.ApprovedMissionLaunches!);
+        Assert.Empty(manifest.MissionDefinitions!);
         Assert.Equal(ProjectMissionOrigin.BuiltIn, manifest.SelectedMission.Origin);
         Assert.Equal("Janus", manifest.SelectedMission.Reference);
         Assert.Null(manifest.SelectedMission.Digest);
@@ -162,7 +163,7 @@ public sealed class ProjectServiceTests : IDisposable
 
         var json = File.ReadAllText(Path.Combine(created.Home, ProjectService.ManifestFileName));
 
-        Assert.Contains("\"schemaVersion\": 4", json, StringComparison.Ordinal);
+        Assert.Contains("\"schemaVersion\": 5", json, StringComparison.Ordinal);
         Assert.Contains("\"legacyProjectControlConversationId\": null", json, StringComparison.Ordinal);
         Assert.DoesNotContain("missionControlConversationId", json, StringComparison.Ordinal);
         Assert.Contains("\"origin\": \"BuiltIn\"", json, StringComparison.Ordinal);
@@ -303,7 +304,7 @@ public sealed class ProjectServiceTests : IDisposable
     public void Open_ANewerSchemaVersion_IsRefusedAndLeftUntouched()
     {
         var home = WriteManifest("""
-            { "schemaVersion": 5, "projectId": "f0a1b2c3-0000-0000-0000-000000000001",
+            { "schemaVersion": 6, "projectId": "f0a1b2c3-0000-0000-0000-000000000001",
               "title": "Future", "goal": "later", "selectedMission": { "origin": "BuiltIn", "reference": "Janus" } }
             """);
 
@@ -395,7 +396,7 @@ public sealed class ProjectServiceTests : IDisposable
     // --- schema migration and immutable submission journal -------------------------------------
 
     [Fact]
-    public async Task OpeningV1_IsNonMutating_AndTheNextMutationPublishesV4WithLegacyHistory()
+    public async Task OpeningV1_IsNonMutating_AndTheNextMutationPublishesV5WithLegacyHistory()
     {
         var legacyId = Guid.NewGuid();
         var home = WriteManifest($$"""
@@ -408,20 +409,20 @@ public sealed class ProjectServiceTests : IDisposable
 
         var opened = _store.Open(home).Project!.Manifest;
 
-        Assert.Equal(4, opened.SchemaVersion);
+        Assert.Equal(5, opened.SchemaVersion);
         Assert.Equal(legacyId, opened.LegacyProjectControlConversationId);
         Assert.Equal(before, File.ReadAllText(manifestPath));
 
         await _store.SelectMissionAsync(home, "Naive", CancellationToken.None);
 
         var rewritten = File.ReadAllText(manifestPath);
-        Assert.Contains("\"schemaVersion\": 4", rewritten, StringComparison.Ordinal);
+        Assert.Contains("\"schemaVersion\": 5", rewritten, StringComparison.Ordinal);
         Assert.Contains(legacyId.ToString(), rewritten, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("missionControlConversationId", rewritten, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task OpeningV2_PreservesContainerAndLegacyData_WhenItsNextWritePublishesV4()
+    public async Task OpeningV2_PreservesContainerAndLegacyData_WhenItsNextWritePublishesV5()
     {
         var containerId = Guid.NewGuid();
         var legacyId = Guid.NewGuid();
@@ -433,7 +434,7 @@ public sealed class ProjectServiceTests : IDisposable
 
         var updated = await _store.SelectMissionAsync(home, "Janus", CancellationToken.None);
 
-        Assert.Equal(4, updated.Manifest.SchemaVersion);
+        Assert.Equal(5, updated.Manifest.SchemaVersion);
         Assert.Equal(containerId, updated.Manifest.ProjectMissionContainerId);
         Assert.Equal(legacyId, updated.Manifest.LegacyProjectControlConversationId);
         Assert.Equal(2, updated.Manifest.Assets.Length);
@@ -735,7 +736,7 @@ public sealed class ProjectServiceTests : IDisposable
     // makes that an append rather than a silent schema change — and Task 2's conversation-ID
     // write-back depends on nothing being dropped on the way through.
     [Fact]
-    public async Task AFullyPopulatedV1Manifest_NextSuccessfulMutationWritesV4WithoutDroppingData()
+    public async Task AFullyPopulatedV1Manifest_NextSuccessfulMutationWritesV5WithoutDroppingData()
     {
         var home = WriteManifest(FullyPopulatedManifestJson);
 
@@ -744,7 +745,7 @@ public sealed class ProjectServiceTests : IDisposable
         var rewritten = File.ReadAllText(manifestPath);
         var reread = _store.Open(home).Project!.Manifest;
 
-        Assert.Equal(4, reread.SchemaVersion);
+        Assert.Equal(5, reread.SchemaVersion);
         Assert.Equal(Guid.Parse("9f000000-0000-0000-0000-0000000000aa"), reread.LegacyProjectControlConversationId);
         Assert.Equal(ProjectAssetKind.LockFile, reread.Assets[1].Kind);
         Assert.Equal("mission/mission.mcl", reread.Assets[0].RelativePath);

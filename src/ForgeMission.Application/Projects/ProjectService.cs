@@ -302,6 +302,28 @@ internal sealed class ProjectService : IProjectService
         }, cancellationToken);
     }
 
+    // The authored-version service is deliberately the only other Project-domain participant in
+    // this lease. It receives the Project home solely to read manifest-listed package inputs while
+    // the transaction is held; it cannot introduce a route, remote call, or arbitrary path.
+    internal async Task<(ProjectRecord Record, T Value)> UpdateMissionDefinitionsAsync<T>(
+        string home,
+        Func<ProjectManifest, string, (ProjectManifest Manifest, T Value)> transform,
+        CancellationToken cancellationToken)
+    {
+        var root = ValidHome(home);
+        if (!Directory.Exists(root) || !File.Exists(Path.Combine(root, ManifestFileName)))
+            throw MissingManifest(root);
+
+        return await _manifestFile.UpdateAsync(root, snapshot =>
+        {
+            var current = Read(snapshot, root);
+            var result = transform(current, root);
+            Validate(result.Manifest, snapshot.Path, root);
+            return new ProjectManifestFileUpdate<(ProjectRecord, T)>(
+                (new ProjectRecord(result.Manifest, root), result.Value), SerializeManifest(result.Manifest));
+        }, cancellationToken);
+    }
+
     private static ProjectManifest PrepareSubmission(
         ProjectManifest manifest,
         Guid commandId,
@@ -591,7 +613,8 @@ internal sealed class ProjectService : IProjectService
             LegacyProjectControlConversationId: null,
             MissionControlConversationId: null,
             Submission: null,
-            ApprovedMissionLaunches: []);
+            ApprovedMissionLaunches: [],
+            MissionDefinitions: []);
 
         // The same owner used by every update also creates the initial manifest. A competing
         // process sees the manifest under the lease and moves to its next candidate; it never
@@ -645,6 +668,7 @@ internal sealed class ProjectService : IProjectService
             AttachedContext = OrEmpty(manifest.AttachedContext),
             Runs = OrEmpty(manifest.Runs),
             ApprovedMissionLaunches = OrEmpty(manifest.ApprovedMissionLaunches),
+            MissionDefinitions = OrEmpty(manifest.MissionDefinitions),
         };
 
         foreach (var asset in normalized.Assets)
@@ -653,6 +677,7 @@ internal sealed class ProjectService : IProjectService
             ValidateContextReference(context, manifestPath);
         ValidateSubmission(normalized.Submission, manifestPath);
         ValidateApprovedLaunches(normalized.ApprovedMissionLaunches, manifestPath);
+        ValidateMissionDefinitions(normalized.MissionDefinitions, manifestPath);
 
         return normalized;
     }
@@ -668,6 +693,7 @@ internal sealed class ProjectService : IProjectService
             MissionControlConversationId = null,
             Submission = manifest.SchemaVersion < 3 ? null : manifest.Submission,
             ApprovedMissionLaunches = manifest.SchemaVersion < 4 ? [] : manifest.ApprovedMissionLaunches,
+            MissionDefinitions = manifest.SchemaVersion < 5 ? [] : manifest.MissionDefinitions,
         };
     }
 
@@ -734,9 +760,102 @@ internal sealed class ProjectService : IProjectService
         }
     }
 
+    private static void ValidateMissionDefinitions(ProjectMissionDefinition[] definitions, string manifestPath)
+    {
+        var missionIds = new HashSet<Guid>();
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var definition in definitions)
+        {
+            if (definition.MissionId == Guid.Empty || string.IsNullOrWhiteSpace(definition.Name) || definition.Name.Trim().Length > 120 ||
+                !missionIds.Add(definition.MissionId) || !names.Add(definition.Name.Trim()))
+                throw InvalidDefinitions(manifestPath);
+            if (definition.Draft is { } draft) ValidateDraft(draft, manifestPath);
+            var versions = OrEmpty(definition.Versions);
+            var ids = new HashSet<Guid>();
+            var numbers = new HashSet<int>();
+            foreach (var version in versions)
+            {
+                if (version.MissionVersionId == Guid.Empty || version.VersionNumber <= 0 || !ids.Add(version.MissionVersionId) ||
+                    !numbers.Add(version.VersionNumber) || version.CandidateRevision <= 0 || version.CreatedAtUtc == default ||
+                    !Enum.IsDefined(version.State) || !Enum.IsDefined(version.CapabilityProfile) ||
+                    !IsDefinitionHash(version.DefinitionHash, version.DefinitionText) || version.Package is null ||
+                    !ValidPackage(version.Package))
+                    throw InvalidDefinitions(manifestPath);
+                var cases = OrEmpty(version.EvaluationCases);
+                if (cases.Select(item => item.EvaluationCaseId).Distinct().Count() != cases.Length) throw InvalidDefinitions(manifestPath);
+                foreach (var evaluationCase in cases)
+                {
+                    try { MissionVersionService.ValidateCase(evaluationCase); }
+                    catch (ProjectOperationException) { throw InvalidDefinitions(manifestPath); }
+                }
+                var results = OrEmpty(version.EvaluationResults);
+                if (results.Select(item => item.EvaluationResultId).Distinct().Count() != results.Length ||
+                    results.Any(result => !ValidResult(result, version, cases))) throw InvalidDefinitions(manifestPath);
+                if (!ValidVersionState(version, cases, results)) throw InvalidDefinitions(manifestPath);
+            }
+            ValidateVersionLineage(versions, manifestPath);
+            var approved = versions.Where(version => version.State == MissionVersionState.Approved).ToArray();
+            if (approved.Length > 1 || approved.Length == 1 && definition.ActiveApprovedVersionId != approved[0].MissionVersionId ||
+                approved.Length == 0 && definition.ActiveApprovedVersionId is not null)
+                throw InvalidDefinitions(manifestPath);
+        }
+    }
+
+    private static void ValidateDraft(MissionDraft draft, string manifestPath)
+    {
+        if (draft.DraftId == Guid.Empty || draft.Revision <= 0 || draft.UpdatedAtUtc == default || !Enum.IsDefined(draft.CapabilityProfile) ||
+            !IsDefinitionHash(draft.DefinitionHash, draft.DefinitionText)) throw InvalidDefinitions(manifestPath);
+    }
+
+    private static bool ValidPackage(ForgeMission.Conversations.Contracts.DurableMissionPackage package)
+    {
+        var raw = new ForgeMission.Core.Runtime.DurableMissionPackageInput(package.FormatVersion, package.PackageHash, package.MissionSource,
+            package.RootMissionName, package.RootInputName, package.ResolvedExperts.Select(expert =>
+                new ForgeMission.Core.Runtime.DurableResolvedExpertInput(expert.Name, expert.LockSource, expert.LockPath, expert.LockHash, expert.ExpertMarkdown)).ToArray());
+        return ForgeMission.Core.Runtime.DurableMissionPackageValidator.TryValidate(raw, out _, out _);
+    }
+
+    private static bool ValidVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) => version.State switch
+    {
+        MissionVersionState.Candidate => version.EvaluatedAtUtc is null && version.ApprovedAtUtc is null,
+        MissionVersionState.Evaluated => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is null && AllCurrentCasesPassed(version, cases, results),
+        MissionVersionState.Approved => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
+        MissionVersionState.Superseded => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
+        _ => false,
+    };
+
+    private static bool AllCurrentCasesPassed(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
+        cases.Length > 0 && cases.All(evaluationCase => results.Any(result =>
+            result.EvaluationCaseId == evaluationCase.EvaluationCaseId && result.CandidateRevision == version.CandidateRevision &&
+            string.Equals(result.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal) && result.State == EvaluationResultState.Passed));
+
+    private static void ValidateVersionLineage(MissionVersion[] versions, string manifestPath)
+    {
+        var ordered = versions.OrderBy(version => version.VersionNumber).ToArray();
+        for (var index = 0; index < ordered.Length; index++)
+        {
+            var version = ordered[index];
+            if (version.VersionNumber != index + 1)
+                throw InvalidDefinitions(manifestPath);
+            if (index == 0 && version.ParentVersionId is not null ||
+                index > 0 && version.ParentVersionId != ordered[index - 1].MissionVersionId)
+                throw InvalidDefinitions(manifestPath);
+        }
+    }
+
+    private static bool ValidResult(EvaluationResult result, MissionVersion version, EvaluationCase[] cases) =>
+        result.EvaluationResultId != Guid.Empty && result.EvaluationCaseId != Guid.Empty && result.MissionVersionId == version.MissionVersionId &&
+        cases.Any(item => item.EvaluationCaseId == result.EvaluationCaseId) && result.CandidateRevision == version.CandidateRevision &&
+        string.Equals(result.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal) && Enum.IsDefined(result.ObservedOutcome) &&
+        Enum.IsDefined(result.State) && result.CompletedAtUtc is not null && Encoding.UTF8.GetByteCount(result.ObservedOutputSummary ?? "") <= 4096 &&
+        (result.TraceOrigin is null || result.TraceOrigin.ConversationId != Guid.Empty && result.TraceOrigin.TurnId != Guid.Empty && result.TraceOrigin.TurnAttemptId != Guid.Empty);
+
+    private static ProjectOperationException InvalidDefinitions(string manifestPath) => new(ProjectOperationErrorCode.InvalidManifest,
+        $"{manifestPath} contains invalid authored mission definitions.");
+
     internal static bool IsDefinitionHash(string hash, string definition)
     {
-        if (string.IsNullOrWhiteSpace(hash) || string.IsNullOrWhiteSpace(definition) || definition.Length > 256 * 1024)
+        if (string.IsNullOrWhiteSpace(hash) || string.IsNullOrWhiteSpace(definition) || Encoding.UTF8.GetByteCount(definition) > 256 * 1024)
             return false;
         var expected = "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(definition))).ToLowerInvariant();
         return string.Equals(hash, expected, StringComparison.Ordinal);

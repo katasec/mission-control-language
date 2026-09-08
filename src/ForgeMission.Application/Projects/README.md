@@ -18,7 +18,7 @@ A Project is durable local domain state, not an execution session or a screen. T
 
 ## Owns
 
-- Project draft, create, open, validation, and all `forge.project.json` reads and mutations in [ProjectService](ProjectService.cs) and its private [ProjectManifestFile](ProjectManifestFile.cs) adapter.
+- Project draft, create, open, validation, authored mission versions/evaluation facts, and all `forge.project.json` reads and mutations in [ProjectService](ProjectService.cs), [MissionVersionService](MissionVersionService.cs), and the private [ProjectManifestFile](ProjectManifestFile.cs) adapter.
 - Built-in mission vocabulary through [MissionCatalog](../Missions/MissionCatalog.cs), and the Project mutation that records a selected mission.
 - Immutable submission preparation and acceptance/rejection receipt mutation for MissionSubmissionService.
 - Workbench projection and bounded, manifest-identified document access in [ProjectContentService](ProjectContentService.cs).
@@ -26,6 +26,7 @@ A Project is durable local domain state, not an execution session or a screen. T
 ## Does not own
 
 - Sending or reconciling a mission command — [Missions](../Missions/README.md).
+- Running an evaluation or starting a durable mission — the later durable-conversation owner; this component records only frozen package and deterministic result facts.
 - Session attachment, local capability authority, or execution — [Sessions](../Sessions/README.md) and Client Runtime.
 - Layout, document presentation, or UI choice — Presentation.
 - Durable run history and remote event authority — [Runs](../Runs/README.md) and Conversation Host.

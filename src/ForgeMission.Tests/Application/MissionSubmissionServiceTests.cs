@@ -133,7 +133,7 @@ public sealed class MissionSubmissionServiceTests : IDisposable
             new ForgeMission.Core.Runtime.DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
         var package = new DurableMissionPackage(1, ForgeMission.Core.Runtime.DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
         const string definition = "approved";
-        return new MissionVersionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionCapabilityProfile.NoHands, DateTimeOffset.UtcNow, package);
+        return new MissionVersionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.NoHands, DateTimeOffset.UtcNow, package);
     }
 
     private static string Hash(string value) => "sha256:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();

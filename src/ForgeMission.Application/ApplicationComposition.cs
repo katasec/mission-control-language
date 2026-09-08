@@ -84,6 +84,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         _sessions = new ApplicationSessionService(policy, publish, applicationStopping);
 
         var projects = new ProjectService(_sessions);
+        var missionVersions = new MissionVersionService(projects);
         var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
         var submissions = new MissionSubmissionService(projects, clients, _sessions, hands);
         var content = new ProjectContentService(projects, _sessions);
@@ -92,6 +93,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         var capabilities = new CapabilityActionService(_sessions, publish);
         var interactions = new InteractionService(_sessions);
         Projects = projects;
+        MissionVersions = missionVersions;
         Sessions = _sessions;
         MissionSubmissions = submissions;
         RunHistory = history;
@@ -103,6 +105,9 @@ public sealed class ApplicationComposition : IAsyncDisposable
     }
 
     public IProjectService Projects { get; }
+
+    // Surface-neutral owner interface. No Application.Transport DTO or route exists until 45.4.
+    internal IMissionVersionService MissionVersions { get; }
 
     public IApplicationSessionService Sessions { get; }
 
