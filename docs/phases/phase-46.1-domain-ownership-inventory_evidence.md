@@ -32,9 +32,9 @@ design-complete but still unimplemented.
 | 6. No disguised complexity | **PASS** | Three fixed profiles, one live attachment and one outstanding request reject a registry, generic dispatcher, wrapper stack, permission dial and hidden Full Access mode. |
 | 7. Evidence and implementation readiness | **PASS (design); FAIL (implementation)** | The locked contract names compatibility, negative cases and default-path proof. F46.1-01 is now plan-ready but unapproved; F46.1-01–03 are not implemented. |
 
-The only remaining design question is Q46.1-03 (Type 2 hosted answer selection). No durable
-admission/trust decision is open: D46.1-01 and D46.1-02 are locked Type-1 designs and Phase 45
-implementation is their dependency, not permission to invent a parallel catalog or authority path.
+Q46.1-03 is closed by accepted Task D. No durable admission/trust decision is open: D46.1-01 and
+D46.1-02 are locked Type-1 designs and Phase 45 implementation is their dependency, not permission
+to invent a parallel catalog or authority path.
 
 | Entry/process path | Confirmed call path and owner |
 |---|---|
@@ -88,14 +88,14 @@ implementation is their dependency, not permission to invent a parallel catalog 
 | Disposition / compatibility | **Move/replace, P0. Type 1:** event enums/shapes are persisted and transit HTTP/SSE/Service Bus. Add generic facts for new launch-snapshot runs; preserve historic event readers. `AwaitingHands`, confirmation and typed terminal outcomes are additive, not a new Worker transcript. |
 | Containment/proof | Host validates shape, correlation, one-outstanding-request and trace ordering before append; unknown/malformed/late input is rejected without corruption. Progress-send failure remains in Worker outbox. Later proof: old-event reads, generic sequencing/replay, duplicate/wrong-correlation rejection, no-hands recovery, generic rendering and default Project run. |
 
-## Q46.1-03 — hosted result selection is an implicit convention
+## Q46.1-03 — terminal declared result is the hosted answer
 
 | Field | Evidence, owner, and proposed disposition |
 |---|---|
-| Classification and signal | **Unresolved design question, Type 2 — implicit content convention, not a second executor.** `Runner/MissionRunHandler.cs` lines 234–247 displays the last `Answerer` trace text for a verified run. Built-in verified assets intentionally use `Answerer → Verifier`, so displaying raw `MissionResult.Text` would display verifier text instead of the user answer. MCL `output(Mission)` selects a mission/file target, not an intermediate step output. |
-| Owner/dependencies | Runner owns `RunResponse.AgentText`; Core owns the pipeline result; API `MissionExecutionService` and ForgeUI `RoomAgentInvoker` consume the projection. `Runner.Tests/MissionRunHandlerTests.cs` proves generic non-`Answerer` agent flows already use the terminal result. |
-| Alternatives / supervisor decision | Choose one: **(a)** retain and document `Answerer` as a built-in catalog/content convention (smallest, no language change); or **(b)** add an explicit generic result-selection semantic to MCL and migrate built-ins (more expressive but a language/API design change). Do not remove the convention or add a name-based runner registry. |
-| Compatibility/proof | This does not block generic execution or F46.1-01–03. Any future change affects public Runner/API/UI response selection and needs built-in visible-result, absent/multiple selector, and hosted default-path evidence. |
+| Classification and signal | **Resolved Type-2 projection correction (2026-09-08).** The former Runner convention selected the last trace entry named `Answerer` for a verified run. That made a specific expert name load-bearing even though MCL has no intermediate-result selector. |
+| Owner/dependencies | Runner owns `RunResponse.AgentText`; Core owns the terminal `MissionResult`; API `MissionExecutionService` and ForgeUI `RoomAgentInvoker` forward the projection. Rooms does not choose a trace step. |
+| Supervisor decision | The terminal declared MCL result is always the operator-facing answer. Mission declarations express verification, debate, synthesis, and retry topology so their terminal step emits the intended answer. `Answerer` is ordinary author vocabulary, not runtime behavior. |
+| Compatibility/proof | Task D removes the name lookup while retaining failure and tool-pause behavior. The regression proves a prior step literally named `Answerer` cannot override a distinct terminal verifier result; the hallucination guard's terminal verifier emits its verified original answer. No MCL grammar, TOML, wire-schema, catalog, or Rooms selector changes. |
 
 ## F46.1-05 — inactive Project mission origins
 

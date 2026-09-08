@@ -42,10 +42,10 @@
 
 ## Patterns established here (reuse these, don't re-derive)
 
-- **A step named exactly `Answerer` gets the "Verified" badge.** `MissionRunHandler.
-  BuildAgentText` (`src/ForgeMission.Runner/MissionRunHandler.cs`) picks the verified answer text
-  from a step literally named `Answerer` — any mission wanting the standard verified-answer
-  treatment (not a bespoke output path) must name its answer-producing step that.
+- **The terminal declared mission result is the answer.** The Runner projects Core's terminal
+  `MissionResult.Text`; every mission declares verification, debate, synthesis, and retries so its
+  final step emits the text intended for the user. `Answerer` is ordinary author vocabulary, not
+  a special runtime name.
 - **URL input is always fetched client-side, never server-side.** ForgeAPI/the runner must never
   fetch a caller-supplied URL — that's an SSRF surface (internal IPs, metadata endpoints, redirect
   chains). The CLI fetching a URL is the same trust boundary as the user running `curl` themselves.

@@ -164,9 +164,10 @@ output(Assistant)
 ```
 
 `Verifier` is `role: judge`, `kind: llm` — fails with a reason (triggering a loop retry with
-feedback) or passes, echoing the answer verbatim. `MissionRunHandler.BuildAgentText`
-(`src/ForgeMission.Runner/MissionRunHandler.cs`) picks the verified answer text from **a step
-literally named `Answerer`** — the naming is load-bearing, not cosmetic.
+feedback) or passes, echoing the answer verbatim. **Historical implementation note, superseded by
+Phase 46 Task D (2026-09-08):** this originally relied on `MissionRunHandler.BuildAgentText`
+selecting a step literally named `Answerer`. Runner now projects the terminal declared
+`MissionResult.Text`; the final step, not an expert name, is load-bearing.
 
 **The gap that had to be closed:** `OcrExec` (`missions/ocr/experts/Ocr/ocr.py`) returns a short
 metadata line as its JSON `summary`, not the full extracted text — correct for `@ocr`'s own CLI

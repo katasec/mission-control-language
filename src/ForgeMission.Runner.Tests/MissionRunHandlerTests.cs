@@ -15,7 +15,7 @@ public sealed class MissionRunHandlerTests : IDisposable
         Path.Combine(Path.GetTempPath(), $"forge-runner-tool-turn-{Guid.NewGuid():N}");
 
     [Fact]
-    public async Task Tool_turn_returns_calls_then_resumes_from_cached_enrichment()
+    public async Task Tool_turn_keeps_response_blank_until_terminal_verifier_result_even_when_prior_step_is_Answerer()
     {
         var registry = await CreateRegistryAsync();
         var cache = new InMemoryEnrichmentCache();
@@ -47,7 +47,11 @@ public sealed class MissionRunHandlerTests : IDisposable
         Assert.NotNull(second);
         Assert.Null(second.ToolUse);
         Assert.True(second.Verified);
-        Assert.Equal("verified answer", second.AgentText);
+        Assert.Equal("terminal verifier result", second.AgentText);
+        Assert.Collection(
+            second.Trace,
+            step => Assert.Equal("Answerer", step.ExpertName),
+            step => Assert.Equal("Verify", step.ExpertName));
         Assert.Equal(1, runner.EnrichCalls);
         Assert.Equal(2, runner.AgentCalls);
         Assert.Equal(1, runner.VerifyCalls);
@@ -57,6 +61,33 @@ public sealed class MissionRunHandlerTests : IDisposable
         // role) is Anthropic-specific, not universal — OpenAI's API rejects it outright. Each
         // provider's IChatClient adapter translates ChatRole.Tool into its own wire correctly.
         Assert.Equal(ChatRole.Tool, runner.ToolResultMessageRole);
+    }
+
+    [Fact]
+    public async Task Terminal_failure_keeps_the_safe_generic_projection()
+    {
+        var registry = await CreateRegistryAsync();
+        var cache = new InMemoryEnrichmentCache();
+        var runner = new ScriptedExpertRunner { FailVerification = true };
+        var handler = new MissionRunHandler(
+            registry,
+            new EmptyArtifactStore(),
+            NullLogger<MissionRunHandler>.Instance,
+            cache,
+            (_, _) => runner);
+
+        _ = await handler.RunAsync(Request(UserTurn()), CancellationToken.None);
+        var failed = await handler.RunAsync(Request(Continuation()), CancellationToken.None);
+
+        Assert.NotNull(failed);
+        Assert.Null(failed.ToolUse);
+        Assert.False(failed.Verified);
+        Assert.Equal("Could not verify: verifier rejected the unsupported claim.", failed.AgentText);
+        Assert.DoesNotContain("raw provider detail", failed.AgentText, StringComparison.OrdinalIgnoreCase);
+        Assert.Collection(
+            failed.Trace,
+            step => Assert.Equal("Answerer", step.ExpertName),
+            step => Assert.Equal("Verify", step.ExpertName));
     }
 
     public void Dispose()
@@ -71,7 +102,7 @@ public sealed class MissionRunHandlerTests : IDisposable
         await File.WriteAllTextAsync(Path.Combine(_missionDirectory, "mission.mcl"), """
             mission Task(goal) = {
               Enrich
-              -> Respond
+              -> Answerer
               -> Verify
             }
 
@@ -83,15 +114,15 @@ public sealed class MissionRunHandlerTests : IDisposable
               Enrich:
                 source: experts
                 path: experts/Enrich/expert.md
-              Respond:
+              Answerer:
                 source: experts
-                path: experts/Respond/expert.md
+                path: experts/Answerer/expert.md
               Verify:
                 source: experts
                 path: experts/Verify/expert.md
             """);
         await WriteExpertAsync("Enrich", role: null);
-        await WriteExpertAsync("Respond", role: "agent");
+        await WriteExpertAsync("Answerer", role: "agent");
         await WriteExpertAsync("Verify", role: null);
 
         return await RunnerRegistry.LoadAsync(
@@ -174,6 +205,7 @@ public sealed class MissionRunHandlerTests : IDisposable
 
     private sealed class ScriptedExpertRunner : IExpertRunner
     {
+        public bool FailVerification { get; init; }
         public int EnrichCalls { get; private set; }
         public int AgentCalls { get; private set; }
         public int VerifyCalls { get; private set; }
@@ -203,7 +235,7 @@ public sealed class MissionRunHandlerTests : IDisposable
         private StepEnvelope Respond(ExpertDefinition expert, Dictionary<string, object> context) => expert.Name switch
         {
             "Enrich" => Enrich(),
-            "Respond" => RespondAsAgent(context),
+            "Answerer" => RespondAsAgent(context),
             "Verify" => Verify(),
             _ => throw new InvalidOperationException($"Unexpected expert '{expert.Name}'.")
         };
@@ -243,7 +275,12 @@ public sealed class MissionRunHandlerTests : IDisposable
         private StepEnvelope Verify()
         {
             VerifyCalls++;
-            return new StepEnvelope("verified answer");
+            if (FailVerification)
+                return new StepEnvelope(
+                    "raw provider detail: terminal verifier payload",
+                    "fail",
+                    "verifier rejected the unsupported claim.");
+            return new StepEnvelope("terminal verifier result");
         }
     }
 

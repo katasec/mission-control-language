@@ -17,7 +17,7 @@ public static class BuiltinMissions
         new("ChatGPT",   "Raw LLM — no verification",
             BuiltinMissionReferences.Vanilla,                                                                                          "vanilla"),
         new("Forge",     "LLM + deterministic verifier, retries on fail",
-            $"{Reg}/forge-mission-hallucination-guard@sha256:ece5dc79e12086c50745c62e2d299402dcc452b27e0181fd4445f8082bf9bb81", "hallucination-guard"),
+            $"{Reg}/forge-mission-hallucination-guard@sha256:4020a035d14b00a76f723e1c147205316cbbba81c627e6fd6c920d0feddd3424", "hallucination-guard"),
         new("Assistant", "General assistant, answers LLM-verified",
             $"{Reg}/forge-mission-assistant@sha256:03749f67d10fe3ed9672f96afa2a138f7f89403d070a806139e946a10e62624c",          "assistant"),
         new("Claude",    "Raw Claude — no verification",

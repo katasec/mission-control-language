@@ -25,4 +25,5 @@ else:
     status = "pass" if says_none else "fail"
     reason = f"No month name contains the letter X. Correct answer: none. Got: {data.get('output', '')[:120]}"
 
-print(json.dumps({"verdict": status, "status": status, "reason": reason}))
+verdict = data.get("output", "") if status == "pass" else status
+print(json.dumps({"verdict": verdict, "status": status, "reason": reason}))
