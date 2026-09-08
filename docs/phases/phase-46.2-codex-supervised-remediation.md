@@ -1,6 +1,7 @@
 # Phase 46.2 — Codex-supervised remediation
 
-> **Status:** blocked on the approved findings ledger in [Phase 46.1 — repository-wide ownership inventory and end state](phase-46.1-domain-ownership-inventory.md).
+> **Status:** accepted Core, hands, generic Worker, and hosted terminal-result remediation; the
+> remaining dependent cleanup follows the approved Phase 45 integration chain.
 > Parent: [Phase 46 — domain-ownership remediation](phase-46-domain-ownership-remediation.md).
 
 ## Why this spoke exists
