@@ -2,12 +2,14 @@
 # ForgeMission.ConversationHost — the durable-conversation Silo/API (Phase 43.16 Task 8a).
 #
 # NOT Native AOT: an ASP.NET Orleans Silo host, same shape as Dockerfile.runner/.forgeapi. Build
-# context = repo root. ConversationHost references only ForgeMission.Conversations.Contracts
-# (zero package/project dependencies of its own) plus Orleans/Azure SDK packages — none of which
-# are private GitHub Packages, so no NUGET_AUTH_TOKEN build secret is needed here, unlike
+# context = repo root. ConversationHost references ForgeMission.Core, which restores the private
+# Katasec.AITools package. Restore therefore needs the repo's nuget.config and a read:packages
+# token supplied as a required BuildKit secret — never written into an image layer — just like
 # Dockerfile.conversationworker.
 #
-#   docker build -f Dockerfile.conversationhost -t forge-conversation-host:local .
+#   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
+#   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
+#     -f Dockerfile.conversationhost -t forge-conversation-host:local .
 
 # ---- build --------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -16,7 +18,9 @@ WORKDIR /src
 COPY nuget.config ./
 COPY src/ ./src/
 
-RUN dotnet publish src/ForgeMission.ConversationHost/ForgeMission.ConversationHost.csproj -c Release -o /app/publish \
+RUN --mount=type=secret,id=nuget_token,required=true \
+    NUGET_AUTH_TOKEN="$(cat /run/secrets/nuget_token)" \
+    dotnet publish src/ForgeMission.ConversationHost/ForgeMission.ConversationHost.csproj -c Release -o /app/publish \
       /p:UseAppHost=false /p:PublishAot=false
 
 # ---- runtime ------------------------------------------------------------------------------
