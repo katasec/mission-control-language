@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">Before: one-shot Missions screen</title>
+  <desc id="desc">The current workbench shows a selected one-shot mission, historic run cards, and a persistent submit composer.</desc>
+  <rect width="1440" height="960" fill="#071426"/>
+  <rect width="212" height="960" fill="#061a30"/>
+  <text x="24" y="44" fill="#f4f8ff" font-family="Arial, sans-serif" font-size="20" font-weight="700">Forge</text>
+  <text x="24" y="70" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="12">Northstar</text>
+  <g font-family="Arial, sans-serif" font-size="15">
+    <text x="30" y="138" fill="#b7cbe2">□  Project Explorer</text>
+    <rect x="12" y="158" width="188" height="42" rx="6" fill="#123b63"/>
+    <text x="30" y="184" fill="#f4f8ff" font-weight="700">◎  Missions</text>
+    <text x="30" y="238" fill="#b7cbe2">⚙  Settings</text>
+  </g>
+  <rect x="212" width="1228" height="76" fill="#0b1d34"/>
+  <text x="240" y="35" fill="#f4f8ff" font-family="Arial, sans-serif" font-size="22" font-weight="700">Missions</text>
+  <text x="240" y="59" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="13">Northstar</text>
+  <rect x="360" y="126" width="720" height="144" rx="10" fill="#102740" stroke="#274d72"/>
+  <text x="392" y="163" fill="#f4f8ff" font-family="Arial, sans-serif" font-size="18" font-weight="700">Janus</text>
+  <text x="392" y="192" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="14">Completed · 4 expert turns · 2 tool calls</text>
+  <text x="392" y="226" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="14">Create a launch plan for the migration.</text>
+  <text x="392" y="252" fill="#57d9ee" font-family="Arial, sans-serif" font-size="14">View run trace</text>
+  <rect x="360" y="294" width="720" height="144" rx="10" fill="#102740" stroke="#274d72"/>
+  <text x="392" y="331" fill="#f4f8ff" font-family="Arial, sans-serif" font-size="18" font-weight="700">Naive</text>
+  <text x="392" y="360" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="14">Failed · retry available</text>
+  <text x="392" y="394" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="14">Summarise the customer feedback.</text>
+  <text x="392" y="420" fill="#57d9ee" font-family="Arial, sans-serif" font-size="14">View run trace</text>
+  <rect x="212" y="786" width="1228" height="174" fill="#0b1d34" stroke="#274d72"/>
+  <rect x="252" y="822" width="230" height="42" rx="6" fill="#102740" stroke="#274d72"/>
+  <text x="269" y="848" fill="#f4f8ff" font-family="Arial, sans-serif" font-size="14">Mission: Janus ▾</text>
+  <rect x="498" y="822" width="660" height="64" rx="6" fill="#102740" stroke="#274d72"/>
+  <text x="520" y="860" fill="#b7cbe2" font-family="Arial, sans-serif" font-size="14">Describe the one-shot mission run…</text>
+  <rect x="1174" y="822" width="124" height="64" rx="6" fill="#57d9ee"/>
+  <text x="1206" y="860" fill="#071426" font-family="Arial, sans-serif" font-size="14" font-weight="700">Run</text>
+</svg>

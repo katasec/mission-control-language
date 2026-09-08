@@ -1,151 +1,93 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** 45.2 is accepted. The prior 45.3 implementation was reverted after a supervisor
-> browser comparison found it materially unlike the binding reference. Claude now implements the
-> replacement under the bounded [Claude ↔ Codex workflow](../design/claude-codex-workflow.md);
-> Codex retains design, browser/default-path acceptance, and integration authority.
+> **Status:** design-ready, 2026-09-09. Implement only Task 3A after a bounded implementer plan passes Codex review. The previous all-in-one surface plan is replaced because it was too broad for useful visual diagnosis.
 
-> **Accepted prerequisite (2026-09-09):** the shared durable-launch structural comparison is
-> now owned by `ForgeMission.Conversations.Contracts` and consumed by Conversation Host without
-> behaviour change. See [45.3 completed evidence](phase-45.3-operator-missions-experience_completed.md#accepted-prerequisite-durable-launch-comparison).
+## Why this slice exists
 
-### Required Claude relay format
+This is the smallest useful replacement for the one-shot Missions control thread: an operator can see the Project's durable, version-pinned Mission Conversations and deliberately create one from a current Approved version. Transcript, turns, trace, authoring, and hands-status follow only after this visible selection/pinning seam is accepted.
 
-Every Phase 45.3 prompt relayed to Claude must include the workflow's
-[copy/paste relay protocol](../design/claude-codex-workflow.md#copy-paste-relay-protocol). For the
-initial plan, Claude's response starts with `RELAY PACKET`, uses printable 7-bit ASCII plus line
-breaks only, and supplies the plan-only labels in the workflow's required order. The operator can
-then paste the packet back to Codex without retyping or translating it. Claude may not edit until
-Codex has approved that relayed plan.
+It advances Presentation rendering/navigation/focus, Application/Missions' Project-to-Host coordination, Application Transport's shared vocabulary, and Application Host's concrete route boundary. Projects remains manifest/Approved-version owner; Conversation Host owns directory/checkpoints; Client Runtime alone owns local-capability authority. Presentation owns no Project, lifecycle, durable, or capability decision.
 
-## Task 3 — make Missions a persistent conversation experience
+## Task 3A — Missions landing and approved-version start
 
-### Why and component fit
+### Scope
 
-This advances Presentation’s rendering/navigation/focus purpose and Application/Host’s concrete
-shared-action boundary. It reuses the existing Project workspace, rail, Application channel, SSE
-subscription and trace renderer. It creates no domain state in Blazor, second shell, generic route
-dispatcher, or new rail entry.
-
-### Affected components and files
-
-| Component | Planned files |
+| Included now | Absent from this slice |
 |---|---|
-| Presentation | `Pages/Home.razor`, `Components/WorkbenchView.cs`, `WorkbenchRail.razor`, reshape `MissionsView.razor`, `MissionPicker.razor`, `MissionComposer.razor`, `RunTraceView.razor`, `ConversationTranscriptView.razor`, relevant CSS/tests. |
-| Application Transport/Host | Additive list/start/submit/retry/cancel/trace/profile-approval/hands-status/confirmation transport routes, channel/event tests. |
-| Application | Conversation/query interfaces, profile-bound attachment and Application-event projection only; no presentation decision rules. |
-| Documentation | Completion evidence and the [mission-hands visual contract](../images/phase-45/mission-hands-profile-states.svg); no new design-system authority. |
+| The existing **Missions** rail destination is a landing view on Project open. It lists Host-indexed conversations with locally resolved mission name, pinned version, and updated time. | Row opening, transcript, title inference, last message, evidence, composer, submit/retry/cancel, trace, running state, hands status, confirmation, reconnect, and turn events. Rows are informational text, never buttons or links. |
+| **New conversation** reveals one right-side setup panel with only each mission's current Approved version. | Filter/search, paging, sorting, candidate/superseded rows, catalog versions, version switching, generic browser, or a new rail item. |
+| A read-only **Fixed access** summary repeats the selected profile. **Start on <mission> v<version>** creates the durable conversation, then acknowledges that exact resolved profile to Application. | Per-tool choices, profile narrowing/editor, escalation, arbitrary host access, Full Access, capability dashboard, or browser-to-Bob/Host calls. |
+| Empty, loading, unavailable, stale-selection, create-uncertain, and attachment-unconfirmed states. | **Author a mission** is omitted, not disabled, until 45.4 has a real Explorer destination. |
 
-### Routes, state, and shared actions
+Success creates an empty durable conversation and, when acknowledgement succeeds, a fresh same-profile attachment. It submits no turn. The panel closes, the new pinned item appears, and a live announcement confirms creation.
 
-`WorkbenchView` retains rail states Explorer, Missions, Settings; it replaces legacy RunTrace with
-`MissionConversation` and `TurnTrace` document states. Neither is a rail entry. Opening Project
-sets Missions. Presentation-only state is:
+### Binding visual and component specification
 
-```text
-MissionsList
-MissionConversation(conversationId, selectedTurnId?)
-TurnTrace(conversationId, turnId, turnAttemptId, traceOrigin)
-ExplorerAuthoring(missionId, versionId?)  // reached through Explorer, defined in 45.4
-```
+Binding reference: [4a — Missions and mission picker](../design/assets/forge-desktop-dark-implementation-reference-v1/4a-missions.png), **1440 × 960**. Task 3A owns rail, header, list container, Approved-version panel, fixed-profile explanation, and one Start action. It explicitly omits 4a's filter, row navigation, last-message column, author link, candidate row, and secondary author action.
 
-Every action calls typed transport: ListMissionConversations, ListApprovedMissionVersions,
-CreateMissionConversation, SubmitMissionTurn, RetryMissionTurn, CancelMissionTurn,
-GetMissionConversation, GetMissionTurnTrace. Responses supply IDs/status/evidence; Presentation
-only renders. A TUI can invoke each with identical authorization/outcome/failure, so
-Presentation-surface parity is **PASS by design**.
+![Before — one-shot Missions](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-45/task-3a-missions-landing-before.svg)
 
-`CreateMissionConversation` returns the immutable version/profile that Application resolved; the
-surface presents that exact read-only profile and sends only an acceptance acknowledgement—not a
-profile value, tool selection or grant. `GetMissionHandsStatus` returns the durable profile,
-`AwaitingHands`/tool/confirmation state and correlation. `ResolveMissionToolConfirmation` sends a
-choice for one correlation to Application; Application returns it to the same Bob attachment.
-Presentation never calls Bob, dispatches a tool, makes a policy decision or converts a denial into a
-prompt. TUI uses the same actions and outcomes.
+![After — Missions landing and approved-version start](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-45/task-3a-missions-landing-after.svg)
 
-### Conversation title (locked 2026-09-08)
+The after artifact at **1440 × 960** is the binding composition; 4a supplies dark visual language and panel hierarchy. The existing composer is removed from this state. At measured packaged usable viewport the header, list, selected version, fixed-access summary, and Start action are visible without document scroll.
 
-Creating a conversation never asks for a name. On its first accepted, non-retry turn, the Worker
-uses one fixed-prompt, no-tools `IMissionConversationTitleInferrer` over that turn's immutable
-message. Its concrete default shares the Worker's existing deployment-configured `IChatClient`;
-the interface is the sole substitution seam should product evidence later favour another strategy.
-There is no deterministic name, random word pair, retry control, or fallback chain.
+| Element | Exact behaviour |
+|---|---|
+| Header | **Missions**; **Review pinned mission versions and start a new conversation.** One primary button: **New conversation**. |
+| List | **Mission conversations**; **Each conversation retains its approved mission version.** Columns: **MISSION · VERSION**, **UPDATED**. Empty: **No mission conversations yet. Start one from an approved version.** Semantic ordered list; no click handler, pointer cursor, or link styling. |
+| Panel | **New mission conversation**; **Choose the approved version this conversation will pin.** Escape and **Cancel** close without request; focus moves to first option and returns to opener. |
+| Options | Radio group **Approved versions**. Each option has mission, v<number>, **Approved**, and profile label. Candidate, Evaluated, Draft, and Superseded are not rendered. No-option: **No approved mission version is available for this Project.** |
+| Fixed access | Read-only label: **No local access**, **Project workspace access**, or **Project workspace and terminal access**. Copy: **This exact profile is fixed for this conversation. Forge asks before any bounded operation. It cannot be changed here.** |
+| Start | **Start on <mission> v<version>** after selection only. During request: **Starting conversation…**; Start, Cancel, and radios disable. |
 
-The Host records title inference request, source turn/attempt, inferred title, and explicit state
-(`Pending`, `Inferred`, or `Unavailable`) as durable checkpoint facts. The Worker returns one typed
-result through the existing `mission-command` / `conversation-progress` path; the Host validates
-its deterministic request ID and assigns the canonical event sequence. A provider timeout, invalid
-title, exception, crash after the provider boundary, or terminal source turn becomes durable
-`Unavailable` without exposing provider text or re-invoking inference. Presentation renders the
-typed state only: **New mission conversation** while pending and **Title generation unavailable**
-when unavailable. It never derives, persists, retries, or reconciles a name itself.
+Cooper/Rams/Norman is **PASS**: this serves the real pre-turn choice of an approved pinned mission; the panel is disclosed only for it; every control performs one real action; stale/unavailable versions cannot look selected; rows make no false promise.
 
-### Visual and interaction contract
+### Theme and responsive evidence
 
-Binding reference: [4a](../design/assets/forge-desktop-dark-implementation-reference-v1/4a-missions.png),
-[4b](../design/assets/forge-desktop-dark-implementation-reference-v1/4b-mission-conversation.png),
-and [4c](../design/assets/forge-desktop-dark-implementation-reference-v1/4c-forge-trace.png), at
-1440×960, plus the binding [mission-hands profile states](../images/phase-45/mission-hands-profile-states.svg)
-at 1440×960. The new wireframe owns the access indicator, fixed-profile approval, required
-confirmation and `AwaitingHands` state; it does not add rail destinations, a tool dashboard or
-permission controls. Select named `forge-desktop-dark` at workbench boundary. Map warm surfaces to
-`--bg`/`--surface-sunken`/`--surface`/`--surface-active`, cream ink to
-`--text`/`--text-muted`, ember action/selection to `--accent`/`--accent-soft`, and state to
-success/danger/warning tokens; define light/dark maps in `forge.css`. Required pairs: text/bg,
-muted/surface, accent/accent-contrast, success/success-bg, danger/danger-bg, disabled/surface.
-No component-local sampled values.
+Select named forge-desktop-dark at Workbench boundary, separate from data-theme. Add both colour-mode maps in source stylesheet src/ForgeUI/wwwroot/css/forge.css, which Presentation links; component styles consume tokens only. Warm background/rail/panel use surface tokens; cream ink uses text tokens; ember start/selection/focus uses accent tokens; pinned uses success tokens; availability/error uses warning/danger tokens. Record text/bg, muted/surface, accent/accent-contrast, success/success-bg, warning/warning-bg, danger/danger-bg, and disabled/surface contrast pairs plus sampled/derived/accessibility provenance.
 
-| Reference slice | Owned | Deferred / omitted |
+Use bounded fluid geometry: compact width puts panel below list, wide width uses the after artifact's right column. Browser-first evidence covers four measured usable-viewport corners, continuous resize, long names, empty/error state, 200% zoom, keyboard focus, and no clipping, overlap, or unintended horizontal/document scroll; then one packaged parity check.
+
+### Typed actions and rendering projection
+
+Add only facts required by these states. MissionConversationService becomes the named Application owner behind IMissionConversationService, validates live session, uses MissionVersionService and ConversationHostClient, and returns presentation projections. Presentation never receives Project home, manifest, DurableMissionLaunch, Host client, Bob handle, tool declaration, or attachment implementation.
+
+| Action | Request | Typed result |
 |---|---|---|
-| 4a | Conversation list, Approved-only picker, creation, pin explanation, Author a mission link. | Search/filter sophistication, OCI catalog, version change in an existing conversation. |
-| 4b | Transcript, evidence row, failed/retry/edit-resend, running/cancel, disabled/re-enabled composer. | Human gate/suspend-resume, rich artifact preview, token-delta transcript. |
-| 4c | Read-only turn trace, origin message/answer anchors, chronological events, exact Back. | Export/copy tools, trace filtering/search. |
-| Mission-hands profile states | Read-only Mission access indicator, creation-time fixed-profile approval, correlated tool status, required confirmation and `AwaitingHands`. | Per-tool checkboxes, profile narrowing, runtime escalation, capability dashboard, arbitrary host access and Full Access. |
+| ListMissionConversations | session_id | MissionConversationListItem[]: conversation_id, locally resolved mission_name, version_number, updated_at_utc. Application reads Host directory and joins pinned mission_version_id to manifest. Missing local definition displays **Mission version is no longer available locally** and stored version; it does not invent a name/delete Host data. |
+| ListApprovedMissionVersions | session_id | ApprovedMissionVersionOption[]: mission_id, mission_name, mission_version_id, version_number, definition_hash, exact MissionHandsProfile. Projects alone determines current active Approved; no package/definition content. |
+| CreateMissionConversation | session_id, mission_id, command_id | CreatedMissionConversation: conversation_id and immutable MissionAccessApproval (mission_version_id, version_number, definition_hash, profile), or ProjectOperationError. Application resolves current Approved immediately before Host create; caller cannot name version, profile, package, or Project path. |
+| AcknowledgeMissionHands (existing) | session_id, conversation_id, exact returned approval, profile_accepted true | Existing owner re-resolves launch and creates at most fresh bounded attachment it owns. Presentation cannot select access. |
 
-At measured packaged usable viewport, selected initial action and composer are visible without
-document scroll. Use bounded fluid token values. Test all rectangular corners, continuous resize,
-long names/output, 200% text/zoom, keyboard focus, no clipping/overlap/horizontal scroll; inspect in
-browser first then one packaged parity run.
+The first three are additive in ApplicationContracts, ApplicationJsonContext, IApplicationChannel, HttpApplicationChannel, and concrete /transport/mission-conversations/* endpoints. DTOs use PascalCase members and source-generated camel-case JSON. Raw durable Contracts records stay Host-internal.
 
-The indicator is an informational chip, never a control. The creation approval appears only after
-the operator selects an Approved version and repeats the profile in plain language; it has one
-start/decline choice, no editable permissions. A tool row identifies the bounded operation and
-correlation/status. Only Bob's `ConfirmationRequired` status reveals Allow/Deny; an out-of-profile
-denial renders a non-interactive explanation, not an escalation prompt. `AwaitingHands` explains
-that reconnecting the same conversation restores only its already-approved profile.
+Home owns MissionsLanding and NewMissionConversation view state, loads both lists on Project entry, refreshes after definitive create, replaces one-shot history, and removes MissionComposer. No new Workbench rail state, SSE requirement, transcript, or trace navigation is added.
 
-### Failure/accessibility/interaction contract
+### Failure boundaries
 
-| State | Required treatment |
-|---|---|
-| List/query unavailable | Honest retryable availability state; no local fake list. |
-| Candidate/stale version chosen | Picker prevents it; typed rejection refreshes list and states Approved-only rule. |
-| Submit acceptance uncertain | Preserve draft/message and offer same-command retry; never append synthetic turn. |
-| Failed/interrupted/cancelled | Preserve message/partial trace; retry or edit-resend; conversation remains usable. |
-| Running/cancelling | `aria-live` status, disabled send, clear Cancel, no focus jump. |
-| Fixed profile approval | Show exact version/profile and decline/start controls; no tool selection, narrowing or hidden default. Decline creates neither conversation nor local attachment. |
-| AwaitingHands | Persistent, correlated status explains that no live local hands attachment exists; reconnect can resume the existing request, never grant a broader profile. |
-| Confirmation required | Announce the bounded operation and its correlation; Allow/Deny calls one typed Application action. It is not a profile change. |
-| Out-of-profile/denied | Render the typed denial and preserve trace; do not turn it into a confirmation, retry with broader access or client-side fallback. |
-| Trace unavailable | Preserve selected conversation and render retryable trace error; never generic-route fallback. |
+| Failure | Containment and result | Proof |
+|---|---|---|
+| Stale session, options unavailable, or Host directory unavailable. | Application/Missions returns typed failure; Presentation has no fake cache/list. Show availability state and **Retry**, which repeats only query. | Service/route plus rendered retry test. |
+| Version loses Approved state before create. | Projects re-resolves before Host admission; no Host command/attachment. Keep panel, state Approved-only rule, refresh options. | No-create/no-attachment stale test plus browser feedback. |
+| Create response lost after dispatch. | Existing Host command_id idempotency; Presentation retains same ID/selection. **We could not confirm whether the conversation was created. Retry** repeats same request, never new command. | Lost-response test proves one conversation. |
+| Create succeeds but acknowledgement fails/uncertain. | Created Host conversation remains valid; Application/Client Runtime owns attachment. Do not retry acknowledgement without command identity. Refresh list and announce **Conversation created. Local access could not be confirmed. Open it later to reconnect its fixed access.** No broader profile/fallback. | Controlled failure proves one pinned conversation and no unbounded retry. |
 
-Controls are semantic, labelled, keyboard-operable, visibly focused and honestly disabled.
-Cooper/Rams/Norman review is PASS: the profile answers the operator's immediate trust question
-without exposing implementation detail; the profile chip is read-only and confirmation appears
-only when Bob requires it; every control maps to one typed action; invalid/escalating states are
-constrained. The named theme uses ordinary semantic tokens only: profile/status surfaces use
-`--surface`/`--border`/`--text-muted`; confirmation uses `--warning`/`--warning-bg`; denial uses
-`--danger`/`--danger-bg`; focus/action continues to use `--accent`/`--accent-contrast`.
+### Gates and done when
 
-### Default path, verification, and done when
+Security Architecture is **PASS**: additive Type-2 presentation/transport integration; no public ingress, datastore, credential, cross-store access, or Tier-1 data-plane permission. Presentation calls loopback Host; Application owns Project files and its named Host adapter; Host alone owns Table/Blob; Client Runtime alone owns local capability authority. No exception.
 
-Use zero-argument published Desktop, normal endpoints/bridge and disposable Project whose approved
-version came through authoring. Observe the exact profile at creation, its durable indicator, a
-bounded tool status, `AwaitingHands` then reconnect, a typed denial, any required confirmation,
-two messages, failed/retry, running cancel, trace open/back exact anchor and reopen. Record default
-facts/IDs/profile/correlation; fixture endpoints/events remain controlled evidence.
+Engineering Philosophy is **PASS**: Projects resolves version/display identity, Missions coordinates, Host orders durable facts, Client Runtime owns attachment, Transport owns wire, Presentation renders/focuses. No dispatcher, durable UI cache, profile knob, alternate runtime, filter framework, or automatic acknowledgement retry.
 
-**Done when:** focused Presentation/transport tests pass; browser-first matrix is PASS against
-4a–4c and mission-hands profile states; packaged parity is PASS; the default path records the
-complete operator journey including profile/attachment states; Codex accepts completion against
-this task.
+Desktop design quality is **PASS**: Presentation owns this existing web-client flow; no Host adapter/Supervisor lifecycle change or workaround. Presentation-surface parity is **PASS**: each action is shared typed Application Transport with same authorization/outcome/failure for TUI; layout/focus are surface-specific.
+
+Default-path acceptance applies. Completion uses zero-argument dist/forge-desktop/ForgeMission.Desktop with MissionRuntime:Mode, MissionRuntime:BaseUrl, FORGE_API_ENDPOINT, and ConversationRuntime:BaseUrl absent; normal cloud mission endpoint; Supervisor-owned Kind bridge at 127.0.0.1:18080; clean-main Host/Worker provenance; and disposable Project with Approved authored version. Record list/create action, pinned version/profile, conversation ID, visible result, and PASS/FAIL. Overrides/stubs are controlled evidence only.
+
+1. Add projections/actions, source-generated JSON, Application owner, routes, channel mapping, and surface-neutral/route tests.
+2. Replace Missions with landing/panel; add token-only theme/rules; remove one-shot composer.
+3. Prove failures, browser matrix, packaged parity, then default path. Codex performs reference comparison.
+
+**Done when:** focused/full tests and AOT publish pass; live 1440×960 matches after artifact and allocated 4a slice; responsive/accessibility pass; no deferred control looks interactive; failure evidence exists; and zero-argument Desktop creates exactly one pinned Approved conversation with selected fixed-profile acknowledgement. Completion includes Default-Path fact table and supervisor visual PASS.
+
+## Required Claude relay format
+
+The user-directed [Claude ↔ Codex workflow](../design/claude-codex-workflow.md) applies. An initial implementation-plan prompt includes its copy/paste relay protocol and required ASCII-only plan labels. Claude must not edit until Codex approves the relayed plan.
