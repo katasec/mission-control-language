@@ -408,14 +408,6 @@ public sealed record RetryMissionTurnRequest(Guid ConversationId, Guid TurnId, G
 public sealed record CancelMissionTurnRequest(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, Guid CommandId);
 public sealed record CancelMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId,
     long AcceptedSequence, ConversationRunStatus Status);
-/// <summary>Host-owned durable projection of one Mission Conversation turn. Stable identities
-/// come from the accepted command, never from a Presentation transcript.</summary>
-public sealed record MissionConversationTurn(Guid TurnId, Guid TurnAttemptId, string Input,
-    ConversationRunStatus Status, long AcceptedSequence, long LastSequence);
-public sealed record MissionConversationDetail(Guid ConversationId, MissionConversationTurn[] Turns,
-    ConversationEvent[] Events);
-public sealed record GetMissionConversationDetailRequest(Guid ConversationId);
-public sealed record GetMissionConversationDetailResponse(MissionConversationDetail Detail);
 
 /// <summary>Host-owned hidden evaluation identity. The command ID is the Project-owned pending
 /// result identity; Host uses it only for idempotency and projection lookup.</summary>

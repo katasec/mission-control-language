@@ -78,9 +78,6 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
         PostProjectAsync($"mission-conversations/{request.ConversationId}/turns/cancel", request,
             ConversationContractsJsonContext.Default.CancelMissionTurnRequest, ConversationContractsJsonContext.Default.CancelMissionTurnResponse, ct);
 
-    public Task<GetMissionConversationDetailResponse> ReadMissionConversationDetailAsync(Guid conversationId, CancellationToken ct) =>
-        GetProjectAsync($"mission-conversations/{conversationId}/detail", ConversationContractsJsonContext.Default.GetMissionConversationDetailResponse, ct);
-
     public Task<StartEvaluationResponse> StartEvaluationAsync(StartEvaluationRequest request, CancellationToken ct) =>
         PostProjectAsync("evaluations", request, ConversationContractsJsonContext.Default.StartEvaluationRequest,
             ConversationContractsJsonContext.Default.StartEvaluationResponse, ct);

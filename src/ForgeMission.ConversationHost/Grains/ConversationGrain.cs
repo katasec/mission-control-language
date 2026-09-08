@@ -1102,29 +1102,6 @@ public sealed class ConversationGrain(
         }
     }
 
-    public async Task<ConversationProjectReadResult> ReadMissionConversationDetailAsync()
-    {
-        if (checkpoint.State.Purpose != ConversationPurpose.MissionConversation || checkpoint.State.ProjectId is null)
-            return ProjectError("wrongPurpose", "This conversation is not a Mission Conversation.");
-        var events = new List<ConversationEvent>();
-        var turns = new List<MissionConversationTurn>();
-        await foreach (var item in eventStore.ReadAfterAsync(Address, 0, CancellationToken.None))
-        {
-            events.Add(item);
-            if (item.Kind != ConversationEventKind.UserMessage || item.RunId is not { } attempt)
-                continue;
-            var stored = await eventStore.FindByEventIdAsync(Address, item.EventId, CancellationToken.None);
-            var command = stored?.AcceptedCommandJson is null ? null : JsonSerializer.Deserialize(stored.AcceptedCommandJson,
-                ConversationContractsJsonContext.Default.ConversationCommand);
-            if (command?.TurnId is not { } turn) continue;
-            var terminal = await eventStore.ReadLatestForRunAsync(Address, attempt, CancellationToken.None);
-            turns.Add(new MissionConversationTurn(turn, attempt, item.Text ?? "", terminal?.RunStatus ?? ConversationRunStatus.Queued,
-                item.Sequence + 1, terminal?.Sequence ?? item.Sequence));
-        }
-        return ProjectPayload(new MissionConversationDetail(Address.ConversationId, [.. turns], [.. events]),
-            ConversationContractsJsonContext.Default.MissionConversationDetail);
-    }
-
     private bool IsProjectMissionContainer() => checkpoint.State.Purpose == ConversationPurpose.ProjectMission && checkpoint.State.ProjectId is not null;
     private static bool ValidCursor(long? anchor, long? before, long last) =>
         (anchor is null && before is null) ||

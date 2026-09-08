@@ -5,8 +5,6 @@ using System.Text.Json;
 using ForgeMission.Application;
 using ForgeMission.Application.Transport;
 using ForgeMission.Conversations.Contracts;
-using DurableCreateRequest = ForgeMission.Conversations.Contracts.CreateMissionConversationRequest;
-using DurableCreateResponse = ForgeMission.Conversations.Contracts.CreateMissionConversationResponse;
 
 namespace ForgeMission.Tests.Application;
 
@@ -26,7 +24,7 @@ public sealed class MissionConversationServiceTests : IDisposable
     public async Task ApprovedVersion_CreatePassesOnlyImmutableLaunchToHost()
     {
         var (project, missionId, approved) = await CreateApprovedAsync();
-        DurableCreateRequest? captured = null;
+        CreateMissionConversationRequest? captured = null;
         var service = Service(async request =>
         {
             Assert.Equal("/mission-conversations", request.RequestUri!.AbsolutePath);
@@ -34,7 +32,7 @@ public sealed class MissionConversationServiceTests : IDisposable
             Assert.DoesNotContain(project.Home, body, StringComparison.Ordinal);
             Assert.DoesNotContain("capabilities", body, StringComparison.OrdinalIgnoreCase);
             captured = JsonSerializer.Deserialize(body, ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
-            var response = new DurableCreateResponse(Guid.NewGuid(), 0, captured!.Launch);
+            var response = new CreateMissionConversationResponse(Guid.NewGuid(), 0, captured!.Launch);
             return Json(response, ConversationContractsJsonContext.Default.CreateMissionConversationResponse, HttpStatusCode.Created);
         });
 

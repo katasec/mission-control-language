@@ -28,22 +28,6 @@ internal interface IMissionVersionService
 
 internal sealed class MissionVersionService(ProjectService projects) : IMissionVersionService
 {
-    internal IReadOnlyList<ApprovedMissionVersion> ListApproved(string home, CancellationToken ct)
-    {
-        ct.ThrowIfCancellationRequested();
-        return Definitions(projects.ReadForHome(home).Manifest)
-            .Where(definition => definition.ActiveApprovedVersionId is not null)
-            .Select(definition => new { Definition = definition, Version = RequireVersion(definition, definition.ActiveApprovedVersionId!.Value) })
-            .Where(item => item.Version.State == MissionVersionState.Approved)
-            .Select(item => new ApprovedMissionVersion(item.Definition.MissionId, item.Definition.Name,
-                new DurableMissionLaunch(item.Version.MissionVersionId, item.Version.VersionNumber, item.Version.DefinitionHash,
-                    item.Version.DefinitionText, item.Version.CapabilityProfile, item.Version.Package)))
-            .ToArray();
-    }
-
-    internal ApprovedMissionVersion FindApproved(string home, Guid missionId, Guid versionId, CancellationToken ct) =>
-        ListApproved(home, ct).SingleOrDefault(item => item.MissionId == missionId && item.Launch.MissionVersionId == versionId)
-        ?? throw Conflict("That mission version is no longer approved.");
     public async Task<ProjectMissionDefinition> CreateDraftAsync(string home, string name, string definitionText, MissionHandsProfile profile, CancellationToken ct)
     {
         var created = await projects.UpdateMissionDefinitionsAsync(home, (manifest, _) =>
