@@ -243,6 +243,12 @@ plan, resolves an open design question by inference, broadens scope, or marks a 
 supervisor independently checks the diff and evidence against the task's `Done when` condition.
 Internal supervisor/subagent handoffs use the collaboration tools and do not need a human relay.
 
+**User-directed external-implementer exception.** When the operator expressly selects Claude for a
+bounded task, use the [Claude ↔ Codex workflow](docs/design/claude-codex-workflow.md). Claude may
+implement only a Codex-approved scope; Codex still owns design, adversarial review, browser and
+default-path acceptance, integration, and merge. This exception never weakens ownership,
+security, AOT, or visual-reference requirements.
+
 ### Phases and tasks
 Work is broken into phases, each with a spoke document in `docs/phases/`. Phases have a
 dependency-ordered spoke list; spokes have a chronological task list. Don't skip ahead of declared

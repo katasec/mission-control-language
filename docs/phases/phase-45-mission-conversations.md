@@ -1,9 +1,10 @@
 # Phase 45 — Forge Desktop mission conversations
 
-> **Status:** version/evaluation foundation and the Phase 46 generic durable-runtime prerequisites
-> are accepted as of 2026-09-08. Current Desktop remains Project → selected one-shot Mission →
-> instruction → terminal run card → trace until the declared integration and surface spokes are
-> delivered in order.
+> **Status:** version/evaluation foundation, generic durable-runtime prerequisites, and 45.2 are
+> accepted as of 2026-09-08. The prior operator-surface implementation was reverted after its
+> supervisor browser comparison failed the binding reference. Current Desktop remains Project →
+> selected one-shot Mission → instruction → terminal run card → trace while the reference-led
+> Claude implementation is reviewed and accepted in dependency order.
 
 ## Why this phase exists
 
@@ -118,6 +119,7 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 | Engineering Philosophy | Each command has one owner and failure result. No generic dispatcher, UI-local domain state, retry knob, local worker path, or speculative version framework. |
 | Native AOT | JSON contexts are source-generated; no reflection, untyped JSON options, runtime type discovery or new warning suppression. |
 | Codex supervisor workflow | A supervising Codex agent approves this design and each bounded subagent plan before code. Completion needs the subagent’s evidence summary and the supervisor’s independent review against Done when. |
+| Claude implementation exception | At the operator's direction, 45.3's replacement implementation follows the bounded [Claude ↔ Codex workflow](../design/claude-codex-workflow.md): Claude implements; Codex retains design, scope, browser/default-path review, acceptance, and integration authority. |
 
 ## Build readiness
 

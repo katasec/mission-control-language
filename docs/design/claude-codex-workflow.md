@@ -1,10 +1,15 @@
-# Former Claude ↔ Codex workflow
+# Claude ↔ Codex workflow
 
-> **Status: superseded.** The repository-wide implementation workflow is now the
-> [Codex supervisor workflow](codex-supervisor-workflow.md). This file remains only so historical
-> links resolve; it is not a handoff or implementation authority.
+> **Status:** user-directed implementation exception for Phase 45.3. The normal repository
+> workflow remains [Codex supervisor workflow](codex-supervisor-workflow.md).
 
-The former workflow used a human-relayed Codex architect / Claude implementer loop. Its design,
-approval, implementation, and independent acceptance gates are preserved internally: a supervising
-Codex agent now approves and reviews a bounded Codex subagent's work through the collaboration
-tools. See the replacement workflow for the binding roles, prompts, and acceptance checklist.
+For the 45.3 rebuild, Codex owns the design, bounded scope, adversarial plan review, browser and
+default-path acceptance, integration, and merge. Claude owns implementation only. The human relays
+the Codex-approved scope to Claude and returns Claude's diff, test results, and screenshots to
+Codex; Claude must not expand the scope or approve itself.
+
+The handoff is: Codex scope card → Claude implementation plan → Codex approval → Claude edits and
+evidence → Codex independent browser/reference review → Codex accepts or rejects → Codex merges.
+The binding Desktop images are acceptance targets, never inspiration. A test pass or Claude
+screenshot alone is insufficient; Codex personally checks the running HTTP surface and the
+zero-argument packaged Desktop path.
