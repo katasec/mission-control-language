@@ -45,6 +45,8 @@ public enum ConversationPurpose
     /// mission and no capabilities — each child run carries its own — so its snapshot reports a
     /// null mission reference rather than an empty string standing in for one.</summary>
     [JsonStringEnumMemberName("projectMission")]  ProjectMission,
+    [JsonStringEnumMemberName("missionConversation")] MissionConversation,
+    [JsonStringEnumMemberName("evaluation")] Evaluation,
 }
 
 /// <summary>The semantic kind of one durable conversation fact. Each kind has exactly one
@@ -188,7 +190,13 @@ public sealed record ConversationSnapshot(
     /// Appended last so an older snapshot's positional shape is unchanged. For a Project Mission
     /// container this is what makes existence checkable at all: it pins no mission, so a non-null
     /// Project ID paired with that purpose IS its existence invariant (43.21 task 1).</summary>
-    Guid? ProjectId = null);
+    Guid? ProjectId = null,
+    DurableMissionLaunch? PinnedLaunch = null,
+    Guid? EvaluationResultId = null,
+    Guid? EvaluationTurnId = null,
+    Guid? EvaluationTurnAttemptId = null,
+    string? EvaluationSummary = null,
+    string? EvaluationReason = null);
 
 /// <summary>
 /// Command queue body sent from the Conversation service to the Worker over the
@@ -214,7 +222,8 @@ public sealed record ConversationCommand(
     string? ProjectGoal = null,
     DurableMissionLaunch? Launch = null,
     string? OpaqueContinuation = null,
-    string? ProviderToolCallId = null);
+    string? ProviderToolCallId = null,
+    Guid? TurnId = null);
 
 /// <summary>
 /// Progress queue body sent from the Worker to the Conversation service over the
@@ -384,3 +393,31 @@ public sealed record ProjectRunEventPage(
 public sealed record ProjectCommandReceipt(
     Guid ContainerId, Guid RunId, string Mission, string Input, string ProjectGoal,
     long AcceptedSequence, ConversationRunStatus Status);
+
+// --- Phase 45 Mission Conversation contracts -----------------------------------------------
+
+public sealed record CreateMissionConversationRequest(Guid ProjectId, Guid CommandId, DurableMissionLaunch Launch);
+public sealed record CreateMissionConversationResponse(Guid ConversationId, long AcceptedSequence, DurableMissionLaunch Launch);
+public sealed record MissionConversationSummary(Guid ConversationId, Guid ProjectId, DurableMissionLaunch Launch,
+    ConversationRunStatus Status, long LastSequence, DateTimeOffset UpdatedAtUtc);
+public sealed record ListMissionConversationsRequest(Guid ProjectId);
+public sealed record ListMissionConversationsResponse(MissionConversationSummary[] Conversations);
+public sealed record SubmitMissionTurnRequest(Guid ConversationId, Guid CommandId, string Text);
+public sealed record SubmitMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, long AcceptedSequence, ConversationRunStatus Status);
+public sealed record RetryMissionTurnRequest(Guid ConversationId, Guid TurnId, Guid CommandId);
+public sealed record CancelMissionTurnRequest(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, Guid CommandId);
+public sealed record CancelMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId,
+    long AcceptedSequence, ConversationRunStatus Status);
+
+/// <summary>Host-owned hidden evaluation identity. The command ID is the Project-owned pending
+/// result identity; Host uses it only for idempotency and projection lookup.</summary>
+public sealed record StartEvaluationRequest(Guid ProjectId, Guid MissionId, Guid MissionVersionId, Guid EvaluationCaseId,
+    Guid EvaluationResultId, int CandidateRevision, string DefinitionHash, DurableMissionLaunch Launch, string Input);
+public sealed record EvaluationProjection(Guid EvaluationResultId, Guid ConversationId, Guid TurnId, Guid TurnAttemptId,
+    bool IsTerminal, EvaluationOutcomeWire? ObservedOutcome, string? ObservedOutputSummary,
+    EvaluationTraceOriginWire? TraceOrigin, string? Reason);
+public enum EvaluationOutcomeWire { Succeeded, Failed }
+public sealed record EvaluationTraceOriginWire(Guid ConversationId, Guid TurnId, Guid TurnAttemptId);
+public sealed record StartEvaluationResponse(EvaluationProjection Projection);
+public sealed record GetEvaluationRequest(Guid EvaluationResultId);
+public sealed record GetEvaluationResponse(EvaluationProjection Projection);

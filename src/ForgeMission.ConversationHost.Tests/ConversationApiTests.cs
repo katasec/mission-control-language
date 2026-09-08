@@ -198,6 +198,163 @@ public class ConversationApiTests(AzuriteFixture fixture)
         Assert.Empty(host.Dispatcher.Sent);
     }
 
+    [Fact]
+    public async Task MissionConversation_CreateListTurnRetryAndTerminalCancel_AreTypedAndIdempotent()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var project = Guid.NewGuid();
+        const string source = "mission Durable(task) = {\n Researcher\n}\n";
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var input = new DurableMissionPackageInput(1, "", source, "Durable", "task", [new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
+        const string definition = "approved";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, MissionHandsProfile.NoHands, package);
+        var create = new CreateMissionConversationRequest(project, Guid.NewGuid(), launch);
+        var created = await client.PostAsJsonAsync("/mission-conversations", create, ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var value = (await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateMissionConversationResponse))!;
+        Assert.Equal(0, value.AcceptedSequence);
+        var list = await client.GetFromJsonAsync($"/mission-conversations/{project}", ConversationContractsJsonContext.Default.ListMissionConversationsResponse);
+        Assert.Single(list!.Conversations);
+        var other = await client.GetFromJsonAsync($"/mission-conversations/{Guid.NewGuid()}", ConversationContractsJsonContext.Default.ListMissionConversationsResponse);
+        Assert.Empty(other!.Conversations);
+        var turn = new SubmitMissionTurnRequest(value.ConversationId, Guid.NewGuid(), "hello");
+        var submitted = await client.PostAsJsonAsync($"/mission-conversations/{value.ConversationId}/turns", turn, ConversationContractsJsonContext.Default.SubmitMissionTurnRequest);
+        Assert.Equal(HttpStatusCode.Accepted, submitted.StatusCode);
+        var accepted = (await submitted.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.SubmitMissionTurnResponse))!;
+        Assert.NotEqual(turn.CommandId, accepted.TurnId); // Host allocates durable turn identity.
+        var duplicateSubmit = await client.PostAsJsonAsync($"/mission-conversations/{value.ConversationId}/turns", turn,
+            ConversationContractsJsonContext.Default.SubmitMissionTurnRequest);
+        var duplicateAccepted = (await duplicateSubmit.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.SubmitMissionTurnResponse))!;
+        Assert.Equal(accepted, duplicateAccepted);
+        var retry = new RetryMissionTurnRequest(value.ConversationId, accepted.TurnId, Guid.NewGuid());
+        var blocked = await client.PostAsJsonAsync($"/mission-conversations/{value.ConversationId}/turns/retry", retry, ConversationContractsJsonContext.Default.RetryMissionTurnRequest);
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+
+        var grain = host.GetConversationGrain(new ConversationAddress("dev", value.ConversationId));
+        var completed = new ConversationProgress(Guid.NewGuid(), value.ConversationId, accepted.TurnAttemptId,
+            ConversationEventKind.RunStatus, ConversationParticipant.Forge, null, null, null, null, null, null, null,
+            ConversationRunStatus.Completed, DateTimeOffset.UtcNow);
+        Assert.Equal(ConversationProgressOutcome.Appended,
+            (await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(completed)))).Outcome);
+
+        var retried = await client.PostAsJsonAsync($"/mission-conversations/{value.ConversationId}/turns/retry", retry,
+            ConversationContractsJsonContext.Default.RetryMissionTurnRequest);
+        Assert.Equal(HttpStatusCode.Accepted, retried.StatusCode);
+        var retryAccepted = (await retried.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.SubmitMissionTurnResponse))!;
+        Assert.Equal(accepted.TurnId, retryAccepted.TurnId);
+        Assert.NotEqual(accepted.TurnAttemptId, retryAccepted.TurnAttemptId);
+
+        var retryCompleted = completed with { EventId = Guid.NewGuid(), RunId = retryAccepted.TurnAttemptId };
+        Assert.Equal(ConversationProgressOutcome.Appended,
+            (await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(retryCompleted)))).Outcome);
+        var beforeCancel = (await grain.ReadAfterAsync(0)).EventJson.Length;
+        var cancel = new CancelMissionTurnRequest(value.ConversationId, accepted.TurnId, retryAccepted.TurnAttemptId, Guid.NewGuid());
+        var cancelled = await client.PostAsJsonAsync($"/mission-conversations/{value.ConversationId}/turns/cancel", cancel,
+            ConversationContractsJsonContext.Default.CancelMissionTurnRequest);
+        Assert.Equal(HttpStatusCode.Accepted, cancelled.StatusCode);
+        var cancelResult = (await cancelled.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CancelMissionTurnResponse))!;
+        Assert.Equal(ConversationRunStatus.Completed, cancelResult.Status);
+        Assert.Equal(beforeCancel, (await grain.ReadAfterAsync(0)).EventJson.Length); // Terminal completion wins.
+    }
+
+    [Fact]
+    public async Task MissionConversation_ExactCreateRetryRepairsMissingHostDirectoryEntry()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var project = Guid.NewGuid();
+        var request = NewMissionConversation(project, MissionHandsProfile.NoHands);
+        var created = await client.PostAsJsonAsync("/mission-conversations", request,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        var value = (await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateMissionConversationResponse))!;
+        await host.MissionConversationDirectory.RemoveAsync("dev", project, value.ConversationId, CancellationToken.None);
+
+        var missing = await client.GetFromJsonAsync($"/mission-conversations/{project}",
+            ConversationContractsJsonContext.Default.ListMissionConversationsResponse);
+        Assert.Empty(missing!.Conversations);
+
+        var retried = await client.PostAsJsonAsync("/mission-conversations", request,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Created, retried.StatusCode);
+        var repaired = await client.GetFromJsonAsync($"/mission-conversations/{project}",
+            ConversationContractsJsonContext.Default.ListMissionConversationsResponse);
+        Assert.Single(repaired!.Conversations);
+    }
+
+    [Fact]
+    public async Task MissionConversation_SubstitutionUnderTheSameCommandIsRefused()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var request = NewMissionConversation(Guid.NewGuid(), MissionHandsProfile.NoHands);
+        var first = await client.PostAsJsonAsync("/mission-conversations", request,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        var substituted = request with { Launch = request.Launch with { Profile = MissionHandsProfile.ProjectWorkspace } };
+        var retry = await client.PostAsJsonAsync("/mission-conversations", substituted,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Conflict, retry.StatusCode);
+    }
+
+    [Fact]
+    public async Task Evaluation_IsHiddenAndDispatchesNoHandsEvenWhenCandidateDeclaresWorkspace()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var project = Guid.NewGuid();
+        var launch = NewMissionConversation(project, MissionHandsProfile.ProjectWorkspace).Launch;
+        var request = new StartEvaluationRequest(project, Guid.NewGuid(), launch.MissionVersionId, Guid.NewGuid(), Guid.NewGuid(),
+            1, launch.DefinitionHash, launch, "evaluate this");
+
+        var mismatched = request with { DefinitionHash = Hash("different") };
+        var refused = await client.PostAsJsonAsync("/evaluations", mismatched, ConversationContractsJsonContext.Default.StartEvaluationRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Empty(host.Dispatcher.Sent);
+
+        var started = await client.PostAsJsonAsync("/evaluations", request, ConversationContractsJsonContext.Default.StartEvaluationRequest);
+        Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
+        var pending = (await started.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.StartEvaluationResponse))!.Projection;
+        Assert.False(pending.IsTerminal);
+        Assert.Null(pending.TraceOrigin);
+        var dispatch = Assert.Single(host.Dispatcher.Sent).Command;
+        Assert.Equal(MissionHandsProfile.NoHands, dispatch.Launch!.Profile);
+        Assert.Empty(dispatch.Capabilities);
+        var listed = await client.GetFromJsonAsync($"/mission-conversations/{project}",
+            ConversationContractsJsonContext.Default.ListMissionConversationsResponse);
+        Assert.Empty(listed!.Conversations);
+
+        var grain = host.GetConversationGrain(new ConversationAddress("dev", pending.ConversationId));
+        var output = new ConversationProgress(Guid.NewGuid(), pending.ConversationId, pending.TurnAttemptId,
+            ConversationEventKind.ParticipantMessage, ConversationParticipant.Implementer, null, "observed answer", null,
+            null, null, null, null, null, DateTimeOffset.UtcNow);
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(output)));
+        var finished = output with { EventId = Guid.NewGuid(), Kind = ConversationEventKind.RunStatus, Text = null, RunStatus = ConversationRunStatus.Completed };
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(finished)));
+
+        var terminal = await client.GetFromJsonAsync($"/evaluations/{request.EvaluationResultId}",
+            ConversationContractsJsonContext.Default.GetEvaluationResponse);
+        Assert.True(terminal!.Projection.IsTerminal);
+        Assert.Equal(EvaluationOutcomeWire.Succeeded, terminal.Projection.ObservedOutcome);
+        Assert.Equal("observed answer", terminal.Projection.ObservedOutputSummary);
+        Assert.NotNull(terminal.Projection.TraceOrigin);
+    }
+
+    private static CreateMissionConversationRequest NewMissionConversation(Guid projectId, MissionHandsProfile profile)
+    {
+        const string source = "mission Durable(task) = {\n Researcher\n}\n";
+        const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var input = new DurableMissionPackageInput(1, "", source, "Durable", "task", [new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
+        var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
+        const string definition = "approved";
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, profile, package);
+        return new CreateMissionConversationRequest(projectId, Guid.NewGuid(), launch);
+    }
+
     private static string Hash(string content) => "sha256:" + Convert.ToHexString(
         System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(content))).ToLowerInvariant();
 

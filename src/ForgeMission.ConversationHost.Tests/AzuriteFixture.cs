@@ -98,6 +98,7 @@ public sealed class AzuriteFixture : IAsyncLifetime
             return decorateEventStore is null ? real : decorateEventStore(real);
         });
         builder.Services.AddSingleton<IProjectRunIndexStore, AzureTableProjectRunIndexStore>();
+        builder.Services.AddSingleton<IProjectMissionConversationDirectoryStore, AzureTableProjectMissionConversationDirectoryStore>();
         builder.Services.AddSingleton<IConversationArtifactStore, AzureBlobConversationArtifactStore>();
 
         // The small in-memory dispatcher seam the Task 5 spoke calls for in place of a real Azure
@@ -209,6 +210,9 @@ public sealed class ConversationHostInstance(WebApplication app, Uri baseAddress
     public IConversationEventStore EventStore => app.Services.GetRequiredService<IConversationEventStore>();
 
     public IProjectRunIndexStore ProjectRunIndexStore => app.Services.GetRequiredService<IProjectRunIndexStore>();
+
+    public IProjectMissionConversationDirectoryStore MissionConversationDirectory =>
+        app.Services.GetRequiredService<IProjectMissionConversationDirectoryStore>();
 
     public IConversationArtifactStore ArtifactStore => app.Services.GetRequiredService<IConversationArtifactStore>();
 

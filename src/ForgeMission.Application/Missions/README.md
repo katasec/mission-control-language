@@ -10,7 +10,7 @@ tags: [missions, submission, recovery]
 
 ## Purpose
 
-Turn an already selected Project Mission and user instruction into one immutable submission, then reconcile its durable acceptance without owning the durable run.
+Turn Project-owned immutable mission versions and user intent into typed durable requests, then reconcile Host acceptance without owning durable state or Project mutation.
 
 ## Why this exists
 
@@ -20,6 +20,7 @@ Local user intent must be prepared and recorded independently from remote comman
 
 - Supported Project Mission names and references in [MissionCatalog](MissionCatalog.cs).
 - Start and retry orchestration in [MissionSubmissionService](MissionSubmissionService.cs): prepare local intent, send through the Conversation Host adapter, and record only a matching receipt.
+- [MissionConversationService](MissionConversationService.cs)'s Approved-version admission, pinned conversation commands, and Candidate evaluation reconciliation. It resolves immutable Project values and coordinates Host calls; it does not sequence facts or write manifests.
 
 ## Does not own
 
@@ -55,6 +56,7 @@ flowchart LR
 - Start validates and prepares local intent before network work; it does not hold a manifest lease across HTTP.
 - A lost acceptance response produces uncertainty; retry reconciles the same command rather than issuing another start.
 - A generic durable start requires acknowledgement of the manifest-approved capability profile. Application then re-resolves that exact immutable package, attaches a fresh Bob for that profile, and only then releases the typed start to Host; callers cannot submit a package or tool list.
+- A Mission Conversation resolves only the current Approved version before Host admission. Evaluation retains a Candidate's profile as provenance but sends a fixed `NoHands` launch with no Bob attachment, workspace, or terminal declaration.
 - MissionCatalog describes supported selection references only. It is not a dynamic catalog, download service, or provider registry.
 
 ## Related documentation

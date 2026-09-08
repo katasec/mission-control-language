@@ -1,6 +1,7 @@
 # Phase 45.2 — Version-to-durable conversation integration
 
-> **Status:** corrected design for independent review, 2026-09-08. Depends on accepted
+> **Status:** accepted, 2026-09-08. Implementation evidence: [completed 45.2](phase-45.2-durable-conversation-turns_completed.md).
+> Depends on accepted
 > [45.1](phase-45.1-version-evaluation-contracts.md) and accepted Phase 46.2 Tasks
 > [A](phase-46.2-task-a-core-continuation.md), [B](phase-46.2-task-b-profile-hands.md), and
 > [C](phase-46.2-task-c-generic-worker-execution.md). It replaces the stale pre-Phase-46
@@ -30,6 +31,28 @@ No Janus/Naive resolver, executor, persona mapper, Worker catalog, provider/prof
 Project-reading Worker, Bob-to-Worker bridge, or second tool/continuation path may be introduced.
 Those compiled Worker branches were removed by Phase 46.2 Task C.
 
+### Pre-implementation contract closure — 2026-09-08
+
+The accepted generic Host run remains the only execution rail. Its existing `RunId` carries the
+generic execution attempt; for the new durable projections it is the `TurnAttemptId`. The following
+additive Host-owned contract closes the missing integration shapes without changing a tier, store,
+or authority boundary:
+
+| Need | Locked contract and owner |
+|---|---|
+| Persistent operator conversation | Append `MissionConversation` to `ConversationPurpose`. A typed create command carries only `projectId`, idempotent `commandId`, and `DurableMissionLaunch`; Host validates/adopts the immutable launch, writes the empty conversation checkpoint, and owns a Project-keyed conversation index. The index is a Host-owned, rebuildable directory projection in the existing Conversation context/storage, never a Project store or a transcript copy: directory recovery rechecks each referenced conversation checkpoint and removes/retries incomplete entries. It returns the conversation ID and pinned launch/profile. No initial turn or Bob attachment is created. |
+| Turn lifecycle | Typed submit carries `conversationId`, idempotent command ID, and message text. Host allocates a new `TurnId` and `TurnAttemptId`; typed retry carries the stored `TurnId` and a new idempotent command ID, and Host allocates the next attempt. Typed cancel names the stored conversation/turn/attempt and is idempotent. The Host derives the package/profile from its pinned launch; no caller can supply a version, package, profile, tool, or attachment. |
+| Evaluation execution | Append `Evaluation` to `ConversationPurpose`. A typed Host-only evaluation create command carries the Project/version/case provenance, exact candidate revision/hash, immutable launch, and case input. Host retains the Candidate's declared profile as provenance but constructs a fixed `NoHands` execution launch from that same immutable package; it creates no Bob attachment and exposes no file or terminal tool declarations. Host creates a hidden one-shot conversation, owns its evaluation index and terminal projection, and never returns it from the operator-conversation list. It uses the same generic start/progress path, with no follow-up. Disposable workspace/terminal evaluation is a separately designed future capability. |
+| Pending and reconciliation | `Application/Projects` atomically creates one `EvaluationResult` in `Pending` before Host admission; pending outcome, output, trace, and completion fields are null. On definitive Host rejection, or by an Application/Missions reconciliation query of the Host-owned evaluation projection, `MissionConversationService` asks the sole Project manifest writer to reconcile that same result identity to terminal `Passed`/`Failed`. An execution that began has an exact trace origin; a pre-admission validation rejection has no trace origin and its typed reason makes that absence explicit. An uncertain admission remains Pending and is reconciled; it is never fabricated as a pass. |
+| Compatibility | Existing `MissionRun`, `ProjectMission`, Project-run index/routes, and legacy `/conversations` read shapes remain unchanged. The new purpose/projections are additive; existing checkpoints retain their ordinal/default meanings. |
+
+`MissionLaunchProvenance(projectId, missionId, launch)` is Application-internal only. It is
+constructed by rereading the manifest inside the existing Project transaction. Durable contracts
+receive no Project path; Host persists only the `projectId` value, immutable launch, and the
+evaluation metadata needed for its own index/projection. The Worker sees only the already accepted
+generic command/package, and Bob remains attached only after the operator's exact-profile
+acknowledgement.
+
 ### Admission and command contract
 
 `DurableMissionLaunch` is the sole durable package/profile value. The legacy
@@ -46,7 +69,7 @@ MissionLaunchProvenance
 |---|---|---|---|
 | Create operator conversation | Current active **Approved** version | Project, mission, version, frozen `DurableMissionPackage`, package hash, and `MissionHandsProfile`. | Missing/inactive/superseded/tampered version is rejected before Host admission or Bob attachment. |
 | Submit/retry/cancel a turn | Conversation's Host-stored launch only | Host-owned pinned package/profile and stable command/turn/attempt IDs. | A caller cannot substitute a version, profile, package, tool, or attachment. |
-| Start evaluation | Exact current **Candidate** version and current case revision | Project, mission/version/case IDs, candidate revision, definition hash, frozen package/profile, and case input. | Stale candidate/case/hash returns `VersionChanged`; `EvaluationService` writes no result. |
+| Start evaluation | Exact current **Candidate** version and current case revision | Project, mission/version/case IDs, candidate revision, definition hash, frozen package/profile, and case input. | Stale candidate/case/hash returns `VersionChanged`; the Project manifest writer makes no change. |
 
 Creating an operator conversation pins an empty transcript and creates no turn. Submission causes
 Host allocation of `TurnId`, `TurnAttemptId`, and canonical sequence. Retry creates a new attempt;
@@ -59,7 +82,7 @@ An evaluation is a hidden one-shot durable execution. It uses the same immutable
 generic turn/progress path but is not listed as an operator conversation and accepts no follow-up.
 Its terminal completion carries mission/version/case IDs, candidate revision, definition hash,
 observed `Succeeded|Failed`, bounded answer/reason, and exact trace origin. Application alone calls
-`EvaluationService.RecordCompletionAsync`; stale completion is a typed no-write result. Provider
+the Project-owned reconciliation method; stale completion is a typed no-write result. Provider
 failure, interruption, and cancellation record an observed failure with its trace/reason, never a
 stranded `Pending` result.
 
@@ -132,3 +155,7 @@ used without a mission-specific executor or new authority; failures preserve the
 facts and typed recovery; compatibility reads remain valid; focused/full/AOT checks pass; and an
 independent reviewer accepts the evidence. Phase 45.3/45.4's visual and zero-argument Desktop
 obligations remain active rather than claimed here.
+
+### Completion
+
+Accepted — see [completed 45.2](phase-45.2-durable-conversation-turns_completed.md) for independent review and named verification. Desktop visual/default-path acceptance remains deferred to 45.3/45.4 exactly as allocated.

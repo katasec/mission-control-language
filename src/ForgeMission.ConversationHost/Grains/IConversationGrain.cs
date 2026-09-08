@@ -43,6 +43,11 @@ public interface IConversationGrain : Orleans.IGrainWithStringKey
     /// active is <see cref="ConversationCommandOutcome.RunAlreadyActive"/> and appends nothing.</summary>
     Task<ConversationCommandOutcomeResult> AcceptProjectMissionRunAsync(ConversationProjectMissionRunInput input);
 
+    Task<ConversationCommandOutcomeResult> AcceptMissionConversationCreateAsync(MissionConversationCreateInput input);
+    Task<ConversationCommandOutcomeResult> AcceptMissionConversationTurnAsync(MissionConversationTurnInput input);
+    Task<ConversationCommandOutcomeResult> CancelMissionConversationTurnAsync(MissionConversationCancelInput input);
+    Task<ConversationCommandOutcomeResult> AcceptEvaluationCreateAsync(EvaluationCreateInput input);
+
     Task<MissionHandsGrainResult> AttachMissionHandsAsync(MissionHandsJsonInput input);
     Task<MissionHandsGrainResult> DetachMissionHandsAsync(MissionHandsJsonInput input);
     Task<MissionHandsGrainResult> RecordMissionHandsRequestAsync(MissionHandsJsonInput input);

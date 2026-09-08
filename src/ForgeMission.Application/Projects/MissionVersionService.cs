@@ -24,7 +24,6 @@ internal interface IMissionVersionService
         int candidateRevision, string definitionHash, EvaluationOutcome observedOutcome, string observedOutputSummary,
         EvaluationTraceOrigin? traceOrigin, CancellationToken ct);
     Task<MissionVersion> PublishAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct);
-    Task<EvaluationResult> StartEvaluationAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct);
 }
 
 internal sealed class MissionVersionService(ProjectService projects) : IMissionVersionService
@@ -147,6 +146,29 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
         return Task.FromResult<IReadOnlyList<EvaluationResult>>(Results(version));
     }
 
+    /// <summary>Resolves exactly the current Approved version for a Mission conversation. This is
+    /// a Project read only; Missions owns the later Host command and no Project path leaves here.</summary>
+    public Task<MissionLaunchProvenance> ResolveActiveApprovedLaunchAsync(string home, Guid missionId, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var manifest = projects.ReadForHome(home).Manifest;
+        var definition = RequireDefinition(manifest, missionId);
+        if (definition.ActiveApprovedVersionId is not { } approvedId)
+            throw Conflict("This mission has no active approved version.");
+        var version = RequireVersion(definition, approvedId);
+        if (version.State != MissionVersionState.Approved)
+            throw Conflict("This mission's active version is not approved.");
+        var launch = new DurableMissionLaunch(version.MissionVersionId, version.VersionNumber, version.DefinitionHash,
+            version.DefinitionText, version.CapabilityProfile, version.Package);
+        return Task.FromResult(new MissionLaunchProvenance(manifest.ProjectId, missionId, launch));
+    }
+
+    public Guid ReadProjectId(string home, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        return projects.ReadForHome(home).Manifest.ProjectId;
+    }
+
     public async Task<EvaluationResult> RecordCompletionAsync(string home, Guid missionId, Guid missionVersionId, Guid evaluationCaseId,
         int candidateRevision, string definitionHash, EvaluationOutcome observedOutcome, string observedOutputSummary,
         EvaluationTraceOrigin? traceOrigin, CancellationToken ct)
@@ -173,6 +195,80 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
         return recorded.Value;
     }
 
+    /// <summary>Writes the sole mutable Pending fact before the Missions owner contacts Host.
+    /// Repeating an already-pending case returns that same identity; it never creates a second
+    /// evaluation intent.</summary>
+    public async Task<PendingEvaluationAdmission> CreatePendingEvaluationAsync(string home, Guid missionId, Guid missionVersionId,
+        Guid evaluationCaseId, CancellationToken ct)
+    {
+        var pending = await projects.UpdateMissionDefinitionsAsync(home, (manifest, _) =>
+        {
+            var definition = RequireDefinition(manifest, missionId);
+            var version = RequireCandidate(definition, missionVersionId);
+            var evaluationCase = Cases(version).SingleOrDefault(item => item.EvaluationCaseId == evaluationCaseId)
+                ?? throw Conflict("That evaluation case no longer exists.");
+            var existing = Results(version).SingleOrDefault(item => item.EvaluationCaseId == evaluationCaseId &&
+                item.CandidateRevision == version.CandidateRevision && string.Equals(item.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal));
+            var result = existing is { State: EvaluationResultState.Pending }
+                ? existing
+                : new EvaluationResult(Guid.NewGuid(), evaluationCaseId, missionVersionId, version.CandidateRevision,
+                    version.DefinitionHash, null, null, EvaluationResultState.Pending, null, null);
+            var results = existing is null ? [.. Results(version), result] : Results(version).Select(item =>
+                item.EvaluationCaseId == evaluationCaseId ? result : item).ToArray();
+            var updated = version with { EvaluationResults = results, EvaluatedAtUtc = null };
+            var admission = new PendingEvaluationAdmission(manifest.ProjectId, missionId, updated, evaluationCase, result);
+            return (Replace(manifest, definition with { Versions = Replace(Versions(definition), updated) }), admission);
+        }, ct);
+        return pending.Value;
+    }
+
+    public Task<PendingEvaluationAdmission> ReadPendingEvaluationAsync(string home, Guid missionId, Guid missionVersionId,
+        Guid evaluationCaseId, Guid evaluationResultId, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var manifest = projects.ReadForHome(home).Manifest;
+        var definition = RequireDefinition(manifest, missionId);
+        var version = RequireCandidate(definition, missionVersionId);
+        var evaluationCase = Cases(version).SingleOrDefault(item => item.EvaluationCaseId == evaluationCaseId)
+            ?? throw Conflict("That evaluation case no longer exists.");
+        var result = Results(version).SingleOrDefault(item => item.EvaluationResultId == evaluationResultId && item.State == EvaluationResultState.Pending)
+            ?? throw Changed("The pending evaluation result no longer exists.");
+        return Task.FromResult(new PendingEvaluationAdmission(manifest.ProjectId, missionId, version, evaluationCase, result));
+    }
+
+    /// <summary>Reconciles exactly the pending identity created before Host admission. A stale
+    /// candidate or a duplicate/foreign completion is a typed no-write conflict.</summary>
+    public async Task<EvaluationResult> ReconcilePendingCompletionAsync(string home, Guid missionId, Guid missionVersionId,
+        Guid evaluationCaseId, Guid evaluationResultId, int candidateRevision, string definitionHash,
+        EvaluationOutcome observedOutcome, string observedOutputSummary, EvaluationTraceOrigin? traceOrigin, CancellationToken ct)
+    {
+        var recorded = await projects.UpdateMissionDefinitionsAsync(home, (manifest, _) =>
+        {
+            var definition = RequireDefinition(manifest, missionId);
+            var version = RequireCandidate(definition, missionVersionId);
+            var evaluationCase = Cases(version).SingleOrDefault(item => item.EvaluationCaseId == evaluationCaseId)
+                ?? throw Conflict("That evaluation case no longer exists.");
+            if (version.CandidateRevision != candidateRevision || !string.Equals(version.DefinitionHash, definitionHash, StringComparison.Ordinal))
+                throw Changed("The candidate changed before evaluation completed.");
+            var pending = Results(version).SingleOrDefault(item => item.EvaluationResultId == evaluationResultId)
+                ?? throw Changed("The evaluation result no longer exists.");
+            if (pending.State != EvaluationResultState.Pending || pending.EvaluationCaseId != evaluationCaseId ||
+                pending.CandidateRevision != candidateRevision || !string.Equals(pending.DefinitionHash, definitionHash, StringComparison.Ordinal))
+                throw Changed("The evaluation result changed before completion.");
+            var state = Matches(evaluationCase, observedOutcome, observedOutputSummary) ? EvaluationResultState.Passed : EvaluationResultState.Failed;
+            var result = pending with { ObservedOutcome = observedOutcome, ObservedOutputSummary = RequiredSummary(observedOutputSummary),
+                State = state, TraceOrigin = traceOrigin, CompletedAtUtc = DateTimeOffset.UtcNow };
+            var results = Replace(Results(version), pending, result);
+            var allPass = Cases(version).Length > 0 && Cases(version).All(item => results.Any(candidate =>
+                candidate.EvaluationCaseId == item.EvaluationCaseId && candidate.CandidateRevision == version.CandidateRevision &&
+                string.Equals(candidate.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal) && candidate.State == EvaluationResultState.Passed));
+            var updated = version with { EvaluationResults = results, State = allPass ? MissionVersionState.Evaluated : MissionVersionState.Candidate,
+                EvaluatedAtUtc = allPass ? DateTimeOffset.UtcNow : null };
+            return (Replace(manifest, definition with { Versions = Replace(Versions(definition), updated) }), result);
+        }, ct);
+        return recorded.Value;
+    }
+
     public async Task<MissionVersion> PublishAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct)
     {
         var published = await projects.UpdateMissionDefinitionsAsync(home, (manifest, _) =>
@@ -189,14 +285,6 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             return (Replace(manifest, updated), approved);
         }, ct);
         return published.Value;
-    }
-
-    public Task<EvaluationResult> StartEvaluationAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct)
-    {
-        // The service is deliberately named before 45.2, but cannot create a fake Pending run.
-        _ = RequireVersion(RequireDefinition(projects.ReadForHome(home).Manifest, missionId), missionVersionId);
-        throw new ProjectOperationException(ProjectOperationErrorCode.EvaluationUnavailable,
-            "Evaluation execution is unavailable until durable mission execution is installed.");
     }
 
     private static MissionDraft NewDraft(string text, MissionHandsProfile profile, DateTimeOffset now, Guid? id = null, int revision = 1) =>
@@ -225,6 +313,8 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
     };
     private static MissionVersion[] Replace(MissionVersion[] versions, MissionVersion replacement) =>
         versions.Select(item => item.MissionVersionId == replacement.MissionVersionId ? replacement : item).ToArray();
+    private static EvaluationResult[] Replace(EvaluationResult[] results, EvaluationResult original, EvaluationResult replacement) =>
+        results.Select(item => item.EvaluationResultId == original.EvaluationResultId ? replacement : item).ToArray();
     private static ProjectMissionDefinition[] Definitions(ProjectManifest manifest) => manifest.MissionDefinitions ?? [];
     private static MissionVersion[] Versions(ProjectMissionDefinition definition) => definition.Versions ?? [];
     private static EvaluationCase[] Cases(MissionVersion version) => version.EvaluationCases ?? [];

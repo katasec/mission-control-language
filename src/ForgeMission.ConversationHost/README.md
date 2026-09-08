@@ -18,7 +18,7 @@ One service must serialize conversation mutation and retain canonical state so r
 
 ## Owns
 
-- Orleans grains, sequence allocation, command/progress acceptance, Table/Blob persistence, and Project Mission indexes.
+- Orleans grains, sequence allocation, command/progress acceptance, Table/Blob persistence, Project Mission indexes, the rebuildable Project-keyed Mission Conversation directory, and hidden Evaluation projections.
 - Generic mission-hands attachment liveness and request/result correlation on the canonical Conversation grain; `AwaitingHands` is an ordered durable fact, never a fallback.
 - HTTP/SSE projections and Service Bus dispatch/consumption for the Conversation bounded context.
 
@@ -55,6 +55,8 @@ flowchart LR
 - The Host is the sole Conversation-store writer and grain caller; other bounded contexts do not query its stores directly.
 - Queue delivery is at least once; stable IDs and grain acceptance make recovery idempotent.
 - Host independently validates a generic immutable package before queueing it and again at the grain boundary; malformed or inconsistent content cannot reach Worker/provider execution.
+- Mission Conversation turn/attempt IDs, retry/cancel order, evaluation trace origins, and directory repair are Host-owned durable facts. The directory is metadata over canonical checkpoints, not a Project store or transcript copy.
+- An evaluation records its declared profile only as provenance, then dispatches an immutable `NoHands` launch with no attachment or local capability declaration.
 - A Worker hands pause becomes one canonical `MissionHandsRequested` fact. After the exact correlated result is committed, Host dispatches its one deterministic generic continuation.
 - Current routes are an adapter projection, not the semantic definition of the shared messages. Tier-1 callers must supply identity through their own boundary; the current local API has a development tenant seam.
 

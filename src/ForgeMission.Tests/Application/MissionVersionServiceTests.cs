@@ -105,17 +105,52 @@ public sealed class MissionVersionServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task EvaluationExecution_IsUnavailableAndDoesNotCreatePendingState()
+    public async Task PendingEvaluation_ReusesOneIdentityThenReconcilesThatSameResult()
     {
         var project = CreatePackagedProject();
         var draft = await _versions.CreateDraftAsync(project.Home, "Review", Source, MissionHandsProfile.NoHands, CancellationToken.None);
         var candidate = await _versions.PromoteCandidateAsync(project.Home, draft.MissionId, draft.Draft!.DraftId, draft.Draft.Revision, CancellationToken.None);
-        var before = File.ReadAllText(Path.Combine(project.Home, ProjectService.ManifestFileName));
+        var evaluationCase = new EvaluationCase(Guid.NewGuid(), "input", "", "", EvaluationOutcome.Succeeded, [], [], 1);
+        candidate = await _versions.SaveCaseAsync(project.Home, draft.MissionId, candidate.MissionVersionId, evaluationCase, CancellationToken.None);
 
-        var failure = await Assert.ThrowsAsync<ProjectOperationException>(() => _versions.StartEvaluationAsync(project.Home, draft.MissionId, candidate.MissionVersionId, CancellationToken.None));
+        var first = await _versions.CreatePendingEvaluationAsync(project.Home, draft.MissionId, candidate.MissionVersionId,
+            evaluationCase.EvaluationCaseId, CancellationToken.None);
+        var repeated = await _versions.CreatePendingEvaluationAsync(project.Home, draft.MissionId, candidate.MissionVersionId,
+            evaluationCase.EvaluationCaseId, CancellationToken.None);
+        Assert.Equal(first.Result.EvaluationResultId, repeated.Result.EvaluationResultId);
+        Assert.Equal(EvaluationResultState.Pending, first.Result.State);
+        Assert.Null(first.Result.ObservedOutcome);
+        Assert.Null(first.Result.ObservedOutputSummary);
+        Assert.Null(first.Result.TraceOrigin);
+        Assert.Null(first.Result.CompletedAtUtc);
 
-        Assert.Equal(ProjectOperationErrorCode.EvaluationUnavailable, failure.Code);
-        Assert.Equal(before, File.ReadAllText(Path.Combine(project.Home, ProjectService.ManifestFileName)));
+        var trace = new EvaluationTraceOrigin(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+        var completed = await _versions.ReconcilePendingCompletionAsync(project.Home, draft.MissionId, candidate.MissionVersionId,
+            evaluationCase.EvaluationCaseId, first.Result.EvaluationResultId, candidate.CandidateRevision, candidate.DefinitionHash,
+            EvaluationOutcome.Succeeded, "observed", trace, CancellationToken.None);
+        Assert.Equal(first.Result.EvaluationResultId, completed.EvaluationResultId);
+        Assert.Equal(EvaluationResultState.Passed, completed.State);
+        Assert.Equal(trace, completed.TraceOrigin);
+    }
+
+    [Fact]
+    public async Task ActiveApprovedLaunch_RefusesCandidateAndResolvesOnlyPublishedValue()
+    {
+        var project = CreatePackagedProject();
+        var draft = await _versions.CreateDraftAsync(project.Home, "Review", Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        var candidate = await _versions.PromoteCandidateAsync(project.Home, draft.MissionId, draft.Draft!.DraftId, draft.Draft.Revision, CancellationToken.None);
+        await Assert.ThrowsAsync<ProjectOperationException>(() => _versions.ResolveActiveApprovedLaunchAsync(project.Home, draft.MissionId, CancellationToken.None));
+
+        var evaluationCase = new EvaluationCase(Guid.NewGuid(), "input", "", "", EvaluationOutcome.Succeeded, [], [], 1);
+        candidate = await _versions.SaveCaseAsync(project.Home, draft.MissionId, candidate.MissionVersionId, evaluationCase, CancellationToken.None);
+        await _versions.RecordCompletionAsync(project.Home, draft.MissionId, candidate.MissionVersionId, evaluationCase.EvaluationCaseId,
+            candidate.CandidateRevision, candidate.DefinitionHash, EvaluationOutcome.Succeeded, "observed", null, CancellationToken.None);
+        var published = await _versions.PublishAsync(project.Home, draft.MissionId, candidate.MissionVersionId, CancellationToken.None);
+
+        var provenance = await _versions.ResolveActiveApprovedLaunchAsync(project.Home, draft.MissionId, CancellationToken.None);
+        Assert.Equal(project.Manifest.ProjectId, provenance.ProjectId);
+        Assert.Equal(published.MissionVersionId, provenance.Launch.MissionVersionId);
+        Assert.Equal(MissionHandsProfile.NoHands, provenance.Launch.Profile);
     }
 
     [Fact]

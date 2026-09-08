@@ -38,6 +38,7 @@ builder.Services.AddSingleton(tableServiceClient);
 builder.Services.AddSingleton(blobServiceClient);
 builder.Services.AddSingleton<IConversationEventStore, AzureTableConversationEventStore>();
 builder.Services.AddSingleton<IProjectRunIndexStore, AzureTableProjectRunIndexStore>();
+builder.Services.AddSingleton<IProjectMissionConversationDirectoryStore, AzureTableProjectMissionConversationDirectoryStore>();
 builder.Services.AddSingleton<IConversationArtifactStore, AzureBlobConversationArtifactStore>();
 
 var commandSendClient = BuildServiceBusClient(

@@ -312,6 +312,143 @@ public sealed class ConversationGrain(
         return await BeginRunAsync(command, ct);
     }
 
+    // -- Phase 45.2 Mission Conversation / hidden Evaluation acceptance --
+
+    public async Task<ConversationCommandOutcomeResult> AcceptMissionConversationCreateAsync(MissionConversationCreateInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        var launch = JsonSerializer.Deserialize(input.LaunchJson, ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        string? reason = null;
+        if (input.CommandId == Guid.Empty || input.ProjectId == Guid.Empty || !DurableMissionPackageAdmission.TryValidate(launch, out reason))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null, reason ?? "A Mission Conversation requires a valid immutable launch.");
+        if (checkpoint.State.Purpose == ConversationPurpose.MissionConversation)
+        {
+            var pinned = DeserializeMissionHands(checkpoint.State.MissionConversationLaunchJson,
+                ConversationContractsJsonContext.Default.DurableMissionLaunch);
+            return checkpoint.State.ProjectId == input.ProjectId && pinned is not null && SameApprovedLaunch(pinned, launch!)
+                ? new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+                    new ConversationCommandAcceptance(Address.ConversationId, null, checkpoint.State.LastSequence, checkpoint.State.Status), null)
+                : new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "This Mission Conversation is already pinned differently.");
+        }
+        if (Exists)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "This conversation is already pinned to another purpose.");
+        checkpoint.State.TenantId = Address.TenantId;
+        checkpoint.State.ConversationId = Address.ConversationId;
+        checkpoint.State.Purpose = ConversationPurpose.MissionConversation;
+        checkpoint.State.ProjectId = input.ProjectId;
+        checkpoint.State.MissionConversationLaunchJson = JsonSerializer.Serialize(launch, ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        checkpoint.State.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await checkpoint.WriteStateAsync();
+        return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+            new ConversationCommandAcceptance(Address.ConversationId, null, 0, checkpoint.State.Status), null);
+    }
+
+    public async Task<ConversationCommandOutcomeResult> AcceptMissionConversationTurnAsync(MissionConversationTurnInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        await RepairPendingRunStartIfAnyAsync(ct);
+        if (checkpoint.State.Purpose != ConversationPurpose.MissionConversation || checkpoint.State.ProjectId is null)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "This conversation is not a Mission Conversation.");
+        if (input.CommandId == Guid.Empty || (!input.Retry && string.IsNullOrWhiteSpace(input.Text)))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null, "A turn requires a command id and text.");
+        var launch = DeserializeMissionHands(checkpoint.State.MissionConversationLaunchJson,
+            ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        string? reason = null;
+        if (!DurableMissionPackageAdmission.TryValidate(launch, out reason))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, reason ?? "The pinned launch is invalid.");
+        var turnId = input.Retry ? input.TurnId : ConversationDeterministicIds.MissionTurn(input.CommandId);
+        if (turnId is null || turnId == Guid.Empty)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null, "A retry requires its original turn id.");
+        var original = input.Retry ? await FindMissionTurnAsync(turnId.Value, ct) : null;
+        if (input.Retry && original is null)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.NotFound, null, "The turn was not found.");
+        var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
+        if (existing is not null)
+        {
+            var accepted = existing.AcceptedCommandJson is null ? null : JsonSerializer.Deserialize(existing.AcceptedCommandJson, ConversationContractsJsonContext.Default.ConversationCommand);
+            return accepted is not null && accepted.TurnId == turnId
+                ? new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+                    new ConversationCommandAcceptance(Address.ConversationId, accepted.RunId, existing.Event.Sequence + 1, ConversationRunStatus.Queued, accepted.TurnId), null)
+                : new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "The command id was already used differently.");
+        }
+        if (checkpoint.State.ActiveRunId is not null)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.RunAlreadyActive, null, "This Mission Conversation already has an active turn.");
+        var text = input.Text;
+        if (input.Retry)
+        {
+            text = original!.Goal;
+        }
+        var command = new ConversationCommand(input.CommandId, Address.ConversationId,
+            ConversationDeterministicIds.MissionTurnAttempt(input.CommandId), ConversationCommandKind.StartMission,
+            "Durable", text!, [], null, Launch: launch, TurnId: turnId);
+        return await BeginRunAsync(command, ct);
+    }
+
+    public async Task<ConversationCommandOutcomeResult> AcceptEvaluationCreateAsync(EvaluationCreateInput input)
+    {
+        var request = JsonSerializer.Deserialize(input.RequestJson, ConversationContractsJsonContext.Default.StartEvaluationRequest);
+        if (request is null || request.EvaluationResultId == Guid.Empty || request.ProjectId == Guid.Empty || request.MissionId == Guid.Empty ||
+            request.MissionVersionId == Guid.Empty || request.EvaluationCaseId == Guid.Empty || request.CandidateRevision <= 0 || string.IsNullOrWhiteSpace(request.Input) ||
+            request.Launch.MissionVersionId != request.MissionVersionId || !string.Equals(request.Launch.DefinitionHash, request.DefinitionHash, StringComparison.Ordinal))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null, "The evaluation request is invalid.");
+        if (!DurableMissionPackageAdmission.TryValidate(request.Launch, out var reason))
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null, reason ?? "The evaluation launch is invalid.");
+        if (checkpoint.State.Purpose == ConversationPurpose.Evaluation)
+            return checkpoint.State.EvaluationResultId == request.EvaluationResultId
+                ? new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+                    new ConversationCommandAcceptance(Address.ConversationId, checkpoint.State.ActiveRunId, checkpoint.State.LastSequence, checkpoint.State.Status), null)
+                : new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "This evaluation is already pinned differently.");
+        if (Exists) return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "This conversation is already pinned to another purpose.");
+        checkpoint.State.TenantId = Address.TenantId;
+        checkpoint.State.ConversationId = Address.ConversationId;
+        checkpoint.State.Purpose = ConversationPurpose.Evaluation;
+        checkpoint.State.ProjectId = request.ProjectId;
+        checkpoint.State.EvaluationResultId = request.EvaluationResultId;
+        checkpoint.State.EvaluationCaseId = request.EvaluationCaseId;
+        checkpoint.State.EvaluationTurnId = ConversationDeterministicIds.EvaluationTurn(request.EvaluationResultId);
+        checkpoint.State.EvaluationTurnAttemptId = ConversationDeterministicIds.MissionTurnAttempt(request.EvaluationResultId);
+        checkpoint.State.EvaluationDeclaredProfile = request.Launch.Profile;
+        // Candidate profile is provenance only. Text-only evaluations always execute through the
+        // already accepted generic Worker path with NoHands and no Bob attachment.
+        var executionLaunch = request.Launch with { Profile = MissionHandsProfile.NoHands };
+        checkpoint.State.MissionConversationLaunchJson = JsonSerializer.Serialize(executionLaunch, ConversationContractsJsonContext.Default.DurableMissionLaunch);
+        await checkpoint.WriteStateAsync();
+        var command = new ConversationCommand(request.EvaluationResultId, Address.ConversationId, checkpoint.State.EvaluationTurnAttemptId,
+            ConversationCommandKind.StartMission, "Durable", request.Input, [], null, Launch: executionLaunch, TurnId: checkpoint.State.EvaluationTurnId);
+        return await BeginRunAsync(command, CancellationToken.None);
+    }
+
+    public async Task<ConversationCommandOutcomeResult> CancelMissionConversationTurnAsync(MissionConversationCancelInput input)
+    {
+        var ct = CancellationToken.None;
+        await RepairPendingTransitionIfAnyAsync(ct);
+        if (checkpoint.State.Purpose != ConversationPurpose.MissionConversation || input.CommandId == Guid.Empty || input.TurnId == Guid.Empty || input.TurnAttemptId == Guid.Empty)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Invalid, null, "The cancellation request is invalid.");
+        var existing = await eventStore.FindByEventIdAsync(Address, input.CommandId, ct);
+        if (existing is not null)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+                new ConversationCommandAcceptance(Address.ConversationId, input.TurnAttemptId, existing.Event.Sequence, existing.Event.RunStatus ?? checkpoint.State.Status), null);
+        if (checkpoint.State.ActiveRunId != input.TurnAttemptId)
+        {
+            var terminal = await ReadTerminalMissionTurnAsync(input.TurnId, input.TurnAttemptId, ct);
+            return terminal is null
+                ? new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "The cancellation does not match an active or terminal turn.")
+                : new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+                    new ConversationCommandAcceptance(Address.ConversationId, input.TurnAttemptId, terminal.Sequence, terminal.RunStatus!.Value, input.TurnId), null);
+        }
+        var start = checkpoint.State.ActiveStartCommandJson is null ? null : JsonSerializer.Deserialize(checkpoint.State.ActiveStartCommandJson, ConversationContractsJsonContext.Default.ConversationCommand);
+        if (start?.TurnId != input.TurnId)
+            return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "The cancellation does not match the active turn.");
+        var cancelled = new ConversationEvent(input.CommandId, 1, Address.ConversationId, input.TurnAttemptId, checkpoint.State.LastSequence + 1,
+            ConversationEventKind.RunStatus, ConversationParticipant.Forge, null, null, "Cancelled by operator.", null, null, null, null,
+            ConversationRunStatus.Interrupted, DateTimeOffset.UtcNow);
+        var stored = await PlanAppendAdvanceAsync(cancelled, null, notifyMissionRun: true, dispatchCommand: null, ct);
+        return new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
+            new ConversationCommandAcceptance(Address.ConversationId, input.TurnAttemptId, stored.Sequence, ConversationRunStatus.Interrupted, input.TurnId), null);
+    }
+
     public async Task<ConversationCommandOutcomeResult> AcceptToolResultAsync(ConversationToolResultInput input)
     {
         var ct = CancellationToken.None;
@@ -853,7 +990,11 @@ public sealed class ConversationGrain(
             string.IsNullOrEmpty(checkpoint.State.MissionRef) ? null : checkpoint.State.MissionRef,
             checkpoint.State.ActiveRunId,
             checkpoint.State.LastSequence, checkpoint.State.Status, checkpoint.State.ExpectedToolRequestId,
-            checkpoint.State.UpdatedAtUtc, checkpoint.State.Purpose, checkpoint.State.ProjectId);
+            checkpoint.State.UpdatedAtUtc, checkpoint.State.Purpose, checkpoint.State.ProjectId,
+            DeserializeMissionHands(checkpoint.State.MissionConversationLaunchJson,
+                ConversationContractsJsonContext.Default.DurableMissionLaunch), checkpoint.State.EvaluationResultId,
+            checkpoint.State.EvaluationTurnId, checkpoint.State.EvaluationTurnAttemptId,
+            checkpoint.State.EvaluationTerminalSummary, checkpoint.State.EvaluationTerminalReason);
 
         return Task.FromResult(new ConversationSnapshotResult(
             JsonSerializer.Serialize(snapshot, ConversationContractsJsonContext.Default.ConversationSnapshot)));
@@ -1058,7 +1199,50 @@ public sealed class ConversationGrain(
         checkpoint.State.MissionHandsExpectedCommandId = command.Launch?.Package is null ? null : command.CommandId;
         await checkpoint.WriteStateAsync();
 
-        return new ConversationCommandAcceptance(Address.ConversationId, command.RunId, queuedEvent.Sequence, ConversationRunStatus.Queued);
+        return new ConversationCommandAcceptance(Address.ConversationId, command.RunId, queuedEvent.Sequence,
+            ConversationRunStatus.Queued, command.TurnId);
+    }
+
+    /// <summary>Finds the Host-owned accepted command for one durable turn by replaying canonical
+    /// events. This is deliberately a query over the existing event log, not a second transcript
+    /// or a caller-owned turn map.</summary>
+    private async Task<ConversationCommand?> FindMissionTurnAsync(Guid turnId, CancellationToken ct)
+    {
+        await foreach (var item in eventStore.ReadAfterAsync(Address, 0, ct))
+        {
+            if (item.Kind != ConversationEventKind.UserMessage)
+                continue;
+            var stored = await eventStore.FindByEventIdAsync(Address, item.EventId, ct);
+            var command = stored?.AcceptedCommandJson is null ? null : JsonSerializer.Deserialize(
+                stored.AcceptedCommandJson, ConversationContractsJsonContext.Default.ConversationCommand);
+            if (command?.TurnId == turnId)
+                return command;
+        }
+
+        return null;
+    }
+
+    /// <summary>Terminal cancellation is a durable no-op. The caller receives the already-stored
+    /// status only when both the turn and attempt are the canonical pair.</summary>
+    private async Task<ConversationEvent?> ReadTerminalMissionTurnAsync(Guid turnId, Guid attemptId, CancellationToken ct)
+    {
+        var matched = false;
+        await foreach (var item in eventStore.ReadAfterAsync(Address, 0, ct))
+        {
+            if (item.Kind != ConversationEventKind.UserMessage || item.RunId != attemptId)
+                continue;
+            var stored = await eventStore.FindByEventIdAsync(Address, item.EventId, ct);
+            var command = stored?.AcceptedCommandJson is null ? null : JsonSerializer.Deserialize(
+                stored.AcceptedCommandJson, ConversationContractsJsonContext.Default.ConversationCommand);
+            if (command?.TurnId == turnId)
+            {
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) return null;
+        var latest = await eventStore.ReadLatestForRunAsync(Address, attemptId, ct);
+        return latest is { RunStatus: { } status } && IsTerminal(status) ? latest : null;
     }
 
     // -- explicit duplicate equality (Task 6) — never relies on AppendAsync's own equality-throw --
@@ -1239,6 +1423,14 @@ public sealed class ConversationGrain(
                 if (terminal)
                     checkpoint.State.ActiveStartCommandJson = null;
                 break;
+            case ConversationEventKind.ParticipantMessage when checkpoint.State.Purpose == ConversationPurpose.Evaluation &&
+                stored.RunId == checkpoint.State.EvaluationTurnAttemptId:
+                checkpoint.State.EvaluationTerminalSummary = stored.Text;
+                break;
+            case ConversationEventKind.Error when checkpoint.State.Purpose == ConversationPurpose.Evaluation &&
+                stored.RunId == checkpoint.State.EvaluationTurnAttemptId:
+                checkpoint.State.EvaluationTerminalReason = stored.Reason;
+                break;
             case ConversationEventKind.ToolRequested:
                 checkpoint.State.ExpectedToolRequestId = stored.ToolRequest?.RequestId;
                 checkpoint.State.Status = ConversationRunStatus.WaitingForTool;
@@ -1254,7 +1446,8 @@ public sealed class ConversationGrain(
         ConversationRunStatus.Interrupted or ConversationRunStatus.Failed;
 
     private bool Exists => !string.IsNullOrEmpty(checkpoint.State.MissionRef) ||
-        (checkpoint.State.Purpose == ConversationPurpose.ProjectMission && checkpoint.State.ProjectId is not null);
+        (checkpoint.State.Purpose is ConversationPurpose.ProjectMission or ConversationPurpose.MissionConversation or ConversationPurpose.Evaluation &&
+         checkpoint.State.ProjectId is not null);
 
     private static bool ValidMissionHandsLaunch(DurableMissionLaunch launch)
     {
