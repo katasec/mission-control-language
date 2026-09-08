@@ -101,6 +101,10 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 ## Build readiness
 
 The product, data, lifecycle, routing, failures, migration, security, default path and visual
-contracts are resolved in the spokes. The listed scope exclusions are intentional and do not block
-this work. No implementation starts until Codex approves the relevant spoke and Claude returns an
-approved task-specific plan.
+contracts are **locked** in the spokes. A later spoke may need a contract-alignment pass when an
+already-accepted prerequisite changes an implementation type or persistence detail; that pass must
+preserve these decisions, name the exact replacement, and never recast it as an open Phase 45 design
+question or request an operator decision. Escalate only an actual contradiction of a table above or
+a new Type-1 tier/data/identity boundary. The listed scope exclusions are intentional and do not
+block this work. No implementation starts until Codex approves the relevant spoke and its
+task-specific plan.

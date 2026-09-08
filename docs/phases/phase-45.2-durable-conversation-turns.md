@@ -1,6 +1,12 @@
 # Phase 45.2 — Durable conversation turns
 
-> **Status:** implementation-ready design; depends on [45.1](phase-45.1-version-evaluation-contracts.md).
+> **Status:** corrective design in progress 2026-09-08; implementation is not assigned until the
+> accepted 45.1 vocabulary and durable turn contract below are reconciled. Depends on accepted
+> [45.1](phase-45.1-version-evaluation-contracts.md).
+
+> **Correction authority:** [Phase 45.2 durable-turn contract reconciliation](phase-45.2-durable-turn-contract-reconciliation.md)
+> supersedes the stale launch/profile, transport, default-path, and undefined-type material in this
+> card. It is a required implementation boundary, not a decision left to an implementer.
 
 ## Task 2 — execute pinned versions as durable conversations and evaluations
 
