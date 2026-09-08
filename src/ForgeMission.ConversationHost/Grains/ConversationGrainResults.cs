@@ -106,6 +106,25 @@ public sealed record ConversationProjectMissionRunInput(
     [property: Id(2)] string Input,
     [property: Id(3)] string? LaunchJson = null);
 
+[GenerateSerializer]
+public sealed record MissionConversationCreateInput(
+    [property: Id(0)] Guid CommandId,
+    [property: Id(1)] Guid ProjectId,
+    [property: Id(2)] string LaunchJson);
+
+[GenerateSerializer]
+public sealed record MissionConversationTurnInput(
+    [property: Id(0)] Guid CommandId,
+    [property: Id(1)] Guid? TurnId,
+    [property: Id(2)] bool Retry,
+    [property: Id(3)] string? Text);
+
+[GenerateSerializer]
+public sealed record MissionConversationCancelInput([property: Id(0)] Guid CommandId, [property: Id(1)] Guid TurnId, [property: Id(2)] Guid TurnAttemptId);
+
+[GenerateSerializer]
+public sealed record EvaluationCreateInput([property: Id(0)] string RequestJson);
+
 /// <summary>Grain-interface wrapper for an ordered <see cref="ConversationEvent"/> range; each
 /// element is deserialized individually by the caller with <see cref="ConversationContractsJsonContext"/>.</summary>
 [GenerateSerializer]
@@ -158,7 +177,8 @@ public sealed record ConversationCommandAcceptance(
     [property: Id(0)] Guid ConversationId,
     [property: Id(1)] Guid? RunId,
     [property: Id(2)] long AcceptedSequence,
-    [property: Id(3)] ConversationRunStatus Status);
+    [property: Id(3)] ConversationRunStatus Status,
+    [property: Id(4)] Guid? TurnId = null);
 
 /// <summary>Distinguishes a newly appended progress fact from an already-recorded equal one from a
 /// rejection (unknown/mismatched/already-completed tool result).</summary>

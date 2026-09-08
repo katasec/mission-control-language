@@ -74,4 +74,15 @@ public sealed class ConversationCheckpoint
     // Only a Host-dispatched generic command may originate a hands pause. This prevents an
     // arbitrary queue publisher from manufacturing Bob work with a plausible-looking request.
     [Id(28)] public Guid? MissionHandsExpectedCommandId { get; set; }
+
+    // Phase 45.2 immutable conversation/evaluation provenance. The launch remains Host-owned
+    // value state; no Project path or attachment authority is persisted here.
+    [Id(29)] public string? MissionConversationLaunchJson { get; set; }
+    [Id(30)] public Guid? EvaluationResultId { get; set; }
+    [Id(31)] public Guid? EvaluationCaseId { get; set; }
+    [Id(32)] public Guid? EvaluationTurnId { get; set; }
+    [Id(33)] public Guid? EvaluationTurnAttemptId { get; set; }
+    [Id(34)] public string? EvaluationTerminalSummary { get; set; }
+    [Id(35)] public string? EvaluationTerminalReason { get; set; }
+    [Id(36)] public MissionHandsProfile? EvaluationDeclaredProfile { get; set; }
 }

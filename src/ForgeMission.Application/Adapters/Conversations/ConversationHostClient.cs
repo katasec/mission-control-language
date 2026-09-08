@@ -59,6 +59,32 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
     public Task<GetConversationResponse> ReadConversationAsync(Guid conversationId, CancellationToken ct) =>
         GetProjectAsync($"conversations/{conversationId}", ConversationContractsJsonContext.Default.GetConversationResponse, ct);
 
+    public Task<CreateMissionConversationResponse> CreateMissionConversationAsync(CreateMissionConversationRequest request, CancellationToken ct) =>
+        PostProjectAsync("mission-conversations", request, ConversationContractsJsonContext.Default.CreateMissionConversationRequest,
+            ConversationContractsJsonContext.Default.CreateMissionConversationResponse, ct);
+
+    public Task<ListMissionConversationsResponse> ListMissionConversationsAsync(Guid projectId, CancellationToken ct) =>
+        GetProjectAsync($"mission-conversations/{projectId}", ConversationContractsJsonContext.Default.ListMissionConversationsResponse, ct);
+
+    public Task<SubmitMissionTurnResponse> SubmitMissionTurnAsync(SubmitMissionTurnRequest request, CancellationToken ct) =>
+        PostProjectAsync($"mission-conversations/{request.ConversationId}/turns", request,
+            ConversationContractsJsonContext.Default.SubmitMissionTurnRequest, ConversationContractsJsonContext.Default.SubmitMissionTurnResponse, ct);
+
+    public Task<SubmitMissionTurnResponse> RetryMissionTurnAsync(RetryMissionTurnRequest request, CancellationToken ct) =>
+        PostProjectAsync($"mission-conversations/{request.ConversationId}/turns/retry", request,
+            ConversationContractsJsonContext.Default.RetryMissionTurnRequest, ConversationContractsJsonContext.Default.SubmitMissionTurnResponse, ct);
+
+    public Task<CancelMissionTurnResponse> CancelMissionTurnAsync(CancelMissionTurnRequest request, CancellationToken ct) =>
+        PostProjectAsync($"mission-conversations/{request.ConversationId}/turns/cancel", request,
+            ConversationContractsJsonContext.Default.CancelMissionTurnRequest, ConversationContractsJsonContext.Default.CancelMissionTurnResponse, ct);
+
+    public Task<StartEvaluationResponse> StartEvaluationAsync(StartEvaluationRequest request, CancellationToken ct) =>
+        PostProjectAsync("evaluations", request, ConversationContractsJsonContext.Default.StartEvaluationRequest,
+            ConversationContractsJsonContext.Default.StartEvaluationResponse, ct);
+
+    public Task<GetEvaluationResponse> GetEvaluationAsync(Guid evaluationResultId, CancellationToken ct) =>
+        GetProjectAsync($"evaluations/{evaluationResultId}", ConversationContractsJsonContext.Default.GetEvaluationResponse, ct);
+
     public Task<MissionHandsResult> AttachMissionHandsAsync(AttachMissionHandsRequest request, CancellationToken ct) =>
         PostAsync("mission-hands/attach", request,
             ConversationContractsJsonContext.Default.AttachMissionHandsRequest,

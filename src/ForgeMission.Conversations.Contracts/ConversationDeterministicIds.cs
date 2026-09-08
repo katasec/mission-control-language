@@ -61,6 +61,25 @@ public static class ConversationDeterministicIds
     public static Guid ProjectMissionRun(Guid commandId)
         => Generate($"project-mission-run:{commandId:N}");
 
+    public static Guid MissionConversation(Guid commandId)
+        => Generate($"mission-conversation:{commandId:N}");
+
+    public static Guid EvaluationConversation(Guid evaluationResultId)
+        => Generate($"evaluation-conversation:{evaluationResultId:N}");
+
+    public static Guid MissionTurnAttempt(Guid commandId)
+        => Generate($"mission-turn-attempt:{commandId:N}");
+
+    /// <summary>The Host-created identity of an operator turn. The submit command supplies an
+    /// idempotency key; it never supplies the durable turn identity directly.</summary>
+    public static Guid MissionTurn(Guid commandId)
+        => Generate($"mission-turn:{commandId:N}");
+
+    /// <summary>The hidden evaluation's durable turn identity. It remains distinct from the
+    /// Project-owned pending-result identity used to idempotently admit the evaluation.</summary>
+    public static Guid EvaluationTurn(Guid evaluationResultId)
+        => Generate($"evaluation-turn:{evaluationResultId:N}");
+
     /// <summary>The Nth progress fact the Worker sends while processing one command.</summary>
     public static Guid Progress(Guid commandId, int ordinal)
         => Generate($"progress:{commandId:N}:{ordinal}");

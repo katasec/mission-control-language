@@ -78,8 +78,8 @@ internal sealed record EvaluationResult(
     Guid MissionVersionId,
     int CandidateRevision,
     string DefinitionHash,
-    EvaluationOutcome ObservedOutcome,
-    string ObservedOutputSummary,
+    EvaluationOutcome? ObservedOutcome,
+    string? ObservedOutputSummary,
     EvaluationResultState State,
     EvaluationTraceOrigin? TraceOrigin,
     DateTimeOffset? CompletedAtUtc);
@@ -87,6 +87,20 @@ internal sealed record EvaluationResult(
 internal enum EvaluationOutcome { Succeeded, Failed }
 internal enum EvaluationResultState { Pending, Passed, Failed }
 internal sealed record EvaluationTraceOrigin(Guid ConversationId, Guid TurnId, Guid TurnAttemptId);
+
+/// <summary>Project-owned pending intent returned to the Missions coordinator. It is a value
+/// snapshot only: it contains no local path, capability authority, or remote state.</summary>
+internal sealed record PendingEvaluationAdmission(
+    Guid ProjectId,
+    Guid MissionId,
+    MissionVersion Version,
+    EvaluationCase EvaluationCase,
+    EvaluationResult Result);
+
+/// <summary>Application-internal provenance assembled from one current Project manifest read.
+/// It is an immutable value passed to Missions, never a durable contract and never a Project path.</summary>
+internal sealed record MissionLaunchProvenance(Guid ProjectId, Guid MissionId,
+    ForgeMission.Conversations.Contracts.DurableMissionLaunch Launch);
 
 internal enum ProjectSubmissionPhase
 {

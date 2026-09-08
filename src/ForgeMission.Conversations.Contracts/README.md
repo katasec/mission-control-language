@@ -21,6 +21,7 @@ Durable conversation facts need stable identities and shapes without coupling ev
 - Versioned conversation commands, event/snapshot/projection records, JSON source generation, and deterministic IDs.
 - Additive generic mission-hands launch, attachment, request, and typed-result records. They contain no Project root, credential, Bob handle, or Worker transcript.
 - The additive immutable durable-package and generic Mission Hands vocabulary; package content has no provider or credential fields.
+- Additive Mission Conversation turn and hidden Evaluation messages. They carry immutable package values and IDs only; no Project path, attachment, capability authority, credential, or local root crosses this vocabulary.
 
 ## Does not own
 

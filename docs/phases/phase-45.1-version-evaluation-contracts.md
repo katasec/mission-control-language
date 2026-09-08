@@ -76,14 +76,17 @@ EvaluationCase
 EvaluationResult
   evaluationResultId: Guid, evaluationCaseId: Guid, missionVersionId: Guid,
   candidateRevision: positive int, definitionHash: lower-case sha256,
-  observedOutcome: Succeeded|Failed, observedOutputSummary: 0..4096 bytes,
+  observedOutcome: Succeeded|Failed?, observedOutputSummary: 0..4096 bytes?,
   state: Pending|Passed|Failed, traceOrigin: EvaluationTraceOrigin?, completedAtUtc?
 
 EvaluationTraceOrigin
   conversationId: Guid, turnId: Guid, turnAttemptId: Guid
 ```
 
-There is exactly one mutable `MissionDraft` per mission. A Draft is not a version. Promotion validates
+There is exactly one mutable `MissionDraft` per mission. A Draft is not a version. A `Pending`
+result has no observed outcome, output summary, trace origin, or completion timestamp; terminal
+reconciliation fills those fields on that same result identity. This is required so a durable
+evaluation can be honestly recoverable without inventing an outcome before one exists. Promotion validates
 and freezes it as Candidate version 1 (or the next number), with a new version ID; later Candidate
 edits retain ID/number and increment only `CandidateRevision`. `DefinitionAssetId` is deliberately
 absent: current asset IDs are positional. Frozen text and package make later asset/editor changes
@@ -129,7 +132,7 @@ active Approved, and leave existing conversations/legacy launches unchanged.
 | Stale draft/candidate/case/publish | ProjectService lease transaction returns `VersionChanged`/`PublishConflict`; no overwrite. | Refresh/retry; concurrent-write test. |
 | Invalid/unknown profile or substitution | Project service rejects it; no caller-selected launch/attachment profile. | Reopen version; tamper test. |
 | Execution requested before 45.2 | Service returns `EvaluationUnavailable`; no Pending result/command/attachment. | Retry after 45.2; no-write test. |
-| Criteria mismatch | EvaluationService records Failed and blocks publish. | Edit/evaluate again; deterministic test. |
+| Criteria mismatch | EvaluationService reconciles the pending result to Failed and blocks publish. | Edit/evaluate again; deterministic test. |
 
 ### Interfaces, gates, and evidence
 

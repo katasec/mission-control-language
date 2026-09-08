@@ -17,7 +17,9 @@ internal static class DurableMissionPackageAdmission
         if (string.IsNullOrWhiteSpace(launch.Definition))
         { reason = "A generic durable launch definition is required."; return false; }
         var definitionHash = "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(launch.Definition))).ToLowerInvariant();
-        if (launch.Definition.Length > 1024 || !string.Equals(launch.DefinitionHash, definitionHash, StringComparison.OrdinalIgnoreCase))
+        // Core already limits a durable mission source to 4 KiB. Host must accept that exact
+        // bounded value rather than imposing a narrower, incompatible 1 KiB admission rule.
+        if (launch.Definition.Length > 4 * 1024 || !string.Equals(launch.DefinitionHash, definitionHash, StringComparison.OrdinalIgnoreCase))
         { reason = "A generic durable launch definition is invalid or exceeds its checkpoint budget."; return false; }
         return DurableMissionPackageValidator.TryValidate(new DurableMissionPackageInput(
             package.FormatVersion, package.PackageHash, package.MissionSource, package.RootMissionName, package.RootInputName,

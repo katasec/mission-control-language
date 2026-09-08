@@ -18,7 +18,7 @@ A Project is durable local domain state, not an execution session or a screen. T
 
 ## Owns
 
-- Project draft, create, open, validation, authored mission versions/evaluation facts, and all `forge.project.json` reads and mutations in [ProjectService](ProjectService.cs), [MissionVersionService](MissionVersionService.cs), and the private [ProjectManifestFile](ProjectManifestFile.cs) adapter.
+- Project draft, create, open, validation, authored mission versions/evaluation facts (including the one atomic Pending evaluation intent), and all `forge.project.json` reads and mutations in [ProjectService](ProjectService.cs), [MissionVersionService](MissionVersionService.cs), and the private [ProjectManifestFile](ProjectManifestFile.cs) adapter.
 - Built-in mission vocabulary through [MissionCatalog](../Missions/MissionCatalog.cs), and the Project mutation that records a selected mission.
 - Immutable submission preparation and acceptance/rejection receipt mutation for MissionSubmissionService.
 - Workbench projection and bounded, manifest-identified document access in [ProjectContentService](ProjectContentService.cs).
@@ -58,6 +58,7 @@ flowchart LR
 
 - Draft is pure and reserves nothing. Create/Open are the only authority for final Project homes and session attachment follows successful validation.
 - A Project Mission command is immutable once prepared; uncertain receipt persistence retains the same command identity for reconciliation.
+- A pending evaluation contains no invented outcome, output, trace, or completion time. Missions reconciles that same Project-owned result only from a terminal Host projection; a pre-admission refusal has an explicit null trace.
 - Content access remains limited to manifest-listed entries and retains size, symlink/path, UTF-8, binary, and hash checks. It is not an agent filesystem capability.
 
 ## Related documentation

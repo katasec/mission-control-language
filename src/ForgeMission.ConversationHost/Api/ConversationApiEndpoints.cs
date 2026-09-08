@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text;
 using Azure;
 using ForgeMission.ConversationHost.Grains;
+using ForgeMission.ConversationHost.Persistence;
 using ForgeMission.Conversations.Contracts;
 using Orleans;
 
@@ -63,6 +64,20 @@ public static class ConversationApiEndpoints
             ProjectRouteAsync(() => CreateProjectMissionContainerAsync(request, grains)));
         app.MapPost("/conversations/{containerId}/mission-runs", (string containerId, StartProjectMissionRunRequest request, IGrainFactory grains) =>
             ProjectRouteAsync(() => StartProjectMissionRunAsync(containerId, request, grains)));
+        app.MapPost("/mission-conversations", (CreateMissionConversationRequest request, IGrainFactory grains, IProjectMissionConversationDirectoryStore directory) =>
+            ProjectRouteAsync(() => CreateMissionConversationAsync(request, grains, directory)));
+        app.MapGet("/mission-conversations/{projectId}", (string projectId, IGrainFactory grains, IProjectMissionConversationDirectoryStore directory) =>
+            ProjectRouteAsync(() => ListMissionConversationsAsync(projectId, grains, directory)));
+        app.MapPost("/mission-conversations/{conversationId}/turns", (string conversationId, SubmitMissionTurnRequest request, IGrainFactory grains) =>
+            ProjectRouteAsync(() => SubmitMissionTurnAsync(conversationId, request, grains)));
+        app.MapPost("/mission-conversations/{conversationId}/turns/retry", (string conversationId, RetryMissionTurnRequest request, IGrainFactory grains) =>
+            ProjectRouteAsync(() => RetryMissionTurnAsync(conversationId, request, grains)));
+        app.MapPost("/mission-conversations/{conversationId}/turns/cancel", (string conversationId, CancelMissionTurnRequest request, IGrainFactory grains) =>
+            ProjectRouteAsync(() => CancelMissionTurnAsync(conversationId, request, grains)));
+        app.MapPost("/evaluations", (StartEvaluationRequest request, IGrainFactory grains) =>
+            ProjectRouteAsync(() => StartEvaluationAsync(request, grains)));
+        app.MapGet("/evaluations/{evaluationResultId}", (string evaluationResultId, IGrainFactory grains) =>
+            ProjectRouteAsync(() => GetEvaluationAsync(evaluationResultId, grains)));
         app.MapGet("/conversations/{containerId}/runs", (string containerId, string? anchor, string? before, IGrainFactory grains) =>
             ProjectRouteAsync(() => ReadProjectRunsAsync(containerId, anchor, before, grains)));
         app.MapGet("/conversations/{containerId}/runs/{runId}", (string containerId, string runId, IGrainFactory grains) =>
@@ -218,6 +233,28 @@ public static class ConversationApiEndpoints
         return await grain.AcceptProjectMissionRunAsync(
             new ConversationProjectMissionRunInput(request.CommandId, request.Mission, request.Input,
                 request.Launch is null ? null : JsonSerializer.Serialize(request.Launch, ConversationContractsJsonContext.Default.DurableMissionLaunch)));
+    }
+
+    public static async Task<ConversationCommandOutcomeResult> HandleCreateMissionConversationAsync(
+        CreateMissionConversationRequest request, IGrainFactory grains)
+    {
+        string? reason = null;
+        if (request.ProjectId == Guid.Empty || request.CommandId == Guid.Empty || !DurableMissionPackageAdmission.TryValidate(request.Launch, out reason))
+            return Invalid(reason ?? "A Mission Conversation requires Project id, command id, and immutable launch.");
+        var id = ConversationDeterministicIds.MissionConversation(request.CommandId);
+        return await grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey)
+            .AcceptMissionConversationCreateAsync(new MissionConversationCreateInput(request.CommandId, request.ProjectId,
+                JsonSerializer.Serialize(request.Launch, ConversationContractsJsonContext.Default.DurableMissionLaunch)));
+    }
+
+    public static async Task<ConversationCommandOutcomeResult> HandleStartEvaluationAsync(StartEvaluationRequest request, IGrainFactory grains)
+    {
+        string? reason = null;
+        if (request.EvaluationResultId == Guid.Empty || !DurableMissionPackageAdmission.TryValidate(request.Launch, out reason))
+            return Invalid(reason ?? "The evaluation request is invalid.");
+        var id = ConversationDeterministicIds.EvaluationConversation(request.EvaluationResultId);
+        return await grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey)
+            .AcceptEvaluationCreateAsync(new EvaluationCreateInput(JsonSerializer.Serialize(request, ConversationContractsJsonContext.Default.StartEvaluationRequest)));
     }
 
     public static async Task<GetConversationOutcomeResult> HandleGetConversationAsync(
@@ -433,6 +470,109 @@ public static class ConversationApiEndpoints
         };
     }
 
+    private static async Task<IResult> CreateMissionConversationAsync(CreateMissionConversationRequest request,
+        IGrainFactory grains, IProjectMissionConversationDirectoryStore directory)
+    {
+        var result = await HandleCreateMissionConversationAsync(request, grains);
+        if (result.Outcome != ConversationCommandOutcome.Accepted)
+            return result.Outcome == ConversationCommandOutcome.Invalid ? ProjectError("invalidRequest", result.Reason ?? "Invalid Mission Conversation.", 400) :
+                ProjectError("commandConflict", result.Reason ?? "Mission Conversation conflicts.", 409);
+        var snapshot = await SnapshotAsync(result.Acceptance!.ConversationId, grains);
+        var summary = new MissionConversationSummary(snapshot.ConversationId, request.ProjectId, snapshot.PinnedLaunch!, snapshot.Status,
+            snapshot.LastSequence, snapshot.UpdatedAtUtc);
+        await directory.UpsertAsync(DevTenantId, summary, CancellationToken.None);
+        return Results.Created($"/conversations/{summary.ConversationId}", new CreateMissionConversationResponse(summary.ConversationId, summary.LastSequence, summary.Launch));
+    }
+
+    private static async Task<IResult> ListMissionConversationsAsync(string projectId, IGrainFactory grains,
+        IProjectMissionConversationDirectoryStore directory)
+    {
+        if (!TryParseRouteId(projectId, out var id)) return ProjectError("invalidRequest", "projectId is required.", 400);
+        var stored = await directory.ReadAsync(DevTenantId, id, CancellationToken.None);
+        var valid = new List<MissionConversationSummary>();
+        foreach (var item in stored)
+        {
+            var snapshot = await TryGetExistingSnapshotAsync(grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, item.ConversationId).PartitionKey));
+            if (snapshot?.Purpose != ConversationPurpose.MissionConversation || snapshot.ProjectId != id || snapshot.PinnedLaunch is null)
+            {
+                await directory.RemoveAsync(DevTenantId, id, item.ConversationId, CancellationToken.None);
+                continue;
+            }
+            valid.Add(new MissionConversationSummary(snapshot.ConversationId, id, snapshot.PinnedLaunch, snapshot.Status, snapshot.LastSequence, snapshot.UpdatedAtUtc));
+        }
+        return Results.Ok(new ListMissionConversationsResponse([.. valid]));
+    }
+
+    private static async Task<IResult> SubmitMissionTurnAsync(string conversationId, SubmitMissionTurnRequest request, IGrainFactory grains)
+    {
+        if (!TryParseRouteId(conversationId, out var id) || request.ConversationId != id)
+            return ProjectError("invalidRequest", "conversationId is invalid.", 400);
+        var grain = grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey);
+        var result = await grain.AcceptMissionConversationTurnAsync(new MissionConversationTurnInput(request.CommandId, null, false, request.Text));
+        return result.Outcome switch
+        {
+            ConversationCommandOutcome.Accepted => Results.Accepted($"/conversations/{id}", new SubmitMissionTurnResponse(id, result.Acceptance!.TurnId!.Value,
+                result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status)),
+            ConversationCommandOutcome.RunAlreadyActive => ProjectError("runAlreadyActive", result.Reason ?? "A turn is active.", 409),
+            ConversationCommandOutcome.NotFound => ProjectError("notFound", result.Reason ?? "Conversation not found.", 404),
+            _ => ProjectError("commandConflict", result.Reason ?? "Turn conflicts.", 409),
+        };
+    }
+
+    private static async Task<IResult> RetryMissionTurnAsync(string conversationId, RetryMissionTurnRequest request, IGrainFactory grains)
+    {
+        if (!TryParseRouteId(conversationId, out var id) || request.ConversationId != id) return ProjectError("invalidRequest", "conversationId is invalid.", 400);
+        var result = await grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey)
+            .AcceptMissionConversationTurnAsync(new MissionConversationTurnInput(request.CommandId, request.TurnId, true, null));
+        return result.Outcome == ConversationCommandOutcome.Accepted ? Results.Accepted($"/conversations/{id}", new SubmitMissionTurnResponse(id, result.Acceptance!.TurnId!.Value, result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status)) : ProjectError("commandConflict", result.Reason ?? "Retry conflicts.", 409);
+    }
+
+    private static async Task<IResult> CancelMissionTurnAsync(string conversationId, CancelMissionTurnRequest request, IGrainFactory grains)
+    {
+        if (!TryParseRouteId(conversationId, out var id) || request.ConversationId != id) return ProjectError("invalidRequest", "conversationId is invalid.", 400);
+        var result = await grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey)
+            .CancelMissionConversationTurnAsync(new MissionConversationCancelInput(request.CommandId, request.TurnId, request.TurnAttemptId));
+        return result.Outcome == ConversationCommandOutcome.Accepted
+            ? Results.Accepted($"/conversations/{id}", new CancelMissionTurnResponse(id, request.TurnId,
+                request.TurnAttemptId, result.Acceptance!.AcceptedSequence, result.Acceptance.Status))
+            : ProjectError("commandConflict", result.Reason ?? "Cancel conflicts.", 409);
+    }
+
+    private static async Task<IResult> StartEvaluationAsync(StartEvaluationRequest request, IGrainFactory grains)
+    {
+        var result = await HandleStartEvaluationAsync(request, grains);
+        if (result.Outcome != ConversationCommandOutcome.Accepted)
+            return ProjectError("invalidRequest", result.Reason ?? "Evaluation rejected.", 400);
+        return Results.Accepted($"/evaluations/{request.EvaluationResultId}", new StartEvaluationResponse(
+            await EvaluationProjectionAsync(request.EvaluationResultId, grains)));
+    }
+
+    private static async Task<IResult> GetEvaluationAsync(string evaluationResultId, IGrainFactory grains)
+    {
+        if (!TryParseRouteId(evaluationResultId, out var id)) return ProjectError("invalidRequest", "evaluationResultId is required.", 400);
+        var projection = await EvaluationProjectionAsync(id, grains);
+        return projection.ConversationId == Guid.Empty ? ProjectError("notFound", "Evaluation not found.", 404) : Results.Ok(new GetEvaluationResponse(projection));
+    }
+
+    private static async Task<ConversationSnapshot> SnapshotAsync(Guid conversationId, IGrainFactory grains) =>
+        (await HandleGetConversationAsync(new GetConversationRequest(conversationId), grains)).Response!.Snapshot;
+
+    private static async Task<EvaluationProjection> EvaluationProjectionAsync(Guid resultId, IGrainFactory grains)
+    {
+        var conversationId = ConversationDeterministicIds.EvaluationConversation(resultId);
+        var snapshot = await TryGetExistingSnapshotAsync(grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, conversationId).PartitionKey));
+        if (snapshot?.Purpose != ConversationPurpose.Evaluation || snapshot.EvaluationResultId != resultId || snapshot.EvaluationTurnId is not { } turn || snapshot.EvaluationTurnAttemptId is not { } attempt)
+            return new EvaluationProjection(resultId, Guid.Empty, Guid.Empty, Guid.Empty, false, null, null, null, null);
+        var terminal = snapshot.Status is ConversationRunStatus.Completed or ConversationRunStatus.Failed or ConversationRunStatus.Interrupted or ConversationRunStatus.Rejected;
+        EvaluationOutcomeWire? outcome = !terminal ? null : snapshot.Status == ConversationRunStatus.Completed ? EvaluationOutcomeWire.Succeeded : EvaluationOutcomeWire.Failed;
+        var trace = terminal ? new EvaluationTraceOriginWire(conversationId, turn, attempt) : null;
+        var reason = snapshot.EvaluationReason ?? (terminal && outcome == EvaluationOutcomeWire.Failed
+            ? $"Evaluation ended with {snapshot.Status}." : null);
+        var summary = snapshot.EvaluationSummary ?? reason ?? (terminal ? "Evaluation completed." : null);
+        return new EvaluationProjection(resultId, conversationId, turn, attempt, terminal, outcome,
+            summary, trace, reason);
+    }
+
     private static async Task<IResult> ReadProjectRunsAsync(string containerId, string? anchor, string? before, IGrainFactory grainFactory)
     {
         if (!TryParseRouteId(containerId, out var id) || !TryParseCursor(anchor, before, out var parsedAnchor, out var parsedBefore))
@@ -635,7 +775,7 @@ public static class ConversationApiEndpoints
         var snapshot = JsonSerializer.Deserialize(result.SnapshotJson, ConversationContractsJsonContext.Default.ConversationSnapshot)!;
 
         var exists = !string.IsNullOrEmpty(snapshot.MissionRef) ||
-            (snapshot.Purpose == ConversationPurpose.ProjectMission && snapshot.ProjectId is not null);
+            (snapshot.Purpose is ConversationPurpose.ProjectMission or ConversationPurpose.MissionConversation or ConversationPurpose.Evaluation && snapshot.ProjectId is not null);
 
         return exists ? snapshot : null;
     }

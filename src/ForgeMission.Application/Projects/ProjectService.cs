@@ -846,9 +846,12 @@ internal sealed class ProjectService : IProjectService
     private static bool ValidResult(EvaluationResult result, MissionVersion version, EvaluationCase[] cases) =>
         result.EvaluationResultId != Guid.Empty && result.EvaluationCaseId != Guid.Empty && result.MissionVersionId == version.MissionVersionId &&
         cases.Any(item => item.EvaluationCaseId == result.EvaluationCaseId) && result.CandidateRevision == version.CandidateRevision &&
-        string.Equals(result.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal) && Enum.IsDefined(result.ObservedOutcome) &&
-        Enum.IsDefined(result.State) && result.CompletedAtUtc is not null && Encoding.UTF8.GetByteCount(result.ObservedOutputSummary ?? "") <= 4096 &&
-        (result.TraceOrigin is null || result.TraceOrigin.ConversationId != Guid.Empty && result.TraceOrigin.TurnId != Guid.Empty && result.TraceOrigin.TurnAttemptId != Guid.Empty);
+        string.Equals(result.DefinitionHash, version.DefinitionHash, StringComparison.Ordinal) && Enum.IsDefined(result.State) &&
+        (result.State == EvaluationResultState.Pending
+            ? result.ObservedOutcome is null && result.ObservedOutputSummary is null && result.TraceOrigin is null && result.CompletedAtUtc is null
+            : result.ObservedOutcome is { } outcome && Enum.IsDefined(outcome) && result.ObservedOutputSummary is not null &&
+              result.CompletedAtUtc is not null && Encoding.UTF8.GetByteCount(result.ObservedOutputSummary) <= 4096 &&
+              (result.TraceOrigin is null || result.TraceOrigin.ConversationId != Guid.Empty && result.TraceOrigin.TurnId != Guid.Empty && result.TraceOrigin.TurnAttemptId != Guid.Empty));
 
     private static ProjectOperationException InvalidDefinitions(string manifestPath) => new(ProjectOperationErrorCode.InvalidManifest,
         $"{manifestPath} contains invalid authored mission definitions.");
