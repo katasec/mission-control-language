@@ -109,9 +109,9 @@ diagnostic and writes neither version nor package.
 
 `MissionVersionLaunch` remains Application-internal compatibility provenance. Contracts never
 depends on Application; `DurableMissionLaunch` is its only durable launch type. In 45.2 Application
-constructs that existing contracts type from an Approved frozen package; Host revalidates before
-Blob/queue work, and Worker receives only package/profile—not Project paths, mutable assets,
-credentials, provider choice, or Bob.
+resolves an Approved frozen package into immutable durable provenance; the accepted Host validates
+and stores it before queue work, and the accepted Worker receives only package/profile—not Project
+paths, mutable assets, credentials, provider choice, or Bob.
 
 ### Lifecycle and failure boundary
 

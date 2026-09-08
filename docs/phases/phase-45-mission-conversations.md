@@ -1,8 +1,9 @@
 # Phase 45 — Forge Desktop mission conversations
 
-> **Status:** version/evaluation foundation accepted 2026-09-08. Current Desktop
-> remains Project → selected one-shot Mission → instruction → terminal run card → trace until the
-> declared durable and surface spokes are delivered in order.
+> **Status:** version/evaluation foundation and the Phase 46 generic durable-runtime prerequisites
+> are accepted as of 2026-09-08. Current Desktop remains Project → selected one-shot Mission →
+> instruction → terminal run card → trace until the declared integration and surface spokes are
+> delivered in order.
 
 ## Why this phase exists
 
@@ -58,19 +59,20 @@ source-generated JSON; serialized enum values append only.
 |---|---|
 | `MissionId` | Stable Project-local mission identity, never its display name. |
 | `MissionVersionId` | Immutable identity of one numbered lifecycle record; paired with `VersionNumber` and SHA-256 `DefinitionHash`. |
-| `MissionConversationId` | Durable Conversation Host identity for one operator conversation, pinned to exactly one `MissionVersionLaunch`. |
+| `MissionConversationId` | Durable Conversation Host identity for one operator conversation, pinned to exactly one `DurableMissionLaunch`. |
 | `TurnId` | Durable identity of one user message inside a conversation; stable across attempts. |
 | `TurnAttemptId` | Durable identity of one execution attempt; retry creates a new one with a new command ID/status/trace range. |
 | `EvaluationCaseId` / `EvaluationResultId` | Stable Project-local case identity and immutable result identity; result names candidate revision/hash and trace origin. |
 | `TraceOrigin` | `(conversation_id, turn_id?, turn_attempt_id?, evaluation_case_id?, run_id, first_sequence, last_sequence)`. Exactly one of turn/evaluation case is populated. |
 
-`MissionVersionLaunch` is the only Project-to-conversation execution snapshot: `mission_id`,
-`mission_version_id`, `version_number`, `definition_hash`, `definition_artifact_ref`, immutable
-resolved MCL/expert-package content, and exactly one immutable `capability_profile`. Conversation
-Host stores a bounded launch artifact and the accepted profile under its own Blob/store ownership
-before queueing work; Worker receives verified content/value and profile-limited generic tool
-declarations only. No command contains Project path, credential, provider selection, Bob handle,
-local root or local capability.
+`DurableMissionLaunch` is the only durable execution snapshot: `mission_version_id`,
+`version_number`, `definition_hash`, immutable definition content, exactly one immutable
+`MissionHandsProfile`, and a bounded `DurableMissionPackage` containing the resolved MCL/expert
+content. Application's internal `MissionVersionLaunch` is compatibility provenance only and never
+crosses the durable wire. Conversation Host stores the bounded launch artifact under its own
+Blob/store ownership before queueing work; Worker receives verified content/value and
+profile-limited generic tool declarations only. No command contains a Project path, credential,
+provider selection, Bob handle, local root, or local capability.
 
 The durable conversation records the approved profile with the pinned launch. Application alone
 can create a live `(conversation, version, profile, session)` attachment; reconnect creates a new
@@ -82,7 +84,7 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 | Order | Spoke | Deliverable | Gate before next spoke |
 |---|---|---|---|
 | 45.1 | [Version and evaluation contracts](phase-45.1-version-evaluation-contracts.md) | Project-owned version/evaluation model, migration, typed Application messages and deterministic evaluation rules. | Contract, migration and default-path design accepted. |
-| 45.2 | [Durable conversation turns](phase-45.2-durable-conversation-turns.md) | Host/Worker turn state machine, trace origin, retry/cancel containment and Application orchestration. | Durable ownership and failure/recovery proof accepted. |
+| 45.2 | [Version-to-durable conversation integration](phase-45.2-durable-conversation-turns.md) | Bind Project-owned Approved/Candidate versions and evaluation cases to the accepted generic Core, hands, Host, and Worker path. | Approved/Candidate admission, evaluation reconciliation, and failure/recovery proof accepted. |
 | 45.3 | [Operator Missions experience](phase-45.3-operator-missions-experience.md) | Conversation list/picker, transcript and trace round-trip in the existing rail/shell. | Browser-first visual PASS and zero-argument Desktop path PASS. |
 | 45.4 | [Project Explorer authoring](phase-45.4-project-explorer-authoring.md) | Author/edit/evaluate/publish flow in Explorer, with evidence links and publish block. | Browser-first visual PASS and zero-argument Desktop author/evaluate/publish path PASS. |
 
@@ -90,7 +92,7 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 
 | Gate | Phase disposition |
 |---|---|
-| Default-Path Acceptance | This documentation task is N/A. Every implementation spoke names the zero-argument `dist/forge-desktop/ForgeMission.Desktop` route, absent overrides, normal dependencies, disposable Project, action and observation. |
+| Default-Path Acceptance | This documentation task is N/A. The first user-facing proof remains 45.3/45.4: zero-argument `dist/forge-desktop/ForgeMission.Desktop`, absent overrides, normal dependencies, a disposable Project, action, and durable observation. 45.2's controlled integration checks do not close that acceptance. |
 | Desktop Interaction Principles | Reference at 1440×960 is binding. UI spokes also record packaged default usable viewport, four-corner matrix, continuous resize, long content, text scale and text-fit evidence. |
 | UI Design System | Add/select named `forge-desktop-dark` theme maps with light/dark token values; components consume tokens only. The theme is independent of `data-theme`; no sampled component-local values. |
 | Security Architecture | No new public endpoint/store owner. Host remains Tier 2/internal state owner; Worker has no Project/Conversation store access; Application Host has no data-plane credential. |
@@ -101,6 +103,11 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 ## Build readiness
 
 The product, data, lifecycle, routing, failures, migration, security, default path and visual
-contracts are resolved in the spokes. The listed scope exclusions are intentional and do not block
-this work. No implementation starts until Codex approves the relevant spoke and Claude returns an
-approved task-specific plan.
+contracts are **locked** in the spokes. Phase 45.2 integrates the accepted Phase 46 generic
+root-continuation, immutable-hands, and durable-Worker path; it does not reimplement or fork those
+owners. A later spoke may need a contract-alignment pass when an already-accepted prerequisite
+changes an implementation type or persistence detail; that pass must preserve these decisions,
+name the exact replacement, and never recast it as an open Phase 45 design question or request an
+operator decision. Escalate only an actual contradiction of a table above or a new Type-1
+tier/data/identity boundary. The listed scope exclusions are intentional and do not block this
+work. No implementation starts until Codex approves the relevant spoke and its task-specific plan.

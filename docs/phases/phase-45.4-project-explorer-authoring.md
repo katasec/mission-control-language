@@ -1,8 +1,8 @@
 # Phase 45.4 — Project Explorer authoring
 
-> **Status:** implementation-ready design; depends on [45.1](phase-45.1-version-evaluation-contracts.md),
-> [45.2](phase-45.2-durable-conversation-turns.md), and
-> [45.3](phase-45.3-operator-missions-experience.md).
+> **Status:** surface design complete; implementation remains blocked by [45.2](phase-45.2-durable-conversation-turns.md)
+> and [45.3](phase-45.3-operator-missions-experience.md). It depends on accepted
+> [45.1](phase-45.1-version-evaluation-contracts.md) as well.
 
 ## Task 4 — author, evaluate and publish inside Project Explorer
 
