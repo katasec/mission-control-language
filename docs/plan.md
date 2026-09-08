@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Implement the approved Project version/evaluation foundation, then continue the declared durable-conversation and compatibility-removal dependency chain. |
+| **NEXT STEP** | Independently review the corrected Phase 45 durable-integration contract, then approve its bounded implementation plan before continuing the declared conversation and compatibility-removal chain. |
 
 ## Active phases
 

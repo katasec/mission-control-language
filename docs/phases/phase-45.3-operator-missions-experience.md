@@ -1,6 +1,7 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** implementation-ready design; depends on [45.2](phase-45.2-durable-conversation-turns.md).
+> **Status:** surface design complete; implementation remains blocked by independent review and
+> delivery of [45.2](phase-45.2-durable-conversation-turns.md).
 
 ## Task 3 — make Missions a persistent conversation experience
 
