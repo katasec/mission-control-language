@@ -42,6 +42,55 @@ public sealed record DurableResolvedExpert(
     string LockHash,
     string ExpertMarkdown);
 
+/// <summary>
+/// The single owner of "are these the same pinned launch?" — a security-relevant durable rule
+/// (create idempotency, attachment-vs-pinned refusal, hands-request correlation), so it has one
+/// implementation rather than one per caller.
+/// <para>
+/// It exists because <see cref="DurableMissionPackage.ResolvedExperts"/> is an array, which the
+/// generated record comparer compares by reference: two launches that crossed JSON are never
+/// <c>==</c>, even when every value matches. Every pinned launch is stored serialized, so a
+/// re-registration always compares a fresh instance against a deserialized one.
+/// </para>
+/// Comparison is ordinal throughout: these are hashes, identifiers, and exact content, never
+/// display text.
+/// </summary>
+public static class DurableMissionLaunchComparison
+{
+    /// <summary>Structural equality over every immutable launch field, including definition
+    /// content and the whole resolved package. Two nulls are the same launch; one null is not.</summary>
+    public static bool SameLaunch(DurableMissionLaunch? left, DurableMissionLaunch? right)
+    {
+        if (left is null || right is null) return left is null && right is null;
+        return left.MissionVersionId == right.MissionVersionId &&
+            left.VersionNumber == right.VersionNumber &&
+            string.Equals(left.DefinitionHash, right.DefinitionHash, StringComparison.Ordinal) &&
+            string.Equals(left.Definition, right.Definition, StringComparison.Ordinal) &&
+            left.Profile == right.Profile &&
+            SamePackage(left.Package, right.Package);
+    }
+
+    /// <summary>Structural equality over the frozen package and every resolved expert. A missing
+    /// package matches only another missing package — a schema-4 launch is never the same value
+    /// as a package-bearing one.</summary>
+    public static bool SamePackage(DurableMissionPackage? left, DurableMissionPackage? right)
+    {
+        if (left is null || right is null) return left is null && right is null;
+        return left.FormatVersion == right.FormatVersion &&
+            string.Equals(left.PackageHash, right.PackageHash, StringComparison.Ordinal) &&
+            string.Equals(left.MissionSource, right.MissionSource, StringComparison.Ordinal) &&
+            string.Equals(left.RootMissionName, right.RootMissionName, StringComparison.Ordinal) &&
+            string.Equals(left.RootInputName, right.RootInputName, StringComparison.Ordinal) &&
+            left.ResolvedExperts.Length == right.ResolvedExperts.Length &&
+            left.ResolvedExperts.Zip(right.ResolvedExperts).All(pair =>
+                string.Equals(pair.First.Name, pair.Second.Name, StringComparison.Ordinal) &&
+                string.Equals(pair.First.LockSource, pair.Second.LockSource, StringComparison.Ordinal) &&
+                string.Equals(pair.First.LockPath, pair.Second.LockPath, StringComparison.Ordinal) &&
+                string.Equals(pair.First.LockHash, pair.Second.LockHash, StringComparison.Ordinal) &&
+                string.Equals(pair.First.ExpertMarkdown, pair.Second.ExpertMarkdown, StringComparison.Ordinal));
+    }
+}
+
 public enum MissionHandsStatus
 {
     [JsonStringEnumMemberName("attached")] Attached,

@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Obtain Claude's bounded Phase 45.3 replacement implementation plan, then perform Codex adversarial approval before any replacement Desktop-surface edits. |
+| **NEXT STEP** | Design and approve one thin, UI-led Phase 45.3 Missions slice before implementation; add only the typed durable facts that its rendered behaviour requires. |
 
 ## Active phases
 
