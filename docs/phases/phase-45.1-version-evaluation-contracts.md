@@ -1,140 +1,164 @@
 # Phase 45.1 — Version and evaluation contracts
 
-> **Status:** implementation-ready design; depends on no Phase 45 code. It changes no behaviour
-> until implemented. Parent: [Phase 45](phase-45-mission-conversations.md).
+> **Status:** implementation-ready, independently re-reviewed 2026-09-08. It depends on no
+> unmerged Phase 45 code. Parent: [Phase 45](phase-45-mission-conversations.md).
 
-## Task 1 — make Project-owned versions and evaluation explicit
+## Task 1 — Project-owned authored versions and deterministic evaluation
 
-### Why and component fit
+### Ownership and scope
 
-This advances `Application/Projects`’ purpose: one transaction-protected authority for Project
-identity, manifest mutation, and bounded content. `Application/Missions` advances its purpose by
-preparing immutable intent and reconciling acceptance without owning durable runs. Application
-Transport makes the same action callable from Desktop and a future TUI; Presentation gains no
-lifecycle authority.
+`Application/Projects` owns one atomic local manifest transaction for authored mission identity,
+version lifecycle, immutable executable content, cases, and deterministic results.
+`Application/Missions` later constructs a bounded immutable launch from an Approved version, but
+owns neither Project mutation nor durable commands. Presentation, Application Host, Conversation
+Host, Worker, and Bob gain no ownership here. This task adds Project records, lifecycle/evaluation
+services, and surface-neutral Application interfaces only.
 
-### Affected components and files
+It adds no Presentation, HTTP route, Application.Transport request, remote conversation, evaluation
+run, pending intent, Bob attachment, Worker message, or provider call. Those effects belong to 45.4
+and 45.2. `StartEvaluation` and `CreateMissionConversation` are not exposed before 45.2; a premature
+direct service call returns append-only `EvaluationUnavailable` and writes nothing.
 
-| Component | Planned files |
-|---|---|
-| Application/Projects | `ProjectManifest.cs`, `ProjectManifestFile.cs`, `ProjectManifestJsonContext.cs`, `ProjectService.cs`, new `MissionVersions/MissionVersionService.cs`, `MissionVersions/EvaluationService.cs`, and tests. |
-| Application/Missions | `MissionCatalog.cs`, new `MissionConversationService.cs`, composition interfaces in `ApplicationComposition.cs`, and focused tests. |
-| Application Transport/Host | `ApplicationContracts.cs`, JSON context/channel bindings, `ApplicationEndpoints.cs`, contract/route tests. |
-| Conversations Contracts | `ConversationContracts.cs`, JSON context and round-trip/boundary tests; no Host/Worker behaviour yet. |
-| Documentation | This completion record and source-adjacent READMEs if a public owner vocabulary changes. |
+The current generic Project submission route and its retained `SelectedMission`/
+`ApprovedMissionLaunches` compatibility lane remain unchanged. Task 45.3 replaces that selection
+only after its accepted durable/default-path proof. No OCI/catalog installation, profile knob,
+provider selection, credential, network, arbitrary-path, or Full Access capability is introduced.
 
-### Data, persistence, and migration contract
+### Schema 5 migration and retained lane
 
-`forge.project.json` migrates atomically from schema 3 to schema 4 on first successful create/open
-write. Schema-3 Project Mission history remains readable and immutable. Migration creates no remote
-conversation and does not reinterpret a historic `ProjectMissionContainerId`.
+Phase 46 already made the manifest schema 4 and added immutable `ApprovedMissionLaunches`. Schema
+5 adds `MissionDefinitions` without guessing that a v4 launch is an authored version: it lacks a
+mission identity/evaluation facts and could contain source the current parser rejects.
+
+| Source schema | Open | First successful task-owned mutation | Meaning |
+|---|---|---|---|
+| 1–3 | Existing compatibility normalization. | Atomically write schema 5, normalized existing fields, empty `MissionDefinitions`; no remote work. | Historic Project/runs stay readable. |
+| 4 | Read `ApprovedMissionLaunches` byte-for-value. | Atomically write schema 5, same launch array, empty `MissionDefinitions`; no remote work. | Current generic submission stays available. |
+| 5 | Validate both lanes independently. | Normal atomic Project mutation. | Authored versions and the retained lane coexist without implicit conversion. |
+
+Future schemas and malformed records fail without rewrite. A malformed retained launch fails only
+the legacy-launch operation; a malformed authored definition fails only that authored operation.
+The retained lane is a Type-2 compatibility exception removed only by a named historic-read migration
+after 45.3 accepts the Approved-version route—not by this task.
+
+### Exact persisted model
+
+All records are Project-owned manifest JSON, source generated with camel-case string enums. Strings
+are UTF-8 bounded before write; the existing 2 MiB aggregate manifest cap remains the outer limit.
+Duplicate ID/name, unknown enum, blank required value, invalid hash, or size breach is a typed
+no-write failure.
 
 ```text
 ProjectMissionDefinition
-  MissionId, Name, ActiveApprovedVersionId?, Draft?, Versions[]
+  missionId: Guid, name: 1..120 chars, activeApprovedVersionId: Guid?,
+  draft: MissionDraft?, versions: MissionVersion[]
+
+MissionDraft
+  draftId: Guid, definitionText: 1..262144 bytes, definitionHash: lower-case sha256,
+  capabilityProfile: MissionHandsProfile, revision: positive int, updatedAtUtc
 
 MissionVersion
-  MissionVersionId, VersionNumber, State, DefinitionHash, DefinitionAssetId,
-  CapabilityProfile, ParentVersionId?, CandidateRevision, CreatedAtUtc, EvaluatedAtUtc?, ApprovedAtUtc?
+  missionVersionId: Guid, versionNumber: positive int,
+  state: Candidate|Evaluated|Approved|Superseded,
+  definitionText: 1..262144 bytes, definitionHash: lower-case sha256,
+  capabilityProfile: MissionHandsProfile, package: DurableMissionPackage,
+  parentVersionId: Guid?, candidateRevision: positive int,
+  createdAtUtc, evaluatedAtUtc?, approvedAtUtc?,
+  evaluationCases: EvaluationCase[], evaluationResults: EvaluationResult[]
 
 EvaluationCase
-  EvaluationCaseId, MissionVersionId, Input,
-  ExpectedSuccess, ExpectedFailure, ExpectedOutcome,
-  RequiredOutputFragments[], ForbiddenOutputFragments[], Revision
+  evaluationCaseId: Guid, input: 1..32768 bytes,
+  expectedSuccess: 0..4096 bytes, expectedFailure: 0..4096 bytes,
+  expectedOutcome: Succeeded|Failed,
+  requiredOutputFragments: 0..16 strings each 1..1024 bytes,
+  forbiddenOutputFragments: 0..16 strings each 1..1024 bytes, revision: positive int
 
 EvaluationResult
-  EvaluationResultId, EvaluationCaseId, MissionVersionId, CandidateRevision,
-  DefinitionHash, ObservedOutcome, ObservedOutputSummary, State,
-  TraceOrigin, CompletedAtUtc
+  evaluationResultId: Guid, evaluationCaseId: Guid, missionVersionId: Guid,
+  candidateRevision: positive int, definitionHash: lower-case sha256,
+  observedOutcome: Succeeded|Failed, observedOutputSummary: 0..4096 bytes,
+  state: Pending|Passed|Failed, traceOrigin: EvaluationTraceOrigin?, completedAtUtc?
+
+EvaluationTraceOrigin
+  conversationId: Guid, turnId: Guid, turnAttemptId: Guid
 ```
 
-`MissionCapabilityProfile` is an append-only string-enum contract with exactly `NoHands`,
-`ProjectWorkspace`, and `ProjectWorkspaceAndTerminal`. It is selected when a new mission version
-is created and cannot be changed by save/promote/evaluate/publish; changing it creates a successor
-version. It is not a list of caller-selected tools. A version with `NoHands` declares no mission
-tools; `ProjectWorkspace` requests only bounded Project-workspace file capabilities; and
-`ProjectWorkspaceAndTerminal` requests that boundary plus a structurally Project-contained terminal.
-No profile names network, credentials, publishing/push, arbitrary host/path access or Full Access.
+There is exactly one mutable `MissionDraft` per mission. A Draft is not a version. Promotion validates
+and freezes it as Candidate version 1 (or the next number), with a new version ID; later Candidate
+edits retain ID/number and increment only `CandidateRevision`. `DefinitionAssetId` is deliberately
+absent: current asset IDs are positional. Frozen text and package make later asset/editor changes
+unable to alter a version. Mission names are unique case-insensitively within a Project; version
+numbers are monotonic within a mission; case/result IDs are unique within their immediate owner.
 
-`ExpectedSuccess` and `ExpectedFailure` are author-visible criteria. `ExpectedOutcome` is
-exactly `Succeeded` or `Failed`; result `Passed` requires that outcome plus every required
-fragment and no forbidden fragment in the terminal answer/reason. `Failed` is a terminal observed
-result that misses criteria; `Pending` is not publishable. `EvaluationService` owns this
-deterministic comparison—never the UI or an LLM. Exact evidence remains the trace.
+### Immutable package and shared profile
 
-Draft content is mutable and unselectable. Promoting creates Candidate N+1. Saving Candidate content
-increments `CandidateRevision`, recomputes hash, clears results and returns it to Candidate. Only
-a Candidate whose current results cover every case and all pass becomes Evaluated. Publish is one
-Project transaction: recheck state/revision/results; set current Approved; set prior Approved
-Superseded; retain every existing conversation launch. Failed recheck returns typed error/no write.
+`ForgeMission.Conversations.Contracts.MissionHandsProfile` is the single profile enum for manifest,
+Application services, and future transport, using existing `noHands`, `projectWorkspace`, and
+`projectWorkspaceAndTerminal` wire values. The Application-internal `MissionCapabilityProfile` is
+removed. An author chooses one known profile only when creating or replacing a Draft; Candidate save
+and later lifecycle preserve it. A caller never supplies a profile, package, hash, capability, Bob
+handle, or durable state with a launch/attachment.
 
-### Typed shared actions
+`MissionVersionService` is the package builder at the Project boundary. On Candidate promotion and
+valid Candidate save, it reads only manifest-listed local MCL, lock, and expert content through the
+existing bounded Project-content owner; parses/resolves that exact content; constructs a
+Contracts-owned `DurableMissionPackage`; and validates its canonical hash through Core in the same
+Project transaction. `MissionVersion.Package` freezes MCL source, root identity/input, lock
+provenance, and resolved expert markdown. A parse, lock, size, or hash failure yields a typed
+diagnostic and writes neither version nor package.
 
-Added additively to `ApplicationContracts`; Host binds one concrete route per request and invokes a
-matching typed Application interface. `ProjectOperationErrorCode` appends `MissionNotFound`,
-`VersionNotFound`, `VersionNotApproved`, `VersionChanged`, `EvaluationRequired`,
-`EvaluationCaseInvalid`, `EvaluationUnavailable`, and `PublishConflict`.
+`MissionVersionLaunch` remains Application-internal compatibility provenance. Contracts never
+depends on Application; `DurableMissionLaunch` is its only durable launch type. In 45.2 Application
+constructs that existing contracts type from an Approved frozen package; Host revalidates before
+Blob/queue work, and Worker receives only package/profile—not Project paths, mutable assets,
+credentials, provider choice, or Bob.
 
-```csharp
-record ListMissionVersionsRequest(string SessionId);
-record MissionVersionView(Guid MissionId, Guid MissionVersionId, int VersionNumber,
-    MissionVersionState State, string DefinitionHash, int CandidateRevision, bool Selectable);
-record CreateMissionDraftRequest(string SessionId, string Name, MissionCapabilityProfile CapabilityProfile,
-    Guid? DerivedFromVersionId);
-record SaveMissionDraftRequest(string SessionId, Guid MissionId, string DefinitionText, int Revision);
-record PromoteMissionCandidateRequest(string SessionId, Guid MissionId, int DraftRevision);
-record GetMissionAuthoringRequest(string SessionId, Guid MissionId, Guid? MissionVersionId);
-record SaveEvaluationCaseRequest(string SessionId, EvaluationCaseDraft Case, int Revision);
-record DeleteEvaluationCaseRequest(string SessionId, Guid EvaluationCaseId, int Revision);
-record StartEvaluationRequest(string SessionId, Guid MissionVersionId, Guid EvaluationCaseId,
-    Guid CommandId, int CandidateRevision, string DefinitionHash);
-record GetEvaluationResultsRequest(string SessionId, Guid MissionVersionId, int CandidateRevision);
-record PublishMissionVersionRequest(string SessionId, Guid MissionVersionId,
-    int CandidateRevision, string DefinitionHash);
-record CreateMissionConversationRequest(string SessionId, Guid MissionVersionId,
-    int VersionNumber, string DefinitionHash, bool ProfileAccepted);
-```
+### Lifecycle and failure boundary
 
-`StartEvaluationRequest` creates immutable local intent here; 45.2 supplies durable execution.
-`PublishMissionVersionRequest` contains no caller-provided state/result. `ProfileAccepted` is only
-the operator's acknowledgement of the displayed version; it is never a caller-supplied profile.
-Application re-resolves the version/number/hash and declared profile before creating the conversation.
-Internal `MissionVersionLaunch` is defined now with ID/version/hash/artifact/text/profile; only
-Application computes it, so a caller cannot substitute a hash, artifact or capability profile.
+Creating a mission creates a Draft. Promoting freezes it to Candidate. Saving a Candidate requires
+its exact revision, recomputes text/package hashes, increments revision, clears results, and keeps
+it Candidate. `EvaluationService` alone records results: `Passed` requires observed outcome equals
+`ExpectedOutcome`, every required fragment occurs, and no forbidden fragment occurs; otherwise it
+is `Failed`. Candidate becomes Evaluated only when every current case has a matching revision/hash
+result and all pass. Publish is one Project transaction: recheck, mark Approved, supersede prior
+active Approved, and leave existing conversations/legacy launches unchanged.
 
-### Validation and failure boundaries
-
-| Boundary | Containment and visible result | Recovery/evidence |
+| Failure | Owner/result | Recovery/proof |
 |---|---|---|
-| Malformed MCL draft | Version service parses before Candidate/evaluation/publish; returns source-span diagnostic and makes no version/result mutation. | Edit/save valid revision; parser/transport negative tests. |
-| Stale save/evaluate/publish | Revision/hash comparison happens inside manifest transaction; returns `VersionChanged`/conflict and never overwrites newer content. | Refresh/retry deliberately; concurrent-write test. |
-| Profile absent, changed, or unaccepted | Version creation requires one known profile; save cannot mutate it. Conversation creation rechecks the pinned version/hash/profile and rejects an unaccepted or mismatched acknowledgement without durable creation or hands attachment. | Refresh/reselect and explicitly accept the displayed profile; lifecycle/profile-tamper tests. |
-| Evaluation launch uncertainty | Project records Pending intent with one CommandId; 45.2 reconciles it, not a second run. | Retry same request; lost-response controlled test. |
-| Manifest write failure | Existing `ManifestWriteFailed`; no claim of Candidate/Evaluated/Approved success. | Repair/retry through owner; atomic-write failure test. |
+| Invalid MCL, changed lock, package size/hash | MissionVersionService returns typed diagnostic; no mutation or remote work. | Correct/retry; parser/lock/hash tests. |
+| Stale draft/candidate/case/publish | ProjectService lease transaction returns `VersionChanged`/`PublishConflict`; no overwrite. | Refresh/retry; concurrent-write test. |
+| Invalid/unknown profile or substitution | Project service rejects it; no caller-selected launch/attachment profile. | Reopen version; tamper test. |
+| Execution requested before 45.2 | Service returns `EvaluationUnavailable`; no Pending result/command/attachment. | Retry after 45.2; no-write test. |
+| Criteria mismatch | EvaluationService records Failed and blocks publish. | Edit/evaluate again; deterministic test. |
 
-No public ingress, credential, Tier-3 grant, direct Host/Worker Project read, or Client Runtime
-authority is added by a version declaration. Project is sole author-data owner; Application later
-owns conversation-specific attachment, and Bob later enforces the bounded profile. JSON remains
-source-generated; parser use adds no reflection.
+### Interfaces, gates, and evidence
 
-### Default path, verification, and done when
+`ApplicationComposition` exposes named internal owner interfaces only: list/create/get Draft, save
+Draft, promote Candidate, get Version state, save/delete case, list results, record a later 45.2
+completion, and publish. It adds neither generic dispatch nor routes. Phase 45.3 owns
+Approved-version transport/read actions; 45.4 owns authoring/evaluation/publish transport, JSON DTOs,
+and UI. This prevents a half-public protocol before the surface and durable executor exist.
 
-The implementation default path is published zero-argument Desktop, no positional URL,
-`MissionRuntime:*`/`FORGE_API_ENDPOINT`/`ConversationRuntime:*` overrides, normal cloud Mission
-route, Supervisor-owned Kind bridge, and disposable Project. Through ordinary UI, create/save valid
-MCL, create candidate/cases, and reopen it. Fixture endpoints/test Projects are controlled evidence.
+Security Architecture is **PASS**: ProjectService remains sole local-store owner; no new public
+ingress, Tier-3 access, credential, cross-context query, Host/Worker Project read, or Bob authority
+exists. This is Type-2 schema/contract evolution with a retained-lane removal condition. Engineering
+Philosophy is **PASS**: one manifest writer/evaluator/profile vocabulary, frozen values not mutable
+references, and named unavailability rather than speculative pending state.
 
-- Unit/contract: schema-3 migration, enum/JSON compatibility, parser diagnostics, lifecycle table,
-  profile immutability/unknown-profile rejection, result invalidation, deterministic criteria and
-  stale paths.
-- Integration: Host routes call typed owners; a surface-neutral channel performs each action with no
-  Presentation types.
-- Visual: N/A—existing renderer reuse only.
-- Default: record artifact, defaults, dependency provenance, Project, action and reopened durable
-  manifest observation, including the exact approved version/profile shown before conversation
-  creation.
+Presentation-surface parity is **PASS by construction**: later surfaces use these named Application
+interfaces. Visual acceptance is **N/A**: no markup, CSS, navigation, or interaction changes. No
+authoring UI exists yet, so this task cannot claim the default Desktop author/save/evaluate/reopen
+journey. Phase 45.4 owns and must pass that zero-argument Desktop proof with absent overrides,
+normal dependency route, disposable Project, reopened evidence, and visual acceptance. Controlled
+Project/service checks are non-acceptance evidence for that UI journey.
 
-**Done when:** schema 4 and source-generated contracts enforce all listed invariants, including one
-immutable profile per version and no caller profile substitution; schema-3 history remains readable;
-focused checks pass; normal Desktop path reopens candidate/cases and displays the exact profile;
-Codex accepts Claude’s evidence summary.
+Required evidence: schema 1–4 reads; v4→5 preservation; no remote migration work; future-schema
+non-rewrite; retained legacy submission; frozen package against later asset edits; tampered profile
+refusal; parser/lock/size/hash diagnostics; stale no-write; deterministic criteria/result
+invalidation; publish race; unavailable execution/no-write; source-generated manifest compatibility;
+focused Application tests; full solution build/test; and Native-AOT `make install`.
+
+**Done when:** schema 5/source-generated records enforce these invariants; schema 1–4 and current
+generic submission remain readable; Candidate freezes executable content; focused/full/AOT checks
+pass; an independent reviewer accepts evidence; and Phase 45.4's UI/default-path obligation remains
+active rather than claimed here.

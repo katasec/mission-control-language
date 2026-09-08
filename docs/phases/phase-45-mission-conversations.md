@@ -1,8 +1,8 @@
 # Phase 45 — Forge Desktop mission conversations
 
-> **Status:** design complete; no proposed behaviour is implemented. Current Desktop remains
-> Project → selected one-shot Mission → instruction → terminal run card → trace until these
-> spokes are approved and delivered in order.
+> **Status:** version/evaluation foundation implementation approved 2026-09-08. Current Desktop
+> remains Project → selected one-shot Mission → instruction → terminal run card → trace until the
+> declared durable and surface spokes are delivered in order.
 
 ## Why this phase exists
 

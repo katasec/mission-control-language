@@ -4,18 +4,18 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-07)
+## Now (2026-09-08)
 
 | | |
 |---|---|
-| **NEXT STEP** | Have a separate supervising Codex agent adversarially review the evidence-led [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) design closure before approving implementation that could depend on it. |
+| **NEXT STEP** | Implement the approved Project version/evaluation foundation, then continue the declared durable-conversation and compatibility-removal dependency chain. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Design complete — held pending the Phase 46 ownership inventory. |
-| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Design closure complete — pending separate supervisory review; no remediation implementation is approved. |
+| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Foundation implementation approved; subsequent durable and surface work follows its declared dependency order. |
+| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
 
 ## Design docs
 
