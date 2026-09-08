@@ -5,6 +5,15 @@
 > replacement under the bounded [Claude ↔ Codex workflow](../design/claude-codex-workflow.md);
 > Codex retains design, browser/default-path acceptance, and integration authority.
 
+### Required Claude relay format
+
+Every Phase 45.3 prompt relayed to Claude must include the workflow's
+[copy/paste relay protocol](../design/claude-codex-workflow.md#copy-paste-relay-protocol). For the
+initial plan, Claude's response starts with `RELAY PACKET`, uses printable 7-bit ASCII plus line
+breaks only, and supplies the plan-only labels in the workflow's required order. The operator can
+then paste the packet back to Codex without retyping or translating it. Claude may not edit until
+Codex has approved that relayed plan.
+
 ## Task 3 — make Missions a persistent conversation experience
 
 ### Why and component fit
