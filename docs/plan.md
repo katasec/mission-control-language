@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Independently review the corrected Phase 45 durable-integration contract, then approve its bounded implementation plan before continuing the declared conversation and compatibility-removal chain. |
+| **NEXT STEP** | Obtain Claude's bounded Phase 45.3 replacement implementation plan, then perform Codex adversarial approval before any replacement Desktop-surface edits. |
 
 ## Active phases
 
