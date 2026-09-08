@@ -64,6 +64,7 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
         {
             var definition = RequireDefinition(manifest, missionId);
             if (definition.Draft is not null) throw Conflict("This mission already has a draft.");
+            EnsureLatestVersionIsActiveApproved(definition);
             var draft = NewDraft(definitionText, profile, DateTimeOffset.UtcNow);
             return (Replace(manifest, definition with { Draft = draft }), draft);
         }, ct);
@@ -77,10 +78,11 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             var definition = RequireDefinition(manifest, missionId);
             if (definition.Draft is not { } draft || draft.DraftId != draftId || draft.Revision != revision)
                 throw Changed("The mission draft changed. Refresh before promoting.");
+            EnsureLatestVersionIsActiveApproved(definition);
             var package = MissionPackageBuilder.Build(root, manifest, draft.DefinitionText);
             var versions = Versions(definition);
             var version = new MissionVersion(Guid.NewGuid(), versions.Length + 1, MissionVersionState.Candidate,
-                draft.DefinitionText, draft.DefinitionHash, draft.CapabilityProfile, package, versions.LastOrDefault()?.MissionVersionId, 1,
+                draft.DefinitionText, draft.DefinitionHash, draft.CapabilityProfile, package, definition.ActiveApprovedVersionId, 1,
                 DateTimeOffset.UtcNow, null, null, [], []);
             var updated = definition with { Draft = null, Versions = [.. versions, version] };
             return (Replace(manifest, updated), version);
@@ -208,6 +210,14 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
         var version = RequireVersion(definition, id);
         if (version.State != MissionVersionState.Candidate) throw Conflict("Only a candidate version can be changed.");
         return version;
+    }
+    private static void EnsureLatestVersionIsActiveApproved(ProjectMissionDefinition definition)
+    {
+        var versions = Versions(definition);
+        if (versions.Length == 0) return;
+        var latest = versions.MaxBy(version => version.VersionNumber)!;
+        if (latest.State != MissionVersionState.Approved || definition.ActiveApprovedVersionId != latest.MissionVersionId)
+            throw Conflict("A new draft can only follow this mission's current active approved version.");
     }
     private static ProjectManifest Replace(ProjectManifest manifest, ProjectMissionDefinition replacement) => manifest with
     {

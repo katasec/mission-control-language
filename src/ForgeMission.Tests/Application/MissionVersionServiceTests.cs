@@ -266,15 +266,22 @@ public sealed class MissionVersionServiceTests : IDisposable
     [Fact]
     public async Task ThirdVersionSkippingItsImmediateParent_IsRejectedWithoutRewrite()
     {
-        var (project, definition, published) = await CreatePublishedAsync();
+        var (project, definition, _) = await CreatePublishedAsync();
         var secondDraft = await _versions.CreateNextDraftAsync(project.Home, definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None);
         var second = await _versions.PromoteCandidateAsync(project.Home, definition.MissionId, secondDraft.DraftId, secondDraft.Revision, CancellationToken.None);
+        var caseForSecond = new EvaluationCase(Guid.NewGuid(), "input", "", "", EvaluationOutcome.Succeeded, [], [], 1);
+        second = await _versions.SaveCaseAsync(project.Home, definition.MissionId, second.MissionVersionId, caseForSecond, CancellationToken.None);
+        await _versions.RecordCompletionAsync(project.Home, definition.MissionId, second.MissionVersionId, caseForSecond.EvaluationCaseId,
+            second.CandidateRevision, second.DefinitionHash, EvaluationOutcome.Succeeded, "ok", null, CancellationToken.None);
+        second = await _versions.PublishAsync(project.Home, definition.MissionId, second.MissionVersionId, CancellationToken.None);
         var thirdDraft = await _versions.CreateNextDraftAsync(project.Home, definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None);
         var third = await _versions.PromoteCandidateAsync(project.Home, definition.MissionId, thirdDraft.DraftId, thirdDraft.Revision, CancellationToken.None);
         Assert.Equal(second.MissionVersionId, third.ParentVersionId);
         var current = _projects.ReadForHome(project.Home).Manifest;
         var stored = Assert.Single(current.MissionDefinitions!);
-        WriteManifest(project.Home, current with { MissionDefinitions = [stored with { Versions = [published, second, third with { ParentVersionId = published.MissionVersionId }] }] });
+        var versions = stored.Versions!;
+        WriteManifest(project.Home, current with { MissionDefinitions = [stored with { Versions = versions.Select(version =>
+            version.MissionVersionId == third.MissionVersionId ? third with { ParentVersionId = versions[0].MissionVersionId } : version).ToArray() }] });
         var path = Path.Combine(project.Home, ProjectService.ManifestFileName);
         var before = File.ReadAllText(path);
 
@@ -282,6 +289,34 @@ public sealed class MissionVersionServiceTests : IDisposable
 
         Assert.Equal(ProjectOperationErrorCode.InvalidManifest, failure.Code);
         Assert.Equal(before, File.ReadAllText(path));
+    }
+
+    [Fact]
+    public async Task CandidateBlocksNewDraftAndStaleDraftPromotionWithoutWrite()
+    {
+        var (project, definition, _) = await CreatePublishedAsync();
+        var secondDraft = await _versions.CreateNextDraftAsync(project.Home, definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        await _versions.PromoteCandidateAsync(project.Home, definition.MissionId, secondDraft.DraftId, secondDraft.Revision, CancellationToken.None);
+        var path = Path.Combine(project.Home, ProjectService.ManifestFileName);
+        var beforeNewDraft = File.ReadAllText(path);
+
+        var newDraftFailure = await Assert.ThrowsAsync<ProjectOperationException>(() => _versions.CreateNextDraftAsync(project.Home,
+            definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.PublishConflict, newDraftFailure.Code);
+        Assert.Equal(beforeNewDraft, File.ReadAllText(path));
+
+        var current = _projects.ReadForHome(project.Home).Manifest;
+        var stored = Assert.Single(current.MissionDefinitions!);
+        var staleDraft = new MissionDraft(Guid.NewGuid(), Source, Hash(Source), MissionHandsProfile.NoHands, 1, DateTimeOffset.UtcNow);
+        WriteManifest(project.Home, current with { MissionDefinitions = [stored with { Draft = staleDraft }] });
+        var beforePromotion = File.ReadAllText(path);
+
+        var promotionFailure = await Assert.ThrowsAsync<ProjectOperationException>(() => _versions.PromoteCandidateAsync(project.Home,
+            definition.MissionId, staleDraft.DraftId, staleDraft.Revision, CancellationToken.None));
+
+        Assert.Equal(ProjectOperationErrorCode.PublishConflict, promotionFailure.Code);
+        Assert.Equal(beforePromotion, File.ReadAllText(path));
     }
 
     [Fact]
