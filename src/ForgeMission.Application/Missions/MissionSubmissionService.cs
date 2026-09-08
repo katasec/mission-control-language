@@ -107,7 +107,7 @@ internal sealed class MissionSubmissionService(
                     "Exactly one approved generic mission launch must be active before starting."));
             var launch = launches.SingleOrDefault();
             var durableLaunch = launch is null ? null : new DurableMissionLaunch(launch.MissionVersionId,
-                launch.VersionNumber, launch.DefinitionHash, launch.Definition, ToDurableProfile(launch.CapabilityProfile), launch.Package);
+                launch.VersionNumber, launch.DefinitionHash, launch.Definition, launch.CapabilityProfile, launch.Package);
             if (launch is not null)
             {
                 if (missionHands is null)
@@ -234,14 +234,6 @@ internal sealed class MissionSubmissionService(
     private static ProjectSubmissionResponse Uncertain(ProjectSubmission submission) =>
         new(ToView(submission), Error(ProjectOperationErrorCode.SubmissionUncertain,
             "Forge could not confirm the Project Mission result. Retry the same command."));
-
-    private static MissionHandsProfile ToDurableProfile(MissionCapabilityProfile profile) => profile switch
-    {
-        MissionCapabilityProfile.NoHands => MissionHandsProfile.NoHands,
-        MissionCapabilityProfile.ProjectWorkspace => MissionHandsProfile.ProjectWorkspace,
-        MissionCapabilityProfile.ProjectWorkspaceAndTerminal => MissionHandsProfile.ProjectWorkspaceAndTerminal,
-        _ => throw new ArgumentOutOfRangeException(nameof(profile)),
-    };
 
     internal static ProjectSubmissionView ToView(ProjectSubmission submission) => submission.Phase switch
     {

@@ -1,5 +1,7 @@
 namespace ForgeMission.Application;
 
+using ForgeMission.Conversations.Contracts;
+
 /// <summary>
 /// Immutable, locally validated provenance for a version that is already approved.  Application
 /// is the sole creator/reader of this record; callers acknowledge this exact launch but cannot
@@ -10,6 +12,6 @@ internal sealed record MissionVersionLaunch(
     int VersionNumber,
     string DefinitionHash,
     string Definition,
-    MissionCapabilityProfile CapabilityProfile,
+    MissionHandsProfile CapabilityProfile,
     DateTimeOffset ApprovedAtUtc,
     ForgeMission.Conversations.Contracts.DurableMissionPackage? Package = null);
