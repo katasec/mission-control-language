@@ -8,7 +8,8 @@
 
 An inventory finding is not authorization to edit code. This spoke turns one approved finding at a
 time into a small, dependency-ordered task with a supervising Codex agent as its architect and
-acceptance authority. Codex sub-agents replace Claude for this initiative only.
+acceptance authority. It is the Phase 46 application of the repository-wide
+[Codex supervisor workflow](../design/codex-supervisor-workflow.md).
 
 ## Per-finding delivery protocol — locked
 

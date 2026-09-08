@@ -98,7 +98,7 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 | Security Architecture | No new public endpoint/store owner. Host remains Tier 2/internal state owner; Worker has no Project/Conversation store access; Application Host has no data-plane credential. |
 | Engineering Philosophy | Each command has one owner and failure result. No generic dispatcher, UI-local domain state, retry knob, local worker path, or speculative version framework. |
 | Native AOT | JSON contexts are source-generated; no reflection, untyped JSON options, runtime type discovery or new warning suppression. |
-| Claude/Codex workflow | Codex approves this design and each Claude plan before code. Completion needs Claude’s evidence summary and Codex review against Done when. |
+| Codex supervisor workflow | A supervising Codex agent approves this design and each bounded subagent plan before code. Completion needs the subagent’s evidence summary and the supervisor’s independent review against Done when. |
 
 ## Build readiness
 
