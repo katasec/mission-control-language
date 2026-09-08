@@ -32,9 +32,9 @@ design-complete but still unimplemented.
 | 6. No disguised complexity | **PASS** | Three fixed profiles, one live attachment and one outstanding request reject a registry, generic dispatcher, wrapper stack, permission dial and hidden Full Access mode. |
 | 7. Evidence and implementation readiness | **PASS (design); FAIL (implementation)** | The locked contract names compatibility, negative cases and default-path proof. F46.1-01 is now plan-ready but unapproved; F46.1-01–03 are not implemented. |
 
-The only remaining design question is Q46.1-03 (Type 2 hosted answer selection). No durable
-admission/trust decision is open: D46.1-01 and D46.1-02 are locked Type-1 designs and Phase 45
-implementation is their dependency, not permission to invent a parallel catalog or authority path.
+Q46.1-03 is closed by accepted Task D. No durable admission/trust decision is open: D46.1-01 and
+D46.1-02 are locked Type-1 designs and Phase 45 implementation is their dependency, not permission
+to invent a parallel catalog or authority path.
 
 | Entry/process path | Confirmed call path and owner |
 |---|---|

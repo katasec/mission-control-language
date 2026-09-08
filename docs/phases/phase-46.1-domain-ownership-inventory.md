@@ -91,7 +91,7 @@ records, including components with no defect.
 | R46.1-02 | CLI and Runner | **Retained / positive evidence** | Both parse, resolve, and execute declarations through `PipelineRunner` without Janus/Naive branches. | Preserve as the generic reference path. | Use its seams when designing F46.1-01/02. |
 | D46.1-01 | Durable Project admission | **Retained deliberate boundary / locked Type-1 dependency** | Current shared two-name allow-list is the present boundary; Phase 45's `MissionVersionLaunch` is the already-designed replacement chain. | Application owns version content; Host verifies/stores bounded content; Worker receives verified value only, with no path, credential, provider selection, or capability. | Phase 45 implementation is a prerequisite, not a new Phase 46 architecture decision. |
 | D46.1-02 | Generic mission-to-hands | **Locked Type-1 design / implementation pending** | Core intentionally isolates child tools/continuations; current durable tool handling is Janus-specific. | Version declares one immutable profile; Application grants one live conversation attachment to Bob; Host owns ordered request/result facts; Worker carries generic facts; Core resumes only the root scope. | Implement F46.1-01 first, then Phase 45's profile and durable-tool path; no runtime escalation, implicit inheritance, or Worker-side transcript. |
-| Q46.1-03 | Hosted answer selection | **Resolved Type-2 correction — Task D implementation pending acceptance** | Runner previously selected a pre-verifier trace entry named `Answerer`; MCL has no intermediate-result selector. | The terminal declared MCL result is always the operator-facing answer. Mission authors place verification, debate, synthesis, and retries in the declaration so its final step emits the intended answer. | No grammar, TOML, wire-schema, registry, or Rooms selector is needed; Task D removes the name-based projection and updates the guard content. |
+| Q46.1-03 | Hosted answer selection | **Resolved Type-2 correction — Task D accepted** | Runner previously selected a pre-verifier trace entry named `Answerer`; MCL has no intermediate-result selector. | The terminal declared MCL result is always the operator-facing answer. Mission authors place verification, debate, synthesis, and retries in the declaration so its final step emits the intended answer. | No grammar, TOML, wire-schema, registry, or Rooms selector is needed; Task D removed the name-based projection and updated the guard content. |
 
 Detailed evidence and the proposed, unapproved dispositions are in the
 [Phase 46.1 evidence record](phase-46.1-domain-ownership-inventory_evidence.md).
@@ -157,8 +157,8 @@ only relevant execution divergence.
 | Evidence and implementation readiness | **PASS (design); FAIL (implementation)** | The contract, negative cases, and default-path observation are named. F46.1-01 is now plan-ready but remains unapproved; the code gaps F46.1-01–03 remain. |
 
 The [evidence record](phase-46.1-domain-ownership-inventory_evidence.md#d461-02--locked-generic-mission-to-hands-contract)
-holds D46.1-02's exact protocol, failure and proof records. Q46.1-03 remains the only independent
-Type-2 design question; the remaining gaps in F46.1-01–03 are implementation, not architecture.
+holds D46.1-02's exact protocol, failure and proof records. Q46.1-03 is closed; the remaining gaps
+in F46.1-01–03 are implementation, not architecture.
 
 ### Step 1 done when
 
