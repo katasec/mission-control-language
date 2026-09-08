@@ -20,13 +20,17 @@ correctness requirement, not a convention.
 ## Required loop
 
 1. **Scope.** The supervisor completes the relevant spoke's design, component-fit, security,
-   engineering-philosophy, default-path, and UI gates. It writes a bounded scope card and `Done
-   when` condition. An unresolved architecture, ownership, contract, or failure question blocks
+   engineering-philosophy, default-path, and UI gates. For user-visible work it names the exact
+   reference image(s), viewport(s), owned slice, required states, named theme selector, and the
+   semantic token map with light/dark values; every other visible element is explicitly deferred,
+   blocked, or omitted. It writes a bounded scope card and `Done when` condition. An unresolved
+   architecture, ownership, contract, failure, visual-reference, or theme-boundary question blocks
    delegation.
 2. **Plan.** The supervisor assigns one bounded implementing subagent through the collaboration
    tool. The assignment explicitly says **plan only; do not edit**. The subagent returns touched
    paths, sequence, tests, default-path facts, failure containment, and every assumption/open
-   question.
+   question. For user-visible work, it also maps each owned image state to an implementation and a
+   comparison observation; it may not invent an unreferenced layout or interaction.
 3. **Adversarial approval.** The supervisor tests the plan against the spoke, component ownership,
    public/wire/persistence compatibility, Security Architecture, Engineering Philosophy, Native
    AOT, default-path acceptance, and UI gates where applicable. It either rejects with a concrete
@@ -34,7 +38,9 @@ correctness requirement, not a convention.
    approval.
 4. **Implementation.** Only after explicit approval may that subagent edit. It works on the
    approved branch and reports actual commands, observations, failures, and deviations. Any
-   material deviation returns to the supervisor before the change expands.
+   material deviation returns to the supervisor before the change expands. A visual mismatch is a
+   material deviation: the subagent revises against the reference image or returns to design; it
+   does not substitute a plausible alternative.
 5. **Acceptance review.** The supervisor independently inspects the diff and completion evidence.
    It checks every `Done when` item, required negative proof, default-path observation, and UI
    acceptance where applicable. It accepts, rejects for correction, or records a genuine deferment.
@@ -64,6 +70,13 @@ Task:
 Scope and non-goals:
 [approved boundaries, dependencies, and exclusions]
 
+UI reference contract, if user-visible:
+- Exact reference image/design path(s), viewport(s), and required state(s):
+- Owned elements and explicit deferred/blocked/omitted elements:
+- Named theme selector; semantic token map with light/dark values; contrast pairs; and explicit
+  confirmation that components use tokens rather than local visual literals:
+- Browser-first comparison and packaged-parity evidence to return:
+
 Done when:
 [verbatim task condition or pointer]
 
@@ -72,7 +85,10 @@ Return only:
 2. implementation sequence;
 3. focused/full/AOT and default-path verification plan;
 4. failure-boundary and negative-path coverage; and
-5. every unresolved question or assumption.
+5. for UI work, an element-by-element mapping to the named reference image(s), with no invented
+   controls, states, or layout; and
+6. the named theme selector and token mapping, including light/dark values and contrast pairs; and
+7. every unresolved question or assumption.
 
 Do not edit files or run a mutating command. Wait for explicit supervisor approval.
 ```
@@ -88,6 +104,15 @@ PLAN APPROVED
 Implement only the approved plan and scope. Do not broaden the task or resolve a new design
 question by inference. If a material deviation is required, stop and report it before editing
 beyond the approved boundary.
+
+For user-visible work, implement and validate the named reference image(s) and their allocated
+states. They are the acceptance target, not inspiration. Do not replace them with a plausible
+alternative, add unowned controls, or omit owned elements without a revised supervisor-approved
+design.
+
+Use the approved named theme and semantic design tokens. Do not copy sampled colours, spacing,
+radii, typography, or state values into component-local rules or markup; the surface must remain
+themeable in both light and dark modes.
 
 When finished, return the completion summary below with actual evidence. Do not mark the task
 complete.
@@ -115,7 +140,9 @@ Default-path acceptance:
 documentation-only work. Label every controlled override/test double as non-acceptance evidence.]
 
 UI acceptance, if applicable:
-[reference, viewport/state evidence, browser-first checks, packaged parity, PASS/FAIL]
+[exact reference image(s); before/after comparison for every owned viewport and state; browser-first
+responsive/text-fit checks; named theme selector, light/dark token evidence, contrast pairs, and
+no-local-literal review; packaged parity; reviewer PASS/FAIL; and every material mismatch]
 
 Done when — evidence against each condition:
 [met/not met]
@@ -136,8 +163,12 @@ Before accepting, the supervisor records a named observation for each applicable
 - focused, full, and Native AOT checks pass when the task changes code;
 - the published default path passes for every user-visible, runtime, integration, or deployment
   change; controlled evidence is labelled and not substituted;
-- Desktop/ForgeUI work has Presentation-surface parity, visual-reference PASS, responsive evidence,
-  and packaged parity; and
+- Desktop/ForgeUI work matches the named reference image(s) at every owned viewport and state; a
+  live/screenshot comparison records the supervisor's PASS/FAIL. Unowned elements are absent or
+  explicitly deferred, not improvised. Presentation-surface parity, responsive evidence, and
+  packaged parity also pass. The surface uses the approved named theme selector and semantic tokens
+  only, has light/dark values and required contrast pairs, and contains no component-local visual
+  literals; and
 - the diff, documentation, branch, commit, pull request, merge, and clean-main state meet the
   repository continuity protocol.
 
