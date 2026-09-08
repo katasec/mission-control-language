@@ -837,9 +837,8 @@ internal sealed class ProjectService : IProjectService
             var version = ordered[index];
             if (version.VersionNumber != index + 1)
                 throw InvalidDefinitions(manifestPath);
-            if (version.ParentVersionId is not { } parent) continue;
-            var parentVersion = ordered.SingleOrDefault(candidate => candidate.MissionVersionId == parent);
-            if (parentVersion is null || parentVersion.VersionNumber >= version.VersionNumber)
+            if (index == 0 && version.ParentVersionId is not null ||
+                index > 0 && version.ParentVersionId != ordered[index - 1].MissionVersionId)
                 throw InvalidDefinitions(manifestPath);
         }
     }

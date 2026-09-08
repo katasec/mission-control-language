@@ -80,7 +80,7 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             var package = MissionPackageBuilder.Build(root, manifest, draft.DefinitionText);
             var versions = Versions(definition);
             var version = new MissionVersion(Guid.NewGuid(), versions.Length + 1, MissionVersionState.Candidate,
-                draft.DefinitionText, draft.DefinitionHash, draft.CapabilityProfile, package, definition.ActiveApprovedVersionId, 1,
+                draft.DefinitionText, draft.DefinitionHash, draft.CapabilityProfile, package, versions.LastOrDefault()?.MissionVersionId, 1,
                 DateTimeOffset.UtcNow, null, null, [], []);
             var updated = definition with { Draft = null, Versions = [.. versions, version] };
             return (Replace(manifest, updated), version);

@@ -246,6 +246,45 @@ public sealed class MissionVersionServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task MissingSecondVersionParent_IsRejectedWithoutRewrite()
+    {
+        var (project, definition, published) = await CreatePublishedAsync();
+        var nextDraft = await _versions.CreateNextDraftAsync(project.Home, definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        var second = await _versions.PromoteCandidateAsync(project.Home, definition.MissionId, nextDraft.DraftId, nextDraft.Revision, CancellationToken.None);
+        var current = _projects.ReadForHome(project.Home).Manifest;
+        var stored = Assert.Single(current.MissionDefinitions!);
+        WriteManifest(project.Home, current with { MissionDefinitions = [stored with { Versions = [published, second with { ParentVersionId = null }] }] });
+        var path = Path.Combine(project.Home, ProjectService.ManifestFileName);
+        var before = File.ReadAllText(path);
+
+        var failure = Assert.Throws<ProjectOperationException>(() => _projects.ReadForHome(project.Home));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidManifest, failure.Code);
+        Assert.Equal(before, File.ReadAllText(path));
+    }
+
+    [Fact]
+    public async Task ThirdVersionSkippingItsImmediateParent_IsRejectedWithoutRewrite()
+    {
+        var (project, definition, published) = await CreatePublishedAsync();
+        var secondDraft = await _versions.CreateNextDraftAsync(project.Home, definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        var second = await _versions.PromoteCandidateAsync(project.Home, definition.MissionId, secondDraft.DraftId, secondDraft.Revision, CancellationToken.None);
+        var thirdDraft = await _versions.CreateNextDraftAsync(project.Home, definition.MissionId, Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        var third = await _versions.PromoteCandidateAsync(project.Home, definition.MissionId, thirdDraft.DraftId, thirdDraft.Revision, CancellationToken.None);
+        Assert.Equal(second.MissionVersionId, third.ParentVersionId);
+        var current = _projects.ReadForHome(project.Home).Manifest;
+        var stored = Assert.Single(current.MissionDefinitions!);
+        WriteManifest(project.Home, current with { MissionDefinitions = [stored with { Versions = [published, second, third with { ParentVersionId = published.MissionVersionId }] }] });
+        var path = Path.Combine(project.Home, ProjectService.ManifestFileName);
+        var before = File.ReadAllText(path);
+
+        var failure = Assert.Throws<ProjectOperationException>(() => _projects.ReadForHome(project.Home));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidManifest, failure.Code);
+        Assert.Equal(before, File.ReadAllText(path));
+    }
+
+    [Fact]
     public async Task ConcurrentPublish_HasOneApprovalAndOneTypedConflict()
     {
         var project = CreatePackagedProject();
