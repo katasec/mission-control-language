@@ -5,6 +5,10 @@
 > replacement under the bounded [Claude ↔ Codex workflow](../design/claude-codex-workflow.md);
 > Codex retains design, browser/default-path acceptance, and integration authority.
 
+> **Accepted prerequisite (2026-09-09):** the shared durable-launch structural comparison is
+> now owned by `ForgeMission.Conversations.Contracts` and consumed by Conversation Host without
+> behaviour change. See [45.3 completed evidence](phase-45.3-operator-missions-experience_completed.md#accepted-prerequisite-durable-launch-comparison).
+
 ### Required Claude relay format
 
 Every Phase 45.3 prompt relayed to Claude must include the workflow's

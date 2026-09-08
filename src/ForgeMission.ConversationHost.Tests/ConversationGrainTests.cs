@@ -47,17 +47,128 @@ public class ConversationGrainTests(AzuriteFixture fixture)
         return result.Acceptance!;
     }
 
-    private static DurableMissionLaunch DurableLaunch(MissionHandsProfile profile)
+    private static DurableMissionLaunch DurableLaunch(MissionHandsProfile profile) =>
+        DurableLaunch(profile, Guid.NewGuid(), "experts/Researcher/expert.md");
+
+    /// <summary>Builds a launch whose identity and package content are both caller-controlled, so
+    /// a test can produce two launches that differ ONLY deep inside the frozen package while both
+    /// stay admissible. <paramref name="lockPath"/> is validated for shape only but is hashed into
+    /// the package, so varying it yields a valid launch that is not the same immutable value.</summary>
+    private static DurableMissionLaunch DurableLaunch(MissionHandsProfile profile, Guid missionVersionId, string lockPath)
     {
         const string source = "mission Durable(task) = {\n    Researcher\n}\n";
         const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\nrole: agent\n---\n{{task}}";
-        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var resolved = new DurableResolvedExpert("Researcher", "inline", lockPath, Hash(expert), expert);
         var packageInput = new DurableMissionPackageInput(1, "", source, "Durable", "task", [
             new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
         var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(packageInput), source,
             "Durable", "task", [resolved]);
         const string definition = "mission Example";
-        return new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, profile, package);
+        return new DurableMissionLaunch(missionVersionId, 1, Hash(definition), definition, profile, package);
+    }
+
+    private static MissionHandsJsonInput AttachInput(AttachMissionHandsRequest request) =>
+        new(JsonSerializer.Serialize(request, ConversationContractsJsonContext.Default.AttachMissionHandsRequest));
+
+    // ── Pinned-launch comparison: the whole immutable value, not a field subset ─────────────
+    // These three cover the Host's comparison call sites through their real grain paths. Every
+    // pinned launch is stored serialized, so each comparison is a fresh instance against a
+    // deserialized one — the case a generated record comparer gets wrong, because
+    // DurableMissionPackage.ResolvedExperts is an array compared by reference.
+
+    [Fact]
+    public async Task GenericHands_AttachmentRejectsALaunchThatDiffersOnlyInsideTheFrozenPackage()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        var runId = Guid.NewGuid();
+        var launch = DurableLaunch(MissionHandsProfile.ProjectWorkspace);
+        // Same version identity, definition, hash and profile — the only difference is package
+        // content, which is exactly what a field-subset comparison would wave through.
+        var repackaged = DurableLaunch(MissionHandsProfile.ProjectWorkspace, launch.MissionVersionId, "experts/Researcher/other.md");
+        Assert.Equal(launch.MissionVersionId, repackaged.MissionVersionId);
+        Assert.Equal(launch.DefinitionHash, repackaged.DefinitionHash);
+        Assert.Equal(launch.Profile, repackaged.Profile);
+        Assert.NotEqual(launch.Package!.PackageHash, repackaged.Package!.PackageHash);
+
+        var genericStart = new ConversationCommand(Guid.NewGuid(), address.ConversationId, runId,
+            ConversationCommandKind.StartMission, "Durable", "goal", [], null, Launch: launch);
+        Assert.Equal(ConversationCommandOutcome.Accepted,
+            (await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(genericStart)))).Outcome);
+
+        var pinning = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), launch);
+        Assert.True((await grain.AttachMissionHandsAsync(AttachInput(pinning))).Accepted);
+
+        // Admissible on its own, but not the pinned value.
+        var mismatched = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), repackaged);
+        Assert.False((await grain.AttachMissionHandsAsync(AttachInput(mismatched))).Accepted);
+
+        // An independently constructed, value-equal launch still re-attaches: comparison is
+        // structural, so a distinct ResolvedExperts array instance is still the same launch.
+        var equalInstance = DurableLaunch(MissionHandsProfile.ProjectWorkspace, launch.MissionVersionId, "experts/Researcher/expert.md");
+        Assert.NotSame(launch.Package.ResolvedExperts, equalInstance.Package!.ResolvedExperts);
+        var reattach = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), equalInstance);
+        Assert.True((await grain.AttachMissionHandsAsync(AttachInput(reattach))).Accepted);
+    }
+
+    [Fact]
+    public async Task GenericHands_ProgressPauseIsRejected_WhenThePinnedHandsLaunchIsNotTheDispatchedLaunch()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        var runId = Guid.NewGuid();
+        var dispatched = DurableLaunch(MissionHandsProfile.ProjectWorkspace);
+        var repackaged = DurableLaunch(MissionHandsProfile.ProjectWorkspace, dispatched.MissionVersionId, "experts/Researcher/other.md");
+        var genericStart = new ConversationCommand(Guid.NewGuid(), address.ConversationId, runId,
+            ConversationCommandKind.StartMission, "Durable", "goal", [], null, Launch: dispatched);
+        Assert.Equal(ConversationCommandOutcome.Accepted,
+            (await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(genericStart)))).Outcome);
+
+        // Nothing is pinned for hands yet, so this first attachment sets the pinned hands launch
+        // to a value that is not the dispatched command's launch.
+        var attachment = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), repackaged);
+        Assert.True((await grain.AttachMissionHandsAsync(AttachInput(attachment))).Accepted);
+
+        var turnAttemptId = genericStart.CommandId;
+        var request = new MissionToolRequest(ConversationDeterministicIds.MissionHandsRequest(address.ConversationId, turnAttemptId, 0),
+            address.ConversationId, turnAttemptId, "root", "agent", "call", "read", JsonDocument.Parse("{}").RootElement.Clone(), "opaque");
+        var pause = new ConversationProgress(request.ToolRequestId, address.ConversationId, runId,
+            ConversationEventKind.MissionHandsRequested, ConversationParticipant.Forge, 1, null, null, null,
+            null, null, null, null, DateTimeOffset.UtcNow, request);
+        // Correctly correlated by attempt ID, and refused purely on the launch comparison.
+        Assert.Equal(ConversationProgressOutcome.Rejected,
+            (await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(pause)))).Outcome);
+    }
+
+    [Fact]
+    public async Task GenericHands_NullPackageLaunchIsOnlyEverTheSameAsAnotherNullPackageLaunch()
+    {
+        await using var host = await fixture.StartHostAsync();
+        var address = NewAddress();
+        var grain = host.GetConversationGrain(address);
+        var runId = Guid.NewGuid();
+        var packaged = DurableLaunch(MissionHandsProfile.ProjectWorkspace);
+        // Schema-4 shape: attachable for historic read/reconnect, but carries no frozen package.
+        var schemaFour = packaged with { Package = null };
+        var genericStart = new ConversationCommand(Guid.NewGuid(), address.ConversationId, runId,
+            ConversationCommandKind.StartMission, "Durable", "goal", [], null, Launch: packaged);
+        Assert.Equal(ConversationCommandOutcome.Accepted,
+            (await grain.AcceptCommandAsync(new ConversationCommandInput(SerializeCommand(genericStart)))).Outcome);
+
+        var pinning = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), schemaFour);
+        Assert.True((await grain.AttachMissionHandsAsync(AttachInput(pinning))).Accepted);
+
+        // Null package versus null package is the same launch.
+        var sameShape = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(),
+            packaged with { Package = null });
+        Assert.True((await grain.AttachMissionHandsAsync(AttachInput(sameShape))).Accepted);
+
+        // A package-bearing launch is never the same value as the pinned schema-4 one, even
+        // though every other field matches.
+        var nowPackaged = new AttachMissionHandsRequest(address.ConversationId, Guid.NewGuid(), Guid.NewGuid(), packaged);
+        Assert.False((await grain.AttachMissionHandsAsync(AttachInput(nowPackaged))).Accepted);
     }
 
     [Fact]

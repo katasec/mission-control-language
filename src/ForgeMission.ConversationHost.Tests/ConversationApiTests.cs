@@ -301,6 +301,53 @@ public class ConversationApiTests(AzuriteFixture fixture)
     }
 
     [Fact]
+    public async Task MissionConversation_CreateIdempotencyComparesTheWholeImmutableLaunch()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var project = Guid.NewGuid();
+        var request = NewMissionConversation(project, MissionHandsProfile.NoHands);
+        var first = await client.PostAsJsonAsync("/mission-conversations", request,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        var created = (await first.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateMissionConversationResponse))!;
+
+        // Rebuilt from scratch: same values, brand new object graph including a distinct
+        // ResolvedExperts array. The pinned launch is compared after deserialization, so this
+        // must still be the same conversation rather than a "pinned differently" conflict.
+        var rebuilt = request with
+        {
+            Launch = NewMissionConversation(project, MissionHandsProfile.NoHands, request.Launch.MissionVersionId,
+                "experts/Researcher/expert.md").Launch,
+        };
+        Assert.NotSame(request.Launch.Package!.ResolvedExperts, rebuilt.Launch.Package!.ResolvedExperts);
+        var idempotent = await client.PostAsJsonAsync("/mission-conversations", rebuilt,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Created, idempotent.StatusCode);
+        var repeated = (await idempotent.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateMissionConversationResponse))!;
+        Assert.Equal(created.ConversationId, repeated.ConversationId);
+
+        // Same version identity, definition, hash and profile; only the frozen package differs.
+        // A field-subset comparison would have accepted this as the same pinning.
+        var repackaged = request with
+        {
+            Launch = NewMissionConversation(project, MissionHandsProfile.NoHands, request.Launch.MissionVersionId,
+                "experts/Researcher/other.md").Launch,
+        };
+        Assert.Equal(request.Launch.MissionVersionId, repackaged.Launch.MissionVersionId);
+        Assert.Equal(request.Launch.DefinitionHash, repackaged.Launch.DefinitionHash);
+        Assert.Equal(request.Launch.Profile, repackaged.Launch.Profile);
+        Assert.NotEqual(request.Launch.Package.PackageHash, repackaged.Launch.Package!.PackageHash);
+        var conflict = await client.PostAsJsonAsync("/mission-conversations", repackaged,
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        Assert.Equal(HttpStatusCode.Conflict, conflict.StatusCode);
+
+        var listed = await client.GetFromJsonAsync($"/mission-conversations/{project}",
+            ConversationContractsJsonContext.Default.ListMissionConversationsResponse);
+        Assert.Single(listed!.Conversations);
+    }
+
+    [Fact]
     public async Task Evaluation_IsHiddenAndDispatchesNoHandsEvenWhenCandidateDeclaresWorkspace()
     {
         await using var host = await fixture.StartHostAsync();
@@ -343,15 +390,22 @@ public class ConversationApiTests(AzuriteFixture fixture)
         Assert.NotNull(terminal.Projection.TraceOrigin);
     }
 
-    private static CreateMissionConversationRequest NewMissionConversation(Guid projectId, MissionHandsProfile profile)
+    private static CreateMissionConversationRequest NewMissionConversation(Guid projectId, MissionHandsProfile profile) =>
+        NewMissionConversation(projectId, profile, Guid.NewGuid(), "experts/Researcher/expert.md");
+
+    /// <summary>Version identity and package content are both caller-controlled so a test can
+    /// build two admissible launches that differ ONLY deep inside the frozen package.
+    /// <paramref name="lockPath"/> is validated for shape only but is hashed into the package.</summary>
+    private static CreateMissionConversationRequest NewMissionConversation(
+        Guid projectId, MissionHandsProfile profile, Guid missionVersionId, string lockPath)
     {
         const string source = "mission Durable(task) = {\n Researcher\n}\n";
         const string expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
-        var resolved = new DurableResolvedExpert("Researcher", "inline", "experts/Researcher/expert.md", Hash(expert), expert);
+        var resolved = new DurableResolvedExpert("Researcher", "inline", lockPath, Hash(expert), expert);
         var input = new DurableMissionPackageInput(1, "", source, "Durable", "task", [new DurableResolvedExpertInput(resolved.Name, resolved.LockSource, resolved.LockPath, resolved.LockHash, resolved.ExpertMarkdown)]);
         var package = new DurableMissionPackage(1, DurableMissionPackageValidator.ComputeHash(input), source, "Durable", "task", [resolved]);
         const string definition = "approved";
-        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, Hash(definition), definition, profile, package);
+        var launch = new DurableMissionLaunch(missionVersionId, 1, Hash(definition), definition, profile, package);
         return new CreateMissionConversationRequest(projectId, Guid.NewGuid(), launch);
     }
 

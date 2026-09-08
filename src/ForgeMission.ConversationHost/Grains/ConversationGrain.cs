@@ -326,7 +326,7 @@ public sealed class ConversationGrain(
         {
             var pinned = DeserializeMissionHands(checkpoint.State.MissionConversationLaunchJson,
                 ConversationContractsJsonContext.Default.DurableMissionLaunch);
-            return checkpoint.State.ProjectId == input.ProjectId && pinned is not null && SameApprovedLaunch(pinned, launch!)
+            return checkpoint.State.ProjectId == input.ProjectId && pinned is not null && DurableMissionLaunchComparison.SameLaunch(pinned, launch!)
                 ? new ConversationCommandOutcomeResult(ConversationCommandOutcome.Accepted,
                     new ConversationCommandAcceptance(Address.ConversationId, null, checkpoint.State.LastSequence, checkpoint.State.Status), null)
                 : new ConversationCommandOutcomeResult(ConversationCommandOutcome.Conflict, null, "This Mission Conversation is already pinned differently.");
@@ -517,7 +517,7 @@ public sealed class ConversationGrain(
             return MissionHandsReject("Invalid mission hands attachment.");
         var pinned = DeserializeMissionHands(checkpoint.State.MissionHandsLaunchJson,
             ConversationContractsJsonContext.Default.DurableMissionLaunch);
-        if (pinned is not null && !SameApprovedLaunch(pinned, attachment.Launch))
+        if (pinned is not null && !DurableMissionLaunchComparison.SameLaunch(pinned, attachment.Launch))
             return MissionHandsReject("The attachment launch does not match the pinned approved launch.");
 
         checkpoint.State.MissionHandsLaunchJson ??= JsonSerializer.Serialize(
@@ -897,7 +897,7 @@ public sealed class ConversationGrain(
             var pinnedLaunch = DeserializeMissionHands(checkpoint.State.MissionHandsLaunchJson,
                 ConversationContractsJsonContext.Default.DurableMissionLaunch);
             if (checkpoint.State.MissionHandsExpectedCommandId != progress.MissionHandsRequest.TurnAttemptId ||
-                activeStart?.Launch is null || pinnedLaunch is null || !SameApprovedLaunch(activeStart.Launch, pinnedLaunch))
+                activeStart?.Launch is null || pinnedLaunch is null || !DurableMissionLaunchComparison.SameLaunch(activeStart.Launch, pinnedLaunch))
                 return new ConversationProgressAcceptance(ConversationProgressOutcome.Rejected, null,
                     "The mission hands request is not correlated to the current Host-dispatched generic command.");
             var hands = await RecordMissionHandsRequestAsync(new MissionHandsJsonInput(JsonSerializer.Serialize(
@@ -1459,34 +1459,6 @@ public sealed class ConversationGrain(
             // Schema-4 pre-generic launches remain attachable for historic read/reconnect. Any
             // package-bearing attachment is independently parsed before Host persists it.
             (launch.Package is null || DurableMissionPackageAdmission.TryValidate(launch, out _));
-    }
-
-    // Arrays in the transport package have reference equality under the generated record
-    // comparer. Attachment re-registration crosses JSON, so compare the approved immutable
-    // value structurally rather than rejecting the same package after deserialization.
-    private static bool SameApprovedLaunch(DurableMissionLaunch left, DurableMissionLaunch right) =>
-        left.MissionVersionId == right.MissionVersionId &&
-        left.VersionNumber == right.VersionNumber &&
-        string.Equals(left.DefinitionHash, right.DefinitionHash, StringComparison.Ordinal) &&
-        string.Equals(left.Definition, right.Definition, StringComparison.Ordinal) &&
-        left.Profile == right.Profile &&
-        SamePackage(left.Package, right.Package);
-
-    private static bool SamePackage(DurableMissionPackage? left, DurableMissionPackage? right)
-    {
-        if (left is null || right is null) return left is null && right is null;
-        return left.FormatVersion == right.FormatVersion &&
-            string.Equals(left.PackageHash, right.PackageHash, StringComparison.Ordinal) &&
-            string.Equals(left.MissionSource, right.MissionSource, StringComparison.Ordinal) &&
-            string.Equals(left.RootMissionName, right.RootMissionName, StringComparison.Ordinal) &&
-            string.Equals(left.RootInputName, right.RootInputName, StringComparison.Ordinal) &&
-            left.ResolvedExperts.Length == right.ResolvedExperts.Length &&
-            left.ResolvedExperts.Zip(right.ResolvedExperts).All(pair =>
-                string.Equals(pair.First.Name, pair.Second.Name, StringComparison.Ordinal) &&
-                string.Equals(pair.First.LockSource, pair.Second.LockSource, StringComparison.Ordinal) &&
-                string.Equals(pair.First.LockPath, pair.Second.LockPath, StringComparison.Ordinal) &&
-                string.Equals(pair.First.LockHash, pair.Second.LockHash, StringComparison.Ordinal) &&
-                string.Equals(pair.First.ExpertMarkdown, pair.Second.ExpertMarkdown, StringComparison.Ordinal));
     }
 
     private MissionHandsGrainResult MissionHandsAccept(MissionHandsStatus status, long? sequence) => new(
