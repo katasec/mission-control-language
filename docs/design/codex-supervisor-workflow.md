@@ -21,10 +21,11 @@ correctness requirement, not a convention.
 
 1. **Scope.** The supervisor completes the relevant spoke's design, component-fit, security,
    engineering-philosophy, default-path, and UI gates. For user-visible work it names the exact
-   reference image(s), viewport(s), owned slice, and required states; every other visible element is
-   explicitly deferred, blocked, or omitted. It writes a bounded scope card and `Done when`
-   condition. An unresolved architecture, ownership, contract, failure, or visual-reference
-   question blocks delegation.
+   reference image(s), viewport(s), owned slice, required states, named theme selector, and the
+   semantic token map with light/dark values; every other visible element is explicitly deferred,
+   blocked, or omitted. It writes a bounded scope card and `Done when` condition. An unresolved
+   architecture, ownership, contract, failure, visual-reference, or theme-boundary question blocks
+   delegation.
 2. **Plan.** The supervisor assigns one bounded implementing subagent through the collaboration
    tool. The assignment explicitly says **plan only; do not edit**. The subagent returns touched
    paths, sequence, tests, default-path facts, failure containment, and every assumption/open
@@ -72,7 +73,8 @@ Scope and non-goals:
 UI reference contract, if user-visible:
 - Exact reference image/design path(s), viewport(s), and required state(s):
 - Owned elements and explicit deferred/blocked/omitted elements:
-- Theme/token and accessibility requirements:
+- Named theme selector; semantic token map with light/dark values; contrast pairs; and explicit
+  confirmation that components use tokens rather than local visual literals:
 - Browser-first comparison and packaged-parity evidence to return:
 
 Done when:
@@ -85,7 +87,8 @@ Return only:
 4. failure-boundary and negative-path coverage; and
 5. for UI work, an element-by-element mapping to the named reference image(s), with no invented
    controls, states, or layout; and
-6. every unresolved question or assumption.
+6. the named theme selector and token mapping, including light/dark values and contrast pairs; and
+7. every unresolved question or assumption.
 
 Do not edit files or run a mutating command. Wait for explicit supervisor approval.
 ```
@@ -106,6 +109,10 @@ For user-visible work, implement and validate the named reference image(s) and t
 states. They are the acceptance target, not inspiration. Do not replace them with a plausible
 alternative, add unowned controls, or omit owned elements without a revised supervisor-approved
 design.
+
+Use the approved named theme and semantic design tokens. Do not copy sampled colours, spacing,
+radii, typography, or state values into component-local rules or markup; the surface must remain
+themeable in both light and dark modes.
 
 When finished, return the completion summary below with actual evidence. Do not mark the task
 complete.
@@ -134,7 +141,8 @@ documentation-only work. Label every controlled override/test double as non-acce
 
 UI acceptance, if applicable:
 [exact reference image(s); before/after comparison for every owned viewport and state; browser-first
-responsive/text-fit checks; packaged parity; reviewer PASS/FAIL; and every material mismatch]
+responsive/text-fit checks; named theme selector, light/dark token evidence, contrast pairs, and
+no-local-literal review; packaged parity; reviewer PASS/FAIL; and every material mismatch]
 
 Done when — evidence against each condition:
 [met/not met]
@@ -158,7 +166,9 @@ Before accepting, the supervisor records a named observation for each applicable
 - Desktop/ForgeUI work matches the named reference image(s) at every owned viewport and state; a
   live/screenshot comparison records the supervisor's PASS/FAIL. Unowned elements are absent or
   explicitly deferred, not improvised. Presentation-surface parity, responsive evidence, and
-  packaged parity also pass; and
+  packaged parity also pass. The surface uses the approved named theme selector and semantic tokens
+  only, has light/dark values and required contrast pairs, and contains no component-local visual
+  literals; and
 - the diff, documentation, branch, commit, pull request, merge, and clean-main state meet the
   repository continuity protocol.
 
