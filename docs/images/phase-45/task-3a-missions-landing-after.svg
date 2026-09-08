@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">After: thin Missions landing with approved-version picker</title>
+  <desc id="desc">The Missions rail destination lists durable mission conversations and opens a compact right-side creation panel. The panel lists approved versions only, repeats the fixed access profile, and has one start action.</desc>
+  <rect width="1440" height="960" fill="#181511"/>
+  <rect width="214" height="960" fill="#201c17"/>
+  <text x="18" y="27" fill="#a49b90" font-family="Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="2">PROJECT</text>
+  <rect x="18" y="36" width="23" height="23" rx="5" fill="#41352a" stroke="#ff9a4a"/>
+  <text x="49" y="52" fill="#f4ede5" font-family="Arial, sans-serif" font-size="14" font-weight="700">Northstar</text>
+  <g font-family="Arial, sans-serif" font-size="14">
+    <text x="18" y="110" fill="#bcb3a8">□  Project Explorer</text>
+    <rect x="10" y="123" width="195" height="37" rx="6" fill="#352b20"/>
+    <rect x="19" y="132" width="13" height="18" rx="3" fill="#5d442e" stroke="#ff9a4a"/>
+    <text x="43" y="147" fill="#f4ede5" font-weight="700">Missions</text>
+    <text x="18" y="184" fill="#bcb3a8">□  Settings</text>
+  </g>
+  <rect x="214" width="1226" height="77" fill="#211d18"/>
+  <line x1="214" y1="77" x2="1440" y2="77" stroke="#423a31"/>
+  <text x="238" y="34" fill="#f4ede5" font-family="Arial, sans-serif" font-size="19" font-weight="700">Missions</text>
+  <text x="238" y="55" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="13">Review pinned mission versions and start a new conversation.</text>
+  <rect x="1238" y="20" width="178" height="36" rx="6" fill="#ff9a4a"/>
+  <text x="1253" y="43" fill="#21150c" font-family="Arial, sans-serif" font-size="13" font-weight="700">New conversation</text>
+  <rect x="238" y="99" width="742" height="736" rx="8" fill="#211d18" stroke="#423a31"/>
+  <text x="254" y="129" fill="#f4ede5" font-family="Arial, sans-serif" font-size="14" font-weight="700">Mission conversations</text>
+  <text x="254" y="151" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">Each conversation retains its approved mission version.</text>
+  <line x1="238" y1="172" x2="980" y2="172" stroke="#423a31"/>
+  <text x="254" y="193" fill="#a49b90" font-family="monospace" font-size="10" font-weight="700">MISSION · VERSION</text>
+  <text x="801" y="193" fill="#a49b90" font-family="monospace" font-size="10" font-weight="700">UPDATED</text>
+  <line x1="238" y1="205" x2="980" y2="205" stroke="#423a31"/>
+  <text x="254" y="241" fill="#f4ede5" font-family="Arial, sans-serif" font-size="15" font-weight="700">Janus v1.4</text>
+  <rect x="254" y="253" width="69" height="19" rx="3" fill="#2d4931"/>
+  <text x="262" y="267" fill="#9ee2a7" font-family="monospace" font-size="9" font-weight="700">PINNED</text>
+  <text x="835" y="248" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="13">Today</text>
+  <line x1="238" y1="291" x2="980" y2="291" stroke="#423a31"/>
+  <text x="254" y="327" fill="#f4ede5" font-family="Arial, sans-serif" font-size="15" font-weight="700">Naive v2.1</text>
+  <rect x="254" y="339" width="69" height="19" rx="3" fill="#2d4931"/>
+  <text x="262" y="353" fill="#9ee2a7" font-family="monospace" font-size="9" font-weight="700">PINNED</text>
+  <text x="822" y="334" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="13">Yesterday</text>
+  <rect x="1008" y="99" width="408" height="736" rx="9" fill="#211d18" stroke="#ff9a4a"/>
+  <text x="1026" y="129" fill="#f4ede5" font-family="Arial, sans-serif" font-size="15" font-weight="700">New mission conversation</text>
+  <text x="1026" y="151" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">Choose the approved version this conversation will pin.</text>
+  <line x1="1008" y1="170" x2="1416" y2="170" stroke="#423a31"/>
+  <text x="1026" y="197" fill="#a49b90" font-family="monospace" font-size="10" font-weight="700">APPROVED VERSIONS</text>
+  <rect x="1026" y="214" width="372" height="81" rx="7" fill="#392a1d" stroke="#ff9a4a"/>
+  <circle cx="1049" cy="236" r="8" fill="none" stroke="#ff9a4a" stroke-width="2"/><circle cx="1049" cy="236" r="3" fill="#ff9a4a"/>
+  <text x="1067" y="240" fill="#f4ede5" font-family="Arial, sans-serif" font-size="14" font-weight="700">Janus v1.4</text>
+  <text x="1067" y="263" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">Approved · Project workspace access</text>
+  <rect x="1026" y="309" width="372" height="70" rx="7" fill="#211d18" stroke="#423a31"/>
+  <circle cx="1049" cy="333" r="8" fill="none" stroke="#a49b90"/>
+  <text x="1067" y="337" fill="#f4ede5" font-family="Arial, sans-serif" font-size="14" font-weight="700">Naive v2.1</text>
+  <text x="1067" y="359" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">Approved · No local access</text>
+  <text x="1026" y="414" fill="#ffb878" font-family="monospace" font-size="10" font-weight="700">FIXED ACCESS</text>
+  <rect x="1026" y="429" width="372" height="112" rx="7" fill="#2a241e"/>
+  <text x="1041" y="458" fill="#f4ede5" font-family="Arial, sans-serif" font-size="13" font-weight="700">Project workspace access</text>
+  <text x="1041" y="483" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">This exact profile is fixed for this conversation.</text>
+  <text x="1041" y="504" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">Forge asks before any bounded operation.</text>
+  <text x="1041" y="525" fill="#bcb3a8" font-family="Arial, sans-serif" font-size="12">It cannot be changed here.</text>
+  <rect x="1026" y="759" width="372" height="46" rx="7" fill="#ff9a4a"/>
+  <text x="1115" y="788" fill="#21150c" font-family="Arial, sans-serif" font-size="13" font-weight="700">Start on Janus v1.4</text>
+</svg>

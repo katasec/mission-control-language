@@ -105,7 +105,7 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 |---|---|---|---|
 | 45.1 | [Version and evaluation contracts](phase-45.1-version-evaluation-contracts.md) | Project-owned version/evaluation model, migration, typed Application messages and deterministic evaluation rules. | Contract, migration and default-path design accepted. |
 | 45.2 | [Version-to-durable conversation integration](phase-45.2-durable-conversation-turns.md) | Bind Project-owned Approved/Candidate versions and evaluation cases to the accepted generic Core, hands, Host, and Worker path. | Approved/Candidate admission, evaluation reconciliation, and failure/recovery proof accepted. |
-| 45.3 | [Operator Missions experience](phase-45.3-operator-missions-experience.md) | Conversation list/picker, transcript and trace round-trip in the existing rail/shell. | Browser-first visual PASS and zero-argument Desktop path PASS. |
+| 45.3 | [Operator Missions experience](phase-45.3-operator-missions-experience.md) | Thin Missions landing: durable conversation list, Approved-version picker, and fixed-profile creation acknowledgement. | Browser-first visual PASS and zero-argument Desktop path PASS. |
 | 45.4 | [Project Explorer authoring](phase-45.4-project-explorer-authoring.md) | Author/edit/evaluate/publish flow in Explorer, with evidence links and publish block. | Browser-first visual PASS and zero-argument Desktop author/evaluate/publish path PASS. |
 
 ## Required gates
