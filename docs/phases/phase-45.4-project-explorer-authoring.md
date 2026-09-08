@@ -17,10 +17,20 @@ separate author product, database, or rail entry.
 
 | Component | Planned files |
 |---|---|
-| Presentation | `ProjectExplorerView.razor`, `ProjectDocumentView.razor`, new `MissionAuthoringView.razor`, `Home.razor`, rail/view state, tokenized CSS and UI tests. |
+| Presentation | `ProjectExplorerView.razor`, `ProjectDocumentView.razor`, new `MissionAuthoringView.razor`, `Home.razor`, rail/view state, tokenized CSS and UI tests. The initial delivery has no third-party editor or generic capability host. |
 | Application/Projects and Missions | Version/evaluation services from 45.1, durable reconciliation from 45.2, composition interfaces and focused tests. |
 | Transport/Host | Authoring/evaluation/publish actions, JSON context, routes and channel tests. |
 | Conversation Host/Worker | Only 45.2 evaluation query/completion projection; no authoring UI logic. |
+
+### Deferred capability-island follow-on
+
+The authoring editor in this task remains a Presentation implementation detail. A later focused
+45.4 follow-on may assess a bounded third-party web capability for editor or visualization
+mechanics only, after this task's existing author/evaluate/publish and default-path acceptance are
+complete. It must follow the Phase 45 capability-island boundary: Presentation owns adapter
+lifecycle and transient interaction; typed Application actions carry intent; Application/Projects
+remains the only content, parser-diagnostic, version-lifecycle, and file-mutation truth. No vendor,
+build-tool exception, worker asset strategy, LSP, or mobile fallback is implied or approved here.
 
 ### Authoring flow and publication rules
 
@@ -51,7 +61,7 @@ and published successor with old pinned conversation unchanged.
 | Project rail and mission/version Explorer tree | **Owned** as existing Explorer/asset navigation; no fourth destination. |
 | Editor, version history, save/parse state, cases | **Owned**. Syntax help follows Language design, not illustration code. |
 | Evaluation trace links, publication block/confirmation | **Owned**. |
-| Inline diff/revert, collaborative locks, human-gate evidence, provider/model selection | **Deferred/omitted**; no simulated controls. |
+| Third-party editor/visualization island, inline diff/revert, collaborative locks, human-gate evidence, provider/model selection | **Deferred/omitted**; no simulated controls or implicit build-policy exception. |
 
 Use semantic token values for syntax/status, with contrast pairs from 45.3 plus editor text/surface
 and disabled-publish/surface. At default packaged usable viewport, save/evaluate controls and block

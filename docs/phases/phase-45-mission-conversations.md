@@ -25,6 +25,7 @@ transcript store, runtime, nor presentation-owned product state.
 | Turns and failure | One submitted user message creates one turn. The transcript is primary. Each answer has compact evidence and a turn-specific trace link. A failed turn preserves its message, failure and partial trace; it does not end the conversation. Retry creates a new attempt of that turn. Cancel is an explicit durable request/outcome, never implied rollback. |
 | Trace | Forge Trace is chronological exact evidence for one turn. It has origin `(conversation_id, turn_id, attempt_id)` and returns to that exact transcript anchor, never a generic Missions route. An evaluation trace also retains `(mission_version_id, evaluation_case_id)`. |
 | Authoring and evaluation | Authoring starts from **Author a mission** in Missions or a mission asset in Project Explorer. Evaluation cases hold input, expected success, expected failure, observed result, state and exact trace reference. Publish is unavailable unless every current case for the unchanged candidate revision passes. |
+| Future web capabilities | A later, separately approved presentation subtask may place one bounded third-party web capability island inside an existing owned view. It may provide UI mechanics only and exchanges transient values and typed user intent through Presentation; it creates no plugin platform, extension host, second Project model/store, rail entry, runtime, generic dispatcher, or remote runtime loader. No capability is selected or adopted by this decision. |
 | Scope boundary | Human gates, suspend/resume, generic checkpoint resume, switching version within a conversation, OCI/catalog installation, and a new rail entry are excluded. They require a separately accepted runtime contract first. |
 
 The dark [implementation reference](../design/forge-desktop-dark-implementation-reference-v1.md)
@@ -41,7 +42,7 @@ currently unsupported status of `debate {}`.
 | Durable order, command idempotency, turn/run lifecycle, trace events and recovery | `ForgeMission.ConversationHost` and `ForgeMission.Conversations.Contracts`; Host remains the only Conversation Table/Blob writer and sequence allocator. |
 | MCL execution and progress | `ForgeMission.ConversationWorker`; it receives an immutable launch snapshot and never reads a Project manifest or local path. |
 | HTTP/SSE and source-generated JSON | `ForgeMission.Application.Host`; every route remains one concrete typed action. |
-| Layout, navigation, form/focus state and responsive rendering | `ForgeMission.Presentation`; it does not calculate lifecycle, mutate Project state, or invent a transcript. |
+| Layout, navigation, form/focus state and responsive rendering | `ForgeMission.Presentation`; it does not calculate lifecycle, mutate Project state, or invent a transcript. A separately approved capability island is a presentation adapter only: it owns neither Project, domain, lifecycle, durable, capability, nor authority state, and reaches Application only through named typed actions. |
 | Mission-to-hands grant and local capabilities | Application approves and binds a new/reconnected conversation/session to one fresh, ephemeral Bob attachment constrained to its pinned profile. `ForgeMission.ClientRuntime` alone owns capability policy, confirmation, structural containment, audit, execution, cancellation and cleanup. Version declaration and Desktop/TUI display grant nothing; Worker never receives Bob/local authority. |
 
 The Type-1 boundary remains `Desktop Presentation → Application/Conversation service →
@@ -49,6 +50,24 @@ Conversation Table/Blob and Service Bus`. Application Host holds no data-plane c
 files are owned by Application/Projects; Conversation Host and Worker receive a value snapshot,
 not a Project path or direct read. The local Kind bridge is a Type-2 deployment adapter, not an
 authority change. No exception is proposed.
+
+### Deferred presentation capability-island option
+
+The first 45.4 authoring delivery is deliberately technology-neutral: it does **not** select a
+third-party editor, visualization, or other browser capability. Once 45.2–45.4 have met their
+existing acceptance commitments, a focused follow-on may assess one candidate where a real user
+need justifies it. It must retain the boundaries above: Application/Projects remains the source,
+parser/diagnostic, lifecycle, and mutation authority; Presentation owns only the island's DOM
+lifecycle and conversion of its transient interaction into named typed actions.
+
+Before implementation, that follow-on must separately lock its vendor/version/license/provenance,
+asset and worker packaging, supply-chain and build decision, same-origin/offline packaged behavior,
+accessibility and mobile fallback, `forge-desktop-dark` semantic-token mapping, reference-image
+states, and browser-first plus packaged default-path evidence. The UI Design System's no-npm/Node
+default stays in force: a candidate that needs an exception must name the narrow exception and its
+reversal path there before code. It may not silently introduce a CDN, dynamic loader, extension
+host, second parser/language truth, LSP, diff/revert, terminal, source control, external-editor
+contract, or a new durable command path. Those are separate designs, not implementation choices.
 
 ## Shared model and invariants
 
