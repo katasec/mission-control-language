@@ -195,6 +195,12 @@ For every user-visible Desktop or ForgeUI change, read
 the binding visual reference, responsive evidence, and theme/token ownership; the task assignment
 must name them explicitly rather than leaving their relevance to inference.
 
+**Browser verification is the supervisor's responsibility.** For a user-visible web-rendered
+surface, the supervisor personally inspects the running HTTP surface with browser tooling and
+compares it with the binding reference before recording visual acceptance. An implementer's
+screenshot, code review, or automated test is supporting evidence only; none can substitute for
+that live inspection.
+
 For every task that changes user-visible, runtime, integration, or deployment behaviour, the
 already-required [Default-Path Acceptance](docs/design/default-path-acceptance.md) gate applies.
 The supported default configuration is a product fact, not a convenient test option: an overridden
