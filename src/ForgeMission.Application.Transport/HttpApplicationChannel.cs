@@ -91,6 +91,14 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         ExecuteMissionHandsRequest => "transport/mission-hands/execute",
         CancelMissionHandsRequest => "transport/mission-hands/cancel",
         RecoverMissionHandsRequest => "transport/mission-hands/recover",
+        ListApprovedMissionVersionsRequest => "transport/mission-conversations/approved",
+        ListMissionConversationsRequest => "transport/mission-conversations/list",
+        CreateMissionConversationRequest => "transport/mission-conversations/create",
+        GetMissionConversationRequest => "transport/mission-conversations/get",
+        SubmitMissionConversationTurnRequest => "transport/mission-conversations/turn/submit",
+        RetryMissionConversationTurnRequest => "transport/mission-conversations/turn/retry",
+        CancelMissionConversationTurnRequest => "transport/mission-conversations/turn/cancel",
+        GetMissionTurnTraceRequest => "transport/mission-conversations/turn/trace",
         _ => throw new InvalidOperationException($"Unsupported application request: {typeof(TRequest).Name}."),
     };
 

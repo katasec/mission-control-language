@@ -75,4 +75,5 @@ public interface IConversationGrain : Orleans.IGrainWithStringKey
     Task<ConversationProjectReadResult> ReadProjectRunAsync(Guid runId);
     Task<ConversationProjectReadResult> ReadProjectRunEventsAsync(Guid runId, long after, long? through);
     Task<ConversationProjectReadResult> ReadProjectCommandAsync(Guid commandId);
+    Task<ConversationProjectReadResult> ReadMissionConversationDetailAsync();
 }

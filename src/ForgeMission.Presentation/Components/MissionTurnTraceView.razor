@@ -1,0 +1,13 @@
+@namespace ForgeMission.Presentation.Components
+@using ForgeMission.Application.Transport
+@using ForgeMission.Presentation
+@using MissionTurnTrace = ForgeMission.Application.Transport.MissionTurnTrace
+
+<section class="mttrace"><header><button type="button" @onclick="Back">← Back to conversation turn</button><h2>Forge Trace</h2><p>Turn evidence is read-only and tied to this exact attempt.</p></header><ConversationTranscriptView Entries="Transcript.Entries" /></section>
+@code {
+ [Parameter, EditorRequired] public MissionTurnTrace Trace { get; set; } = default!;
+ [Parameter] public EventCallback Back { get; set; }
+ private readonly ConversationTranscript Transcript = new();
+ protected override void OnParametersSet() { foreach (var item in Trace.Events) Transcript.Apply(item); }
+}
+<style>.mttrace { width:min(100%,64rem); align-self:center; display:flex; flex-direction:column; gap:var(--space-4); } .mttrace header { display:flex; flex-direction:column; gap:var(--space-2); } .mttrace h2,.mttrace p { margin:0; } .mttrace p { color:var(--text-muted); font-size:var(--font-size-meta); } .mttrace button { align-self:start; border:0; background:none; color:var(--accent); font:inherit; font-weight:600; cursor:pointer; }</style>

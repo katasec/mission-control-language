@@ -211,6 +211,42 @@ public sealed record RecoverMissionHandsRequest(string SessionId, Guid Conversat
 public sealed record RecoverMissionHandsResponse(
     ForgeMission.Conversations.Contracts.MissionHandsStatus? Status, long? AcceptedSequence, string? Error);
 
+// --- Mission conversations (Phase 45.3) ------------------------------------------------------
+// Presentation supplies a live Application session plus opaque identities and user intent.  It
+// never supplies a Project path, mission package/profile, capability choice, or Host projection.
+public sealed record ListApprovedMissionVersionsRequest(string SessionId);
+public sealed record MissionVersionPickerItem(Guid MissionId, string Name, Guid MissionVersionId,
+    int VersionNumber, string DefinitionHash, ForgeMission.Conversations.Contracts.MissionHandsProfile Profile);
+public sealed record ListApprovedMissionVersionsResponse(IReadOnlyList<MissionVersionPickerItem>? Versions, ProjectOperationError? Error);
+
+public sealed record ListMissionConversationsRequest(string SessionId);
+public sealed record MissionConversationView(Guid ConversationId, Guid MissionVersionId, int VersionNumber,
+    string Profile, ForgeMission.Conversations.Contracts.ConversationRunStatus Status, long LastSequence,
+    DateTimeOffset UpdatedAtUtc);
+public sealed record ListMissionConversationsResponse(IReadOnlyList<MissionConversationView>? Conversations, ProjectOperationError? Error);
+
+public sealed record CreateMissionConversationRequest(string SessionId, Guid MissionId, Guid CommandId);
+public sealed record CreateMissionConversationResponse(MissionConversationView? Conversation,
+    MissionVersionPickerItem? PinnedVersion, ProjectOperationError? Error);
+
+public sealed record GetMissionConversationRequest(string SessionId, Guid ConversationId);
+public sealed record MissionTurnView(Guid TurnId, Guid TurnAttemptId, string Input,
+    ForgeMission.Conversations.Contracts.ConversationRunStatus Status, long AcceptedSequence, long LastSequence);
+public sealed record MissionConversationDetail(MissionConversationView Conversation, MissionTurnView[] Turns,
+    ForgeMission.Conversations.Contracts.ConversationEvent[] Events);
+public sealed record GetMissionConversationResponse(MissionConversationDetail? Conversation, ProjectOperationError? Error);
+
+public sealed record SubmitMissionConversationTurnRequest(string SessionId, Guid ConversationId, Guid CommandId, string Text);
+public sealed record RetryMissionConversationTurnRequest(string SessionId, Guid ConversationId, Guid TurnId, Guid CommandId);
+public sealed record CancelMissionConversationTurnRequest(string SessionId, Guid ConversationId, Guid TurnId, Guid TurnAttemptId, Guid CommandId);
+public sealed record MissionTurnCommandResponse(Guid? TurnId, Guid? TurnAttemptId, long? AcceptedSequence,
+    ForgeMission.Conversations.Contracts.ConversationRunStatus? Status, ProjectOperationError? Error);
+
+public sealed record GetMissionTurnTraceRequest(string SessionId, Guid ConversationId, Guid TurnId, Guid TurnAttemptId);
+public sealed record MissionTurnTrace(Guid ConversationId, Guid TurnId, Guid TurnAttemptId,
+    ForgeMission.Conversations.Contracts.ConversationEvent[] Events);
+public sealed record GetMissionTurnTraceResponse(MissionTurnTrace? Trace, ProjectOperationError? Error);
+
 public sealed record CapabilityRequestData(
     string CapabilityName,
     CapabilityOperation Operation,

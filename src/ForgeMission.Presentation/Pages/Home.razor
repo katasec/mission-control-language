@@ -31,17 +31,17 @@ else
                     case WorkbenchView.RunTrace:
                         <RunTraceView Run="selectedRun" Events="traceEvents" AfterSequence="traceAfter" ThroughSequence="traceThrough" Error="traceError" Back="BackToMissions" Earlier="EarlierTraceAsync" Later="LaterTraceAsync" Latest="LatestTraceAsync" />
                         break;
+                    case WorkbenchView.MissionTrace:
+                        @if (missionTrace is { } trace) { <MissionTurnTraceView Trace="trace" Back="BackToMissionConversation" /> }
+                        break;
+                    case WorkbenchView.MissionConversation:
+                        @if (missionConversation is { } detail) { <ForgeMission.Presentation.Components.MissionConversationView Detail="detail" Back="BackToMissions" Submit="SubmitMissionTurnAsync" Cancel="CancelMissionTurnAsync" Retry="RetryMissionTurnAsync" Trace="OpenMissionTraceAsync" /> }
+                        break;
                     default:
-                        <MissionsView Page="runs" Loading="loadingState" OlderPage="@(runCursor is not null)" HistoryError="historyError" HasLegacyHistory="@(missionState?.Missions.HasLegacyHistory ?? false)" TraceRequested="OpenTraceAsync" InstructionRequested="ShowInstructionAsync" Refresh="LatestRunsAsync" Older="OlderRunsAsync" Latest="LatestRunsAsync" />
-                        @if (expandedInstruction is not null) { <section class="instruction-detail"><button type="button" @onclick="HideInstruction">Hide instruction</button><pre>@expandedInstruction</pre></section> }
-                        @if (newRunsAvailable) { <button type="button" class="new-runs" @onclick="LatestRunsAsync">New runs available</button> }
+                        <MissionConversationsView Conversations="missionConversations" Versions="approvedVersions" Error="missionConversationError" Open="OpenMissionConversationAsync" Create="CreateMissionConversationAsync" Refresh="LoadMissionConversationsAsync" Author="OpenAuthoringAsync" />
                         break;
                 }
             </main>
-            @if (view == WorkbenchView.Missions && missionState is { } state)
-            {
-                <footer class="composer-bar"><MissionComposer Missions="state.Missions" Submission="state.Submission" Error="submissionError" HistoryAvailable="@HistoryAvailable" ActiveRun="@HasActiveRun" Busy="submissionBusy" MissionSelected="SelectMissionAsync" Run="StartRunAsync" Retry="RetrySubmissionAsync" /></footer>
-            }
         </section>
     </div>
 }
@@ -50,14 +50,9 @@ else
     private ProjectSummary? project;
     private string? sessionId;
     private WorkbenchView view = WorkbenchView.Missions;
-    private ProjectMissionState? missionState;
+    // Explorer continues to own its pre-existing historical run list and trace navigation. This
+    // is independent from the Phase 45 Mission Conversation surface.
     private ProjectRunPage? runs;
-    private ProjectRunCursor? runCursor;
-    private ProjectOperationError? historyError;
-    private ProjectOperationError? submissionError;
-    private bool loadingState;
-    private bool submissionBusy;
-    private bool newRunsAvailable;
     private ProjectWorkbenchProjection? workbench;
     private ProjectOperationError? workbenchError;
     private ProjectDocument? document;
@@ -67,7 +62,11 @@ else
     private ProjectOperationError? traceError;
     private long traceAfter;
     private long traceThrough;
-    private string? expandedInstruction;
+    private IReadOnlyList<ForgeMission.Application.Transport.MissionConversationView> missionConversations = [];
+    private IReadOnlyList<MissionVersionPickerItem> approvedVersions = [];
+    private ProjectOperationError? missionConversationError;
+    private ForgeMission.Application.Transport.MissionConversationDetail? missionConversation;
+    private ForgeMission.Application.Transport.MissionTurnTrace? missionTrace;
 
     private string goalInput = string.Empty;
     private string titleInput = string.Empty;
@@ -84,9 +83,7 @@ else
     private int generation;
     private string? connectionError;
 
-    private bool HistoryAvailable => missionState?.Runs is not null && historyError is null && !missionState.Runs.Synchronizing;
-    private bool HasActiveRun => runs?.Runs.Any(run => !Terminal(run.Status)) == true;
-    private string HeaderTitle => view switch { WorkbenchView.Explorer or WorkbenchView.Document => "Project Explorer", WorkbenchView.Settings => "Settings", WorkbenchView.RunTrace => "Run trace", _ => "Missions" };
+    private string HeaderTitle => view switch { WorkbenchView.Explorer or WorkbenchView.Document => "Project Explorer", WorkbenchView.Settings => "Settings", WorkbenchView.RunTrace => "Run trace", WorkbenchView.MissionTrace => "Forge Trace", _ => "Missions" };
 
     private void ToggleOpenFolder() { showOpenFolder = !showOpenFolder; launcherError = null; }
     private async Task DraftProjectAsync()
@@ -127,73 +124,84 @@ else
         project = opened.Project; sessionId = opened.SessionId; view = WorkbenchView.Missions;
         lifetime = new CancellationTokenSource();
         subscription = ConsumeEventsAsync(generation, lifetime.Token);
-        await RefreshStateAsync(forceLatest: true);
+        await LoadMissionConversationsAsync();
+        await LoadLegacyExplorerRunsAsync();
     }
     private async Task ChangeViewAsync(WorkbenchView next)
     {
-        view = next; expandedInstruction = null;
-        if (next == WorkbenchView.Explorer) await LoadWorkbenchAsync();
+        view = next;
+        if (next == WorkbenchView.Explorer) { await LoadWorkbenchAsync(); await LoadLegacyExplorerRunsAsync(); }
+        if (next == WorkbenchView.Missions) await LoadMissionConversationsAsync();
     }
-    private async Task RefreshStateAsync(bool forceLatest = false)
+    private async Task LoadMissionConversationsAsync()
     {
         if (sessionId is null || lifetime is null) return;
-        loadingState = true;
         try
         {
-            var response = await ApplicationChannel.SendAsync<GetProjectMissionStateRequest, GetProjectMissionStateResponse>(new(sessionId), lifetime.Token);
-            if (response.Error is { } error) { historyError = error; return; }
-            if (response.State is not { } state) return;
-            missionState = state;
-            historyError = state.HistoryError;
-            if (state.Runs is { } page && (forceLatest || runCursor is null)) { runs = page; runCursor = null; newRunsAvailable = false; }
-            else if (state.Runs is not null) newRunsAvailable = true;
+            var listed = await ApplicationChannel.SendAsync<ForgeMission.Application.Transport.ListMissionConversationsRequest, ForgeMission.Application.Transport.ListMissionConversationsResponse>(new(sessionId), lifetime.Token);
+            var versions = await ApplicationChannel.SendAsync<ListApprovedMissionVersionsRequest, ListApprovedMissionVersionsResponse>(new(sessionId), lifetime.Token);
+            missionConversations = listed.Conversations ?? []; approvedVersions = versions.Versions ?? [];
+            missionConversationError = listed.Error ?? versions.Error;
         }
-        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
-        catch (Exception exception) { historyError = new(ProjectOperationErrorCode.HistoryUnavailable, exception.Message); }
-        finally { loadingState = false; await InvokeAsync(StateHasChanged); }
+        catch (Exception exception) { missionConversationError = new(ProjectOperationErrorCode.HistoryUnavailable, exception.Message); }
+        finally { await InvokeAsync(StateHasChanged); }
     }
-    private async Task SelectMissionAsync(string mission)
+    private async Task CreateMissionConversationAsync(Guid missionId)
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ApplicationChannel.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(new(sessionId, mission), lifetime.Token);
-        if (response.Error is { } error) submissionError = error;
-        else if (response.Missions is { } missions && missionState is { } state) { missionState = state with { Missions = missions }; submissionError = null; }
-    }
-    private async Task StartRunAsync(string input)
-    {
-        if (sessionId is null || lifetime is null || missionState is null) return;
-        submissionBusy = true;
-        Guid? previous = missionState.Submission is { State: ProjectSubmissionState.Rejected } prior ? prior.CommandId : null;
-        try
+        var response = await ApplicationChannel.SendAsync<ForgeMission.Application.Transport.CreateMissionConversationRequest, ForgeMission.Application.Transport.CreateMissionConversationResponse>(new(sessionId, missionId, Guid.NewGuid()), lifetime.Token);
+        if (response.Error is { } error) { missionConversationError = error; return; }
+        if (response.Conversation is { } created && response.PinnedVersion is { } pinned)
         {
-            var response = await ApplicationChannel.SendAsync<ForgeMission.Application.Transport.StartProjectMissionRunRequest, ProjectSubmissionResponse>(new ForgeMission.Application.Transport.StartProjectMissionRunRequest(sessionId, Guid.NewGuid(), previous, input), lifetime.Token);
-            submissionError = response.Error;
-            await RefreshStateAsync();
+            // The picker has already shown this exact immutable profile. This typed acknowledgement
+            // carries only pinned identity/facts; it cannot select a profile, tool, or package.
+            var hands = await ApplicationChannel.SendAsync<AcknowledgeMissionHandsRequest, AcknowledgeMissionHandsResponse>(
+                new(sessionId, created.ConversationId, pinned.MissionVersionId, pinned.VersionNumber, pinned.DefinitionHash, true), lifetime.Token);
+            if (hands.Error is { } handsError) { missionConversationError = new(ProjectOperationErrorCode.HistoryUnavailable, handsError); return; }
+            await OpenMissionConversationAsync(created.ConversationId);
         }
-        catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
-        finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
     }
-    private async Task RetrySubmissionAsync(Guid commandId)
+    private async Task OpenMissionConversationAsync(Guid conversationId)
     {
         if (sessionId is null || lifetime is null) return;
-        submissionBusy = true;
-        try { var response = await ApplicationChannel.SendAsync<RetryProjectMissionSubmissionRequest, ProjectSubmissionResponse>(new(sessionId, commandId), lifetime.Token); submissionError = response.Error; await RefreshStateAsync(); }
-        catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
-        finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
+        var response = await ApplicationChannel.SendAsync<GetMissionConversationRequest, GetMissionConversationResponse>(new(sessionId, conversationId), lifetime.Token);
+        missionConversationError = response.Error; missionConversation = response.Conversation; if (missionConversation is not null) view = WorkbenchView.MissionConversation;
     }
-    private async Task OlderRunsAsync()
+    private async Task SubmitMissionTurnAsync(string text)
     {
-        if (sessionId is null || lifetime is null || runs?.Next is not { } next) return;
-        await LoadRunsAsync(next);
+        if (sessionId is null || lifetime is null || missionConversation is null) return;
+        var response = await ApplicationChannel.SendAsync<SubmitMissionConversationTurnRequest, MissionTurnCommandResponse>(new(sessionId, missionConversation.Conversation.ConversationId, Guid.NewGuid(), text), lifetime.Token);
+        missionConversationError = response.Error;
+        await OpenMissionConversationAsync(missionConversation.Conversation.ConversationId);
     }
-    private async Task LatestRunsAsync() { runCursor = null; await RefreshStateAsync(forceLatest: true); }
-    private async Task LoadRunsAsync(ProjectRunCursor? cursor)
+    private async Task CancelMissionTurnAsync((Guid TurnId, Guid AttemptId) turn)
     {
-        if (sessionId is null || lifetime is null) return;
-        var response = await ApplicationChannel.SendAsync<GetProjectRunsRequest, GetProjectRunsResponse>(new(sessionId, cursor), lifetime.Token);
-        if (response.Error is { } error) historyError = error;
-        else if (response.Page is { } page) { runs = page; runCursor = cursor; historyError = null; }
+        if (sessionId is null || lifetime is null || missionConversation is null) return;
+        var response = await ApplicationChannel.SendAsync<CancelMissionConversationTurnRequest, MissionTurnCommandResponse>(new(sessionId, missionConversation.Conversation.ConversationId, turn.TurnId, turn.AttemptId, Guid.NewGuid()), lifetime.Token);
+        missionConversationError = response.Error;
+        await OpenMissionConversationAsync(missionConversation.Conversation.ConversationId);
     }
+    private async Task RetryMissionTurnAsync(Guid turnId)
+    {
+        if (sessionId is null || lifetime is null || missionConversation is null) return;
+        var response = await ApplicationChannel.SendAsync<RetryMissionConversationTurnRequest, MissionTurnCommandResponse>(new(sessionId, missionConversation.Conversation.ConversationId, turnId, Guid.NewGuid()), lifetime.Token);
+        missionConversationError = response.Error; await OpenMissionConversationAsync(missionConversation.Conversation.ConversationId);
+    }
+    private async Task OpenMissionTraceAsync((Guid TurnId, Guid AttemptId) origin)
+    {
+        if (sessionId is null || lifetime is null || missionConversation is null) return;
+        var response = await ApplicationChannel.SendAsync<GetMissionTurnTraceRequest, GetMissionTurnTraceResponse>(new(sessionId, missionConversation.Conversation.ConversationId, origin.TurnId, origin.AttemptId), lifetime.Token);
+        missionConversationError = response.Error; missionTrace = response.Trace; if (missionTrace is not null) view = WorkbenchView.MissionTrace;
+    }
+    private Task BackToMissionConversation()
+    {
+        // Preserve the exact loaded conversation (and therefore its turn/attempt anchors); trace
+        // navigation must never collapse this detail document into the Missions list.
+        view = WorkbenchView.MissionConversation;
+        missionTrace = null;
+        return Task.CompletedTask;
+    }
+    private Task OpenAuthoringAsync() { view = WorkbenchView.Explorer; return LoadWorkbenchAsync(); }
     private async Task LoadWorkbenchAsync()
     {
         if (sessionId is null || lifetime is null) return;
@@ -208,13 +216,12 @@ else
         document = response.Document; documentError = response.Error;
     }
     private Task BackToExplorer() { view = WorkbenchView.Explorer; return Task.CompletedTask; }
-    private async Task ShowInstructionAsync(Guid runId)
+    private async Task LoadLegacyExplorerRunsAsync()
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ApplicationChannel.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
-        if (response.Run is { } detail) expandedInstruction = detail.Input; else historyError = response.Error;
+        var response = await ApplicationChannel.SendAsync<GetProjectRunsRequest, GetProjectRunsResponse>(new(sessionId, null), lifetime.Token);
+        runs = response.Page;
     }
-    private void HideInstruction() => expandedInstruction = null;
     private async Task OpenTraceAsync(Guid runId)
     {
         if (sessionId is null || lifetime is null) return;
@@ -247,10 +254,10 @@ else
         var response = await ApplicationChannel.SendAsync<GetProjectRunEventsRequest, GetProjectRunEventsResponse>(new(sessionId, selectedRun.Run.RunId, traceAfter, traceThrough), lifetime.Token);
         traceEvents = response.Page; traceError = response.Error;
     }
-    private Task BackToMissions() { view = WorkbenchView.Missions; return Task.CompletedTask; }
+    private Task BackToMissions() { view = WorkbenchView.Missions; missionConversation = null; return LoadMissionConversationsAsync(); }
     private async Task ConsumeEventsAsync(int ownerGeneration, CancellationToken ct)
     {
-        try { await foreach (var evt in ApplicationChannel.Subscribe(ct)) if (ownerGeneration == generation && evt.SessionId == sessionId && evt.Kind == ApplicationEventKind.ProjectMissionChanged) await RefreshStateAsync(); }
+        try { await foreach (var evt in ApplicationChannel.Subscribe(ct)) if (ownerGeneration == generation && evt.SessionId == sessionId && evt.Kind == ApplicationEventKind.ProjectMissionChanged) await LoadMissionConversationsAsync(); }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception exception) { if (ownerGeneration == generation) { connectionError = exception.Message; await InvokeAsync(StateHasChanged); } }
     }
@@ -260,14 +267,13 @@ else
         connectionError = null;
         if (subscription is not null) await subscription;
         subscription = ConsumeEventsAsync(generation, lifetime.Token);
-        await RefreshStateAsync();
+        await LoadMissionConversationsAsync();
     }
     private async Task StopLifetimeAsync()
     {
         if (lifetime is null) return;
         await lifetime.CancelAsync(); if (subscription is not null) await subscription; lifetime.Dispose(); lifetime = null; subscription = null;
     }
-    private static bool Terminal(ConversationRunStatus status) => status is ConversationRunStatus.Completed or ConversationRunStatus.Failed or ConversationRunStatus.Interrupted or ConversationRunStatus.Rejected;
     private static string? Blank(string value) => string.IsNullOrWhiteSpace(value) ? null : value;
     public async ValueTask DisposeAsync() => await StopLifetimeAsync();
 }
