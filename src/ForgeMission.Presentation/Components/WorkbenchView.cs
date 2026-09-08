@@ -24,4 +24,10 @@ public enum WorkbenchView
     /// (43.21 task 2). Like Document it is reached by selecting something, not from the rail, and
     /// the rail keeps saying Missions while it is open.</summary>
     RunTrace,
+
+    /// <summary>Read-only evidence for one durable Mission Conversation turn. It remains under
+    /// Missions in the rail and carries the exact turn origin for its Back action.</summary>
+    MissionTrace,
+
+    MissionConversation,
 }

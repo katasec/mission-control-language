@@ -45,7 +45,7 @@
     // while it is shown: an Explorer entry to the Explorer, a run's trace to Missions.
     private bool IsCurrent(WorkbenchView view) => view == Selected
         || (view == WorkbenchView.Explorer && Selected == WorkbenchView.Document)
-        || (view == WorkbenchView.Missions && Selected == WorkbenchView.RunTrace);
+        || (view == WorkbenchView.Missions && Selected is WorkbenchView.RunTrace or WorkbenchView.MissionTrace or WorkbenchView.MissionConversation);
 
     // Real markup rather than a RenderTreeBuilder fragment: Blazor stamps a component's scoped-CSS
     // attribute onto elements written in the template only, so a hand-built fragment would render

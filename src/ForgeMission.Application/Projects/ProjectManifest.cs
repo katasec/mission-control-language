@@ -102,6 +102,9 @@ internal sealed record PendingEvaluationAdmission(
 internal sealed record MissionLaunchProvenance(Guid ProjectId, Guid MissionId,
     ForgeMission.Conversations.Contracts.DurableMissionLaunch Launch);
 
+internal sealed record ApprovedMissionVersion(Guid MissionId, string Name,
+    ForgeMission.Conversations.Contracts.DurableMissionLaunch Launch);
+
 internal enum ProjectSubmissionPhase
 {
     Prepared,

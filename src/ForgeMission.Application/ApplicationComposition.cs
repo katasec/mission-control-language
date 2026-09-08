@@ -70,6 +70,18 @@ public interface IMissionHandsConversationService
     Task<RecoverMissionHandsResponse> RecoverAsync(RecoverMissionHandsRequest request, CancellationToken ct);
 }
 
+public interface IMissionConversationService
+{
+    Task<ListApprovedMissionVersionsResponse> ListApprovedAsync(ListApprovedMissionVersionsRequest request, CancellationToken ct);
+    Task<ListMissionConversationsResponse> ListAsync(ListMissionConversationsRequest request, CancellationToken ct);
+    Task<CreateMissionConversationResponse> CreateAsync(CreateMissionConversationRequest request, CancellationToken ct);
+    Task<GetMissionConversationResponse> GetAsync(GetMissionConversationRequest request, CancellationToken ct);
+    Task<MissionTurnCommandResponse> SubmitAsync(SubmitMissionConversationTurnRequest request, CancellationToken ct);
+    Task<MissionTurnCommandResponse> RetryAsync(RetryMissionConversationTurnRequest request, CancellationToken ct);
+    Task<MissionTurnCommandResponse> CancelAsync(CancelMissionConversationTurnRequest request, CancellationToken ct);
+    Task<GetMissionTurnTraceResponse> GetTraceAsync(GetMissionTurnTraceRequest request, CancellationToken ct);
+}
+
 public sealed class ApplicationComposition : IAsyncDisposable
 {
     private readonly ApplicationSessionService _sessions;
@@ -85,7 +97,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
 
         var projects = new ProjectService(_sessions);
         var missionVersions = new MissionVersionService(projects);
-        var missionConversations = new MissionConversationService(missionVersions, clients);
+        var missionConversations = new MissionConversationService(missionVersions, _sessions, clients);
         var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
         var submissions = new MissionSubmissionService(projects, clients, _sessions, hands);
         var content = new ProjectContentService(projects, _sessions);
@@ -111,7 +123,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
     // Surface-neutral owner interface. No Application.Transport DTO or route exists until 45.4.
     internal IMissionVersionService MissionVersions { get; }
 
-    internal MissionConversationService MissionConversations { get; }
+    public IMissionConversationService MissionConversations { get; }
 
     public IApplicationSessionService Sessions { get; }
 

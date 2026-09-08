@@ -74,6 +74,8 @@ public static class ConversationApiEndpoints
             ProjectRouteAsync(() => RetryMissionTurnAsync(conversationId, request, grains)));
         app.MapPost("/mission-conversations/{conversationId}/turns/cancel", (string conversationId, CancelMissionTurnRequest request, IGrainFactory grains) =>
             ProjectRouteAsync(() => CancelMissionTurnAsync(conversationId, request, grains)));
+        app.MapGet("/mission-conversations/{conversationId}/detail", (string conversationId, IGrainFactory grains) =>
+            ProjectRouteAsync(() => GetMissionConversationDetailAsync(conversationId, grains)));
         app.MapPost("/evaluations", (StartEvaluationRequest request, IGrainFactory grains) =>
             ProjectRouteAsync(() => StartEvaluationAsync(request, grains)));
         app.MapGet("/evaluations/{evaluationResultId}", (string evaluationResultId, IGrainFactory grains) =>
@@ -536,6 +538,13 @@ public static class ConversationApiEndpoints
             ? Results.Accepted($"/conversations/{id}", new CancelMissionTurnResponse(id, request.TurnId,
                 request.TurnAttemptId, result.Acceptance!.AcceptedSequence, result.Acceptance.Status))
             : ProjectError("commandConflict", result.Reason ?? "Cancel conflicts.", 409);
+    }
+
+    private static async Task<IResult> GetMissionConversationDetailAsync(string conversationId, IGrainFactory grains)
+    {
+        if (!TryParseRouteId(conversationId, out var id)) return ProjectError("invalidRequest", "conversationId is invalid.", 400);
+        var result = await grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey).ReadMissionConversationDetailAsync();
+        return ProjectReadResult(result, ConversationContractsJsonContext.Default.MissionConversationDetail);
     }
 
     private static async Task<IResult> StartEvaluationAsync(StartEvaluationRequest request, IGrainFactory grains)

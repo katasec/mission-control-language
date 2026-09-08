@@ -38,6 +38,14 @@ internal static class ApplicationEndpoints
         app.MapPost("/transport/mission-hands/execute", (ExecuteMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.ExecuteAsync(request, ct)));
         app.MapPost("/transport/mission-hands/cancel", (CancelMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.CancelAsync(request, ct)));
         app.MapPost("/transport/mission-hands/recover", (RecoverMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.RecoverAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/approved", (ListApprovedMissionVersionsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListApprovedAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/list", (ListMissionConversationsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/create", (CreateMissionConversationRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.CreateAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/get", (GetMissionConversationRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.GetAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/turn/submit", (SubmitMissionConversationTurnRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.SubmitAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/turn/retry", (RetryMissionConversationTurnRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.RetryAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/turn/cancel", (CancelMissionConversationTurnRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.CancelAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/turn/trace", (GetMissionTurnTraceRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.GetTraceAsync(request, ct)));
         app.MapPost("/transport/prompt", (PromptRequest request, IConversationService service, CancellationToken ct) => Result(service.PromptAsync(request, ct)));
         app.MapGet("/transport/events", async (HttpContext context, ApplicationEventHub events, CancellationToken ct) =>
         {

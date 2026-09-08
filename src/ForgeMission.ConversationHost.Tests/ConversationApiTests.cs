@@ -285,6 +285,33 @@ public class ConversationApiTests(AzuriteFixture fixture)
     }
 
     [Fact]
+    public async Task MissionConversationDetail_ReloadsStableTurnAndAttemptForExactTrace()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = CreateClient(host);
+        var created = await client.PostAsJsonAsync("/mission-conversations", NewMissionConversation(Guid.NewGuid(), MissionHandsProfile.NoHands),
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        var conversation = (await created.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.CreateMissionConversationResponse))!;
+        var submitted = await client.PostAsJsonAsync($"/mission-conversations/{conversation.ConversationId}/turns",
+            new SubmitMissionTurnRequest(conversation.ConversationId, Guid.NewGuid(), "retain this"),
+            ConversationContractsJsonContext.Default.SubmitMissionTurnRequest);
+        var accepted = (await submitted.Content.ReadFromJsonAsync(ConversationContractsJsonContext.Default.SubmitMissionTurnResponse))!;
+        var grain = host.GetConversationGrain(new ConversationAddress("dev", conversation.ConversationId));
+        await grain.RecordProgressAsync(new ConversationProgressInput(SerializeProgress(new ConversationProgress(Guid.NewGuid(), conversation.ConversationId,
+            accepted.TurnAttemptId, ConversationEventKind.RunStatus, ConversationParticipant.Forge, null, null, null, null, null, null, null,
+            ConversationRunStatus.Completed, DateTimeOffset.UtcNow))));
+
+        var detail = await client.GetFromJsonAsync($"/mission-conversations/{conversation.ConversationId}/detail",
+            ConversationContractsJsonContext.Default.MissionConversationDetail);
+        var turn = Assert.Single(detail!.Turns);
+        Assert.Equal(accepted.TurnId, turn.TurnId);
+        Assert.Equal(accepted.TurnAttemptId, turn.TurnAttemptId);
+        Assert.Equal("retain this", turn.Input);
+        Assert.Equal(ConversationRunStatus.Completed, turn.Status);
+        Assert.All(detail.Events.Where(item => item.RunId == turn.TurnAttemptId), item => Assert.Equal(turn.TurnAttemptId, item.RunId));
+    }
+
+    [Fact]
     public async Task MissionConversation_SubstitutionUnderTheSameCommandIsRefused()
     {
         await using var host = await fixture.StartHostAsync();
