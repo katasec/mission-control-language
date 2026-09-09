@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Decide the next Mission Conversation experience after the accepted authoring and launch flow; transcript/turn presentation is intentionally pending that product pivot. |
+| **NEXT STEP** | Use the approved [Mission chat experience v1](design/mission-chat-experience-v1.md) as the next static Presentation-only design slice; backend integration remains deferred until the experience is reviewed. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; the next transcript/turn experience awaits product scope. |
+| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; Mission chat experience direction is captured, with integration deferred pending UI review. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
 
 ## Design docs
