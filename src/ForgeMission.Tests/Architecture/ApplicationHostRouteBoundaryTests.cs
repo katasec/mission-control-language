@@ -20,6 +20,7 @@ public sealed class ApplicationHostRouteBoundaryTests
         Assert.Contains("IConversationService service", source, StringComparison.Ordinal);
         Assert.Contains("ICapabilityActionService service", source, StringComparison.Ordinal);
         Assert.Contains("IInteractionService service", source, StringComparison.Ordinal);
+        Assert.Contains("IMissionConversationService service", source, StringComparison.Ordinal);
 
         Assert.DoesNotContain("InvokeAsync<TRequest, TResponse>", source, StringComparison.Ordinal);
         Assert.DoesNotContain("InvokeAsync<", source, StringComparison.Ordinal);

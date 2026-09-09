@@ -11,6 +11,7 @@ namespace ForgeMission.Tests.Architecture;
 public sealed class ForgeCssThemeScopingTests
 {
     private const string SurfaceThemeAttribute = "[data-surface-theme=\"workbench\"]";
+    private const string MissionsThemeAttribute = "[data-surface-theme=\"forge-desktop-dark\"]";
 
     [Fact]
     public void EveryWorkbenchValue_IsReachableOnlyThroughTheSurfaceThemeAttribute()
@@ -82,6 +83,114 @@ public sealed class ForgeCssThemeScopingTests
         Assert.DoesNotContain("data-surface-theme", File.ReadAllText(host), StringComparison.Ordinal);
     }
 
+    // Phase 45.3 Task 3A — the Missions surface's theme is reached through the same attribute one
+    // level down, so it gets the same two guards: its values stay behind the attribute, and it
+    // defines both colour modes rather than only the dark one it is named for.
+    [Fact]
+    public void EveryMissionsValue_IsReachableOnlyThroughTheSurfaceThemeAttribute()
+    {
+        string[] missionsOnly = ["#181511", "#ff9a4a", "#f4ede5", "#9ee2a7", "#392a1d"];
+
+        foreach (var (selector, body) in TokenBlocks())
+        {
+            if (selector.Contains(MissionsThemeAttribute, StringComparison.Ordinal))
+                continue;
+            foreach (var value in missionsOnly)
+                Assert.DoesNotContain(value, body, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public void TheMissionsTheme_DefinesBothALightAndADarkMap()
+    {
+        var missions = TokenBlocks()
+            .Where(block => block.Selector.Contains(MissionsThemeAttribute, StringComparison.Ordinal))
+            .ToList();
+
+        Assert.Equal(3, missions.Count); // light, automatic dark, forced dark
+        Assert.Single(missions, block => block.Body.Contains("color-scheme: light", StringComparison.Ordinal));
+        Assert.Equal(2, missions.Count(block => block.Body.Contains("color-scheme: dark", StringComparison.Ordinal)));
+
+        var light = missions.Single(block => block.Body.Contains("color-scheme: light", StringComparison.Ordinal));
+        foreach (var token in ColourTokens(light.Body))
+        {
+            foreach (var dark in missions.Where(block => block.Body.Contains("color-scheme: dark", StringComparison.Ordinal)))
+                Assert.Contains(token, ColourTokens(dark.Body));
+        }
+    }
+
+    // data-theme is the ROOT's colour-mode hook and forge-desktop-dark sits on a nested element,
+    // so each map must test the mode on :root and the surface on its descendant. Testing
+    // data-theme on the nested element compiles and looks plausible, but the nested element never
+    // carries it: the automatic map would always win and both explicit choices would be dead.
+    // These three assert the composition that makes an operator's light/dark choice work.
+    [Fact]
+    public void TheMissionsTheme_BaseMap_IsTheNestedSurfaceAlone()
+    {
+        var light = MissionsBlocks().Single(block => block.Body.Contains("color-scheme: light", StringComparison.Ordinal));
+
+        Assert.Equal(MissionsThemeAttribute, light.Selector);
+        Assert.DoesNotContain("data-theme", light.Selector, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheMissionsTheme_AutomaticDarkMap_TestsTheRootColourMode_NotTheNestedSurface()
+    {
+        var css = CssWithoutComments();
+        var automatic = MissionsBlocks().Single(block =>
+            block.Selector.StartsWith(":root:not([data-theme=\"light\"])", StringComparison.Ordinal));
+
+        // The mode condition is on :root; the surface is its descendant, with a combinator between.
+        Assert.Equal($":root:not([data-theme=\"light\"]) {MissionsThemeAttribute}", automatic.Selector);
+        Assert.Contains("color-scheme: dark", automatic.Body, StringComparison.Ordinal);
+        // ...and it only applies when the OS asks for dark.
+        var selectorAt = css.IndexOf(automatic.Selector, StringComparison.Ordinal);
+        var media = css.LastIndexOf("@media (prefers-color-scheme: dark)", selectorAt, StringComparison.Ordinal);
+        Assert.InRange(media, 0, selectorAt);
+    }
+
+    [Fact]
+    public void TheMissionsTheme_ForcedDarkMap_TestsTheRootColourMode_NotTheNestedSurface()
+    {
+        var forced = MissionsBlocks().Single(block =>
+            block.Selector.StartsWith(":root[data-theme=\"dark\"]", StringComparison.Ordinal));
+
+        Assert.Equal($":root[data-theme=\"dark\"] {MissionsThemeAttribute}", forced.Selector);
+        Assert.Contains("color-scheme: dark", forced.Body, StringComparison.Ordinal);
+    }
+
+    // A colour-mode condition must never be written against the nested surface element, in any map.
+    [Fact]
+    public void TheMissionsTheme_NeverTestsDataThemeOnTheNestedSurface()
+    {
+        foreach (var block in MissionsBlocks())
+        {
+            Assert.DoesNotContain($"{MissionsThemeAttribute}[data-theme", block.Selector, StringComparison.Ordinal);
+            Assert.DoesNotContain($"{MissionsThemeAttribute}:not([data-theme", block.Selector, StringComparison.Ordinal);
+        }
+    }
+
+    private static List<(string Selector, string Body)> MissionsBlocks() =>
+        [.. TokenBlocks().Where(block => block.Selector.Contains(MissionsThemeAttribute, StringComparison.Ordinal))];
+
+    // The landing's geometry lives in the theme map too, so a component never hard-codes a
+    // reference measurement.
+    [Fact]
+    public void TheMissionsTheme_DeclaresTheLandingGeometryItsSurfacesConsume()
+    {
+        var light = TokenBlocks().Single(block =>
+            block.Selector.Contains(MissionsThemeAttribute, StringComparison.Ordinal) &&
+            block.Body.Contains("color-scheme: light", StringComparison.Ordinal));
+
+        foreach (var token in new[]
+                 {
+                     "--wb-rail-width", "--wb-page-inset", "--ml-header-height", "--ml-region-top",
+                     "--ml-region-max", "--ml-column-gap", "--ml-panel-width", "--ml-block-pad",
+                     "--ml-row-pad", "--ml-action-height", "--ml-actions-bottom",
+                 })
+            Assert.Contains(token, light.Body, StringComparison.Ordinal);
+    }
+
     // A Workbench value outside a Workbench block would re-theme every surface that consumes the
     // token, which is exactly what the named theme exists to avoid.
     private static void AssertNoWorkbenchValues(string selector)
@@ -99,13 +208,23 @@ public sealed class ForgeCssThemeScopingTests
             .Distinct();
 
     // A deliberately small reader: it splits on top-level `selector { ... }` pairs, which is all
-    // this guard needs and far less than a CSS parser would drag in.
+    // this guard needs and far less than a CSS parser would drag in. It reads both shapes of token
+    // block: the document-level `:root...` ones, and a surface theme selected on an element inside
+    // the document rather than on <html>.
+    private static string Css() =>
+        File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "ForgeUI", "wwwroot", "css", "forge.css"));
+
+    // Comments are stripped before the block reader runs: this file documents its selectors in
+    // prose, and a comment that happens to contain ":root" would otherwise be read as one.
+    private static string CssWithoutComments() =>
+        Regex.Replace(Css(), @"/\*.*?\*/", string.Empty, RegexOptions.Singleline);
+
     private static List<(string Selector, string Body)> TokenBlocks()
     {
-        var css = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "ForgeUI", "wwwroot", "css", "forge.css"));
+        var css = CssWithoutComments();
         var blocks = new List<(string, string)>();
 
-        foreach (Match match in Regex.Matches(css, @"(:root[^{}]*)\{([^{}]*)\}"))
+        foreach (Match match in Regex.Matches(css, @"((?::root|\[data-surface-theme)[^{}]*)\{([^{}]*)\}"))
             blocks.Add((match.Groups[1].Value.Trim(), match.Groups[2].Value));
 
         Assert.NotEmpty(blocks);

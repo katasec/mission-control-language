@@ -211,6 +211,50 @@ public sealed record RecoverMissionHandsRequest(string SessionId, Guid Conversat
 public sealed record RecoverMissionHandsResponse(
     ForgeMission.Conversations.Contracts.MissionHandsStatus? Status, long? AcceptedSequence, string? Error);
 
+// --- Missions landing contracts (45.3 task 3A) ----------------------------------------------
+// The rendered states own this vocabulary and nothing more. No request can name a package,
+// definition, profile, capability, tool, Project path, launch, or attachment: a surface asks for
+// a mission, and Application alone decides which approved version that resolves to.
+
+public sealed record ListMissionConversationsRequest(string SessionId);
+
+/// <summary>One informational row. Conversation identity, pinned version number and update time
+/// are Host facts; <see cref="MissionName"/> is the Project's local display identity, resolved by
+/// the pinned version ID. It is null when this Project no longer holds that version, which the
+/// surface states plainly rather than inventing a name or hiding the Host's record.</summary>
+public sealed record MissionConversationListItem(
+    Guid ConversationId, string? MissionName, int VersionNumber, DateTimeOffset UpdatedAtUtc);
+public sealed record ListMissionConversationsResponse(
+    IReadOnlyList<MissionConversationListItem>? Conversations, ProjectOperationError? Error);
+
+public sealed record ListApprovedMissionVersionsRequest(string SessionId);
+
+/// <summary>A selectable option. It carries the identity and the exact profile a surface must
+/// show, and deliberately no definition text or package: displaying an approved version is not
+/// the same as holding what executes it.</summary>
+public sealed record ApprovedMissionVersionOption(
+    Guid MissionId, string MissionName, Guid MissionVersionId, int VersionNumber,
+    string DefinitionHash, ForgeMission.Conversations.Contracts.MissionHandsProfile Profile);
+public sealed record ListApprovedMissionVersionsResponse(
+    IReadOnlyList<ApprovedMissionVersionOption>? Options, ProjectOperationError? Error);
+
+/// <summary><see cref="ExpectedMissionVersionId"/> is a stale-display precondition, never a
+/// selection: it is the version the operator actually read before approving, and Application
+/// rejects the create with <see cref="ProjectOperationErrorCode.VersionChanged"/> when the
+/// mission's current approved version is a different one. It cannot name a version to use, so an
+/// operator can never be pinned to — or asked to acknowledge — access they never saw.</summary>
+public sealed record CreateMissionConversationRequest(
+    string SessionId, Guid MissionId, Guid CommandId, Guid ExpectedMissionVersionId);
+
+/// <summary>What Application resolved and Host pinned. The surface echoes this exact value back
+/// when it acknowledges; it composes no approval of its own.</summary>
+public sealed record MissionAccessApproval(
+    Guid MissionVersionId, int VersionNumber, string DefinitionHash,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile);
+public sealed record CreatedMissionConversation(Guid ConversationId, MissionAccessApproval Approval);
+public sealed record CreateMissionConversationResponse(
+    CreatedMissionConversation? Created, ProjectOperationError? Error);
+
 public sealed record CapabilityRequestData(
     string CapabilityName,
     CapabilityOperation Operation,

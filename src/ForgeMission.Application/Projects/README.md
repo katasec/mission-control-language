@@ -41,6 +41,8 @@ For mission submission or retry orchestration, compose with or change Missions i
 
 - Host-facing Project actions enter through [IProjectService](../ApplicationComposition.cs) and the corresponding [transport requests](../../ForgeMission.Application.Transport/ApplicationContracts.cs).
 - [ProjectService](ProjectService.cs) is the single manifest/write owner; [ProjectContentService](ProjectContentService.cs) resolves a fresh manifest entry before opening content.
+- `ProjectService.ResolveApprovedLaunch` answers "may this exact version be granted hands?" across both manifest lanes: the schema-4 `ApprovedMissionLaunches` compatibility array first, then the schema-5 `MissionDefinitions` lifecycle. The authored lifecycle never writes that array, so without the second lane a published version could never be acknowledged. Both lanes require the same exact version id, version number, definition hash, `Approved` state, and active-approved identity.
+- [MissionVersionService](MissionVersionService.cs) additionally answers which versions are startable now (`ListApprovedVersionsAsync`) and what a pinned version is called locally (`ResolveVersionIdentitiesAsync`, matching by version id in any state so a superseded pin still names its mission).
 - [Project service tests](../../ForgeMission.Tests/Application/ProjectServiceTests.cs), [content tests](../../ForgeMission.Tests/Application/ProjectContentServiceTests.cs), and [transport contract tests](../../ForgeMission.Tests/Application/ProjectTransportContractTests.cs) prove the boundary.
 
 ## Communicates with

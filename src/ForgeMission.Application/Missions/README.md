@@ -39,6 +39,8 @@ For Project identity, manifest schema, or journal persistence, compose with or c
 - The Host invokes [IMissionSubmissionService](../ApplicationComposition.cs) with [StartProjectMissionRunRequest](../../ForgeMission.Application.Transport/ApplicationContracts.cs) or [RetryProjectMissionSubmissionRequest](../../ForgeMission.Application.Transport/ApplicationContracts.cs).
 - [MissionSubmissionService](MissionSubmissionService.cs) uses [ProjectService](../Projects/ProjectService.cs) and [ConversationHostClient](../Adapters/Conversations/ConversationHostClient.cs), rather than exposing a second remote client.
 - [Mission submission tests](../../ForgeMission.Tests/Application/MissionSubmissionServiceTests.cs) cover request identity and recovery behavior.
+- The Host invokes [IMissionConversationService](../ApplicationComposition.cs) for the Missions landing's three actions. [MissionConversationService](MissionConversationService.cs) joins the Host-owned conversation directory to Project-owned display identity, resolves the current Approved version immediately before Host admission, and returns the immutable approval a surface then acknowledges. It hands out no Project home, manifest, durable launch, or attachment detail.
+- [Mission conversation tests](../../ForgeMission.Tests/Application/MissionConversationServiceTests.cs) cover the approved-version projection, the stale-display precondition, and the typed availability results.
 
 ## Communicates with
 

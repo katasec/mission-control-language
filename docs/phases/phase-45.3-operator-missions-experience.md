@@ -1,6 +1,6 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** design-ready, 2026-09-09. Implement only Task 3A after a bounded implementer plan passes Codex review. The previous all-in-one surface plan is replaced because it was too broad for useful visual diagnosis.
+> **Status:** controlled implementation accepted, 2026-09-09. Task 3A passed Codex's live controlled visual review against its allocated reference slice. Default-path acceptance remains **open**: a normal Desktop user still has no author → evaluate → publish route to create an Approved schema-5 mission version. Do not merge or mark this task complete until that prerequisite is delivered and the zero-argument journey is proven.
 
 ## Why this slice exists
 

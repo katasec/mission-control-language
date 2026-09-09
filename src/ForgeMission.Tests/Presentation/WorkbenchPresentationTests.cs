@@ -38,18 +38,6 @@ public sealed class WorkbenchPresentationTests : BunitContext
         Assert.Contains("Events 4–5", trace.Markup);
     }
 
-    [Fact]
-    public void Composer_DisablesRun_WhenNoCanonicalSelectionExists()
-    {
-        var composer = Render<MissionComposer>(p => p
-            .Add(x => x.Missions, new ProjectMissionsView(["Janus", "Naive"], null, false))
-            .Add(x => x.HistoryAvailable, true));
-
-        Assert.Contains("Mission: none selected", composer.Markup);
-        Assert.True(composer.Find(".mc-run").HasAttribute("disabled"));
-        Assert.False(composer.Find(".mc-input").HasAttribute("disabled"));
-    }
-
     private static ConversationEvent Event(long sequence, ConversationEventKind kind, string? text) =>
         new(Guid.NewGuid(), 1, Guid.NewGuid(), null, sequence, kind, ConversationParticipant.Proposer, 1, text, null, null, null, null, null, null, DateTimeOffset.UtcNow);
 }

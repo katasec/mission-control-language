@@ -38,6 +38,9 @@ internal static class ApplicationEndpoints
         app.MapPost("/transport/mission-hands/execute", (ExecuteMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.ExecuteAsync(request, ct)));
         app.MapPost("/transport/mission-hands/cancel", (CancelMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.CancelAsync(request, ct)));
         app.MapPost("/transport/mission-hands/recover", (RecoverMissionHandsRequest request, IMissionHandsConversationService service, CancellationToken ct) => Result(service.RecoverAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/list", (ListMissionConversationsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/approved-versions", (ListApprovedMissionVersionsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListApprovedVersionsAsync(request, ct)));
+        app.MapPost("/transport/mission-conversations/create", (CreateMissionConversationRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.CreateAsync(request, ct)));
         app.MapPost("/transport/prompt", (PromptRequest request, IConversationService service, CancellationToken ct) => Result(service.PromptAsync(request, ct)));
         app.MapGet("/transport/events", async (HttpContext context, ApplicationEventHub events, CancellationToken ct) =>
         {

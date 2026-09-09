@@ -24,7 +24,21 @@ internal interface IMissionVersionService
         int candidateRevision, string definitionHash, EvaluationOutcome observedOutcome, string observedOutputSummary,
         EvaluationTraceOrigin? traceOrigin, CancellationToken ct);
     Task<MissionVersion> PublishAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct);
+    Task<IReadOnlyList<ApprovedMissionVersionRecord>> ListApprovedVersionsAsync(string home, CancellationToken ct);
+    Task<IReadOnlyDictionary<Guid, LocalMissionVersionIdentity>> ResolveVersionIdentitiesAsync(
+        string home, IReadOnlyCollection<Guid> missionVersionIds, CancellationToken ct);
 }
+
+/// <summary>What an operator may choose from: identity plus the exact profile that choice fixes.
+/// Deliberately no definition text and no package — a surface shows an approved version, it never
+/// holds what executes one.</summary>
+internal sealed record ApprovedMissionVersionRecord(
+    Guid MissionId, string MissionName, Guid MissionVersionId, int VersionNumber,
+    string DefinitionHash, MissionHandsProfile Profile);
+
+/// <summary>The Project's local display identity for one pinned version. Read-only: it names a
+/// conversation's mission, and grants nothing.</summary>
+internal sealed record LocalMissionVersionIdentity(Guid MissionId, string MissionName, int VersionNumber);
 
 internal sealed class MissionVersionService(ProjectService projects) : IMissionVersionService
 {
@@ -162,6 +176,51 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             version.DefinitionText, version.CapabilityProfile, version.Package);
         return Task.FromResult(new MissionLaunchProvenance(manifest.ProjectId, missionId, launch));
     }
+
+    /// <summary>Every mission whose active approved version is genuinely Approved. A definition
+    /// holding only a draft, or whose active version has since become Candidate, Evaluated, or
+    /// Superseded, is omitted rather than returned in a state a surface would have to interpret:
+    /// an operator can only ever be offered a version they could actually start.</summary>
+    public Task<IReadOnlyList<ApprovedMissionVersionRecord>> ListApprovedVersionsAsync(string home, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var manifest = projects.ReadForHome(home).Manifest;
+        var approved = Definitions(manifest)
+            .Select(definition => (definition, version: ActiveApproved(definition)))
+            .Where(pair => pair.version is not null)
+            .Select(pair => new ApprovedMissionVersionRecord(pair.definition.MissionId, pair.definition.Name,
+                pair.version!.MissionVersionId, pair.version.VersionNumber, pair.version.DefinitionHash,
+                pair.version.CapabilityProfile))
+            .ToArray();
+        return Task.FromResult<IReadOnlyList<ApprovedMissionVersionRecord>>(approved);
+    }
+
+    /// <summary>Resolves display identity for pinned versions in one read. It matches by version
+    /// ID in any lifecycle state, because a conversation stays pinned to the version it started
+    /// on: a later publication supersedes that version but must not blank the row that names it.
+    /// An unknown ID is simply absent, which is what lets the surface say so honestly.</summary>
+    public Task<IReadOnlyDictionary<Guid, LocalMissionVersionIdentity>> ResolveVersionIdentitiesAsync(
+        string home, IReadOnlyCollection<Guid> missionVersionIds, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        if (missionVersionIds.Count == 0)
+            return Task.FromResult<IReadOnlyDictionary<Guid, LocalMissionVersionIdentity>>(
+                new Dictionary<Guid, LocalMissionVersionIdentity>());
+        var wanted = missionVersionIds.ToHashSet();
+        var manifest = projects.ReadForHome(home).Manifest;
+        var found = Definitions(manifest)
+            .SelectMany(definition => Versions(definition).Select(version => (definition, version)))
+            .Where(pair => wanted.Contains(pair.version.MissionVersionId))
+            .ToDictionary(pair => pair.version.MissionVersionId, pair => new LocalMissionVersionIdentity(
+                pair.definition.MissionId, pair.definition.Name, pair.version.VersionNumber));
+        return Task.FromResult<IReadOnlyDictionary<Guid, LocalMissionVersionIdentity>>(found);
+    }
+
+    private static MissionVersion? ActiveApproved(ProjectMissionDefinition definition) =>
+        definition.ActiveApprovedVersionId is { } id
+            ? Versions(definition).SingleOrDefault(version =>
+                version.MissionVersionId == id && version.State == MissionVersionState.Approved)
+            : null;
 
     public Guid ReadProjectId(string home, CancellationToken ct)
     {

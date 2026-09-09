@@ -218,6 +218,96 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         Assert.Contains("project-rooted-read", dispatch.Content, StringComparison.Ordinal);
     }
 
+    // --- the Missions landing's three actions, over the real transport -------------------------
+    // This class is the parity proof: a TUI reaching the same routes with the same DTOs gets the
+    // same authorization, outcomes, and failures, with no Blazor or Desktop type in sight.
+
+    [Fact]
+    public async Task MissionsLanding_AnswersAFreshProjectWithNothingPinnedAndNothingApproved()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Todos API"));
+        var session = created.Session!.SessionId;
+
+        var options = await _channel.SendAsync<ListApprovedMissionVersionsRequest, ListApprovedMissionVersionsResponse>(
+            new ListApprovedMissionVersionsRequest(session), CancellationToken.None);
+
+        // A Project read, so it answers on its own: empty is a real answer, and it is a different
+        // answer from unavailable.
+        Assert.Null(options.Error);
+        Assert.Empty(options.Options!);
+
+        // The conversation directory is Host-owned, and this harness runs no Conversation Host.
+        // Either honest outcome is allowed — a typed availability failure, or a failed request —
+        // but a fabricated list is not, so a caller can never mistake "cannot reach it" for
+        // "this Project has none".
+        try
+        {
+            var conversations = await _channel.SendAsync<ListMissionConversationsRequest, ListMissionConversationsResponse>(
+                new ListMissionConversationsRequest(session), CancellationToken.None);
+            Assert.NotNull(conversations.Error);
+            Assert.Null(conversations.Conversations);
+        }
+        catch (HttpRequestException)
+        {
+            // Also honest: nothing was invented.
+        }
+    }
+
+    [Fact]
+    public async Task MissionsLanding_RefusesToCreateAgainstAMissionThisProjectDoesNotApprove()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Todos API"));
+
+        var response = await _channel.SendAsync<CreateMissionConversationRequest, CreateMissionConversationResponse>(
+            new CreateMissionConversationRequest(created.Session!.SessionId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.Null(response.Created);
+        Assert.NotNull(response.Error);
+    }
+
+    [Fact]
+    public async Task MissionsLanding_RefusesAForeignSessionOnEveryAction()
+    {
+        var foreign = Guid.NewGuid().ToString("N");
+
+        foreach (var send in new Func<Task>[]
+                 {
+                     () => _channel.SendAsync<ListMissionConversationsRequest, ListMissionConversationsResponse>(
+                         new ListMissionConversationsRequest(foreign), CancellationToken.None),
+                     () => _channel.SendAsync<ListApprovedMissionVersionsRequest, ListApprovedMissionVersionsResponse>(
+                         new ListApprovedMissionVersionsRequest(foreign), CancellationToken.None),
+                     () => _channel.SendAsync<CreateMissionConversationRequest, CreateMissionConversationResponse>(
+                         new CreateMissionConversationRequest(foreign, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None),
+                 })
+        {
+            var rejection = await Assert.ThrowsAsync<HttpRequestException>(send);
+            Assert.Equal(HttpStatusCode.NotFound, rejection.StatusCode);
+        }
+    }
+
+    [Fact]
+    public void MissionsLanding_RequestsCannotNameAccess_OnlyAMissionAndWhatWasDisplayed()
+    {
+        Assert.Equal(["SessionId", "MissionId", "CommandId", "ExpectedMissionVersionId"],
+            typeof(CreateMissionConversationRequest).GetProperties().Select(property => property.Name));
+
+        foreach (var type in new[]
+                 {
+                     typeof(CreateMissionConversationRequest), typeof(ListMissionConversationsRequest),
+                     typeof(ListApprovedMissionVersionsRequest),
+                 })
+        {
+            var names = type.GetProperties().Select(property => property.Name).ToArray();
+            foreach (var forbidden in new[] { "Profile", "Package", "Definition", "Capabilities", "Tool", "Path", "Home", "AttachmentId", "Launch" })
+                Assert.DoesNotContain(names, name => name.Contains(forbidden, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // What comes back is identity and the profile to display — never the executable package.
+        var approval = typeof(MissionAccessApproval).GetProperties().Select(property => property.Name).ToArray();
+        Assert.Equal(["MissionVersionId", "VersionNumber", "DefinitionHash", "Profile"], approval);
+    }
+
     // --- session replacement is replacement only ----------------------------------------------
 
     [Fact]

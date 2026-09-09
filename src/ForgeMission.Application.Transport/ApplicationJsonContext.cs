@@ -52,4 +52,10 @@ namespace ForgeMission.Application.Transport;
 [JsonSerializable(typeof(RecoverMissionHandsRequest))]
 [JsonSerializable(typeof(RecoverMissionHandsResponse))]
 [JsonSerializable(typeof(CapabilityRequestData))]
+[JsonSerializable(typeof(ListMissionConversationsRequest))]
+[JsonSerializable(typeof(ListMissionConversationsResponse))]
+[JsonSerializable(typeof(ListApprovedMissionVersionsRequest))]
+[JsonSerializable(typeof(ListApprovedMissionVersionsResponse))]
+[JsonSerializable(typeof(CreateMissionConversationRequest))]
+[JsonSerializable(typeof(CreateMissionConversationResponse))]
 public partial class ApplicationJsonContext : JsonSerializerContext;

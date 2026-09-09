@@ -1,4 +1,10 @@
 @page "/"
+@* Contracts and Transport each name a list/create pair for mission conversations, because each
+   owns one side of it. These aliases pick the surface side without renaming a durable contract. *@
+@using SurfaceListMissionConversationsRequest = ForgeMission.Application.Transport.ListMissionConversationsRequest
+@using SurfaceListMissionConversationsResponse = ForgeMission.Application.Transport.ListMissionConversationsResponse
+@using SurfaceCreateMissionConversationRequest = ForgeMission.Application.Transport.CreateMissionConversationRequest
+@using SurfaceCreateMissionConversationResponse = ForgeMission.Application.Transport.CreateMissionConversationResponse
 @inject IApplicationChannel ApplicationChannel
 @implements IAsyncDisposable
 
@@ -11,10 +17,16 @@
 }
 else
 {
-    <div class="workbench">
-        <WorkbenchRail Selected="view" SelectedChanged="ChangeViewAsync" />
+    <div class="workbench" data-surface-theme="forge-desktop-dark">
+        <WorkbenchRail ProjectTitle="@project.Title" Selected="view" SelectedChanged="ChangeViewAsync" />
         <section class="wb-content">
-            <header class="wb-header"><h1>@HeaderTitle</h1><p>@project.Title</p></header>
+            <header class="wb-header">
+                <div class="wb-header-text"><h1>@HeaderTitle</h1><p>@HeaderSubtitle</p></div>
+                @if (view == WorkbenchView.Missions && !newConversationOpen)
+                {
+                    <button type="button" class="wb-header-action" @onclick="OpenNewConversationAsync">New conversation</button>
+                }
+            </header>
             @if (connectionError is not null) { <div class="connection-banner"><span>Connection lost: @connectionError</span><button type="button" @onclick="RestartSubscriptionAsync">Retry</button></div> }
             <main class="wb-document">
                 @switch (view)
@@ -32,16 +44,11 @@ else
                         <RunTraceView Run="selectedRun" Events="traceEvents" AfterSequence="traceAfter" ThroughSequence="traceThrough" Error="traceError" Back="BackToMissions" Earlier="EarlierTraceAsync" Later="LaterTraceAsync" Latest="LatestTraceAsync" />
                         break;
                     default:
-                        <MissionsView Page="runs" Loading="loadingState" OlderPage="@(runCursor is not null)" HistoryError="historyError" HasLegacyHistory="@(missionState?.Missions.HasLegacyHistory ?? false)" TraceRequested="OpenTraceAsync" InstructionRequested="ShowInstructionAsync" Refresh="LatestRunsAsync" Older="OlderRunsAsync" Latest="LatestRunsAsync" />
-                        @if (expandedInstruction is not null) { <section class="instruction-detail"><button type="button" @onclick="HideInstruction">Hide instruction</button><pre>@expandedInstruction</pre></section> }
-                        @if (newRunsAvailable) { <button type="button" class="new-runs" @onclick="LatestRunsAsync">New runs available</button> }
+                        <MissionsLandingView Conversations="conversations" Error="conversationsError" Retry="LoadConversationsAsync" Panel="@NewConversationPanel" />
                         break;
                 }
             </main>
-            @if (view == WorkbenchView.Missions && missionState is { } state)
-            {
-                <footer class="composer-bar"><MissionComposer Missions="state.Missions" Submission="state.Submission" Error="submissionError" HistoryAvailable="@HistoryAvailable" ActiveRun="@HasActiveRun" Busy="submissionBusy" MissionSelected="SelectMissionAsync" Run="StartRunAsync" Retry="RetrySubmissionAsync" /></footer>
-            }
+            <p class="wb-announce" role="status" aria-live="polite">@announcement</p>
         </section>
     </div>
 }
@@ -54,20 +61,27 @@ else
     private ProjectRunPage? runs;
     private ProjectRunCursor? runCursor;
     private ProjectOperationError? historyError;
-    private ProjectOperationError? submissionError;
-    private bool loadingState;
-    private bool submissionBusy;
-    private bool newRunsAvailable;
     private ProjectWorkbenchProjection? workbench;
     private ProjectOperationError? workbenchError;
     private ProjectDocument? document;
     private ProjectOperationError? documentError;
+    // Missions landing (45.3 task 3A). Presentation state only: what was returned, what is
+    // selected, what is in flight. No durable or Project fact is cached or derived here.
+    private IReadOnlyList<MissionConversationListItem>? conversations;
+    private ProjectOperationError? conversationsError;
+    private IReadOnlyList<ApprovedMissionVersionOption>? approvedVersions;
+    private ProjectOperationError? approvedVersionsError;
+    private ProjectOperationError? createError;
+    private bool newConversationOpen;
+    private bool creating;
+    private Guid createCommandId;
+    private string? announcement;
+
     private ProjectRunDetail? selectedRun;
     private ProjectRunEventPage? traceEvents;
     private ProjectOperationError? traceError;
     private long traceAfter;
     private long traceThrough;
-    private string? expandedInstruction;
 
     private string goalInput = string.Empty;
     private string titleInput = string.Empty;
@@ -84,9 +98,16 @@ else
     private int generation;
     private string? connectionError;
 
-    private bool HistoryAvailable => missionState?.Runs is not null && historyError is null && !missionState.Runs.Synchronizing;
-    private bool HasActiveRun => runs?.Runs.Any(run => !Terminal(run.Status)) == true;
     private string HeaderTitle => view switch { WorkbenchView.Explorer or WorkbenchView.Document => "Project Explorer", WorkbenchView.Settings => "Settings", WorkbenchView.RunTrace => "Run trace", _ => "Missions" };
+    private string HeaderSubtitle => view == WorkbenchView.Missions
+        ? "Review pinned mission versions and start a new conversation."
+        : project?.Title ?? string.Empty;
+
+    private RenderFragment? NewConversationPanel => newConversationOpen
+        ? @<NewMissionConversationPanel Options="approvedVersions" OptionsError="approvedVersionsError" Error="createError"
+                                        Busy="creating" Start="StartConversationAsync" Cancel="CloseNewConversation"
+                                        RetryOptions="LoadApprovedVersionsAsync" />
+        : null;
 
     private void ToggleOpenFolder() { showOpenFolder = !showOpenFolder; launcherError = null; }
     private async Task DraftProjectAsync()
@@ -127,17 +148,27 @@ else
         project = opened.Project; sessionId = opened.SessionId; view = WorkbenchView.Missions;
         lifetime = new CancellationTokenSource();
         subscription = ConsumeEventsAsync(generation, lifetime.Token);
+        ResetMissionsLanding();
         await RefreshStateAsync(forceLatest: true);
+        await LoadConversationsAsync();
+        await LoadApprovedVersionsAsync();
+    }
+
+    private void ResetMissionsLanding()
+    {
+        conversations = null; conversationsError = null;
+        approvedVersions = null; approvedVersionsError = null;
+        createError = null; announcement = null;
+        newConversationOpen = false; creating = false; createCommandId = Guid.Empty;
     }
     private async Task ChangeViewAsync(WorkbenchView next)
     {
-        view = next; expandedInstruction = null;
+        view = next;
         if (next == WorkbenchView.Explorer) await LoadWorkbenchAsync();
     }
     private async Task RefreshStateAsync(bool forceLatest = false)
     {
         if (sessionId is null || lifetime is null) return;
-        loadingState = true;
         try
         {
             var response = await ApplicationChannel.SendAsync<GetProjectMissionStateRequest, GetProjectMissionStateResponse>(new(sessionId), lifetime.Token);
@@ -145,42 +176,114 @@ else
             if (response.State is not { } state) return;
             missionState = state;
             historyError = state.HistoryError;
-            if (state.Runs is { } page && (forceLatest || runCursor is null)) { runs = page; runCursor = null; newRunsAvailable = false; }
-            else if (state.Runs is not null) newRunsAvailable = true;
+            if (state.Runs is { } page && (forceLatest || runCursor is null)) { runs = page; runCursor = null; }
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         catch (Exception exception) { historyError = new(ProjectOperationErrorCode.HistoryUnavailable, exception.Message); }
-        finally { loadingState = false; await InvokeAsync(StateHasChanged); }
+        finally { await InvokeAsync(StateHasChanged); }
     }
-    private async Task SelectMissionAsync(string mission)
+    // ── Missions landing (45.3 task 3A) ────────────────────────────────────────────────────
+    // Every branch below renders what Application returned. Nothing here decides which version is
+    // approved, what a profile permits, or whether an attachment exists.
+
+    private async Task LoadConversationsAsync()
     {
         if (sessionId is null || lifetime is null) return;
-        var response = await ApplicationChannel.SendAsync<SelectProjectMissionRequest, SelectProjectMissionResponse>(new(sessionId, mission), lifetime.Token);
-        if (response.Error is { } error) submissionError = error;
-        else if (response.Missions is { } missions && missionState is { } state) { missionState = state with { Missions = missions }; submissionError = null; }
-    }
-    private async Task StartRunAsync(string input)
-    {
-        if (sessionId is null || lifetime is null || missionState is null) return;
-        submissionBusy = true;
-        Guid? previous = missionState.Submission is { State: ProjectSubmissionState.Rejected } prior ? prior.CommandId : null;
+        conversationsError = null;
         try
         {
-            var response = await ApplicationChannel.SendAsync<ForgeMission.Application.Transport.StartProjectMissionRunRequest, ProjectSubmissionResponse>(new ForgeMission.Application.Transport.StartProjectMissionRunRequest(sessionId, Guid.NewGuid(), previous, input), lifetime.Token);
-            submissionError = response.Error;
-            await RefreshStateAsync();
+            var response = await ApplicationChannel.SendAsync<SurfaceListMissionConversationsRequest, SurfaceListMissionConversationsResponse>(new(sessionId), lifetime.Token);
+            if (response.Error is { } error) { conversationsError = error; return; }
+            conversations = response.Conversations ?? [];
         }
-        catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
-        finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception) { conversationsError = new(ProjectOperationErrorCode.HistoryUnavailable, exception.Message); }
+        finally { await InvokeAsync(StateHasChanged); }
     }
-    private async Task RetrySubmissionAsync(Guid commandId)
+
+    private async Task LoadApprovedVersionsAsync()
     {
         if (sessionId is null || lifetime is null) return;
-        submissionBusy = true;
-        try { var response = await ApplicationChannel.SendAsync<RetryProjectMissionSubmissionRequest, ProjectSubmissionResponse>(new(sessionId, commandId), lifetime.Token); submissionError = response.Error; await RefreshStateAsync(); }
-        catch (Exception exception) { submissionError = new(ProjectOperationErrorCode.SubmissionUncertain, exception.Message); }
-        finally { submissionBusy = false; await InvokeAsync(StateHasChanged); }
+        approvedVersionsError = null;
+        try
+        {
+            var response = await ApplicationChannel.SendAsync<ListApprovedMissionVersionsRequest, ListApprovedMissionVersionsResponse>(new(sessionId), lifetime.Token);
+            if (response.Error is { } error) { approvedVersionsError = error; return; }
+            approvedVersions = response.Options ?? [];
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception) { approvedVersionsError = new(ProjectOperationErrorCode.HistoryUnavailable, exception.Message); }
+        finally { await InvokeAsync(StateHasChanged); }
     }
+
+    private async Task OpenNewConversationAsync()
+    {
+        newConversationOpen = true; createError = null; announcement = null;
+        // A new command identity per opening, so a retry inside one attempt is idempotent while a
+        // fresh attempt is genuinely a fresh create.
+        createCommandId = Guid.NewGuid();
+        await LoadApprovedVersionsAsync();
+    }
+
+    private void CloseNewConversation()
+    {
+        newConversationOpen = false; createError = null; creating = false; createCommandId = Guid.Empty;
+    }
+
+    /// <summary>Creating and attaching are two outcomes, and this reports them as two. A durable
+    /// conversation that could not attach local hands is still a real conversation: it is listed
+    /// and named, never hidden, and acknowledgement is never retried on its own.</summary>
+    private async Task StartConversationAsync(ApprovedMissionVersionOption option)
+    {
+        if (sessionId is null || lifetime is null || creating) return;
+        creating = true; createError = null; announcement = null;
+        if (createCommandId == Guid.Empty) createCommandId = Guid.NewGuid();
+        try
+        {
+            var created = await ApplicationChannel.SendAsync<SurfaceCreateMissionConversationRequest, SurfaceCreateMissionConversationResponse>(
+                new(sessionId, option.MissionId, createCommandId, option.MissionVersionId), lifetime.Token);
+            if (created.Error is { } refused)
+            {
+                createError = refused;
+                await LoadApprovedVersionsAsync();
+                return;
+            }
+            if (created.Created is not { } conversation) return;
+
+            var attached = await AcknowledgeAsync(conversation);
+            CloseNewConversation();
+            announcement = attached
+                ? $"Conversation created on {option.MissionName} v{option.VersionNumber}."
+                : "Conversation created. Local access could not be confirmed. Open it later to reconnect its fixed access.";
+            await LoadConversationsAsync();
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            // The request left; its outcome did not come back. The same command id and the same
+            // selection are kept, so pressing Start again asks the identical question and Host
+            // idempotency answers it once.
+            createError = new(ProjectOperationErrorCode.SubmissionUncertain,
+                $"We could not confirm whether the conversation was created. Retry. ({exception.Message})");
+        }
+        finally { creating = false; await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task<bool> AcknowledgeAsync(CreatedMissionConversation conversation)
+    {
+        if (sessionId is null || lifetime is null) return false;
+        var approval = conversation.Approval;
+        try
+        {
+            var response = await ApplicationChannel.SendAsync<AcknowledgeMissionHandsRequest, AcknowledgeMissionHandsResponse>(
+                new(sessionId, conversation.ConversationId, approval.MissionVersionId, approval.VersionNumber,
+                    approval.DefinitionHash, ProfileAccepted: true), lifetime.Token);
+            return response.AttachmentId is not null;
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { return false; }
+        catch { return false; }
+    }
+
     private async Task OlderRunsAsync()
     {
         if (sessionId is null || lifetime is null || runs?.Next is not { } next) return;
@@ -208,13 +311,6 @@ else
         document = response.Document; documentError = response.Error;
     }
     private Task BackToExplorer() { view = WorkbenchView.Explorer; return Task.CompletedTask; }
-    private async Task ShowInstructionAsync(Guid runId)
-    {
-        if (sessionId is null || lifetime is null) return;
-        var response = await ApplicationChannel.SendAsync<GetProjectRunRequest, GetProjectRunResponse>(new(sessionId, runId), lifetime.Token);
-        if (response.Run is { } detail) expandedInstruction = detail.Input; else historyError = response.Error;
-    }
-    private void HideInstruction() => expandedInstruction = null;
     private async Task OpenTraceAsync(Guid runId)
     {
         if (sessionId is null || lifetime is null) return;
@@ -274,7 +370,7 @@ else
 <style>
 .shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
 .shell-header { min-height: var(--wb-header-height); display: flex; align-items: center; padding: 0 var(--wb-page-inset) 0 var(--wb-header-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .brand { display: flex; align-items: baseline; gap: var(--space-4); } .brand h1, .subtitle { margin: 0; } .brand h1 { color: var(--accent); font-size: var(--font-size-display); } .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); } .subtitle { font-size: var(--font-size-title); }
-.workbench { display: grid; grid-template-columns: var(--wb-rail-width) minmax(0, 1fr); grid-template-areas: "rail content"; min-height: 100vh; min-height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font-sans); } .wb-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-strong); } .wb-header { flex: none; min-width: 0; padding: var(--space-3) var(--wb-page-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .wb-header h1, .wb-header p { margin: 0; overflow-wrap: anywhere; } .wb-header h1 { font-size: var(--font-size-title); } .wb-header p { color: var(--text-muted); font-size: var(--font-size-mono); }
-.wb-document { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; padding: var(--wb-page-inset); } .composer-bar { flex: none; padding: var(--space-3) var(--wb-page-inset) calc(var(--space-3) + var(--safe-bottom)); border-top: 1px solid var(--border); background: var(--bg); } .connection-banner { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--wb-page-inset); border-bottom: 1px solid var(--danger-border); background: var(--danger-bg); color: var(--danger); font-size: var(--font-size-meta); } .connection-banner button, .instruction-detail button, .new-runs { border: none; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; } .instruction-detail { width: var(--wb-run-content-width); max-width: 100%; align-self: center; margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); } .instruction-detail pre { max-height: 12rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; } .new-runs { align-self: center; margin-top: var(--space-3); }
+.workbench { display: grid; grid-template-columns: var(--wb-rail-width) minmax(0, 1fr); grid-template-areas: "rail content"; min-height: 100vh; min-height: 100dvh; height: 100vh; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font-sans); } .wb-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-strong); } .wb-header { flex: none; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; justify-content: space-between; min-width: 0; min-height: var(--ml-header-height, auto); padding: var(--space-2) var(--wb-page-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .wb-header-text { min-width: 0; } .wb-header h1, .wb-header p { margin: 0; overflow-wrap: anywhere; } .wb-header h1 { font-size: var(--font-size-title); } .wb-header p { color: var(--text-muted); font-size: var(--font-size-mono); } .wb-header-action { flex: none; min-height: var(--ml-action-height); padding: 0 var(--space-4); border: none; border-radius: var(--radius); background: var(--accent); color: var(--accent-contrast); font: inherit; font-size: var(--font-size-label); font-weight: 700; cursor: pointer; } .wb-header-action:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.wb-document { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; padding: var(--ml-region-top, var(--wb-page-inset)) var(--wb-page-inset) calc(var(--wb-page-inset) + var(--safe-bottom)); } .wb-announce { flex: none; margin: 0; padding: 0 var(--wb-page-inset); color: var(--text-muted); font-size: var(--font-size-meta); } .wb-announce:empty { display: none; } .connection-banner { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--wb-page-inset); border-bottom: 1px solid var(--danger-border); background: var(--danger-bg); color: var(--danger); font-size: var(--font-size-meta); } .connection-banner button { border: none; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 @@media (max-width: 639px) { .workbench { grid-template-columns: minmax(7rem, 28%) minmax(0, 1fr); } }
 </style>

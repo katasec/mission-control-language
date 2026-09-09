@@ -34,6 +34,11 @@ A change belongs here only if it advances rendering, navigation, focus, or view 
 - [`Program`](Program.cs) installs the scoped [`IApplicationChannel`](../ForgeMission.Application.Transport/IApplicationChannel.cs).
 - [`Home`](Pages/Home.razor) is the routed application surface and subscribes to application events.
 - [`WorkbenchView`](Components/WorkbenchView.cs) names presentation-only view states.
+- [`MissionsLandingView`](Components/MissionsLandingView.razor) is the Missions destination: durable
+  mission conversations as informational rows, with no control that would imply opening one.
+- [`NewMissionConversationPanel`](Components/NewMissionConversationPanel.razor) chooses an Approved
+  version and repeats the access it fixes read-only. It contains no control that could select,
+  narrow, or widen a profile.
 - [`ConversationTranscriptView`](Components/ConversationTranscriptView.razor) renders one durable
   conversation transcript projection — user, participant, activity, approval, tool and status rows.
 - [`ConversationMarkdownRenderer`](Components/ConversationMarkdownRenderer.cs) is the **sole** Markdig

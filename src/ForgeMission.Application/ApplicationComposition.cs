@@ -60,6 +60,17 @@ public interface IInteractionService
     ConfirmationResponse Respond(ConfirmationResponseRequest request);
 }
 
+/// <summary>The Missions landing's product actions (45.3 task 3A). Each answers with rendered
+/// facts and typed failures only: no Project home, manifest, durable launch, Host client, Bob
+/// handle, tool declaration, or attachment detail crosses this boundary, so a TUI can invoke the
+/// same three with the same authorization, outcome, and failure.</summary>
+public interface IMissionConversationService
+{
+    Task<ListMissionConversationsResponse> ListAsync(ListMissionConversationsRequest request, CancellationToken ct);
+    Task<ListApprovedMissionVersionsResponse> ListApprovedVersionsAsync(ListApprovedMissionVersionsRequest request, CancellationToken ct);
+    Task<CreateMissionConversationResponse> CreateAsync(CreateMissionConversationRequest request, CancellationToken ct);
+}
+
 public interface IMissionHandsConversationService
 {
     Task<AcknowledgeMissionHandsResponse> AcknowledgeAsync(AcknowledgeMissionHandsRequest request, CancellationToken ct);
@@ -85,7 +96,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
 
         var projects = new ProjectService(_sessions);
         var missionVersions = new MissionVersionService(projects);
-        var missionConversations = new MissionConversationService(missionVersions, clients);
+        var missionConversations = new MissionConversationService(missionVersions, clients, _sessions);
         var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
         var submissions = new MissionSubmissionService(projects, clients, _sessions, hands);
         var content = new ProjectContentService(projects, _sessions);
@@ -111,7 +122,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
     // Surface-neutral owner interface. No Application.Transport DTO or route exists until 45.4.
     internal IMissionVersionService MissionVersions { get; }
 
-    internal MissionConversationService MissionConversations { get; }
+    public IMissionConversationService MissionConversations { get; }
 
     public IApplicationSessionService Sessions { get; }
 

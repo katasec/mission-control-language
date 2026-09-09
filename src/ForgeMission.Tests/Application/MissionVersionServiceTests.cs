@@ -154,6 +154,97 @@ public sealed class MissionVersionServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ApprovedVersionList_OffersOnlyVersionsAnOperatorCouldActuallyStart()
+    {
+        var project = CreatePackagedProject();
+        var published = await PublishAsync(project.Home, "Review");
+        // A second mission never leaves candidate, and a third never leaves draft. Neither is
+        // startable, so neither may appear in a list whose whole purpose is what can be started.
+        var candidateOnly = await _versions.CreateDraftAsync(project.Home, "Candidate", Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        await _versions.PromoteCandidateAsync(project.Home, candidateOnly.MissionId, candidateOnly.Draft!.DraftId, candidateOnly.Draft.Revision, CancellationToken.None);
+        await _versions.CreateDraftAsync(project.Home, "Draft", Source, MissionHandsProfile.NoHands, CancellationToken.None);
+
+        var approved = await _versions.ListApprovedVersionsAsync(project.Home, CancellationToken.None);
+
+        var only = Assert.Single(approved);
+        Assert.Equal("Review", only.MissionName);
+        Assert.Equal(published.Version.MissionVersionId, only.MissionVersionId);
+        Assert.Equal(published.Version.DefinitionHash, only.DefinitionHash);
+        Assert.Equal(MissionHandsProfile.NoHands, only.Profile);
+    }
+
+    [Fact]
+    public async Task ApprovedVersionList_DropsAMissionOnceItsApprovedVersionIsSuperseded()
+    {
+        var project = CreatePackagedProject();
+        var first = await PublishAsync(project.Home, "Review");
+        var second = await PublishNextAsync(project.Home, first.MissionId);
+
+        var approved = await _versions.ListApprovedVersionsAsync(project.Home, CancellationToken.None);
+
+        // One row, naming the newly approved version: the superseded one is no longer startable.
+        var only = Assert.Single(approved);
+        Assert.Equal(second.MissionVersionId, only.MissionVersionId);
+        Assert.Equal(2, only.VersionNumber);
+    }
+
+    [Fact]
+    public async Task VersionIdentities_ResolveASupersededVersion_ButNotAnUnknownOne()
+    {
+        var project = CreatePackagedProject();
+        var first = await PublishAsync(project.Home, "Review");
+        var second = await PublishNextAsync(project.Home, first.MissionId);
+        var stranger = Guid.NewGuid();
+
+        var identities = await _versions.ResolveVersionIdentitiesAsync(project.Home,
+            [first.Version.MissionVersionId, second.MissionVersionId, stranger], CancellationToken.None);
+
+        // A conversation pinned to the superseded version is still a conversation about "Review".
+        Assert.Equal("Review", identities[first.Version.MissionVersionId].MissionName);
+        Assert.Equal(1, identities[first.Version.MissionVersionId].VersionNumber);
+        Assert.Equal(first.MissionId, identities[first.Version.MissionVersionId].MissionId);
+        Assert.Equal(2, identities[second.MissionVersionId].VersionNumber);
+        Assert.False(identities.ContainsKey(stranger));
+    }
+
+    [Fact]
+    public async Task VersionIdentities_ResolveByPinnedVersion_NotByWhicheverVersionIsActiveNow()
+    {
+        var project = CreatePackagedProject();
+        var reviewed = await PublishAsync(project.Home, "Review");
+        var other = await PublishAsync(project.Home, "Other");
+
+        var identities = await _versions.ResolveVersionIdentitiesAsync(project.Home,
+            [reviewed.Version.MissionVersionId], CancellationToken.None);
+
+        Assert.Equal("Review", Assert.Single(identities).Value.MissionName);
+        Assert.NotEqual(other.MissionId, identities[reviewed.Version.MissionVersionId].MissionId);
+    }
+
+    private async Task<(Guid MissionId, MissionVersion Version)> PublishAsync(string home, string name)
+    {
+        var draft = await _versions.CreateDraftAsync(home, name, Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        var candidate = await _versions.PromoteCandidateAsync(home, draft.MissionId, draft.Draft!.DraftId, draft.Draft.Revision, CancellationToken.None);
+        return (draft.MissionId, await ApproveAsync(home, draft.MissionId, candidate));
+    }
+
+    private async Task<MissionVersion> PublishNextAsync(string home, Guid missionId)
+    {
+        var draft = await _versions.CreateNextDraftAsync(home, missionId, Source + "\n", MissionHandsProfile.NoHands, CancellationToken.None);
+        var candidate = await _versions.PromoteCandidateAsync(home, missionId, draft.DraftId, draft.Revision, CancellationToken.None);
+        return await ApproveAsync(home, missionId, candidate);
+    }
+
+    private async Task<MissionVersion> ApproveAsync(string home, Guid missionId, MissionVersion candidate)
+    {
+        var evaluationCase = new EvaluationCase(Guid.NewGuid(), "input", "", "", EvaluationOutcome.Succeeded, [], [], 1);
+        candidate = await _versions.SaveCaseAsync(home, missionId, candidate.MissionVersionId, evaluationCase, CancellationToken.None);
+        await _versions.RecordCompletionAsync(home, missionId, candidate.MissionVersionId, evaluationCase.EvaluationCaseId,
+            candidate.CandidateRevision, candidate.DefinitionHash, EvaluationOutcome.Succeeded, "observed", null, CancellationToken.None);
+        return await _versions.PublishAsync(home, missionId, candidate.MissionVersionId, CancellationToken.None);
+    }
+
+    [Fact]
     public async Task ANewDraftAfterApproval_PromotesTheNextVersionWithItsApprovedParent()
     {
         var project = CreatePackagedProject();

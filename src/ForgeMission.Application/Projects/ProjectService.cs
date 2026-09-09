@@ -87,13 +87,36 @@ internal sealed class ProjectService : IProjectService
             return manifest.ApprovedMissionLaunches?.SingleOrDefault(launch =>
                 launch.MissionVersionId == missionVersionId &&
                 launch.VersionNumber == versionNumber &&
-                string.Equals(launch.DefinitionHash, definitionHash, StringComparison.Ordinal));
+                string.Equals(launch.DefinitionHash, definitionHash, StringComparison.Ordinal))
+                ?? ApprovedDefinitionLaunch(manifest, missionVersionId, versionNumber, definitionHash);
         }
         catch (ProjectOperationException)
         {
             return null;
         }
     }
+
+    /// <summary>The schema-5 half of the same question. <c>ApprovedMissionLaunches</c> is the
+    /// schema-4 compatibility lane and has no writer in the authored lifecycle, so a version
+    /// published through <c>MissionVersionService.PublishAsync</c> lives only in
+    /// <c>MissionDefinitions</c> — without this it could never be acknowledged at all. The bar is
+    /// the same one the legacy lane sets and no lower: exact version ID, version number and
+    /// definition hash, genuinely Approved, and still the definition's active approved version.
+    /// Nothing here writes, migrates, or changes a schema.</summary>
+    private static MissionVersionLaunch? ApprovedDefinitionLaunch(
+        ProjectManifest manifest, Guid missionVersionId, int versionNumber, string definitionHash) =>
+        (manifest.MissionDefinitions ?? [])
+            .Where(definition => definition.ActiveApprovedVersionId == missionVersionId)
+            .SelectMany(definition => definition.Versions ?? [])
+            .Where(version =>
+                version.MissionVersionId == missionVersionId &&
+                version.VersionNumber == versionNumber &&
+                version.State == MissionVersionState.Approved &&
+                string.Equals(version.DefinitionHash, definitionHash, StringComparison.Ordinal))
+            .Select(version => new MissionVersionLaunch(version.MissionVersionId, version.VersionNumber,
+                version.DefinitionHash, version.DefinitionText, version.CapabilityProfile,
+                version.ApprovedAtUtc ?? version.CreatedAtUtc, version.Package))
+            .SingleOrDefault();
 
     /// <summary>Pure: what a create would use, for display before confirmation. It performs no
     /// filesystem work at all — not even a collision probe, which would be both an access and an
