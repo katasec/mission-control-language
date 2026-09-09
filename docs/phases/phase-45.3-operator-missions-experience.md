@@ -1,6 +1,6 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** design-ready, 2026-09-09. Implement only Task 3A after a bounded implementer plan passes Codex review. The previous all-in-one surface plan is replaced because it was too broad for useful visual diagnosis.
+> **Status:** accepted, 2026-09-09. Codex completed controlled visual review and the zero-argument packaged Desktop journey: a new Project authored, evaluated, published, and started exactly one pinned Approved mission conversation. The next transcript/turn presentation is outside this slice.
 
 ## Why this slice exists
 

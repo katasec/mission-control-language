@@ -1,0 +1,183 @@
+/* The Missions landing (45.3 task 3A). Every value here resolves through the forge-desktop-dark
+   token map in forge.css: no literal colour, radius, type size, or reference geometry. */
+
+.ml {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ml-column-gap);
+    /* Both columns share one height, as the reference draws them: the list grows with its rows
+       and the panel keeps its Start action at the foot rather than floating mid-page. The height
+       is the reference's own, capped by what the document actually has, so a short window
+       contracts instead of overflowing. */
+    align-items: stretch;
+    align-content: stretch;
+    width: 100%;
+    min-width: 0;
+    flex: none;
+    height: min(var(--ml-region-max), 100%);
+    min-height: 0;
+}
+
+/* The one structural rearrangement this surface needs: the reference's right column becomes a
+   block below the list when there is not room for both. It is a real layout change, not a way to
+   avoid sizing a fixed card. The column is reserved only while the panel is actually open, so a
+   closed panel never leaves the list short of a gap it cannot use. */
+@media (min-width: 60rem) {
+    .ml-with-panel {
+        grid-template-columns: minmax(0, 1fr) var(--ml-panel-width);
+    }
+}
+
+/* The panel is a child component and carries its own scoped-CSS attribute, so it styles and
+   sizes itself; this file only gives it a column to live in. */
+.ml-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.ml-list-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--ml-block-pad);
+    border-bottom: 1px solid var(--border);
+}
+
+.ml-list-head h2 {
+    margin: 0;
+    font-size: var(--font-size-label);
+    color: var(--text);
+}
+
+.ml-list-head p {
+    margin: 0;
+    font-size: var(--font-size-meta);
+    color: var(--text-muted);
+}
+
+.ml-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--ml-block-pad);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.ml-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    min-width: 0;
+}
+
+/* A row is text. It has no cursor, hover, focus, or transition, because none of them would be
+   honest until opening a conversation exists. */
+.ml-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: start;
+    padding: var(--ml-row-pad) var(--ml-block-pad);
+    border-bottom: 1px solid var(--border);
+    min-width: 0;
+}
+
+.ml-row:last-child {
+    border-bottom: none;
+}
+
+.ml-row-mission {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.ml-row-name {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.ml-row-note {
+    margin: 0;
+    flex-basis: 100%;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    overflow-wrap: anywhere;
+}
+
+.ml-pinned {
+    flex: none;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--success-bg);
+    color: var(--success);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.ml-row-updated {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    white-space: nowrap;
+}
+
+.ml-state {
+    margin: 0;
+    padding: var(--ml-block-pad);
+    color: var(--text-muted);
+    font-size: var(--font-size-label);
+}
+
+.ml-state-error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    color: var(--danger);
+}
+
+.ml-state-error p {
+    margin: 0;
+    font-size: var(--font-size-label);
+}
+
+.ml-state-error button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ml-state-error button:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
+}
+
+.ml-panel-slot {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}

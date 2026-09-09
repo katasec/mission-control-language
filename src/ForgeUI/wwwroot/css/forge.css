@@ -472,6 +472,180 @@
   --focus-ring: 0 0 0 3px rgba(77, 155, 255, 0.35);
 }
 
+/* 2c. Design tokens — forge-desktop-dark product theme -------------------- */
+/* The Missions surface's visual language (45.3 task 3A), selected with
+   data-surface-theme="forge-desktop-dark" on the Workbench element — the same attribute the
+   Workbench theme uses, one level down, so a surface picks its theme without a second convention.
+   It is orthogonal to data-theme, which keeps its light/dark colour-mode meaning.
+
+   The selectors carry no :root, because this theme is chosen at the Workbench boundary rather
+   than the document. Custom properties inherit, so anything this block does not restate — the
+   --wb-* layout geometry above, radii, spacing, type — still resolves from the document theme.
+   That is deliberate: this task changes a palette, not a layout system.
+
+   Provenance, against docs/images/phase-45/task-3a-missions-landing-after.svg:
+     S  sampled from the binding after artifact
+     D  derived from a sampled value by the relationship the default theme already uses
+     N  no reference evidence — the artifact draws no failure or warning state
+     A  an accessibility override of a sampled value */
+
+/* Light colour mode. The binding artifact is dark, so these are the warm light counterpart the
+   design system requires of a named theme; they are held to contrast, not to the artifact. */
+[data-surface-theme="forge-desktop-dark"] {
+  color-scheme: light;
+
+  --bg:               #faf7f3;   /* D */
+  --surface-sunken:   #f3ede5;   /* D */
+  --surface:          #ffffff;   /* D */
+  --surface-hover:    #f6f1ea;   /* D */
+  --surface-active:   #efe7dc;   /* D */
+
+  --border:           #e6ded2;   /* D */
+  --border-strong:    #d3c7b7;   /* D */
+
+  --text:             #241d16;   /* D */
+  --text-muted:       #6a5c4d;   /* D */
+  --text-subtle:      #7a6a59;   /* A — the sampled subtle ink is a dark-mode value */
+
+  --accent:           #b4560f;   /* A — #ff9a4a reaches 1.9 on white; this holds the ember hue at 4.6 */
+  --accent-hover:     #96450a;   /* D */
+  --accent-soft:      #fbeee2;   /* D */
+  --accent-contrast:  #ffffff;   /* D */
+  --ink:              #b4560f;   /* D */
+  --ink-hover:        #96450a;   /* D */
+  --ink-contrast:     #ffffff;   /* D */
+
+  --success:          #2f6b39;   /* N */
+  --success-bg:       #e9f5ea;   /* N */
+  --success-border:   #4e9a5b;   /* N */
+  --danger:           #a5341f;   /* N */
+  --danger-bg:        #fbecea;   /* N */
+  --danger-border:    #d8705c;   /* N */
+  --warning:          #8a5a06;   /* N */
+  --warning-bg:       #fdf3e2;   /* N */
+
+  --wb-rail-surface:          #201c17;   /* S — the rail is dark in both modes, as the artifact draws it */
+  --wb-rail-surface-selected: #352b20;   /* S */
+  --wb-rail-text:             #f4ede5;   /* S */
+  --wb-rail-text-muted:       #bcb3a8;   /* S */
+  --wb-rail-marker:           #ff9a4a;   /* S */
+
+  --focus-ring: 0 0 0 3px rgba(180, 86, 15, 0.32);   /* D */
+
+  /* Landing geometry, theme-owned so no component hard-codes a reference measurement. Every
+     value below is a bounded fluid ramp that lands EXACTLY on its figure in
+     docs/images/phase-45/task-3a-missions-landing-after.svg at 1440x960, and contracts toward a
+     sane floor at smaller frames. Horizontal terms follow width (vw), vertical follow height
+     (vh), as the Workbench map's axis rule already fixes.
+
+     Rail and page inset are restated here rather than inherited: this task owns the reference's
+     rail/header/list/panel composition, and the Workbench map's 192px rail and 23px inset would
+     put every column 22-23px out of place. */
+  --wb-rail-width:     clamp(10rem, 14.86vw, 13.375rem);  /* S — 214px at 1440 */
+  --wb-page-inset:     clamp(16px, calc(2.67px + 1.481vw), 28px);  /* S — 24px at 1440 */
+  --ml-header-height:  clamp(56px, 8.02vh, 77px);         /* S — 77px band at 960 */
+  --ml-region-top:     clamp(12px, 2.29vh, 22px);         /* S — panels start at y=99 */
+  --ml-region-max:     clamp(360px, 76.67vh, 736px);      /* S — 736px panel height at 960 */
+  --ml-column-gap:     clamp(16px, 1.944vw, 28px);        /* S — 980 to 1008 */
+  --ml-panel-width:    clamp(18rem, 28.33vw, 25.5rem);    /* S — 408px at 1440 */
+  --ml-block-pad:      clamp(12px, 1.25vw, 20px);         /* S — 1008 to 1026 */
+  --ml-row-pad:        clamp(var(--space-3), 1.4vh, var(--space-4));  /* D */
+  --ml-action-height:  clamp(36px, 4.79vh, 46px);         /* S — Start is 46px tall */
+  --ml-actions-bottom: clamp(16px, 3.125vh, 34px);        /* S — Start sits at y=759 */
+}
+
+/* Dark colour mode: the binding artifact itself. data-theme is the ROOT's colour-mode hook and
+   this surface theme sits on a nested element, so the mode condition must be tested on :root and
+   the surface on its descendant. Testing data-theme on the nested element (which never carries
+   it) would make the automatic map always win and the forced maps never match. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-surface-theme="forge-desktop-dark"] {
+    color-scheme: dark;
+
+    --bg:               #181511;   /* S */
+    --surface-sunken:   #201c17;   /* S */
+    --surface:          #211d18;   /* S */
+    --surface-hover:    #272219;   /* D */
+    --surface-active:   #2a241e;   /* S — the artifact's fixed-access block */
+
+    --border:           #423a31;   /* S */
+    --border-strong:    #564c40;   /* D */
+
+    --text:             #f4ede5;   /* S */
+    --text-muted:       #bcb3a8;   /* S */
+    --text-subtle:      #a49b90;   /* S */
+
+    --accent:           #ff9a4a;   /* S */
+    --accent-hover:     #ffb878;   /* S — the artifact's FIXED ACCESS label tint */
+    --accent-soft:      #392a1d;   /* S */
+    --accent-contrast:  #21150c;   /* S */
+    --ink:              #ff9a4a;   /* S */
+    --ink-hover:        #ffb878;   /* S */
+    --ink-contrast:     #21150c;   /* S */
+
+    --success:          #9ee2a7;   /* S */
+    --success-bg:       #2d4931;   /* S */
+    --success-border:   #4e9a5b;   /* D */
+    --danger:           #f4a196;   /* N */
+    --danger-bg:        #3a1f1a;   /* N */
+    --danger-border:    #a5341f;   /* N */
+    --warning:          #e8c06a;   /* N */
+    --warning-bg:       #372a12;   /* N */
+
+    --wb-rail-surface:          #201c17;   /* S */
+    --wb-rail-surface-selected: #352b20;   /* S */
+    --wb-rail-text:             #f4ede5;   /* S */
+    --wb-rail-text-muted:       #bcb3a8;   /* S */
+    --wb-rail-marker:           #ff9a4a;   /* S */
+
+    --focus-ring: 0 0 0 3px rgba(255, 154, 74, 0.35);   /* D */
+  }
+}
+
+/* Dark, forced by an explicit root choice. Same values as the automatic block; a forced light
+   choice lands on the base map above and needs no counterpart. */
+:root[data-theme="dark"] [data-surface-theme="forge-desktop-dark"] {
+  color-scheme: dark;
+
+  --bg:               #181511;
+  --surface-sunken:   #201c17;
+  --surface:          #211d18;
+  --surface-hover:    #272219;
+  --surface-active:   #2a241e;
+
+  --border:           #423a31;
+  --border-strong:    #564c40;
+
+  --text:             #f4ede5;
+  --text-muted:       #bcb3a8;
+  --text-subtle:      #a49b90;
+
+  --accent:           #ff9a4a;
+  --accent-hover:     #ffb878;
+  --accent-soft:      #392a1d;
+  --accent-contrast:  #21150c;
+  --ink:              #ff9a4a;
+  --ink-hover:        #ffb878;
+  --ink-contrast:     #21150c;
+
+  --success:          #9ee2a7;
+  --success-bg:       #2d4931;
+  --success-border:   #4e9a5b;
+  --danger:           #f4a196;
+  --danger-bg:        #3a1f1a;
+  --danger-border:    #a5341f;
+  --warning:          #e8c06a;
+  --warning-bg:       #372a12;
+
+  --wb-rail-surface:          #201c17;
+  --wb-rail-surface-selected: #352b20;
+  --wb-rail-text:             #f4ede5;
+  --wb-rail-text-muted:       #bcb3a8;
+  --wb-rail-marker:           #ff9a4a;
+
+  --focus-ring: 0 0 0 3px rgba(255, 154, 74, 0.35);
+}
+
 /* 3. Base / reset -------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; padding: 0; }

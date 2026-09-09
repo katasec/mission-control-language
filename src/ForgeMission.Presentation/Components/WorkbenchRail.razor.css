@@ -25,15 +25,38 @@
     min-width: 0;
 }
 
-.wb-brand-name {
-    font-size: var(--font-size-title);
+.wb-brand-eyebrow {
+    color: var(--wb-rail-text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
     font-weight: 700;
-    color: var(--wb-rail-text);
+    letter-spacing: 0.14em;
 }
 
-.wb-brand-sub {
-    font-size: var(--font-size-meta);
-    color: var(--wb-rail-text-muted);
+.wb-brand-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.wb-brand-swatch {
+    flex: none;
+    width: var(--font-size-lead);
+    height: var(--font-size-lead);
+    border: 1px solid var(--wb-rail-marker);
+    border-radius: var(--radius-sm);
+    background: var(--wb-rail-surface-selected);
+}
+
+/* A long Project name wraps rather than truncating: a clipped Project title is worse than a
+   taller identity block, exactly as the destination labels below already decide. */
+.wb-brand-name {
+    min-width: 0;
+    color: var(--wb-rail-text);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 .wb-rail-group {

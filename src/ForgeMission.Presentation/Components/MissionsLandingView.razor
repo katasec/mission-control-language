@@ -1,0 +1,90 @@
+@namespace ForgeMission.Presentation.Components
+@using ForgeMission.Application.Transport
+
+@* The Missions destination (45.3 task 3A): what this Project has pinned, and the way to pin one
+   more. Rows are deliberately inert — no button, no link, no click handler, no pointer cursor.
+   Opening a conversation is a later task, and a row that looked clickable would promise it now. *@
+
+<div class="@(Panel is null ? "ml" : "ml ml-with-panel")">
+    <section class="ml-list" aria-labelledby="ml-list-heading">
+        <header class="ml-list-head">
+            <h2 id="ml-list-heading">Mission conversations</h2>
+            <p>Each conversation retains its approved mission version.</p>
+        </header>
+
+        @if (Error is not null)
+        {
+            <div class="ml-state ml-state-error" role="alert">
+                <p>Mission conversations are unavailable right now.</p>
+                <button type="button" @onclick="Retry">Retry</button>
+            </div>
+        }
+        else if (Conversations is null)
+        {
+            <p class="ml-state" aria-live="polite">Loading mission conversations…</p>
+        }
+        else if (Conversations.Count == 0)
+        {
+            <p class="ml-state">No mission conversations yet. Start one from an approved version.</p>
+        }
+        else
+        {
+            <div class="ml-columns" aria-hidden="true">
+                <span>MISSION · VERSION</span>
+                <span>UPDATED</span>
+            </div>
+            <ol class="ml-rows">
+                @foreach (var item in Conversations)
+                {
+                    <li class="ml-row" @key="item.ConversationId">
+                        <div class="ml-row-mission">
+                            @if (item.MissionName is { } name)
+                            {
+                                <p class="ml-row-name">@name v@(item.VersionNumber)</p>
+                            }
+                            else
+                            {
+                                <p class="ml-row-name">Version @item.VersionNumber</p>
+                                <p class="ml-row-note">Mission version is no longer available locally</p>
+                            }
+                            <span class="ml-pinned">PINNED</span>
+                        </div>
+                        <p class="ml-row-updated">@Updated(item.UpdatedAtUtc)</p>
+                    </li>
+                }
+            </ol>
+        }
+    </section>
+
+    @if (Panel is not null)
+    {
+        <div class="ml-panel-slot">@Panel</div>
+    }
+</div>
+
+@code {
+    /// <summary>Null while the first load is in flight; empty is a real, different answer.</summary>
+    [Parameter] public IReadOnlyList<MissionConversationListItem>? Conversations { get; set; }
+
+    [Parameter] public ProjectOperationError? Error { get; set; }
+
+    [Parameter] public EventCallback Retry { get; set; }
+
+    /// <summary>The creation panel, when it is open. Held as a fragment so this view owns the
+    /// two-column geometry while Home keeps the view state that decides whether it exists.</summary>
+    [Parameter] public RenderFragment? Panel { get; set; }
+
+    // Formatting a returned instant, not deriving a fact: Application stores and returns UTC and
+    // no relative value is persisted anywhere.
+    private static string Updated(DateTimeOffset value)
+    {
+        var days = (DateTimeOffset.UtcNow.Date - value.UtcDateTime.Date).Days;
+        return days switch
+        {
+            <= 0 => "Today",
+            1 => "Yesterday",
+            < 7 => $"{days} days ago",
+            _ => value.UtcDateTime.ToString("d MMM"),
+        };
+    }
+}

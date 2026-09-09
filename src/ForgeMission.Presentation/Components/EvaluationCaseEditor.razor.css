@@ -1,0 +1,15 @@
+/* The case editor (45.4 minimum). Token-only. */
+
+.ce { display: flex; flex-direction: column; gap: var(--space-3); margin: var(--ml-block-pad); padding: var(--ml-block-pad); border: 1px solid var(--accent); border-radius: var(--radius); background: var(--bg); min-width: 0; }
+.ce-field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.ce-field > span { color: var(--text-subtle); font-family: var(--font-mono); font-size: var(--font-size-mono); font-weight: 700; letter-spacing: 0.06em; }
+.ce-input, .ce-select, .ce-fragments { width: 100%; min-width: 0; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: var(--font-size-meta); }
+.ce-input { min-height: 4rem; resize: vertical; }
+.ce-input:focus-visible, .ce-select:focus-visible, .ce-fragments:focus-visible { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+.ce-actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+.ce-save, .ce-cancel { min-height: var(--ml-action-height); padding: 0 var(--space-4); border-radius: var(--radius); font: inherit; font-size: var(--font-size-label); cursor: pointer; }
+.ce-save { border: none; background: var(--accent); color: var(--accent-contrast); font-weight: 700; }
+.ce-cancel { border: 1px solid var(--border-strong); background: transparent; color: var(--text); }
+.ce-save:disabled, .ce-cancel:disabled { cursor: default; opacity: 0.6; }
+.ce-save:focus-visible, .ce-cancel:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ce-note { margin: 0; color: var(--text-muted); font-size: var(--font-size-mono); }

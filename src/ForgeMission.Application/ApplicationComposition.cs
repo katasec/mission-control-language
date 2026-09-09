@@ -60,6 +60,32 @@ public interface IInteractionService
     ConfirmationResponse Respond(ConfirmationResponseRequest request);
 }
 
+/// <summary>The Missions landing's product actions (45.3 task 3A). Each answers with rendered
+/// facts and typed failures only: no Project home, manifest, durable launch, Host client, Bob
+/// handle, tool declaration, or attachment detail crosses this boundary, so a TUI can invoke the
+/// same three with the same authorization, outcome, and failure.</summary>
+public interface IMissionConversationService
+{
+    Task<ListMissionConversationsResponse> ListAsync(ListMissionConversationsRequest request, CancellationToken ct);
+    Task<ListApprovedMissionVersionsResponse> ListApprovedVersionsAsync(ListApprovedMissionVersionsRequest request, CancellationToken ct);
+    Task<CreateMissionConversationResponse> CreateAsync(CreateMissionConversationRequest request, CancellationToken ct);
+}
+
+/// <summary>Authoring's product actions (45.4 minimum): draft, promote, case, evaluate, publish.
+/// Projects keeps the lifecycle and the publish guard; this boundary carries rendered facts and
+/// typed failures only, so a TUI reaches the same outcomes.</summary>
+public interface IMissionAuthoringService
+{
+    Task<GetMissionAuthoringResponse> GetAsync(GetMissionAuthoringRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> CreateDraftAsync(CreateMissionDraftRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> SaveDraftAsync(SaveMissionDraftRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> PromoteCandidateAsync(PromoteMissionCandidateRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> AddCaseAsync(AddEvaluationCaseRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> UpdateCaseAsync(UpdateEvaluationCaseRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> RunCaseAsync(RunEvaluationCaseRequest request, CancellationToken ct);
+    Task<MissionAuthoringMutationResponse> PublishAsync(PublishMissionVersionRequest request, CancellationToken ct);
+}
+
 public interface IMissionHandsConversationService
 {
     Task<AcknowledgeMissionHandsResponse> AcknowledgeAsync(AcknowledgeMissionHandsRequest request, CancellationToken ct);
@@ -85,7 +111,8 @@ public sealed class ApplicationComposition : IAsyncDisposable
 
         var projects = new ProjectService(_sessions);
         var missionVersions = new MissionVersionService(projects);
-        var missionConversations = new MissionConversationService(missionVersions, clients);
+        var missionConversations = new MissionConversationService(missionVersions, clients, _sessions);
+        var missionAuthoring = new MissionAuthoringService(projects, missionVersions, missionConversations, _sessions);
         var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
         var submissions = new MissionSubmissionService(projects, clients, _sessions, hands);
         var content = new ProjectContentService(projects, _sessions);
@@ -96,6 +123,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         Projects = projects;
         MissionVersions = missionVersions;
         MissionConversations = missionConversations;
+        MissionAuthoring = missionAuthoring;
         Sessions = _sessions;
         MissionSubmissions = submissions;
         RunHistory = history;
@@ -111,7 +139,9 @@ public sealed class ApplicationComposition : IAsyncDisposable
     // Surface-neutral owner interface. No Application.Transport DTO or route exists until 45.4.
     internal IMissionVersionService MissionVersions { get; }
 
-    internal MissionConversationService MissionConversations { get; }
+    public IMissionConversationService MissionConversations { get; }
+
+    public IMissionAuthoringService MissionAuthoring { get; }
 
     public IApplicationSessionService Sessions { get; }
 

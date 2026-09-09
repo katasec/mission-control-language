@@ -8,9 +8,15 @@
    so the rail keeps saying where in the Project you are. *@
 
 <nav class="wb-rail" aria-label="Project">
+    @* Which Project you are in, not which product you are running: the rail already sits inside
+       one open Project, so the product name told an operator nothing they could act on. It is a
+       label, never a control - switching Project is not a rail affordance. *@
     <div class="wb-brand">
-        <span class="wb-brand-name">Forge</span>
-        <span class="wb-brand-sub">AI Workbench</span>
+        <span class="wb-brand-eyebrow">PROJECT</span>
+        <span class="wb-brand-row">
+            <span class="wb-brand-swatch" aria-hidden="true"></span>
+            <span class="wb-brand-name">@ProjectTitle</span>
+        </span>
     </div>
 
     <div class="wb-rail-group">
@@ -27,6 +33,10 @@
 </nav>
 
 @code {
+    /// <summary>The open Project's title, supplied by Home. It is display only: the rail neither
+    /// reads nor changes Project state.</summary>
+    [Parameter, EditorRequired] public string ProjectTitle { get; set; } = string.Empty;
+
     [Parameter, EditorRequired] public WorkbenchView Selected { get; set; }
 
     [Parameter] public EventCallback<WorkbenchView> SelectedChanged { get; set; }

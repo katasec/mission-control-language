@@ -1,0 +1,199 @@
+@namespace ForgeMission.Presentation.Components
+@using ForgeMission.Application.Transport
+@using ForgeMission.Conversations.Contracts
+
+@* Author, evaluate, publish (45.4 minimum). Publish is disabled with a stated reason rather than
+   hidden, because "you cannot publish yet" is only useful if it says why. Application refuses a
+   blocked publish regardless, so the disabled state is a courtesy, not the guard. *@
+
+<div class="ma">
+    <header class="ma-head">
+        <div class="ma-title">
+            <h2>@Document.Name</h2>
+            <span class="ma-chip">@KindLabel</span>
+            @if (Document.VersionNumber is { } number)
+            {
+                <span class="ma-version">v@(number)</span>
+            }
+        </div>
+        <div class="ma-head-actions">
+            @if (Document.Editable is MissionEditableKind.Draft)
+            {
+                <button type="button" class="ma-action ma-action-accent" @onclick="Promote" disabled="@Busy">Promote to candidate</button>
+            }
+            else if (Document.Editable is MissionEditableKind.Candidate)
+            {
+                <button type="button" class="ma-action ma-action-accent" @onclick="Publish" disabled="@(Busy || !Document.CanPublish)">
+                    Publish@(Document.VersionNumber is { } v ? $" v{v}" : string.Empty)
+                </button>
+            }
+        </div>
+    </header>
+
+    @if (Error is not null)
+    {
+        <p class="ma-error" role="alert">@Error.Message</p>
+    }
+
+    <div class="ma-body">
+        <section class="ma-panel ma-definition" aria-labelledby="ma-definition-heading">
+            <header class="ma-panel-head">
+                <h3 id="ma-definition-heading">Mission definition</h3>
+                <p>@ProfileLabel(Document.Profile)</p>
+            </header>
+            <textarea class="ma-editor" aria-label="Mission definition" spellcheck="false"
+                      disabled="@(Busy || Document.Editable is MissionEditableKind.None)"
+                      value="@draft" @oninput="OnDefinitionInput"></textarea>
+            <footer class="ma-panel-foot">
+                <button type="button" class="ma-action" @onclick="Save" disabled="@(Busy || !Dirty)">Save</button>
+                <span class="ma-saved">@(Dirty ? "Unsaved changes" : "All changes saved")</span>
+            </footer>
+        </section>
+
+        <section class="ma-panel ma-cases" aria-labelledby="ma-cases-heading">
+            <header class="ma-panel-head">
+                <h3 id="ma-cases-heading">Evaluation cases</h3>
+                <p>@CaseSummary</p>
+            </header>
+
+            @if (Document.Editable is not MissionEditableKind.Candidate)
+            {
+                <p class="ma-state">Promote this draft to a candidate before adding evaluation cases.</p>
+            }
+            else
+            {
+                <ol class="ma-case-list">
+                    @foreach (var item in Document.Cases)
+                    {
+                        <li class="ma-case" @key="item.EvaluationCaseId">
+                            <div class="ma-case-head">
+                                <span class="@ResultClass(item.ResultState)">@ResultLabel(item.ResultState)</span>
+                                <p class="ma-case-input">@item.Input</p>
+                                @if (item.TraceReference is { } trace)
+                                {
+                                    <span class="ma-trace" title="Durable trace origin">trace_@trace</span>
+                                }
+                            </div>
+                            <p class="ma-case-expect">
+                                Expect @(item.ExpectedOutcome is EvaluationOutcomeView.Succeeded ? "success" : "failure")@(item.RequiredFragments.Count == 0 ? "" : $" containing \"{string.Join("\", \"", item.RequiredFragments)}\"")
+                            </p>
+                            @if (item.ObservedSummary is { } observed)
+                            {
+                                <p class="@(item.ResultState is EvaluationResultStateView.Failed ? "ma-case-observed ma-case-observed-bad" : "ma-case-observed")">@observed</p>
+                            }
+                            <div class="ma-case-actions">
+                                <button type="button" class="ma-link" @onclick="() => BeginEdit(item)" disabled="@Busy">Edit case</button>
+                                <button type="button" class="ma-link" @onclick="() => Run.InvokeAsync(item.EvaluationCaseId)" disabled="@Busy">
+                                    @(item.ResultState is EvaluationResultStateView.None ? "Run evaluation" : "Re-evaluate")
+                                </button>
+                            </div>
+                        </li>
+                    }
+                </ol>
+
+                @if (editing is not null)
+                {
+                    <EvaluationCaseEditor Draft="editing" Busy="Busy" Save="CommitEdit" Cancel="CancelEdit" />
+                }
+                else
+                {
+                    <button type="button" class="ma-action" @onclick="BeginAdd" disabled="@Busy">Add case</button>
+                }
+            }
+
+            @if (Document.PublishBlockedReason is { } blocked)
+            {
+                <p class="ma-blocked" role="status">@blocked</p>
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MissionAuthoringDocument Document { get; set; } = default!;
+    [Parameter] public ProjectOperationError? Error { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<string> SaveDefinition { get; set; }
+    [Parameter] public EventCallback PromoteCandidate { get; set; }
+    [Parameter] public EventCallback<(Guid? CaseId, EvaluationCaseInput Case)> SaveCase { get; set; }
+    [Parameter] public EventCallback<Guid> Run { get; set; }
+    [Parameter] public EventCallback PublishVersion { get; set; }
+
+    private string draft = string.Empty;
+    private Guid trackedRevision;
+    private EvaluationCaseDraft? editing;
+
+    private bool Dirty => !string.Equals(draft, Document.DefinitionText, StringComparison.Ordinal);
+
+    private string KindLabel => Document.Editable switch
+    {
+        MissionEditableKind.Draft => "DRAFT",
+        MissionEditableKind.Candidate => "CANDIDATE",
+        _ => "NO EDITABLE VERSION",
+    };
+
+    private string CaseSummary => Document.Cases.Count == 0
+        ? "No cases yet"
+        : $"{Document.Cases.Count(item => item.ResultState is EvaluationResultStateView.Passed)} pass · " +
+          $"{Document.Cases.Count(item => item.ResultState is EvaluationResultStateView.Failed)} fail · " +
+          $"{Document.Cases.Count} total";
+
+    // The editor is local text until Save. Adopting the server's text on every parameter change
+    // would silently discard what the operator is typing, so it is adopted only when the document
+    // this view is showing actually changes underneath it.
+    protected override void OnParametersSet()
+    {
+        var identity = Document.MissionVersionId ?? Document.DraftId ?? Document.MissionId;
+        if (identity != trackedRevision || !Dirty)
+        {
+            trackedRevision = identity;
+            draft = Document.DefinitionText;
+        }
+        if (editing is not null && Document.Editable is not MissionEditableKind.Candidate)
+            editing = null;
+    }
+
+    private void OnDefinitionInput(ChangeEventArgs e) => draft = e.Value?.ToString() ?? string.Empty;
+
+    private Task Save() => SaveDefinition.InvokeAsync(draft);
+    private Task Promote() => PromoteCandidate.InvokeAsync();
+    private Task Publish() => PublishVersion.InvokeAsync();
+
+    private void BeginAdd() => editing = new EvaluationCaseDraft(null, string.Empty, EvaluationOutcomeView.Succeeded, string.Empty);
+
+    private void BeginEdit(EvaluationCaseView item) => editing = new EvaluationCaseDraft(
+        item.EvaluationCaseId, item.Input, item.ExpectedOutcome, string.Join(", ", item.RequiredFragments));
+
+    private void CancelEdit() => editing = null;
+
+    private async Task CommitEdit(EvaluationCaseDraft value)
+    {
+        editing = null;
+        await SaveCase.InvokeAsync((value.EvaluationCaseId, new EvaluationCaseInput(
+            value.Input, null, null, value.ExpectedOutcome,
+            value.RequiredFragments.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))));
+    }
+
+    private static string ResultLabel(EvaluationResultStateView state) => state switch
+    {
+        EvaluationResultStateView.Passed => "PASS",
+        EvaluationResultStateView.Failed => "FAIL",
+        EvaluationResultStateView.Pending => "RUNNING",
+        _ => "NOT RUN",
+    };
+
+    private static string ResultClass(EvaluationResultStateView state) => state switch
+    {
+        EvaluationResultStateView.Passed => "ma-result ma-result-pass",
+        EvaluationResultStateView.Failed => "ma-result ma-result-fail",
+        EvaluationResultStateView.Pending => "ma-result ma-result-running",
+        _ => "ma-result",
+    };
+
+    private static string ProfileLabel(MissionHandsProfile profile) => profile switch
+    {
+        MissionHandsProfile.ProjectWorkspace => "Project workspace access",
+        MissionHandsProfile.ProjectWorkspaceAndTerminal => "Project workspace and terminal access",
+        _ => "No local access",
+    };
+}

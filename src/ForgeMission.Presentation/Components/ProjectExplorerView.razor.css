@@ -135,3 +135,23 @@
     color: var(--text-muted);
     overflow-wrap: anywhere;
 }
+
+/* Authoring entry (45.4 minimum). One action, in the section it acts on. */
+.ex-author {
+    align-self: flex-start;
+    margin-top: var(--space-2);
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--font-size-meta);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ex-author:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
+}

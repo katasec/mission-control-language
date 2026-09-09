@@ -1,0 +1,235 @@
+/* The creation panel (45.3 task 3A). Token-only, like every other surface here. The accent
+   border is the reference's way of saying this panel is the one thing being decided. */
+
+.np {
+    display: flex;
+    flex-direction: column;
+    /* Fills the column the landing gives it, so Start sits at the foot as the reference draws it
+       rather than floating wherever the option list happens to end. */
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.np-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--ml-block-pad);
+    border-bottom: 1px solid var(--border);
+}
+
+.np-head h2 {
+    margin: 0;
+    font-size: var(--font-size-label);
+    color: var(--text);
+}
+
+.np-head p {
+    margin: 0;
+    font-size: var(--font-size-meta);
+    color: var(--text-muted);
+}
+
+.np-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--ml-block-pad);
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.np-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.np-group-label,
+.np-access-label {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.np-group-label {
+    color: var(--text-subtle);
+}
+
+.np-option {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--ml-row-pad) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    min-width: 0;
+}
+
+.np-option-selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.np-radio {
+    flex: none;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
+.np-radio:focus-visible {
+    outline: none;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--focus-ring);
+}
+
+.np-option label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+    cursor: pointer;
+}
+
+.np-option-name {
+    color: var(--text);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.np-option-meta {
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    overflow-wrap: anywhere;
+}
+
+/* Read-only by construction: a block of text, containing no control at all. */
+.np-access {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-radius: var(--radius);
+    background: var(--surface-active);
+    min-width: 0;
+}
+
+.np-access-label {
+    color: var(--accent);
+}
+
+.np-access-profile,
+.np-access-copy {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.np-access-profile {
+    color: var(--text);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+}
+
+.np-access-copy {
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+}
+
+.np-state {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-label);
+}
+
+.np-state-error {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    color: var(--danger);
+}
+
+.np-state-error p {
+    margin: 0;
+}
+
+.np-error {
+    margin: 0;
+    padding: var(--space-3);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius);
+    background: var(--warning-bg);
+    color: var(--warning);
+    font-size: var(--font-size-meta);
+    overflow-wrap: anywhere;
+}
+
+/* Start is rendered last so the footer's bottom inset lands it on the reference's own y; Cancel
+   stacks above it, in the band the reference leaves empty. */
+.np-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding: var(--ml-block-pad) var(--ml-block-pad) var(--ml-actions-bottom);
+}
+
+.np-start,
+.np-cancel {
+    min-height: var(--ml-action-height);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.np-start {
+    border: none;
+    background: var(--accent);
+    color: var(--accent-contrast);
+}
+
+.np-cancel {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font-weight: 400;
+}
+
+.np-start:disabled,
+.np-cancel:disabled,
+.np-state-error button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.np-start:focus-visible,
+.np-cancel:focus-visible,
+.np-state-error button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.np-state-error button {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}

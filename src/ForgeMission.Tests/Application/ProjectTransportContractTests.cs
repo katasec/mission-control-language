@@ -1,5 +1,8 @@
 using System.Net;
 using ForgeMission.Application.Transport;
+// Only the profile is needed from Contracts here; importing the namespace would collide with the
+// transport's own list/create records, which deliberately share those names.
+using MissionHandsProfile = ForgeMission.Conversations.Contracts.MissionHandsProfile;
 using ForgeMission.Tests.ApplicationHost;
 
 namespace ForgeMission.Tests.Application;
@@ -216,6 +219,190 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
 
         Assert.False(dispatch.IsError, dispatch.Content);
         Assert.Contains("project-rooted-read", dispatch.Content, StringComparison.Ordinal);
+    }
+
+    // --- the Missions landing's three actions, over the real transport -------------------------
+    // This class is the parity proof: a TUI reaching the same routes with the same DTOs gets the
+    // same authorization, outcomes, and failures, with no Blazor or Desktop type in sight.
+
+    [Fact]
+    public async Task MissionsLanding_AnswersAFreshProjectWithNothingPinnedAndNothingApproved()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Todos API"));
+        var session = created.Session!.SessionId;
+
+        var options = await _channel.SendAsync<ListApprovedMissionVersionsRequest, ListApprovedMissionVersionsResponse>(
+            new ListApprovedMissionVersionsRequest(session), CancellationToken.None);
+
+        // A Project read, so it answers on its own: empty is a real answer, and it is a different
+        // answer from unavailable.
+        Assert.Null(options.Error);
+        Assert.Empty(options.Options!);
+
+        // The conversation directory is Host-owned, and this harness runs no Conversation Host.
+        // Either honest outcome is allowed — a typed availability failure, or a failed request —
+        // but a fabricated list is not, so a caller can never mistake "cannot reach it" for
+        // "this Project has none".
+        try
+        {
+            var conversations = await _channel.SendAsync<ListMissionConversationsRequest, ListMissionConversationsResponse>(
+                new ListMissionConversationsRequest(session), CancellationToken.None);
+            Assert.NotNull(conversations.Error);
+            Assert.Null(conversations.Conversations);
+        }
+        catch (HttpRequestException)
+        {
+            // Also honest: nothing was invented.
+        }
+    }
+
+    [Fact]
+    public async Task MissionsLanding_RefusesToCreateAgainstAMissionThisProjectDoesNotApprove()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Todos API"));
+
+        var response = await _channel.SendAsync<CreateMissionConversationRequest, CreateMissionConversationResponse>(
+            new CreateMissionConversationRequest(created.Session!.SessionId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()),
+            CancellationToken.None);
+
+        Assert.Null(response.Created);
+        Assert.NotNull(response.Error);
+    }
+
+    [Fact]
+    public async Task MissionsLanding_RefusesAForeignSessionOnEveryAction()
+    {
+        var foreign = Guid.NewGuid().ToString("N");
+
+        foreach (var send in new Func<Task>[]
+                 {
+                     () => _channel.SendAsync<ListMissionConversationsRequest, ListMissionConversationsResponse>(
+                         new ListMissionConversationsRequest(foreign), CancellationToken.None),
+                     () => _channel.SendAsync<ListApprovedMissionVersionsRequest, ListApprovedMissionVersionsResponse>(
+                         new ListApprovedMissionVersionsRequest(foreign), CancellationToken.None),
+                     () => _channel.SendAsync<CreateMissionConversationRequest, CreateMissionConversationResponse>(
+                         new CreateMissionConversationRequest(foreign, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None),
+                 })
+        {
+            var rejection = await Assert.ThrowsAsync<HttpRequestException>(send);
+            Assert.Equal(HttpStatusCode.NotFound, rejection.StatusCode);
+        }
+    }
+
+    [Fact]
+    public void MissionsLanding_RequestsCannotNameAccess_OnlyAMissionAndWhatWasDisplayed()
+    {
+        Assert.Equal(["SessionId", "MissionId", "CommandId", "ExpectedMissionVersionId"],
+            typeof(CreateMissionConversationRequest).GetProperties().Select(property => property.Name));
+
+        foreach (var type in new[]
+                 {
+                     typeof(CreateMissionConversationRequest), typeof(ListMissionConversationsRequest),
+                     typeof(ListApprovedMissionVersionsRequest),
+                 })
+        {
+            var names = type.GetProperties().Select(property => property.Name).ToArray();
+            foreach (var forbidden in new[] { "Profile", "Package", "Definition", "Capabilities", "Tool", "Path", "Home", "AttachmentId", "Launch" })
+                Assert.DoesNotContain(names, name => name.Contains(forbidden, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // What comes back is identity and the profile to display — never the executable package.
+        var approval = typeof(MissionAccessApproval).GetProperties().Select(property => property.Name).ToArray();
+        Assert.Equal(["MissionVersionId", "VersionNumber", "DefinitionHash", "Profile"], approval);
+    }
+
+    // --- authoring, over the real transport ----------------------------------------------------
+
+    [Fact]
+    public async Task Authoring_AnswersAFreshProjectWithNoMissions_ThenDraftsOneThroughTheNormalPath()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Author and publish"));
+        var session = created.Session!.SessionId;
+
+        var empty = await _channel.SendAsync<GetMissionAuthoringRequest, GetMissionAuthoringResponse>(
+            new GetMissionAuthoringRequest(session, null), CancellationToken.None);
+        Assert.Null(empty.Error);
+        Assert.Empty(empty.Authoring!.Missions);
+        Assert.Null(empty.Authoring.Open);
+
+        // The same call that starts authoring is what makes the Project package-able, so this is
+        // the whole "a normal user can begin" path in one request.
+        var drafted = await _channel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(
+            new CreateMissionDraftRequest(session, "Janus", string.Empty, MissionHandsProfile.NoHands), CancellationToken.None);
+        Assert.Null(drafted.Error);
+        var document = drafted.Authoring!.Open!;
+        Assert.Equal(MissionEditableKind.Draft, document.Editable);
+        Assert.False(document.CanPublish);
+
+        var promoted = await _channel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(
+            new PromoteMissionCandidateRequest(session, document.MissionId, document.DraftId!.Value, document.Revision),
+            CancellationToken.None);
+        Assert.Null(promoted.Error);
+        Assert.Equal(MissionEditableKind.Candidate, promoted.Authoring!.Open!.Editable);
+        Assert.Equal(1, promoted.Authoring.Open.VersionNumber);
+    }
+
+    [Fact]
+    public async Task Authoring_RefusesAPublishThatItsOwnProjectionSaysIsBlocked()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Author and publish"));
+        var session = created.Session!.SessionId;
+        var drafted = await _channel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(
+            new CreateMissionDraftRequest(session, "Janus", string.Empty, MissionHandsProfile.NoHands), CancellationToken.None);
+        var draft = drafted.Authoring!.Open!;
+        var promoted = await _channel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(
+            new PromoteMissionCandidateRequest(session, draft.MissionId, draft.DraftId!.Value, draft.Revision), CancellationToken.None);
+        var candidate = promoted.Authoring!.Open!;
+
+        var refused = await _channel.SendAsync<PublishMissionVersionRequest, MissionAuthoringMutationResponse>(
+            new PublishMissionVersionRequest(session, candidate.MissionId, candidate.MissionVersionId!.Value), CancellationToken.None);
+
+        Assert.NotNull(refused.Error);
+        Assert.Equal(MissionVersionStateView.Candidate, refused.Authoring!.Missions[0].LatestState);
+    }
+
+    [Fact]
+    public async Task Authoring_RefusesAForeignSessionOnEveryAction()
+    {
+        var foreign = Guid.NewGuid().ToString("N");
+        var blank = new EvaluationCaseInput("input", null, null, EvaluationOutcomeView.Succeeded, null);
+
+        foreach (var send in new Func<Task>[]
+                 {
+                     () => _channel.SendAsync<GetMissionAuthoringRequest, GetMissionAuthoringResponse>(new(foreign, null), CancellationToken.None),
+                     () => _channel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(new(foreign, "Janus", "", MissionHandsProfile.NoHands), CancellationToken.None),
+                     () => _channel.SendAsync<SaveMissionDraftRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), 1, "x", MissionHandsProfile.NoHands), CancellationToken.None),
+                     () => _channel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), 1), CancellationToken.None),
+                     () => _channel.SendAsync<AddEvaluationCaseRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), blank), CancellationToken.None),
+                     () => _channel.SendAsync<UpdateEvaluationCaseRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), blank), CancellationToken.None),
+                     () => _channel.SendAsync<RunEvaluationCaseRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None),
+                     () => _channel.SendAsync<PublishMissionVersionRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None),
+                 })
+        {
+            var rejection = await Assert.ThrowsAsync<HttpRequestException>(send);
+            Assert.Equal(HttpStatusCode.NotFound, rejection.StatusCode);
+        }
+    }
+
+    [Fact]
+    public void Authoring_RequestsCarryIntentOnly_AndTheProjectionCarriesNoExecutableContent()
+    {
+        foreach (var type in new[]
+                 {
+                     typeof(GetMissionAuthoringRequest), typeof(CreateMissionDraftRequest), typeof(SaveMissionDraftRequest),
+                     typeof(PromoteMissionCandidateRequest), typeof(AddEvaluationCaseRequest), typeof(UpdateEvaluationCaseRequest),
+                     typeof(RunEvaluationCaseRequest), typeof(PublishMissionVersionRequest),
+                 })
+        {
+            var names = type.GetProperties().Select(property => property.Name).ToArray();
+            foreach (var forbidden in new[] { "Package", "Launch", "Path", "Home", "Capabilit", "AttachmentId", "Credential" })
+                Assert.DoesNotContain(names, name => name.Contains(forbidden, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // The document carries the text an operator is editing, and no resolved package.
+        var document = typeof(MissionAuthoringDocument).GetProperties().Select(property => property.Name).ToArray();
+        Assert.Contains("DefinitionText", document);
+        Assert.DoesNotContain(document, name => name.Contains("Package", StringComparison.OrdinalIgnoreCase));
     }
 
     // --- session replacement is replacement only ----------------------------------------------

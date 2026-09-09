@@ -1,0 +1,162 @@
+@namespace ForgeMission.Presentation.Components
+@using Microsoft.AspNetCore.Components.Web
+@using ForgeMission.Application.Transport
+@using ForgeMission.Conversations.Contracts
+
+@* Creating a mission conversation (45.3 task 3A). The whole point of this panel is that the
+   operator reads the exact access a version fixes before it is pinned, so the profile is shown
+   read-only and there is no control anywhere that could narrow, widen, or select it. *@
+
+<section class="np" aria-labelledby="np-heading" @onkeydown="KeyDown" @onkeydown:stopPropagation="true">
+    <header class="np-head">
+        <h2 id="np-heading">New mission conversation</h2>
+        <p>Choose the approved version this conversation will pin.</p>
+    </header>
+
+    <div class="np-body">
+        @if (Error is not null)
+        {
+            <p class="np-error" role="alert">@Error.Message</p>
+        }
+
+        @if (OptionsError is not null)
+        {
+            <div class="np-state np-state-error" role="alert">
+                <p>Approved versions are unavailable right now.</p>
+                <button type="button" @onclick="RetryOptions" disabled="@Busy">Retry</button>
+            </div>
+        }
+        else if (Options is null)
+        {
+            <p class="np-state" aria-live="polite">Loading approved versions…</p>
+        }
+        else if (Options.Count == 0)
+        {
+            <p class="np-state">No approved mission version is available for this Project.</p>
+        }
+        else
+        {
+            <div class="np-group" role="radiogroup" aria-label="Approved versions">
+                <p class="np-group-label" aria-hidden="true">APPROVED VERSIONS</p>
+                @for (var index = 0; index < Options.Count; index++)
+                {
+                    @Option(Options[index], index == 0)
+                }
+            </div>
+
+            @if (Selected is { } chosen)
+            {
+                <div class="np-access">
+                    <p class="np-access-label">FIXED ACCESS</p>
+                    <p class="np-access-profile">@ProfileLabel(chosen.Profile)</p>
+                    <p class="np-access-copy">This exact profile is fixed for this conversation. Forge asks before any bounded operation. It cannot be changed here.</p>
+                </div>
+            }
+        }
+    </div>
+
+    <footer class="np-actions">
+        <button type="button" class="np-cancel" @onclick="Cancel" disabled="@Busy">Cancel</button>
+        @if (Selected is { } startable)
+        {
+            <button type="button" class="np-start" @onclick="StartAsync" disabled="@Busy">
+                @(Busy ? "Starting conversation…" : $"Start on {startable.MissionName} v{startable.VersionNumber}")
+            </button>
+        }
+    </footer>
+</section>
+
+@code {
+    /// <summary>Null while loading; empty is the real "this Project has none" answer.</summary>
+    [Parameter] public IReadOnlyList<ApprovedMissionVersionOption>? Options { get; set; }
+
+    [Parameter] public ProjectOperationError? OptionsError { get; set; }
+
+    /// <summary>A typed refusal from the create itself — a changed approved version, most often.</summary>
+    [Parameter] public ProjectOperationError? Error { get; set; }
+
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public EventCallback<ApprovedMissionVersionOption> Start { get; set; }
+
+    [Parameter] public EventCallback Cancel { get; set; }
+
+    [Parameter] public EventCallback RetryOptions { get; set; }
+
+    private ApprovedMissionVersionOption? Selected { get; set; }
+
+    private ElementReference firstOption;
+    private bool focusFirstOption = true;
+
+    // A refreshed option list can drop or replace the version the operator was reading. Clearing
+    // the selection is deliberate: it forces them to read the current one rather than pressing
+    // Start against a summary that no longer describes what would be pinned.
+    protected override void OnParametersSet()
+    {
+        if (Selected is null)
+            return;
+        if (Options is null || !Options.Any(option => option.MissionVersionId == Selected.MissionVersionId))
+            Selected = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!focusFirstOption || Options is null || Options.Count == 0)
+            return;
+        focusFirstOption = false;
+        await firstOption.FocusAsync();
+    }
+
+    private bool IsSelected(ApprovedMissionVersionOption option) =>
+        Selected?.MissionVersionId == option.MissionVersionId;
+
+    private void Select(ApprovedMissionVersionOption option) => Selected = option;
+
+    // Written as template markup, not a RenderTreeBuilder fragment: Blazor stamps a component's
+    // scoped-CSS attribute only onto elements written in the template. The first option carries
+    // the element reference so opening the panel lands focus inside the choice it exists to make.
+    private RenderFragment Option(ApprovedMissionVersionOption option, bool isFirst) =>
+        @<div class="@(IsSelected(option) ? "np-option np-option-selected" : "np-option")">
+             @if (isFirst)
+             {
+                 <input type="radio" id="@OptionId(option)" name="np-approved-version" class="np-radio"
+                        checked="@IsSelected(option)" disabled="@Busy"
+                        @onchange="() => Select(option)" @ref="firstOption" />
+             }
+             else
+             {
+                 <input type="radio" id="@OptionId(option)" name="np-approved-version" class="np-radio"
+                        checked="@IsSelected(option)" disabled="@Busy"
+                        @onchange="() => Select(option)" />
+             }
+             <label for="@OptionId(option)">
+                 <span class="np-option-name">@option.MissionName v@(option.VersionNumber)</span>
+                 <span class="np-option-meta">Approved · @ProfileLabel(option.Profile)</span>
+             </label>
+         </div>;
+
+    private static string OptionId(ApprovedMissionVersionOption option) => $"np-option-{option.MissionVersionId:N}";
+
+    private async Task StartAsync()
+    {
+        if (Busy || Selected is null)
+            return;
+        await Start.InvokeAsync(Selected);
+    }
+
+    // Escape closes only while nothing is in flight, so a create can never be abandoned into an
+    // outcome the operator cannot see.
+    private async Task KeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" && !Busy)
+            await Cancel.InvokeAsync();
+    }
+
+    private static string ProfileLabel(MissionHandsProfile profile) => profile switch
+    {
+        MissionHandsProfile.NoHands => "No local access",
+        MissionHandsProfile.ProjectWorkspace => "Project workspace access",
+        MissionHandsProfile.ProjectWorkspaceAndTerminal => "Project workspace and terminal access",
+        _ => "No local access",
+    };
+}

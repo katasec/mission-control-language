@@ -22,6 +22,162 @@ public sealed class ProjectServiceTests : IDisposable
 
     public void Dispose() => Directory.Delete(_profile, recursive: true);
 
+    // --- the scaffold that makes authoring possible at all ----------------------------------
+    // A Project created through the launcher has no assets, so MissionPackageBuilder has no lock
+    // file and promoting a candidate is impossible. These pin the seam that closes that.
+
+    [Fact]
+    public async Task MissionAssets_TurnABareProjectIntoOneThatCanActuallyPromoteACandidate()
+    {
+        var project = _store.Create("Author a mission", null, null);
+        Assert.Empty(_store.ReadForHome(project.Home).Manifest.Assets);
+
+        var scaffolded = await _store.EnsureMissionAssetsAsync(project.Home, CancellationToken.None);
+
+        Assert.Single(scaffolded.Manifest.Assets, asset => asset.Kind == ProjectAssetKind.LockFile);
+        Assert.Equal(2, scaffolded.Manifest.Assets.Count(asset => asset.Kind == ProjectAssetKind.Expert));
+        Assert.True(File.Exists(Path.Combine(project.Home, "mcl.lock")));
+        Assert.True(File.Exists(Path.Combine(project.Home, "experts", "Proposer", "expert.md")));
+        Assert.True(File.Exists(Path.Combine(project.Home, "experts", "Reviewer", "expert.md")));
+
+        // The point of the scaffold: the starter definition now promotes, which it could not before.
+        var versions = new MissionVersionService(_store);
+        var draft = await versions.CreateDraftAsync(project.Home, "Janus",
+            ProjectService.StarterMissionDefinition, MissionHandsProfile.NoHands, CancellationToken.None);
+        var candidate = await versions.PromoteCandidateAsync(project.Home, draft.MissionId,
+            draft.Draft!.DraftId, draft.Draft.Revision, CancellationToken.None);
+        Assert.Equal(MissionVersionState.Candidate, candidate.State);
+        Assert.Equal(2, candidate.Package.ResolvedExperts.Length);
+    }
+
+    [Fact]
+    public async Task MissionAssets_AreIdempotent_AndNeverOverwriteWhatTheOperatorWrote()
+    {
+        var project = _store.Create("Author a mission", null, null);
+        Directory.CreateDirectory(Path.Combine(project.Home, "experts", "Proposer"));
+        const string mine = "---\nname: Proposer\nkind: llm\ninput: task\noutput: proposal\n---\nMy own wording.\n";
+        await File.WriteAllTextAsync(Path.Combine(project.Home, "experts", "Proposer", "expert.md"), mine);
+
+        var first = await _store.EnsureMissionAssetsAsync(project.Home, CancellationToken.None);
+        var lockText = await File.ReadAllTextAsync(Path.Combine(project.Home, "mcl.lock"));
+        var second = await _store.EnsureMissionAssetsAsync(project.Home, CancellationToken.None);
+
+        // The operator's expert survives and is what got locked.
+        Assert.Equal(mine, await File.ReadAllTextAsync(Path.Combine(project.Home, "experts", "Proposer", "expert.md")));
+        // A second call changes nothing at all.
+        Assert.Equal(first.Manifest.Assets.Length, second.Manifest.Assets.Length);
+        Assert.Equal(lockText, await File.ReadAllTextAsync(Path.Combine(project.Home, "mcl.lock")));
+        Assert.Single(second.Manifest.Assets, asset => asset.Kind == ProjectAssetKind.LockFile);
+    }
+
+    // --- approved-launch resolution across both manifest lanes -----------------------------
+    // ApprovedMissionLaunches is the schema-4 compatibility lane and the authored lifecycle never
+    // writes it, so without the schema-5 half a published version could never be acknowledged at
+    // all. Both lanes are asserted here, and the bar is the same for each.
+
+    [Fact]
+    public void ApprovedLaunch_ResolvesAPublishedSchema5Version_WhenTheLegacyLaneIsEmpty()
+    {
+        var (session, published, home) = PublishedProject();
+        Assert.Empty(_store.ReadForHome(home).Manifest.ApprovedMissionLaunches!);
+
+        var launch = _store.ResolveApprovedLaunch(session, published.MissionVersionId, published.VersionNumber, published.DefinitionHash);
+
+        Assert.NotNull(launch);
+        Assert.Equal(published.MissionVersionId, launch!.MissionVersionId);
+        Assert.Equal(published.DefinitionText, launch.Definition);
+        Assert.Equal(published.CapabilityProfile, launch.CapabilityProfile);
+        Assert.Equal(published.Package.PackageHash, launch.Package!.PackageHash);
+    }
+
+    [Fact]
+    public void ApprovedLaunch_RefusesAnythingButTheExactActiveApprovedTriple()
+    {
+        var (session, published, home) = PublishedProject();
+
+        Assert.Null(_store.ResolveApprovedLaunch(session, Guid.NewGuid(), published.VersionNumber, published.DefinitionHash));
+        Assert.Null(_store.ResolveApprovedLaunch(session, published.MissionVersionId, published.VersionNumber + 1, published.DefinitionHash));
+        Assert.Null(_store.ResolveApprovedLaunch(session, published.MissionVersionId, published.VersionNumber, published.DefinitionHash + "0"));
+
+        // The same version, once it is no longer the active approved one, stops resolving.
+        var manifest = _store.ReadForHome(home).Manifest;
+        var definition = manifest.MissionDefinitions![0];
+        WriteManifest(home, manifest with { MissionDefinitions = [definition with { ActiveApprovedVersionId = null }] });
+        Assert.Null(_store.ResolveApprovedLaunch(session, published.MissionVersionId, published.VersionNumber, published.DefinitionHash));
+    }
+
+    [Fact]
+    public void ApprovedLaunch_KeepsResolvingTheLegacyLane_Unchanged()
+    {
+        var project = _store.Create("Legacy launch", null, null);
+        var sessions = new ApplicationSessionService(ForgeMission.Core.Tools.CapabilityAuthorizationPolicy.Default, _ => { }, CancellationToken.None);
+        var session = sessions.CreateForProject(project.Home);
+        const string definition = "legacy definition";
+        var legacy = new MissionVersionLaunch(Guid.NewGuid(), 3, DefinitionHash(definition), definition,
+            MissionHandsProfile.ProjectWorkspace, DateTimeOffset.UtcNow);
+        WriteManifest(project.Home, _store.ReadForHome(project.Home).Manifest with { ApprovedMissionLaunches = [legacy] });
+
+        var resolved = _store.ResolveApprovedLaunch(session, legacy.MissionVersionId, legacy.VersionNumber, legacy.DefinitionHash);
+
+        Assert.NotNull(resolved);
+        Assert.Equal(legacy.MissionVersionId, resolved!.MissionVersionId);
+        Assert.Equal(legacy.VersionNumber, resolved.VersionNumber);
+        Assert.Equal(legacy.DefinitionHash, resolved.DefinitionHash);
+        Assert.Equal(legacy.Definition, resolved.Definition);
+        Assert.Equal(legacy.CapabilityProfile, resolved.CapabilityProfile);
+        Assert.Null(resolved.Package);
+        Assert.Null(_store.ResolveApprovedLaunch(session, legacy.MissionVersionId, legacy.VersionNumber, DefinitionHash("other")));
+    }
+
+    private (ApplicationSession Session, MissionVersion Published, string Home) PublishedProject()
+    {
+        var project = PackagedProject("Approved launch");
+        var sessions = new ApplicationSessionService(ForgeMission.Core.Tools.CapabilityAuthorizationPolicy.Default, _ => { }, CancellationToken.None);
+        var session = sessions.CreateForProject(project.Home);
+        var versions = new MissionVersionService(_store);
+        var draft = versions.CreateDraftAsync(project.Home, "Review", MissionSource, MissionHandsProfile.NoHands, CancellationToken.None).GetAwaiter().GetResult();
+        var candidate = versions.PromoteCandidateAsync(project.Home, draft.MissionId, draft.Draft!.DraftId, draft.Draft.Revision, CancellationToken.None).GetAwaiter().GetResult();
+        var evaluationCase = new EvaluationCase(Guid.NewGuid(), "input", "", "", EvaluationOutcome.Succeeded, [], [], 1);
+        candidate = versions.SaveCaseAsync(project.Home, draft.MissionId, candidate.MissionVersionId, evaluationCase, CancellationToken.None).GetAwaiter().GetResult();
+        versions.RecordCompletionAsync(project.Home, draft.MissionId, candidate.MissionVersionId, evaluationCase.EvaluationCaseId,
+            candidate.CandidateRevision, candidate.DefinitionHash, EvaluationOutcome.Succeeded, "observed", null, CancellationToken.None).GetAwaiter().GetResult();
+        var published = versions.PublishAsync(project.Home, draft.MissionId, candidate.MissionVersionId, CancellationToken.None).GetAwaiter().GetResult();
+        return (session, published, project.Home);
+    }
+
+    // A Project that can actually publish: promoting a candidate freezes a package, which needs
+    // the mission source, its expert, and a lock file that agrees with both.
+    private ProjectRecord PackagedProject(string goal)
+    {
+        var project = _store.Create(goal, null, null);
+        Directory.CreateDirectory(Path.Combine(project.Home, "experts", "Researcher"));
+        File.WriteAllText(Path.Combine(project.Home, "mission.mcl"), MissionSource);
+        File.WriteAllText(Path.Combine(project.Home, "experts", "Researcher", "expert.md"), ExpertSource);
+        var expertHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(ExpertSource))).ToLowerInvariant();
+        File.WriteAllText(Path.Combine(project.Home, "mcl.lock"),
+            $"version: 1\nexperts:\n  Researcher:\n    source: local\n    path: experts/Researcher/expert.md\n    hash: {expertHash}\n");
+        WriteManifest(project.Home, project.Manifest with
+        {
+            Assets = [
+                new ProjectAssetDescriptor(ProjectAssetKind.Mission, "mission.mcl", null),
+                new ProjectAssetDescriptor(ProjectAssetKind.LockFile, "mcl.lock", null),
+                new ProjectAssetDescriptor(ProjectAssetKind.Expert, "experts/Researcher/expert.md", null),
+            ],
+        });
+        return _store.ReadForHome(project.Home);
+    }
+
+    private static void WriteManifest(string home, ProjectManifest manifest) =>
+        File.WriteAllText(Path.Combine(home, ProjectService.ManifestFileName),
+            JsonSerializer.Serialize(manifest, ProjectManifestJsonContext.Default.ProjectManifest));
+
+    private static string DefinitionHash(string value) => "sha256:" + Convert.ToHexString(
+        System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+
+    private const string MissionSource = "mission Review(task) = {\n  Researcher\n}\n";
+    private const string ExpertSource = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
+
     // --- draft is pure ---------------------------------------------------------------------
 
     [Fact]

@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;
 using ForgeMission.Application.Transport;
+using ForgeMission.Core.Resolution;
 
 namespace ForgeMission.Application;
 
@@ -87,13 +88,36 @@ internal sealed class ProjectService : IProjectService
             return manifest.ApprovedMissionLaunches?.SingleOrDefault(launch =>
                 launch.MissionVersionId == missionVersionId &&
                 launch.VersionNumber == versionNumber &&
-                string.Equals(launch.DefinitionHash, definitionHash, StringComparison.Ordinal));
+                string.Equals(launch.DefinitionHash, definitionHash, StringComparison.Ordinal))
+                ?? ApprovedDefinitionLaunch(manifest, missionVersionId, versionNumber, definitionHash);
         }
         catch (ProjectOperationException)
         {
             return null;
         }
     }
+
+    /// <summary>The schema-5 half of the same question. <c>ApprovedMissionLaunches</c> is the
+    /// schema-4 compatibility lane and has no writer in the authored lifecycle, so a version
+    /// published through <c>MissionVersionService.PublishAsync</c> lives only in
+    /// <c>MissionDefinitions</c> — without this it could never be acknowledged at all. The bar is
+    /// the same one the legacy lane sets and no lower: exact version ID, version number and
+    /// definition hash, genuinely Approved, and still the definition's active approved version.
+    /// Nothing here writes, migrates, or changes a schema.</summary>
+    private static MissionVersionLaunch? ApprovedDefinitionLaunch(
+        ProjectManifest manifest, Guid missionVersionId, int versionNumber, string definitionHash) =>
+        (manifest.MissionDefinitions ?? [])
+            .Where(definition => definition.ActiveApprovedVersionId == missionVersionId)
+            .SelectMany(definition => definition.Versions ?? [])
+            .Where(version =>
+                version.MissionVersionId == missionVersionId &&
+                version.VersionNumber == versionNumber &&
+                version.State == MissionVersionState.Approved &&
+                string.Equals(version.DefinitionHash, definitionHash, StringComparison.Ordinal))
+            .Select(version => new MissionVersionLaunch(version.MissionVersionId, version.VersionNumber,
+                version.DefinitionHash, version.DefinitionText, version.CapabilityProfile,
+                version.ApprovedAtUtc ?? version.CreatedAtUtc, version.Package))
+            .SingleOrDefault();
 
     /// <summary>Pure: what a create would use, for display before confirmation. It performs no
     /// filesystem work at all — not even a collision probe, which would be both an access and an
@@ -305,6 +329,74 @@ internal sealed class ProjectService : IProjectService
     // The authored-version service is deliberately the only other Project-domain participant in
     // this lease. It receives the Project home solely to read manifest-listed package inputs while
     // the transaction is held; it cannot introduce a route, remote call, or arbitrary path.
+    /// <summary>
+    /// Gives a Project the two files a durable mission package is built from, once. A Project
+    /// created through the launcher carries no assets at all, so <c>MissionPackageBuilder</c> has
+    /// no lock file to read and promoting a candidate is impossible - authoring would dead-end at
+    /// its first real step. This closes that gap at the moment the need appears rather than
+    /// changing what creating a Project means.
+    /// <para>
+    /// The scaffold is deliberately the smallest thing that can actually be published: a Proposer
+    /// and a Reviewer, which is two experts exactly (the durable package limit) and the propose-
+    /// then-review shape the operator is authoring. It selects no provider profile, because a
+    /// durable package cannot carry one.
+    /// </para>
+    /// It is idempotent and never destructive: a Project that already lists a lock file is left
+    /// exactly as it is, and an existing file on disk is adopted rather than overwritten.
+    /// </summary>
+    internal async Task<ProjectRecord> EnsureMissionAssetsAsync(string home, CancellationToken cancellationToken)
+    {
+        var root = ValidHome(home);
+        var existing = ReadForHome(root);
+        if ((existing.Manifest.Assets ?? []).Any(asset => asset.Kind == ProjectAssetKind.LockFile))
+            return existing;
+
+        var experts = new Dictionary<string, LockFileExpert>(StringComparer.Ordinal);
+        var descriptors = new List<ProjectAssetDescriptor>(existing.Manifest.Assets ?? []);
+        foreach (var (name, markdown) in StarterExperts)
+        {
+            var relative = $"experts/{name}/expert.md";
+            var path = Path.Combine(root, "experts", name, "expert.md");
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            // Adopt, never clobber: if the operator already wrote this expert, their content is
+            // what gets locked.
+            if (!File.Exists(path))
+                await File.WriteAllTextAsync(path, markdown, cancellationToken);
+            var content = await File.ReadAllTextAsync(path, cancellationToken);
+            experts[name] = new LockFileExpert
+            {
+                Source = "experts",
+                Path = relative,
+                Hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(content))),
+            };
+            if (!descriptors.Any(asset => asset.Kind == ProjectAssetKind.Expert && asset.RelativePath == relative))
+                descriptors.Add(new ProjectAssetDescriptor(ProjectAssetKind.Expert, relative, null));
+        }
+
+        var lockPath = Path.Combine(root, "mcl.lock");
+        if (!File.Exists(lockPath))
+            LockFileIO.Write(lockPath, new LockFile { Version = 1, Experts = experts });
+        descriptors.Add(new ProjectAssetDescriptor(ProjectAssetKind.LockFile, "mcl.lock", null));
+
+        var updated = await UpdateMissionDefinitionsAsync(root,
+            (manifest, _) => (manifest with { Assets = [.. descriptors] }, true), cancellationToken);
+        return updated.Record;
+    }
+
+    /// <summary>The starter pair. Kinds are limited to what a durable package accepts, and the
+    /// pair fits the package's two-expert ceiling exactly.</summary>
+    private static readonly (string Name, string Markdown)[] StarterExperts =
+    [
+        ("Proposer", "---\nname: Proposer\nkind: llm\ninput: task\noutput: proposal\n---\nPropose a concise plan for the task below. State assumptions explicitly.\n\n{{task}}\n"),
+        ("Reviewer", "---\nname: Reviewer\nkind: llm\ninput: proposal\noutput: answer\n---\nReview the proposal below. Approve it, or decline and name the specific conflict.\n\n{{proposal}}\n"),
+    ];
+
+    /// <summary>The definition a new mission starts from: one declaration, the two starter
+    /// experts, no provider profile. It is publishable as written, so an operator can reach the
+    /// end of the flow before they change a line of it.</summary>
+    internal const string StarterMissionDefinition =
+        "mission Janus(task) = {\n    Proposer\n    -> Reviewer\n}\n";
+
     internal async Task<(ProjectRecord Record, T Value)> UpdateMissionDefinitionsAsync<T>(
         string home,
         Func<ProjectManifest, string, (ProjectManifest Manifest, T Value)> transform,

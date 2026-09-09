@@ -62,6 +62,8 @@ internal sealed class Program
         builder.Services.AddSingleton<ICapabilityActionService>(sp => sp.GetRequiredService<ApplicationComposition>().Capabilities);
         builder.Services.AddSingleton<IInteractionService>(sp => sp.GetRequiredService<ApplicationComposition>().Interactions);
         builder.Services.AddSingleton<IMissionHandsConversationService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionHands);
+        builder.Services.AddSingleton<IMissionConversationService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionConversations);
+        builder.Services.AddSingleton<IMissionAuthoringService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionAuthoring);
         var app = builder.Build();
         app.MapStaticAssets();
         app.UseBlazorFrameworkFiles();
