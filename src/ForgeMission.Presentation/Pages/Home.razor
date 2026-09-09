@@ -24,6 +24,7 @@ else
                 <div class="wb-header-text"><h1>@HeaderTitle</h1><p>@HeaderSubtitle</p></div>
                 @if (view == WorkbenchView.Missions && !newConversationOpen)
                 {
+                    <button type="button" class="wb-header-secondary" @onclick="AuthorMissionAsync">Author a mission</button>
                     <button type="button" class="wb-header-action" @onclick="OpenNewConversationAsync">New conversation</button>
                 }
             </header>
@@ -32,7 +33,20 @@ else
                 @switch (view)
                 {
                     case WorkbenchView.Explorer:
-                        <ProjectExplorerView Projection="workbench" Runs="runs" Error="workbenchError" EntrySelected="OpenDocumentAsync" TraceRequested="OpenTraceAsync" />
+                        <ProjectExplorerView Projection="workbench" Runs="runs" Error="workbenchError" EntrySelected="OpenDocumentAsync" TraceRequested="OpenTraceAsync"
+                                             Missions="authoring?.Missions" MissionSelected="OpenAuthoringAsync" AuthorRequested="AuthorMissionAsync" />
+                        break;
+                    case WorkbenchView.MissionAuthoring:
+                        @if (authoring?.Open is { } authoringDocument)
+                        {
+                            <MissionAuthoringView Document="authoringDocument" Error="authoringError" Busy="authoringBusy"
+                                                  SaveDefinition="SaveDefinitionAsync" PromoteCandidate="PromoteCandidateAsync"
+                                                  SaveCase="SaveCaseAsync" Run="RunEvaluationAsync" PublishVersion="PublishVersionAsync" />
+                        }
+                        else
+                        {
+                            <p class="wb-loading" aria-live="polite">Loading this mission…</p>
+                        }
                         break;
                     case WorkbenchView.Document:
                         <ProjectDocumentView Document="document" Error="documentError" Back="BackToExplorer" />
@@ -77,6 +91,14 @@ else
     private Guid createCommandId;
     private string? announcement;
 
+    // Authoring (45.4 minimum). Presentation state only: the projection Application returned, what
+    // is in flight, and the last typed refusal.
+    private MissionAuthoringProjection? authoring;
+    private ProjectOperationError? authoringError;
+    private bool authoringBusy;
+    private Guid authoringMissionId;
+    private CancellationTokenSource? evaluationPoll;
+
     private ProjectRunDetail? selectedRun;
     private ProjectRunEventPage? traceEvents;
     private ProjectOperationError? traceError;
@@ -98,10 +120,13 @@ else
     private int generation;
     private string? connectionError;
 
-    private string HeaderTitle => view switch { WorkbenchView.Explorer or WorkbenchView.Document => "Project Explorer", WorkbenchView.Settings => "Settings", WorkbenchView.RunTrace => "Run trace", _ => "Missions" };
-    private string HeaderSubtitle => view == WorkbenchView.Missions
-        ? "Review pinned mission versions and start a new conversation."
-        : project?.Title ?? string.Empty;
+    private string HeaderTitle => view switch { WorkbenchView.Explorer or WorkbenchView.Document or WorkbenchView.MissionAuthoring => "Project Explorer", WorkbenchView.Settings => "Settings", WorkbenchView.RunTrace => "Run trace", _ => "Missions" };
+    private string HeaderSubtitle => view switch
+    {
+        WorkbenchView.Missions => "Review pinned mission versions and start a new conversation.",
+        WorkbenchView.MissionAuthoring => "Author, evaluate and publish a mission version.",
+        _ => project?.Title ?? string.Empty,
+    };
 
     private RenderFragment? NewConversationPanel => newConversationOpen
         ? @<NewMissionConversationPanel Options="approvedVersions" OptionsError="approvedVersionsError" Error="createError"
@@ -152,10 +177,13 @@ else
         await RefreshStateAsync(forceLatest: true);
         await LoadConversationsAsync();
         await LoadApprovedVersionsAsync();
+        await LoadAuthoringAsync(null);
     }
 
     private void ResetMissionsLanding()
     {
+        authoring = null; authoringError = null; authoringBusy = false; authoringMissionId = Guid.Empty;
+        evaluationPoll?.Cancel(); evaluationPoll?.Dispose(); evaluationPoll = null;
         conversations = null; conversationsError = null;
         approvedVersions = null; approvedVersionsError = null;
         createError = null; announcement = null;
@@ -164,7 +192,12 @@ else
     private async Task ChangeViewAsync(WorkbenchView next)
     {
         view = next;
-        if (next == WorkbenchView.Explorer) await LoadWorkbenchAsync();
+        if (next is not WorkbenchView.MissionAuthoring) { evaluationPoll?.Cancel(); }
+        if (next == WorkbenchView.Explorer)
+        {
+            await LoadWorkbenchAsync();
+            await LoadAuthoringAsync(null);
+        }
     }
     private async Task RefreshStateAsync(bool forceLatest = false)
     {
@@ -297,6 +330,156 @@ else
         if (response.Error is { } error) historyError = error;
         else if (response.Page is { } page) { runs = page; runCursor = cursor; historyError = null; }
     }
+    // ── Authoring (45.4 minimum) ───────────────────────────────────────────────────────────
+    // Projects decides the lifecycle and whether this candidate may publish; every branch below
+    // renders that answer. Nothing here evaluates, verdicts, or unblocks anything.
+
+    private async Task LoadAuthoringAsync(Guid? missionId)
+    {
+        if (sessionId is null || lifetime is null) return;
+        try
+        {
+            var response = await ApplicationChannel.SendAsync<GetMissionAuthoringRequest, GetMissionAuthoringResponse>(
+                new(sessionId, missionId), lifetime.Token);
+            if (response.Error is { } error) { authoringError = error; return; }
+            authoring = response.Authoring;
+            authoringError = null;
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception) { authoringError = new(ProjectOperationErrorCode.EvaluationUnavailable, exception.Message); }
+        finally { await InvokeAsync(StateHasChanged); }
+    }
+
+    private async Task OpenAuthoringAsync(Guid missionId)
+    {
+        authoringMissionId = missionId;
+        authoringError = null;
+        view = WorkbenchView.MissionAuthoring;
+        await LoadAuthoringAsync(missionId);
+        await PollEvaluationsAsync();
+    }
+
+    /// <summary>Authoring starts from a mission, so this creates the draft and opens it. The
+    /// starter definition and the Project scaffold it needs are Application's answer, not a
+    /// template this surface holds.</summary>
+    private async Task AuthorMissionAsync()
+    {
+        if (sessionId is null || lifetime is null) return;
+        var existing = authoring?.Missions.FirstOrDefault(item => item.HasDraft || item.LatestState is MissionVersionStateView.Candidate);
+        if (existing is not null) { await OpenAuthoringAsync(existing.MissionId); return; }
+
+        authoringBusy = true; authoringError = null;
+        view = WorkbenchView.MissionAuthoring;
+        try
+        {
+            var name = NextMissionName();
+            var response = await ApplicationChannel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(
+                new(sessionId, name, string.Empty, MissionHandsProfile.NoHands), lifetime.Token);
+            Apply(response);
+            if (authoring?.Open is { } opened) authoringMissionId = opened.MissionId;
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception) { authoringError = new(ProjectOperationErrorCode.EvaluationUnavailable, exception.Message); }
+        finally { authoringBusy = false; await InvokeAsync(StateHasChanged); }
+    }
+
+    private string NextMissionName()
+    {
+        var taken = authoring?.Missions.Select(item => item.Name).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+        if (!taken.Contains("Janus")) return "Janus";
+        for (var index = 2; ; index++)
+            if (!taken.Contains($"Janus {index}")) return $"Janus {index}";
+    }
+
+    private Task SaveDefinitionAsync(string definitionText) => MutateAuthoringAsync(document =>
+        document.Editable is MissionEditableKind.Draft && document.DraftId is { } draftId
+            ? ApplicationChannel.SendAsync<SaveMissionDraftRequest, MissionAuthoringMutationResponse>(
+                new(sessionId!, document.MissionId, draftId, document.Revision, definitionText, document.Profile), lifetime!.Token)
+            : null);
+
+    private Task PromoteCandidateAsync() => MutateAuthoringAsync(document =>
+        document.DraftId is { } draftId
+            ? ApplicationChannel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(
+                new(sessionId!, document.MissionId, draftId, document.Revision), lifetime!.Token)
+            : null);
+
+    private Task SaveCaseAsync((Guid? CaseId, EvaluationCaseInput Case) edit) => MutateAuthoringAsync(document =>
+        document.MissionVersionId is not { } versionId ? null
+            : edit.CaseId is { } caseId
+                ? ApplicationChannel.SendAsync<UpdateEvaluationCaseRequest, MissionAuthoringMutationResponse>(
+                    new(sessionId!, document.MissionId, versionId, caseId, edit.Case), lifetime!.Token)
+                : ApplicationChannel.SendAsync<AddEvaluationCaseRequest, MissionAuthoringMutationResponse>(
+                    new(sessionId!, document.MissionId, versionId, edit.Case), lifetime!.Token));
+
+    private async Task RunEvaluationAsync(Guid caseId)
+    {
+        await MutateAuthoringAsync(document => document.MissionVersionId is { } versionId
+            ? ApplicationChannel.SendAsync<RunEvaluationCaseRequest, MissionAuthoringMutationResponse>(
+                new(sessionId!, document.MissionId, versionId, caseId), lifetime!.Token)
+            : null);
+        await PollEvaluationsAsync();
+    }
+
+    private async Task PublishVersionAsync()
+    {
+        await MutateAuthoringAsync(document => document.MissionVersionId is { } versionId
+            ? ApplicationChannel.SendAsync<PublishMissionVersionRequest, MissionAuthoringMutationResponse>(
+                new(sessionId!, document.MissionId, versionId), lifetime!.Token)
+            : null);
+        if (authoringError is null)
+        {
+            // A published version is only useful where it can be started, so the surface goes
+            // there and the picker is refreshed to include it.
+            announcement = "Mission version published. It is now selectable for new conversations.";
+            view = WorkbenchView.Missions;
+            await LoadApprovedVersionsAsync();
+            await LoadConversationsAsync();
+        }
+    }
+
+    private async Task MutateAuthoringAsync(Func<MissionAuthoringDocument, Task<MissionAuthoringMutationResponse>?> action)
+    {
+        if (sessionId is null || lifetime is null || authoring?.Open is not { } document || authoringBusy) return;
+        authoringBusy = true; authoringError = null;
+        try
+        {
+            if (action(document) is { } pending) Apply(await pending);
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception exception) { authoringError = new(ProjectOperationErrorCode.EvaluationUnavailable, exception.Message); }
+        finally { authoringBusy = false; await InvokeAsync(StateHasChanged); }
+    }
+
+    private void Apply(MissionAuthoringMutationResponse response)
+    {
+        // A refusal still carries the document as it actually stands, so the surface shows both.
+        if (response.Authoring is { } projection) authoring = projection;
+        authoringError = response.Error;
+    }
+
+    /// <summary>Evaluation has no event channel, so a running case is polled until it settles.
+    /// The read action is what reconciles it; this only asks again.</summary>
+    private async Task PollEvaluationsAsync()
+    {
+        evaluationPoll?.Cancel();
+        evaluationPoll?.Dispose();
+        if (lifetime is null) return;
+        var poll = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        evaluationPoll = poll;
+        var missionId = authoringMissionId;
+        try
+        {
+            for (var attempt = 0; attempt < 120 && !poll.IsCancellationRequested; attempt++)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), poll.Token);
+                if (poll.IsCancellationRequested || authoringMissionId != missionId) return;
+                await LoadAuthoringAsync(missionId);
+                if (authoring?.Open?.Cases.All(item => item.ResultState is not EvaluationResultStateView.Pending) != false) return;
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
     private async Task LoadWorkbenchAsync()
     {
         if (sessionId is null || lifetime is null) return;
@@ -361,6 +544,7 @@ else
     private async Task StopLifetimeAsync()
     {
         if (lifetime is null) return;
+        evaluationPoll?.Cancel(); evaluationPoll?.Dispose(); evaluationPoll = null;
         await lifetime.CancelAsync(); if (subscription is not null) await subscription; lifetime.Dispose(); lifetime = null; subscription = null;
     }
     private static bool Terminal(ConversationRunStatus status) => status is ConversationRunStatus.Completed or ConversationRunStatus.Failed or ConversationRunStatus.Interrupted or ConversationRunStatus.Rejected;
@@ -370,7 +554,7 @@ else
 <style>
 .shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font-family: var(--font-sans); }
 .shell-header { min-height: var(--wb-header-height); display: flex; align-items: center; padding: 0 var(--wb-page-inset) 0 var(--wb-header-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .brand { display: flex; align-items: baseline; gap: var(--space-4); } .brand h1, .subtitle { margin: 0; } .brand h1 { color: var(--accent); font-size: var(--font-size-display); } .brand-divider { align-self: stretch; width: 1px; background: var(--border-strong); } .subtitle { font-size: var(--font-size-title); }
-.workbench { display: grid; grid-template-columns: var(--wb-rail-width) minmax(0, 1fr); grid-template-areas: "rail content"; min-height: 100vh; min-height: 100dvh; height: 100vh; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font-sans); } .wb-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-strong); } .wb-header { flex: none; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; justify-content: space-between; min-width: 0; min-height: var(--ml-header-height, auto); padding: var(--space-2) var(--wb-page-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .wb-header-text { min-width: 0; } .wb-header h1, .wb-header p { margin: 0; overflow-wrap: anywhere; } .wb-header h1 { font-size: var(--font-size-title); } .wb-header p { color: var(--text-muted); font-size: var(--font-size-mono); } .wb-header-action { flex: none; min-height: var(--ml-action-height); padding: 0 var(--space-4); border: none; border-radius: var(--radius); background: var(--accent); color: var(--accent-contrast); font: inherit; font-size: var(--font-size-label); font-weight: 700; cursor: pointer; } .wb-header-action:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.workbench { display: grid; grid-template-columns: var(--wb-rail-width) minmax(0, 1fr); grid-template-areas: "rail content"; min-height: 100vh; min-height: 100dvh; height: 100vh; height: 100dvh; background: var(--bg); color: var(--text); font-family: var(--font-sans); } .wb-content { grid-area: content; display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--border-strong); } .wb-header { flex: none; display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; justify-content: space-between; min-width: 0; min-height: var(--ml-header-height, auto); padding: var(--space-2) var(--wb-page-inset); background: var(--surface-sunken); border-bottom: 1px solid var(--border-strong); } .wb-header-text { min-width: 0; } .wb-header h1, .wb-header p { margin: 0; overflow-wrap: anywhere; } .wb-header h1 { font-size: var(--font-size-title); } .wb-header p { color: var(--text-muted); font-size: var(--font-size-mono); } .wb-header-secondary { flex: none; min-height: var(--ml-action-height); padding: 0 var(--space-4); border: 1px solid var(--border-strong); border-radius: var(--radius); background: transparent; color: var(--text); font: inherit; font-size: var(--font-size-label); cursor: pointer; } .wb-header-secondary:focus-visible { outline: none; box-shadow: var(--focus-ring); } .wb-loading { margin: auto; color: var(--text-muted); font-size: var(--font-size-label); } .wb-header-action { flex: none; min-height: var(--ml-action-height); padding: 0 var(--space-4); border: none; border-radius: var(--radius); background: var(--accent); color: var(--accent-contrast); font: inherit; font-size: var(--font-size-label); font-weight: 700; cursor: pointer; } .wb-header-action:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .wb-document { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: auto; padding: var(--ml-region-top, var(--wb-page-inset)) var(--wb-page-inset) calc(var(--wb-page-inset) + var(--safe-bottom)); } .wb-announce { flex: none; margin: 0; padding: 0 var(--wb-page-inset); color: var(--text-muted); font-size: var(--font-size-meta); } .wb-announce:empty { display: none; } .connection-banner { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--wb-page-inset); border-bottom: 1px solid var(--danger-border); background: var(--danger-bg); color: var(--danger); font-size: var(--font-size-meta); } .connection-banner button { border: none; background: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 @@media (max-width: 639px) { .workbench { grid-template-columns: minmax(7rem, 28%) minmax(0, 1fr); } }
 </style>

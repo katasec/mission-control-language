@@ -94,6 +94,14 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         ListMissionConversationsRequest => "transport/mission-conversations/list",
         ListApprovedMissionVersionsRequest => "transport/mission-conversations/approved-versions",
         CreateMissionConversationRequest => "transport/mission-conversations/create",
+        GetMissionAuthoringRequest => "transport/mission-authoring/get",
+        CreateMissionDraftRequest => "transport/mission-authoring/draft",
+        SaveMissionDraftRequest => "transport/mission-authoring/save-draft",
+        PromoteMissionCandidateRequest => "transport/mission-authoring/promote",
+        AddEvaluationCaseRequest => "transport/mission-authoring/case/add",
+        UpdateEvaluationCaseRequest => "transport/mission-authoring/case/update",
+        RunEvaluationCaseRequest => "transport/mission-authoring/evaluate",
+        PublishMissionVersionRequest => "transport/mission-authoring/publish",
         _ => throw new InvalidOperationException($"Unsupported application request: {typeof(TRequest).Name}."),
     };
 

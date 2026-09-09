@@ -1,5 +1,8 @@
 using System.Net;
 using ForgeMission.Application.Transport;
+// Only the profile is needed from Contracts here; importing the namespace would collide with the
+// transport's own list/create records, which deliberately share those names.
+using MissionHandsProfile = ForgeMission.Conversations.Contracts.MissionHandsProfile;
 using ForgeMission.Tests.ApplicationHost;
 
 namespace ForgeMission.Tests.Application;
@@ -306,6 +309,100 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         // What comes back is identity and the profile to display — never the executable package.
         var approval = typeof(MissionAccessApproval).GetProperties().Select(property => property.Name).ToArray();
         Assert.Equal(["MissionVersionId", "VersionNumber", "DefinitionHash", "Profile"], approval);
+    }
+
+    // --- authoring, over the real transport ----------------------------------------------------
+
+    [Fact]
+    public async Task Authoring_AnswersAFreshProjectWithNoMissions_ThenDraftsOneThroughTheNormalPath()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Author and publish"));
+        var session = created.Session!.SessionId;
+
+        var empty = await _channel.SendAsync<GetMissionAuthoringRequest, GetMissionAuthoringResponse>(
+            new GetMissionAuthoringRequest(session, null), CancellationToken.None);
+        Assert.Null(empty.Error);
+        Assert.Empty(empty.Authoring!.Missions);
+        Assert.Null(empty.Authoring.Open);
+
+        // The same call that starts authoring is what makes the Project package-able, so this is
+        // the whole "a normal user can begin" path in one request.
+        var drafted = await _channel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(
+            new CreateMissionDraftRequest(session, "Janus", string.Empty, MissionHandsProfile.NoHands), CancellationToken.None);
+        Assert.Null(drafted.Error);
+        var document = drafted.Authoring!.Open!;
+        Assert.Equal(MissionEditableKind.Draft, document.Editable);
+        Assert.False(document.CanPublish);
+
+        var promoted = await _channel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(
+            new PromoteMissionCandidateRequest(session, document.MissionId, document.DraftId!.Value, document.Revision),
+            CancellationToken.None);
+        Assert.Null(promoted.Error);
+        Assert.Equal(MissionEditableKind.Candidate, promoted.Authoring!.Open!.Editable);
+        Assert.Equal(1, promoted.Authoring.Open.VersionNumber);
+    }
+
+    [Fact]
+    public async Task Authoring_RefusesAPublishThatItsOwnProjectionSaysIsBlocked()
+    {
+        var created = await CreateAsync(new ProjectCreateRequest("Author and publish"));
+        var session = created.Session!.SessionId;
+        var drafted = await _channel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(
+            new CreateMissionDraftRequest(session, "Janus", string.Empty, MissionHandsProfile.NoHands), CancellationToken.None);
+        var draft = drafted.Authoring!.Open!;
+        var promoted = await _channel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(
+            new PromoteMissionCandidateRequest(session, draft.MissionId, draft.DraftId!.Value, draft.Revision), CancellationToken.None);
+        var candidate = promoted.Authoring!.Open!;
+
+        var refused = await _channel.SendAsync<PublishMissionVersionRequest, MissionAuthoringMutationResponse>(
+            new PublishMissionVersionRequest(session, candidate.MissionId, candidate.MissionVersionId!.Value), CancellationToken.None);
+
+        Assert.NotNull(refused.Error);
+        Assert.Equal(MissionVersionStateView.Candidate, refused.Authoring!.Missions[0].LatestState);
+    }
+
+    [Fact]
+    public async Task Authoring_RefusesAForeignSessionOnEveryAction()
+    {
+        var foreign = Guid.NewGuid().ToString("N");
+        var blank = new EvaluationCaseInput("input", null, null, EvaluationOutcomeView.Succeeded, null);
+
+        foreach (var send in new Func<Task>[]
+                 {
+                     () => _channel.SendAsync<GetMissionAuthoringRequest, GetMissionAuthoringResponse>(new(foreign, null), CancellationToken.None),
+                     () => _channel.SendAsync<CreateMissionDraftRequest, MissionAuthoringMutationResponse>(new(foreign, "Janus", "", MissionHandsProfile.NoHands), CancellationToken.None),
+                     () => _channel.SendAsync<SaveMissionDraftRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), 1, "x", MissionHandsProfile.NoHands), CancellationToken.None),
+                     () => _channel.SendAsync<PromoteMissionCandidateRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), 1), CancellationToken.None),
+                     () => _channel.SendAsync<AddEvaluationCaseRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), blank), CancellationToken.None),
+                     () => _channel.SendAsync<UpdateEvaluationCaseRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), blank), CancellationToken.None),
+                     () => _channel.SendAsync<RunEvaluationCaseRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None),
+                     () => _channel.SendAsync<PublishMissionVersionRequest, MissionAuthoringMutationResponse>(new(foreign, Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None),
+                 })
+        {
+            var rejection = await Assert.ThrowsAsync<HttpRequestException>(send);
+            Assert.Equal(HttpStatusCode.NotFound, rejection.StatusCode);
+        }
+    }
+
+    [Fact]
+    public void Authoring_RequestsCarryIntentOnly_AndTheProjectionCarriesNoExecutableContent()
+    {
+        foreach (var type in new[]
+                 {
+                     typeof(GetMissionAuthoringRequest), typeof(CreateMissionDraftRequest), typeof(SaveMissionDraftRequest),
+                     typeof(PromoteMissionCandidateRequest), typeof(AddEvaluationCaseRequest), typeof(UpdateEvaluationCaseRequest),
+                     typeof(RunEvaluationCaseRequest), typeof(PublishMissionVersionRequest),
+                 })
+        {
+            var names = type.GetProperties().Select(property => property.Name).ToArray();
+            foreach (var forbidden in new[] { "Package", "Launch", "Path", "Home", "Capabilit", "AttachmentId", "Credential" })
+                Assert.DoesNotContain(names, name => name.Contains(forbidden, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // The document carries the text an operator is editing, and no resolved package.
+        var document = typeof(MissionAuthoringDocument).GetProperties().Select(property => property.Name).ToArray();
+        Assert.Contains("DefinitionText", document);
+        Assert.DoesNotContain(document, name => name.Contains("Package", StringComparison.OrdinalIgnoreCase));
     }
 
     // --- session replacement is replacement only ----------------------------------------------

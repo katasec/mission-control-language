@@ -19,6 +19,7 @@ internal interface IMissionVersionService
     Task<MissionVersion> SaveCandidateAsync(string home, Guid missionId, Guid missionVersionId, int candidateRevision, string definitionText, CancellationToken ct);
     Task<MissionVersion> SaveCaseAsync(string home, Guid missionId, Guid missionVersionId, EvaluationCase evaluationCase, CancellationToken ct);
     Task<MissionVersion> DeleteCaseAsync(string home, Guid missionId, Guid missionVersionId, Guid evaluationCaseId, CancellationToken ct);
+    Task<MissionVersion> UpdateCaseAsync(string home, Guid missionId, Guid missionVersionId, EvaluationCase evaluationCase, CancellationToken ct);
     Task<IReadOnlyList<EvaluationResult>> ListResultsAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct);
     Task<EvaluationResult> RecordCompletionAsync(string home, Guid missionId, Guid missionVersionId, Guid evaluationCaseId,
         int candidateRevision, string definitionHash, EvaluationOutcome observedOutcome, string observedOutputSummary,
@@ -134,6 +135,27 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             if (cases.Any(item => item.EvaluationCaseId == evaluationCase.EvaluationCaseId))
                 throw Conflict("That evaluation case already exists.");
             var updated = version with { EvaluationCases = [.. cases, evaluationCase], EvaluationResults = [], EvaluatedAtUtc = null };
+            return (Replace(manifest, definition with { Versions = Replace(Versions(definition), updated) }), updated);
+        }, ct);
+        return saved.Value;
+    }
+
+    /// <summary>Corrects a case in place. Adding and deleting already clear every result, and so
+    /// does this: a case whose criteria changed has not been evaluated against those criteria, and
+    /// letting an older Passed row survive would let a version publish on evidence for a question
+    /// nobody asked. The revision is bumped so the change is visible rather than silent.</summary>
+    public async Task<MissionVersion> UpdateCaseAsync(string home, Guid missionId, Guid missionVersionId, EvaluationCase evaluationCase, CancellationToken ct)
+    {
+        var saved = await projects.UpdateMissionDefinitionsAsync(home, (manifest, _) =>
+        {
+            var definition = RequireDefinition(manifest, missionId);
+            var version = RequireCandidate(definition, missionVersionId);
+            var existing = Cases(version).SingleOrDefault(item => item.EvaluationCaseId == evaluationCase.EvaluationCaseId)
+                ?? throw Conflict("That evaluation case no longer exists.");
+            var replacement = evaluationCase with { Revision = existing.Revision + 1 };
+            ValidateCase(replacement);
+            var cases = Cases(version).Select(item => item.EvaluationCaseId == replacement.EvaluationCaseId ? replacement : item).ToArray();
+            var updated = version with { EvaluationCases = cases, EvaluationResults = [], EvaluatedAtUtc = null };
             return (Replace(manifest, definition with { Versions = Replace(Versions(definition), updated) }), updated);
         }, ct);
         return saved.Value;

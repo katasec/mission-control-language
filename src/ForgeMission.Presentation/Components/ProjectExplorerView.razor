@@ -6,6 +6,28 @@
     else if (Projection is null) { <p class="ex-empty">Loading this Project…</p> }
     else
     {
+        <section class="ex-section">
+            <h3 class="ex-heading">Missions</h3>
+            @if (Missions is null || Missions.Count == 0)
+            {
+                <p class="ex-empty">No authored missions yet</p>
+            }
+            else
+            {
+                <ul class="ex-list">
+                    @foreach (var mission in Missions)
+                    {
+                        <li @key="mission.MissionId">
+                            <button type="button" class="ex-open" @onclick="() => MissionSelected.InvokeAsync(mission.MissionId)">
+                                <span>@mission.Name</span>
+                                <small>@MissionState(mission)</small>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            <button type="button" class="ex-author" @onclick="AuthorRequested">Author a mission</button>
+        </section>
         @Section("Project assets", Projection.Assets, "No local assets yet")
         @Section("Source context", Projection.Context, "No context attached")
         <section class="ex-section"><h3 class="ex-heading">Runs</h3><MissionsView Page="Runs" HasLegacyHistory="false" TraceRequested="TraceRequested" ShowInstruction="false" AllowPaging="false" /></section>
@@ -18,6 +40,16 @@
     [Parameter] public ProjectOperationError? Error { get; set; }
     [Parameter] public EventCallback<ProjectWorkbenchEntry> EntrySelected { get; set; }
     [Parameter] public EventCallback<Guid> TraceRequested { get; set; }
+    [Parameter] public IReadOnlyList<MissionDefinitionSummary>? Missions { get; set; }
+    [Parameter] public EventCallback<Guid> MissionSelected { get; set; }
+    [Parameter] public EventCallback AuthorRequested { get; set; }
+
+    private static string MissionState(MissionDefinitionSummary mission) => mission switch
+    {
+        { HasDraft: true } => "draft",
+        { LatestVersionNumber: { } number, LatestState: { } state } => $"v{number} {state.ToString().ToLowerInvariant()}",
+        _ => "no version",
+    };
 
     private RenderFragment Section(string heading, IReadOnlyList<ProjectWorkbenchEntry> entries, string empty) => @<section class="ex-section"><h3 class="ex-heading">@heading</h3>@if (entries.Count == 0) { <p class="ex-empty">@empty</p> } else { <ul class="ex-list">@foreach (var item in entries) { <li><button type="button" class="ex-open" @onclick="() => EntrySelected.InvokeAsync(item)"><span>@item.Label</span><small>@item.Kind</small></button></li> }</ul> }</section>;
 }

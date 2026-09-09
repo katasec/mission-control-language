@@ -1,0 +1,63 @@
+@namespace ForgeMission.Presentation.Components
+@using ForgeMission.Application.Transport
+
+@* One evaluation case: what to send, what should come back, and whether it should succeed. It
+   edits nothing else - the deterministic criteria are the whole contract, and a surface that let
+   an operator adjust the verdict would make the evidence worthless. *@
+
+<section class="ce" aria-label="@(Draft.EvaluationCaseId is null ? "Add evaluation case" : "Edit evaluation case")">
+    <label class="ce-field">
+        <span>Input</span>
+        <textarea class="ce-input" disabled="@Busy" value="@input" @oninput="e => input = e.Value?.ToString() ?? string.Empty"></textarea>
+    </label>
+
+    <label class="ce-field">
+        <span>Expected outcome</span>
+        <select class="ce-select" disabled="@Busy" value="@outcome" @onchange="OnOutcomeChanged">
+            <option value="@EvaluationOutcomeView.Succeeded">Succeeds</option>
+            <option value="@EvaluationOutcomeView.Failed">Fails</option>
+        </select>
+    </label>
+
+    <label class="ce-field">
+        <span>Answer must contain</span>
+        <input class="ce-fragments" type="text" disabled="@Busy" placeholder="comma separated, optional"
+               value="@fragments" @oninput="e => fragments = e.Value?.ToString() ?? string.Empty" />
+    </label>
+
+    <div class="ce-actions">
+        <button type="button" class="ce-cancel" @onclick="Cancel" disabled="@Busy">Cancel</button>
+        <button type="button" class="ce-save" @onclick="Commit" disabled="@(Busy || string.IsNullOrWhiteSpace(input))">
+            @(Draft.EvaluationCaseId is null ? "Add case" : "Save case")
+        </button>
+    </div>
+    <p class="ce-note">Saving a case clears its previous result: criteria that changed have not been evaluated yet.</p>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public EvaluationCaseDraft Draft { get; set; } = default!;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<EvaluationCaseDraft> Save { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+
+    private string input = string.Empty;
+    private string fragments = string.Empty;
+    private EvaluationOutcomeView outcome = EvaluationOutcomeView.Succeeded;
+    private Guid? tracked;
+
+    protected override void OnParametersSet()
+    {
+        if (tracked == Draft.EvaluationCaseId && input.Length > 0) return;
+        tracked = Draft.EvaluationCaseId;
+        input = Draft.Input;
+        fragments = Draft.RequiredFragments;
+        outcome = Draft.ExpectedOutcome;
+    }
+
+    private void OnOutcomeChanged(ChangeEventArgs e) =>
+        outcome = Enum.TryParse<EvaluationOutcomeView>(e.Value?.ToString(), out var parsed) ? parsed : EvaluationOutcomeView.Succeeded;
+
+    private Task Commit() => string.IsNullOrWhiteSpace(input)
+        ? Task.CompletedTask
+        : Save.InvokeAsync(new EvaluationCaseDraft(Draft.EvaluationCaseId, input, outcome, fragments));
+}

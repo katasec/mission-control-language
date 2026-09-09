@@ -1,8 +1,9 @@
 # Phase 45.4 — Project Explorer authoring
 
-> **Status:** surface design complete; implementation remains blocked by [45.2](phase-45.2-durable-conversation-turns.md)
-> and [45.3](phase-45.3-operator-missions-experience.md). It depends on accepted
-> [45.1](phase-45.1-version-evaluation-contracts.md) as well.
+> **Status:** accepted, 2026-09-09. Codex reviewed the live authored-candidate surface and the
+> zero-argument packaged Desktop journey: a new Project authored Janus, recorded a genuine failed
+> evaluation, corrected and passed it, published v1, then launched one pinned conversation. Transcript
+> presentation remains outside this task.
 
 ## Task 4 — author, evaluate and publish inside Project Explorer
 

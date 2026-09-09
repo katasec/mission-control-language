@@ -41,6 +41,14 @@ internal static class ApplicationEndpoints
         app.MapPost("/transport/mission-conversations/list", (ListMissionConversationsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListAsync(request, ct)));
         app.MapPost("/transport/mission-conversations/approved-versions", (ListApprovedMissionVersionsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListApprovedVersionsAsync(request, ct)));
         app.MapPost("/transport/mission-conversations/create", (CreateMissionConversationRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.CreateAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/get", (GetMissionAuthoringRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.GetAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/draft", (CreateMissionDraftRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.CreateDraftAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/save-draft", (SaveMissionDraftRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.SaveDraftAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/promote", (PromoteMissionCandidateRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.PromoteCandidateAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/case/add", (AddEvaluationCaseRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.AddCaseAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/case/update", (UpdateEvaluationCaseRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.UpdateCaseAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/evaluate", (RunEvaluationCaseRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.RunCaseAsync(request, ct)));
+        app.MapPost("/transport/mission-authoring/publish", (PublishMissionVersionRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.PublishAsync(request, ct)));
         app.MapPost("/transport/prompt", (PromptRequest request, IConversationService service, CancellationToken ct) => Result(service.PromptAsync(request, ct)));
         app.MapGet("/transport/events", async (HttpContext context, ApplicationEventHub events, CancellationToken ct) =>
         {

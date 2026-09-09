@@ -22,6 +22,54 @@ public sealed class ProjectServiceTests : IDisposable
 
     public void Dispose() => Directory.Delete(_profile, recursive: true);
 
+    // --- the scaffold that makes authoring possible at all ----------------------------------
+    // A Project created through the launcher has no assets, so MissionPackageBuilder has no lock
+    // file and promoting a candidate is impossible. These pin the seam that closes that.
+
+    [Fact]
+    public async Task MissionAssets_TurnABareProjectIntoOneThatCanActuallyPromoteACandidate()
+    {
+        var project = _store.Create("Author a mission", null, null);
+        Assert.Empty(_store.ReadForHome(project.Home).Manifest.Assets);
+
+        var scaffolded = await _store.EnsureMissionAssetsAsync(project.Home, CancellationToken.None);
+
+        Assert.Single(scaffolded.Manifest.Assets, asset => asset.Kind == ProjectAssetKind.LockFile);
+        Assert.Equal(2, scaffolded.Manifest.Assets.Count(asset => asset.Kind == ProjectAssetKind.Expert));
+        Assert.True(File.Exists(Path.Combine(project.Home, "mcl.lock")));
+        Assert.True(File.Exists(Path.Combine(project.Home, "experts", "Proposer", "expert.md")));
+        Assert.True(File.Exists(Path.Combine(project.Home, "experts", "Reviewer", "expert.md")));
+
+        // The point of the scaffold: the starter definition now promotes, which it could not before.
+        var versions = new MissionVersionService(_store);
+        var draft = await versions.CreateDraftAsync(project.Home, "Janus",
+            ProjectService.StarterMissionDefinition, MissionHandsProfile.NoHands, CancellationToken.None);
+        var candidate = await versions.PromoteCandidateAsync(project.Home, draft.MissionId,
+            draft.Draft!.DraftId, draft.Draft.Revision, CancellationToken.None);
+        Assert.Equal(MissionVersionState.Candidate, candidate.State);
+        Assert.Equal(2, candidate.Package.ResolvedExperts.Length);
+    }
+
+    [Fact]
+    public async Task MissionAssets_AreIdempotent_AndNeverOverwriteWhatTheOperatorWrote()
+    {
+        var project = _store.Create("Author a mission", null, null);
+        Directory.CreateDirectory(Path.Combine(project.Home, "experts", "Proposer"));
+        const string mine = "---\nname: Proposer\nkind: llm\ninput: task\noutput: proposal\n---\nMy own wording.\n";
+        await File.WriteAllTextAsync(Path.Combine(project.Home, "experts", "Proposer", "expert.md"), mine);
+
+        var first = await _store.EnsureMissionAssetsAsync(project.Home, CancellationToken.None);
+        var lockText = await File.ReadAllTextAsync(Path.Combine(project.Home, "mcl.lock"));
+        var second = await _store.EnsureMissionAssetsAsync(project.Home, CancellationToken.None);
+
+        // The operator's expert survives and is what got locked.
+        Assert.Equal(mine, await File.ReadAllTextAsync(Path.Combine(project.Home, "experts", "Proposer", "expert.md")));
+        // A second call changes nothing at all.
+        Assert.Equal(first.Manifest.Assets.Length, second.Manifest.Assets.Length);
+        Assert.Equal(lockText, await File.ReadAllTextAsync(Path.Combine(project.Home, "mcl.lock")));
+        Assert.Single(second.Manifest.Assets, asset => asset.Kind == ProjectAssetKind.LockFile);
+    }
+
     // --- approved-launch resolution across both manifest lanes -----------------------------
     // ApprovedMissionLaunches is the schema-4 compatibility lane and the authored lifecycle never
     // writes it, so without the schema-5 half a published version could never be acknowledged at

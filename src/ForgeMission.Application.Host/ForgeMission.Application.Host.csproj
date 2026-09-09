@@ -6,6 +6,13 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
     <IsAotCompatible>true</IsAotCompatible>
+    <!-- This Host reaches Core's YAML entry points through Application (the Project lock file),
+         so YamlDotNet's reflection-based builders land in its AOT closure the same way they land
+         in the CLI's. Core already preserves every POCO that crosses those builders with
+         [DynamicDependency], so the assembly-level warnings are the conservative roll-up rather
+         than a real trim hazard. Same handling, same reason, as ForgeMission.Cli. -->
+    <IlcSuppressWarnings>IL3050</IlcSuppressWarnings>
+    <NoWarn>$(NoWarn);IL3050;IL2104;IL3053</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

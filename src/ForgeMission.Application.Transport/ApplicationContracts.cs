@@ -255,6 +255,64 @@ public sealed record CreatedMissionConversation(Guid ConversationId, MissionAcce
 public sealed record CreateMissionConversationResponse(
     CreatedMissionConversation? Created, ProjectOperationError? Error);
 
+// --- Mission authoring contracts (45.4 minimum) ---------------------------------------------
+// The smallest vocabulary that lets one operator author, evaluate and publish. Projects still
+// owns the lifecycle: CanPublish below is a projection of what it already enforces, and
+// PublishMissionVersion is refused there too, so a surface that ignored the flag changes nothing.
+
+public enum MissionVersionStateView { Candidate, Evaluated, Approved, Superseded }
+public enum MissionEditableKind { None, Draft, Candidate }
+public enum EvaluationOutcomeView { Succeeded, Failed }
+public enum EvaluationResultStateView { None, Pending, Passed, Failed }
+
+public sealed record MissionDefinitionSummary(
+    Guid MissionId, string Name, int? LatestVersionNumber, MissionVersionStateView? LatestState, bool HasDraft);
+
+/// <summary><see cref="TraceReference"/> is evidence a result came from a real durable run. It is
+/// an identifier to read, not a link: the trace surface is a later task.</summary>
+public sealed record EvaluationCaseView(
+    Guid EvaluationCaseId, string Input, string ExpectedSuccess, string ExpectedFailure,
+    EvaluationOutcomeView ExpectedOutcome, IReadOnlyList<string> RequiredFragments,
+    EvaluationResultStateView ResultState, string? ObservedSummary, string? TraceReference);
+
+public sealed record MissionAuthoringDocument(
+    Guid MissionId, string Name, MissionEditableKind Editable,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile,
+    Guid? DraftId, Guid? MissionVersionId, int Revision, int? VersionNumber,
+    string DefinitionText, IReadOnlyList<EvaluationCaseView> Cases,
+    bool CanPublish, string? PublishBlockedReason);
+
+public sealed record MissionAuthoringProjection(
+    IReadOnlyList<MissionDefinitionSummary> Missions, MissionAuthoringDocument? Open);
+
+public sealed record GetMissionAuthoringRequest(string SessionId, Guid? MissionId);
+public sealed record GetMissionAuthoringResponse(MissionAuthoringProjection? Authoring, ProjectOperationError? Error);
+
+/// <summary>One response for every mutation: the refusal, and the document as it actually stands
+/// beside it, so a surface never has to guess what a rejected action left behind.</summary>
+public sealed record MissionAuthoringMutationResponse(
+    MissionAuthoringProjection? Authoring, ProjectOperationError? Error);
+
+public sealed record CreateMissionDraftRequest(
+    string SessionId, string Name, string DefinitionText,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile);
+public sealed record SaveMissionDraftRequest(
+    string SessionId, Guid MissionId, Guid DraftId, int Revision, string DefinitionText,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile);
+public sealed record PromoteMissionCandidateRequest(string SessionId, Guid MissionId, Guid DraftId, int Revision);
+
+public sealed record EvaluationCaseInput(
+    string Input, string? ExpectedSuccess, string? ExpectedFailure,
+    EvaluationOutcomeView ExpectedOutcome, IReadOnlyList<string>? RequiredFragments);
+
+public sealed record AddEvaluationCaseRequest(
+    string SessionId, Guid MissionId, Guid MissionVersionId, EvaluationCaseInput Case);
+public sealed record UpdateEvaluationCaseRequest(
+    string SessionId, Guid MissionId, Guid MissionVersionId, Guid EvaluationCaseId, EvaluationCaseInput Case);
+public sealed record RunEvaluationCaseRequest(
+    string SessionId, Guid MissionId, Guid MissionVersionId, Guid EvaluationCaseId);
+public sealed record PublishMissionVersionRequest(string SessionId, Guid MissionId, Guid MissionVersionId);
+
 public sealed record CapabilityRequestData(
     string CapabilityName,
     CapabilityOperation Operation,

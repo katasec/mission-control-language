@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Obtain and review a bounded implementation plan for Phase 45's next Desktop Missions UI work; add only the typed durable facts its rendered behaviour requires. |
+| **NEXT STEP** | Decide the next Mission Conversation experience after the accepted authoring and launch flow; transcript/turn presentation is intentionally pending that product pivot. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Durable foundation accepted; the next reference-led Desktop Missions slice is design-ready for bounded implementation under Codex review. |
+| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; the next transcript/turn experience awaits product scope. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
 
 ## Design docs

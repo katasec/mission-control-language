@@ -1,6 +1,6 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** controlled implementation accepted, 2026-09-09. Task 3A passed Codex's live controlled visual review against its allocated reference slice. Default-path acceptance remains **open**: a normal Desktop user still has no author → evaluate → publish route to create an Approved schema-5 mission version. Do not merge or mark this task complete until that prerequisite is delivered and the zero-argument journey is proven.
+> **Status:** accepted, 2026-09-09. Codex completed controlled visual review and the zero-argument packaged Desktop journey: a new Project authored, evaluated, published, and started exactly one pinned Approved mission conversation. The next transcript/turn presentation is outside this slice.
 
 ## Why this slice exists
 

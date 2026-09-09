@@ -1,10 +1,8 @@
 # Phase 45 — Forge Desktop mission conversations
 
-> **Status:** version/evaluation foundation, generic durable-runtime prerequisites, and 45.2 are
-> accepted as of 2026-09-08. The prior operator-surface implementation was reverted after its
-> supervisor browser comparison failed the binding reference. Current Desktop remains Project →
-> selected one-shot Mission → instruction → terminal run card → trace while the reference-led
-> Claude implementation is reviewed and accepted in dependency order.
+> **Status:** authoring, evaluation, publication, and pinned-conversation launch are accepted as
+> of 2026-09-09. The next operator transcript/turn presentation is intentionally not implied by
+> this delivery and awaits the product pivot.
 
 ## Why this phase exists
 
