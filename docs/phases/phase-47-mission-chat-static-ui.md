@@ -41,11 +41,11 @@ reviewable Forge-blue prototype of the startup choice, fresh Janus chat, and act
 
 ## Codex ↔ Claude iteration
 
-This phase uses the user-directed [Claude ↔ Codex workflow](../design/claude-codex-workflow.md).
-Each iteration is narrow: Codex issues or revises the scope card; Claude returns a **plan only**;
-Codex explicitly approves or rejects it; Claude implements only the approved delta; Codex compares
-the running surface with the bound frame and accepts or sends one concrete revision. Claude never
-approves its own output, broadens into integration, or treats a screenshot as final acceptance.
+The [Claude ↔ Codex workflow](../design/claude-codex-workflow.md) is the canonical process for
+this phase. Its sequence governs every iteration: **Codex scope card → Claude implementation plan
+→ Codex approval → Claude edits and evidence → Codex independent browser/reference review → Codex
+accepts or rejects**. Claude never approves its own output, broadens into integration, or treats a
+screenshot as final acceptance.
 
 The first handoff is 47.1. A later visual adjustment gets a new bounded scope card under the same
 spoke; it does not silently add a backend dependency or turn a stand-in into product behavior.

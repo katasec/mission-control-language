@@ -69,12 +69,11 @@ MissionsLandingView / NewMissionConversationPanel behavior.
 
 ## Claude handoff
 
-Claude receives a link to this spoke and the three image files on the branch. The first request is
-**plan only; do not edit**. It must name the exact paths, local-state sequence, test plan,
-reference-image mapping, token use, and every assumption. Codex must explicitly approve that plan
-before Claude edits. After each implementation pass, Claude returns actual test results and
-screenshots; Codex independently inspects the diff and live UI, then accepts or issues a narrower
-revision scope.
+Use the canonical [Claude ↔ Codex workflow](../design/claude-codex-workflow.md), including its
+relay-packet format. Claude receives this spoke and the three image files on the branch, then
+returns a **plan only; do not edit** packet. Codex approves or rejects it. Only then may Claude
+implement the approved scope and return actual test results and screenshots for Codex's independent
+diff and live-UI acceptance review.
 
 ## Done when
 
