@@ -2,8 +2,8 @@
 
 > **Status:** authoring, evaluation, publication, and pinned-conversation launch are accepted as
 > of 2026-09-09. The approved [Mission chat experience v1](../design/mission-chat-experience-v1.md)
-> now defines the next static Presentation-only product slice; durable/transport integration remains
-> a separately approved follow-on.
+> is being proved first as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md);
+> durable/transport integration remains a separately approved follow-on.
 
 ## Why this phase exists
 

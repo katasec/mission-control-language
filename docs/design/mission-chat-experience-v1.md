@@ -1,6 +1,6 @@
 # Mission Chat experience v1 — visual reference
 
-> **Status:** proposed product-design export, not shipped behaviour.
+> **Status:** approved visual reference for Phase 47's static UI prototype, not shipped behaviour.
 > **Exported:** 2026-09-10 from Claude Design (`Mission Chat Experience.dc.html`).
 > **Default-path acceptance:** N/A — static design artifact; no runtime, contract, or user-path change.
 
@@ -62,24 +62,17 @@ Checked against `forge.css`, `Pages/Home.razor`, `WorkbenchRail.razor(.css)`,
 6. Type: system sans throughout, mono restricted to versions, identifiers and column labels — 13px
    metadata floor at 1440 × 960.
 
-### Unresolved inconsistency — needs a product decision
+### Implementation reconciliations — locked for the static prototype
 
-- **Which named theme owns this surface.** `Home.razor` selects
-  `data-surface-theme="forge-desktop-dark"` on the Workbench element, whose accent family is ember;
-  the locked direction for this journey is the blue **Workbench** map. Both maps exist in
-  `forge.css` and both are legitimate, so the frames cannot resolve it: either the Missions surface
-  moves back to `workbench`, or the ember theme is restated in these blue values. Decide before
-  implementation, because the visual contract binds one theme selector.
-- **What `PINNED` looks like.** The shipped `.ml-pinned` badge uses green `--success-bg`/`--success`.
-  Because the locked direction reserves green for success/Approved, the frames render `PINNED` as a
-  neutral mono chip on `--surface-sunken` and keep green for `APPROVED`. If green is to stay on
-  `PINNED`, `MissionsLandingView.razor.css` and these frames disagree and one must change.
-- **Whether a chat row is openable.** `MissionsLandingView` rows are deliberately inert; frames 2
-  and 3 show a selected chat in the local list, which presumes opening exists. That capability is
-  unbuilt — the frames describe the intended state, not current behaviour.
-- **Live-activity honesty.** Frame 3 shows `Proposer is revising the plan`. Today's
-  `ConversationActivity` states are Thinking/Working/Streaming with a tool label; a domain-specific
-  activity string would need a real projection field, not surface copy.
+- **Theme:** Phase 47 uses the blue `workbench` theme already selected on the document root. Its
+  static Mission Chat shell must not apply `forge-desktop-dark`; a later integration task may
+  reconcile the existing durable-Missions shell separately.
+- **Pinned provenance:** `PINNED` is neutral in the new static components. Green is reserved for
+  `APPROVED`; Phase 47 does not change the accepted durable-Missions `.ml-pinned` component.
+- **Opening a chat:** the local chat list is openable only inside the prototype. It never changes the
+  deliberately inert durable rows in `MissionsLandingView`.
+- **Activity:** `Proposer is revising the plan` is fixed stand-in copy for the prototype. It is not
+  a projection claim, transport event, or new domain field.
 
 ## Guardrails
 

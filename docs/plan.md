@@ -8,14 +8,15 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Use the approved [Mission chat experience v1](design/mission-chat-experience-v1.md) as the next static Presentation-only design slice; backend integration remains deferred until the experience is reviewed. |
+| **NEXT STEP** | Execute [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md): an interactive, Presentation-only prototype of the approved Mission Chat experience. Backend integration remains deferred. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; Mission chat experience direction is captured, with integration deferred pending UI review. |
+| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; eventual Mission Chat integration follows the separately scoped Phase 47 UI prototype. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
+| [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md) | Build and review the approved Mission Chat journey as an interactive Presentation-only prototype before any backend integration. | Scope is locked; Claude plan review is next under the Codex-supervised external-implementer workflow. |
 
 ## Design docs
 
