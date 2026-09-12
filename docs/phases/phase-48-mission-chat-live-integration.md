@@ -104,7 +104,10 @@ While a selected chat's history is being opened, Presentation stages relayed eve
 requested conversation only. It applies the returned complete seed first, then the staged events
 through the same `ConversationTranscript`, whose EventId dedupe handles any overlap. The staging
 buffer is view-local, lasts only for that one open operation, and is cleared on its success or
-failure; it is not a cache or a second transcript store.
+failure; it is not a cache or a second transcript store. On a successful open, the handoff from
+staged to direct rendering is synchronous: apply the seed, apply and clear the staged batch, then
+clear the opening marker before any await. An event arriving afterwards therefore applies directly
+to the new selected transcript rather than being cleared unseen.
 
 For a first managed chat, the sequence is: provision/validate Project -> create empty pinned Host
 conversation -> automatically attach the fixed Client Runtime profile -> return the real fresh
