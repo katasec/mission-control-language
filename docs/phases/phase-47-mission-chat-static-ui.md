@@ -1,7 +1,7 @@
 # Phase 47 — Mission Chat static UI
 
-> **Status:** interactive Presentation-only prototype accepted 2026-09-12; awaiting
-> static-UI review. It creates no product chat, no durable state, and no backend contract.
+> **Status:** complete — static UI approved by the operator 2026-09-12. It creates no product
+> chat, no durable state, and no backend contract; real integration requires a separate design.
 
 ## Why this phase exists
 

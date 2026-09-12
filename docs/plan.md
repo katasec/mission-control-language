@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-08)
+## Now (2026-09-12)
 
 | | |
 |---|---|
-| **NEXT STEP** | Review the accepted [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md) prototype. Backend integration remains deferred pending a separately approved design. |
+| **NEXT STEP** | Design the bounded integration that connects the approved static Mission Chat UI to Phase 45's existing durable-conversation owners. No integration implementation starts until that design is approved. |
 
 ## Active phases
 
@@ -16,7 +16,6 @@
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; eventual Mission Chat integration follows the separately scoped Phase 47 UI prototype. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
-| [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md) | Build and review the approved Mission Chat journey as an interactive Presentation-only prototype before any backend integration. | Interactive prototype accepted; awaiting static-UI review. Backend integration remains deferred. |
 
 ## Design docs
 
