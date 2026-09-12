@@ -1,7 +1,7 @@
 # Phase 48 — Mission Chat live integration
 
-> **Status:** design locked 2026-09-13. Await Claude's corrected plan-only relay; no implementation has
-> started.
+> **Status:** implementation authorised 2026-09-13. Await Claude's bounded implementation and
+> evidence; no implementation result has been reviewed.
 
 ## Why this phase exists
 
