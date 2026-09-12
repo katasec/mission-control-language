@@ -275,12 +275,19 @@ public sealed record OpenMissionChatRequest(string SessionId, Guid ConversationI
 public sealed record SubmitMissionChatTurnRequest(
     string SessionId, Guid ConversationId, Guid CommandId, string Text);
 
+/// <summary>One member of the mission this chat is pinned to, as read-only display text. It is a fact
+/// of the shipped mission itself, supplied so a surface never infers who is in a chat from transcript
+/// events and never holds a roster of its own.</summary>
+public sealed record MissionChatMember(string Initials, string Name, string Role);
+
 /// <summary>A chat's read-only provenance. <paramref name="VersionLabel"/> is display text only — a
 /// shipped version's release label, or <c>v&lt;number&gt;</c> for an authored one; admission and
-/// pinning use the identity Application already holds.</summary>
+/// pinning use the identity Application already holds. <paramref name="Members"/> is the pinned
+/// mission's own roster, empty for a mission Forge holds no roster for.</summary>
 public sealed record MissionChatPin(
     string MissionName, int VersionNumber, string VersionLabel,
-    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile, bool IsApproved);
+    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile, bool IsApproved,
+    IReadOnlyList<MissionChatMember> Members);
 
 /// <summary>One real chat row. It exists only because a durable conversation does.
 /// <paramref name="Title"/> is the Host-owned durable title; <paramref name="MissionName"/> is null
@@ -330,9 +337,13 @@ public sealed record OpenMissionChatResponse(
     IReadOnlyList<MissionChatRow>? Rows, IReadOnlyList<ForgeMission.Conversations.Contracts.ConversationEvent>? Events,
     long ThroughSequence, MissionChatFailure? Failure);
 
+/// <summary><paramref name="Title"/> is the Host-owned durable title as it stands after this turn was
+/// accepted, so a surface can name the chat it just started from the same answer. It is relayed, never
+/// derived: a surface neither normalizes it nor reloads the chat directory to learn it.</summary>
 public sealed record SubmitMissionChatTurnResponse(
     Guid? TurnId, long? AcceptedSequence,
-    ForgeMission.Conversations.Contracts.ConversationRunStatus? Status, MissionChatFailure? Failure);
+    ForgeMission.Conversations.Contracts.ConversationRunStatus? Status, MissionChatFailure? Failure,
+    string? Title = null);
 
 // --- Mission authoring contracts (45.4 minimum) ---------------------------------------------
 // The smallest vocabulary that lets one operator author, evaluate and publish. Projects still

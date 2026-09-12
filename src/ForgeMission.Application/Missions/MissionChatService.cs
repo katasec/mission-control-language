@@ -104,7 +104,9 @@ internal sealed class MissionChatService(
         try
         {
             var accepted = await conversations.SubmitAsync(request.ConversationId, request.CommandId, request.Text, ct);
-            return new SubmitMissionChatTurnResponse(accepted.TurnId, accepted.AcceptedSequence, accepted.Status, null);
+            // The title comes back from the acceptance itself, so a surface names the chat it just
+            // started without deriving one or re-reading the directory.
+            return new SubmitMissionChatTurnResponse(accepted.TurnId, accepted.AcceptedSequence, accepted.Status, null, accepted.Title);
         }
         catch (ConversationHostProjectException exception)
         {
@@ -230,8 +232,15 @@ internal sealed class MissionChatService(
         var approved = await versions.ListApprovedVersionsAsync(home, ct);
         var isApproved = approved.Any(item => item.MissionVersionId == launch.MissionVersionId);
         return new MissionChatPin(identity.MissionName, launch.VersionNumber,
-            identity.ReleaseLabel ?? $"v{launch.VersionNumber}", launch.Profile, isApproved);
+            identity.ReleaseLabel ?? $"v{launch.VersionNumber}", launch.Profile, isApproved, Roster(identity.MissionName));
     }
+
+    /// <summary>The pinned mission's own members, for the mission Forge ships them for. A mission Forge
+    /// holds no roster for gets an empty one rather than a guessed list.</summary>
+    private static IReadOnlyList<MissionChatMember> Roster(string missionName) =>
+        string.Equals(missionName, ShippedMissionCatalog.MissionName, StringComparison.OrdinalIgnoreCase)
+            ? [.. ShippedMissionCatalog.Members.Select(member => new MissionChatMember(member.Initials, member.Name, member.Role))]
+            : [];
 
     private Guid? ShippedMissionId(string home)
     {

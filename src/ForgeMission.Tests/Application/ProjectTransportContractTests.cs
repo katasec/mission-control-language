@@ -522,7 +522,8 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
                 DateTimeOffset.UnixEpoch),
         };
         var rows = new[] { new MissionChatRow(Guid.NewGuid(), "New chat", "Janus", 1, "1.4", DateTimeOffset.UnixEpoch, false) };
-        var pin = new MissionChatPin("Janus", 1, "1.4", ForgeMission.Conversations.Contracts.MissionHandsProfile.ProjectWorkspace, true);
+        var pin = new MissionChatPin("Janus", 1, "1.4", ForgeMission.Conversations.Contracts.MissionHandsProfile.ProjectWorkspace, true,
+            [new MissionChatMember("P", "Proposer", "Drafts and revises the work this mission version defines.")]);
         var access = new MissionChatAccess(MissionChatAccessState.Attached, null);
 
         var payloads = new[]

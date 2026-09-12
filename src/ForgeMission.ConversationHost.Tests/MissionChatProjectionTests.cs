@@ -209,6 +209,29 @@ public class MissionChatProjectionTests(AzuriteFixture fixture)
         Assert.Equal("Draft the rollout", Assert.Single(after!.Conversations).Title);
     }
 
+    [Fact]
+    public async Task AnAcceptedTurn_AnswersWithTheTitleItJustAcquired()
+    {
+        await using var host = await fixture.StartHostAsync();
+        using var client = new HttpClient { BaseAddress = host.BaseAddress };
+
+        var created = await client.PostAsJsonAsync("/mission-conversations",
+            new CreateMissionConversationRequest(Guid.NewGuid(), Guid.NewGuid(), Launch()),
+            ConversationContractsJsonContext.Default.CreateMissionConversationRequest);
+        var conversation = (await created.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.CreateMissionConversationResponse))!.ConversationId;
+
+        var submitted = await client.PostAsJsonAsync($"/mission-conversations/{conversation}/turns",
+            new SubmitMissionTurnRequest(conversation, Guid.NewGuid(), "  Draft the   rollout "),
+            ConversationContractsJsonContext.Default.SubmitMissionTurnRequest);
+
+        var accepted = (await submitted.Content.ReadFromJsonAsync(
+            ConversationContractsJsonContext.Default.SubmitMissionTurnResponse))!;
+        // The caller learns the title from the same answer that accepted the turn, already normalized
+        // by the one owner of that rule.
+        Assert.Equal("Draft the rollout", accepted.Title);
+    }
+
     // --- helpers ---------------------------------------------------------------------------------
 
     private static ConversationAddress NewAddress() => new("dev", Guid.NewGuid());

@@ -926,7 +926,7 @@ internal sealed class ProjectService : IProjectService
                 var results = OrEmpty(version.EvaluationResults);
                 if (results.Select(item => item.EvaluationResultId).Distinct().Count() != results.Length ||
                     results.Any(result => !ValidResult(result, version, cases))) throw InvalidDefinitions(manifestPath);
-                if (!ValidVersionState(version, cases, results)) throw InvalidDefinitions(manifestPath);
+                if (!ValidVersionState(definition.Name, version, cases, results)) throw InvalidDefinitions(manifestPath);
             }
             ValidateVersionLineage(versions, manifestPath);
             var approved = versions.Where(version => version.State == MissionVersionState.Approved).ToArray();
@@ -950,8 +950,8 @@ internal sealed class ProjectService : IProjectService
         return ForgeMission.Core.Runtime.DurableMissionPackageValidator.TryValidate(raw, out _, out _);
     }
 
-    private static bool ValidVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
-        version.ReleaseLabel is not null
+    private static bool ValidVersionState(string missionName, MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
+        ShippedMissionCatalog.IsShippedRelease(missionName, version)
             ? ValidShippedVersionState(version, cases, results)
             : version.State switch
             {
@@ -962,13 +962,13 @@ internal sealed class ProjectService : IProjectService
                 _ => false,
             };
 
-    /// <summary>A version carrying a release label is shipped, release-reviewed code rather than an
-    /// operator-authored candidate (Phase 48). The authored lane's bar — evaluated, with every current
-    /// case passed — cannot apply to it, because Forge ran no evaluation for it and must record no
-    /// outcome it did not observe. So the shipped lane asserts the opposite invariant: it is Approved
-    /// (or later superseded) from the start, it was never evaluated, and it holds no case or result at
-    /// all. Nothing here relaxes the authored lane above, and nothing can publish into this lane
-    /// except the shipped-mission writer.</summary>
+    /// <summary>The one shipped release is release-reviewed code rather than an operator-authored
+    /// candidate (Phase 48). The authored lane's bar — evaluated, with every current case passed —
+    /// cannot apply to it, because Forge ran no evaluation for it and must record no outcome it did
+    /// not observe. So this lane asserts the opposite invariant: Approved (or later superseded) from
+    /// the start, never evaluated, and holding no case or result at all. It is reachable only for the
+    /// exact release <see cref="ShippedMissionCatalog.IsShippedRelease"/> recognises: a version that
+    /// merely carries some other label is still held to the authored lane.</summary>
     private static bool ValidShippedVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
         cases.Length == 0 && results.Length == 0 && version.EvaluatedAtUtc is null &&
         version.State is MissionVersionState.Approved or MissionVersionState.Superseded && version.ApprovedAtUtc is not null;

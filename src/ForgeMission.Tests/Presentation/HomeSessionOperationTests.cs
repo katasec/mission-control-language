@@ -119,6 +119,73 @@ public sealed class HomeSessionOperationTests : BunitContext
     }
 
     [Fact]
+    public void ASentMessage_RenamesOnlyThatRow_FromTheTitleHostReturned()
+    {
+        var (page, channel) = RenderHome();
+        Choose(page, "Chat with a mission");
+        Choose(page, "New chat");
+        Assert.Equal(["New chat", "Earlier chat"], RowTitles(page));
+
+        page.Find(".mcp-composer-field").Input("Draft the rollout");
+        page.Find(".mcp-send").Click();
+
+        // The title is the Host's own answer to that submit: nothing is derived here, and the chat
+        // directory is not re-read to learn it.
+        Assert.Equal(["Draft the rollout", "Earlier chat"], RowTitles(page));
+        Assert.Equal("Draft the rollout", page.Find(".mcp-chat-head h2").TextContent);
+        Assert.Empty(channel.Requests.OfType<OpenMissionChatRequest>());
+    }
+
+    [Fact]
+    public void ASubmitThatReturnsNoTitle_LeavesEveryRowAsItWas()
+    {
+        var (page, channel) = RenderHome();
+        channel.TitleOnSubmit = null;
+        Choose(page, "Chat with a mission");
+
+        page.Find(".mcp-composer-field").Input("Draft the rollout");
+        page.Find(".mcp-send").Click();
+
+        Assert.Equal(["New chat"], RowTitles(page));
+    }
+
+    [Fact]
+    public async Task AnEventDeliveredWhileAChatIsOpening_IsRenderedOnce_AfterItsSeed()
+    {
+        var (page, channel) = RenderHome();
+        Choose(page, "Chat with a mission");
+        Choose(page, "New chat");
+
+        // Hold the open response, so the event below genuinely arrives mid-request.
+        channel.HoldOpen();
+        page.FindAll(".mcp-row").First(row => row.TextContent.Contains("Earlier chat", StringComparison.Ordinal)).Click();
+        await channel.PublishAsync(ScriptedChannel.Event(ScriptedChannel.Chat, 2, "Arrived mid-request."));
+        // It cannot be shown yet: its seed has not come back.
+        Assert.Empty(page.FindAll(".mcp-user-bubble"));
+
+        channel.ReleaseOpen([ScriptedChannel.Event(ScriptedChannel.Chat, 1, "The first message.").Conversation!]);
+
+        page.WaitForAssertion(() => Assert.Equal(["The first message.", "Arrived mid-request."],
+            page.FindAll(".mcp-user-bubble").Select(node => node.TextContent)));
+    }
+
+    [Fact]
+    public async Task AnEventThatAlsoArrivesInTheSeed_IsStillRenderedOnce()
+    {
+        var (page, channel) = RenderHome();
+        Choose(page, "Chat with a mission");
+        Choose(page, "New chat");
+        var overlapping = ScriptedChannel.Event(ScriptedChannel.Chat, 1, "The first message.");
+
+        channel.HoldOpen();
+        page.FindAll(".mcp-row").First(row => row.TextContent.Contains("Earlier chat", StringComparison.Ordinal)).Click();
+        await channel.PublishAsync(overlapping);
+        channel.ReleaseOpen([overlapping.Conversation!]);
+
+        page.WaitForAssertion(() => Assert.Single(page.FindAll(".mcp-user-bubble")));
+    }
+
+    [Fact]
     public void NewChat_SendsItsOwnAction_AndSelectingARowSendsOpen()
     {
         var (page, channel) = RenderHome();
@@ -162,6 +229,9 @@ public sealed class HomeSessionOperationTests : BunitContext
 
     private (IRenderedComponent<Home> Page, ScriptedChannel Channel) RenderHome() => (Render<Home>(), channel);
 
+    private static IEnumerable<string> RowTitles(IRenderedComponent<Home> page) =>
+        page.FindAll(".mcp-row-title").Select(node => node.TextContent);
+
     private static void Choose(IRenderedComponent<Home> page, string label) =>
         page.FindAll("button")
             .First(button => button.TextContent.Contains(label, StringComparison.Ordinal))
@@ -178,13 +248,29 @@ public sealed class HomeSessionOperationTests : BunitContext
         private readonly System.Threading.Channels.Channel<ApplicationEvent> events =
             System.Threading.Channels.Channel.CreateUnbounded<ApplicationEvent>();
 
+        private TaskCompletionSource<IReadOnlyList<ConversationEvent>>? heldOpen;
+
         public List<object> Requests { get; } = [];
 
+        /// <summary>What Host answers a submit with. Null is a submit that named no title.</summary>
+        public string? TitleOnSubmit { get; set; } = "Draft the rollout";
+
         public Task PublishAsync(ApplicationEvent message) => events.Writer.WriteAsync(message).AsTask();
+
+        /// <summary>Makes the next open request wait, so a test can deliver an event while it is in
+        /// flight.</summary>
+        public void HoldOpen() => heldOpen = new TaskCompletionSource<IReadOnlyList<ConversationEvent>>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        /// <summary>Answers that held request with the complete seed it assembled.</summary>
+        public void ReleaseOpen(IReadOnlyList<ConversationEvent> seed) => heldOpen!.SetResult(seed);
 
         public Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
         {
             Requests.Add(request!);
+            if (request is OpenMissionChatRequest held && heldOpen is { } pending)
+                return Held<TResponse>(held, pending);
+
             object response = request switch
             {
                 StartMissionChatRequest => new StartMissionChatResponse(
@@ -192,12 +278,21 @@ public sealed class HomeSessionOperationTests : BunitContext
                     Chat, Pin, Attached, [Row(Chat, "New chat", false)], [], 0, null),
                 CreateMissionChatRequest => new CreateMissionChatResponse(Second, Pin, Attached,
                     [Row(Second, "New chat", false), Row(Chat, "Earlier chat", true)], [], 0, null),
-                OpenMissionChatRequest open => new OpenMissionChatResponse(open.ConversationId, Pin, Attached,
+                OpenMissionChatRequest opened => new OpenMissionChatResponse(opened.ConversationId, Pin, Attached,
                     [Row(Second, "New chat", false), Row(Chat, "Earlier chat", true)], [], 0, null),
-                SubmitMissionChatTurnRequest => new SubmitMissionChatTurnResponse(Guid.NewGuid(), 1, ConversationRunStatus.Queued, null),
+                SubmitMissionChatTurnRequest => new SubmitMissionChatTurnResponse(Guid.NewGuid(), 1, ConversationRunStatus.Queued, null, TitleOnSubmit),
                 _ => throw new InvalidOperationException("The launcher must not make a call before a person acts."),
             };
             return Task.FromResult((TResponse)response);
+        }
+
+        private async Task<TResponse> Held<TResponse>(OpenMissionChatRequest open,
+            TaskCompletionSource<IReadOnlyList<ConversationEvent>> pending)
+        {
+            var seed = await pending.Task;
+            heldOpen = null;
+            return (TResponse)(object)new OpenMissionChatResponse(open.ConversationId, Pin, Attached,
+                [Row(Second, "New chat", false), Row(Chat, "Earlier chat", true)], seed, seed.Count, null);
         }
 
         public async IAsyncEnumerable<ApplicationEvent> Subscribe([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
@@ -211,7 +306,13 @@ public sealed class HomeSessionOperationTests : BunitContext
                 Guid.NewGuid(), 1, conversationId, null, sequence, ConversationEventKind.UserMessage,
                 ConversationParticipant.User, null, text, null, null, null, null, null, null, DateTimeOffset.UnixEpoch));
 
-        private static MissionChatPin Pin => new("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true);
+        private static MissionChatPin Pin => new("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true, Members);
+
+        internal static readonly IReadOnlyList<MissionChatMember> Members =
+        [
+            new("P", "Proposer", "Drafts and revises the work this mission version defines."),
+            new("A", "Approver", "Checks each proposal against the mission's approval rules and says why."),
+        ];
 
         private static MissionChatAccess Attached => new(MissionChatAccessState.Attached, null);
 

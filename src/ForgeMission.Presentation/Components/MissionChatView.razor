@@ -163,13 +163,13 @@
     private RenderFragment Introduction => @<div class="mcp-intro">
         <div class="mcp-participants">
             <p class="mcp-participants-label">WHO IS IN THIS CHAT</p>
-            <div class="mcp-participant">
-                <span class="mcp-avatar" aria-hidden="true">@YouInitials</span>
-                <span class="mcp-participant-text">
-                    <span class="mcp-participant-name">You</span>
-                    <span class="mcp-participant-role">You steer the work with ordinary messages and decide what happens next.</span>
-                </span>
-            </div>
+            @* You, then the pinned mission's own members in the order Application returned them. This
+               surface names no expert of its own and reads none out of the transcript. *@
+            @Participant(YouInitials, "You", "You steer the work with ordinary messages and decide what happens next.")
+            @foreach (var member in Pin?.Members ?? [])
+            {
+                @Participant(member.Initials, member.Name, member.Role)
+            }
         </div>
 
         @* Read-only by construction: a block of text containing no control at all, stating the exact
@@ -183,6 +183,15 @@
         <p class="mcp-intro-note">Send the first message to start. Everything said here stays in this one chat.</p>
     </div>;
 
+    private RenderFragment Participant(string initials, string name, string role) =>
+        @<div class="mcp-participant">
+             <span class="mcp-avatar" aria-hidden="true">@initials</span>
+             <span class="mcp-participant-text">
+                 <span class="mcp-participant-name">@name</span>
+                 <span class="mcp-participant-role">@role</span>
+             </span>
+         </div>;
+
     private RenderFragment Entry(ConversationEntry entry) => entry.Kind switch
     {
         ConversationEntryKind.UserMessage => @<p class="mcp-user-bubble">@entry.Text</p>,
@@ -191,9 +200,11 @@
         ConversationEntryKind.ToolCall => @<p class="mcp-tool-row"><span class="mcp-tool-glyph" aria-hidden="true">@(entry.ToolCompleted ? "✓" : "…")</span><span>@ToolText(entry)</span></p>,
         ConversationEntryKind.Typing => @<p class="mcp-activity"><span class="mcp-activity-dot" aria-hidden="true"></span><span>@($"{Label(entry)} is working")</span><span class="mcp-activity-dots" aria-hidden="true"><span></span><span></span><span></span></span></p>,
         ConversationEntryKind.Status => @<p class="mcp-day">@StatusText(entry)</p>,
+        // The one Markdig seam the workbench already owns: a fixed, inert pipeline whose links and
+        // images render as escaped text. Reusing it is what stops a reply's Markdown showing literally.
         _ => @<article class="mcp-participant-bubble">
                   <p class="mcp-participant-label">@Label(entry)</p>
-                  <p class="mcp-participant-lead">@entry.Text</p>
+                  <div class="mcp-participant-markdown">@ConversationMarkdownRenderer.Render(entry.Text)</div>
               </article>,
     };
 

@@ -147,6 +147,11 @@ else
     private bool chatBusy;
     private MissionChatFailure? chatFailure;
     private string? chatNotice;
+    // While an open request is in flight, relayed events for the chat it asked for are held here and
+    // applied after its complete seed, so a message that lands mid-request is shown rather than lost.
+    // Transient view state for the length of one request, never a cache: it is cleared either way.
+    private Guid? chatOpening;
+    private readonly List<ConversationEvent> chatStaged = [];
 
     private CancellationTokenSource? lifetime;
     private Task? subscription;
@@ -222,15 +227,39 @@ else
 
     /// <summary>Select a real chat row. Application returns its complete durable history and resumes
     /// its live stream from the same sequence, so this renders one list and then live events.</summary>
-    private Task OpenMissionChatAsync(Guid conversationId) =>
-        chatSessionId is not { } session ? Task.CompletedTask : MissionChatAsync(
-            token => ApplicationChannel.SendAsync<OpenMissionChatRequest, OpenMissionChatResponse>(new(session, conversationId), token),
-            (response, _) =>
-            {
-                ApplyMissionChat(response.ConversationId, response.Pin, response.Access, response.Rows,
-                    response.Events, response.Failure, "Opened that chat.");
-                return Task.CompletedTask;
-            });
+    private async Task OpenMissionChatAsync(Guid conversationId)
+    {
+        if (chatSessionId is not { } session) return;
+
+        chatOpening = conversationId;
+        chatStaged.Clear();
+        try
+        {
+            await MissionChatAsync(
+                token => ApplicationChannel.SendAsync<OpenMissionChatRequest, OpenMissionChatResponse>(new(session, conversationId), token),
+                (response, _) =>
+                {
+                    ApplyMissionChat(response.ConversationId, response.Pin, response.Access, response.Rows,
+                        response.Events, response.Failure, "Opened that chat.");
+                    if (response.Failure is null)
+                        ApplyStagedEvents();
+                    return Task.CompletedTask;
+                });
+        }
+        finally
+        {
+            chatOpening = null;
+            chatStaged.Clear();
+        }
+    }
+
+    /// <summary>Whatever arrived while the seed was being assembled, applied after it through the same
+    /// projection: it dedupes by event id, so an event in both places still renders once.</summary>
+    private void ApplyStagedEvents()
+    {
+        foreach (var staged in chatStaged.Where(evt => evt.ConversationId == chatConversationId))
+            chatTranscript.Apply(staged);
+    }
 
     /// <summary>Send a non-empty message. The durable user message arrives through the conversation
     /// stream, so nothing is added to the transcript here.</summary>
@@ -252,10 +281,23 @@ else
                 {
                     chatDraft = string.Empty;
                     chatNotice = "Message sent.";
+                    RenameSelectedRow(conversation, response.Title);
                 }
 
                 return Task.CompletedTask;
             });
+    }
+
+    /// <summary>The Host-owned title for the chat that was just spoken to, taken from its acceptance.
+    /// Only that row changes, nothing is derived or normalized here, and the chat directory is not
+    /// re-read to learn it.</summary>
+    private void RenameSelectedRow(Guid conversationId, string? title)
+    {
+        if (string.IsNullOrEmpty(title)) return;
+
+        chatRows = [.. chatRows.Select(row => row.ConversationId == conversationId
+            ? row with { Title = title, HasMessages = true }
+            : row)];
     }
 
     private async Task MissionChatAsync<T>(Func<CancellationToken, Task<T>> action, Func<T, CancellationToken, Task> apply)
@@ -709,7 +751,15 @@ else
     /// belong to another view's selection and are ignored here.</summary>
     private async Task ApplyConversationEventAsync(ConversationEvent? conversation)
     {
-        if (conversation is null || chatConversationId != conversation.ConversationId) return;
+        if (conversation is null) return;
+        if (chatOpening == conversation.ConversationId)
+        {
+            // Its seed has not arrived yet, so holding it is what keeps it from being lost.
+            chatStaged.Add(conversation);
+            return;
+        }
+
+        if (chatConversationId != conversation.ConversationId) return;
         chatTranscript.Apply(conversation);
         await InvokeAsync(StateHasChanged);
     }

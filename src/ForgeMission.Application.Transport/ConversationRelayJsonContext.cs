@@ -30,6 +30,7 @@ namespace ForgeMission.Application.Transport;
 [JsonSerializable(typeof(SubmitMissionChatTurnRequest))]
 [JsonSerializable(typeof(SubmitMissionChatTurnResponse))]
 [JsonSerializable(typeof(MissionChatPin))]
+[JsonSerializable(typeof(MissionChatMember))]
 [JsonSerializable(typeof(MissionChatRow))]
 [JsonSerializable(typeof(MissionChatAccess))]
 [JsonSerializable(typeof(MissionChatFailure))]

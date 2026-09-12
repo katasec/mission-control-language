@@ -528,10 +528,13 @@ public static class ConversationApiEndpoints
             return ProjectError("invalidRequest", "conversationId is invalid.", 400);
         var grain = grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey);
         var result = await grain.AcceptMissionConversationTurnAsync(new MissionConversationTurnInput(request.CommandId, null, false, request.Text));
+        // An accepted first turn is also when this conversation acquired its durable title, so the
+        // acceptance carries it: the caller never has to derive or normalize one of its own.
+        var title = result.Outcome == ConversationCommandOutcome.Accepted ? (await SnapshotAsync(id, grains)).Title : null;
         return result.Outcome switch
         {
             ConversationCommandOutcome.Accepted => Results.Accepted($"/conversations/{id}", new SubmitMissionTurnResponse(id, result.Acceptance!.TurnId!.Value,
-                result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status)),
+                result.Acceptance.RunId!.Value, result.Acceptance.AcceptedSequence, result.Acceptance.Status, title)),
             ConversationCommandOutcome.RunAlreadyActive => ProjectError("runAlreadyActive", result.Reason ?? "A turn is active.", 409),
             ConversationCommandOutcome.NotFound => ProjectError("notFound", result.Reason ?? "Conversation not found.", 404),
             _ => ProjectError("commandConflict", result.Reason ?? "Turn conflicts.", 409),

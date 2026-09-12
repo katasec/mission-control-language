@@ -503,15 +503,82 @@ public sealed class MissionVersionServiceTests : IDisposable
 
     // ── Phase 48: the shipped Approved version ──────────────────────────────────────────────
 
+    [Theory]
+    // A label Forge does not ship at all.
+    [InlineData("Janus", "9.9", 1, true)]
+    // The shipped label on a mission that is not the shipped one.
+    [InlineData("Borrowed", "1.4", 1, true)]
+    // The shipped name and label on a second version, which the one shipped release never is.
+    [InlineData("Janus", "1.4", 2, true)]
+    // The shipped name and label on different definition text.
+    [InlineData("Janus", "1.4", 1, false)]
+    public async Task OnlyTheExactShippedRelease_MaySkipEvaluation_EveryOtherLabelledVersionIsRefused(
+        string missionName, string releaseLabel, int versionNumber, bool shippedDefinition)
+    {
+        var project = await CreateShippedProjectAsync();
+        var definitionText = shippedDefinition ? ShippedMissionCatalog.Definition : OneExpertDefinition;
+        var version = ApprovedWithoutEvaluation(project, definitionText, releaseLabel, versionNumber);
+        var manifest = _projects.ReadForHome(project.Home).Manifest with
+        {
+            MissionDefinitions = [new ProjectMissionDefinition(Guid.NewGuid(), missionName, version.MissionVersionId, null, [version])],
+        };
+
+        // Written straight to disk, so the next read is the manifest validator's own verdict rather
+        // than a service's: a version that merely carries a label stays on the authored lifecycle.
+        WriteManifest(project.Home, manifest);
+        var refused = Assert.Throws<ProjectOperationException>(() => _projects.ReadForHome(project.Home));
+
+        Assert.Equal(ProjectOperationErrorCode.InvalidManifest, refused.Code);
+        Assert.Contains("invalid authored mission definitions", refused.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheExactShippedRelease_IsAcceptedWithNoEvaluationFacts()
+    {
+        var project = await CreateShippedProjectAsync();
+        var version = ApprovedWithoutEvaluation(project, ShippedMissionCatalog.Definition, "1.4", 1);
+        var manifest = _projects.ReadForHome(project.Home).Manifest with
+        {
+            MissionDefinitions = [new ProjectMissionDefinition(Guid.NewGuid(), "Janus", version.MissionVersionId, null, [version])],
+        };
+
+        WriteManifest(project.Home, manifest);
+
+        var read = Assert.Single(_projects.ReadForHome(project.Home).Manifest.MissionDefinitions!);
+        Assert.Equal("Janus", read.Name);
+        Assert.Equal("1.4", Assert.Single(read.Versions!).ReleaseLabel);
+    }
+
+    /// <summary>A Project holding the shipped Proposer/Approver pair, which is what the shipped
+    /// release's package is built from. Created the same way the managed chat Project is.</summary>
+    private async Task<ProjectRecord> CreateShippedProjectAsync()
+    {
+        var created = _projects.CreateManaged(Guid.NewGuid(), "Amber Harbor", "Chat with Forge's shipped missions.");
+        return await _projects.EnsureManagedChatAssetsAsync(created.Home, CancellationToken.None);
+    }
+
+    /// <summary>An Approved version with no evaluation record at all — the shape only the shipped
+    /// release may have. Everything else about it is valid, so the assertion is about the lane.</summary>
+    private MissionVersion ApprovedWithoutEvaluation(ProjectRecord project, string definitionText, string releaseLabel, int versionNumber)
+    {
+        var package = MissionPackageBuilder.Build(project.Home, project.Manifest, definitionText);
+        var hash = "sha256:" + Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(definitionText)));
+        var now = DateTimeOffset.UtcNow;
+        return new MissionVersion(Guid.NewGuid(), versionNumber, MissionVersionState.Approved, definitionText, hash,
+            MissionHandsProfile.ProjectWorkspace, package, null, 1, now, null, now, [], [], releaseLabel);
+    }
+
+
     [Fact]
     public async Task TheShippedVersion_IsApprovedWithNoEvaluationFacts_AndIsWrittenOnlyOnce()
     {
-        var project = CreatePackagedProject();
+        var project = await CreateShippedProjectAsync();
 
-        var first = await _versions.EnsureShippedApprovedVersionAsync(project.Home, "Janus", Source,
-            MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None);
-        var second = await _versions.EnsureShippedApprovedVersionAsync(project.Home, "Janus", Source,
-            MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None);
+        var first = await _versions.EnsureShippedApprovedVersionAsync(project.Home, ShippedMissionCatalog.MissionName,
+            ShippedMissionCatalog.Definition, ShippedMissionCatalog.Profile, ShippedMissionCatalog.ReleaseLabel, CancellationToken.None);
+        var second = await _versions.EnsureShippedApprovedVersionAsync(project.Home, ShippedMissionCatalog.MissionName,
+            ShippedMissionCatalog.Definition, ShippedMissionCatalog.Profile, ShippedMissionCatalog.ReleaseLabel, CancellationToken.None);
 
         Assert.Equal(first.MissionId, second.MissionId);
         var definition = Assert.Single(_projects.ReadForHome(project.Home).Manifest.MissionDefinitions!);
@@ -570,6 +637,8 @@ public sealed class MissionVersionServiceTests : IDisposable
         File.WriteAllText(Path.Combine(home, ProjectService.ManifestFileName), JsonSerializer.Serialize(manifest, ProjectManifestJsonContext.Default.ProjectManifest));
     private static string Hash(string value) => "sha256:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
     private const string Source = "mission Review(task) = {\n  Researcher\n}\n";
+    // Buildable from the shipped pair, but not the shipped release's own definition text.
+    private const string OneExpertDefinition = "mission Janus(task) = {\n    Proposer\n}\n";
     private const string Expert = "---\nname: Researcher\nkind: llm\ninput: task\noutput: answer\n---\n{{task}}";
 
     public void Dispose()

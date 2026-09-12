@@ -266,9 +266,12 @@ public sealed class MissionConversationServiceTests : IDisposable
     {
         // Phase 48: Host owns the durable title and update order; Projects owns the name and the release
         // label. The row joins them and invents neither.
-        var project = CreatePackagedProject();
-        var shipped = await versions.EnsureShippedApprovedVersionAsync(project.Home, "Janus",
-            "mission Janus(task) = {\n  Researcher\n}\n", MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None);
+        // The real shipped release, in a Project holding the shipped pair its package is built from:
+        // only that exact release carries a label, which is what the row is asserting.
+        var created = projects.CreateManaged(Guid.NewGuid(), "Amber Harbor", "Chat with Forge's shipped missions.");
+        var project = await projects.EnsureManagedChatAssetsAsync(created.Home, CancellationToken.None);
+        var shipped = await versions.EnsureShippedApprovedVersionAsync(project.Home, ShippedMissionCatalog.MissionName,
+            ShippedMissionCatalog.Definition, ShippedMissionCatalog.Profile, ShippedMissionCatalog.ReleaseLabel, CancellationToken.None);
         var approved = Assert.Single(shipped.Versions!);
         var launch = new DurableMissionLaunch(approved.MissionVersionId, approved.VersionNumber, approved.DefinitionHash,
             approved.DefinitionText, approved.CapabilityProfile, approved.Package);

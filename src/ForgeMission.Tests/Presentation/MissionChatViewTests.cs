@@ -37,6 +37,59 @@ public sealed class MissionChatViewTests : BunitContext
     }
 
     [Fact]
+    public void TheFreshChat_NamesYouAndEveryMemberApplicationSupplied_InThatOrder()
+    {
+        var view = RenderView();
+
+        Assert.Equal(["You", "Proposer", "Approver"],
+            view.FindAll(".mcp-participant-name").Select(node => node.TextContent));
+        Assert.Equal(
+            [
+                "You steer the work with ordinary messages and decide what happens next.",
+                "Drafts and revises the work this mission version defines.",
+                "Checks each proposal against the mission's approval rules and says why.",
+            ],
+            view.FindAll(".mcp-participant-role").Select(node => node.TextContent));
+    }
+
+    [Fact]
+    public void TheRoster_IsOnlyWhatWasSupplied_AndIsNeverInventedOrReadFromTheTranscript()
+    {
+        // A pin with no members names only You, even with a transcript full of named experts: this
+        // surface holds no roster of its own and infers none from events.
+        var view = RenderView(p => p
+            .Add(x => x.Pin, new MissionChatPin("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true, []))
+            .Add(x => x.Entries, []));
+
+        Assert.Equal(["You"], view.FindAll(".mcp-participant-name").Select(node => node.TextContent));
+        Assert.DoesNotContain("Proposer", view.Markup, StringComparison.Ordinal);
+
+        var single = RenderView(p => p.Add(x => x.Pin,
+            new MissionChatPin("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true,
+                [new MissionChatMember("R", "Reviewer", "Reviews the work.")])));
+        Assert.Equal(["You", "Reviewer"], single.FindAll(".mcp-participant-name").Select(node => node.TextContent));
+    }
+
+    [Fact]
+    public void AParticipantReply_RendersThroughTheSafeMarkdownSeam_RatherThanShowingItsSyntax()
+    {
+        var transcript = new ConversationTranscript();
+        transcript.Apply(Participant(2, "Proposer", "Two-week plan:\n\n- Freeze the schema\n- Run one restore drill\n"));
+
+        var view = RenderView(p => p.Add(x => x.Entries, transcript.Entries));
+
+        var rendered = view.Find(".mcp-participant-markdown");
+        Assert.Equal(["Freeze the schema", "Run one restore drill"],
+            rendered.QuerySelectorAll("li").Select(node => node.TextContent));
+        Assert.DoesNotContain("- Freeze", view.Markup, StringComparison.Ordinal);
+        // The seam stays inert: a link renders as its own escaped text, not as an anchor.
+        var linked = new ConversationTranscript();
+        linked.Apply(Participant(3, "Approver", "See [the plan](https://example.com/plan)."));
+        var linkedView = RenderView(p => p.Add(x => x.Entries, linked.Entries));
+        Assert.Empty(linkedView.FindAll(".mcp-participant-markdown a"));
+    }
+
+    [Fact]
     public void Nothing_IsSeeded_WhenApplicationReturnedNothing()
     {
         var view = Render<MissionChatView>(p => p.Add(x => x.ProjectTitle, "Amber Harbor"));
@@ -90,7 +143,7 @@ public sealed class MissionChatViewTests : BunitContext
         Assert.Equal("Draft the launch plan for the Atlas beta.", view.Find(".mcp-user-bubble").TextContent);
         Assert.Equal(["Proposer", "Approver"], view.FindAll(".mcp-participant-label").Select(node => node.TextContent));
         Assert.Equal(["Two-week plan.", "The rollback path is reversible."],
-            view.FindAll(".mcp-participant-lead").Select(node => node.TextContent));
+            view.FindAll(".mcp-participant-markdown").Select(node => node.TextContent.Trim()));
     }
 
     [Fact]
@@ -123,6 +176,9 @@ public sealed class MissionChatViewTests : BunitContext
         Assert.Empty(view.FindAll("select"));
         Assert.Empty(view.FindAll("input"));
         Assert.Single(view.FindAll("textarea"));
+        // Rendered reply Markdown adds no control of its own either.
+        Assert.Empty(view.FindAll(".mcp-participant-markdown button"));
+        Assert.Empty(view.FindAll(".mcp-participant-markdown a"));
     }
 
     [Theory]
@@ -229,6 +285,14 @@ public sealed class MissionChatViewTests : BunitContext
 
     private static readonly DateTimeOffset Updated = new(2026, 9, 13, 9, 30, 0, TimeSpan.Zero);
 
+    /// <summary>The roster Application supplies for the shipped mission. This surface renders it; it
+    /// never holds one of its own.</summary>
+    private static readonly IReadOnlyList<MissionChatMember> Members =
+    [
+        new("P", "Proposer", "Drafts and revises the work this mission version defines."),
+        new("A", "Approver", "Checks each proposal against the mission's approval rules and says why."),
+    ];
+
     /// <summary>Renders with the one managed Project's real shape, then applies whatever a test is
     /// actually about. Overrides are a second set of parameters on the same component, so each test
     /// states only its own difference.</summary>
@@ -239,7 +303,7 @@ public sealed class MissionChatViewTests : BunitContext
             .Add(x => x.ProjectTitle, "Amber Harbor")
             .Add(x => x.Rows, Rows)
             .Add(x => x.SelectedConversationId, FirstChat)
-            .Add(x => x.Pin, new MissionChatPin("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true))
+            .Add(x => x.Pin, new MissionChatPin("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true, Members))
             .Add(x => x.Access, new MissionChatAccess(MissionChatAccessState.Attached, null)));
         if (parameters is not null)
             view.Render(parameters);

@@ -49,7 +49,14 @@ public sealed class MissionChatServiceTests : IDisposable
         Assert.NotNull(response.Session);
         Assert.Equal(Path.Combine(root, response.Session!.Project.ProjectId.ToString("D")), response.Session.Project.Home);
         Assert.NotNull(response.ConversationId);
-        Assert.Equal(new MissionChatPin("Janus", 1, "1.4", MissionHandsProfile.ProjectWorkspace, true), response.Pin);
+        Assert.Equal("Janus", response.Pin!.MissionName);
+        Assert.Equal("1.4", response.Pin.VersionLabel);
+        Assert.Equal(1, response.Pin.VersionNumber);
+        Assert.Equal(MissionHandsProfile.ProjectWorkspace, response.Pin.Profile);
+        Assert.True(response.Pin.IsApproved);
+        // The shipped mission's own roster, supplied so no surface has to name an expert itself.
+        Assert.Equal(["Proposer", "Approver"], response.Pin.Members.Select(member => member.Name));
+        Assert.All(response.Pin.Members, member => Assert.False(string.IsNullOrWhiteSpace(member.Role)));
         Assert.Equal(MissionChatAccessState.Attached, response.Access!.State);
         Assert.Empty(response.Events!);
         Assert.Equal(0, response.ThroughSequence);
@@ -85,7 +92,7 @@ public sealed class MissionChatServiceTests : IDisposable
         Assert.Null(created.Failure);
         Assert.NotEqual(started.ConversationId, created.ConversationId);
         Assert.Equal(2, created.Rows!.Count);
-        Assert.Equal(started.Pin, created.Pin);
+        AssertSamePin(started.Pin, created.Pin);
         Assert.Single(Directory.GetDirectories(root));
     }
 
@@ -103,6 +110,8 @@ public sealed class MissionChatServiceTests : IDisposable
 
         Assert.Null(response.Failure);
         Assert.NotNull(response.TurnId);
+        // The Host's own title is relayed unchanged: Application derives none and normalizes none.
+        Assert.Equal(FakeHost.AcceptedTitle, response.Title);
         var submitted = JsonSerializer.Deserialize(host.LastTurnBody!, ConversationContractsJsonContext.Default.SubmitMissionTurnRequest)!;
         Assert.Equal(started.ConversationId, submitted.ConversationId);
         Assert.Equal(commandId, submitted.CommandId);
@@ -147,7 +156,7 @@ public sealed class MissionChatServiceTests : IDisposable
 
         Assert.Null(response.Failure);
         Assert.Equal(started.ConversationId, response.ConversationId);
-        Assert.Equal(started.Pin, response.Pin);
+        AssertSamePin(started.Pin, response.Pin);
         Assert.Equal(1, response.ThroughSequence);
         var only = Assert.Single(response.Events!);
         Assert.Equal("Draft the launch plan", only.Text);
@@ -188,6 +197,19 @@ public sealed class MissionChatServiceTests : IDisposable
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.OpenAsync(new OpenMissionChatRequest(foreign, Guid.NewGuid()), CancellationToken.None));
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.SubmitAsync(
             new SubmitMissionChatTurnRequest(foreign, Guid.NewGuid(), Guid.NewGuid(), "hello"), CancellationToken.None));
+    }
+
+    /// <summary>Compares the pin's own facts. A whole-record comparison would not do: the member list
+    /// is an interface reference, so two pins built from equal rosters are not reference-equal.</summary>
+    private static void AssertSamePin(MissionChatPin? expected, MissionChatPin? actual)
+    {
+        Assert.NotNull(actual);
+        Assert.Equal(expected!.MissionName, actual!.MissionName);
+        Assert.Equal(expected.VersionNumber, actual.VersionNumber);
+        Assert.Equal(expected.VersionLabel, actual.VersionLabel);
+        Assert.Equal(expected.Profile, actual.Profile);
+        Assert.Equal(expected.IsApproved, actual.IsApproved);
+        Assert.Equal(expected.Members.Select(member => member.Name), actual.Members.Select(member => member.Name));
     }
 
     // --- a Conversation Host that answers this journey's calls ----------------------------------
@@ -248,12 +270,14 @@ public sealed class MissionChatServiceTests : IDisposable
                 ConversationContractsJsonContext.Default.CreateMissionConversationResponse, HttpStatusCode.Created);
         }
 
+        internal const string AcceptedTitle = "Sketch the rollout steps";
+
         private HttpResponseMessage Turn(string path, string body)
         {
             TurnCount++;
             LastTurnBody = body;
             var id = Guid.Parse(path.Split('/')[^2]);
-            return Json(new SubmitMissionTurnResponse(id, Guid.NewGuid(), Guid.NewGuid(), 1, ConversationRunStatus.Queued),
+            return Json(new SubmitMissionTurnResponse(id, Guid.NewGuid(), Guid.NewGuid(), 1, ConversationRunStatus.Queued, AcceptedTitle),
                 ConversationContractsJsonContext.Default.SubmitMissionTurnResponse, HttpStatusCode.Accepted);
         }
 

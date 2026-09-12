@@ -398,6 +398,86 @@
     overflow-wrap: anywhere;
 }
 
+/* Rendered participant Markdown, at the same metrics .mcp-participant-lead states, so a reply reads
+   exactly as the frames draw it. Every value is an existing theme token; no new measurement or colour
+   is introduced, and nothing here is interactive. */
+.mcp-participant-markdown {
+    color: var(--text);
+    font-size: var(--wb-chat-message-font-size);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mcp-participant-markdown > :first-child { margin-top: 0; }
+.mcp-participant-markdown > :last-child { margin-bottom: 0; }
+.mcp-participant-markdown p { margin: 0 0 var(--space-2); }
+
+.mcp-participant-markdown h1,
+.mcp-participant-markdown h2,
+.mcp-participant-markdown h3,
+.mcp-participant-markdown h4,
+.mcp-participant-markdown h5,
+.mcp-participant-markdown h6 {
+    margin: var(--space-3) 0 var(--space-1);
+    font-size: var(--wb-chat-message-font-size);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.mcp-participant-markdown ul,
+.mcp-participant-markdown ol { margin: var(--space-2) 0 0; padding-left: var(--space-5); }
+.mcp-participant-markdown li { margin-bottom: var(--space-1); overflow-wrap: anywhere; }
+.mcp-participant-markdown li > ul,
+.mcp-participant-markdown li > ol { margin: var(--space-1) 0 0; }
+/* Markdig keeps the list marker on a task-list item; the checkbox already carries it. */
+.mcp-participant-markdown li.task-list-item { list-style: none; }
+.mcp-participant-markdown li > input[type="checkbox"] { margin-right: var(--space-1); }
+
+.mcp-participant-markdown blockquote {
+    margin: 0 0 var(--space-2);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--border);
+    color: var(--text-muted);
+}
+
+.mcp-participant-markdown code {
+    padding: 0 var(--space-1);
+    border-radius: var(--radius-sm);
+    background: var(--surface-sunken);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+}
+
+/* Long code and wide tables scroll inside the message; the chat column never does. */
+.mcp-participant-markdown pre {
+    margin: 0 0 var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-sunken);
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.mcp-participant-markdown pre code { padding: 0; border-radius: 0; background: none; }
+
+.mcp-participant-markdown table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 0 0 var(--space-2);
+    border-collapse: collapse;
+}
+
+.mcp-participant-markdown th,
+.mcp-participant-markdown td {
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border);
+    text-align: left;
+}
+
+.mcp-participant-markdown th { font-size: var(--font-size-meta); color: var(--text-muted); }
+
 .mcp-participant-bullets {
     margin: var(--space-2) 0 0;
     padding-left: var(--space-5);

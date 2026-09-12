@@ -450,7 +450,11 @@ public sealed record MissionConversationEventPage(
     bool HasMore);
 
 public sealed record SubmitMissionTurnRequest(Guid ConversationId, Guid CommandId, string Text);
-public sealed record SubmitMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, long AcceptedSequence, ConversationRunStatus Status);
+public sealed record SubmitMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, long AcceptedSequence, ConversationRunStatus Status,
+    /// <summary>The conversation's durable display title as it stands after this turn was accepted
+    /// (Phase 48). Host owns it, so a caller learns the first message's title from the same answer
+    /// that accepted it rather than deriving one. Appended last.</summary>
+    string? Title = null);
 public sealed record RetryMissionTurnRequest(Guid ConversationId, Guid TurnId, Guid CommandId);
 public sealed record CancelMissionTurnRequest(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, Guid CommandId);
 public sealed record CancelMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId,
