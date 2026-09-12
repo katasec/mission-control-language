@@ -1,6 +1,6 @@
 # Phase 45.3 — Operator Missions experience
 
-> **Status:** accepted, 2026-09-09. Codex completed controlled visual review and the zero-argument packaged Desktop journey: a new Project authored, evaluated, published, and started exactly one pinned Approved mission conversation. The next transcript/turn presentation is outside this slice.
+> **Status:** accepted, 2026-09-09. Codex completed controlled visual review and the zero-argument packaged Desktop journey: a new Project authored, evaluated, published, and started exactly one pinned Approved mission conversation. The next transcript/turn presentation is outside this slice. [Phase 48](phase-48-mission-chat-live-integration.md) supersedes this slice's profile-acknowledgement interaction for the Mission Chat journey; fixed access is now informational.
 
 ## Why this slice exists
 

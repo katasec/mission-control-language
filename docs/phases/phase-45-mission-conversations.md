@@ -2,8 +2,8 @@
 
 > **Status:** authoring, evaluation, publication, and pinned-conversation launch are accepted as
 > of 2026-09-09. The approved [Mission chat experience v1](../design/mission-chat-experience-v1.md)
-> is being proved first as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md);
-> durable/transport integration remains a separately approved follow-on.
+> was proved as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md);
+> its bounded durable integration is now [Phase 48](phase-48-mission-chat-live-integration.md).
 
 ## Why this phase exists
 
@@ -20,7 +20,7 @@ transcript store, runtime, nor presentation-owned product state.
 |---|---|
 | Workspace and navigation | One Project workspace serves operators and authors. The persistent rail remains exactly **Project Explorer**, **Missions**, and **Settings**. Opening a Project selects Missions. Authoring is a Project Explorer document, not a fourth rail entry. |
 | Version lifecycle | A mission version moves only `Draft → Candidate → Evaluated → Approved → Superseded`. A candidate is editable; editing invalidates prior evaluations. An evaluated version is immutable. Publishing approves it and supersedes the prior approved version for *new* conversations only. |
-| Mission hands profile | Every mission version declares exactly one immutable `NoHands`, `ProjectWorkspace`, or `ProjectWorkspaceAndTerminal` profile; changing it creates a new version. The profile is a bounded request, not authority. Creation of a Mission Conversation shows the exact profile and records the operator's acceptance; there are no per-tool checkboxes, profile narrowing controls, runtime escalation, network, credential, publishing/push, arbitrary-path or Full Access profile. |
+| Mission hands profile | Every mission version declares exactly one immutable `NoHands`, `ProjectWorkspace`, or `ProjectWorkspaceAndTerminal` profile; changing it creates a new version. The profile is a bounded request, not authority. Creation shows the exact fixed profile as information; it does not request or record profile consent. Client Runtime alone asks before a bounded operation when its policy requires it. There are no per-tool checkboxes, profile narrowing controls, runtime escalation, network, credential, publishing/push, arbitrary-path or Full Access profile. |
 | Operator selection | Missions lists persistent Mission Conversations and starts a new one. The picker exposes Approved versions only. Starting stores an immutable version launch snapshot and pins it to that conversation. Candidate, Evaluated, Draft, and Superseded versions cannot be selected by an operator. |
 | Turns and failure | One submitted user message creates one turn. The transcript is primary. Each answer has compact evidence and a turn-specific trace link. A failed turn preserves its message, failure and partial trace; it does not end the conversation. Retry creates a new attempt of that turn. Cancel is an explicit durable request/outcome, never implied rollback. |
 | Trace | Forge Trace is chronological exact evidence for one turn. It has origin `(conversation_id, turn_id, attempt_id)` and returns to that exact transcript anchor, never a generic Missions route. An evaluation trace also retains `(mission_version_id, evaluation_case_id)`. |

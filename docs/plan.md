@@ -8,14 +8,15 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Design the bounded integration that connects the approved static Mission Chat UI to Phase 45's existing durable-conversation owners. No integration implementation starts until that design is approved. |
+| **NEXT STEP** | Obtain Claude's plan-only relay for the locked [Phase 48 Mission Chat live integration](phases/phase-48-mission-chat-live-integration.md), then approve the bounded implementation plan before edits start. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; eventual Mission Chat integration follows the separately scoped Phase 47 UI prototype. |
+| [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; Mission Chat integration is separately scoped in Phase 48. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
+| [Phase 48 — Mission Chat live integration](phases/phase-48-mission-chat-live-integration.md) | Make the approved Mission Chat journey live using the existing Project and durable-conversation owners. | Design locked; awaiting Claude's plan-only relay. |
 
 ## Design docs
 
