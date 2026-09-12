@@ -241,24 +241,32 @@ else
                 {
                     ApplyMissionChat(response.ConversationId, response.Pin, response.Access, response.Rows,
                         response.Events, response.Failure, "Opened that chat.");
-                    if (response.Failure is null)
-                        ApplyStagedEvents();
+                    CompleteOpenHandoff(response.Failure is null);
                     return Task.CompletedTask;
                 });
         }
         finally
         {
+            // Only the path where the answer never arrived reaches this still holding the marker: the
+            // handoff above already released it, synchronously, the moment the seed landed.
             chatOpening = null;
             chatStaged.Clear();
         }
     }
 
-    /// <summary>Whatever arrived while the seed was being assembled, applied after it through the same
-    /// projection: it dedupes by event id, so an event in both places still renders once.</summary>
-    private void ApplyStagedEvents()
+    /// <summary>Hands a chat over in one synchronous step, with no await between its parts: the staged
+    /// events go in after the seed through the same projection, the buffer empties, and the marker is
+    /// released. There is no interval in which an arriving event can be staged and then dropped,
+    /// because from the moment the marker clears the next event goes straight to this transcript. On a
+    /// failed open nothing is applied and both are cleared just the same.</summary>
+    private void CompleteOpenHandoff(bool seedApplied)
     {
-        foreach (var staged in chatStaged.Where(evt => evt.ConversationId == chatConversationId))
-            chatTranscript.Apply(staged);
+        if (seedApplied)
+            foreach (var staged in chatStaged.Where(evt => evt.ConversationId == chatConversationId))
+                chatTranscript.Apply(staged);
+
+        chatStaged.Clear();
+        chatOpening = null;
     }
 
     /// <summary>Send a non-empty message. The durable user message arrives through the conversation

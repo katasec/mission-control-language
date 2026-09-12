@@ -170,6 +170,50 @@ public sealed class HomeSessionOperationTests : BunitContext
     }
 
     [Fact]
+    public async Task AnEventArrivingAfterTheStagedBatch_StillRendersOnce_WhileTheRequestFinishes()
+    {
+        var (page, channel) = RenderHome();
+        Choose(page, "Chat with a mission");
+        Choose(page, "New chat");
+
+        channel.HoldOpen();
+        page.FindAll(".mcp-row").First(row => row.TextContent.Contains("Earlier chat", StringComparison.Ordinal)).Click();
+        await channel.PublishAsync(ScriptedChannel.Event(ScriptedChannel.Chat, 2, "Staged mid-request."));
+        channel.ReleaseOpen([ScriptedChannel.Event(ScriptedChannel.Chat, 1, "The first message.").Conversation!]);
+
+        // Wait until the staged batch has been handed over, then publish into the very interval the
+        // handoff used to leave open: the marker is released in the same synchronous step that applied
+        // the staged events, so this event goes straight to the selected transcript.
+        page.WaitForAssertion(() => Assert.Equal(2, page.FindAll(".mcp-user-bubble").Count));
+        await channel.PublishAsync(ScriptedChannel.Event(ScriptedChannel.Chat, 3, "Arrived after the handoff."));
+
+        page.WaitForAssertion(() => Assert.Equal(
+            ["The first message.", "Staged mid-request.", "Arrived after the handoff."],
+            page.FindAll(".mcp-user-bubble").Select(node => node.TextContent)));
+    }
+
+    [Fact]
+    public async Task AFailedOpen_AppliesNothingAndKeepsNoStagedEvent()
+    {
+        var (page, channel) = RenderHome();
+        Choose(page, "Chat with a mission");
+        Choose(page, "New chat");
+
+        channel.HoldOpen();
+        page.FindAll(".mcp-row").First(row => row.TextContent.Contains("Earlier chat", StringComparison.Ordinal)).Click();
+        await channel.PublishAsync(ScriptedChannel.Event(ScriptedChannel.Chat, 1, "Staged for a chat that never opened."));
+        channel.FailOpen(new MissionChatFailure(MissionChatFailureCode.HistoryUnavailable, "Forge could not read that chat."));
+
+        page.WaitForAssertion(() => Assert.Equal("Forge could not read that chat.", page.Find(".mcp-announce").TextContent));
+        Assert.Empty(page.FindAll(".mcp-user-bubble"));
+
+        // The buffer went with it: a later event for that conversation is not a replay of the staged one.
+        await channel.PublishAsync(ScriptedChannel.Event(ScriptedChannel.Chat, 2, "A later message."));
+        await Task.Delay(50);
+        Assert.Empty(page.FindAll(".mcp-user-bubble"));
+    }
+
+    [Fact]
     public async Task AnEventThatAlsoArrivesInTheSeed_IsStillRenderedOnce()
     {
         var (page, channel) = RenderHome();
@@ -249,6 +293,7 @@ public sealed class HomeSessionOperationTests : BunitContext
             System.Threading.Channels.Channel.CreateUnbounded<ApplicationEvent>();
 
         private TaskCompletionSource<IReadOnlyList<ConversationEvent>>? heldOpen;
+        private MissionChatFailure? openFailure;
 
         public List<object> Requests { get; } = [];
 
@@ -264,6 +309,13 @@ public sealed class HomeSessionOperationTests : BunitContext
 
         /// <summary>Answers that held request with the complete seed it assembled.</summary>
         public void ReleaseOpen(IReadOnlyList<ConversationEvent> seed) => heldOpen!.SetResult(seed);
+
+        /// <summary>Answers that held request with a typed failure and no seed at all.</summary>
+        public void FailOpen(MissionChatFailure failure)
+        {
+            openFailure = failure;
+            heldOpen!.SetResult([]);
+        }
 
         public Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
         {
@@ -291,6 +343,13 @@ public sealed class HomeSessionOperationTests : BunitContext
         {
             var seed = await pending.Task;
             heldOpen = null;
+            if (openFailure is { } failure)
+            {
+                openFailure = null;
+                return (TResponse)(object)new OpenMissionChatResponse(null, null, null,
+                    [Row(Second, "New chat", false), Row(Chat, "Earlier chat", true)], null, 0, failure);
+            }
+
             return (TResponse)(object)new OpenMissionChatResponse(open.ConversationId, Pin, Attached,
                 [Row(Second, "New chat", false), Row(Chat, "Earlier chat", true)], seed, seed.Count, null);
         }
