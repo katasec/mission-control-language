@@ -8,6 +8,12 @@ being longer; it's thorough when nothing needed is missing and nothing unneeded 
 
 ## Rules
 
+- **Use plain, direct, concrete English.** Lead with the action or answer. Prefer ordinary verbs
+  and nouns over abstract labels, nominalizations, and corporate or AI-speak. For example, say
+  "Connect the mock UI to the backend" rather than "Design the bounded integration that connects
+  the approved static Mission Chat UI to Phase 45's existing durable-conversation owners." Keep
+  necessary technical terms, but explain them in the same sentence when plain words alone would
+  hide an important boundary.
 - **Answer scoped questions directly, then stop.** When asked a specific, bounded question
   (especially a yes/no or "is my understanding correct?" check), answer it and stop. Don't follow
   with an escalating chain of "oh, and one more consideration" additions — save adjacent

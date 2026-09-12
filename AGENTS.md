@@ -428,6 +428,9 @@ private method — no new packages needed for OpenAI-compatible APIs.
   independent idea, not per sentence); merge issue→response / request→open-question pairs into one
   row instead of padding row count. Full rules in
   [docs/design/collaboration-style.md](docs/design/collaboration-style.md).
+- **Use plain, direct, concrete English.** Lead with the action or answer. Avoid abstract,
+  nominalized, corporate, or AI-speak phrasing when ordinary words say it more clearly. Full
+  examples are in [docs/design/collaboration-style.md](docs/design/collaboration-style.md).
 - **Report results straight — no cliffhangers.** State what is done and proven, then stop. Don't
   end a wrap-up with a manufactured "one thing left" hedge to look thorough or invite another turn.
   A genuine limitation is one plain line, not a teaser.
