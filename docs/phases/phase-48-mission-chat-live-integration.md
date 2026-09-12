@@ -17,6 +17,7 @@ rail item, picker, workflow, or chat capability.
 | **Chat with a mission** opens a fresh Janus chat immediately. | On first use, Forge creates one managed chat Project; on later uses it reopens that same Project and creates one new empty Janus chat. The person never picks a folder, Project, mission, or version for this flow. |
 | The rail has a Project name. | Projects generates a friendly two-word title once. It is ordinary Project display data and can be renamed by a later, separately designed action. No name field appears in this flow. |
 | Chats group below a mission version. | The managed Project ships **Janus v1.4**, an immutable Approved mission. Each chat pins that version. A group or row appears only when real durable data exists; the Phase 47 Naive and sample-chat rows are not fabricated. |
+| The fresh-chat card names You, Proposer, and Approver. | It retains that exact existing roster. Forge supplies the fixed Janus member names and roles as read-only shipped-mission display facts; they are not inferred from prior transcript events or written by Presentation. |
 | **New chat** returns to the fresh Janus state. | It creates one further empty Janus conversation in the same managed Project. |
 | The fixed-access panel is read-only. | It is information, not a question. Creating or sending a chat message does not ask for or record profile consent. Client Runtime still asks before a bounded operation when its own policy requires it. |
 | The startup screen remains the startup screen. | Forge does not silently reopen the last chat. **Chat with a mission** is the direct route to a fresh chat in the managed Project; **Open an existing workspace...** keeps its existing meaning. |
@@ -32,7 +33,7 @@ operator-authored candidate; Forge records no invented evaluation result.
 | Chat with a mission | Application/Missions asks Application/Projects to find or provision the managed Project and its shipped Janus version, then creates and attaches one Host-owned Mission Conversation. Presentation enters the real chat view. |
 | New chat | The same named Application action creates and attaches one further Janus conversation in the current managed Project. |
 | Select a real chat row | Presentation asks Application for that Project's Host-owned conversation projection and complete transcript seed. Application obtains that seed through bounded Host pages, then follows the ordered event stream from the snapshot's final sequence. Paging is internal; the UI gains no history control, partial-history state, or notice. |
-| Send a non-empty message | Presentation sends one typed submit request. Conversation Host allocates the turn and attempt; Worker progress arrives through the existing relayed event stream; `ConversationTranscript` renders it. |
+| Send a non-empty message | Presentation sends one typed submit request. Conversation Host allocates the turn and attempt, and returns its durable display title on acceptance so Presentation updates the selected row without deriving a title or reloading the directory. Worker progress arrives through the existing relayed event stream; `ConversationTranscript` renders it. |
 | Author a mission / Open an existing workspace | Existing launcher routes remain unchanged. |
 
 The live view retains the three binding frames in
@@ -83,7 +84,9 @@ sequence. Pages and their `HasMore` fact are Application-internal and never reac
 This avoids both an unbounded response and a missing interval between history and live replay.
 `SubmitMissionChatTurn` carries only session ID, conversation ID,
 idempotent command ID, and text. Application derives every Project, version, package, profile,
-attachment, and Host call.
+attachment, and Host call. A successful submit also returns the Host-owned durable title that its
+first accepted turn set. Presentation uses that returned fact only to replace the selected row's
+title; it never creates or normalizes a title itself.
 
 The Host validates that a submitted conversation belongs to the session's Project and derives the
 pinned launch. A caller cannot substitute a mission, version, package, profile, tool, title,
@@ -91,9 +94,17 @@ Project path, or attachment. `ConversationProgress` and `ConversationEvent` gain
 `ActorName` field. It is the immutable package expert name already present on
 `PipelineTraceEvent`; Host stores it unchanged, and Presentation prefers it only for display over
 the existing generic `Forge` participant label. This makes real `Proposer` and `Approver` rows
-truthful without a Janus mapper or a new participant model. The existing `ConversationTailReader`
-relays events through `ApplicationEventKind.ConversationEvent`; Presentation filters by selected
-conversation and applies them through `ConversationTranscript`.
+truthful without a Janus mapper or a new participant model. Participant messages use the existing
+inert `ConversationMarkdownRenderer`; any Mission Chat-specific selectors use existing theme tokens
+only and preserve the binding layout. The existing `ConversationTailReader` relays events through
+`ApplicationEventKind.ConversationEvent`; Presentation filters by selected conversation and applies
+them through `ConversationTranscript`.
+
+While a selected chat's history is being opened, Presentation stages relayed events for that
+requested conversation only. It applies the returned complete seed first, then the staged events
+through the same `ConversationTranscript`, whose EventId dedupe handles any overlap. The staging
+buffer is view-local, lasts only for that one open operation, and is cleared on its success or
+failure; it is not a cache or a second transcript store.
 
 For a first managed chat, the sequence is: provision/validate Project -> create empty pinned Host
 conversation -> automatically attach the fixed Client Runtime profile -> return the real fresh
@@ -109,6 +120,11 @@ no profile fallback, silent retry, or fake ready state.
 | Create response is lost. | Host command identity remains idempotent. Mission Chat returns a typed uncertain-create result; this UI exposes no retry and never creates a second chat silently. |
 | Attachment fails. | The pinned conversation remains listed; Presentation reports that fixed access is not currently available. Client Runtime owns later recovery; there is no broader profile or remote fallback. |
 | Page read or stream fails. | The Host's durable accepted/failed/interrupted fact remains canonical. Presentation shows the typed outcome and never invents a reply, approval, title, or activity row. Each Host page is finite; a page failure starts no tail, while the existing tail reconnects from its last durable sequence after a stream failure. |
+
+The zero-evaluation lifecycle exception is limited to the exact known shipped release, currently
+Janus `1.4`, through a Projects-owned predicate. A non-empty or arbitrary `ReleaseLabel` alone
+never bypasses the authored candidate's evaluated-and-passing lifecycle. The release label remains
+a read-only display/provenance fact outside that narrow manifest validation.
 
 ## Gates
 
