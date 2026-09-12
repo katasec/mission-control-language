@@ -1,0 +1,66 @@
+@* The pre-workspace startup choice (47.1). Presentation only, and deliberately less than the
+   launcher beside it: it holds no field, derives nothing, and reaches nothing but the three
+   callbacks below. Which surface each choice opens is Home's decision, not this component's.
+
+   Binding reference: docs/design/assets/mission-chat-experience-v1/01-start.png at 1440x960. It
+   is drawn in the launcher's own shell, so every measurement here resolves through the shipped
+   launcher geometry in the Workbench theme map rather than through anything new. *@
+
+<section class="msc-root">
+    <div class="msc-card">
+        <h2 class="msc-title">Where do you want to start?</h2>
+        <p class="msc-lead">Forge needs one of these before a workspace opens. You can do the other one afterwards.</p>
+
+        <div class="msc-options">
+            @Option("□", "Create a mission",
+                    "Write and evaluate a reusable mission version, then approve it for use.",
+                    CreateMission)
+            @Option("◎", "Chat with a mission",
+                    "Start a durable chat on an approved mission version. It stays pinned to that version.",
+                    ChatWithMission)
+        </div>
+
+        <hr class="msc-rule" />
+        <p class="msc-note">Both paths open the same workspace. A mission is reusable configuration; a chat is one durable context under it.</p>
+    </div>
+
+    @* The same quiet text treatment the launcher already gives this action, so the two surfaces
+       agree about what a secondary route looks like. *@
+    <button type="button" class="msc-open-link" @onclick="OnOpenWorkspace">
+        <svg class="msc-folder-glyph" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+            <path d="M0.9 3.6 h6.4 l1.8 2.2 h9.0 a0.9 0.9 0 0 1 0.9 0.9 v9.7 a0.9 0.9 0 0 1 -0.9 0.9
+                     h-17.2 a0.9 0.9 0 0 1 -0.9 -0.9 v-11.9 a0.9 0.9 0 0 1 0.9 -0.9 z" />
+        </svg>
+        <span>Open an existing workspace…</span>
+    </button>
+</section>
+
+@code {
+    /// <summary>Opens the existing Project launcher, unchanged. This component does not know what
+    /// creating a mission involves; it only says which choice was made.</summary>
+    [Parameter] public EventCallback CreateMission { get; set; }
+
+    /// <summary>Opens the static Mission Chat preview. No request is made and no Project or
+    /// durable context is created by choosing it.</summary>
+    [Parameter] public EventCallback ChatWithMission { get; set; }
+
+    [Parameter] public EventCallback OpenWorkspace { get; set; }
+
+    private Task OnOpenWorkspace() => OpenWorkspace.InvokeAsync();
+
+    // Real markup rather than a RenderTreeBuilder fragment: Blazor stamps a component's scoped-CSS
+    // attribute onto elements written in the template only, so a hand-built fragment would render
+    // with no styling at all. The same reason WorkbenchRail writes its items this way.
+    private RenderFragment Option(string glyph, string title, string description, EventCallback chosen) =>
+        @<button type="button" class="msc-option" @onclick="() => chosen.InvokeAsync()">
+             @* Decorative on both counts: the tile glyph repeats the rail's visual language and
+                the arrow says "this goes somewhere". The title and description below are the
+                button's accessible name, so announcing either glyph would only repeat them. *@
+             <span class="msc-option-tile" aria-hidden="true">@glyph</span>
+             <span class="msc-option-text">
+                 <span class="msc-option-title">@title</span>
+                 <span class="msc-option-description">@description</span>
+             </span>
+             <span class="msc-option-arrow" aria-hidden="true">→</span>
+         </button>;
+}

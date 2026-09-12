@@ -1,0 +1,173 @@
+/* Layout for the startup choice (47.1). Like the launcher's own stylesheet, this file declares no
+   custom property and contains no literal colour, radius, type or reference measurement: the card,
+   its padding, the link offset and the type scale all resolve through the Workbench theme map in
+   forge.css, and this surface adds nothing of its own.
+
+   Frame 01 is drawn inside the shared launcher shell, which is why the brand band above is the
+   shipped one, untouched. The card itself is not the launcher's: the frame draws it wider and far
+   more compact than the launcher card it replaces, so it reads from the Mission Chat startup
+   tokens rather than the --wb-card-* group. */
+
+.msc-root {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--wb-chat-start-gap-top) var(--wb-page-inset) var(--wb-page-inset);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg);
+}
+
+.msc-card {
+    width: var(--wb-chat-start-card-width);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--wb-chat-start-card-pad-y) var(--wb-chat-start-card-pad-x) var(--wb-chat-start-card-pad-bottom);
+    display: grid;
+    min-width: 0;
+}
+
+.msc-title {
+    margin: 0 0 var(--wb-gap-label);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-display);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+}
+
+.msc-lead {
+    margin: 0 0 var(--space-3);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-lead);
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.msc-options {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+/* A row is a real button: choosing one is the whole point of the surface, so it carries the
+   affordance rather than looking like a card that happens to be clickable. */
+.msc-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    min-height: var(--wb-chat-start-option-height);
+    padding: 0 var(--wb-chat-start-option-pad);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.msc-option:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+}
+
+.msc-option:focus-visible {
+    outline: none;
+    border-color: var(--accent-hover);
+    box-shadow: var(--focus-ring);
+}
+
+.msc-option-tile {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--wb-chat-start-tile-size);
+    height: var(--wb-chat-start-tile-size);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--font-size-lead);
+    line-height: 1;
+}
+
+.msc-option-text {
+    display: grid;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.msc-option-title {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.msc-option-description {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-meta);
+    line-height: 1.4;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.msc-option-arrow {
+    flex: none;
+    color: var(--accent);
+    font-size: var(--font-size-lead);
+    line-height: 1;
+}
+
+.msc-rule {
+    margin: var(--wb-chat-start-rule-gap) 0 0;
+    border: none;
+    border-top: 1px solid var(--border);
+}
+
+.msc-note {
+    margin: var(--space-2) 0 0;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-meta);
+    line-height: 1.4;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+/* Centred under the card, as the reference draws it, rather than aligned to the card's content
+   edge: this action belongs to neither option above it. */
+.msc-open-link {
+    max-width: 100%;
+    margin-top: var(--wb-chat-start-link-gap);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-label);
+    cursor: pointer;
+}
+
+.msc-open-link:hover { color: var(--accent-hover); text-decoration: underline; }
+
+.msc-open-link:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
+}
+
+.msc-folder-glyph {
+    width: var(--wb-link-glyph);
+    height: var(--wb-link-glyph);
+    fill: currentColor;
+    stroke: none;
+}

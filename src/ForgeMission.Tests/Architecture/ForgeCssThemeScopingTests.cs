@@ -73,6 +73,38 @@ public sealed class ForgeCssThemeScopingTests
             Assert.Contains(token, light.Body, StringComparison.Ordinal);
     }
 
+    // Phase 47.1 — the Mission Chat prototype's reference geometry is theme-owned for the same
+    // reason the launcher's is: a component that hard-coded a measurement would fragment the token
+    // system. These are geometry and type only, which is why the dark maps inherit them and the
+    // light/dark colour pairing above is unaffected.
+    [Fact]
+    public void TheWorkbenchTheme_DeclaresTheMissionChatGeometryItsSurfacesConsume()
+    {
+        var light = TokenBlocks().Single(block =>
+            block.Selector.Contains(SurfaceThemeAttribute, StringComparison.Ordinal) &&
+            block.Body.Contains("color-scheme: light", StringComparison.Ordinal));
+
+        foreach (var token in new[]
+                 {
+                     // Chat shell and columns. The rail is the prototype's own width, because the
+                     // frames draw 216px where the shipped rail token is 192px.
+                     "--wb-chat-rail-width", "--wb-chat-list-width", "--wb-chat-column-gap",
+                     "--wb-chat-block-pad", "--wb-chat-row-pad", "--wb-chat-action-height",
+                     "--wb-chat-transcript-gap",
+                     // Composer and message type.
+                     "--wb-chat-composer-height", "--wb-chat-composer-pad-top",
+                     "--wb-chat-composer-pad-bottom", "--wb-chat-send-width",
+                     "--wb-chat-composer-font-size", "--wb-chat-message-font-size",
+                     // Startup choice (frame 01), which is its own card rather than the launcher's.
+                     "--wb-chat-start-card-width", "--wb-chat-start-gap-top",
+                     "--wb-chat-start-card-pad-x", "--wb-chat-start-card-pad-y",
+                     "--wb-chat-start-card-pad-bottom", "--wb-chat-start-option-height",
+                     "--wb-chat-start-option-pad", "--wb-chat-start-tile-size",
+                     "--wb-chat-start-rule-gap", "--wb-chat-start-link-gap",
+                 })
+            Assert.Contains(token, light.Body, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ForgeUiHost_SelectsNoSurfaceTheme()
     {

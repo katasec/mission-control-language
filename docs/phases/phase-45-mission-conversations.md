@@ -1,8 +1,9 @@
 # Phase 45 — Forge Desktop mission conversations
 
 > **Status:** authoring, evaluation, publication, and pinned-conversation launch are accepted as
-> of 2026-09-09. The next operator transcript/turn presentation is intentionally not implied by
-> this delivery and awaits the product pivot.
+> of 2026-09-09. The approved [Mission chat experience v1](../design/mission-chat-experience-v1.md)
+> is being proved first as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md);
+> durable/transport integration remains a separately approved follow-on.
 
 ## Why this phase exists
 
