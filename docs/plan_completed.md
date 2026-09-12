@@ -22,6 +22,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md) | Interactive Presentation-only Mission Chat prototype for the approved startup, fresh Janus, and active-chat journey. | Done — Codex acceptance and operator approval 2026-09-12. Real backend integration remains a separately designed follow-on. |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Done — verified 2026-09-07; see the [completed record](phases/phase-44-local-development-bootstrap_completed.md). |
 | [Phase 43 — Forge Desktop (coding-agent client)](phases/phase-43-forge-desktop.md) | Coding-agent desktop client where **missions attach instead of models**. Canonical architecture: [forge-architecture.md](design/forge-architecture.md). | Done — selected work verified 2026-09-07. Remaining follow-ups are deferred in [backlog.md](backlog.md); the hub keeps their routing. |
 | [Phase 1 — Project Scaffold](phases/phase-1-scaffold.md) | Solution structure, projects, package references | Done |

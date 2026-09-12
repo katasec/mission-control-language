@@ -1,6 +1,6 @@
 # Phase 47.1 — Interactive Mission Chat prototype
 
-> **Status:** accepted 2026-09-12. Codex independently verified the three binding frames, the required responsive layouts, and the zero-argument packaged Desktop path; backend integration remains deferred.
+> **Status:** complete — approved by the operator 2026-09-12. Codex independently verified the three binding frames, the required responsive layouts, and the zero-argument packaged Desktop path; backend integration remains deferred.
 
 ## Outcome and component fit
 
