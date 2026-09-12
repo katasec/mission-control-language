@@ -1,7 +1,7 @@
 # Phase 47 — Mission Chat static UI
 
-> **Status:** scope locked, 2026-09-10. This is an interactive Presentation-only prototype.
-> It creates no product chat, no durable state, and no backend contract.
+> **Status:** interactive Presentation-only prototype accepted 2026-09-12; awaiting
+> static-UI review. It creates no product chat, no durable state, and no backend contract.
 
 ## Why this phase exists
 

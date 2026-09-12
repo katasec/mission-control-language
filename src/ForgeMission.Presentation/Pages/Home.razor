@@ -8,11 +8,25 @@
 @inject IApplicationChannel ApplicationChannel
 @implements IAsyncDisposable
 
-@if (project is null)
+@if (project is null && startSurface == StartSurface.ChatPreview)
+{
+    @* 47.1: the static Mission Chat prototype. It is reached only by choosing it here, owns all of
+       its own state, and is discarded whenever this component is rebuilt. Nothing below it is a
+       Project, session, transport or durable path. *@
+    <MissionChatPreview AuthorMission="ShowLauncher" />
+}
+else if (project is null)
 {
     <div class="shell launcher-shell">
         <header class="shell-header"><div class="brand"><h1>Forge</h1><span class="brand-divider"></span><p class="subtitle">AI Workbench</p></div></header>
-        <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value" Title="@titleInput" TitleChanged="value => titleInput = value" Home="@homeInput" HomeChanged="value => homeInput = value" Busy="busy" Error="@launcherError" Notice="@LauncherNotice" ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput" OpenPathChanged="value => openPathInput = value" GoalCommitted="DraftProjectAsync" Create="CreateProjectAsync" OpenRequested="ToggleOpenFolder" Open="OpenProjectAsync" />
+        @if (startSurface == StartSurface.Choice)
+        {
+            <MissionStartChoice CreateMission="ShowLauncher" ChatWithMission="ShowChatPreview" OpenWorkspace="ShowLauncherForOpen" />
+        }
+        else
+        {
+            <ProjectLauncher Goal="@goalInput" GoalChanged="value => goalInput = value" Title="@titleInput" TitleChanged="value => titleInput = value" Home="@homeInput" HomeChanged="value => homeInput = value" Busy="busy" Error="@launcherError" Notice="@LauncherNotice" ShowOpenFolder="showOpenFolder" OpenPath="@openPathInput" OpenPathChanged="value => openPathInput = value" GoalCommitted="DraftProjectAsync" Create="CreateProjectAsync" OpenRequested="ToggleOpenFolder" Open="OpenProjectAsync" />
+        }
     </div>
 }
 else
@@ -133,6 +147,21 @@ else
                                         Busy="creating" Start="StartConversationAsync" Cancel="CloseNewConversation"
                                         RetryOptions="LoadApprovedVersionsAsync" />
         : null;
+
+    // ── Pre-workspace routing (47.1) ──────────────────────────────────────────────────────────
+    // Which surface a person sees before a Project exists. It is local navigation and nothing
+    // else: no branch below starts a session, sends a request, or changes what the launcher does
+    // once it is shown. It is a plain field, so a reload rebuilds this component on Choice and the
+    // prototype's state is gone — that reset is the prototype's contract, not a recovery path.
+    private enum StartSurface { Choice, Launcher, ChatPreview }
+    private StartSurface startSurface = StartSurface.Choice;
+
+    private void ShowLauncher() => startSurface = StartSurface.Launcher;
+    private void ShowChatPreview() => startSurface = StartSurface.ChatPreview;
+
+    // The launcher's own folder disclosure, opened directly rather than through the toggle: this
+    // choice always means "show me the open path", never "hide the one already showing".
+    private void ShowLauncherForOpen() { startSurface = StartSurface.Launcher; showOpenFolder = true; launcherError = null; }
 
     private void ToggleOpenFolder() { showOpenFolder = !showOpenFolder; launcherError = null; }
     private async Task DraftProjectAsync()

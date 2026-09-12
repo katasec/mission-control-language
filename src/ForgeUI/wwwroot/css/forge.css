@@ -351,6 +351,53 @@
   --wb-section-gap: var(--space-5); /* D */
   --wb-run-content-width: min(40rem, 100%); /* D — 40rem/640px at standard root size */
 
+  /* Mission Chat geometry (47.1), theme-owned so the prototype's components hard-code no
+     reference measurement. Provenance is against the three binding frames in
+     docs/design/assets/mission-chat-experience-v1/, each value landing exactly on its measured
+     figure at 1440x960 and contracting to a floor at the small boundary. Horizontal terms follow
+     width, vertical follow height, per the axis rule the layout group above already fixes. Every
+     value here is geometry or type, so both Workbench dark maps inherit them unchanged and restate
+     nothing.
+
+     The frames win over the shipped figures where the two disagree, which is why the rail and the
+     startup card are restated here rather than reused: the frames draw a 216px rail and a 994px
+     card where --wb-rail-width is 192px and --wb-card-width is 906px. These are the prototype's
+     own values and are consumed only by its two components; WorkbenchRail, the launcher shell and
+     ProjectLauncher keep the shipped tokens untouched. */
+  --wb-chat-rail-width:          min(13.5rem, 25vw);                             /* S — 216px at 1440 */
+  --wb-chat-list-width:          clamp(15rem, 20.14vw, 18.125rem);               /* S — 290px at 1440 */
+  --wb-chat-column-gap:          clamp(16px, 1.944vw, 28px);                     /* S — 28px at 1440 */
+  --wb-chat-block-pad:           clamp(12px, 1.25vw, 20px);                      /* S — 20px at 1440 */
+  --wb-chat-row-pad:             clamp(var(--space-2), 1.25vh, var(--space-3));  /* D */
+  --wb-chat-action-height:       clamp(36px, 4.79vh, 46px);                      /* S — 46px at 960 */
+  --wb-chat-composer-height:     clamp(38px, 4.69vh, 45px);                      /* S — 45px at 960 */
+  --wb-chat-composer-pad-top:    clamp(var(--space-2), 1.25vh, var(--space-3));  /* S — 12px at 960 */
+  --wb-chat-composer-pad-bottom: clamp(var(--space-3), 1.67vh, var(--space-4));  /* S — 16px at 960 */
+  --wb-chat-send-width:          clamp(72px, 5.83vw, 84px);                      /* S — 84px at 1440 */
+  --wb-chat-transcript-gap:      clamp(var(--space-2), 1.25vh, var(--space-3));  /* D */
+  /* A — the design system's 16px input floor, below which iOS Safari auto-zooms on focus. Named
+     here so the composer never carries a size literal of its own. */
+  --wb-chat-composer-font-size:  16px;
+  /* S — 16px at 960. The document type scale is height-driven and tuned for the launcher's sparse
+     card, so --font-size-body reaches 20px at this height; the frames set message text at 16px and
+     a transcript is dense enough that the difference decides whether it fits. Message text only:
+     labels, metadata and chrome stay on the document scale. */
+  --wb-chat-message-font-size:   clamp(15px, 1.667vh, 16px);
+
+  /* Startup choice geometry (frame 01). The card is the prototype's own, not the launcher's: the
+     frame draws it 994px wide with its top edge at y=274 and a noticeably more compact interior
+     than the launcher card it replaces. */
+  --wb-chat-start-card-width:      min(62.125rem, 100%);                          /* S — 994px */
+  --wb-chat-start-gap-top:         clamp(16px, calc(-63.2px + 25.65vh), 183px);   /* S — card top at y=274 */
+  --wb-chat-start-card-pad-x:      clamp(20px, calc(-4.0px + 3.333vw), 44px);     /* S — 44px at 1440 */
+  --wb-chat-start-card-pad-y:      clamp(20px, calc(-19.6px + 7.042vh), 48px);    /* S — 48px at 960 */
+  --wb-chat-start-card-pad-bottom: clamp(20px, calc(-14.0px + 6.042vh), 44px);    /* S — 44px at 960 */
+  --wb-chat-start-option-height:   clamp(60px, calc(25.5px + 6.198vh), 85px);     /* S — 85px at 960 */
+  --wb-chat-start-option-pad:      clamp(12px, calc(0.8px + 2.0vh), 20px);        /* S — 20px at 960 */
+  --wb-chat-start-tile-size:       clamp(32px, calc(11.2px + 3.417vh), 44px);     /* S — 44px at 960 */
+  --wb-chat-start-rule-gap:        clamp(16px, calc(-8.4px + 4.313vh), 33px);     /* S — 33px at 960 */
+  --wb-chat-start-link-gap:        clamp(16px, calc(-22.4px + 6.708vh), 42px);    /* S — 42px below the card */
+
   /* Type. Height-driven: every size contributes to the vertical stack. */
   --font-size-display:    clamp(24px, calc(9.05px + 2.632vh), 36px);
   --font-size-title:      clamp(18px, calc(5.54px + 2.193vh), 28px);

@@ -1,0 +1,526 @@
+/* Layout for the Mission Chat prototype (47.1). Like every other surface here this file declares
+   no custom property and contains no literal colour, radius, type size or reference measurement:
+   all of it resolves through the Workbench theme map in forge.css, reached from the document root
+   rather than from a selector of this component's own. The header band, page inset and card radii
+   are the shipped ones; the rail column, the chat measurements and the message type are the frames'
+   own, and every one of those is a theme-owned --wb-chat-* token.
+
+   The layout is content-led — grid and flex, minmax(0, 1fr), min-width and min-height of 0 — so it
+   reflows continuously across the supported range instead of switching between fixed frames. The
+   fluid tokens ramp spacing and type along the way; they support the layout, they are not it. */
+
+/* The frames draw a 216px rail where the shipped --wb-rail-width is 192px. The column is the only
+   thing that decides the rail's width, so widening it here reproduces the frames without touching
+   WorkbenchRail, which keeps styling and sizing itself from its own tokens. */
+.mcp-shell {
+    display: grid;
+    grid-template-columns: var(--wb-chat-rail-width) minmax(0, 1fr);
+    grid-template-areas: "rail content";
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+}
+
+.mcp-content {
+    grid-area: content;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-left: 1px solid var(--border-strong);
+}
+
+.mcp-header {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    min-height: var(--wb-header-height);
+    padding: var(--space-2) var(--wb-page-inset);
+    background: var(--surface-sunken);
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.mcp-header-text { min-width: 0; }
+.mcp-header h1, .mcp-header p { margin: 0; overflow-wrap: anywhere; }
+.mcp-header h1 { font-size: var(--font-size-title); }
+.mcp-header p { color: var(--text-muted); font-size: var(--font-size-meta); }
+
+.mcp-header-secondary,
+.mcp-header-action {
+    flex: none;
+    min-height: var(--wb-chat-action-height);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: var(--font-size-label);
+    cursor: pointer;
+    overflow-wrap: anywhere;
+}
+
+.mcp-header-secondary {
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+}
+
+.mcp-header-secondary:hover { background: var(--surface-hover); }
+
+.mcp-header-action {
+    border: none;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 700;
+}
+
+.mcp-header-action:hover { background: var(--accent-hover); }
+
+.mcp-header-secondary:focus-visible,
+.mcp-header-action:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.mcp-document {
+    flex: 1;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--wb-page-inset) var(--wb-page-inset) calc(var(--wb-page-inset) + var(--safe-bottom));
+}
+
+/* One structural rearrangement, and only one: below the width where both columns can hold their
+   content, the list becomes a block above the chat rather than a squeezed column. It is a real
+   change of structure, not a way to avoid sizing a fixed card.
+
+   Both tracks are bounded, never content-sized. An auto row would grow to whatever the seeded
+   transcript needs and push the composer past the bottom of a short window, and because the shell
+   is exactly one viewport tall that overflow would be clipped rather than scrolled -- the document
+   itself must never scroll. minmax(0, Nfr) instead gives the two regions a fixed share of the
+   height that is actually available, and each one scrolls inside itself: the list through its own
+   overflow, the chat through .mcp-body. The 2fr/3fr split favours the chat, which is the surface
+   a person is reading. flex: 1 with min-height: 0 is what makes that height definite, since the
+   grid is the only child of the flex column above it. */
+.mcp-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 2fr) minmax(0, 3fr);
+    gap: var(--wb-chat-column-gap);
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+@media (min-width: 60rem) {
+    .mcp-columns {
+        grid-template-columns: var(--wb-chat-list-width) minmax(0, 1fr);
+        /* Side by side again: one bounded row, both columns full height. */
+        grid-template-rows: minmax(0, 1fr);
+    }
+}
+
+.mcp-announce {
+    flex: none;
+    margin: 0;
+    padding: 0 var(--wb-page-inset) var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+}
+
+.mcp-announce:empty { display: none; }
+
+/* ── The list column ──────────────────────────────────────────────────────────────────────── */
+
+.mcp-list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.mcp-list-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--wb-chat-block-pad);
+    border-bottom: 1px solid var(--border);
+}
+
+.mcp-list-head h2 { margin: 0; font-size: var(--font-size-label); color: var(--text); }
+.mcp-list-head p { margin: 0; font-size: var(--font-size-meta); color: var(--text-muted); }
+
+.mcp-group-label {
+    margin: 0;
+    padding: var(--space-3) var(--wb-chat-block-pad);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    overflow-wrap: anywhere;
+}
+
+.mcp-rows { margin: 0; padding: 0; list-style: none; min-width: 0; }
+
+.mcp-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    width: 100%;
+    padding: var(--wb-chat-row-pad) var(--wb-chat-block-pad);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-left: var(--wb-rail-marker-width) solid transparent;
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.mcp-row:hover { background: var(--surface-hover); }
+.mcp-row:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.mcp-row-current {
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.mcp-row-title {
+    color: var(--text);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.mcp-row-current .mcp-row-title { color: var(--accent); }
+
+.mcp-row-meta {
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    overflow-wrap: anywhere;
+}
+
+/* ── The chat column ──────────────────────────────────────────────────────────────────────── */
+
+.mcp-chat {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.mcp-chat-head {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--wb-chat-block-pad);
+    border-bottom: 1px solid var(--border);
+}
+
+.mcp-chat-head-text { flex: 1; min-width: 0; }
+.mcp-chat-head h2, .mcp-chat-head p { margin: 0; overflow-wrap: anywhere; }
+.mcp-chat-head h2 { font-size: var(--font-size-lead); color: var(--text); }
+.mcp-chat-head p { margin-top: var(--space-1); color: var(--text-muted); font-size: var(--font-size-meta); }
+
+.mcp-chip {
+    flex: none;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+/* Green says Approved and nothing else. */
+.mcp-chip-approved { background: var(--success-bg); color: var(--success); }
+
+/* Pinned provenance is neutral here: it is a fact about the chat, not a verdict on it. */
+.mcp-chip-pinned { background: var(--surface-sunken); color: var(--text-muted); }
+
+.mcp-body {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--wb-chat-block-pad);
+}
+
+/* ── The fresh chat's introduction ────────────────────────────────────────────────────────── */
+
+.mcp-intro { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+
+.mcp-participants {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--wb-chat-block-pad);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-width: 0;
+}
+
+.mcp-participants-label,
+.mcp-access-label {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.mcp-participants-label { color: var(--text-subtle); }
+
+.mcp-participant { display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0; }
+
+.mcp-avatar {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--wb-chat-action-height);
+    height: var(--wb-chat-action-height);
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-mono);
+    font-weight: 700;
+}
+
+.mcp-participant-text { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+
+.mcp-participant-name {
+    color: var(--text);
+    font-size: var(--font-size-label);
+    font-weight: 700;
+}
+
+.mcp-participant-role {
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* Read-only by construction: text, with no control inside it. */
+.mcp-access {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--wb-chat-block-pad);
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    min-width: 0;
+}
+
+.mcp-access-label { color: var(--accent); }
+.mcp-access-profile, .mcp-access-copy { margin: 0; overflow-wrap: anywhere; }
+.mcp-access-profile { color: var(--text); font-size: var(--font-size-label); font-weight: 700; }
+.mcp-access-copy { color: var(--text-muted); font-size: var(--font-size-meta); line-height: 1.4; }
+
+.mcp-intro-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-body);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* ── The transcript ───────────────────────────────────────────────────────────────────────── */
+
+.mcp-transcript {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wb-chat-transcript-gap);
+    min-width: 0;
+}
+
+.mcp-day {
+    align-self: center;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+}
+
+.mcp-user-bubble {
+    align-self: flex-end;
+    max-width: 80%;
+    margin: 0;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius);
+    background: var(--accent-soft);
+    color: var(--text);
+    font-size: var(--wb-chat-message-font-size);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.mcp-participant-bubble {
+    align-self: stretch;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    min-width: 0;
+}
+
+.mcp-participant-label {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    font-weight: 600;
+}
+
+.mcp-participant-lead {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--wb-chat-message-font-size);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.mcp-participant-bullets {
+    margin: var(--space-2) 0 0;
+    padding-left: var(--space-5);
+    color: var(--text);
+    font-size: var(--wb-chat-message-font-size);
+    line-height: 1.5;
+}
+
+.mcp-participant-bullets li { margin-bottom: var(--space-1); overflow-wrap: anywhere; }
+
+.mcp-approval {
+    margin: 0;
+    color: var(--success);
+    font-size: var(--font-size-label);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.mcp-tool-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    overflow-wrap: anywhere;
+}
+
+.mcp-tool-glyph { color: var(--success); }
+
+.mcp-activity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-meta);
+    font-style: italic;
+}
+
+.mcp-activity-dot {
+    flex: none;
+    width: var(--space-1);
+    height: var(--space-1);
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+}
+
+.mcp-activity-dots { display: inline-flex; align-items: flex-end; gap: var(--space-1); }
+
+.mcp-activity-dots span {
+    width: var(--space-1);
+    height: var(--space-1);
+    border-radius: var(--radius-pill);
+    background: currentColor;
+    opacity: 0.35;
+    animation: thinking-bounce 1.3s ease-in-out infinite;
+}
+
+.mcp-activity-dots span:nth-child(2) { animation-delay: 0.18s; }
+.mcp-activity-dots span:nth-child(3) { animation-delay: 0.36s; }
+
+/* ── The composer ─────────────────────────────────────────────────────────────────────────── */
+
+.mcp-composer {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: end;
+    padding: var(--wb-chat-composer-pad-top) var(--wb-chat-block-pad) var(--wb-chat-composer-pad-bottom);
+    border-top: 1px solid var(--border);
+}
+
+/* Height and min-height together: the element would otherwise take an intrinsic height of its own,
+   and resize stays available so a long message can be seen while it is written. */
+.mcp-composer-field {
+    min-width: 0;
+    height: var(--wb-chat-composer-height);
+    min-height: var(--wb-chat-composer-height);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-sans);
+    /* The theme's named input floor: below it iOS Safari auto-zooms the page on focus. */
+    font-size: var(--wb-chat-composer-font-size);
+    line-height: 1.4;
+    resize: vertical;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.mcp-composer-field::placeholder { color: var(--text-subtle); }
+
+.mcp-composer-field:focus {
+    outline: none;
+    border-color: var(--accent-hover);
+    box-shadow: var(--focus-ring);
+}
+
+.mcp-send {
+    flex: none;
+    width: var(--wb-chat-send-width);
+    height: var(--wb-chat-composer-height);
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font: inherit;
+    font-size: var(--font-size-label);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.mcp-send:hover { background: var(--accent-hover); }
+.mcp-send:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Below the rail breakpoint the shipped workbench gives the rail a share of the width rather than
+   a fixed column it cannot honour. That behaviour is unchanged: the 216px column is a desktop
+   measurement, and this rule still overrides it exactly as before. */
+@media (max-width: 639px) {
+    .mcp-shell { grid-template-columns: minmax(7rem, 28%) minmax(0, 1fr); }
+}
