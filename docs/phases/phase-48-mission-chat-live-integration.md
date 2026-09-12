@@ -1,6 +1,6 @@
 # Phase 48 — Mission Chat live integration
 
-> **Status:** design locked 2026-09-13. Await Claude's revised plan-only relay; no implementation has
+> **Status:** design locked 2026-09-13. Await Claude's corrected plan-only relay; no implementation has
 > started.
 
 ## Why this phase exists
@@ -31,7 +31,7 @@ operator-authored candidate; Forge records no invented evaluation result.
 |---|---|
 | Chat with a mission | Application/Missions asks Application/Projects to find or provision the managed Project and its shipped Janus version, then creates and attaches one Host-owned Mission Conversation. Presentation enters the real chat view. |
 | New chat | The same named Application action creates and attaches one further Janus conversation in the current managed Project. |
-| Select a real chat row | Presentation asks Application for that Project's Host-owned conversation projection and bounded history page, then follows its ordered event stream from that page's final sequence. |
+| Select a real chat row | Presentation asks Application for that Project's Host-owned conversation projection and complete transcript seed. Application obtains that seed through bounded Host pages, then follows the ordered event stream from the snapshot's final sequence. Paging is internal; the UI gains no history control, partial-history state, or notice. |
 | Send a non-empty message | Presentation sends one typed submit request. Conversation Host allocates the turn and attempt; Worker progress arrives through the existing relayed event stream; `ConversationTranscript` renders it. |
 | Author a mission / Open an existing workspace | Existing launcher routes remain unchanged. |
 
@@ -43,8 +43,8 @@ while it waits for a real first message.
 
 Not included: a Project switcher, Project rename UI, folder picker in the chat route, version
 picker, manual profile confirmation, chat rename, search, sorting, last-chat restore, retry,
-cancel, trace links, a right drawer, more participants, Naive provisioning, or any new rail
-destination.
+cancel, trace links, a right drawer, more participants, Naive provisioning, history paging or a
+partial-history notice, or any new rail destination.
 
 ## Ownership and stored facts
 
@@ -73,10 +73,14 @@ labels.
 `StartMissionChat` is a concrete, zero-input Application action. It returns the created Project
 session, the just-created pinned conversation, its read-only mission/version/profile projection,
 and the real current chat directory. `CreateMissionChat` uses the active managed session and has
-the same output. `OpenMissionChat` returns the selected pinned projection plus an ordered
-conversation-event page. Conversation Host supplies that page through one named read contract,
-bounded by the snapshot sequence returned before the read; Application starts its existing tail
-from that sequence afterwards, so no event can fall between the page and live replay.
+the same output. `OpenMissionChat` returns the selected pinned projection plus one complete,
+ordered transcript seed. Conversation Host supplies finite event pages through one named read
+contract. Application first fixes the snapshot's final sequence, requests consecutive pages only
+through that fixed sequence until the seed is complete, then starts its existing tail from that
+same final sequence. The page cursor is the final returned event sequence (or the request's
+`after` when the page is empty); completion requires that cursor to equal the fixed snapshot
+sequence. Pages and their `HasMore` fact are Application-internal and never reach Presentation.
+This avoids both an unbounded response and a missing interval between history and live replay.
 `SubmitMissionChatTurn` carries only session ID, conversation ID,
 idempotent command ID, and text. Application derives every Project, version, package, profile,
 attachment, and Host call.
@@ -102,9 +106,9 @@ no profile fallback, silent retry, or fake ready state.
 |---|---|
 | Managed marker or Project is missing/corrupt. | Projects either repairs only the missing marker by creating a new managed Project, or returns a typed invalid-Project result for a malformed existing Project. It never overwrites a valid Project. Focused test proves the boundary. |
 | Shipped Janus package is invalid or unavailable. | Projects returns a typed unavailable result; no conversation or attachment is created. Presentation shows that result without a substitute mission. |
-| Create response is lost. | Host command identity remains idempotent. Presentation repeats the same command only after an explicit retry; it never creates a second chat silently. |
+| Create response is lost. | Host command identity remains idempotent. Mission Chat returns a typed uncertain-create result; this UI exposes no retry and never creates a second chat silently. |
 | Attachment fails. | The pinned conversation remains listed; Presentation reports that fixed access is not currently available. Client Runtime owns later recovery; there is no broader profile or remote fallback. |
-| Page read or stream fails. | The Host's durable accepted/failed/interrupted fact remains canonical. Presentation shows the typed outcome and never invents a reply, approval, title, or activity row. The page read is a finite typed request; the existing tail reconnects from its last durable sequence. |
+| Page read or stream fails. | The Host's durable accepted/failed/interrupted fact remains canonical. Presentation shows the typed outcome and never invents a reply, approval, title, or activity row. Each Host page is finite; a page failure starts no tail, while the existing tail reconnects from its last durable sequence after a stream failure. |
 
 ## Gates
 
