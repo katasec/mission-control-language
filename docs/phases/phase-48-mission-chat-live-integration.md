@@ -1,6 +1,6 @@
 # Phase 48 — Mission Chat live integration
 
-> **Status:** design locked 2026-09-13. Await Claude's plan-only relay; no implementation has
+> **Status:** design locked 2026-09-13. Await Claude's revised plan-only relay; no implementation has
 > started.
 
 ## Why this phase exists
@@ -31,7 +31,7 @@ operator-authored candidate; Forge records no invented evaluation result.
 |---|---|
 | Chat with a mission | Application/Missions asks Application/Projects to find or provision the managed Project and its shipped Janus version, then creates and attaches one Host-owned Mission Conversation. Presentation enters the real chat view. |
 | New chat | The same named Application action creates and attaches one further Janus conversation in the current managed Project. |
-| Select a real chat row | Presentation asks Application for that Project's Host-owned conversation projection and follows its ordered event stream. |
+| Select a real chat row | Presentation asks Application for that Project's Host-owned conversation projection and bounded history page, then follows its ordered event stream from that page's final sequence. |
 | Send a non-empty message | Presentation sends one typed submit request. Conversation Host allocates the turn and attempt; Worker progress arrives through the existing relayed event stream; `ConversationTranscript` renders it. |
 | Author a mission / Open an existing workspace | Existing launcher routes remain unchanged. |
 
@@ -50,9 +50,9 @@ destination.
 
 | Owner | Change |
 |---|---|
-| Application/Projects | Owns the managed-Project marker at `~/Forge/Projects/mission-chat-project.json`, containing only the Project GUID; its home is `~/Forge/Projects/<project-guid>`. It creates/validates that Project, its generated title, and the shipped immutable Janus v1.4 definition/package. A missing or invalid marker is repaired only by creating a fresh managed Project; an existing valid Project is never overwritten. |
+| Application/Projects | Owns the managed-Project marker at `~/Forge/Projects/mission-chat-project.json`, containing only the Project GUID; its home is `~/Forge/Projects/<project-guid>`. `ProjectService` remains the sole writer of that Project's directory, assets, and manifest. It creates/validates that Project, its generated title, and the shipped immutable Janus v1.4 definition/package. A missing or invalid marker is repaired only by creating a fresh managed Project; an existing valid Project is never overwritten. |
 | Application/Missions | Owns the one named product action that composes managed-Project resolution, Janus admission, Host conversation creation, and the existing Client Runtime attachment. It never writes a manifest, transcript, or Host store. |
-| Conversation Host | Remains the sole conversation-store writer and sequence allocator. It adds the durable display title projection: `New chat` before the first turn; a bounded normalized prefix of the first user message thereafter. It does not call a model to make a title. It persists an optional generic expert label unchanged from Worker progress. |
+| Conversation Host | Remains the sole conversation-store writer and sequence allocator. It adds the durable display title projection: `New chat` before the first turn; a bounded normalized prefix of the first user message thereafter. It does not call a model to make a title. It persists an optional generic expert label unchanged from Worker progress, and exposes one typed bounded event-page read for an existing Mission Conversation. |
 | Conversation Worker | Copies the existing `PipelineTraceEvent.ExpertName` into that optional progress label for each started/completed expert step. It does not map mission names, choose a persona, or branch for Janus. |
 | Client Runtime | Attaches the version's fixed profile automatically. It alone retains capability policy, bounded-operation confirmation, containment, execution, and cleanup. |
 | Application Transport / Host | Adds only concrete typed actions and source-generated DTOs for start, list/open, transcript read/follow, and submit. No generic endpoint or untyped payload is allowed. |
@@ -74,7 +74,10 @@ labels.
 session, the just-created pinned conversation, its read-only mission/version/profile projection,
 and the real current chat directory. `CreateMissionChat` uses the active managed session and has
 the same output. `OpenMissionChat` returns the selected pinned projection plus an ordered
-conversation-event page. `SubmitMissionChatTurn` carries only session ID, conversation ID,
+conversation-event page. Conversation Host supplies that page through one named read contract,
+bounded by the snapshot sequence returned before the read; Application starts its existing tail
+from that sequence afterwards, so no event can fall between the page and live replay.
+`SubmitMissionChatTurn` carries only session ID, conversation ID,
 idempotent command ID, and text. Application derives every Project, version, package, profile,
 attachment, and Host call.
 
@@ -101,7 +104,7 @@ no profile fallback, silent retry, or fake ready state.
 | Shipped Janus package is invalid or unavailable. | Projects returns a typed unavailable result; no conversation or attachment is created. Presentation shows that result without a substitute mission. |
 | Create response is lost. | Host command identity remains idempotent. Presentation repeats the same command only after an explicit retry; it never creates a second chat silently. |
 | Attachment fails. | The pinned conversation remains listed; Presentation reports that fixed access is not currently available. Client Runtime owns later recovery; there is no broader profile or remote fallback. |
-| Submit or stream fails. | The Host's durable accepted/failed/interrupted fact remains canonical. Presentation shows the typed outcome and never invents a reply, approval, title, or activity row. |
+| Page read or stream fails. | The Host's durable accepted/failed/interrupted fact remains canonical. Presentation shows the typed outcome and never invents a reply, approval, title, or activity row. The page read is a finite typed request; the existing tail reconnects from its last durable sequence. |
 
 ## Gates
 
@@ -132,7 +135,8 @@ Claude may implement this phase only after returning a plan that keeps the file 
 
 - `ForgeMission.Application/Projects`, `ForgeMission.Application/Missions`, and their focused tests;
 - `ForgeMission.Conversations.Contracts` and `ForgeMission.ConversationHost` only for the additive
-  conversation-title and generic expert-label projections and their persistence/contract tests;
+  conversation-title, generic expert-label, and bounded conversation-event-page projections and
+  their persistence/contract tests;
 - `ForgeMission.ConversationWorker` only to copy its existing trace expert name into that generic
   label, with focused Worker coverage;
 - `ForgeMission.Application.Transport`, `ForgeMission.Application.Host`, and contract/route tests;
