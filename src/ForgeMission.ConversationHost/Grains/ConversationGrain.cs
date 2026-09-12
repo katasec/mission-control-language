@@ -383,6 +383,12 @@ public sealed class ConversationGrain(
         var command = new ConversationCommand(input.CommandId, Address.ConversationId,
             ConversationDeterministicIds.MissionTurnAttempt(input.CommandId), ConversationCommandKind.StartMission,
             "Durable", text!, [], null, Launch: launch, TurnId: turnId);
+        // Phase 48: the chat's durable title is this conversation's first accepted turn, normalized
+        // once. Set before BeginRunAsync so it persists in the PendingRunStart checkpoint write that
+        // call already performs. A retry carries the original turn's text and never renames, and a
+        // later turn finds a non-null title, so a title is written exactly once.
+        if (checkpoint.State.DisplayTitle is null && !input.Retry)
+            checkpoint.State.DisplayTitle = MissionChatTitle.Normalize(text);
         return await BeginRunAsync(command, ct);
     }
 
@@ -920,7 +926,9 @@ public sealed class ConversationGrain(
             progress.EventId, 1, progress.ConversationId, progress.RunId, checkpoint.State.LastSequence + 1,
             progress.Kind, progress.Participant, progress.Attempt, progress.Text, progress.Reason,
             progress.Approval, progress.ToolRequest, progress.ToolResult, progress.Artifact, progress.RunStatus,
-            progress.OccurredAtUtc, MissionHandsRequest: progress.MissionHandsRequest);
+            // ActorName is the Worker's own immutable package expert name, stored unchanged: Host
+            // neither maps nor validates it, and nothing here branches on its value.
+            progress.OccurredAtUtc, MissionHandsRequest: progress.MissionHandsRequest, ActorName: progress.ActorName);
 
         var existing = await eventStore.FindByEventIdAsync(Address, progress.EventId, ct);
         if (existing is not null)
@@ -994,7 +1002,8 @@ public sealed class ConversationGrain(
             DeserializeMissionHands(checkpoint.State.MissionConversationLaunchJson,
                 ConversationContractsJsonContext.Default.DurableMissionLaunch), checkpoint.State.EvaluationResultId,
             checkpoint.State.EvaluationTurnId, checkpoint.State.EvaluationTurnAttemptId,
-            checkpoint.State.EvaluationTerminalSummary, checkpoint.State.EvaluationTerminalReason);
+            checkpoint.State.EvaluationTerminalSummary, checkpoint.State.EvaluationTerminalReason,
+            checkpoint.State.DisplayTitle ?? MissionChatTitle.Default);
 
         return Task.FromResult(new ConversationSnapshotResult(
             JsonSerializer.Serialize(snapshot, ConversationContractsJsonContext.Default.ConversationSnapshot)));
@@ -1081,6 +1090,41 @@ public sealed class ConversationGrain(
         {
             return ProjectError("historyInvalid", ex.Message);
         }
+    }
+
+    /// <summary>Phase 48's named bounded read: one finite page of this Mission Conversation's own
+    /// ordered events. The caller owns the upper bound and Host never widens it, so a live event
+    /// appended during an assembly can never enter a page. It reads through the grain, not the
+    /// store, and writes nothing.</summary>
+    public async Task<ConversationProjectReadResult> ReadMissionConversationEventsAsync(long after, long through)
+    {
+        if (checkpoint.State.Purpose != ConversationPurpose.MissionConversation || checkpoint.State.ProjectId is null)
+            return ProjectError("wrongPurpose", "This conversation is not a Mission Conversation.");
+        if (after < 0 || through < after || through > checkpoint.State.LastSequence)
+            return ProjectError("invalidRequest", "The history range is invalid.");
+
+        var events = new List<ConversationEvent>();
+        var capped = false;
+        await foreach (var evt in eventStore.ReadAfterAsync(Address, after, CancellationToken.None))
+        {
+            if (evt.Sequence > through)
+                break;
+            if (events.Count == ConversationJsonLimits.MaxMissionConversationEventPage)
+            {
+                capped = true;
+                break;
+            }
+
+            events.Add(evt);
+        }
+
+        // The last event actually returned is the only legal next cursor; an empty range reports the
+        // caller's own lower bound back. HasMore says only that durable events remain inside
+        // (returned, through] — newer live events past `through` are outside this page's question.
+        var returnedThrough = events.Count == 0 ? after : events[^1].Sequence;
+        var page = new MissionConversationEventPage(Address.ConversationId, [.. events], after, through,
+            returnedThrough, capped && returnedThrough < through);
+        return ProjectPayload(page, ConversationContractsJsonContext.Default.MissionConversationEventPage);
     }
 
     public async Task<ConversationProjectReadResult> ReadProjectCommandAsync(Guid commandId)

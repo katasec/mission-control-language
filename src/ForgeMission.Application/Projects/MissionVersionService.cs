@@ -25,6 +25,8 @@ internal interface IMissionVersionService
         int candidateRevision, string definitionHash, EvaluationOutcome observedOutcome, string observedOutputSummary,
         EvaluationTraceOrigin? traceOrigin, CancellationToken ct);
     Task<MissionVersion> PublishAsync(string home, Guid missionId, Guid missionVersionId, CancellationToken ct);
+    Task<ProjectMissionDefinition> EnsureShippedApprovedVersionAsync(string home, string name, string definitionText,
+        MissionHandsProfile profile, string releaseLabel, CancellationToken ct);
     Task<IReadOnlyList<ApprovedMissionVersionRecord>> ListApprovedVersionsAsync(string home, CancellationToken ct);
     Task<IReadOnlyDictionary<Guid, LocalMissionVersionIdentity>> ResolveVersionIdentitiesAsync(
         string home, IReadOnlyCollection<Guid> missionVersionIds, CancellationToken ct);
@@ -35,11 +37,12 @@ internal interface IMissionVersionService
 /// holds what executes one.</summary>
 internal sealed record ApprovedMissionVersionRecord(
     Guid MissionId, string MissionName, Guid MissionVersionId, int VersionNumber,
-    string DefinitionHash, MissionHandsProfile Profile);
+    string DefinitionHash, MissionHandsProfile Profile, string? ReleaseLabel = null);
 
 /// <summary>The Project's local display identity for one pinned version. Read-only: it names a
 /// conversation's mission, and grants nothing.</summary>
-internal sealed record LocalMissionVersionIdentity(Guid MissionId, string MissionName, int VersionNumber);
+internal sealed record LocalMissionVersionIdentity(Guid MissionId, string MissionName, int VersionNumber,
+    string? ReleaseLabel = null);
 
 internal sealed class MissionVersionService(ProjectService projects) : IMissionVersionService
 {
@@ -212,7 +215,7 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             .Where(pair => pair.version is not null)
             .Select(pair => new ApprovedMissionVersionRecord(pair.definition.MissionId, pair.definition.Name,
                 pair.version!.MissionVersionId, pair.version.VersionNumber, pair.version.DefinitionHash,
-                pair.version.CapabilityProfile))
+                pair.version.CapabilityProfile, pair.version.ReleaseLabel))
             .ToArray();
         return Task.FromResult<IReadOnlyList<ApprovedMissionVersionRecord>>(approved);
     }
@@ -234,7 +237,7 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
             .SelectMany(definition => Versions(definition).Select(version => (definition, version)))
             .Where(pair => wanted.Contains(pair.version.MissionVersionId))
             .ToDictionary(pair => pair.version.MissionVersionId, pair => new LocalMissionVersionIdentity(
-                pair.definition.MissionId, pair.definition.Name, pair.version.VersionNumber));
+                pair.definition.MissionId, pair.definition.Name, pair.version.VersionNumber, pair.version.ReleaseLabel));
         return Task.FromResult<IReadOnlyDictionary<Guid, LocalMissionVersionIdentity>>(found);
     }
 
@@ -367,6 +370,43 @@ internal sealed class MissionVersionService(ProjectService projects) : IMissionV
         }, ct);
         return published.Value;
     }
+
+    /// <summary>Gives the managed chat Project its one shipped Approved version (Phase 48). A
+    /// shipped mission is release-reviewed code, not an operator-authored candidate, so it is
+    /// written Approved with no draft and — deliberately — no evaluation case and no evaluation
+    /// result: Forge records no outcome it did not observe. It is idempotent and never rewrites an
+    /// existing definition, it writes only through ProjectService's own manifest transaction, and it
+    /// is not a second publish path: <see cref="PublishAsync"/>'s evaluated-and-passing gate for
+    /// authored candidates is untouched.</summary>
+    public async Task<ProjectMissionDefinition> EnsureShippedApprovedVersionAsync(string home, string name,
+        string definitionText, MissionHandsProfile profile, string releaseLabel, CancellationToken ct)
+    {
+        if (FindShipped(projects.ReadForHome(home).Manifest, name) is { } present)
+            return present;
+
+        var created = await projects.UpdateMissionDefinitionsAsync(home, (manifest, root) =>
+        {
+            if (FindShipped(manifest, name) is { } existing)
+                return (manifest, existing);
+            if (Definitions(manifest).Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)))
+                throw Conflict($"This Project already holds a mission named '{name}' that is not the shipped approved version.");
+
+            var now = DateTimeOffset.UtcNow;
+            var version = new MissionVersion(Guid.NewGuid(), 1, MissionVersionState.Approved, RequiredDefinition(definitionText),
+                DefinitionHash(definitionText), RequiredProfile(profile), MissionPackageBuilder.Build(root, manifest, definitionText),
+                null, 1, now, null, now, [], [], releaseLabel);
+            var definition = new ProjectMissionDefinition(Guid.NewGuid(), RequiredName(name), version.MissionVersionId, null, [version]);
+            return (manifest with { MissionDefinitions = [.. Definitions(manifest), definition] }, definition);
+        }, ct);
+        return created.Value;
+    }
+
+    /// <summary>The named definition only when its active version really is Approved, which is the
+    /// same bar every other caller resolves against.</summary>
+    private static ProjectMissionDefinition? FindShipped(ProjectManifest manifest, string name) =>
+        Definitions(manifest)
+            .Where(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase) && ActiveApproved(item) is not null)
+            .SingleOrDefault();
 
     private static MissionDraft NewDraft(string text, MissionHandsProfile profile, DateTimeOffset now, Guid? id = null, int revision = 1) =>
         new(id ?? Guid.NewGuid(), RequiredDefinition(text), DefinitionHash(text), RequiredProfile(profile), revision, now);

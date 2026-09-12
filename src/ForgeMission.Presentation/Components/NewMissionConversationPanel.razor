@@ -152,11 +152,7 @@
             await Cancel.InvokeAsync();
     }
 
-    private static string ProfileLabel(MissionHandsProfile profile) => profile switch
-    {
-        MissionHandsProfile.NoHands => "No local access",
-        MissionHandsProfile.ProjectWorkspace => "Project workspace access",
-        MissionHandsProfile.ProjectWorkspaceAndTerminal => "Project workspace and terminal access",
-        _ => "No local access",
-    };
+    // The wording is shared with the live Mission Chat surface, so both state the same fixed access
+    // in the same words (Phase 48). This panel's behaviour is unchanged.
+    private static string ProfileLabel(MissionHandsProfile profile) => MissionProfileLabel.For(profile);
 }

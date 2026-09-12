@@ -73,6 +73,9 @@ namespace ForgeMission.Conversations.Contracts;
 [JsonSerializable(typeof(MissionConversationSummary[]))]
 [JsonSerializable(typeof(ListMissionConversationsRequest))]
 [JsonSerializable(typeof(ListMissionConversationsResponse))]
+// Phase 48 — the named bounded Mission Conversation event-page read.
+[JsonSerializable(typeof(ReadMissionConversationEventsRequest))]
+[JsonSerializable(typeof(MissionConversationEventPage))]
 [JsonSerializable(typeof(SubmitMissionTurnRequest))]
 [JsonSerializable(typeof(SubmitMissionTurnResponse))]
 [JsonSerializable(typeof(RetryMissionTurnRequest))]

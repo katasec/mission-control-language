@@ -8,12 +8,17 @@
 @inject IApplicationChannel ApplicationChannel
 @implements IAsyncDisposable
 
-@if (project is null && startSurface == StartSurface.ChatPreview)
+@if (project is null && startSurface == StartSurface.MissionChat)
 {
-    @* 47.1: the static Mission Chat prototype. It is reached only by choosing it here, owns all of
-       its own state, and is discarded whenever this component is rebuilt. Nothing below it is a
-       Project, session, transport or durable path. *@
-    <MissionChatPreview AuthorMission="ShowLauncher" />
+    @* Phase 48: the live Mission Chat surface. It is reached only by choosing it here, and every
+       value it renders came from one typed application action: the managed Project's title, its real
+       chats, the pinned shipped version, its fixed access, and the durable transcript. *@
+    <MissionChatView ProjectTitle="@(chatProject?.Title ?? string.Empty)" Rows="chatRows"
+                     SelectedConversationId="chatConversationId" Pin="chatPin" Access="chatAccess"
+                     Entries="chatTranscript.Entries" Draft="@chatDraft" DraftChanged="value => chatDraft = value"
+                     Busy="chatBusy" Failure="chatFailure" Notice="@chatNotice"
+                     Send="SendMissionChatTurnAsync" NewChat="CreateMissionChatAsync" SelectChat="OpenMissionChatAsync"
+                     AuthorMission="ShowLauncher" />
 }
 else if (project is null)
 {
@@ -21,7 +26,7 @@ else if (project is null)
         <header class="shell-header"><div class="brand"><h1>Forge</h1><span class="brand-divider"></span><p class="subtitle">AI Workbench</p></div></header>
         @if (startSurface == StartSurface.Choice)
         {
-            <MissionStartChoice CreateMission="ShowLauncher" ChatWithMission="ShowChatPreview" OpenWorkspace="ShowLauncherForOpen" />
+            <MissionStartChoice CreateMission="ShowLauncher" ChatWithMission="StartMissionChatAsync" OpenWorkspace="ShowLauncherForOpen" />
         }
         else
         {
@@ -129,6 +134,20 @@ else
     private string? launcherError;
     private string? LauncherNotice => goalRequired ? "That folder is not a Forge Project yet. Enter a goal to create one there." : null;
 
+    // ── Mission Chat (48). View state only: what Application returned, what is selected, what is
+    // in flight, and the composer's text. No cursor, sequence bound or page state is held here. ──
+    private string? chatSessionId;
+    private ProjectSummary? chatProject;
+    private IReadOnlyList<MissionChatRow> chatRows = [];
+    private Guid? chatConversationId;
+    private MissionChatPin? chatPin;
+    private MissionChatAccess? chatAccess;
+    private ConversationTranscript chatTranscript = new();
+    private string chatDraft = string.Empty;
+    private bool chatBusy;
+    private MissionChatFailure? chatFailure;
+    private string? chatNotice;
+
     private CancellationTokenSource? lifetime;
     private Task? subscription;
     private int generation;
@@ -153,15 +172,130 @@ else
     // else: no branch below starts a session, sends a request, or changes what the launcher does
     // once it is shown. It is a plain field, so a reload rebuilds this component on Choice and the
     // prototype's state is gone — that reset is the prototype's contract, not a recovery path.
-    private enum StartSurface { Choice, Launcher, ChatPreview }
+    private enum StartSurface { Choice, Launcher, MissionChat }
     private StartSurface startSurface = StartSurface.Choice;
 
     private void ShowLauncher() => startSurface = StartSurface.Launcher;
-    private void ShowChatPreview() => startSurface = StartSurface.ChatPreview;
 
     // The launcher's own folder disclosure, opened directly rather than through the toggle: this
     // choice always means "show me the open path", never "hide the one already showing".
     private void ShowLauncherForOpen() { startSurface = StartSurface.Launcher; showOpenFolder = true; launcherError = null; }
+
+    // ── Mission Chat actions (48) ──────────────────────────────────────────────────────────
+    // Each is one typed application request. Nothing here resolves a Project, picks a version,
+    // assembles history, or decides what access a chat has; every branch renders the answer.
+
+    /// <summary>Chat with a mission. Application finds or provisions the managed Project, creates the
+    /// chat on its shipped version, and returns the real fresh view plus its complete history.</summary>
+    private async Task StartMissionChatAsync()
+    {
+        startSurface = StartSurface.MissionChat;
+        await MissionChatAsync(token =>
+            ApplicationChannel.SendAsync<StartMissionChatRequest, StartMissionChatResponse>(new(), token),
+            async (response, token) =>
+            {
+                if (response.Session is { } session)
+                {
+                    await StopLifetimeAsync();
+                    generation++;
+                    chatSessionId = session.SessionId;
+                    chatProject = session.Project;
+                    lifetime = new CancellationTokenSource();
+                    subscription = ConsumeEventsAsync(generation, lifetime.Token);
+                }
+
+                ApplyMissionChat(response.ConversationId, response.Pin, response.Access, response.Rows,
+                    response.Events, response.Failure, "Opened a new chat.");
+            });
+    }
+
+    /// <summary>New chat: one further chat in the same managed Project.</summary>
+    private Task CreateMissionChatAsync() =>
+        chatSessionId is not { } session ? Task.CompletedTask : MissionChatAsync(
+            token => ApplicationChannel.SendAsync<CreateMissionChatRequest, CreateMissionChatResponse>(new(session), token),
+            (response, _) =>
+            {
+                ApplyMissionChat(response.ConversationId, response.Pin, response.Access, response.Rows,
+                    response.Events, response.Failure, "Opened a new chat.");
+                return Task.CompletedTask;
+            });
+
+    /// <summary>Select a real chat row. Application returns its complete durable history and resumes
+    /// its live stream from the same sequence, so this renders one list and then live events.</summary>
+    private Task OpenMissionChatAsync(Guid conversationId) =>
+        chatSessionId is not { } session ? Task.CompletedTask : MissionChatAsync(
+            token => ApplicationChannel.SendAsync<OpenMissionChatRequest, OpenMissionChatResponse>(new(session, conversationId), token),
+            (response, _) =>
+            {
+                ApplyMissionChat(response.ConversationId, response.Pin, response.Access, response.Rows,
+                    response.Events, response.Failure, "Opened that chat.");
+                return Task.CompletedTask;
+            });
+
+    /// <summary>Send a non-empty message. The durable user message arrives through the conversation
+    /// stream, so nothing is added to the transcript here.</summary>
+    private Task SendMissionChatTurnAsync()
+    {
+        var text = chatDraft.Trim();
+        if (text.Length == 0 || chatSessionId is not { } session || chatConversationId is not { } conversation)
+            return Task.CompletedTask;
+
+        // One command identity per attempt, so Host answers the same question once.
+        var commandId = Guid.NewGuid();
+        return MissionChatAsync(
+            token => ApplicationChannel.SendAsync<SubmitMissionChatTurnRequest, SubmitMissionChatTurnResponse>(
+                new(session, conversation, commandId, text), token),
+            (response, _) =>
+            {
+                chatFailure = response.Failure;
+                if (response.Failure is null)
+                {
+                    chatDraft = string.Empty;
+                    chatNotice = "Message sent.";
+                }
+
+                return Task.CompletedTask;
+            });
+    }
+
+    private async Task MissionChatAsync<T>(Func<CancellationToken, Task<T>> action, Func<T, CancellationToken, Task> apply)
+    {
+        if (chatBusy) return;
+        chatBusy = true;
+        chatFailure = null;
+        chatNotice = null;
+        try
+        {
+            var token = lifetime?.Token ?? CancellationToken.None;
+            await apply(await action(token), token);
+        }
+        catch (OperationCanceledException) when (lifetime?.IsCancellationRequested == true) { }
+        catch (Exception exception)
+        {
+            chatFailure = new MissionChatFailure(MissionChatFailureCode.StreamLost, exception.Message);
+        }
+        finally { chatBusy = false; await InvokeAsync(StateHasChanged); }
+    }
+
+    /// <summary>Applies one chat answer: its selection, provenance, rows and complete history. The
+    /// transcript is rebuilt from the returned seed, then live events are applied to that same
+    /// projection, which dedupes by event id.</summary>
+    private void ApplyMissionChat(Guid? conversationId, MissionChatPin? pin, MissionChatAccess? access,
+        IReadOnlyList<MissionChatRow>? rows, IReadOnlyList<ConversationEvent>? events, MissionChatFailure? failure, string notice)
+    {
+        chatFailure = failure;
+        if (rows is not null) chatRows = rows;
+        if (failure is not null) return;
+
+        chatConversationId = conversationId;
+        chatPin = pin;
+        chatAccess = access;
+        chatDraft = string.Empty;
+        chatTranscript = new ConversationTranscript();
+        foreach (var evt in events ?? [])
+            chatTranscript.Apply(evt);
+        chatNotice = notice;
+    }
 
     private void ToggleOpenFolder() { showOpenFolder = !showOpenFolder; launcherError = null; }
     private async Task DraftProjectAsync()
@@ -558,9 +692,26 @@ else
     private Task BackToMissions() { view = WorkbenchView.Missions; return Task.CompletedTask; }
     private async Task ConsumeEventsAsync(int ownerGeneration, CancellationToken ct)
     {
-        try { await foreach (var evt in ApplicationChannel.Subscribe(ct)) if (ownerGeneration == generation && evt.SessionId == sessionId && evt.Kind == ApplicationEventKind.ProjectMissionChanged) await RefreshStateAsync(); }
+        try
+        {
+            await foreach (var evt in ApplicationChannel.Subscribe(ct))
+            {
+                if (ownerGeneration != generation || evt.SessionId != (sessionId ?? chatSessionId)) continue;
+                if (evt.Kind == ApplicationEventKind.ProjectMissionChanged) await RefreshStateAsync();
+                else if (evt.Kind == ApplicationEventKind.ConversationEvent) await ApplyConversationEventAsync(evt.Conversation);
+            }
+        }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception exception) { if (ownerGeneration == generation) { connectionError = exception.Message; await InvokeAsync(StateHasChanged); } }
+    }
+
+    /// <summary>A relayed durable event for the chat that is open. Events for any other conversation
+    /// belong to another view's selection and are ignored here.</summary>
+    private async Task ApplyConversationEventAsync(ConversationEvent? conversation)
+    {
+        if (conversation is null || chatConversationId != conversation.ConversationId) return;
+        chatTranscript.Apply(conversation);
+        await InvokeAsync(StateHasChanged);
     }
     private async Task RestartSubscriptionAsync()
     {

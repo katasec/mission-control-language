@@ -75,4 +75,9 @@ public interface IConversationGrain : Orleans.IGrainWithStringKey
     Task<ConversationProjectReadResult> ReadProjectRunAsync(Guid runId);
     Task<ConversationProjectReadResult> ReadProjectRunEventsAsync(Guid runId, long after, long? through);
     Task<ConversationProjectReadResult> ReadProjectCommandAsync(Guid commandId);
+
+    /// <summary>One finite page of this Mission Conversation's ordered events (Phase 48), bounded
+    /// below by <paramref name="after"/> (exclusive) and above by the caller's fixed
+    /// <paramref name="through"/> (inclusive). Host never widens that bound and writes nothing.</summary>
+    Task<ConversationProjectReadResult> ReadMissionConversationEventsAsync(long after, long through);
 }

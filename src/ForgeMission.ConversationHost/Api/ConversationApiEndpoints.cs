@@ -68,6 +68,11 @@ public static class ConversationApiEndpoints
             ProjectRouteAsync(() => CreateMissionConversationAsync(request, grains, directory)));
         app.MapGet("/mission-conversations/{projectId}", (string projectId, IGrainFactory grains, IProjectMissionConversationDirectoryStore directory) =>
             ProjectRouteAsync(() => ListMissionConversationsAsync(projectId, grains, directory)));
+        // Phase 48 — one named bounded history read for an existing Mission Conversation. `through`
+        // is required here, unlike the run-trace route's optional form: the caller's fixed upper
+        // bound is what makes a multi-page assembly gapless.
+        app.MapGet("/mission-conversations/{conversationId}/events", (string conversationId, string? after, string? through, IGrainFactory grains) =>
+            ProjectRouteAsync(() => ReadMissionConversationEventsAsync(conversationId, after, through, grains)));
         app.MapPost("/mission-conversations/{conversationId}/turns", (string conversationId, SubmitMissionTurnRequest request, IGrainFactory grains) =>
             ProjectRouteAsync(() => SubmitMissionTurnAsync(conversationId, request, grains)));
         app.MapPost("/mission-conversations/{conversationId}/turns/retry", (string conversationId, RetryMissionTurnRequest request, IGrainFactory grains) =>
@@ -479,7 +484,7 @@ public static class ConversationApiEndpoints
                 ProjectError("commandConflict", result.Reason ?? "Mission Conversation conflicts.", 409);
         var snapshot = await SnapshotAsync(result.Acceptance!.ConversationId, grains);
         var summary = new MissionConversationSummary(snapshot.ConversationId, request.ProjectId, snapshot.PinnedLaunch!, snapshot.Status,
-            snapshot.LastSequence, snapshot.UpdatedAtUtc);
+            snapshot.LastSequence, snapshot.UpdatedAtUtc, snapshot.Title);
         await directory.UpsertAsync(DevTenantId, summary, CancellationToken.None);
         return Results.Created($"/conversations/{summary.ConversationId}", new CreateMissionConversationResponse(summary.ConversationId, summary.LastSequence, summary.Launch));
     }
@@ -498,9 +503,23 @@ public static class ConversationApiEndpoints
                 await directory.RemoveAsync(DevTenantId, id, item.ConversationId, CancellationToken.None);
                 continue;
             }
-            valid.Add(new MissionConversationSummary(snapshot.ConversationId, id, snapshot.PinnedLaunch, snapshot.Status, snapshot.LastSequence, snapshot.UpdatedAtUtc));
+            valid.Add(new MissionConversationSummary(snapshot.ConversationId, id, snapshot.PinnedLaunch, snapshot.Status,
+                snapshot.LastSequence, snapshot.UpdatedAtUtc, snapshot.Title));
         }
         return Results.Ok(new ListMissionConversationsResponse([.. valid]));
+    }
+
+    private static async Task<IResult> ReadMissionConversationEventsAsync(string conversationId, string? after, string? through,
+        IGrainFactory grains)
+    {
+        if (!TryParseRouteId(conversationId, out var id) || !TryParseRange(after, through, out var parsedAfter, out var parsedThrough) ||
+            parsedThrough is null)
+            return ProjectError("invalidRequest", "after and through are required and must bound a valid range.", 400);
+        var grain = grains.GetGrain<IConversationGrain>(new ConversationAddress(DevTenantId, id).PartitionKey);
+        if (await TryGetExistingSnapshotAsync(grain) is null)
+            return ProjectError("notFound", "Conversation not found.", 404);
+        var result = await grain.ReadMissionConversationEventsAsync(parsedAfter, parsedThrough.Value);
+        return ProjectReadResult(result, ConversationContractsJsonContext.Default.MissionConversationEventPage);
     }
 
     private static async Task<IResult> SubmitMissionTurnAsync(string conversationId, SubmitMissionTurnRequest request, IGrainFactory grains)

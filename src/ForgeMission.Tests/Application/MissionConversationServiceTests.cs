@@ -261,6 +261,51 @@ public sealed class MissionConversationServiceTests : IDisposable
         Assert.Equal(0, calls);
     }
 
+    [Fact]
+    public async Task MissionChatRows_CarryTheHostTitleAndTheProjectsOwnVersionLabel()
+    {
+        // Phase 48: Host owns the durable title and update order; Projects owns the name and the release
+        // label. The row joins them and invents neither.
+        var project = CreatePackagedProject();
+        var shipped = await versions.EnsureShippedApprovedVersionAsync(project.Home, "Janus",
+            "mission Janus(task) = {\n  Researcher\n}\n", MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None);
+        var approved = Assert.Single(shipped.Versions!);
+        var launch = new DurableMissionLaunch(approved.MissionVersionId, approved.VersionNumber, approved.DefinitionHash,
+            approved.DefinitionText, approved.CapabilityProfile, approved.Package);
+        var named = new MissionConversationSummary(Guid.NewGuid(), project.Manifest.ProjectId, launch,
+            ConversationRunStatus.Queued, 4, DateTimeOffset.UnixEpoch.AddMinutes(2), "Draft the rollout");
+        var fresh = new MissionConversationSummary(Guid.NewGuid(), project.Manifest.ProjectId, launch,
+            ConversationRunStatus.Queued, 0, DateTimeOffset.UnixEpoch, "New chat");
+        var service = Service(_ => Task.FromResult(Json(new HostListMissionConversationsResponse([fresh, named]),
+            ConversationContractsJsonContext.Default.ListMissionConversationsResponse, HttpStatusCode.OK)));
+
+        var rows = await service.ListChatRowsAsync(project.Home, CancellationToken.None);
+
+        // Newest first, named by Host, labelled by Projects.
+        Assert.Equal(["Draft the rollout", "New chat"], rows.Select(row => row.Title));
+        Assert.Equal(["Janus", "Janus"], rows.Select(row => row.MissionName));
+        Assert.Equal(["1.4", "1.4"], rows.Select(row => row.VersionLabel));
+        Assert.Equal([true, false], rows.Select(row => row.HasMessages));
+    }
+
+    [Fact]
+    public async Task AMissionChatRow_StillCarriesATitle_WhenThisProjectNoLongerHoldsItsPinnedVersion()
+    {
+        var project = CreatePackagedProject();
+        var unknown = new DurableMissionLaunch(Guid.NewGuid(), 7, "sha256:unknown", "definition", MissionHandsProfile.NoHands, null);
+        var summary = new MissionConversationSummary(Guid.NewGuid(), project.Manifest.ProjectId, unknown,
+            ConversationRunStatus.Queued, 2, DateTimeOffset.UnixEpoch, "Draft the rollout");
+        var service = Service(_ => Task.FromResult(Json(new HostListMissionConversationsResponse([summary]),
+            ConversationContractsJsonContext.Default.ListMissionConversationsResponse, HttpStatusCode.OK)));
+
+        var row = Assert.Single(await service.ListChatRowsAsync(project.Home, CancellationToken.None));
+
+        Assert.Equal("Draft the rollout", row.Title);
+        Assert.Null(row.MissionName);
+        Assert.Null(row.VersionLabel);
+        Assert.Equal(7, row.VersionNumber);
+    }
+
     private async Task<MissionVersion> PublishNextAsync(string home, Guid missionId)
     {
         var draft = await versions.CreateNextDraftAsync(home, missionId, Source + "\n", MissionHandsProfile.NoHands, CancellationToken.None);

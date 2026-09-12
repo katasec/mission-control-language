@@ -33,8 +33,16 @@ internal sealed class ProjectService : IProjectService
     }
 
     public ProjectService(ApplicationSessionService sessions)
+        : this(sessions, DefaultProjectsRoot())
     {
-        _projectsRoot = DefaultProjectsRoot();
+    }
+
+    // The same owner with its Projects root stated rather than derived. Production composition uses
+    // the derived root above; this seam exists so the Project-opening paths can be exercised without
+    // writing into the real user profile.
+    internal ProjectService(ApplicationSessionService sessions, string projectsRoot)
+    {
+        _projectsRoot = projectsRoot;
         _manifestFile = new ProjectManifestFile();
         _sessions = sessions;
     }
@@ -145,6 +153,31 @@ internal sealed class ProjectService : IProjectService
                 ? CreateInFirstFreeHome(Path.GetFileName(home), title, required)
                 : CreateInExactHome(home, title, required);
     }
+
+    /// <summary>Creates the one managed chat Project (Phase 48) at a home keyed by the Project GUID
+    /// it is given, so the marker that names that GUID also names its home. Create, not a surface,
+    /// still owns the final home: this refuses an existing directory rather than adopting or
+    /// overwriting whatever is there.</summary>
+    internal ProjectRecord CreateManaged(Guid projectId, string title, string goal)
+    {
+        if (projectId == Guid.Empty)
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidManifest,
+                "A managed Project requires its Project id.");
+
+        var required = RequiredGoal(goal);
+        var home = Path.Combine(_projectsRoot, projectId.ToString("D"));
+        if (Directory.Exists(home))
+            throw new ProjectOperationException(ProjectOperationErrorCode.InvalidHome,
+                $"{home} already exists; a managed Project is never created over an existing directory.");
+
+        return TryWriteNewManifest(home, DeriveTitle(required, title), required, projectId)
+            ?? throw new ProjectOperationException(ProjectOperationErrorCode.InvalidHome,
+                $"{home} was claimed while the managed Project was being created.");
+    }
+
+    /// <summary>Where Forge's own Projects live. Exposed so the managed-chat marker beside that root
+    /// is derived in one place rather than recomputed by another owner.</summary>
+    internal string ProjectsRoot => _projectsRoot;
 
     /// <summary>Opens an existing directory as a Project home. A directory with no manifest is not
     /// a failure and not an empty-goal Project: it returns the proposal the goal-confirmation flow
@@ -344,7 +377,17 @@ internal sealed class ProjectService : IProjectService
     /// It is idempotent and never destructive: a Project that already lists a lock file is left
     /// exactly as it is, and an existing file on disk is adopted rather than overwritten.
     /// </summary>
-    internal async Task<ProjectRecord> EnsureMissionAssetsAsync(string home, CancellationToken cancellationToken)
+    internal Task<ProjectRecord> EnsureMissionAssetsAsync(string home, CancellationToken cancellationToken) =>
+        EnsureExpertAssetsAsync(home, StarterExperts, cancellationToken);
+
+    /// <summary>The managed chat Project's own shipped pair (Phase 48). Same single asset writer as
+    /// the authoring scaffold above, with the shipped Proposer/Approver content: ProjectService
+    /// stays the only writer of a Project's directory, assets, and manifest.</summary>
+    internal Task<ProjectRecord> EnsureManagedChatAssetsAsync(string home, CancellationToken cancellationToken) =>
+        EnsureExpertAssetsAsync(home, ShippedMissionCatalog.Experts, cancellationToken);
+
+    private async Task<ProjectRecord> EnsureExpertAssetsAsync(
+        string home, (string Name, string Markdown)[] pair, CancellationToken cancellationToken)
     {
         var root = ValidHome(home);
         var existing = ReadForHome(root);
@@ -353,7 +396,7 @@ internal sealed class ProjectService : IProjectService
 
         var experts = new Dictionary<string, LockFileExpert>(StringComparer.Ordinal);
         var descriptors = new List<ProjectAssetDescriptor>(existing.Manifest.Assets ?? []);
-        foreach (var (name, markdown) in StarterExperts)
+        foreach (var (name, markdown) in pair)
         {
             var relative = $"experts/{name}/expert.md";
             var path = Path.Combine(root, "experts", name, "expert.md");
@@ -690,11 +733,11 @@ internal sealed class ProjectService : IProjectService
                 $"{home} was claimed by another Project while this one was being created.");
     }
 
-    private ProjectRecord? TryWriteNewManifest(string home, string title, string goal)
+    private ProjectRecord? TryWriteNewManifest(string home, string title, string goal, Guid? projectId = null)
     {
         var manifest = new ProjectManifest(
             ProjectManifest.CurrentSchemaVersion,
-            Guid.NewGuid(),
+            projectId ?? Guid.NewGuid(),
             title,
             goal,
             [],
@@ -907,14 +950,28 @@ internal sealed class ProjectService : IProjectService
         return ForgeMission.Core.Runtime.DurableMissionPackageValidator.TryValidate(raw, out _, out _);
     }
 
-    private static bool ValidVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) => version.State switch
-    {
-        MissionVersionState.Candidate => version.EvaluatedAtUtc is null && version.ApprovedAtUtc is null,
-        MissionVersionState.Evaluated => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is null && AllCurrentCasesPassed(version, cases, results),
-        MissionVersionState.Approved => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
-        MissionVersionState.Superseded => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
-        _ => false,
-    };
+    private static bool ValidVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
+        version.ReleaseLabel is not null
+            ? ValidShippedVersionState(version, cases, results)
+            : version.State switch
+            {
+                MissionVersionState.Candidate => version.EvaluatedAtUtc is null && version.ApprovedAtUtc is null,
+                MissionVersionState.Evaluated => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is null && AllCurrentCasesPassed(version, cases, results),
+                MissionVersionState.Approved => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
+                MissionVersionState.Superseded => version.EvaluatedAtUtc is not null && version.ApprovedAtUtc is not null && AllCurrentCasesPassed(version, cases, results),
+                _ => false,
+            };
+
+    /// <summary>A version carrying a release label is shipped, release-reviewed code rather than an
+    /// operator-authored candidate (Phase 48). The authored lane's bar — evaluated, with every current
+    /// case passed — cannot apply to it, because Forge ran no evaluation for it and must record no
+    /// outcome it did not observe. So the shipped lane asserts the opposite invariant: it is Approved
+    /// (or later superseded) from the start, it was never evaluated, and it holds no case or result at
+    /// all. Nothing here relaxes the authored lane above, and nothing can publish into this lane
+    /// except the shipped-mission writer.</summary>
+    private static bool ValidShippedVersionState(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
+        cases.Length == 0 && results.Length == 0 && version.EvaluatedAtUtc is null &&
+        version.State is MissionVersionState.Approved or MissionVersionState.Superseded && version.ApprovedAtUtc is not null;
 
     private static bool AllCurrentCasesPassed(MissionVersion version, EvaluationCase[] cases, EvaluationResult[] results) =>
         cases.Length > 0 && cases.All(evaluationCase => results.Any(result =>

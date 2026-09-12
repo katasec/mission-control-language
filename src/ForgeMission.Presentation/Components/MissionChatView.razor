@@ -1,0 +1,305 @@
+@* The live Mission Chat surface (Phase 48). It is the same three frames the prototype drew, with
+   every value now supplied by Application: rows, titles, the pinned version, fixed access, and the
+   transcript are durable facts, and nothing here is seeded, replied to, or invented. This component
+   owns selection feedback, composer text, focus and typed-error display only — the actions below are
+   callbacks, and Home turns each into one typed application request.
+
+   Binding references, at 1440x960:
+     docs/design/assets/mission-chat-experience-v1/02-new-janus-chat.png  (fresh chat)
+     docs/design/assets/mission-chat-experience-v1/03-active-chat.png     (active chat)
+
+   Two destinations in the frames have no screen this phase adds: the two rail entries other than
+   Missions. They stay visible, because they are the navigation structure the references draw, and
+   they answer in the live region rather than doing nothing at all. *@
+
+<div class="mcp-shell">
+    <WorkbenchRail ProjectTitle="@ProjectTitle" Selected="WorkbenchView.Missions" SelectedChanged="OnRailSelected" />
+
+    <section class="mcp-content">
+        <header class="mcp-header">
+            <div class="mcp-header-text">
+                <h1>Missions</h1>
+                <p>Chats live under the mission version they pinned.</p>
+            </div>
+            <button type="button" class="mcp-header-secondary" @onclick="OnAuthorMission">Author a mission</button>
+            <button type="button" class="mcp-header-action" @onclick="OnNewChat" disabled="@Busy">New chat</button>
+        </header>
+
+        <main class="mcp-document">
+            <div class="mcp-columns">
+                @ChatList
+                @ChatPane
+            </div>
+        </main>
+
+        @* The one place a change is announced, including every typed refusal Application returned. *@
+        <p class="mcp-announce" role="status" aria-live="polite">@Announcement</p>
+    </section>
+</div>
+
+@code {
+    // ── View state. Selection, composer text and focus are all this component decides. ─────────
+    private ElementReference composer;
+    private string? railNotice;
+
+    [Parameter] public string ProjectTitle { get; set; } = string.Empty;
+
+    /// <summary>Every real chat in this Project. A row exists only because a durable conversation
+    /// does, so an empty list renders no group at all.</summary>
+    [Parameter] public IReadOnlyList<MissionChatRow> Rows { get; set; } = [];
+
+    [Parameter] public Guid? SelectedConversationId { get; set; }
+
+    /// <summary>The selected chat's read-only mission/version/profile provenance.</summary>
+    [Parameter] public MissionChatPin? Pin { get; set; }
+
+    /// <summary>Whether the version's fixed profile is attached. Informational: this surface asks
+    /// for no consent and offers no way to change it.</summary>
+    [Parameter] public MissionChatAccess? Access { get; set; }
+
+    /// <summary>The durable transcript projection for the selected chat.</summary>
+    [Parameter] public IReadOnlyList<ConversationEntry> Entries { get; set; } = [];
+
+    [Parameter] public string Draft { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> DraftChanged { get; set; }
+    [Parameter] public bool Busy { get; set; }
+
+    /// <summary>The last typed failure Application returned, stated as itself.</summary>
+    [Parameter] public MissionChatFailure? Failure { get; set; }
+
+    [Parameter] public string? Notice { get; set; }
+
+    [Parameter] public EventCallback Send { get; set; }
+    [Parameter] public EventCallback NewChat { get; set; }
+    [Parameter] public EventCallback<Guid> SelectChat { get; set; }
+
+    /// <summary>Raised when a person leaves for the unchanged Project launcher. Authoring a mission
+    /// needs a Project, so this surface sends them where that happens rather than hosting it.</summary>
+    [Parameter] public EventCallback AuthorMission { get; set; }
+
+    private bool OnFreshChat => Entries.Count == 0;
+
+    private MissionChatRow? SelectedRow =>
+        SelectedConversationId is { } id ? Rows.FirstOrDefault(row => row.ConversationId == id) : null;
+
+    // A typed refusal outranks a local notice: it is the thing a person needs to read.
+    private string? Announcement => Failure?.Message ?? railNotice ?? Notice;
+
+    // ── The list column ────────────────────────────────────────────────────────────────────────
+
+    private RenderFragment ChatList => @<div class="mcp-list">
+        <div class="mcp-list-head">
+            <h2>Chats</h2>
+            <p>Grouped beneath their mission.</p>
+        </div>
+        @foreach (var group in Groups)
+        {
+            <p class="mcp-group-label">@group.Label</p>
+            <ul class="mcp-rows">
+                @foreach (var row in group.Rows)
+                {
+                    <li>@Row(row)</li>
+                }
+            </ul>
+        }
+    </div>;
+
+    // Real markup rather than a RenderTreeBuilder fragment: Blazor stamps the scoped-CSS attribute
+    // onto elements written in the template only, so a hand-built fragment would render unstyled.
+    private RenderFragment Row(MissionChatRow row) =>
+        @<button type="button"
+                 class="@(row.ConversationId == SelectedConversationId ? "mcp-row mcp-row-current" : "mcp-row")"
+                 aria-current="@(row.ConversationId == SelectedConversationId ? "true" : null)"
+                 disabled="@Busy"
+                 @onclick="() => OnSelectChat(row)">
+             <span class="mcp-row-title">@row.Title</span>
+             <span class="mcp-row-meta">@Meta(row)</span>
+         </button>;
+
+    // ── The chat column ────────────────────────────────────────────────────────────────────────
+
+    private RenderFragment ChatPane => @<div class="mcp-chat">
+        <header class="mcp-chat-head">
+            <div class="mcp-chat-head-text">
+                <h2>@(SelectedRow?.Title ?? MissionConversationTitles.Default)</h2>
+                <p>@(OnFreshChat ? FreshSubtitle : ActiveSubtitle)</p>
+            </div>
+            @if (Pin is { IsApproved: true })
+            {
+                <span class="mcp-chip mcp-chip-approved">APPROVED</span>
+            }
+            @if (Pin is { } pinned)
+            {
+                <span class="mcp-chip mcp-chip-pinned">@($"PINNED · {pinned.MissionName} {pinned.VersionLabel}".ToUpperInvariant())</span>
+            }
+        </header>
+
+        <div class="mcp-body">
+            @if (Entries.Count == 0)
+            {
+                @Introduction
+            }
+            else
+            {
+                <div class="mcp-transcript">
+                    @foreach (var entry in Entries)
+                    {
+                        @Entry(entry)
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="mcp-composer">
+            @* The placeholder is not a label, so the field carries its own. *@
+            <textarea class="mcp-composer-field" @ref="composer"
+                      aria-label="@Placeholder"
+                      placeholder="@Placeholder"
+                      value="@Draft" @oninput="OnDraftInput" @onkeyup="OnComposerKeyUp"></textarea>
+            <button type="button" class="mcp-send" @onclick="OnSend" disabled="@Busy">Send</button>
+        </div>
+    </div>;
+
+    private RenderFragment Introduction => @<div class="mcp-intro">
+        <div class="mcp-participants">
+            <p class="mcp-participants-label">WHO IS IN THIS CHAT</p>
+            <div class="mcp-participant">
+                <span class="mcp-avatar" aria-hidden="true">@YouInitials</span>
+                <span class="mcp-participant-text">
+                    <span class="mcp-participant-name">You</span>
+                    <span class="mcp-participant-role">You steer the work with ordinary messages and decide what happens next.</span>
+                </span>
+            </div>
+        </div>
+
+        @* Read-only by construction: a block of text containing no control at all, stating the exact
+           profile the version fixed. *@
+        <div class="mcp-access">
+            <p class="mcp-access-label">FIXED ACCESS</p>
+            <p class="mcp-access-profile">@AccessProfile</p>
+            <p class="mcp-access-copy">@AccessCopy</p>
+        </div>
+
+        <p class="mcp-intro-note">Send the first message to start. Everything said here stays in this one chat.</p>
+    </div>;
+
+    private RenderFragment Entry(ConversationEntry entry) => entry.Kind switch
+    {
+        ConversationEntryKind.UserMessage => @<p class="mcp-user-bubble">@entry.Text</p>,
+        ConversationEntryKind.Approval => @<p class="mcp-approval">@ApprovalText(entry)</p>,
+        ConversationEntryKind.NotApproved => @<p class="mcp-day">@NotApprovedText(entry)</p>,
+        ConversationEntryKind.ToolCall => @<p class="mcp-tool-row"><span class="mcp-tool-glyph" aria-hidden="true">@(entry.ToolCompleted ? "✓" : "…")</span><span>@ToolText(entry)</span></p>,
+        ConversationEntryKind.Typing => @<p class="mcp-activity"><span class="mcp-activity-dot" aria-hidden="true"></span><span>@($"{Label(entry)} is working")</span><span class="mcp-activity-dots" aria-hidden="true"><span></span><span></span><span></span></span></p>,
+        ConversationEntryKind.Status => @<p class="mcp-day">@StatusText(entry)</p>,
+        _ => @<article class="mcp-participant-bubble">
+                  <p class="mcp-participant-label">@Label(entry)</p>
+                  <p class="mcp-participant-lead">@entry.Text</p>
+              </article>,
+    };
+
+    // ── Transitions. Each one either tells Home what happened or answers in the live region. ───
+
+    private Task OnAuthorMission() => AuthorMission.InvokeAsync();
+
+    private Task OnNewChat()
+    {
+        railNotice = null;
+        return NewChat.InvokeAsync();
+    }
+
+    private Task OnSelectChat(MissionChatRow row)
+    {
+        railNotice = null;
+        // Re-selecting the open chat is not a reload: it would discard what a person just typed.
+        return row.ConversationId == SelectedConversationId ? Task.CompletedTask : SelectChat.InvokeAsync(row.ConversationId);
+    }
+
+    private void OnRailSelected(WorkbenchView destination)
+    {
+        // Missions is already current, so the rail's own selected state never moves.
+        if (destination == WorkbenchView.Missions) return;
+        railNotice = $"{RailLabel(destination)} is not available from this chat.";
+    }
+
+    private Task OnDraftInput(ChangeEventArgs e) => DraftChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+
+    // Enter sends on key-up rather than key-down: preventing the key-down default is the only way
+    // to stop the newline, and Blazor's preventDefault is static — it would suppress Shift+Enter's
+    // newline too. By key-up the character is already in the field, so the send path trims the
+    // newline Enter just added and Shift+Enter keeps the one it meant to add.
+    private async Task OnComposerKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await OnSend();
+    }
+
+    private async Task OnSend()
+    {
+        if (Busy || Draft.Trim().Length == 0) return;
+        railNotice = null;
+        await Send.InvokeAsync();
+        await composer.FocusAsync();
+    }
+
+    private static string RailLabel(WorkbenchView destination) =>
+        destination == WorkbenchView.Explorer ? "Project Explorer" : "Settings";
+
+    // ── Projections of supplied data. None of these invents a fact. ────────────────────────────
+
+    private sealed record ChatGroup(string Label, IReadOnlyList<MissionChatRow> Rows);
+
+    /// <summary>Rows grouped beneath the mission version they pinned, in the order Application
+    /// returned them. A group exists only because at least one real chat pins that version.</summary>
+    private IEnumerable<ChatGroup> Groups =>
+        Rows.GroupBy(row => GroupLabel(row)).Select(group => new ChatGroup(group.Key, [.. group]));
+
+    private static string GroupLabel(MissionChatRow row) =>
+        row.MissionName is null
+            ? $"MISSION VERSION {row.VersionNumber} · THIS PROJECT NO LONGER HOLDS IT"
+            : $"{row.MissionName} · {row.VersionLabel ?? $"v{row.VersionNumber}"} · APPROVED".ToUpperInvariant();
+
+    private static string Meta(MissionChatRow row) =>
+        row.HasMessages ? $"Updated {row.UpdatedAtUtc.ToLocalTime():MMM d HH:mm}" : "No messages yet";
+
+    private string AccessProfile => Pin is { } pin ? MissionProfileLabel.For(pin.Profile) : "Access is not available yet";
+
+    private string AccessCopy => Access is { State: MissionChatAccessState.Unavailable, Reason: { } reason }
+        ? $"Fixed access is not currently available: {reason}"
+        : "This exact profile is fixed for this chat. Forge asks before any bounded operation. It cannot be changed here.";
+
+    private string Placeholder => Pin is { } pin ? $"Message {pin.MissionName} {pin.VersionLabel}…" : "Message the chat…";
+
+    private const string FreshSubtitle = "This chat is fixed to the mission version below. Choosing a version happens once, here at the start.";
+    private const string ActiveSubtitle = "One shared chat with the mission's experts";
+    private const string YouInitials = "Y";
+
+    private static string Label(ConversationEntry entry) =>
+        string.IsNullOrWhiteSpace(entry.ActorName) ? ParticipantLabel(entry.Participant) : entry.ActorName!;
+
+    private static string ParticipantLabel(ConversationParticipant participant) => participant switch
+    {
+        ConversationParticipant.Proposer => "Proposer",
+        ConversationParticipant.Approver => "Approver",
+        ConversationParticipant.Implementer => "Implementer",
+        ConversationParticipant.Forge => "Forge",
+        ConversationParticipant.MissionControl => "Mission Control",
+        ConversationParticipant.Naive => "Naive",
+        _ => "You",
+    };
+
+    private static string ApprovalText(ConversationEntry entry) =>
+        string.IsNullOrWhiteSpace(entry.Feedback) ? "Approved" : $"Approved — {entry.Feedback}";
+
+    private static string NotApprovedText(ConversationEntry entry) =>
+        string.IsNullOrWhiteSpace(entry.Feedback) ? "Not approved" : $"Not approved — {entry.Feedback}";
+
+    private static string ToolText(ConversationEntry entry) => entry.ToolName ?? "Tool";
+
+    private static string StatusText(ConversationEntry entry) => entry.StatusKind switch
+    {
+        ConversationEventKind.Error => entry.Text ?? "An error occurred.",
+        ConversationEventKind.Artifact => $"Artifact: {entry.ArtifactId}",
+        ConversationEventKind.RunStatus => $"Status: {entry.RunStatus}",
+        _ => entry.Text ?? string.Empty,
+    };
+}

@@ -96,6 +96,18 @@ public interface IMissionHandsConversationService
     Task<RecoverMissionHandsResponse> RecoverAsync(RecoverMissionHandsRequest request, CancellationToken ct);
 }
 
+/// <summary>The live Mission Chat journey's four product actions (Phase 48). Each answers with
+/// rendered facts, a chat's complete ordered history, and typed failures only: no Project home,
+/// manifest, durable launch, package, capability list, cursor, or page state crosses this boundary,
+/// so another surface invokes the same four with the same authorization and outcome.</summary>
+public interface IMissionChatService
+{
+    Task<StartMissionChatResponse> StartAsync(StartMissionChatRequest request, CancellationToken ct);
+    Task<CreateMissionChatResponse> CreateAsync(CreateMissionChatRequest request, CancellationToken ct);
+    Task<OpenMissionChatResponse> OpenAsync(OpenMissionChatRequest request, CancellationToken ct);
+    Task<SubmitMissionChatTurnResponse> SubmitAsync(SubmitMissionChatTurnRequest request, CancellationToken ct);
+}
+
 public sealed class ApplicationComposition : IAsyncDisposable
 {
     private readonly ApplicationSessionService _sessions;
@@ -114,6 +126,9 @@ public sealed class ApplicationComposition : IAsyncDisposable
         var missionConversations = new MissionConversationService(missionVersions, clients, _sessions);
         var missionAuthoring = new MissionAuthoringService(projects, missionVersions, missionConversations, _sessions);
         var hands = new MissionHandsConversationService(projects, _sessions, clients, policy, applicationStopping);
+        var managedChatProject = new ManagedChatProjectService(projects, missionVersions);
+        var missionChat = new MissionChatService(managedChatProject, projects, missionVersions, missionConversations,
+            hands, _sessions, clients, publish, applicationStopping);
         var submissions = new MissionSubmissionService(projects, clients, _sessions, hands);
         var content = new ProjectContentService(projects, _sessions);
         var history = new RunHistoryService(_sessions, projects, clients, publish, applicationStopping);
@@ -132,6 +147,7 @@ public sealed class ApplicationComposition : IAsyncDisposable
         Capabilities = capabilities;
         Interactions = interactions;
         MissionHands = hands;
+        MissionChat = missionChat;
     }
 
     public IProjectService Projects { get; }
@@ -158,6 +174,8 @@ public sealed class ApplicationComposition : IAsyncDisposable
     public IInteractionService Interactions { get; }
 
     public IMissionHandsConversationService MissionHands { get; }
+
+    public IMissionChatService MissionChat { get; }
 
     public static ApplicationComposition Create(
         IHttpClientFactory clients,

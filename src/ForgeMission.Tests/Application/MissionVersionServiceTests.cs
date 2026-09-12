@@ -501,6 +501,52 @@ public sealed class MissionVersionServiceTests : IDisposable
         catch (ProjectOperationException exception) { return (null, exception); }
     }
 
+    // ── Phase 48: the shipped Approved version ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task TheShippedVersion_IsApprovedWithNoEvaluationFacts_AndIsWrittenOnlyOnce()
+    {
+        var project = CreatePackagedProject();
+
+        var first = await _versions.EnsureShippedApprovedVersionAsync(project.Home, "Janus", Source,
+            MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None);
+        var second = await _versions.EnsureShippedApprovedVersionAsync(project.Home, "Janus", Source,
+            MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None);
+
+        Assert.Equal(first.MissionId, second.MissionId);
+        var definition = Assert.Single(_projects.ReadForHome(project.Home).Manifest.MissionDefinitions!);
+        var version = Assert.Single(definition.Versions!);
+        Assert.Equal(MissionVersionState.Approved, version.State);
+        Assert.Equal(version.MissionVersionId, definition.ActiveApprovedVersionId);
+        Assert.Null(definition.Draft);
+        Assert.Equal("1.4", version.ReleaseLabel);
+        // Release-reviewed code carries no evaluation record at all, and claims none.
+        Assert.Empty(version.EvaluationCases!);
+        Assert.Empty(version.EvaluationResults!);
+        Assert.Null(version.EvaluatedAtUtc);
+        Assert.NotNull(version.ApprovedAtUtc);
+    }
+
+    [Fact]
+    public async Task TheShippedWriter_IsNotASecondPublishPath_ForAnAuthoredCandidate()
+    {
+        var project = CreatePackagedProject();
+        var draft = await _versions.CreateDraftAsync(project.Home, "Authored", Source, MissionHandsProfile.NoHands, CancellationToken.None);
+        var candidate = await _versions.PromoteCandidateAsync(project.Home, draft.MissionId, draft.Draft!.DraftId,
+            draft.Draft.Revision, CancellationToken.None);
+
+        // The authored gate is untouched: a candidate with no passing evaluation still cannot publish.
+        var refused = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _versions.PublishAsync(project.Home, draft.MissionId, candidate.MissionVersionId, CancellationToken.None));
+        Assert.Equal(ProjectOperationErrorCode.PublishConflict, refused.Code);
+
+        // And the shipped writer refuses to take over an existing authored mission of the same name.
+        var conflict = await Assert.ThrowsAsync<ProjectOperationException>(() =>
+            _versions.EnsureShippedApprovedVersionAsync(project.Home, "Authored", Source,
+                MissionHandsProfile.ProjectWorkspace, "1.4", CancellationToken.None));
+        Assert.Equal(ProjectOperationErrorCode.PublishConflict, conflict.Code);
+    }
+
     private ProjectRecord CreatePackagedProject()
     {
         var project = _projects.Create("Version test", null, null);

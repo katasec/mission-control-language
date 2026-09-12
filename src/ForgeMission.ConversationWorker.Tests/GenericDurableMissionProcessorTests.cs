@@ -130,6 +130,33 @@ public sealed class GenericDurableMissionProcessorTests
         Assert.Equal(ConversationRunStatus.Interrupted, Assert.Single(published).RunStatus);
     }
 
+    [Fact]
+    public async Task Started_and_completed_progress_carry_the_trace_expert_name_verbatim()
+    {
+        // Phase 48: the Worker copies its own trace fact onto the progress it already publishes. It maps
+        // no mission name, chooses no persona, and branches on no mission.
+        var package = Package();
+        var launch = new DurableMissionLaunch(Guid.NewGuid(), 1, "sha256:definition", "definition", MissionHandsProfile.NoHands, package);
+        var command = new ConversationCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), ConversationCommandKind.StartMission,
+            "Durable", "hello", [], null, Launch: launch);
+        var published = new List<ConversationProgress>();
+        var processor = new MissionCommandProcessor(new FakeExpertRunner((_, context) => new StepEnvelope($"answer:{context["task"]}")));
+
+        await processor.ProcessAsync(command, "dev", null, (_, _) => Task.CompletedTask,
+            (progress, _, _) => { published.Add(progress); return Task.CompletedTask; }, CancellationToken.None);
+
+        var started = Assert.Single(published, progress => progress.Kind == ConversationEventKind.ParticipantStarted);
+        var step = Assert.Single(published, progress => progress.Kind == ConversationEventKind.ParticipantMessage && progress.Attempt is not null);
+        Assert.Equal("Researcher", started.ActorName);
+        Assert.Equal("Researcher", step.ActorName);
+        // The generic participant is unchanged, and the mission name is not what the label carries.
+        Assert.Equal(ConversationParticipant.Forge, started.Participant);
+        Assert.DoesNotContain("Durable", started.ActorName!, StringComparison.Ordinal);
+        // Everything that is not a started/completed step still carries none: the mission's own final
+        // result message and the run status are not one expert's turn to speak.
+        Assert.All(published.Where(progress => progress.Attempt is null), progress => Assert.Null(progress.ActorName));
+    }
+
     private static DurableMissionPackage Package(bool agent = false)
     {
         const string mission = "mission Durable(task) = {\n    Researcher\n}\n";

@@ -165,7 +165,12 @@ public sealed record ConversationEvent(
     ConversationRunStatus? RunStatus,
     DateTimeOffset OccurredAtUtc,
     MissionToolRequest? MissionHandsRequest = null,
-    MissionToolOutcome? MissionHandsOutcome = null);
+    MissionToolOutcome? MissionHandsOutcome = null,
+    /// <summary>The immutable package expert name this fact came from, copied unchanged from the
+    /// Worker's own <c>PipelineTraceEvent.ExpertName</c> (Phase 48). Host stores it and derives
+    /// nothing from it; a surface may prefer it over <see cref="Participant"/> for display only.
+    /// Appended last so an older stored event's positional shape is unchanged.</summary>
+    string? ActorName = null);
 
 /// <summary>Compact operational checkpoint for a conversation — the projection returned by
 /// <c>GET /conversations/{conversationId}</c>. The event log, not this snapshot, is canonical.</summary>
@@ -196,7 +201,11 @@ public sealed record ConversationSnapshot(
     Guid? EvaluationTurnId = null,
     Guid? EvaluationTurnAttemptId = null,
     string? EvaluationSummary = null,
-    string? EvaluationReason = null);
+    string? EvaluationReason = null,
+    /// <summary>The durable display title of a Mission Conversation (Phase 48): <c>New chat</c>
+    /// until its first turn, then a bounded normalized prefix of that first user message. Host
+    /// owns it, never calls a model to make it, and never changes it again. Appended last.</summary>
+    string? Title = null);
 
 /// <summary>
 /// Command queue body sent from the Conversation service to the Worker over the
@@ -249,7 +258,11 @@ public sealed record ConversationProgress(
     ConversationArtifactReference? Artifact,
     ConversationRunStatus? RunStatus,
     DateTimeOffset OccurredAtUtc,
-    MissionToolRequest? MissionHandsRequest = null);
+    MissionToolRequest? MissionHandsRequest = null,
+    /// <summary>The Worker's own immutable package expert name for a started/completed step
+    /// (Phase 48), copied verbatim from <c>PipelineTraceEvent.ExpertName</c>. It maps no mission
+    /// name, chooses no persona, and grants nothing. Appended last.</summary>
+    string? ActorName = null);
 
 // --- HTTP request/response contract -------------------------------------------------------
 // Tenant/user identity is authenticated at Tier 1 (a later ForgeUI/ForgeAPI adapter) and is
@@ -399,9 +412,43 @@ public sealed record ProjectCommandReceipt(
 public sealed record CreateMissionConversationRequest(Guid ProjectId, Guid CommandId, DurableMissionLaunch Launch);
 public sealed record CreateMissionConversationResponse(Guid ConversationId, long AcceptedSequence, DurableMissionLaunch Launch);
 public sealed record MissionConversationSummary(Guid ConversationId, Guid ProjectId, DurableMissionLaunch Launch,
-    ConversationRunStatus Status, long LastSequence, DateTimeOffset UpdatedAtUtc);
+    ConversationRunStatus Status, long LastSequence, DateTimeOffset UpdatedAtUtc,
+    /// <summary>The Host-owned durable display title (Phase 48). Appended last.</summary>
+    string? Title = null);
 public sealed record ListMissionConversationsRequest(Guid ProjectId);
 public sealed record ListMissionConversationsResponse(MissionConversationSummary[] Conversations);
+/// <summary>The one name a Mission Conversation carries before its first accepted turn (Phase 48).
+/// Host owns the durable title rule and this is its default; it lives in the shared vocabulary so a
+/// caller projecting an older stored summary uses the same single definition rather than repeating
+/// the words.</summary>
+public static class MissionConversationTitles
+{
+    public const string Default = "New chat";
+}
+
+/// <summary>One bounded, finite read of an existing Mission Conversation's ordered events
+/// (Phase 48). <paramref name="Through"/> is required: a caller always states the fixed inclusive
+/// upper bound it is paging toward, so a page can never silently follow a moving head. This is a
+/// named bounded read, not a generic query: it carries no filter, selector, projection, or kind.
+/// </summary>
+public sealed record ReadMissionConversationEventsRequest(Guid ConversationId, long After, long Through);
+
+/// <summary>One finite page of that read.</summary>
+/// <param name="AfterSequence">The exclusive lower bound this page was asked for.</param>
+/// <param name="RequestedThroughSequence">The caller's fixed inclusive upper bound, echoed.</param>
+/// <param name="ReturnedThroughSequence">The sequence of the last event in <paramref name="Events"/>,
+/// or <paramref name="AfterSequence"/> when the range held none. It is the only legal next cursor.</param>
+/// <param name="HasMore">True only when durable events remain inside
+/// (<paramref name="ReturnedThroughSequence"/>, <paramref name="RequestedThroughSequence"/>]. Newer
+/// live events beyond the requested bound never set it, and an empty page never sets it.</param>
+public sealed record MissionConversationEventPage(
+    Guid ConversationId,
+    ConversationEvent[] Events,
+    long AfterSequence,
+    long RequestedThroughSequence,
+    long ReturnedThroughSequence,
+    bool HasMore);
+
 public sealed record SubmitMissionTurnRequest(Guid ConversationId, Guid CommandId, string Text);
 public sealed record SubmitMissionTurnResponse(Guid ConversationId, Guid TurnId, Guid TurnAttemptId, long AcceptedSequence, ConversationRunStatus Status);
 public sealed record RetryMissionTurnRequest(Guid ConversationId, Guid TurnId, Guid CommandId);

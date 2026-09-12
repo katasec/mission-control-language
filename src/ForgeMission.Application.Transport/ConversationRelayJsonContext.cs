@@ -17,4 +17,20 @@ namespace ForgeMission.Application.Transport;
 [JsonSerializable(typeof(ApplicationEvent))]
 [JsonSerializable(typeof(ProjectMissionChange))]
 [JsonSerializable(typeof(ConversationEvent))]
+// Phase 48's Mission Chat family lives here, not in ApplicationJsonContext: these responses carry
+// durable ConversationEvent values, and this context is the one that mirrors ConversationHost's own
+// camelCase/omit-null/string-enum options so those embedded events keep byte parity. The durable
+// MissionConversationEventPage is deliberately absent — a page never crosses this boundary.
+[JsonSerializable(typeof(StartMissionChatRequest))]
+[JsonSerializable(typeof(StartMissionChatResponse))]
+[JsonSerializable(typeof(CreateMissionChatRequest))]
+[JsonSerializable(typeof(CreateMissionChatResponse))]
+[JsonSerializable(typeof(OpenMissionChatRequest))]
+[JsonSerializable(typeof(OpenMissionChatResponse))]
+[JsonSerializable(typeof(SubmitMissionChatTurnRequest))]
+[JsonSerializable(typeof(SubmitMissionChatTurnResponse))]
+[JsonSerializable(typeof(MissionChatPin))]
+[JsonSerializable(typeof(MissionChatRow))]
+[JsonSerializable(typeof(MissionChatAccess))]
+[JsonSerializable(typeof(MissionChatFailure))]
 public partial class ConversationRelayJsonContext : JsonSerializerContext;

@@ -66,6 +66,13 @@ internal sealed class ConversationHostClient(HttpClient httpClient)
     public Task<ListMissionConversationsResponse> ListMissionConversationsAsync(Guid projectId, CancellationToken ct) =>
         GetProjectAsync($"mission-conversations/{projectId}", ConversationContractsJsonContext.Default.ListMissionConversationsResponse, ct);
 
+    // Phase 48's named bounded history read. Both bounds are always sent: the caller owns the fixed
+    // upper bound, so a page can never follow a head that moved while an assembly was in flight.
+    public Task<MissionConversationEventPage> ReadMissionConversationEventsAsync(
+        Guid conversationId, long after, long through, CancellationToken ct) =>
+        GetProjectAsync($"mission-conversations/{conversationId}/events?after={after}&through={through}",
+            ConversationContractsJsonContext.Default.MissionConversationEventPage, ct);
+
     public Task<SubmitMissionTurnResponse> SubmitMissionTurnAsync(SubmitMissionTurnRequest request, CancellationToken ct) =>
         PostProjectAsync($"mission-conversations/{request.ConversationId}/turns", request,
             ConversationContractsJsonContext.Default.SubmitMissionTurnRequest, ConversationContractsJsonContext.Default.SubmitMissionTurnResponse, ct);

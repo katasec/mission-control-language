@@ -11,6 +11,52 @@ namespace ForgeMission.ConversationHost.Tests;
 /// have reference-based default equality even when their content is identical.</summary>
 public class ConversationContractsRoundTripTests
 {
+    // ── Phase 48 additions: the display title, the generic expert label, and the bounded page ──
+
+    [Fact]
+    public void TheExpertLabelAndDurableTitle_RoundTrip_AndOlderPayloadsStillRead()
+    {
+        var evt = new ConversationEvent(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), 7,
+            ConversationEventKind.ParticipantMessage, ConversationParticipant.Forge, 1, "a plan", null, null, null, null,
+            null, null, DateTimeOffset.UtcNow, null, null, "Proposer");
+        AssertRoundTrips(evt);
+        AssertRoundTrips(new ConversationProgress(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            ConversationEventKind.ParticipantStarted, ConversationParticipant.Forge, 1, null, null, null, null, null, null, null,
+            DateTimeOffset.UtcNow, null, "Approver"));
+
+        // A payload written before either field existed still reads, with both absent.
+        var older = JsonSerializer.Serialize(evt, ConversationContractsJsonContext.Default.ConversationEvent)
+            .Replace(",\"actorName\":\"Proposer\"", string.Empty, StringComparison.Ordinal);
+        var read = JsonSerializer.Deserialize(older, ConversationContractsJsonContext.Default.ConversationEvent)!;
+        Assert.Null(read.ActorName);
+        Assert.Equal(evt.Text, read.Text);
+
+        var snapshot = JsonSerializer.Deserialize(
+            JsonSerializer.Serialize(new ConversationSnapshot(Guid.NewGuid(), null, null, 3, ConversationRunStatus.Queued, null,
+                DateTimeOffset.UtcNow, ConversationPurpose.MissionConversation, Guid.NewGuid(), null, null, null, null, null, null, "New chat"),
+                ConversationContractsJsonContext.Default.ConversationSnapshot),
+            ConversationContractsJsonContext.Default.ConversationSnapshot)!;
+        Assert.Equal("New chat", snapshot.Title);
+    }
+
+    [Fact]
+    public void TheBoundedPage_RoundTrips_WithItsFourBoundsDistinct()
+    {
+        var page = new MissionConversationEventPage(Guid.NewGuid(),
+            [BuildEvent(ConversationEventKind.UserMessage)], 2, 9, 4, true);
+        AssertRoundTrips(page);
+        AssertRoundTrips(new ReadMissionConversationEventsRequest(page.ConversationId, 2, 9));
+
+        var read = JsonSerializer.Deserialize(
+            JsonSerializer.Serialize(page, ConversationContractsJsonContext.Default.MissionConversationEventPage),
+            ConversationContractsJsonContext.Default.MissionConversationEventPage)!;
+        // The requested bound and what the page actually returned are separate facts on the wire.
+        Assert.Equal(2, read.AfterSequence);
+        Assert.Equal(9, read.RequestedThroughSequence);
+        Assert.Equal(4, read.ReturnedThroughSequence);
+        Assert.True(read.HasMore);
+    }
+
     private static void AssertRoundTrips<T>(T value)
     {
         var json1 = JsonSerializer.Serialize(value, typeof(T), ConversationContractsJsonContext.Default);

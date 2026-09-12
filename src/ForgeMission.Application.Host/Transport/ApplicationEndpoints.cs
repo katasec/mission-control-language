@@ -41,6 +41,11 @@ internal static class ApplicationEndpoints
         app.MapPost("/transport/mission-conversations/list", (ListMissionConversationsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListAsync(request, ct)));
         app.MapPost("/transport/mission-conversations/approved-versions", (ListApprovedMissionVersionsRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.ListApprovedVersionsAsync(request, ct)));
         app.MapPost("/transport/mission-conversations/create", (CreateMissionConversationRequest request, IMissionConversationService service, CancellationToken ct) => Result(service.CreateAsync(request, ct)));
+        // Phase 48 — the live Mission Chat journey. Each is one typed action bound to its owner.
+        app.MapPost("/transport/mission-chat/start", (StartMissionChatRequest request, IMissionChatService service, CancellationToken ct) => Result(service.StartAsync(request, ct)));
+        app.MapPost("/transport/mission-chat/new", (CreateMissionChatRequest request, IMissionChatService service, CancellationToken ct) => Result(service.CreateAsync(request, ct)));
+        app.MapPost("/transport/mission-chat/open", (OpenMissionChatRequest request, IMissionChatService service, CancellationToken ct) => Result(service.OpenAsync(request, ct)));
+        app.MapPost("/transport/mission-chat/turn", (SubmitMissionChatTurnRequest request, IMissionChatService service, CancellationToken ct) => Result(service.SubmitAsync(request, ct)));
         app.MapPost("/transport/mission-authoring/get", (GetMissionAuthoringRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.GetAsync(request, ct)));
         app.MapPost("/transport/mission-authoring/draft", (CreateMissionDraftRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.CreateDraftAsync(request, ct)));
         app.MapPost("/transport/mission-authoring/save-draft", (SaveMissionDraftRequest request, IMissionAuthoringService service, CancellationToken ct) => Result(service.SaveDraftAsync(request, ct)));

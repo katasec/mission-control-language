@@ -31,6 +31,9 @@ internal sealed class Program
         {
             options.SerializerOptions.TypeInfoResolverChain.Insert(0, ApplicationJsonContext.Default);
             options.SerializerOptions.TypeInfoResolverChain.Insert(1, ReadyResponseJsonContext.Default);
+            // Phase 48's Mission Chat family is owned by the conversation relay context, because it
+            // carries durable ConversationEvent values and must keep their exact wire format.
+            options.SerializerOptions.TypeInfoResolverChain.Insert(2, ConversationRelayJsonContext.Default);
         });
         builder.Services.AddHttpClient("mission-runtime", client =>
         {
@@ -62,6 +65,7 @@ internal sealed class Program
         builder.Services.AddSingleton<ICapabilityActionService>(sp => sp.GetRequiredService<ApplicationComposition>().Capabilities);
         builder.Services.AddSingleton<IInteractionService>(sp => sp.GetRequiredService<ApplicationComposition>().Interactions);
         builder.Services.AddSingleton<IMissionHandsConversationService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionHands);
+        builder.Services.AddSingleton<IMissionChatService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionChat);
         builder.Services.AddSingleton<IMissionConversationService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionConversations);
         builder.Services.AddSingleton<IMissionAuthoringService>(sp => sp.GetRequiredService<ApplicationComposition>().MissionAuthoring);
         var app = builder.Build();

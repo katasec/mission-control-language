@@ -73,7 +73,8 @@ public sealed class ForgeCssThemeScopingTests
             Assert.Contains(token, light.Body, StringComparison.Ordinal);
     }
 
-    // Phase 47.1 — the Mission Chat prototype's reference geometry is theme-owned for the same
+    // Phase 47.1, still binding for the live surface (48) — the Mission Chat geometry is theme-owned
+    // for the same
     // reason the launcher's is: a component that hard-coded a measurement would fragment the token
     // system. These are geometry and type only, which is why the dark maps inherit them and the
     // light/dark colour pairing above is unaffected.

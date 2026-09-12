@@ -29,7 +29,11 @@ public sealed record ConversationEntry(
     bool ToolIsError = false,
     ConversationEventKind? StatusKind = null,
     ConversationRunStatus? RunStatus = null,
-    string? ArtifactId = null);
+    string? ArtifactId = null,
+    /// <summary>The immutable package expert name Host stored on this event (Phase 48), when it has
+    /// one. Display only: a view prefers it over the generic participant label, and nothing here
+    /// derives authority, ordering, or identity from it.</summary>
+    string? ActorName = null);
 
 /// <summary>
 /// Pure, dependency-free projection from a durable <see cref="ConversationEvent"/> stream to one
@@ -45,10 +49,13 @@ public sealed class ConversationTranscript
     private readonly HashSet<Guid> _appliedEventIds = [];
     private readonly List<ConversationEntry> _entries = [];
 
-    // The most recently appended typing/message entry's index for one (participant, attempt) —
+    // The most recently appended typing/message entry's index for one (participant, attempt, actor) —
     // used both to replace an open typing indicator with its completed message/error, and to
     // merge a contiguous run of same-participant/same-attempt messages into one visual bubble.
-    private readonly Dictionary<(ConversationParticipant Participant, int Attempt), int> _lastEntryIndexByAttempt = [];
+    // The actor name is part of the key because two experts can report inside one attempt under the
+    // same generic participant: without it, a Proposer reply and an Approver reply would merge into
+    // a single bubble attributed to whichever spoke first.
+    private readonly Dictionary<(ConversationParticipant Participant, int Attempt, string? ActorName), int> _lastEntryIndexByAttempt = [];
 
     // A tool row's index, so its matching ToolResult updates the same row instead of appending a
     // second one.
@@ -72,7 +79,8 @@ public sealed class ConversationTranscript
         switch (evt.Kind)
         {
             case ConversationEventKind.UserMessage:
-                _entries.Add(new ConversationEntry(ConversationEntryKind.UserMessage, evt.Participant, Text: evt.Text));
+                _entries.Add(new ConversationEntry(ConversationEntryKind.UserMessage, evt.Participant, Text: evt.Text,
+                    ActorName: evt.ActorName));
                 break;
             case ConversationEventKind.ParticipantStarted:
                 ApplyParticipantStarted(evt);
@@ -104,13 +112,14 @@ public sealed class ConversationTranscript
 
     private void ApplyParticipantStarted(ConversationEvent evt)
     {
-        _entries.Add(new ConversationEntry(ConversationEntryKind.Typing, evt.Participant, Attempt: evt.Attempt));
-        _lastEntryIndexByAttempt[(evt.Participant, evt.Attempt ?? 0)] = _entries.Count - 1;
+        _entries.Add(new ConversationEntry(ConversationEntryKind.Typing, evt.Participant, Attempt: evt.Attempt,
+            ActorName: evt.ActorName));
+        _lastEntryIndexByAttempt[(evt.Participant, evt.Attempt ?? 0, evt.ActorName)] = _entries.Count - 1;
     }
 
     private void ApplyParticipantMessage(ConversationEvent evt)
     {
-        var key = (evt.Participant, evt.Attempt ?? 0);
+        var key = (evt.Participant, evt.Attempt ?? 0, evt.ActorName);
         if (_lastEntryIndexByAttempt.TryGetValue(key, out var index) && index == _entries.Count - 1)
         {
             var existing = _entries[index];
@@ -122,13 +131,13 @@ public sealed class ConversationTranscript
         }
 
         _entries.Add(new ConversationEntry(ConversationEntryKind.ParticipantMessage, evt.Participant,
-            Text: evt.Text, Attempt: evt.Attempt));
+            Text: evt.Text, Attempt: evt.Attempt, ActorName: evt.ActorName));
         _lastEntryIndexByAttempt[key] = _entries.Count - 1;
     }
 
     private void ApplyError(ConversationEvent evt)
     {
-        var key = (evt.Participant, evt.Attempt ?? 0);
+        var key = (evt.Participant, evt.Attempt ?? 0, evt.ActorName);
         if (_lastEntryIndexByAttempt.TryGetValue(key, out var index) && index == _entries.Count - 1
             && _entries[index].Kind == ConversationEntryKind.Typing)
         {
@@ -136,7 +145,8 @@ public sealed class ConversationTranscript
             return;
         }
 
-        _entries.Add(new ConversationEntry(ConversationEntryKind.Status, evt.Participant, StatusKind: evt.Kind, Text: evt.Reason));
+        _entries.Add(new ConversationEntry(ConversationEntryKind.Status, evt.Participant, StatusKind: evt.Kind,
+            Text: evt.Reason, ActorName: evt.ActorName));
     }
 
     private void ApplyApproval(ConversationEvent evt)

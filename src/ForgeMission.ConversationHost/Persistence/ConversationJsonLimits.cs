@@ -17,4 +17,9 @@ internal static class ConversationJsonLimits
     /// at a time, so this bound is enforced for both first and follow-up starts before any
     /// checkpoint write.</summary>
     internal const int MaxStartCommandJsonBytes = 32 * 1024;
+
+    /// <summary>How many events one Mission Conversation event page may carry (Phase 48). It is a
+    /// wire-size bound on a single page, never a history limit: a caller pages to its own fixed
+    /// upper bound, and the page reports <c>HasMore</c> when this cap stopped it short.</summary>
+    internal const int MaxMissionConversationEventPage = 500;
 }

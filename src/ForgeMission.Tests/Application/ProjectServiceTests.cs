@@ -989,4 +989,44 @@ public sealed class ProjectServiceTests : IDisposable
     }
 
 
+
+    // ── Phase 48: the managed chat Project's create and its shipped assets ──────────────────
+
+    [Fact]
+    public void CreateManaged_WritesTheHomeKeyedByTheGuidItWasGiven_AndRefusesAnExistingDirectory()
+    {
+        var projectId = Guid.NewGuid();
+
+        var created = _store.CreateManaged(projectId, "Amber Harbor", "Chat with Forge's shipped missions.");
+
+        Assert.Equal(projectId, created.Manifest.ProjectId);
+        Assert.Equal(Path.Combine(ProjectsRoot, projectId.ToString("D")), created.Home);
+        Assert.Equal("Amber Harbor", created.Manifest.Title);
+        // A managed Project is never created over something that is already there.
+        var refused = Assert.Throws<ProjectOperationException>(() =>
+            _store.CreateManaged(projectId, "Amber Harbor", "Chat with Forge's shipped missions."));
+        Assert.Equal(ProjectOperationErrorCode.InvalidHome, refused.Code);
+    }
+
+    [Fact]
+    public async Task EnsureManagedChatAssets_WritesTheShippedPairOnce_AndAdoptsWhatIsAlreadyThere()
+    {
+        var created = _store.CreateManaged(Guid.NewGuid(), "Amber Harbor", "Chat with Forge's shipped missions.");
+
+        var first = await _store.EnsureManagedChatAssetsAsync(created.Home, CancellationToken.None);
+
+        Assert.Equal(["Proposer", "Approver"], first.Manifest.Assets
+            .Where(asset => asset.Kind == ProjectAssetKind.Expert)
+            .Select(asset => asset.RelativePath.Split('/')[1]));
+        Assert.Single(first.Manifest.Assets, asset => asset.Kind == ProjectAssetKind.LockFile);
+        var lockFile = await File.ReadAllTextAsync(Path.Combine(created.Home, "mcl.lock"));
+        var proposer = await File.ReadAllTextAsync(Path.Combine(created.Home, "experts", "Proposer", "expert.md"));
+
+        // Idempotent: a second call adopts what is there rather than rewriting it.
+        var second = await _store.EnsureManagedChatAssetsAsync(created.Home, CancellationToken.None);
+
+        Assert.Equal(first.Manifest.Assets.Length, second.Manifest.Assets.Length);
+        Assert.Equal(lockFile, await File.ReadAllTextAsync(Path.Combine(created.Home, "mcl.lock")));
+        Assert.Equal(proposer, await File.ReadAllTextAsync(Path.Combine(created.Home, "experts", "Proposer", "expert.md")));
+    }
 }

@@ -321,4 +321,46 @@ public sealed class ConversationTranscriptViewTests : BunitContext
         Assert.NotEqual(string.Empty, markdown.TextContent.Trim());
         Assert.Single(view.FindAll(".convo-approval"));
     }
+
+    // ── Phase 48: an event's own expert name is preferred for display ────────────────────────
+
+    [Fact]
+    public void Render_ParticipantMessageWithAnActorName_NamesThatExpertRatherThanTheGenericParticipant()
+    {
+        var entries = new List<ConversationEntry>
+        {
+            new(ConversationEntryKind.ParticipantMessage, ConversationParticipant.Forge, Text: "Two-week plan.", ActorName: "Proposer"),
+        };
+
+        var component = Render<ConversationTranscriptView>(parameters => parameters.Add(p => p.Entries, entries));
+
+        Assert.Equal("Proposer", component.Find(".convo-participant-name").TextContent);
+        Assert.DoesNotContain("Forge", component.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Render_WithoutAnActorName_KeepsTheLabelItAlreadyHad()
+    {
+        var entries = new List<ConversationEntry>
+        {
+            new(ConversationEntryKind.ParticipantMessage, ConversationParticipant.Proposer, Text: "Two-week plan."),
+        };
+
+        var component = Render<ConversationTranscriptView>(parameters => parameters.Add(p => p.Entries, entries));
+
+        Assert.Equal("Proposer", component.Find(".convo-participant-name").TextContent);
+    }
+
+    [Fact]
+    public void Render_TypingWithAnActorName_AnnouncesThatExpertIsWorking()
+    {
+        var entries = new List<ConversationEntry>
+        {
+            new(ConversationEntryKind.Typing, ConversationParticipant.Forge, Attempt: 1, ActorName: "Approver"),
+        };
+
+        var component = Render<ConversationTranscriptView>(parameters => parameters.Add(p => p.Entries, entries));
+
+        Assert.Contains("Approver", component.Markup, StringComparison.Ordinal);
+    }
 }

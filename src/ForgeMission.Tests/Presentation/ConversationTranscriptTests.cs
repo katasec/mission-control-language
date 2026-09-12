@@ -188,4 +188,52 @@ public sealed class ConversationTranscriptTests
         Assert.Equal(ConversationParticipant.MissionControl, transcript.Entries[1].Participant);
         Assert.Equal("What would done look like?", transcript.Entries[1].Text);
     }
+
+    // ── Phase 48: the generic expert label ──────────────────────────────────────────────────
+
+    [Fact]
+    public void TwoExpertsInsideOneAttempt_DoNotMergeIntoOneBubble()
+    {
+        var transcript = new ConversationTranscript();
+
+        // Both arrive as the same generic participant and the same attempt; only the recorded expert
+        // name tells them apart, which is exactly what a merged bubble would lose.
+        transcript.Apply(Participant(1, "Proposer", "Two-week plan."));
+        transcript.Apply(Participant(2, "Approver", "The rollback is reversible."));
+
+        Assert.Equal(["Proposer", "Approver"], transcript.Entries.Select(entry => entry.ActorName));
+        Assert.Equal(["Two-week plan.", "The rollback is reversible."], transcript.Entries.Select(entry => entry.Text));
+    }
+
+    [Fact]
+    public void OneExpertSpeakingTwiceInARow_StillMergesIntoOneBubble()
+    {
+        var transcript = new ConversationTranscript();
+
+        transcript.Apply(Participant(1, "Proposer", "Two-week "));
+        transcript.Apply(Participant(2, "Proposer", "plan."));
+
+        var only = Assert.Single(transcript.Entries);
+        Assert.Equal("Two-week plan.", only.Text);
+        Assert.Equal("Proposer", only.ActorName);
+    }
+
+    [Fact]
+    public void AnEventDeliveredInBothTheSeedAndTheStream_ProducesOneRow()
+    {
+        var transcript = new ConversationTranscript();
+        var seeded = Participant(1, "Proposer", "Two-week plan.");
+
+        transcript.Apply(seeded);
+        transcript.Apply(seeded);
+        transcript.Apply(Participant(2, "Approver", "Reversible."));
+
+        Assert.Equal(2, transcript.Entries.Count);
+        Assert.Equal(2, transcript.HighestSequence);
+    }
+
+    private static ConversationEvent Participant(long sequence, string actor, string text) =>
+        new(ConversationDeterministicIds.Progress(Guid.Empty, (int)sequence), 1, Guid.Empty, null, sequence,
+            ConversationEventKind.ParticipantMessage, ConversationParticipant.Forge, 1, text, null, null, null, null, null, null,
+            DateTimeOffset.UnixEpoch, null, null, actor);
 }

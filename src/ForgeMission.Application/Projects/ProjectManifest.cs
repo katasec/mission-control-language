@@ -58,7 +58,12 @@ internal sealed record MissionVersion(
     DateTimeOffset? EvaluatedAtUtc,
     DateTimeOffset? ApprovedAtUtc,
     EvaluationCase[]? EvaluationCases,
-    EvaluationResult[]? EvaluationResults);
+    EvaluationResult[]? EvaluationResults,
+    /// <summary>The user-facing release label for a shipped version (Phase 48), e.g. <c>1.4</c>.
+    /// Null means "call this v&lt;VersionNumber&gt;", which is what every authored version keeps.
+    /// It is display provenance only: admission, pinning, package validation and durable
+    /// correlation use the version id, number, hash and package. Appended last.</summary>
+    string? ReleaseLabel = null);
 
 internal enum MissionVersionState { Candidate, Evaluated, Approved, Superseded }
 

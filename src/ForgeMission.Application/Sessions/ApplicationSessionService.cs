@@ -163,6 +163,10 @@ internal sealed record ApplicationSession(
     /// the legacy session execution root and is always drained on session replacement/disposal.</summary>
     public MissionHandsSlot MissionHands { get; } = new();
 
+    /// <summary>One Mission Chat history/tail owner per live session (Phase 48), disposed on the
+    /// same replacement boundary as the slots above so a tail never outlives its session.</summary>
+    public MissionChatSlot MissionChat { get; } = new();
+
     public ValueTask DisposeAsync()
     {
         lock (_disposeGate)
@@ -177,6 +181,7 @@ internal sealed record ApplicationSession(
         await Conversation.DisposeAsync();
         await ProjectMission.DisposeAsync();
         await MissionHands.DisposeAsync();
+        await MissionChat.DisposeAsync();
         await Execution.DisposeAsync();
     }
 }

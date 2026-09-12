@@ -85,4 +85,11 @@ public sealed class ConversationCheckpoint
     [Id(34)] public string? EvaluationTerminalSummary { get; set; }
     [Id(35)] public string? EvaluationTerminalReason { get; set; }
     [Id(36)] public MissionHandsProfile? EvaluationDeclaredProfile { get; set; }
+
+    /// <summary>Phase 48's durable Mission Chat display title. Null until the conversation's first
+    /// accepted turn, which is projected as <c>New chat</c>; from then on it is a bounded
+    /// normalized prefix of that first user message and is never rewritten. Appended as a NEW
+    /// Orleans ID rather than renumbering, so a checkpoint persisted before this field existed
+    /// reads it as null and projects the same <c>New chat</c>.</summary>
+    [Id(37)] public string? DisplayTitle { get; set; }
 }

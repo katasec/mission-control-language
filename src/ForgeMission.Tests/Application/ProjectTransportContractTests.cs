@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using ForgeMission.Application.Transport;
 // Only the profile is needed from Contracts here; importing the namespace would collide with the
 // transport's own list/create records, which deliberately share those names.
@@ -474,6 +475,78 @@ public sealed class ProjectTransportContractTests : IAsyncLifetime
         Assert.False(dispatch.IsError, dispatch.Content);
         Assert.Contains("intact", dispatch.Content, StringComparison.Ordinal);
     }
+
+    // ── Mission Chat (48) ───────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task MissionChat_RefusesAForeignSessionOnEverySessionCarryingAction()
+    {
+        var foreign = Guid.NewGuid().ToString("N");
+
+        foreach (var send in new Func<Task>[]
+                 {
+                     () => _channel.SendAsync<CreateMissionChatRequest, CreateMissionChatResponse>(
+                         new CreateMissionChatRequest(foreign), CancellationToken.None),
+                     () => _channel.SendAsync<OpenMissionChatRequest, OpenMissionChatResponse>(
+                         new OpenMissionChatRequest(foreign, Guid.NewGuid()), CancellationToken.None),
+                     () => _channel.SendAsync<SubmitMissionChatTurnRequest, SubmitMissionChatTurnResponse>(
+                         new SubmitMissionChatTurnRequest(foreign, Guid.NewGuid(), Guid.NewGuid(), "hello"), CancellationToken.None),
+                 })
+        {
+            // Reaching the route at all proves it is bound and that its typed request serialized through
+            // the channel; a foreign session is the transport's 404, not a product outcome.
+            var rejection = await Assert.ThrowsAsync<HttpRequestException>(send);
+            Assert.Equal(HttpStatusCode.NotFound, rejection.StatusCode);
+        }
+    }
+
+    [Fact]
+    public void MissionChat_RequestsCarryNothingApplicationShouldDerive()
+    {
+        Assert.Empty(typeof(StartMissionChatRequest).GetProperties());
+        Assert.Equal(["SessionId"], Names<CreateMissionChatRequest>());
+        Assert.Equal(["SessionId", "ConversationId"], Names<OpenMissionChatRequest>());
+        Assert.Equal(["SessionId", "ConversationId", "CommandId", "Text"], Names<SubmitMissionChatTurnRequest>());
+    }
+
+    [Fact]
+    public void MissionChat_ResponsesCarryNoPagingVocabularyAtAll()
+    {
+        // Application assembles a chat's whole history before it answers, so a cursor, a page size, or a
+        // "more remains" flag has no meaning above this boundary and must not appear on the wire.
+        var events = new[]
+        {
+            new ForgeMission.Conversations.Contracts.ConversationEvent(Guid.NewGuid(), 1, Guid.NewGuid(), null, 1,
+                ForgeMission.Conversations.Contracts.ConversationEventKind.UserMessage,
+                ForgeMission.Conversations.Contracts.ConversationParticipant.User, null, "hello", null, null, null, null, null, null,
+                DateTimeOffset.UnixEpoch),
+        };
+        var rows = new[] { new MissionChatRow(Guid.NewGuid(), "New chat", "Janus", 1, "1.4", DateTimeOffset.UnixEpoch, false) };
+        var pin = new MissionChatPin("Janus", 1, "1.4", ForgeMission.Conversations.Contracts.MissionHandsProfile.ProjectWorkspace, true);
+        var access = new MissionChatAccess(MissionChatAccessState.Attached, null);
+
+        var payloads = new[]
+        {
+            JsonSerializer.Serialize(new StartMissionChatResponse(null, Guid.NewGuid(), pin, access, rows, events, 1, null),
+                ConversationRelayJsonContext.Default.StartMissionChatResponse),
+            JsonSerializer.Serialize(new CreateMissionChatResponse(Guid.NewGuid(), pin, access, rows, events, 1, null),
+                ConversationRelayJsonContext.Default.CreateMissionChatResponse),
+            JsonSerializer.Serialize(new OpenMissionChatResponse(Guid.NewGuid(), pin, access, rows, events, 1, null),
+                ConversationRelayJsonContext.Default.OpenMissionChatResponse),
+        };
+
+        foreach (var payload in payloads)
+            foreach (var absent in new[] { "hasMore", "cursor", "pageSize", "capabilit" })
+                Assert.DoesNotContain(absent, payload, StringComparison.OrdinalIgnoreCase);
+        // The embedded durable event keeps the Host's own wire format, which is why this family is
+        // serialized by the relay context rather than the application one.
+        Assert.All(payloads, payload => Assert.Contains("\"kind\":\"userMessage\"", payload, StringComparison.Ordinal));
+        // And the durable page itself never crosses this boundary.
+        Assert.Null(ConversationRelayJsonContext.Default.GetTypeInfo(
+            typeof(ForgeMission.Conversations.Contracts.MissionConversationEventPage)));
+    }
+
+    private static string[] Names<T>() => [.. typeof(T).GetProperties().Select(property => property.Name)];
 
     private string WriteManifest(string json)
     {

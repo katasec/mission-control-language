@@ -31,8 +31,8 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
     public async Task<TResponse> SendAsync<TRequest, TResponse>(TRequest request, CancellationToken ct)
     {
         var route = RouteFor(request);
-        var requestType = ApplicationJsonContext.Default.GetTypeInfo(typeof(TRequest));
-        var responseType = ApplicationJsonContext.Default.GetTypeInfo(typeof(TResponse));
+        var requestType = TypeInfoFor(typeof(TRequest));
+        var responseType = TypeInfoFor(typeof(TResponse));
         if (requestType is null || responseType is null)
             throw new InvalidOperationException($"Unsupported application transport type: {typeof(TRequest).Name}.");
 
@@ -102,8 +102,18 @@ public sealed class HttpApplicationChannel : IApplicationChannel, IDisposable
         UpdateEvaluationCaseRequest => "transport/mission-authoring/case/update",
         RunEvaluationCaseRequest => "transport/mission-authoring/evaluate",
         PublishMissionVersionRequest => "transport/mission-authoring/publish",
+        StartMissionChatRequest => "transport/mission-chat/start",
+        CreateMissionChatRequest => "transport/mission-chat/new",
+        OpenMissionChatRequest => "transport/mission-chat/open",
+        SubmitMissionChatTurnRequest => "transport/mission-chat/turn",
         _ => throw new InvalidOperationException($"Unsupported application request: {typeof(TRequest).Name}."),
     };
+
+    // The application vocabulary keeps its own (numeric-enum) serialization, and the Mission Chat
+    // family keeps the conversation relay's — because it carries durable ConversationEvent values.
+    // Both are source-generated; this picks the owning context rather than merging their options.
+    private static System.Text.Json.Serialization.Metadata.JsonTypeInfo? TypeInfoFor(Type type) =>
+        ApplicationJsonContext.Default.GetTypeInfo(type) ?? ConversationRelayJsonContext.Default.GetTypeInfo(type);
 
     public void Dispose()
     {

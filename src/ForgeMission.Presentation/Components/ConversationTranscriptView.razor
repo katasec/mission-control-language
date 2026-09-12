@@ -22,7 +22,7 @@
         else if (entry.Kind == ConversationEntryKind.ParticipantMessage)
         {
             <article class="convo-participant-bubble">
-                <p class="convo-participant-name">@ParticipantLabel(entry.Participant)</p>
+                <p class="convo-participant-name">@EntryLabel(entry)</p>
                 <div class="convo-participant-markdown">@ConversationMarkdownRenderer.Render(entry.Text)</div>
             </article>
         }
@@ -174,11 +174,17 @@
     // The two live entry kinds map to the shared activity states (43.18); a durable entry exposes
     // no distinct live-delta fact, so this view never claims Streaming.
     private static ConversationActivityState Thinking(ConversationEntry entry)
-        => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Thinking, null);
+        => new(EntryLabel(entry), ConversationActivityKind.Thinking, null);
 
     private static ConversationActivityState Working(ConversationEntry entry)
-        => new(ParticipantLabel(entry.Participant), ConversationActivityKind.Working,
+        => new(EntryLabel(entry), ConversationActivityKind.Working,
                $"{entry.ToolName ?? "Tool"} running…");
+
+    // The immutable package expert name Host recorded, when there is one, so a real Proposer or
+    // Approver row is named as itself rather than as the generic participant. It is display text:
+    // an entry without one keeps exactly the label it had before (Phase 48).
+    private static string EntryLabel(ConversationEntry entry)
+        => string.IsNullOrWhiteSpace(entry.ActorName) ? ParticipantLabel(entry.Participant) : entry.ActorName!;
 
     private static string ParticipantLabel(ConversationParticipant participant) => participant switch
     {

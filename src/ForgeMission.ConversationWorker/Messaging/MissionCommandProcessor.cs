@@ -79,13 +79,15 @@ public sealed class MissionCommandProcessor(IExpertRunner defaultRunner)
             ConversationProgress? fact = trace switch
             {
                 PipelineStepStarted started => Progress(command, state.NextProgressOrdinal, ConversationEventKind.ParticipantStarted,
-                    ConversationParticipant.Forge, started.Attempt, text: $"{started.MissionName}:{started.ExpertName}"),
+                    ConversationParticipant.Forge, started.Attempt, text: $"{started.MissionName}:{started.ExpertName}",
+                    actorName: started.ExpertName),
                 PipelineStepCompleted completed => Progress(command, state.NextProgressOrdinal,
                     string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase)
                         ? ConversationEventKind.ParticipantMessage : ConversationEventKind.Error,
                     ConversationParticipant.Forge, completed.Attempt,
                     text: string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? completed.Envelope.Text : null,
-                    reason: string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? null : completed.Envelope.Reason ?? completed.Envelope.Text),
+                    reason: string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? null : completed.Envelope.Reason ?? completed.Envelope.Text,
+                    actorName: completed.ExpertName),
                 _ => null,
             };
             if (fact is not null) state = await Send(state, fact, innerCt);
@@ -115,12 +117,14 @@ public sealed class MissionCommandProcessor(IExpertRunner defaultRunner)
             ConversationProgress? fact = trace switch
             {
                 PipelineStepStarted started => Progress(command, state.NextProgressOrdinal, ConversationEventKind.ParticipantStarted,
-                    ConversationParticipant.Forge, started.Attempt, text: $"{started.MissionName}:{started.ExpertName}"),
+                    ConversationParticipant.Forge, started.Attempt, text: $"{started.MissionName}:{started.ExpertName}",
+                    actorName: started.ExpertName),
                 PipelineStepCompleted completed => Progress(command, state.NextProgressOrdinal,
                     string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? ConversationEventKind.ParticipantMessage : ConversationEventKind.Error,
                     ConversationParticipant.Forge, completed.Attempt,
                     text: string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? completed.Envelope.Text : null,
-                    reason: string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? null : completed.Envelope.Reason ?? completed.Envelope.Text),
+                    reason: string.Equals(completed.Envelope.Status, "pass", StringComparison.OrdinalIgnoreCase) ? null : completed.Envelope.Reason ?? completed.Envelope.Text,
+                    actorName: completed.ExpertName),
                 _ => null,
             };
             if (fact is not null) state = await send(state, fact, innerCt);
@@ -166,9 +170,13 @@ public sealed class MissionCommandProcessor(IExpertRunner defaultRunner)
         return state;
     }
 
+    // actorName is the trace's own expert name, copied verbatim for a started/completed step. This
+    // Worker maps no mission name, chooses no persona, and branches on no mission: the name is a
+    // generic execution fact the durable stream carries onward unchanged.
     private static ConversationProgress Progress(ConversationCommand command, int ordinal, ConversationEventKind kind,
         ConversationParticipant participant, int? attempt = null, string? text = null, string? reason = null,
-        ConversationRunStatus? runStatus = null, MissionToolRequest? missionHandsRequest = null) => new(
+        ConversationRunStatus? runStatus = null, MissionToolRequest? missionHandsRequest = null, string? actorName = null) => new(
             ConversationDeterministicIds.Progress(command.CommandId, ordinal), command.ConversationId, command.RunId,
-            kind, participant, attempt, text, reason, null, null, null, null, runStatus, DateTimeOffset.UtcNow, missionHandsRequest);
+            kind, participant, attempt, text, reason, null, null, null, null, runStatus, DateTimeOffset.UtcNow, missionHandsRequest,
+            actorName);
 }

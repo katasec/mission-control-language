@@ -22,6 +22,10 @@ public sealed class ApplicationHostRouteBoundaryTests
         Assert.Contains("IInteractionService service", source, StringComparison.Ordinal);
         Assert.Contains("IMissionConversationService service", source, StringComparison.Ordinal);
         Assert.Contains("IMissionAuthoringService service", source, StringComparison.Ordinal);
+        // Phase 48's four Mission Chat actions bind the same way: one route, one typed owner.
+        Assert.Contains("IMissionChatService service", source, StringComparison.Ordinal);
+        foreach (var route in new[] { "mission-chat/start", "mission-chat/new", "mission-chat/open", "mission-chat/turn" })
+            Assert.Contains($"/transport/{route}", source, StringComparison.Ordinal);
 
         Assert.DoesNotContain("InvokeAsync<TRequest, TResponse>", source, StringComparison.Ordinal);
         Assert.DoesNotContain("InvokeAsync<", source, StringComparison.Ordinal);

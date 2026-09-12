@@ -98,6 +98,48 @@ internal sealed class MissionConversationService(
         }
     }
 
+    // ── Mission Chat projections and bounded reads (48) ─────────────────────────────────────
+    // Host owns conversation identity, the pinned launch, the durable title and update order.
+    // Projects owns local display identity and the release label. This joins them and nothing more:
+    // no assembly loop, no tail, and no caller-supplied bound lives here.
+
+    /// <summary>Every real chat in this Project, newest first, named by what Host and Projects each
+    /// already own. A row exists only because a durable conversation does.</summary>
+    internal async Task<IReadOnlyList<MissionChatRow>> ListChatRowsAsync(string home, CancellationToken ct)
+    {
+        var projectId = versions.ReadProjectId(home, ct);
+        var conversations = (await Host().ListMissionConversationsAsync(projectId, ct)).Conversations;
+        var identities = await versions.ResolveVersionIdentitiesAsync(home,
+            conversations.Select(item => item.Launch.MissionVersionId).Distinct().ToArray(), ct);
+        return conversations
+            .OrderByDescending(item => item.UpdatedAtUtc)
+            .Select(item => new MissionChatRow(item.ConversationId,
+                item.Title ?? MissionConversationTitles.Default,
+                identities.TryGetValue(item.Launch.MissionVersionId, out var local) ? local.MissionName : null,
+                item.Launch.VersionNumber,
+                identities.TryGetValue(item.Launch.MissionVersionId, out var labelled) ? labelled.ReleaseLabel : null,
+                item.UpdatedAtUtc,
+                item.LastSequence > 0))
+            .ToArray();
+    }
+
+    /// <summary>The Project's read-only display identity for one pinned version, or null when this
+    /// Project no longer holds it. Nothing here invents a name.</summary>
+    internal async Task<LocalMissionVersionIdentity?> ResolveIdentityAsync(string home, Guid missionVersionId, CancellationToken ct)
+    {
+        var identities = await versions.ResolveVersionIdentitiesAsync(home, [missionVersionId], ct);
+        return identities.TryGetValue(missionVersionId, out var identity) ? identity : null;
+    }
+
+    internal async Task<ConversationSnapshot> ReadSnapshotAsync(Guid conversationId, CancellationToken ct) =>
+        (await Host().ReadConversationAsync(conversationId, ct)).Snapshot;
+
+    /// <summary>One finite page of a conversation's ordered events, bounded by the caller's own
+    /// fixed upper bound. This is a pass-through read: the page's cursor rules belong to the one
+    /// owner that assembles them.</summary>
+    internal Task<MissionConversationEventPage> ReadEventsAsync(Guid conversationId, long after, long through, CancellationToken ct) =>
+        Host().ReadMissionConversationEventsAsync(conversationId, after, through, ct);
+
     // ── Existing durable coordination (45.2) ────────────────────────────────────────────────
 
     public async Task<HostCreateMissionConversationResponse> CreateAsync(string home, Guid missionId, Guid commandId, CancellationToken ct)

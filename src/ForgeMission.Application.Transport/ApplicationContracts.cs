@@ -255,6 +255,85 @@ public sealed record CreatedMissionConversation(Guid ConversationId, MissionAcce
 public sealed record CreateMissionConversationResponse(
     CreatedMissionConversation? Created, ProjectOperationError? Error);
 
+// --- Mission Chat contracts (Phase 48) ------------------------------------------------------
+// The live Mission Chat journey's whole vocabulary. Every action is concrete and derives nothing
+// from its caller: no request names a package, definition, profile, capability, tool, Project path,
+// launch, attachment, title, or version, and no response carries a capability list, a cursor, a page
+// size, or a partial-history flag. Application assembles a chat's complete history before it hands
+// one back, so a surface never pages and never has to render "some of it".
+
+/// <summary>Zero input by design: Forge resolves or provisions the one managed chat Project, pins
+/// the shipped version, and creates the chat. A person picks no folder, Project, mission, or
+/// version here.</summary>
+public sealed record StartMissionChatRequest();
+
+/// <summary>One further chat in the session's managed Project.</summary>
+public sealed record CreateMissionChatRequest(string SessionId);
+
+public sealed record OpenMissionChatRequest(string SessionId, Guid ConversationId);
+
+public sealed record SubmitMissionChatTurnRequest(
+    string SessionId, Guid ConversationId, Guid CommandId, string Text);
+
+/// <summary>A chat's read-only provenance. <paramref name="VersionLabel"/> is display text only — a
+/// shipped version's release label, or <c>v&lt;number&gt;</c> for an authored one; admission and
+/// pinning use the identity Application already holds.</summary>
+public sealed record MissionChatPin(
+    string MissionName, int VersionNumber, string VersionLabel,
+    ForgeMission.Conversations.Contracts.MissionHandsProfile Profile, bool IsApproved);
+
+/// <summary>One real chat row. It exists only because a durable conversation does.
+/// <paramref name="Title"/> is the Host-owned durable title; <paramref name="MissionName"/> is null
+/// when this Project no longer holds the pinned version, which the surface states plainly rather
+/// than inventing a name.</summary>
+public sealed record MissionChatRow(
+    Guid ConversationId, string Title, string? MissionName, int VersionNumber, string? VersionLabel,
+    DateTimeOffset UpdatedAtUtc, bool HasMessages);
+
+/// <summary>Whether the version's fixed profile is attached right now. It is informational: this
+/// flow never asks for or records profile consent.</summary>
+public sealed record MissionChatAccess(MissionChatAccessState State, string? Reason);
+
+public enum MissionChatAccessState { Attached, Unavailable }
+
+public sealed record MissionChatFailure(MissionChatFailureCode Code, string Message);
+
+public enum MissionChatFailureCode
+{
+    ManagedProjectInvalid,
+    MissionUnavailable,
+    ChatNotFound,
+    TurnConflict,
+    CreateUncertain,
+    HistoryUnavailable,
+    HistoryProtocol,
+    StreamLost,
+}
+
+/// <summary><paramref name="Events"/> is the chat's complete ordered history through
+/// <paramref name="ThroughSequence"/>, which is also the sequence the live stream resumes from, so a
+/// surface applies one list and then live events with nothing in between.</summary>
+public sealed record StartMissionChatResponse(
+    ProjectSession? Session, Guid? ConversationId, MissionChatPin? Pin, MissionChatAccess? Access,
+    IReadOnlyList<MissionChatRow>? Rows, IReadOnlyList<ForgeMission.Conversations.Contracts.ConversationEvent>? Events,
+    long ThroughSequence, MissionChatFailure? Failure);
+
+/// <summary>The same shape, from the session that is already open: it carries no Project session
+/// because it never opens one.</summary>
+public sealed record CreateMissionChatResponse(
+    Guid? ConversationId, MissionChatPin? Pin, MissionChatAccess? Access,
+    IReadOnlyList<MissionChatRow>? Rows, IReadOnlyList<ForgeMission.Conversations.Contracts.ConversationEvent>? Events,
+    long ThroughSequence, MissionChatFailure? Failure);
+
+public sealed record OpenMissionChatResponse(
+    Guid? ConversationId, MissionChatPin? Pin, MissionChatAccess? Access,
+    IReadOnlyList<MissionChatRow>? Rows, IReadOnlyList<ForgeMission.Conversations.Contracts.ConversationEvent>? Events,
+    long ThroughSequence, MissionChatFailure? Failure);
+
+public sealed record SubmitMissionChatTurnResponse(
+    Guid? TurnId, long? AcceptedSequence,
+    ForgeMission.Conversations.Contracts.ConversationRunStatus? Status, MissionChatFailure? Failure);
+
 // --- Mission authoring contracts (45.4 minimum) ---------------------------------------------
 // The smallest vocabulary that lets one operator author, evaluate and publish. Projects still
 // owns the lifecycle: CanPublish below is a projection of what it already enforces, and
