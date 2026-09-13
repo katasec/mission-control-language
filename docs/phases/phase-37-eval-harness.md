@@ -236,8 +236,9 @@ early and the aggregation core gets exercised before the language surface is fro
 
 ### Spoke 7 — Reference eval + documented finding
 Run `PitchComparison` (20 inputs) and `LoopVsNaive` over the two existing A/B pairs.
-Write the result into `docs/findings.md` (currently a promissory note referenced by
-`why.md`). This closes the loop on the founding hypothesis with actual data.
+Record a versioned evaluation report with its inputs, model configuration, rubric, and retained
+outputs or immutable output hashes. Only that evidence can support or refute the founding
+hypothesis.
 
 ---
 

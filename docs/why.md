@@ -169,4 +169,7 @@ mission ChooseArchitecture =
 > Expert composition improves reasoning quality, consistency, and outcomes compared to a
 > single general-purpose prompt.
 
-The `build-operator` mission tests this. Findings are documented in [`findings.md`](findings.md).
+The `build-operator` mission is an illustrative example. It does not currently verify this
+hypothesis: the prior single-run comparison and its generated evidence were retired because the
+retained outputs did not support the report's conclusions. A future conclusion needs a versioned
+evaluation report with retained evidence and provenance.
