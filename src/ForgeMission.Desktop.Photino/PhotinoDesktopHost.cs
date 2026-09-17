@@ -3,9 +3,9 @@ using Photino.NET;
 
 namespace ForgeMission.Desktop.Photino;
 
-// Today's implementation of IDesktopHost. This project is deliberately the only place Photino.NET
-// types are used; the Host composition root only ever sees IDesktopHost, and the Desktop Supervisor
-// never sees either.
+// Retained legacy implementation of IDesktopHost. This project is deliberately the only place
+// Photino.NET types are used; the Host composition root only ever sees IDesktopHost, and the
+// Desktop Supervisor never sees either.
 //
 // Threading: the constructing thread owns the window. It is the Host's main thread, which is also
 // the thread Photino runs its native loop on once Run() is called, and macOS AppKit requires all
@@ -41,8 +41,6 @@ public sealed class PhotinoDesktopHost : IDesktopHost
             if (message == RetryMessage)
                 onRetryRequested();
         });
-
-    public void Run() => _window.WaitForClose();
 
     // On the owner thread this is either pre-Run start content (Photino's documented "configure the
     // window, then WaitForClose" pattern) or a call already on the native loop's thread; both apply

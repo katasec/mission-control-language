@@ -16,6 +16,10 @@ else ifeq ($(UNAME_S),Linux)
   endif
 endif
 
+ifeq ($(OS),Windows_NT)
+  RID := win-arm64
+endif
+
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
 APPLICATION_HOST := src/ForgeMission.Application.Host
@@ -69,8 +73,7 @@ desktop-publish: ## Publish the desktop app (Application Host + supervisor + nat
 	dotnet publish $(APPLICATION_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	# Last on purpose: publishing into a shared folder prunes files a project published before but
-	# no longer owns, and the native host's Photino.Native.dylib is the one asset another project
-	# here used to own. Publishing it last puts it back after any such pruning.
+	# no longer owns; keep the native shell last so its framework assets are present in the bundle.
 	dotnet publish $(DESKTOP_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	@echo "Desktop app published: $(DESKTOP_DIR)/ForgeMission.Desktop"
 

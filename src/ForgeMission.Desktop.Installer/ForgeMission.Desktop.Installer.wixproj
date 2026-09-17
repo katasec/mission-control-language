@@ -1,0 +1,24 @@
+<Project Sdk="WixToolset.Sdk/4.0.5">
+  <PropertyGroup>
+    <OutputName>ForgeDesktop</OutputName>
+    <InstallerPlatform>arm64</InstallerPlatform>
+    <PublishDirectory>$(MSBuildThisFileDirectory)..\..\dist\forge-desktop</PublishDirectory>
+    <DefineConstants>PublishDirectory=$(PublishDirectory)</DefineConstants>
+    <DebugType>none</DebugType>
+    <!-- Windows Installer validation is blocked by the local policy. The package remains an
+         explicitly unvalidated development artifact until validation can run on an approved host. -->
+    <SuppressValidation>true</SuppressValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Heat" Version="4.0.5" />
+    <HarvestDirectory Include="$(PublishDirectory)">
+      <ComponentGroupName>DesktopFiles</ComponentGroupName>
+      <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
+      <PreprocessorVariable>PublishDirectory</PreprocessorVariable>
+      <SuppressCom>true</SuppressCom>
+      <SuppressRegistry>true</SuppressRegistry>
+      <SuppressRootDirectory>true</SuppressRootDirectory>
+    </HarvestDirectory>
+  </ItemGroup>
+</Project>
