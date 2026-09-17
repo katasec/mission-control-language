@@ -8,10 +8,13 @@ namespace ForgeMission.Desktop.Host;
 // documents rather than an asset pipeline or template engine: this is the whole of the Host's UI.
 internal static class HostContent
 {
-    public static string Booting { get; } = Page("""
+    public static string Booting { get; } = Page($"""
         <div class="spinner"></div>
         <h1>Starting Forge</h1>
         <p>Preparing the mission and client runtimes&hellip;</p>
+        <script>
+          window.external.sendMessage('{PhotinoDesktopHost.WebViewReadyMessage}');
+        </script>
         """);
 
     public static string Failed(string message) => Page($"""

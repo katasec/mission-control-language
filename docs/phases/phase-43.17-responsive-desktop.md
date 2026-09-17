@@ -42,6 +42,45 @@ The durable Conversation Runtime already has valuable precedents: it owns one ta
 the session is replaced, deduplicates by event ID, and reconnects with a cursor. Reuse those
 principles; do not introduce a second generic reactive framework.
 
+## Windows ARM64 Photino WebView readiness hypothesis (unverified)
+
+The actual observed Windows failure was not a proven Photino crash: local WDAC (Windows Defender
+Application Control) Code Integrity blocked the unsigned `ForgeMission.Desktop.exe`, producing
+`FileLoadException` `0x800711C7`. The recorded Code Integrity events 3033/3077 establish that the
+machine policy—not Defender AV or a Forge regression—prevented the normal published-app run.
+
+`RegisterWindowCreatedHandler` proves only native-window creation, not that a WebView can accept
+`Invoke`/`LoadRawString` work. The readiness latch is therefore an unverified adapter hypothesis,
+not evidence that it caused the Windows failure. It is preserved on this branch only as abandoned
+Photino troubleshooting; it is not default-path acceptance and must not be carried into the
+MAUI-host investigation.
+
+**Scope:** a native-adapter-only readiness repair. The initial Host Booting document posts one
+adapter-owned literal when its inline script reaches Photino's native message bridge;
+`PhotinoDesktopHost` admits off-owner-thread
+`LoadRawString`/`Navigate` calls only after that signal. The Host's initial owner-thread Booting
+load remains direct, and retry remains its existing literal web message. `IDesktopHost`, the pipe
+protocol, Supervisor lifecycle, runtime ownership, credentials, and Application behavior do not
+change.
+
+**Type 2:** this is a bounded, unverified workaround hypothesis. Remove the literal/latch unless a
+real signed/allowed Windows run proves that a direct pre-ready background `Invoke` is unsafe. It
+adds no architecture or security ownership change: no tier, public entry point, datastore, identity,
+or cross-context contract is involved.
+
+| Required gate answer | Result |
+|---|---|
+| Product behaviour | No valid Windows default-path observation exists: WDAC blocked the unsigned executable before the app could establish the Photino path. **BLOCKED** |
+| Owner | `PhotinoDesktopHost` owns native WebView readiness; `HostContent` owns its local bootstrap document. Supervisor process/runtime ownership is unchanged. |
+| Adapter evidence | The non-AOT stack reaches `PhotinoWindow.Invoke`/`LoadRawString`; upstream Photino issue #87 states native window creation precedes WebView creation. This does not establish a Forge Windows defect. |
+| Replacement boundary | No framework detail crosses `IDesktopHost`; only the replaceable adapter and Host-local markup change. |
+| Proof | The zero-argument published Windows ARM64 artifact is blocked by WDAC; the readiness hypothesis is unverified. **BLOCKED** |
+
+Default-path acceptance target: `dist/forge-desktop/ForgeMission.Desktop.exe`, launched with zero
+arguments on Windows ARM64, with normal source-controlled configuration and no URL/runtime override.
+The published boot-to-Application-Host transition—not a substituted URL or controlled diagnostic—is
+the acceptance observation.
+
 ## Comparable-product research — GitHub Copilot app (2026-08-16)
 
 **Method:** compliance-bounded black-box observation of the installed GitHub Copilot app 1.1.2
