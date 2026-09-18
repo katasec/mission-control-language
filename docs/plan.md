@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Run the bounded Windows MAUI Desktop Host spike: replace the Photino implementation while preserving the supervisor, pipe protocol, Application Host, and existing Blazor UI. |
+| **NEXT STEP** | Make the GitHub Actions Desktop bundle the standard cross-platform build, download it unchanged for local Windows/macOS acceptance, and finish the MAUI Host spike. |
 
 ## Active phases
 
@@ -16,7 +16,7 @@
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; eventual Mission Chat integration follows the separately scoped Phase 47 UI prototype. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
-| [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Replace the Windows Photino native shell with a thin MAUI WebView host while preserving the existing loopback Application Host and Presentation UI. | Design approved; implementation and default-path acceptance in progress. |
+| [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Replace the Windows Photino native shell with a thin MAUI WebView host while preserving the existing loopback Application Host and Presentation UI. | MAUI implementation and a standard GitHub Actions desktop bundle are in progress; default-path acceptance follows downloaded artifacts. |
 
 ## Design docs
 

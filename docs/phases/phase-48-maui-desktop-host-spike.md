@@ -21,6 +21,9 @@ Blazor UI migration.
 | Scope | Windows only (`net10.0-windows10.0.19041.0`, `win-arm64` on this machine). The MAUI host is managed/self-contained, not Native AOT. Existing non-Windows host support is outside this spike. |
 | Installer trial | A WiX MSI packages the already-published `dist/forge-desktop` folder without changing its files. It is an installation/distribution experiment only: it neither signs the package nor establishes Smart App Control trust. |
 | In-process trial | `ForgeMission.Desktop.Maui` is a separate Windows-only executable that owns the MAUI window and starts the loopback Application Host in-process. It replaces neither the accepted legacy process topology nor the pipe Host during the spike. Reversal is deleting this project and its installer selection. |
+| Standard Desktop build | GitHub Actions is the source of testable Desktop bundles. This Windows-only MAUI spike publishes the complete Windows sibling bundle, retains it as a workflow artifact, and records its SHA-256. `make desktop-publish` remains the local equivalent for diagnosis; it does not become the release source. A macOS bundle is blocked until a macOS native Host composition is explicitly designed. |
+| Windows AOT identity | Native AOT embeds a linker timestamp in the Supervisor PE header and debug-directory entries. The Windows publish step canonicalizes only those parsed fields, rejects an unexpected PE layout or byte change, and checks a clean repeat publish is byte-identical. This is not signing and does not claim a changed program body has the same Windows policy verdict. |
+| Local acceptance artifact | Windows acceptance uses the unmodified `forge-desktop-win-arm64` bundle downloaded from the successful GitHub Actions run. A local rebuild, copied executable, or overridden runtime route is not release-artifact acceptance. macOS acceptance has no artifact yet because the MAUI Host is Windows-only. |
 
 ## Architecture and gates
 
@@ -38,4 +41,27 @@ Blazor UI migration.
 | Task | Status | Done when |
 |---|---|---|
 | Replace the Photino implementation with the MAUI host | In progress | The existing host executable builds and runs the unchanged inherited-pipe protocol with an ordinary MAUI WebView. |
+| Standardize the Windows Desktop bundle | In progress | The release workflow builds the complete Windows bundle, runs the Windows AOT identity guard, uploads a named artifact and draft-release ZIP with SHA-256 file, and documents exact download/extract commands. |
+| Design the macOS Desktop bundle | Open design decision | Choose and document a macOS native Host composition before adding a macOS GitHub Actions artifact. Do not package the Windows-only MAUI Host or a bare Photino adapter as a purportedly runnable macOS Desktop. |
 | Default-path acceptance | Blocked by WDAC | The published zero-argument Windows artifact visibly reaches the existing Forge UI and exits without orphaned children. |
+
+## Standard bundle steps
+
+1. Start the release workflow from the intended commit. Its Windows Desktop job builds the full
+   bundle; a failed AOT identity check publishes no usable Windows artifact.
+2. On Windows, download the named bundle from the successful run with
+   `gh release download v<version> --pattern forge-desktop-win-arm64.zip`. Extract it without
+   changing files and compare the included `SHA256SUMS` entry before launch. macOS has no
+   equivalent command until its Host composition is designed and built.
+3. Launch the downloaded `ForgeMission.Desktop` with zero arguments and no `FORGE_*` overrides.
+   Record the default-path result: boot state, navigation to the loopback UI, and child cleanup.
+4. Only after that observation may the same commit's Desktop bundle be considered for distribution.
+   The workflow artifact is a testable bundle, not a claim that Windows will accept every new
+   program-body hash.
+
+## Investigation record
+
+The controlled Windows Application Control and MAUI/WebView test matrix is retained in
+[the active investigation note](phase-48-maui-desktop-host-spike-investigation.md). The active
+work remains the two open facts only: policy-accepted default packaging and a visibly rendering
+managed MAUI WebView.

@@ -7,6 +7,11 @@
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
     <WindowsPackageType>None</WindowsPackageType>
+    <!-- The Supervisor uses `dotnet Host.dll` for its dev child. Enable the Windows App SDK's
+         supported managed bootstrap so that form retains the WinUI runtime initialization that
+         the generated MAUI executable normally supplies. -->
+    <WindowsAppSdkBootstrapInitialize>true</WindowsAppSdkBootstrapInitialize>
+    <WindowsAppSdkUndockedRegFreeWinRTInitialize>true</WindowsAppSdkUndockedRegFreeWinRTInitialize>
   </PropertyGroup>
 
   <!-- Contracts plus today's concrete host, and deliberately nothing else: no Core, no

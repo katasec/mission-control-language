@@ -8,17 +8,20 @@ internal sealed class MauiDesktopHost : IDesktopHost
 
     private readonly WebView _webView;
     private Action? _onRetryRequested;
+    private Action? _pendingContent;
+    private bool _webViewLoaded;
 
     public MauiDesktopHost(WebView webView)
     {
         _webView = webView;
         _webView.Navigating += OnNavigating;
+        _webView.Loaded += OnWebViewLoaded;
     }
 
-    public void ShowLocalContent(string html) => Dispatch(() =>
+    public void ShowLocalContent(string html) => SetContent(() =>
         _webView.Source = new HtmlWebViewSource { Html = html });
 
-    public void Navigate(string url) => Dispatch(() =>
+    public void Navigate(string url) => SetContent(() =>
         _webView.Source = new UrlWebViewSource { Url = url });
 
     public void RegisterRetryRequestedHandler(Action onRetryRequested) => _onRetryRequested = onRetryRequested;
@@ -30,6 +33,28 @@ internal sealed class MauiDesktopHost : IDesktopHost
 
         e.Cancel = true;
         _onRetryRequested?.Invoke();
+    }
+
+    private void OnWebViewLoaded(object? sender, EventArgs e)
+    {
+        _webViewLoaded = true;
+        ApplyPendingContent();
+    }
+
+    private void SetContent(Action content) => Dispatch(() =>
+    {
+        _pendingContent = content;
+        ApplyPendingContent();
+    });
+
+    private void ApplyPendingContent()
+    {
+        if (!_webViewLoaded || _pendingContent is null)
+            return;
+
+        var content = _pendingContent;
+        _pendingContent = null;
+        content();
     }
 
     private static void Dispatch(Action action)
