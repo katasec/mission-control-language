@@ -74,11 +74,13 @@ These are load-bearing. Later sub-phases assume them.
    token counts + compute-seconds. **No DB, no secrets, egress-restricted** (LLM provider + OCI registry
    only). The orchestrator (ForgeUI) stays the owner of identity, DB, broadcast, persistence, and the
    ledger. `RoomAgentInvoker` is already the right (queue-shaped, fire-and-forget) seam.
-9. **Keep it warm.** One runner, `minReplicas ≥ 1`. The container hop is single-digit ms **when warm** —
-   negligible against multi-second LLM calls. The *only* thing that turns ms into seconds is a
-   cold start from scale-to-zero, which bites hardest at low F&F traffic (long idle gaps). Do **not**
-   split into warm/scale-to-zero profiles now; scale-to-zero is a later cost optimisation, not worth
-   trading warm-path simplicity for pennies.
+9. **Dev scale-to-zero policy (supersedes the warm-runner decision).** The current Forge deployment
+   is a dev-only environment used solely by Ameer, normally during nights and weekends. ForgeUI,
+   ForgeAPI, and the runner therefore run at `minReplicas: 0`, `maxReplicas: 3` to avoid idle cost.
+   The first request after idle accepts Container Apps cold-start latency; the runner may cold-start
+   behind the UI/API request. This is not a production policy: revisit it before adding other users,
+   an availability commitment, or a low-latency requirement. ForgeUI still has an in-process SignalR
+   broadcaster, so concurrent replicas can split connected clients until it has a backplane.
 10. **Trust = a per-run policy attribute, not a path fork.** Built-in runs get a looser policy
     (broader egress, `exec`/`http` permitted); custom runs get a locked-down policy (no `exec`/`http`,
     restricted egress). Same runner image, policy is config on the run. Custom missions are additionally
