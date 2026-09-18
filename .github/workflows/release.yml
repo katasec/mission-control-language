@@ -99,7 +99,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. Build and push forge Docker image to ghcr.io ──────────────────────────
+  # ── 3. Build through the standard reusable Desktop workflow ────────────────
+  desktop-build:
+    needs: prepare
+    uses: ./.github/workflows/desktop-build.yml
+    secrets: inherit
+
+  # ── 4. Attach the exact standard artifact to the draft release ──────────────
+  desktop-release-asset:
+    needs: [prepare, desktop-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download standard Windows Desktop bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: forge-desktop-win-arm64
+          path: dist
+
+      - name: Upload release assets
+        run: gh release upload v${{ github.event.inputs.version }} dist/forge-desktop-win-arm64.zip dist/forge-desktop-win-arm64.zip.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── 5. Build and push forge Docker image to ghcr.io ─────────────────────────
   docker:
     needs: build
     runs-on: ubuntu-latest
@@ -130,7 +152,7 @@ jobs:
             ghcr.io/katasec/forge:latest
             ghcr.io/katasec/forge:${{ github.event.inputs.version }}
 
-  # ── 4. All binaries + image ready — draft release is open for review ─────────
+  # ── 6. All binaries + image ready — draft release is open for review ─────────
   #
   # The release stays as a draft. Go to GitHub → Releases → Edit → Publish
   # once you've reviewed the attached binaries and release notes.

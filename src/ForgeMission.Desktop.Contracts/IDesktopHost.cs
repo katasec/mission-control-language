@@ -8,7 +8,7 @@ namespace ForgeMission.Desktop.Contracts;
 // Scope is deliberately local window/WebView work: show Host-owned markup, show a ready URL, hear
 // the one local Retry click, run the native loop. It owns no process, credential, runtime, cleanup,
 // or general-purpose scheduler, and it has no close veto — the Desktop Supervisor observes the Host
-// process exiting and owns every cleanup path. See
+// process exiting and owns every cleanup path. The native framework owns its application loop. See
 // docs/design/forge-architecture.md#desktop-host-abstraction-idesktophost.
 public interface IDesktopHost
 {
@@ -19,9 +19,7 @@ public interface IDesktopHost
     void Navigate(string url);
 
     // The single local event the Host understands: the user clicked Retry on the failure content.
-    // Registered before Run; translated by the Host into the locked RetryRequested pipe event.
+    // Registered before the native framework starts its UI; translated by the Host into the locked
+    // RetryRequested pipe event.
     void RegisterRetryRequestedHandler(Action onRetryRequested);
-
-    // Blocks the calling thread — the Host's main thread — until the window closes.
-    void Run();
 }

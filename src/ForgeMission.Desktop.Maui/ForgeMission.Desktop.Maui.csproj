@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows10.0.19041.0</TargetFramework><UseMaui>true</UseMaui><SingleProject>true</SingleProject><WindowsPackageType>None</WindowsPackageType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'win-arm64'">
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="..\ForgeMission.Application.Host\ForgeMission.Application.Host.csproj" /><ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" /><ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" /><PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" /><PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" /><PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" /></ItemGroup>
+</Project>

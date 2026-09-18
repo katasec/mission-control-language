@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-12)
+## Now (2026-09-17)
 
 | | |
 |---|---|
-| **NEXT STEP** | Design the bounded integration that connects the approved static Mission Chat UI to Phase 45's existing durable-conversation owners. No integration implementation starts until that design is approved. |
+| **NEXT STEP** | Make the GitHub Actions Windows Desktop bundle the standard build, download it unchanged for local acceptance, and finish the MAUI Host spike. |
 
 ## Active phases
 
@@ -16,6 +16,7 @@
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; eventual Mission Chat integration follows the separately scoped Phase 47 UI prototype. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
+| [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Replace the Windows Photino native shell with a thin MAUI WebView host while preserving the existing loopback Application Host and Presentation UI. | MAUI implementation and a standard GitHub Actions desktop bundle are in progress; default-path acceptance follows downloaded artifacts. |
 
 ## Design docs
 

@@ -57,7 +57,7 @@ All implementation tasks change runtime wiring and must satisfy [Default-Path Ac
 
 | Fact | Required acceptance observation |
 |---|---|
-| Published artifact | `dist/forge-desktop/ForgeMission.Desktop`, launched with zero arguments, built with `make desktop-publish`; its Application.Host sibling is the new internal child. |
+| Published artifact | Historical evidence used `make desktop-publish`. Current Windows MAUI acceptance uses the unchanged GitHub Actions Desktop-build artifact; see [Phase 48](phase-48-maui-desktop-host-spike.md#standard-bundle-steps). It launches `ForgeMission.Desktop` with zero arguments and its Application.Host sibling is the new internal child. |
 | Absent overrides | No positional URL; no user overrides to MissionRuntime mode/base URL, FORGE_API_ENDPOINT or ConversationRuntime base URL. Supervisor's owned injection is expected. |
 | Normal dependencies | Default cloud Mission endpoint `https://api.forge.katasec.com`; Conversation endpoint `http://127.0.0.1:18080/`, `/health`, normal Supervisor-owned Kind bridge when needed. Record actual dependency revision/provenance; deployment only through existing forge-infra workflow. |
 | Local transport | OS-assigned `127.0.0.1:0`, unchanged `/ready`, `/transport/*`, static paths and `FORGE_CLIENT_RUNTIME_URL=` marker. Verify the Supervisor navigates the native Host to that observed URL. |

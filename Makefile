@@ -16,12 +16,19 @@ else ifeq ($(UNAME_S),Linux)
   endif
 endif
 
+ifeq ($(OS),Windows_NT)
+  RID := win-arm64
+  SHELL := bash
+endif
+
 INSTALL_DIR := $(HOME)/.local/bin
 CLI         := src/ForgeMission.Cli
 APPLICATION_HOST := src/ForgeMission.Application.Host
 DESKTOP_SUPERVISOR := src/ForgeMission.Desktop
 DESKTOP_HOST := src/ForgeMission.Desktop.Host
 DESKTOP_DIR := dist/forge-desktop
+DESKTOP_SUPERVISOR_EXE := $(DESKTOP_DIR)/ForgeMission.Desktop.exe
+NORMALIZE_AOT_PE := pwsh -NoProfile -File ./scripts/Normalize-AotPeTimestamps.ps1
 
 .PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset desktop desktop-publish
 .DEFAULT_GOAL := help
@@ -69,9 +76,21 @@ desktop-publish: ## Publish the desktop app (Application Host + supervisor + nat
 	dotnet publish $(APPLICATION_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	# Last on purpose: publishing into a shared folder prunes files a project published before but
-	# no longer owns, and the native host's Photino.Native.dylib is the one asset another project
-	# here used to own. Publishing it last puts it back after any such pruning.
+	# no longer owns; keep the native shell last so its framework assets are present in the bundle.
 	dotnet publish $(DESKTOP_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
+
+ifeq ($(OS),Windows_NT)
+	$(NORMALIZE_AOT_PE) -Image $(DESKTOP_SUPERVISOR_EXE)
+	@identity_dir=$$(mktemp -d); \
+	trap 'rm -rf -- "$$identity_dir"' EXIT; \
+	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o "$$identity_dir"; \
+	$(NORMALIZE_AOT_PE) -Image "$$identity_dir/ForgeMission.Desktop.exe"; \
+	if ! cmp -s $(DESKTOP_SUPERVISOR_EXE) "$$identity_dir/ForgeMission.Desktop.exe"; then \
+		echo "Normalized Supervisor differs from an isolated repeat publish." >&2; \
+		exit 1; \
+	fi; \
+	echo "Windows Supervisor identity verified against an isolated repeat publish."
+endif
 	@echo "Desktop app published: $(DESKTOP_DIR)/ForgeMission.Desktop"
 
 desktop: desktop-publish ## Publish the desktop app without launching it

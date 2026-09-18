@@ -18,7 +18,8 @@ The user-visible shell needs to remain disposable and independent of runtime own
 
 ## Owns
 
-- The executable composition root in [`Program`](Program.cs), inherited-pipe handling, and command application.
+- The MAUI executable composition root in [`MauiProgram`](MauiProgram.cs), inherited-pipe handling,
+  command application, and the local WebView.
 - Local Booting/Failed markup in [`HostContent`](HostContent.cs), including the single Retry affordance.
 
 ## Does not own
@@ -27,11 +28,12 @@ The user-visible shell needs to remain disposable and independent of runtime own
 
 ## Change admission
 
-A change belongs here only if it advances the disposable native-host process or its fixed command handling. For lifecycle policy change `ForgeMission.Desktop`; for WebView implementation change `ForgeMission.Desktop.Photino`.
+A change belongs here only if it advances the disposable native-host process or its fixed command handling. For lifecycle policy change `ForgeMission.Desktop`; this Windows spike owns its MAUI WebView implementation here.
 
 ## Use these pieces
 
-- [`Program`](Program.cs) is the native Host executable entry point; it requires pipe handles from the Supervisor.
+- [`MauiProgram`](MauiProgram.cs) is the native Host composition root; Windows starts the MAUI app loop.
+- [`DesktopHostController`](DesktopHostController.cs) requires the inherited pipe handles from the Supervisor.
 - [`HostContent`](HostContent.cs) supplies the Host-owned startup/failure documents.
 - [`IDesktopHost`](../ForgeMission.Desktop.Contracts/IDesktopHost.cs) is the abstraction it composes.
 
@@ -42,13 +44,13 @@ flowchart LR
   Supervisor[Desktop Supervisor] -->|anonymous-pipe commands| Host[Desktop Host process]
   Host -->|RetryRequested event| Supervisor
   Host -->|Navigate to ready loopback URL| AppHost[Application Host]
-  Host -->|constructs| Shell[Photino adapter]
+  Host -->|constructs| Shell[MAUI WebView adapter]
 ```
 
 ## Important flows and constraints
 
 - It starts with local content before any Application URL, credential, or runtime is available.
-- It runs its native loop on the main thread; pipe reads occur on a background thread.
+- MAUI runs its native loop; pipe reads occur on a background thread and adapter calls marshal to MAUI's UI thread.
 - When the Supervisor pipe closes, this process exits rather than becoming an orphan window.
 
 ## Related documentation

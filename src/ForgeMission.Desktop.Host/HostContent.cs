@@ -1,5 +1,4 @@
 using System.Net;
-using ForgeMission.Desktop.Photino;
 
 namespace ForgeMission.Desktop.Host;
 
@@ -17,7 +16,7 @@ internal static class HostContent
     public static string Failed(string message) => Page($"""
         <h1>Forge could not start</h1>
         <p class="detail">{WebUtility.HtmlEncode(message)}</p>
-        <button onclick="window.external.sendMessage('{PhotinoDesktopHost.RetryMessage}')">Retry</button>
+        <button onclick="location.href='{MauiDesktopHost.RetryRequestUrl}'">Retry</button>
         """);
 
     private static string Page(string body) => $$"""

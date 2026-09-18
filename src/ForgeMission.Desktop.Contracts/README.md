@@ -43,14 +43,14 @@ flowchart LR
   Protocol --> Host[Desktop Host]
   Host -->|RetryRequested| Protocol
   Protocol --> Supervisor
-  Host -->|composes and consumes| Adapter[PhotinoDesktopHost]
+  Host -->|composes and consumes| Adapter[MAUI Desktop Host]
   Adapter -->|implements| Contract[IDesktopHost]
 ```
 
 ## Important flows and constraints
 
 - The protocol has two commands and one event; unknown frame kinds fail instead of being ignored.
-- Closing the Host is observed by the Supervisor, which owns cleanup; `IDesktopHost` has no close veto.
+- Closing the Host is observed by the Supervisor, which owns cleanup; `IDesktopHost` has no close veto or native-loop ownership.
 - This project has no project dependencies and must stay framework-neutral.
 
 ## Related documentation
