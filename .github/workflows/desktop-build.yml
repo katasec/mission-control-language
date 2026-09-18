@@ -24,6 +24,10 @@ jobs:
         shell: pwsh
         run: choco install make --yes --no-progress
 
+      - name: Restore MAUI workload
+        shell: pwsh
+        run: dotnet workload restore src/ForgeMission.Desktop.Host/ForgeMission.Desktop.Host.csproj
+
       - name: Publish Windows Desktop
         shell: pwsh
         run: make OS=Windows_NT desktop-publish

@@ -72,6 +72,7 @@ Blazor UI migration.
 - The PowerShell verifier rejected both a malformed file and a copied image with one mismatched debug-directory timestamp. A copied MRE image with one debug record also normalized and verified.
 - Directly starting the normalized published Supervisor with `not-a-url` printed its expected usage and exited 1. This is only a process-start check; zero-argument Desktop default-path acceptance remains open.
 - Repository-wide tests are not accepted evidence: `dotnet test src/ForgeMission.slnx --no-build --no-restore` was blocked on 2026-09-18 because Docker/Testcontainers could not reach `npipe://./pipe/docker_engine`; it also exposed unrelated existing Windows test failures. The Windows publish guard above passed independently.
+- The first GitHub Actions run (`35388053583`) reached the MAUI Host publish but failed with `NETSDK1147` because the hosted Windows runner lacked the MAUI workload. **Desktop build** now runs `dotnet workload restore` for that Host before publish; the next run is the first artifact candidate.
 
 ## Investigation record
 
