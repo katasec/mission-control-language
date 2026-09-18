@@ -7,7 +7,7 @@
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
     <WindowsPackageType>None</WindowsPackageType>
-    <!-- This is an unpackaged, self-contained Windows app.  `--self-contained` covers CoreCLR;
+    <!-- This is an unpackaged, self-contained Windows app. The self-contained publish option covers CoreCLR;
          this property additionally makes the Windows App SDK app-local.  Do not boot against an
          installed Windows App Runtime: a downloaded Desktop bundle must work on a machine that
          does not have one. -->
