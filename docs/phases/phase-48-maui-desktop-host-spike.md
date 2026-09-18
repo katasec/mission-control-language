@@ -34,6 +34,8 @@ Blazor UI migration.
 | Engineering Philosophy | **PASS.** One MAUI host owns UI-thread dispatch and WebView behavior. The fixed two-command/one-event protocol is unchanged; no generic IPC, configuration switch, embedded server, or lifecycle abstraction is added. |
 | Desktop interaction principles / UI system | **PASS.** No ForgeUI markup, interaction, design token, or reference surface changes. The existing application URL is rendered through the native WebView; packaged default-path inspection remains required. |
 | Native AOT | **Exception, bounded.** MAUI Windows runs managed CoreCLR/ReadyToRun rather than Native AOT. The AOT rule remains unchanged for the Forge CLI, Supervisor, and Application Host. This spike adds no reflection-based application code. |
+| Windows Supervisor identity | On Windows only, `make desktop-publish` normalizes the Desktop Supervisor's COFF build timestamp and every matching `IMAGE_DEBUG_DIRECTORY` timestamp after all three publish operations. The PowerShell normalizer validates the PE header, debug data directory, RVA-to-file mapping, and timestamp equality; it writes a fixed timestamp to a copy and replaces the image only after byte-diff validation. A second isolated Supervisor publish is normalized and must hash-identically match the shipped Supervisor. This does not sign an image or alter the Supervisor/Host/Application Host topology. |
+| Windows delivery | The Release workflow's `desktop` job runs `make OS=Windows_NT desktop-publish` on `windows-11-arm`, uploads `forge-desktop-win-arm64.zip` to both the workflow run and its draft release. Download a release package with `gh release download v<version> --pattern forge-desktop-win-arm64.zip`. |
 | Default path | **Applies.** Publish the three sibling executables for `win-arm64` into `dist/forge-desktop`; run `ForgeMission.Desktop.exe` with zero arguments and no `FORGE_*` overrides. Passing evidence must show boot content, dynamic-loopback navigation to the existing UI, and cleanup when the window closes. On 2026-09-17, Windows Application Control blocked the unsigned published Supervisor before process launch; this is an environment-policy observation, not MAUI acceptance. |
 
 ## Tasks
@@ -41,6 +43,7 @@ Blazor UI migration.
 | Task | Status | Done when |
 |---|---|---|
 | Replace the Photino implementation with the MAUI host | In progress | The existing host executable builds and runs the unchanged inherited-pipe protocol with an ordinary MAUI WebView. |
+| Stabilize the Windows Supervisor image identity | In progress | `make desktop-publish` on Windows fail-closes unless the Supervisor is a valid PE whose COFF and debug-directory timestamps match, normalizes only those timestamp fields, and matches a separately published-and-normalized Supervisor byte-for-byte. Non-Windows publishes remain unchanged. |
 | Standardize the Windows Desktop bundle | In progress | The release workflow builds the complete Windows bundle, runs the Windows AOT identity guard, uploads a named artifact and draft-release ZIP with SHA-256 file, and documents exact download/extract commands. |
 | Design the macOS Desktop bundle | Open design decision | Choose and document a macOS native Host composition before adding a macOS GitHub Actions artifact. Do not package the Windows-only MAUI Host or a bare Photino adapter as a purportedly runnable macOS Desktop. |
 | Default-path acceptance | Blocked by WDAC | The published zero-argument Windows artifact visibly reaches the existing Forge UI and exits without orphaned children. |
@@ -59,9 +62,16 @@ Blazor UI migration.
    The workflow artifact is a testable bundle, not a claim that Windows will accept every new
    program-body hash.
 
+## Implementation evidence
+
+- `make OS=Windows_NT desktop-publish` on 2026-09-18 normalized the published Supervisor and an isolated repeat publish to SHA-256 `7df4e4ff164e30a89bc712e80186b1b29a9ecf7db63f70fe9c1a3450610c8682`; `cmp -s` passed.
+- The validated locations were the COFF timestamp at byte 264 and the three PE debug-directory timestamps at bytes 5,228,148, 5,228,176, and 5,228,204. No other bytes changed.
+- The PowerShell verifier rejected both a malformed file and a copied image with one mismatched debug-directory timestamp. A copied MRE image with one debug record also normalized and verified.
+- Directly starting the normalized published Supervisor with `not-a-url` printed its expected usage and exited 1. This is only a process-start check; zero-argument Desktop default-path acceptance remains open.
+
 ## Investigation record
 
 The controlled Windows Application Control and MAUI/WebView test matrix is retained in
 [the active investigation note](phase-48-maui-desktop-host-spike-investigation.md). The active
-work remains the two open facts only: policy-accepted default packaging and a visibly rendering
+work remains the default-path observation, a successful workflow artifact, and a visibly rendering
 managed MAUI WebView.
