@@ -44,7 +44,7 @@ Blazor UI migration.
 |---|---|---|
 | Replace the Photino implementation with the MAUI host | In progress | The existing host executable builds and runs the unchanged inherited-pipe protocol with an ordinary MAUI WebView. |
 | Stabilize the Windows Supervisor image identity | In progress | `make desktop-publish` on Windows fail-closes unless the Supervisor is a valid PE whose COFF and debug-directory timestamps match, normalizes only those timestamp fields, and matches a separately published-and-normalized Supervisor byte-for-byte. Non-Windows publishes remain unchanged. |
-| Standardize the Windows Desktop bundle | In progress | The release workflow builds the complete Windows bundle, runs the Windows AOT identity guard, uploads a named artifact and draft-release ZIP with SHA-256 file, and documents exact download/extract commands. |
+| Standardize the Windows Desktop bundle | In progress | The release workflow builds the complete Windows bundle, runs the Windows AOT identity guard, uploads a named artifact and draft-release ZIP with a SHA-256 sidecar, and documents exact download/extract commands. |
 | Design the macOS Desktop bundle | Open design decision | Choose and document a macOS native Host composition before adding a macOS GitHub Actions artifact. Do not package the Windows-only MAUI Host or a bare Photino adapter as a purportedly runnable macOS Desktop. |
 | Default-path acceptance | Blocked by WDAC | The published zero-argument Windows artifact visibly reaches the existing Forge UI and exits without orphaned children. |
 
@@ -53,9 +53,10 @@ Blazor UI migration.
 1. Start the release workflow from the intended commit. Its Windows Desktop job builds the full
    bundle; a failed AOT identity check publishes no usable Windows artifact.
 2. On Windows, download the named bundle from the successful run with
-   `gh release download v<version> --pattern forge-desktop-win-arm64.zip`. Extract it without
-   changing files and compare the included `SHA256SUMS` entry before launch. macOS has no
-   equivalent command until its Host composition is designed and built.
+   `gh release download v<version> --pattern 'forge-desktop-win-arm64.zip*'`. Run
+   `Get-FileHash .\forge-desktop-win-arm64.zip -Algorithm SHA256` and compare it with the
+   accompanying `.sha256` file, then extract it without changing files. macOS has no equivalent
+   command until its Host composition is designed and built.
 3. Launch the downloaded `ForgeMission.Desktop` with zero arguments and no `FORGE_*` overrides.
    Record the default-path result: boot state, navigation to the loopback UI, and child cleanup.
 4. Only after that observation may the same commit's Desktop bundle be considered for distribution.

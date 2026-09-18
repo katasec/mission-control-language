@@ -124,18 +124,24 @@ jobs:
 
       - name: Package Windows Desktop
         shell: pwsh
-        run: Compress-Archive -Path dist/forge-desktop -DestinationPath dist/forge-desktop-win-arm64.zip
+        run: |
+          $archive = 'dist/forge-desktop-win-arm64.zip'
+          Compress-Archive -Path dist/forge-desktop -DestinationPath $archive
+          $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  forge-desktop-win-arm64.zip" | Set-Content -NoNewline -Encoding ascii "$archive.sha256"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v6
         with:
           name: forge-desktop-win-arm64
-          path: dist/forge-desktop-win-arm64.zip
+          path: |
+            dist/forge-desktop-win-arm64.zip
+            dist/forge-desktop-win-arm64.zip.sha256
           if-no-files-found: error
 
       - name: Upload release asset
         shell: pwsh
-        run: gh release upload v${{ github.event.inputs.version }} dist/forge-desktop-win-arm64.zip
+        run: gh release upload v${{ github.event.inputs.version }} dist/forge-desktop-win-arm64.zip dist/forge-desktop-win-arm64.zip.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
