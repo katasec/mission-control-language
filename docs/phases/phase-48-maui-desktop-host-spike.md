@@ -21,9 +21,9 @@ Blazor UI migration.
 | Scope | Windows only (`net10.0-windows10.0.19041.0`, `win-arm64` on this machine). The MAUI host is managed/self-contained, not Native AOT. Existing non-Windows host support is outside this spike. |
 | Installer trial | A WiX MSI packages the already-published `dist/forge-desktop` folder without changing its files. It is an installation/distribution experiment only: it neither signs the package nor establishes Smart App Control trust. |
 | In-process trial | `ForgeMission.Desktop.Maui` is a separate Windows-only executable that owns the MAUI window and starts the loopback Application Host in-process. It replaces neither the accepted legacy process topology nor the pipe Host during the spike. Reversal is deleting this project and its installer selection. |
-| Standard Desktop build | GitHub Actions is the source of testable Desktop bundles. This Windows-only MAUI spike publishes the complete Windows sibling bundle, retains it as a workflow artifact, and records its SHA-256. `make desktop-publish` remains the local equivalent for diagnosis; it does not become the release source. A macOS bundle is blocked until a macOS native Host composition is explicitly designed. |
+| Standard Desktop build | GitHub Actions **Desktop build** is the source of testable Desktop bundles. It is manually runnable on any branch or commit and reusable by Release; it publishes the complete Windows sibling bundle, retains it as a workflow artifact, and records its SHA-256. `make desktop-publish` is the implementation Actions calls, not a separate release source. A macOS bundle is blocked until a macOS native Host composition is explicitly designed. |
 | Windows AOT identity | Native AOT embeds a linker timestamp in the Supervisor PE header and debug-directory entries. The Windows publish step canonicalizes only those parsed fields, rejects an unexpected PE layout or byte change, and checks a clean repeat publish is byte-identical. This is not signing and does not claim a changed program body has the same Windows policy verdict. |
-| Local acceptance artifact | Windows acceptance uses the unmodified `forge-desktop-win-arm64` bundle downloaded from the successful GitHub Actions run. A local rebuild, copied executable, or overridden runtime route is not release-artifact acceptance. macOS acceptance has no artifact yet because the MAUI Host is Windows-only. |
+| Local acceptance artifact | For a candidate commit, Windows acceptance uses the unmodified `forge-desktop-win-arm64` artifact from **Desktop build**. For a release, it uses the same workflow's ZIP and checksum attached to the draft release. A local rebuild, copied executable, or overridden runtime route is not acceptance. macOS acceptance has no artifact yet because the MAUI Host is Windows-only. |
 
 ## Architecture and gates
 
@@ -35,7 +35,7 @@ Blazor UI migration.
 | Desktop interaction principles / UI system | **PASS.** No ForgeUI markup, interaction, design token, or reference surface changes. The existing application URL is rendered through the native WebView; packaged default-path inspection remains required. |
 | Native AOT | **Exception, bounded.** MAUI Windows runs managed CoreCLR/ReadyToRun rather than Native AOT. The AOT rule remains unchanged for the Forge CLI, Supervisor, and Application Host. This spike adds no reflection-based application code. |
 | Windows Supervisor identity | On Windows only, `make desktop-publish` normalizes the Desktop Supervisor's COFF build timestamp and every matching `IMAGE_DEBUG_DIRECTORY` timestamp after all three publish operations. The PowerShell normalizer validates the PE header, debug data directory, RVA-to-file mapping, and timestamp equality; it writes a fixed timestamp to a copy and replaces the image only after byte-diff validation. A second isolated Supervisor publish is normalized and must hash-identically match the shipped Supervisor. This does not sign an image or alter the Supervisor/Host/Application Host topology. |
-| Windows delivery | The Release workflow's `desktop` job runs `make OS=Windows_NT desktop-publish` on `windows-11-arm`, uploads `forge-desktop-win-arm64.zip` to both the workflow run and its draft release. Download a release package with `gh release download v<version> --pattern forge-desktop-win-arm64.zip`. |
+| Windows delivery | **Desktop build** owns the only Windows packaging recipe. Release calls it, then attaches that exact ZIP and checksum to its draft release. The actionable trigger/download procedure is below. |
 | Default path | **Applies.** Publish the three sibling executables for `win-arm64` into `dist/forge-desktop`; run `ForgeMission.Desktop.exe` with zero arguments and no `FORGE_*` overrides. Passing evidence must show boot content, dynamic-loopback navigation to the existing UI, and cleanup when the window closes. On 2026-09-17, Windows Application Control blocked the unsigned published Supervisor before process launch; this is an environment-policy observation, not MAUI acceptance. |
 
 ## Tasks
@@ -44,15 +44,17 @@ Blazor UI migration.
 |---|---|---|
 | Replace the Photino implementation with the MAUI host | In progress | The existing host executable builds and runs the unchanged inherited-pipe protocol with an ordinary MAUI WebView. |
 | Stabilize the Windows Supervisor image identity | In progress | `make desktop-publish` on Windows fail-closes unless the Supervisor is a valid PE whose COFF and debug-directory timestamps match, normalizes only those timestamp fields, and matches a separately published-and-normalized Supervisor byte-for-byte. Non-Windows publishes remain unchanged. |
-| Standardize the Windows Desktop bundle | In progress | The release workflow builds the complete Windows bundle, runs the Windows AOT identity guard, uploads a named artifact and draft-release ZIP with a SHA-256 sidecar, and documents exact download/extract commands. |
+| Standardize the Windows Desktop bundle | In progress | The reusable Desktop build workflow builds the complete Windows bundle, runs the Windows AOT identity guard, and uploads a named artifact and SHA-256 sidecar. Release attaches that exact artifact without rebuilding it; the procedure below is the sole future-agent instruction. |
 | Design the macOS Desktop bundle | Open design decision | Choose and document a macOS native Host composition before adding a macOS GitHub Actions artifact. Do not package the Windows-only MAUI Host or a bare Photino adapter as a purportedly runnable macOS Desktop. |
 | Default-path acceptance | Blocked by WDAC | The published zero-argument Windows artifact visibly reaches the existing Forge UI and exits without orphaned children. |
 
 ## Standard bundle steps
 
-1. Start the release workflow from the intended commit. Its Windows Desktop job builds the full
-   bundle; a failed AOT identity check publishes no usable Windows artifact.
-2. On Windows, download the named bundle from the successful run with
+1. For any candidate branch or commit, start **Desktop build** in GitHub Actions. Its Windows job
+   builds the full bundle; a failed AOT identity check publishes no usable artifact. Future agents
+   use this workflow rather than building a test candidate locally.
+2. Download the candidate artifact with `gh run download <run-id> -n forge-desktop-win-arm64`.
+   For a release, download the ZIP and sidecar made by the same workflow with
    `gh release download v<version> --pattern 'forge-desktop-win-arm64.zip*'`. Run
    `Get-FileHash .\forge-desktop-win-arm64.zip -Algorithm SHA256` and compare it with the
    accompanying `.sha256` file, then extract it without changing files. macOS has no equivalent

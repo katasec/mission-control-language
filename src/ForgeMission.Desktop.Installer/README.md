@@ -28,7 +28,7 @@ code ownership of application startup, native hosting, or application content.
 
 ## Use
 
-Publish the Desktop bundle first, then run:
+Obtain the canonical Windows bundle through the [Phase 48 Desktop build procedure](../../docs/phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps), extract it unchanged, then run:
 
 ```powershell
 dotnet build src/ForgeMission.Desktop.Installer/ForgeMission.Desktop.Installer.wixproj -c Release

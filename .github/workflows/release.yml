@@ -99,53 +99,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. Build the complete Windows Desktop folder and attach it ──────────────
-  desktop:
+  # ── 3. Build through the standard reusable Desktop workflow ────────────────
+  desktop-build:
     needs: prepare
-    runs-on: windows-11-arm
+    uses: ./.github/workflows/desktop-build.yml
+    secrets: inherit
 
+  # ── 4. Attach the exact standard artifact to the draft release ──────────────
+  desktop-release-asset:
+    needs: [prepare, desktop-build]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.x'
-
-      - name: Install GNU Make
-        shell: pwsh
-        run: choco install make --yes --no-progress
-
-      - name: Publish Windows Desktop
-        shell: pwsh
-        run: make OS=Windows_NT desktop-publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Package Windows Desktop
-        shell: pwsh
-        run: |
-          $archive = 'dist/forge-desktop-win-arm64.zip'
-          Compress-Archive -Path dist/forge-desktop -DestinationPath $archive
-          $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$hash  forge-desktop-win-arm64.zip" | Set-Content -NoNewline -Encoding ascii "$archive.sha256"
-
-      - name: Upload workflow artifact
-        uses: actions/upload-artifact@v6
+      - name: Download standard Windows Desktop bundle
+        uses: actions/download-artifact@v8
         with:
           name: forge-desktop-win-arm64
-          path: |
-            dist/forge-desktop-win-arm64.zip
-            dist/forge-desktop-win-arm64.zip.sha256
-          if-no-files-found: error
+          path: dist
 
-      - name: Upload release asset
-        shell: pwsh
+      - name: Upload release assets
         run: gh release upload v${{ github.event.inputs.version }} dist/forge-desktop-win-arm64.zip dist/forge-desktop-win-arm64.zip.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 4. Build and push forge Docker image to ghcr.io ──────────────────────────
+  # ── 5. Build and push forge Docker image to ghcr.io ─────────────────────────
   docker:
     needs: build
     runs-on: ubuntu-latest
@@ -176,7 +152,7 @@ jobs:
             ghcr.io/katasec/forge:latest
             ghcr.io/katasec/forge:${{ github.event.inputs.version }}
 
-  # ── 5. All binaries + image ready — draft release is open for review ─────────
+  # ── 6. All binaries + image ready — draft release is open for review ─────────
   #
   # The release stays as a draft. Go to GitHub → Releases → Edit → Publish
   # once you've reviewed the attached binaries and release notes.

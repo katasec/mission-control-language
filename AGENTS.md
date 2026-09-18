@@ -354,9 +354,14 @@ Bash-doesn't-inherit-pwsh trap, the pull-through-pwsh recipe) is in
 
 Releases are cut via GitHub Actions (`workflow_dispatch`):
 1. Enter the version (e.g. `0.1.3`) in the Actions UI.
-2. The workflow tags the commit, opens a draft release, and attaches
+2. The workflow tags the commit, opens a draft release, and attaches the CLI assets
    `forge-osx-arm64`, `forge-linux-x64`, and `forge-win-arm64.exe`.
 3. Review the draft on GitHub, then publish.
+
+For the Windows MAUI Desktop bundle, do not make a local release candidate. Trigger/download the
+canonical **Desktop build** artifact as specified in
+[Phase 48](docs/phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps). The Release
+workflow promotes that exact ZIP and checksum to its draft release; it does not rebuild the bundle.
 
 Semver: patch bump for bug fixes and backwards-compatible changes; minor for new user-visible
 language features; major for breaking `.mcl` syntax changes.

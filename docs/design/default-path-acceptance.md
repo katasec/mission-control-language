@@ -52,6 +52,11 @@ zero-argument launch, absent external configuration changes, the normal route an
 provenance, the Project action initiated through the product surface, and the durable/user-visible
 result. A health check alone is insufficient.
 
+For the Windows MAUI Desktop, the published artifact must come from the canonical GitHub Actions
+Desktop build (or its unchanged draft-release attachment). The trigger/download procedure is owned
+by [Phase 48](../phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps); do not rebuild
+locally and call that release-artifact acceptance.
+
 ## New or changed defaults
 
 Before a task changes a supported path—or introduces a new one—the active spoke must add or revise

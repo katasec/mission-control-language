@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Make the GitHub Actions Desktop bundle the standard cross-platform build, download it unchanged for local Windows/macOS acceptance, and finish the MAUI Host spike. |
+| **NEXT STEP** | Make the GitHub Actions Windows Desktop bundle the standard build, download it unchanged for local acceptance, and finish the MAUI Host spike. |
 
 ## Active phases
 
