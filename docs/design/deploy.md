@@ -53,18 +53,22 @@ custom domain. All in Azure subscription (workforce), region **uaenorth**, resou
 ```
 
 - **`ca-forge-ui-dev`** — the orchestrator: OIDC identity, Postgres (`forge_rooms`), SignalR
-  (`RoomBroadcaster`, in-proc → **single replica**), all UI.
+  (`RoomBroadcaster`, in-proc with no cross-replica backplane), all UI. It scales from zero to three
+  replicas in the dev-only environment; concurrent replicas can split connected clients until a
+  backplane is introduced.
 - **`ca-forge-runner-dev`** — stateless mission execution (Phase 39.1). Holds the **provider keys**
   (`MCL_API_KEY`/`ANTHROPIC_API_KEY`/`XAI_API_KEY`); the orchestrator holds none. Internal ingress,
-  warm (`minReplicas ≥ 1`).
+  scales from zero to three replicas. A first request after idle accepts runner cold-start latency.
 - **`authbilling_db`** — a second database on the *same* Postgres server (`psql-forge-dev`), a
   separate bounded context for `platform_keys` + `ledger_entries` (Phase 42.6). ForgeUI reads/writes
   it via `ConnectionStrings__AuthBillingConnection`, wired explicitly in `dev/500-app`'s Bicep — not
   derived from `WriteConnection` anymore.
 - **DB migrations are a separate deliberate step**, not coupled to an app deploy: `dev/450-migrate`
   defines the job, `dev/500-app` never runs it automatically. See `forge-infra/README.md`.
-- **One live environment today (dev)**, fronted by `forge.katasec.com`. A separate prod slice is a
-  documented follow-up (38.7 §9), not yet stood up.
+- **One live environment today (dev)**, fronted by `forge.katasec.com`, used solely by Ameer during
+  nights and weekends. Scale-to-zero is intentionally dev-only; revisit it before serving another
+  user or creating a production slice. A separate prod slice is a documented follow-up (38.7 §9),
+  not yet stood up.
 
 ## Which image for which change
 
