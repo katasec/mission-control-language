@@ -7,11 +7,12 @@
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
     <WindowsPackageType>None</WindowsPackageType>
-    <!-- The Supervisor uses `dotnet Host.dll` for its dev child. Enable the Windows App SDK's
-         supported managed bootstrap so that form retains the WinUI runtime initialization that
-         the generated MAUI executable normally supplies. -->
-    <WindowsAppSdkBootstrapInitialize>true</WindowsAppSdkBootstrapInitialize>
-    <WindowsAppSdkUndockedRegFreeWinRTInitialize>true</WindowsAppSdkUndockedRegFreeWinRTInitialize>
+    <!-- This is an unpackaged, self-contained Windows app.  `--self-contained` covers CoreCLR;
+         this property additionally makes the Windows App SDK app-local.  Do not boot against an
+         installed Windows App Runtime: a downloaded Desktop bundle must work on a machine that
+         does not have one. -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
   </PropertyGroup>
 
   <!-- Contracts plus today's concrete host, and deliberately nothing else: no Core, no
