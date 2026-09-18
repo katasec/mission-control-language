@@ -99,7 +99,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. Build and push forge Docker image to ghcr.io ──────────────────────────
+  # ── 3. Build the complete Windows Desktop folder and attach it ──────────────
+  desktop:
+    needs: prepare
+    runs-on: windows-11-arm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+
+      - name: Install GNU Make
+        shell: pwsh
+        run: choco install make --yes --no-progress
+
+      - name: Publish Windows Desktop
+        shell: pwsh
+        run: make OS=Windows_NT desktop-publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package Windows Desktop
+        shell: pwsh
+        run: Compress-Archive -Path dist/forge-desktop -DestinationPath dist/forge-desktop-win-arm64.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: forge-desktop-win-arm64
+          path: dist/forge-desktop-win-arm64.zip
+          if-no-files-found: error
+
+      - name: Upload release asset
+        shell: pwsh
+        run: gh release upload v${{ github.event.inputs.version }} dist/forge-desktop-win-arm64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── 4. Build and push forge Docker image to ghcr.io ──────────────────────────
   docker:
     needs: build
     runs-on: ubuntu-latest
@@ -130,7 +170,7 @@ jobs:
             ghcr.io/katasec/forge:latest
             ghcr.io/katasec/forge:${{ github.event.inputs.version }}
 
-  # ── 4. All binaries + image ready — draft release is open for review ─────────
+  # ── 5. All binaries + image ready — draft release is open for review ─────────
   #
   # The release stays as a draft. Go to GitHub → Releases → Edit → Publish
   # once you've reviewed the attached binaries and release notes.
