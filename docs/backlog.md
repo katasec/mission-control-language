@@ -8,6 +8,7 @@
 | Item | Status / pointer |
 |------|------------------|
 | Explorer OCI dependency/portable-lock migration | Separate from the current [Phase 43.23 ownership end state](phases/phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06). The linked [43.22 reconstruction](phases/phase-43.22-project-mission-reconstruction.md) is historical reference only; its earlier Core/CLI/lock candidate is not an implicit prerequisite of the mission picker or run history. |
+| macOS Desktop native Host composition | Deferred design. Phase 48's MAUI Host and GitHub Actions bundle are Windows-only; choose and document a macOS Host before adding a macOS Desktop artifact. See the [completed Phase 48 record](phases/phase-48-maui-desktop-host-spike_completed.md). |
 | [Phase 22 / 22b — Non-LLM and ONNX experts](phases/phase-22-non-llm-experts.md) | Partial; resume only if an embedded-model use case requires it. |
 | [Phase 26 — Tooling foundation](phases/phase-26-tooling-foundation.md) | Tree-sitter/LSP deferred until external demand. |
 | [Phase 27 — Project assistant missions](phases/phase-27-project-assistant.md) | Design candidate. |

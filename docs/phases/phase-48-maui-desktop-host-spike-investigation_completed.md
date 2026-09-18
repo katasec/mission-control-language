@@ -1,4 +1,4 @@
-# Phase 48 — Windows Application Control investigation
+# Phase 48 — Windows Application Control investigation — completed
 
 > **Status:** security cause resolved on 2026-09-18. Controlled evidence only; not default-path acceptance.
 
