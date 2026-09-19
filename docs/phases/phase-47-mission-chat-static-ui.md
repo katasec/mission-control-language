@@ -1,7 +1,9 @@
 # Phase 47 — Mission Chat static UI
 
 > **Status:** complete — static UI approved by the operator 2026-09-12. It creates no product
-> chat, no durable state, and no backend contract; real integration requires a separate design.
+> chat, no durable state, and no backend contract. Its sole approved integration successor is
+> [Phase 45.5 — Live existing-mission chat](phase-45.5-live-existing-mission-chat.md), which must
+> retain this screen exactly.
 
 ## Why this phase exists
 
