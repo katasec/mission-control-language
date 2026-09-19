@@ -55,8 +55,8 @@ result. A health check alone is insufficient.
 For the MAUI Desktop on Windows and macOS, the published artifact must come from the canonical
 GitHub Actions Desktop build (or its unchanged draft-release attachment). The trigger/download
 procedure is owned by [Phase 48](../phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps);
-do not rebuild locally and call that release-artifact acceptance. Windows is accepted; macOS launch
-acceptance remains pending until a Mac is available.
+do not rebuild locally and call that release-artifact acceptance. Windows and macOS acceptance is
+complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-host-spike_completed.md).
 
 ## New or changed defaults
 
