@@ -2,8 +2,9 @@
 
 > **Status:** authoring, evaluation, publication, and pinned-conversation launch are accepted as
 > of 2026-09-09. The approved [Mission chat experience v1](../design/mission-chat-experience-v1.md)
-> is being proved first as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md);
-> durable/transport integration remains a separately approved follow-on.
+> was proved as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md).
+> **Next is 45.5 only:** make that exact screen live for chat with an existing Approved mission;
+> do not work on mission authoring or redesign the screen.
 
 ## Why this phase exists
 
@@ -106,6 +107,7 @@ durable `AwaitingHands` state, not an authority grant, remote fallback, or succe
 | 45.2 | [Version-to-durable conversation integration](phase-45.2-durable-conversation-turns.md) | Bind Project-owned Approved/Candidate versions and evaluation cases to the accepted generic Core, hands, Host, and Worker path. | Approved/Candidate admission, evaluation reconciliation, and failure/recovery proof accepted. |
 | 45.3 | [Operator Missions experience](phase-45.3-operator-missions-experience.md) | Thin Missions landing: durable conversation list, Approved-version picker, and fixed-profile creation acknowledgement. | Browser-first visual PASS and zero-argument Desktop path PASS. |
 | 45.4 | [Project Explorer authoring](phase-45.4-project-explorer-authoring.md) | Author/edit/evaluate/publish flow in Explorer, with evidence links and publish block. | Browser-first visual PASS and zero-argument Desktop author/evaluate/publish path PASS. |
+| 45.5 | [Live existing-mission chat](phase-45.5-live-existing-mission-chat.md) | Replace only the Phase 47 screen's local stand-in data/actions with a real, version-pinned Mission Conversation. | The exact approved screen sends, receives, replays, and reopens a real existing-mission conversation with no UI drift. |
 
 ## Required gates
 
