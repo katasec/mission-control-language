@@ -358,7 +358,7 @@ Releases are cut via GitHub Actions (`workflow_dispatch`):
    `forge-osx-arm64`, `forge-linux-x64`, and `forge-win-arm64.exe`.
 3. Review the draft on GitHub, then publish.
 
-For the Windows MAUI Desktop bundle, do not make a local release candidate. Trigger/download the
+For the Windows or macOS MAUI Desktop bundle, do not make a local release candidate. Trigger/download the
 canonical **Desktop build** artifact as specified in
 [Phase 48](docs/phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps). The Release
 workflow promotes that exact ZIP and checksum to its draft release; it does not rebuild the bundle.

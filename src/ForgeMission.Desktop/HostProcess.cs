@@ -38,7 +38,7 @@ internal sealed class HostProcess : IHostChannel
         _commands = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.Inheritable);
         _events = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
 
-        var (fileName, dllArgument) = SiblingExecutable.ResolveWindowsMaui(HostProjectName);
+        var (fileName, dllArgument) = SiblingExecutable.ResolveMaui(HostProjectName);
         var startInfo = new ProcessStartInfo(fileName) { UseShellExecute = false };
         if (dllArgument is not null)
             startInfo.ArgumentList.Add(dllArgument);

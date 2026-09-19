@@ -25,20 +25,45 @@ internal static class SiblingExecutable
             (devDllPath is null ? "" : $" and {devDllPath}"));
     }
 
-    // The Windows MAUI Host targets a platform/RID-specific output while the AOT Supervisor's
-    // dev build remains net10.0. Do not fall back to a stale, pre-MAUI net10.0 Host DLL.
-    public static (string FileName, string? DllArgument) ResolveWindowsMaui(string projectName)
+    // The MAUI Host targets a platform/RID-specific output while the AOT Supervisor's dev build
+    // remains net10.0. Do not fall back to a stale, pre-MAUI net10.0 Host DLL.
+    public static (string FileName, string? DllArgument) ResolveMaui(string projectName)
     {
-        if (TryResolvePublished(projectName, out var published))
+        if (TryResolvePublishedMaui(projectName, out var published))
             return published;
 
-        var devDllPath = WindowsMauiDevelopmentDllPath(projectName);
-        if (devDllPath is not null && File.Exists(devDllPath))
-            return (Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet", devDllPath);
+        var developmentPath = MauiDevelopmentPath(projectName);
+        if (developmentPath is not null && File.Exists(developmentPath))
+            return OperatingSystem.IsMacOS()
+                ? (developmentPath, null)
+                : (Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ?? "dotnet", developmentPath);
 
         throw new FileNotFoundException(
-            $"Could not find {projectName} next to this executable, or as a Windows MAUI dev build. " +
-            $"Publish the desktop app into one folder (`make desktop-publish`). Looked for: {devDllPath}");
+            $"Could not find {projectName} next to this executable, or as a MAUI dev build. " +
+            $"Publish the desktop app into one folder (`make desktop-publish`). Looked for: {developmentPath}");
+    }
+
+    private static bool TryResolvePublishedMaui(
+        string projectName,
+        out (string FileName, string? DllArgument) executable)
+    {
+        if (TryResolvePublished(projectName, out executable))
+            return true;
+
+        if (OperatingSystem.IsMacOS())
+        {
+            var appPath = Path.Combine(
+                AppContext.BaseDirectory,
+                $"{projectName}.app",
+                "Contents",
+                "MacOS",
+                projectName);
+            executable = (appPath, null);
+            return File.Exists(appPath);
+        }
+
+        executable = default;
+        return false;
     }
 
     private static bool TryResolvePublished(string projectName, out (string FileName, string? DllArgument) executable)
@@ -58,17 +83,31 @@ internal static class SiblingExecutable
             : Path.Combine(srcDir.FullName, projectName, "bin", tfmDir.Parent!.Name, tfmDir.Name, $"{projectName}.dll");
     }
 
-    private static string? WindowsMauiDevelopmentDllPath(string projectName)
+    private static string? MauiDevelopmentPath(string projectName)
     {
         var tfmDir = new DirectoryInfo(AppContext.BaseDirectory);
         var srcDir = tfmDir.Parent?.Parent?.Parent?.Parent;
-        return srcDir is null
-            ? null
+        if (srcDir is null)
+            return null;
+
+        var configuration = tfmDir.Parent!.Name;
+        return OperatingSystem.IsMacOS()
+            ? Path.Combine(
+                srcDir.FullName,
+                projectName,
+                "bin",
+                configuration,
+                "net10.0-maccatalyst",
+                "maccatalyst-arm64",
+                $"{projectName}.app",
+                "Contents",
+                "MacOS",
+                projectName)
             : Path.Combine(
                 srcDir.FullName,
                 projectName,
                 "bin",
-                tfmDir.Parent!.Name,
+                configuration,
                 "net10.0-windows10.0.19041.0",
                 "win-arm64",
                 $"{projectName}.dll");

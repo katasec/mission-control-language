@@ -5,9 +5,12 @@ UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_S),Darwin)
   ifeq ($(UNAME_M),arm64)
     RID := osx-arm64
+    DESKTOP_HOST_RID := maccatalyst-arm64
   else
     RID := osx-x64
+    DESKTOP_HOST_RID := maccatalyst-x64
   endif
+  DESKTOP_HOST_TFM := net10.0-maccatalyst
 else ifeq ($(UNAME_S),Linux)
   ifeq ($(UNAME_M),aarch64)
     RID := linux-arm64
@@ -18,6 +21,8 @@ endif
 
 ifeq ($(OS),Windows_NT)
   RID := win-arm64
+  DESKTOP_HOST_TFM := net10.0-windows10.0.19041.0
+  DESKTOP_HOST_RID := win-arm64
   SHELL := bash
 endif
 
@@ -71,13 +76,14 @@ dev-down: ## Stop local dev environment (keeps data)
 dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
 	./scripts/dev-reset.sh
 
-desktop-publish: ## Publish the desktop app (Application Host + supervisor + native host) as one self-contained folder
+desktop-publish: ## Publish the desktop app (Application Host + supervisor + native MAUI host) as one self-contained folder
+	@test -n "$(DESKTOP_HOST_TFM)" || (echo "desktop-publish is supported on Windows and macOS only." >&2; exit 1)
 	rm -rf $(DESKTOP_DIR)
 	dotnet publish $(APPLICATION_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	# Last on purpose: publishing into a shared folder prunes files a project published before but
 	# no longer owns; keep the native shell last so its framework assets are present in the bundle.
-	dotnet publish $(DESKTOP_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
+	dotnet publish $(DESKTOP_HOST) -c Release -f $(DESKTOP_HOST_TFM) -r $(DESKTOP_HOST_RID) --self-contained -o $(DESKTOP_DIR)
 
 ifeq ($(OS),Windows_NT)
 	$(NORMALIZE_AOT_PE) -Image $(DESKTOP_SUPERVISOR_EXE)

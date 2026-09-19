@@ -52,10 +52,11 @@ zero-argument launch, absent external configuration changes, the normal route an
 provenance, the Project action initiated through the product surface, and the durable/user-visible
 result. A health check alone is insufficient.
 
-For the Windows MAUI Desktop, the published artifact must come from the canonical GitHub Actions
-Desktop build (or its unchanged draft-release attachment). The trigger/download procedure is owned
-by [Phase 48](../phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps); do not rebuild
-locally and call that release-artifact acceptance.
+For the MAUI Desktop on Windows and macOS, the published artifact must come from the canonical
+GitHub Actions Desktop build (or its unchanged draft-release attachment). The trigger/download
+procedure is owned by [Phase 48](../phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps);
+do not rebuild locally and call that release-artifact acceptance. Windows is accepted; macOS launch
+acceptance remains pending until a Mac is available.
 
 ## New or changed defaults
 
