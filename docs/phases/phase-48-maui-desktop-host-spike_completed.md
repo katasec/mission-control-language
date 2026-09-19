@@ -1,7 +1,7 @@
 # Phase 48 — MAUI Desktop Host spike — completed
 
-> **Completed 2026-09-19.** This Windows-only host replacement preserved the Application Host,
-> Presentation UI, Supervisor, and pipe protocol. The active handoff is the compact
+> **Completed 2026-09-19.** This Windows and macOS host replacement preserved the Application Host,
+> Presentation UI, Supervisor, and pipe protocol. The compact historical handoff is the
 > [Phase 48 hub](phase-48-maui-desktop-host-spike.md).
 
 ## Why this phase exists
@@ -15,16 +15,16 @@ Blazor UI migration.
 
 | Area | Decision |
 |---|---|
-| Native executable | `ForgeMission.Desktop.Host` becomes the ordinary Windows MAUI executable. Its name stays unchanged, so the Desktop Supervisor and its child-process wiring stay unchanged. |
+| Native executable | `ForgeMission.Desktop.Host` is the ordinary Windows MAUI executable and the executable inside the Mac Catalyst `Forge.app` bundle. Its name stays unchanged, so the Desktop Supervisor and its child-process wiring stay unchanged. |
 | Rendered content | MAUI `WebView` shows Host-owned Booting/Failed HTML first and navigates to the existing dynamic loopback URL only when the Supervisor sends `Navigate`. `ForgeMission.Application.Host` remains the sole embedded web server and continues serving `ForgeMission.Presentation` unchanged. |
 | Host seam | `MauiDesktopHost` implements the existing `IDesktopHost` content/navigation/retry seam. MAUI owns its own application loop, so `IDesktopHost.Run()` is removed rather than simulated. |
 | Retry | The Failed page navigates to the reserved `forge-retry://request` URL. The MAUI WebView cancels that navigation and emits the existing `RetryRequested` pipe event. No additional IPC or WebView message bridge is introduced. |
-| Scope | Windows only (`net10.0-windows10.0.19041.0`, `win-arm64` on this machine). The MAUI host is managed/self-contained, including the Windows App SDK app-local deployment; it is not Native AOT. Existing non-Windows host support is outside this spike. |
-| Installer trial | A WiX MSI packages the already-published `dist/forge-desktop` folder without changing its files. It is an installation/distribution experiment only: it neither signs the package nor establishes Smart App Control trust. |
+| Scope | Windows (`net10.0-windows10.0.19041.0`, `win-arm64`) and macOS (`net10.0-maccatalyst`, `maccatalyst-arm64`). The MAUI host is managed/self-contained, including Windows App SDK app-local deployment; it is not Native AOT. macOS publishes `Forge.app` beside the Supervisor. |
+| Installer trial | A WiX MSI packages the already-published `dist/forge-desktop` folder without changing its files. It is an installation/distribution experiment only. |
 | In-process trial | `ForgeMission.Desktop.Maui` is a separate Windows-only executable that owns the MAUI window and starts the loopback Application Host in-process. It replaces neither the accepted legacy process topology nor the pipe Host during the spike. Reversal is deleting this project and its installer selection. |
-| Standard Desktop build | GitHub Actions **Desktop build** is the source of testable Desktop bundles. It is manually runnable on any branch or commit and reusable by Release; it publishes the complete Windows sibling bundle, retains it as a workflow artifact, and records its SHA-256. `make desktop-publish` is the implementation Actions calls, not a separate release source. The same MAUI Host is being added as a macOS artifact target; only its on-Mac launch acceptance remains deferred. |
-| Windows AOT identity | Native AOT embeds a linker timestamp in the Supervisor PE header and debug-directory entries. The Windows publish step canonicalizes only those parsed fields, rejects an unexpected PE layout or byte change, and checks a clean repeat publish is byte-identical. This is not signing and does not claim a changed program body has the same Windows policy verdict. |
-| Local acceptance artifact | For a candidate commit, Windows acceptance uses the unmodified `forge-desktop-win-arm64` artifact from **Desktop build**. For a release, it uses the same workflow's ZIP and checksum attached to the draft release. A local rebuild, copied executable, or overridden runtime route is not acceptance. The macOS MAUI artifact follows the same workflow and release path; it is not accepted until it is launched on a Mac. |
+| Standard Desktop build | GitHub Actions **Desktop build** is the source of testable Desktop bundles. It is manually runnable on any branch or commit and reusable by Release; it publishes the complete sibling bundle for Windows and macOS, retains each as a workflow artifact, and records its SHA-256. `make desktop-publish` is the implementation Actions calls, not a separate release source. |
+| Windows AOT identity | Native AOT embeds a linker timestamp in the Supervisor PE header and debug-directory entries. The Windows publish step canonicalizes only those parsed fields, rejects an unexpected PE layout or byte change, and checks a clean repeat publish is byte-identical. |
+| Local acceptance artifact | For a candidate commit, acceptance uses the unmodified `forge-desktop-win-arm64` or `forge-desktop-osx-arm64` artifact from **Desktop build**. For a release, it uses the same workflow's ZIP and checksum attached to the draft release. A local rebuild, copied executable, or overridden runtime route is not acceptance. |
 
 ## Architecture and gates
 
@@ -35,18 +35,18 @@ Blazor UI migration.
 | Engineering Philosophy | **PASS.** One MAUI host owns UI-thread dispatch and WebView behavior. The fixed two-command/one-event protocol is unchanged; no generic IPC, configuration switch, embedded server, or lifecycle abstraction is added. |
 | Desktop interaction principles / UI system | **PASS.** No ForgeUI markup, interaction, design token, or reference surface changes. The existing application URL is rendered through the native WebView; packaged default-path inspection remains required. |
 | Native AOT | **Exception, bounded.** MAUI Windows runs managed CoreCLR/ReadyToRun rather than Native AOT. The AOT rule remains unchanged for the Forge CLI, Supervisor, and Application Host. This spike adds no reflection-based application code. |
-| Windows Supervisor identity | On Windows only, `make desktop-publish` normalizes the Desktop Supervisor's COFF build timestamp and every matching `IMAGE_DEBUG_DIRECTORY` timestamp after all three publish operations. The PowerShell normalizer validates the PE header, debug data directory, RVA-to-file mapping, and timestamp equality; it writes a fixed timestamp to a copy and replaces the image only after byte-diff validation. A second isolated Supervisor publish is normalized and must hash-identically match the shipped Supervisor. This does not sign an image or alter the Supervisor/Host/Application Host topology. |
+| Windows Supervisor identity | On Windows only, `make desktop-publish` normalizes the Desktop Supervisor's COFF build timestamp and every matching `IMAGE_DEBUG_DIRECTORY` timestamp after all three publish operations. The PowerShell normalizer validates the PE header, debug data directory, RVA-to-file mapping, and timestamp equality; it writes a fixed timestamp to a copy and replaces the image only after byte-diff validation. A second isolated Supervisor publish is normalized and must hash-identically match the shipped Supervisor. This preserves the Supervisor/Host/Application Host topology. |
 | Windows delivery | **Desktop build** owns the only Windows packaging recipe. Release calls it, then attaches that exact ZIP and checksum to its draft release. The actionable trigger/download procedure is below. |
-| Default path | **Applies.** Publish the three sibling executables for `win-arm64` into `dist/forge-desktop`; run `ForgeMission.Desktop.exe` with zero arguments and no `FORGE_*` overrides. Passing evidence must show boot content, dynamic-loopback navigation to the existing UI, and cleanup when the window closes. The MAUI Host must use the Windows App SDK's app-local self-contained deployment, rather than bootstrap an installed runtime. On 2026-09-17, Windows Application Control blocked the unsigned published Supervisor before process launch; this is an environment-policy observation, not MAUI acceptance. |
+| Default path | **PASS.** The canonical Windows and macOS artifacts launch `ForgeMission.Desktop` with zero arguments and no `FORGE_*` overrides. Windows evidence shows boot content, dynamic-loopback navigation to the existing UI, and child cleanup; macOS evidence shows the downloaded Supervisor launching the staged `Forge.app` Host. |
 
 ## Tasks
 
 | Task | Status | Done when |
 |---|---|---|
-| Replace the Photino implementation with the MAUI host | In progress | The existing host executable builds and runs the unchanged inherited-pipe protocol with an ordinary MAUI WebView. |
+| Replace the Photino implementation with the MAUI host | Verified | The existing host executable builds and runs the unchanged inherited-pipe protocol with an ordinary MAUI WebView. |
 | Stabilize the Windows Supervisor image identity | Verified | `make desktop-publish` on Windows fail-closes unless the Supervisor is a valid PE whose COFF and debug-directory timestamps match, normalizes only those timestamp fields, and matches a separately published-and-normalized Supervisor byte-for-byte. Non-Windows publishes remain unchanged. |
 | Standardize the Windows Desktop bundle | Verified | The reusable Desktop build workflow builds the complete Windows bundle, runs the Windows AOT identity guard, and uploads a named artifact and SHA-256 sidecar. Release attaches that exact artifact without rebuilding it; the procedure below is the sole future-agent instruction. |
-| Publish the macOS MAUI Desktop bundle | In progress | Publish the same MAUI Host as a `maccatalyst-arm64` artifact from GitHub Actions. Do not introduce a second Host architecture; defer only on-Mac launch acceptance. |
+| Publish the macOS MAUI Desktop bundle | Verified | The same MAUI Host publishes as a `maccatalyst-arm64` artifact from GitHub Actions and the downloaded Supervisor launches it on a Mac. |
 | Default-path acceptance | Verified | The published zero-argument Windows artifact visibly starts the MAUI Host, uses the Supervisor-owned local Conversation tunnel, reaches the existing Forge UI, and exits through a normal MAUI window-close message with no remaining Host, Application Host, or port-forward child. |
 
 ## Standard bundle steps
@@ -80,6 +80,7 @@ Blazor UI migration.
 - Local runtime bootstrap was fixed in `forge-infra` `main` commits `934f198`, `7966e06`, and `948f2d5`: native Windows `kubectl` now receives complete base64 Secret YAML on stdin rather than Git Bash's unsupported `/dev/stdin` pseudo-file, and the verifier probe ID has a portable fallback. On 2026-09-19 the canonical target passed both verifier roles and their cleanup barrier, rolled out `conversation-host` and `mission-worker`, and the Host's `/health` probe returned 200.
 - The unchanged downloaded Desktop bundle was then launched with zero arguments. Its live tree was Supervisor → MAUI Host, Application Host, and Supervisor-owned `kubectl port-forward --address 127.0.0.1 --namespace forge-durable service/conversation-host 18080:8080`; `http://127.0.0.1:18080/health` returned 200, with zero new Code Integrity or Application crash events. The operator visually confirmed the Forge UI rendered.
 - Final cleanup evidence: the same downloaded bundle was launched again with the Conversation health endpoint returning 200. Sending `CloseMainWindow()` to the MAUI Host returned `true`; within 20 seconds the Supervisor and all four children (MAUI Host, Application Host, `kubectl` port-forward, and `conhost`) were gone, and no listener remained on `127.0.0.1:18080`.
+- GitHub Actions **Desktop build** run [`35463430366`](https://github.com/katasec/mission-control-language/actions/runs/35463430366) passed its Windows ARM64 and macOS ARM64 bundle jobs. The downloaded macOS artifact was launched through `ForgeMission.Desktop` with zero arguments on a Mac; the operator confirmed it worked.
 
 ## Investigation record
 

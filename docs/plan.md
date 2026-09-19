@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Publish and verify the macOS MAUI Desktop artifact through GitHub Actions; on-Mac launch acceptance follows when a Mac is available. |
+| **NEXT STEP** | Continue the remaining active Phase 45 and Phase 46 work. Phase 48 is complete. |
 
 ## Active phases
 
@@ -16,7 +16,6 @@
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Authoring, evaluation, publication, and pinned-conversation launch are accepted; eventual Mission Chat integration follows the separately scoped Phase 47 UI prototype. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
-| [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Publish the same MAUI Desktop Host for Windows ARM64 and macOS ARM64 from the canonical GitHub Actions workflow. | Windows default-path accepted; macOS artifact publication in progress, with launch acceptance deferred until a Mac is available. |
 
 ## Design docs
 
