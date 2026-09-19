@@ -127,8 +127,8 @@ jobs:
           gh release upload v${{ github.event.inputs.version }} \
             dist/forge-desktop-win-arm64.zip \
             dist/forge-desktop-win-arm64.zip.sha256 \
-            dist/forge-desktop-osx-arm64.tar.gz \
-            dist/forge-desktop-osx-arm64.tar.gz.sha256
+            dist/forge-desktop-osx-arm64.zip \
+            dist/forge-desktop-osx-arm64.zip.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

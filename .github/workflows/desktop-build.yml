@@ -74,15 +74,15 @@ jobs:
 
       - name: Package macOS Desktop
         run: |
-          archive='dist/forge-desktop-osx-arm64.tar.gz'
-          tar -C dist -czf "$archive" forge-desktop
-          shasum -a 256 "$archive" | awk '{ print $1 "  forge-desktop-osx-arm64.tar.gz" }' > "$archive.sha256"
+          archive='dist/forge-desktop-osx-arm64.zip'
+          ditto -c -k --sequesterRsrc --keepParent dist/forge-desktop "$archive"
+          shasum -a 256 "$archive" | awk '{ print $1 "  forge-desktop-osx-arm64.zip" }' > "$archive.sha256"
 
       - name: Upload macOS Desktop bundle
         uses: actions/upload-artifact@v7
         with:
           name: forge-desktop-osx-arm64
           path: |
-            dist/forge-desktop-osx-arm64.tar.gz
-            dist/forge-desktop-osx-arm64.tar.gz.sha256
+            dist/forge-desktop-osx-arm64.zip
+            dist/forge-desktop-osx-arm64.zip.sha256
           if-no-files-found: error

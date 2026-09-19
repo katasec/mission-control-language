@@ -19,9 +19,9 @@
 
 1. Start **Desktop build** in GitHub Actions for the candidate commit. It produces
    `forge-desktop-win-arm64` and `forge-desktop-osx-arm64`.
-2. Download either artifact unchanged with `gh run download <run-id> -n <artifact-name>`. The
-   Windows bundle is a ZIP; the macOS bundle is a `.tar.gz` to preserve executable permissions.
-   Verify the outer SHA-256 against GitHub, then the archive checksum against its `.sha256` sidecar.
+2. Download either artifact unchanged with `gh run download <run-id> -n <artifact-name>`. Both
+   bundles are ZIPs. Verify the outer SHA-256 against GitHub, then the archive checksum against
+   its `.sha256` sidecar.
 3. Launch the platform's `ForgeMission.Desktop` with zero arguments and no `FORGE_*` overrides.
    The normal local dependency is `make -C ~/progs/forge-infra 350-conversation-kind-up`; the
    Supervisor owns its `kubectl port-forward` to `127.0.0.1:18080`.

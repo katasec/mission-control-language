@@ -57,9 +57,8 @@ Blazor UI migration.
    locally.
 2. Download the candidate artifact with `gh run download <run-id> -n forge-desktop-win-arm64` or
    `gh run download <run-id> -n forge-desktop-osx-arm64`. For a release, download the matching
-   archive and sidecar made by the same workflow. The Windows bundle is a ZIP and the macOS bundle
-   is a `.tar.gz`, preserving application executable permissions. Verify the archive hash against
-   its `.sha256` sidecar before extracting without changing files.
+   archive and sidecar made by the same workflow. Both bundles are ZIPs. Verify the archive hash
+   against its `.sha256` sidecar before extracting without changing files.
 3. Launch the downloaded `ForgeMission.Desktop` with zero arguments and no `FORGE_*` overrides.
    Record the default-path result: boot state, navigation to the loopback UI, and child cleanup.
 4. Only after that observation may the same commit's Desktop bundle be considered for distribution.
