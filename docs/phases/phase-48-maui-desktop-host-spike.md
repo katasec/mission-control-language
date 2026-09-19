@@ -29,4 +29,20 @@
 ## Routing
 
 Windows default-path acceptance is complete. macOS uses the same MAUI Host and is published by the
-same GitHub Actions workflow; its on-Mac launch acceptance is the only deferred check.
+same GitHub Actions workflow. Its bundle-and-Supervisor launch smoke is complete; full macOS
+default-path acceptance remains deferred for normal sign-in and Conversation Runtime readiness.
+
+## macOS bundle-layout repair
+
+Mac Catalyst defaults to creating an installer package during `dotnet publish`; its direct
+application output is `Forge.app`. The Host publish sets `CreatePackage=false` so the published
+Desktop folder contains that app bundle beside the Supervisor. `make desktop` remains the sole
+local entry point, and the Supervisor starts
+`Forge.app/Contents/MacOS/ForgeMission.Desktop.Host` through the existing inherited-pipe protocol.
+
+This is a Type-2 local packaging repair. It adds no public entry point, identity, runtime route,
+service, or UI change; visual-reference and Presentation-parity gates are N/A. A failed Host
+publish fails the build rather than emitting a bundle that claims to be runnable. Done when a fresh
+`make desktop` leaves the expected app bundle beside `ForgeMission.Desktop`, and launching
+that Supervisor starts the Host. Full macOS default-path acceptance remains the existing later
+check, including normal sign-in and Conversation Runtime readiness.

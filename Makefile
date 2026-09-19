@@ -1,6 +1,7 @@
 # Detect platform RID for single-file publish
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
+DESKTOP_HOST_PUBLISH_OPTIONS :=
 
 ifeq ($(UNAME_S),Darwin)
   ifeq ($(UNAME_M),arm64)
@@ -11,6 +12,8 @@ ifeq ($(UNAME_S),Darwin)
     DESKTOP_HOST_RID := maccatalyst-x64
   endif
   DESKTOP_HOST_TFM := net10.0-maccatalyst
+  DESKTOP_HOST_PUBLISH_OPTIONS := -p:CreatePackage=false
+  DESKTOP_HOST_APP = $(DESKTOP_HOST)/bin/Release/$(DESKTOP_HOST_TFM)/$(DESKTOP_HOST_RID)/Forge.app
 else ifeq ($(UNAME_S),Linux)
   ifeq ($(UNAME_M),aarch64)
     RID := linux-arm64
@@ -78,12 +81,18 @@ dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
 
 desktop-publish: ## Publish the desktop app (Application Host + supervisor + native MAUI host) as one self-contained folder
 	@test -n "$(DESKTOP_HOST_TFM)" || (echo "desktop-publish is supported on Windows and macOS only." >&2; exit 1)
+	dotnet workload restore $(DESKTOP_HOST)/ForgeMission.Desktop.Host.csproj
 	rm -rf $(DESKTOP_DIR)
 	dotnet publish $(APPLICATION_HOST) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	dotnet publish $(DESKTOP_SUPERVISOR) -c Release -r $(RID) --self-contained -o $(DESKTOP_DIR)
 	# Last on purpose: publishing into a shared folder prunes files a project published before but
 	# no longer owns; keep the native shell last so its framework assets are present in the bundle.
-	dotnet publish $(DESKTOP_HOST) -c Release -f $(DESKTOP_HOST_TFM) -r $(DESKTOP_HOST_RID) --self-contained -o $(DESKTOP_DIR)
+	dotnet publish $(DESKTOP_HOST) -c Release -f $(DESKTOP_HOST_TFM) -r $(DESKTOP_HOST_RID) --self-contained $(DESKTOP_HOST_PUBLISH_OPTIONS) -o $(DESKTOP_DIR)
+
+ifeq ($(UNAME_S),Darwin)
+	@test -d "$(DESKTOP_HOST_APP)" || (echo "Expected macOS MAUI app bundle was not produced: $(DESKTOP_HOST_APP)" >&2; exit 1)
+	ditto "$(DESKTOP_HOST_APP)" "$(DESKTOP_DIR)/Forge.app"
+endif
 
 ifeq ($(OS),Windows_NT)
 	$(NORMALIZE_AOT_PE) -Image $(DESKTOP_SUPERVISOR_EXE)

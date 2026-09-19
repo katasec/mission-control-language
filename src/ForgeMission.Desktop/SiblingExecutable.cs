@@ -54,7 +54,7 @@ internal static class SiblingExecutable
         {
             var appPath = Path.Combine(
                 AppContext.BaseDirectory,
-                $"{projectName}.app",
+                "Forge.app",
                 "Contents",
                 "MacOS",
                 projectName);
