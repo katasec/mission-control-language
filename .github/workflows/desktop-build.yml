@@ -24,10 +24,6 @@ jobs:
         shell: pwsh
         run: choco install make --yes --no-progress
 
-      - name: Restore MAUI workload
-        shell: pwsh
-        run: dotnet workload restore src/ForgeMission.Desktop.Host/ForgeMission.Desktop.Host.csproj
-
       - name: Publish Windows Desktop
         shell: pwsh
         run: make OS=Windows_NT desktop-publish
@@ -62,9 +58,6 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
-
-      - name: Restore MAUI workload
-        run: dotnet workload restore src/ForgeMission.Desktop.Host/ForgeMission.Desktop.Host.csproj
 
       - name: Publish macOS Desktop
         run: make desktop-publish
