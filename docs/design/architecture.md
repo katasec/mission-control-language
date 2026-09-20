@@ -1,9 +1,5 @@
 # MCL — Architecture
 
-For a source-derived, component-level orientation map, see the
-[Forge component landscape](component-landscape.md). It supplements this
-document; this document remains the authority for architecture decisions.
-
 ## Guiding principle
 
 The direct IChatClient adapter is the only LLM integration point. It does not appear above the adapter layer. The parser, AST, pipeline runner, and CLI know nothing about the underlying provider.
