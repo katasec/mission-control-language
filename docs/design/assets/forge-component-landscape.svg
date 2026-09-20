@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1480" viewBox="0 0 1800 1480" role="img" aria-labelledby="title desc">
+  <title id="title">Forge component landscape</title>
+  <desc id="desc">A layered architecture diagram of Forge's client surfaces, local Desktop path, durable conversation path, hosted platform, shared mission runtime, and external systems.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3e5d7d"/></marker>
+    <style>
+      .title { font: 700 38px Arial, sans-serif; fill: #16395f; }
+      .subtitle { font: 20px Arial, sans-serif; fill: #49627e; }
+      .section { font: 700 19px Arial, sans-serif; fill: #16395f; letter-spacing: .5px; }
+      .small { font: 15px Arial, sans-serif; fill: #40546a; }
+      .node-title { font: 700 16px Arial, sans-serif; fill: #153553; text-anchor: middle; }
+      .node-sub { font: 13px Arial, sans-serif; fill: #49627e; text-anchor: middle; }
+      .external-title { font: 700 15px Arial, sans-serif; fill: #4b5563; text-anchor: middle; }
+      .line { fill: none; stroke: #3e5d7d; stroke-width: 2.4; marker-end: url(#arrow); }
+      .contract { fill: none; stroke: #60758c; stroke-width: 2; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+      .label { font: 12px Arial, sans-serif; fill: #3e5d7d; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1480" fill="#fbfcfe"/>
+  <text x="900" y="58" class="title" text-anchor="middle">FORGE COMPONENT LANDSCAPE</text>
+  <text x="900" y="88" class="subtitle" text-anchor="middle">Source-derived ownership map — runtime paths, contracts, and external boundaries</text>
+
+  <!-- client surfaces -->
+  <rect x="35" y="118" width="1730" height="180" rx="16" fill="#eef5ff" stroke="#83aee3" stroke-width="2"/>
+  <text x="64" y="151" class="section">CLIENT SURFACES</text>
+  <text x="64" y="176" class="small">Where people and compatible clients enter Forge</text>
+  <g>
+    <rect x="70" y="204" width="225" height="66" rx="10" fill="#fff" stroke="#83aee3"/><text x="182" y="232" class="node-title">Forge CLI</text><text x="182" y="253" class="node-sub">Native-AOT command surface</text>
+    <rect x="325" y="204" width="225" height="66" rx="10" fill="#fff" stroke="#83aee3"/><text x="437" y="232" class="node-title">Desktop Supervisor</text><text x="437" y="253" class="node-sub">published process owner</text>
+    <rect x="580" y="204" width="225" height="66" rx="10" fill="#fff" stroke="#83aee3"/><text x="692" y="232" class="node-title">Presentation</text><text x="692" y="253" class="node-sub">Blazor WASM rendering</text>
+    <rect x="835" y="204" width="225" height="66" rx="10" fill="#fff" stroke="#83aee3"/><text x="947" y="232" class="node-title">ForgeUI</text><text x="947" y="253" class="node-sub">authenticated Rooms browser host</text>
+    <rect x="1090" y="204" width="225" height="66" rx="10" fill="#fff" stroke="#83aee3"/><text x="1202" y="232" class="node-title">Conversation Presentation</text><text x="1202" y="253" class="node-sub">shared activity renderer</text>
+    <rect x="1345" y="204" width="350" height="66" rx="10" fill="#fff" stroke="#83aee3"/><text x="1520" y="232" class="node-title">OpenAI / Anthropic-compatible clients</text><text x="1520" y="253" class="node-sub">served mission consumers</text>
+  </g>
+
+  <!-- local desktop -->
+  <rect x="35" y="330" width="1730" height="295" rx="16" fill="#f0fbf5" stroke="#68b88c" stroke-width="2"/>
+  <text x="64" y="364" class="section">LOCAL DESKTOP APPLICATION</text>
+  <text x="64" y="389" class="small">Supervisor-managed shell, loopback application boundary, and scoped local authority</text>
+  <g>
+    <rect x="70" y="418" width="220" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="180" y="447" class="node-title">Desktop Contracts</text><text x="180" y="468" class="node-sub">host abstraction + pipe protocol</text>
+    <rect x="320" y="418" width="220" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="430" y="447" class="node-title">Desktop Host</text><text x="430" y="468" class="node-sub">disposable native process</text>
+    <rect x="570" y="418" width="220" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="680" y="447" class="node-title">Desktop Photino</text><text x="680" y="468" class="node-sub">replaceable WebView adapter</text>
+    <rect x="820" y="418" width="220" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="930" y="447" class="node-title">Orchestration</text><text x="930" y="468" class="node-sub">endpoint resolution + readiness</text>
+    <rect x="1070" y="418" width="280" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="1210" y="447" class="node-title">Application Host</text><text x="1210" y="468" class="node-sub">loopback HTTP, SSE, static assets</text>
+    <rect x="1380" y="418" width="315" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="1537" y="447" class="node-title">Application Transport</text><text x="1537" y="468" class="node-sub">typed actions, events, JSON channel</text>
+    <rect x="390" y="525" width="350" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="565" y="554" class="node-title">Application</text><text x="565" y="575" class="node-sub">Projects · missions · conversations · runs · sessions</text>
+    <rect x="780" y="525" width="350" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="955" y="554" class="node-title">Client Runtime (Bob)</text><text x="955" y="575" class="node-sub">policy · confirmation · execution · audit</text>
+    <rect x="1170" y="525" width="350" height="70" rx="10" fill="#fff" stroke="#68b88c"/><text x="1345" y="554" class="node-title">Desktop Installer</text><text x="1345" y="575" class="node-sub">Windows ARM64 MSI packaging adjunct</text>
+  </g>
+
+  <!-- conversation -->
+  <rect x="35" y="657" width="1730" height="230" rx="16" fill="#f7f1ff" stroke="#9c7bd7" stroke-width="2"/>
+  <text x="64" y="691" class="section">DURABLE CONVERSATION CONTEXT</text>
+  <text x="64" y="716" class="small">Canonical ordering and replay are separate from provider-backed mission work</text>
+  <g>
+    <rect x="100" y="748" width="270" height="72" rx="10" fill="#fff" stroke="#9c7bd7"/><text x="235" y="778" class="node-title">Conversation Contracts</text><text x="235" y="800" class="node-sub">versioned commands, events, projections</text>
+    <rect x="455" y="748" width="340" height="72" rx="10" fill="#fff" stroke="#9c7bd7"/><text x="625" y="778" class="node-title">Conversation Host</text><text x="625" y="800" class="node-sub">Orleans state · HTTP/SSE · durable facts</text>
+    <rect x="880" y="748" width="340" height="72" rx="10" fill="#fff" stroke="#9c7bd7"/><text x="1050" y="778" class="node-title">Conversation Worker</text><text x="1050" y="800" class="node-sub">queue-driven reasoning + progress</text>
+    <rect x="1305" y="748" width="360" height="72" rx="10" fill="#fff" stroke="#9c7bd7"/><text x="1485" y="778" class="node-title">Mission Hands hand-off</text><text x="1485" y="800" class="node-sub">request fact → Bob result → continuation</text>
+  </g>
+
+  <!-- hosted -->
+  <rect x="35" y="919" width="1730" height="250" rx="16" fill="#fff8e9" stroke="#e2ad48" stroke-width="2"/>
+  <text x="64" y="953" class="section">HOSTED PLATFORM AND COLLABORATION</text>
+  <text x="64" y="978" class="small">Independent account, compute, and Rooms bounded contexts connected through explicit contracts</text>
+  <g>
+    <rect x="75" y="1010" width="240" height="70" rx="10" fill="#fff" stroke="#e2ad48"/><text x="195" y="1039" class="node-title">Forge API</text><text x="195" y="1060" class="node-sub">platform-key execution edge</text>
+    <rect x="345" y="1010" width="240" height="70" rx="10" fill="#fff" stroke="#e2ad48"/><text x="465" y="1039" class="node-title">Billing</text><text x="465" y="1060" class="node-sub">keys · pricing · ledger</text>
+    <rect x="615" y="1010" width="240" height="70" rx="10" fill="#fff" stroke="#e2ad48"/><text x="735" y="1039" class="node-title">Runner Contracts</text><text x="735" y="1060" class="node-sub">typed request/result/progress wire</text>
+    <rect x="885" y="1010" width="240" height="70" rx="10" fill="#fff" stroke="#e2ad48"/><text x="1005" y="1039" class="node-title">Mission Runner</text><text x="1005" y="1060" class="node-sub">stateless execution host</text>
+    <rect x="1155" y="1010" width="240" height="70" rx="10" fill="#fff" stroke="#e2ad48"/><text x="1275" y="1039" class="node-title">Rooms</text><text x="1275" y="1060" class="node-sub">domain facts + invariants</text>
+    <rect x="1425" y="1010" width="270" height="70" rx="10" fill="#fff" stroke="#e2ad48"/><text x="1560" y="1039" class="node-title">Rooms Data</text><text x="1560" y="1060" class="node-sub">EF Core persistence seam</text>
+    <rect x="650" y="1100" width="500" height="42" rx="10" fill="#fff" stroke="#e2ad48"/><text x="900" y="1127" class="node-title">Forge Serve — shared OpenAI / Anthropic-compatible HTTP wire</text>
+  </g>
+
+  <!-- shared runtime -->
+  <rect x="35" y="1201" width="1210" height="230" rx="16" fill="#eef3f8" stroke="#8496aa" stroke-width="2"/>
+  <text x="64" y="1235" class="section">SHARED MISSION LANGUAGE AND EXECUTION</text>
+  <text x="64" y="1260" class="small">Provider-neutral MCL semantics and bounded adapters reused by CLI, Worker, Runner, and serving hosts</text>
+  <g>
+    <rect x="75" y="1290" width="200" height="70" rx="10" fill="#fff" stroke="#8496aa"/><text x="175" y="1319" class="node-title">Parser</text><text x="175" y="1340" class="node-sub">pure MCL AST + diagnostics</text>
+    <rect x="300" y="1290" width="200" height="70" rx="10" fill="#fff" stroke="#8496aa"/><text x="400" y="1319" class="node-title">Mission Core</text><text x="400" y="1340" class="node-sub">resolve · pipeline · tools</text>
+    <rect x="525" y="1290" width="200" height="70" rx="10" fill="#fff" stroke="#8496aa"/><text x="625" y="1319" class="node-title">Chat Clients</text><text x="625" y="1340" class="node-sub">provider SDK boundary</text>
+    <rect x="750" y="1290" width="200" height="70" rx="10" fill="#fff" stroke="#8496aa"/><text x="850" y="1319" class="node-title">Scout</text><text x="850" y="1340" class="node-sub">source-attributed search</text>
+    <rect x="975" y="1290" width="200" height="70" rx="10" fill="#fff" stroke="#8496aa"/><text x="1075" y="1319" class="node-title">Docker Support</text><text x="1075" y="1340" class="node-sub">narrow local helper</text>
+  </g>
+
+  <!-- external -->
+  <rect x="1275" y="1201" width="490" height="230" rx="16" fill="#f4f5f7" stroke="#a6adb7" stroke-width="2"/>
+  <text x="1304" y="1235" class="section">EXTERNAL SYSTEMS</text>
+  <g>
+    <rect x="1305" y="1270" width="190" height="40" rx="8" fill="#fff" stroke="#a6adb7"/><text x="1400" y="1296" class="external-title">Model providers</text>
+    <rect x="1520" y="1270" width="210" height="40" rx="8" fill="#fff" stroke="#a6adb7"/><text x="1625" y="1296" class="external-title">xAI search API</text>
+    <rect x="1305" y="1325" width="190" height="40" rx="8" fill="#fff" stroke="#a6adb7"/><text x="1400" y="1351" class="external-title">Service Bus</text>
+    <rect x="1520" y="1325" width="210" height="40" rx="8" fill="#fff" stroke="#a6adb7"/><text x="1625" y="1351" class="external-title">Conversation Table / Blob</text>
+    <rect x="1305" y="1380" width="190" height="40" rx="8" fill="#fff" stroke="#a6adb7"/><text x="1400" y="1406" class="external-title">PostgreSQL stores</text>
+    <rect x="1520" y="1380" width="210" height="40" rx="8" fill="#fff" stroke="#a6adb7"/><text x="1625" y="1406" class="external-title">Local workspace / Docker</text>
+  </g>
+
+  <!-- main paths -->
+  <path class="line" d="M437 270 V385 H1210 V418"/><text x="825" y="378" class="label">starts and supplies resolved addresses</text>
+  <path class="contract" d="M437 270 V390 H180 V418"/><path class="line" d="M180 488 H430"/><path class="contract" d="M430 488 H680"/>
+  <path class="line" d="M692 270 V382 H1537 V418"/><text x="1115" y="322" class="label">typed actions / SSE events</text>
+  <path class="line" d="M1537 488 H1210"/><path class="contract" d="M1210 488 V525 H565"/>
+  <path class="line" d="M565 595 H955"/><text x="760" y="617" class="label">scoped capability dispatch</text>
+  <path class="contract" d="M930 488 V705 H625 V748"/><text x="810" y="699" class="label">verified runtime address</text>
+  <path class="line" d="M625 820 H1050"/><text x="838" y="842" class="label">mission command / durable progress</text>
+  <path class="contract" d="M235 820 H625"/><path class="line" d="M1050 820 V1260 H400 V1290"/>
+  <path class="contract" d="M175 1360 H400"/><path class="line" d="M400 1360 H625"/><path class="contract" d="M400 1360 H850"/>
+  <path class="line" d="M1202 270 V710 H1485 V748"/>
+  <path class="line" d="M955 595 V710 H1485 V748"/><text x="1230" y="704" class="label">authorized tool result only</text>
+  <path class="line" d="M947 270 V980 H1275 V1010"/>
+  <path class="contract" d="M947 270 V980 H1560 V1010"/>
+  <path class="line" d="M195 1080 H465"/><path class="line" d="M195 1080 H735 V1010"/><path class="line" d="M735 1080 H1005"/>
+  <path class="line" d="M1005 1080 V1260 H625 V1290"/>
+  <path class="contract" d="M1275 1080 H1560"/>
+  <path class="contract" d="M182 270 V1260 H175 V1290"/>
+  <path class="contract" d="M1520 270 V1100 H1150"/>
+  <path class="line" d="M625 1360 H1400 V1310"/><path class="line" d="M850 1360 H1625 V1310"/>
+  <path class="line" d="M1050 820 V1345 H1400"/><path class="line" d="M625 820 V1345 H1625"/>
+  <path class="line" d="M465 1080 V1400 H1400"/><path class="line" d="M1560 1080 V1400"/>
+  <path class="contract" d="M955 595 V1400 H1625"/>
+
+  <line x1="70" y1="1455" x2="112" y2="1455" class="line"/><text x="125" y="1460" class="small">primary request, command, event, or execution</text>
+  <line x1="590" y1="1455" x2="632" y2="1455" class="contract"/><text x="645" y="1460" class="small">contract, composition, or dependency</text>
+  <text x="1730" y="1460" class="small" text-anchor="end">Component Atlas snapshot · 2026-09-20</text>
+</svg>
