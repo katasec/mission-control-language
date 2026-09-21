@@ -97,7 +97,7 @@ internal static class SiblingExecutable
                 projectName,
                 "bin",
                 configuration,
-                "net10.0-maccatalyst",
+                "net10.0-maccatalyst27.0",
                 "maccatalyst-arm64",
                 $"{projectName}.app",
                 "Contents",

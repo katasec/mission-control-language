@@ -1,1 +1,0 @@
-namespace ForgeMission.Desktop.Maui; public sealed class App(DesktopSession session):Microsoft.Maui.Controls.Application { protected override Window CreateWindow(IActivationState? state) { var page=new MainPage(); session.Start(page.Web); var w=new Window(page){Title="Forge"}; w.Destroying += async (_,_)=>await session.DisposeAsync(); return w; } }

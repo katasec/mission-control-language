@@ -18,7 +18,6 @@
   <Project Path="ForgeMission.Desktop/ForgeMission.Desktop.csproj" />
   <Project Path="ForgeMission.Desktop.Contracts/ForgeMission.Desktop.Contracts.csproj" />
   <Project Path="ForgeMission.Desktop.Host/ForgeMission.Desktop.Host.csproj" />
-  <Project Path="ForgeMission.Desktop.Maui/ForgeMission.Desktop.Maui.csproj" />
   <Project Path="ForgeMission.Desktop.Installer/ForgeMission.Desktop.Installer.wixproj" />
   <Project Path="ForgeMission.Desktop.Photino/ForgeMission.Desktop.Photino.csproj" />
   <Project Path="ForgeMission.Core/ForgeMission.Core.csproj" />

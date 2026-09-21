@@ -4,7 +4,7 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-17)
+## Now (2026-09-21)
 
 | | |
 |---|---|

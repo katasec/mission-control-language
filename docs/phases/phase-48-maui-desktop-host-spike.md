@@ -1,9 +1,9 @@
 # Phase 48 — MAUI Desktop Host spike
 
-> **Completed 2026-09-19.** The canonical GitHub Actions **Desktop build** publishes the same
-> Supervisor topology for Windows ARM64 and macOS ARM64. Both downloaded artifacts were accepted.
-> The design, implementation, and acceptance evidence are in
-> [the completed spoke](phase-48-maui-desktop-host-spike_completed.md).
+> **Completed 2026-09-21.** The accepted spike remains recorded in
+> [the completed spoke](phase-48-maui-desktop-host-spike_completed.md). Its Xcode 27
+> compatibility repair and acceptance evidence are in
+> [the compatibility completion record](phase-48.1-xcode-27-desktop-build-compatibility_completed.md).
 
 ## Standard bundle steps
 
