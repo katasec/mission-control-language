@@ -1,1 +1,0 @@
-namespace ForgeMission.Desktop.Maui; public static class MauiProgram { public static MauiApp CreateMauiApp() { var b=MauiApp.CreateBuilder(); b.UseMauiApp<App>(); b.Services.AddSingleton<DesktopSession>(); return b.Build(); } }
