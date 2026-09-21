@@ -1,7 +1,7 @@
 # Phase 49.1 — Repository decomposition program foundation
 
-> **Status:** In progress. Documentation-only governance task; build, test and default-path
-> acceptance are N/A until a later card changes executable behavior.
+> **Status:** Accepted 2026-09-22. Documentation-only governance task; build, test and default-path
+> acceptance were N/A because it changed no executable behavior.
 
 ## Purpose and component fit
 
@@ -93,3 +93,12 @@ The Phase 49 hub, program ledger, decision ledger, private-delivery and rollback
 limits and next-card order have been reviewed for consistency with the component atlas, active
 Phase 45/46 interlock, Security Architecture, Engineering Philosophy and Codex supervisor
 workflow. No executable behavior has changed.
+
+## Acceptance evidence
+
+PR [#166](https://github.com/katasec/mission-control-language/pull/166) introduced the foundation.
+An independent reviewer rejected its initial authority and placement assumptions; corrective PR
+[#167](https://github.com/katasec/mission-control-language/pull/167) was re-reviewed PASS before
+merge. The accepted rules now reserve executable assignment and plan approval to the Program
+Supervisor and leave shared conversation presentation and reusable Docker support as explicit open
+decisions. Documentation diff checks passed; build/test/default-path verification were N/A.
