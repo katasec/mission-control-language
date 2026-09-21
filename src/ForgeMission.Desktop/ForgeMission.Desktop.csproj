@@ -29,9 +29,12 @@
     <InternalsVisibleTo Include="ForgeMission.Tests" />
   </ItemGroup>
 
-  <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
-    <LinkerArg Include="-L/opt/homebrew/lib" />
-    <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
-  </ItemGroup>
+  <!-- Keep linker-only inputs inside the link target: Rider otherwise presents them as source items. -->
+  <Target Name="AddMacNativeAotLinkerArgs" BeforeTargets="LinkNative"
+          Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <ItemGroup>
+      <LinkerArg Include="-L/opt/homebrew/lib" />
+      <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
+    </ItemGroup>
+  </Target>
 </Project>

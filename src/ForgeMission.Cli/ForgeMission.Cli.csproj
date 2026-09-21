@@ -33,12 +33,15 @@
     <NoWarn>$(NoWarn);IL3050;IL2104;IL3053</NoWarn>
   </PropertyGroup>
 
-  <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
-    <!-- LinkerArgs on a referenced library are not propagated to this executable's final AOT link. -->
-    <LinkerArg Include="-Wl,-ld_classic" />
-    <LinkerArg Include="-L/opt/homebrew/lib" />
-    <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
-  </ItemGroup>
+  <!-- Keep linker-only inputs inside the link target: Rider otherwise presents them as source items. -->
+  <Target Name="AddMacNativeAotLinkerArgs" BeforeTargets="LinkNative"
+          Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <ItemGroup>
+      <!-- LinkerArgs on a referenced library are not propagated to this executable's final AOT link. -->
+      <LinkerArg Include="-Wl,-ld_classic" />
+      <LinkerArg Include="-L/opt/homebrew/lib" />
+      <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
+    </ItemGroup>
+  </Target>
 
 </Project>

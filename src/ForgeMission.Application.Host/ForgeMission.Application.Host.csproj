@@ -26,11 +26,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0" />
   </ItemGroup>
 
-  <!-- Native AOT on macOS: system libs needed by the AOT runtime live under Homebrew -->
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
-    <LinkerArg Include="-L/opt/homebrew/lib" />
-    <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
-  </ItemGroup>
+  <!-- Keep linker-only inputs inside the link target: Rider otherwise presents them as source items. -->
+  <Target Name="AddMacNativeAotLinkerArgs" BeforeTargets="LinkNative"
+          Condition="$([MSBuild]::IsOSPlatform('osx'))">
+    <ItemGroup>
+      <LinkerArg Include="-L/opt/homebrew/lib" />
+      <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
+    </ItemGroup>
+  </Target>
 
   <!-- The Presentation project reference exists to pull in its wwwroot static assets (served
        from _framework/*.wasm) — its own .runtimeconfig.json is a vestigial publish byproduct
