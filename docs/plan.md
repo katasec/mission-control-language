@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 45.5: make the approved static **Chat with a mission** screen a live chat with an existing approved mission. Mission authoring is not part of this task; the approved screen is fixed. |
+| **NEXT STEP** | Phase 49: establish the private-repository decomposition program's governance and compatibility baseline before authorizing any source, package, workflow, or repository move. |
 
 ## Active phases
 
@@ -16,6 +16,7 @@
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Next: live existing-mission chat in the fixed Phase 47 screen. Authoring is accepted work, not the next task. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
+| [Phase 49 — private repository decomposition](phases/phase-49-repository-decomposition.md) | Safely split the Forge estate into private, independently owned repositories without changing product behavior by accident. | Governance and compatibility baseline in progress; no source, package, workflow, or repository extraction is authorized yet. |
 
 ## Design docs
 
