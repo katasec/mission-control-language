@@ -77,15 +77,15 @@ Application failed to launch: UIScene life cycle is required for apps built with
 |---|---|
 | Product requirement | The existing single native Host window opens and receives the same inherited pipe commands. No multi-window product capability is introduced. |
 | Owner | `ForgeMission.Desktop.Host` owns the Apple lifecycle declaration. The Supervisor, Application Host, pipe protocol, and MAUI page remain unchanged. |
-| Implementation | Add a Mac Catalyst `SceneDelegate` deriving from MAUI's `MauiUISceneDelegate`; add the matching `UIApplicationSceneManifest` and default scene configuration to the Host’s Mac Catalyst `Info.plist`. Declare `UIApplicationSupportsMultipleScenes` false: the manifest satisfies Xcode 27's lifecycle requirement without enabling a new multiple-window behavior. |
+| Implementation | Add a Mac Catalyst `SceneDelegate` deriving from MAUI's `MauiUISceneDelegate`; add the matching `UIApplicationSceneManifest` and default scene configuration to the Host’s Mac Catalyst `Info.plist`. Declare `UIApplicationSupportsMultipleScenes` true so UIKit can create the required scene; the unchanged MAUI composition still opens one Host window. |
 | Failure boundary | UIKit validates the bundle lifecycle before MAUI creates the page. A missing manifest/delegate terminates the disposable Host; the Supervisor observes its exit and cleans its children. The repair is confined to the Host-owned bundle configuration. |
 | Reversal | Remove the delegate and manifest only if a later MAUI/Xcode profile again supports the application-delegate lifecycle. It cannot be removed while Xcode 27 requires scenes. |
 | Non-goals | No lifecycle policy, native-window count, WebView content, UI token/layout, process ownership, runtime URL, credentials, or cross-context contract change. |
 
 Microsoft's MAUI Mac Catalyst guidance uses this delegate/manifest pairing for scene-backed native
-windows. Its documented example enables multiple scenes; this Host explicitly retains one
-window, so the manifest’s support flag is false while the required default scene configuration
-remains present.
+windows. The prior false support flag is superseded: the canonical artifact created then immediately
+exited its sole scene without a native window. The required true flag permits that scene lifecycle;
+the unchanged MAUI composition retains the product’s one Host window.
 
 **Task 2 done when:** a fresh Xcode 27 `make desktop` bundle starts its zero-argument Supervisor
 without the UIKit scene-lifecycle runtime issue; the existing Host boot content and loopback UI
