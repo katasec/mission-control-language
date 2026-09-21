@@ -31,8 +31,8 @@ wire/store because files moved, or introduce a new deployment topology as an ext
 |---|---|---|---|---|
 | `forge-mcl` | Private | MCL syntax, generic execution, provider/retrieval adapters, CLI and mission-package client | Parser, Core, ChatClients, Scout after seam cleanup, Serve, CLI | MCL packages and CLI release |
 | `forge-runner` | Private | Stateless hosted mission execution | Runner and Runner Contracts | Runner contract and `forge-runner` image |
-| `forge-conversations` | Private | Durable conversation admission/state and mission work | Conversations Contracts, ConversationHost, ConversationWorker, shared semantic presentation package | Conversation contract and service images |
-| `forge-desktop` | Private | Local Application, capabilities, UI, native host, supervision and local runtime orchestration | Application*, ClientRuntime, Presentation, Desktop*, Orchestration, Docker | Desktop packages and canonical Desktop artifact |
+| `forge-conversations` | Private | Durable conversation admission/state and mission work | Conversations Contracts, ConversationHost and ConversationWorker; shared conversation presentation placement remains pending D49-05 | Conversation contract and service images |
+| `forge-desktop` | Private | Local Application, capabilities, UI, native host, supervision and local runtime orchestration | Application*, ClientRuntime, Presentation, Desktop* and Orchestration; Docker support placement remains pending D49-06 | Desktop packages and canonical Desktop artifact |
 | `forge-platform` | Private | Public platform edge and account/ledger authority | Api and Billing | Platform client contract and `forge-api` image |
 | `forge-rooms` | Private | Collaboration domain, Rooms store and browser product | Rooms, Rooms.Data, ForgeUI | Rooms browser image and migration bundle |
 | `forge-missions` | Private, deferred | Independently versioned OCI mission/expert content only | No source move is approved yet | OCI content artifacts only |
@@ -74,6 +74,7 @@ and datastore access.
 | D49-03 | Type 1 contract policy | Define supported consumer-version windows and NuGet/HTTP ownership for each public contract. | Open | Private package foundation |
 | D49-04 | Type 1 platform boundary | Define the narrow Platform service/client route that removes Rooms' in-process Billing dependency without granting Rooms Billing-store access. | Open | Platform and Rooms extraction |
 | D49-05 | Type 2 UI package placement | Decide whether shared conversation activity rendering travels with Conversations as a semantic package or a dedicated UI package. | Open | Conversations/Desktop/Rooms extraction |
+| D49-06 | Type 2 reusable local-support placement | Decide the smallest owner/package boundary for Docker operations used by both the CLI and Desktop orchestration without introducing an MCL-to-Desktop dependency or duplicate implementation. | Open | MCL and Desktop extraction |
 
 ## Spokes
 

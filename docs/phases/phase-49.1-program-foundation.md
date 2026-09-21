@@ -15,16 +15,18 @@ program resumable without relying on agent memory.
 | Persona | Authority | Hard limit |
 |---|---|---|
 | Program Supervisor (root Codex) | Locks Type-1 decisions, approves/rejects plans, accepts/rejects evidence, updates status, owns PR/merge and personally performs browser/default-path inspection. | Does not implement a supervised code or IaC task. |
-| Program Orchestrator | Maintains the Phase 49 ledger, identifies the next unblocked card and creates bounded assignments. | Read-only; cannot settle design, approve a plan, accept work or edit files. |
+| Program Orchestrator | Maintains the Phase 49 ledger, identifies the next unblocked card, and may route read-only investigation/planning/review assignments. | Read-only; cannot assign executable work, settle design, approve a plan, accept work or edit files. |
 | Boundary Investigator | Traces source, contracts, data/identity ownership and dependency direction. | Read-only; reports evidence, not decisions. |
 | Release/Infra Investigator | Audits private package access, GitHub Actions, OIDC, ACR and Bicep implications. | Read-only; cannot create identities, repositories, packages or deployments. |
 | Implementer Planner | Produces a file-by-file, verification-first plan for one card. | No edit until an explicit `PLAN APPROVED` message. |
 | Single Implementer | Makes only the approved mutation on one `codex/` branch and records actual evidence. | One writer globally; cannot broaden scope or self-approve. |
 | Independent Acceptance Reviewer | Fresh read-only review of the diff and evidence against the card. | Cannot replace Supervisor acceptance. |
 
-The Program Orchestrator may use child investigators/planners/reviewers, but never concurrent code
-writers. Agents receive only their current card, linked spoke, relevant component READMEs and
-governing design docs. Their durable conclusions are folded into the ledger before the next card.
+The Program Supervisor alone assigns every executable task and issues `PLAN APPROVED`. The Program
+Orchestrator may use child investigators/planners/reviewers for read-only work, but never
+concurrent code writers. Agents receive only their current card, linked spoke, relevant component
+READMEs and governing design docs. Their durable conclusions are folded into the ledger before the
+next card.
 
 ## Required card shape
 
