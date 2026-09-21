@@ -50,7 +50,7 @@ jobs:
 
   macos:
     name: macOS ARM64 bundle
-    runs-on: macos-26
+    runs-on: xcode-27
 
     steps:
       - uses: actions/checkout@v6

@@ -5,11 +5,11 @@ namespace ForgeMission.Desktop.Host;
 
 // Owns only the inherited-pipe protocol. MAUI owns the native app loop and MauiDesktopHost owns
 // UI-thread dispatch; keeping those responsibilities separate preserves the fixed protocol.
-public sealed class DesktopHostController
+public sealed class DesktopHostController(HostStartupArguments startupArguments)
 {
     public void Start(IDesktopHost host)
     {
-        if (!TryParsePipeHandles(Environment.GetCommandLineArgs()[1..], out var commandHandle, out var eventHandle))
+        if (!TryParsePipeHandles(startupArguments.Values, out var commandHandle, out var eventHandle))
         {
             host.ShowLocalContent(HostContent.Failed(
                 "This process is started by ForgeMission.Desktop and requires inherited pipe handles."));
@@ -29,7 +29,7 @@ public sealed class DesktopHostController
         commandReader.Start();
     }
 
-    private static bool TryParsePipeHandles(string[] args, out string commandHandle, out string eventHandle)
+    private static bool TryParsePipeHandles(ReadOnlySpan<string> args, out string commandHandle, out string eventHandle)
     {
         commandHandle = "";
         eventHandle = "";

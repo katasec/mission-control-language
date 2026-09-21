@@ -11,7 +11,7 @@ ifeq ($(UNAME_S),Darwin)
     RID := osx-x64
     DESKTOP_HOST_RID := maccatalyst-x64
   endif
-  DESKTOP_HOST_TFM := net10.0-maccatalyst
+  DESKTOP_HOST_TFM := net10.0-maccatalyst27.0
   DESKTOP_HOST_PUBLISH_OPTIONS := -p:CreatePackage=false
   DESKTOP_HOST_APP = $(DESKTOP_HOST)/bin/Release/$(DESKTOP_HOST_TFM)/$(DESKTOP_HOST_RID)/Forge.app
 else ifeq ($(UNAME_S),Linux)
