@@ -1201,7 +1201,7 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
     // If no "default" profile came from forge.toml, fall back to let-binding context.
     if (!runners.ContainsKey("default"))
     {
-        var defaultProfile = manifest?.Providers.GetValueOrDefault("default");
+        var defaultProfile = manifest?.Providers?.GetValueOrDefault("default");
         var apiKey   = GetContextString(seedContext, "apiKey")   ?? defaultProfile?.ApiKey;
         var model    = GetContextString(seedContext, "model")    ?? defaultProfile?.Model;
         var provider = GetContextString(seedContext, "provider") ?? defaultProfile?.Provider ?? "openai";
@@ -1238,7 +1238,7 @@ static IReadOnlyDictionary<string, IExpertRunner>? BuildRunners(
 // forge.toml [providers.default] first, then the mission's let-binding context.
 static ProviderProfile? ResolveDefaultProfile(ForgeManifest? manifest, Dictionary<string, object> seedContext)
 {
-    var profile  = manifest?.Providers.GetValueOrDefault("default");
+    var profile  = manifest?.Providers?.GetValueOrDefault("default");
     var apiKey   = GetContextString(seedContext, "apiKey")   ?? profile?.ApiKey;
     var model    = GetContextString(seedContext, "model")    ?? profile?.Model;
     var provider = GetContextString(seedContext, "provider") ?? profile?.Provider ?? "openai";
