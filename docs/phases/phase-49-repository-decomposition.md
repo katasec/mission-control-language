@@ -1,7 +1,7 @@
 # Phase 49 — Private repository decomposition
 
-> **Status:** Program foundation in progress. No source, package, workflow, infrastructure, or
-> repository extraction is authorized until the foundation and compatibility gates below pass.
+> **Status:** Program foundation accepted; compatibility baseline is next. No source, package,
+> workflow, infrastructure, or repository extraction is authorized until the gates below pass.
 
 ## Why this phase exists
 
@@ -57,7 +57,7 @@ and datastore access.
 
 | Card | Outcome | Target | Status | Prerequisite | Evidence / rollback |
 |---|---|---|---|---|---|
-| 49.1 | Program governance, agent roles, decision/compatibility/rollback ledger and task-card standard | Current repository docs | **Implementing** | None | This spoke; pre-program tag above |
+| 49.1 | Program governance, agent roles, decision/compatibility/rollback ledger and task-card standard | Current repository docs | **Accepted** | None | PR [#166](https://github.com/katasec/mission-control-language/pull/166), corrective review PR [#167](https://github.com/katasec/mission-control-language/pull/167), independent review PASS |
 | 49.2 | Reproducible dependency, AOT, CI, package, identity and deployment baseline | Current repository docs | Not started | 49.1 accepted | Named observations; no behavior change |
 | 49.3 | Resolve the active Phase 45/46 compatibility interlock | Current repository docs | Design blocked | Operator decision D49-01 | Versioned compatibility baseline |
 | 49.4 | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | Not started | 49.2, 49.3 | Focused/full/AOT evidence |
