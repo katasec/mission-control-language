@@ -17,8 +17,4 @@
     <PackageReference Include="tryAGI.Anthropic" Version="3.8.3" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('osx'))">
-    <LinkerArg Include="-Wl,-ld_classic" />
-  </ItemGroup>
-
 </Project>
