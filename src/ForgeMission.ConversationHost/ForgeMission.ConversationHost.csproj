@@ -8,10 +8,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="10.0.0" />
     <PackageReference Include="Microsoft.Orleans.Clustering.AzureStorage" Version="10.0.0" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="10.0.0" />

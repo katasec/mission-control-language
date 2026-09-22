@@ -72,9 +72,10 @@ public class ConversationContractsBoundaryTests
         // Core is the one approved MCL/package parser. Host uses it only to reject immutable
         // durable package content before queue dispatch; it still owns no provider composition.
         var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
-        Assert.Equal(2, projectReferenceCount);
+        Assert.Equal(1, projectReferenceCount);
         Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
-        Assert.Contains("ForgeMission.Core.csproj", text);
+        Assert.DoesNotContain("ForgeMission.Core.csproj", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />""", text);
 
         // The Task-4-approved packages plus Task 5's reminder/Service Bus additions, at their
         // pinned versions — no other Orleans/Azure package, no serializer package/codec of any kind.
