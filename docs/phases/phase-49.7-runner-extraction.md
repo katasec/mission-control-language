@@ -18,8 +18,35 @@ mission-content lifecycle ownership.
 Keep `forge-missions` deferred. Runner imports eight image-coupled built-in fallback directories
 as `content/builtins/`, preserving `/app/missions` and `MissionDir`:
 `vanilla`, `hallucination-guard`, `assistant`, `claude`, `grok`, `websearch`, `ocr`, and
-`summarize`. At mono commit `36a8417f166668f578806913ba652b301634f98e`, their 48 source records
-have canonical ordinal SHA-256 `2731c73cc6fecba7291d66787acbd9ce8d13f25ec59caa993c8edae5298d25a0`.
+`summarize`. Their import is pinned to mono commit
+`36a8417f166668f578806913ba652b301634f98e`; it is not inferred from a later working tree.
+
+### Built-ins integrity manifest
+
+The future Runner import commits `content/builtins.manifest.v1`. It has exactly 49 UTF-8 (no BOM),
+LF-terminated lines, including one final LF. Its first line is exactly:
+
+```text
+forge-runner-builtins-manifest-v1	36a8417f166668f578806913ba652b301634f98e
+```
+
+Each of the next 48 lines is, with literal tab separators:
+
+```text
+<lowercase-content-sha256>	<source-path>	<destination-path>
+```
+
+Records sort by `source-path` with `StringComparer.Ordinal`. `source-path` is a blob below only the
+eight declared `missions/` roots, and `destination-path` is exactly
+`content/builtins/` plus the source path after `missions/`. `content-sha256` is SHA-256 of the raw
+blob bytes, not a Git object ID. No escape, text normalization, symlink, extra file, or mode
+transform is permitted: every selected source record at the anchor is `100644 blob`. The Python
+assets remain invoked through `python3`, not an executable bit.
+
+The complete manifest bytes have 48 records, are 7,163 bytes, and SHA-256 to
+`dc22ee1a48be58b69f6f76585901d2d288941fa0c67d48f0e04a9c888fa080d4`. This binds both the
+source anchor and the relocated destination map; the earlier unspecified aggregate hash is not
+integrity evidence and is retired.
 
 This preserves `BuiltinMissions`: OCI entries remain digest-pinned and fall back per item to the
 baked path; `MissionRef` failures remain startup failures with **no** fallback; and the mounted
@@ -39,12 +66,16 @@ repository release.
    least-privilege infra change.
 
 PR CI proves clean locked restore, no MCL source edge, zero-warning build, Runner tests, contract
-serialization, and token-free image build. Image release uses immutable tags and BuildKit restore
-secrets only. Runner remains JIT; MCL packages retain their AOT compatibility.
+serialization, and token-free image build. It regenerates the manifest bytes from a clean checkout,
+byte-hashes every `content/builtins/**` file, and proves the exact expected set (no omissions or
+extras), header anchor, record count, and aggregate hash. The image check proves `/app/missions`
+has the same 48 content hashes after Docker `COPY`. Image release uses immutable tags and BuildKit
+restore secrets only. Runner remains JIT; MCL packages retain their AOT compatibility.
 
 ## Acceptance and rollback
 
-Controlled evidence verifies manifest/image fallback integrity and invalid `MissionRef` failure.
-The normal path later deploys only through `forge-infra`, keeps `MissionDir=/app/missions`, proves
-internal health, `/missions`, and one existing caller execution. Roll back by restoring the prior
-image and infra revision—never a cross-repo `ProjectReference`.
+Controlled evidence verifies zero-override baked fallback, the digest-pinned OCI built-ins'
+per-item fallback, manifest/image integrity, and invalid `MissionRef` startup failure. `MissionFile`
+remains a separate mounted path. The normal path later deploys only through `forge-infra`, keeps
+`MissionDir=/app/missions`, proves internal health, `/missions`, and one existing caller execution.
+Roll back by restoring the prior image and infra revision—never a cross-repo `ProjectReference`.
