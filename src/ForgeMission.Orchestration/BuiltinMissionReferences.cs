@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 namespace ForgeMission.Orchestration;
 
 /// <summary>Built-in default for the Docker Mission Runtime when no MissionRuntime:Docker:MissionRef
-/// is configured — same embedded, digest-pinned reference ForgeMission.Cli uses, so local orchestration
-/// works out of the box with zero configuration.</summary>
+/// is configured — an embedded, digest-pinned reference, so local orchestration works out of the box
+/// with zero configuration.</summary>
 public static partial class BuiltinMissionReferences
 {
     private const string VanillaResource = "ForgeMission.Orchestration.BuiltinMissionReferences.vanilla.oci-ref";

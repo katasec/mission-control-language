@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationWorker\ForgeMission.ConversationWorker.csproj" />
   </ItemGroup>
 

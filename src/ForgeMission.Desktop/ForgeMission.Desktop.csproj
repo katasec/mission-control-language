@@ -13,7 +13,7 @@
        Deliberately no reference to a concrete native host or to ForgeMission.Desktop.Host: the Host
        is started as a sibling binary by path, which keeps its dependencies out of this process. -->
   <ItemGroup>
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Desktop.Contracts\ForgeMission.Desktop.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
   </ItemGroup>

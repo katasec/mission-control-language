@@ -42,7 +42,7 @@ public class ConversationContractsBoundaryTests
         Assert.DoesNotContain("<PackageReference", text);
     }
 
-    // Application, Bob, CLI, Presentation, and Application Transport are the AOT-published/
+    // Application, Bob, Presentation, and Application Transport are the AOT-published/
     // user-facing surfaces (Application and Transport may reference Contracts from Task 7 —
     // never Host). Contracts itself must also stay clean of its own server-side dependencies, so
     // it's included alongside them here. Host and its own test project are the only projects
@@ -54,7 +54,6 @@ public class ConversationContractsBoundaryTests
     [InlineData("ForgeMission.Application.Host", "ForgeMission.Application.Host.csproj")]
     [InlineData("ForgeMission.ClientRuntime", "ForgeMission.ClientRuntime.csproj")]
     [InlineData("ForgeMission.Application.Transport", "ForgeMission.Application.Transport.csproj")]
-    [InlineData("ForgeMission.Cli", "ForgeMission.Cli.csproj")]
     [InlineData("ForgeMission.Presentation", "ForgeMission.Presentation.csproj")]
     public void ClientFacingProjects_DoNotNameConversationHostOrleansOrAzureSdk(string projectFolder, string csprojFileName)
     {

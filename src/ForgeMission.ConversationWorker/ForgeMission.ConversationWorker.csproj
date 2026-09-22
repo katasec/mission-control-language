@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
-    <ProjectReference Include="..\ForgeMission.ChatClients\ForgeMission.ChatClients.csproj" />
+    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.ChatClients\ForgeMission.ChatClients.csproj" />
   </ItemGroup>
 
   <ItemGroup>

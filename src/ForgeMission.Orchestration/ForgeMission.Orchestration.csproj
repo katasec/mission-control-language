@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ForgeMission.Docker/ForgeMission.Docker.csproj" />
+    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Docker\ForgeMission.Docker.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\ForgeMission.Cli\BuiltinMissionReferences\vanilla.oci-ref"
+    <EmbeddedResource Include="BuiltinMissionReferences\vanilla.oci-ref"
                       Link="BuiltinMissionReferences\vanilla.oci-ref"
                       LogicalName="ForgeMission.Orchestration.BuiltinMissionReferences.vanilla.oci-ref" />
   </ItemGroup>
