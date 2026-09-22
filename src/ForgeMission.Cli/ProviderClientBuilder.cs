@@ -1,4 +1,4 @@
-using Scout;
+using ForgeMission.Core.Retrieval;
 using Scout.Grok;
 
 // Live-retrieval wiring stays in CLI; chat-provider construction lives in ForgeMission.ChatClients.

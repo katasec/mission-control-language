@@ -61,7 +61,7 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Mission language | [ForgeMission.Core](ForgeMission.Core/README.md) | Component — provider-neutral MCL resolution and pipeline execution. |
 | Mission language | [ForgeMission.Parser](ForgeMission.Parser/README.md) | Component — source-spanned MCL syntax and diagnostics. |
 | Mission language | [ForgeMission.ChatClients](ForgeMission.ChatClients/README.md) | Component — provider-SDK client boundary. |
-| Mission language | [ForgeMission.Scout](ForgeMission.Scout/README.md) | Component — provider-neutral web-search contract and Grok adapter. |
+| Mission language | [ForgeMission.Scout](ForgeMission.Scout/README.md) | Component — xAI Grok web-search adapter implementing Core's retrieval contract. |
 | Mission language | [ForgeMission.Cli](ForgeMission.Cli/README.md) | Component — Native-AOT command composition surface. |
 | Mission language | [ForgeMission.Serve](ForgeMission.Serve/README.md) | Component — shared OpenAI/Anthropic-compatible HTTP wire mapping. |
 | Mission language | [ForgeMission.Docker](ForgeMission.Docker/README.md) | Component — narrow Docker operations and prerequisite checks. |

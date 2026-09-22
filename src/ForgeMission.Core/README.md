@@ -20,7 +20,7 @@ Mission semantics must be executable without coupling the language runtime to a 
 
 - Expert definitions and loading, mission/lock-file resolution, and `forge.toml` manifest reading.
 - Pipeline execution, trace/result contracts, and the provider-neutral [`IExpertRunner`](Runtime/IExpertRunner.cs) seam.
-- Reusable workspace and capability contracts, dispatch primitives, and tool executors.
+- Reusable workspace, capability, and retrieval contracts, dispatch primitives, and tool executors.
 
 ## Does not own
 
@@ -35,6 +35,8 @@ A change belongs here only if it advances provider-neutral MCL execution, resolu
 
 - [`PipelineRunner`](Runtime/PipelineRunner.cs) executes a parsed mission with resolved experts and named runners; its root-scoped continuation seam pauses and resumes declared nested tool requests without holding capability authority.
 - [`IExpertRunner`](Runtime/IExpertRunner.cs) is the only runner abstraction used by the pipeline.
+- [`IWebSearch`](Retrieval/IWebSearch.cs) is the provider-neutral retrieval contract used by the
+  `kind: search` primitive; provider adapters implement it from outside Core.
 - [`ExpertResolver`](Resolution/ExpertResolver.cs), [`ExpertLoader`](Experts/ExpertLoader.cs), and [`ForgeTomlReader`](Manifest/ForgeTomlReader.cs) provide the resolution inputs.
 - [`DurableMissionPackageValidator`](Runtime/DurableMissionPackageValidator.cs) is the single in-memory parser/validator for bounded durable package content; it never reads a Worker image directory or TOML provider profile.
 - [`PipelineRunnerTests`](../ForgeMission.Tests/Runtime/PipelineRunnerTests.cs) and [`CapabilityDispatcherTests`](../ForgeMission.Tests/Tools/CapabilityDispatcherTests.cs) cover execution and capability contracts.
@@ -46,7 +48,7 @@ flowchart LR
   Source[.mcl source] --> Parser[ForgeMission.Parser]
   Parser -->|AST| Core[Mission Core]
   Clients[ForgeMission.ChatClients] -->|builds IExpertRunner| Core
-  Core -->|IWebSearch| Scout[ForgeMission.Scout]
+  Scout[ForgeMission.Scout] -->|implements Core.Retrieval.IWebSearch| Core
   Core -->|MissionResult and trace| Host[CLI / Runner / Worker]
 ```
 
