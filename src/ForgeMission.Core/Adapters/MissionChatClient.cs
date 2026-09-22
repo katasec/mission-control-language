@@ -6,7 +6,7 @@ using Microsoft.Extensions.AI;
 using ForgeMission.Core.Experts;
 using ForgeMission.Parser;
 using ForgeMission.Core.Runtime;
-using Scout;
+using ForgeMission.Core.Retrieval;
 using MclProgram = ForgeMission.Parser.Program;
 
 namespace ForgeMission.Core.Adapters;

@@ -1,7 +1,7 @@
 ---
 type: software-component
 title: Scout
-description: Provider-neutral web-search contract with the current xAI Grok implementation.
+description: xAI Grok web-search adapter implementing Mission Core's retrieval contract.
 resource: src/ForgeMission.Scout
 tags: [search, retrieval, grok, aot]
 ---
@@ -10,30 +10,35 @@ tags: [search, retrieval, grok, aot]
 
 ## Purpose
 
-Defines source-attributed web-search results and supplies the current Grok Responses API implementation.
+Supplies the current xAI Grok Responses API implementation of Mission Core's source-attributed
+web-search contract.
 
 ## Why this exists
 
-Live retrieval is an optional execution dependency with different result shapes from chat completion. A small contract keeps pipeline search steps independent from a particular search backend while retaining source attribution.
+Live retrieval is an optional external execution dependency. Scout isolates xAI HTTP/SSE handling
+from provider-neutral MCL execution while retaining source attribution.
 
 ## Owns
 
-- [`IWebSearch`](IWebSearch.cs), request/progress/result records, source attribution, and search failures.
 - [`GrokWebSearch`](Grok/GrokWebSearch.cs), including buffered and SSE progress handling for xAI’s Responses API.
 - Source-generated Grok wire types in [`GrokWire`](Grok/GrokWire.cs).
 
 ## Does not own
 
-- Search-key discovery, provider-chat construction, MCL pipeline control flow, source ranking policy, or persistent retrieval storage.
+- Retrieval contract ownership, search-key discovery, provider-chat construction, MCL pipeline
+  control flow, source ranking policy, or persistent retrieval storage.
 
 ## Change admission
 
-A change belongs here only if it advances the retrieval contract or a backend implementation behind it. For environment-key wiring change `ForgeMission.Cli`; for how a `kind: search` step executes change `ForgeMission.Core`.
+A change belongs here only if it advances the xAI backend implementation behind Core's retrieval
+contract. For environment-key wiring change `ForgeMission.Cli`; for the contract or how a
+`kind: search` step executes change `ForgeMission.Core`.
 
 ## Use these pieces
 
-- [`IWebSearch`](IWebSearch.cs) is the backend-neutral contract injected into the pipeline.
-- [`GrokWebSearch`](Grok/GrokWebSearch.cs) implements it with optional progress reporting.
+- [`IWebSearch`](../ForgeMission.Core/Retrieval/IWebSearch.cs) is Core's backend-neutral contract
+  injected into the pipeline.
+- [`GrokWebSearch`](Grok/GrokWebSearch.cs) implements that contract with optional progress reporting.
 - [`GrokWebSearchStreamTests`](../ForgeMission.Tests/Scout/GrokWebSearchStreamTests.cs) and [`SearchMissionPipelineTests`](../ForgeMission.Tests/Scout/SearchMissionPipelineTests.cs) cover stream mapping and pipeline integration.
 
 ## Communicates with
@@ -41,7 +46,7 @@ A change belongs here only if it advances the retrieval contract or a backend im
 ```mermaid
 flowchart LR
   CLI[Forge CLI] -->|XAI_API_KEY / GROK_API_KEY| Scout[Scout]
-  Core[Mission Core] -->|IWebSearch request| Scout
+  Core[Mission Core] -->|defines IWebSearch contract| Scout
   Scout -->|HTTPS Responses API and SSE| Grok[xAI Grok]
   Scout -->|answer, sources, progress| Core
 ```

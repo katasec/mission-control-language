@@ -45,5 +45,5 @@ baseline. No new warning class appeared.
 Rollback is a normal revert of the accepted merge commit, which restores only the removed
 `ProjectReference`; no deployed artifact, package, identity, store, or migration exists to unwind.
 The pre-program anchor remains `checkpoint-pre-repo-split-2026-09-22` at
-`06e11af30b6eb17d2a3c32e1e5b883bbe42c0d51`. 49.4b and 49.4c remain unapproved; package and
-repository extraction remain blocked by the Phase 49 decision ledger.
+`06e11af30b6eb17d2a3c32e1e5b883bbe42c0d51`. 49.4c remains unapproved; package and repository
+extraction remain blocked by the Phase 49 decision ledger.

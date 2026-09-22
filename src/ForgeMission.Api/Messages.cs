@@ -130,8 +130,9 @@ public sealed class MissionTraceStep
     public int Attempt { get; set; }
 }
 
-/// <summary>Mirrors Scout.SourceRef (src/ForgeMission.Scout/IWebSearch.cs) field-for-field — the
-/// actual upstream type this is plumbed from once the runner contract carries structured citations
+/// <summary>Mirrors ForgeMission.Core.Retrieval.SourceRef
+/// (src/ForgeMission.Core/Retrieval/IWebSearch.cs) field-for-field — the actual upstream type this
+/// is plumbed from once the runner contract carries structured citations
 /// (see "Known gap: sources are not in the runner contract yet" in the phase-42.6 spoke). Provider
 /// is non-nullable, matching SourceRef's own "source attribution over source-selection" tenet.</summary>
 public sealed class MissionSource

@@ -1,4 +1,4 @@
-using Scout;
+using ForgeMission.Core.Retrieval;
 using Scout.Grok;
 
 namespace ForgeMission.Tests.Scout;
