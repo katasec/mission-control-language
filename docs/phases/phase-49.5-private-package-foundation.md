@@ -12,9 +12,9 @@
 | Decision | Policy |
 |---|---|
 | Repository disposition (D49-02) | Create private `katasec/forge-mcl`. Import only the MCL owner map from a recorded mono commit; tag provenance in the private repository. The public monorepo becomes read-only coordination/rollback source after cutover and never consumes private packages. |
-| MCL packages (D49-03, partial) | Private v1 packages are published only from `forge-mcl` immutable release tags: `Katasec.Forge.Mcl.Parser`, `.Core`, `.ChatClients`, `.Scout`, `.MissionRegistry`, and `.Serve` start at `1.0.0`; direct and intra-MCL dependencies use exact `[1.0.0]` ranges. Every library declares `PackageId`, `Version`, `IsPackable=true`, `RepositoryUrl`, and the existing proprietary license policy; MissionRegistry becomes packable only in `forge-mcl`. CLI is an executable, not a package. Lock files plus locked-mode restore are required. One major line is supported; additive v1 changes only, breaking public/wire/persistent changes require v2 and a migration card. Runner/Conversation contract policy remains to be locked in their extraction cards. |
+| MCL packages (D49-03, partial) | Private v1 packages are published only from `forge-mcl` immutable release tags: `Katasec.Forge.Mcl.Parser`, `.Core`, `.ChatClients`, `.Scout`, `.MissionRegistry`, and `.Serve` start at `1.0.0`; direct and intra-MCL dependencies use exact `[1.0.0]` ranges. Packable library `ProjectReference` edges retain same-repository builds and set `TreatAsPackageReference=true` with exact `Version=[1.0.0]`, so packing emits the range without restoring an unpublished sibling package. This applies Core → Parser and ChatClients/Scout/MissionRegistry → Core. Every library declares `PackageId`, `Version`, `IsPackable=true`, `RepositoryUrl`, and the existing proprietary license policy; MissionRegistry becomes packable only in `forge-mcl`. CLI is an executable, not a package, so no CLI nuspec dependency exists. `RestorePackagesWithLockFile=true`, committed lock files, and locked-mode restore are required. One major line is supported; additive v1 changes only, breaking public/wire/persistent changes require v2 and a migration card. Runner/Conversation contract policy remains to be locked in their extraction cards. |
 | Docker support (D49-06) | `ForgeMission.Docker` stays the sole Docker socket/prerequisite owner, hosted by `forge-mcl` as private `Katasec.Forge.Docker` **0.1.0** with exact `[0.1.0]` consumer range, unchanged assembly/namespace, and `net10.0` AOT-safe leaf surface. Its package metadata matches the MCL libraries and explicitly sets `IsAotCompatible=true`. CLI uses source there; Desktop later consumes only the exact package. It owns no lifecycle policy, image choice, runtime mode, or process authority. |
-| Access | Publisher release workflow alone has `packages: write`. Consumer repositories receive explicit package-level Actions read access; their own `GITHUB_TOKEN` has only `contents: read` and `packages: read`. No PAT, producer token, or package credential reaches product artifacts or containers. |
+| Access | Publisher release workflow alone has `packages: write`. Every producer/consumer PR workflow has exactly `contents: read` and `packages: read`, and provides `NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` only to restore. Before `forge-mcl` CI is enabled, it receives explicit read access to its existing private upstream build dependencies `Katasec.AITools`, `Katasec.OciClient`, `Katasec.OaiServer`, and `Katasec.AnthropicServer`; later consumer repositories receive explicit access only to the named MCL packages they restore. No PAT, producer token, or package credential reaches product artifacts or containers. |
 | Source mapping | Each private repo maps `Katasec.*` exclusively to GitHub Packages and unrelated packages to nuget.org; no persisted token is committed. |
 
 ## Chronological proof
@@ -25,9 +25,11 @@
    `d2c0c121bbe4180b60ddd44fa5f18872e2402771`. The checked-in
    `eng/import/forge-mcl-v1.json` is the authority: it enumerates exactly the 186 source blobs
    selected below. Its canonical input is UTF-8, LF-terminated, ordinal-sorted `git ls-tree -r`
-   records ordered by path (`<mode> <type> <blob>\t<path>\n`) and SHA-256 is
+   records split at the first tab, ordinal case-sensitive sorted by their source-path suffix, then
+   joined as UTF-8 with LF and one final LF (`<mode> <type> <blob>\t<path>\n`). Its SHA-256 is
    `a5a6aa83cf32add694708b51296f865787c7a1d5c611444b70ba94c6e9502940`.
-   Its parallel path-list check is
+   Its parallel source-path check uses those same ordinal-sorted suffixes, UTF-8/LF plus final LF,
+   and is
    `4936c7a94cde0b8df13948a087b235fcf45622a0d85406490c35e6de255cd21a`.
    Import Parser, Core, ChatClients, Scout, MissionRegistry, Serve, Docker, CLI, their
    source-adjacent READMEs, owned unit tests/fixtures, lowercase `nuget.config`, and the two
@@ -71,12 +73,15 @@ is excluded from deterministic CI; it is separately recorded as external-provide
 
 ## Reproducible CI and substitution proof
 
-Both producer and Runner commit `packages.lock.json`; each `NuGet.config` clears inherited
+Both producer and Runner set `RestorePackagesWithLockFile=true` and commit `packages.lock.json`;
+each `NuGet.config` clears inherited
 sources, maps `Katasec.*` only to GitHub Packages and `*` only to nuget.org, and contains no
 credential other than the `%NUGET_AUTH_TOKEN%` placeholder. CI uses a fresh checkout/cache and
 `dotnet restore --locked-mode`, then `dotnet build --no-restore`, `dotnet test --no-restore`, and
-producer `dotnet pack --no-build`. Producer additionally publishes CLI AOT; CI stores command
-exit/result and artifact hash. Runner replaces its `Core`, `ChatClients`, `Scout`,
+producer `dotnet pack --no-build`. Producer CI fails when any library nuspec lacks its expected
+exact internal range (Core → Parser; ChatClients/Scout/MissionRegistry → Core), contains a CLI
+dependency, or omits required repository/package metadata. Producer additionally publishes CLI
+AOT; CI stores command exit/result and artifact hash. Runner replaces its `Core`, `ChatClients`, `Scout`,
 `MissionRegistry`, and `Serve` ProjectReferences with exact `Katasec.Forge.Mcl.*` references;
 Runner.Contracts remains Runner source. Its proof records a clean-cache no-grant restore failure,
 then explicit package grant and clean-cache locked restore/build/test success with workflow run IDs.
@@ -86,7 +91,9 @@ then explicit package grant and clean-cache locked restore/build/test success wi
 This changes no public route, store, queue, identity, or product credential. Package source mapping
 and explicit Actions grants are security controls. A missing grant fails restore; recovery owner is
 the package administrator, who grants only the named consumer repository and re-runs clean CI.
-The producer's PR workflow uses only `contents: read` and `packages: read`; its protected-tag
+The producer's PR workflow uses only `contents: read` and `packages: read`, exposes its own
+`GITHUB_TOKEN` only as `NUGET_AUTH_TOKEN` for restore, and runs its missing-token clean-cache
+restore as controlled negative-path evidence, never default-path evidence. Its protected-tag
 release workflow alone receives `packages: write`, validates package metadata and exact internal
 ranges, and never deletes or republishes a version. A bad package or grant is contained before a
 consumer cutover: retain the current image/commit, correct the producer or grant, and re-run clean
