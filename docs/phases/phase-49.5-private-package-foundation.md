@@ -1,7 +1,7 @@
 # Phase 49.5 — Private package foundation
 
-> **Status:** 49.5a final independent review. Package publication and repository extraction are
-> deliberately coupled to the first real private consumer; prose alone cannot close this card.
+> **Status:** 49.5a is accepted. Immutable package publication and the first real private
+> consumer proof are deliberately coupled; prose alone cannot close this card.
 
 > **Default-path acceptance:** N/A for 49.5a: this is a documentation/policy card and changes no
 > artifact, runtime, integration, or deployment default. Each later producer/consumer cutover must

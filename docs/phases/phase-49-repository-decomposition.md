@@ -1,8 +1,8 @@
 # Phase 49 — Private repository decomposition
 
-> **Status:** Program foundation, compatibility baseline and narrow local seam-cleanup fence are
-> accepted. The private target repositories exist. Package and consumer proof remains the next
-> gate before any product cutover.
+> **Status:** Program foundation, compatibility baseline, narrow local seam-cleanup fence, and
+> private Forge MCL bootstrap are accepted. Immutable package publication and consumer proof remain
+> the next gate before any product cutover.
 
 ## Why this phase exists
 
@@ -30,10 +30,10 @@ wire/store because files moved, or introduce a new deployment topology as an ext
 
 | Repository | Privacy | Bounded owner | Planned source | External contracts / delivery owner |
 |---|---|---|---|---|
-| `forge-mcl` | Private | MCL syntax, generic execution, provider/retrieval adapters, CLI and mission-package client | Parser, Core, ChatClients, Scout after seam cleanup, Serve, CLI | MCL packages and CLI release |
+| `forge-mcl` | Private | MCL syntax, generic execution, provider/retrieval adapters, CLI, mission-package client and Docker support | Parser, Core, ChatClients, Scout after seam cleanup, Serve, Docker, CLI | MCL packages and CLI release |
 | `forge-runner` | Private | Stateless hosted mission execution | Runner and Runner Contracts | Runner contract and `forge-runner` image |
 | `forge-conversations` | Private | Durable conversation admission/state and mission work | Conversations Contracts, ConversationHost and ConversationWorker; shared conversation presentation placement remains pending D49-05 | Conversation contract and service images |
-| `forge-desktop` | Private | Local Application, capabilities, UI, native host, supervision and local runtime orchestration | Application*, ClientRuntime, Presentation, Desktop* and Orchestration; Docker support placement remains pending D49-06 | Desktop packages and canonical Desktop artifact |
+| `forge-desktop` | Private | Local Application, capabilities, UI, native host, supervision and local runtime orchestration | Application*, ClientRuntime, Presentation, Desktop* and Orchestration; later consumes the exact private Docker package | Desktop packages and canonical Desktop artifact |
 | `forge-platform` | Private | Public platform edge and account/ledger authority | Api and Billing | Platform client contract and `forge-api` image |
 | `forge-rooms` | Private | Collaboration domain, Rooms store and browser product | Rooms, Rooms.Data, ForgeUI | Rooms browser image and migration bundle |
 | `forge-missions` | Private, deferred | Independently versioned OCI mission/expert content only | No source move is approved yet | OCI content artifacts only |
@@ -66,8 +66,8 @@ and datastore access.
 | [49.2](phase-49.2-baseline-and-seam-proof.md) | Reproducible dependency, AOT, CI, package, identity and deployment baseline | Current repository docs | **Accepted** | 49.1 accepted | [Completion record](phase-49.2-baseline-and-seam-proof_completed.md), independent review PASS |
 | [49.3](phase-49.3-compatibility-freeze.md) | Establish a narrow compatibility fence for local MCL seam cleanup | Current repository docs | **Accepted** | 49.2 accepted | Implemented-boundary fence; extraction remains blocked |
 | [49.4](phase-49.4-mcl-seam-cleanup.md) | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | **Accepted** | 49.2, 49.3 | [Completion evidence](phase-49.4c-runner-cli-dependency-cut_completed.md), PR [#173](https://github.com/katasec/mission-control-language/pull/173) |
-| [49.5](phase-49.5-private-package-foundation.md) | Private package foundation and external-consumer proof | Package owners | Final design review; `forge-mcl` bootstrap next | 49.4 accepted | Private package/version/access proof |
-| 49.6 | Extract MCL/toolchain without changing the current product path | `forge-mcl` | PR verification in progress | 49.5a accepted | [Private PR #1](https://github.com/katasec/forge-mcl/pull/1); package publication and consumer cutover remain blocked |
+| [49.5](phase-49.5-private-package-foundation.md) | Private package foundation and external-consumer proof | Package owners | Package publication and real consumer proof next | 49.4 accepted | Private package/version/access proof |
+| 49.6 | Extract MCL/toolchain without changing the current product path | `forge-mcl` | **Accepted** | 49.5a accepted | [Completion record](phase-49.6-forge-mcl-bootstrap_completed.md); package publication and consumer cutover remain blocked |
 | 49.7–49.11 | One repository extraction per accepted product boundary | Target repository above | Not started | Relevant package and compatibility gates | Per-card cutover checkpoints |
 | 49.12 | Optional mission-content decision and monorepo retirement | Deferred | Not started | All accepted extractions | No cross-repo source references |
 
@@ -80,7 +80,7 @@ and datastore access.
 | D49-03 | Type 1 contract policy | Define supported consumer-version windows and NuGet/HTTP ownership for each public contract. | Partially resolved — MCL v1 policy locked; Runner/Conversation contracts remain extraction decisions | Private package foundation |
 | D49-04 | Type 1 platform boundary | Define the narrow Platform service/client route that removes Rooms' in-process Billing dependency without granting Rooms Billing-store access. | Open | Platform and Rooms extraction |
 | D49-05 | Type 2 UI package placement | Decide whether shared conversation activity rendering travels with Conversations as a semantic package or a dedicated UI package. | Open | Conversations/Desktop/Rooms extraction |
-| D49-06 | Type 2 reusable local-support placement | Decide the smallest owner/package boundary for Docker operations used by both the CLI and Desktop orchestration without introducing an MCL-to-Desktop dependency or duplicate implementation. | Resolved — private leaf Docker package published by `forge-mcl`, consumed by Desktop | MCL and Desktop extraction |
+| D49-06 | Type 2 reusable local-support placement | Decide the smallest owner/package boundary for Docker operations used by both the CLI and Desktop orchestration without introducing an MCL-to-Desktop dependency or duplicate implementation. | Resolved — private leaf Docker package owned by `forge-mcl`; publication and Desktop consumption remain separate gates | MCL and Desktop extraction |
 
 ## Spokes
 
