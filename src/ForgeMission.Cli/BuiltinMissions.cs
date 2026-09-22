@@ -1,4 +1,4 @@
-namespace ForgeMission.MissionRegistry;
+namespace ForgeMission.Cli;
 
 /// <summary>
 /// The built-in missions and the immutable <c>@sha256</c> digests they are pinned to on the trusted
@@ -36,7 +36,7 @@ public static class BuiltinMissions
     /// Resolve each built-in to its <c>mission.mcl</c> path by pulling from the registry by pinned
     /// digest into the forge cache — the "baked-in → pulled" move. Falls back to the copy baked into
     /// the image if a pull fails (registry outage), so the runner stays up. Returns
-    /// <see cref="ForgeMission.Runner.RunnerRegistry"/> load specs.
+    /// <see cref="RunnerRegistry"/> load specs.
     /// </summary>
     public static async Task<List<(string label, string description, string path)>> ResolveAsync(
         string bakedInDir, CancellationToken ct = default)

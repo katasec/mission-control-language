@@ -61,8 +61,7 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Mission language | [ForgeMission.Core](ForgeMission.Core/README.md) | Component — provider-neutral MCL resolution and pipeline execution. |
 | Mission language | [ForgeMission.Parser](ForgeMission.Parser/README.md) | Component — source-spanned MCL syntax and diagnostics. |
 | Mission language | [ForgeMission.ChatClients](ForgeMission.ChatClients/README.md) | Component — provider-SDK client boundary. |
-| Mission language | [ForgeMission.Scout](ForgeMission.Scout/README.md) | Component — xAI Grok web-search adapter implementing Core's retrieval contract. |
-| Mission language | [ForgeMission.MissionRegistry](ForgeMission.MissionRegistry/README.md) | Component — AOT-safe owner of pinned built-in catalogue and OCI cache/pull behavior. |
+| Mission language | [ForgeMission.Scout](ForgeMission.Scout/README.md) | Component — provider-neutral web-search contract and Grok adapter. |
 | Mission language | [ForgeMission.Cli](ForgeMission.Cli/README.md) | Component — Native-AOT command composition surface. |
 | Mission language | [ForgeMission.Serve](ForgeMission.Serve/README.md) | Component — shared OpenAI/Anthropic-compatible HTTP wire mapping. |
 | Mission language | [ForgeMission.Docker](ForgeMission.Docker/README.md) | Component — narrow Docker operations and prerequisite checks. |
@@ -90,6 +89,6 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Diagnostic | [ForgeMission.Application.TransportProbe](ForgeMission.Application.TransportProbe/Program.cs) | Excluded — diagnostic executable that proves a non-Desktop use of the transport contract; its owner is [Application Transport](ForgeMission.Application.Transport/README.md). |
 | Diagnostic | [ForgeMission.ProjectServiceProbe](ForgeMission.ProjectServiceProbe/Program.cs) | Excluded — diagnostic executable for Project-service crash and concurrent-write scenarios; its owner is [Application](ForgeMission.Application/README.md). |
 
-The 29 linked components are the documented source-adjacent boundaries. The two
+The 28 linked components are the documented source-adjacent boundaries. The two
 diagnostic probes are deliberately excluded from component status: they exercise
 their owners and do not introduce a separate runtime, store, host, or service.

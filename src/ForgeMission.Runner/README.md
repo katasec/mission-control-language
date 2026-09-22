@@ -18,7 +18,7 @@ Provider-backed compute and mission loading must be isolated from presentation a
 
 ## Owns
 
-- `/run`, `/run/stream`, `/missions`, artifact projections, mission loading, execution mapping, and runner-owned enrichment cache.
+- `/run`, `/run/stream`, `/missions`, artifact projections, mission registry/loading, execution mapping, and runner-owned enrichment cache.
 - Provider-backed mission execution and observability for this host.
 
 ## Does not own
@@ -35,8 +35,7 @@ For caller-side policy, durable conversation state, or local capability work, co
 ## Use these pieces
 
 - [HTTP composition and route entry points](Program.cs)
-- [Execution handler](MissionRunHandler.cs), [mission loading](RunnerMissionSource.cs), [mission registry](RunnerRegistry.cs), and [artifact store](RunnerArtifactStore.cs)
-- [Mission Registry](../ForgeMission.MissionRegistry/README.md) owns OCI pulls/cache and the pinned built-in catalogue; Runner owns the fallback and host composition.
+- [Execution handler](MissionRunHandler.cs), [mission registry](RunnerRegistry.cs), and [artifact store](RunnerArtifactStore.cs)
 - [Shared wire](../ForgeMission.Runner.Contracts/README.md)
 - Boundary coverage: [run handling](../ForgeMission.Runner.Tests/MissionRunHandlerTests.cs), [registry](../ForgeMission.Runner.Tests/RunnerRegistryTests.cs), and [cache](../ForgeMission.Runner.Tests/PostgresEnrichmentCacheTests.cs)
 

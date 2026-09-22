@@ -1,9 +1,9 @@
 using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Experts;
-using ForgeMission.Core.Retrieval;
 using ForgeMission.Core.Runtime;
 using ForgeMission.Parser;
 using ForgeMission.Tests.Runtime;
+using Scout;
 using static ForgeMission.Core.Runtime.MissionStatus;
 
 namespace ForgeMission.Tests.Scout;
@@ -93,21 +93,6 @@ public class SearchMissionPipelineTests
         Assert.Equal(Pass, result.Status);
         Assert.Equal(0, web.Calls);                                     // no retrieval on the passthrough path
         Assert.Equal("DIRECT", result.Text);                            // when(else) answered
-    }
-
-    [Fact]
-    public async Task SearchNeeded_WithoutBackend_ThrowsStableConfigurationError()
-    {
-        var ast = MclParser.Parse(MissionMcl);
-        var llm = LlmStub("""{"search_needed":"yes","search_query":"world cup today"}""");
-
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            new PipelineRunner(llm).RunAsync(ast, Experts(), new PipelineRunOptions("SearchAgent",
-                new Dictionary<string, string> { ["goal"] = "who plays in the world cup today?" })));
-
-        Assert.Equal(
-            "kind: search requires a configured IWebSearch (Scout). Pass one to the PipelineRunner constructor.",
-            error.Message);
     }
 
     // Phase 41.7: a PipelineStepStarted trace fact fires as each step BEGINS, in pipeline order,
