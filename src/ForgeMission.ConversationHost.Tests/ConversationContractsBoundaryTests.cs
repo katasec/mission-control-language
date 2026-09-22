@@ -123,6 +123,8 @@ public class ConversationContractsBoundaryTests
         // fixed release is the real fix — never a NuGet-audit suppression for a high-severity
         // advisory.
         Assert.Contains("""<PackageReference Include="SSH.NET" Version="2026.0.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />""", text);
+        Assert.DoesNotContain("ForgeMission.Core.csproj", text);
         Assert.DoesNotContain("NU1903", text);
         Assert.DoesNotContain("Orleans", text);
         // Testcontainers.Azurite is the only allowed Azure-named package reference here — "Azure."
