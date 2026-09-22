@@ -22,6 +22,24 @@ public sealed class MclPackageConsumptionTests
         Assert.Equal("0.1.0", (string?)package.Attribute("Version"));
     }
 
+    [Fact]
+    public void Desktop_UsesReleasedCorePackage_NotTheForgeMclCheckout()
+    {
+        var project = XDocument.Load(Path.Combine(RepositoryRoot(), "src", "ForgeMission.Desktop", "ForgeMission.Desktop.csproj"));
+
+        Assert.DoesNotContain(project.Descendants("ProjectReference"), reference =>
+            string.Equals(
+                Path.GetFileNameWithoutExtension(((string?)reference.Attribute("Include") ?? string.Empty)
+                    .Replace('\\', Path.DirectorySeparatorChar)),
+                "ForgeMission.Core",
+                StringComparison.Ordinal));
+
+        var package = Assert.Single(project.Descendants("PackageReference"), reference =>
+            string.Equals((string?)reference.Attribute("Include"), "Katasec.Forge.Mcl.Core", StringComparison.Ordinal));
+        Assert.Equal("Katasec.Forge.Mcl.Core", (string?)package.Attribute("Include"));
+        Assert.Equal("0.1.0", (string?)package.Attribute("Version"));
+    }
+
     private static string RepositoryRoot()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)

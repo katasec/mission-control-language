@@ -8,17 +8,18 @@
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
-  <!-- Contracts (the pipe protocol), Orchestration (Mission Runtime resolution) and Core (the
-       platform credential this process hands to the Application Host, and to nothing else).
+  <!-- Contracts (the pipe protocol), Orchestration (Mission Runtime resolution), and the released
+       Core package (the platform credential this process hands to the Application Host, and to
+       nothing else).
        Deliberately no reference to a concrete native host or to ForgeMission.Desktop.Host: the Host
        is started as a sibling binary by path, which keeps its dependencies out of this process. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Desktop.Contracts\ForgeMission.Desktop.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />
   </ItemGroup>
