@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 49: establish the private package foundation and first real consumer proof. |
+| **NEXT STEP** | Phase 49: publish the accepted Forge MCL packages and prove the first real private consumer. |
 
 ## Active phases
 
