@@ -4,22 +4,29 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- NOT Native AOT: this is an ASP.NET web host (like ForgeUI), not the `forge` CLI. The AOT
-         rule in CLAUDE.md is scoped to the CLI binary. PublishAot=false neutralises the flag
-         inherited from the referenced ForgeMission.Cli project (which sets PublishAot=true),
-         exactly as Dockerfile.forgeui does for ForgeUI. -->
+    <!-- NOT Native AOT: this is an ASP.NET web host, not the `forge` CLI. -->
     <PublishAot>false</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
-    <ProjectReference Include="..\ForgeMission.ChatClients\ForgeMission.ChatClients.csproj" />
-    <ProjectReference Include="..\ForgeMission.Cli\ForgeMission.Cli.csproj" />
     <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
-    <ProjectReference Include="..\ForgeMission.Serve\ForgeMission.Serve.csproj" />
+    <PackageReference Include="Katasec.Forge.Mcl.Serve" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="BuiltinMissionReferences\vanilla.oci-ref"
+                      LogicalName="ForgeMission.Runner.BuiltinMissionReferences.vanilla.oci-ref" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ForgeMission.Runner.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Mcl.MissionRegistry" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Mcl.Scout" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Mcl.ChatClients" Version="0.1.0" />
     <!-- Raw ADO.NET Postgres for the runner-owned enrichment cache. No EF: cache data stays
          isolated from authbilling_db and the implementation remains trim/AOT-friendly. -->
     <PackageReference Include="Npgsql" Version="10.0.3" />

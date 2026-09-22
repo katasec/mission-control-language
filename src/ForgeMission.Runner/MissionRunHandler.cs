@@ -166,10 +166,9 @@ internal sealed class MissionRunHandler(
                 return Task.CompletedTask;
             });
 
-        // kind:search backend (Phase 41.2) — implicitly Grok, built from the runner's XAI_API_KEY operator
-        // env var (null if unset ⇒ missions without kind:search are unaffected). Same seam as the CLI.
+        // kind:search backend is owned by this host's XAI API-key environment configuration.
         var stopwatch = Stopwatch.StartNew();
-        var result    = await new PipelineRunner(runner, webSearch: ProviderClientBuilder.BuildWebSearch())
+        var result    = await new PipelineRunner(runner, webSearch: RunnerWebSearch.Build())
             .RunAsync(mission.Ast, mission.Experts, options, ct);
         stopwatch.Stop();
 

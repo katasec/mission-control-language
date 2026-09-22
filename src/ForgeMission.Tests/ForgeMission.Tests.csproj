@@ -10,8 +10,8 @@
   <ItemGroup>
     <PackageReference Include="bunit" Version="2.9.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.7.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
     <PackageReference Include="Xunit.SkippableFact" Version="1.5.61" />
@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Application\ForgeMission.Application.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime\ForgeMission.ClientRuntime.csproj" />
     <ProjectReference Include="..\ForgeMission.Application.Host\ForgeMission.Application.Host.csproj" />
@@ -33,17 +32,7 @@
     <ProjectReference Include="..\ForgeMission.ProjectServiceProbe\ForgeMission.ProjectServiceProbe.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ForgeMission.Desktop\ForgeMission.Desktop.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
-    <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />
-    <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
-    <!-- Build-ordering only (42.1): integration tests spawn the REAL `forge serve` from the
-         CLI's own output dir; not compile-referenced (its top-level Program would collide). -->
-    <ProjectReference Include="..\ForgeMission.Cli\ForgeMission.Cli.csproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\..\..\..\progs\oai-server-dotnet\src\Katasec.OaiServer\Katasec.OaiServer.csproj" />
     <ProjectReference Include="..\..\..\..\progs\oai-server-dotnet\src\Katasec.AnthropicServer\Katasec.AnthropicServer.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="GitHub.Copilot.SDK" Version="*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,9 +40,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Missions/**" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\..\missions\vanilla\**\*" Link="missions\vanilla\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

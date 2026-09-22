@@ -29,8 +29,6 @@ ifeq ($(OS),Windows_NT)
   SHELL := bash
 endif
 
-INSTALL_DIR := $(HOME)/.local/bin
-CLI         := src/ForgeMission.Cli
 APPLICATION_HOST := src/ForgeMission.Application.Host
 DESKTOP_SUPERVISOR := src/ForgeMission.Desktop
 DESKTOP_HOST := src/ForgeMission.Desktop.Host
@@ -38,7 +36,7 @@ DESKTOP_DIR := dist/forge-desktop
 DESKTOP_SUPERVISOR_EXE := $(DESKTOP_DIR)/ForgeMission.Desktop.exe
 NORMALIZE_AOT_PE := pwsh -NoProfile -File ./scripts/Normalize-AotPeTimestamps.ps1
 
-.PHONY: help build test install clean demo demo-naive demo-reliable dev-up dev-down dev-reset desktop desktop-publish
+.PHONY: help build test clean dev-up dev-down dev-reset desktop desktop-publish
 .DEFAULT_GOAL := help
 
 help:
@@ -49,26 +47,6 @@ build: ## Build the solution (debug)
 
 test: ## Run all tests
 	dotnet test src/
-
-install: ## Publish native AOT binary to ~/.local/bin
-	dotnet publish $(CLI) \
-		-c Release \
-		-r $(RID) \
-		-o $(INSTALL_DIR)
-	@echo "Installed: $(INSTALL_DIR)/forge"
-
-demo: install ## Install then run the build-operator sample mission end-to-end
-	cd missions/build-operator && forge init && forge run
-
-demo-naive: ## Run the one-shot loop demo — no retry, raw first-attempt output (requires forge in PATH)
-	cd missions/loop-demo-naive && forge run
-
-demo-reliable: ## Run the loop demo — retries until quality passes, shows convergence (requires forge in PATH)
-	cd missions/loop-demo && forge run --steps
-
-build-linux: ## Build linux-x64 binary into repo root (needed for docker build)
-	dotnet publish $(CLI) -c Release -r linux-x64 -o . --self-contained
-	@echo "forge-linux-x64 ready"
 
 dev-up: ## Start local dev environment (Postgres + migrations)
 	./scripts/dev-up.sh

@@ -42,7 +42,7 @@ public class ConversationContractsBoundaryTests
         Assert.DoesNotContain("<PackageReference", text);
     }
 
-    // Application, Bob, CLI, Presentation, and Application Transport are the AOT-published/
+    // Application, Bob, Presentation, and Application Transport are the AOT-published/
     // user-facing surfaces (Application and Transport may reference Contracts from Task 7 —
     // never Host). Contracts itself must also stay clean of its own server-side dependencies, so
     // it's included alongside them here. Host and its own test project are the only projects
@@ -54,7 +54,6 @@ public class ConversationContractsBoundaryTests
     [InlineData("ForgeMission.Application.Host", "ForgeMission.Application.Host.csproj")]
     [InlineData("ForgeMission.ClientRuntime", "ForgeMission.ClientRuntime.csproj")]
     [InlineData("ForgeMission.Application.Transport", "ForgeMission.Application.Transport.csproj")]
-    [InlineData("ForgeMission.Cli", "ForgeMission.Cli.csproj")]
     [InlineData("ForgeMission.Presentation", "ForgeMission.Presentation.csproj")]
     public void ClientFacingProjects_DoNotNameConversationHostOrleansOrAzureSdk(string projectFolder, string csprojFileName)
     {
@@ -73,9 +72,10 @@ public class ConversationContractsBoundaryTests
         // Core is the one approved MCL/package parser. Host uses it only to reject immutable
         // durable package content before queue dispatch; it still owns no provider composition.
         var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
-        Assert.Equal(2, projectReferenceCount);
+        Assert.Equal(1, projectReferenceCount);
         Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
-        Assert.Contains("ForgeMission.Core.csproj", text);
+        Assert.DoesNotContain("ForgeMission.Core.csproj", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />""", text);
 
         // The Task-4-approved packages plus Task 5's reminder/Service Bus additions, at their
         // pinned versions — no other Orleans/Azure package, no serializer package/codec of any kind.
@@ -91,15 +91,17 @@ public class ConversationContractsBoundaryTests
     }
 
     [Fact]
-    public void ConversationWorker_ReferencesOnlyContractsCoreChatClients_AndNamesOnlyTheTwoApprovedAzurePackages()
+    public void ConversationWorker_ReferencesContractsWithReleasedCoreAndChatClientsPackages_AndNamesOnlyTheTwoApprovedAzurePackages()
     {
         var text = ReadCsproj("ForgeMission.ConversationWorker", "ForgeMission.ConversationWorker.csproj");
 
         Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
-        Assert.Contains("ForgeMission.Core.csproj", text);
-        Assert.Contains("ForgeMission.ChatClients.csproj", text);
         var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
-        Assert.Equal(3, projectReferenceCount);
+        Assert.Equal(1, projectReferenceCount);
+        Assert.DoesNotContain("ForgeMission.Core.csproj", text);
+        Assert.DoesNotContain("ForgeMission.ChatClients.csproj", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.ChatClients" Version="0.1.0" />""", text);
 
         // Worker constructs the mission-command Listen and progress Send directions itself and
         // needs Azure.Identity for DefaultAzureCredential — nothing else Azure-named, and no
@@ -123,6 +125,8 @@ public class ConversationContractsBoundaryTests
         // fixed release is the real fix — never a NuGet-audit suppression for a high-severity
         // advisory.
         Assert.Contains("""<PackageReference Include="SSH.NET" Version="2026.0.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />""", text);
+        Assert.DoesNotContain("ForgeMission.Core.csproj", text);
         Assert.DoesNotContain("NU1903", text);
         Assert.DoesNotContain("Orleans", text);
         // Testcontainers.Azurite is the only allowed Azure-named package reference here — "Azure."

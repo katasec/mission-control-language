@@ -19,6 +19,7 @@
          this version everywhere, including inside Testcontainers, which permits the newer version. -->
     <PackageReference Include="SSH.NET" Version="2026.0.0" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.7.0" />
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +30,6 @@
     <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationHost\ForgeMission.ConversationHost.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime\ForgeMission.ClientRuntime.csproj" />
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationWorker\ForgeMission.ConversationWorker.csproj" />
   </ItemGroup>
 

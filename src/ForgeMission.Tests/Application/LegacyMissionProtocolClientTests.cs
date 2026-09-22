@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using ForgeMission.Application;
 using ForgeMission.Core.Tools;
-using ForgeMission.Tests.Integration;
 using Microsoft.Extensions.AI;
 
 namespace ForgeMission.Tests.Application;
@@ -21,7 +20,7 @@ public sealed class LegacyMissionProtocolClientTests : IDisposable
         await File.WriteAllTextAsync(notesPath, "status: before-PLATYPUS");
 
         var client = new ScriptedAgentClient(notesPath);
-        await using var fixture = await AnthropicServerFixture.StartAsync(client);
+        await using var fixture = await LegacyMissionProtocolFixture.StartAsync(client);
         using var http = new HttpClient { BaseAddress = new Uri(fixture.BaseUrl) };
         var session = new LegacyMissionProtocolClient(http);
         var workspace = new LocalDiskWorkspace(_workspace);
