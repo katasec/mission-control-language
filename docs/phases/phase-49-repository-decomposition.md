@@ -42,6 +42,10 @@ wire/store because files moved, or introduce a new deployment topology as an ext
 `forge-missions` remains deferred until a separate design proves an independent content lifecycle.
 The Platform API's public mission policy catalog is not the same owner as MCL OCI package retrieval.
 
+All six new private repositories now have a deliberately minimal `main` base, allowing later
+changes to use normal feature-branch PRs. The one-file bootstrap evidence and rollback facts are
+in the [completion record](phase-49-repository-decomposition_completed.md#repository-base-seeds).
+
 ## Dependency direction
 
 `forge-mcl` is a package/toolchain dependency for Runner, Conversations and Desktop. Runner and
@@ -63,7 +67,8 @@ and datastore access.
 | [49.3](phase-49.3-compatibility-freeze.md) | Establish a narrow compatibility fence for local MCL seam cleanup | Current repository docs | **Accepted** | 49.2 accepted | Implemented-boundary fence; extraction remains blocked |
 | [49.4](phase-49.4-mcl-seam-cleanup.md) | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | **Accepted** | 49.2, 49.3 | [Completion evidence](phase-49.4c-runner-cli-dependency-cut_completed.md), PR [#173](https://github.com/katasec/mission-control-language/pull/173) |
 | [49.5](phase-49.5-private-package-foundation.md) | Private package foundation and external-consumer proof | Package owners | Final design review; `forge-mcl` bootstrap next | 49.4 accepted | Private package/version/access proof |
-| 49.6–49.11 | One repository extraction per accepted product boundary | Target repository above | Not started | Relevant package and compatibility gates | Per-card cutover checkpoints |
+| 49.6 | Extract MCL/toolchain without changing the current product path | `forge-mcl` | PR verification in progress | 49.5a accepted | [Private PR #1](https://github.com/katasec/forge-mcl/pull/1); package publication and consumer cutover remain blocked |
+| 49.7–49.11 | One repository extraction per accepted product boundary | Target repository above | Not started | Relevant package and compatibility gates | Per-card cutover checkpoints |
 | 49.12 | Optional mission-content decision and monorepo retirement | Deferred | Not started | All accepted extractions | No cross-repo source references |
 
 ## Decision ledger
