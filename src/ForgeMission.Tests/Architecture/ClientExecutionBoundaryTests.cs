@@ -15,8 +15,10 @@ public sealed class ClientExecutionBoundaryTests
                 .Replace('\\', Path.DirectorySeparatorChar)))
             .ToList();
 
-        Assert.Equal(["ForgeMission.Core"], references);
-        Assert.Empty(project.Descendants("PackageReference"));
+        Assert.Empty(references);
+        var package = Assert.Single(project.Descendants("PackageReference"));
+        Assert.Equal("Katasec.Forge.Mcl.Core", (string?)package.Attribute("Include"));
+        Assert.Equal("0.1.0", (string?)package.Attribute("Version"));
 
         foreach (var source in Directory.EnumerateFiles(Path.Combine(root, "src", "ForgeMission.ClientRuntime"), "*.cs", SearchOption.AllDirectories)
                      .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))

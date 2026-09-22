@@ -6,7 +6,7 @@
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ForgeMission.Application" />

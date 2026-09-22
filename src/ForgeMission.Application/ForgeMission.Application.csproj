@@ -8,8 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Application.Transport\ForgeMission.Application.Transport.csproj" />
     <ProjectReference Include="..\ForgeMission.ClientRuntime\ForgeMission.ClientRuntime.csproj" />
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
