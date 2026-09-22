@@ -33,6 +33,7 @@
     <ProjectReference Include="..\ForgeMission.ProjectServiceProbe\ForgeMission.ProjectServiceProbe.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\ForgeMission.Desktop\ForgeMission.Desktop.csproj" />
     <ProjectReference Include="..\ForgeMission.Orchestration\ForgeMission.Orchestration.csproj" />
+    <ProjectReference Include="..\ForgeMission.MissionRegistry\ForgeMission.MissionRegistry.csproj" />
     <ProjectReference Include="..\ForgeMission.Parser\ForgeMission.Parser.csproj" />
     <ProjectReference Include="..\ForgeMission.Scout\ForgeMission.Scout.csproj" />
     <!-- Build-ordering only (42.1): integration tests spawn the REAL `forge serve` from the

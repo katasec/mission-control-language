@@ -15,8 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\ForgeMission.Cli\BuiltinMissionReferences\vanilla.oci-ref"
-                      Link="BuiltinMissionReferences\vanilla.oci-ref"
+    <EmbeddedResource Include="BuiltinMissionReferences\vanilla.oci-ref"
                       LogicalName="ForgeMission.Orchestration.BuiltinMissionReferences.vanilla.oci-ref" />
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@ using ForgeMission.Application;
 using ForgeMission.Core.Tools;
 using ForgeMission.Orchestration;
 using Microsoft.Extensions.Configuration;
+using RegistryReferences = ForgeMission.MissionRegistry.BuiltinMissionReferences;
 
 namespace ForgeMission.Tests.Orchestration;
 
@@ -15,7 +16,8 @@ public sealed class LocalDockerMissionRuntimeLauncherTests
     {
         var configuration = new ConfigurationBuilder().Build();
 
-        Assert.Equal(BuiltinMissionReferences.Vanilla, LocalDockerMissionRuntimeLauncher.ResolveMissionRef(configuration));
+        Assert.Equal(RegistryReferences.Vanilla, BuiltinMissionReferences.Vanilla);
+        Assert.Equal(RegistryReferences.Vanilla, LocalDockerMissionRuntimeLauncher.ResolveMissionRef(configuration));
     }
 
     [Fact]
