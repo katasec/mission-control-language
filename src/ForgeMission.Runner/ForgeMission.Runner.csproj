@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Serve\ForgeMission.Serve.csproj" />
+    <PackageReference Include="Katasec.Forge.Mcl.Serve" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>
