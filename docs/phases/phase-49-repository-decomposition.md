@@ -1,7 +1,8 @@
 # Phase 49 — Private repository decomposition
 
-> **Status:** Program foundation accepted; compatibility baseline is next. No source, package,
-> workflow, infrastructure, or repository extraction is authorized until the gates below pass.
+> **Status:** Program foundation and compatibility baseline accepted; the Phase 45/46 compatibility
+> decision is next. No source, package, workflow, infrastructure, or repository extraction is
+> authorized until the gates below pass.
 
 ## Why this phase exists
 
@@ -58,7 +59,7 @@ and datastore access.
 | Card | Outcome | Target | Status | Prerequisite | Evidence / rollback |
 |---|---|---|---|---|---|
 | 49.1 | Program governance, agent roles, decision/compatibility/rollback ledger and task-card standard | Current repository docs | **Accepted** | None | PR [#166](https://github.com/katasec/mission-control-language/pull/166), corrective review PR [#167](https://github.com/katasec/mission-control-language/pull/167), independent review PASS |
-| 49.2 | Reproducible dependency, AOT, CI, package, identity and deployment baseline | Current repository docs | Not started | 49.1 accepted | Named observations; no behavior change |
+| [49.2](phase-49.2-baseline-and-seam-proof.md) | Reproducible dependency, AOT, CI, package, identity and deployment baseline | Current repository docs | **Accepted** | 49.1 accepted | [Completion record](phase-49.2-baseline-and-seam-proof_completed.md), independent review PASS |
 | 49.3 | Resolve the active Phase 45/46 compatibility interlock | Current repository docs | Design blocked | Operator decision D49-01 | Versioned compatibility baseline |
 | 49.4 | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | Not started | 49.2, 49.3 | Focused/full/AOT evidence |
 | 49.5 | Private package foundation and external-consumer proof | Package owners | Not started | 49.4 | Package versions and access observation |
@@ -79,7 +80,8 @@ and datastore access.
 ## Spokes
 
 - [49.1 — Program foundation](phase-49.1-program-foundation.md) — active governance and agent protocol.
-- 49.2 baseline, 49.3 compatibility, 49.4 MCL seam cleanup and later extraction spokes are created only when their prerequisites make their design build-ready. They must not be pre-filled with inferred contracts.
+- [49.2 — Baseline and seam proof](phase-49.2-baseline-and-seam-proof.md) — accepted evidence and remaining gates.
+- 49.3 compatibility, 49.4 MCL seam cleanup and later extraction spokes are created only when their prerequisites make their design build-ready. They must not be pre-filled with inferred contracts.
 
 ## Done when
 
