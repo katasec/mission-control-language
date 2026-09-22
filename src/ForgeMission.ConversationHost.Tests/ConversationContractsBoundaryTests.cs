@@ -91,16 +91,17 @@ public class ConversationContractsBoundaryTests
     }
 
     [Fact]
-    public void ConversationWorker_ReferencesContractsAndChatClientsWithReleasedCorePackage_AndNamesOnlyTheTwoApprovedAzurePackages()
+    public void ConversationWorker_ReferencesContractsWithReleasedCoreAndChatClientsPackages_AndNamesOnlyTheTwoApprovedAzurePackages()
     {
         var text = ReadCsproj("ForgeMission.ConversationWorker", "ForgeMission.ConversationWorker.csproj");
 
         Assert.Contains("ForgeMission.Conversations.Contracts.csproj", text);
-        Assert.Contains("ForgeMission.ChatClients.csproj", text);
         var projectReferenceCount = System.Text.RegularExpressions.Regex.Matches(text, "<ProjectReference").Count;
-        Assert.Equal(2, projectReferenceCount);
+        Assert.Equal(1, projectReferenceCount);
         Assert.DoesNotContain("ForgeMission.Core.csproj", text);
+        Assert.DoesNotContain("ForgeMission.ChatClients.csproj", text);
         Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />""", text);
+        Assert.Contains("""<PackageReference Include="Katasec.Forge.Mcl.ChatClients" Version="0.1.0" />""", text);
 
         // Worker constructs the mission-command Listen and progress Send directions itself and
         // needs Azure.Identity for DefaultAzureCredential — nothing else Azure-named, and no
