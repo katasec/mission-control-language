@@ -1,3 +1,4 @@
+using ForgeMission.Cli;
 using ForgeMission.Core.Adapters;
 using ForgeMission.Core.Runtime;
 using Microsoft.Extensions.AI;
@@ -50,7 +51,7 @@ internal sealed class MissionDoorClient(
         return new MissionChatClient(
             mission.Ast, mission.Experts, runner, fullConversation,
             enrichmentCache: enrichmentCache,
-            webSearch: RunnerWebSearch.Build());
+            webSearch: ProviderClientBuilder.BuildWebSearch());
     }
 
     private RunnerMission ResolveMission(string? modelId)

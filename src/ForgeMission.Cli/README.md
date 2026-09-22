@@ -20,7 +20,7 @@ People need one command surface for mission lifecycle, execution, serving, and s
 
 - The executable entry point and command registration in [`Program`](Program.cs).
 - Command input/output, mission-file selection, and composition of Core, Chat Clients, Docker, Scout, and Serve.
-- CLI-specific OCI command workflows, platform sign-in, and MCP command wiring.
+- CLI-specific OCI pulls, platform sign-in, built-in mission references, and MCP command wiring.
 
 ## Does not own
 
@@ -32,11 +32,10 @@ A change belongs here only if it advances the `forge` command surface or compose
 
 ## Use these pieces
 
-- [`Program`](Program.cs) registers every command and is the executable entry point; it composes
-  the OCI mission catalogue owner when a command needs a built-in or cached OCI content.
+- [`Program`](Program.cs) registers every command and is the executable entry point.
 - [`ForgeExec`](ForgeExec.cs) is the shared CLI execution helper; [`ProviderClientBuilder`](ProviderClientBuilder.cs) wires optional live search.
 - [`ChatClients`](../ForgeMission.ChatClients/ChatClients.cs), [`ForgeServe`](../ForgeMission.Serve/ForgeServe.cs), and [`DockerCli`](../ForgeMission.Docker/DockerCli.cs) are composed owners.
-- [`MissionFileResolutionTests`](../ForgeMission.Tests/Cli/MissionFileResolutionTests.cs) and [`ForgeExecUrlInputTests`](../ForgeMission.Tests/Cli/ForgeExecUrlInputTests.cs) cover CLI-specific behavior. [`BuiltinMissionsTests`](../ForgeMission.Tests/MissionRegistry/BuiltinMissionsTests.cs) covers the composed catalogue owner.
+- [`MissionFileResolutionTests`](../ForgeMission.Tests/Cli/MissionFileResolutionTests.cs), [`BuiltinMissionsTests`](../ForgeMission.Tests/Cli/BuiltinMissionsTests.cs), and [`ForgeExecUrlInputTests`](../ForgeMission.Tests/Cli/ForgeExecUrlInputTests.cs) cover CLI-specific behavior.
 
 ## Communicates with
 

@@ -1,4 +1,4 @@
-namespace ForgeMission.Core.Retrieval;
+namespace Scout;
 
 /// <summary>
 /// The single swap point for live-internet retrieval. Callers depend only on this interface and the

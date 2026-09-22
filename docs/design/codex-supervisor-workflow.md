@@ -17,20 +17,6 @@ or executable-configuration task has exactly one implementing subagent at a time
 are read-only investigators or reviewers. Shared worktree access makes this serialization a
 correctness requirement, not a convention.
 
-## Decision tempo — reversible by default
-
-Every persona preserves velocity by preferring the smallest **Type 2** decision that can be
-measured and reversed: an isolated branch, private non-production repository, exact package pin,
-feature-neutral source move, or retained fallback artifact. The supervisor records the pivot path
-before execution and keeps the current product path untouched until the new path is proven.
-
-Only a genuine Type 1 boundary—public/wire/persistent contract, datastore ownership, public
-ingress, or credential/identity grant—may justify slower design work. A reviewer must identify all
-known blockers in one pass. A card gets at most five decision turns: one evidence inventory, two
-design/review turns, one correction turn, and one implementation/acceptance turn. At that limit the
-supervisor implements the best bounded Type 2 option, records one concrete external blocker, or
-makes the authorized decision; it does not reopen a broad investigation.
-
 ## Required loop
 
 1. **Scope.** The supervisor completes the relevant spoke's design, component-fit, security,

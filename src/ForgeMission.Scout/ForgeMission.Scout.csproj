@@ -10,8 +10,4 @@
          no reflection, no bare JsonSerializerOptions — STJ source-gen only (see Grok/GrokWire.cs). -->
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ForgeMission.Core\ForgeMission.Core.csproj" />
-  </ItemGroup>
-
 </Project>

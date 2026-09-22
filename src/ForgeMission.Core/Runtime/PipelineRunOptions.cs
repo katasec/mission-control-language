@@ -1,5 +1,5 @@
 using Microsoft.Extensions.AI;
-using ForgeMission.Core.Retrieval;
+using Scout;
 
 namespace ForgeMission.Core.Runtime;
 

@@ -6,7 +6,7 @@ using ForgeMission.Core.Experts;
 using ForgeMission.Core.Manifest;
 using ForgeMission.Parser;
 using Microsoft.Extensions.AI;
-using ForgeMission.Core.Retrieval;
+using Scout;
 
 namespace ForgeMission.Core.Runtime;
 

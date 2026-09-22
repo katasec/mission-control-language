@@ -1,5 +1,5 @@
 using System.Net;
-using ForgeMission.Core.Retrieval;
+using Scout;
 using Scout.Grok;
 
 namespace ForgeMission.Tests.Scout;
