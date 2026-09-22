@@ -51,6 +51,8 @@ flowchart LR
 ## Important flows and constraints
 
 - With no Mission configuration, cloud mode resolves to `https://api.forge.katasec.com`.
+- The Docker mission-runtime fallback reference is a source-local, digest-pinned compatibility copy;
+  it intentionally has no runtime OCI/registry dependency.
 - With no Conversation base URL, the default is `http://127.0.0.1:18080/` and readiness is `GET /health`.
 - A configured or already-healthy endpoint is never stopped; a lease disposes only the tunnel this library started.
 

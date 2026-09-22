@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 49: design and accept the next proven local MCL dependency cleanup while preserving the accepted Desktop/Conversation compatibility envelope. |
+| **NEXT STEP** | Phase 49: complete the local seam final review, then establish the private package foundation for the first real consumer cutover. |
 
 ## Active phases
 
@@ -16,7 +16,7 @@
 |-------|-------------|--------|
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Next: live existing-mission chat in the fixed Phase 47 screen. Authoring is accepted work, not the next task. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
-| [Phase 49 — private repository decomposition](phases/phase-49-repository-decomposition.md) | Safely split the Forge estate into private, independently owned repositories without changing product behavior by accident. | Governance, baseline and first local seam cleanup accepted; package and repository extraction remain blocked. |
+| [Phase 49 — private repository decomposition](phases/phase-49-repository-decomposition.md) | Safely split the Forge estate into private, independently owned repositories without changing product behavior by accident. | Local seam final review; extraction remains blocked by the decision ledger. |
 
 ## Design docs
 

@@ -8,6 +8,7 @@ using ForgeMission.Core.Runtime;
 using static ForgeMission.Core.Runtime.MissionStatus;
 using Microsoft.Extensions.AI;
 using ForgeMission.ChatClients;
+using ForgeMission.MissionRegistry;
 using Katasec.OciClient;
 using ForgeMission.Serve;
 using Microsoft.AspNetCore.Builder;

@@ -1,7 +1,7 @@
-using Katasec.OciClient;
 using ForgeMission.Core.Resolution;
+using Katasec.OciClient;
 
-namespace ForgeMission.Cli;
+namespace ForgeMission.MissionRegistry;
 
 /// <summary>
 /// Pulls a whole OCI <b>mission</b> (Phase 39.4) into the forge cache — the mission analog of
@@ -26,17 +26,14 @@ public static class OciMissionPuller
         var (registry, name, reference) = OciExpertPuller.ParseRef(ociRef);
         var cacheDir = ForgeCache.MissionDir(registry, name, reference);
 
-        // A populated cache dir (mission.mcl present) is a hit — digest refs are immutable, so a
-        // cached digest never needs refetching.
         if (!refresh && File.Exists(Path.Combine(cacheDir, "mission.mcl")))
             return (cacheDir, "cached");
 
         var token = CredentialStore.GetToken(registry);
         using var client = new OciClient(credential: token);
 
-        var bundle = await client.PullMissionAsync(registry, name, reference, ct); // throws if not a mission
+        var bundle = await client.PullMissionAsync(registry, name, reference, ct);
 
-        // Unpack fresh: clear any partial dir first so a failed prior pull can't leave a mix.
         if (Directory.Exists(cacheDir))
             Directory.Delete(cacheDir, recursive: true);
         MissionBundle.Unpack(bundle, cacheDir);

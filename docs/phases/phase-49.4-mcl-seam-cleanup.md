@@ -1,6 +1,6 @@
 # Phase 49.4 — Local MCL seam cleanup
 
-> **Status:** 49.4a and 49.4b are accepted; their evidence is in the
+> **Status:** 49.4a and 49.4b are accepted; 49.4c is in final review. Its evidence is in the
 > [49.4a](phase-49.4-mcl-seam-cleanup_completed.md) and
 > [49.4b](phase-49.4b-retrieval-contract-inversion_completed.md) completion records. No package
 > or repository extraction is authorized by this spoke. The Phase 49.3 compatibility fence applies
@@ -22,7 +22,11 @@ single project reference (or revert the accepted merge commit).
 [completion record](phase-49.4b-retrieval-contract-inversion_completed.md). Its rollback is a
 normal revert; no package, deployment, identity, or store change exists.
 
+49.4c moves shared OCI registry behavior to MissionRegistry, removes Runner/Orchestration CLI
+reuse, and preserves Desktop's light AOT closure; see its
+[completion record](phase-49.4c-runner-cli-dependency-cut_completed.md).
+
 ## Later cards
 
-49.4b isolated neutral retrieval vocabulary from concrete Scout/Grok transport. 49.4c removes
-Runner/Orchestration CLI reuse through a proven owner and requires a separate approved design.
+After 49.4c merges, local MCL seam cleanup is complete. Package and repository extraction remains
+governed by the Phase 49 decision ledger and the private package foundation card.

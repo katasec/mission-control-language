@@ -1,9 +1,10 @@
-using Katasec.OciClient;
 using ForgeMission.Core.Resolution;
+using Katasec.OciClient;
 
-static class OciExpertPuller
+namespace ForgeMission.MissionRegistry;
+
+public static class OciExpertPuller
 {
-    // Parses "ghcr.io/katasec/forge-k8s-architect@0.1.0" → (registry, name, tag)
     public static (string Registry, string Name, string Tag) ParseRef(string ociRef)
     {
         var firstSlash = ociRef.IndexOf('/');
@@ -20,11 +21,9 @@ static class OciExpertPuller
         return (registry, rest[..atIdx], rest[(atIdx + 1)..]);
     }
 
-    // Pull expert into ~/.forge cache. Returns (absolutePath, status) where
-    // status is "cached", "pulled", or throws on failure.
     public static async Task<(string Path, string Status)> PullAsync(
         string ociRef,
-        bool   refresh,
+        bool refresh,
         CancellationToken ct = default)
     {
         var (registry, name, tag) = ParseRef(ociRef);
@@ -44,7 +43,6 @@ static class OciExpertPuller
         return (cachePath, "pulled");
     }
 
-    // Returns a ~/... path for storing in mcl.lock so it survives machine moves.
     public static string ToLockPath(string absolutePath)
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
