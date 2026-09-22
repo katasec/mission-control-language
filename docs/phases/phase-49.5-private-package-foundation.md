@@ -27,10 +27,10 @@
    selected below. Its canonical input is UTF-8, LF-terminated, ordinal-sorted `git ls-tree -r`
    records split at the first tab, ordinal case-sensitive sorted by their source-path suffix, then
    joined as UTF-8 with LF and one final LF (`<mode> <type> <blob>\t<path>\n`). Its SHA-256 is
-   `a5a6aa83cf32add694708b51296f865787c7a1d5c611444b70ba94c6e9502940`.
+   `a883dd656a5eab6318f7dfec7f3ec77f76a4a366a5f83b4766b55733fdff9c03`.
    Its parallel source-path check uses those same ordinal-sorted suffixes, UTF-8/LF plus final LF,
    and is
-   `4936c7a94cde0b8df13948a087b235fcf45622a0d85406490c35e6de255cd21a`.
+   `72447a494e3771b22f835e1ce34545e0dac3bfbe0791729de32e2efd6c4ef3e6`.
    Import Parser, Core, ChatClients, Scout, MissionRegistry, Serve, Docker, CLI, their
    source-adjacent READMEs, owned unit tests/fixtures, lowercase `nuget.config`, and the two
    `src/Directory.Build.*` files. Exclude every `missions/**` content file (including
