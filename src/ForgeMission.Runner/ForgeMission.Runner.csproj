@@ -9,10 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Core\ForgeMission.Core.csproj" />
     <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.ChatClients\ForgeMission.ChatClients.csproj" />
     <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.MissionRegistry\ForgeMission.MissionRegistry.csproj" />
-    <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Scout\ForgeMission.Scout.csproj" />
     <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
     <ProjectReference Include="..\..\..\forge-mcl\src\ForgeMission.Serve\ForgeMission.Serve.csproj" />
   </ItemGroup>
@@ -27,6 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Mcl.Scout" Version="0.1.0" />
     <!-- Raw ADO.NET Postgres for the runner-owned enrichment cache. No EF: cache data stays
          isolated from authbilling_db and the implementation remains trim/AOT-friendly. -->
     <PackageReference Include="Npgsql" Version="10.0.3" />
