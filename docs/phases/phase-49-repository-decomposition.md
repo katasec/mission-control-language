@@ -1,8 +1,8 @@
 # Phase 49 — Private repository decomposition
 
-> **Status:** Program foundation and compatibility baseline accepted; the Phase 45/46 compatibility
-> decision is next. No source, package, workflow, infrastructure, or repository extraction is
-> authorized until the gates below pass.
+> **Status:** Program foundation, compatibility baseline and narrow local seam-cleanup fence are
+> accepted. No package, workflow, infrastructure, or repository extraction is authorized until the
+> remaining extraction gates below pass.
 
 ## Why this phase exists
 
@@ -60,7 +60,7 @@ and datastore access.
 |---|---|---|---|---|---|
 | 49.1 | Program governance, agent roles, decision/compatibility/rollback ledger and task-card standard | Current repository docs | **Accepted** | None | PR [#166](https://github.com/katasec/mission-control-language/pull/166), corrective review PR [#167](https://github.com/katasec/mission-control-language/pull/167), independent review PASS |
 | [49.2](phase-49.2-baseline-and-seam-proof.md) | Reproducible dependency, AOT, CI, package, identity and deployment baseline | Current repository docs | **Accepted** | 49.1 accepted | [Completion record](phase-49.2-baseline-and-seam-proof_completed.md), independent review PASS |
-| 49.3 | Resolve the active Phase 45/46 compatibility interlock | Current repository docs | Design blocked | Operator decision D49-01 | Versioned compatibility baseline |
+| [49.3](phase-49.3-compatibility-freeze.md) | Establish a narrow compatibility fence for local MCL seam cleanup | Current repository docs | **Accepted** | 49.2 accepted | Implemented-boundary fence; extraction remains blocked |
 | 49.4 | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | Not started | 49.2, 49.3 | Focused/full/AOT evidence |
 | 49.5 | Private package foundation and external-consumer proof | Package owners | Not started | 49.4 | Package versions and access observation |
 | 49.6–49.11 | One repository extraction per accepted product boundary | Target repository above | Not started | Relevant package and compatibility gates | Per-card cutover checkpoints |
@@ -70,7 +70,7 @@ and datastore access.
 
 | ID | Classification | Question | Status | Blocks |
 |---|---|---|---|---|
-| D49-01 | Type 1 compatibility sequencing | Complete Phase 45.5/46's active Desktop/Conversation work first, or freeze it against an explicit versioned compatibility baseline before extraction? | Open — do not infer | 49.3 and Conversations/Desktop extraction |
+| D49-01 | Type 1 compatibility sequencing | Complete Phase 45.5/46's active Desktop/Conversation work first, or freeze it against an explicit versioned compatibility baseline before extraction? | Partially resolved for 49.4 only; open for extraction | Conversations/Desktop extraction |
 | D49-02 | Type 2 repository disposition | Does this repository become/rename to private `forge-mcl`, or remain an archived coordination repository after a new `forge-mcl` is created? | Open — do not infer | `forge-mcl` bootstrap |
 | D49-03 | Type 1 contract policy | Define supported consumer-version windows and NuGet/HTTP ownership for each public contract. | Open | Private package foundation |
 | D49-04 | Type 1 platform boundary | Define the narrow Platform service/client route that removes Rooms' in-process Billing dependency without granting Rooms Billing-store access. | Open | Platform and Rooms extraction |
@@ -81,7 +81,8 @@ and datastore access.
 
 - [49.1 — Program foundation](phase-49.1-program-foundation.md) — active governance and agent protocol.
 - [49.2 — Baseline and seam proof](phase-49.2-baseline-and-seam-proof.md) — accepted evidence and remaining gates.
-- 49.3 compatibility, 49.4 MCL seam cleanup and later extraction spokes are created only when their prerequisites make their design build-ready. They must not be pre-filled with inferred contracts.
+- [49.3 — Compatibility freeze](phase-49.3-compatibility-freeze.md) — accepted local seam-cleanup fence; extraction decision remains open.
+- 49.4 MCL seam cleanup and later extraction spokes are created only when their prerequisites make their design build-ready. They must not be pre-filled with inferred contracts.
 
 ## Done when
 
