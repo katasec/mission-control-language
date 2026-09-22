@@ -46,12 +46,14 @@ future consumer-version policy in D49-03.
   named by the affected task still pass where buildable;
 - frozen JSON/SSE/pipe payload fixtures round-trip unchanged;
 - CLI, Application Host, Desktop Supervisor AOT and MAUI package observations are compared to 49.2;
-- known aggregate-suite missing-local-project failure remains reported as a constraint, never PASS;
+- the aggregate suite is run in an environment that has the required local project dependencies;
+  a missing dependency is reported as a constraint, never treated as a pass;
 - no default-path acceptance is claimed unless 49.4 changes runtime behavior. Phase 45.5's real
   default-path/browser acceptance remains open.
 
 ## Extraction remains blocked
 
 D49-02 (repository disposition), D49-03 (contract consumer-version/private package policy),
-D49-05 (shared renderer placement), D49-06 (Docker ownership), the aggregate suite dependency
-gap, and Phase 45.5's missing live-chat contract still block package or repository extraction.
+D49-05 (shared renderer placement), D49-06 (Docker ownership), and Phase 45.5's missing live-chat
+contract still block package or repository extraction. The 49.2 missing-local-project observation
+is historical; 49.4a proved the aggregate suite on a capable local environment.
