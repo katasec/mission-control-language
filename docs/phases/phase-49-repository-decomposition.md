@@ -1,8 +1,8 @@
 # Phase 49 — Private repository decomposition
 
 > **Status:** Program foundation, compatibility baseline and narrow local seam-cleanup fence are
-> accepted. No package, workflow, infrastructure, or repository extraction is authorized until the
-> remaining extraction gates below pass.
+> accepted. The private target repositories exist. Package and consumer proof remains the next
+> gate before any product cutover.
 
 ## Why this phase exists
 
@@ -61,8 +61,8 @@ and datastore access.
 | 49.1 | Program governance, agent roles, decision/compatibility/rollback ledger and task-card standard | Current repository docs | **Accepted** | None | PR [#166](https://github.com/katasec/mission-control-language/pull/166), corrective review PR [#167](https://github.com/katasec/mission-control-language/pull/167), independent review PASS |
 | [49.2](phase-49.2-baseline-and-seam-proof.md) | Reproducible dependency, AOT, CI, package, identity and deployment baseline | Current repository docs | **Accepted** | 49.1 accepted | [Completion record](phase-49.2-baseline-and-seam-proof_completed.md), independent review PASS |
 | [49.3](phase-49.3-compatibility-freeze.md) | Establish a narrow compatibility fence for local MCL seam cleanup | Current repository docs | **Accepted** | 49.2 accepted | Implemented-boundary fence; extraction remains blocked |
-| [49.4](phase-49.4-mcl-seam-cleanup.md) | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | Final review — third seam | 49.2, 49.3 | [49.4a](phase-49.4-mcl-seam-cleanup_completed.md) and [49.4b](phase-49.4b-retrieval-contract-inversion_completed.md) accepted; 49.4c evidence pending merge |
-| 49.5 | Private package foundation and external-consumer proof | Package owners | Not started | 49.4 | Package versions and access observation |
+| [49.4](phase-49.4-mcl-seam-cleanup.md) | Remove proven CLI reverse dependencies and Core-to-concrete-Scout coupling | Current repository | **Accepted** | 49.2, 49.3 | [Completion evidence](phase-49.4c-runner-cli-dependency-cut_completed.md), PR [#173](https://github.com/katasec/mission-control-language/pull/173) |
+| [49.5](phase-49.5-private-package-foundation.md) | Private package foundation and external-consumer proof | Package owners | Final design review; `forge-mcl` bootstrap next | 49.4 accepted | Private package/version/access proof |
 | 49.6–49.11 | One repository extraction per accepted product boundary | Target repository above | Not started | Relevant package and compatibility gates | Per-card cutover checkpoints |
 | 49.12 | Optional mission-content decision and monorepo retirement | Deferred | Not started | All accepted extractions | No cross-repo source references |
 
@@ -71,11 +71,11 @@ and datastore access.
 | ID | Classification | Question | Status | Blocks |
 |---|---|---|---|---|
 | D49-01 | Type 1 compatibility sequencing | Complete Phase 45.5/46's active Desktop/Conversation work first, or freeze it against an explicit versioned compatibility baseline before extraction? | Partially resolved for 49.4 only; open for extraction | Conversations/Desktop extraction |
-| D49-02 | Type 2 repository disposition | Does this repository become/rename to private `forge-mcl`, or remain an archived coordination repository after a new `forge-mcl` is created? | Open — do not infer | `forge-mcl` bootstrap |
-| D49-03 | Type 1 contract policy | Define supported consumer-version windows and NuGet/HTTP ownership for each public contract. | Open | Private package foundation |
+| D49-02 | Type 2 repository disposition | Does this repository become/rename to private `forge-mcl`, or remain an archived coordination repository after a new `forge-mcl` is created? | Resolved — new private `forge-mcl`; mono archives after cutover | `forge-mcl` bootstrap |
+| D49-03 | Type 1 contract policy | Define supported consumer-version windows and NuGet/HTTP ownership for each public contract. | Partially resolved — MCL v1 policy locked; Runner/Conversation contracts remain extraction decisions | Private package foundation |
 | D49-04 | Type 1 platform boundary | Define the narrow Platform service/client route that removes Rooms' in-process Billing dependency without granting Rooms Billing-store access. | Open | Platform and Rooms extraction |
 | D49-05 | Type 2 UI package placement | Decide whether shared conversation activity rendering travels with Conversations as a semantic package or a dedicated UI package. | Open | Conversations/Desktop/Rooms extraction |
-| D49-06 | Type 2 reusable local-support placement | Decide the smallest owner/package boundary for Docker operations used by both the CLI and Desktop orchestration without introducing an MCL-to-Desktop dependency or duplicate implementation. | Open | MCL and Desktop extraction |
+| D49-06 | Type 2 reusable local-support placement | Decide the smallest owner/package boundary for Docker operations used by both the CLI and Desktop orchestration without introducing an MCL-to-Desktop dependency or duplicate implementation. | Resolved — private leaf Docker package published by `forge-mcl`, consumed by Desktop | MCL and Desktop extraction |
 
 ## Spokes
 

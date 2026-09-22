@@ -1,6 +1,6 @@
 # Phase 49.4 — Local MCL seam cleanup
 
-> **Status:** 49.4a and 49.4b are accepted; 49.4c is in final review. Its evidence is in the
+> **Status:** Accepted. Its evidence is in the
 > [49.4a](phase-49.4-mcl-seam-cleanup_completed.md) and
 > [49.4b](phase-49.4b-retrieval-contract-inversion_completed.md) completion records. No package
 > or repository extraction is authorized by this spoke. The Phase 49.3 compatibility fence applies
@@ -28,5 +28,5 @@ reuse, and preserves Desktop's light AOT closure; see its
 
 ## Later cards
 
-After 49.4c merges, local MCL seam cleanup is complete. Package and repository extraction remains
-governed by the Phase 49 decision ledger and the private package foundation card.
+Local MCL seam cleanup is complete. Package and repository extraction remains governed by the
+Phase 49 decision ledger and the private package foundation card.
