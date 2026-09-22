@@ -82,7 +82,7 @@ For every accepted card:
 | Next card | Bounded outcome | Gate |
 |---|---|---|
 | 49.2 | Reproducible baseline of solution graph, AOT timing, tests, workflows, private-package access, identities, images and stores. | 49.1 accepted |
-| 49.3 | Resolve D49-01 without changing the active product contract by inference. | Operator decision required |
+| 49.3 | Establish a narrow no-extraction compatibility fence without changing the active product contract by inference. | 49.2 plus Supervisor review; D49-01 remains open for extraction |
 | 49.4a | Remove the ForgeUI-to-CLI reference only if the focused build proves it dead. | 49.2/49.3 |
 | 49.4b | Separate neutral retrieval vocabulary from concrete Grok transport. | 49.2/49.3 |
 | 49.4c | Remove Runner/Orchestration reuse of CLI only through the smallest proven shared owner. | 49.2/49.3; no speculative catalog |
