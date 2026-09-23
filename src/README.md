@@ -79,8 +79,7 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Durable conversations | [ForgeMission.ConversationHost](ForgeMission.ConversationHost/README.md) | Component — durable conversation state and HTTP/SSE projection. |
 | Durable conversations | [ForgeMission.ConversationWorker](ForgeMission.ConversationWorker/README.md) | Component — queue-driven mission reasoning and durable progress publication. |
 | Durable conversations | [ForgeMission.ConversationPresentation](ForgeMission.ConversationPresentation/README.md) | Component — shared presentation-only conversation activity rendering. |
-| Hosted platform | [ForgeMission.Runner.Contracts](ForgeMission.Runner.Contracts/README.md) | Component — typed mission-run request, result, progress, artifact, and usage wire. |
-| Hosted platform | [ForgeMission.Runner](ForgeMission.Runner/README.md) | Component — stateless mission-execution host. |
+| Hosted platform | [forge-runner](https://github.com/katasec/forge-runner) | External component — stateless mission-execution host and typed mission-run contract. |
 | Hosted platform | [ForgeMission.Api](ForgeMission.Api/README.md) | Component — platform-key-authenticated mission ingress and account settlement. |
 | Hosted platform | [ForgeMission.Billing](ForgeMission.Billing/README.md) | Component — accounts, platform keys, pricing, balances, and ledgers. |
 | Hosted platform | [ForgeMission.Rooms](ForgeMission.Rooms/README.md) | Component — collaboration-domain facts and invariants. |

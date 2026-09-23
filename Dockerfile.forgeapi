@@ -3,10 +3,11 @@
 #
 # NOT Native AOT here: PublishAot is flipped on as a fast-follow once the endpoint works end-to-end
 # (see ForgeMission.Api.csproj's own comment) — this build stays a normal JIT ASP.NET host, same
-# shape as Dockerfile.runner/Dockerfile.forgeui. Build context = repo root.
+# shape as Dockerfile.forgeui. Build context = repo root.
 #
-# Unlike the runner/forgeui, ForgeAPI's dependency tree (ForgeMission.Billing -> Runner.Contracts)
-# pulls no private GitHub Packages, so no NUGET_AUTH_TOKEN build secret is needed here.
+# ForgeAPI now source-links Runner Contracts from the sibling forge-runner checkout for local MSBuild.
+# Docker cannot read that sibling path from this repo-root build context, so this image must not be
+# rebuilt until the Contracts package is published and this temporary link is replaced.
 #
 #   docker buildx build -f Dockerfile.forgeapi -t forge-api:local .
 

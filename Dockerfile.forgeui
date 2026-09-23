@@ -4,15 +4,15 @@
 # NOT Native AOT: this is the .NET 10 ASP.NET web host. The AOT rule in CLAUDE.md is for the
 # `forge` CLI (built by the root Dockerfile), NOT this app. Build context = repo root.
 #
-# ForgeUI -> ForgeMission.Cli depends on PRIVATE GitHub Packages (Katasec.OaiServer/OciClient),
-# so restore needs the repo's nuget.config AND a read:packages token. The token is supplied as a
-# BuildKit SECRET (never written into an image layer):
+# ForgeUI temporarily source-links Runner Contracts from the sibling forge-runner checkout. Docker
+# cannot read that checkout from this repository-root context, so do not rebuild this image until
+# Contracts is published and the temporary project link becomes a package reference.
 #
 #   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
 #   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
 #     -f Dockerfile.forgeui -t forge-ui:local .
 #
-# CI does the same on the runner, then pushes to ACR (see .github/workflows/forge-ui-image.yml).
+# The existing image workflow must remain unused until that package cutover is complete.
 
 # ---- build --------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build

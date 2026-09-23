@@ -3,12 +3,11 @@
 # surface: a generic-host background service that only consumes/produces Service Bus messages, so
 # unlike Dockerfile.conversationhost this image exposes no port.
 #
-# NOT Native AOT: a normal .NET 10 worker host, same shape as Dockerfile.runner. Build context =
-# repo root. ForgeMission.ConversationWorker -> ForgeMission.Core depends on the PRIVATE GitHub
+# NOT Native AOT: a normal .NET 10 worker host. Build context = repo root.
+# ForgeMission.ConversationWorker -> ForgeMission.Core depends on the PRIVATE GitHub
 # Packages feed (Katasec.AITools), so restore needs the repo's nuget.config AND a read:packages
 # token, supplied as a REQUIRED BuildKit secret (never written into an image layer, and the build
-# fails outright rather than silently restoring without it) — same pattern as Dockerfile.forgeui/
-# Dockerfile.runner:
+# fails outright rather than silently restoring without it) — same pattern as Dockerfile.forgeui:
 #
 #   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
 #   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \

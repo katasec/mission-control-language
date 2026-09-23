@@ -26,7 +26,7 @@ permissions:
 jobs:
   build-push:
     runs-on: ubuntu-latest
-    environment: forge-ui-image   # shared "push image to ACR" env (see forge-runner-image.yml)
+    environment: forge-ui-image   # shared ACR-push environment; the Runner workflow lives in forge-runner.
     steps:
       - uses: actions/checkout@v4
 

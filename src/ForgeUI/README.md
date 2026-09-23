@@ -37,7 +37,7 @@ For domain rules, database access, accounting, or mission compute, compose with 
 - [Web composition and authentication routes](Program.cs)
 - [Membership-checked send path](Services/RoomMessageService.cs), [runner adapter](Services/MissionRunnerClient.cs), and [chat hub](Hubs/ChatHub.cs)
 - [Room UI](Pages/Rooms.razor) and [platform-key endpoint projection](PlatformKeyEndpoints.cs)
-- Boundary coverage: [room store/integrity](../ForgeMission.Rooms.Tests/RoomStoreTests.cs), [messages](../ForgeMission.Rooms.Tests/Api/MessagesSerializationTests.cs), and [runner contract](../ForgeMission.Runner.Tests/RunContractsSerializationTests.cs)
+- Boundary coverage: [room store/integrity](../ForgeMission.Rooms.Tests/RoomStoreTests.cs), [messages](../ForgeMission.Rooms.Tests/Api/MessagesSerializationTests.cs), and [Runner contract tests](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner.Tests/RunContractsSerializationTests.cs).
 
 ## Communicates with
 
