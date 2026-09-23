@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <!-- RunUsage (the priced signal) lives with the runner transport contract. -->
-    <ProjectReference Include="..\..\..\forge-runner\src\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
+    <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
     <!-- Abstractions only — ILogger/DI have no reflection surface, unlike the config binder. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />

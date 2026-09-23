@@ -9,10 +9,11 @@ are the Runner Contracts package metadata and the direct test dependency on Npgs
 
 ## Consumer cutover
 
-`ForgeMission.Billing`, `ForgeUI`, and `ForgeMission.Api` now directly reference sibling
-`forge-runner` Contracts. `ForgeMission.Rooms.Tests` directly references sibling Runner and
-Contracts for its existing internal tool-round-trip test. The API no longer reaches the contract
-only through Billing's transitive reference.
+`ForgeMission.Billing`, `ForgeUI`, and `ForgeMission.Api` directly reference
+`Katasec.Forge.Runner.Contracts` `0.1.0`. `ForgeMission.Rooms.Tests` directly references
+`Katasec.Forge.Runner` and `Katasec.Forge.Runner.Contracts` `0.1.0` for its existing internal
+tool-round-trip test. The API does not receive the contract only through Billing's transitive
+reference.
 
 ## Verification
 
@@ -23,11 +24,12 @@ only through Billing's transitive reference.
 | Monorepo build | `dotnet build src/ForgeMission.slnx -c Release` passed with 0 warnings and 0 errors. |
 | Monorepo tests | Conversation Host 179 passed; Conversation Worker 18 passed; Rooms 97 passed; ForgeMission 353 passed, with one Docker-dependent test skipped. |
 | Runner build/tests | Release build passed with 0 warnings/errors; 13 Runner tests passed. |
+| Runner packages | GitHub Actions run [35866511629](https://github.com/katasec/forge-runner/actions/runs/35866511629) published private `Katasec.Forge.Runner` and `Katasec.Forge.Runner.Contracts` `0.1.0`; pack and publish both succeeded. |
+| Package-only monorepo restore/build | `dotnet restore src/ForgeMission.slnx --configfile nuget.config --force-evaluate` and `dotnet build src/ForgeMission.slnx -c Release --no-restore -v:q` passed with 0 warnings and 0 errors. |
 
 ## Deliberate temporary exception
 
-The sibling source links require both repositories under `~/progs`; a standalone monorepo clone and
-its Docker contexts cannot resolve them. This is a bounded transition, not the permanent package
-boundary. Publish `Katasec.Forge.Runner.Contracts`, replace Billing/ForgeUI/API source links with
-package references, and replace the Rooms internal-host test with black-box HTTP coverage before
-requiring standalone MCL or its container builds.
+`ForgeMission.Rooms.Tests` needs Runner internals for its existing tool-round-trip test. This is a
+temporary Type-2 test exception: `Katasec.Forge.Runner` grants
+`InternalsVisibleTo("ForgeMission.Rooms.Tests")`. Replace that package dependency and friend-assembly
+entry with black-box HTTP coverage in the later test-boundary task.

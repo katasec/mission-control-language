@@ -15,6 +15,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.7.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Katasec.Forge.Runner" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.13.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -37,8 +39,6 @@
     <!-- ForgeAPI gateway (42.6) — its edge auth filter is unit-tested here alongside the other
          platform-key tests (no DB; a fake resolver). -->
     <ProjectReference Include="..\ForgeMission.Api\ForgeMission.Api.csproj" />
-    <ProjectReference Include="..\..\..\forge-runner\src\ForgeMission.Runner\ForgeMission.Runner.csproj" />
-    <ProjectReference Include="..\..\..\forge-runner\src\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
   </ItemGroup>
 
   <!-- The auth-filter test constructs a DefaultHttpContext / EndpointFilterInvocationContext. -->

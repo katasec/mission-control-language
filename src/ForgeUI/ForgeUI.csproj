@@ -10,12 +10,12 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Rooms\ForgeMission.Rooms.csproj" />
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
-    <ProjectReference Include="..\..\..\forge-runner\src\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationPresentation\ForgeMission.ConversationPresentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="Markdig" Version="1.3.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
