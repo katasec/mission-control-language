@@ -1,5 +1,0 @@
-mission Claude(goal) = {
-    Answerer
-}
-
-output(Claude)

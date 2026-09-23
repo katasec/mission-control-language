@@ -1,5 +1,0 @@
-mission Ocr = {
-    OcrExec
-}
-
-output(OcrExec)

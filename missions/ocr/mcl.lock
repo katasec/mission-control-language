@@ -1,5 +1,0 @@
-version: 1
-experts:
-  OcrExec:
-    source: experts
-    path: experts/Ocr/expert.md

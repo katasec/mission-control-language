@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 # ForgeMission.ConversationHost — the durable-conversation Silo/API (Phase 43.16 Task 8a).
 #
-# NOT Native AOT: an ASP.NET Orleans Silo host, same shape as Dockerfile.runner/.forgeapi. Build
-# context = repo root. ConversationHost references ForgeMission.Core, which restores the private
+# NOT Native AOT: an ASP.NET Orleans Silo host, built from this repository's root context.
+# ConversationHost references ForgeMission.Core, which restores the private
 # Katasec.AITools package. Restore therefore needs the repo's nuget.config and a read:packages
 # token supplied as a required BuildKit secret — never written into an image layer — just like
 # Dockerfile.conversationworker.

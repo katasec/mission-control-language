@@ -1,6 +1,0 @@
-mission HallucinationGuard(goal) loop(3) = {
-    Answerer
-    -> Verifier
-}
-
-output(HallucinationGuard)

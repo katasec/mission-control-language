@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Rooms\ForgeMission.Rooms.csproj" />
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
-    <ProjectReference Include="..\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\forge-runner\src\ForgeMission.Runner.Contracts\ForgeMission.Runner.Contracts.csproj" />
     <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
     <ProjectReference Include="..\ForgeMission.ConversationPresentation\ForgeMission.ConversationPresentation.csproj" />
   </ItemGroup>

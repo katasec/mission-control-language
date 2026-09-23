@@ -1,5 +1,0 @@
-mission Vanilla(goal) = {
-    Answerer
-}
-
-output(Vanilla)

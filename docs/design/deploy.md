@@ -35,21 +35,20 @@ custom domain. All in Azure subscription (workforce), region **uaenorth**, resou
 `rg-forge-dev`.
 
 ```
- mission-control-language (this repo)          katasec/forge-infra (IaC, layered Bicep + Makefile)
-   src/ForgeUI ──► Dockerfile.forgeui             dev/100-base    RG · Log Analytics · ACR · Key Vault · app MI
-   src/ForgeMission.Runner ──► Dockerfile.runner  dev/150-ci      passwordless CI identity (GitHub OIDC)
-   src/ForgeMission.Api ──► Dockerfile.forgeapi
-        │                                         dev/200-entra   app registration (manual, no Bicep)
-        │  git tag forge-ui-vX.Y.Z                dev/300-data    Postgres Flexible Server + authbilling_db
-        │  (CI: OIDC → ACR, native amd64)         dev/400-appenv  Container Apps env  cae-forge-dev
-        ▼                                         dev/450-migrate Manual migration job definition
-   ACR  crforgeroomsdev.azurecr.io                dev/500-app     ForgeUI + runner Container Apps + domain
-     forge-ui:X.Y.Z          ─────────────►  ca-forge-ui-dev    (orchestrator: identity, DB, SignalR, UI)
-     forge-runner:X.Y.Z      ─────────────►  ca-forge-runner-dev (stateless mission execution, provider keys)
-                                                     │
-   Key Vault kv-forgerooms-dev  (only secret store)  │  managed identity id-forge-dev pulls ACR + reads KV
-   Postgres  psql-forge-dev                          ▼    (forge_rooms + authbilling_db, same server)
-                                            https://forge.katasec.com  (managed TLS, SNI)
+ mission-control-language                  forge-runner                         katasec/forge-infra (IaC, layered Bicep + Makefile)
+   src/ForgeUI ──► Dockerfile.forgeui        src/ForgeMission.Runner ──► Dockerfile.runner  dev/100-base    RG · Log Analytics · ACR · Key Vault · app MI
+   src/ForgeMission.Api ──► Dockerfile.forgeapi      │                                      dev/150-ci      passwordless CI identity (GitHub OIDC)
+        │                                             │                                      dev/200-entra   app registration (manual, no Bicep)
+        │  git tag forge-ui-vX.Y.Z                   │  git tag forge-runner-vX.Y.Z         dev/300-data    Postgres Flexible Server + authbilling_db
+        │  (CI: OIDC → ACR, native amd64)            │  (CI: OIDC → ACR, native amd64)      dev/400-appenv  Container Apps env  cae-forge-dev
+        ▼                                             ▼                                      dev/450-migrate Manual migration job definition
+   ACR  crforgeroomsdev.azurecr.io                                                               dev/500-app     ForgeUI + runner Container Apps + domain
+     forge-ui:X.Y.Z          ───────────────────────────────────────────────────────────►  ca-forge-ui-dev    (orchestrator: identity, DB, SignalR, UI)
+     forge-runner:X.Y.Z      ───────────────────────────────────────────────────────────►  ca-forge-runner-dev (stateless mission execution, provider keys)
+                                                                                                  │
+   Key Vault kv-forgerooms-dev  (only secret store)                                                │  managed identity id-forge-dev pulls ACR + reads KV
+   Postgres  psql-forge-dev                                                                        ▼    (forge_rooms + authbilling_db, same server)
+                                                                                         https://forge.katasec.com  (managed TLS, SNI)
 ```
 
 - **`ca-forge-ui-dev`** — the orchestrator: OIDC identity, Postgres (`forge_rooms`), SignalR
@@ -72,10 +71,10 @@ custom domain. All in Azure subscription (workforce), region **uaenorth**, resou
 
 ## Which image for which change
 
-| You changed… | Rebuild (this repo) | Deploy (forge-infra) |
+| You changed… | Rebuild in the owning repository | Deploy (forge-infra) |
 |---|---|---|
 | `src/ForgeUI` (rooms, nav shell, pages, orchestrator) | `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` | `make 500-app-deploy-image VERSION=X.Y.Z` |
-| `src/ForgeMission.Runner`, mission execution, provider-key wiring, `missions/` baked into the runner | `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app` |
+| `forge-runner`: `src/ForgeMission.Runner`, mission execution, provider-key wiring, or baked fallback `missions/` | In `~/progs/forge-runner`: `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app` |
 | `src/ForgeMission.Api`, hosted API-A messages/endpoints/billing gateway | `git tag forge-api-vX.Y.Z && git push origin forge-api-vX.Y.Z` | bump `image` in `dev/550-api/main.bicepparam`, `make 550-api` |
 | Infra (new secret, env var, scaling, domain, Postgres, a new `authbilling_db`-style DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
 | An EF migration needs to actually run | image already has `/app/migrate` baked in | `make 450-migrate` (updates the job definition only) then start the job — a separate, deliberate operator action |
@@ -127,6 +126,7 @@ present; the `2>/dev/null | tail -1` drops the profile's Azure-module warning ba
 ```bash
 export XAI_API_KEY="$(pwsh -NoLogo -Command 'Write-Output $env:XAI_API_KEY' 2>/dev/null | tail -1)"
 # then, e.g., boot the runner with a real key so it actually loads the Grok/search mission:
+cd ~/progs/forge-runner
 XAI_API_KEY="$XAI_API_KEY" MissionDir="$(pwd)/missions" \
   dotnet run --project src/ForgeMission.Runner/ForgeMission.Runner.csproj
 ```
