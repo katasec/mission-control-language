@@ -7,6 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ForgeMission.Conversations.Contracts\ForgeMission.Conversations.Contracts.csproj" />
+    <PackageReference Include="Katasec.Forge.Conversations.Contracts" Version="0.1.0" />
   </ItemGroup>
 </Project>
