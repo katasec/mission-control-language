@@ -1,6 +1,6 @@
 # Repository extraction — Conversations
 
-> **Status:** active. This is the first repository cutover in the approved decomposition map; it
+> **Status:** complete (2026-09-24). This was the first repository cutover in the approved decomposition map; it
 > is deliberately **not** a numbered Phase 49 plan. The destination is
 > [`forge-conversations`](../../../forge-conversations), which currently contains only its
 > reservation README.
@@ -61,6 +61,9 @@ provenance points to the extracted checkout. Use a disposable Project and a real
 mission conversation; record the durable/user-visible result. Controlled package/restore, Docker,
 and component tests are non-acceptance evidence.
 
+The completed default-path acceptance record, including its disposable fixture and scope boundary,
+is in [the completed evidence](repository-extraction-conversations_completed.md#default-path-acceptance).
+
 ## Delivery sequence and done when
 
 1. Destination bootstrap and history-preserving owner transfer — **done**; see
@@ -70,8 +73,8 @@ and component tests are non-acceptance evidence.
    [completed evidence](repository-extraction-conversations_completed.md#destination-package-release).
 3. MCL consumer package cutover and source deletion — **done**; see
    [completed evidence](repository-extraction-conversations_completed.md#mcl-consumer-package-cutover).
-4. Update `forge-infra` Kind provenance/build contexts; use its prescribed what-if/deploy workflow,
-   then record the default-path result and map/completion evidence.
+4. Update `forge-infra` Kind provenance/build contexts and record the default-path result —
+   **done**; see [completed evidence](repository-extraction-conversations_completed.md#default-path-acceptance).
 
 Done when the destination independently builds, tests, publishes the two packages, and produces
 both images; all consumers build/test from packages only; the normal Desktop/Kind path has named

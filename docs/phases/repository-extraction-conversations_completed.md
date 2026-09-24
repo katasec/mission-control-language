@@ -34,3 +34,13 @@ The initial owner transfer is accepted on `forge-conversations` branch
 | Consumer proof | Normal MCL restore passed through its authorized private feed. Focused package/application/presentation tests passed 94/94; the remaining full MCL suite passed 450/450 with one existing Docker-runner test skipped. Application Host Native AOT publish produced `ForgeMission.Application.Host` for `osx-arm64` (29,022,432 bytes). |
 | Negative proof | An isolated-cache, nuget.org-only restore failed closed with `NU1101` for `Katasec.Forge.Conversations.Contracts`; this controlled test is non-acceptance evidence and proves no local-project fallback. |
 | Known environment limit | A full MCL Release build reaches all package consumers with zero warnings, but the untouched `ForgeMission.Desktop.Host` then fails local Mac Catalyst setup (`NETSDK1047` missing `maccatalyst-x64` assets; one retry reached an empty generated-AOT-object clang failure). Fresh restore returned to `NETSDK1047`; no source/config workaround was made. The full test suite and Application Host AOT publish above pass. |
+
+## Default-path acceptance
+
+| Fact | Observation |
+|---|---|
+| Canonical artifact | GitHub Actions [Desktop build run 36023371010](https://github.com/katasec/mission-control-language/actions/runs/36023371010) built the merged MCL `main` commit `0109e81de1dc9a021283df17cf690aef2e56e3d2`; its macOS ARM64 publish, package, and artifact-upload steps all passed. The downloaded `forge-desktop-osx-arm64.zip` checksum validated against its sidecar: `b193cffb77251c277f6895b2a7833aba7f0acbc83d3a0bd24273825dfe27c9f6`. |
+| Normal defaults | The untouched bundle's `ForgeMission.Desktop` launched with zero arguments. `MissionRuntime`, `ConversationRuntime`, and `FORGE_API_ENDPOINT` were absent. The Supervisor started the normal Kind tunnel at `127.0.0.1:18080`; its `/health` request succeeded, and the Supervisor-owned Application Host listened on OS-assigned loopback ports. |
+| Disposable Project action | The product created `/Users/ameerdeen/Forge/Projects/conversations-extraction-default-path-20260924`, scaffolded Janus with `No local access`, promoted candidate v1, added one benign success case, and recorded its PASS evaluation (trace origin `a91056fc-65ca-5dd2-ad85-edc4dc568390`). |
+| Durable result | The product published Janus v1, created conversation `effa2096-8fcf-578c-b5f3-c5697fbeeb78` pinned to that approved `noHands` profile, then after a fresh zero-argument bundle launch reopened the exact Project and visibly showed `Janus v1 PINNED`. |
+| Scope | No user turn was sent: the live existing-mission chat belongs to the undelivered Phase 45.5 surface. The fixture remains as audit evidence because the product has no supported delete path. |
