@@ -8,12 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 45.5: make the approved static **Chat with a mission** screen a live chat with an existing approved mission. Mission authoring is not part of this task; the approved screen is fixed. |
+| **NEXT STEP** | Extract the durable Conversations bounded owner into `forge-conversations`; preserve the packaged consumer and default Desktop/Kind paths. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Repository extraction — Conversations](phases/repository-extraction-conversations.md) | Move the durable Conversations bounded owner into `forge-conversations` and cut consumers over to published packages. | Active: destination bootstrap and owner move. |
 | [Phase 45 — Forge Desktop mission conversations](phases/phase-45-mission-conversations.md) | Evolve the existing Desktop Project workspace from one-shot Mission runs into version-pinned, durable Mission Conversations with in-Explorer authoring and evaluation. | Next: live existing-mission chat in the fixed Phase 47 screen. Authoring is accepted work, not the next task. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
 

@@ -36,10 +36,10 @@ the path, walk upward to the first one before making the placement decision.
   [Application Transport](ForgeMission.Application.Transport/README.md), and
   [Client Runtime (Bob)](ForgeMission.ClientRuntime/README.md); [Presentation](ForgeMission.Presentation/README.md)
   speaks the typed application wire.
-- Durable remote path: [Application](ForgeMission.Application/README.md) uses
-  [Durable Conversation Contracts](ForgeMission.Conversations.Contracts/README.md)
-  with [Conversation Host](ForgeMission.ConversationHost/README.md), which
-  delegates reasoning work to [Conversation Worker](ForgeMission.ConversationWorker/README.md).
+- Durable remote path: [Application](ForgeMission.Application/README.md) uses the versioned
+  durable-conversation contracts from
+  [forge-conversations](https://github.com/katasec/forge-conversations), whose Host delegates
+  reasoning work to its Worker.
 
 ```mermaid
 flowchart LR
@@ -75,10 +75,7 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Local application | [ForgeMission.Desktop.Host](ForgeMission.Desktop.Host/README.md) | Component — disposable native window process. |
 | Local application | [ForgeMission.Desktop.Photino](ForgeMission.Desktop.Photino/README.md) | Component — Photino implementation of the native-host contract. |
 | Local application | [ForgeMission.Orchestration](ForgeMission.Orchestration/README.md) | Component — runtime endpoint resolution, readiness, and owned adapters. |
-| Durable conversations | [ForgeMission.Conversations.Contracts](ForgeMission.Conversations.Contracts/README.md) | Component — versioned durable-conversation messages and projections. |
-| Durable conversations | [ForgeMission.ConversationHost](ForgeMission.ConversationHost/README.md) | Component — durable conversation state and HTTP/SSE projection. |
-| Durable conversations | [ForgeMission.ConversationWorker](ForgeMission.ConversationWorker/README.md) | Component — queue-driven mission reasoning and durable progress publication. |
-| Durable conversations | [ForgeMission.ConversationPresentation](ForgeMission.ConversationPresentation/README.md) | Component — shared presentation-only conversation activity rendering. |
+| Durable conversations | [forge-conversations](https://github.com/katasec/forge-conversations) | External component — versioned durable-conversation contracts, Host/Worker execution, and shared activity presentation. |
 | Hosted platform | [forge-runner](https://github.com/katasec/forge-runner) | External component — stateless mission-execution host and typed mission-run contract. |
 | Hosted platform | [ForgeMission.Api](ForgeMission.Api/README.md) | Component — platform-key-authenticated mission ingress and account settlement. |
 | Hosted platform | [ForgeMission.Billing](ForgeMission.Billing/README.md) | Component — accounts, platform keys, pricing, balances, and ledgers. |
@@ -88,6 +85,5 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Diagnostic | [ForgeMission.Application.TransportProbe](ForgeMission.Application.TransportProbe/Program.cs) | Excluded — diagnostic executable that proves a non-Desktop use of the transport contract; its owner is [Application Transport](ForgeMission.Application.Transport/README.md). |
 | Diagnostic | [ForgeMission.ProjectServiceProbe](ForgeMission.ProjectServiceProbe/Program.cs) | Excluded — diagnostic executable for Project-service crash and concurrent-write scenarios; its owner is [Application](ForgeMission.Application/README.md). |
 
-The 28 linked components are the documented source-adjacent boundaries. The two
-diagnostic probes are deliberately excluded from component status: they exercise
+The documented components are the source-adjacent boundaries. The two diagnostic probes are deliberately excluded from component status: they exercise
 their owners and do not introduce a separate runtime, store, host, or service.
