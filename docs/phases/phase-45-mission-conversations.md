@@ -3,8 +3,9 @@
 > **Status:** authoring, evaluation, publication, and pinned-conversation launch are accepted as
 > of 2026-09-09. The approved [Mission chat experience v1](../design/mission-chat-experience-v1.md)
 > was proved as [Phase 47's static Presentation-only prototype](phase-47-mission-chat-static-ui.md).
-> **Next is 45.5 only:** make that exact screen live for chat with an existing Approved mission;
-> do not work on mission authoring or redesign the screen.
+> **Phase 45.5 is deferred:** the operator requires the repository sequence — `forge-platform`,
+> `forge-rooms`, `forge-desktop`, then `forge-meta` — to complete before live existing-mission chat
+> resumes. Do not work on chat, mission authoring, or a screen redesign in this repository meanwhile.
 
 ## Why this phase exists
 
