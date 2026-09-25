@@ -8,12 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Extract `forge-platform` after the completed Conversations extraction. Complete the declared repository sequence before resuming live Mission Chat. |
+| **NEXT STEP** | Execute the initial bounded Platform owner move, then refine the remaining boundary from the observed build and test failures. Complete the declared repository sequence before resuming live Mission Chat. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Repository extraction — Platform](phases/repository-extraction-platform.md) | Move the hosted API and Billing boundary into `forge-platform` through bounded, evidence-led cutover work. | Active: initial bounded owner move approved; its failures refine the remaining boundary. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
 
 ## Design docs
