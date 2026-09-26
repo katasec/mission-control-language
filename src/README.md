@@ -77,7 +77,7 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Local application | [ForgeMission.Orchestration](ForgeMission.Orchestration/README.md) | Component — runtime endpoint resolution, readiness, and owned adapters. |
 | Durable conversations | [forge-conversations](https://github.com/katasec/forge-conversations) | External component — versioned durable-conversation contracts, Host/Worker execution, and shared activity presentation. |
 | Hosted platform | [forge-runner](https://github.com/katasec/forge-runner) | External component — stateless mission-execution host and typed mission-run contract. |
-| Hosted platform | [ForgeMission.Api](ForgeMission.Api/README.md) | Component — platform-key-authenticated mission ingress and account settlement. |
+| Hosted platform | [ForgeMission.Api](https://github.com/katasec/forge-platform) | External component owned by `forge-platform` — platform-key-authenticated mission ingress and account settlement. |
 | Hosted platform | [`Katasec.Forge.Billing`](https://github.com/katasec/forge-platform) | External package owned by `forge-platform` — accounts, platform keys, pricing, balances, and ledgers; MCL consumes its contract. |
 | Hosted platform | [ForgeMission.Rooms](ForgeMission.Rooms/README.md) | Component — collaboration-domain facts and invariants. |
 | Hosted platform | [ForgeMission.Rooms.Data](ForgeMission.Rooms.Data/README.md) | Component — Rooms EF Core persistence and schema ownership. |
