@@ -1,6 +1,6 @@
-# forge-platform — row 4
+# Phase 50.4 — forge-platform
 
-> Detail for row 4 of [the repository map](repository-extraction.md). Move only: one change at a time,
+> Detail for row 4 of [the repository map](phase-50-repository-extraction.md). Move only: one change at a time,
 > no redesign, no new contracts, no new gates. If a task below doesn't say to change a line, don't.
 
 | Item | State |
@@ -52,7 +52,7 @@ Create `FP/src/ForgeMission.Api.Tests/ForgeMission.Api.Tests.csproj`. It's a cop
   `Katasec.Forge.Billing`, `Katasec.Forge.Runner`, `Katasec.Forge.Mcl.Core`,
   `Microsoft.Extensions.AI`.
 
-Copy `FP/src/ForgeMission.Billing.Tests/BillingPostgresFixture.cs` into the new project. Change only
+Copy (named exception to move-only) `FP/src/ForgeMission.Billing.Tests/BillingPostgresFixture.cs` into the new project. Change only
 its namespace to `ForgeMission.Api.Tests`. This replaces the Rooms-owned `PostgresFixture` the API
 tests used.
 

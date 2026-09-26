@@ -8,14 +8,14 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Move the API into `forge-platform` — [task file](phases/repository-extraction-forge-platform.md). |
+| **NEXT STEP** | Move the API into `forge-platform` — [task file](phases/phase-50.4-forge-platform.md). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Repository extraction — Platform](phases/repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: `forge-platform` in progress. |
-| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
+| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: `forge-platform` in progress. |
+| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold until Phase 50 is complete.** Don't start work here; review after the reorg. |
 
 ## Design docs
 

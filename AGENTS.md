@@ -180,6 +180,11 @@ this repo (and vice versa) so the repo copy doesn't drift stale.
 
 ## How work is structured
 
+> **Exception — Phase 50 repository extraction.** The gates below (design first, security,
+> engineering philosophy, default-path acceptance, supervisor workflow) apply to all work *except*
+> Phase 50 moves. Those change no behaviour; follow only the
+> [Phase 50 protocol](docs/phases/phase-50-repository-extraction.md#extraction-protocol).
+
 ### Design first
 Design decisions are captured in `docs/design/` or the relevant phase spoke before implementation
 **starts, not partway through it.** An open architecture question, a deferred decision, or a
