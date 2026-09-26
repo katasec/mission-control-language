@@ -51,7 +51,6 @@ public sealed class MclPackageConsumptionTests
             ("ForgeMission.Application", new[] { contracts }),
             ("ForgeMission.Application.Transport", new[] { contracts }),
             ("ForgeMission.Presentation", new[] { contracts, presentation }),
-            ("ForgeUI", new[] { presentation }),
             ("ForgeMission.Tests", new[] { contracts, presentation }),
         };
 

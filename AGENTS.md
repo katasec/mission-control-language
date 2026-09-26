@@ -462,8 +462,9 @@ private method — no new packages needed for OpenAI-compatible APIs.
 
 ## Repository map and extraction order
 
-- `mission-control-language` owns the MCL language, CLI, Desktop, Application, Conversation,
-  Rooms, and ForgeUI components; it consumes the external `Katasec.Forge.Billing` package.
+- `mission-control-language` owns the MCL language, CLI, Desktop, Application, and Conversation
+  components; it consumes the external `Katasec.Forge.Billing` package.
+- [`forge-rooms`](https://github.com/katasec/forge-rooms) owns the Rooms and ForgeUI components.
 - [`forge-platform`](https://github.com/katasec/forge-platform) owns the Forge API, the
   `Katasec.Forge.Billing` package, and the hosted Platform boundary.
 - [`forge-runner`](https://github.com/katasec/forge-runner) owns the stateless Runner host, its
