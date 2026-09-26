@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Move the API into `forge-platform` — [task file](phases/phase-50.4-forge-platform.md). |
+| **NEXT STEP** | Phase 50.5: write the `forge-rooms` task file (same shape as [50.4](phases/phase-50.4-forge-platform.md)). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: `forge-platform` in progress. |
+| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: `forge-platform` ✅; `forge-rooms` next. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold until Phase 50 is complete.** Don't start work here; review after the reorg. |
 
 ## Design docs

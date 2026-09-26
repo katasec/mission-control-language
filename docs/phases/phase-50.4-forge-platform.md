@@ -1,13 +1,15 @@
 # Phase 50.4 — forge-platform
 
+> **✅ Complete (2026-09-26).** The tasks below are the record of what was done.
+
 > Detail for row 4 of [the repository map](phase-50-repository-extraction.md). Move only: one change at a time,
 > no redesign, no new contracts, no new gates. If a task below doesn't say to change a line, don't.
 
 | Item | State |
 |---|---|
 | `ForgeMission.Billing` + tests | ✅ Moved; `Katasec.Forge.Billing` `0.1.1` published; consumers on `0.1.1` |
-| `ForgeMission.Api` + tests | 🔄 Task 1 ✅; next: Task 2 |
-| `Dockerfile.forgeapi` + `forge-api-image.yml` | ⬜ Task 7 |
+| `ForgeMission.Api` + tests | ✅ Moved (forge-platform #7, MCL #194) |
+| `Dockerfile.forgeapi` + `forge-api-image.yml` | ✅ Moved (forge-platform #8, MCL #195); `forge-api` `0.3.2` pushed from forge-platform |
 
 Paths: `MCL` = `/Users/ameerdeen/progs/mission-control-language`,
 `FP` = `/Users/ameerdeen/progs/forge-platform`.
@@ -23,7 +25,7 @@ Dockerfile moves without edits. Merge this as its own PR before Task 2.
 
 **Done when:** `git status` shows clean and up to date in both, and `FP` CI passes with `nuget.config`.
 
-## Task 2 — Move the API project
+## Task 2 — Move the API project ✅ (forge-platform #7, MCL #194)
 
 Create branch `codex/move-api` from `main` in both `MCL` and `FP`.
 
@@ -43,7 +45,7 @@ Properties/launchSettings.json
 **Done when:** `dotnet build FP/src/ForgePlatform.slnx` passes, and every moved file is
 byte-identical to its original on `MCL` `main`.
 
-## Task 3 — Create the API test project
+## Task 3 — Create the API test project ✅ (forge-platform #7)
 
 Create `FP/src/ForgeMission.Api.Tests/ForgeMission.Api.Tests.csproj`. It's a copy of
 `FP/src/ForgeMission.Billing.Tests/ForgeMission.Billing.Tests.csproj` with these changes:
@@ -61,7 +63,7 @@ tests used.
 Add `<Project Path="ForgeMission.Api.Tests/ForgeMission.Api.Tests.csproj" />` to
 `ForgePlatform.slnx`.
 
-## Task 4 — Move the API tests
+## Task 4 — Move the API tests ✅ (forge-platform #7)
 
 Move these 7 files from `MCL/src/ForgeMission.Rooms.Tests/Api/` to `FP/src/ForgeMission.Api.Tests/`,
 then delete them from `MCL`:
@@ -85,7 +87,7 @@ The only edits allowed (the same ones the Billing move made):
 **Done when:** `dotnet test FP/src/ForgePlatform.slnx` passes — Billing's 28 tests plus the moved
 API tests — and the diff of each moved test file against its original shows only the edits above.
 
-## Task 5 — Update MCL consumers
+## Task 5 — Update MCL consumers ✅ (MCL #194)
 
 - Remove `<Project Path="ForgeMission.Api/ForgeMission.Api.csproj" />` from `MCL/src/ForgeMission.slnx`.
 - Remove the `ForgeMission.Api` `ProjectReference` (and its comment) from
@@ -100,12 +102,12 @@ API tests — and the diff of each moved test file against its original shows on
 **Done when:** `dotnet build MCL/src/ForgeMission.slnx` has 0 errors and `dotnet test` on
 `ForgeMission.Rooms.Tests` passes.
 
-## Task 6 — Merge
+## Task 6 — Merge ✅ (merged 2026-09-26)
 
 One PR per repo, `FP` first. Merge once CI passes. Both repos back on clean `main`. Update row 4 of
 `readme-updated.md`.
 
-## Task 7 — Move the image build
+## Task 7 — Move the image build ✅ (forge-infra #13, #14; run 36249520588)
 
 Moving `Dockerfile.forgeapi` and `.github/workflows/forge-api-image.yml` to `FP` is a plain move
 (the `nuget.config` casing is fixed in Task 1), except for one change that isn't a file move:
@@ -120,3 +122,14 @@ task is done. The running Azure API is unaffected; only new image builds are blo
 
 Order: move both files unchanged, then add the
 `forge-platform` federated credential in `forge-infra` as its own PR.
+
+## Deviations (all approved)
+
+| Deviation | Why |
+|---|---|
+| `forge-runner`: `InternalsVisibleTo("ForgeMission.Api.Tests")`, Runner + Contracts `0.1.1` published and used by Api.Tests (forge-runner #5) | The round-trip test uses Runner internals; only the old `ForgeMission.Rooms.Tests` name had access. |
+| `ForgeMission.Api/Properties/AssemblyInfo.cs`: `InternalsVisibleTo` now names `ForgeMission.Api.Tests` | Same reason, for API internals. |
+| Billing `0.1.1` published by the simplified workflow; consumers bumped (MCL #192) | Proved the new publish workflow. |
+| 11 private packages granted Read Actions access for `forge-platform` | CI restore returned 403 without it. |
+| `forge-platform`: `forge-ui-image` environment + 5 repo variables copied from MCL | Needed by `forge-api-image.yml`. |
+| OIDC subject uses GitHub's ID-qualified form `katasec@87564133/forge-platform@1381261019` (forge-infra #14) | GitHub presents that form for this repo; the plain form failed with AADSTS700213. |
