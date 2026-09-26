@@ -10,6 +10,7 @@ relocated so `plan.md` only shows what's still active.
 
 | Plan | Replacement / status |
 |------|----------------------|
+| `repository-extraction-platform.md` (removed) | Superseded 2026-09-26 by [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md). Its API redesign and acceptance requirements were never approved. |
 | [Phase 43.20 workbench](phases/phase-43.20-project-workbench-mvp.md) and [43.21 candidate](phases/phase-43.21-mission-run-unification.md) | Remaining implementation superseded by [43.22 reconstruction](phases/phase-43.22-project-mission-reconstruction.md), 2026-09-05. Verified baseline evidence remains; candidate is not release-ready. |
 | [Phase 35 — Forge UI (Blazor Server)](phases/phase-35-forge-ui-blazor.md) | **Superseded 2026-08-16 — do not implement as a new phase.** Desktop is [Phase 43.11](phases/phase-43.11-wasm-photino-shell.md) + [Phase 43.16](phases/phase-43.16-janus-desktop-local-poc.md), with future trace/workbench work in [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). Hosted ForgeUI/Rooms work evolved through [Phase 38](phases/phase-38-forge-rooms.md) + [Phase 40](phases/phase-40-forge-ui-shell.md). |
 
@@ -22,7 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Repository extraction — Conversations](phases/repository-extraction-conversations.md) | Move the durable Conversations bounded owner into `forge-conversations` and cut consumers over to published packages. | Done — destination packages, MCL package consumers, Kind provenance, and canonical zero-argument Desktop/Kind acceptance verified 2026-09-24; see [completed evidence](phases/repository-extraction-conversations_completed.md#default-path-acceptance). |
+| Repository extraction — Conversations | Move Conversations into `forge-conversations`. | Done 2026-09-24 — see [Phase 50](phases/phase-50-repository-extraction.md), row 3. |
 | [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Windows and macOS MAUI native Host with the existing Supervisor, Application Host, and Presentation topology. | Done — downloaded GitHub Actions artifacts accepted on both platforms 2026-09-19; see the [completed record](phases/phase-48-maui-desktop-host-spike_completed.md). |
 | [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md) | Interactive Presentation-only Mission Chat prototype for the approved startup, fresh Janus, and active-chat journey. | Done — Codex acceptance and operator approval 2026-09-12. Real backend integration remains a separately designed follow-on. |
 | [Phase 44 — Local development bootstrap integrity](phases/phase-44-local-development-bootstrap.md) | Fresh local ForgeUI startup creates the existing Rooms and Auth & Billing databases without manual PostgreSQL setup. | Done — verified 2026-09-07; see the [completed record](phases/phase-44-local-development-bootstrap_completed.md). |

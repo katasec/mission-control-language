@@ -4,18 +4,18 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-25)
+## Now (2026-09-26)
 
 | | |
 |---|---|
-| **NEXT STEP** | Execute the initial bounded Platform owner move, then refine the remaining boundary from the observed build and test failures. Complete the declared repository sequence before resuming live Mission Chat. |
+| **NEXT STEP** | Move the API into `forge-platform` — [task file](phases/phase-50.4-forge-platform.md). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Repository extraction — Platform](phases/repository-extraction-platform.md) | Move the hosted API and Billing boundary into `forge-platform` through bounded, evidence-led cutover work. | Active: initial bounded owner move approved; its failures refine the remaining boundary. |
-| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | Core, hands, generic Worker, and hosted terminal-result remediation accepted; remaining default-path and compatibility cleanup depend on the Phase 45 integration chain. |
+| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: `forge-platform` in progress. |
+| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold until Phase 50 is complete.** Don't start work here; review after the reorg. |
 
 ## Design docs
 
