@@ -10,10 +10,10 @@
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Rooms\ForgeMission.Rooms.csproj" />
     <ProjectReference Include="..\ForgeMission.Rooms.Data\ForgeMission.Rooms.Data.csproj" />
-    <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Katasec.Forge.Billing" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.ConversationPresentation" Version="0.1.0" />

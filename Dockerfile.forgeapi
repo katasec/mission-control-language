@@ -5,11 +5,13 @@
 # (see ForgeMission.Api.csproj's own comment) — this build stays a normal JIT ASP.NET host, same
 # shape as Dockerfile.forgeui. Build context = repo root.
 #
-# ForgeAPI now source-links Runner Contracts from the sibling forge-runner checkout for local MSBuild.
-# Docker cannot read that sibling path from this repo-root build context, so this image must not be
-# rebuilt until the Contracts package is published and this temporary link is replaced.
+# ForgeAPI restores private GitHub Packages, including Runner Contracts and Billing. Supply the
+# read:packages token only as a BuildKit secret; it must never become an ARG, ENV, image layer, or
+# runtime secret.
 #
-#   docker buildx build -f Dockerfile.forgeapi -t forge-api:local .
+#   NUGET_AUTH_TOKEN=<gh read:packages PAT> \
+#   docker buildx build --secret id=nuget_token,env=NUGET_AUTH_TOKEN \
+#     -f Dockerfile.forgeapi -t forge-api:local .
 
 # ---- build --------------------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -18,7 +20,9 @@ WORKDIR /src
 COPY nuget.config ./
 COPY src/ ./src/
 
-RUN dotnet publish src/ForgeMission.Api/ForgeMission.Api.csproj -c Release -o /app/publish \
+RUN --mount=type=secret,id=nuget_token \
+    NUGET_AUTH_TOKEN="$(cat /run/secrets/nuget_token)" \
+    dotnet publish src/ForgeMission.Api/ForgeMission.Api.csproj -c Release -o /app/publish \
       /p:UseAppHost=false /p:PublishAot=false
 
 # ---- runtime ------------------------------------------------------------------------------
