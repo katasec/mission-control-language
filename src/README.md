@@ -79,9 +79,9 @@ README; use that README for ownership, public pieces, and adjacent-owner rules.
 | Hosted platform | [forge-runner](https://github.com/katasec/forge-runner) | External component — stateless mission-execution host and typed mission-run contract. |
 | Hosted platform | [ForgeMission.Api](https://github.com/katasec/forge-platform) | External component owned by `forge-platform` — platform-key-authenticated mission ingress and account settlement. |
 | Hosted platform | [`Katasec.Forge.Billing`](https://github.com/katasec/forge-platform) | External package owned by `forge-platform` — accounts, platform keys, pricing, balances, and ledgers; MCL consumes its contract. |
-| Hosted platform | [ForgeMission.Rooms](ForgeMission.Rooms/README.md) | Component — collaboration-domain facts and invariants. |
-| Hosted platform | [ForgeMission.Rooms.Data](ForgeMission.Rooms.Data/README.md) | Component — Rooms EF Core persistence and schema ownership. |
-| Hosted platform | [ForgeUI](ForgeUI/README.md) | Component — authenticated browser/Rooms host and membership-checked orchestration. |
+| Hosted platform | [ForgeMission.Rooms](https://github.com/katasec/forge-rooms) | External component owned by `forge-rooms` — collaboration-domain facts and invariants. |
+| Hosted platform | [ForgeMission.Rooms.Data](https://github.com/katasec/forge-rooms) | External component owned by `forge-rooms` — Rooms EF Core persistence and schema ownership. |
+| Hosted platform | [ForgeUI](https://github.com/katasec/forge-rooms) | External component owned by `forge-rooms` — authenticated browser/Rooms host and membership-checked orchestration. |
 | Diagnostic | [ForgeMission.Application.TransportProbe](ForgeMission.Application.TransportProbe/Program.cs) | Excluded — diagnostic executable that proves a non-Desktop use of the transport contract; its owner is [Application Transport](ForgeMission.Application.Transport/README.md). |
 | Diagnostic | [ForgeMission.ProjectServiceProbe](ForgeMission.ProjectServiceProbe/Program.cs) | Excluded — diagnostic executable for Project-service crash and concurrent-write scenarios; its owner is [Application](ForgeMission.Application/README.md). |
 

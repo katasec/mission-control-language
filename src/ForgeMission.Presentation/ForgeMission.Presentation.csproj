@@ -16,9 +16,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ForgeMission.Application.Transport\ForgeMission.Application.Transport.csproj" />
-    <Content Include="..\ForgeUI\wwwroot\css\forge.css"
-             Link="wwwroot\css\forge.css"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

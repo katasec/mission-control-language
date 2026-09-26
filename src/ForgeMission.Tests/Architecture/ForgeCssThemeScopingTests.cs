@@ -244,7 +244,7 @@ public sealed class ForgeCssThemeScopingTests
     // block: the document-level `:root...` ones, and a surface theme selected on an element inside
     // the document rather than on <html>.
     private static string Css() =>
-        File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "ForgeUI", "wwwroot", "css", "forge.css"));
+        File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "ForgeMission.Presentation", "wwwroot", "css", "forge.css"));
 
     // Comments are stripped before the block reader runs: this file documents its selectors in
     // prose, and a comment that happens to contain ":root" would otherwise be read as one.

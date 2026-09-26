@@ -36,7 +36,7 @@ DESKTOP_DIR := dist/forge-desktop
 DESKTOP_SUPERVISOR_EXE := $(DESKTOP_DIR)/ForgeMission.Desktop.exe
 NORMALIZE_AOT_PE := pwsh -NoProfile -File ./scripts/Normalize-AotPeTimestamps.ps1
 
-.PHONY: help build test clean dev-up dev-down dev-reset desktop desktop-publish
+.PHONY: help build test clean desktop desktop-publish
 .DEFAULT_GOAL := help
 
 help:
@@ -47,15 +47,6 @@ build: ## Build the solution (debug)
 
 test: ## Run all tests
 	dotnet test src/
-
-dev-up: ## Start local dev environment (Postgres + migrations)
-	./scripts/dev-up.sh
-
-dev-down: ## Stop local dev environment (keeps data)
-	./scripts/dev-down.sh
-
-dev-reset: ## Reset local dev environment (drops data volume, re-initialises)
-	./scripts/dev-reset.sh
 
 desktop-publish: ## Publish the desktop app (Application Host + supervisor + native MAUI host) as one self-contained folder
 	@test -n "$(DESKTOP_HOST_TFM)" || (echo "desktop-publish is supported on Windows and macOS only." >&2; exit 1)

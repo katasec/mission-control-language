@@ -11,9 +11,5 @@
   <Project Path="ForgeMission.Desktop.Installer/ForgeMission.Desktop.Installer.wixproj" />
   <Project Path="ForgeMission.Desktop.Photino/ForgeMission.Desktop.Photino.csproj" />
   <Project Path="ForgeMission.Orchestration/ForgeMission.Orchestration.csproj" />
-  <Project Path="ForgeMission.Rooms.Data/ForgeMission.Rooms.Data.csproj" />
-  <Project Path="ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj" />
-  <Project Path="ForgeMission.Rooms/ForgeMission.Rooms.csproj" />
   <Project Path="ForgeMission.Tests/ForgeMission.Tests.csproj" />
-  <Project Path="ForgeUI/ForgeUI.csproj" />
 </Solution>
