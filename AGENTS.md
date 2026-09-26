@@ -14,6 +14,25 @@ Composition operator is `->` (not `|>` — that was replaced in Phase 25). See
 [README.md](README.md) for the full picture and [docs/design/language.md](docs/design/language.md)
 for the grammar and syntax decisions.
 
+## Where the code lives
+
+This repo holds no product source. It is agent mission control: plans, agent rules, agents, and
+missions. Each component lives in its own repo — see the
+[repository map](docs/phases/phase-50-repository-extraction.md) for status and detail.
+
+| Repo | Purpose |
+|---|---|
+| [`forge-mcl`](https://github.com/katasec/forge-mcl) | MCL language, CLI (`forge`), generic execution support |
+| [`forge-runner`](https://github.com/katasec/forge-runner) | Stateless hosted mission execution |
+| [`forge-conversations`](https://github.com/katasec/forge-conversations) | Durable conversation admission, state, and dispatch |
+| [`forge-platform`](https://github.com/katasec/forge-platform) | API, accounts, platform keys, billing, ledger |
+| [`forge-rooms`](https://github.com/katasec/forge-rooms) | Collaboration domain and browser product (Rooms, ForgeUI) |
+| [`forge-desktop`](https://github.com/katasec/forge-desktop) | Local application and supervision (Desktop, Application) |
+| [`forge-infra`](https://github.com/katasec/forge-infra) | Azure deployment configuration |
+| `mission-control-language` (this repo) | Agent mission control |
+
+Do not restore source from any of those repos here or add sibling project references.
+
 ---
 
 ## How to orient at the start of a session
@@ -22,10 +41,8 @@ for the grammar and syntax decisions.
    repository-wide definition of the supported user defaults and the evidence required to prove
    them. A documentation-only task records N/A; every other task first determines whether this
    gate applies before taking action.
-2. Before planning a code change, read the [Source Component Atlas](src/README.md), then the
-   nearest component README for every affected path. The task plan or PR description must state
-   why the change advances that component's "Why this exists"; if it cannot, stop and locate the
-   correct owner.
+2. Before planning a code change, open the owning repo from [Where the code lives](#where-the-code-lives)
+   and read its README and the nearest component README for every affected path.
 3. Read [docs/plan.md](docs/plan.md) — the active-work hub. It's a **light table of contents**:
    links + a one-line status per active phase, nothing more. It answers only "what is next?".
    Read [docs/backlog.md](docs/backlog.md) or [docs/plan_completed.md](docs/plan_completed.md)
@@ -265,86 +282,6 @@ that condition is actually met and verified — not just implemented.
 
 ---
 
-## How to run the build and tests
-
-```bash
-make install              # native AOT publish → ~/.local/bin/forge (osx-arm64)
-make demo-naive           # end-to-end smoke test (forces a full rebuild)
-dotnet build src/ForgeMission.slnx
-dotnet test src/ForgeMission.slnx
-```
-
-All tests must pass before marking any task complete. Never mark a task done if tests are failing.
-
-**Documentation-only exception:** When a change is confined to Markdown/documentation files, do
-not run the build or test suite by default. Instead, review the rendered/linked documentation and
-the diff for consistency, and state that no code verification was needed. Run checks only if the
-documentation change also alters executable configuration, scripts, generated artifacts, or if the
-operator explicitly asks for validation.
-
----
-
-## AOT-first — standing rules for all new code
-
-**Every change must remain Native AOT-safe.** The `forge` CLI binary publishes with
-`<PublishAot>true</PublishAot>`. Violations cause ILC (IL Compiler) warnings or runtime crashes.
-
-This binds on code compiled into the AOT binary (CLI, and the runner/host where they share Core).
-It does **not** bind on `kind: exec` subprocess tooling — a python script run out-of-process is
-never linked into the AOT image, so pick those libraries on merit (correctness/licensing), not
-AOT-compatibility. This is a selection criterion for any new .NET package, not just a code pattern:
-favor AOT-compatible libraries wherever possible, and surface the tradeoff before adopting one
-that isn't clean, rather than silently taking on suppressions.
-
-### JSON / STJ
-
-**Never** use `new JsonSerializerOptions { ... }` at runtime in AOT code — a bare
-`JsonSerializerOptions` without a `TypeInfoResolver` crashes under AOT. Use STJ source generation:
-
-```csharp
-[JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
-[JsonSerializable(typeof(MyType))]
-internal partial class MyTypeContext : JsonSerializerContext { }
-```
-
-Pass `MyTypeContext.Default.Options` wherever `JsonSerializerOptions` is needed. For
-`IChatClient.GetResponseAsync<T>`, always pass the source-gen options:
-
-```csharp
-var response = await chatClient.GetResponseAsync<T>(messages, MyTypeContext.Default.Options, cancellationToken: ct);
-```
-
-### YAML (YamlDotNet)
-
-YamlDotNet uses reflection internally. Preserve any POCO that flows through `ISerializer`/
-`IDeserializer` with:
-
-```csharp
-[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(MyPoco))]
-[UnconditionalSuppressMessage("AOT", "IL3050", Justification = "Type preserved via DynamicDependency")]
-private static readonly IDeserializer Deserializer = new DeserializerBuilder()
-    .WithNamingConvention(CamelCaseNamingConvention.Instance)
-    .IgnoreUnmatchedProperties()
-    .Build();
-```
-
-### Reflection / dynamic dispatch
-
-Avoid `Type.GetType(string)`, `Activator.CreateInstance`, or `Assembly.GetTypes()`. Prefer
-`IChatClient` (`Microsoft.Extensions.AI`) — it is AOT-safe by design.
-
-### Warning suppression (already in Cli.csproj)
-
-```xml
-<IlcSuppressWarnings>IL3050</IlcSuppressWarnings>
-<NoWarn>$(NoWarn);IL3050;IL2104;IL3053</NoWarn>
-```
-
-These cover YamlDotNet assembly-level warnings. Do **not** add new suppressions without a
-`[DynamicDependency]` or a concrete explanation.
-
----
-
 ## Local dev environment — shell + provider keys
 
 The maintainer's default shell is **PowerShell (`pwsh`)**, and all provider keys are already
@@ -355,29 +292,10 @@ Bash-doesn't-inherit-pwsh trap, the pull-through-pwsh recipe) is in
 
 ---
 
-## Release workflow
+## Deploying the hosted app (forge-infra)
 
-Releases are cut via GitHub Actions (`workflow_dispatch`):
-1. Enter the version (e.g. `0.1.3`) in the Actions UI.
-2. The workflow tags the commit, opens a draft release, and attaches the CLI assets
-   `forge-osx-arm64`, `forge-linux-x64`, and `forge-win-arm64.exe`.
-3. Review the draft on GitHub, then publish.
-
-For the Windows or macOS MAUI Desktop bundle, do not make a local release candidate. Trigger/download the
-canonical **Desktop build** artifact as specified in
-[Phase 48](docs/phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps). The Release
-workflow promotes that exact ZIP and checksum to its draft release; it does not rebuild the bundle.
-
-Semver: patch bump for bug fixes and backwards-compatible changes; minor for new user-visible
-language features; major for breaking `.mcl` syntax changes.
-
----
-
-## Deploying the hosted app (forge-infra) — separate from the release workflow above
-
-The CLI binary release above (GitHub Releases) is **not** how the hosted app (ForgeUI, ForgeAPI,
-the runner) reaches Azure. That is a **separate repo, `katasec/forge-infra`** (layered Bicep +
-Makefile, checked out at `~/progs/forge-infra`), and every deploy goes through it.
+The hosted app (ForgeUI, ForgeAPI, the runner) reaches Azure only through the **separate repo
+`katasec/forge-infra`** (layered Bicep + Makefile, checked out at `~/progs/forge-infra`).
 
 - **Only use the `make` targets** (`100-base`, `150-ci`, `300-data`, `400-appenv`, `450-migrate`,
   `500-app`, `500-app-bump-image`, `500-app-deploy-image`) — never raw `az deployment` commands or
@@ -395,26 +313,6 @@ Makefile, checked out at `~/progs/forge-infra`), and every deploy goes through i
 
 ---
 
-## Supported providers
-
-`ProviderClientBuilder` in `src/ForgeMission.Cli/ProviderClientBuilder.cs` maps the `provider`
-field in `forge.toml` to an `IChatClient`. Adding a new provider is a single switch case + one
-private method — no new packages needed for OpenAI-compatible APIs.
-
-| `provider` value | API | SDK used |
-|---|---|---|
-| `openai` / `azure` | OpenAI / Azure OpenAI | `OpenAI` NuGet |
-| `anthropic` | Anthropic Claude | `Anthropic` NuGet |
-| `ollama` | Ollama (local) | `OpenAI` NuGet (pointed at localhost) |
-| `xai` | xAI Grok | `OpenAI` NuGet (pointed at api.x.ai/v1) |
-
-**Adding a new OpenAI-compatible provider** (e.g. Groq, Together, Mistral):
-1. Add a case to the switch in `ProviderClientBuilder.cs`.
-2. Add a private method pointing `OpenAIClientOptions.Endpoint` at the provider's base URL.
-3. No new NuGet packages required.
-
----
-
 ## Conventions
 
 - **No Co-Authored-By lines in commits.** Commits are attributed to the repo owner only.
@@ -423,9 +321,6 @@ private method — no new packages needed for OpenAI-compatible APIs.
   — wrong case is a parse error.
 - **Runtime and data keys are `snake_case`** — reserved runtime keys (`output`, `feedback`,
   `max_loops`) and any key produced by `exec`/`onnx`/`json_extract` steps.
-- **No business logic in the CLI.** The CLI wires up dependencies and delegates to Core.
-- **`IExpertRunner` is the only interface** between the CLI and the AI provider. Keep it free of
-  provider-specific types.
 - **Language files use the `.mcl` extension**, binary is `forge`. Expert markdown files live under
   `experts/<ExpertName>/expert.md`. Lock file is `mcl.lock` (relative paths, generated by
   `forge init`). Reserved context variables: `apiKey`, `model`, `provider`, `endpoint`.
@@ -460,37 +355,19 @@ private method — no new packages needed for OpenAI-compatible APIs.
 
 ---
 
-## Repository map and extraction order
-
-- `mission-control-language` owns the MCL language, CLI, and Conversation components.
-- [`forge-desktop`](https://github.com/katasec/forge-desktop) owns the Desktop and Application
-  components.
-- [`forge-rooms`](https://github.com/katasec/forge-rooms) owns the Rooms and ForgeUI components.
-- [`forge-platform`](https://github.com/katasec/forge-platform) owns the Forge API, the
-  `Katasec.Forge.Billing` package, and the hosted Platform boundary.
-- [`forge-runner`](https://github.com/katasec/forge-runner) owns the stateless Runner host, its
-  transport Contracts, focused tests, Runner image workflow, and its eight baked fallback missions.
-- `forge-infra` owns Azure deployment configuration and applies hosted images.
-
-No MCL project consumes the Runner or Billing packages. Do not restore duplicate source from any
-extracted repository here or add sibling project references.
-
 ## Project structure
 
 ```
-README.md               — what MCL is and why it exists
-AGENTS.md                — this file (canonical; CLAUDE.md symlinks here)
+README.md        — what MCL is and why it exists
+AGENTS.md        — this file (canonical; CLAUDE.md symlinks here)
 docs/
-  plan.md                — active-work hub: current phases only
-  backlog.md             — deferred candidates, paused work, and external conditions
-  plan_completed.md      — verified completed work and superseded-plan mappings
-  design/                — cross-cutting design decisions (language, architecture, deploy, code-style, ...)
-  phases/                — one hub + spokes per phase, task lists and statuses
-src/
-  ForgeMission.Core/      — parser, expert loader, pipeline runner
-  ForgeMission.ChatClients/ — provider SDK clients and structured-output translation
-  ForgeMission.Cli/       — CLI entry point (forge)
-  ForgeMission.*.Tests/   — test projects
-missions/                — example + built-in missions
-runs/                    — gitignored, output of `forge run`
+  plan.md        — active-work hub: current phases only
+  backlog.md     — deferred candidates, paused work, and external conditions
+  plan_completed.md — verified completed work and superseded-plan mappings
+  design/        — cross-cutting design decisions
+  phases/        — one hub + spokes per phase, task lists and statuses
+agents/          — agent definitions
+missions/        — example + built-in missions
+skills/          — repo copies of agent skills (e.g. checkpoint)
+clients/, editors/, html/ — to be placed (Phase 50 row 7)
 ```

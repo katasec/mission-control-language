@@ -2,6 +2,22 @@
 
 **MCL is a language for codifying how to think, not just what to ask.**
 
+## Where the code lives
+
+This repo holds plans, agent rules, agents, and missions. The code lives in these repos:
+
+| Repo | Purpose |
+|---|---|
+| [`forge-mcl`](https://github.com/katasec/forge-mcl) | MCL language, CLI (`forge`), generic execution support |
+| [`forge-runner`](https://github.com/katasec/forge-runner) | Stateless hosted mission execution |
+| [`forge-conversations`](https://github.com/katasec/forge-conversations) | Durable conversation admission, state, and dispatch |
+| [`forge-platform`](https://github.com/katasec/forge-platform) | API, accounts, platform keys, billing, ledger |
+| [`forge-rooms`](https://github.com/katasec/forge-rooms) | Collaboration domain and browser product (Rooms, ForgeUI) |
+| [`forge-desktop`](https://github.com/katasec/forge-desktop) | Local application and supervision (Desktop, Application) |
+| [`forge-infra`](https://github.com/katasec/forge-infra) | Azure deployment configuration |
+
+Status and detail: [repository map](docs/phases/phase-50-repository-extraction.md).
+
 ---
 
 ## The problem
