@@ -1,14 +1,16 @@
 # Phase 50.5 — forge-rooms
 
+> **✅ Complete (2026-09-26).** The tasks below are the record of what was done.
+
 > Detail for row 5 of [the repository map](phase-50-repository-extraction.md). Move only: one change
 > at a time, no redesign, no new contracts, no new gates. If a task below doesn't say to change a
 > line, don't. Build or test fails → stop and report the exact error.
 
 | Item | State |
 |---|---|
-| `ForgeMission.Rooms`, `ForgeMission.Rooms.Data`, `ForgeUI`, `ForgeMission.Rooms.Tests` | ⬜ Tasks 1–7 |
-| ForgeUI dev tooling (compose, dev scripts) | ⬜ Task 5 |
-| `Dockerfile.forgeui` + `forge-ui-image.yml` | ⬜ Task 8 |
+| `ForgeMission.Rooms`, `ForgeMission.Rooms.Data`, `ForgeUI`, `ForgeMission.Rooms.Tests` | ✅ Moved (forge-rooms #1, MCL #197) |
+| ForgeUI dev tooling (compose, dev scripts) | ✅ Moved (forge-rooms #1, MCL #197) |
+| `Dockerfile.forgeui` + `forge-ui-image.yml` | ✅ Moved (forge-rooms #2, MCL #198); `forge-ui` `0.6.2` pushed from forge-rooms |
 
 Paths: `MCL` = `/Users/ameerdeen/progs/mission-control-language`,
 `FR` = `/Users/ameerdeen/progs/forge-rooms` (GitHub `katasec/forge-rooms`, repo id `1381261126`).
@@ -16,12 +18,12 @@ Paths: `MCL` = `/Users/ameerdeen/progs/mission-control-language`,
 Decisions (approved 2026-09-26): **D1** Desktop gets its own copy of `forge.css`. **D2** the ForgeUI
 image drops its dead `missions/` copy. **D3** the image build moves in this phase.
 
-## Task 1 — Preflight
+## Task 1 — Preflight ✅ (2026-09-26)
 
 `MCL`, `FR`, `forge-infra` on clean `main`, pushed. `FR` contains only `README.md`. Create branch
 `codex/move-rooms` from `main` in `MCL` and `FR`.
 
-## Task 2 — Scaffold forge-rooms
+## Task 2 — Scaffold forge-rooms ✅ (forge-rooms #1)
 
 Named copies (not moves — `MCL` keeps its own):
 
@@ -32,7 +34,7 @@ Named copies (not moves — `MCL` keeps its own):
 Create `FR/src/ForgeRooms.slnx` listing `ForgeMission.Rooms`, `ForgeMission.Rooms.Data`, `ForgeUI`,
 `ForgeMission.Rooms.Tests` (same format as `MCL/src/ForgeMission.slnx`).
 
-## Task 3 — Move the four projects
+## Task 3 — Move the four projects ✅ (forge-rooms #1, MCL #197; 110/110 byte-identical)
 
 Move all tracked files (`git ls-files`) of these folders from `MCL/src/` to `FR/src/`, then
 `git rm` them in `MCL`: `ForgeMission.Rooms/`, `ForgeMission.Rooms.Data/`, `ForgeUI/`,
@@ -40,7 +42,7 @@ Move all tracked files (`git ls-files`) of these folders from `MCL/src/` to `FR/
 
 **Done when:** every moved file is byte-identical to `MCL` `main`.
 
-## Task 4 — Desktop keeps `forge.css` (D1)
+## Task 4 — Desktop keeps `forge.css` (D1) ✅ (MCL #197)
 
 In `MCL`:
 
@@ -54,7 +56,7 @@ In `MCL`:
 - `src/ForgeMission.Tests/Architecture/MclPackageConsumptionTests.cs`: delete the line
   `("ForgeUI", new[] { presentation }),`.
 
-## Task 5 — Move ForgeUI dev tooling
+## Task 5 — Move ForgeUI dev tooling ✅ (forge-rooms #1, MCL #197)
 
 Move from `MCL` to the same path in `FR`, no edits: `docker-compose.yml`, `.dockerignore`,
 `scripts/dev-up.sh`, `scripts/dev-down.sh`, `scripts/dev-reset.sh`, `scripts/db/init/01-init.sql`,
@@ -67,21 +69,21 @@ In `MCL`:
 - `.claude/launch.json`: move the `forge-ui` configuration object to a new `FR/.claude/launch.json`
   (same `version` wrapper). `MCL` keeps `mcl-site`.
 
-## Task 6 — Update MCL consumers and docs
+## Task 6 — Update MCL consumers and docs ✅ (MCL #197)
 
 - `MCL/src/ForgeMission.slnx`: remove the four moved projects.
 - `MCL/src/README.md`: point the four rows at `forge-rooms`, like the Billing/Api rows.
 - `MCL/AGENTS.md` repository map: move Rooms and ForgeUI from the `mission-control-language` line
   to a `forge-rooms` line.
 
-## Task 7 — Verify and merge
+## Task 7 — Verify and merge ✅ (forge-rooms 36/36, MCL ForgeMission.Tests 353 pass / 1 skip)
 
 - `FR`: `dotnet build src/ForgeRooms.slnx` and `dotnet test src/ForgeRooms.slnx` pass.
 - `MCL`: `dotnet build src/ForgeMission.slnx` has 0 errors and `dotnet test src/ForgeMission.Tests` passes.
 - Pre-approved: a CS0122 visibility error in tests may be fixed only by an `InternalsVisibleTo` grant.
 - One PR per repo, `FR` first; merge; both on clean `main`.
 
-## Task 8 — Move the image build (D3)
+## Task 8 — Move the image build (D3) ✅ (forge-rooms #2, MCL #198, forge-infra #15; run 36257785673)
 
 1. Move `MCL/Dockerfile.forgeui` and `MCL/.github/workflows/forge-ui-image.yml` to `FR`. In the
    Dockerfile, delete the 4-line `# Mission files MUST ship…` comment, the `COPY missions/ /app/missions/`
@@ -101,3 +103,10 @@ In `MCL`:
    container app stays on its pinned tag.
 
 **Done when:** the image workflow succeeds from `FR` and the new tag is in ACR.
+
+## Notes
+
+- `src/README.md` had no `ForgeMission.Rooms.Tests` row; three rows were updated.
+- Private packages granted Read for `forge-rooms`: Billing, ConversationPresentation, Mcl.ChatClients,
+  Mcl.Core, Mcl.MissionRegistry, Mcl.Parser, Mcl.Scout, Mcl.Serve, Runner, Runner.Contracts.
+- Live ForgeUI stays on `forge-ui:0.6.1`; `0.6.2` is built and stored only.

@@ -463,7 +463,7 @@ private method — no new packages needed for OpenAI-compatible APIs.
 ## Repository map and extraction order
 
 - `mission-control-language` owns the MCL language, CLI, Desktop, Application, and Conversation
-  components; it consumes the external `Katasec.Forge.Billing` package.
+  components.
 - [`forge-rooms`](https://github.com/katasec/forge-rooms) owns the Rooms and ForgeUI components.
 - [`forge-platform`](https://github.com/katasec/forge-platform) owns the Forge API, the
   `Katasec.Forge.Billing` package, and the hosted Platform boundary.
@@ -471,11 +471,8 @@ private method — no new packages needed for OpenAI-compatible APIs.
   transport Contracts, focused tests, Runner image workflow, and its eight baked fallback missions.
 - `forge-infra` owns Azure deployment configuration and applies hosted images.
 
-The four MCL Runner consumers use the private GitHub Packages releases
-`Katasec.Forge.Runner.Contracts` and, for the temporary internal Rooms test only,
-`Katasec.Forge.Runner`. Do not restore duplicate Runner source here or add sibling project
-references. A later test-boundary task replaces the Rooms test's internal host package reference
-with black-box HTTP coverage.
+No MCL project consumes the Runner or Billing packages. Do not restore duplicate source from any
+extracted repository here or add sibling project references.
 
 ## Project structure
 
