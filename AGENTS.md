@@ -28,7 +28,7 @@ missions. Each component lives in its own repo — see the
 | [`forge-platform`](https://github.com/katasec/forge-platform) | API, accounts, platform keys, billing, ledger |
 | [`forge-rooms`](https://github.com/katasec/forge-rooms) | Collaboration domain and browser product (Rooms, ForgeUI) |
 | [`forge-desktop`](https://github.com/katasec/forge-desktop) | Local application and supervision (Desktop, Application) |
-| `forge-infra` | Azure deployment configuration |
+| [`forge-infra`](https://github.com/katasec/forge-infra) | Azure deployment configuration |
 | `mission-control-language` (this repo) | Agent mission control |
 
 Do not restore source from any of those repos here or add sibling project references.
