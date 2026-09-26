@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 50.6: write the `forge-desktop` task file (same shape as [50.5](phases/phase-50.5-forge-rooms.md)). |
+| **NEXT STEP** | Phase 50.7: write the task file for tidying this repo into agent mission control (same shape as [50.6](phases/phase-50.6-forge-desktop.md)). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: `forge-platform` ✅, `forge-rooms` ✅; `forge-desktop` next. |
+| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos. Move code only — no redesign. | Active: all product code extracted; row 7 (tidy this repo) next. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold until Phase 50 is complete.** Don't start work here; review after the reorg. |
 
 ## Design docs
