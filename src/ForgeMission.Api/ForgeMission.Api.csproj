@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <!-- Auth + billing bounded context (platform-key resolve, balance check, debit) — AOT-clean. -->
-    <ProjectReference Include="..\ForgeMission.Billing\ForgeMission.Billing.csproj" />
+    <PackageReference Include="Katasec.Forge.Billing" Version="0.1.0" />
     <!-- Direct contract dependency: API maps the Runner wire and must not receive it transitively through Billing. -->
     <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
   </ItemGroup>

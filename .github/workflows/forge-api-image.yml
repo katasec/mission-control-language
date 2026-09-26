@@ -6,7 +6,8 @@ name: forge-api image
 # Security posture:
 #   * Auth to Azure is GitHub -> Azure OIDC federation (id-token). There is NO Azure client secret.
 #   * ACR push uses the CI identity's AcrPush role via `az acr login` — no registry password.
-#   * Dockerfile.forgeapi does not pull private GitHub Packages, so no NuGet build secret is needed.
+#   * The image references PRIVATE GitHub Packages, so restore gets a read:packages token through
+#     a BuildKit secret mount; it never lands in an image layer or `docker history`.
 #   * Runtime secrets are Key Vault references injected by the Container App, never image content.
 
 on:
@@ -22,6 +23,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  packages: read
 
 jobs:
   build-push:
@@ -59,6 +61,10 @@ jobs:
           context: .
           file: Dockerfile.forgeapi
           push: true
+          # Prefer the repository override; otherwise use this workflow's read:packages token.
+          # Dockerfile.forgeapi mounts it only during restore.
+          secrets: |
+            nuget_token=${{ secrets.NUGET_AUTH_TOKEN != '' && secrets.NUGET_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
           tags: |
             ${{ vars.ACR_LOGIN_SERVER }}/forge-api:${{ steps.ver.outputs.version }}
             ${{ vars.ACR_LOGIN_SERVER }}/forge-api:sha-${{ github.sha }}

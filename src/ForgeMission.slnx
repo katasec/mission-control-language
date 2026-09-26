@@ -1,6 +1,5 @@
 <Solution>
   <Project Path="ForgeMission.Api/ForgeMission.Api.csproj" />
-  <Project Path="ForgeMission.Billing/ForgeMission.Billing.csproj" />
   <Project Path="ForgeMission.Application/ForgeMission.Application.csproj" />
   <Project Path="ForgeMission.ClientRuntime/ForgeMission.ClientRuntime.csproj" />
   <Project Path="ForgeMission.Application.Host/ForgeMission.Application.Host.csproj" />
