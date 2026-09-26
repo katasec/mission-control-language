@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Katasec.Forge.Billing" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Billing" Version="0.1.1" />
     <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.ConversationPresentation" Version="0.1.0" />

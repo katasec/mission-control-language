@@ -15,7 +15,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.7.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="Katasec.Forge.Billing" Version="0.1.0" />
+    <PackageReference Include="Katasec.Forge.Billing" Version="0.1.1" />
     <PackageReference Include="Katasec.Forge.Runner" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Runner.Contracts" Version="0.1.0" />
     <PackageReference Include="Katasec.Forge.Mcl.Core" Version="0.1.0" />
