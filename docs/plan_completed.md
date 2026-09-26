@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos; move code only. | Closed for this iteration 2026-09-26: rows 1–6 extracted and verified; row 7 deferred to [backlog](backlog.md). |
 | Repository extraction — Conversations | Move Conversations into `forge-conversations`. | Done 2026-09-24 — see [Phase 50](phases/phase-50-repository-extraction.md), row 3. |
 | [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Windows and macOS MAUI native Host with the existing Supervisor, Application Host, and Presentation topology. | Done — downloaded GitHub Actions artifacts accepted on both platforms 2026-09-19; see the [completed record](phases/phase-48-maui-desktop-host-spike_completed.md). |
 | [Phase 47 — Mission Chat static UI](phases/phase-47-mission-chat-static-ui.md) | Interactive Presentation-only Mission Chat prototype for the approved startup, fresh Janus, and active-chat journey. | Done — Codex acceptance and operator approval 2026-09-12. Real backend integration remains a separately designed follow-on. |

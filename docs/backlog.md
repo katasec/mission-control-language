@@ -7,8 +7,9 @@
 
 | Item | Status / pointer |
 |------|------------------|
-| [Phase 45.5 — Live existing-mission chat](phases/phase-45.5-live-existing-mission-chat.md) | Deferred by operator direction on 2026-09-25 until the repository sequence is complete: `forge-platform` → `forge-rooms` → `forge-desktop` → `forge-meta`. Do not resume the fixed-screen implementation in `mission-control-language`; reselect it only after that componentization has closed. |
+| [Phase 45.5 — Live existing-mission chat](phases/phase-45.5-live-existing-mission-chat.md) | Deferred by operator direction on 2026-09-25. The repository extraction closed 2026-09-26 ([Phase 50](phases/phase-50-repository-extraction.md)); if reselected, resume in `forge-desktop`, not here. |
 | Explorer OCI dependency/portable-lock migration | Separate from the current [Phase 43.23 ownership end state](phases/phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06). The linked [43.22 reconstruction](phases/phase-43.22-project-mission-reconstruction.md) is historical reference only; its earlier Core/CLI/lock candidate is not an implicit prerequisite of the mission picker or run history. |
+| [Phase 50 row 7 — tidy this repo](phases/phase-50-repository-extraction.md) | Deferred 2026-09-26: place `clients/`, `editors/`, `html/`; further AGENTS.md/README cleanup. |
 | [Phase 22 / 22b — Non-LLM and ONNX experts](phases/phase-22-non-llm-experts.md) | Partial; resume only if an embedded-model use case requires it. |
 | [Phase 26 — Tooling foundation](phases/phase-26-tooling-foundation.md) | Tree-sitter/LSP deferred until external demand. |
 | [Phase 27 — Project assistant missions](phases/phase-27-project-assistant.md) | Design candidate. |
