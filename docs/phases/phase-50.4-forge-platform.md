@@ -5,16 +5,16 @@
 
 | Item | State |
 |---|---|
-| `ForgeMission.Billing` + tests | ✅ Moved; `Katasec.Forge.Billing` `0.1.0` published |
-| `ForgeMission.Api` + tests | ⬜ Tasks 1–6 below |
+| `ForgeMission.Billing` + tests | ✅ Moved; `Katasec.Forge.Billing` `0.1.1` published; consumers on `0.1.1` |
+| `ForgeMission.Api` + tests | 🔄 Task 1 ✅; next: Task 2 |
 | `Dockerfile.forgeapi` + `forge-api-image.yml` | ⬜ Task 7 |
 
 Paths: `MCL` = `/Users/ameerdeen/progs/mission-control-language`,
 `FP` = `/Users/ameerdeen/progs/forge-platform`.
 
-## Task 1 — Preflight
+## Task 1 — Preflight ✅ (2026-09-26, forge-platform #6)
 
-Both `MCL` and `FP` on clean `main`, pushed. Create branch `codex/move-api` in each.
+Both `MCL` and `FP` on clean `main`, pushed.
 
 In `FP`, rename `NuGet.config` → `nuget.config` (`git mv NuGet.config tmp && git mv tmp nuget.config`
 on macOS) and update its two references in `.github/workflows/publish-billing-package.yml`
@@ -24,6 +24,8 @@ Dockerfile moves without edits. Merge this as its own PR before Task 2.
 **Done when:** `git status` shows clean and up to date in both, and `FP` CI passes with `nuget.config`.
 
 ## Task 2 — Move the API project
+
+Create branch `codex/move-api` from `main` in both `MCL` and `FP`.
 
 Move `MCL/src/ForgeMission.Api/` (all tracked files) to `FP/src/ForgeMission.Api/`, then delete it
 from `MCL`:
