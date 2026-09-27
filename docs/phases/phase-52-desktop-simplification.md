@@ -4,7 +4,7 @@
 one MAUI process that performs the same dependency checks. The target is fewer projects, fewer
 processes, and no local Kind dependency on the default path.
 
-> **Status: design (2026-09-28).** No spoke is build-ready yet. Each spoke lists its open
+> **Status: design (2026-09-28).** All four spokes are written; none is build-ready yet. Each spoke lists its open
 > questions; close them before handing off implementation.
 
 ## Why
