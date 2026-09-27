@@ -1,8 +1,8 @@
 # Phase 51 — Desktop publish-script extraction
 
-> **Active.** Extract only the existing `desktop-publish` Make recipe into a PowerShell script.
-> This refactor preserves the Makefile interface, the canonical workflow, and the Desktop bundle
-> contract exactly; it does not replace Make.
+> **Closed for this iteration (2026-09-28).** The extracted publish path and its local acceptance
+> are verified. The canonical downloaded-artifact checksum acceptance is deferred to the
+> [backlog](../backlog.md), not active work.
 
 ## Locked design
 
