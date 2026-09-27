@@ -2,7 +2,7 @@
 
 > **Status:** user-directed implementation exception for Phase 45.3 and Phase 47's static UI
 > prototype. The normal repository workflow remains
-> [Codex supervisor workflow](codex-supervisor-workflow.md).
+> [supervisor workflow](supervisor-workflow.md).
 
 For an eligible user-directed task, Codex owns the design, bounded scope, adversarial plan review,
 browser and default-path acceptance, integration, and merge. Claude owns implementation only. The

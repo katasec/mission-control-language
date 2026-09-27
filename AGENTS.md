@@ -250,26 +250,23 @@ abstractions, prefer structural containment to warnings or remembered procedures
 verification observation in “Done when.” Record any material exception and its removal path in the
 active spoke; do not defer it to implementation.
 
-### Roles — Codex supervisor / Codex subagent implementer
+### Roles — supervisor / subagent implementer
 
-All implementation work follows the internal
-[Codex supervisor workflow](docs/design/codex-supervisor-workflow.md). The supervising Codex agent
-owns design, scope, adversarial plan review, and final acceptance. A bounded Codex subagent owns
-implementation of one explicitly approved task. The supervisor may write or correct design and
-planning documentation; a subagent may investigate without edits, but may not modify code,
-infrastructure, or executable configuration until the supervisor has explicitly approved its plan.
+All implementation work follows the [supervisor workflow](docs/design/supervisor-workflow.md).
+It is provider-neutral: whichever LLM agent the operator is working in (Claude, Codex, or another)
+is the supervisor and uses its own subagents. The operator may run some tasks in one agent and
+others in another. The supervisor owns design, scope, adversarial plan review, and final
+acceptance. A bounded subagent owns implementation of one explicitly approved task. The supervisor
+may write or correct design and planning documentation; a subagent may investigate without edits,
+but may not modify code, infrastructure, or executable configuration until the supervisor has
+explicitly approved its plan.
 
 The required loop is **scope → subagent plan → supervisor adversarial approval → implementation →
 subagent evidence summary → supervisor acceptance review**. The implementer never approves its own
 plan, resolves an open design question by inference, broadens scope, or marks a task complete. The
 supervisor independently checks the diff and evidence against the task's `Done when` condition.
-Internal supervisor/subagent handoffs use the collaboration tools and do not need a human relay.
-
-**User-directed external-implementer exception.** When the operator expressly selects Claude for a
-bounded task, use the [Claude ↔ Codex workflow](docs/design/claude-codex-workflow.md). Claude may
-implement only a Codex-approved scope; Codex still owns design, adversarial review, browser and
-default-path acceptance, integration, and merge. This exception never weakens ownership,
-security, AOT, or visual-reference requirements.
+Internal supervisor/subagent handoffs use the agent's own subagent tools and do not need a human
+relay.
 
 ### Phases and tasks
 Work is broken into phases, each with a spoke document in `docs/phases/`. Phases have a

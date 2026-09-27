@@ -52,7 +52,7 @@ approved designs once a finding proves them necessary.
 
 ## Governance and acceptance
 
-Phase 46 follows the repository-wide [Codex supervisor workflow](../design/codex-supervisor-workflow.md).
+Phase 46 follows the repository-wide [supervisor workflow](../design/supervisor-workflow.md).
 It is the validated predecessor of that workflow, not a special exception or a weakened gate:
 
 1. A supervising Codex agent owns the architecture, task card, contracts, risk assessment, and
