@@ -167,7 +167,7 @@ session:
 
 ## Branch isolation
 
-Start every implementation task on a new `codex/` branch before writing code or task documentation.
+Start every implementation task on a new `adeen/` branch before writing code or task documentation.
 Do not work directly on `main`: an isolated branch keeps incomplete work from contaminating the
 known-good baseline and contains regression risk until the task has been reviewed and merged. Reuse
 an existing branch only when explicitly continuing the same unfinished task; otherwise create a new,
