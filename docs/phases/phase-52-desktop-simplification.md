@@ -14,7 +14,8 @@ library, and an Application Host. On the default path that machinery performs on
 check (Conversation Runtime `/health`) plus an Application Host readiness wait. Local Kind startup
 adds recurring friction and long agent debugging loops. Local and cloud share one Conversation
 contract by design, so an always-up cloud default removes Kind from the normal path and proves
-that contract.
+that contract. The Desktop always checks both dependencies: Mission Runtime and Conversation
+Runtime, each at its own URL, local or remote.
 
 ## Spokes
 

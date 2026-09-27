@@ -35,7 +35,8 @@ through ForgeAPI. Kind stops being the normal path.
 | Fact | Value |
 |---|---|
 | Artifact | Published Desktop bundle, zero-argument launch, no `ConversationRuntime:*` or `FORGE_*` overrides. |
-| Conversation route | ForgeAPI conversation route (URL fixed in Task 2). |
+| Mission Runtime URL | `https://api.forge.katasec.com` (unchanged); `/health` checked. |
+| Conversation Runtime URL | ForgeAPI conversation route (URL fixed in Task 2); `/health` checked. |
 | Credential | Platform key from `forge login` (see open question 2). |
 | Action / result | Send a message in a Project conversation; the streamed reply appears and survives reopening the Project. |
 

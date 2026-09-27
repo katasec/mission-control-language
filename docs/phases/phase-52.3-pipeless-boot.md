@@ -18,7 +18,7 @@ blocking the UI thread, which async startup fixes inside one process.
 |---|---|
 | Entry point | `ForgeMission.Desktop.Host` (MAUI) is the launched artifact. |
 | UI thread | Shows the local Booting content immediately; does no I/O. |
-| Background startup | 1. `GET {missionUrl}/health`. 2. `GET {conversationUrl}/health`. 3. Start Application Host; wait for its ready marker. 4. Marshal back to the UI thread and navigate. Both dependencies are always checked, each at its own configured URL, local or remote. |
+| Background startup | Two dependencies, two URLs, two checks. 1. `GET {missionUrl}/health`. 2. `GET {conversationUrl}/health`. 3. Start Application Host; wait for its ready marker. 4. Marshal back to the UI thread and navigate. Both dependencies are always checked, each at its own configured URL, local or remote. |
 | Failure | Any step's failure or timeout shows the existing Failed content with Retry. Retry reruns background startup as a method call. |
 | Cancellation | Window close cancels startup and stops the Application Host. |
 | Orphan cleanup | Application Host exits when its parent process dies (parent-owned stdin closes). |
@@ -46,7 +46,5 @@ blocking the UI thread, which async startup fixes inside one process.
 
 1. **Parent-death signal on Windows.** Confirm stdin-close works for the Application Host on both
    macOS and Windows, or name the Windows equivalent.
-2. **Mission `/health` through ForgeAPI.** ForgeAPI exposes `/health`; confirm it represents
-   mission-run readiness, or name the correct endpoint.
-3. **Bundle layout.** Name the published artifact and update `Publish-Desktop.ps1` and the
+2. **Bundle layout.** Name the published artifact and update `Publish-Desktop.ps1` and the
    workflow accordingly.
