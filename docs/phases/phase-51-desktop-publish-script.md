@@ -233,13 +233,14 @@ stdout readiness marker with direct line reads from that same redirected stdout 
    artifact acceptance remains required before Phase 51 completion.
 
 **Current evidence (2026-09-27):** the focused reader tests passed, including a redirected child
-that writes the ready marker while keeping stderr open; this proves ready completion does not wait
-for the child's lifetime. `dotnet build src/ForgeMission.slnx` passed with 0 warnings and 0
-errors, and `make build-desktop` produced the local macOS bundle. The operator confirmed that the
-zero-argument Supervisor reached the application. This is local packaged-app evidence only;
-canonical downloaded-artifact checksum acceptance remains pending.
+that writes the ready marker while keeping stderr open. That controlled evidence did **not** close
+the default path: a fresh zero-argument bundle launch reached a healthy Application Host but the
+native Host remained on `Starting Forge`. Task 8 replaces the insufficient readiness proof.
 
-## Task 8 — Completion record
+## Task 8 — First ready-to-navigate handoff
 
-After verification, move execution and workflow evidence to
-`phase-51-desktop-publish-script_completed.md`; retain a short status pointer here.
+**Done (2026-09-28):** the Host serializes its Booting and ready-URL WebView source assignments;
+the published bundle permits local networking only. Focused guards passed 17/17, the normal local
+launch established WebContent connections to its dynamic loopback Application Host, the Kind health
+endpoint returned 200, and the operator accepted the fresh launch. See
+[Task 8 completion record](phase-51-desktop-publish-script_completed.md#task-8--first-ready-to-navigate-handoff).
