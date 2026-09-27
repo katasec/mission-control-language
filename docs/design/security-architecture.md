@@ -29,12 +29,38 @@ invariant is the rule they must enforce.
 
 | Tier | Purpose | May call | Must not hold |
 |---|---|---|---|
-| 1 — presentation / edge | CDN/WAF, browser/Desktop/API entry, authentication and routing. | Tier 2 services only. | Tier 3 credentials/RBAC or direct datastore paths. |
+| 1 — presentation / edge | CDN/WAF, browser/Desktop/API entry, authentication and routing. | Tier 2 services (queries), and tier-2 boundary queues in one direction only (see [queue classes](#service-bus-queue-classes)). | Tier 3 credentials/RBAC, direct datastore paths, or any right on a tier-3 queue. |
 | 2 — application | Bounded-context services, mission workers, domain operations. | Its Tier 3 store; explicit internal Tier 2 contracts. | Another context's store credentials or public data endpoints. |
 | 3 — data / durable transport | Per-context database, Table/Blob, cache, broker. | Nothing as an initiator. | Public ingress or shared, unconstrained credentials. |
 
 Tier-2-to-tier-2 traffic is allowed only through a named service or durable-message contract. It
 does not authorise a service to bypass another context and access its data store directly.
+
+## Service Bus queue classes
+
+Amended 2026-09-29 with the [command-bus architecture](command-bus-architecture.md). A queue is
+classified by who may touch it and in which direction. A queue message is a request: the edge can
+ask, but only the owning tier-2 service validates and applies it, so granting an edge a one-way
+right on a boundary queue keeps the tier-1 invariant's intent.
+
+| Class | Tier | Purpose | Edge rights | Tier-2 rights |
+|---|---|---|---|---|
+| Ingress | 2 boundary | User-originated commands arriving via the API | Send only | Owner: listen only |
+| Reply | 2 boundary | Synchronous results back to the edge | Listen only, own sessions | Owner: send only |
+| Internal work | 3 | Service-to-service work | None | Producer send; consumer listen |
+| Financial | 3, restricted | Money and ledger | None, ever | forge-runner send; Billing listen |
+
+Enforcement:
+
+1. Rights are per queue and per direction, granted to managed identities with queue-scoped
+   Service Bus sender/receiver roles. Local (SAS) authentication is disabled on every namespace.
+2. One namespace per class group: edge-facing (ingress + reply), internal work, financial.
+3. Clients never hold a Service Bus right. They reach ingress only through an authenticated edge.
+4. The owner validates every message; commands are idempotent by ID.
+5. **Transitional exception (Type 2):** namespaces start on the Standard tier with public network
+   access, RBAC-only. Private endpoints require Premium. Scope: all three namespaces. Removal:
+   move internal-work and financial namespaces to Premium with private endpoints when cost is
+   approved. Verification: local auth disabled and no namespace-wide role assignment exists.
 
 ## Type 1 versus Type 2 decisions
 
