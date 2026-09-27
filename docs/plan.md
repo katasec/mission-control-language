@@ -14,7 +14,7 @@
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations, then collapse Desktop launch into one MAUI process and move the UI in-process. | 🔵 Design — spokes written; none build-ready yet. |
+| [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations, then collapse Desktop launch into one MAUI process and move the UI in-process. | 🟢 First spoke build-ready; later spokes in design. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs
@@ -26,6 +26,7 @@
 | [UI Design System](design/ui-design-system.md) | Forge UI tokens, themes, reusable primitives, and local-run gotchas. |
 | [Architecture](design/architecture.md) | Components, boundaries, dependency flow. |
 | [Security Architecture](design/security-architecture.md) | Mandatory design gate. |
+| [Command-bus architecture](design/command-bus-architecture.md) | Governing target: Service Bus carries every command; queries direct. |
 | [Engineering Philosophy](design/engineering-philosophy.md) | Mandatory design and implementation gate. |
 | [Desktop Interaction Principles](design/desktop-interaction-principles.md) | Binding visual-reference acceptance for Desktop and ForgeUI changes. |
 | [Default-Path Acceptance](design/default-path-acceptance.md) | Mandatory real-user configuration and end-to-end acceptance gate. |
