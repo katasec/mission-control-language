@@ -178,7 +178,68 @@ passed 346/346 with 1 intentional skip. The Kind port-forward at `127.0.0.1:1808
 but was not required for those tests. Canonical Windows/macOS workflow and downloaded-artifact
 default-path/checksum acceptance remain pending.
 
-## Task 6 — Completion record
+## Task 6 — Preserve Mac Catalyst inherited pipe arguments
+
+**Scope:** correct the Mac Catalyst entry point so the Desktop Host receives the complete fixed
+Supervisor pipe-argument pair passed to its `Main(string[] args)` entry point.
+
+| Area | Decision |
+|---|---|
+| Owner and contract | `ForgeMission.Desktop.Host` owns this bootstrap handoff. C# `Main` arguments already exclude the executable path, so it passes `args` unchanged to `HostStartupArguments`. |
+| Boundary preservation | Do not change `MauiProgram`'s `Environment.GetCommandLineArgs()[1..]` fallback, the Supervisor, pipe protocol, workflow, runtime ownership, or UI. The environment API includes the executable path; the `Main` parameter does not. |
+| Regression guard | A focused source-contract test asserts the Mac entry point preserves `args` and cannot reintroduce the slice. It is intentionally source-level because the normal test target does not compile/reference the Mac Catalyst executable. |
+| Security / architecture | **N/A, PASS.** This Type-2 local process-bootstrap repair changes no public entry point, tier, datastore, identity, credential, or cross-context contract. Source history is the reversal path. |
+| Engineering / failure boundary | **PASS.** The existing fixed Supervisor-to-Host pipe contract remains the only seam. The Host continues to show its existing failure content for invalid handles; no fallback, retry policy, option, or helper abstraction is introduced. |
+| Desktop quality / parity / visual reference | **PASS, N/A for visual design.** Required behavior is that the Host launched by the Supervisor accepts its inherited pipe handles. The Host remains disposable and the Supervisor remains framework-free; no product action, native lifecycle policy, or visual surface changes. |
+| Default path | The normal action is the zero-argument Supervisor executable from the published bundle, with relevant `FORGE_*` overrides absent. A local bundle launch is focused packaged-app evidence only; canonical downloaded-artifact acceptance remains required for Phase 51 completion. |
+
+**Done when:**
+
+1. The Mac Catalyst `Main` passes its `args` unchanged to `HostStartupArguments`; only that
+   argument handoff changes.
+2. The focused regression guard passes and rejects the prior `args[1..]` form.
+3. The focused test and `git diff --check` pass; a `make build-desktop` bundle launch through the
+   zero-argument Supervisor moves past the inherited-pipe-handles failure.
+
+**Current evidence (2026-09-27):** the Mac Catalyst entry point preserves the complete `Main`
+argument array; the focused source-contract guard passed. `dotnet build src/ForgeMission.slnx`
+passed with 0 warnings and 0 errors, and `make build-desktop` produced the local macOS bundle.
+The operator launched that zero-argument Supervisor and confirmed that it reached the application,
+instead of the inherited-pipe-handles failure. This is local packaged-app evidence only; canonical
+downloaded-artifact checksum acceptance remains pending.
+
+## Task 7 — Read Application Host readiness directly
+
+**Scope:** replace the Supervisor's event-based observation of its Application Host child's existing
+stdout readiness marker with direct line reads from that same redirected stdout pipe.
+
+| Area | Decision |
+|---|---|
+| Owner and contract | `ForgeMission.Desktop` owns Application Host supervision. It continues to wait for the exact existing `FORGE_CLIENT_RUNTIME_URL=` marker and passes the reported loopback URL to the native Host unchanged. |
+| Read and failure boundary | Read stdout line-by-line with one linked 20-second timeout and caller cancellation token; capture stderr concurrently. A closed stdout pipe without the marker and a timeout remain startup failures; caller cancellation remains cancellation. |
+| Regression guard | A redirected lightweight child emits the exact marker while deliberately keeping stderr open. It proves the readiness wait returns before the child exits, without starting a UI, network listener, or application process. It is controlled component evidence, not default-path acceptance. |
+| Non-goals | Do not change the Supervisor-to-native-Host pipe protocol, Host/UI code, child process ownership, runtime configuration, workflow, or published artifact contract. |
+| Security / architecture | **N/A, PASS.** This Type-2 local supervision repair changes no public entry point, tier, datastore, identity, credential, or cross-context contract. Source history is the reversal path. |
+| Engineering philosophy | **PASS.** The existing readiness marker remains the one contract. Direct reading removes an unreliable observer without adding a fallback, retry policy, option, or abstraction framework. |
+| Default path / UI | **Unchanged.** The normal path remains the zero-argument published Supervisor and its owned Application Host. The in-memory and lightweight-child tests are explicitly non-acceptance; a manual zero-argument bundle launch must reach navigation for local packaged-app evidence. |
+
+**Done when:**
+
+1. The Supervisor reads the existing marker directly from its redirected child stdout, with one
+   20-second timeout, caller cancellation, and concurrent stderr capture retained.
+2. The focused in-memory marker and open-stderr child tests and `git diff --check` pass.
+3. `make build-desktop` succeeds, and a manual zero-argument bundle launch moves from Starting
+   Forge to application navigation. This is local packaged-app evidence; canonical downloaded-
+   artifact acceptance remains required before Phase 51 completion.
+
+**Current evidence (2026-09-27):** the focused reader tests passed, including a redirected child
+that writes the ready marker while keeping stderr open; this proves ready completion does not wait
+for the child's lifetime. `dotnet build src/ForgeMission.slnx` passed with 0 warnings and 0
+errors, and `make build-desktop` produced the local macOS bundle. The operator confirmed that the
+zero-argument Supervisor reached the application. This is local packaged-app evidence only;
+canonical downloaded-artifact checksum acceptance remains pending.
+
+## Task 8 — Completion record
 
 After verification, move execution and workflow evidence to
 `phase-51-desktop-publish-script_completed.md`; retain a short status pointer here.
