@@ -18,7 +18,7 @@ Rooms and `forge exec` runs are.
 | ForgeAPI role | Authenticate with `PlatformKeyAuthFilter`, then forward to the internal Conversation Host (existing routes, unchanged), streaming through `WireProxy`. It adds the platform-resolved `MemberId`. |
 | Identity | Azure CIAM via `forge login` → platform key in `~/.forge`. The Desktop sends it as `Bearer`. Only the platform turns it into a `MemberId`; no client-supplied identity is ever trusted. |
 | Ownership | The Host records the `MemberId` that created a conversation. Every lookup is scoped by `(MemberId, id)`; a non-owner gets not found. |
-| Execution: one runner image | forge-runner is the single isolated compute sandbox for every mission run, one-shot or durable. It absorbs the Conversation Worker's capabilities: (1) accept a mission package (source + inline experts, root mission and input names) as well as a registry label, with a runner-wide default provider for packages without a manifest; (2) pause on a root-scoped tool call and resume from a saved opaque continuation; (3) stream step output as well as step starts. The runner stays stateless: a paused run returns its continuation to the caller, which stores it. The Conversation Worker, its container, and the Host↔Worker Service Bus queues are deleted. The Conversation Host calls forge-runner the way ForgeUI does; durable state stays in the Host's storage. |
+| Execution: one runner image | forge-runner is the single isolated compute sandbox for every mission run, one-shot or durable. It absorbs the Conversation Worker's capabilities: (1) accept a mission package (source + inline experts, root mission and input names) as well as a registry label, with a runner-wide default provider for packages without a manifest; (2) pause on a root-scoped tool call and resume from a saved opaque continuation; (3) stream step output as well as step starts. The runner holds no conversation or billing state: a paused run returns its continuation to the Conversation Host, which stores it (see [State ownership](#state-ownership)). The Conversation Worker, its container, and the Host↔Worker Service Bus queues are deleted. The Conversation Host calls forge-runner the way ForgeUI does; durable state stays in the Host's storage. |
 | Metering | forge-runner is compute for rent and the source of truth for usage. `RunRequest` carries the `MemberId` from a trusted internal caller; the runner sends `{MemberId, RunId, MissionRef, Usage}` to the `run-settlement` queue; ForgeAPI consumes it and calls `BillingService.SettleRunAsync` unchanged with `RunId` plus segment number as the idempotency token. A turn that pauses for a local tool and resumes runs as several segments; each is measured and settled separately. ForgeUI and ForgeAPI stop settling inline: one settlement point, no double charge, redelivery never double-debits. |
 | Settlement transport | Durable message, not an internal HTTP call: ForgeAPI has public ingress and Container Apps cannot make one route internal-only, so a settle endpoint would be internet-reachable. The queue keeps settlement off the public surface and survives ForgeAPI restarts. |
 | Billing single writer | ForgeAPI is the only billing writer for runs; ForgeUI is read-only for billing (CQRS). ForgeUI's balance reads (`HasCreditAsync` in `RoomAgentInvoker`, `GetBalanceMicroUsdAsync` in `Account.razor` and `PlatformKeyEndpoints`) go through ForgeAPI's existing `GetAccount`. |
@@ -26,6 +26,26 @@ Rooms and `forge exec` runs are.
 | Network | ForgeAPI (`550-api`) and the Conversation Host (`525-conversation-app`) share Container Apps environment `cae-forge-dev`; the Host keeps internal-only ingress. |
 | Transitional exception | ForgeUI keeps `authbilling_db` write access for exactly two sign-in writes: platform key issuance (`PlatformKeyEndpoints.IssueAsync`) and `GrantStartingCreditAsync` (`MemberProvisioningService`). Reason: `forge login` exchanges the CIAM token at ForgeUI today and does not affect Desktop-to-cloud. Removal: moving `forge login` key issuance to ForgeAPI ([backlog](../backlog.md)). Verification: no other ForgeUI code references a `BillingService` write. |
 | Out of scope | Unauthenticated local mode and `forge dev start` ([backlog](../backlog.md)); local ForgeAPI. |
+
+## State ownership
+
+Each store has exactly one owner. Nothing in this phase adds a store, moves one, or gives a
+second component access to it. Build against this table; do not introduce a new cache, table,
+or database to "hold" something listed here.
+
+| Store | Type | Owner (only writer) | Holds | Change in 52.1 |
+|---|---|---|---|---|
+| Conversation events | Azure Table (350 Storage) | Conversation Host | Durable transcript events per conversation | None |
+| Conversation checkpoint | Azure Table, Orleans grain storage `conversation-checkpoint` | Conversation Host | Conversation state, including a paused run's opaque continuation (`ConversationGrain`) | Continuation now arrives from forge-runner instead of the Worker |
+| Run index | Azure Table | Conversation Host | Project run-history pages (21-row pages, cursored) | None |
+| Conversation artifacts | Azure Blob, container `forgeconversationartifacts` | Conversation Host | Large outputs/files referenced from events (`artifact_ref`). Wired; no writer exists yet. | None |
+| Orleans clustering and reminders | Azure Table | Conversation Host | Silo membership, reminders | None |
+| Worker session state | Service Bus session state | Conversation Worker | Working copy of the continuation | **Deleted** with the Worker |
+| Rooms data | Postgres `rooms_db` | ForgeUI (forge-rooms) | Rooms, messages, members | None |
+| Billing | Postgres `authbilling_db` | ForgeAPI for run settlement; ForgeUI only for the two sign-in writes (transitional exception) | Platform keys, ledger, balances | ForgeUI settlement writes removed |
+| Settlement transport | Service Bus `sb-forge-billing-dev` / `run-settlement` | forge-runner sends; ForgeAPI consumes | In-flight settlement messages | **New** |
+| Enrichment cache | Postgres via `ConnectionStrings__EnrichmentCacheConnection` (in-memory if absent) | forge-runner | Pre-agent context for transcript-replay continuation (`ToolContinuationGate`) | Depends on the [open question](#open-question) |
+| Platform key file | `~/.forge` on the user's machine | `forge login` | The member's platform key | None |
 
 ## Architecture-security review
 
