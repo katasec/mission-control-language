@@ -20,7 +20,7 @@ and is metered exactly once, and no new point-to-point command path is built.
 | Usage | Both entry points build their LLM client through the runner's existing `BuildRunner` (`UsageTrackingChatClient` + `UsageAccumulator`). The Worker's deployment-default provider becomes a runner setting. |
 | Continuation | The saved opaque continuation is the only mechanism. `ExecuteMission` moves to it; transcript replay (`RunRequest.History` + `ToolContinuationGate`) and the enrichment cache are removed. |
 | Billing service | Extract Billing into its own tier-2 container hosting `ForgeMission.Billing` unchanged. It owns `authbilling_db`, consumes the financial queue, and answers queries (balance, platform-key resolution). ForgeAPI loses its `authbilling_db` credentials. |
-| Metering | forge-runner sends `{MemberId, RunId, Segment, MissionRef, Usage}` to the financial `run-settlement` queue after every run segment. Billing calls `SettleRunAsync` with `RunId`+`Segment` as the idempotency token. ForgeUI and ForgeAPI stop settling inline. |
+| Metering | forge-runner sends `{MemberId, RunId, Segment, MissionRef, Usage}` to the financial `private-run-settlement` queue after every run segment. Billing calls `SettleRunAsync` with `RunId`+`Segment` as the idempotency token. ForgeUI and ForgeAPI stop settling inline. |
 | Identity hop | ForgeAPI resolves `MemberId` (query to Billing) → ingress message → Host stores owner → work-queue command → forge-runner → settlement message. |
 | Transitional exception | ForgeUI keeps `authbilling_db` write access for exactly two sign-in writes: key issuance (`PlatformKeyEndpoints.IssueAsync`) and `GrantStartingCreditAsync` (`MemberProvisioningService`). Removal: backlog item "Move `forge login` key issuance". Verification: no other ForgeUI code references a `BillingService` write. |
 | Out of scope | Rooms and `forge exec` moving to the bus; deleting HTTP `/run`; Rooms extraction; unauthenticated local mode; `forge dev start`; local ForgeAPI ([backlog](../backlog.md)). |
@@ -33,9 +33,9 @@ Classes and enforcement: [Security Architecture](../design/security-architecture
 |---|---|---|---|---|
 | `conversation-ingress` | Ingress | edge-facing | ForgeAPI | Conversation Host |
 | `conversation-reply` (sessions) | Reply | edge-facing | Conversation Host | ForgeAPI |
-| `mission-command` (existing) | Internal work | `sb-forge-conversation-dev` | Conversation Host | forge-runner |
-| `conversation-progress` (existing) | Internal work | `sb-forge-conversation-dev` | forge-runner | Conversation Host |
-| `run-settlement` | Financial | financial | forge-runner | Billing |
+| `private-mission-command` (renamed from `mission-command`) | Internal work | `sb-forge-conversation-dev` | Conversation Host | forge-runner |
+| `private-conversation-progress` (renamed from `conversation-progress`) | Internal work | `sb-forge-conversation-dev` | forge-runner | Conversation Host |
+| `private-run-settlement` | Financial | financial | forge-runner | Billing |
 
 ## State ownership
 
@@ -45,7 +45,7 @@ Each store has exactly one owner. Do not add a cache, table, or database to hold
 |---|---|---|---|
 | Azure Table (events, checkpoint incl. continuation, run index, Orleans) | Conversation Host | Durable conversations | None |
 | Azure Blob `forgeconversationartifacts` | Conversation Host | Artifacts (wired, no writer yet) | None |
-| Service Bus session state on `mission-command` | forge-runner | Working copy of a paused continuation | Owner moves from Worker to runner |
+| Service Bus session state on `private-mission-command` | forge-runner | Working copy of a paused continuation | Owner moves from Worker to runner |
 | Postgres `authbilling_db` | Billing service | Keys, ledger, balances | Owner moves from ForgeAPI; ForgeUI keeps the transitional exception |
 | Postgres `rooms_db` | ForgeUI | Rooms | None |
 | Enrichment cache (Postgres/in-memory) | forge-runner | Replay context | **Deleted** with replay |
@@ -80,8 +80,8 @@ Each store has exactly one owner. Do not add a cache, table, or database to hold
 | 1 | Move the Worker's queue consumer, processor, and executor into forge-runner; both entry points use `BuildRunner`; runner-wide default provider; delete the Worker project and image. | Moved Worker tests pass inside forge-runner; Host tests pass unchanged; no Worker project remains. |
 | 2 | Saved continuation only: `ExecuteMission` moves to it; remove transcript replay and the enrichment cache. | `ExecuteMission` tool continuation passes with a continuation; no `History` replay or `ToolContinuationGate` remains. |
 | 3 | Billing service: new container hosting `ForgeMission.Billing`; queries for balance and platform-key resolution; ForgeAPI resolves keys and balances through it and drops `authbilling_db`. | ForgeAPI auth and `GetAccount` pass with no `authbilling_db` setting. |
-| 4 | Metering: financial namespace + `run-settlement`; `MemberId` and segment on runs; runner settles per segment; Billing consumes; ForgeUI and ForgeAPI stop inline settlement; ForgeUI balance reads query Billing. | A Rooms run, a `forge exec` run, and a paused-then-resumed durable turn each debit once per segment; redelivery adds nothing. |
+| 4 | Metering: financial namespace + `private-run-settlement`; `MemberId` and segment on runs; runner settles per segment; Billing consumes; ForgeUI and ForgeAPI stop inline settlement; ForgeUI balance reads query Billing. | A Rooms run, a `forge exec` run, and a paused-then-resumed durable turn each debit once per segment; redelivery adds nothing. |
 | 5 | Host: consume `conversation-ingress`, reply on `conversation-reply`; owner link. Queries stay direct. | Each write message round-trips over the bus; a second member gets not found. |
-| 6 | Infra: edge-facing and financial namespaces, queue-scoped roles, Billing and Host images, runner queue rights, 525 without the Worker (`what-if` first). | All containers healthy; role assignments match the Queues table; local auth disabled. |
+| 6 | Infra: edge-facing and financial namespaces (Standard tier), `private-` renames of the internal-work queues, queue-scoped roles, Billing and Host images, runner queue rights, 525 without the Worker (`what-if` first). | All containers healthy; role assignments match the Queues table; local auth disabled. |
 | 7 | ForgeAPI: 26 messages + event stream — writes via ingress/reply, reads via Host queries, `MemberId` attached. | Each Desktop call succeeds through ForgeAPI with a platform key. |
 | 8 | Desktop: message route strings, `Bearer` on the conversation client, default URL → ForgeAPI; update [Default-Path Acceptance](../design/default-path-acceptance.md). | The default-path action passes on the published bundle. |

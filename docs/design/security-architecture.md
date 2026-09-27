@@ -57,10 +57,14 @@ Enforcement:
 2. One namespace per class group: edge-facing (ingress + reply), internal work, financial.
 3. Clients never hold a Service Bus right. They reach ingress only through an authenticated edge.
 4. The owner validates every message; commands are idempotent by ID.
-5. **Transitional exception (Type 2):** namespaces start on the Standard tier with public network
-   access, RBAC-only. Private endpoints require Premium. Scope: all three namespaces. Removal:
-   move internal-work and financial namespaces to Premium with private endpoints when cost is
-   approved. Verification: local auth disabled and no namespace-wide role assignment exists.
+5. Tier-3 queues (internal work and financial) carry the `private-` name prefix as a standing
+   reminder that no edge or client may ever be granted a right on them.
+6. **Transitional exception (Type 2), operator decision 2026-09-29:** all namespaces stay on the
+   Standard tier with public network access, blocked by access control: queue-scoped RBAC only,
+   local auth disabled, and IP rules where the Standard tier supports them (confirm during
+   implementation). Private endpoints require Premium. Removal: move the internal-work and
+   financial namespaces to Premium with private endpoints once revenue justifies the cost.
+   Verification: local auth disabled and no namespace-wide role assignment exists.
 
 ## Type 1 versus Type 2 decisions
 
