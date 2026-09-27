@@ -1,16 +1,18 @@
-# Codex supervisor workflow
+# Supervisor workflow
 
 > **Status: governing implementation workflow.** This replaces the former external
-> Claude/Codex relay for all implementation work. It preserves the same separation of design,
-> adversarial approval, implementation, and acceptance inside Codex.
+> Claude/Codex relay for all implementation work. It is provider-neutral: the LLM agent the
+> operator is working in (Claude, Codex, or another) is the supervisor and uses its own subagents.
+> It preserves the same separation of design, adversarial approval, implementation, and acceptance
+> inside that one agent. The operator may run different tasks in different agents.
 
 ## Roles
 
 | Role | Authority | May not do |
 |---|---|---|
-| Supervising Codex | Finish the design, write the scope card, challenge and approve/reject the implementation plan, and accept/reject completion. | Implement the task it is supervising, delegate its final decision, or treat a subagent's claim as acceptance evidence. |
-| Investigating Codex subagent | Gather bounded source evidence, trace dependencies, or challenge a proposed design. | Edit files, decide an open design question, or approve a plan. |
-| Implementing Codex subagent | Produce a file-by-file plan, then make only the supervisor-approved change and return evidence. | Edit before approval, broaden scope, self-approve, or mark work complete. |
+| Supervising agent | Finish the design, write the scope card, challenge and approve/reject the implementation plan, and accept/reject completion. | Implement the task it is supervising, delegate its final decision, or treat a subagent's claim as acceptance evidence. |
+| Investigating subagent | Gather bounded source evidence, trace dependencies, or challenge a proposed design. | Edit files, decide an open design question, or approve a plan. |
+| Implementing subagent | Produce a file-by-file plan, then make only the supervisor-approved change and return evidence. | Edit before approval, broaden scope, self-approve, or mark work complete. |
 
 The supervisor may create or correct design and planning documentation. Every code, infrastructure,
 or executable-configuration task has exactly one implementing subagent at a time; other subagents
@@ -54,7 +56,7 @@ the active spoke instead of duplicating decisions in the message.
 ```text
 TASK ASSIGNMENT — PLAN ONLY
 
-Role: implementing Codex subagent. Do not create or modify any file until I explicitly approve
+Role: implementing subagent. Do not create or modify any file until I explicitly approve
 your plan in a later message.
 
 Read first:
@@ -175,5 +177,5 @@ Before accepting, the supervisor records a named observation for each applicable
 ## Migration from the former workflow
 
 [The former Claude/Codex workflow](claude-codex-workflow.md) is retained only as a pointer for old
-links and historical context. It is not an implementation authority. Phase 46's Codex-supervised
+links and historical context. It is not an implementation authority. Phase 46's supervised
 procedure is the validated predecessor of this repository-wide workflow, not a special exception.
