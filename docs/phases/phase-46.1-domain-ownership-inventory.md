@@ -116,9 +116,8 @@ Detailed evidence and the proposed, unapproved dispositions are in the
 | ClientRuntime | Scoped local capability policy/execution. | Application only. | D46.1-02; Worker has no local-capability path. |
 | Presentation | Rendering/navigation/view state. | Application Transport. | D46.1-02, F46.1-03 consumer |
 | Desktop | User-launched process supervision. | Starts Application Host/native Host. | None |
-| Desktop.Contracts | Native-host and Supervisor pipe contract. | Desktop Host/Photino/Supervisor. | None |
-| Desktop.Host | Disposable native-window process. | Desktop Contracts/Photino. | None |
-| Desktop.Photino | Photino native-host implementation. | Desktop.Host. | None |
+| Desktop.Contracts | Native-host and Supervisor pipe contract. | Desktop Host/Supervisor. | None |
+| Desktop.Host | Disposable native-window process and MAUI Host implementation. | Desktop Contracts. | None |
 | Orchestration | Runtime endpoint/readiness/owned adapters. | Desktop/Application Host startup. | None; Vanilla is deployment default, not Core selection. |
 | Conversations.Contracts | Versioned durable messages/projections. | Application Transport, Host, Worker, Presentation. | F46.1-03, D46.1-01, D46.1-02 |
 | ConversationHost | Sole durable command/event/store owner. | Application adapter and Worker queue boundary. | R46.1-01, D46.1-01, D46.1-02 |
@@ -129,11 +128,9 @@ Detailed evidence and the proposed, unapproved dispositions are in the
 | Rooms | Collaboration facts/invariants. | Rooms.Data and ForgeUI. | None |
 | Rooms.Data | Rooms EF persistence/schema owner. | ForgeUI. | None |
 | ForgeUI | Authenticated Rooms/Runner surface. | Rooms, Rooms.Data, Billing, Runner. | None; agent directory is UI policy. |
-| TransportProbe / ProjectServiceProbe | Diagnostic executables owned by Transport/Application. | Diagnostic-only. | Retained evidence, no second owner. |
 
-The actual solution graph matches the atlas's 28 production components and two excluded diagnostic
-probes. The evidence record contains exact references, entry/process paths, test anchors, and the
-only relevant execution divergence.
+The actual solution graph matches the atlas's documented components. The evidence record contains
+exact references, entry/process paths, test anchors, and the only relevant execution divergence.
 
 ### Proposed remediation order — not approved work
 

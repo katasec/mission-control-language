@@ -8,12 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | None selected. Phase 50 is closed for this iteration; Phase 46 awaits review before any work starts. |
+| **NEXT STEP** | Complete Phase 51's unchanged canonical Desktop workflow and downloaded-artifact acceptance. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 51 — Desktop publish-script extraction](phases/phase-51-desktop-publish-script.md) | Extract Desktop publishing, remove obsolete local projects, and preserve the canonical release bundle contract. | 🟡 Local build, removal, and transport checks verified; canonical workflow and artifact acceptance pending. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs

@@ -71,9 +71,8 @@ rather than treating it as an implementation detail of the cloud phase.
 
 **Forge stabilizes contracts, not technologies.** Capability contracts, transport contracts, and
 provider abstractions are the durable layer. Everything behind them — a WebView vendor, an HTTP
-library, a packaging tool — is replaceable infrastructure. When a technology choice changes (as it
-already has twice for the desktop shell — Avalonia, then Electron, now Photino), the contracts
-above it should not need to change.
+library, a packaging tool — is replaceable infrastructure. When a technology choice changes, the
+contracts above it should not need to change.
 
 ---
 
@@ -170,7 +169,9 @@ and it never talks to the Mission Runtime directly either (see "Communication fl
 For Forge Desktop specifically, Presentation is a Blazor WebAssembly UI. WASM code runs sandboxed
 in the browser engine by design — it cannot touch the file system or spawn processes. That's not a
 limitation to work around; it's *why* the Client Runtime exists as a separate, unsandboxed process.
-See [43.11](../phases/phase-43.11-wasm-photino-shell.md) for the desktop-specific hosting decision.
+The current native-host implementation is `ForgeMission.Desktop.Host`, a MAUI process behind the
+Supervisor↔Host boundary. The former framework-selection record is retained in
+[43.11](../phases/phase-43.11-wasm-photino-shell.md) as historical evidence only.
 
 ### Presentation-surface parity — non-negotiable
 
@@ -358,8 +359,8 @@ The Supervisor does not provision Kind, deploy Host/Worker images, read developm
 **Decision (2026-08-17, locked): the user-launched `ForgeMission.Desktop` process is the
 Desktop Supervisor. It is never the native host.** It owns Mission Runtime resolution, the Client
 Runtime child, the launcher, startup cancellation, and every cleanup path. It starts the native
-host as a separate child process and remains alive after that child exits. A concrete host — Photino
-today, another host tomorrow — owns only a native window and its WebView.
+host as a separate child process and remains alive after that child exits. The current concrete Host
+is MAUI; it owns only a native window and its WebView.
 
 ```
 ForgeMission.Desktop (Desktop Supervisor)
@@ -368,11 +369,10 @@ ForgeMission.Desktop (Desktop Supervisor)
   └─ Mission Runtime launcher/container                      reasoning runtime
 ```
 
-This is a process boundary, not a convention. The Supervisor has no `Photino.NET` reference and
-never constructs `IDesktopHost`; `ForgeMission.Desktop.Host` is the only composition root that does.
-`ForgeMission.Desktop.Photino` remains only one implementation behind that host contract. Replacing
-the host therefore cannot move runtime ownership, cleanup, credentials, or capability dispatch into
-the replacement.
+This is a process boundary, not a convention. The Supervisor has no concrete-native-host dependency
+and never constructs `IDesktopHost`; `ForgeMission.Desktop.Host` is the only composition root that
+does. Its MAUI implementation stays behind that host contract, so replacing the Host cannot move
+runtime ownership, cleanup, credentials, or capability dispatch into the replacement.
 
 ### Lifecycle contract
 
@@ -439,30 +439,32 @@ shape is not an alternative architecture and must not be reintroduced.
 
 ## Native host, UI framework, and the verification constraint
 
-**Decision: Blazor WebAssembly for the UI, Photino for native packaging.**
+**Current implementation: Blazor WebAssembly for the UI, MAUI for the native Host.**
 
 The UI Claude/Codex develop against is a normal browser-hosted Blazor application — localhost,
 DevTools, Playwright, screenshots, hot reload, standard browser tooling, the same zero-setup
 verification loop [desktop-interaction-principles.md](desktop-interaction-principles.md) already
-established as the reason the Avalonia→Electron pivot happened. **Photino is a thin native
-packaging layer around that same application, not the UI framework and not where business logic
-lives.** Its job is limited to: native window, native WebView, local Host rendering, packaging, and
-OS integration. Runtime lifecycle belongs to the Desktop Supervisor above.
+established as the reason the Avalonia→Electron pivot happened. **The MAUI Host is a thin native
+window/WebView process around that same application, not the UI framework and not where business
+logic lives.** Its job is limited to: native window, native WebView, local Host rendering, packaging,
+and OS integration. Runtime lifecycle belongs to the Desktop Supervisor above.
 
 This resolves the verification-tooling tension the WASM/native-host choice originally raised:
 development and iteration happen against a plain browser tab (CDP-verifiable, exactly as today),
-and Photino only wraps the already-verified application for shipping. It does not require making
+and the MAUI Host wraps the already-verified application for shipping. It does not require making
 sandboxed WASM code do real capability execution — that stays the Client Runtime's job, per the
 layer split above.
 
-**One residual, lower-severity risk, not a blocker:** Photino's native WebView on macOS is
-WKWebView (WebKit), not Chromium — the only native option macOS offers without bundling a separate
-browser engine the way Electron does. WebKit and Chromium are not pixel-identical renderers.
-Verifying against a standard browser during development is right, but the actual Photino-packaged
-build should still get periodic real checks on macOS, not be assumed to match forever just because
-the browser-tab version did.
+**One residual, lower-severity risk, not a blocker:** the MAUI Host's native WebView on macOS is
+WKWebView (WebKit), not Chromium. WebKit and Chromium are not pixel-identical renderers. Verifying
+against a standard browser during development is right, but the actual MAUI-packaged build should
+still get periodic real checks on macOS, not be assumed to match forever just because the browser-tab
+version did.
 
-### Why not MAUI, Avalonia, or Tauri
+### Historical framework evaluation (superseded)
+
+The following 2026-08-01 evaluation predates the MAUI Host. It is retained as historical rationale,
+not a statement of the selected implementation.
 
 - **Tauri** introduces an unnecessary Rust host into an otherwise entirely `.NET` application — a
   second language/toolchain for a project that has deliberately avoided that elsewhere (see the
@@ -485,7 +487,7 @@ the browser-tab version did.
 `Photino.Blazor` are stale, several unmerged community PRs, one unanswered Linux segfault
 report), accepted not deferred, because the mitigation is structural — see below.
 
-### Why Photino, specifically: the shell is intentionally disposable
+### Historical Photino rationale (superseded)
 
 We didn't choose Photino because it's the best long-term desktop framework. We chose it because,
 after the layer split above, the desktop shell became intentionally insignificant — and that
@@ -514,8 +516,8 @@ design discussions, not an accident of how the code happened to end up.
 
 **Decision (2026-08-17, locked): `ForgeMission.Desktop` names the user-launched Supervisor, and
 `ForgeMission.Desktop.Host` names the disposable native-host executable.** Neither name contains a
-concrete framework. `ForgeMission.Desktop.Photino` names only today's adapter library; it is never
-the user entry point and may be replaced without renaming or moving the Supervisor.
+concrete framework. The MAUI implementation is Host-local; it is never the user entry point and may
+be replaced without renaming or moving the Supervisor.
 
 This corrects the old single-process naming, where `ForgeMission.Desktop` ambiguously meant both
 the user-facing app and the native shell. The public `ForgeMission.Desktop` entry point stays stable;
@@ -539,37 +541,30 @@ and made a host-specific close callback look architecturally important. The spli
 `Desktop Supervisor and native host are separate processes` above is the current rule; do not use
 the old composition as precedent.
 
-**Revised same day: split into three projects, not kept inside `ForgeMission.Desktop`.** The first
-cut kept `IDesktopHost`/`PhotinoDesktopHost` inside `ForgeMission.Desktop` itself (both `internal`)
-on the grounds that a second project for one implementation would be speculative. That reasoning
-was sound for *runtime* swappability (there's still only one host), but missed a *legibility* cost:
-with everything in one project, `Program.cs` still had to `using` a namespace that could be read as
-naming Photino just to reach the interface, and nothing structurally signaled "this file is the
-implementation, that file is host-agnostic" beyond an `internal` modifier — easy for a future
-reader (human or agent) to miss and reintroduce coupling. Moved to three projects instead:
+**Current project split: three projects, not one `ForgeMission.Desktop` implementation.** Keeping
+the contract, Host composition, and Supervisor separate makes the process boundary legible and
+prevents a future reader from reintroducing coupling by treating the Supervisor as the native Host.
+The current projects are:
 
 - `ForgeMission.Desktop.Contracts` — `IDesktopHost` and the fixed Supervisor↔Host pipe records,
   `public`, zero dependencies (not even on `ForgeMission.Desktop`).
-- `ForgeMission.Desktop.Photino` — `PhotinoDesktopHost`, `public sealed`, the only project allowed
-  to depend on the `Photino.NET` package; references `ForgeMission.Desktop.Contracts`.
-- `ForgeMission.Desktop.Host` — the Host executable/composition root. References Contracts and the
-  selected concrete adapter; this is the only process that constructs `IDesktopHost`.
+- `ForgeMission.Desktop.Host` — the Host executable/composition root. References Contracts and owns
+  the MAUI implementation; this is the only process that constructs `IDesktopHost`.
 - `ForgeMission.Desktop` — the Supervisor executable. References Contracts and Orchestration; it
   starts the Host executable and runtime children, but has no host package and never names or
   constructs `IDesktopHost`.
 
-No `LinkerArg`/`PublishAot` on Contracts or adapter libraries — those stay exe-only, matching how
-`ForgeMission.Core` (a library linked into other AOT exes) is set up; they get `IsAotCompatible`
-only. The Supervisor and Host executables each publish Native AOT. This split is enforced by
+No `LinkerArg`/`PublishAot` on Contracts — those stay exe-only, matching how `ForgeMission.Core`
+(a library linked into other AOT exes) is set up; it gets `IsAotCompatible` only. The Supervisor and
+Host executables each publish Native AOT. This split is enforced by
 `DesktopSupervisorHostBoundaryTests` (added by Task 2): the Supervisor cannot reference a concrete-host package and
 its source cannot name `IDesktopHost`; the Host cannot reference `Core`, `Orchestration`,
-`ClientRuntime`, or capability providers; and the Photino adapter cannot reference those runtime
-projects either.
+`ClientRuntime`, or capability providers.
 
 **Open, separate from the above — not yet decided:** whether the desktop shell should embed and
 self-serve the WASM UI itself, instead of loading a URL served by the Client Runtime's Kestrel host.
-Closing *this* question is not implied by closing "is Photino the shell" above, nor by the naming
-decision just above it — it's a distinct, independently-revisitable question. Treat the WHY and the
+Closing *this* question is not implied by choosing a native Host, nor by the naming decision just
+above it — it's a distinct, independently-revisitable question. Treat the WHY and the
 HOW as two separate steps, in this order, and don't let them blur together (a prior discussion
 looped by answering "how" — a specific API/mechanism — while the actual question on the table was
 still "why"):
@@ -588,12 +583,11 @@ still "why"):
   to whether #1 (`ForgeMission.Desktop.Host`) should *also* carry a copy. Don't re-derive this "why" from
   scratch — reference it.
 - **HOW (solutioning) — not yet done, deliberately deferred:** if/how the desktop shell specifically
-  would embed and serve the assets (e.g. `Photino.NET`'s `RegisterCustomSchemeHandler` is one
-  candidate mechanism, confirmed present in the package version in use), and what it costs — what a
-  future shell replacement would additionally need to reimplement (resource embedding, scheme-handler
-  wiring, cross-origin handling against the Client Runtime's transport API) versus the
-  disposability goal above. This is intentionally not solved here yet — a future session should
-  pick up solutioning from the WHY above, not restart the why/how debate.
+  would embed and serve the assets, and what it costs — what a future shell replacement would
+  additionally need to reimplement (resource embedding, scheme-handler wiring, cross-origin handling
+  against the Client Runtime's transport API) versus the disposability goal above. This is
+  intentionally not solved here yet — a future session should pick up solutioning from the WHY above,
+  not restart the why/how debate.
 
 ---
 
