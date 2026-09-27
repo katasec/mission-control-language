@@ -4,17 +4,16 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-26)
+## Now (2026-09-28)
 
 | | |
 |---|---|
-| **NEXT STEP** | Complete Phase 51's downloaded-artifact checksum acceptance. |
+| **NEXT STEP** | No build-ready implementation is selected. Phase 52 remains design-only. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 51 — Desktop publish-script extraction](phases/phase-51-desktop-publish-script.md) | Extract Desktop publishing, remove obsolete local projects, and preserve the canonical release bundle contract. | 🟡 Local build, removal, transport, and canonical workflow checks verified; downloaded-artifact checksum acceptance pending. |
 | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations, then collapse Desktop launch into one MAUI process and move the UI in-process. | 🔵 Design; no spoke build-ready. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 

@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 51 — Desktop publish-script extraction](phases/phase-51-desktop-publish-script.md) | Extract Desktop publishing, remove obsolete local projects, and preserve the canonical release bundle contract. | Closed for this iteration 2026-09-28: local build, runtime, and publish checks verified; downloaded-artifact checksum acceptance deferred to [backlog](backlog.md). |
 | [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos; move code only. | Closed for this iteration 2026-09-26: rows 1–6 extracted and verified; row 7 deferred to [backlog](backlog.md). |
 | Repository extraction — Conversations | Move Conversations into `forge-conversations`. | Done 2026-09-24 — see [Phase 50](phases/phase-50-repository-extraction.md), row 3. |
 | [Phase 48 — MAUI Desktop Host spike](phases/phase-48-maui-desktop-host-spike.md) | Windows and macOS MAUI native Host with the existing Supervisor, Application Host, and Presentation topology. | Done — downloaded GitHub Actions artifacts accepted on both platforms 2026-09-19; see the [completed record](phases/phase-48-maui-desktop-host-spike_completed.md). |
