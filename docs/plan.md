@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | No build-ready implementation is selected. Phase 52 remains design-only. |
+| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): select and make its first spoke build-ready. |
 
 ## Active phases
 
