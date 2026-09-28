@@ -103,3 +103,41 @@ sequence avoided a temporary direct "settle" call that would break the command-b
 **Open from this task:** The
 settlement path logs no run id on success, so a debit can't be traced to its run from logs — added to
 Task 6's alerting work.
+
+## Tasks 5 to 8 — cloud conversations live
+
+**Done 2026-09-29.** Supervised; each PR merged by the supervisor after re-running its tests; cloud
+changes deployed with operator approval through forge-infra `make` targets, what-if before every apply.
+
+| Task | PRs | Outcome |
+|---|---|---|
+| 5 Host commands over the bus; owner link | [forge-conversations#5](https://github.com/katasec/forge-conversations/pull/5), [forge-runner#10](https://github.com/katasec/forge-runner/pull/10) | 17 commands via `conversation-ingress` with request/reply on session-enabled `conversation-reply`; 8 queries + event stream direct with `X-Forge-Member-Id`; owner link is the storage key itself (tenant = `MemberId`), so a non-owner gets not found; `MemberId` rides `mission-command`, so durable segments settle. Contracts 0.3.0. |
+| 7 ForgeAPI messages | [forge-conversations#6](https://github.com/katasec/forge-conversations/pull/6), [#7](https://github.com/katasec/forge-conversations/pull/7), [forge-platform#12](https://github.com/katasec/forge-platform/pull/12) | 25 messages + stream: commands awaited over the bus (30 s, then 503), queries/stream proxied with the member header set by ForgeAPI; credit gate on segment-starting messages; conversation errors use `ConversationApiError` (M4 exception); existing DTOs reused without `Version` (M3 exception). Host HTTP command routes deleted; ingress namespace required. Contracts 0.4.0. |
+| 6 Cloud infrastructure | [forge-conversations#8](https://github.com/katasec/forge-conversations/pull/8), [forge-runner#11](https://github.com/katasec/forge-runner/pull/11), [forge-platform#13](https://github.com/katasec/forge-platform/pull/13), [forge-infra#22](https://github.com/katasec/forge-infra/pull/22) | `private-mission-command`/`private-conversation-progress`; new `380-conversation-edge` (local auth off); 525 Host-only (`forge-conversation-host:0.1.0`); runner `0.13.0` (`Runner:Default*`, `minReplicas` 1, durable entry point on managed identity); Billing `0.1.1`; ForgeAPI `0.5.0`; two log alert rules (no action group yet); settlement logs carry `RunId:Segment`. |
+| 8 Desktop | [forge-desktop#6](https://github.com/katasec/forge-desktop/pull/6) | Default Conversation Runtime = ForgeAPI; `ConversationHostClient` speaks ForgeAPI messages with `Bearer`; Project runs carry the published version's package; Janus prompt path and Kind tunnel deleted; ForgeAPI auth errors decoded. |
+
+**Evidence**
+
+- Tests (supervisor re-runs): forge-conversations 185 → 190 → 186 → 191 across the PRs; forge-runner
+  61/61; forge-platform Api 87, Billing.Service 21, Billing 28; forge-desktop 347 passed, 1 skipped.
+- Cloud security checks: edge and financial namespaces `disableLocalAuth=true`; all 14 Service Bus role
+  assignments queue-scoped; ForgeAPI holds only Send on ingress and Receive on reply; no edge identity
+  on any `private-` queue.
+- Task 7 live (ForgeAPI, platform key): `CreateProjectMissionContainer` 201 → `StartProjectMissionRun`
+  202 → events `… participantMessage "hello from the cloud" … completed`; runner `Settlement sent for
+  bbbf60a5…:04278286…` and Billing `Settled bbbf60a5…:04278286… 436µ$` equal to the balance drop; bad
+  key → 401.
+- **Task 8 default path** (published bundle from forge-desktop `8e1c15c`, zero arguments, no
+  `MissionRuntime*`/`ConversationRuntime*`/`FORGE_*`, after `forge login`, driven through the
+  Application Host `/transport/*` because the UI is a mock-up): project/create → draft → promote →
+  case → evaluate (Passed) → publish → `project/mission/run` accepted → events `participantMessage
+  "hello from the desktop" … completed` → `project/runs` lists the run Completed. No `kubectl` ran.
+  Balance 4,816,573 → 4,810,113 µ$ = evaluation `Settled f83513e2…:014508c2… 5519µ$` + Project run
+  `Settled ca7101b9…:887e8c99… 941µ$` (supervisor Log Analytics query). Stopping the Desktop left no
+  orphaned child processes.
+
+**Found in passing (backlog):** the starter mission's Reviewer ignored the requested reply and
+repeated its answer; the Desktop keeps polling after a run completes (~1 platform-key resolve per
+second); run history shows `Durable` rather than the mission name; `/transport` rejects string enums;
+a local Kind Host joins the cloud Orleans cluster (Kind scaled to 0 during deploy); alert rules have
+no recipient; old queues and the Worker identity await retirement.
