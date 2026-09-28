@@ -19,7 +19,9 @@
 3. **Deploy it** — commands live in `forge-infra`, not duplicated here:
    ```bash
    cd /Users/ameerdeen/progs/forge-infra
-   make 500-app-deploy-image VERSION=0.6.0
+   # edit the image tag in dev/500-app/main.bicepparam, then:
+   make 500-app-what-if
+   make 500-app
    ```
 4. **Verify live** (see [Verify live](#verify-live) below).
 
@@ -73,7 +75,7 @@ custom domain. All in Azure subscription (workforce), region **uaenorth**, resou
 
 | You changed… | Rebuild in the owning repository | Deploy (forge-infra) |
 |---|---|---|
-| `src/ForgeUI` (rooms, nav shell, pages, orchestrator) | `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` | `make 500-app-deploy-image VERSION=X.Y.Z` |
+| `src/ForgeUI` (rooms, nav shell, pages, orchestrator) | `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` | edit `dev/500-app/main.bicepparam`, then `make 500-app-what-if` and `make 500-app` |
 | `forge-runner`: `src/ForgeMission.Runner`, mission execution, provider-key wiring, or baked fallback `missions/` | In `~/progs/forge-runner`: `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app` |
 | `src/ForgeMission.Api`, hosted API-A messages/endpoints/billing gateway | `git tag forge-api-vX.Y.Z && git push origin forge-api-vX.Y.Z` | bump `image` in `dev/550-api/main.bicepparam`, `make 550-api` |
 | Infra (new secret, env var, scaling, domain, Postgres, a new `authbilling_db`-style DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
