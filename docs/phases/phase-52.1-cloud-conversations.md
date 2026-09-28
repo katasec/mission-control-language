@@ -1,6 +1,6 @@
 # Phase 52.1 — Cloud conversations
 
-> **Status: build-ready (2026-09-29).** Hub: [Phase 52](phase-52-desktop-simplification.md).
+> **Status: ✅ done (2026-09-29).** All tasks verified; see the [completion record](phase-52.1-cloud-conversations_completed.md). Hub: [Phase 52](phase-52-desktop-simplification.md).
 > Builds toward the [command-bus architecture](../design/command-bus-architecture.md). Selected
 > from the backlog item "Cloud as the default local target (replacing Kind)".
 
@@ -12,7 +12,7 @@ and is metered exactly once, and no new point-to-point command path is built.
 | Area | Decision |
 |---|---|
 | Client setting | The Desktop's runtime URLs choose cloud or local; default cloud. ForgeAPI never chooses. |
-| API style | Message-based ([Phase 42.6](phase-42.6-hosted-endpoint-ttfa.md#api-design--message-based-decided-2026-07-18)). One message per purpose: every call the Desktop makes today in `ConversationHostClient` (26 calls + the event stream) becomes a ForgeAPI message, `POST /api/{MessageName}`, reusing the existing DTOs from `ForgeMission.Conversations.Contracts`. |
+| API style | Message-based ([Phase 42.6](phase-42.6-hosted-endpoint-ttfa.md#api-design--message-based-decided-2026-07-18)). One message per purpose: every call the Desktop makes today in `ConversationHostClient` (25 calls + the event stream) becomes a ForgeAPI message, `POST /api/{MessageName}`, reusing the existing DTOs from `ForgeMission.Conversations.Contracts`. |
 | Commands vs queries | ForgeAPI publishes write messages to the conversation **ingress** queue and awaits the Host's result on the **reply** queue (Service Bus request/reply); the existing response DTO is returned unchanged. Read messages (run history, conversation, event stream) are direct queries to the Host. |
 | Identity | Azure CIAM via `forge login` → platform key in `~/.forge` → `Bearer`. Only the platform resolves it to a `MemberId`; no client-supplied identity is trusted. |
 | Ownership | The Host records the creating `MemberId`; every lookup is scoped by `(MemberId, id)`; a non-owner gets not found. |
@@ -82,14 +82,14 @@ Each store has exactly one owner. Do not add a cache, table, or database to hold
 | 2 | ✅ **Done 2026-09-29** — stateless one-shot, durable-only tool loops, continuation versioning, no client-held continuation; see [completion record](phase-52.1-cloud-conversations_completed.md#task-2--stateless-one-shot-durable-only-tool-loops). | No `History`, tool-use, or enrichment-cache code remains in forge-runner's `/run` path or ForgeAPI `ExecuteMission`; no infra references the cache; the Desktop has no legacy mission-chat path; a resume against a changed version fails clearly (test); `forge exec` and Rooms one-shot runs unchanged; moved queue tests pass. |
 | 3 | ✅ **Done 2026-09-29** (with Task 4) — Billing service; see [completion record](phase-52.1-cloud-conversations_completed.md#tasks-3-and-4--billing-service-and-metering). | ForgeAPI auth and `GetAccount` pass with no `authbilling_db` setting. |
 | 4 | ✅ **Done 2026-09-29** (with Task 3) — Metering; see [completion record](phase-52.1-cloud-conversations_completed.md#tasks-3-and-4--billing-service-and-metering). | A Rooms run, a `forge exec` run, and a paused-then-resumed durable turn each debit once per segment; redelivery adds nothing. |
-| 5 | Host: consume `conversation-ingress`, reply on `conversation-reply`; owner link. Queries stay direct. | Each write message round-trips over the bus; a second member gets not found. |
-| 6 | Infra: edge-facing and financial namespaces (Standard tier), `private-` renames of the internal-work queues, rename the runner's `ConversationWorker:Default*` settings to runner names, an alert on the runner's queue-consumer fault log, settlement success logs carrying `RunId:Segment` on both the runner and Billing, queue-scoped roles, Billing and Host images, runner queue rights, 525 without the Worker (`what-if` first). | All containers healthy; role assignments match the Queues table; local auth disabled. |
-| 7 | ForgeAPI: 26 messages + event stream — writes via ingress/reply, reads via Host queries, `MemberId` attached. | Each Desktop call succeeds through ForgeAPI with a platform key. |
-| 8 | Desktop: the durable prompt path launches a Project mission run with a mission package (it still sends the retired legacy Janus conversation command, which the runner rejects with "Unsupported legacy mission command"); message route strings, `Bearer` on the conversation client, default URL → ForgeAPI; update [Default-Path Acceptance](../design/default-path-acceptance.md). | The default-path action above (via `/transport/*`) passes on the published bundle. |
+| 5 | ✅ **Done 2026-09-29** — Host takes commands from the bus; owner link; see [completion record](phase-52.1-cloud-conversations_completed.md#tasks-5-to-8--cloud-conversations-live). | Each write message round-trips over the bus; a second member gets not found. |
+| 6 | ✅ **Done 2026-09-29** — cloud infrastructure; see [completion record](phase-52.1-cloud-conversations_completed.md#tasks-5-to-8--cloud-conversations-live). | All containers healthy; role assignments match the Queues table; local auth disabled. |
+| 7 | ✅ **Done 2026-09-29** — ForgeAPI conversation messages; see [completion record](phase-52.1-cloud-conversations_completed.md#tasks-5-to-8--cloud-conversations-live). | Each Desktop call succeeds through ForgeAPI with a platform key. |
+| 8 | ✅ **Done 2026-09-29** — Desktop talks to the cloud; see [completion record](phase-52.1-cloud-conversations_completed.md#tasks-5-to-8--cloud-conversations-live). | The default-path action above (via `/transport/*`) passes on the published bundle. |
 
 ## Known limitations
 
 | Limitation | Handling |
 |---|---|
 | If forge-runner's queue consumer faults at runtime, it stays down until the process restarts; `/health` still reports OK because `/run` is unaffected (by design, so a queue fault cannot take down Rooms or `forge exec`). | The fault is logged at error level; Task 6 adds an alert on it. |
-| The Desktop's default session is durable, but its durable prompt path still sends the retired legacy Janus conversation command, so a default Desktop prompt fails with "Unsupported legacy mission command". Pre-existing: the executor rejected it before Task 1 moved it unchanged. No users are affected (the UI is a mock-up). | Fixed in Task 8. |
+| The Desktop's default session is durable, but its durable prompt path still sends the retired legacy Janus conversation command, so a default Desktop prompt fails with "Unsupported legacy mission command". Pre-existing: the executor rejected it before Task 1 moved it unchanged. No users are affected (the UI is a mock-up). | Fixed in Task 8 (Janus prompt path deleted; Project runs carry the published package). |

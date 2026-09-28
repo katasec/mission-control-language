@@ -10,7 +10,7 @@
 
 | Delete | Reason |
 |---|---|
-| `LocalKindConversationRuntimeTunnel` and the tunnel branch in `ConversationRuntimeBootstrap` | Kind is no longer the default; local dependencies move to the deferred `forge dev start`. |
+| ~~`LocalKindConversationRuntimeTunnel` and the tunnel branch~~ — **already deleted** in 52.1 Task 8 | Kind is no longer the default; local dependencies move to the deferred `forge dev start`. |
 | `LocalDockerMissionRuntimeLauncher`, `IMissionRuntimeLauncher`, `ProviderEnvironmentFile`, and `MissionRuntime:Mode=docker` | Starting containers belongs to a CLI dev command, not the Desktop. |
 | `BuiltinMissionReferences` | Only if unreferenced; confirm before deleting. |
 

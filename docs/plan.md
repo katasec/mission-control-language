@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): implement its build-ready spoke, starting at that spoke's first task. |
+| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): close the open questions of its next spoke in the hub's order. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations, then collapse Desktop launch into one MAUI process and move the UI in-process. | 🟢 First spoke build-ready; later spokes in design. |
+| [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations, then collapse Desktop launch into one MAUI process and move the UI in-process. | 🟢 Cloud default live and verified; remaining spokes in design. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs
