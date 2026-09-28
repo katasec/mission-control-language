@@ -98,6 +98,8 @@ sequence avoided a temporary direct "settle" call that would break the command-b
 - One debit: balance 4,826,807 → 4,822,223 µ$ across one `forge exec websearch` run; Billing logged a
   single `Debited 4584µ$ … WebSearch 1312+101 tok`; queue active 0, dead-letter 0. A bad key returns 401.
 
-**Open from this task:** Rooms turn against the new stack not yet exercised (operator, browser). The
+- Rooms (operator, browser, 2026-09-28 20:41 UTC): `Hi @grok` answered; runner logged `Ran 'Grok' [trusted] — verified=True steps=3 in 1733+50 tok`; balance 4,822,223 → 4,817,009 µ$ (one debit of 5,214 µ$); settlement queue active 0, dead-letter 0. The Rooms card showed "Not verified" although the runner reported `verified=True` — display mismatch, recorded in the backlog.
+
+**Open from this task:** The
 settlement path logs no run id on success, so a debit can't be traced to its run from logs — added to
 Task 6's alerting work.
