@@ -85,10 +85,11 @@ Each store has exactly one owner. Do not add a cache, table, or database to hold
 | 5 | Host: consume `conversation-ingress`, reply on `conversation-reply`; owner link. Queries stay direct. | Each write message round-trips over the bus; a second member gets not found. |
 | 6 | Infra: edge-facing and financial namespaces (Standard tier), `private-` renames of the internal-work queues, rename the runner's `ConversationWorker:Default*` settings to runner names, an alert on the runner's queue-consumer fault log, queue-scoped roles, Billing and Host images, runner queue rights, 525 without the Worker (`what-if` first). | All containers healthy; role assignments match the Queues table; local auth disabled. |
 | 7 | ForgeAPI: 26 messages + event stream — writes via ingress/reply, reads via Host queries, `MemberId` attached. | Each Desktop call succeeds through ForgeAPI with a platform key. |
-| 8 | Desktop: message route strings, `Bearer` on the conversation client, default URL → ForgeAPI; update [Default-Path Acceptance](../design/default-path-acceptance.md). | The default-path action above (via `/transport/*`) passes on the published bundle. |
+| 8 | Desktop: the durable prompt path launches a Project mission run with a mission package (it still sends the retired legacy Janus conversation command, which the runner rejects with "Unsupported legacy mission command"); message route strings, `Bearer` on the conversation client, default URL → ForgeAPI; update [Default-Path Acceptance](../design/default-path-acceptance.md). | The default-path action above (via `/transport/*`) passes on the published bundle. |
 
 ## Known limitations
 
 | Limitation | Handling |
 |---|---|
 | If forge-runner's queue consumer faults at runtime, it stays down until the process restarts; `/health` still reports OK because `/run` is unaffected (by design, so a queue fault cannot take down Rooms or `forge exec`). | The fault is logged at error level; Task 6 adds an alert on it. |
+| The Desktop's default session is durable, but its durable prompt path still sends the retired legacy Janus conversation command, so a default Desktop prompt fails with "Unsupported legacy mission command". Pre-existing: the executor rejected it before Task 1 moved it unchanged. No users are affected (the UI is a mock-up). | Fixed in Task 8. |
