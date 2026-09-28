@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-28)
+## Now (2026-09-29)
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): select and make its first spoke build-ready. |
+| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): implement its build-ready spoke, starting at that spoke's first task. |
 
 ## Active phases
 
