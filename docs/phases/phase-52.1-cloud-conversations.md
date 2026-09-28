@@ -71,17 +71,23 @@ Each store has exactly one owner. Do not add a cache, table, or database to hold
 | Artifact | Published Desktop bundle, zero arguments, no `MissionRuntime:*`, `ConversationRuntime:*`, or `FORGE_*` overrides, after `forge login`. |
 | Mission Runtime URL | `https://api.forge.katasec.com`; `/health` checked. |
 | Conversation Runtime URL | ForgeAPI; `/health` checked. |
-| Action / result | In a Project, send a message; the streamed reply appears; reopening the Project shows it in run history; the member is debited once per run segment. |
+| Action / result | Through the published bundle's Application Host `/transport/*` actions (the calls the UI will make), submit a Project turn; its streamed events include the reply; the run appears in run history; the member is debited once per run segment. The Desktop UI is a mock-up today, so clicking through the UI is acceptance for the task that brings the UI to life, not for this phase. |
 
 ## Tasks
 
 | # | Task | Done when |
 |---|---|---|
-| 1 | Move the Worker's queue consumer, processor, and executor into forge-runner; both entry points use `BuildRunner`; runner-wide default provider; delete the Worker project and image. | Moved Worker tests pass inside forge-runner; Host tests pass unchanged; no Worker project remains. |
+| 1 | ✅ **Done 2026-09-29** — Worker moved into forge-runner; see [completion record](phase-52.1-cloud-conversations_completed.md#task-1--forge-runner-absorbs-the-worker). | Moved Worker tests pass inside forge-runner; Host production code unchanged; no Worker project remains. |
 | 2 | Saved continuation only: `ExecuteMission` moves to it; remove transcript replay and the enrichment cache. | `ExecuteMission` tool continuation passes with a continuation; no `History` replay or `ToolContinuationGate` remains. |
 | 3 | Billing service: new container hosting `ForgeMission.Billing`; queries for balance and platform-key resolution; ForgeAPI resolves keys and balances through it and drops `authbilling_db`. | ForgeAPI auth and `GetAccount` pass with no `authbilling_db` setting. |
 | 4 | Metering: financial namespace + `private-run-settlement`; `MemberId` and segment on runs; runner settles per segment; Billing consumes; ForgeUI and ForgeAPI stop inline settlement; ForgeUI balance reads query Billing. | A Rooms run, a `forge exec` run, and a paused-then-resumed durable turn each debit once per segment; redelivery adds nothing. |
 | 5 | Host: consume `conversation-ingress`, reply on `conversation-reply`; owner link. Queries stay direct. | Each write message round-trips over the bus; a second member gets not found. |
-| 6 | Infra: edge-facing and financial namespaces (Standard tier), `private-` renames of the internal-work queues, queue-scoped roles, Billing and Host images, runner queue rights, 525 without the Worker (`what-if` first). | All containers healthy; role assignments match the Queues table; local auth disabled. |
+| 6 | Infra: edge-facing and financial namespaces (Standard tier), `private-` renames of the internal-work queues, rename the runner's `ConversationWorker:Default*` settings to runner names, an alert on the runner's queue-consumer fault log, queue-scoped roles, Billing and Host images, runner queue rights, 525 without the Worker (`what-if` first). | All containers healthy; role assignments match the Queues table; local auth disabled. |
 | 7 | ForgeAPI: 26 messages + event stream — writes via ingress/reply, reads via Host queries, `MemberId` attached. | Each Desktop call succeeds through ForgeAPI with a platform key. |
-| 8 | Desktop: message route strings, `Bearer` on the conversation client, default URL → ForgeAPI; update [Default-Path Acceptance](../design/default-path-acceptance.md). | The default-path action passes on the published bundle. |
+| 8 | Desktop: message route strings, `Bearer` on the conversation client, default URL → ForgeAPI; update [Default-Path Acceptance](../design/default-path-acceptance.md). | The default-path action above (via `/transport/*`) passes on the published bundle. |
+
+## Known limitations
+
+| Limitation | Handling |
+|---|---|
+| If forge-runner's queue consumer faults at runtime, it stays down until the process restarts; `/health` still reports OK because `/run` is unaffected (by design, so a queue fault cannot take down Rooms or `forge exec`). | The fault is logged at error level; Task 6 adds an alert on it. |
