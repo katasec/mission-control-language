@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): select and make its first spoke build-ready. |
+| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): implement its build-ready spoke, starting at that spoke's first task. |
 
 ## Active phases
 
