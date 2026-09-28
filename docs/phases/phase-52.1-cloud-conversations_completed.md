@@ -70,3 +70,34 @@ deployed with operator approval by a deployment subagent.
 **Open from this task:** Rooms one-shot against the new runner not yet exercised (needs the operator
 in the browser). Billing logged that `grok-4.5` has no pricing rate and used the fallback. ForgeAPI logs
 `Cannot load library libgssapi_krb5.so.2` at startup but serves normally.
+
+## Tasks 3 and 4 — Billing service and metering
+
+**Done 2026-09-29, delivered together.** ForgeAPI debited `authbilling_db` inline on every run, so it
+could not drop its database credentials (Task 3) until settlement moved (Task 4); doing them as one
+sequence avoided a temporary direct "settle" call that would break the command-bus rule.
+
+| Repo | PR / artifact | Change |
+|---|---|---|
+| forge-runner | [#9](https://github.com/katasec/forge-runner/pull/9); packages 0.3.0; image `forge-runner:0.12.0` (built from `1930f5d`, pushed from a workstation) | `RunRequest` carries `MemberId`/`RunId`; the runner publishes `{MemberId, RunId, Segment, MissionRef, Usage}` to `private-run-settlement` after every `/run`, `/run/stream`, and `/v1` door run; no `MemberId` → logged and unsettled. |
+| forge-platform | [#10](https://github.com/katasec/forge-platform/pull/10) → `forge-api:0.3.4`; [#11](https://github.com/katasec/forge-platform/pull/11) → `forge-api:0.4.0`, `forge-billing:0.1.0`, `Katasec.Forge.Billing.Contracts` 0.1.0 | Billing service: key resolution and balance queries, settlement consumer calling `SettleRunAsync` unchanged (idempotent by `RunId:Segment`). ForgeAPI: auth through Billing, no inline settlement, no billing DB or Npgsql; `/v1` strips client `Authorization`/`X-Forge-*` and sets `X-Forge-Member-Id`; cost/balance removed from `ExecuteMissionResponse`. |
+| forge-rooms | [#3](https://github.com/katasec/forge-rooms/pull/3) → `forge-ui:0.7.0` | ForgeUI reads via Billing; no inline settlement; only the two sign-in writes remain (transitional exception). |
+| forge-infra | [#20](https://github.com/katasec/forge-infra/pull/20), [#21](https://github.com/katasec/forge-infra/pull/21) | `370-billing-data` (financial namespace, queue, 3 identities, queue/secret-scoped roles), `540-billing`, runner and ForgeAPI on their own identities. |
+
+**Evidence**
+
+- Tests (supervisor re-run): forge-runner 59/59; forge-platform Api 35, Billing.Service 21 (incl.
+  redelivery settles once; two segments debit twice), Billing 28; forge-rooms 36 plus a grep showing
+  only `PlatformKeyEndpoints.cs:102` and `MemberProvisioningService.cs:35` write billing.
+- Deploy (operator-approved; what-if before every apply; cutover order 550-api 0.3.4 → 370 → 540 →
+  500-app → 550-api 0.4.0): `370-billing-data` 15 creates, 0 modify, 0 delete; namespace
+  `disableLocalAuth=true`, no namespace-scope role assignments.
+- Live (supervisor `az` check): runner `0.12.0`, ForgeAPI `0.4.0`, ForgeUI `0.7.0`, Billing `0.1.0`,
+  all Healthy at 100% traffic. ForgeAPI env is only `ASPNETCORE_ENVIRONMENT`, `RunnerBaseUrl`,
+  `BillingBaseUrl`; its identity has AcrPull only.
+- One debit: balance 4,826,807 → 4,822,223 µ$ across one `forge exec websearch` run; Billing logged a
+  single `Debited 4584µ$ … WebSearch 1312+101 tok`; queue active 0, dead-letter 0. A bad key returns 401.
+
+**Open from this task:** Rooms turn against the new stack not yet exercised (operator, browser). The
+settlement path logs no run id on success, so a debit can't be traced to its run from logs — added to
+Task 6's alerting work.
