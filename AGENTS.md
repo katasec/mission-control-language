@@ -294,8 +294,9 @@ Bash-doesn't-inherit-pwsh trap, the pull-through-pwsh recipe) is in
 The hosted app (ForgeUI, ForgeAPI, the runner) reaches Azure only through the **separate repo
 `katasec/forge-infra`** (layered Bicep + Makefile, checked out at `~/progs/forge-infra`).
 
-- **Only use the `make` targets** (`100-base`, `150-ci`, `300-data`, `400-appenv`, `450-migrate`,
-  `500-app`, `500-app-bump-image`, `500-app-deploy-image`) — never raw `az deployment` commands or
+- **Only use the `make` targets** (for example `100-base`, `150-ci`, `300-data`, `400-appenv`, `450-migrate`,
+  `500-app`, `550-api`, each with a `-what-if` twin; an image change is a `main.bicepparam` edit
+  followed by `<layer>-what-if` and `<layer>`) — never raw `az deployment` commands or
   a hand-rolled script. Layer order and full command reference are
   `forge-infra/README.md`'s job, not duplicated here.
 - **Run `make <layer>-what-if` before any secret-bearing or app-layer deploy** (`300-data`,
