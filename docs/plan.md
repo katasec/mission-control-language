@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): design the next `forge chat` step toward the TUI mockup (53.2 later steps). |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): implement the naked Anthropic default mission for `forge chat` (53.4). |
 
 ## Active phases
 
