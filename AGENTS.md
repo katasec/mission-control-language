@@ -27,7 +27,8 @@ missions. Each component lives in its own repo — see the
 | [`forge-conversations`](https://github.com/katasec/forge-conversations) | Durable conversation admission, state, and dispatch |
 | [`forge-platform`](https://github.com/katasec/forge-platform) | API, accounts, platform keys, billing, ledger |
 | [`forge-rooms`](https://github.com/katasec/forge-rooms) | Collaboration domain and browser product (Rooms, ForgeUI) |
-| [`forge-desktop`](https://github.com/katasec/forge-desktop) | Local application and supervision (Desktop, Application) |
+| [`forge-client`](https://github.com/katasec/forge-client) | Local Forge client packages: `Katasec.Forge.Client`, `Katasec.Forge.Client.Contracts`, `Katasec.Forge.Hands` (Bob) |
+| [`forge-desktop`](https://github.com/katasec/forge-desktop) | Desktop application and supervision; consumes the forge-client packages |
 | [`forge-infra`](https://github.com/katasec/forge-infra) | Azure deployment configuration |
 | `mission-control-language` (this repo) | Agent mission control |
 
