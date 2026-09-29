@@ -51,7 +51,7 @@ Numbers are the execution order.
 | 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | First release: a basic `forge chat` proving the client talks to the cloud, chat works turn by turn, and conversations are durable; later steps build toward the TUI mockup. | First release done ([record](phase-53.2-forge-chat_completed.md)); later steps need design |
 | 4 | [Naked default mission](phase-53.4-naked-default-mission.md) (file 53.4) | `forge chat` opens into a single-expert Anthropic mission; missions choose a provider through server-side named profiles. | Done ([record](phase-53.4-naked-default-mission_completed.md)) |
 | 5 | [TUI first slice](phase-53.5-tui-first-slice.md) (file 53.5) | `forge chat` becomes a full-screen XenoAtom TUI: header, streaming transcript, composer, key bar. | Done ([record](phase-53.5-tui-first-slice_completed.md)) |
-| 6 | [TUI theming](phase-53.6-tui-theming.md) (file 53.6) | Swappable themes by data only; light (default) and dark, chosen in `~/.forge/config.json`. | Build-ready |
+| 6 | [TUI theming](phase-53.6-tui-theming.md) (file 53.6) | Swappable themes by data only; light (default) and dark, chosen in `~/.forge/config.json`. | Done ([record](phase-53.6-tui-theming_completed.md)) |
 
 ## Replaces
 

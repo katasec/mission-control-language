@@ -19,3 +19,5 @@ cells, so layout, diff redraw and scrolling carry the image with them.
 
 Fallback that also worked: one strip image per row drawn with bare `U+10EEEE` cells (no diacritics).
 Spike sources: supervisor scratchpad `gfx-spike` (not in any repo).
+
+Images forge draws itself (e.g. the mission graph) take their colours from the active `ForgeTheme`, so a light theme gets a light image.
