@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): close the open questions of the `forge chat` spoke. |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): close the open decisions in the conversation memory and `forge chat` spokes. |
 
 ## Active phases
 
