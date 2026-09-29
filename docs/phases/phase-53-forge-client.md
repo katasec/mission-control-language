@@ -4,8 +4,7 @@
 Bob into a new `forge-client` repo, then make the `forge` CLI its first new consumer with
 `forge chat`: cloud conversations from the terminal.
 
-> **Status: design (2026-09-29).** Both spokes are written; neither is build-ready. Each lists its
-> open questions, which must close before implementation handoff.
+> **Status (2026-09-29):** spoke 1 is build-ready; spoke 2 is in design with open questions.
 
 ## Why
 
@@ -21,7 +20,8 @@ no-duplicate-path rule applied to the runner in 52.1.
 ```
 forge-client/                  new repo — the local Forge client
   Katasec.Forge.Hands          Bob: local tools, policy, confirmation, audit, sandbox
-  Katasec.Forge.Client         client core (depends on Hands)
+  Katasec.Forge.Client.Contracts  client service DTOs and events (from Application.Transport)
+  Katasec.Forge.Client         client core, incl. Bob session lifetimes (depends on Hands, Contracts)
     Projects/  Missions/  Conversations/  Hands bridge/  Adapters/ (ForgeAPI client)
 ```
 
@@ -29,7 +29,7 @@ forge-client/                  new repo — the local Forge client
 |---|---|
 | Hands is its own package | It is the local tool-execution authority (a security boundary): own README, tests, sandbox profiles. Client depends on Hands, never the reverse. It moves to its own repo only if a non-.NET consumer appears. |
 | Dependency direction | forge-mcl Core ← forge-client ← { forge-mcl CLI, forge-desktop }. Separate packages, so no package cycle. |
-| What stays in forge-desktop | The UI shell (MAUI Host, Presentation), Desktop-only session state, and — until the deferred Phase 52 spokes — the Application Host, Transport, Supervisor, and Orchestration. |
+| What stays in forge-desktop | The UI shell (MAUI Host, Presentation) and — until the deferred Phase 52 spokes — the Application Host, Supervisor, and Orchestration. |
 
 ## Spokes
 
@@ -37,7 +37,7 @@ Numbers are the execution order.
 
 | # | Spoke | Outcome | State |
 |---|---|---|---|
-| 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Client + Hands packages; forge-desktop consumes them with no behaviour change. | Design |
+| 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Build-ready |
 | 2 | [`forge chat`](phase-53.2-forge-chat.md) | The `forge` CLI runs multi-turn cloud conversations through Katasec.Forge.Client. | Design |
 
 ## Replaces
