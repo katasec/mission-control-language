@@ -15,6 +15,15 @@ messages, platform-key auth, owner scoping, per-segment billing. Extracting the 
 the Desktop and the `forge chat` TUI one implementation instead of one each — the same one-owner,
 no-duplicate-path rule applied to the runner in 52.1.
 
+## Locked direction (2026-09-29)
+
+| Decision | Detail |
+|---|---|
+| One universal control plane | The Desktop (GUI) and the TUI consume the same facility over the same wire protocol (ForgeAPI messages): interoperable, no client-specific server paths. |
+| Mission conversations are the chat facility | All chat goes through mission conversations (`CreateMissionConversation` → `SubmitMissionTurn` → event stream). This is what forge-conversations exists for. Project runs are not a chat path. |
+| The TUI is the pressure test | Building a second, independent front end on only the published protocol exposes anything the Desktop relied on that is not truly universal (found so far: missing conversation memory; acceptance run through Project runs instead of mission conversations). |
+| The Desktop is paused | Deferred until the control plane is proven through the TUI. When reselected, its chat moves to mission conversations and its default-path acceptance is restated around a mission-conversation turn that checks memory. |
+
 ## Target structure
 
 ```
@@ -38,7 +47,8 @@ Numbers are the execution order.
 | # | Spoke | Outcome | State |
 |---|---|---|---|
 | 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Done ([record](phase-53.1-forge-client-extraction_completed.md)) |
-| 2 | [`forge chat`](phase-53.2-forge-chat.md) | `forge chat` opens the Forge TUI: multi-turn cloud conversations through Katasec.Forge.Client. | Design |
+| 2 | [Conversation memory](phase-53.3-conversation-memory.md) (file 53.3) | The model sees prior turns in a mission conversation; composed server-side by the conversation grain. | Design — one product decision open |
+| 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | `forge chat` opens the Forge TUI: multi-turn cloud conversations through Katasec.Forge.Client. Its acceptance needs conversation memory. | Design |
 
 ## Replaces
 
