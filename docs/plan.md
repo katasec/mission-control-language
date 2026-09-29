@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): `forge chat` runs on a naked Claude mission; next, design the next step (mission choice, TUI layout) with Ameer. |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): build the `forge chat` TUI first slice (53.5). |
 
 ## Active phases
 
