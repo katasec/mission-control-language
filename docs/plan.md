@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): implement the naked Anthropic default mission for `forge chat` (53.4). |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): `forge chat` runs on a naked Claude mission; next, design the next step (mission choice, TUI layout) with Ameer. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 forge-client, conversation memory and the `forge chat` first release done; next step in design. |
+| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 forge-client, conversation memory, `forge chat` and the naked Claude default done; next step in design. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs
