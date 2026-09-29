@@ -1,6 +1,7 @@
 # Phase 53.5 — `forge chat` TUI, first slice
 
-> **Status: build-ready (2026-09-30).**
+> **Status: done (2026-09-30), verified.** Evidence:
+> [phase-53.5-tui-first-slice_completed.md](phase-53.5-tui-first-slice_completed.md).
 > Hub: [Phase 53](phase-53-forge-client.md). Builds on [53.2](phase-53.2-forge-chat.md) and
 > [53.4](phase-53.4-naked-default-mission.md).
 
