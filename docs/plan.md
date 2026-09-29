@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): implement the build-ready forge-client extraction spoke. |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): close the open questions of the `forge chat` spoke. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then `forge chat` for cloud conversations from the terminal. | 🟢 Build-ready — extraction next; `forge chat` still in design. |
+| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then `forge chat` for cloud conversations from the terminal. | 🔵 forge-client extraction done; `forge chat` in design. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs

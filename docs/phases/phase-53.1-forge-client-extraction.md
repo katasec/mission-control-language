@@ -1,6 +1,7 @@
 # Phase 53.1 — forge-client extraction
 
-> **Status: build-ready (2026-09-29).** All four open questions closed; see [Locked decisions](#locked-decisions).
+> **Status: done (2026-09-29), verified.** Evidence:
+> [phase-53.1-forge-client-extraction_completed.md](phase-53.1-forge-client-extraction_completed.md).
 > Hub: [Phase 53](phase-53-forge-client.md).
 
 **Goal:** a new `forge-client` repo publishes `Katasec.Forge.Hands` (from `ForgeMission.ClientRuntime`),
@@ -34,20 +35,22 @@ consumes all three packages. No behaviour changes.
 
 1. `forge-client` builds and tests pass; all three packages are published.
 2. forge-desktop references the packages instead of the three projects; its tests pass.
-3. No test lost: the forge-desktop test count on `main` immediately before the move (re-measured then;
-   2026-09-29 figure from the design session: 347 passed + 1 skipped = 348) equals forge-client's
-   moved tests + forge-desktop's remaining tests, counting both halves of the
-   `MclPackageConsumptionTests` split. The arithmetic is reported.
+3. No test lost: the forge-desktop test count on `main` immediately before the move
+   (347 passed + 1 skipped = 348) plus the one method the `MclPackageConsumptionTests` split
+   duplicates equals forge-client's moved tests plus forge-desktop's remaining tests:
+   160 + 189 = 349.
 4. The 52.1 Task 8 default-path procedure passes on the published bundle.
 
 ## Tasks
 
-| # | Task | Output |
+All four are done and verified; see the [completion record](phase-53.1-forge-client-extraction_completed.md).
+
+| # | Task | Result |
 |---|---|---|
-| 1 | Create the `forge-client` repo with the mirrored `src/` layout; move the three projects and the Q3 test set; add `PackageId`/packaging metadata and one publish workflow per package (forge-mcl `publish-core-package.yml` template). | forge-client builds; tests pass; the MissionSubmissionServiceTests edit compiles. |
-| 2 | Grant forge-client's Actions access on the four private dependencies; publish the three packages; grant forge-desktop access on them. | Three packages visible on the katasec org, private, linked to forge-client. |
-| 3 | Switch forge-desktop to the packages; delete the three projects and moved tests; apply the MclPackageConsumptionTests split. | Desktop builds and tests pass; test-count arithmetic reported (Done when 3). |
-| 4 | Run the 52.1 Task 8 default-path procedure on the published bundle. | Done when 4. |
+| 1 | Create the forge-client repo; move the projects and tests; add the publish workflows | [forge-client#1](https://github.com/katasec/forge-client/pull/1): 160/160 tests |
+| 2 | Grant access; publish the three packages | Private 0.1.0 packages from forge-client `f874856`; grants confirmed |
+| 3 | forge-desktop consumes the packages | [forge-desktop#7](https://github.com/katasec/forge-desktop/pull/7): 189 tests; 160 + 189 = 349 |
+| 4 | Default path | PASS: run `68b793ea…` completed; settlements 1,211 + 7,399 µ$ equal the balance drop |
 
 ## Open questions
 
