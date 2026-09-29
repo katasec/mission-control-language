@@ -1,7 +1,7 @@
 # Phase 53.2 — `forge chat`
 
-> **Status: build-ready (2026-09-29).** Its acceptance needs
-> [53.3 conversation memory](phase-53.3-conversation-memory.md) to land first. Hub: [Phase 53](phase-53-forge-client.md).
+> **Status: first release done (2026-09-29), verified.** Evidence:
+> [phase-53.2-forge-chat_completed.md](phase-53.2-forge-chat_completed.md). Next: the later steps below. Hub: [Phase 53](phase-53-forge-client.md).
 
 **Goal:** `forge chat` is the Forge TUI, built up in steps toward the
 [target mockup](../design/forge_tui_mission_chat_mockup.html). The first release is only a basic chat
@@ -71,7 +71,7 @@ Each needs its own design before it is built.
 
 | Fact | Value |
 |---|---|
-| Artifact | The released `forge` binary, after `forge login`, no `FORGE_*` overrides. |
+| Artifact | `forge` from `make install` on merged forge-mcl `main` (there is no CLI release workflow yet; see [backlog](../backlog.md)), after `forge login`, no `FORGE_*` overrides. |
 | Action / result | `forge chat`; two turns on one mission conversation; the second reply reflects the first; quit and relaunch; the conversation returns with its history; the member is debited once per turn. |
 
 ## Open questions

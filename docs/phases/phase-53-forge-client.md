@@ -48,7 +48,7 @@ Numbers are the execution order.
 |---|---|---|---|
 | 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Done ([record](phase-53.1-forge-client-extraction_completed.md)) |
 | 2 | [Conversation memory](phase-53.3-conversation-memory.md) (file 53.3) | The model sees prior turns in a mission conversation; composed server-side by the conversation grain. | Done ([record](phase-53.3-conversation-memory_completed.md)) |
-| 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | First release: a basic `forge chat` proving the client talks to the cloud, chat works turn by turn, and conversations are durable; later steps build toward the TUI mockup. | Build-ready (after 53.3) |
+| 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | First release: a basic `forge chat` proving the client talks to the cloud, chat works turn by turn, and conversations are durable; later steps build toward the TUI mockup. | First release done ([record](phase-53.2-forge-chat_completed.md)); later steps need design |
 
 ## Replaces
 
