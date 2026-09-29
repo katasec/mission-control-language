@@ -5,7 +5,7 @@
 
 **Goal:** `forge chat` opens the Forge TUI, a full-screen interactive terminal app in the style of
 Claude Code, Codex, and Grok CLI. It runs multi-turn cloud conversations with a mission, using
-`Katasec.Forge.Client`. No backend changes.
+`Katasec.Forge.Client`. The only backend change it depends on is [conversation memory](phase-53.3-conversation-memory.md), which must land first.
 
 ## Locked decisions
 

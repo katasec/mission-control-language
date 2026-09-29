@@ -141,3 +141,12 @@ repeated its answer; the Desktop keeps polling after a run completes (~1 platfor
 second); run history shows `Durable` rather than the mission name; `/transport` rejects string enums;
 a local Kind Host joins the cloud Orleans cluster (Kind scaled to 0 during deploy); alert rules have
 no recipient; old queues and the Worker identity await retirement.
+
+## Correction (2026-09-29)
+
+The Task 8 default-path acceptance (and 53.1's rerun of it) drove `project/mission/run`, i.e.
+Project runs. That proved the platform path — ForgeAPI auth, the command bus, the runner, per-segment
+billing — but **not the chat facility**, which is mission conversations. It also did not check
+memory, which was absent: each turn ran with only its own text. See
+[Phase 53](phase-53-forge-client.md#locked-direction-2026-09-29) and
+[53.3 Conversation memory](phase-53.3-conversation-memory.md).
