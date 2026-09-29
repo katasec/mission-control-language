@@ -1,7 +1,7 @@
 # Phase 53.2 — `forge chat`
 
-> **Status: design (2026-09-29). Not build-ready** — one [open question](#open-questions). Starts
-> after [53.3 conversation memory](phase-53.3-conversation-memory.md). Hub: [Phase 53](phase-53-forge-client.md).
+> **Status: build-ready (2026-09-29).** Its acceptance needs
+> [53.3 conversation memory](phase-53.3-conversation-memory.md) to land first. Hub: [Phase 53](phase-53-forge-client.md).
 
 **Goal:** `forge chat` is the Forge TUI, built up in steps toward the
 [target mockup](../design/forge_tui_mission_chat_mockup.html). The first release is only a basic chat
@@ -32,6 +32,14 @@ ForgeAPI client, no new storage, and no second Janus.
 | Janus | The built-in Janus starter in Client's Project authoring | Use it inside a Project, as the Desktop does. |
 | `forge chat` | The existing CLI command structure | New: one command wiring the above, and a plain type-and-print loop. `forge chat` reopens the last conversation. |
 
+## First release — tasks
+
+| # | Task | Repo |
+|---|---|---|
+| 1 | Client 0.2.0: make the existing mission-conversation create/submit/stream/list/reopen calls public; publish | forge-client |
+| 2 | `forge chat`: default Project and first-use Janus publish via existing calls; reopen the last conversation; plain type-and-print loop; `CredentialStore` for the platform key | forge-mcl |
+| 3 | Default path (below), after 53.3 is deployed | — |
+
 ## Locked decisions
 
 | Area | Decision |
@@ -39,6 +47,8 @@ ForgeAPI client, no new storage, and no second Janus.
 | Front end | One TUI, launched by the `forge` CLI as `forge chat`. No separate TUI app or command, and no one-shot mode. `chat`, not `code`, because most MCL missions are not coding. |
 | Universal control plane | Uses only the same ForgeAPI mission-conversation messages as the Desktop; no client-specific server path (see the [Phase 53 locked direction](phase-53-forge-client.md#locked-direction-2026-09-29)). The TUI is the pressure test of that facility. |
 | Client | `Katasec.Forge.Client` 0.2.0 public mission-conversation API is the only path; the CLI adds no second ForgeAPI client. |
+| Project (Ameer, 2026-09-29) | One default Project under the existing default root `<profile>/Forge/Projects` (`ProjectService.DefaultProjectsRoot`), created on first use through the existing create/open calls. Later launches open it and its last conversation. Pointing at another Project comes later, with switching. |
+| Janus version (Ameer, 2026-09-29) | On first use only, run the existing authoring sequence as the Desktop does: draft the built-in Janus starter → promote → add one case → evaluate → publish. Publish requires a passed evaluation (`MissionVersionService.cs:359-360`); that policy is unchanged. It costs one evaluation run, once. If the evaluation fails, `forge chat` reports it and stops. |
 | Default mission | Janus. Later: mission switching in the TUI starts a new conversation (the launch is pinned at create); not persisted; no `/model`. |
 | Core consumption | The CLI adds a `PackageReference` to `Katasec.Forge.Client`; restore unifies its `Katasec.Forge.Mcl.Core` dependency onto forge-mcl's own Core project (one `ForgeMission.Core.dll`), and the Native AOT publish is clean (+1.5 MB; spike 2026-09-29). |
 | Terminal | Ghostty and Kitty, no fallback path. |
@@ -66,8 +76,11 @@ Each needs its own design before it is built.
 
 ## Open questions
 
-1. **Which Project does `forge chat` open?** Janus runs inside a Project, and starting a mission
-   conversation today needs an opened Project with a published (approved) mission version. The
-   Desktop reaches that through draft → promote → evaluate → publish. Decide what the first release
-   does with no Project: for example, open the current directory as a Project, or use one default
-   Project under the user's Forge folder, and how its Janus version gets published.
+None for the first release.
+
+## Security note (not v1)
+
+Server-side admission (`DurableMissionPackageAdmission`) checks the launch package but not approval.
+Approval is enforced by the client (`MissionConversationService.CreateAsync`), so the server trusts
+the client's claim. Acceptable while approval is a local authoring policy; review it in a future
+security pass.
