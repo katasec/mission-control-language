@@ -48,7 +48,7 @@ Numbers are the execution order.
 |---|---|---|---|
 | 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Done ([record](phase-53.1-forge-client-extraction_completed.md)) |
 | 2 | [Conversation memory](phase-53.3-conversation-memory.md) (file 53.3) | The model sees prior turns in a mission conversation; composed server-side by the conversation grain. | Design — one product decision open |
-| 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | `forge chat` opens the Forge TUI: multi-turn cloud conversations through Katasec.Forge.Client. Its acceptance needs conversation memory. | Design |
+| 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | First release: a basic `forge chat` proving the client talks to the cloud, chat works turn by turn, and conversations are durable; later steps build toward the TUI mockup. | Design — one open question |
 
 ## Replaces
 
