@@ -40,7 +40,7 @@
 | Desktop post-run polling | Found in 52.1 Task 8 acceptance: after a run completes the Desktop keeps emitting identical `ProjectMissionChanged` events and ForgeAPI resolves the platform key about once a second. Stop the tail on a terminal run status. |
 | Desktop run-history mission name | Run history shows `Durable` (the package root) instead of the Project's mission name. |
 | `/transport` string enums | Application Host `/transport/*` requests accept enums only as numbers despite the string-enum converter. |
-| Starter mission reply | The starter `Proposer -> Reviewer` mission's Reviewer ignored the requested reply and emitted its answer twice. |
+| Starter mission reply | The starter `Proposer -> Reviewer` (Janus) Reviewer ignored the requested reply and emitted its answer twice (52.1); in 53.3 it misread "what is my name?" as a claim about its own identity although the Proposer answered correctly. Janus is the `forge chat` default, so extend it when this blocks. |
 | Local Host isolation | A local Kind Conversation Host shares the cloud Orleans membership table and blocks the cloud Host; `forge dev start` must use its own cluster id or storage. Kind was scaled to 0 on 2026-09-29. |
 | Local ForgeAPI | Deferred, 2026-09-28. Would let the Desktop use local runtimes with authentication; needs a local platform DB. Not planned. |
 | Publish workflow final check | The last step of the publish workflows in forge-mcl and forge-client, "Verify GitHub Packages ownership and visibility", always fails, even when the package is published correctly (forge-mcl `core-v0.1.0`, forge-client 53.1). Fix it or remove it so a green run means published. |
