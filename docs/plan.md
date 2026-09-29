@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): choose the next `forge chat` step with Ameer (chat list and mission switching, token streaming, or Markdown). |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): build `forge chat` TUI theming (53.6), then Markdown. |
 
 ## Active phases
 
