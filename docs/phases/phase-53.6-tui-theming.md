@@ -1,6 +1,7 @@
 # Phase 53.6 — `forge chat` TUI theming (light + dark)
 
-> **Status: build-ready (2026-09-30).** Hub: [Phase 53](phase-53-forge-client.md). Builds on
+> **Status: done (2026-09-30), verified.** Evidence:
+> [phase-53.6-tui-theming_completed.md](phase-53.6-tui-theming_completed.md). Hub: [Phase 53](phase-53-forge-client.md). Builds on
 > [53.5](phase-53.5-tui-first-slice.md). Markdown rendering is the next step; its tokens are defined here.
 
 **Goal:** make the TUI theme swappable by data only, proven by a light theme matching Ameer's light mock
