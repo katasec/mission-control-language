@@ -1,6 +1,7 @@
 # Phase 53.4 — Naked default mission (Anthropic)
 
-> **Status: build-ready (2026-09-29).**
+> **Status: done (2026-09-29), verified.** Evidence:
+> [phase-53.4-naked-default-mission_completed.md](phase-53.4-naked-default-mission_completed.md).
 > Hub: [Phase 53](phase-53-forge-client.md). Follows the [53.2 first release](phase-53.2-forge-chat.md).
 
 **Goal:** `forge chat` opens into a naked mission: one expert on Anthropic Claude, the smallest unit of
@@ -33,7 +34,7 @@ comes later.
 
 | Gate | Result |
 |---|---|
-| Security | Key custody unchanged: the runner holds all keys; a package names only an allowlisted profile. The allowlist is deployment configuration owned by forge-infra, not user input. Billing charges the model actually used. |
+| Security | Key custody unchanged: the runner holds all keys; a package names only an allowlisted profile. Core owns the profile names; forge-infra owns each name's binding (provider, model, key). Billing charges the model actually used. |
 | Engineering philosophy | Reuses the existing `using` grammar, the runner's multi-profile constructor and the Janus starter mechanism. One real fix (package only the experts a mission uses). No new setting beyond the deployment's profile list. |
 | Default path | `forge chat` from `make install` on merged forge-mcl `main`, after `forge login`, no `FORGE_*`: a new conversation on the naked mission; two turns remember; the reply comes from Claude (runner log / settlement model); billing settles at the Claude rate. |
 
