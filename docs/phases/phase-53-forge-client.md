@@ -4,7 +4,7 @@
 Bob into a new `forge-client` repo, then make the `forge` CLI its first new consumer with
 `forge chat`: cloud conversations from the terminal.
 
-> **Status (2026-09-29):** spoke 1 is build-ready; spoke 2 is in design with open questions.
+> **Status (2026-09-29):** spoke 1 is done and verified; spoke 2 is in design with open questions.
 
 ## Why
 
@@ -37,7 +37,7 @@ Numbers are the execution order.
 
 | # | Spoke | Outcome | State |
 |---|---|---|---|
-| 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Build-ready |
+| 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Done ([record](phase-53.1-forge-client-extraction_completed.md)) |
 | 2 | [`forge chat`](phase-53.2-forge-chat.md) | The `forge` CLI runs multi-turn cloud conversations through Katasec.Forge.Client. | Design |
 
 ## Replaces
