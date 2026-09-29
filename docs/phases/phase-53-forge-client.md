@@ -2,7 +2,7 @@
 
 **Goal:** one local Forge client, used by every front end. Extract the Desktop's client logic and
 Bob into a new `forge-client` repo, then make the `forge` CLI its first new consumer with
-`forge chat`: cloud conversations from the terminal.
+`forge chat`: the Forge TUI, cloud conversations in a full-screen terminal app.
 
 > **Status (2026-09-29):** spoke 1 is done and verified; spoke 2 is in design with open questions.
 
@@ -12,7 +12,7 @@ Bob into a new `forge-client` repo, then make the `forge` CLI its first new cons
 the ForgeAPI client) and `ForgeMission.ClientRuntime` (Bob) are UI-agnostic client logic that
 happens to live in forge-desktop. Phase 52.1 made every server path client-agnostic: ForgeAPI
 messages, platform-key auth, owner scoping, per-segment billing. Extracting the client core gives
-the Desktop, the CLI, and a future TUI one implementation instead of one each — the same one-owner,
+the Desktop and the `forge chat` TUI one implementation instead of one each — the same one-owner,
 no-duplicate-path rule applied to the runner in 52.1.
 
 ## Target structure
@@ -38,7 +38,7 @@ Numbers are the execution order.
 | # | Spoke | Outcome | State |
 |---|---|---|---|
 | 1 | [forge-client extraction](phase-53.1-forge-client-extraction.md) | `forge-client` repo with Hands, Client.Contracts, and Client packages; forge-desktop consumes them with no behaviour change. | Done ([record](phase-53.1-forge-client-extraction_completed.md)) |
-| 2 | [`forge chat`](phase-53.2-forge-chat.md) | The `forge` CLI runs multi-turn cloud conversations through Katasec.Forge.Client. | Design |
+| 2 | [`forge chat`](phase-53.2-forge-chat.md) | `forge chat` opens the Forge TUI: multi-turn cloud conversations through Katasec.Forge.Client. | Design |
 
 ## Replaces
 
