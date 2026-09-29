@@ -50,7 +50,7 @@ Numbers are the execution order.
 | 2 | [Conversation memory](phase-53.3-conversation-memory.md) (file 53.3) | The model sees prior turns in a mission conversation; composed server-side by the conversation grain. | Done ([record](phase-53.3-conversation-memory_completed.md)) |
 | 3 | [`forge chat`](phase-53.2-forge-chat.md) (file 53.2) | First release: a basic `forge chat` proving the client talks to the cloud, chat works turn by turn, and conversations are durable; later steps build toward the TUI mockup. | First release done ([record](phase-53.2-forge-chat_completed.md)); later steps need design |
 | 4 | [Naked default mission](phase-53.4-naked-default-mission.md) (file 53.4) | `forge chat` opens into a single-expert Anthropic mission; missions choose a provider through server-side named profiles. | Done ([record](phase-53.4-naked-default-mission_completed.md)) |
-| 5 | [TUI first slice](phase-53.5-tui-first-slice.md) (file 53.5) | `forge chat` becomes a full-screen XenoAtom TUI: header, streaming transcript, composer, key bar. | Build-ready |
+| 5 | [TUI first slice](phase-53.5-tui-first-slice.md) (file 53.5) | `forge chat` becomes a full-screen XenoAtom TUI: header, streaming transcript, composer, key bar. | Done ([record](phase-53.5-tui-first-slice_completed.md)) |
 
 ## Replaces
 
