@@ -13,7 +13,7 @@ streaming transcript, composer, and key bar. Everything else in the mockup comes
 | In this slice | Later (own design) |
 |---|---|
 | XenoAtom.Terminal.UI (core package) full-screen layout | Left chat list, mission switching |
-| Header: `forge │ PROJECT chat` left; `CHAT · V1 · APPROVED · <model>` right | Tabs (Explorer / Missions / Settings) |
+| Header: `forge │ PROJECT chat` left; `CHAT · V1 · APPROVED · anthropic` right (the provider profile; the model name is runner config the client never sees) | Tabs (Explorer / Missions / Settings) |
 | Transcript of typed blocks: **You** (right-aligned pill) and **participant card** (expert name, streamed text), plus a muted progress line ("Answerer is replying …") | Mission graph and artifact images (kitty graphics), "Needs you" gate, inline tool lines |
 | Composer: `› Message Chat v1…`; Enter sends; Shift+Enter newline via the kitty keyboard protocol | Markdown rendering of replies |
 | Key bar: `enter send · shift+enter newline · pgup/pgdn scroll · ctrl-c stop run · ctrl-d quit` | Light theme |
@@ -27,6 +27,8 @@ streaming transcript, composer, and key bar. Everything else in the mockup comes
 | Visual reference (Ameer, 2026-09-30) | [forge_tui_first_slice_mockup.html](../design/forge_tui_first_slice_mockup.html): accepted as drawn. The wider [target mockup](../design/forge_tui_mission_chat_mockup.html) stays the long-term direction. |
 | Piped input (Ameer, 2026-09-30) | When stdin or stdout is not a terminal, `forge chat` keeps today's line mode unchanged (acceptance scripts use it). The TUI runs only on a terminal. |
 | Ctrl-C (Ameer, 2026-09-30) | Ctrl-C stops a running turn (existing `CancelAsync`) and stays in the TUI; when idle it does nothing. Ctrl-D quits. |
+| Streaming state (Ameer, 2026-09-30) | Replies arrive whole (the runner sends each step's text as one message). While a turn runs, the card shows the expert name with a `▌` body and the progress line; the full text replaces it in one update. Token streaming is a later step ([backlog](../backlog.md)). |
+| Plan rulings (supervisor, 2026-09-30) | The mockup's card border `#2a3850` and prompt `#24d5ee` become tokens `cardBorder` and `prompt`. Enter during a running turn is ignored and the text kept. A final result that differs from the last step's text gets its own card titled with the mission name; a final `Error` repeating a step error is shown once. Ctrl-C on a turn that was already running at reopen does nothing (no turn id in the snapshot), as in line mode. |
 | Library | XenoAtom.Terminal.UI, core package only (no `.Graphics`/SkiaSharp). Locked in [53.2](phase-53.2-forge-chat.md). |
 | Terminal | Ghostty and Kitty; no fallback for other terminals ([53.2](phase-53.2-forge-chat.md)). |
 | Owner | forge-mcl `ForgeMission.Cli` (presentation only). `Katasec.Forge.Client` and the server are unchanged; the TUI uses the same Client calls `ForgeChat` makes today. |
