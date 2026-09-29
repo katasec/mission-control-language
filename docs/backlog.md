@@ -43,7 +43,8 @@
 | Starter mission reply | The starter `Proposer -> Reviewer` mission's Reviewer ignored the requested reply and emitted its answer twice. |
 | Local Host isolation | A local Kind Conversation Host shares the cloud Orleans membership table and blocks the cloud Host; `forge dev start` must use its own cluster id or storage. Kind was scaled to 0 on 2026-09-29. |
 | Local ForgeAPI | Deferred, 2026-09-28. Would let the Desktop use local runtimes with authentication; needs a local platform DB. Not planned. |
-| Split Bob (ClientRuntime) out of `forge-desktop` | Deferred from [Phase 52](phases/phase-52-desktop-simplification.md), 2026-09-28. Own repo/package so a TUI can reuse it; keep the capability-dispatch and confirmation seam. |
+| Split Bob (ClientRuntime) out of `forge-desktop` | **Selected 2026-09-29** as part of [Phase 53.1](phases/phase-53.1-forge-client-extraction.md) (`Katasec.Forge.Hands`). |
+| [Phase 52](phases/phase-52-desktop-simplification.md) remaining spokes: Trim Orchestration, Pipeless Boot, BlazorWebView | Deferred 2026-09-29 in favour of [Phase 53](phases/phase-53-forge-client.md). Effort: Trim small; Pipeless Boot medium–large; BlazorWebView small spike then large. Reselect after Phase 53, since forge-client changes what stays in the Desktop. |
 | Durable run control and enforcement | **Next after the Phase 43.4 UI exercise.** Add user-triggered `StopMission`, run-ID cancellation-source ownership, `Stopping`/`Stopped by user` durable outcomes, terminal process-tree cancellation, and auditable best-effort cancellation results. Recovery must create a new named run and retain stopped/failed/interrupted history; later checkpoint resume is explicit only from a verified safe boundary. The current workbench mock is design only; see [Phase 43.4](phases/phase-43.4-ide-trace-surface.md). |
 
 ## UI plans that are no longer implementation work

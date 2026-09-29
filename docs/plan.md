@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md): close the open questions of its next spoke in the hub's order. |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): close the open questions of its first spoke. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations, then collapse Desktop launch into one MAUI process and move the UI in-process. | 🟢 Cloud default live and verified; remaining spokes in design. |
+| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then `forge chat` for cloud conversations from the terminal. | 🔵 Design — spokes written; none build-ready yet. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs

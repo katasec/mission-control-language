@@ -4,8 +4,8 @@
 one MAUI process that performs the same dependency checks. The target is fewer projects, fewer
 processes, and no local Kind dependency on the default path.
 
-> **Status (2026-09-29):** the first spoke is done and live; the others are in design and list their
-> open questions, which must close before implementation handoff.
+> **Status (2026-09-29):** the first spoke is done and live. The remaining spokes are **deferred** to
+> the [backlog](../backlog.md) in favour of [Phase 53](phase-53-forge-client.md).
 
 ## Why
 
@@ -25,9 +25,9 @@ except the 52.4 spike, which runs alongside 52.1.
 | # | Spoke | Outcome | State |
 |---|---|---|---|
 | 1 | [Cloud conversations](phase-52.1-cloud-conversations.md) | Desktop talks to the cloud through ForgeAPI; one runner image; Billing extracted; every run metered. | ✅ Done |
-| 2 | [Trim Orchestration](phase-52.2-trim-orchestration.md) | Kind tunnel, Docker launcher, and unused paths deleted. | Design |
-| 3 | [Pipeless Boot](phase-52.3-pipeless-boot.md) | One MAUI process checks both runtimes and navigates; Supervisor, Contracts, and Orchestration deleted. | Design |
-| 4 | [BlazorWebView](phase-52.4-blazor-webview.md) | UI runs in-process; Application Host and Transport deleted. Gated by an AOT spike. | Design |
+| 2 | [Trim Orchestration](phase-52.2-trim-orchestration.md) | Kind tunnel, Docker launcher, and unused paths deleted. | Deferred |
+| 3 | [Pipeless Boot](phase-52.3-pipeless-boot.md) | One MAUI process checks both runtimes and navigates; Supervisor, Contracts, and Orchestration deleted. | Deferred |
+| 4 | [BlazorWebView](phase-52.4-blazor-webview.md) | UI runs in-process; Application Host and Transport deleted. Gated by an AOT spike. | Deferred |
 
 ## Project count
 

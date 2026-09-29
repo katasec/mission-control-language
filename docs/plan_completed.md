@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations; Desktop launch and UI simplification. | ✅ Cloud conversations done and live (2026-09-29); remaining spokes deferred to the [backlog](backlog.md) in favour of [Phase 53](phases/phase-53-forge-client.md). |
 | [Phase 51 — Desktop publish-script extraction](phases/phase-51-desktop-publish-script.md) | Extract Desktop publishing, remove obsolete local projects, and preserve the canonical release bundle contract. | Closed for this iteration 2026-09-28: local build, runtime, and publish checks verified; downloaded-artifact checksum acceptance deferred to [backlog](backlog.md). |
 | [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos; move code only. | Closed for this iteration 2026-09-26: rows 1–6 extracted and verified; row 7 deferred to [backlog](backlog.md). |
 | Repository extraction — Conversations | Move Conversations into `forge-conversations`. | Done 2026-09-24 — see [Phase 50](phases/phase-50-repository-extraction.md), row 3. |
