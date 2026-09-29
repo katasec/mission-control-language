@@ -185,6 +185,13 @@ HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login tes
    nothing about a different API (Key Vault, `az deployment group create`, role assignment reads) —
    verify each capability by trying it, not by reasoning from another one's error.
 
+8. **Docker Desktop push refused (2026-09-29).** On this Mac, the Docker Desktop daemon dials ACR
+   directly ("no HTTPS proxy") and some requests were refused, while containers reach ACR through
+   Docker Desktop's proxy. Working route: `docker buildx build --platform linux/amd64
+   --provenance=false --load …`, then `docker save -o <tar>`, then `crane push <tar> <ref>` from a
+   `crane:debug` container with an `az acr login --expose-token` token in an environment variable.
+   The `docker` buildx driver cannot export `type=oci` or `type=docker` files.
+
 ## Bicep authoring gotchas (forge-infra)
 
 Hard-won errors from standing up `forge-infra`'s Bicep layers — not deploy-flow issues, but ones

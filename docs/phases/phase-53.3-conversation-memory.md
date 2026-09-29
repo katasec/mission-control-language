@@ -1,6 +1,7 @@
 # Phase 53.3 — Conversation memory
 
-> **Status: build-ready (2026-09-29).** The product decision is closed; see Locked decisions.
+> **Status: done (2026-09-29), verified live.** Evidence:
+> [phase-53.3-conversation-memory_completed.md](phase-53.3-conversation-memory_completed.md).
 > Hub: [Phase 53](phase-53-forge-client.md). **Must land before [53.2](phase-53.2-forge-chat.md)'s
 > acceptance** ("the second reply reflects the first" cannot pass without it).
 
