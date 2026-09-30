@@ -97,6 +97,28 @@ All remaining candidates ship, in dependency order: **Tasks 4+7 → Task 8 → T
 the in-process hub. Each task: design locked (Type-1 decisions with Ameer) → supervisor loop → deploy →
 default-path check.
 
+## Tasks 4+7 design (locked 2026-09-30, build-ready)
+
+Evidence: read-only investigation against the decompiled Orleans 10.0.0 runtime
+(`ActivationData.MayInvokeRequest`: a ReadOnly request interleaves only with another ReadOnly
+request). Reads see only `State` (the confirmed view); commits complete inside the request that raised
+them, so a ReadOnly read never observes a half-applied commit.
+
+| # | Decision | Why |
+|---|---|---|
+| E1 | `[ReadOnly]` on `GetMissionHandsWorkAsync`, `PublishDeltaAsync`, `GetSnapshotAsync`, `ReadAfterAsync`, `ReadProjectCommandAsync` | Pure reads of `State`/the store; reads stop queueing behind each other. |
+| E2 | `ReadProjectRuns*` stay non-ReadOnly | They write the ETag-guarded project-run projection; concurrent writers would race to stale answers. |
+| E3 | `[ResponseTimeout("00:02:00")]` on `RecordProgressAsync` only; every other method keeps the 30 s default | A storage stall (D9) must not exhaust 10 × 30 s progress redeliveries and fail the run; 2 min stays under the 5 min lock auto-renewal. Ingress commands stay at 30 s because ForgeAPI stops waiting at 30 s. |
+| E4 | No new Service Bus retry/lock settings | Receipts make any redelivery a no-op; no new knob. |
+
+Deltas off the queue remain Task 3 (E1 only lets a delta overlap with other reads).
+
+Security: N/A (no tier, identity or data change). Engineering Philosophy: no knob added beyond one
+attribute. Failure boundary: a timed-out progress call is abandoned and redelivered; the receipt makes
+it a no-op. Done when: suite green; a focused test shows a ReadOnly read completes while another
+ReadOnly read is in flight; Host deployed; default path: a `forge chat` turn completes and the
+snapshot/events reads work, no Host errors.
+
 ## Next
 
-Design Tasks 4+7, 8, 6 and 3 (read-only investigations running 2026-09-30), then build Tasks 4+7.
+Build Tasks 4+7 (Host 0.6.1). Task 8 design: decision on body storage pending with Ameer. Tasks 6+3: investigation running.
