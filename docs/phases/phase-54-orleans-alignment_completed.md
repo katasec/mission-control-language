@@ -92,3 +92,40 @@ Code: [katasec/forge-conversations#14](https://github.com/katasec/forge-conversa
 | Tests (supervisor rerun) | `-warnaserror` 0 warnings; 217/217. The four new tests fail on the old code (gap test got ids `1,2,4`; overlap test timed out at 35 s; reflection found no ReadOnly). CI "Verify Conversations packages" passed. |
 | Deploy | what-if: image 0.6.0 → 0.6.1 only; `make 525-conversation-app` Succeeded 14:11:31Z; revision Healthy, silo started 14:11:53Z. |
 | Default path | Piped `forge chat` (forge 1.0.0+c041dee, no overrides): a new turn answered `BLUE-HERON-54` from earlier turns, prior turns replayed; Host logs: no errors, no SSE gap warnings. **PASS.** Timeout proven by reflection only (slow runtime test skipped by decision). |
+
+## Task 8 — every body in Blob via claim-check (done 2026-10-01)
+
+Design: [spoke B1–B14](phase-54-orleans-alignment.md#task-8-design-locked-2026-09-30-build-ready).
+
+| Part | PR | Evidence (supervisor re-run) |
+|---|---|---|
+| 8a Contracts 0.7.0 + Host | [katasec/forge-conversations#15](https://github.com/katasec/forge-conversations/pull/15) (+ B6 amendment `8945ee2`) | 249/249, 0 warnings; tag `forge-conversations-v0.7.0` published Contracts 0.7.0 (`gh api` lists it; run red at the known visibility step). |
+| 8b runner | [katasec/forge-runner#16](https://github.com/katasec/forge-runner/pull/16) | 98/98 on published 0.7.0. |
+| 8c ForgeAPI edge | [katasec/forge-platform#16](https://github.com/katasec/forge-platform/pull/16) | 109 + 30 + 21 on published 0.7.0 (repo has no CI). |
+| 8e forge-client (Bob) | [katasec/forge-client#5](https://github.com/katasec/forge-client/pull/5) | 171/171; tag `client-v0.5.0` published Katasec.Forge.Client 0.5.0. |
+| forge-mcl bump | [katasec/forge-mcl#25](https://github.com/katasec/forge-mcl/pull/25) | Build 0 warnings; 460 passed (`MissingApiKey_ThrowsClearly` fails only when the shell exports `MCL_API_KEY`). |
+| 8d forge-infra | [katasec/forge-infra#30](https://github.com/katasec/forge-infra/pull/30) | what-if: 525 image; 500 runner image + `ConversationHostBaseUrl` (ForgeUI: unresolved-reference noise only); 550 image. |
+
+**Images:** Host `forge-conversation-host:0.7.0` (`sha256:1377300c…3e80`, local build + crane); runner
+`forge-runner:0.18.0` (`sha256:0a80f4c9…0610`, local build + crane — its CI image workflow fails Azure OIDC
+login: the extracted repo has no client/tenant id); ForgeAPI `forge-api:0.7.0` (CI).
+
+**Release window:** all seven Service Bus queues (and DLQs) at 0; reset deleted 122 event rows and the
+reminders table (blobs: 0); `make 525-conversation-app`, `500-app`, `550-api` Succeeded 21:52–21:54Z; active
+revisions Healthy on Host 0.7.0, runner 0.18.0, ForgeAPI 0.7.0.
+
+### Default-path acceptance
+
+| Fact | Observation |
+|---|---|
+| Artifact | `forge` 1.0.0+290e241 from `make install` on forge-mcl `main`. |
+| Defaults | No endpoint overrides; existing `forge login`; default project `~/Forge/Projects/chat`. |
+| Dependency | ForgeAPI 0.7.0 → Host 0.7.0 → runner 0.18.0 as deployed from forge-infra `main`. |
+| Starting state | Store reset in the release window. |
+| Action | Piped `forge chat` with one 404,863-byte line ending "The codeword is VIOLET-KESTREL-8. Reply with only the codeword."; then a small turn. |
+| Outcome | **PASS.** The answer was `VIOLET-KESTREL-8` (the runner read the whole body through the Host route); the body is one 404,863-byte blob under `bodies/`; reopening replayed the large message hydrated (all 8,800 filler sentences and the codeword); the small turn completed. Runner and ForgeAPI logs clean. |
+| Not proven live | Bob's claim-then-read (B13): no default client attaches hands (`forge chat` is NoHands; Desktop deferred — [backlog](../backlog.md)). Controlled tests only. |
+
+**Gotcha:** the Host logged `TableBeingDeleted` for the reminders table at startup because the reset had just
+deleted it; Orleans retried and started the reminder service a second later. In a reset, delete Orleans
+tables well before the deploy, or leave the reminders table in place.
