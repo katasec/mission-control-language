@@ -37,7 +37,7 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 | 6 | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
 | 7 ✅ | `[ResponseTimeout]` on long methods | Explicit timeouts |
 
-| 8 | Large bodies via claim-check: body in Host-owned Blob, event carries a preview + reference | Removes the per-event ceiling (30 KiB today, 256 KB transport) up to a 4 MiB guardrail |
+| 8 ✅ | Large bodies via claim-check: body in Host-owned Blob, event carries a preview + reference | Removes the per-event ceiling (30 KiB today, 256 KB transport) up to a 4 MiB guardrail |
 
 Not changing: the Table event log itself, Service Bus ingress/progress, reminders, `command_id` dedupe.
 
@@ -121,7 +121,7 @@ ReadOnly read is in flight; a focused test shows a live event two ahead of the c
 missing event from the Table first; Host deployed; default path: a `forge chat` turn completes and the
 snapshot/events reads work, no Host errors.
 
-## Task 8 design (locked 2026-09-30, build-ready)
+## Task 8 design (locked 2026-09-30) — done 2026-10-01, see [completed record](phase-54-orleans-alignment_completed.md#task-8--every-body-in-blob-via-claim-check-done-2026-10-01)
 
 Evidence (read-only investigation 2026-09-30): Service Bus Standard caps every message at 256 KB, so
 no body over 256 KB reaches the Host today; the runner has no cap (an over-limit answer loops 10
@@ -160,4 +160,4 @@ on 0.4.0. Host identity has Blob Data Contributor account-wide; runner and edge 
 
 ## Next
 
-Build Task 8a (forge-conversations), then 8b, 8c and 8e, then 8d. Tasks 6+3 after.
+Design Tasks 6 (fan-out on N silos) and 3 (deltas off the grain queue): first verify whether ACA replicas form one Orleans cluster, then lock the Type-1 decisions with Ameer.
