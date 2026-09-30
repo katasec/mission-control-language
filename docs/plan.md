@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): finish the design of Tasks 1–2 (fold `MissionRunGrain`; atomic event and checkpoint write) and lock its open decisions with Ameer. |
+| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): lock decisions D1–D6 for Tasks 1–2 with Ameer (design findings recorded), then mark build-ready. |
 
 ## Active phases
 
