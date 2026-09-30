@@ -191,6 +191,10 @@ HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login tes
    --provenance=false --load …`, then `docker save -o <tar>`, then `crane push <tar> <ref>` from a
    `crane:debug` container with an `az acr login --expose-token` token in an environment variable.
    The `docker` buildx driver cannot export `type=oci` or `type=docker` files.
+   Run it from a `.ps1` file with the profile loaded: `pwsh -NoProfile` drops `NUGET_AUTH_TOKEN`
+   (restore fails with "Value cannot be null … 'password'"), and an inline `pwsh -Command` string
+   expands `$ACR_TOKEN` itself before `sh -c` sees it. The ACR username is
+   `00000000-0000-0000-0000-000000000000`.
 
 ## Bicep authoring gotchas (forge-infra)
 
