@@ -37,7 +37,7 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 | 6 | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
 | 7 | `[ResponseTimeout]` on long methods | Explicit timeouts |
 
-| 8 | Blob offload: large bodies (answers, tool output) go to Blob, referenced by the event | Removes the ~30K-character per-event ceiling that fails a run today |
+| 8 | Large bodies via claim-check: body in Host-owned Blob, event carries a preview + reference | Removes the per-event ceiling (30 KiB today, 256 KB transport) up to a 4 MiB guardrail |
 
 Not changing: the Table event log itself, Service Bus ingress/progress, reminders, `command_id` dedupe.
 
@@ -120,6 +120,22 @@ it a no-op. Done when: suite green; a focused test shows a ReadOnly read complet
 ReadOnly read is in flight; a focused test shows a live event two ahead of the cursor delivers the
 missing event from the Table first; Host deployed; default path: a `forge chat` turn completes and the
 snapshot/events reads work, no Host errors.
+
+## Task 8 design (in progress)
+
+Evidence (read-only investigation 2026-09-30): Service Bus Standard caps every message at 256 KB, so
+no body over 256 KB reaches the Host today; the runner has no cap (an over-limit answer loops 10
+redeliveries, then dead-letters). `ConversationArtifactReference` exists but `Artifact` belongs only to
+`Kind=Artifact`. Consumers: forge-platform, forge-runner, forge-client on Contracts 0.6.0; forge-desktop
+on 0.4.0. Host identity has Blob Data Contributor account-wide; runner and edge have no storage role.
+
+| # | Decision | Why |
+|---|---|---|
+| B1 | **Claim-check (locked with Ameer 2026-09-30).** A large body is stored in the Host-owned `forgeconversationartifacts` Blob container, written only by the Host. The event keeps a preview and a body reference. Producers (runner; edge for client-submitted results) send a large body as ordered chunk messages in the conversation's Service Bus session; the Host appends them to a blob keyed by the event id (idempotent retry) and commits the event after the last chunk. Clients fetch a full body on demand through a query route. | Removes the transport and Table ceilings with one store owner; runner keeps no storage role. Alternatives rejected: split Table columns (stops at 256 KB), Service Bus Premium (~$700/mo, huge payloads on a bus), runner-written Blob (breaks the no-storage-role rule). |
+| B2 | **4 MiB per body (locked with Ameer 2026-09-30),** enforced at intake. | A guardrail, not a storage limit: a body larger than ~1M tokens (the model context) is unusable, and client-submitted bodies are untrusted input. Model replies are ≤ ~512 KB (128K output tokens). Comparable to Claude (1M context ≈ 4 MB) and ChatGPT's per-message use. Attachments are a separate later feature with their own route and larger cap. |
+
+Open: event/progress contract shape and release order across consumers; preview size and what memory
+composition reads; orphan blobs; Blob role scope.
 
 ## Next
 
