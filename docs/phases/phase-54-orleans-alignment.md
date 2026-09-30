@@ -50,8 +50,3 @@ Not changing: the Table event log itself, Service Bus ingress/progress, reminder
    conversations** (lazy read-old/write-new, a one-off job, or a dev reset); it's a Type-1 data
    decision. Also: whether to keep the fail-closed corruption check.
 3. Then mark Tasks 1–2 build-ready and run them through the supervisor loop.
-
-Pending hand-off: the brainstorm doc
-([forge-vs-local-agent-tuis.md](../brainstorm/forge-vs-local-agent-tuis.md), owned by another session
-and uncommitted on 2026-09-30) needs one correction from this review. Its "JournaledGrain (event
-sourcing)" row should say the fix is a single atomic Table transaction; `JournaledGrain` isn't needed.
