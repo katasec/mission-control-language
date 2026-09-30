@@ -79,3 +79,16 @@ what real Azure accepts and `AcceptedCommandJson` (32 KiB) sits at the limit (se
 in); an unbounded `OpaqueContinuation` (the state cap fails loudly); resends after the 10-minute Service Bus
 dedupe window rely on the runner.
 
+
+## Tasks 4+7 + E5 — ReadOnly reads, progress timeout, SSE gap rule (done 2026-09-30)
+
+Design: [spoke E1–E5](phase-54-orleans-alignment.md#tasks-47-design-locked-2026-09-30-build-ready).
+Code: [katasec/forge-conversations#14](https://github.com/katasec/forge-conversations/pull/14). Deploy:
+[katasec/forge-infra#29](https://github.com/katasec/forge-infra/pull/29), Host `0.6.1`
+(`sha256:3fbe6e8c…f320`), revision `--0000006`.
+
+| Check | Observation |
+|---|---|
+| Tests (supervisor rerun) | `-warnaserror` 0 warnings; 217/217. The four new tests fail on the old code (gap test got ids `1,2,4`; overlap test timed out at 35 s; reflection found no ReadOnly). CI "Verify Conversations packages" passed. |
+| Deploy | what-if: image 0.6.0 → 0.6.1 only; `make 525-conversation-app` Succeeded 14:11:31Z; revision Healthy, silo started 14:11:53Z. |
+| Default path | Piped `forge chat` (forge 1.0.0+c041dee, no overrides): a new turn answered `BLUE-HERON-54` from earlier turns, prior turns replayed; Host logs: no errors, no SSE gap warnings. **PASS.** Timeout proven by reflection only (slow runtime test skipped by decision). |
