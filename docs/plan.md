@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): build `forge chat` Markdown replies (53.7). |
+| **NEXT STEP** | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md): choose the next `forge chat` step with Ameer (token streaming is the leading candidate; see backlog). |
 
 ## Active phases
 

@@ -1,6 +1,7 @@
 # Phase 53.7 — `forge chat` Markdown replies
 
-> **Status: build-ready (2026-09-30).** Hub: [Phase 53](phase-53-forge-client.md). Builds on
+> **Status: done (2026-09-30), verified.** Evidence:
+> [phase-53.7-tui-markdown_completed.md](phase-53.7-tui-markdown_completed.md). Hub: [Phase 53](phase-53-forge-client.md). Builds on
 > [53.6 theming](phase-53.6-tui-theming.md). Reference (patterns only): CodeAlta's timeline cards
 > (`~/progs/CodeAlta/src/CodeAlta/Presentation/Timeline/ChatTimelineVisualFactory.cs`), BSD-2-Clause;
 > no code copied.
