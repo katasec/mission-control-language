@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): Tasks 1–2 done (Host 0.6.0); choose the next task with Ameer. |
+| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): Tasks 1–2 done (Host 0.6.0); next: design and build Tasks 4+7, then 8, 6, 3. |
 
 ## Active phases
 

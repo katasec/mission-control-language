@@ -37,6 +37,8 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 | 6 | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
 | 7 | `[ResponseTimeout]` on long methods | Explicit timeouts |
 
+| 8 | Blob offload: large bodies (answers, tool output) go to Blob, referenced by the event | Removes the ~30K-character per-event ceiling that fails a run today |
+
 Not changing: the Table event log itself, Service Bus ingress/progress, reminders, `command_id` dedupe.
 
 Pre-lock findings from a parallel investigation (a `6-checkpoint` row on plain grain code, a new
@@ -88,6 +90,13 @@ Tasks 1+2, deploy, reset and default-path acceptance — done, see the
 Not in scope: Blob offload of large bodies; retiring the empty, unreferenced
 `forgeconversationindex` table.
 
+## Phase Done when (Ameer, 2026-09-30)
+
+All remaining candidates ship, in dependency order: **Tasks 4+7 → Task 8 → Task 6 → Task 3**
+(Task 5 was absorbed by 1–2). Task 3 follows Task 6 so deltas use the new fan-out path rather than
+the in-process hub. Each task: design locked (Type-1 decisions with Ameer) → supervisor loop → deploy →
+default-path check.
+
 ## Next
 
-Choose the next Phase 54 task (candidates 3–7 above; each needs its own design) with Ameer.
+Design Tasks 4+7, 8, 6 and 3 (read-only investigations running 2026-09-30), then build Tasks 4+7.
