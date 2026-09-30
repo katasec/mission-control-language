@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): lock decisions D1–D6 for Tasks 1–2 with Ameer (design findings recorded), then mark build-ready. |
+| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): Tasks 1–2 done (Host 0.6.0); choose the next task with Ameer. |
 
 ## Active phases
 
