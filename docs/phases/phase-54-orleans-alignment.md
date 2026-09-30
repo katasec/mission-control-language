@@ -1,7 +1,8 @@
 # Phase 54 — Orleans alignment (forge-conversations Host)
 
-> **Status: Tasks 1–2 design locked with Ameer 2026-09-30; build-ready.** Tasks 1 and 2 ship
-> together (they both change where a conversation's state lives). Tasks 3–7 are not designed.
+> **Status: Tasks 1–2 done 2026-09-30 (Host 0.6.0 live in dev, default path PASS) — see
+> [completed record](phase-54-orleans-alignment_completed.md#tasks-12--delete-missionrungrain-journaledgrain-single-atomic-write-done-2026-09-30).**
+> Tasks 3–7 are not designed.
 > Origin: the [53.8 incident](phase-53.8-token-streaming.md#incident-2026-09-30--host-deadlock-after-a-mid-turn-restart-blocks-task-8)
 > and a review of the Host against Orleans guidance, cross-checked online the same day.
 
@@ -28,8 +29,8 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 
 | # | Task | Effect |
 |---|---|---|
-| 1 | Fold or delete `MissionRunGrain`; run state lives in `ConversationGrain` | Removes the only cross-grain edge and the run-grain call in activation |
-| 2 | Checkpoint row in the event partition, committed with the events in one entity-group transaction; remove `PendingTransition` | Removes the most complex code in the Host |
+| 1 ✅ | Fold or delete `MissionRunGrain`; run state lives in `ConversationGrain` | Removes the only cross-grain edge and the run-grain call in activation |
+| 2 ✅ | Checkpoint row in the event partition, committed with the events in one entity-group transaction; remove `PendingTransition` | Removes the most complex code in the Host |
 | 3 | Deltas off the non-reentrant queue (publish without a grain turn, or `[AlwaysInterleave]` with no state change) plus delta sequence dedupe | Streaming no longer queues behind commands |
 | 4 | `[ReadOnly]` on read methods (after confirming they don't mutate) | Reads stop waiting on each other |
 | 5 | Activation limited to local repair; explicit decision on the fail-closed corruption check | Predictable activation |
@@ -104,7 +105,7 @@ tenant), 3,454 event-table rows, largest partition 452 KB / 190 events, largest 
 | D11 | **Live publish:** after a confirmed conditional event, the grain publishes exactly that transition's public events to `ConversationEventHub`. Not `OnStateChanged` (it also fires on reads and carries no event list). | A failed or ambiguous commit publishes nothing; SSE clients catch up from the Table. |
 | D12 | **Deleted:** `PendingTransition`, `PendingRunStart` and their repair/advance methods, the activation corruption check, the `conversation-checkpoint` grain storage provider, `DispatchState.BrokerAccepted`. **Kept:** outbox reminder, `RecoverMissionHandsInFlightAsync` (domain operation), clustering and reminder tables. | The single transaction makes the crash gap impossible; a foreign or duplicate write fails at commit (ETag 412 / Add 409) instead of blocking activation. |
 | D13 | **Inline event cap drops from 48 KiB UTF-8 to 30 KiB**, so an `EventJson` fits a Table string property (64 KiB = 32K UTF-16 chars). Blob offload of large bodies stays unwired (not needed for Tasks 1–2; `PutAsync` has no caller today). | 48 KiB can exceed the Table limit (inference; the build verifies it against real Azure). |
-| D14 | **Dev data: reset, no migration** (Ameer: "delete everything"). Delete tables `OrleansConversationCheckpoints`, `OrleansMissionRunCheckpoints`, `OrleansConversationReminders` (Orleans-created) and all rows of `forgeconversationevents` (Bicep-owned; delete + recreate via `make 350-conversation-data-what-if` / `350-conversation-data`). Blob container checked empty. Done as a deliberate step with Ameer's go-ahead, immediately before the new Host deploys. | No code path for old data remains. Local Desktop Projects holding a dev container id will read not-found. |
+| D14 | **Dev data: reset, no migration** (Ameer: "delete everything"). Done 2026-09-30: tables `OrleansConversationCheckpoints`, `OrleansMissionRunCheckpoints`, `OrleansConversationReminders` deleted; all rows of `forgeconversationevents` deleted (table kept, so no Bicep re-run). Blob container was empty. | No code path for old data remains. Local Desktop Projects holding a dev container id will read not-found. |
 
 ### Gates
 
@@ -117,15 +118,12 @@ tenant), 3,454 event-table rows, largest partition 452 KB / 190 events, largest 
 
 ### Build tasks
 
-| Task | Scope | Done when |
-|---|---|---|
-| 1+2 (one PR, forge-conversations) | D1–D13: delete `MissionRunGrain`; `ConversationGrain` on `JournaledGrain` + CustomStorage adapter; tests rewritten for the new seams (a Table fault seam replaces the `ThrowOnNth*` seams). Host version 0.6.0. | Full test suite green on Azurite. Focused negative tests: conflicting commit (stale version) is re-validated, not double-applied; ambiguous commit (write succeeds, call throws) yields one event; outbox send failure is resent by the reminder. A 30 KiB `EventJson` write succeeds against real Azure Table in dev and a >32K-char one is rejected at the grain boundary before storage. |
-| Deploy + reset | D14, then forge-infra PR bumping the Host image, `make 525-conversation-app-what-if`, merge, `make 525-conversation-app`. | Tables reset as listed; Host 0.6.0 running (revision query). |
-| Default-path acceptance | Default path above. | In `forge chat`: a new conversation, two turns (the second answer uses the first as memory), the Host restarted mid-turn (revision restart) and the turn still completes; reopening replays history; no error in Host logs. |
+Tasks 1+2, deploy, reset and default-path acceptance — done, see the
+[completed record](phase-54-orleans-alignment_completed.md).
 
-Not in scope: candidate Tasks 3–7 above; Blob offload of large bodies; retiring the empty, unreferenced
+Not in scope: Blob offload of large bodies; retiring the empty, unreferenced
 `forgeconversationindex` table.
 
 ## Next
 
-Run Tasks 1+2 through the supervisor loop (implementer plan → approval → build).
+Choose the next Phase 54 task (candidates 3–7 above; each needs its own design) with Ameer.
