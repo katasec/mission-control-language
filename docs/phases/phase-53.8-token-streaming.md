@@ -1,6 +1,7 @@
 # Phase 53.8 — `forge chat` token streaming
 
-> **Status: build-ready (2026-09-30).** Hub: [Phase 53](phase-53-forge-client.md). Builds on
+> **Status: done (2026-09-30), verified.** Evidence:
+> [phase-53.8-token-streaming_completed.md](phase-53.8-token-streaming_completed.md). Hub: [Phase 53](phase-53-forge-client.md). Builds on
 > [53.7](phase-53.7-tui-markdown.md). Investigation 2026-09-30 (code at `main` in each repo, two spikes).
 
 **Goal:** a reply appears as it is generated in the `forge chat` TUI, over the existing
@@ -68,7 +69,7 @@ Deploy order: Host → ForgeAPI → runner, then the CLI.
 
 ## Incident 2026-09-30 — Host deadlock after a mid-turn restart (blocks Task 8)
 
-**Status: fix in progress.** Not caused by 53.8 (`MissionRunGrain` and `AdvanceAsync` unchanged since
+**Status: fixed (Host 0.5.0, forge-conversations#12); the wedged conversation recovered on deploy.** Follow-ups: [Phase 54](phase-54-orleans-alignment.md). Not caused by 53.8 (`MissionRunGrain` and `AdvanceAsync` unchanged since
 0.3.0); triggered when the Host 0.4.0 deploy restarted Orleans mid-turn (01:57:34Z).
 
 | Item | Detail |
