@@ -158,7 +158,7 @@ on 0.4.0. Host identity has Blob Data Contributor account-wide; runner and edge 
 | 8e | forge-client | Bob: after `ClaimMissionHandsWork` (status-only reply, B13), read the work item through `GetMissionHandsWork` and execute from it; Contracts 0.7.0. | Suite green; a test shows execution uses the queried work item. |
 | 8d | forge-infra + deploy | 500-app: `ConversationHostBaseUrl` for the runner; image bumps; drain, reset, deploy all. | Default path: piped `forge chat` sends a ~400 KB single-line message ending with a codeword and asks for it; the turn completes and the answer contains the codeword (the runner read the whole body), reopening replays the message hydrated, a following small turn completes; Host/runner/edge logs clean. |
 
-## Tasks 6+3 design (in progress)
+## Tasks 6+3 design (locked 2026-10-01, build-ready)
 
 Evidence so far (2026-10-01): the Orleans Container Apps tutorial runs one replica only (min = max = 1) and does
 not cover silo-to-silo traffic. Our membership table shows every rollover's old silo marked Dead by its successor
@@ -172,6 +172,28 @@ same way. Scope: dev Host only. Observation: both silos `Active` in `OrleansSilo
 Known effect while it runs: live SSE events can be missed (the in-process hub — the gap Task 6 fixes); no chat
 use during the window.
 
+**Test result (2026-10-01):** with min = max = 2 ([katasec/forge-infra#31](https://github.com/katasec/forge-infra/pull/31)),
+both silos stayed `Active` with no suspicions for 6 minutes, and the Host log shows TCP connections on 11111
+from the new silo to its sibling and to the previous revision's silo. Replicas and rollover revisions form one
+Orleans cluster on Container Apps. Reverted to one replica ([katasec/forge-infra#32](https://github.com/katasec/forge-infra/pull/32), confirmed `maxReplicas: 1`).
+
+| # | Decision | Why |
+|---|---|---|
+| F1 | **Fan-out = Orleans grain observers (per host).** Each Host process keeps its in-process `ConversationEventHub` for its own SSE readers. The first local reader of a conversation creates one `IConversationEventObserver` (`CreateObjectReference`, from non-grain code) and subscribes it on `ConversationGrain`; the last reader leaving unsubscribes and deletes the reference. The grain holds an Orleans `ObserverManager<IConversationEventObserver>` (in memory, not durable) and, after a confirmed commit, notifies with a `[OneWay]` call carrying the committed events. | Orleans' documented push pattern; no new infra, store or identity; correct on N silos and during rollover. Rejected: Orleans streams (memory = test-grade, Azure Queue = new infra and polling), broadcast channel (fans out to grains, not hosts), SignalR/Web PubSub or a Service Bus topic (new Tier-3 transport and roles). |
+| F2 | **Lease and resubscribe:** observer entries expire after 2 minutes; each host resubscribes every 30 s. After every (re)subscribe, the host tells its local readers to catch up from the Table from their cursor (the E5 replay). | The observer list is lost when the grain reactivates on another silo; resubscribe restores it and the catch-up closes any window, including a missed final event. Fixed constants, no settings. |
+| F3 | **Task 3: `PublishDeltaAsync` is `[AlwaysInterleave]`** (it stays synchronous, reads only the confirmed `State`, and notifies observers `[OneWay]`). | Deltas no longer wait behind commands on the grain queue; no contract change. A delta stamped at N while a commit to N+1 is in flight is dropped by the reader's existing `sequence == cursor` rule — harmless. |
+| F4 | **Delta dedupe by `EventId` in the SSE writer** (a small per-connection set of recent delta ids). No runner offset, no contract change. | Service Bus redelivery reuses the delta's `EventId`; ordering and gaps inside a stream are cosmetic for a live-only draft (the durable message replaces it). |
+| F5 | Replica count stays **1**. The design is correct for N; scaling out is a separate decision. | Fewest resources; nothing needs a second replica today. |
+
+**Gates.** Security: no new entry point, store, identity or queue; observer calls use the existing internal Orleans cluster channel (proven above). Engineering Philosophy: one fan-out path (observers → local hub → SSE); two fixed constants (lease, resubscribe); the E5 gap rule is the single recovery path. Failure boundary: a dead or slow observer is dropped by `ObserverManager` and never blocks the grain (`[OneWay]`); a lost observer list is repaired by resubscribe + Table catch-up; an SSE host crash → client reconnects and replays from its cursor.
+
+### Tasks 6+3 build tasks
+
+| Task | Repo | Done when |
+|---|---|---|
+| 6+3 | forge-conversations (Host 0.8.0; Contracts unchanged) | Suite green, 0 warnings. Tests with **two silos in one test cluster**: an SSE reader on silo A receives every committed event of a grain living on silo B, in order, with no gaps; after the grain is deactivated and reactivated elsewhere, the reader receives the next events and a missed final event is caught up by resubscribe; a dead observer does not block commits; deltas interleave with a commit that is held in storage (the delta is published before the commit completes); a redelivered delta is written once. |
+| Acceptance | forge-infra + deploy | Host 0.8.0 deployed with one replica. Default path: `forge chat` turn completes, reopening replays, no Host errors. Live multi-silo check (same Type-2 exception as above, reverted after): with two replicas, several `forge chat` turns all complete with full replies over repeated runs (SSE lands on either replica), and Host logs show no observer errors. Deltas: an events request with `deltas=true` through ForgeAPI shows delta frames before the final message (controlled check, stated as such). |
+
 ## Next
 
-Run the two-replica cluster test, then design Tasks 6 and 3.
+Build Tasks 6+3 (Host 0.8.0), then the acceptance window. That completes Phase 54.
