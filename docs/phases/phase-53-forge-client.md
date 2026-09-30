@@ -53,6 +53,7 @@ Numbers are the execution order.
 | 5 | [TUI first slice](phase-53.5-tui-first-slice.md) (file 53.5) | `forge chat` becomes a full-screen XenoAtom TUI: header, streaming transcript, composer, key bar. | Done ([record](phase-53.5-tui-first-slice_completed.md)) |
 | 6 | [TUI theming](phase-53.6-tui-theming.md) (file 53.6) | Swappable themes by data only; light (default) and dark, chosen in `~/.forge/config.json`. | Done ([record](phase-53.6-tui-theming_completed.md)) |
 | 7 | [Markdown replies](phase-53.7-tui-markdown.md) (file 53.7) | Replies render Markdown with the theme's tokens via XenoAtom's `MarkdownControl` and a forge code-block renderer. | Done ([record](phase-53.7-tui-markdown_completed.md)) |
+| 8 | [Token streaming](phase-53.8-token-streaming.md) (file 53.8) | Replies stream into the TUI as they are generated; deltas are live-only over the existing conversation path. | Build-ready |
 
 ## Replaces
 
