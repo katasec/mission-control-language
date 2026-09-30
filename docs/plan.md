@@ -8,14 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md): Tasks 1–2, 4+7, 8 done (Host 0.7.0); next: design Tasks 6 and 3. |
+| **NEXT STEP** | Choose the next phase with Ameer. [Phase 54](phases/phase-54-orleans-alignment.md) is complete; its follow-ups (conversation Host explainer doc, Desktop client upgrade, `forge chat` with hands) are in the [backlog](backlog.md). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
 | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 forge-client, conversation memory, the `forge chat` TUI, naked Claude default and token streaming done; next step to choose. |
-| [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md) | Align the conversation Host with Orleans guidance: one grain owner per run, atomic event and checkpoint write, deltas off the grain queue. | 🔵 Atomic write, ReadOnly reads, timeouts, bodies in Blob done (Host 0.7.0); multi-silo fan-out and deltas next. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs

@@ -1,8 +1,7 @@
 # Phase 54 — Orleans alignment (forge-conversations Host)
 
-> **Status: Tasks 1–2 done 2026-09-30 (Host 0.6.0 live in dev, default path PASS) — see
-> [completed record](phase-54-orleans-alignment_completed.md#tasks-12--delete-missionrungrain-journaledgrain-single-atomic-write-done-2026-09-30).**
-> Tasks 3–7 are not designed.
+> **Status: complete 2026-10-01.** Every candidate task is done and live in dev (Host 0.8.0, runner 0.18.0,
+> ForgeAPI 0.7.0). Evidence: [completed record](phase-54-orleans-alignment_completed.md).
 > Origin: the [53.8 incident](phase-53.8-token-streaming.md#incident-2026-09-30--host-deadlock-after-a-mid-turn-restart-blocks-task-8)
 > and a review of the Host against Orleans guidance, cross-checked online the same day.
 
@@ -31,10 +30,10 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 |---|---|---|
 | 1 ✅ | Fold or delete `MissionRunGrain`; run state lives in `ConversationGrain` | Removes the only cross-grain edge and the run-grain call in activation |
 | 2 ✅ | Checkpoint row in the event partition, committed with the events in one entity-group transaction; remove `PendingTransition` | Removes the most complex code in the Host |
-| 3 | Deltas off the non-reentrant queue (publish without a grain turn, or `[AlwaysInterleave]` with no state change) plus delta sequence dedupe | Streaming no longer queues behind commands |
+| 3 ✅ | Deltas off the non-reentrant queue (publish without a grain turn, or `[AlwaysInterleave]` with no state change) plus delta sequence dedupe | Streaming no longer queues behind commands |
 | 4 ✅ | `[ReadOnly]` on read methods (after confirming they don't mutate) | Reads stop waiting on each other |
 | 5 ✅ | Activation limited to local repair; explicit decision on the fail-closed corruption check | Predictable activation |
-| 6 | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
+| 6 ✅ | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
 | 7 ✅ | `[ResponseTimeout]` on long methods | Explicit timeouts |
 
 | 8 ✅ | Large bodies via claim-check: body in Host-owned Blob, event carries a preview + reference | Removes the per-event ceiling (30 KiB today, 256 KB transport) up to a 4 MiB guardrail |
@@ -158,7 +157,7 @@ on 0.4.0. Host identity has Blob Data Contributor account-wide; runner and edge 
 | 8e | forge-client | Bob: after `ClaimMissionHandsWork` (status-only reply, B13), read the work item through `GetMissionHandsWork` and execute from it; Contracts 0.7.0. | Suite green; a test shows execution uses the queried work item. |
 | 8d | forge-infra + deploy | 500-app: `ConversationHostBaseUrl` for the runner; image bumps; drain, reset, deploy all. | Default path: piped `forge chat` sends a ~400 KB single-line message ending with a codeword and asks for it; the turn completes and the answer contains the codeword (the runner read the whole body), reopening replays the message hydrated, a following small turn completes; Host/runner/edge logs clean. |
 
-## Tasks 6+3 design (locked 2026-10-01, build-ready)
+## Tasks 6+3 design (locked 2026-10-01) — done, see [completed record](phase-54-orleans-alignment_completed.md#tasks-63--grain-observers-for-n-silos-interleaved-deltas-done-2026-10-01)
 
 Evidence so far (2026-10-01): the Orleans Container Apps tutorial runs one replica only (min = max = 1) and does
 not cover silo-to-silo traffic. Our membership table shows every rollover's old silo marked Dead by its successor
@@ -196,4 +195,4 @@ Orleans cluster on Container Apps. Reverted to one replica ([katasec/forge-infra
 
 ## Next
 
-Build Tasks 6+3 (Host 0.8.0), then the acceptance window. That completes Phase 54.
+Phase complete. Follow-ups are in the [backlog](../backlog.md): the conversation Host explainer doc, the Desktop client upgrade, and `forge chat` with hands.
