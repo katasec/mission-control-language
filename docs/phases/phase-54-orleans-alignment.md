@@ -110,13 +110,15 @@ them, so a ReadOnly read never observes a half-applied commit.
 | E2 | `ReadProjectRuns*` stay non-ReadOnly | They write the ETag-guarded project-run projection; concurrent writers would race to stale answers. |
 | E3 | `[ResponseTimeout("00:02:00")]` on `RecordProgressAsync` only; every other method keeps the 30 s default | A storage stall (D9) must not exhaust 10 × 30 s progress redeliveries and fail the run; 2 min stays under the 5 min lock auto-renewal. Ingress commands stay at 30 s because ForgeAPI stops waiting at 30 s. |
 | E4 | No new Service Bus retry/lock settings | Receipts make any redelivery a no-op; no new knob. |
+| E5 | **SSE gap rule (bug fix, found 2026-09-30):** `ConversationSseWriter` emits a live event only when its sequence is `cursor + 1`. A live event beyond that first replays the missing range from the Table (`ReadAfterAsync(cursor)`) in order; an event at or below the cursor is skipped. | Today the writer emits any `Sequence > cursor`, so a skipped publish (D11 ambiguous commit) moves the reader's `id:` past an event it never received, and a reconnect never replays it. Sequences are contiguous, so `cursor + 1` is exact. |
 
 Deltas off the queue remain Task 3 (E1 only lets a delta overlap with other reads).
 
 Security: N/A (no tier, identity or data change). Engineering Philosophy: no knob added beyond one
 attribute. Failure boundary: a timed-out progress call is abandoned and redelivered; the receipt makes
 it a no-op. Done when: suite green; a focused test shows a ReadOnly read completes while another
-ReadOnly read is in flight; Host deployed; default path: a `forge chat` turn completes and the
+ReadOnly read is in flight; a focused test shows a live event two ahead of the cursor delivers the
+missing event from the Table first; Host deployed; default path: a `forge chat` turn completes and the
 snapshot/events reads work, no Host errors.
 
 ## Next
