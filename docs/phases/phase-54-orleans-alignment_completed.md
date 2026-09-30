@@ -129,3 +129,20 @@ revisions Healthy on Host 0.7.0, runner 0.18.0, ForgeAPI 0.7.0.
 **Gotcha:** the Host logged `TableBeingDeleted` for the reminders table at startup because the reset had just
 deleted it; Orleans retried and started the reminder service a second later. In a reset, delete Orleans
 tables well before the deploy, or leave the reminders table in place.
+
+## Tasks 6+3 — grain observers for N silos; interleaved deltas (done 2026-10-01)
+
+Design: [spoke F1–F5](phase-54-orleans-alignment.md#tasks-63-design-locked-2026-10-01-build-ready).
+Code: [katasec/forge-conversations#16](https://github.com/katasec/forge-conversations/pull/16). Deploy:
+[katasec/forge-infra#33](https://github.com/katasec/forge-infra/pull/33), Host `0.8.0` (`sha256:b693dbd4…ce32`).
+
+| Check | Observation |
+|---|---|
+| Cluster prerequisite | Two-replica test ([forge-infra#31](https://github.com/katasec/forge-infra/pull/31), reverted by [#32](https://github.com/katasec/forge-infra/pull/32)): both silos `Active`, no suspicions for 6 min; TCP 11111 connections to the sibling and to the previous revision's silo. |
+| Tests (supervisor rerun) | 0 warnings; 259/259. Two-silo tests (one cluster, two in-process Hosts): cross-silo order, reactivation + resubscribe catch-up (~32 s), dead and hanging observers do not block commits, delta during a held commit, delta dedupe. They fail with the grain's notify disabled. |
+| Default path, one replica | `forge chat` turns complete on 0.8.0 before and after the acceptance window; Host logs clean. |
+| Multi-silo window | [forge-infra#34](https://github.com/katasec/forge-infra/pull/34) (two replicas), reverted by [#35](https://github.com/katasec/forge-infra/pull/35) (min = max = 1 confirmed). Three silos `Active`, no suspicions; five `forge chat` turns all completed with full replies. |
+| Deltas (controlled check) | `StreamConversationEvents` with `includeDeltas` through ForgeAPI (`api.forge.katasec.com`) while `forge chat` ran: one replica — 12 deltas before the final message; two replicas — 5 of 6 runs 7–11 deltas before the message. Run 1 had all six durable events (85–90) but no deltas; inference, not proven: the grain moved off the draining previous silo and its observer list was empty until the 30 s resubscribe, when the Table catch-up delivered the durable events (deltas are live-only by design). |
+
+**Process note:** the image-tag bumps and the two-replica window edits in forge-infra were made by the
+supervisor directly (one-line, what-if reviewed, PR-merged), not by an implementing subagent.
