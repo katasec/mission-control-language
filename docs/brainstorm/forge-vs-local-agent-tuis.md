@@ -44,7 +44,7 @@ features already does the hard part.
 | **Cluster membership and failover**: if a silo dies, its grains restart on another | A run keeps going after a server node dies | Health checks, leader election, and moving sessions to another node | Available, not realised: the first deployment has one silo, and multi-silo HA is deferred |
 | **Grain observers and Orleans Streams**: push events to subscribers | Live updates to every attached client | A pub/sub layer and a connection registry | Not used: SSE replays from the Table event log instead. Streams are an option if we fan out to many clients. |
 | **Grain call filters**: interceptors on every grain call | One place to enforce authorization, audit, and telemetry for every client | Middleware copied into each service | Not used yet: a candidate home for server-side tool policy |
-| **JournaledGrain (event sourcing)** | Rebuild any run's state from its events | A hand-built event store and replay | Not used, and not needed: our own Azure Table event log is fine. The real gap is atomicity. Events and checkpoint should commit in one Table entity-group transaction ([Phase 54](../phases/phase-54-orleans-alignment.md)); `Microsoft.Orleans.Journaling` is still alpha. |
+| **JournaledGrain (event sourcing)** | Rebuild any run's state from its events | A hand-built event store and replay | Adopted by [Phase 54](../phases/phase-54-orleans-alignment.md) (2026-09-30): `JournaledGrain` + `CustomStorage` owns the single write; our Table adapter commits events and state in one entity-group transaction. |
 
 ## 2. Not Orleans: built by Forge whatever the stack
 

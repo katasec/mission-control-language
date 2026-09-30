@@ -4,7 +4,7 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-29)
+## Now (2026-09-30)
 
 | | |
 |---|---|
@@ -15,7 +15,7 @@
 | Phase | Description | Status |
 |-------|-------------|--------|
 | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 forge-client, conversation memory, the `forge chat` TUI, naked Claude default and token streaming done; next step to choose. |
-| [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md) | Align the conversation Host with Orleans guidance: one grain owner per run, atomic event and checkpoint write, deltas off the grain queue. | 🔵 Design — Tasks 1–2 design in progress (selected 2026-09-30). |
+| [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md) | Align the conversation Host with Orleans guidance: one grain owner per run, atomic event and checkpoint write, deltas off the grain queue. | 🔵 Tasks 1–2 design locked, build-ready; build next. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
 ## Design docs
