@@ -1,6 +1,7 @@
 # Phase 54 — Orleans alignment (forge-conversations Host)
 
-> **Status: design (2026-09-30). Not build-ready** — tasks need their own design before handoff.
+> **Status: design (2026-09-30). Not build-ready.** Selected by Ameer 2026-09-30; Tasks 1 and 2 are
+> being designed together (they both change where a conversation's state lives).
 > Origin: the [53.8 incident](phase-53.8-token-streaming.md#incident-2026-09-30--host-deadlock-after-a-mid-turn-restart-blocks-task-8)
 > and a review of the Host against Orleans guidance, cross-checked online the same day.
 
@@ -36,3 +37,21 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 | 7 | `[ResponseTimeout]` on long methods | Explicit timeouts |
 
 Not changing: the Table event log itself, Service Bus ingress/progress, reminders, `command_id` dedupe.
+
+## Next
+
+1. Finish the design of Tasks 1–2. A read-only investigation was started 2026-09-30 and did not
+   report before the session handoff; rerun it if its result isn't recorded here. It must cover:
+   `MissionRunGrain` fields and readers (including project run history); today's Table and
+   grain-storage layout with measured sizes; the one-transaction layout and entity-group limits;
+   what `PendingTransition`, the repair methods, the outbox reminder and the corruption check become;
+   keeping the Service Bus outbox correct outside the transaction; and the dev-data migration options.
+2. Lock the decisions with Ameer, one at a time. The main one is **migrating existing dev
+   conversations** (lazy read-old/write-new, a one-off job, or a dev reset); it's a Type-1 data
+   decision. Also: whether to keep the fail-closed corruption check.
+3. Then mark Tasks 1–2 build-ready and run them through the supervisor loop.
+
+Pending hand-off: the brainstorm doc
+([forge-vs-local-agent-tuis.md](../brainstorm/forge-vs-local-agent-tuis.md), owned by another session
+and uncommitted on 2026-09-30) needs one correction from this review. Its "JournaledGrain (event
+sourcing)" row should say the fix is a single atomic Table transaction; `JournaledGrain` isn't needed.
