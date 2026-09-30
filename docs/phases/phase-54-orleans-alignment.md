@@ -158,6 +158,20 @@ on 0.4.0. Host identity has Blob Data Contributor account-wide; runner and edge 
 | 8e | forge-client | Bob: after `ClaimMissionHandsWork` (status-only reply, B13), read the work item through `GetMissionHandsWork` and execute from it; Contracts 0.7.0. | Suite green; a test shows execution uses the queried work item. |
 | 8d | forge-infra + deploy | 500-app: `ConversationHostBaseUrl` for the runner; image bumps; drain, reset, deploy all. | Default path: piped `forge chat` sends a ~400 KB single-line message ending with a codeword and asks for it; the turn completes and the answer contains the codeword (the runner read the whole body), reopening replays the message hydrated, a following small turn completes; Host/runner/edge logs clean. |
 
+## Tasks 6+3 design (in progress)
+
+Evidence so far (2026-10-01): the Orleans Container Apps tutorial runs one replica only (min = max = 1) and does
+not cover silo-to-silo traffic. Our membership table shows every rollover's old silo marked Dead by its successor
+(one suspecter each) — consistent with either a failed probe or a normal replacement, so not conclusive. The
+Host uses default ports 11111/30000 and has one internal HTTP ingress.
+
+**Type-2 test exception (2026-10-01):** to learn whether two Host replicas form one Orleans cluster, the Host
+runs with min = max = 2 replicas via a forge-infra PR and `make 525-conversation-app`, then is reverted to 1 the
+same way. Scope: dev Host only. Observation: both silos `Active` in `OrleansSiloInstances` with no suspicions for
+5 minutes, and a grain call routed across silos. Reversal/removal: the revert PR, deployed immediately after.
+Known effect while it runs: live SSE events can be missed (the in-process hub — the gap Task 6 fixes); no chat
+use during the window.
+
 ## Next
 
-Design Tasks 6 (fan-out on N silos) and 3 (deltas off the grain queue): first verify whether ACA replicas form one Orleans cluster, then lock the Type-1 decisions with Ameer.
+Run the two-replica cluster test, then design Tasks 6 and 3.
