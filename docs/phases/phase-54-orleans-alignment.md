@@ -32,10 +32,10 @@ Each claim below is cited from the official docs or the dotnet/orleans repo.
 | 1 ✅ | Fold or delete `MissionRunGrain`; run state lives in `ConversationGrain` | Removes the only cross-grain edge and the run-grain call in activation |
 | 2 ✅ | Checkpoint row in the event partition, committed with the events in one entity-group transaction; remove `PendingTransition` | Removes the most complex code in the Host |
 | 3 | Deltas off the non-reentrant queue (publish without a grain turn, or `[AlwaysInterleave]` with no state change) plus delta sequence dedupe | Streaming no longer queues behind commands |
-| 4 | `[ReadOnly]` on read methods (after confirming they don't mutate) | Reads stop waiting on each other |
-| 5 | Activation limited to local repair; explicit decision on the fail-closed corruption check | Predictable activation |
+| 4 ✅ | `[ReadOnly]` on read methods (after confirming they don't mutate) | Reads stop waiting on each other |
+| 5 ✅ | Activation limited to local repair; explicit decision on the fail-closed corruption check | Predictable activation |
 | 6 | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
-| 7 | `[ResponseTimeout]` on long methods | Explicit timeouts |
+| 7 ✅ | `[ResponseTimeout]` on long methods | Explicit timeouts |
 
 | 8 | Large bodies via claim-check: body in Host-owned Blob, event carries a preview + reference | Removes the per-event ceiling (30 KiB today, 256 KB transport) up to a 4 MiB guardrail |
 
@@ -97,7 +97,7 @@ All remaining candidates ship, in dependency order: **Tasks 4+7 → Task 8 → T
 the in-process hub. Each task: design locked (Type-1 decisions with Ameer) → supervisor loop → deploy →
 default-path check.
 
-## Tasks 4+7 design (locked 2026-09-30, build-ready)
+## Tasks 4+7 design (locked 2026-09-30) — done, Host 0.6.1, see [completed record](phase-54-orleans-alignment_completed.md#tasks-47--e5--readonly-reads-progress-timeout-sse-gap-rule-done-2026-09-30)
 
 Evidence: read-only investigation against the decompiled Orleans 10.0.0 runtime
 (`ActivationData.MayInvokeRequest`: a ReadOnly request interleaves only with another ReadOnly
@@ -139,4 +139,4 @@ composition reads; orphan blobs; Blob role scope.
 
 ## Next
 
-Build Tasks 4+7 (Host 0.6.1). Task 8 design: decision on body storage pending with Ameer. Tasks 6+3: investigation running.
+Lock Task 8 decision B3 (contract shape) with Ameer, then the Type-2 details, then build. Tasks 6+3 after.
