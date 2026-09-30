@@ -4,6 +4,11 @@
 > [Phase 43.16 — Durable Janus conversation proof](../phases/phase-43.16-janus-desktop-local-poc.md).
 > Forge Desktop and Forge Rooms are different projections of one durable conversation, not separate
 > stores or runtimes.
+>
+> **Amended by [Phase 54](../phases/phase-54-orleans-alignment.md#tasks-12-design-locked-2026-09-30)
+> (2026-09-30):** `MissionRunGrain` is removed; `ConversationGrain` is a `JournaledGrain` whose
+> events and state row commit in one Table transaction, replacing Orleans grain-storage
+> checkpoints. Where this doc says otherwise, Phase 54 wins.
 
 ## Decision
 
