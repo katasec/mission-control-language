@@ -15,6 +15,7 @@ mission-conversation path.
 | Max tokens | Streamed and tool-mode Anthropic calls set `MaxOutputTokens` to the existing 4096 default (`ChatClients.cs` `DefaultMaxTokens`); the SDK otherwise defaults to 250. Fixed in this work. |
 | Scope | The TUI opts in; piped `forge chat` stays whole-message. |
 | Deltas are live-only | Never stored: no event-store rows, no replay, no effect on 53.3 memory. The final `ParticipantMessage` stays the durable record. A reconnect mid-reply shows no partial text until the final arrives. |
+| Plan rulings (supervisor, 2026-09-30) | Only llm steps **with no tools** stream; the hands/tool-mode path keeps `RunAsync` this release (streamed tool calls through the Anthropic SDK are unverified; Chat has no tools). `StreamLlmDeltas` is an init-only property. Non-llm kinds keep the envelope parse. The TUI shows deltas only for a card whose `ParticipantStarted` arrived on the same connection (enforces the reconnect rule). Only the changed card re-renders its Markdown. |
 | Batching | First chunk immediately, then every 200 ms or 16 K characters; remainder flushed before the step's completed message. Hard-coded. |
 
 ## Design by hop
