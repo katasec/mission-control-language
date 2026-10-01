@@ -14,8 +14,8 @@ client.
 |---|---|
 | The hands loop exists in forge-client (`MissionHandsConversationService.AcknowledgeAsync`/`ExecuteAsync`), but no client calls Execute today — Desktop only acknowledges. | forge-client `Missions/MissionHandsConversationService.cs:58-166`; forge-desktop `Home.razor:335-349` |
 | `forge chat` creates its mission with `MissionHandsProfile.NoHands` and passes a deny-all policy. A conversation's profile is pinned for life. | forge-mcl `ForgeChat.cs:57,122`; Host `ConversationGrain.cs:443` |
-| The runner adds the tools from the pinned profile: `ProjectWorkspace` = one `file` capability covering Read, Write and Edit (no read-only variant). Tools are declared with an empty input schema — untested live. | forge-runner `GenericDurableMissionExecutor.cs:62-71` |
-| File paths are confined to the project root by `WorkspaceGuard` (relative paths resolved under the root; anything outside rejected; symlinks followed). It is a path guard, not an OS sandbox. | forge-client `WorkspaceGuard.cs:19-80` |
+| The runner adds the tools from the pinned profile: `ProjectWorkspace` = one `file` capability covering Read, Write and Edit (no read-only variant). Before Task 1b: tools were declared with an empty input schema (Task 1b replaced them with Core `AgentToolDeclarations`). | forge-runner `GenericDurableMissionExecutor.cs:62-71` |
+| File paths are confined to the project root by `WorkspaceGuard` (relative paths resolved under the root; anything outside rejected; symlinks followed). It is a path guard, not an OS sandbox. | forge-mcl Core `src/ForgeMission.Core/Tools/WorkspaceGuard.cs`, used by forge-client through `LocalDiskWorkspace` (corrected 2026-10-01) |
 | A mission's active approved version (including its profile) is persisted per project in the manifest's `MissionDefinitions` by `PublishAsync`; `AcknowledgeMissionHands` resolves it. | forge-client `ProjectService.cs:116`, `Projects/README.md:44` |
 
 ## Decisions

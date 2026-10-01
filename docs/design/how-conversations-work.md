@@ -1,6 +1,6 @@
 # How conversations work
 
-> **Status: draft, 2026-10-01. Section 4 waits for Phase 53.9.** This doc explains a Forge
+> **Status: draft, 2026-10-01. Two-window TUI acceptance (Phase 53.9) pending.** This doc explains a Forge
 > conversation from end to end: a turn, storage, live events, clients, hands, and failure. It
 > replaces the stale parts of [durable-conversations.md](durable-conversations.md) (`MissionRunGrain`,
 > grain-storage checkpoints, `PendingTransition`). It matches Host 0.8.0, runner 0.19.0, ForgeAPI
@@ -260,30 +260,186 @@ harmless: the step's final `ParticipantMessage` is the durable record.
 
 ## 4. Clients and turns
 
-To complete after Phase 53.9 merges (one live stream per window, own turn vs other windows, one
-turn at a time, Ctrl-C/Ctrl-D, reconnect).
+This section covers `forge chat` (forge-mcl `main` after Phase 53.9,
+[katasec/forge-mcl#29](https://github.com/katasec/forge-mcl/pull/29)). Paths are in
+`forge-mcl/src/ForgeMission.Cli/`. **Live acceptance of the two-window behaviour is pending**
+(the supervisor is running it); the claims below come from code.
 
-**True and verified today for piped mode** (`forge chat` with redirected input;
-`forge-mcl … ForgeChat.cs:291-375` on `main`):
+| Mode | When | Stream |
+|---|---|---|
+| TUI | A terminal on both input and output | One live stream with deltas, open to exit |
+| Piped (line) | Input or output redirected | Follows only its own turn, no deltas, exits on EOF |
+
+### One live stream per window
 
 ```mermaid
 flowchart LR
-  OPEN["replay events to snapshot.LastSequence"] --> RUN{"a turn<br/>still running?"}
+  subgraph W1["TUI window 1"]
+    L1["LiveAsync: one stream,<br/>deltas on, open to Ctrl-D"]
+  end
+  subgraph W2["TUI window 2"]
+    L2["LiveAsync"]
+  end
+  H["Host SSE<br/>(via ForgeAPI)"] -->|"every event of every turn"| L1
+  H -->|"every event of every turn"| L2
+  W1 -->|"SubmitMissionTurn only"| API["ForgeAPI"]
+```
+
+On open, the TUI reads the snapshot, replays history up to `LastSequence`, then starts one stream
+after that cursor with `includeDeltas: true`. The stream runs until Ctrl-D and never ends on a turn
+(`ends: _ => false`) (`Tui/ChatTui.cs:105-126`). So every window shows every turn live, whichever
+window sent it. The Host fan-out ([section 3](#3-live-events)) already supports many readers.
+
+### Submit only posts; the stream shows the turn
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant T as TUI window
+  participant A as ForgeAPI / Host
+  U->>T: Enter
+  T->>T: show message + pending reply at once
+  T->>A: SubmitMissionTurn (CommandId)
+  A-->>T: SubmitMissionTurnResponse (TurnId, TurnAttemptId)
+  T->>T: own turn = that attempt
+  A-->>T: stream: UserMessage, ParticipantStarted, deltas, message, RunStatus
+  T->>T: terminal RunStatus for own attempt: own turn cleared
+```
+
+Enter shows the message and a pending reply straight away and queues the submit for the next UI
+step (`ChatTui.cs:186-194`). The submit stores the response as this window's **own turn**
+(`ChatTui.cs:135`). The turn's events arrive only through the live stream; when the stream shows
+the own attempt's end, the own turn is cleared (`ChatTui.cs:231-235`). A submit Forge refuses puts
+the text back in the composer with an error.
+
+### One turn at a time
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle: snapshot has no active run
+  [*] --> Running: snapshot has an active run
+  Idle --> Running: stream shows UserMessage (any window)
+  Running --> Idle: stream shows terminal RunStatus
+  note right of Running: Enter is ignored, text stays in the composer
+```
+
+Enter does nothing while the conversation is opening, while a call is in flight (`_busy`, a
+message already queued), or while any window's turn runs (`ChatTui.cs:188`). "A turn runs" is
+`TurnRunning`: a `UserMessage` starts one, a terminal `RunStatus` ends one, and the start value
+comes from the snapshot (`ChatTui.cs:109, 265-270`). The Host enforces the same rule
+(`RunAlreadyActive`, `ConversationGrain.cs:305`); the client rule keeps a second window from
+trying.
+
+### Another window's message
+
+```mermaid
+flowchart LR
+  E["live UserMessage"] --> Q{"sent from<br/>this window?"}
+  Q -->|yes| A["already shown with<br/>its pending reply"]
+  Q -->|no| B["show it, then a pending reply"]
+  B --> C["ParticipantStarted replaces<br/>the pending reply with a card"]
+```
+
+`Transcript.ApplyLive` checks whether the `UserMessage` id matches a message this window sent
+(the command id is the event id). If not, it appends a pending reply, which the participant's
+started card replaces (`Tui/Transcript.cs:60-66`).
+
+### Ctrl-C stops only this window's turn
+
+```mermaid
+flowchart TB
+  K["Ctrl-C"] --> O{"own turn, or<br/>submit in flight?"}
+  O -->|no| N["nothing"]
+  O -->|yes| F["mark stop"]
+  F --> W{"submit returned?"}
+  W -->|"not yet"| W2["wait for next UI step"] --> W
+  W -->|yes| C["cancel hands attempt,<br/>then CancelMissionTurn"]
+  C --> S["stream shows how the turn ended"]
+```
+
+Ctrl-C does nothing for a turn another window sent, or a turn already running when this window
+opened (`ChatTui.cs:198-201`). Pressed before the submit returns, the stop waits for the response,
+then runs on the next UI step (`ChatTui.cs:93-97`). It cancels a running file operation first,
+then the turn (`ChatTui.cs:150-161`).
+
+### Hands run only for this window's turn
+
+```mermaid
+flowchart LR
+  E["live event"] --> B{"RunId == own<br/>TurnAttemptId?"}
+  B -->|yes| H["ChatHandsAttachment.OnEvent:<br/>MissionHandsRequested → Execute"]
+  B -->|no| S["show the tool line only"]
+```
+
+Only events of the own turn reach the hands attachment (`BelongsToOwnTurn`, `ChatTui.cs:228-229,
+260-261`); the Host stamps each turn's events with its attempt id as `RunId`. Another window's
+tool request is shown, not executed. Why: the Host keeps one current attachment per conversation,
+and it refuses a claim from a non-current attachment with the same untyped reason as a missing or
+cancelled request (`ConversationGrain.cs:642-648`). A second `--hands` window could not tell
+"not mine" from a real failure without matching strings. A typed reject is in the backlog.
+
+One exception on open: `Begin` checks once for a request already waiting for this window's new
+attachment and executes it (`ChatHandsAttachment.cs:25-30`).
+
+### Reconnect
+
+```mermaid
+sequenceDiagram
+  participant T as TUI StreamAsync
+  participant A as ForgeAPI / Host
+  T->>A: events after cursor
+  A--xT: transport failure (HttpRequestException or IOException)
+  T->>T: show "connection lost; reconnecting" (once)
+  T->>T: wait 250 ms
+  T->>A: events after the same cursor
+  A-->>T: next event clears the lost flag
+```
+
+The TUI and piped mode share one loop, `ForgeChat.StreamAsync` (`ForgeChat.cs:363-394`). A stream
+that closes is reopened from the cursor after 250 ms. In the TUI, a transport failure also
+reconnects and adds one notice line; no second notice is added until an event arrives
+(`ChatTui.cs:240-245`). A delta is shown only after its step started on the same connection, so a
+reconnect mid-reply shows no partial text until the final message.
+
+### Ctrl-D exits cleanly
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant Q as Quit command
+  participant L as UI loop (UpdateAsync)
+  U->>Q: Ctrl-D
+  Q->>Q: cancel the session token
+  L->>L: next step sees cancellation
+  L->>L: await the live stream to end
+  L->>L: cancel any running file operation
+  L-->>L: return Stop (UI thread still running until here)
+```
+
+The TUI replaces the app's own quit command (`ChatTui.cs:203-214`). Before 53.9, Ctrl-D stopped
+the terminal app at once; a `finally` then cancelled the session and a pending await resumed onto
+the stopped dispatcher, which crashed with `InvalidOperationException: Dispatcher is not attached
+to a running TerminalApp`. Now Ctrl-D only cancels the session. The UI loop's next step waits for
+the stream, then the hands cancel, and only then stops (`ChatTui.cs:76-80, 174-179`). A turn still
+running keeps running on Forge.
+
+### Piped mode (unchanged)
+
+```mermaid
+flowchart LR
+  OPEN["replay to snapshot.LastSequence"] --> RUN{"a turn<br/>still running?"}
   RUN -->|yes| F1["follow it"] --> READ
   RUN -->|no| READ["read a line"]
   READ -->|"EOF (Ctrl-D)"| EXIT["exit 0"]
-  READ --> SUB["SubmitMissionTurn"] --> F2["follow own TurnAttemptId<br/>(no deltas)"]
+  READ --> SUB["SubmitMissionTurn"] --> F2["FollowTurnAsync: own<br/>TurnAttemptId, no deltas"]
   F2 -->|"run ends"| READ
   F2 -->|"Ctrl-C"| CAN["cancel hands attempt,<br/>CancelMissionTurn, exit 130"]
 ```
 
-| Fact | Evidence |
-|---|---|
-| One turn at a time per conversation: a second submit while a run is active is `RunAlreadyActive` | `ConversationGrain.cs:305` |
-| Piped mode follows only its own turn (by `TurnAttemptId`), without deltas, then reads the next line | `ForgeChat.cs:310-317` |
-| A stream that closes is reopened from the cursor after 250 ms | `ForgeChat.cs:353-375` |
-| Reopening replays prior turns with bodies hydrated | Phase 54 acceptance (codeword turns, 404,863-byte message) |
-| A turn spanning a Host restart completes | Phase 54 Tasks 1+2 acceptance, turn 4 |
+Piped mode follows only its own turn through `FollowTurnAsync`, which is `StreamAsync` ending at
+that attempt's end. A transport failure there is thrown, not retried (`ForgeChat.cs:291-352`).
+Phase 54 and 55 acceptance runs used piped mode (codeword recall, the 404,863-byte message, a turn
+across a Host restart, the hands Read).
 
 ---
 
@@ -348,7 +504,7 @@ sequenceDiagram
 | Attach | One current attachment per conversation; a new one waits as pending while the old one has work in flight | `ConversationGrain.cs:432-470` |
 | Request | Host accepts a request only if it matches the active start command and the pinned launch | `ConversationGrain.cs:800-818` |
 | Claim then read (B13) | Command replies never carry bodies (they ride the 256 KB reply queue). The claim returns status and the request id; Bob reads the work item by query | `ConversationGrain.cs:629-663`; `forge-client … MissionHandsConversationService.cs:214-228` |
-| Execute | Driven by the event stream: each `MissionHandsRequested` starts one Execute off the stream loop; one check after attach for a request already waiting | `forge-mcl … ChatHandsAttachment.cs:7-37` |
+| Execute | Driven by the event stream: each `MissionHandsRequested` starts one Execute off the stream loop (in the TUI, only for the window's own turn, [section 4](#hands-run-only-for-this-windows-turn)); one check after attach for a request already waiting | `forge-mcl … ChatHandsAttachment.cs:7-37` |
 | Path guard | Relative paths resolve under the project root; anything resolving outside is refused; symlinks are followed on every existing ancestor. A path guard, not an OS sandbox | `forge-mcl … Core/Tools/WorkspaceGuard.cs` (used by forge-client ClientRuntime via `LocalDiskWorkspace`) |
 | Result | The result commit owes exactly one deterministic `ContinueAfterTool` | `ConversationGrain.cs:534-592` |
 | Resume | Runner refuses a resume if the run is not `WaitingForHands`, or the package hash or engine build changed | `MissionCommandProcessor.cs:145-162` |
@@ -424,10 +580,10 @@ on a queue.
 
 | Gap | Note |
 |---|---|
-| Section 4 for the TUI | After Phase 53.9 (one live stream per window, own turn, Ctrl-D). |
 | Typed "not the current attachment" claim reject | The Host refuses a non-current attachment with the same untyped reason as other refusals (`ConversationGrain.cs:642-648`). Backlog. |
 | Desktop client upgrade | Desktop is on Contracts 0.4.0 and does not execute hands. Backlog. |
 | Host replica count is 1 | The design is correct for N silos (tested with 2); scaling out is a separate decision (`forge-infra dev/525-conversation-app/main.bicep:116-117`). |
 | Runner processes one conversation at a time per replica | `MaxConcurrentSessions = 1` (`AzureServiceBusMissionCommandConsumer.cs:91`); 1–3 replicas (`forge-infra dev/500-app/main.bicep:233-234`). Inference: replicas scale on HTTP traffic, not queue length. |
 | Orphan body blobs | A body staged but never committed stays; uncommitted blocks expire after 7 days (Phase 54 B4). |
 | Resends after the 10-minute duplicate-detection window | Not deduplicated by the queue; inference: the runner's session state (same `CommandId`) turns a late resend into a no-op or `Interrupted`. |
+| Two-window TUI behaviour (section 4) | Live acceptance pending (Phase 53.9 Task 2); described from code. |
