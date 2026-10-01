@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Task 1 spike verified (2026-10-01); kerning and G8 decisions open.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Task 1 spike verified (2026-10-01); G8 decision open.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -40,13 +40,14 @@ image id, so a card that grows while a reply streams sends no new image.
 | # | Decision | Why |
 |---|---|---|
 | G1 | **Shapes: a small pure-C# renderer** (signed-distance rounded rectangles, hairlines, box-blur shadows, gamma-correct blending) and a PNG encoder on `System.IO.Compression`. | Only shapes are needed; AOT-clean, no native dependency. |
-| G2 | **Proportional text: StbTrueTypeSharp**, behind one adapter (`GlyphText`); the only file that references the package. | Same quality as Skia in the text spike, pure managed, AOT-clean (Task 1). **Correction (Task 1):** Stb reads only the legacy `kern` table, and Inter keeps its kerning in GPOS, so headings are unkerned. The kerning approach is open (Ameer). |
+| G2 | **Proportional text: StbTrueTypeSharp**, behind one adapter (`GlyphText`); the only file that references the package. | Same quality as Skia in the text spike, pure managed, AOT-clean (Task 1). **Correction (Task 1):** Stb reads only the legacy `kern` table, and Inter keeps its kerning in GPOS, so headings are unkerned. Kerning is G9. |
 | G3 | **No SkiaSharp.** | Native library per platform, several MB, needs a second native library for kerning; no visible gain (G2 evidence). Keeps the 53.2 decision. |
 | G4 | **Font: Inter (OFL), SemiBold and Bold static TTFs, embedded** in the binary. | Mockup's face; two weights cover brand (Bold) and names, crumb, headings (SemiBold). Licence allows embedding. |
 | G5 | **Images only where the X-ray marks them**; every other cell is terminal text. | Selection and copy keep working; images never carry body text. |
 | G6 | **Tiles, not per-card images** (see *How it renders*). | Streaming grows cards several times a second (53.8); tiles make growth free. |
 | G7 | **Every visual value is a theme token**: colours, shadow colour/alpha, radii, avatar fills. The literal scan becomes recursive over `Tui/` and also flags raw RGBA. | Themes as data (53.6); closes the scan gaps found above. |
 | G8 | **Terminal: Ghostty and Kitty only, no fallback** (53.2). Failure behaviour when the cell pixel size is unavailable is decided from Task 1's observation, before Task 2. | No silent degraded mode; the decision needs the measured behaviour. |
+| G9 | **Kerning: our own GPOS pair-kerning reader inside `GlyphText`** (PairPos formats 1 and 2, Extension lookups, Coverage and ClassDef tables), verified against HarfBuzz's output for Inter. **Image text is simple Latin only**: a heading or name with any other script is drawn as bold terminal text, which Ghostty shapes itself. (Ameer, 2026-10-01) | Every serious renderer uses HarfBuzz, but HarfBuzzSharp brings a native library per platform, and forking it means owning a C++ build per platform. SixLabors.Fonts needs a paid licence above $1M revenue; Typography.OpenFont is unmaintained. We need only pair kerning for one known font: about 200 testable lines and no dependency. Move to stock HarfBuzzSharp, unforked, only if image text must cover every script. |
 
 **Gates.** Security: N/A — local rendering only; no entry point, store, identity or secret.
 Engineering philosophy: named owners per box in the diagram, one adapter per external dependency
@@ -84,4 +85,4 @@ the supervisor compares the captures with the mockup (PASS/FAIL per row), and G8
 
 ## Next
 
-Ameer decides kerning and G8, which closes Task 1. Then lock the Task 2 design.
+Ameer decides G8 (terminals without images), which closes Task 1. Then lock the Task 2 design.

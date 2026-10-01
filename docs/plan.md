@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) — two decisions (kerning, no-image terminals), then the renderer design. |
+| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) — one decision (terminals without images), then the renderer design. |
 
 ## Active phases
 
