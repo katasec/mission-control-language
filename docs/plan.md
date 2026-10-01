@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 2 — start-up check and card edges (plan next). |
+| **NEXT STEP** | Fix the `forge chat` idle live-stream bug ([backlog](backlog.md)), then [Phase 56](phases/phase-56-tui-graphics.md) Task 2b. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges next |
+| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges done; paused for the stream fix |
 
 ## Design docs
 
