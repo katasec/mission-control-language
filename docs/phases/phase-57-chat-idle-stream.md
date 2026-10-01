@@ -1,6 +1,6 @@
 # Phase 57 — `forge chat` live stream survives idle
 
-> **Status (2026-10-02): Tasks 1–2 done and deployed; Task 3 acceptance half done — 180 s idle PASS, 300 s idle FAIL (under investigation).** Origin: found in [Phase 56](phase-56-tui-graphics.md)
+> **Status (2026-10-02): the fix works — Tasks 1–3 done (180 s and 300 s idle PASS). Task 4 (stale reconnect notice) next.** Origin: found in [Phase 56](phase-56-tui-graphics.md)
 > Task 2 acceptance. Pre-existing on forge-mcl `main` `cc998ac`.
 
 **Goal:** a `forge chat` window left idle for any length of time still shows new replies, with no
@@ -59,19 +59,9 @@ default endpoint.
 |---|---|---|
 | 1 — Host flushes headers (S1). **Done:** forge-conversations [#18](https://github.com/katasec/forge-conversations/pull/18) `918bcc2`; image `forge-conversation-host:0.8.1` (`sha256:c226e259…93fb`), revision `--0000013` Healthy, deployed 2026-10-01 20:51Z via `make 525-conversation-app`; forge-infra [#39](https://github.com/katasec/forge-infra/pull/39) open | forge-conversations, then forge-infra | A loopback Kestrel test opens `events?after=<last>` on an idle conversation with `ResponseHeadersRead` and a 2 s client timeout and gets 200 (fails before the fix). Build 0 warnings, tests pass. New Host image deployed with `make 525-conversation-app-what-if` then `make 525-conversation-app` (operator approves the deploy). |
 | 2 — Client reconnects on a non-session cancellation (S2, S2b). **Done:** forge-mcl [#34](https://github.com/katasec/forge-mcl/pull/34) `209682c`; 5 new tests red→green, suite 530 passed | forge-mcl | Unit tests: a fake stream that throws `TaskCanceledException(new TimeoutException())` reconnects once and reports it; repeated timeouts each reconnect; a session cancel still ends quietly; without a reconnect handler (line mode) the failure reaches `RunAsync`, which prints the S2b message and returns 1. Build 0 warnings, tests pass, AOT 0 IL warnings. |
-| 3 — Acceptance. **180 s: PASS** (installed `forge` from `209682c`, reply shown, no reconnect line). **300 s: FAIL** — the message was sent and the server answered (line-mode replay shows it), but the TUI showed two `connection lost` cycles and no reply within 42 s. See [Open: 300 s failure](#open-300-s-failure). | — | Default path, in Ghostty: idle 180 s, then send — the reply appears with no reconnect line. Idle 300 s, then send — at most one reconnect line, and the reply appears. ForgeAPI logs show no 499 at about 100 s. |
-
-## Open: 300 s failure
-
-| | |
-|---|---|
-| Symptom | Installed `forge` (`209682c`), Host `0.8.1`. Idle 300 s, then send at 330 s: the pill and "replying" appear, but no reply text by 372 s. The typescript has `connection lost; reconnecting` once before the send and again after it, then "Answerer is replying" at the end. A line-mode replay (`printf '' \| forge chat`) shows the server did answer. |
-| Odd | "Answerer is replying" was redrawn about 27 times during the idle period. Unexplained. |
-| Not affected | 180 s idle: PASS, no reconnect line. |
-| Suspects (unverified) | (1) Azure ingress cuts the quiet stream at 240 s; the reconnect may reopen from a stale cursor or drop events. (2) A second cut after the send. (3) The progress state (`Transcript.Replying`) left over from an old turn. Code: forge-mcl `ForgeChat.cs` `StreamAsync` (reconnect loop, cursor), `Tui/ChatTui.cs` (`_connectionLost` ~:272, live stream). Server: ForgeAPI and Host logs (`az containerapp logs show`, `rg-forge-dev`), one line per `events?after=N`. |
-| Reproduce | [tools/tui-capture](../../tools/tui-capture/README.md): keys `[[330, "Reply with just: idle check\r"], [372, "\u0004"]]`, capture at 300 and 362. For a timeline, timestamp each output chunk (add `time.monotonic()` to `relay.py`'s log) and match against the server logs. |
-| Status | An investigator is running (2026-10-02 ~01:15 +04); its findings go here. |
+| 3 — Acceptance. **Done.** 180 s: PASS (supervisor, Ghostty, installed `forge` `209682c`). 300 s: PASS, two timestamped runs: the ingress cuts the quiet stream at 240.0 s (Host log), the client reconnects with the same cursor 1–2.6 s later, and the reply is drawn 3.3 s and 9.5 s after sending. Every stream ends 200, no 499. (A first supervisor run was misread as a failure: escape-stripping placed the progress line after the cursor-addressed reply.) | — |
+| 4 — Clear the reconnect notice once events flow again. `ChatTui.cs:271` says the notice shows until an event arrives, but `ShowLive` (`:259`) only resets `_connectionLost`; the `NoticeLine` added at `:276` stays in the transcript for good. On the first event after a loss, remove that notice. | forge-mcl | A unit test: lost, then an event, and the notice is gone. Live: idle 300 s, send, and the notice disappears when the reply arrives. |
 
 ## Next
 
-Find why a reconnect after Azure's 240 s idle cut doesn't show the reply, fix it, then rerun both idle tests. Phase 57 is done only when 180 s and 300 s both pass.
+Task 4 (small). Then Phase 57 is done.
