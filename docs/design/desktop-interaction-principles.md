@@ -112,7 +112,7 @@ Running the Asylum*):
 > [phase-43.2-avalonia-vanilla-shell_completed.md](../phases/phase-43.2-avalonia-vanilla-shell_completed.md#task-4-design-visual-identity-skin).
 
 Forge Desktop currently runs stock Avalonia `FluentTheme` with zero customization
-([App.axaml:7](../../src/ForgeMission.Desktop/App.axaml)) — every control renders in Avalonia's
+(`App.axaml:7`, from the retired Avalonia shell; no longer in any repo) — every control renders in Avalonia's
 default gray. Direction agreed, not yet implemented (blocked on no active UI task needing it yet):
 
 - **Port the existing "Forge ember" tokens into Avalonia, don't adopt a pre-themed library.**

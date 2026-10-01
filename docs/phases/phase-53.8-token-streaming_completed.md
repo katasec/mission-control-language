@@ -25,3 +25,16 @@
 | 4 | Build 0 warnings; the CLI's Native AOT publish is clean. |
 
 Known: the runner handles one turn at a time across all conversations, so a second turn waits for the first ([backlog](../backlog.md)).
+
+## Incident 2026-09-30 — Host deadlock after a mid-turn restart (blocks Task 8)
+
+**Status: fixed (Host 0.5.0, forge-conversations#12); the wedged conversation recovered on deploy.** Follow-ups: [Phase 54](phase-54-orleans-alignment.md). Not caused by 53.8 (`MissionRunGrain` and `AdvanceAsync` unchanged since
+0.3.0); triggered when the Host 0.4.0 deploy restarted Orleans mid-turn (01:57:34Z).
+
+| Item | Detail |
+|---|---|
+| Root cause | The run checkpoint said `ExecutingProvider`; on reactivation `MissionRunGrain.OnActivateAsync` marks the run Interrupted and calls **back** into `ConversationGrain.RecordRunInterruptionAsync` (`MissionRunGrain.cs:28-54,123-129`). The activation was started by `ConversationGrain.AdvanceAsync` inside `RecordProgressAsync`; the conversation grain is not reentrant, so both wait 30 s and time out. The conversation's durable `PendingTransition` replays the cycle on every retry, restart or new call. |
+| Blast radius (dev) | Conversation `efc9b6d1…` wedged; its project's `ListMissionConversations` 503s; progress consumer (`MaxConcurrentSessions = 1`) would stall every conversation behind it; the dead-letter handler would retry forever. Billing for the turn had already settled. |
+| Not fixes | Restart, rollback to 0.3.0 (same code and state; would also mishandle deltas), purging the queue. |
+| Decision (Ameer) | **The runner owns the run outcome.** A Host restart no longer interrupts the provider call (it runs in the runner, which finished this turn at 01:57:36). On reactivation the run grain never calls the conversation grain and does not declare an interruption; the runner's completed/failed messages are the truth. Containment: the progress dead-letter handler settles or gives up on handler failure instead of retrying forever, and one wedged conversation must not stall others' progress. |
+| Recovery | Deploy the fixed Host; the pending transition then replays cleanly and the queued messages apply. |

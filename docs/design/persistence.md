@@ -9,20 +9,20 @@
 **Every persisted aggregate is fronted by an `I*Store` interface; callers depend on the
 interface, never on `RoomsDbContext` or a provider type.** The current implementations are
 EF Core / Postgres (`LedgerStore`, `ReadStore`, `WriteStore`, and now `PlatformKeyStore`),
-registered in [`RoomsDataServiceCollectionExtensions`](../../src/ForgeMission.Rooms.Data/RoomsDataServiceCollectionExtensions.cs).
+registered in [`RoomsDataServiceCollectionExtensions`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms.Data/RoomsDataServiceCollectionExtensions.cs).
 Swapping a store's backend is a **one-line DI change**, not a caller change.
 
 **Azure Table Storage is deferred, not adopted for existing Rooms/Billing stores.** Ship
 EF/Postgres there now — the data project already has the migration tooling, DI wiring, and
 IDbContextFactory pattern, so EF is zero marginal cost. When the cheap-storage move happens, it
 slots in behind the existing interfaces. This does not prevent a new bounded context from being
-Table-native: [durable conversations](durable-conversations.md) use Azure Table for their
-append-only event log and Orleans checkpoints without silently redefining the existing migration
+Table-native: conversations ([How conversations work](how-conversations-work.md#2-storage)) use
+Azure Table for their append-only event log and the `JournaledGrain` state row (`s-state`) without silently redefining the existing migration
 decision.
 
 ## Why platform_keys is the first Table Storage candidate
 
-When the move starts, [`platform_keys`](../../src/ForgeMission.Rooms.Data/) migrates first:
+When the move starts, [`platform_keys`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Billing/NpgsqlPlatformKeyStore.cs) (now owned by the Billing service in forge-platform) migrates first:
 
 - **Pure key→value lookup by `key_id`** — a natural `PartitionKey`/`RowKey`, no joins, no
   aggregation. Table Storage's exact sweet spot.

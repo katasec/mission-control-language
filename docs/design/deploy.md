@@ -8,79 +8,69 @@
 > [Phase 38.7 — Hosting & Deployment](../phases/phase-38.7-hosting-deployment.md); this doc is the
 > operational how-to that sits on top of it.
 
-## TL;DR — ship a ForgeUI change
+## TL;DR — ship a hosted-app change
 
-1. **Commit + push** to `main` in this repo.
-2. **Tag + push a release** to build the image via CI:
-   ```bash
-   git tag forge-ui-v0.6.0
-   git push origin forge-ui-v0.6.0
-   ```
+1. **Commit + merge** to `main` in the **owning repo** (table below).
+2. **Build the image:** tag + push a release in that repo (CI builds and pushes to ACR), or, for
+   the Conversation Host, build locally and push with crane ([gotcha 8](#gotchas)).
 3. **Deploy it** — commands live in `forge-infra`, not duplicated here:
    ```bash
    cd /Users/ameerdeen/progs/forge-infra
-   # edit the image tag in dev/500-app/main.bicepparam, then:
-   make 500-app-what-if
-   make 500-app
+   # edit the image tag in dev/<layer>/main.bicepparam, then:
+   make <layer>-what-if
+   make <layer>
    ```
 4. **Verify live** (see [Verify live](#verify-live) below).
 
-The full command set (bump-only, what-if preview, runner image, migration job, firewall access) is
+The full command set (bump-only, what-if preview, migration job, firewall access) is
 **owned by [`forge-infra/README.md`](https://github.com/katasec/forge-infra/blob/main/README.md)** —
 that repo has the Makefile, so its README can't drift from the commands the way a copy in a second
 repo would. Read it before deploying; don't rely on a paraphrase here.
 
 ## Topology
 
-Two container images, one registry, two Container Apps in one managed environment, fronted by a
-custom domain. All in Azure subscription (workforce), region **uaenorth**, resource group
-`rg-forge-dev`.
+All in Azure subscription (workforce), region **uaenorth**, resource group `rg-forge-dev`, one
+Container Apps environment (`cae-forge-dev`, layer 400), one registry
+(`crforgeroomsdev.azurecr.io`), one Key Vault (`kv-forgerooms-dev`). Conversations are explained in
+[How conversations work](how-conversations-work.md).
 
-```
- mission-control-language                  forge-runner                         katasec/forge-infra (IaC, layered Bicep + Makefile)
-   src/ForgeUI ──► Dockerfile.forgeui        src/ForgeMission.Runner ──► Dockerfile.runner  dev/100-base    RG · Log Analytics · ACR · Key Vault · app MI
-   src/ForgeMission.Api ──► Dockerfile.forgeapi      │                                      dev/150-ci      passwordless CI identity (GitHub OIDC)
-        │                                             │                                      dev/200-entra   app registration (manual, no Bicep)
-        │  git tag forge-ui-vX.Y.Z                   │  git tag forge-runner-vX.Y.Z         dev/300-data    Postgres Flexible Server + authbilling_db
-        │  (CI: OIDC → ACR, native amd64)            │  (CI: OIDC → ACR, native amd64)      dev/400-appenv  Container Apps env  cae-forge-dev
-        ▼                                             ▼                                      dev/450-migrate Manual migration job definition
-   ACR  crforgeroomsdev.azurecr.io                                                               dev/500-app     ForgeUI + runner Container Apps + domain
-     forge-ui:X.Y.Z          ───────────────────────────────────────────────────────────►  ca-forge-ui-dev    (orchestrator: identity, DB, SignalR, UI)
-     forge-runner:X.Y.Z      ───────────────────────────────────────────────────────────►  ca-forge-runner-dev (stateless mission execution, provider keys)
-                                                                                                  │
-   Key Vault kv-forgerooms-dev  (only secret store)                                                │  managed identity id-forge-dev pulls ACR + reads KV
-   Postgres  psql-forge-dev                                                                        ▼    (forge_rooms + authbilling_db, same server)
-                                                                                         https://forge.katasec.com  (managed TLS, SNI)
-```
+| Hosted app | Source repo | Image (dev, 2026-10-01) | Layer | Replicas | Ingress |
+|---|---|---|---|---|---|
+| ForgeUI (`ca-forge-ui-dev`): Rooms, OIDC sign-in, SignalR | forge-rooms `src/ForgeUI` | `forge-ui:0.7.0` | 500-app | 0–3 | Public, `forge.katasec.com` |
+| forge-runner (`ca-forge-runner-dev`): mission execution, provider keys | forge-runner | `forge-runner:0.19.0` | 500-app | 1–3 (always one, so the queue consumer runs) | Internal |
+| ForgeAPI: platform-key edge for `forge` CLI and Desktop | forge-platform `src/ForgeMission.Api` | `forge-api:0.7.0` | 550-api | 0–3 | Public, `api.forge.katasec.com` |
+| Billing service: keys, ledger, balances (`authbilling_db`) | forge-platform `src/ForgeMission.Billing.Service` | `forge-billing:0.1.2` | 540-billing | 1–2 | Internal |
+| Conversation Host: conversations (Orleans, Table/Blob) | forge-conversations `src/ForgeMission.ConversationHost` | `forge-conversation-host:0.8.0` | 525-conversation-app | 1 | Internal |
 
-- **`ca-forge-ui-dev`** — the orchestrator: OIDC identity, Postgres (`forge_rooms`), SignalR
-  (`RoomBroadcaster`, in-proc with no cross-replica backplane), all UI. It scales from zero to three
-  replicas in the dev-only environment; concurrent replicas can split connected clients until a
-  backplane is introduced.
-- **`ca-forge-runner-dev`** — stateless mission execution (Phase 39.1). Holds the **provider keys**
-  (`MCL_API_KEY`/`ANTHROPIC_API_KEY`/`XAI_API_KEY`); the orchestrator holds none. Internal ingress,
-  scales from zero to three replicas. A first request after idle accepts runner cold-start latency.
-- **`authbilling_db`** — a second database on the *same* Postgres server (`psql-forge-dev`), a
-  separate bounded context for `platform_keys` + `ledger_entries` (Phase 42.6). ForgeUI reads/writes
-  it via `ConnectionStrings__AuthBillingConnection`, wired explicitly in `dev/500-app`'s Bicep — not
-  derived from `WriteConnection` anymore.
+| Data / transport layer | Holds |
+|---|---|
+| 300-data | Postgres Flexible Server `psql-forge-dev` (`forge_rooms`, `authbilling_db`); connection strings in Key Vault |
+| 350-conversation-data | Conversation Storage account (Table `forgeconversationevents`, Blob `forgeconversationartifacts`), the internal Service Bus queues `private-mission-command` / `private-conversation-progress`, Host and runner identities |
+| 370-billing-data | The financial Service Bus queue `private-run-settlement` (runner → Billing) and the Billing, runner and ForgeAPI identities |
+| 380-conversation-edge | The edge-facing Service Bus queues `conversation-ingress` / `conversation-reply` |
+| 450-migrate | Manual migration job definition (never run by an app deploy) |
+
+Layer contents for 370 and 380 are summarised from their Bicep headers; `forge-infra/README.md` is
+the source of truth.
+
 - **DB migrations are a separate deliberate step**, not coupled to an app deploy: `dev/450-migrate`
   defines the job, `dev/500-app` never runs it automatically. See `forge-infra/README.md`.
-- **One live environment today (dev)**, fronted by `forge.katasec.com`, used solely by Ameer during
-  nights and weekends. Scale-to-zero is intentionally dev-only; revisit it before serving another
-  user or creating a production slice. A separate prod slice is a documented follow-up (38.7 §9),
-  not yet stood up.
+- **One live environment today (dev)**, used solely by Ameer. ForgeUI and ForgeAPI scale to zero
+  (dev-only; revisit before serving other users). The runner does not: one replica always runs,
+  because a replica scaled to zero has no queue consumer.
 
 ## Which image for which change
 
-| You changed… | Rebuild in the owning repository | Deploy (forge-infra) |
+| You changed… | Build the image | Deploy (forge-infra) |
 |---|---|---|
-| `src/ForgeUI` (rooms, nav shell, pages, orchestrator) | `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` | edit `dev/500-app/main.bicepparam`, then `make 500-app-what-if` and `make 500-app` |
-| `forge-runner`: `src/ForgeMission.Runner`, mission execution, provider-key wiring, or baked fallback `missions/` | In `~/progs/forge-runner`: `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app` |
-| `src/ForgeMission.Api`, hosted API-A messages/endpoints/billing gateway | `git tag forge-api-vX.Y.Z && git push origin forge-api-vX.Y.Z` | bump `image` in `dev/550-api/main.bicepparam`, `make 550-api` |
-| Infra (new secret, env var, scaling, domain, Postgres, a new `authbilling_db`-style DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
+| forge-rooms `src/ForgeUI` | In forge-rooms: `git tag forge-ui-vX.Y.Z && git push origin forge-ui-vX.Y.Z` (CI) | bump `image` in `dev/500-app/main.bicepparam`, `make 500-app-what-if`, `make 500-app` |
+| forge-runner | In forge-runner: `git tag forge-runner-vX.Y.Z && git push origin forge-runner-vX.Y.Z` (CI; first CI-built release 0.19.0) | bump `runnerImage` in `dev/500-app/main.bicepparam`, `make 500-app-what-if`, `make 500-app` |
+| forge-platform `src/ForgeMission.Api` (ForgeAPI) | In forge-platform: `git tag forge-api-vX.Y.Z && git push origin forge-api-vX.Y.Z` (CI) | bump `image` in `dev/550-api/main.bicepparam`, `make 550-api-what-if`, `make 550-api` |
+| forge-platform Billing service | In forge-platform: `git tag forge-billing-vX.Y.Z && git push origin forge-billing-vX.Y.Z` (CI) | bump `image` in `dev/540-billing/main.bicepparam`, `make 540-billing-what-if`, `make 540-billing` |
+| forge-conversations Conversation Host | No image CI: build locally (`--platform linux/amd64`) and push with crane ([gotcha 8](#gotchas)) | bump `hostImage` in `dev/525-conversation-app/main.bicepparam`, `make 525-conversation-app-what-if`, `make 525-conversation-app` |
+| Infra (new secret, env var, scaling, domain, a new DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
 | An EF migration needs to actually run | image already has `/app/migrate` baked in | `make 450-migrate` (updates the job definition only) then start the job — a separate, deliberate operator action |
-| The `forge` **CLI binary** (unrelated to hosting) | `release.yml` (osx/linux/win artifacts) | n/a — not a container |
+| The `forge` **CLI binary** (unrelated to hosting) | forge-mcl `make install` / its release workflow | n/a — not a container |
 
 ## Verify live
 
@@ -159,7 +149,7 @@ default shell here). Not a forge bug — a native pwsh argument-passing quirk wi
 
 Verify locally against the browser preview tooling **before** cutting an image. Full loop + gotchas:
 [Phase 40 hub §6](../phases/phase-40-forge-ui-shell.md#6-building-running--verifying-locally) and
-[UI Design System §9](ui-design-system.md#9-running-it-locally-and-two-gotchas-that-will-bite-you). In
+[UI Design System §11](ui-design-system.md#11-running-it-locally-and-two-gotchas-that-will-bite-you). In
 short: `preview_start forge-ui` (config in [`.claude/launch.json`](../../.claude/launch.json), HTTP
 `:5286`), dev sign-in `/auth/dev?user=alice`, verify at 375/768/1024 + dark. Real OIDC login needs
 HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login test.
@@ -171,8 +161,8 @@ HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login tes
    this is exactly how `authbilling_db` sat empty in prod for a day after the code merged (2026-07-18/19).
 2. **amd64 only.** Container Apps rejects `linux/arm64`. CI runners are amd64 (fine by default); a
    **local** `docker buildx` on Apple Silicon must pass `--platform linux/amd64`.
-3. **Single replica.** `RoomBroadcaster` SignalR is in-proc, so `ca-forge-ui-dev` runs one replica.
-   Scale-out later needs Azure SignalR + a backplane.
+3. **ForgeUI replicas.** `RoomBroadcaster` SignalR is in-proc with no backplane, so concurrent
+   ForgeUI replicas can split connected clients. Scale-out needs Azure SignalR + a backplane.
 4. **Secrets only via Key Vault** (`kv-forgerooms-dev`). No secret value is committed; Bicep uses KV
    references. Passwordless throughout (CI = OIDC federation, runtime = managed identity). The image
    itself carries no runtime secrets — they're injected at run time.

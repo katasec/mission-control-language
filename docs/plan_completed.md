@@ -24,7 +24,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 | Phase | Description | Status |
 |-------|-------------|--------|
 | [Phase 55 — `forge chat --hands`](phases/phase-55-forge-chat-hands.md) | Opt-in hands in `forge chat`: Bob reads, writes and edits files in the chat project after a one-time approval. | ✅ Complete 2026-10-01; live acceptance in the [completed record](phases/phase-55-forge-chat-hands_completed.md). |
-| [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md) | Align the conversation Host with Orleans guidance: one grain owner, a single atomic write, bodies in Blob, grain-observer fan-out on N silos, interleaved deltas. | ✅ Complete and live in dev (2026-10-01): Host 0.8.0, runner 0.18.0, ForgeAPI 0.7.0; evidence in the [completed record](phases/phase-54-orleans-alignment_completed.md). |
+| [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md) | Align the conversation Host with Orleans guidance: one grain owner, a single atomic write, bodies in Blob, grain-observer fan-out on N silos, interleaved deltas. | ✅ Complete and live in dev (2026-10-01): Host 0.8.0, runner 0.18.0 (runner now 0.19.0 via Phase 55), ForgeAPI 0.7.0; evidence in the [completed record](phases/phase-54-orleans-alignment_completed.md). |
 | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations; Desktop launch and UI simplification. | ✅ Cloud conversations done and live (2026-09-29); remaining spokes deferred to the [backlog](backlog.md) in favour of [Phase 53](phases/phase-53-forge-client.md). |
 | [Phase 51 — Desktop publish-script extraction](phases/phase-51-desktop-publish-script.md) | Extract Desktop publishing, remove obsolete local projects, and preserve the canonical release bundle contract. | Closed for this iteration 2026-09-28: local build, runtime, and publish checks verified; downloaded-artifact checksum acceptance deferred to [backlog](backlog.md). |
 | [Phase 50 — Repository extraction](phases/phase-50-repository-extraction.md) | Split this repo into single-purpose repos; move code only. | Closed for this iteration 2026-09-26: rows 1–6 extracted and verified; row 7 deferred to [backlog](backlog.md). |
@@ -88,7 +88,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 | &nbsp;&nbsp;↳ [43.1 Tool-execution engine](phases/phase-43.1-tool-execution-engine.md) | Forge executes `Read`/`Edit`/`Write`/`Bash` itself — no external `claude` CLI. | ✅ Done |
 | &nbsp;&nbsp;↳ [43.7 Workspace provider abstraction](phases/phase-43.7-workspace-provider.md) | `IWorkspace` (multi-root, `LocalDiskWorkspace` v1). | ✅ Done |
 | &nbsp;&nbsp;↳ ~~43.2 Avalonia vanilla shell~~ [(shelved)](phases/phase-43.2-avalonia-vanilla-shell.md) | Spike — Tasks 1–3 worked, Task 4 abandoned; code removed once WASM/Photino proved out. | Shelved, code removed 2026-08-01 |
-| &nbsp;&nbsp;↳ [43.2 Electron Forge Desktop shell](phases/phase-43.2-electron-forge-desktop-shell.md) | Superseded track — see [Architecture](phases/phase-43-forge-desktop.md#architecture-2026-08-01--supersedes-the-electronblazor-server-decision-below) for why. | Superseded by 43.8–43.11 |
+| &nbsp;&nbsp;↳ [43.2 Electron Forge Desktop shell](phases/phase-43.2-electron-forge-desktop-shell.md) | Superseded track — see [Architecture](phases/phase-43-forge-desktop.md#durable-decisions) for why. | Superseded by 43.8–43.11 |
 | &nbsp;&nbsp;↳ [43.13 Mission Runtime resolution & orchestration](phases/phase-43.13-mission-runtime-orchestration.md) | Shared `ForgeMission.Orchestration` (start/find/teardown the Mission Runtime), surface-agnostic. | ✅ Done 2026-08-04 |
 | &nbsp;&nbsp;↳ [43.14 Desktop cloud missions via API A](phases/phase-43.14-desktop-cloud-missions.md) | Desktop reaches cloud missions through API A (small additive extension), not API B. | ✅ **DONE + LIVE 2026-08-08** — all 10 tasks, 4 named live observations, see its own [_completed doc](phases/phase-43.14-desktop-cloud-missions_completed.md) |
 | [Phase 40 — Forge UI App Shell & Responsive Foundation](phases/phase-40-forge-ui-shell.md) | Multi-surface, mobile-first app shell (rail↔bottom-tab-bar nav: Rooms · Library · Account); absorbs [38.8](phases/phase-38.8-mobile-access.md). Full status per sub-spoke in the hub. | **✅ COMPLETE + LIVE** (`forge-ui:0.3.4`, user-verified installable) |
@@ -96,6 +96,14 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 | &nbsp;&nbsp;↳ [40.2 App Navigation Shell](phases/phase-40.2-app-navigation-shell.md) | Net-new nav layer: `NavShell.razor`, `/library`, `/account`. | Done (2026-07-12, verified in-browser) — `plan.md` previously showed this as "Design"; corrected 2026-08-09 after checking the spoke's own status line and confirming `NavShell.razor`/`Library.razor`/`Account.razor` exist in code |
 | &nbsp;&nbsp;↳ [40.3 Responsive Surface Collapse](phases/phase-40.3-responsive-collapse.md) | Rooms' two-pane → master/detail on mobile; absorbs 38.8 Task 1. | Done (2026-07-12, verified in-browser) — same correction as 40.2 |
 | &nbsp;&nbsp;↳ [40.4 PWA Shell](phases/phase-40.4-pwa-shell.md) | Installable, online-only PWA (manifest, icons, deliberate service worker); absorbs 38.8 Task 2. | **✅ Done + live** |
+
+## Resolved backlog items
+
+| Item | Resolution |
+|------|------------|
+| "How conversations work" design doc | Done 2026-10-01: [how-conversations-work.md](design/how-conversations-work.md) is the current conversation reference; it replaces the stale parts of [durable-conversations.md](design/durable-conversations.md). |
+| Cloud as the default local target (replacing Kind) | Done as [Phase 52.1](phases/phase-52.1-cloud-conversations.md). |
+| forge-runner image CI identity | Done 2026-10-01: forge-infra 150-ci federated credential `gh-runner-image` ([katasec/forge-infra#36](https://github.com/katasec/forge-infra/pull/36)), the five CI repo variables, and Write on `ghcr.io/katasec/forge-runner`; runner 0.19.0 was the first CI-built release. |
 
 ## Resolved open issues
 
@@ -196,7 +204,7 @@ database. Defused 2026-07-18, structurally fixed 2026-07-19 — full incident + 
 in [phase-42.6-hosted-endpoint-ttfa_completed.md](phases/phase-42.6-hosted-endpoint-ttfa_completed.md#migration-job-db-wipe--defused-2026-07-18-structurally-fixed-2026-07-19)
 (not duplicated here). The structural fix: deploying a migration job definition
 (`make 450-migrate`) and starting a migration are now two separate deliberate steps — see
-[AGENTS.md](../AGENTS.md#deploying-the-hosted-app-forge-infra--separate-from-the-release-workflow-above).
+[AGENTS.md](../AGENTS.md#deploying-the-hosted-app-forge-infra).
 
 **Status:** Closed — not a deploy gate, structural recurrence prevention in place.
 

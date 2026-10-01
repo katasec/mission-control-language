@@ -131,8 +131,8 @@ Orchestration loop. Walks the pipeline in order, calls `IExpertRunner` for each 
 ```csharp
 interface IExpertRunner
 {
-    Task<StepEnvelope> RunAsync(ExpertDefinition expert, string context, CancellationToken ct);
-    IAsyncEnumerable<string> StreamAsync(ExpertDefinition expert, string context, CancellationToken ct);
+    Task<StepEnvelope> RunAsync(ExpertDefinition expert, Dictionary<string, object> context, CancellationToken ct = default);
+    IAsyncEnumerable<string> StreamAsync(ExpertDefinition expert, Dictionary<string, object> context, CancellationToken ct = default);
 }
 ```
 
@@ -141,8 +141,16 @@ interface IExpertRunner
 ```csharp
 class PipelineRunner
 {
-    PipelineRunner(IReadOnlyDictionary<string, IExpertRunner> runners);
-    PipelineRunner(IExpertRunner defaultRunner);   // backward-compat: wraps as "default"
+    PipelineRunner(IReadOnlyDictionary<string, IExpertRunner> runners,
+                   ExecutionConfig? execution = null, IWebSearch? webSearch = null);
+    PipelineRunner(IExpertRunner defaultRunner, IWebSearch? webSearch = null); // wraps as "default"
+
+    Task<MissionResult> RunAsync(Program ast, Dictionary<string, ExpertDefinition> experts,
+                                 PipelineRunOptions options, CancellationToken ct = default);
+    // Resumes a root-scoped tool pause (durable hands, Core 0.1.3):
+    Task<MissionResult> ResumeAsync(Program ast, Dictionary<string, ExpertDefinition> experts,
+                                    PipelineResumeRequest request, PipelineRunOptions observers,
+                                    CancellationToken ct = default);
 }
 ```
 
@@ -212,6 +220,15 @@ Thin entry point. Reads `forge.toml` (via `ForgeTomlReader`), builds the runner 
 | `forge serve` | Expose the mission as an OpenAI-compatible endpoint |
 | `forge agent start/stop` | Start/stop the agent container (Docker) |
 | `forge webui start/stop` | Start/stop Open WebUI connected to the agent |
+| `forge chat [--hands]` | Chat with the default Chat mission in the cloud (TUI on a terminal, line mode when piped); `--hands` lets it read, write and edit files in the project folder — see [How conversations work](how-conversations-work.md#4-clients-and-turns) |
+| `forge login` / `forge logout` / `forge whoami` | Sign in through the browser and store a platform key / remove it / show the signed-in user and credit balance |
+| `forge exec` | Run a hosted mission once and print the answer |
+| `forge claude` | Launch Claude Code talking to a forge mission |
+| `forge connect vscode` | Wire an editor's Claude Code extension to a forge mission |
+| `forge mcp` | Expose a mission as a stdio MCP server |
+| `forge publish` | Package a mission directory into an OCI artifact and push it |
+| `forge registry login` | Save registry credentials to `~/.forge/credentials.json` |
+| `forge clean` | Remove cached OCI experts from `~/.forge/experts` |
 
 ---
 

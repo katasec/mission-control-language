@@ -25,7 +25,7 @@
 
 | Task | Repo | Done when |
 |---|---|---|
-| 1 | forge-mcl | L2 (in progress), then L1. Suite green, 0 warnings, AOT 0 ILC warnings. |
+| 1 | forge-mcl | L2, then L1 — done ([completed record](phase-53.9-tui-live-sessions_completed.md)). Suite green, 0 warnings, AOT 0 ILC warnings. |
 | 2 | acceptance | `forge` from `make install` on `main`: two `forge chat` windows on one conversation; a question sent from one streams in both; Ctrl-D in either while a reply streams exits cleanly; reopening replays. |
 
 ## Next

@@ -1,37 +1,41 @@
 # Durable conversations — Orleans, Azure Table, Blob, and Service Bus
 
-> **Current design: see [How conversations work](how-conversations-work.md).** Where this doc differs from it, that doc wins.
+> **Current design: see [How conversations work](how-conversations-work.md).** This doc keeps the
+> original decision (2026-08-12) and its boundaries. Everything that has since changed is in
+> [Historical design (superseded)](#historical-design-superseded) at the end and must not be used
+> as current guidance.
 
-> **Status: approved architectural direction, 2026-08-12.** The first implementation is
-> [Phase 43.16 — Durable Janus conversation proof](../phases/phase-43.16-janus-desktop-local-poc.md).
-> Forge Desktop and Forge Rooms are different projections of one durable conversation, not separate
-> stores or runtimes.
->
-> **Amended by [Phase 54](../phases/phase-54-orleans-alignment.md#tasks-12-design-locked-2026-09-30)
-> (2026-09-30):** `MissionRunGrain` is removed; `ConversationGrain` is a `JournaledGrain` whose
-> events and state row commit in one Table transaction, replacing Orleans grain-storage
-> checkpoints. Where this doc says otherwise, Phase 54 wins.
+## Current state (2026-10-01)
+
+| Fact | Now |
+|---|---|
+| Deployment | The 525 layer is live in dev: Conversation Host 0.8.0, one replica, internal ingress only. |
+| Grains | One grain, `ConversationGrain` (`JournaledGrain`); its events and state row commit in one Table transaction ([Phase 54](../phases/phase-54-orleans-alignment_completed.md#tasks-12-design-locked-2026-09-30)). `MissionRunGrain` and grain-storage checkpoints are gone. |
+| Queues | `conversation-ingress` / `conversation-reply` (edge ↔ Host), `private-mission-command` (Host → forge-runner), `private-conversation-progress` (forge-runner → Host). |
+| Client entry | ForgeAPI `POST /api/{MessageName}` behind platform-key auth; the Host has no public routes. |
+| Execution | forge-runner (the old mission Worker was absorbed in Phase 52.1). |
 
 ## Decision
 
 A Forge conversation is a durable, ordered record of people, mission participants, lifecycle
 events, and local-capability hand-offs. It has one canonical event sequence:
 
-    Forge Desktop / Forge Rooms
+    forge chat / Forge Desktop / (later) Rooms
                 |
-         Conversation API
+         ForgeAPI edge
                 |
-        ConversationGrain
-          /             \
- Azure Table events   MissionRunGrain
-       + Blob                |
-                    Service Bus command queue
-                            |
-                      mission worker
+     conversation-ingress queue
+                |
+        ConversationGrain  ──  Azure Table events + Blob bodies
+                |
+     private-mission-command queue
+                |
+           forge-runner ── private-conversation-progress ──> ConversationGrain
 
 Desktop remains the holder of local authority. Only Client Runtime can authorize and execute file,
 terminal, browser, Git, or Docker capabilities. A mission requests a capability; it never gets
 desktop access. Rooms renders the same durable events but does not gain those capabilities.
+
 
 ## Boundary with existing decisions
 
@@ -58,13 +62,48 @@ makes that separation materially harder to retrofit.
 | Tier | Conversation responsibility | Must not hold |
 |---|---|---|
 | 1 — internet-facing | Authenticate/authorize and route browser, Desktop, and API requests to the conversation application service. | Azure Table/Blob credentials or data-plane RBAC. |
-| 2 — internal applications | Conversation/Orleans service owns conversation state; mission worker executes commands and reports through an explicit internal service or durable-message contract. | Another bounded context's datastore credentials. |
+| 2 — internal applications | Conversation/Orleans service owns conversation state; forge-runner executes commands and reports through the private progress queue. | Another bounded context's datastore credentials. |
 | 3 — data | Conversation Azure Table/Blob state; the Service Bus command/progress transport used by tier-2 services. | Public ingress. |
 
 **One datastore per bounded context is also Type-1.** The conversation store is owned by the
 conversation application service. No other service queries or mutates it directly; data moves
 between bounded contexts through a service contract or a durable message, never a cross-store query
 or foreign key.
+
+## External collaboration projections (future)
+
+Forge may later project its durable conversation into an external collaboration system (for example,
+a [Buzz](https://github.com/block/buzz) room) when that product integration has a concrete user
+need. This is deliberately not an integration commitment or a Phase 43.16 deliverable.
+
+The adapter is a distinct Tier-2 projection consumer: it reads the Conversation service through a
+named internal contract, remembers its own delivery cursor, and uses Forge `EventId` for
+idempotency while retaining Forge `Sequence` for source ordering. It owns any external credentials
+and external projection state. It never reads conversation Table/Blob directly, never becomes a
+second sequence allocator, and never turns transient token deltas/typing into durable transcript
+facts. Start with one Forge identity and carry `Participant`, `RunId`, `Sequence`, and `EventId` as
+metadata; mapping individual Janus participants to external identities is a separate product and
+identity decision. Projection UIs may summarize routine successful tool bursts, but approval,
+rejection, tool hand-off/result, error, and interrupted state remain individually visible.
+
+
+## Deferred
+
+- Human intervention/suspend/resume (43.5).
+- General MCL checkpoint/resume for uncertain provider calls.
+- Cloud catalog/OCI, multi-silo HA, Azure SignalR backplane, regional recovery/load shedding.
+- Orleans durable-collection APIs until their exact supported public surface is selected.
+- Migration of existing Rooms, membership, ledger, or other Postgres stores.
+
+
+## Historical design (superseded)
+
+> **Superseded.** The sections below describe the 2026-08 design: `MissionRunGrain`, grain-storage
+> checkpoints, the `mission-command` / `conversation-progress` queues, a mission Worker, direct
+> `POST /conversations` routes, and a local Kind topology. None of these exist now. Current design:
+> [How conversations work](how-conversations-work.md).
+
+### Original tiering notes (Worker era)
 
 This makes the following current-infrastructure choices Type-2 and deliberately reversible before
 cloud deployment: direct Worker Table/Blob grants, external ingress on a state-owning Conversation
@@ -83,7 +122,7 @@ state-owning Conversation service consumes that queue and is the only process th
 event/command IDs and the conversation session ID; the service's grain remains the sole sequence
 allocator.
 
-## Durable model
+### Durable model
 
 | Grain | Key | Durable responsibility | Not responsible for |
 |---|---|---|---|
@@ -136,7 +175,7 @@ already-applied command ID.
 Retention/compaction is deferred. A later compactor must write a verified summary/artifact event
 before deletion; no initial implementation deletes transcript data.
 
-## Reliable command and progress delivery
+### Reliable command and progress delivery
 
 Service Bus carries work commands and completed trace/progress facts, never the transcript or UI
 stream:
@@ -158,7 +197,7 @@ its command only after the corresponding progress fact is broker-accepted; the C
 completes progress only after its grain has durably accepted the idempotent event. Service Bus is
 not the browser/Desktop event source: clients reconnect from the durable sequence.
 
-## Mission execution and failure semantics
+### Mission execution and failure semantics
 
 Pipeline execution exposes awaited, nested-mission-safe trace callbacks: mission path, participant,
 attempt, lifecycle, completed StepEnvelope, and tool-request identity. Callback completion is
@@ -176,7 +215,7 @@ a tool wait is resumable; a completed step is never silently rerun; a run found 
 completed safe boundary becomes visible 'interrupted'. General checkpoint/resume of an uncertain
 provider call is deferred rather than pretending duplicate calls cannot happen.
 
-## Reconnect and projections
+### Reconnect and projections
 
 ### Transport-neutral conversation messages
 
@@ -208,23 +247,8 @@ updates. Clients retain their last rendered sequence and deduplicate by event ID
 normal, not data loss. Desktop renders group chat; Rooms and the later 43.4 workbench are further
 projections of the same events, not new trace databases.
 
-### External collaboration projections
 
-Forge may later project its durable conversation into an external collaboration system (for example,
-a [Buzz](https://github.com/block/buzz) room) when that product integration has a concrete user
-need. This is deliberately not an integration commitment or a Phase 43.16 deliverable.
-
-The adapter is a distinct Tier-2 projection consumer: it reads the Conversation service through a
-named internal contract, remembers its own delivery cursor, and uses Forge `EventId` for
-idempotency while retaining Forge `Sequence` for source ordering. It owns any external credentials
-and external projection state. It never reads conversation Table/Blob directly, never becomes a
-second sequence allocator, and never turns transient token deltas/typing into durable transcript
-facts. Start with one Forge identity and carry `Participant`, `RunId`, `Sequence`, and `EventId` as
-metadata; mapping individual Janus participants to external identities is a separate product and
-identity decision. Projection UIs may summarize routine successful tool bursts, but approval,
-rejection, tool hand-off/result, error, and interrupted state remain individually visible.
-
-## Local Kind topology
+### Local Kind topology
 
     Desktop / Client Runtime (host machine)
                   |
@@ -248,7 +272,8 @@ from the first product proof; Azurite and the Service Bus emulator are not part 
 topology. Automated tests may use emulators where appropriate, but a successful emulator run is
 never the deployment proof.
 
-## Azure development infrastructure
+
+### Azure development infrastructure
 
 Azure infrastructure is a required deliverable of the durable-conversation work, not a later
 configuration detail. The current dev resource group has no Storage account and no Service Bus
@@ -345,11 +370,3 @@ The forge-infra Makefile gains '350-conversation-data-what-if' and
 
 The Azure CLI is for observation, verification, and the Make targets' deployment path; it is never
 used to hand-create a resource that Bicep must own.
-
-## Deferred
-
-- Human intervention/suspend/resume (43.5).
-- General MCL checkpoint/resume for uncertain provider calls.
-- Cloud catalog/OCI, multi-silo HA, Azure SignalR backplane, regional recovery/load shedding.
-- Orleans durable-collection APIs until their exact supported public surface is selected.
-- Migration of existing Rooms, membership, ledger, or other Postgres stores.

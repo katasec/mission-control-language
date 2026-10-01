@@ -1,11 +1,14 @@
 # How conversations work
 
-> **Status: current, 2026-10-01** (reviewed against the code; all 23 diagrams parse with Mermaid 11). This doc explains a Forge conversation from end to end: a turn,
+> **Status: current, 2026-10-01** (reviewed against the code; the 23 diagrams present at review parse with Mermaid 11; the chat-modes diagram added later has not been parse-checked). This doc explains a Forge conversation from end to end: a turn,
 > storage, live events, clients, hands, and failure. It replaces the stale parts of
 > [durable-conversations.md](durable-conversations.md) (`MissionRunGrain`, grain-storage
-> checkpoints, `PendingTransition`). It matches Host 0.8.0, runner 0.19.0 (Core 0.1.3), ForgeAPI
-> 0.7.0, Contracts 0.7.0, Client 0.6.0 (client Core 0.1.0/0.1.1; the path guard runs in the client
-> ClientRuntime on Core 0.1.0), and `forge` from forge-mcl `main` after Phase 53.9.
+> checkpoints, `PendingTransition`). It matches Conversation Host 0.8.0 (one replica), forge-runner
+> 0.19.0 (`Katasec.Forge.Mcl.Core` 0.1.3; at least one replica always runs), ForgeAPI 0.7.0,
+> `Katasec.Forge.Conversations.Contracts` 0.7.0, `Katasec.Forge.Client` 0.6.0 with
+> `Katasec.Forge.Client.Contracts` 0.1.0 (client-side `Katasec.Forge.Mcl.Core` 0.1.0/0.1.1; the path
+> guard runs in the client ClientRuntime on Core 0.1.0), and `forge` from forge-mcl `main` after
+> Phase 53.9.
 
 Repos are named by their short name (`forge-conversations`, `forge-runner`, …). Paths without a
 repo prefix are in `forge-conversations/src/ForgeMission.ConversationHost/`; other paths name their
@@ -681,7 +684,7 @@ dropped.
 | Turn cancel and the runner | The runner is not told; inference: it finishes its work and its later facts are rejected ([section 1](#1-a-turns-life)). |
 | Desktop client upgrade | Desktop is on Contracts 0.4.0 and does not execute hands. Backlog. |
 | Host replica count is 1 | The design is correct for N silos (tested with 2); scaling out is a separate decision (`forge-infra/dev/525-conversation-app/main.bicep:116-117`). |
-| Runner processes one conversation at a time per replica | `MaxConcurrentSessions = 1` (`forge-runner/…/Conversations/AzureServiceBusMissionCommandConsumer.cs:91`); 1–3 replicas (`forge-infra/dev/500-app/main.bicep:233-234`). Inference: replicas scale on HTTP traffic, not queue length. |
+| Runner processes one conversation at a time per replica | `MaxConcurrentSessions = 1` (`forge-runner/…/Conversations/AzureServiceBusMissionCommandConsumer.cs:91`); 1–3 replicas, minimum 1 so the queue consumer always runs (`forge-infra/dev/500-app/main.bicep:233-234`). Inference: replicas scale on HTTP traffic, not queue length. |
 | Orphan body blobs | A body blob committed but never referenced by a grain commit stays (Phase 54 B4). Staged blocks never committed expire after 7 days (Phase 54 B7). |
 | Resends after the 10-minute duplicate-detection window | Not deduplicated by the queue; inference: the runner's session state (same `CommandId`) turns a late resend into a no-op or `Interrupted`. |
 | Not covered live | Two `--hands` windows; the TUI reconnect notice; hands Write/Edit and cancel mid-tool. |
