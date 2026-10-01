@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 57](phases/phase-57-chat-idle-stream.md) — Task 4 (clear the reconnect notice), then [Phase 56](phases/phase-56-tui-graphics.md) Task 2b. |
+| **NEXT STEP** | [Phase 57](phases/phase-57-chat-idle-stream.md) — Task 4 (idle sleep), then [Phase 56](phases/phase-56-tui-graphics.md) Task 2b. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [57](phases/phase-57-chat-idle-stream.md) | `forge chat` live stream survives idle | Fix verified live; one small notice fix left |
+| [57](phases/phase-57-chat-idle-stream.md) | `forge chat` live stream survives idle | Fix verified live; idle sleep (Task 4) left |
 | [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges done; paused for the stream fix |
 
 ## Design docs
