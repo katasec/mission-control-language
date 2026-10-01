@@ -37,10 +37,11 @@ client.
 
 | Task | Repo | Done when |
 |---|---|---|
-| 1 | probe (supervisor) | A live run shows whether the empty-schema tools yield `file_path`; if not, a forge-runner PR switches to `AgentToolDeclarations` and is deployed. |
+| 1 | probe (supervisor) — **done 2026-10-01: fails** | Anthropic (Haiku 4.5) rejects the runner's empty `{}` schema with 400 `input_schema.type: Field required`; with `{"type":"object"}` the model sends `path`, `{}` or `file` (3 runs), never `file_path`. So the runner must use Core's `AgentToolDeclarations` (real schemas, `file_path` required) — Task 1b. |
+| 1b | forge-runner | `RootTools` uses `AgentToolDeclarations.Read/Write/Edit` (and `Bash` for the terminal profile) instead of empty-schema tools; runner image via CI; deployed. Done when: suite green; a test asserts each declared tool's schema requires `file_path`; deployed runner revision healthy. |
 | 2 | forge-mcl | `--hands`; one-time approval (H3); `ChatHands` mission (H4); attach + execute from the stream (H5); cancel on exit (H7); rendering (H8); README. Tests: flag parsing, policy per mode, approval prompt behaviour (approve, decline, piped-without-approval), mission selection, hands-event rendering. Suite green, 0 warnings. |
 | 3 | acceptance | Published `forge` from `make install` on `main`. First interactive `forge chat --hands` in a dedicated project asks once and approves; a file `secret.txt` with a random codeword; asked to read it, the reply contains the codeword; the stream shows `MissionHandsRequested` → `MissionHandsResult`. A second run (piped) does not ask and also works. Plain `forge chat` unchanged. |
 
 ## Next
 
-Task 1 (schema probe), then Task 2.
+Tasks 1b (runner) and 2 (CLI) in parallel, then 3 (acceptance).
