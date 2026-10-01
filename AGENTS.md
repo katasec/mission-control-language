@@ -371,5 +371,6 @@ docs/
 agents/          — agent definitions
 missions/        — example + built-in missions
 skills/          — repo copies of agent skills (e.g. checkpoint)
+tools/           — supervisor tools (tui-capture: live Ghostty checks)
 clients/, editors/, html/ — to be placed (Phase 50 row 7)
 ```

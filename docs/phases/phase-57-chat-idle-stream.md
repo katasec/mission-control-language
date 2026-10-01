@@ -23,6 +23,8 @@ sequenceDiagram
 
 ## Evidence (read-only investigation 2026-10-01 – 2026-10-02)
 
+Scratchpad paths below were session-local and are not kept; the facts are recorded here.
+
 | Fact | Source |
 |---|---|
 | Idle windows stop showing replies; restart shows them all; same on `main` and the Phase 56 branch | pty runs, 180 s and 120 s idle: never; 0 s idle: 5–6 s. Supervisor scratchpad `stall/` |
@@ -57,7 +59,18 @@ default endpoint.
 |---|---|---|
 | 1 — Host flushes headers (S1). **Done:** forge-conversations [#18](https://github.com/katasec/forge-conversations/pull/18) `918bcc2`; image `forge-conversation-host:0.8.1` (`sha256:c226e259…93fb`), revision `--0000013` Healthy, deployed 2026-10-01 20:51Z via `make 525-conversation-app`; forge-infra [#39](https://github.com/katasec/forge-infra/pull/39) open | forge-conversations, then forge-infra | A loopback Kestrel test opens `events?after=<last>` on an idle conversation with `ResponseHeadersRead` and a 2 s client timeout and gets 200 (fails before the fix). Build 0 warnings, tests pass. New Host image deployed with `make 525-conversation-app-what-if` then `make 525-conversation-app` (operator approves the deploy). |
 | 2 — Client reconnects on a non-session cancellation (S2, S2b). **Done:** forge-mcl [#34](https://github.com/katasec/forge-mcl/pull/34) `209682c`; 5 new tests red→green, suite 530 passed | forge-mcl | Unit tests: a fake stream that throws `TaskCanceledException(new TimeoutException())` reconnects once and reports it; repeated timeouts each reconnect; a session cancel still ends quietly; without a reconnect handler (line mode) the failure reaches `RunAsync`, which prints the S2b message and returns 1. Build 0 warnings, tests pass, AOT 0 IL warnings. |
-| 3 — Acceptance. **180 s: PASS** (installed `forge` from `209682c`, reply shown, no reconnect line). **300 s: FAIL** — the message was sent and the server answered (line-mode replay shows it), but the TUI showed two `connection lost` cycles and no reply within 42 s. Investigation running (timestamped client and server timeline); evidence in scratchpad `accept/ts-idle300`. | — | Default path, in Ghostty: idle 180 s, then send — the reply appears with no reconnect line. Idle 300 s, then send — at most one reconnect line, and the reply appears. ForgeAPI logs show no 499 at about 100 s. |
+| 3 — Acceptance. **180 s: PASS** (installed `forge` from `209682c`, reply shown, no reconnect line). **300 s: FAIL** — the message was sent and the server answered (line-mode replay shows it), but the TUI showed two `connection lost` cycles and no reply within 42 s. See [Open: 300 s failure](#open-300-s-failure). | — | Default path, in Ghostty: idle 180 s, then send — the reply appears with no reconnect line. Idle 300 s, then send — at most one reconnect line, and the reply appears. ForgeAPI logs show no 499 at about 100 s. |
+
+## Open: 300 s failure
+
+| | |
+|---|---|
+| Symptom | Installed `forge` (`209682c`), Host `0.8.1`. Idle 300 s, then send at 330 s: the pill and "replying" appear, but no reply text by 372 s. The typescript has `connection lost; reconnecting` once before the send and again after it, then "Answerer is replying" at the end. A line-mode replay (`printf '' \| forge chat`) shows the server did answer. |
+| Odd | "Answerer is replying" was redrawn about 27 times during the idle period. Unexplained. |
+| Not affected | 180 s idle: PASS, no reconnect line. |
+| Suspects (unverified) | (1) Azure ingress cuts the quiet stream at 240 s; the reconnect may reopen from a stale cursor or drop events. (2) A second cut after the send. (3) The progress state (`Transcript.Replying`) left over from an old turn. Code: forge-mcl `ForgeChat.cs` `StreamAsync` (reconnect loop, cursor), `Tui/ChatTui.cs` (`_connectionLost` ~:272, live stream). Server: ForgeAPI and Host logs (`az containerapp logs show`, `rg-forge-dev`), one line per `events?after=N`. |
+| Reproduce | [tools/tui-capture](../../tools/tui-capture/README.md): keys `[[330, "Reply with just: idle check\r"], [372, "\u0004"]]`, capture at 300 and 362. For a timeline, timestamp each output chunk (add `time.monotonic()` to `relay.py`'s log) and match against the server logs. |
+| Status | An investigator is running (2026-10-02 ~01:15 +04); its findings go here. |
 
 ## Next
 

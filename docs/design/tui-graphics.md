@@ -26,7 +26,7 @@ Images forge draws itself (e.g. the mission graph) take their colours from the a
 
 > Ghostty 1.3.1 on the MacBook's Retina display (cell 19×42 px) and a 1× external display
 > (10×21 px), XenoAtom.Terminal.UI 3.10.0, Native AOT osx-arm64. Supervisor reviewed every
-> capture. Spike sources: supervisor scratchpad `gfx56` (not in any repo).
+> capture. Spike sources: supervisor scratchpad `gfx56` (not kept). Live-check tools: [tools/tui-capture](../../tools/tui-capture/README.md).
 > Decisions: [Phase 56](../phases/phase-56-tui-graphics.md).
 
 | Check | Observation | Verdict |
