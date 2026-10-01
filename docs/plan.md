@@ -8,12 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Choose the next phase with Ameer. [Phase 54](phases/phase-54-orleans-alignment.md) is complete; its follow-ups (conversation Host explainer doc, Desktop client upgrade, `forge chat` with hands) are in the [backlog](backlog.md). |
+| **NEXT STEP** | [Phase 55 — `forge chat --hands`](phases/phase-55-forge-chat-hands.md): build Bob on a default client (Task 1 schema probe, then the CLI). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 55 — `forge chat --hands`](phases/phase-55-forge-chat-hands.md) | Opt-in hands in `forge chat`: Bob reads, writes and edits files in the chat project folder after a one-time approval. | 🔵 Design locked; build next. |
 | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 forge-client, conversation memory, the `forge chat` TUI, naked Claude default and token streaming done; next step to choose. |
 | [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
 
