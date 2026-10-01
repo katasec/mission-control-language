@@ -1,6 +1,6 @@
 # How conversations work
 
-> **Status: draft, 2026-10-01.** This doc explains a Forge conversation from end to end: a turn,
+> **Status: current, 2026-10-01** (reviewed against the code; all 23 diagrams parse with Mermaid 11). This doc explains a Forge conversation from end to end: a turn,
 > storage, live events, clients, hands, and failure. It replaces the stale parts of
 > [durable-conversations.md](durable-conversations.md) (`MissionRunGrain`, grain-storage
 > checkpoints, `PendingTransition`). It matches Host 0.8.0, runner 0.19.0 (Core 0.1.3), ForgeAPI
