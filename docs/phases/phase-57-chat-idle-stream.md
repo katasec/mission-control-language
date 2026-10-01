@@ -40,6 +40,7 @@ sequenceDiagram
 |---|---|---|
 | S1 | **The Host flushes headers as soon as the stream opens**: `await response.Body.FlushAsync(ct)` right after `StartAsync`, and the misleading comment fixed. | The root cause; one line at the owner. |
 | S2 | **The client treats a cancellation that isn't the session's as a lost connection**: `OperationCanceledException when !ct.IsCancellationRequested` reconnects through the existing path and shows the existing `connection lost; reconnecting` line. Ctrl-D still exits quietly. | Any future silent stall becomes visible and recovers, instead of killing the stream. |
+| S2b | **Line mode stops visibly.** It has no reconnect (`lost: null`), so a lost connection (`OperationCanceledException` not from the session, or `IOException`) ends with `chat failed: connection lost (<reason>)` on stderr and exit 1, not a stack trace. Ctrl-C still cancels the turn (exit 130). (Task 2 plan review) | Today these crash past `RunAsync`. One catch at the owning boundary. |
 | S3 | **No heartbeat now.** | With S1, an ingress cut at 240 s reconnects (S2 and the existing `IOException` path). A heartbeat needs a timer interleaved with the event reader; revisit only if reconnect lines become a nuisance ([backlog](../backlog.md)). |
 | S4 | **No forge-client or forge-platform change**, and the client timeout stays at the default. | Once headers flush, the 100 s wait never applies to the stream. |
 
@@ -55,7 +56,7 @@ default endpoint.
 | Task | Repo | Done when |
 |---|---|---|
 | 1 — Host flushes headers (S1) | forge-conversations, then forge-infra | A loopback Kestrel test opens `events?after=<last>` on an idle conversation with `ResponseHeadersRead` and a 2 s client timeout and gets 200 (fails before the fix). Build 0 warnings, tests pass. New Host image deployed with `make 525-conversation-app-what-if` then `make 525-conversation-app` (operator approves the deploy). |
-| 2 — Client reconnects on a non-session cancellation (S2) | forge-mcl | A unit test: a fake stream that throws `TaskCanceledException(new TimeoutException())` reconnects once and reports it; a session cancel still ends quietly. Build 0 warnings, tests pass, AOT 0 IL warnings. |
+| 2 — Client reconnects on a non-session cancellation (S2) | forge-mcl | Unit tests: a fake stream that throws `TaskCanceledException(new TimeoutException())` reconnects once and reports it; repeated timeouts each reconnect; a session cancel still ends quietly; without a reconnect handler (line mode) the failure reaches `RunAsync`, which prints the S2b message and returns 1. Build 0 warnings, tests pass, AOT 0 IL warnings. |
 | 3 — Acceptance | — | Default path, in Ghostty: idle 180 s, then send — the reply appears with no reconnect line. Idle 300 s, then send — at most one reconnect line, and the reply appears. ForgeAPI logs show no 499 at about 100 s. |
 
 ## Next
