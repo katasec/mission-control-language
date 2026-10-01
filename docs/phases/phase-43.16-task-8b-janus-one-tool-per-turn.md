@@ -3,7 +3,7 @@
 > **Status: code merged and Kind rollout verified (2026-08-14).** mission-control-language PR
 > [#43](https://github.com/katasec/mission-control-language/pull/43), merge commit
 > `01047eab2a086587743a04163041802f295878b4`. Prerequisite to
-> [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
+> [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-core-product-proof--done-2026-08-16):
 > corrects a real defect discovered during Task 8's first live run, where the Implementer's
 > provider call emitted two tool calls in one turn and tripped
 > `JanusPipelineProgressMapper`'s deliberate "exactly one tool call per request" guard, failing
@@ -190,7 +190,7 @@ images built/rolled out together by the one established target — no Worker-onl
 
 ## Next after Task 8b
 
-Task 8b landing does not by itself close out Task 8. [Task 8's live proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence)
+Task 8b landing does not by itself close out Task 8. [Task 8's live proof](phase-43.16-janus-desktop-local-poc.md#8-core-product-proof--done-2026-08-16)
 remains **active and unverified** and requires separate Codex reauthorization, plus a full rerun
 using the same "Implement a rate limiter." goal that originally failed — not an artificially
 single-file-scoped one — before Task 8 itself is marked done.

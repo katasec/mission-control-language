@@ -10,7 +10,7 @@ spoke keeps only the one-line status, "What Janus proves," "Relationship to othe
 
 ## Why this exists
 
-The longer-term aspiration logged in [43's hub](phase-43-forge-desktop.md#open-questions--not-yet-decided)
+The longer-term aspiration logged in [43's hub](phase-43-forge-desktop.md)
 (2026-07-26) is to eliminate the manual copy-paste cycle currently used to hand work between Claude
 (architect/reviewer) and Codex (implementer) during this project's own build process. Forge Desktop's
 "missions attach instead of models" thesis is the natural vehicle for that — but it needs a concrete
@@ -31,12 +31,12 @@ at once: one at the plan, one at the build. Picked 2026-08-09 over Daedalus/Anvi
 
 - **Two-mission composed design rejected** — `Negotiate(task: task) -> Implementer when(decision:
   "approved")` was the first design, but verified `PipelineRunner.ExecuteStepAsync`'s sub-mission
-  branch ([PipelineRunner.cs:230](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs:230)) only
+  branch ([PipelineRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs) (line 230 at the time)) only
   passes the sub-mission's final `output` text back to the parent context — never arbitrary context
   keys. A `decision` value set inside `Negotiate` could never be read by an outer `when()`.
 - **Explicit `when(decision: "approved")` + `Blocked when(else)` gate rejected** — verified
   `role: judge`'s structured-output schema is closed to exactly `{text, status, reason}`
-  ([DirectExpertRunner.cs:15-26](../../src/ForgeMission.Core/Adapters/DirectExpertRunner.cs:15)),
+  ([DirectExpertRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/DirectExpertRunner.cs) (lines 15-26 at the time)),
   no room for a custom `decision` field without an actual engine change. Also verified a failing
   judge step breaks the whole attempt immediately, before later `when()`-gated steps in the same
   attempt are ever evaluated — so a `when(else)` branch positioned after a judge step is unreachable
@@ -94,7 +94,7 @@ at once: one at the plan, one at the build. Picked 2026-08-09 over Daedalus/Anvi
 - **Why it was never caught before**: `dotnet test`/`dotnet build` never disable reflection (only the
   AOT-published binary does), and no existing shipped mission combined an Anthropic provider with a
   structured-output step (`role: judge`/critic) through `forge run` — every judge/critic demo defaulted
-  to OpenAI; the one existing Anthropic mission ([`missions/claude`](../../missions/claude/)) uses
+  to OpenAI; the one existing Anthropic mission ([`missions/claude`](https://github.com/katasec/forge-runner/tree/main/missions/claude)) uses
   `role: agent` (tools), a different code path (see "Open questions" in the active spoke).
 - **OpenAI is unaffected** — confirmed both providers used the identical integration shape: official
   vendor SDK → `Microsoft.Extensions.AI`'s `AsIChatClient()`, no custom client for either. The
@@ -228,7 +228,7 @@ since it's a `required int`, an unset value defaults to `0`. Also asked for `Get
 ## Implementation verified (2026-08-10)
 
 `ForgeMission.ChatClients` built and wired per the design above (see
-[ChatClients.cs](../../src/ForgeMission.ChatClients/ChatClients.cs)); `Cli.csproj` carries zero
+[ChatClients.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.ChatClients/ChatClients.cs)); `Cli.csproj` carries zero
 vendor SDK package references. The `AnthropicResponseFormatChatClient` decorator correctly
 implements all three required corrections (`MaxTokens` forwarding, `GetService` delegation,
 streaming pass-through) — verified by reading the merged code, not just trusting the summary.
@@ -251,7 +251,7 @@ Verified independently, not just from Codex's completion summary:
   never touched — confirmed via `git diff --stat`) failing on a live xAI call with
   `403 permission-denied: "...has either used all available credits or reached its monthly spending
   limit."` — an external account-billing condition, not a regression. Logged as
-  [plan.md Open issue #7](../plan.md#open-issues).
+  [plan.md Open issue #7](../plan.md).
 
 ## Reopened & resolved (2026-08-10/11): SpeakerTranscript replay + Negotiate/Implement split
 
@@ -315,7 +315,7 @@ change to `DirectExpertRunner`) — approved without revision.
   lexer token (`output(...)` top-level declaration) so bare `LOWER_ID` didn't match it.
 - Declared `mission Janus` first in `mission.mcl` (ahead of `Negotiate`/`Implement`) — `forge run`
   without an explicit `--mission` flag selects `ast.Declarations.OfType<MissionDeclaration>()
-  .FirstOrDefault()` ([Program.cs:196](../../src/ForgeMission.Cli/Program.cs:196)), not the
+  .FirstOrDefault()` ([Program.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs) (line 196 at the time)), not the
   `output(...)` declaration; Janus's own header comment relies on running without `--mission`, so
   it has to be declared first. (`sdlc-agent/mission.mcl` never hit this because its own header
   always specifies `--mission` explicitly.)

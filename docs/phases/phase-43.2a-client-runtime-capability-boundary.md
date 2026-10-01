@@ -73,7 +73,7 @@ picker and cross-target mission identity.
    Docker-Engine request shape so `RunContainerAsync` can set `HostIp: "127.0.0.1"` for the Client
    Runtime runner. Preserve existing CLI callers' intended behavior explicitly rather than changing
    them accidentally. Add focused serialization/request-shape coverage for the binding.
-   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-2-5--implementation-and-regression-coverage).
+   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-25--implementation-and-regression-coverage).
 
 3. **Replace the repository workspace bind with the approved mission-delivery adapter.** Change
    `LocalDockerMissionRuntimeLauncher.StartAsync` to validate the selected mission according to Task 1, construct
@@ -81,20 +81,20 @@ picker and cross-target mission identity.
    It must neither derive a repository root for Docker nor pass that root into `DockerCli`. Retain
    the existing provider allow-list, image pull/prerequisite checks, health wait, cancellation, and
    cleanup semantics.
-   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-2-5--implementation-and-regression-coverage).
+   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-25--implementation-and-regression-coverage).
 
 4. **Keep target selection outside the loop.** Wire the hardened local adapter into the Client
    Runtime composition root so a local Docker target yields only its loopback base URL to
    `MissionRuntimeSession`; a hosted target remains an externally configured URL and starts no
    container. Confirm no code in the conversation/tool loop branches on Docker versus hosted.
-   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-2-5--implementation-and-regression-coverage).
+   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-25--implementation-and-regression-coverage).
 
 5. **Add boundary regression coverage.** Add unit tests for the Docker create request and the local
    adapter that prove: no host bind is present, including the repository, opened workspace, or
    selected mission source; `MissionFile` is beneath the approved container location; and the
    published port has `HostIp` loopback. Reject a symbolic link in the mission package so it cannot
    become an implicit path escape.
-   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-2-5--implementation-and-regression-coverage).
+   ✅ Done 2026-07-31 — see [completed evidence](phase-43.2a-client-runtime-capability-boundary_completed.md#tasks-25--implementation-and-regression-coverage).
 
 6. **Run the real integration proof.** With Docker available and real local provider credentials,
    run the unchanged Client Runtime conversation/tool loop against `ghcr.io/katasec/forge-runner`.

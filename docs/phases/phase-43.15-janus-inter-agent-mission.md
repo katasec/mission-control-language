@@ -81,7 +81,7 @@ actually requires branching mission logic on it, not preemptively.
 
 ## Relationship to other phases
 
-- Motivating aspiration already logged in [43 hub's open questions](phase-43-forge-desktop.md#open-questions--not-yet-decided)
+- Motivating aspiration already logged in [43 hub's open questions](phase-43-forge-desktop.md)
   (2026-07-26): eliminate manual Claude/Codex copy-paste. Janus is the first concrete build step
   toward it.
 - Feeds [43.16 — Durable Janus conversation proof](phase-43.16-janus-desktop-local-poc.md): render

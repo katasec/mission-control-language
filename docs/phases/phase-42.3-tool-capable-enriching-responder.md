@@ -115,7 +115,7 @@ one-way pipeline, or a failed verification will dead-end instead of repairing.
   a single text content block. So: (a) inbound `tools` + `tool_result` blocks are ignored, (b) there is no
   path to emit a `tool_use` block. **Both directions must be built.**
 - **`MissionChatClient` ignores `ChatOptions`** and returns `result.Text`
-  ([`Adapters/MissionChatClient.cs`](../../src/ForgeMission.Core/Adapters/MissionChatClient.cs)). Tools arrive
+  ([`Adapters/MissionChatClient.cs`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/MissionChatClient.cs)). Tools arrive
   via `ChatOptions.Tools` (`Microsoft.Extensions.AI` `AITool` / `AIFunction`); function calls come back as
   `FunctionCallContent` and results go in as `FunctionResultContent`. None of this is wired.
 - **`ISessionStore` already exists** in `Katasec.OaiServer` (`Session`, `X-Session-Id`, `LocalFileSessionStore`)

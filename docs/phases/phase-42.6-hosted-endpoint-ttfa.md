@@ -202,7 +202,7 @@ Helm-over-OCI).
 
 The spoke previously said `forge exec` and `forge claude` ride the "same hosted `/v1` underneath." Wire
 capture disproves the premise. In one real Claude Code run the CLI issued **three different kinds** of
-request to the same endpoint ([Fixtures/anthropic-wire](../../src/ForgeMission.Tests/Fixtures/anthropic-wire/)):
+request to the same endpoint (Fixtures/anthropic-wire):
 `main-loop-tools.json` (the real agentic turn), `aux-title-gen.json` ("generate a 3–7 word session title"),
 and `aux-state-check.json` ("classify which of four agent states"). If `@websearch` simply hangs off
 `/m/websearch/v1/messages`, **Claude Code's title-generation call runs the full websearch mission** —
@@ -468,7 +468,7 @@ match; `randomguy/websearch` must never resolve to the same entry as `forge/webs
 multi-publisher support (real third-party publishers) a two-way door: `MissionHandle`/`IMissionCatalog`
 never change later, only `StaticMissionCatalog`'s hardcoded entry list gets replaced by a real
 registry. `StaticMissionCatalog` (today's only impl) filters its fixed entries against the runner's
-live `GET /missions`, same precedent [`AgentRegistry`](../../src/ForgeUI/Services/AgentRegistry.cs)
+live `GET /missions`, same precedent [`AgentRegistry`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Services/AgentRegistry.cs)
 already sets.
 
 **Run storage — `IRunStore`, same repository-seam shape, backing `GetRun` (M6):**
@@ -497,9 +497,9 @@ link, no cross-DB FK). `forge whoami` shows `MemberId` for now; a future interna
 explicitly not a cross-DB query, which would violate the bounded-context rule.
 
 **`@websearch` — published for real, as a build step of 5a, not deferred.**
-[`missions/websearch/mission.mcl`](../../missions/websearch/mission.mcl) (pre-existing, near-identical
+[`missions/websearch/mission.mcl`](https://github.com/katasec/forge-runner/blob/main/missions/websearch/mission.mcl) (pre-existing, near-identical
 to the already-published "Grok" mission) is added to
-[`BuiltinMissions.All`](../../src/ForgeMission.Cli/BuiltinMissions.cs) and pushed to `ghcr.io/katasec`
+[`BuiltinMissions.All`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner/BuiltinMissions.cs) and pushed to `ghcr.io/katasec`
 by digest, exactly like the other 5 built-ins.
 
 ### Mission lifecycle — cut from scope (decided 2026-07-19)
@@ -534,7 +534,7 @@ implemented as an adapter over the same service — **not** a parallel implement
 
 ### Known gap: sources are not in the runner contract yet
 
-[`RunResponse`](../../src/ForgeMission.Runner.Contracts/) carries `AgentText, Verified, StepCount,
+[`RunResponse`](https://github.com/katasec/forge-runner/tree/main/src/ForgeMission.Runner.Contracts) carries `AgentText, Verified, StepCount,
 RetryCount, Trace, Usage` — **no structured citations**. Today "source-cited" means whatever URLs the model
 wrote inline in prose. `MissionSource[]` above is the target shape; plumbing it from Scout's `SourceRef`
 through the runner contract is required for a real trust footer (`--sources`) and is **additive** (M4), so
@@ -597,7 +597,7 @@ are billing, cache, CLI, and deploy.
    71s), and concurrent requests all pass `balance > 0` before any debit lands. **Accepted at F&F scale**
    (trusted population, stop-at-zero freeze bounds accidents to cents). The ladder — each rung built only
    when its trigger fires:
-   1. **Freeze at zero** — already live ([RoomAgentInvoker](../../src/ForgeUI/Services/RoomAgentInvoker.cs)).
+   1. **Freeze at zero** — already live ([RoomAgentInvoker](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Services/RoomAgentInvoker.cs)).
    2. **Edge rate limit — DEFERRED (decided 2026-07-18, Ameer). No longer a launch gate; not implemented
       for this spoke.** Consistent with the ladder's own rule (build a rung when its trigger fires) — at
       F&F scale, with a trusted population and stop-at-zero freeze, the trigger has not fired.

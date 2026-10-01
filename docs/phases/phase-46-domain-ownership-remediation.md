@@ -1,5 +1,7 @@
 # Phase 46 — domain-ownership remediation
 
+> **Paused — in the [backlog](../backlog.md) (2026-10-01).**
+>
 > **Status:** Step 1 inventory and the generic mission-to-hands design closure are complete; both
 > await separate Codex-supervisor review. No source behavior changes are authorized until an
 > individual finding has an approved implementation plan.

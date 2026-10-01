@@ -4,7 +4,7 @@
 Bob into a new `forge-client` repo, then make the `forge` CLI its first new consumer with
 `forge chat`: the Forge TUI, cloud conversations in a full-screen terminal app.
 
-> **Status (2026-09-29):** spoke 1 is done and verified; spoke 2 is in design with open questions.
+> **Status (2026-10-01):** all spokes done; next step under selection.
 
 ## Why
 

@@ -3,7 +3,7 @@
 > **Status: Done and verified (2026-08-14).** mission-control-language commit `071d245` (merged
 > `main` at `cde3623ed4a872b355cf6eb8d5209ab945621fe8`) and forge-infra commit `d8e8108` (merged
 > `main` at `8121453`). Prerequisite to
-> [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-product-proof-and-evidence):
+> [Task 8's live product proof](phase-43.16-janus-desktop-local-poc.md#8-core-product-proof--done-2026-08-16):
 > builds the real `ForgeMission.ConversationHost`/`ForgeMission.ConversationWorker` container
 > images and rolls them out into the `forge-durable` Kind cluster with immutable, commit-SHA-derived
 > provenance. Discovered as a blocking gap during Task 8 planning — `forge-infra`'s

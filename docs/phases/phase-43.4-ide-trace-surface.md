@@ -32,7 +32,7 @@ artifacts, not a bespoke chat schema:
 - **Outline** = the mission's own pipeline steps (`Architect`, `CriticalReviewer`, `Synthesiser`,
   `QualityJudge`, ...), derived from the `.mcl` source itself.
 - **Thread** = a rendering of consecutive `StepEnvelope`s
-  ([StepEnvelope.cs](../../src/ForgeMission.Core/Runtime/StepEnvelope.cs)) as the pipeline actually
+  ([StepEnvelope.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/StepEnvelope.cs)) as the pipeline actually
   ran, anchored to the file/line a step's output touched.
 - **Gate** = a human step where the pipeline genuinely suspends (see
   [43.5](phase-43.5-human-in-the-loop.md)), not a UI illusion.
@@ -210,18 +210,18 @@ reference.
 [43.5](phase-43.5-human-in-the-loop.md) is the mechanical spec this depends on: `kind: human`
 reusing existing roles (no new `role:` needed — `role: judge` fail/pass + prose-output already
 cover it), a `channel:` field resolved like `provider:` is in
-[`ProviderClientBuilder.BuildChatClient`](../../src/ForgeMission.Cli/ProviderClientBuilder.cs), and
+[`ProviderClientBuilder.BuildChatClient`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/ProviderClientBuilder.cs), and
 suspend/resume via a `Suspended` `StepEnvelope` outcome. `forge trace` is naturally a **new
 channel**, not a competing product — it gets resume-token/webhook plumbing for free and only owns
 rendering.
 
 Confirmed mechanism: a human's "Request changes" writes to `context["feedback"]`, the same slot
 `role: judge` failures already use to drive `loop(N)` retries
-([PipelineRunner.cs:71,189-190](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs)). No new
+([PipelineRunner.cs:71,189-190](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs)). No new
 protocol needed for the human case.
 
 **Open tension, not yet resolved:** `ForgeMission.Rooms` (`MemberKind.Human`/`Agent`,
-[MemberKind.cs](../../src/ForgeMission.Rooms/MemberKind.cs), `Room`, `Message`) already exists,
+[MemberKind.cs](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms/MemberKind.cs), `Room`, `Message`) already exists,
 live, with real server-side state — the "easy channel." But its chat-room rendering was explicitly
 ruled out as the wrong UX for this. The reusable part is suspend/resume + the channel abstraction,
 not the Rooms chat surface itself — `forge trace` is a sibling rendering, deliberately not the room

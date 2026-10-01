@@ -68,7 +68,7 @@ Before writing DTOs, pull the current shape from the API reference so the source
 1. Create `src/ForgeMission.Scout/ForgeMission.Scout.csproj` — a library, `net10.0`, `RootNamespace=Scout`,
    `Nullable=enable`, `ImplicitUsings=enable`. No `PublishAot` on the lib itself, but keep it **AOT-clean**
    (it will be referenced by the AOT CLI eventually): no reflection, no bare `JsonSerializerOptions`.
-2. Add it to [`src/ForgeMission.slnx`](../../src/ForgeMission.slnx) as a `<Project>` entry.
+2. Add it to `src/ForgeMission.slnx` as a `<Project>` entry.
 - **Done when:** `dotnet build src/ForgeMission.Scout` succeeds and the project appears in the solution.
 
 ### Task 3 — The swap-point interface + provider-neutral DTOs

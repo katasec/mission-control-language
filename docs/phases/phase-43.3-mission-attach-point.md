@@ -13,7 +13,7 @@ with a real picker in the same
 UI slot a model dropdown occupies — attaching a **mission** instead of a model. This is the direct
 generalization of [Phase 38.5](phase-38.5-registry-save-as-agent.md)'s raw-model passthrough
 pattern (`@claude`/`@openai` as thin `vanilla`-shape missions,
-[missions/claude/](../../missions/claude/)) from "one model wrapped as a mission" to "any real
+[missions/claude/](https://github.com/katasec/forge-runner/tree/main/missions/claude)) from "one model wrapped as a mission" to "any real
 multi-role mission is attachable the same way."
 
 Future flagship mission: [missions/sdlc-agent/](../../missions/sdlc-agent/) —
@@ -25,7 +25,7 @@ propose/critique/revise/gate-check shape no single model turn can.
 ## Tasks
 
 1. ✅ **Done** — Mission discovery. `MissionDiscovery.Discover(missionsRoot)`
-   ([src/ForgeMission.Core/Resolution/MissionDiscovery.cs](../../src/ForgeMission.Core/Resolution/MissionDiscovery.cs))
+   ([src/ForgeMission.Core/Resolution/MissionDiscovery.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Resolution/MissionDiscovery.cs))
    scans immediate subdirectories of a missions root for `mission.mcl`, mirroring the
    `<missionsRoot>/<name>/mission.mcl` convention `forge run`/`forge claude` already resolve by
    name — but lists every mission found instead of one pinned handle. Returns a
@@ -34,16 +34,16 @@ propose/critique/revise/gate-check shape no single model turn can.
    Root path resolution is left to the caller — same pattern as `RunnerMissionSource`/`forge claude`,
    each of which computes its own root today. Not yet wired to any transport endpoint or UI; that's
    task 2/3's job. 5 unit tests in
-   [src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs](../../src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs).
+   [src/ForgeMission.Tests/Resolution/MissionDiscoveryTests.cs](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Resolution/MissionDiscoveryTests.cs).
 2. ✅ **Done (v0, scope deliberately cut down 2026-08-08)** — Picker UI. A full mockup was built and
    approved first (below), but implementing it whole turned out to be three separate problems
    tangled into one: (a) show missions in the picker UI, (b) give them nice descriptive
    metadata, (c) catalog/curate which missions are attachable at all. Per-row descriptions and the
    "Missions"/"Local" grouping are (b) and (c) — deferred, not solved, see below. What actually
    shipped is just (a): `AttachableMission(Name, WireMission)` and a hardcoded, flat, two-entry list
-   ([src/ForgeMission.ClientRuntime.Presentation/AttachableMissions.cs](../../src/ForgeMission.ClientRuntime.Presentation/AttachableMissions.cs)) —
+   (src/ForgeMission.ClientRuntime.Presentation/AttachableMissions.cs) —
    `ChatGPT`→`vanilla`, `Websearch`→`websearch` — rendered as a trigger pill + dropdown in
-   [Home.razor](../../src/ForgeMission.ClientRuntime.Presentation/Pages/Home.razor), name-only, no
+   [Home.razor](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Presentation/Pages/Home.razor), name-only, no
    grouping. Both entries are names already live on the hosted `StaticMissionCatalog`
    (`ForgeMission.Api/MissionCatalog.cs`), chosen specifically so attach/switch could be proven
    against the real cloud catalog with zero new publish or redeploy. `MissionDiscovery` (task 1)
@@ -64,7 +64,7 @@ propose/critique/revise/gate-check shape no single model turn can.
    What it still gets right for later: trigger pill in the composer bar next to Send (own control,
    not replacing `+`), checkmark instead of a keyboard-shortcut number.
 3. ✅ **Done** — Attach/switch. `SessionSetupRequest` carries an optional `Mission` field
-   ([ClientRuntimeContracts.cs](../../src/ForgeMission.ClientRuntime.Transport/ClientRuntimeContracts.cs)),
+   (ClientRuntimeContracts.cs),
    stored on `ClientRuntimeSession` and threaded into `CloudMissionRuntimeSession`'s wire request
    (replacing the old hardcoded `"vanilla"`) and `MissionRuntimeSession`'s existing `model` parameter
    for local-Docker mode — a null `Mission` falls through to each session type's own default rather

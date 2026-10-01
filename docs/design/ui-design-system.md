@@ -5,7 +5,7 @@
 > is themed and structured.
 
 The `ForgeUI` project (Blazor Server, .NET 10, **no npm/Node build step**) is styled by a
-**single tokenized stylesheet**: [`src/ForgeUI/wwwroot/css/forge.css`](../../src/ForgeUI/wwwroot/css/forge.css).
+**single tokenized stylesheet**: [`src/ForgeUI/wwwroot/css/forge.css`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/wwwroot/css/forge.css).
 There is no Bootstrap, no Tailwind, no component library. To re-theme the app you edit
 **tokens**, not rules.
 
@@ -188,7 +188,7 @@ sidebar foot to the **rail foot** (desktop); on mobile it lives behind the **Acc
   arbitrary component-local pixels merely to make a smaller window fit. The detailed evidence
   method — four rectangular boundary corners, continuous resize, text fit, and browser-first
   packaged parity — is binding in
-  [Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate).
+  [Desktop Interaction Principles](desktop-interaction-principles.md#visual-reference-acceptance-gate--non-negotiable).
 - **New agent card / message type:** reuse `.agent-card` + `.trust-badge` so the trust surface
   stays consistent (this is the product's core differentiator — never fake a green ✓).
 - **Anything showing agent identity:** use `.identity-seal` (gold/blue), **never** the green

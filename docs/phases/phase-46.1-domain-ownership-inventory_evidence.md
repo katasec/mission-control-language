@@ -7,7 +7,7 @@
 
 ## Scope and graph reconciliation
 
-The solution contains the 28 production components named by the [Source Component Atlas](../../src/README.md), plus its two excluded diagnostic executables and test projects. The production-reference graph agrees with the documented direction: Core depends on Parser/Scout; ChatClients depends on Core; CLI composes Core/ChatClients/Scout/Serve/Docker; Runner composes Core/ChatClients/Serve and uses the existing CLI mission-source support; Worker composes Core/ChatClients and durable contracts only. Application Host is the intended composition root for Application, Transport, Client Runtime, and Presentation. No unlisted production executable or second store owner was found.
+The solution contains the 28 production components named by the Source Component Atlas (`src/README.md`, removed from this repo by the Phase 50 extraction), plus its two excluded diagnostic executables and test projects. The production-reference graph agrees with the documented direction: Core depends on Parser/Scout; ChatClients depends on Core; CLI composes Core/ChatClients/Scout/Serve/Docker; Runner composes Core/ChatClients/Serve and uses the existing CLI mission-source support; Worker composes Core/ChatClients and durable contracts only. Application Host is the intended composition root for Application, Transport, Client Runtime, and Presentation. No unlisted production executable or second store owner was found.
 
 No source-adjacent README was changed: each describes the observed current component boundary,
 including the current closed Worker catalog. The Phase 46 records, rather than a speculative README

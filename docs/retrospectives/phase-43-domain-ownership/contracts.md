@@ -4,7 +4,7 @@ Companion to [end state](end-state.md). The source baseline is `ef2e636cd37db670
 
 ## Shared application actions
 
-The complete existing wire vocabulary is [ApplicationContracts.cs](../../../src/ForgeMission.Application.Transport/ApplicationContracts.cs), its JSON registration is [ApplicationJsonContext.cs](../../../src/ForgeMission.Application.Transport/ApplicationJsonContext.cs), and route/error behavior is [ApplicationEndpoints.cs](../../../src/ForgeMission.Application.Host/Transport/ApplicationEndpoints.cs). Event serialization separately uses [ConversationRelayJsonContext.cs](../../../src/ForgeMission.Application.Transport/ConversationRelayJsonContext.cs), including the embedded conversation string-enum options; do not merge those settings with numeric application DTO enums. These are the Application.Transport / Application.Host sources after Task 1.
+The complete existing wire vocabulary is [ApplicationContracts.cs](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.Application.Transport/ApplicationContracts.cs), its JSON registration is [ApplicationJsonContext.cs](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.Application.Transport/ApplicationJsonContext.cs), and route/error behavior is [ApplicationEndpoints.cs](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Application.Host/Transport/ApplicationEndpoints.cs). Event serialization separately uses [ConversationRelayJsonContext.cs](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.Application.Transport/ConversationRelayJsonContext.cs), including the embedded conversation string-enum options; do not merge those settings with numeric application DTO enums. These are the Application.Transport / Application.Host sources after Task 1.
 
 | Existing request → response | Owner / local call | Preserved semantics |
 |---|---|---|
@@ -158,7 +158,7 @@ Closing a Project attachment, changing its legacy session or losing a UI subscri
 
 ## Submission and durable ownership
 
-Preserve [ProjectManifest.cs](../../../src/ForgeMission.Application/Projects/ProjectManifest.cs), schema version 3, v1/v2 reads and legacy read-only fields. ProjectService is the sole manifest transaction owner, including submission journal writes; MissionSubmissionService decides when to invoke those named operations. No second manifest writer, local run ledger or new schema version.
+Preserve [ProjectManifest.cs](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.Application/Projects/ProjectManifest.cs), schema version 3, v1/v2 reads and legacy read-only fields. ProjectService is the sole manifest transaction owner, including submission journal writes; MissionSubmissionService decides when to invoke those named operations. No second manifest writer, local run ledger or new schema version.
 
 1. Start reads the validated Project and checks the existing Host active-run state. Host admission remains the final arbiter against races.
 2. ProjectService prepares the immutable journal using CommandId, PreviousCommandId and input under the existing lease. Mission, input and Project goal are captured exactly as today. Release the lease before HTTP.

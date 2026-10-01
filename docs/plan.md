@@ -4,23 +4,23 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-09-30)
+## Now (2026-10-01)
 
 | | |
 |---|---|
-| **NEXT STEP** | Choose the next phase with Ameer. [How conversations work](design/how-conversations-work.md) is the current design reference; follow-ups are in the [backlog](backlog.md). |
+| **NEXT STEP** | Under selection — Ameer will choose the next phase. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 forge-client, conversation memory, the `forge chat` TUI, naked Claude default and token streaming done; next step to choose. |
-| [Phase 46 — domain-ownership remediation](phases/phase-46-domain-ownership-remediation.md) | Establish a repository-wide ownership inventory and remove confirmed duplicate, overlapping, and mission-specific runtime implementations through Codex-supervised work. | ⏸ **On hold — review after the reorg before starting.** |
+| None — under selection. | | |
 
 ## Design docs
 
 | Doc | Description |
 |-----|-------------|
+| [How conversations work](design/how-conversations-work.md) | Current conversation design reference. |
 | [Backlog](backlog.md) | Deferred candidates, paused work, and external conditions. |
 | [Completed / Resolved Archive](plan_completed.md) | Verified completed work and superseded plans. |
 | [UI Design System](design/ui-design-system.md) | Forge UI tokens, themes, reusable primitives, and local-run gotchas. |

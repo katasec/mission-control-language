@@ -365,7 +365,7 @@ record ContextValue(string Raw);           // Phase 25
 **Superseded note (2026-08-10):** the "Decision" recorded below — `{{feedback}}` removed as a
 public developer API, automatic structured (criterion/reason/suggestion) injection to the first
 expert only — is **not** what was actually built. What shipped, and what
-[`docs/design/language.md`](../design/language.md#L330) documents as the canonical, current design,
+[`docs/design/language.md`](../design/language.md) documents as the canonical, current design,
 is simpler: `{{feedback}}` **is** a public reserved runtime variable, a raw string (the failing
 expert's `onFail`/`reason` message, not a structured critique), which any expert's prompt can
 reference explicitly — not injection restricted to the first expert only. `language.md:332`
@@ -377,7 +377,7 @@ truth for `{{feedback}}`'s actual behavior.
 **Second superseded note (2026-08-10, same day, deeper finding):** investigating a live bug in
 [missions/janus/](../../missions/janus/) (Phase 43.15) surfaced that `{{feedback}}` — Option A,
 "most recent failure only" — was never actually a considered final answer either. Re-reading
-[`docs/design/research.md`](../design/research.md#L181): *"The literature suggests Option B or C
+[`docs/design/research.md`](../design/research.md): *"The literature suggests Option B or C
 produces the best results. Option A is the minimum viable implementation."* Option A shipped anyway
 (Phase 28, for `kind:rule`) because it was what a different, unrelated feature needed at the time,
 and nobody came back to revisit it. Full design conversation and final resolution recorded in

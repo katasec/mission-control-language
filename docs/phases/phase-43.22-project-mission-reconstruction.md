@@ -4,7 +4,7 @@
 > Phase 43.23 verified the current ownership end state, default journey, and acceptance evidence.
 > Do **not** use the owner, class, file, or implementation instructions below to plan new work;
 > read the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
-> and the nearest [source component README](../../src/README.md) instead. This document preserves
+> and the nearest [source component README](https://github.com/katasec/forge-desktop/blob/main/src/README.md) instead. This document preserves
 > the 43.22 reconstruction baseline and its evidence only.
 
 ## Outcome and scope

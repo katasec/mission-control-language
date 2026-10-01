@@ -6,7 +6,8 @@
 > metrics, logs.
 >
 > **Implementation status (2026-07-09):** first tracing lane is **live in the containerized runner**
-> (`ForgeMission.Runner`, image `0.4.2`). Per run it emits: a `mission.run` span (`forge.mission.ref`
+> (`ForgeMission.Runner`, first shipped in image `0.4.2`; dev runs `forge-runner:0.19.0` from the
+> forge-runner repo, telemetry in `RunnerTelemetry.cs`). Per run it emits: a `mission.run` span (`forge.mission.ref`
 > / `forge.provider` / `gen_ai.request.model`), the `gen_ai.*` span from `UseOpenTelemetry` on the
 > provider `IChatClient` (model + token usage), and the **outbound-HTTP span whose `server.address`
 > is the real provider endpoint** (`api.openai.com` vs `api.x.ai` vs `api.anthropic.com`) — the ground

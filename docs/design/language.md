@@ -17,7 +17,7 @@ composition. Nothing is added without a design decision recorded in the pre-flig
 
 ## Grammar
 
-The authoritative grammar is [`src/ForgeMission.Core/Parser/MclGrammar.g4`](../../src/ForgeMission.Core/Parser/MclGrammar.g4). The ANTLR4 tool generates the lexer and parser from this file.
+The authoritative grammar is [`src/ForgeMission.Parser/MclGrammar.g4`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Parser/MclGrammar.g4) (forge-mcl). The ANTLR4 tool generates the lexer and parser from this file.
 
 ```antlr
 grammar MclGrammar;

@@ -41,7 +41,7 @@ this spoke shipped with a single hardcoded mission to prove the shell itself).
 - **Native AOT — locked 2026-07-25.** Confirmed against
   [Avalonia's own Native AOT deployment guide](https://docs.avaloniaui.net/docs/deployment/native-aot):
   does not reduce UI/UX design options (full styling/theming/animation/Skia rendering all work),
-  only constrains *how* the app is wired — same AOT-first discipline [AGENTS.md](../../AGENTS.md#aot-first--standing-rules-for-all-new-code)
+  only constrains *how* the app is wired — same AOT-first discipline [AGENTS.md](../../AGENTS.md)
   already mandates elsewhere in this repo, not a new burden:
   - Compiled bindings (`x:CompileBindings="True"`), not reflection bindings.
   - **CommunityToolkit.Mvvm, not ReactiveUI** — ReactiveUI's expression-tree/reflection-heavy
@@ -140,7 +140,7 @@ this spoke shipped with a single hardcoded mission to prove the shell itself).
    evidence.
 4. **Added 2026-07-27, abandoned mid-flight 2026-07-27 (pivot to Electron).** Apply the visual
    identity system — skin only, not a restructure. Draft the Avalonia token catalogue per
-   [Visual identity direction](../design/desktop-interaction-principles.md#visual-identity-direction-decided-2026-07-27)
+   [Visual identity direction](../design/desktop-interaction-principles.md#visual-identity-direction-decided-2026-07-27-superseded-2026-07-27-by-the-electron-pivot)
    (mirrors `forge.css`'s groups: surfaces, lines, text, accent, radii, spacing, elevation) as
    `DynamicResource` brushes, then reskin the existing Tasks 1–3 controls (composer, `+` flyout,
    message list, tool-call indicator rows, workspace label) to use them in place of stock

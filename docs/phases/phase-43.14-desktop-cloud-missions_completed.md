@@ -21,18 +21,18 @@ implementation plan → Claude review/approval → implementation → completion
 verification (below).
 
 **What changed:**
-- [`src/ForgeMission.Api/Messages.cs`](../../src/ForgeMission.Api/Messages.cs) — `History`/`Tools`
+- [`src/ForgeMission.Api/Messages.cs`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api/Messages.cs) — `History`/`Tools`
   added to `ExecuteMission`, `ToolUse` added to `ExecuteMissionResponse`; new `TurnMessage`,
   `TurnContent`, `MissionToolDecl`, `ToolUseCall` sealed classes, shapes matching the spoke's "Wire
   shape" section exactly (`JsonElement` for schema/input/arguments, string-typed `Role`/`Type` for
   the closed-but-additive-friendly enums). All four registered as `[JsonSerializable]` on
   `MessagesJsonContext`.
-- [`src/ForgeMission.Api/Properties/AssemblyInfo.cs`](../../src/ForgeMission.Api/Properties/AssemblyInfo.cs)
+- [`src/ForgeMission.Api/Properties/AssemblyInfo.cs`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api/Properties/AssemblyInfo.cs)
   (new) — `[assembly: InternalsVisibleTo("ForgeMission.Rooms.Tests")]`, exposing the internal
   `MessagesJsonContext` to the test assembly. Matches existing precedent in this repo
   (`ForgeMission.Runner`, `ForgeMission.Orchestration`, `ForgeMission.ClientRuntime`,
   `ForgeMission.Docker` all use the same pattern for internal-context test access).
-- [`src/ForgeMission.Rooms.Tests/Api/MessagesSerializationTests.cs`](../../src/ForgeMission.Rooms.Tests/Api/MessagesSerializationTests.cs)
+- [`src/ForgeMission.Rooms.Tests/Api/MessagesSerializationTests.cs`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api.Tests/MessagesSerializationTests.cs)
   (new) — two tests round-tripping `ExecuteMission` (with populated `History`/`Tools`, including
   nested `tool_use`/`tool_result` content and a `JsonElement` tool-input payload) and
   `ExecuteMissionResponse` (with populated `ToolUse`) through `MessagesJsonContext.Default`,
@@ -65,7 +65,7 @@ approved by the operator 2026-08-06.
 as Task 1.
 
 **What changed:**
-- [`src/ForgeMission.Runner.Contracts/RunContracts.cs`](../../src/ForgeMission.Runner.Contracts/RunContracts.cs) —
+- [`src/ForgeMission.Runner.Contracts/RunContracts.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner.Contracts/RunContracts.cs) —
   `History`/`Tools` appended as optional trailing params on the `RunRequest` record (after
   `InputArtifacts`), `ToolUse` appended on `RunResponse` (after `OutputArtifacts`) — preserves every
   existing named-arg call site. New `TurnMessage`/`TurnContent`/`MissionToolDecl`/`ToolUseCall`
@@ -73,7 +73,7 @@ as Task 1.
   `[JsonSerializable]` on `RunContractsContext`. Deliberately **PascalCase on the wire** (no
   `PropertyNamingPolicy` override) — this context has never used camelCase, unlike
   `MessagesJsonContext`; mirroring the shape doesn't mean mirroring that unrelated policy.
-- [`src/ForgeMission.Runner.Tests/RunContractsSerializationTests.cs`](../../src/ForgeMission.Runner.Tests/RunContractsSerializationTests.cs)
+- [`src/ForgeMission.Runner.Tests/RunContractsSerializationTests.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner.Tests/RunContractsSerializationTests.cs)
   (new) — two tests, same structure as Task 1's `MessagesSerializationTests`: round-trip a
   `RunRequest` with nested `History`/`Tools` (incl. a `JsonElement` tool-input payload) and a
   `RunResponse` with `ToolUse`, through `RunContractsContext.Default`.
@@ -107,30 +107,30 @@ not silently built around).
 (`3077b51 Add runner Postgres enrichment cache`).
 
 **What changed:**
-- [`src/ForgeMission.Runner/PostgresEnrichmentCache.cs`](../../src/ForgeMission.Runner/PostgresEnrichmentCache.cs)
+- `src/ForgeMission.Runner/PostgresEnrichmentCache.cs`
   (new) — `GetAsync` filters `expires_at > NOW()`; `SetAsync` upserts via
   `ON CONFLICT (prefix_hash) DO UPDATE`, storing the snapshot as `jsonb`
   (`NpgsqlDbType.Jsonb`), serialized through a new source-generated
-  [`EnrichmentCacheJsonContext`](../../src/ForgeMission.Runner/EnrichmentCacheJsonContext.cs)
+  `EnrichmentCacheJsonContext`
   (`Dictionary<string,string>`, AOT-safe, no runtime `JsonSerializerOptions`). 30-minute default TTL,
   matching `InMemoryEnrichmentCache`.
-- [`src/ForgeMission.Runner/EnrichmentCacheSchema.cs`](../../src/ForgeMission.Runner/EnrichmentCacheSchema.cs)
+- `src/ForgeMission.Runner/EnrichmentCacheSchema.cs`
   (new) — idempotent `CREATE TABLE IF NOT EXISTS enrichment_cache (prefix_hash PK, snapshot jsonb,
   expires_at)` + an index on `expires_at`, mirroring `AuthBillingSchema.EnsureCreatedAsync`'s pattern.
-- [`src/ForgeMission.Runner/Program.cs`](../../src/ForgeMission.Runner/Program.cs) — resolves
+- [`src/ForgeMission.Runner/Program.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner/Program.cs) — resolves
   `ConnectionStrings:EnrichmentCacheConnection` only (never derives from or reads
   `AuthBillingConnection`); registers `InMemoryEnrichmentCache` when unset, or a singleton
   `NpgsqlDataSource` + `PostgresEnrichmentCache` when set, running the schema bootstrap once at
   startup. Both `MissionDoorClient` constructions (the Anthropic and OpenAI `/v1` doors) now receive
   the one shared `IEnrichmentCache` singleton instead of each building their own default.
-- [`src/ForgeMission.Runner/MissionDoorClient.cs`](../../src/ForgeMission.Runner/MissionDoorClient.cs) —
+- [`src/ForgeMission.Runner/MissionDoorClient.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner/MissionDoorClient.cs) —
   new constructor parameter `IEnrichmentCache enrichmentCache`, passed through to
   `MissionChatClient`'s `enrichmentCache:` argument (previously omitted, defaulting to a fresh
   `InMemoryEnrichmentCache()` every request — the gap Codex's plan flagged and fixed).
-- [`src/ForgeMission.Runner.Tests/PostgresFixture.cs`](../../src/ForgeMission.Runner.Tests/PostgresFixture.cs)
+- `src/ForgeMission.Runner.Tests/PostgresFixture.cs`
   (new) — `Testcontainers.PostgreSql`-backed, mirroring `ForgeMission.Rooms.Tests`' fixture pattern
   (previously absent from this test project).
-- [`src/ForgeMission.Runner.Tests/PostgresEnrichmentCacheTests.cs`](../../src/ForgeMission.Runner.Tests/PostgresEnrichmentCacheTests.cs)
+- `src/ForgeMission.Runner.Tests/PostgresEnrichmentCacheTests.cs`
   (new) — round-trips a snapshot through two independent `NpgsqlDataSource` instances (a writer and a
   reader), proving a real durable store rather than same-process caching; also calls
   `EnsureCreatedAsync` twice to prove the bootstrap stays safe on every boot.
@@ -151,7 +151,7 @@ not silently built around).
 
 **Explicitly not yet done — tracked separately as its own claim, not implied by the above:**
 actual deployment/verification against real Azure Postgres. That's
-[Task 3b](phase-43.14-desktop-cloud-missions.md#3b-enrichment-cache-infra--provision-enrichmentcacheconnection-in-forge-infra)
+[Task 3b](phase-43.14-desktop-cloud-missions.md)
 in the active spoke — a separate `forge-infra` change, still open, with the exact wiring chain
 locked in against the real current Bicep (not assumptions) specifically to avoid repeating a past
 "built/tested locally, nothing worked in Azure" failure.
@@ -183,15 +183,15 @@ AGENTS.md — neither was silently built around):
 (`ca880bc Add runner tool continuation support`).
 
 **What changed:**
-- [`src/ForgeMission.Core/Runtime/ToolContinuationGate.cs`](../../src/ForgeMission.Core/Runtime/ToolContinuationGate.cs)
+- [`src/ForgeMission.Core/Runtime/ToolContinuationGate.cs`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/ToolContinuationGate.cs)
   (new) — the extracted three-segment gate as a static helper (`ApplyAsync`), reusing
   `ConversationHash.Prefix` unchanged; returns a `ToolContinuationState(StartAtAgent,
   OnPreAgentComplete)`.
-- [`src/ForgeMission.Core/Adapters/MissionChatClient.cs`](../../src/ForgeMission.Core/Adapters/MissionChatClient.cs) —
+- [`src/ForgeMission.Core/Adapters/MissionChatClient.cs`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/MissionChatClient.cs) —
   its inline gate replaced with a call to `ToolContinuationGate.ApplyAsync`; duplicate-continuation
   observation stays at its existing call site, unmoved. Pure extraction — behavior unchanged
   (confirmed by the existing `ThreeSegmentExecutorTests` passing without modification).
-- [`src/ForgeMission.Runner/RunnerToolTurnMapper.cs`](../../src/ForgeMission.Runner/RunnerToolTurnMapper.cs)
+- `src/ForgeMission.Runner/RunnerToolTurnMapper.cs`
   (new, Runner-only, reflection-free) — `ToChatMessages` (maps `TurnMessage.Role` 1:1, synthesizes a
   single user turn from `Goal` when `History` is empty, per the spoke's "forge exec is a degenerate
   case" design); `ToTools` (each `MissionToolDecl` → `new DeclaredTool(...)`, reusing the
@@ -200,7 +200,7 @@ AGENTS.md — neither was silently built around):
   `Arguments` to `JsonElement` via a hand-rolled `Utf8JsonWriter` walk — mirroring
   `MissionRuntimeSession`'s existing `JsonElement→IDictionary` conversion in reverse — that throws
   explicitly on any unsupported value type rather than falling back to a reflection-based serializer.
-- [`src/ForgeMission.Runner/MissionRunHandler.cs`](../../src/ForgeMission.Runner/MissionRunHandler.cs) —
+- [`src/ForgeMission.Runner/MissionRunHandler.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner/MissionRunHandler.cs) —
   new constructor params `IEnrichmentCache enrichmentCache` and an optional
   `Func<RunnerMission, UsageAccumulator, IExpertRunner>? runnerFactory` (defaulting to the existing
   `BuildRunner`, enabling direct construction in tests with no DI/`Program.cs` changes — a simpler
@@ -210,7 +210,7 @@ AGENTS.md — neither was silently built around):
   populated: `AgentText` is empty, `Verified` is false; `Trace`/`Usage`/`OutputArtifacts` still
   reflect the actual partial run (Task 5 decides what to do with those fields when shaping the API
   response).
-- [`src/ForgeMission.Runner.Tests/MissionRunHandlerTests.cs`](../../src/ForgeMission.Runner.Tests/MissionRunHandlerTests.cs)
+- [`src/ForgeMission.Runner.Tests/MissionRunHandlerTests.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner.Tests/MissionRunHandlerTests.cs)
   (new) — builds a real 3-step mission (`Enrich → Respond(role:agent) → Verify`) with a scripted
   `IExpertRunner`, and proves end-to-end: the first call stops after `Respond` emits a tool call
   (`Trace.Count == 2`, `Verify` never reached, `ToolUse` populated, `AgentText` empty, `Verified`
@@ -258,12 +258,12 @@ response) were resolved in the plan before implementation, per AGENTS.md's desig
 (`b3ef071 Wire tool continuations through Forge API`).
 
 **What changed:**
-- [`src/ForgeMission.Api/MissionToolTurnMapper.cs`](../../src/ForgeMission.Api/MissionToolTurnMapper.cs)
+- `src/ForgeMission.Api/MissionToolTurnMapper.cs`
   (new) — field-for-field bridge (`ToRunnerHistory`, `ToRunnerTools`, `ToApiToolUse`) between
   `ForgeMission.Api`'s and `ForgeMission.Runner.Contracts`'s separately-defined `TurnMessage`/
   `TurnContent`/`MissionToolDecl`/`ToolUseCall` types, using a `RunnerContracts` namespace alias to
   disambiguate the identically-named types cleanly. Pure copying, no semantic conversion.
-- [`src/ForgeMission.Api/MissionExecutionService.cs`](../../src/ForgeMission.Api/MissionExecutionService.cs) —
+- [`src/ForgeMission.Api/MissionExecutionService.cs`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api/MissionExecutionService.cs) —
   `RunCoreAsync` (shared by both the buffered and streaming entry points) now maps `msg.History`/
   `msg.Tools` into the outbound `RunRequest`. When `result.ToolUse` is populated, returns early: a
   new `DiscardOutputsFromRunnerAsync` helper deletes any unexpected runner output artifacts (rather
@@ -271,7 +271,7 @@ response) were resolved in the plan before implementation, per AGENTS.md's desig
   `CostMicroUsd: 0` (nothing settled), `BalanceMicroUsd` is still fetched (unchanged, but visible to
   the client), and `Answer`/`Verified`/`Trace`/`Artifacts`/`runStore.SaveAsync` are all skipped as
   terminal-only. When `result.ToolUse` is `null`, behavior is byte-identical to before this task.
-- [`src/ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs`](../../src/ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs) —
+- [`src/ForgeMission.Rooms.Tests/Api/MissionExecutionServiceTests.cs`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api.Tests/MissionExecutionServiceTests.cs) —
   new `Execute_forwards_agent_turn_and_returns_tool_use_without_settlement` test captures the
   outbound `RunRequest` via an extended stub handler and asserts the full round trip (nested
   `tool_use`/`tool_result` content, tool schema) maps correctly; asserts zero cost, unchanged
@@ -332,7 +332,7 @@ does the actual mode-based selection.
 (`894f451 Add cloud mission runtime session`).
 
 **What changed:**
-- [`src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs`](../../src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs)
+- `src/ForgeMission.ClientRuntime/Services/CloudMissionRuntimeSession.cs`
   (new) — `SendAsync` maintains a per-session `_history` list (`WireTurnMessage`s) that accumulates
   across calls; a `firstTurn` flag (true only for this session instance's very first `SendAsync`
   call) governs exactly when the user's prompt gets appended, avoiding duplicate entries whether the
@@ -345,7 +345,7 @@ does the actual mode-based selection.
   already caught identically by the one existing caller, `ClientRuntimeEndpoints.cs`. A private
   `CloudWireJsonContext` (camelCase, matching the real `MessagesJsonContext` wire convention) covers
   the private wire DTOs.
-- [`src/ForgeMission.Tests/ClientRuntime/CloudMissionRuntimeSessionTests.cs`](../../src/ForgeMission.Tests/ClientRuntime/CloudMissionRuntimeSessionTests.cs)
+- `src/ForgeMission.Tests/ClientRuntime/CloudMissionRuntimeSessionTests.cs`
   (new) — a genuinely end-to-end test: real `LocalDiskWorkspace`/`WorkspaceFileProvider`/
   `CapabilityDispatcher` infrastructure actually reads a real temp file for the "Read" tool call
   (not mocked), against a scripted ForgeAPI handler. Asserts the first request has no `history`
@@ -391,7 +391,7 @@ the read.
 (`910b837 Forward the real platform credential to the Client Runtime`), two small revision rounds.
 
 **What changed:**
-- [`src/ForgeMission.Desktop/Program.cs`](../../src/ForgeMission.Desktop/Program.cs) — the
+- [`src/ForgeMission.Desktop/Program.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Desktop/Program.cs) — the
   `args.Length == 0` branch (the real double-click launch path; the explicit-URL dev path is
   correctly left untouched, since Desktop doesn't own that external process's environment) now
   calls `CredentialStore.GetPlatform()` before resolving or launching any runtime. A missing/empty
@@ -399,7 +399,7 @@ the read.
   message) and calls `Environment.Exit(1)` before any child process starts. `StartClientRuntime`
   gained a `missionRuntimeCredential` parameter, passed through as `MissionRuntime__Credential`
   instead of the `"local"` sentinel.
-- [`src/ForgeMission.Desktop/ForgeMission.Desktop.csproj`](../../src/ForgeMission.Desktop/ForgeMission.Desktop.csproj) —
+- [`src/ForgeMission.Desktop/ForgeMission.Desktop.csproj`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Desktop/ForgeMission.Desktop.csproj) —
   new direct `ForgeMission.Core` project reference (genuinely needed: `Desktop → Orchestration →
   Docker` is a dead end, `Docker` has zero project references of its own, so `Core`'s
   `CredentialStore` was not transitively reachable before this).
@@ -449,7 +449,7 @@ first plan omitted entirely, including fixing an existing test that the new beha
 otherwise break).
 
 **What changed:**
-- [`src/ForgeMission.Orchestration/MissionRuntimeResolver.cs`](../../src/ForgeMission.Orchestration/MissionRuntimeResolver.cs) —
+- [`src/ForgeMission.Orchestration/MissionRuntimeResolver.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Orchestration/MissionRuntimeResolver.cs) —
   `ResolveMode` defaults absent `MissionRuntime:Mode` to `"cloud"`; a new pure
   `ResolveCloudBaseUrl(configuredUrl, apiEndpoint)` helper (deliberately pure — no direct
   `Environment.GetEnvironmentVariable` call inside it — so tests can exercise the fallback/override
@@ -459,26 +459,26 @@ otherwise break).
   `DefaultCloudEndpoint` constant (`https://api.forge.katasec.com`). `ResolveAsync` now returns
   `(BaseUrl, Mode, Launcher)` — `docker` unchanged; a genuinely unrecognized mode still requires an
   explicit `BaseUrl` or throws.
-- [`src/ForgeMission.Desktop/Program.cs`](../../src/ForgeMission.Desktop/Program.cs) — threads the
+- [`src/ForgeMission.Desktop/Program.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Desktop/Program.cs) — threads the
   resolved mode through to a new `MissionRuntime__Mode` env var alongside the existing
   `BaseUrl`/`Credential`.
-- [`src/ForgeMission.ClientRuntime/Program.cs`](../../src/ForgeMission.ClientRuntime/Program.cs) —
+- `src/ForgeMission.ClientRuntime/Program.cs` —
   removed the dead typed `AddHttpClient<MissionRuntimeSession>` registration.
-- [`src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs`](../../src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs) —
+- `src/ForgeMission.ClientRuntime/Transport/ClientRuntimeEndpoints.cs` —
   the `/transport/prompt` handler now reads `MissionRuntime:Mode` via injected `IConfiguration` and
   picks between `CloudMissionRuntimeSession`/`MissionRuntimeSession` directly at the construction
   site via a new `UsesCloudMissionRuntime(mode)` selector (`null`/case-insensitive `"cloud"` → true;
   `"docker"`/anything else → false). Deliberately no shared interface or factory — the two session
   types have identical public signatures by construction (Task 6), so the small duplication between
   the two branches is the direct, sanctioned cost of not building unneeded abstraction.
-- [`src/ForgeMission.Tests/Orchestration/MissionRuntimeResolverTests.cs`](../../src/ForgeMission.Tests/Orchestration/MissionRuntimeResolverTests.cs) —
+- [`src/ForgeMission.Tests/Orchestration/MissionRuntimeResolverTests.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Tests/Orchestration/MissionRuntimeResolverTests.cs) —
   the pre-existing `ResolveAsync_NonDockerModeWithoutConfiguredUrl_Throws` test (which asserted
   `"cloud"` mode with no `BaseUrl` throws) was replaced — that assertion directly contradicted this
   task's own new behavior. New coverage: no-mode-configured defaults to cloud; cloud without a
   `BaseUrl` uses the endpoint convention; a genuinely unrecognized mode (`"remote"`) without a
   `BaseUrl` still throws (preserving the old catch-all behavior test, now on the right mode value);
   plus direct unit coverage of the pure `ResolveCloudBaseUrl`/`ResolveMode` helpers.
-- [`src/ForgeMission.Tests/ClientRuntime/ClientRuntimeEndpointsTests.cs`](../../src/ForgeMission.Tests/ClientRuntime/ClientRuntimeEndpointsTests.cs)
+- `src/ForgeMission.Tests/ClientRuntime/ClientRuntimeEndpointsTests.cs`
   (new) — narrow theory-based tests on `UsesCloudMissionRuntime` alone (not a full hosted-TestServer
   endpoint test — deliberately scoped down since `MissionRuntimeSession`/`CloudMissionRuntimeSession`
   are already independently tested elsewhere, so a full endpoint test would mostly re-test their
@@ -530,7 +530,7 @@ in-process, no real sockets, no new hosting infrastructure invented.
 (`30e8765 Add tier-2 planted-content round-trip test for API A tool continuations`).
 
 **What changed:**
-- [`src/ForgeMission.Rooms.Tests/Api/MissionExecutionToolRoundTripTests.cs`](../../src/ForgeMission.Rooms.Tests/Api/MissionExecutionToolRoundTripTests.cs)
+- `src/ForgeMission.Rooms.Tests/Api/MissionExecutionToolRoundTripTests.cs`
   (new) — a real 3-step mission (`Enrich → Respond(role:agent) → Verify`) built fresh on disk, a
   `ChainedToolRunner : IExpertRunner` that derives each step from actual conversation state (not
   hardcoded), a chained two-file plant (file A's content names file B's path; file B holds the
@@ -543,11 +543,11 @@ in-process, no real sockets, no new hosting infrastructure invented.
   settlement (verified via a live `Billing.GetBalanceMicroUsdAsync` check, not just response
   fields) on both tool-use turns; **exactly one** settlement on the terminal turn, with the real
   ledger balance matching the response's reported balance.
-- [`src/ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj`](../../src/ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj) —
+- [`src/ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms.Tests/ForgeMission.Rooms.Tests.csproj) —
   new `ForgeMission.Runner`/`ForgeMission.Core` project references + a `Microsoft.Extensions.AI`
   package reference (needed for direct compile-time use of `ChatMessage`/`FunctionCallContent`/etc.
   in the new test file — a real, build-verified necessity, not a guess).
-- [`src/ForgeMission.Runner/Properties/AssemblyInfo.cs`](../../src/ForgeMission.Runner/Properties/AssemblyInfo.cs) —
+- [`src/ForgeMission.Runner/Properties/AssemblyInfo.cs`](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner/Properties/AssemblyInfo.cs) —
   new `[assembly: InternalsVisibleTo("ForgeMission.Rooms.Tests")]`, verified genuinely required
   (`RunnerRegistry`/`IRunnerArtifactStore` confirmed `internal` by reading the source before
   approving the plan).

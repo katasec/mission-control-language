@@ -57,6 +57,21 @@ procedure is owned by [Phase 48](../phases/phase-48-maui-desktop-host-spike.md#s
 do not rebuild locally and call that release-artifact acceptance. Windows and macOS acceptance is
 complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-host-spike_completed.md).
 
+### `forge chat` and `forge chat --hands`
+
+| Part | Default | Override (not default-path evidence) | Source |
+|---|---|---|---|
+| Artifact | `forge` from `make install` on forge-mcl `main`. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` |
+| Endpoint | ForgeAPI `https://api.forge.katasec.com`, platform key from `forge login` as `Bearer`. | `FORGE_API_ENDPOINT`. | forge-mcl `ForgeExec.cs:24-26`, `ForgeChat.cs` |
+| Project | The default Project under `<profile>/Forge/Projects` (title `chat`), created on first use. | Another Project is a designed starting state for that task. | [Phase 53.2](../phases/phase-53.2-forge-chat.md) |
+| Mission and conversation | Plain: `StarterMissions.Chat` (`Answerer`, `NoHands`). `--hands`: `StarterMissions.ChatHands` (`Assistant`, `ProjectWorkspace`) after the one-time approval. Each mode reopens its own latest conversation. | — | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
+| Mode | TUI on a terminal; piped (line) mode when input or output is redirected. Both are the shipped binary. | — | [How conversations work §4](how-conversations-work.md#4-clients-and-turns) |
+
+**Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
+reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop
+hands therefore cannot be default-path evidence until the Desktop client upgrade
+([backlog](../backlog.md)) lands.
+
 ## New or changed defaults
 
 Before a task changes a supported path—or introduces a new one—the active spoke must add or revise

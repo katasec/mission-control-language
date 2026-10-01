@@ -92,7 +92,7 @@ as it was scoped under Avalonia.
    - **Task 2a — HTTP loop correctness, in-process. ✅ Done 2026-07-30** — implementation and
      verification evidence are in the [completed record](phase-43.2-electron-forge-desktop-shell_completed.md#task-2a--http-tool-loop-2026-07-30). Build the new loop component and prove it
      against an **in-process** `AnthropicServer` host — no subprocess, no Docker. Reuse the exact
-     pattern [`AnthropicServerFixture`](../../src/ForgeMission.Tests/Integration/AnthropicServerFixture.cs)
+     pattern [`AnthropicServerFixture`](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Integration/AnthropicServerFixture.cs)
      already uses (`WebApplication.CreateSlimBuilder()` bound to a free loopback port via
      `app.StartAsync()`), which `AnthropicServerToolTests.cs` and `MockClaudeHostTests.cs` already
      drive with a plain `HttpClient` — i.e. non-CLI HTTP consumption of `/v1/messages`, both
@@ -112,11 +112,11 @@ as it was scoped under Avalonia.
      the real local Docker `/v1` container (`ghcr.io/katasec/forge-runner`), launched the way
      `forge claude --container` already does it: `DockerCli.RunContainerAsync` port-maps the
      container's fixed internal port to a free host port, and the caller just does plain HTTP to
-     `http://127.0.0.1:{hostPort}/v1/messages` ([Program.cs:591](../../src/ForgeMission.Cli/Program.cs),
-     [:618](../../src/ForgeMission.Cli/Program.cs)) — **no protocol difference from 2a's in-process
+     `http://127.0.0.1:{hostPort}/v1/messages` ([Program.cs:591](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs),
+     [:618](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs)) — **no protocol difference from 2a's in-process
      target**, only the base URL config value changes. Two things Task 2b must land, resolved
      2026-07-27:
-     - **`DockerCli` reuse** — extract [`DockerCli`](../../src/ForgeMission.Cli/Docker/DockerCli.cs)
+     - **`DockerCli` reuse** — extract [`DockerCli`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Docker/DockerCli.cs)
        + `DockerPrereqChecker`/`PrereqCheck` (`src/ForgeMission.Cli/Docker/`) into a new shared
        project referenced by both `ForgeMission.Cli` and `ForgeMission.ClientRuntime`. `DockerCli`
        itself has zero CLI-specific dependencies (Spectre.Console/System.CommandLine live in

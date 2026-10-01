@@ -6,9 +6,9 @@
 ## Task 1 — done (2026-07-25)
 
 The four `Read`/`Edit`/`Write`/`Bash` `AITool` declarations are built:
-[AgentToolDeclarations.cs](../../src/ForgeMission.Core/Tools/AgentToolDeclarations.cs). Schema
+[AgentToolDeclarations.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/AgentToolDeclarations.cs). Schema
 content copied verbatim from the captured fixture
-([main-loop-tools.json](../../src/ForgeMission.Tests/Fixtures/anthropic-wire/main-loop-tools.json)),
+([main-loop-tools.json](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Fixtures/anthropic-wire/main-loop-tools.json)),
 trimmed to what a future executor supports (`Bash` → `command` only; `Read` drops the PDF-only
 `pages` field; `Edit`/`Write` unchanged). Hand-written, no `AIFunctionFactory.Create` reflection.
 
@@ -60,14 +60,14 @@ this repo needs `NUGET_AUTH_TOKEN` set to a token with `read:packages` scope (`$
 
 ## Task 2 — done (2026-07-25)
 
-The tool-executor registry: [ToolExecutorRegistry.cs](../../src/ForgeMission.Core/Tools/ToolExecutorRegistry.cs)
+The tool-executor registry: [ToolExecutorRegistry.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/ToolExecutorRegistry.cs)
 dispatches a `FunctionCallContent` by `.Name` to one of four executors — `ReadToolExecutor` /
 `EditToolExecutor` / `WriteToolExecutor` / `BashToolExecutor`, each in its own file, mirroring the
 `expert.Kind switch` convention as a name-keyed dictionary lookup instead of an inline switch (the
 tool set may grow). An unknown tool name returns a graceful `ToolExecutionResult.Error`, never a
 throw — same discipline as path violations.
 
-**`WorkspaceGuard`** ([WorkspaceGuard.cs](../../src/ForgeMission.Core/Tools/WorkspaceGuard.cs)) is
+**`WorkspaceGuard`** ([WorkspaceGuard.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/WorkspaceGuard.cs)) is
 the path-confinement primitive `Read`/`Edit`/`Write` share: resolves a requested path against the
 workspace root, following symlinks on every *existing* ancestor (not just the leaf — so a
 not-yet-created file under a symlinked parent still resolves through the real target first), then
@@ -107,7 +107,7 @@ exactly +1).
 
 ## Task 3 — done (2026-07-25)
 
-[AgenticSession.cs](../../src/ForgeMission.Core/Runtime/AgenticSession.cs) — the loop the whole
+[AgenticSession.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/AgenticSession.cs) — the loop the whole
 spoke was building toward. Constructor takes `ast`, `experts`, `pipelineRunner`, `workspaceRoot`
 (bound once per session — see "workspace-root ownership" below), an optional `ToolExecutorRegistry`
 (defaults to `ToolExecutorRegistry.Default()`), and an optional approval hook (defaults to
@@ -145,7 +145,7 @@ Calls `PipelineRunner.RunAsync` directly, not `MissionChatClient` — no `IEnric
 
 ## Task 4 — done (2026-07-25)
 
-[AgenticSessionTests.cs](../../src/ForgeMission.Tests/Runtime/AgenticSessionTests.cs) — 3 tests,
+[AgenticSessionTests.cs](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Runtime/AgenticSessionTests.cs) — 3 tests,
 **no mocked tool execution**: the model is scripted (as every LLM-facing test in this codebase
 already scripts the LLM), but `Read`/`Edit`/`Bash` run for real against a real temp-directory
 workspace. Pass criterion is planted, tool-derived content flowing into the final answer text
@@ -180,7 +180,7 @@ evidence, not a regression from `AgenticSession`.
   config/keychain, held in memory, passed directly to the provider SDK client constructor —
   `Environment.SetEnvironmentVariable` is never called for it. Consequence: `Bash`'s child process can
   safely inherit the app's **full** environment (`UseShellExecute = false` default behavior, same as
-  `ExecExpertRunner` — [ExecExpertRunner.cs:27](../../src/ForgeMission.Core/Adapters/ExecExpertRunner.cs)) with
+  `ExecExpertRunner` — [ExecExpertRunner.cs:27](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/ExecExpertRunner.cs)) with
   nothing to leak, because there is nothing secret in that environment to inherit. This supersedes
   39.7 Option A (allowlist-from-empty) *for this spoke specifically* — allowlisting would break real
   dev workflows (extended `PATH`, `ssh-agent`, npm/git config, proxy vars) for no benefit once the key
@@ -189,19 +189,19 @@ evidence, not a regression from `AgenticSession`.
 - **The agentic loop is a shared `ForgeMission.Core` helper (`AgenticSession`), not desktop-app-only** —
   reusable later by a CLI-driven agentic mode without duplication.
 - **The loop keeps state in memory, not via the wire's enrichment cache.** `IEnrichmentCache`/
-  `ConversationHash` ([EnrichmentCache.cs](../../src/ForgeMission.Core/Runtime/EnrichmentCache.cs),
-  [ConversationHash.cs](../../src/ForgeMission.Core/Runtime/ConversationHash.cs)) exist to solve a
+  `ConversationHash` ([EnrichmentCache.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/EnrichmentCache.cs),
+  [ConversationHash.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/ConversationHash.cs)) exist to solve a
   **stateless HTTP** problem: each tool round-trip on the wire is a fresh `POST` with no server memory,
   so the pre-agent output has to be recovered by re-deriving a content-addressed hash key. `AgenticSession`
   runs in-process across one long-lived call — the `context`/`vars` dictionary is a normal local variable
   that survives every loop iteration untouched. There is nothing to re-derive, so `AgenticSession` does
   **not** use `IEnrichmentCache` or `ConversationHash` at all. It reuses `StartAtAgent`
-  ([PipelineRunOptions.cs:29](../../src/ForgeMission.Core/Runtime/PipelineRunOptions.cs)) — the real
+  ([PipelineRunOptions.cs:29](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunOptions.cs)) — the real
   mechanism, skip pre-agent steps on continuation calls — and grows a plain `List<ChatMessage>`
-  (wrapped in a `Conversation`, [Conversation.cs](../../src/ForgeMission.Core/Runtime/Conversation.cs))
+  (wrapped in a `Conversation`, [Conversation.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/Conversation.cs))
   by appending the assistant's `tool_use` and the executed `FunctionResultContent` each iteration, the
   same shape `DirectExpertRunner` already reads back out of `context["conversation"]`
-  ([DirectExpertRunner.cs:83](../../src/ForgeMission.Core/Adapters/DirectExpertRunner.cs)).
+  ([DirectExpertRunner.cs:83](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/DirectExpertRunner.cs)).
   `AgenticSession` calls `PipelineRunner.RunAsync` directly — it does not go through `MissionChatClient`
   (that class is wire-shaped: message-list-in/message-out, goal extraction, the cache lookup above —
   none of which the desktop needs).
@@ -216,12 +216,12 @@ evidence, not a regression from `AgenticSession`.
   `Bash` `AITool` declarations (name, description, JSON input schema) itself. **Do not use
   `AIFunctionFactory.Create(delegate)`** for this in `ForgeMission.Core` — it's reflection-based and unsafe
   in the AOT-published binary (today it appears only in test code:
-  [AgentToolPipelineTests.cs:35](../../src/ForgeMission.Tests/Runtime/AgentToolPipelineTests.cs)). Hand-write
+  [AgentToolPipelineTests.cs:35](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Runtime/AgentToolPipelineTests.cs)). Hand-write
   the schemas and construct `AIFunction` instances explicitly, the same pattern `DirectExpertRunner` already
-  uses for `StepEnvelopeSchemaJson` ([DirectExpertRunner.cs:18](../../src/ForgeMission.Core/Adapters/DirectExpertRunner.cs)).
+  uses for `StepEnvelopeSchemaJson` ([DirectExpertRunner.cs:18](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/DirectExpertRunner.cs)).
 - **Tool-executor dispatch: one class per tool behind a name-keyed registry**, not a single mega-dispatcher
   method — mirrors the existing `expert.Kind switch` convention in
-  [PipelineRunner.cs:245](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs), as a lookup rather than an
+  [PipelineRunner.cs:245](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs), as a lookup rather than an
   inline switch since the tool set may grow (`NotebookEdit` etc. noted as "add if needed" in 42.3).
 - **Path confinement:** resolve every `Read`/`Edit`/`Write` path against the workspace root (the folder
   43.2's shell has open) via `Path.GetFullPath`, resolving symlinks before the prefix check (a symlink
@@ -241,8 +241,8 @@ deliberately built *for* an external client. This spoke inverts that: forge beco
 
 What already exists and is reused as-is:
 - `MissionResult.ToolCalls` — `IReadOnlyList<Microsoft.Extensions.AI.FunctionCallContent>?`
-  ([MissionResult.cs:13](../../src/ForgeMission.Core/Runtime/MissionResult.cs)) — set when the
-  agent expert (`role: agent`, `expert.IsAgent` — [PipelineRunner.cs:267](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs))
+  ([MissionResult.cs:13](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/MissionResult.cs)) — set when the
+  agent expert (`role: agent`, `expert.IsAgent` — [PipelineRunner.cs:267](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs))
   asks for a tool call. Today the caller (the wire protocol) reads this and hands it to the real
   `claude` CLI. Forge Desktop instead executes it directly.
 - `FunctionResultContent` (`Microsoft.Extensions.AI`) — the type a tool execution result feeds
@@ -275,7 +275,7 @@ What's new:
    - appends the call + its `FunctionResultContent` to an in-memory `List<ChatMessage>` (wrapped in
      a `Conversation`), no cache/hash lookup involved,
    - calls `PipelineRunner.RunAsync` again with `PipelineRunOptions.StartAtAgent = true`
-     ([PipelineRunner.cs:86](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs)) and the updated
+     ([PipelineRunner.cs:86](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs)) and the updated
      `Conversation` in `ContextObjects`,
    - repeats until a turn returns no tool calls.
    Calls `PipelineRunner` directly — does not go through `MissionChatClient` (wire-shaped, carries

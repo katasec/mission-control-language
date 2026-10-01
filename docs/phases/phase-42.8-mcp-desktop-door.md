@@ -34,7 +34,7 @@ round-trip, no re-entrancy, in forge for this door.
 ## Context an implementer needs (verified 2026-07-15)
 
 - **`forge mcp` already exists (Phase 33, Done):** a **stdio** MCP server exposing a mission as one callable
-  tool. [`Program.cs` `BuildMcpCommand`](../../src/ForgeMission.Cli/Program.cs) uses the
+  tool. [`Program.cs` `BuildMcpCommand`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs) uses the
   `ModelContextProtocol` SDK — `.AddMcpServer(...).WithStdioServerTransport()` with `WithListToolsHandler`
   (builds the tool + JSON schema from the mission's params) and `WithCallToolHandler` (runs the mission with
   call-time args as context overrides). **These handlers are reusable verbatim; only the transport changes.**

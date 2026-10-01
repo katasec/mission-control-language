@@ -30,7 +30,7 @@ deliberately rather than assuming "it built, so it's fine."
    a compiler-enforcement gap: every other library in the AOT closure (`Core`, `Parser`, `Scout`,
    `Serve`, `Billing`, `ClientRuntime.Transport`) has `<IsAotCompatible>true</IsAotCompatible>`, so a
    future reflection-based JSON call added to `Docker` would fail the build immediately (now that
-   [`src/Directory.Build.props`](../../src/Directory.Build.props) treats warnings as errors); without
+   `src/Directory.Build.props` treats warnings as errors); without
    the marker, the same mistake would build clean and only surface at publish+run time — exactly the
    two bugs this phase already found. **Fix:** add the marker, confirm a clean rebuild.
 

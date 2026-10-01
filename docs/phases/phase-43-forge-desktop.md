@@ -18,7 +18,7 @@ is a replaceable presentation client over the Mission Runtime (reasoning) and Cl
 | If working on… | Read… |
 |---|---|
 | Completed ownership record | [43.23 — Domain ownership](phase-43.23-domain-ownership.md) and its [completed evidence](phase-43.23-domain-ownership_completed.md). |
-| Current Project/Conversation/Run workbench ownership | [43.23 — Domain ownership](phase-43.23-domain-ownership.md), then the nearest [source component README](../../src/README.md). [43.22](phase-43.22-project-mission-reconstruction.md) is historical reconstruction evidence only. |
+| Current Project/Conversation/Run workbench ownership | [43.23 — Domain ownership](phase-43.23-domain-ownership.md), then the nearest [source component README](https://github.com/katasec/forge-desktop/blob/main/src/README.md). [43.22](phase-43.22-project-mission-reconstruction.md) is historical reconstruction evidence only. |
 | Shared in-chat activity visual (complete; read only if changing it) | [43.18 — Shared conversation activity surface](phase-43.18-shared-conversation-activity.md), then only its named design sections and source files. |
 | Conversation Markdown rendering | [43.24 — Conversation Markdown rendering](phase-43.24-conversation-markdown-rendering.md), then `ForgeMission.Presentation`'s README and only the named source/test files. |
 | Deferred rich trace/workbench UX | [43.4 — IDE trace surface](phase-43.4-ide-trace-surface.md). |

@@ -3,7 +3,7 @@
 > **Status: ALL TASKS DONE — 2026-07-12.** Step-level spine (Tasks 1, 3, 4, 5, 6) live-verified on
 > `forge.katasec.com`; **Task 2 (Grok SSE sub-search adapter) now built + verified live** (real xAI stream →
 > sub-search chips → grounded result, one call). Deployed: `forge-runner:0.6.0`→(pending `0.7.0`),
-> `forge-ui:0.4.1`→(pending `0.4.2`). See [Progress](#progress-2026-07-12) and [Task 2](#task-2-done) below.
+> `forge-ui:0.4.1`→(pending `0.4.2`). See [Progress](#progress-2026-07-12) and [Task 2](#task-2--grok-streaming-adapter) below.
 > · **Parent:** [Phase 41 — Live Retrieval](phase-41-live-retrieval-scout.md) ·
 > **Depends on:** [41.2](phase-41.2-search-expert-kind.md) (`@grok` live) · **Revisits:** the 39.1 runner
 > transport decision (synchronous HTTP → streaming). · **Code style:** all new code follows
@@ -130,13 +130,13 @@ independent of any Grok-specific work.
 
 **Built:**
 - **Task 1** — `WebSearchProgress` record + default `IWebSearch.SearchStreamAsync` (yields nothing) in
-  [src/ForgeMission.Scout/IWebSearch.cs](../../src/ForgeMission.Scout/IWebSearch.cs). Provider-neutral shape
+  [src/ForgeMission.Scout/IWebSearch.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Scout/IWebSearch.cs). Provider-neutral shape
   ready for the Grok adapter; existing backends compile unchanged (default interface method).
 - **Engine hook** — `PipelineRunOptions.OnStepStart(expertName, kind)` fired *before* each step runs in
-  [PipelineRunner.cs](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs), so "Searching the web…" lands
+  [PipelineRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs), so "Searching the web…" lands
   *during* the ~40s search, not after. Provider- and mission-agnostic.
 - **Task 3** — streaming runner leg. `RunStreamEvent`/`RunProgress` in
-  [RunContracts.cs](../../src/ForgeMission.Runner.Contracts/RunContracts.cs); `MissionRunHandler` refactored
+  [RunContracts.cs](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner.Contracts/RunContracts.cs); `MissionRunHandler` refactored
   into a shared `ExecuteAsync` core + `RunStreamAsync` (Channel + 15s heartbeat); new `POST /run/stream`
   NDJSON endpoint (per-event flush). Buffered `POST /run` kept verbatim for the CLI.
 - **Task 4** — `MissionRunnerClient.RunStreamAsync` consumes the NDJSON with

@@ -1,7 +1,7 @@
 # Phase 53.2 — `forge chat`
 
 > **Status: first release done (2026-09-29), verified.** Evidence:
-> [phase-53.2-forge-chat_completed.md](phase-53.2-forge-chat_completed.md). Next: the later steps below. Hub: [Phase 53](phase-53-forge-client.md).
+> [phase-53.2-forge-chat_completed.md](phase-53.2-forge-chat_completed.md). Later steps: see the table below. Hub: [Phase 53](phase-53-forge-client.md).
 
 **Goal:** `forge chat` is the Forge TUI, built up in steps toward the
 [target mockup](../design/forge_tui_mission_chat_mockup.html). The first release is only a basic chat
@@ -49,7 +49,7 @@ ForgeAPI client, no new storage, and no second Janus.
 | Client | `Katasec.Forge.Client` 0.2.0 public mission-conversation API is the only path; the CLI adds no second ForgeAPI client. |
 | Project (Ameer, 2026-09-29) | One default Project under the existing default root `<profile>/Forge/Projects` (`ProjectService.DefaultProjectsRoot`), created on first use through the existing create/open calls. Later launches open it and its last conversation. Pointing at another Project comes later, with switching. |
 | Janus version (Ameer, 2026-09-29) | On first use only, run the existing authoring sequence as the Desktop does: draft the built-in Janus starter → promote → add one case → evaluate → publish. Publish requires a passed evaluation (`MissionVersionService.cs:359-360`); that policy is unchanged. It costs one evaluation run, once. If the evaluation fails, `forge chat` reports it and stops. |
-| Default mission | Janus. Later: mission switching in the TUI starts a new conversation (the launch is pinned at create); not persisted; no `/model`. |
+| Default mission | ~~Janus.~~ **Superseded by [Phase 53.4](phase-53.4-naked-default-mission.md):** the default is `StarterMissions.Chat` (one `Answerer` on Claude). Mission switching in the TUI is not built; a launch is pinned at create. |
 | Core consumption | The CLI adds a `PackageReference` to `Katasec.Forge.Client`; restore unifies its `Katasec.Forge.Mcl.Core` dependency onto forge-mcl's own Core project (one `ForgeMission.Core.dll`), and the Native AOT publish is clean (+1.5 MB; spike 2026-09-29). |
 | Terminal | Ghostty and Kitty, no fallback path. |
 | TUI library | XenoAtom.Terminal.UI (core package, no `.Graphics`/SkiaSharp), introduced when the layout is built, not in the first release. Kitty images later through a small PNG → kitty graphics encoder. Before the images step: a visual check in Ghostty and Kitty that a placed image survives XenoAtom's redraw. |
@@ -61,8 +61,8 @@ Each needs its own design before it is built.
 
 | Step | Note |
 |---|---|
-| TUI layout (XenoAtom), chat list, mission switching | List, reopen and replay already exist server-side. |
-| Mission hands (Bob tools, TUI confirmation prompts) | Existing in-process confirmation callback; the TUI works inside a Project, which is Bob's root. |
+| TUI layout (XenoAtom), chat list, mission switching | **TUI layout shipped** ([53.5](phase-53.5-tui-first-slice.md)–[53.9](phase-53.9-tui-live-sessions.md)). Chat list and mission switching not built. |
+| Mission hands (Bob tools, TUI confirmation prompts) | **Shipped as `forge chat --hands`** ([Phase 55](phase-55-forge-chat-hands.md)) with a one-time approval per project instead of per-tool prompts. |
 | Mission graph image | Needs the mission definition plus participant and loop events; confirm those events carry what is needed. |
 | Image artifacts | Nothing produces artifacts today (the Host's Blob artifact store has no writer). |
 | "Needs you" gate | No event or command shape defined yet (a deferred Phase 43 item). |

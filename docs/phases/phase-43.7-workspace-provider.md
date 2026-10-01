@@ -60,8 +60,8 @@ changed the design from the first pass:
   flat-root-list model scales past v1's needs rather than needing a redesign later.
 - **This repo's own precedent**: `forge claude --container` already bind-mounts the workspace root
   into a running container (`binds: [$"{workspaceRoot}:/workspace"]`,
-  [Program.cs:888](../../src/ForgeMission.Cli/Program.cs:888) and
-  [:1378](../../src/ForgeMission.Cli/Program.cs:1378)) — the exact shape a future container backend
+  [Program.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs) lines 888 and
+  1378 at the time) — the exact shape a future container backend
   should reuse rather than reinventing.
 
 ## Locked decisions
@@ -129,13 +129,13 @@ public interface IWorkspace
 ```
 
 `LocalDiskWorkspace` is the sole implementation this spoke builds: absorbs
-[`WorkspaceGuard`](../../src/ForgeMission.Core/Tools/WorkspaceGuard.cs)'s confinement logic
+[`WorkspaceGuard`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/WorkspaceGuard.cs)'s confinement logic
 (extended to check against a list of roots instead of one), the `File.*` calls currently inline in
-[`ReadToolExecutor`](../../src/ForgeMission.Core/Tools/ReadToolExecutor.cs)/
-[`EditToolExecutor`](../../src/ForgeMission.Core/Tools/EditToolExecutor.cs)/
-[`WriteToolExecutor`](../../src/ForgeMission.Core/Tools/WriteToolExecutor.cs), and the
+[`ReadToolExecutor`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/ReadToolExecutor.cs)/
+[`EditToolExecutor`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/EditToolExecutor.cs)/
+[`WriteToolExecutor`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/WriteToolExecutor.cs), and the
 `ProcessStartInfo` logic currently inline in
-[`BashToolExecutor`](../../src/ForgeMission.Core/Tools/BashToolExecutor.cs) (including its existing
+[`BashToolExecutor`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/BashToolExecutor.cs) (including its existing
 full-environment-inheritance behavior, unchanged). **The timeout constructor parameter moves with
 it** — `BashToolExecutor`'s own `timeout` constructor param goes away; `LocalDiskWorkspace` gains
 the optional `timeout` param instead (default 5 minutes, unchanged value), since it now owns the
@@ -153,7 +153,7 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
   resolving) and overrides only `ExecuteAsync`, which must run inside the container and translate
   the working directory from the host-side root to the container-side mount point (`/workspace/...`,
   matching the existing `--container` convention).
-- **Missing primitive for the above:** [`DockerCli`](../../src/ForgeMission.Cli/Docker/DockerCli.cs)
+- **Missing primitive for the above:** [`DockerCli`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Docker/DockerCli.cs)
   has container lifecycle (`RunContainerAsync`, `StopAndRemoveAsync`, bind-mount plumbing) but **no
   exec-into-a-running-container method** — everything it does today creates+starts a container
   running one fixed `Cmd`. The gap is the Docker Engine API's `POST /containers/{id}/exec` →
@@ -166,9 +166,9 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
 ## Tasks
 
 1. ✅ **Done 2026-07-25.** Define `IWorkspace` — new file
-   [src/ForgeMission.Core/Tools/IWorkspace.cs](../../src/ForgeMission.Core/Tools/IWorkspace.cs) (does
+   [src/ForgeMission.Core/Tools/IWorkspace.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/IWorkspace.cs) (does
    not exist yet), exact shape above. Reuses the existing `ToolExecutionResult` type from
-   [IToolExecutor.cs](../../src/ForgeMission.Core/Tools/IToolExecutor.cs) — no new result type.
+   [IToolExecutor.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/IToolExecutor.cs) — no new result type.
 2. ✅ **Done 2026-07-25.** Implement `LocalDiskWorkspace` — new file, absorbing `WorkspaceGuard`'s confinement logic
    (extended to "inside ANY of `Roots`"), the three executors' `File.*` calls, and
    `BashToolExecutor`'s `ProcessStartInfo` logic (unrestricted execution, full environment
@@ -197,7 +197,7 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
    resolution was silently primary-root-only (structurally could never reach `Roots[1..N]`) — untested
    and undocumented as such. Fixed by making it an explicit, tested decision instead of an accidental
    one: a code comment directly above the join in
-   [`WorkspaceGuard.TryResolve`](../../src/ForgeMission.Core/Tools/WorkspaceGuard.cs:38-40) states
+   [`WorkspaceGuard.TryResolve`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/WorkspaceGuard.cs) (lines 38-40 at the time) states
    relative paths always resolve against `Roots[0]` by design (matches Claude Agent SDK's primary
    directory + `additionalDirectories` asymmetry); `WorkspaceGuardTests.RelativePath_AlwaysResolvesAgainstFirstRoot`
    proves it doesn't silently resolve into a same-named file under a non-primary root.

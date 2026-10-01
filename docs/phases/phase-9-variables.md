@@ -63,7 +63,7 @@ envCall    : 'env' '(' STRING (',' STRING)? ')' ;
 STRING     : '"' (~["\r\n])* '"' ;
 ```
 
-See [`src/ForgeMission.Core/Parser/FmlGrammar.g4`](../../src/ForgeMission.Core/Parser/FmlGrammar.g4)
+See `src/ForgeMission.Core/Parser/FmlGrammar.g4`
 for the authoritative grammar.
 
 ## AST changes

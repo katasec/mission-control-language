@@ -47,7 +47,7 @@ only if a real mission surfaces a shape the existing roles can't express.
 
 ## The mechanical gap: suspend/resume
 
-`PipelineRunner.RunAsync` ([PipelineRunner.cs](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs))
+`PipelineRunner.RunAsync` ([PipelineRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs))
 runs a mission start-to-finish today; there's no "pause mid-run, resume later" concept. Phase 42.3
 hit an adjacent problem (tool-call continuations) and deliberately chose *not* to pause the process
 — see [phase-42.3 §Design](phase-42.3-tool-capable-enriching-responder.md) ("the pipeline runs
@@ -57,10 +57,10 @@ full history. A human doesn't behave that way, so the same trick doesn't transfe
 shape of the fix does: persist state externally, skip already-completed steps, re-derive forward.
 
 **What's actually missing:**
-- A `Suspended` outcome on `StepEnvelope` ([StepEnvelope.cs](../../src/ForgeMission.Core/Runtime/StepEnvelope.cs)
+- A `Suspended` outcome on `StepEnvelope` ([StepEnvelope.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/StepEnvelope.cs)
   — today only carries `status: "pass"`/fail via `Status`, no suspend concept).
 - A resume option on `PipelineRunOptions` that generalizes the existing `StartAtAgent` skip
-  mechanism ([PipelineRunner.cs:86](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs)) from
+  mechanism ([PipelineRunner.cs:86](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs)) from
   "skip to the agent step" to "skip to step N with a seeded context bag."
 
 **Split by where the mission runs, not by `kind:`:**
@@ -72,7 +72,7 @@ shape of the fix does: persist state externally, skip already-completed steps, r
   case below.
 - **Hosted** — `RunAsync` must never block a worker for hours. It returns `Suspended` immediately;
   a layer above `PipelineRunner` (shaped like the `MissionExecutionService` already backing
-  [RunContracts.cs](../../src/ForgeMission.Runner.Contracts/RunContracts.cs)) persists
+  [RunContracts.cs](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner.Contracts/RunContracts.cs)) persists
   `{run_id, step_index, context bag}` and later resumes by calling `RunAsync` again with the
   persisted context + "start at step N."
 
@@ -84,14 +84,14 @@ completeness since it was part of the original brainstorm and may matter once Fo
 to a hosted mission:
 
 Proposed shape: a `channel:` field on the human step, resolved by a switch exactly like
-[`ProviderClientBuilder.BuildChatClient`](../../src/ForgeMission.Cli/ProviderClientBuilder.cs)
+[`ProviderClientBuilder.BuildChatClient`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/ProviderClientBuilder.cs)
 resolves `provider:` for LLM experts — one case per channel (`rooms`, `email`, `teams`, `slack`,
 and now `desktop` for Forge Desktop's own local blocking path), each providing:
 1. **Notify** — render the pending question in that channel's native shape.
 2. **Resume callback** — the channel's click/reply must call back into one universal resume
    webhook that exchanges a token for `{run_id, decision}`.
 
-Rooms ([`MemberKind.Human`](../../src/ForgeMission.Rooms/MemberKind.cs)) is the *easy* channel — it
+Rooms ([`MemberKind.Human`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms/MemberKind.cs)) is the *easy* channel — it
 already tracks state server-side. Email/Teams/Slack don't hold conversation state between messages,
 so the token itself has to be self-describing (signed, embeds `run_id` and `step_index`) — the same
 trick calendar RSVP and PR-approval-by-email links use.

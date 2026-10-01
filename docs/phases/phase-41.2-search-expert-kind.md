@@ -36,7 +36,7 @@ not yet configurable.
 ## Context an implementer needs (verified against the code 2026-07-12)
 
 - **Expert kinds are native `IExpertRunner`s dispatched by string** in
-  [`PipelineRunner`](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs) — the switch appears **twice**
+  [`PipelineRunner`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs) — the switch appears **twice**
   (`ExecuteStepAsync` *and* `ExecuteParallelStepAsync`):
   ```csharp
   var runner = expert.Kind switch {
@@ -48,11 +48,11 @@ not yet configurable.
   So an unrecognised `kind: search` would be mis-dispatched as an LLM call — **adding the switch case is
   the core wiring.** No kind whitelist exists in the parser/loader, so `kind: search` frontmatter already
   parses (`ExpertDefinition.Kind` is a free string, default `"llm"`).
-- **`IExpertRunner`** ([iface](../../src/ForgeMission.Core/Runtime/IExpertRunner.cs)):
+- **`IExpertRunner`** ([iface](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/IExpertRunner.cs)):
   `Task<StepEnvelope> RunAsync(ExpertDefinition, Dictionary<string,object> context, ct)` + `StreamAsync`.
   A runner **may mutate `context`** to publish named keys — `JsonExtractExpertRunner` does exactly this
   (`context[prop.Name] = …`). `PipelineRunner` then sets `context["output"] = envelope.Text` after each step.
-- **`when()` guards** ([grammar](../../src/ForgeMission.Parser/MclGrammar.g4): `step : UPPER_ID contextClause? usingClause? whenClause?`)
+- **`when()` guards** ([grammar](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Parser/MclGrammar.g4): `step : UPPER_ID contextClause? usingClause? whenClause?`)
   read a **context key**: `StringEqualsWhen` ⇒ `context[key]?.ToString() == value`. Step bindings are
   `Expert(key: value)`; the `when(...)` clause follows. **Two load-bearing behaviours:**
   1. Every step overwrites `context["output"]`, so **a guard must key off a *stable* context key** (one no
@@ -62,7 +62,7 @@ not yet configurable.
 - **The reference pattern already in-repo:** [`missions/when-routing`](../../missions/when-routing/mission.mcl)
   — a classifier emits a keyword, `when(output: "x")` guards route, `when(else)` catches the rest. We
   extend it from *mutually-exclusive terminal branches* to *classify → augment → answer*.
-- **Vanilla mission shape today** ([`missions/vanilla`](../../missions/vanilla/mission.mcl)):
+- **Vanilla mission shape today** ([`missions/vanilla`](https://github.com/katasec/forge-runner/blob/main/missions/vanilla/mission.mcl)):
   `mission Vanilla(goal) = { Answerer }` where `Answerer` is `kind: llm` with `{{goal}}`. Per-provider
   clones exist: `missions/{vanilla,grok,openai,claude,assistant}`.
 
@@ -97,7 +97,7 @@ Create `src/ForgeMission.Core/Adapters/SearchExpertRunner.cs`:
 public sealed class SearchExpertRunner(Scout.IWebSearch search) : IExpertRunner
 ```
 1. Add `ProjectReference` to `ForgeMission.Scout` in
-   [`ForgeMission.Core.csproj`](../../src/ForgeMission.Core/ForgeMission.Core.csproj) (Scout is AOT-clean).
+   [`ForgeMission.Core.csproj`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/ForgeMission.Core.csproj) (Scout is AOT-clean).
 2. `RunAsync`: resolve the query from `context["query"]` (set by the `(query: …)` binding), falling back to
    `context["output"]`; call `search.SearchAsync(new WebSearchRequest(query), ct)`; **mutate context** (the
    `json_extract` pattern) to publish `context["search_results"]` = `result.Answer ?? ""` and
@@ -108,8 +108,8 @@ public sealed class SearchExpertRunner(Scout.IWebSearch search) : IExpertRunner
   land in context and `envelope.Text` is the answer.
 
 ### Task 2 — Dispatch + wiring
-1. Add `IsSearch => Kind.Equals("search", …)` to [`ExpertDefinition`](../../src/ForgeMission.Core/Experts/ExpertDefinition.cs).
-2. Carry an optional `IWebSearch` on [`ExecutionConfig`](../../src/ForgeMission.Core/Runtime) (the config already
+1. Add `IsSearch => Kind.Equals("search", …)` to [`ExpertDefinition`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Experts/ExpertDefinition.cs).
+2. Carry an optional `IWebSearch` on [`ExecutionConfig`](https://github.com/katasec/forge-mcl/tree/main/src/ForgeMission.Core/Runtime) (the config already
    passed to `PipelineRunner`); add `"search" => new SearchExpertRunner(_execution.WebSearch ?? throw new
    InvalidOperationException("kind: search requires a configured IWebSearch (Scout)."))` to **both** dispatch
    switches in `PipelineRunner`.

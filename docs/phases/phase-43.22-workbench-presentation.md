@@ -3,7 +3,7 @@
 > **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
 > The Presentation paths and task instructions below describe the reconstruction baseline, not a
 > current implementation assignment. Read the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
-> and the nearest [source component README](../../src/README.md) before changing the workbench.
+> and the nearest [source component README](https://github.com/katasec/forge-desktop/blob/main/src/README.md) before changing the workbench.
 
 ## Components and scope
 

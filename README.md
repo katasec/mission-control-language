@@ -435,6 +435,19 @@ output(BuildOperatorDesign, "./report.md")  // write to file
 
 Status messages always go to stderr and never pollute the output stream.
 
+### Chat in the cloud — `forge chat`
+
+```bash
+forge login                # sign in once (browser); stores a platform key
+forge chat                 # full-screen chat with the default Chat mission on Forge Cloud
+forge chat --hands         # same, but the model may read, write and edit files in the project folder
+```
+
+`forge chat` runs a durable cloud conversation through ForgeAPI: replies stream as they are
+generated, and reopening replays the history. `--hands` asks once per project before granting file
+access, and keeps its own conversation separate from plain `forge chat`. Piped input switches to a
+plain line mode. How it works end to end: [How conversations work](docs/design/how-conversations-work.md).
+
 ---
 
 ## Interoperability — forge serve

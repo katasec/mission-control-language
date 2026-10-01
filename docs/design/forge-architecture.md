@@ -1,6 +1,10 @@
 # Forge Architecture — Mission Runtime, Application, Client Runtime, Presentation
 
-**Status: current 2026-09-06.** This is the canonical architecture for Forge. The completed
+**Status: current for the Desktop, 2026-10-01.** This is the canonical architecture for the Forge
+Desktop client. Conversations (Host, runner, ForgeAPI edge, `forge chat`) are described in
+[How conversations work](how-conversations-work.md). Since Phase 52.1 the Desktop's default runtime
+is the cloud ForgeAPI (`https://api.forge.katasec.com`, forge-desktop
+`Orchestration/MissionRuntimeResolver.cs:7`); the Kind local runtime is no longer supported. The completed
 [domain ownership end state](../retrospectives/phase-43-domain-ownership/end-state.md) and its
 [contracts](../retrospectives/phase-43-domain-ownership/contracts.md) define the concrete owners.
 The prior three-layer description is retained below as a historical record, not current deployment
@@ -30,14 +34,14 @@ Presentation ─Application.Transport──┤    Project, content, selection, s
   and any future surface. `ForgeMission.Presentation` owns rendering only.
 - The Desktop Supervisor resolves Mission and Conversation Runtime dependencies, starts and stops
   `ApplicationHostProcess`, and supplies its resolved addresses. It owns neither Project use cases
-  nor capability authorization. Host, Worker, API, Billing, and their durable stores keep their
+  nor capability authorization. Host, forge-runner, API, Billing, and their durable stores keep their
   existing authority.
 
-Current source anchors are [`Application.Host/Program.cs`](../../src/ForgeMission.Application.Host/Program.cs),
-[`ApplicationComposition.cs`](../../src/ForgeMission.Application/ApplicationComposition.cs),
-[`ClientExecutionSession.cs`](../../src/ForgeMission.ClientRuntime/ClientExecutionSession.cs),
-[`ApplicationHostProcess.cs`](../../src/ForgeMission.Desktop/ApplicationHostProcess.cs), and
-[`ApplicationContracts.cs`](../../src/ForgeMission.Application.Transport/ApplicationContracts.cs).
+Current source anchors are [`Application.Host/Program.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Application.Host/Program.cs),
+[`ApplicationComposition.cs`](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.Application/ApplicationComposition.cs),
+[`ClientExecutionSession.cs`](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.ClientRuntime/ClientExecutionSession.cs),
+[`ApplicationHostProcess.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Desktop/ApplicationHostProcess.cs), and
+[`ApplicationContracts.cs`](https://github.com/katasec/forge-client/blob/main/src/ForgeMission.Application.Transport/ApplicationContracts.cs).
 
 ## Historical pre-43.23 architecture record
 
@@ -148,7 +152,7 @@ A **Capability Registry** sits above these, advertising which capabilities are a
 particular client instance. The Mission Runtime reasons over capabilities, not implementations —
 it asks "can this client edit files," not "does this client have `LocalDiskWorkspace`." This is a
 genuine capability upgrade over today's static tool list
-([`AgentToolDeclarations`](../../src/ForgeMission.Core/Tools/AgentToolDeclarations.cs) is currently
+([`AgentToolDeclarations`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/AgentToolDeclarations.cs) is currently
 hand-written and fixed per mission) — see [43.8](../phases/phase-43.8-capability-provider-pattern.md)
 for the migration path from today's four tools to this shape.
 
@@ -344,6 +348,10 @@ concrete build.
 ---
 
 ### Durable Conversation Runtime local-proof bootstrap
+
+> **Superseded by Phase 52.1 (2026-09-28).** The Desktop's default conversation runtime is the cloud
+> ForgeAPI; Kind is no longer supported and the local tunnel below no longer exists. Kept as a
+> historical record. Current design: [How conversations work](how-conversations-work.md).
 
 The durable Conversation Runtime is an independent boot dependency of a Janus-capable Desktop, not an optional value that may drift into Client Runtime configuration. During the current Kind proof, the Desktop Supervisor composes one `ConversationRuntimeResolver` result before starting Client Runtime:
 

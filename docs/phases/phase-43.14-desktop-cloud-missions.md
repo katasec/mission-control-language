@@ -208,7 +208,7 @@ runner** — and [42.6](phase-42.6-hosted-endpoint-ttfa.md) holds a standing inv
 never holds credentials to `authbilling_db` (it's the highest-compromise-risk tier, running
 `kind: exec`; that database holds identity/keys/ledger data). Re-checking the already-drawn north-star
 topology ([`phase-42-north-star-tiers.svg`](phase-42-north-star-tiers.svg), referenced from
-[phase-42-forge-cloud.md](phase-42-forge-cloud.md#L220-L232)) settles this cleanly rather than
+[phase-42-forge-cloud.md](phase-42-forge-cloud.md)) settles this cleanly rather than
 needing a new workaround: the diagram already gives the Runner its **own** tier-3 datastore — `Cache +
 blob`, labeled `enrichment · missions` — a direct, adjacent-tier hop (`Runner → Cache + blob`), never
 touching `Auth + billing DB`. This is the same database-per-service boundary already enforced between
@@ -324,7 +324,7 @@ codebase rather than inventing new process:**
    `ToolContinuationGate`, called by both it and `MissionRunHandler`; `RunnerToolTurnMapper` handles
    the `TurnMessage↔ChatMessage`/`MissionToolDecl→AITool`/`FunctionCallContent→ToolUseCall`
    conversions, reflection-free. Full narrative + evidence:
-   [_completed doc, Task 4](phase-43.14-desktop-cloud-missions_completed.md#task-4--runner-execution--threadhistorytools-into-missionrunhandler).
+   [_completed doc, Task 4](phase-43.14-desktop-cloud-missions_completed.md#task-4--runner-execution-thread-historytools-into-missionrunhandler).
 
 5. **ForgeAPI wiring. ✅ Done 2026-08-06** — `msg.History`/`msg.Tools` threaded into the `RunRequest`
    via a new field-for-field `MissionToolTurnMapper` (bridging the separately-defined Api/
@@ -359,7 +359,7 @@ codebase rather than inventing new process:**
    `MissionRunHandler` behind an in-process NDJSON-serializing `HttpMessageHandler`, driven through
    real `ExecuteMission`/`ExecuteMissionResponse` DTOs, with a chained two-file plant (mirroring
    `MockClaudeHostTests.cs`'s rigor exactly). Full narrative + evidence:
-   [_completed doc, Task 9](phase-43.14-desktop-cloud-missions_completed.md#task-9--tests--tier-2-planted-content-round-trip).
+   [_completed doc, Task 9](phase-43.14-desktop-cloud-missions_completed.md#task-9--tests-tier-2-planted-content-round-trip).
 
 10. **Live verification. ✅ Done + LIVE 2026-08-08** — ran the real Forge Desktop app against the
     real hosted endpoint with a real `~/.forge` credential, executed a genuine tool call end to end,
