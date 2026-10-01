@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: design; Task 1 (spike) next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Task 1 spike verified (2026-10-01); kerning and G8 decisions open.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -40,7 +40,7 @@ image id, so a card that grows while a reply streams sends no new image.
 | # | Decision | Why |
 |---|---|---|
 | G1 | **Shapes: a small pure-C# renderer** (signed-distance rounded rectangles, hairlines, box-blur shadows, gamma-correct blending) and a PNG encoder on `System.IO.Compression`. | Only shapes are needed; AOT-clean, no native dependency. |
-| G2 | **Proportional text: StbTrueTypeSharp**, behind one adapter (`GlyphText`); the only file that references the package. | Same quality as Skia in the spike, kerns without extra packages, pure managed. |
+| G2 | **Proportional text: StbTrueTypeSharp**, behind one adapter (`GlyphText`); the only file that references the package. | Same quality as Skia in the text spike, pure managed, AOT-clean (Task 1). **Correction (Task 1):** Stb reads only the legacy `kern` table, and Inter keeps its kerning in GPOS, so headings are unkerned. The kerning approach is open (Ameer). |
 | G3 | **No SkiaSharp.** | Native library per platform, several MB, needs a second native library for kerning; no visible gain (G2 evidence). Keeps the 53.2 decision. |
 | G4 | **Font: Inter (OFL), SemiBold and Bold static TTFs, embedded** in the binary. | Mockup's face; two weights cover brand (Bold) and names, crumb, headings (SemiBold). Licence allows embedding. |
 | G5 | **Images only where the X-ray marks them**; every other cell is terminal text. | Selection and copy keep working; images never carry body text. |
@@ -60,9 +60,9 @@ UI: the finish-line mockup is the binding reference by analogy with
 
 | Task | Repo | Done when |
 |---|---|---|
-| 1 — **Spike** (supervisor scratchpad, not a repo) | — | See [Task 1](#task-1--spike). |
-| 2 — Renderer, tiles and font in `Tui/`: cards, code blocks, pills, tool lines, composer ring | forge-mcl | Design locked from Task 1 results first. |
-| 3 — Proportional text: brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 2. |
+| 1 — **Spike** (supervisor scratchpad, not a repo) | — | Every row PASS; evidence in [tui-graphics.md](../design/tui-graphics.md#phase-56-spike--drawn-edges-and-proportional-text-verified-2026-10-01). Done once G8 is decided. |
+| 2 — Renderer, tiles and font in `Tui/`: cards, code blocks, pills, tool lines, composer ring | forge-mcl | Design locked from Task 1 results first. Inputs from Task 1: fit ring (4 columns at the sides, 2 rows top and bottom) rather than strict; new image ids on any theme or cell-size change; reconcile the dark `CardSurface`/`CardBorder` tokens with the mockup (`#151f2e`/`#22304a`); choose between raw stdout and XenoAtom's `GraphicsPresenter` for transmits. |
+| 3 — Proportional text: brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 2. Input from Task 1: choose the blend per theme (naive sRGB on light, linear-light on dark). |
 | 4 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape, synchronized output | forge-mcl | Design locked after Task 3. |
 | 5 — Window: hidden title bar, padding, cell height (Ghostty config) | — | Open: how the config reaches the user (Ameer). |
 | 6 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, light default and dark via config: supervisor captures match the mockup; Ameer accepts live. |
@@ -84,4 +84,4 @@ the supervisor compares the captures with the mockup (PASS/FAIL per row), and G8
 
 ## Next
 
-Task 1: assign the spike to an implementing subagent (plan only), then approve.
+Ameer decides kerning and G8, which closes Task 1. Then lock the Task 2 design.

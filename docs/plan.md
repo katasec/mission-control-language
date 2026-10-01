@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 1 — the graphics spike. |
+| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) — two decisions (kerning, no-image terminals), then the renderer design. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Design; spike next |
+| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Spike verified; decisions open |
 
 ## Design docs
 
