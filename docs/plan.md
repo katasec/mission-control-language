@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Under selection — Ameer will choose the next phase. |
+| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 1 — the graphics spike. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| None — under selection. | | |
+| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Design; spike next |
 
 ## Design docs
 
