@@ -1,6 +1,6 @@
 # Phase 53.9 — TUI live sessions: one continuous stream, clean exit
 
-> **Status: design locked 2026-10-01, build-ready.** Reported by Ameer while testing two attached
+> **Status: complete 2026-10-01** — see [completed record](phase-53.9-tui-live-sessions_completed.md). Reported by Ameer while testing two attached
 > `forge chat` windows on one conversation.
 
 ## Problems
@@ -30,4 +30,4 @@
 
 ## Next
 
-Task 1 (L2 then L1).
+Phase complete.
