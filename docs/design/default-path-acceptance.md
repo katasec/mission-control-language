@@ -67,7 +67,7 @@ complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-h
 | Mission and conversation | Plain: `StarterMissions.Chat` (`Answerer`, `NoHands`). `--hands`: `StarterMissions.ChatHands` (`Assistant`, `ProjectWorkspace`) after the one-time approval. Each mode reopens its own latest conversation. | — | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
 | Mode | TUI on a terminal; piped (line) mode when input or output is redirected. Both are the shipped binary. | — | [How conversations work §4](how-conversations-work.md#4-clients-and-turns) |
 | Terminal (from Phase 56 Task 2) | Ghostty, not inside tmux; the TUI needs kitty graphics. Any other terminal stops at start-up with a named message. | Kitty is supported but not the default. | [Phase 56 G8](../phases/phase-56-tui-graphics.md) |
-| Theme | No `~/.forge/config.json` (or no `theme` key): **dark** from Phase 56 Task 2b, light until then. | `{ "theme": "light" }` in `~/.forge/config.json`. | [Phase 56 G10](../phases/phase-56-tui-graphics.md) |
+| Theme | No `~/.forge/config.json` (or no `theme` key): **dark** (Phase 56 Task 2b, 2026-10-02). | `{ "theme": "light" }` in `~/.forge/config.json`. | [Phase 56 G10](../phases/phase-56-tui-graphics.md) |
 
 **Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
 reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop
