@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1–2 done (2026-10-02); paused for [Phase 57](phase-57-chat-idle-stream.md), then Task 2b.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1–2 done (2026-10-02); Task 2b next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -73,4 +73,4 @@ UI: the finish-line mockup is the binding reference by analogy with
 
 ## Next
 
-Paused while the `forge chat` idle-stream bug is fixed ([Phase 57](phase-57-chat-idle-stream.md)). Then Task 2b (dark default), then design Task 3.
+Task 2b (dark default), then design Task 3.
