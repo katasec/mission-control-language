@@ -50,8 +50,11 @@ Do not restore source from any of those repos here or add sibling project refere
    only when the task requires deferred or historical context.
 4. Read the spoke doc for the current phase — linked from `docs/plan.md` — for the actual detail:
    design, decisions, task status.
-5. Read [docs/design/architecture.md](docs/design/architecture.md) if you need component
-   boundaries, or another `docs/design/*.md` file if the task touches that area.
+5. Read [docs/design/how-conversations-work.md](docs/design/how-conversations-work.md) for how
+   conversations, the Conversation Host, the runner and clients fit together;
+   [docs/design/command-bus-architecture.md](docs/design/command-bus-architecture.md) for how commands
+   and queries travel; [docs/design/architecture.md](docs/design/architecture.md) for the MCL engine;
+   or another `docs/design/*.md` file if the task touches that area.
 
 Do not load everything at once. Start from the hub and follow links only when the task requires it.
 
@@ -292,7 +295,7 @@ Bash-doesn't-inherit-pwsh trap, the pull-through-pwsh recipe) is in
 
 ## Deploying the hosted app (forge-infra)
 
-The hosted app (ForgeUI, ForgeAPI, the runner) reaches Azure only through the **separate repo
+The hosted app (ForgeUI, ForgeAPI, the runner, the Conversation Host, Billing) reaches Azure only through the **separate repo
 `katasec/forge-infra`** (layered Bicep + Makefile, checked out at `~/progs/forge-infra`).
 
 - **Only use the `make` targets** (for example `100-base`, `150-ci`, `300-data`, `400-appenv`, `450-migrate`,
