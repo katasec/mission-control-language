@@ -8,12 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Fix the `forge chat` idle live-stream bug ([backlog](backlog.md)), then [Phase 56](phases/phase-56-tui-graphics.md) Task 2b. |
+| **NEXT STEP** | [Phase 57](phases/phase-57-chat-idle-stream.md) — idle live-stream fix (plans next), then [Phase 56](phases/phase-56-tui-graphics.md) Task 2b. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [57](phases/phase-57-chat-idle-stream.md) | `forge chat` live stream survives idle | Design locked; plans next |
 | [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges done; paused for the stream fix |
 
 ## Design docs
