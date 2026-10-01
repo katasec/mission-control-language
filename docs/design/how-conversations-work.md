@@ -296,6 +296,27 @@ Not covered live: two `--hands` windows and the reconnect notice (unit tests onl
 | TUI | A terminal on both input and output | One live stream with deltas, open to exit |
 | Piped (line) | Input or output redirected | Follows only its own turn, no deltas, exits on EOF |
 
+### One conversation per chat mode
+
+```mermaid
+flowchart LR
+  P["Project"] --> C1["Chat conversation<br/>Answerer, NoHands"]
+  P --> C2["ChatHands conversation<br/>Assistant, ProjectWorkspace"]
+  L["forge chat launch"] --> Q{"latest conversation<br/>on my mode's mission?"}
+  Q -->|"yes"| R["reopen it, replay its history"]
+  Q -->|"no"| N["create one on my mission"]
+```
+
+`forge chat` and `forge chat --hands` use two separate conversations in the same project, because a
+conversation's hands profile is fixed for life. On launch, each mode reopens the latest conversation
+on its own mission (`LatestFor` in `OpenConversationAsync`, `ForgeChat.cs:265-276, 439-440`) and
+creates one only if that mode has none. So each mode keeps its own history. Before
+[katasec/forge-mcl#31](https://github.com/katasec/forge-mcl/pull/31) the CLI looked only at the
+project's single latest conversation, so switching modes started an empty conversation on every
+launch. Two windows share a conversation, and stream each other's turns, only when they are in the
+same mode; a plain window and a `--hands` window are separate chats. Verified live 2026-10-01:
+alternating plain → `--hands` → plain, each run replayed its own history.
+
 ### One live stream per window
 
 ```mermaid
@@ -565,6 +586,8 @@ sequenceDiagram
 | Resume | Runner refuses a resume if the run is not `WaitingForHands`, or the package hash or engine build changed | `forge-runner/…/Conversations/MissionCommandProcessor.cs:145-162` |
 | Fingerprint | Core hashes tool schemas in compact JSON at pause and at resume, so schema whitespace cannot break a continuation (fixed in Core 0.1.3) | `forge-mcl/src/ForgeMission.Core/Runtime/PipelineRunner.cs:741-749` |
 | Exit mid-tool | Ctrl-C cancels the hands attempt on the Host, then the local operation | `forge-mcl/src/ForgeMission.Cli/ChatHandsAttachment.cs:39-73` |
+
+`forge chat --hands` runs in its own conversation, separate from plain `forge chat` ([section 4](#one-conversation-per-chat-mode)).
 
 Proven live on the default path by Phase 55 (Read of `secret.txt`, codeword returned). Write,
 Edit, cancel mid-tool, the TUI rendering and two `--hands` windows are covered by unit tests only.
