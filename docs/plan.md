@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Choose the next phase with Ameer. Phases 54 and 55 are complete; follow-ups (conversation Host explainer doc, Desktop client upgrade) are in the [backlog](backlog.md). |
+| **NEXT STEP** | [Phase 53.9 — TUI live sessions](phases/phase-53.9-tui-live-sessions.md): clean Ctrl-D exit, then one continuous live stream per window. |
 
 ## Active phases
 
