@@ -390,8 +390,7 @@ Ctrl-C does nothing for a turn another window sent, or a turn already running wh
 opened (`Tui/ChatTui.cs:198-201`). Pressed before the submit returns, the stop waits for the
 response, then runs on the next UI step (`Tui/ChatTui.cs:93-97`). It cancels a running file
 operation first, then the turn (`Tui/ChatTui.cs:150-161`). If the submit is refused, the pending
-stop is cleared, so it cannot apply to a later turn. That is the intended behaviour; the code fix
-for it is landing separately in forge-mcl.
+stop is cleared, so it cannot apply to a later turn. The submit's `finally` applies `KeepsStop(stopRequested, hasOwnTurn)` (`ChatTui.cs`, forge-mcl [#30](https://github.com/katasec/forge-mcl/pull/30)).
 
 ### Hands run only for this window's turn
 
@@ -656,7 +655,6 @@ dropped.
 | Gap | Note |
 |---|---|
 | Typed "not the current attachment" claim reject | The Host refuses a non-current attachment with the same untyped reason as other refusals (`ConversationGrain.cs:646-648`), so only the most recently attached `--hands` window can execute. Backlog. |
-| Ctrl-C pressed during a submit that then fails | Intended: the failed submit clears the pending stop. Code fix landing in forge-mcl. |
 | Turn cancel and the runner | The runner is not told; inference: it finishes its work and its later facts are rejected ([section 1](#1-a-turns-life)). |
 | Desktop client upgrade | Desktop is on Contracts 0.4.0 and does not execute hands. Backlog. |
 | Host replica count is 1 | The design is correct for N silos (tested with 2); scaling out is a separate decision (`forge-infra/dev/525-conversation-app/main.bicep:116-117`). |
