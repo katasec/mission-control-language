@@ -1,6 +1,6 @@
 # Phase 54 — Orleans alignment (forge-conversations Host)
 
-> **Status: complete 2026-10-01.** Every candidate task is done and live in dev (Host 0.8.0, runner 0.18.0 — now 0.19.0 after [Phase 55](phase-55-forge-chat-hands.md),
+> **Status: complete 2026-10-01.** Every candidate task is done and live in dev (Host 0.8.0, runner 0.18.0[^runner],
 > ForgeAPI 0.7.0). Evidence: [completed record](phase-54-orleans-alignment_completed.md).
 > Origin: the [53.8 incident](phase-53.8-token-streaming.md#incident-2026-09-30--host-deadlock-after-a-mid-turn-restart-blocks-task-8)
 > and a review of the Host against Orleans guidance, cross-checked online the same day.
@@ -196,3 +196,5 @@ Orleans cluster on Container Apps. Reverted to one replica ([katasec/forge-infra
 ## Next
 
 Phase complete. Follow-ups are in the [backlog](../backlog.md): the conversation Host explainer doc, the Desktop client upgrade, and `forge chat` with hands.
+
+[^runner]: The runner is now 0.19.0, deployed by [Phase 55](phase-55-forge-chat-hands.md).
