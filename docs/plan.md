@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 53.9 — TUI live sessions](phases/phase-53.9-tui-live-sessions.md): clean Ctrl-D exit, then one continuous live stream per window. |
+| **NEXT STEP** | [Phase 53.9 — TUI live sessions](phases/phase-53.9-tui-live-sessions.md): clean Ctrl-D exit, then one continuous live stream per window. Then the "How conversations work" design doc ([backlog](backlog.md)). |
 
 ## Active phases
 
