@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 2b (dark default), then the Task 3 design. |
+| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 3 design (code blocks, pills, tool lines, composer). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges done; Task 2b next |
+| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges and dark default done; Task 3 next |
 
 ## Design docs
 
