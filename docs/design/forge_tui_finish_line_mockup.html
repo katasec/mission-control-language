@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge TUI Finish Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Forge TUI — finish-line mockup. Tokens are the 53.6 ForgeTheme values plus the new
+   elevation/shadow tokens the image layer needs. One cell = 1ch × var(--cell-h). */
+:root {
+  --cell-h: 20px;
+  --page: #e9ecf3;
+  --surface: #f7f8fe; --surface-header: #f8faff; --surface-alt: #f1f4fb; --card: #ffffff;
+  --text: #101d34; --text-strong: #101d34; --muted: #63748c; --card-title: #5b6b83;
+  --accent: #0f6feb; --prompt: #689df1; --border: #d5dae5; --card-border: #e7ecf4;
+  --selection: #dbe7fb; --pill-fill: #eff5fe; --pill-text: #103f87;
+  --success: #4e7c0f; --success-fill: #f2fbe6; --warning: #b45309; --error: #b91c1c;
+  --code-fill: #f7f8fe; --code-border: #e7ecf4; --inline-code: #0f6feb;
+  --shadow: 0 1px 2px rgba(16,29,52,.05), 0 6px 20px rgba(16,29,52,.07);
+  --shadow-window: 0 30px 80px rgba(16,29,52,.25), 0 2px 8px rgba(16,29,52,.12);
+  --avatar-a: linear-gradient(135deg,#4f9bff,#7c5cff);
+  --avatar-you: linear-gradient(135deg,#9fb4d3,#63748c);
+  --xray: #d61aff;
+}
+[data-theme="dark"] {
+  --page: #05080d;
+  --surface: #0f1622; --surface-header: #111a28; --surface-alt: #141d2b; --card: #151f2e;
+  --text: #c9d4e3; --text-strong: #e8eef7; --muted: #6b7a91; --card-title: #8696ad;
+  --accent: #4f9bff; --prompt: #24d5ee; --border: #243044; --card-border: #22304a;
+  --selection: #16345a; --pill-fill: #16345a; --pill-text: #e8eef7;
+  --success: #8cc152; --success-fill: #1d2a1a; --warning: #f0b35a; --error: #f07178;
+  --code-fill: #0f1622; --code-border: #2a3850; --inline-code: #4f9bff;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-window: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font: 14px/1.5 Inter, system-ui, sans-serif; transition: background .3s; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+
+/* ── Controls ─────────────────────────────────────────── */
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+.controls h1 { font-size: 15px; font-weight: 600; margin: 0 auto 0 0; color: var(--text-strong); }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+.seg button { font: 500 12.5px Inter, sans-serif; border: 0; background: none; color: var(--muted); padding: 5px 11px; border-radius: 6px; cursor: pointer; }
+.seg button.on { background: var(--selection); color: var(--text-strong); }
+
+/* ── Window ───────────────────────────────────────────── */
+.window { position: relative; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-window); background: var(--surface); }
+.today img { display: block; width: 100%; }
+.term { font: 14px/var(--cell-h) "JetBrains Mono", ui-monospace, monospace; color: var(--text); height: 760px; display: flex; flex-direction: column; position: relative; }
+.lights { position: absolute; top: 14px; left: 16px; display: flex; gap: 8px; z-index: 3; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+
+/* Header: brand + breadcrumb in a proportional face (rendered image), status as text + pill */
+.header { height: calc(var(--cell-h) * 2.5); display: flex; align-items: center; padding: 0 3ch 0 10ch; background: var(--surface-header); border-bottom: 1px solid var(--card-border); gap: 1.2ch; }
+.brand { font: 700 17px Inter, sans-serif; letter-spacing: -.02em; color: var(--text-strong); display: flex; align-items: center; gap: 8px; }
+.logo { width: 20px; height: 20px; border-radius: 6px; background: var(--avatar-a); display: grid; place-items: center; color: #fff; font: 700 12px Inter; }
+.crumb { font: 500 14px Inter, sans-serif; color: var(--muted); }
+.crumb b { color: var(--text-strong); font-weight: 600; }
+.status { margin-left: auto; display: flex; align-items: center; gap: 1.5ch; color: var(--muted); }
+.pill-ok { background: var(--success-fill); color: var(--success); border-radius: 999px; padding: 0 1.2ch; font-weight: 500; display: inline-flex; align-items: center; gap: .8ch; height: calc(var(--cell-h) * 1.1); }
+.pill-ok::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+
+/* Transcript */
+.scroll { flex: 1; min-height: 0; overflow: hidden; padding: var(--cell-h) 4ch 0; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
+.scroll > * { flex: none; }
+.scroll::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 28px; background: linear-gradient(var(--surface), transparent); z-index: 1; pointer-events: none; }
+.you { display: flex; justify-content: flex-end; align-items: center; gap: 1.2ch; margin: var(--cell-h) 0; }
+.you .bubble { background: var(--pill-fill); color: var(--pill-text); border-radius: 14px; padding: calc(var(--cell-h) * .3) 1.6ch; font-weight: 500; }
+.avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--avatar-a); color: #fff; display: grid; place-items: center; font: 600 12px Inter; flex: none; }
+.avatar.me { background: var(--avatar-you); }
+.card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; box-shadow: var(--shadow); padding: var(--cell-h) 3ch; margin: var(--cell-h) 0; position: relative; transition: border-color .15s, box-shadow .15s; }
+.card:hover { border-color: var(--border); }
+.card .head { display: flex; align-items: center; gap: 1.2ch; height: calc(var(--cell-h) * 1.5); margin-bottom: calc(var(--cell-h) * .5); }
+.card .name { font: 600 14.5px Inter, sans-serif; color: var(--text-strong); }
+.card .time { color: var(--muted); font-size: 12.5px; }
+.card .actions { margin-left: auto; display: flex; gap: 1ch; opacity: 0; transition: opacity .15s; }
+.card:hover .actions { opacity: 1; }
+.chip { font: 500 12px Inter, sans-serif; color: var(--muted); border: 1px solid var(--card-border); border-radius: 7px; padding: 2px 9px; background: var(--surface); cursor: pointer; }
+.chip:hover { color: var(--accent); border-color: var(--accent); }
+.md p { margin: 0 0 var(--cell-h); }
+.md p:last-child { margin-bottom: 0; }
+.md h2 { font: 600 19px/calc(var(--cell-h) * 2) Inter, sans-serif; letter-spacing: -.015em; margin: 0; color: var(--text-strong); }
+.md code { color: var(--inline-code); background: color-mix(in srgb, var(--inline-code) 9%, transparent); border-radius: 4px; }
+.md a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); cursor: pointer; }
+.md a:hover { border-bottom-color: var(--accent); }
+.md ol { margin: 0 0 var(--cell-h); padding-left: 3ch; }
+pre.code { margin: 0 0 var(--cell-h); background: var(--code-fill); border: 1px solid var(--code-border); border-radius: 10px; padding: calc(var(--cell-h) * .75) 2ch; font: inherit; color: var(--text-strong); white-space: pre; overflow: hidden; }
+.k { color: var(--accent); } .s { color: var(--success); } .c { color: var(--muted); font-style: italic; }
+
+/* Hands (tool) lines */
+.tools { display: flex; flex-direction: column; gap: calc(var(--cell-h) * .3); margin: 0 0 var(--cell-h); }
+.tool { display: inline-flex; align-items: center; gap: 1ch; align-self: flex-start; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; padding: 0 1.4ch; height: calc(var(--cell-h) * 1.3); color: var(--muted); }
+.tool b { color: var(--text-strong); font-weight: 500; }
+.tool .ok { color: var(--success); }
+.tool .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--selection); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Streaming text fades in */
+.fade { animation: fade .22s ease-out both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.caret { display: inline-block; width: 1ch; height: 1em; background: var(--accent); vertical-align: -2px; border-radius: 2px; animation: blink 1s steps(2) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Bottom: progress, composer, key bar */
+.bottom { padding: calc(var(--cell-h) * .5) 4ch calc(var(--cell-h) * .75); background: linear-gradient(transparent, var(--surface) 30%); }
+.progress { color: var(--muted); height: var(--cell-h); display: flex; align-items: center; gap: 1ch; font-style: italic; margin-bottom: calc(var(--cell-h) * .5); }
+.progress .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--selection); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+.composer { background: var(--card); border: 1px solid var(--accent); border-radius: 14px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent), var(--shadow); height: calc(var(--cell-h) * 2.5); display: flex; align-items: center; padding: 0 1.5ch 0 2ch; gap: 1.2ch; }
+.composer .pr { color: var(--prompt); font-weight: 700; }
+.composer .ph { color: var(--muted); flex: 1; }
+.send { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 600 14px Inter; }
+.keys { display: flex; gap: 2.5ch; color: var(--muted); margin-top: calc(var(--cell-h) * .6); font-size: 12.5px; }
+kbd { font: 500 11px Inter, sans-serif; color: var(--text); background: var(--card); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; margin-right: .6ch; }
+
+/* ── X-ray: cell grid over text; magenta = kitty image cells ── */
+.xray .term::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background-image: linear-gradient(to right, color-mix(in srgb, var(--xray) 10%, transparent) 1px, transparent 1px),
+                    linear-gradient(to bottom, color-mix(in srgb, var(--xray) 10%, transparent) 1px, transparent 1px);
+  background-size: 1ch var(--cell-h); }
+.xray .img { outline: 1.5px dashed var(--xray); outline-offset: 1px; }
+.xray .img[data-x] { position: relative; }
+.xray .img[data-x]::after { content: attr(data-x); position: absolute; top: -9px; right: 6px; z-index: 6; font: 600 9.5px Inter, sans-serif; color: #fff; background: var(--xray); border-radius: 4px; padding: 0 5px; line-height: 15px; white-space: nowrap; }
+
+/* ── Notes under the window ─────────────────────────────── */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 24px; }
+.note { background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--muted); }
+.note b { display: block; color: var(--text-strong); font-weight: 600; margin-bottom: 2px; }
+.limits { margin-top: 12px; font-size: 13px; color: var(--muted); }
+[hidden] { display: none !important; }
+@media (max-width: 720px) { .term { height: auto; } .header { padding-left: 9ch; } .status span.prov { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="controls">
+    <h1>forge chat — finish line</h1>
+    <div class="seg" id="view"><button data-v="finish" class="on">Finish line</button><button data-v="today">Today</button></div>
+    <div class="seg" id="theme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+    <div class="seg" id="xray"><button data-v="off" class="on">Normal</button><button data-v="on">X-ray</button></div>
+  </div>
+
+  <div class="window today" id="today" hidden>
+    <img src="forge_tui_light_mockup.png" alt="forge chat today, light theme">
+  </div>
+
+  <div class="window" id="finish">
+    <div class="term">
+      <div class="lights"><i></i><i></i><i></i></div>
+
+      <div class="header">
+        <span class="brand img" data-x="image: proportional type"><span class="logo">f</span>forge</span>
+        <span class="crumb img" data-x="image">my-project / <b>Chat</b></span>
+        <span class="status">CHAT · V1 <span class="pill-ok img" data-x="image caps">Approved</span><span class="prov">anthropic</span></span>
+      </div>
+
+      <div class="scroll">
+        <div class="you"><span class="bubble img" data-x="image caps + text">Read Program.cs and port it to Pascal</span><span class="avatar me img" data-x="image">AD</span></div>
+
+        <div class="card img" data-x="edge ring = image tiles · inside = text cells">
+          <div class="head">
+            <span class="avatar img" data-x="image">A</span><span class="name img" data-x="image">Answerer</span><span class="time">12:04</span>
+            <span class="actions"><span class="chip">Copy</span><span class="chip">Retry</span></span>
+          </div>
+          <div class="tools">
+            <span class="tool img" data-x="image ring"><span class="ok">✓</span><b>read_file</b> src/Program.cs <span>· 14 lines</span></span>
+            <span class="tool img" data-x="image ring"><span class="ok">✓</span><b>write_file</b> hello.pas <span>· approved</span></span>
+          </div>
+          <div class="md">
+            <h2 class="img" data-x="image: heading type">Hello World in Pascal</h2>
+            <p>Here is the same program in Free Pascal. It keeps the structure of your C# version:</p>
+            <pre class="code img" data-x="edge ring = image tiles"><span class="k">program</span> HelloWorld;
+<span class="k">begin</span>
+  WriteLn(<span class="s">'Hello, World!'</span>);  <span class="c">{ prints to stdout }</span>
+<span class="k">end</span>.</pre>
+            <ol>
+              <li>Save it as <code>hello.pas</code></li>
+              <li>Compile with <code>fpc hello.pas</code></li>
+              <li>Run <code>./hello</code> — see the <a>Free Pascal docs</a> for options</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="you"><span class="bubble img" data-x="image caps + text">That is so cool</span><span class="avatar me img" data-x="image">AD</span></div>
+
+        <div class="card img" data-x="edge ring = image tiles">
+          <div class="head"><span class="avatar img" data-x="image">A</span><span class="name img" data-x="image">Answerer</span><span class="time">12:05</span></div>
+          <div class="md"><p id="stream"></p></div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <div class="progress"><span class="dot img" data-x="image frames"></span>Answerer is replying…</div>
+        <div class="composer img" data-x="edge ring = image tiles · inside = text cells">
+          <span class="pr">›</span><span class="ph">Message Chat v1…</span><span class="send img" data-x="image">↵</span>
+        </div>
+        <div class="keys">
+          <span><kbd class="img">enter</kbd>send</span><span><kbd class="img">⇧ enter</kbd>newline</span><span><kbd class="img">pgup/pgdn</kbd>scroll</span><span><kbd class="img">ctrl c</kbd>stop</span><span><kbd class="img">ctrl d</kbd>quit</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes" id="notes">
+    <div class="note"><b>1 · Window</b>Ghostty config forge ships: hidden title bar (traffic lights over the header), wide padding, ~18% taller cells.</div>
+    <div class="note"><b>2 · Edges</b>Every rounded corner, hairline, shadow and focus ring is a few reusable image tiles. Insides stay plain text cells.</div>
+    <div class="note"><b>3 · Motion</b>Streamed words fade in, spinners are eased image frames, cards and links react to hover with a pointer cursor.</div>
+    <div class="note"><b>4 · Type</b>Brand, breadcrumb, names and headings are drawn in Inter as images. Body text stays real, selectable terminal text.</div>
+    <div class="note"><b>5 · Images</b>Avatars now; mission graph and artifact previews later — all from theme tokens.</div>
+  </div>
+  <p class="limits">What a terminal still can't do: body text stays monospace, and scrolling moves by whole lines. Switch on X-ray to see the cell grid and which parts are images (magenta).</p>
+</div>
+
+<script>
+// Toggles: view, theme, x-ray. Each segmented control sets one attribute on the page.
+const set = {
+  view: v => { finish.hidden = v !== 'finish'; today.hidden = v !== 'today'; notes.hidden = v !== 'finish'; },
+  theme: v => { document.documentElement.dataset.theme = v; },
+  xray: v => { document.body.classList.toggle('xray', v === 'on'); },
+};
+for (const id of Object.keys(set)) {
+  const seg = document.getElementById(id);
+  seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    set[id](b.dataset.v);
+  });
+}
+
+// A streaming reply: words arrive and fade in, then the loop restarts.
+const words = "Glad you like it! Pascal was designed for teaching, so it reads almost like plain English: begin and end instead of braces, and := for assignment. Want me to add a loop that greets each name in a list?".split(' ');
+const stream = document.getElementById('stream');
+let i = 0;
+function tick() {
+  if (i === 0) stream.innerHTML = '<span class="caret"></span>';
+  const caret = stream.querySelector('.caret');
+  if (i < words.length) {
+    const w = document.createElement('span');
+    w.className = 'fade'; w.textContent = words[i++] + ' ';
+    stream.insertBefore(w, caret);
+    setTimeout(tick, 70 + Math.random() * 90);
+  } else { i = 0; setTimeout(tick, 2500); }
+}
+tick();
+</script>
+</body>
+</html>
