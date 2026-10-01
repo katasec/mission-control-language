@@ -1,6 +1,6 @@
 # Phase 54 — Orleans alignment (forge-conversations Host)
 
-> **Status: complete 2026-10-01.** Every candidate task is done and live in dev (Host 0.8.0, runner 0.18.0,
+> **Status: complete 2026-10-01.** Every candidate task is done and live in dev (Host 0.8.0, runner 0.18.0[^runner],
 > ForgeAPI 0.7.0). Evidence: [completed record](phase-54-orleans-alignment_completed.md).
 > Origin: the [53.8 incident](phase-53.8-token-streaming.md#incident-2026-09-30--host-deadlock-after-a-mid-turn-restart-blocks-task-8)
 > and a review of the Host against Orleans guidance, cross-checked online the same day.
@@ -66,7 +66,7 @@ tenant), 3,454 event-table rows, largest partition 452 KB / 190 events, largest 
 | D7 | **Conditional events only.** Every mutating method: validate → build transition → `RaiseConditionalEvent` → on `false`, re-read state and re-validate (receipt row decides "already accepted"). Unconditional `RaiseEvent` is not used. | Orleans 10.0.0 retries unconditional events on top of re-read state without re-validating (`PrimaryBasedLogViewAdaptor.UpdatePrimary`); conditional events are dropped when the version moved. Makes ambiguous commits and the ~30 s dual-silo rollover safe. |
 | D8 | **Durable before ack:** a method returns only after its conditional event is confirmed. | The Service Bus ingress/progress consumers complete their message only after the grain replies. |
 | D9 | **Storage outage:** accepted behaviour — Orleans retries with backoff (≤~10 s) and never throws; the caller times out (30 s), the message is abandoned and redelivered; the receipt row makes the redelivery a no-op. | Without storage the grain cannot progress anyway; no new knob. |
-| D10 | **Outbox:** a transition that owes a mission command records it in state (`DispatchOwed`). Register the reminder before raising; after confirm, send (`MessageId = CommandId`), then raise `DispatchSent` (state-row-only commit) and unregister when nothing is owed. Reminder ticks and activation drain what remains. `DispatchState.BrokerAccepted` is deleted. | Service Bus cannot join the Table transaction; the owed command is durable before the send, and the send is idempotent within the 10-min duplicate-detection window (existing exposure beyond it is unchanged). |
+| D10 | **Outbox:** a transition that owes a mission command records it in state (`DispatchOwed`). Register the reminder before raising; after confirm, send (`MessageId = CommandId`), then raise `DispatchSent` (state-row-only commit) and unregister when nothing is owed. What remains is drained by the next reminder tick and after the next call to the grain (`CommitTransitionAsync`); activation does not drain (the grain has no `OnActivateAsync`; corrected 2026-10-01). `DispatchState.BrokerAccepted` is deleted. | Service Bus cannot join the Table transaction; the owed command is durable before the send, and the send is idempotent within the 10-min duplicate-detection window (existing exposure beyond it is unchanged). |
 | D11 | **Live publish:** after a confirmed conditional event, the grain publishes exactly that transition's public events to `ConversationEventHub`. Not `OnStateChanged` (it also fires on reads and carries no event list). | A failed or ambiguous commit publishes nothing; SSE clients catch up from the Table. |
 | D12 | **Deleted:** `PendingTransition`, `PendingRunStart` and their repair/advance methods, the activation corruption check, the `conversation-checkpoint` grain storage provider, `DispatchState.BrokerAccepted`. **Kept:** outbox reminder, `RecoverMissionHandsInFlightAsync` (domain operation), clustering and reminder tables. | The single transaction makes the crash gap impossible; a foreign or duplicate write fails at commit (ETag 412 / Add 409) instead of blocking activation. |
 | D13 | **Inline event cap drops from 48 KiB UTF-8 to 30 KiB**, so an `EventJson` fits a Table string property (64 KiB = 32K UTF-16 chars). Blob offload of large bodies stays unwired (not needed for Tasks 1–2; `PutAsync` has no caller today). | 48 KiB can exceed the Table limit (inference; the build verifies it against real Azure). |
@@ -196,3 +196,5 @@ Orleans cluster on Container Apps. Reverted to one replica ([katasec/forge-infra
 ## Next
 
 Phase complete. Follow-ups are in the [backlog](../backlog.md): the conversation Host explainer doc, the Desktop client upgrade, and `forge chat` with hands.
+
+[^runner]: The runner is now 0.19.0, deployed by [Phase 55](phase-55-forge-chat-hands.md).

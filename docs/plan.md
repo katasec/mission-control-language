@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Finish the "How conversations work" design doc (drafted; in review). Phase 53.9 (TUI live sessions) is done. |
+| **NEXT STEP** | Choose the next phase with Ameer. [How conversations work](design/how-conversations-work.md) is the current design reference; follow-ups are in the [backlog](backlog.md). |
 
 ## Active phases
 
