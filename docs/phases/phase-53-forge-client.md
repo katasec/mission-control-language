@@ -54,7 +54,7 @@ Numbers are the execution order.
 | 6 | [TUI theming](phase-53.6-tui-theming.md) (file 53.6) | Swappable themes by data only; light (default) and dark, chosen in `~/.forge/config.json`. | Done ([record](phase-53.6-tui-theming_completed.md)) |
 | 7 | [Markdown replies](phase-53.7-tui-markdown.md) (file 53.7) | Replies render Markdown with the theme's tokens via XenoAtom's `MarkdownControl` and a forge code-block renderer. | Done ([record](phase-53.7-tui-markdown_completed.md)) |
 | 8 | [Token streaming](phase-53.8-token-streaming.md) (file 53.8) | Replies stream into the TUI as they are generated; deltas are live-only over the existing conversation path. | Done ([record](phase-53.8-token-streaming_completed.md)) |
-| 9 | [TUI live sessions](phase-53.9-tui-live-sessions.md) (file 53.9) | Every attached window streams every turn; Ctrl-D exits cleanly while busy. | Design locked; build next |
+| 9 | [TUI live sessions](phase-53.9-tui-live-sessions.md) (file 53.9) | Every attached window streams every turn; Ctrl-D exits cleanly while busy. | Done ([record](phase-53.9-tui-live-sessions_completed.md)) |
 
 ## Replaces
 
