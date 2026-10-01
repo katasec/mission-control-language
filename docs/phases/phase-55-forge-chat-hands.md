@@ -39,9 +39,10 @@ client.
 |---|---|---|
 | 1 | probe (supervisor) — **done 2026-10-01: fails** | Anthropic (Haiku 4.5) rejects the runner's empty `{}` schema with 400 `input_schema.type: Field required`; with `{"type":"object"}` the model sends `path`, `{}` or `file` (3 runs), never `file_path`. So the runner must use Core's `AgentToolDeclarations` (real schemas, `file_path` required) — Task 1b. |
 | 1b | forge-runner | `RootTools` uses `AgentToolDeclarations.Read/Write/Edit` (and `Bash` for the terminal profile) instead of empty-schema tools; runner image via CI; deployed. Done when: suite green; a test asserts each declared tool's schema requires `file_path`; deployed runner revision healthy. |
+| 1c | forge-mcl (Core 0.1.3) | **Found in 1b (2026-10-01):** Core's pause fingerprint hashes each tool schema's raw text, but resume recomputes it from the checkpoint's compacted schemas, so any non-compact schema (e.g. `AgentToolDeclarations`) fails resume with `InvalidContinuation`. Fix in Core (the owner): compute the fingerprint from compact JSON at both points; release Core 0.1.3 (no other Core changes since 0.1.2). Done when: a Core test pauses and resumes with an indented schema; package 0.1.3 published; the runner (1b) bumps to it and its suite passes with no workaround. |
 | 2 | forge-mcl | `--hands`; one-time approval (H3); `ChatHands` mission (H4); attach + execute from the stream (H5); cancel on exit (H7); rendering (H8); README. Tests: flag parsing, policy per mode, approval prompt behaviour (approve, decline, piped-without-approval), mission selection, hands-event rendering. Suite green, 0 warnings. |
 | 3 | acceptance | Published `forge` from `make install` on `main`. First interactive `forge chat --hands` in a dedicated project asks once and approves; a file `secret.txt` with a random codeword; asked to read it, the reply contains the codeword; the stream shows `MissionHandsRequested` → `MissionHandsResult`. A second run (piped) does not ask and also works. Plain `forge chat` unchanged. |
 
 ## Next
 
-Tasks 1b (runner) and 2 (CLI) in parallel, then 3 (acceptance).
+Task 1c (Core fingerprint fix), then 1b (runner on Core 0.1.3) and 2 (CLI, branched after 1c), then 3 (acceptance).
