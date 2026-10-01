@@ -124,7 +124,7 @@ revisions Healthy on Host 0.7.0, runner 0.18.0, ForgeAPI 0.7.0.
 | Starting state | Store reset in the release window. |
 | Action | Piped `forge chat` with one 404,863-byte line ending "The codeword is VIOLET-KESTREL-8. Reply with only the codeword."; then a small turn. |
 | Outcome | **PASS.** The answer was `VIOLET-KESTREL-8` (the runner read the whole body through the Host route); the body is one 404,863-byte blob under `bodies/`; reopening replayed the large message hydrated (all 8,800 filler sentences and the codeword); the small turn completed. Runner and ForgeAPI logs clean. |
-| Not proven live | Bob's claim-then-read (B13): no default client attaches hands (`forge chat` is NoHands; Desktop deferred — [backlog](../backlog.md)). Controlled tests only. |
+| Bob's claim-then-read (B13) | Not live at the time (no default client attached hands); **proven live 2026-10-01 by [Phase 55](phase-55-forge-chat-hands_completed.md)** (`forge chat --hands`). |
 
 **Gotcha:** the Host logged `TableBeingDeleted` for the reminders table at startup because the reset had just
 deleted it; Orleans retried and started the reminder service a second later. In a reset, delete Orleans

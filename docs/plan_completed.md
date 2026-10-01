@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 55 — `forge chat --hands`](phases/phase-55-forge-chat-hands.md) | Opt-in hands in `forge chat`: Bob reads, writes and edits files in the chat project after a one-time approval. | ✅ Complete 2026-10-01; live acceptance in the [completed record](phases/phase-55-forge-chat-hands_completed.md). |
 | [Phase 54 — Orleans alignment](phases/phase-54-orleans-alignment.md) | Align the conversation Host with Orleans guidance: one grain owner, a single atomic write, bodies in Blob, grain-observer fan-out on N silos, interleaved deltas. | ✅ Complete and live in dev (2026-10-01): Host 0.8.0, runner 0.18.0, ForgeAPI 0.7.0; evidence in the [completed record](phases/phase-54-orleans-alignment_completed.md). |
 | [Phase 52 — Desktop simplification](phases/phase-52-desktop-simplification.md) | Cloud-default conversations; Desktop launch and UI simplification. | ✅ Cloud conversations done and live (2026-09-29); remaining spokes deferred to the [backlog](backlog.md) in favour of [Phase 53](phases/phase-53-forge-client.md). |
 | [Phase 51 — Desktop publish-script extraction](phases/phase-51-desktop-publish-script.md) | Extract Desktop publishing, remove obsolete local projects, and preserve the canonical release bundle contract. | Closed for this iteration 2026-09-28: local build, runtime, and publish checks verified; downloaded-artifact checksum acceptance deferred to [backlog](backlog.md). |

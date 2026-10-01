@@ -1,6 +1,6 @@
 # Phase 55 — `forge chat --hands` (Bob on a default client)
 
-> **Status: design locked 2026-10-01, build-ready.** Origin: Phase 54 left Bob's claim-then-read flow
+> **Status: complete 2026-10-01** — see [completed record](phase-55-forge-chat-hands_completed.md). Origin: Phase 54 left Bob's claim-then-read flow
 > (B13) proven by tests only, because no default client attaches hands. Ameer chose to close that by
 > developing hands in `forge chat` and testing it on the default path.
 
@@ -49,4 +49,4 @@ client.
 
 ## Next
 
-Task 2b (agent expert), then rerun Task 3. Status: Tasks 1, 1b, 1c, 2 done; first acceptance run found H9.
+Phase complete.
