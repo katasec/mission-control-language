@@ -48,6 +48,7 @@ image id, so a card that grows while a reply streams sends no new image.
 | G7 | **Every visual value is a theme token**: colours, shadow colour/alpha, radii, avatar fills. The literal scan becomes recursive over `Tui/` and also flags raw RGBA. | Themes as data (53.6); closes the scan gaps found above. |
 | G8 | **Start-up check, no fallback.** On a terminal (not piped), before the TUI starts, `forge chat` checks two things: XenoAtom reports kitty graphics with truecolor, and the cell-size query answers (exact check: [Task 2](#task-2--start-up-check-and-card-edges)). If either fails it exits with code 1 and the message: `forge chat needs a terminal that can show images, such as Ghostty or Kitty (not inside tmux). Open forge chat again from one of those.` Piped line mode is unchanged. (Ameer, 2026-10-01) | Early stage: one rendering path, no plain-look copy to maintain. Accepted cost: `forge chat` inside tmux stops working until a later phase adds a plain look. The spike observed both signals (Terminal.app: no reply after 256 ms; tmux: no graphics protocol). |
 | G9 | **Kerning: our own GPOS pair-kerning reader inside `GlyphText`** (PairPos formats 1 and 2, Extension lookups, Coverage and ClassDef tables), verified against HarfBuzz's output for Inter. **Image text is simple Latin only**: a heading or name with any other script is drawn as bold terminal text, which Ghostty shapes itself. (Ameer, 2026-10-01) | Every serious renderer uses HarfBuzz, but HarfBuzzSharp brings a native library per platform, and forking it means owning a C++ build per platform. SixLabors.Fonts needs a paid licence above $1M revenue; Typography.OpenFont is unmaintained. We need only pair kerning for one known font: about 200 testable lines and no dependency. Move to stock HarfBuzzSharp, unforked, only if image text must cover every script. |
+| G10 | **Default theme is dark**: a missing `~/.forge/config.json` or a missing `theme` key means **dark**. This supersedes the 53.6 default (light). `light` stays selectable, and an unknown name is still an error. (Ameer, 2026-10-01) | The market prefers dark; Ameer uses light via config. |
 
 **Gates.** Security: N/A — local rendering only; no entry point, store, identity or secret.
 Engineering philosophy: named owners per box in the diagram, one adapter per external dependency
@@ -63,11 +64,12 @@ UI: the finish-line mockup is the binding reference by analogy with
 |---|---|---|
 | 1 — **Spike** (supervisor scratchpad, not a repo) | — | **Done**, see [completed](phase-56-tui-graphics_completed.md#task-1--spike-done-2026-10-01). |
 | 2 — **Start-up check and card edges**: G8, `Tui/Graphics/`, participant cards framed by the fit ring | forge-mcl | See [Task 2](#task-2--start-up-check-and-card-edges). |
+| 2b — **Default theme dark** (G10): `ForgeConfig` default and its tests (missing file and missing key mean dark) | forge-mcl | Tests updated; `forge chat` with no config opens dark; build 0 warnings, AOT 0 IL warnings. After Task 2 merges. |
 | 3 — Other shapes: code blocks, user pill, APPROVED pill, tool lines, composer ring | forge-mcl | Design locked after Task 2. Input: one-row items need their own cap-tile design (the fit ring is 2 rows tall at top and bottom). |
 | 4 — Proportional text (StbTrueTypeSharp, Inter, G9 kerning): brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 3. Input: choose the blend per theme (naive sRGB on light, linear-light on dark). |
 | 5 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape | forge-mcl | Design locked after Task 4. |
 | 6 — Window: hidden title bar, padding, cell height (Ghostty config) | — | Open: how the config reaches the user (Ameer). |
-| 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, light default and dark via config: supervisor captures match the mockup; Ameer accepts live. |
+| 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, dark by default and light via config: supervisor captures match the mockup; Ameer accepts live. |
 
 ### Task 2 — start-up check and card edges
 
@@ -103,7 +105,7 @@ flowchart LR
 4. Live: Ctrl-C stops a running turn and Ctrl-D quits, as before.
 5. Every visual value is in `ForgeTheme`, and the recursive colour scan passes with its one exception.
 6. Build 0 warnings, all tests pass, Native AOT publish 0 IL warnings.
-7. Default path: `forge` from `make install` on merged forge-mcl `main` in Ghostty, light by default and dark via config, a two-turn chat.
+7. Default path: `forge` from `make install` on merged forge-mcl `main` in Ghostty, a two-turn chat in each theme (the default as of Task 2, and the other via config).
 
 ## Next
 
