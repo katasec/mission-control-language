@@ -1,5 +1,7 @@
 # Durable conversations — Orleans, Azure Table, Blob, and Service Bus
 
+> **Current design: see [How conversations work](how-conversations-work.md).** Where this doc differs from it, that doc wins.
+
 > **Status: approved architectural direction, 2026-08-12.** The first implementation is
 > [Phase 43.16 — Durable Janus conversation proof](../phases/phase-43.16-janus-desktop-local-poc.md).
 > Forge Desktop and Forge Rooms are different projections of one durable conversation, not separate
