@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Task 1 done (2026-10-01); Task 2 design next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Task 1 done (2026-10-01); Task 2 design locked, plan next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -46,7 +46,7 @@ image id, so a card that grows while a reply streams sends no new image.
 | G5 | **Images only where the X-ray marks them**; every other cell is terminal text. | Selection and copy keep working; images never carry body text. |
 | G6 | **Tiles, not per-card images** (see *How it renders*). | Streaming grows cards several times a second (53.8); tiles make growth free. |
 | G7 | **Every visual value is a theme token**: colours, shadow colour/alpha, radii, avatar fills. The literal scan becomes recursive over `Tui/` and also flags raw RGBA. | Themes as data (53.6); closes the scan gaps found above. |
-| G8 | **Start-up check, no fallback.** On a terminal (not piped), before the TUI starts, `forge chat` checks two things: the cell-size query answers (`Terminal.Graphics.QueryPixelMetricsAsync()` not `null`), and XenoAtom detects a graphics protocol. If either fails it exits with code 1 and the message: `forge chat needs a terminal that can show images, such as Ghostty or Kitty (not inside tmux). Open forge chat again from one of those.` Piped line mode is unchanged. The exact XenoAtom detection API is named in the Task 2 plan. (Ameer, 2026-10-01) | Early stage: one rendering path, no plain-look copy to maintain. Accepted cost: `forge chat` inside tmux stops working until a later phase adds a plain look. The spike observed both signals (Terminal.app: no reply after 256 ms; tmux: no graphics protocol). |
+| G8 | **Start-up check, no fallback.** On a terminal (not piped), before the TUI starts, `forge chat` checks two things: XenoAtom reports kitty graphics with truecolor, and the cell-size query answers (exact check: [Task 2](#task-2--start-up-check-and-card-edges)). If either fails it exits with code 1 and the message: `forge chat needs a terminal that can show images, such as Ghostty or Kitty (not inside tmux). Open forge chat again from one of those.` Piped line mode is unchanged. (Ameer, 2026-10-01) | Early stage: one rendering path, no plain-look copy to maintain. Accepted cost: `forge chat` inside tmux stops working until a later phase adds a plain look. The spike observed both signals (Terminal.app: no reply after 256 ms; tmux: no graphics protocol). |
 | G9 | **Kerning: our own GPOS pair-kerning reader inside `GlyphText`** (PairPos formats 1 and 2, Extension lookups, Coverage and ClassDef tables), verified against HarfBuzz's output for Inter. **Image text is simple Latin only**: a heading or name with any other script is drawn as bold terminal text, which Ghostty shapes itself. (Ameer, 2026-10-01) | Every serious renderer uses HarfBuzz, but HarfBuzzSharp brings a native library per platform, and forking it means owning a C++ build per platform. SixLabors.Fonts needs a paid licence above $1M revenue; Typography.OpenFont is unmaintained. We need only pair kerning for one known font: about 200 testable lines and no dependency. Move to stock HarfBuzzSharp, unforked, only if image text must cover every script. |
 
 **Gates.** Security: N/A — local rendering only; no entry point, store, identity or secret.
@@ -61,28 +61,50 @@ UI: the finish-line mockup is the binding reference by analogy with
 
 | Task | Repo | Done when |
 |---|---|---|
-| 1 — **Spike** (supervisor scratchpad, not a repo) | — | **Done**: every row PASS, G8 decided; evidence in [tui-graphics.md](../design/tui-graphics.md#phase-56-spike--drawn-edges-and-proportional-text-verified-2026-10-01). |
-| 2 — Renderer, tiles and font in `Tui/`: cards, code blocks, pills, tool lines, composer ring | forge-mcl | Design locked from Task 1 results first. Inputs from Task 1: fit ring (4 columns at the sides, 2 rows top and bottom) rather than strict; new image ids on any theme or cell-size change; reconcile the dark `CardSurface`/`CardBorder` tokens with the mockup (`#151f2e`/`#22304a`); choose between raw stdout and XenoAtom's `GraphicsPresenter` for transmits. |
-| 3 — Proportional text: brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 2. Input from Task 1: choose the blend per theme (naive sRGB on light, linear-light on dark). |
-| 4 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape, synchronized output | forge-mcl | Design locked after Task 3. |
-| 5 — Window: hidden title bar, padding, cell height (Ghostty config) | — | Open: how the config reaches the user (Ameer). |
-| 6 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, light default and dark via config: supervisor captures match the mockup; Ameer accepts live. |
+| 1 — **Spike** (supervisor scratchpad, not a repo) | — | **Done**, see [completed](phase-56-tui-graphics_completed.md#task-1--spike-done-2026-10-01). |
+| 2 — **Start-up check and card edges**: G8, `Tui/Graphics/`, participant cards framed by the fit ring | forge-mcl | See [Task 2](#task-2--start-up-check-and-card-edges). |
+| 3 — Other shapes: code blocks, user pill, APPROVED pill, tool lines, composer ring | forge-mcl | Design locked after Task 2. Input: one-row items need their own cap-tile design (the fit ring is 2 rows tall at top and bottom). |
+| 4 — Proportional text (StbTrueTypeSharp, Inter, G9 kerning): brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 3. Input: choose the blend per theme (naive sRGB on light, linear-light on dark). |
+| 5 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape | forge-mcl | Design locked after Task 4. |
+| 6 — Window: hidden title bar, padding, cell height (Ghostty config) | — | Open: how the config reaches the user (Ameer). |
+| 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, light default and dark via config: supervisor captures match the mockup; Ameer accepts live. |
 
-### Task 1 — spike
+### Task 2 — start-up check and card edges
 
-Prove the finish-line look in Ghostty before writing product code.
+Participant cards get the mockup's rounded edges and shadow. Every other element keeps today's look until Task 3.
 
-| Check | Observation that proves it |
+```mermaid
+flowchart LR
+  S[ForgeChat.RunAsync] --> C{G8 check: kitty, truecolor, cell size}
+  C -- fails --> X[exit 1 with message]
+  C -- passes --> R[Terminal.RunAsync]
+  R --> T[transmit card tiles once, raw stdout]
+  T --> F[CardFrame paints tile cells around each card]
+```
+
+| Area | Decision |
 |---|---|
-| Cell size in device pixels is available inside a XenoAtom app (terminal reply or XenoAtom API) | Logged width × height on a Retina display; behaviour when no reply arrives |
-| One card framed by edge tiles (corners, hairline, shadow) around a XenoAtom card with `CardSurface` interior | Ghostty capture, both themes; no visible seams at tile joins |
-| The card grows (simulated streaming) with no new transmits | Transmit count stays at the initial tile count |
-| One heading in Inter SemiBold via StbTrueTypeSharp, gamma-correct blend, drawn 1:1 | 4× crop of the capture: no resampling blur; compared with the mockup |
-| Native AOT publish with StbTrueTypeSharp and the embedded fonts | 0 IL warnings; binary size delta recorded |
+| G8 check | In `ForgeChat.RunAsync` right after the theme is read (`ForgeChat.cs:53`), compute `UsesTui` there. On the TUI path: `Terminal.Graphics.Capabilities.SupportedProtocols` contains Kitty, and truecolor is on, and `QueryPixelMetricsAsync()` returns a value. If any check fails: exit code 1 with the G8 message, before sign-in, the Project, or any network call. One pure function decides from those three facts; it is unit-tested. |
+| Ctrl-C | The probe starts terminal input before `Run`. Start input explicitly with Ctrl-C treated as input before probing, so `Run` keeps today's Ctrl-C behaviour. Proven live (Done when 4). |
+| Cell size | Read once at start-up, like the theme. Window resizes need no new images. A font-size change while running is not handled: Ghostty rescales the images until `forge chat` restarts (accepted). |
+| Transmit | Raw stdout, once, after `Run` enters the alternate screen (the verified method). Fixed image ids for the one card tile set. XenoAtom's `GraphicsPresenter` is not used. |
+| Ring | The fit ring from the spike only (no strict mode). Geometry is solved from the cell size, so the ring's width in cells differs between Retina and 1×. |
+| Layout | Card position and spacing follow the mockup: transcript gutter, one-row gap between cards, card text column. Today the cards touch and have no gutter (`ChatScreen.cs:21`). |
+| Owners | `Tui/Graphics/` (new): `Raster`, `Png`, `RingGeometry`, `CardTiles`, `KittyImages` (the only code that writes images to stdout), `PlaceholderDiacritics`, `CellMetrics`. They are ported from the spike under [code style](../design/code-style.md). The spike's seam, edge and interior checks become unit tests. `ChatScreen` uses a card-frame visual and never builds pixels. The Cli README gains the `Tui/Graphics/` ownership line. |
+| Tokens | New `ForgeTheme` tokens: card radius, hairline, and two shadow layers (colour with alpha, y offset, blur), all in mockup px where 1 mockup px = cell height ÷ 20. Dark `CardSurface` becomes `#151f2e` and `CardBorder` becomes `#22304a` (the mockup). Other dark mismatches wait for the task that owns those elements. |
+| Colour scan | `TuiColourLiteralTests` scans `Tui/` recursively and also flags RGBA byte literals. One named exception: `KittyImages`, whose `Color.Rgb` carries an image id, not a visual colour. |
+| Packages | None new. StbTrueTypeSharp and Inter arrive in Task 4. |
+| Accepted for now | Mouse-selecting across a card edge copies placeholder characters. |
 
-**Done when:** every row has its observation recorded in [tui-graphics.md](../design/tui-graphics.md),
-the supervisor compares the captures with the mockup (PASS/FAIL per row), and G8 is decided.
+**Done when:**
+1. In Terminal.app, and in tmux inside Ghostty, `forge chat` exits with code 1 and the G8 message before any network call. Piped line mode is unchanged. Unit tests cover the decision function.
+2. Supervisor Ghostty captures of replies in both themes, on Retina and 1×: card edges match the mockup's card (PASS per capture). A streamed reply grows its card with no new transmit (the count from a `script` typescript stays at the start-up tile count).
+3. A card scrolled partly off the top still draws its edges correctly (capture).
+4. Live: Ctrl-C stops a running turn and Ctrl-D quits, as before.
+5. Every visual value is in `ForgeTheme`, and the recursive colour scan passes with its one exception.
+6. Build 0 warnings, all tests pass, Native AOT publish 0 IL warnings.
+7. Default path: `forge` from `make install` on merged forge-mcl `main` in Ghostty, light by default and dark via config, a two-turn chat.
 
 ## Next
 
-Lock the Task 2 design (renderer, tiles, font, G8 start-up check), then assign it plan-only.
+Task 2: assign it to an implementing subagent (plan only), then approve.
