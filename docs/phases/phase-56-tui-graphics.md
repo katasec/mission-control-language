@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Task 1 spike verified (2026-10-01); G8 decision open.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Task 1 done (2026-10-01); Task 2 design next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -46,13 +46,13 @@ image id, so a card that grows while a reply streams sends no new image.
 | G5 | **Images only where the X-ray marks them**; every other cell is terminal text. | Selection and copy keep working; images never carry body text. |
 | G6 | **Tiles, not per-card images** (see *How it renders*). | Streaming grows cards several times a second (53.8); tiles make growth free. |
 | G7 | **Every visual value is a theme token**: colours, shadow colour/alpha, radii, avatar fills. The literal scan becomes recursive over `Tui/` and also flags raw RGBA. | Themes as data (53.6); closes the scan gaps found above. |
-| G8 | **Terminal: Ghostty and Kitty only, no fallback** (53.2). Failure behaviour when the cell pixel size is unavailable is decided from Task 1's observation, before Task 2. | No silent degraded mode; the decision needs the measured behaviour. |
+| G8 | **Start-up check, no fallback.** On a terminal (not piped), before the TUI starts, `forge chat` checks two things: the cell-size query answers (`Terminal.Graphics.QueryPixelMetricsAsync()` not `null`), and XenoAtom detects a graphics protocol. If either fails it exits with code 1 and the message: `forge chat needs a terminal that can show images, such as Ghostty or Kitty (not inside tmux). Open forge chat again from one of those.` Piped line mode is unchanged. The exact XenoAtom detection API is named in the Task 2 plan. (Ameer, 2026-10-01) | Early stage: one rendering path, no plain-look copy to maintain. Accepted cost: `forge chat` inside tmux stops working until a later phase adds a plain look. The spike observed both signals (Terminal.app: no reply after 256 ms; tmux: no graphics protocol). |
 | G9 | **Kerning: our own GPOS pair-kerning reader inside `GlyphText`** (PairPos formats 1 and 2, Extension lookups, Coverage and ClassDef tables), verified against HarfBuzz's output for Inter. **Image text is simple Latin only**: a heading or name with any other script is drawn as bold terminal text, which Ghostty shapes itself. (Ameer, 2026-10-01) | Every serious renderer uses HarfBuzz, but HarfBuzzSharp brings a native library per platform, and forking it means owning a C++ build per platform. SixLabors.Fonts needs a paid licence above $1M revenue; Typography.OpenFont is unmaintained. We need only pair kerning for one known font: about 200 testable lines and no dependency. Move to stock HarfBuzzSharp, unforked, only if image text must cover every script. |
 
 **Gates.** Security: N/A — local rendering only; no entry point, store, identity or secret.
 Engineering philosophy: named owners per box in the diagram, one adapter per external dependency
 (Stb, compression), no on/off setting and no renderer interface. Failure boundary: font loading is
-an embedded resource proven by a test; the terminal-capability failure is G8, locked before Task 2.
+an embedded resource proven by a test; an unsupported terminal stops at start-up with a named message (G8).
 UI: the finish-line mockup is the binding reference by analogy with
 [Desktop Interaction Principles](../design/desktop-interaction-principles.md#visual-reference-acceptance-gate--non-negotiable)
 (which scopes itself to Desktop/ForgeUI); supervisor Ghostty captures, then Ameer's live review.
@@ -61,7 +61,7 @@ UI: the finish-line mockup is the binding reference by analogy with
 
 | Task | Repo | Done when |
 |---|---|---|
-| 1 — **Spike** (supervisor scratchpad, not a repo) | — | Every row PASS; evidence in [tui-graphics.md](../design/tui-graphics.md#phase-56-spike--drawn-edges-and-proportional-text-verified-2026-10-01). Done once G8 is decided. |
+| 1 — **Spike** (supervisor scratchpad, not a repo) | — | **Done**: every row PASS, G8 decided; evidence in [tui-graphics.md](../design/tui-graphics.md#phase-56-spike--drawn-edges-and-proportional-text-verified-2026-10-01). |
 | 2 — Renderer, tiles and font in `Tui/`: cards, code blocks, pills, tool lines, composer ring | forge-mcl | Design locked from Task 1 results first. Inputs from Task 1: fit ring (4 columns at the sides, 2 rows top and bottom) rather than strict; new image ids on any theme or cell-size change; reconcile the dark `CardSurface`/`CardBorder` tokens with the mockup (`#151f2e`/`#22304a`); choose between raw stdout and XenoAtom's `GraphicsPresenter` for transmits. |
 | 3 — Proportional text: brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 2. Input from Task 1: choose the blend per theme (naive sRGB on light, linear-light on dark). |
 | 4 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape, synchronized output | forge-mcl | Design locked after Task 3. |
@@ -85,4 +85,4 @@ the supervisor compares the captures with the mockup (PASS/FAIL per row), and G8
 
 ## Next
 
-Ameer decides G8 (terminals without images), which closes Task 1. Then lock the Task 2 design.
+Lock the Task 2 design (renderer, tiles, font, G8 start-up check), then assign it plan-only.

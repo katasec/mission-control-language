@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) — one decision (terminals without images), then the renderer design. |
+| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 2 — renderer design. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Spike verified; decisions open |
+| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Spike done; renderer design next |
 
 ## Design docs
 
