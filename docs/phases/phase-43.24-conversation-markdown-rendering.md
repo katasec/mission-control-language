@@ -19,10 +19,10 @@ Desktop WebView.
 
 Read this spoke first. Then read only:
 
-1. [`ConversationTranscriptView.razor`](../../src/ForgeMission.Presentation/Components/ConversationTranscriptView.razor),
-   [`ForgeMission.Presentation.csproj`](../../src/ForgeMission.Presentation/ForgeMission.Presentation.csproj),
-   and the nearest [Presentation README](../../src/ForgeMission.Presentation/README.md);
-2. [`ConversationTranscriptViewTests.cs`](../../src/ForgeMission.Tests/Presentation/ConversationTranscriptViewTests.cs)
+1. [`ConversationTranscriptView.razor`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Presentation/Components/ConversationTranscriptView.razor),
+   [`ForgeMission.Presentation.csproj`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Presentation/ForgeMission.Presentation.csproj),
+   and the nearest [Presentation README](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Presentation/README.md);
+2. [`ConversationTranscriptViewTests.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Tests/Presentation/ConversationTranscriptViewTests.cs)
    and the existing bUnit presentation-test convention; and
 3. [Desktop Interaction Principles](../design/desktop-interaction-principles.md),
    [UI Design System](../design/ui-design-system.md), [Security Architecture](../design/security-architecture.md),

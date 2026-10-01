@@ -4,7 +4,7 @@
 > Phase 43.23 contains the verified final acceptance evidence. The retirement instructions below
 > are preserved to explain the reconstruction baseline; do **not** execute them as a current task.
 > Use the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
-> and the nearest [source component README](../../src/README.md) instead.
+> and the nearest [source component README](https://github.com/katasec/forge-desktop/blob/main/src/README.md) instead.
 
 ## Current status (2026-09-05)
 

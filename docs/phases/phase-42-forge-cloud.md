@@ -340,7 +340,7 @@ Never sell mandatory quality on an opt-in door. (Full surface support matrix in 
   `ledger_entries`, `BillingService` (credit-grant "Granted 5,000,000 µ$" on login, balance-check,
   debit-after-run), OCI mission catalog (39.4, `ghcr.io/katasec`, pinned digest, anonymous). **Live.**
 - `Katasec.AnthropicServer` — `/v1/messages`, streaming + non-streaming, **live-verified against the real
-  `claude` CLI** ([`ClaudeCodeTests`](../../src/ForgeMission.Tests/Integration/ClaudeCodeTests.cs)).
+  `claude` CLI** ([`ClaudeCodeTests`](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Integration/ClaudeCodeTests.cs)).
 - `Katasec.OaiServer` — `/v1/chat/completions`, **`/v1/responses`**, `/v1/models`; `Session` / `ISessionStore`
   / `LocalFileSessionStore` (the seed of the re-entrancy store).
 - `forge agent start` — mission-as-container on `forge-net` (the local ≡ cloud pattern, shipped).

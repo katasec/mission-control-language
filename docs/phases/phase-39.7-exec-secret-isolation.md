@@ -9,7 +9,7 @@
 
 ## The finding
 
-`ExecExpertRunner` ([src/ForgeMission.Core/Adapters/ExecExpertRunner.cs](../../src/ForgeMission.Core/Adapters/ExecExpertRunner.cs))
+`ExecExpertRunner` ([src/ForgeMission.Core/Adapters/ExecExpertRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/ExecExpertRunner.cs))
 spawns the child process with `new ProcessStartInfo(expert.Command) { UseShellExecute = false, … }`
 and **never touches `psi.EnvironmentVariables`**. With `UseShellExecute = false`, .NET pre-populates
 the child environment with the **parent process's entire environment**; because the code removes
@@ -55,7 +55,7 @@ liability with no upside.
   fixed script doesn't print keys. Safe **only because the code is fixed**.
 - **Custom missions (Phase 39.5) — real, no injection needed.** The moment a user can publish a
   mission with a `kind: exec` step, they can author `print(os.environ)` directly.
-  `RunPolicyGate.EnsureAllowed` ([src/ForgeMission.Runner/MissionRunHandler.cs](../../src/ForgeMission.Runner/MissionRunHandler.cs))
+  `RunPolicyGate.EnsureAllowed` ([src/ForgeMission.Runner/MissionRunHandler.cs](https://github.com/katasec/forge-runner/blob/main/src/ForgeMission.Runner/MissionRunHandler.cs))
   is currently a **stub** — it validates the policy string but does not yet deny `exec`/`http` for
   untrusted missions. That gate is the intended first defence and isn't enforcing yet.
 - **Program-synthesis / DynamicGuard spike — the classic chain.** An LLM writing `verify.py` at

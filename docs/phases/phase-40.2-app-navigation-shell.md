@@ -15,22 +15,22 @@ widths from this spoke.
 
 ## Context an implementer needs
 
-- **Layout seam:** [`MainLayout.razor`](../../src/ForgeUI/Shared/MainLayout.razor) is today a thin `@Body`.
+- **Layout seam:** [`MainLayout.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Shared/MainLayout.razor) is today a thin `@Body`.
   It becomes the shell: `NavShell` + a content region hosting `@Body`. This reverses design-system §8 — 40.1
   Task 7 left a forward note; **this spoke rewrites §8 + the surface map** (Task 8).
-- **Routing/landing:** [`Pages/Index.razor`](../../src/ForgeUI/Pages/Index.razor) redirects `/` → `/rooms`;
-  keep it. [`App.razor`](../../src/ForgeUI/App.razor) gates everything (`AuthorizeRouteView` →
+- **Routing/landing:** [`Pages/Index.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Pages/Index.razor) redirects `/` → `/rooms`;
+  keep it. [`App.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/App.razor) gates everything (`AuthorizeRouteView` →
   `RedirectToLogin`), so new pages just need `@attribute [Authorize]`.
-- **Rooms shell today** ([`Pages/Rooms.razor`](../../src/ForgeUI/Pages/Rooms.razor)) is `.app-shell` =
+- **Rooms shell today** ([`Pages/Rooms.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Pages/Rooms.razor)) is `.app-shell` =
   `.rooms-nav` (sidebar, with `AccountMenu` docked at its foot) + `.app-main` (conversation). The app rail
   wraps *around* this; the **account control moves from the rooms-sidebar foot up to the rail foot** so it
   isn't duplicated.
 - **Data for the new surfaces already exists** (no backend work):
   - Account balance: `BillingService.GetBalanceMicroUsdAsync(memberId)` → micro-USD `long`
-    ([`Services/BillingService.cs`](../../src/ForgeUI/Services/BillingService.cs)); identity via
+    (`Services/BillingService.cs`); identity via
     `CurrentUser.GetMemberAsync()` (`DisplayName`, `Email`) + `ForgeClaims`.
   - Library directory: `AgentRegistry.List()` → `IReadOnlyList<AgentDescriptor>` (Handle, Description,
-    Publisher, Seal) ([`Services/AgentRegistry.cs`](../../src/ForgeUI/Services/AgentRegistry.cs)). Render the
+    Publisher, Seal) ([`Services/AgentRegistry.cs`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Services/AgentRegistry.cs)). Render the
     identity seal via the existing `IdentitySealMark` component. **Never** the green verified badge (§5).
 - **Blazor best practice:** use the built-in **`NavLink`** component for each nav item — it applies an
   `active` CSS class and `aria-current="page"` automatically. Use `Match="NavLinkMatch.Prefix"` for `/rooms`

@@ -30,7 +30,7 @@ here is:
    [forge-architecture.md](../design/forge-architecture.md) establishes, so future capabilities
    (Git, Docker, Browser, ...) follow the same pattern rather than each being designed from scratch.
 2. A **Capability Registry** the Mission Runtime can query — replacing today's static, hand-written
-   `AgentToolDeclarations` ([AgentToolDeclarations.cs](../../src/ForgeMission.Core/Tools/AgentToolDeclarations.cs))
+   `AgentToolDeclarations` ([AgentToolDeclarations.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/AgentToolDeclarations.cs))
    with something a client advertises dynamically.
 
 **What this spoke does NOT do:** build `IGitProvider`/`IDockerProvider`/`IBrowserProvider`/

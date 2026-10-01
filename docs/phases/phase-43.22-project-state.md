@@ -3,7 +3,7 @@
 > **Historical task record — superseded by [Phase 43.23](phase-43.23-domain-ownership.md).**
 > Its `ProjectStore` instructions and source paths are not current implementation guidance. Read
 > the [Phase 43.23 completed record](phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06)
-> and the nearest [source component README](../../src/README.md) before changing Project code.
+> and the nearest [source component README](https://github.com/katasec/forge-desktop/blob/main/src/README.md) before changing Project code.
 
 ## Task and files
 

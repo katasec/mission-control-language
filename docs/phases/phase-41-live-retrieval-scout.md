@@ -18,7 +18,7 @@
 >
 > **Parent:** grows out of [Phase 38 — Forge Rooms](phase-38-forge-rooms.md) (the chat surface where the
 > "no real-time data" wall shows up) · **Consumes:** provider wiring precedent in
-> [`ProviderClientBuilder`](../../src/ForgeMission.Cli/ProviderClientBuilder.cs).
+> [`ProviderClientBuilder`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/ProviderClientBuilder.cs).
 >
 > **Done when (phase):** an MCL reasoning chain can call `IWebSearch`, receive current web data as a
 > provider-neutral, source-attributed result, and synthesize over it — with the backend swappable without
@@ -103,7 +103,7 @@ byproduct of forced synthesis, reasoning-only, snippet-depth) > Grok (no raw at 
    **migrate by 2026-08-15**). **The API has no "auto"** (that's a consumer-UI router only) — pin a model
    id, use the `<model>` alias (→ latest stable) to avoid chasing version strings.
 7. **Project = `ForgeMission.Scout`**, root namespace `Scout`, added to
-   [`ForgeMission.slnx`](../../src/ForgeMission.slnx) (a curated subset — add it explicitly).
+   `ForgeMission.slnx` (a curated subset — add it explicitly).
 
 ## 5. Spokes (dependency-ordered)
 

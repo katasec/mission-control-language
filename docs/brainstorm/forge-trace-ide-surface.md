@@ -74,7 +74,7 @@ rendering.
 
 Confirmed mechanism: a human's "Request changes" writes to `context["feedback"]`, the same slot
 `role: judge` failures already use to drive `loop(N)` retries
-([`PipelineRunner.cs:71,189-190`](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs)). No new
+([`PipelineRunner.cs:71,189-190`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs)). No new
 protocol needed for the human case.
 
 **Open tension, not yet resolved:** `ForgeMission.Rooms` (`MemberKind.Human`/`Agent`, `Room`,

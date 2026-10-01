@@ -20,7 +20,7 @@ layout structurally, and they establish the conventions the later spokes lean on
 
 ## Context an implementer needs
 
-- The stylesheet is a single tokenized file, [`src/ForgeUI/wwwroot/css/forge.css`](../../src/ForgeUI/wwwroot/css/forge.css)
+- The stylesheet is a single tokenized file, [`src/ForgeUI/wwwroot/css/forge.css`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/wwwroot/css/forge.css)
   (~606 lines), organised into numbered sections. **No npm, no Node, no preprocessor** — plain CSS with
   custom properties. To re-theme you edit tokens in `:root`, not rules.
 - **A known CSS limitation to respect:** you *cannot* use a custom property in a media-query condition

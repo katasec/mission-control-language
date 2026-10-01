@@ -14,7 +14,7 @@ POCOs — no reflection, no runtime `JsonSerializerOptions`. Referenced by both 
 (one meter, not two). Done when the room path (`RoomAgentInvoker`) still bills identically through the
 lib.
 
-**✅ DONE (2026-07-18).** New [`ForgeMission.Billing`](../../src/ForgeMission.Billing/) project
+**✅ DONE (2026-07-18).** New [`ForgeMission.Billing`](https://github.com/katasec/forge-platform/tree/main/src/ForgeMission.Billing) project
 (`IsAotCompatible=true`, builds 0 warnings) holding the moved `LedgerEntry`/`LedgerEntryKind` POCOs,
 the `ILedgerStore` interface, `CostMeter`, and `BillingService`. `IConfiguration` swapped for an
 injected `BillingOptions` record so the lib carries no config-binder reflection (host binds it from
@@ -37,9 +37,9 @@ cross-DB FK.
 **✅ DONE (2026-07-18, code — full split, decided w/ Ameer).** `ForgeMission.Billing` now owns the
 whole billing bounded context: `PlatformKey`/`LedgerEntry` POCOs + `IPlatformKeyStore`/`ILedgerStore` +
 `PlatformKeyMinting`/`PlatformKeyResolver`, plus raw-Npgsql
-[`NpgsqlLedgerStore`](../../src/ForgeMission.Billing/NpgsqlLedgerStore.cs) /
-[`NpgsqlPlatformKeyStore`](../../src/ForgeMission.Billing/NpgsqlPlatformKeyStore.cs), idempotent
-[`AuthBillingSchema.EnsureCreatedAsync`](../../src/ForgeMission.Billing/AuthBillingSchema.cs), and an
+[`NpgsqlLedgerStore`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Billing/NpgsqlLedgerStore.cs) /
+[`NpgsqlPlatformKeyStore`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Billing/NpgsqlPlatformKeyStore.cs), idempotent
+[`AuthBillingSchema.EnsureCreatedAsync`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Billing/AuthBillingSchema.cs), and an
 `AddAuthBilling(connString)` DI extension. **rooms_db cut over:** EF `LedgerStore`/`PlatformKeyStore` +
 configs + DbSets deleted; a `DropLedgerAndPlatformKeysFromRooms` migration drops both tables (Down
 fully recreates → reversible). **ForgeUI re-pointed** to `authbilling_db`
@@ -73,8 +73,8 @@ AOT-clean. Health probe; a streaming reverse-proxy of the `/v1` wire to the runn
 (SSE pass-through; not `/run`). Thin gateway only: auth, route, meter, forward — no mission logic. No
 DB except the scoped `authbilling_db`.
 
-**✅ FOUNDATION DONE (2026-07-18).** New [`ForgeMission.Api`](../../src/ForgeMission.Api/) slim host:
-`/health` + [`WireProxy`](../../src/ForgeMission.Api/WireProxy.cs) — a hand-rolled (no YARP) streaming
+**✅ FOUNDATION DONE (2026-07-18).** New [`ForgeMission.Api`](https://github.com/katasec/forge-platform/tree/main/src/ForgeMission.Api) slim host:
+`/health` + [`WireProxy`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api/WireProxy.cs) — a hand-rolled (no YARP) streaming
 reverse-proxy of `/v1/{**rest}` → the runner (`RunnerBaseUrl`), forwarding both verbs with
 `ResponseHeadersRead` + `DisableBuffering` so SSE relays as it arrives; hop-by-hop headers stripped
 both ways. References only the AOT-clean `ForgeMission.Billing` (auth/billing wraps landed in task 4).
@@ -91,11 +91,11 @@ mission-internal 500 flows back verbatim). Gateway forwards + streams; mission o
 attach `(userId, balance)`; 401 on bad/revoked key.
 
 **✅ DONE (2026-07-19, commit `da977ff`).**
-[`PlatformKeyAuthFilter`](../../src/ForgeMission.Api/PlatformKeyAuth.cs) resolves the Bearer token via
+[`PlatformKeyAuthFilter`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api/PlatformKeyAuth.cs) resolves the Bearer token via
 the shared `authbilling_db` resolver, stashes `PlatformKeyContext` on `HttpContext.Items` for tasks
 5/6 to read, 401 on missing/invalid/revoked. `ApiJsonContext` added for the gateway's own AOT-clean
 JSON responses. 4 unit tests pass
-([`PlatformKeyAuthFilterTests`](../../src/ForgeMission.Rooms.Tests/Api/PlatformKeyAuthFilterTests.cs)).
+([`PlatformKeyAuthFilterTests`](https://github.com/katasec/forge-platform/blob/main/src/ForgeMission.Api.Tests/PlatformKeyAuthFilterTests.cs)).
 Wired onto `/v1/{**rest}` via `.AddEndpointFilter<PlatformKeyAuthFilter>()` in `Program.cs`.
 
 ## Task 5a — design gap review (found + resolved 2026-07-19)
@@ -219,7 +219,7 @@ bootstrap); `src/ForgeMission.Billing/{AuthBillingSchema,BillingService,ILedgerS
 **`websearch` published for real:** `ghcr.io/katasec/forge-mission-websearch:0.1.0`, pinned digest
 `sha256:dc69d92b53cf0fbb28f0e241568eaa716ab3215f326a7ba72acd62b666d0478d` — pushed via `forge publish`
 using a `gh auth token`-bridged registry credential (see
-[deploy.md → OCI registry credentials](../design/deploy.md#oci-registry-ghcrio-publish-credentials--gh-cli-is-already-authenticated)).
+[deploy.md → OCI registry credentials](../design/deploy.md)).
 Runner-verified: `GET /missions` lists `WebSearch` after a real pull from ghcr.io.
 
 **Tests (12 new, `src/ForgeMission.Rooms.Tests/Api/`):** `MissionHandleTests` (parse equivalence,
@@ -398,7 +398,7 @@ unless the symptom recurs.
 **What happened:** during the `authbilling_db` infra work the dev `forge_rooms` DB was wiped (all
 rooms/members/messages gone, confirmed by sign-in). Two mechanisms were live at the time:
 - The two `DropTable` calls in
-  [`DropLedgerAndPlatformKeysFromRooms`](../../src/ForgeMission.Rooms.Data/Migrations/20260717233324_DropLedgerAndPlatformKeysFromRooms.cs)
+  [`DropLedgerAndPlatformKeysFromRooms`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms.Data/Migrations/20260717233324_DropLedgerAndPlatformKeysFromRooms.cs)
   `Up()`.
 - The auto-run migrate step in `forge-infra`'s `.github/workflows/infra.yml` (`500-app` → start
   `caj-forge-migrate-dev`).

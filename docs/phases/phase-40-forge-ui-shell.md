@@ -20,11 +20,11 @@
 
 ## 1. Why this, why now
 
-Today the entire authenticated app is **one surface**. [`Pages/Index.razor`](../../src/ForgeUI/Pages/Index.razor)
-redirects `/` → `/rooms`, and [`Pages/Rooms.razor`](../../src/ForgeUI/Pages/Rooms.razor) *is* the app —
-a WhatsApp-style two-pane shell (rooms sidebar + conversation). [`MainLayout.razor`](../../src/ForgeUI/Shared/MainLayout.razor)
+Today the entire authenticated app is **one surface**. [`Pages/Index.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Pages/Index.razor)
+redirects `/` → `/rooms`, and [`Pages/Rooms.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Pages/Rooms.razor) *is* the app —
+a WhatsApp-style two-pane shell (rooms sidebar + conversation). [`MainLayout.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Shared/MainLayout.razor)
 is a deliberately thin `@Body` pass-through, and the only cross-surface primitive is
-[`AccountMenu.razor`](../../src/ForgeUI/Shared/AccountMenu.razor).
+[`AccountMenu.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Shared/AccountMenu.razor).
 
 Two forces make an app shell the right next investment:
 
@@ -150,7 +150,7 @@ dark mode mandatory).
 ## 6. Building, running & verifying locally
 
 A cold agent needs this to execute — full detail (and two auth gotchas) live in
-[UI Design System §9](../design/ui-design-system.md#9-running-it-locally-and-two-gotchas-that-will-bite-you).
+[UI Design System §9](../design/ui-design-system.md#11-running-it-locally-and-two-gotchas-that-will-bite-you).
 
 **Run it.** There is a ready launch config `forge-ui` in [`.claude/launch.json`](../../.claude/launch.json)
 (`dotnet run` on `http://localhost:5286`, `ASPNETCORE_ENVIRONMENT=Development`). Use `preview_start forge-ui`
@@ -159,7 +159,7 @@ navigate to `/auth/dev?user=alice` (it sets no OIDC correlation cookie, so it wo
 
 **Three gotchas that will make you think you broke something:**
 1. **The Library / agent lists can be legitimately empty locally.** `AgentRegistry` is built **once at
-   boot** from the runner's `GET /missions` probe ([`Program.cs:124-131`](../../src/ForgeUI/Program.cs)). If
+   boot** from the runner's `GET /missions` probe ([`Program.cs:124-131`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Program.cs)). If
    the `ForgeMission.Runner` isn't running, `availableMissionRefs` is empty → **no agents bind** → `/library`
    (40.2 Task 5), the create-room agent picker, and `@`-mentions all show nothing. This is expected, **not a
    bug in your layout.** To verify Library with real rows, run the runner with `MCL_API_KEY` set; to verify

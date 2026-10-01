@@ -24,7 +24,7 @@
 > **Done when:** `forge serve` (with an `agent.yaml` that selects the Anthropic wire) exposes
 > `POST /v1/messages`; pointing the real `claude` CLI at it via `ANTHROPIC_BASE_URL` returns a
 > mission-generated answer that reflects the **full conversation** (a second turn that references the first
-> works). Verified by extending [`ClaudeCodeTests`](../../src/ForgeMission.Tests/Integration/ClaudeCodeTests.cs)
+> works). Verified by extending [`ClaudeCodeTests`](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Integration/ClaudeCodeTests.cs)
 > to run through `forge serve` (not just the raw `AnthropicServerFixture`).
 
 > **Sequencing (DECIDED 2026-07-16): this spoke is dev-facing; the user-facing launcher ships AFTER
@@ -37,7 +37,7 @@
 
 ## Context an implementer needs (verified against the code 2026-07-15)
 
-- **`forge serve` today** ([`Program.cs` `BuildServeCommand`](../../src/ForgeMission.Cli/Program.cs)) builds a
+- **`forge serve` today** ([`Program.cs` `BuildServeCommand`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs)) builds a
   `MissionChatClient` and calls **`OaiServer.Build(missionClient, config.Id, config.Port)`** — the OpenAI
   wire only (`/v1/chat/completions`, `/v1/responses`, `/v1/models`). It never constructs the Anthropic server.
 - **`Katasec.AnthropicServer`** (sibling `oai-server-dotnet` repo) already implements `/v1/messages`
@@ -45,7 +45,7 @@
   CLI** — but only via the test's `AnthropicServerFixture`, wired to a **direct** `IChatClient`, **never
   through `forge serve` and never through a mission.** Its `Build(IChatClient, modelId, port)` mirrors
   `OaiServer.Build`.
-- **`MissionChatClient`** ([`Adapters/MissionChatClient.cs`](../../src/ForgeMission.Core/Adapters/MissionChatClient.cs))
+- **`MissionChatClient`** ([`Adapters/MissionChatClient.cs`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/MissionChatClient.cs))
   is the only mission→`IChatClient` adapter. It is **lossy on purpose today**:
   - `LastUserMessage(messages)` — takes **only the last user turn**, drops all history and the system prompt.
   - flattens it to the mission's first param (`BuildOptions`).
@@ -69,7 +69,7 @@
 Two independent changes; neither adds tool-calling.
 
 **A. A wire selector in `agent.yaml`.** Add an optional `wire` field (`anthropic` | `openai`, default keep
-today's behaviour). `AgentConfig` ([`Resolution/AgentConfig.cs`](../../src/ForgeMission.Core/Resolution/AgentConfig.cs))
+today's behaviour). `AgentConfig` ([`Resolution/AgentConfig.cs`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Resolution/AgentConfig.cs))
 gains `public string Wire { get; set; } = "openai";`. `BuildServeCommand` branches:
 
 ```csharp

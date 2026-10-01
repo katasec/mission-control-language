@@ -22,7 +22,7 @@
 
 - **Naming (DECIDED 2026-07-16):** `forge login` = **platform sign-in** (browser OAuth → platform key +
   credits — the thing users mean by "log in"). Today's OCI-registry login
-  ([`Program.cs` `BuildLoginCommand`](../../src/ForgeMission.Cli/Program.cs)) moves to **`forge registry
+  ([`Program.cs` `BuildLoginCommand`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs)) moves to **`forge registry
   login`**; keep the old invocation working with a deprecation notice for a release. Both write to the same
   `~/.forge/credentials.json` store (`platform` + registry sections).
 - **Identity + billing exist (Phase 39):** Entra External ID tenant `forgeids`; `BillingService` grants

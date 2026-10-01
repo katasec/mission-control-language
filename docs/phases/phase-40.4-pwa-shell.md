@@ -41,7 +41,7 @@ this app is online-by-nature anyway, so the one Blazor-Server-PWA limitation cos
 - Theme/background colours come from `forge.css` tokens — `--accent` (ember) and `--surface`/`--bg`. The
   manifest and iOS meta must use the **same literal values** the tokens resolve to (a manifest can't read CSS
   vars), so copy the hex from `:root`.
-- Meta tags go in the `<head>` of [`Pages/_Host.cshtml`](../../src/ForgeUI/Pages/_Host.cshtml) (already holds
+- Meta tags go in the `<head>` of [`Pages/_Host.cshtml`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Pages/_Host.cshtml) (already holds
   the viewport + favicon links; 40.1 added `viewport-fit=cover`).
 - **Why the default Blazor Server template ships no service worker:** a "cache everything" SW silently breaks
   the SignalR circuit (`/_blazor`, the WebSocket negotiate) and the OIDC redirect (`/auth/*`,

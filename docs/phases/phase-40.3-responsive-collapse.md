@@ -16,7 +16,7 @@ master/detail on the phone.
 
 ## Context an implementer needs
 
-- **Lean on the route, not new state.** [`Pages/Rooms.razor`](../../src/ForgeUI/Pages/Rooms.razor) already
+- **Lean on the route, not new state.** [`Pages/Rooms.razor`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeUI/Pages/Rooms.razor) already
   owns both `/rooms` (no room selected) and `/rooms/{RoomId:guid}` (a room selected) on one component. That
   route split *is* the "which pane" signal — the collapse is CSS driven by whether a room is selected, plus a
   back control. Do not introduce a viewport-width C# state machine.

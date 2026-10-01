@@ -43,7 +43,7 @@ Retrospect this only if a real mission surfaces a shape the existing roles can't
 
 ## The mechanical gap: suspend/resume
 
-`PipelineRunner.RunAsync` ([PipelineRunner.cs](../../src/ForgeMission.Core/Runtime/PipelineRunner.cs))
+`PipelineRunner.RunAsync` ([PipelineRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs))
 runs a mission start-to-finish today; there's no "pause mid-run, resume later" concept.
 Phase 42.3 hit an adjacent problem (tool-call continuations) and deliberately chose *not* to
 pause the process — see
@@ -78,7 +78,7 @@ orthogonal to the suspend/resume mechanism above — it's just an adapter layer 
 state" and "resume call."
 
 Proposed shape: a `channel:` field on the human step, resolved by a switch exactly like
-[`ProviderClientBuilder.BuildChatClient`](../../src/ForgeMission.Cli/ProviderClientBuilder.cs)
+[`ProviderClientBuilder.BuildChatClient`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/ProviderClientBuilder.cs)
 resolves `provider:` for LLM experts — one case per channel (`rooms`, `email`, `teams`, `slack`),
 each providing:
 1. **Notify** — render the pending question in that channel's native shape (Rooms chat message,
@@ -86,7 +86,7 @@ each providing:
 2. **Resume callback** — the channel's click/reply must call back into one universal resume
    webhook that exchanges a token for `{run_id, decision}`.
 
-Rooms ([`MemberKind.Human`](../../src/ForgeMission.Rooms/MemberKind.cs)) is the *easy* channel —
+Rooms ([`MemberKind.Human`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms/MemberKind.cs)) is the *easy* channel —
 it already tracks state server-side. Email/Teams/Slack don't hold conversation state between
 messages, so the token itself has to be self-describing (signed, embeds `run_id` and
 `step_index`) — the same trick calendar RSVP and PR-approval-by-email links use.

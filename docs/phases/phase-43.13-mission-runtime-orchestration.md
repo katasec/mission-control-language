@@ -17,7 +17,7 @@ this spoke is where the actual build gets task-broken-down once the design below
 
 ## The drift this corrects
 
-[`ForgeMission.ClientRuntime/Program.cs`](../../src/ForgeMission.ClientRuntime/Program.cs) defaults
+`ForgeMission.ClientRuntime/Program.cs` defaults
 `MissionRuntime:Mode` to `"docker"` and, unless overridden, starts a local Docker container itself
 via `LocalDockerMissionRuntimeLauncher`, falling back to a configured `MissionRuntime:BaseUrl` only
 if Docker mode is explicitly turned off. This contradicts the architecture's own stated principle

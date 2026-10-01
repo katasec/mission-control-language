@@ -73,11 +73,11 @@
 
 ## Context an implementer needs (verified against the code 2026-07-15)
 
-- **Redirect mechanism (proven):** [`ClaudeCodeTests.RunClaudeAsync`](../../src/ForgeMission.Tests/Integration/ClaudeCodeTests.cs)
+- **Redirect mechanism (proven):** [`ClaudeCodeTests.RunClaudeAsync`](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Integration/ClaudeCodeTests.cs)
   already launches `claude` with `psi.Environment["ANTHROPIC_BASE_URL"] = baseUrl` and
   `psi.Environment["ANTHROPIC_API_KEY"] = <anything>` (forge ignores the value). That is exactly the child-env
   wiring `forge claude` performs — the test is the reference implementation of the launch step.
-- **Container primitives (for `--container`):** [`Program.cs` `BuildAgentStartCommand`](../../src/ForgeMission.Cli/Program.cs)
+- **Container primitives (for `--container`):** [`Program.cs` `BuildAgentStartCommand`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs)
   already does the whole container dance — `DockerPrereqChecker`, pull `ghcr.io/katasec/forge:latest`,
   `DockerCli.EnsureNetworkAsync("forge-net")`, `DockerCli.RunContainerAsync(name, image, cmd:["serve", …],
   env, binds:[repo→/workspace], hostPort, containerPort)`, and `BuildAgentStopCommand` →
@@ -86,7 +86,7 @@
   For `forge claude` we need to start it **without blocking** (background `Task` / `app.StartAsync()`), grab
   the bound port, then launch `claude`. Note `AnthropicServer.Build` currently pins `urls` to
   `http://0.0.0.0:{port}`; for an ephemeral in-proc server prefer binding `127.0.0.1:{0}` and reading back
-  the assigned port (mirror [`AnthropicServerFixture.FindFreePort`](../../src/ForgeMission.Tests/Integration/AnthropicServerFixture.cs)).
+  the assigned port (mirror [`AnthropicServerFixture.FindFreePort`](https://github.com/katasec/forge-mcl/blob/main/tests/ForgeMission.Mcl.Tests/Integration/AnthropicServerFixture.cs)).
 - **Mission resolution:** `ResolveMission(...)` and the `@handle` → OCI catalog resolution (Phase 39.4) both
   exist; `forge claude @websearch` locally would pull the built-in mission by digest (same path the runner
   uses), `forge claude ./mission.mcl` uses the local file, `forge claude` with no arg uses `agent.yaml` or
