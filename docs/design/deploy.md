@@ -40,7 +40,7 @@ Container Apps environment (`cae-forge-dev`, layer 400), one registry
 | forge-runner (`ca-forge-runner-dev`): mission execution, provider keys | forge-runner | `forge-runner:0.19.0` | 500-app | 1–3 (always one, so the queue consumer runs) | Internal |
 | ForgeAPI: platform-key edge for `forge` CLI and Desktop | forge-platform `src/ForgeMission.Api` | `forge-api:0.7.0` | 550-api | 0–3 | Public, `api.forge.katasec.com` |
 | Billing service: keys, ledger, balances (`authbilling_db`) | forge-platform `src/ForgeMission.Billing.Service` | `forge-billing:0.1.2` | 540-billing | 1–2 | Internal |
-| Conversation Host: conversations (Orleans, Table/Blob) | forge-conversations `src/ForgeMission.ConversationHost` | `forge-conversation-host:0.8.0` | 525-conversation-app | 1 | Internal |
+| Conversation Host: conversations (Orleans, Table/Blob) | forge-conversations `src/ForgeMission.ConversationHost` | `forge-conversation-host:0.8.1` (Phase 57, 2026-10-02) | 525-conversation-app | 1 | Internal |
 
 | Data / transport layer | Holds |
 |---|---|

@@ -1,6 +1,6 @@
 # Phase 57 — `forge chat` live stream survives idle
 
-> **Status: design locked (2026-10-02); plans next.** Origin: found in [Phase 56](phase-56-tui-graphics.md)
+> **Status (2026-10-02): Tasks 1–2 done and deployed; Task 3 acceptance half done — 180 s idle PASS, 300 s idle FAIL (under investigation).** Origin: found in [Phase 56](phase-56-tui-graphics.md)
 > Task 2 acceptance. Pre-existing on forge-mcl `main` `cc998ac`.
 
 **Goal:** a `forge chat` window left idle for any length of time still shows new replies, with no
@@ -55,10 +55,10 @@ default endpoint.
 
 | Task | Repo | Done when |
 |---|---|---|
-| 1 — Host flushes headers (S1) | forge-conversations, then forge-infra | A loopback Kestrel test opens `events?after=<last>` on an idle conversation with `ResponseHeadersRead` and a 2 s client timeout and gets 200 (fails before the fix). Build 0 warnings, tests pass. New Host image deployed with `make 525-conversation-app-what-if` then `make 525-conversation-app` (operator approves the deploy). |
-| 2 — Client reconnects on a non-session cancellation (S2) | forge-mcl | Unit tests: a fake stream that throws `TaskCanceledException(new TimeoutException())` reconnects once and reports it; repeated timeouts each reconnect; a session cancel still ends quietly; without a reconnect handler (line mode) the failure reaches `RunAsync`, which prints the S2b message and returns 1. Build 0 warnings, tests pass, AOT 0 IL warnings. |
-| 3 — Acceptance | — | Default path, in Ghostty: idle 180 s, then send — the reply appears with no reconnect line. Idle 300 s, then send — at most one reconnect line, and the reply appears. ForgeAPI logs show no 499 at about 100 s. |
+| 1 — Host flushes headers (S1). **Done:** forge-conversations [#18](https://github.com/katasec/forge-conversations/pull/18) `918bcc2`; image `forge-conversation-host:0.8.1` (`sha256:c226e259…93fb`), revision `--0000013` Healthy, deployed 2026-10-01 20:51Z via `make 525-conversation-app`; forge-infra [#39](https://github.com/katasec/forge-infra/pull/39) open | forge-conversations, then forge-infra | A loopback Kestrel test opens `events?after=<last>` on an idle conversation with `ResponseHeadersRead` and a 2 s client timeout and gets 200 (fails before the fix). Build 0 warnings, tests pass. New Host image deployed with `make 525-conversation-app-what-if` then `make 525-conversation-app` (operator approves the deploy). |
+| 2 — Client reconnects on a non-session cancellation (S2, S2b). **Done:** forge-mcl [#34](https://github.com/katasec/forge-mcl/pull/34) `209682c`; 5 new tests red→green, suite 530 passed | forge-mcl | Unit tests: a fake stream that throws `TaskCanceledException(new TimeoutException())` reconnects once and reports it; repeated timeouts each reconnect; a session cancel still ends quietly; without a reconnect handler (line mode) the failure reaches `RunAsync`, which prints the S2b message and returns 1. Build 0 warnings, tests pass, AOT 0 IL warnings. |
+| 3 — Acceptance. **180 s: PASS** (installed `forge` from `209682c`, reply shown, no reconnect line). **300 s: FAIL** — the message was sent and the server answered (line-mode replay shows it), but the TUI showed two `connection lost` cycles and no reply within 42 s. Investigation running (timestamped client and server timeline); evidence in scratchpad `accept/ts-idle300`. | — | Default path, in Ghostty: idle 180 s, then send — the reply appears with no reconnect line. Idle 300 s, then send — at most one reconnect line, and the reply appears. ForgeAPI logs show no 499 at about 100 s. |
 
 ## Next
 
-Assign Tasks 1 and 2 (separate repos) to implementing subagents, plan only.
+Find why a reconnect after Azure's 240 s idle cut doesn't show the reply, fix it, then rerun both idle tests. Phase 57 is done only when 180 s and 300 s both pass.
