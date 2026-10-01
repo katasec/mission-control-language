@@ -32,7 +32,7 @@ events, and local-capability hand-offs. It has one canonical event sequence:
                 |
            forge-runner ── private-conversation-progress ──> ConversationGrain
 
-Desktop remains the holder of local authority. Only Client Runtime can authorize and execute file,
+The client (Desktop or `forge chat --hands`) holds local authority. Only Client Runtime can authorize and execute file,
 terminal, browser, Git, or Docker capabilities. A mission requests a capability; it never gets
 desktop access. Rooms renders the same durable events but does not gain those capabilities.
 
@@ -100,7 +100,9 @@ rejection, tool hand-off/result, error, and interrupted state remain individuall
 
 > **Superseded.** The sections below describe the 2026-08 design: `MissionRunGrain`, grain-storage
 > checkpoints, the `mission-command` / `conversation-progress` queues, a mission Worker, direct
-> `POST /conversations` routes, and a local Kind topology. None of these exist now. Current design:
+> `POST /conversations` routes, and a local Kind topology. None of these are used now; the old queues (`mission-command`, `conversation-progress`) and the
+> Worker identity await retirement (see [backlog](../backlog.md)), and forge-infra still carries the
+> Kind manifests. Current design:
 > [How conversations work](how-conversations-work.md).
 
 ### Original tiering notes (Worker era)
@@ -134,7 +136,7 @@ One conversation owns mutation order. Janus's Proposer, Approver, and Implemente
 participants in one run, not actor identities; per-expert grains would create chatty distributed
 calls without a useful ownership boundary.
 
-### Event contract
+#### Event contract
 
 The additive, versioned Forge contract is shared by Conversation API, Client Runtime, Desktop, and
 future Rooms. It is distinct from the compatibility-bound '/v1/*' endpoints.
@@ -151,7 +153,7 @@ best-effort live updates only, coalesced for the active participant message. Com
 durable 'participant_message' event, so a restart can lose only an unfinished visual draft, never
 a completed expert response or approval decision.
 
-### Storage and compaction
+#### Storage and compaction
 
 Named Azure Table grain state stores compact checkpoints only: IDs, last sequence, accepted command
 IDs, active run/step, expected tool request IDs, and terminal status. It is not a growing chat blob:
@@ -217,7 +219,7 @@ provider call is deferred rather than pretending duplicate calls cannot happen.
 
 ### Reconnect and projections
 
-### Transport-neutral conversation messages
+#### Transport-neutral conversation messages
 
 The Conversation API is a **message contract**, not an HTTP resource design. Named command and
 query messages (and the versioned `ConversationEvent` stream) are the stable contract shared by

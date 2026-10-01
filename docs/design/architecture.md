@@ -147,7 +147,7 @@ class PipelineRunner
 
     Task<MissionResult> RunAsync(Program ast, Dictionary<string, ExpertDefinition> experts,
                                  PipelineRunOptions options, CancellationToken ct = default);
-    // Resumes a root-scoped tool pause (durable hands, Core 0.1.3):
+    // Resumes a root-scoped tool pause (durable hands; used by runner 0.19.0):
     Task<MissionResult> ResumeAsync(Program ast, Dictionary<string, ExpertDefinition> experts,
                                     PipelineResumeRequest request, PipelineRunOptions observers,
                                     CancellationToken ct = default);

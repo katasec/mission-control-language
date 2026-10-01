@@ -45,7 +45,7 @@ Container Apps environment (`cae-forge-dev`, layer 400), one registry
 | Data / transport layer | Holds |
 |---|---|
 | 300-data | Postgres Flexible Server `psql-forge-dev` (`forge_rooms`, `authbilling_db`); connection strings in Key Vault |
-| 350-conversation-data | Conversation Storage account (Table `forgeconversationevents`, Blob `forgeconversationartifacts`), the internal Service Bus queues `private-mission-command` / `private-conversation-progress`, Host and runner identities |
+| 350-conversation-data | Conversation Storage account (Tables `forgeconversationevents` and `forgeconversationindex`, Blob `forgeconversationartifacts`), the internal Service Bus queues `private-mission-command` / `private-conversation-progress`, and the Host identity (the runner identity comes from 370) |
 | 370-billing-data | The financial Service Bus queue `private-run-settlement` (runner → Billing) and the Billing, runner and ForgeAPI identities |
 | 380-conversation-edge | The edge-facing Service Bus queues `conversation-ingress` / `conversation-reply` |
 | 450-migrate | Manual migration job definition (never run by an app deploy) |
@@ -70,7 +70,7 @@ the source of truth.
 | forge-conversations Conversation Host | No image CI: build locally (`--platform linux/amd64`) and push with crane ([gotcha 8](#gotchas)) | bump `hostImage` in `dev/525-conversation-app/main.bicepparam`, `make 525-conversation-app-what-if`, `make 525-conversation-app` |
 | Infra (new secret, env var, scaling, domain, a new DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
 | An EF migration needs to actually run | image already has `/app/migrate` baked in | `make 450-migrate` (updates the job definition only) then start the job — a separate, deliberate operator action |
-| The `forge` **CLI binary** (unrelated to hosting) | forge-mcl `make install` / its release workflow | n/a — not a container |
+| The `forge` **CLI binary** (unrelated to hosting) | forge-mcl `make install` | n/a — not a container |
 
 ## Verify live
 
@@ -150,7 +150,7 @@ default shell here). Not a forge bug — a native pwsh argument-passing quirk wi
 Verify locally against the browser preview tooling **before** cutting an image. Full loop + gotchas:
 [Phase 40 hub §6](../phases/phase-40-forge-ui-shell.md#6-building-running--verifying-locally) and
 [UI Design System §11](ui-design-system.md#11-running-it-locally-and-two-gotchas-that-will-bite-you). In
-short: `preview_start forge-ui` (config in [`.claude/launch.json`](../../.claude/launch.json), HTTP
+short: `preview_start forge-ui` (config in forge-rooms [`.claude/launch.json`](https://github.com/katasec/forge-rooms/blob/main/.claude/launch.json), HTTP
 `:5286`), dev sign-in `/auth/dev?user=alice`, verify at 375/768/1024 + dark. Real OIDC login needs
 HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login test.
 

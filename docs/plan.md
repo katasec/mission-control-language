@@ -14,12 +14,13 @@
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | 🔵 All spokes done; next step under selection. |
+| None — under selection. | | |
 
 ## Design docs
 
 | Doc | Description |
 |-----|-------------|
+| [How conversations work](design/how-conversations-work.md) | Current conversation design reference. |
 | [Backlog](backlog.md) | Deferred candidates, paused work, and external conditions. |
 | [Completed / Resolved Archive](plan_completed.md) | Verified completed work and superseded plans. |
 | [UI Design System](design/ui-design-system.md) | Forge UI tokens, themes, reusable primitives, and local-run gotchas. |

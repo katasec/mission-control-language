@@ -60,8 +60,8 @@ changed the design from the first pass:
   flat-root-list model scales past v1's needs rather than needing a redesign later.
 - **This repo's own precedent**: `forge claude --container` already bind-mounts the workspace root
   into a running container (`binds: [$"{workspaceRoot}:/workspace"]`,
-  [Program.cs:888](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs#L888) and
-  [:1378](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs#L1378)) — the exact shape a future container backend
+  [Program.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs) lines 888 and
+  1378 at the time) — the exact shape a future container backend
   should reuse rather than reinventing.
 
 ## Locked decisions
@@ -197,7 +197,7 @@ sandbox" toggle, or a hosted/multi-tenant Forge Desktop scenario):
    resolution was silently primary-root-only (structurally could never reach `Roots[1..N]`) — untested
    and undocumented as such. Fixed by making it an explicit, tested decision instead of an accidental
    one: a code comment directly above the join in
-   [`WorkspaceGuard.TryResolve`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/WorkspaceGuard.cs#L38-L40) states
+   [`WorkspaceGuard.TryResolve`](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Tools/WorkspaceGuard.cs) (lines 38-40 at the time) states
    relative paths always resolve against `Roots[0]` by design (matches Claude Agent SDK's primary
    directory + `additionalDirectories` asymmetry); `WorkspaceGuardTests.RelativePath_AlwaysResolvesAgainstFirstRoot`
    proves it doesn't silently resolve into a same-named file under a non-primary root.

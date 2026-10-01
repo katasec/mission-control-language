@@ -31,12 +31,12 @@ at once: one at the plan, one at the build. Picked 2026-08-09 over Daedalus/Anvi
 
 - **Two-mission composed design rejected** — `Negotiate(task: task) -> Implementer when(decision:
   "approved")` was the first design, but verified `PipelineRunner.ExecuteStepAsync`'s sub-mission
-  branch ([PipelineRunner.cs:230](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs#L230)) only
+  branch ([PipelineRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Runtime/PipelineRunner.cs) (line 230 at the time)) only
   passes the sub-mission's final `output` text back to the parent context — never arbitrary context
   keys. A `decision` value set inside `Negotiate` could never be read by an outer `when()`.
 - **Explicit `when(decision: "approved")` + `Blocked when(else)` gate rejected** — verified
   `role: judge`'s structured-output schema is closed to exactly `{text, status, reason}`
-  ([DirectExpertRunner.cs:15-26](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/DirectExpertRunner.cs#L15)),
+  ([DirectExpertRunner.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/Adapters/DirectExpertRunner.cs) (lines 15-26 at the time)),
   no room for a custom `decision` field without an actual engine change. Also verified a failing
   judge step breaks the whole attempt immediately, before later `when()`-gated steps in the same
   attempt are ever evaluated — so a `when(else)` branch positioned after a judge step is unreachable
@@ -315,7 +315,7 @@ change to `DirectExpertRunner`) — approved without revision.
   lexer token (`output(...)` top-level declaration) so bare `LOWER_ID` didn't match it.
 - Declared `mission Janus` first in `mission.mcl` (ahead of `Negotiate`/`Implement`) — `forge run`
   without an explicit `--mission` flag selects `ast.Declarations.OfType<MissionDeclaration>()
-  .FirstOrDefault()` ([Program.cs:196](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs#L196)), not the
+  .FirstOrDefault()` ([Program.cs](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Cli/Program.cs) (line 196 at the time)), not the
   `output(...)` declaration; Janus's own header comment relies on running without `--mission`, so
   it has to be declared first. (`sdlc-agent/mission.mcl` never hit this because its own header
   always specifies `--mission` explicitly.)

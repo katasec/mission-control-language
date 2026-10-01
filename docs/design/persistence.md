@@ -8,8 +8,11 @@
 
 **Every persisted aggregate is fronted by an `I*Store` interface; callers depend on the
 interface, never on `RoomsDbContext` or a provider type.** The current implementations are
-EF Core / Postgres (`LedgerStore`, `ReadStore`, `WriteStore`, and now `PlatformKeyStore`),
-registered in [`RoomsDataServiceCollectionExtensions`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms.Data/RoomsDataServiceCollectionExtensions.cs).
+EF Core / Postgres. forge-rooms registers `ReadStore` and `WriteStore` in
+[`RoomsDataServiceCollectionExtensions`](https://github.com/katasec/forge-rooms/blob/main/src/ForgeMission.Rooms.Data/RoomsDataServiceCollectionExtensions.cs)
+(lines 24-25 at the time of writing); the ledger and platform-key stores are `NpgsqlLedgerStore` and
+`NpgsqlPlatformKeyStore` in forge-platform
+[`src/ForgeMission.Billing`](https://github.com/katasec/forge-platform/tree/main/src/ForgeMission.Billing).
 Swapping a store's backend is a **one-line DI change**, not a caller change.
 
 **Azure Table Storage is deferred, not adopted for existing Rooms/Billing stores.** Ship

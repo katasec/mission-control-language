@@ -20,7 +20,6 @@ future work layers on its capabilities instead of working around them. Principle
 | 5 ✅ | Activation limited to local repair; explicit decision on the fail-closed corruption check | Predictable activation |
 | 6 ✅ | Before any second silo: SSE hosts subscribe as grain observers with resubscribe and log catch-up | Correct fan-out on multiple silos and during rollover |
 | 7 ✅ | `[ResponseTimeout]` on long methods | Explicit timeouts |
-
 | 8 ✅ | Large bodies via claim-check: body in Host-owned Blob, event carries a preview + reference | Removes the per-event ceiling (30 KiB today, 256 KB transport) up to a 4 MiB guardrail |
 
 Not changing: the Table event log itself, Service Bus ingress/progress, reminders, `command_id` dedupe.
