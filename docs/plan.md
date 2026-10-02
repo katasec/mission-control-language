@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 6 (forge's own Ghostty window). |
+| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Shapes, Inter text and motion done; window next |
+| None — under selection. | | |
 
 ## Design docs
 
