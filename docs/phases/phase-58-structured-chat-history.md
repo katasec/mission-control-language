@@ -39,6 +39,8 @@ paired by id. Reference practices: [model-request-payloads.md](../design/model-r
 | D5 | Existing stored conversations already contain invented turns. Leave them as they are (no legacy paths), or not? |
 | D6 | Evidence: how we capture the outgoing provider request JSON on the default path to prove one message per turn. |
 
+**Out of scope (Ameer, 2026-10-03):** timestamps are never sent to the model; message content stays exactly what the user and the experts wrote. Showing times in `forge chat` is a separate backlog item.
+
 Gates: [Security Architecture](../design/security-architecture.md),
 [Engineering Philosophy](../design/engineering-philosophy.md),
 [Default-Path Acceptance](../design/default-path-acceptance.md) (`forge chat` defaults).
