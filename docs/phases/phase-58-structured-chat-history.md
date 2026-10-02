@@ -1,6 +1,6 @@
 # Phase 58 — Structured chat history
 
-> **Status: selected 2026-10-03; design in progress (D1 decided).** Not build-ready: the open design questions
+> **Status: selected 2026-10-03; design in progress (D1, D2 decided).** Not build-ready: the open design questions
 > below must be closed first.
 
 ## Problem
@@ -33,7 +33,7 @@ paired by id. Reference practices: [model-request-payloads.md](../design/model-r
 | # | Question |
 |---|---|
 | D1 | ✅ **Decided 2026-10-03 (Ameer):** the Host stops flattening. The `MissionInput` body becomes a JSON message list (`role` + content per turn) in a format the Host owns; the runner reads it as messages. Host and runner ship together, with no dual format (no legacy paths). |
-| D2 | Where history becomes provider messages: the runner's pipeline input, the expert step, or the provider client? How does a mission's root input relate to history? |
+| D2 | ✅ **Decided 2026-10-03 (Ameer):** reuse the existing structured path. The runner turns the Host's message list into a `Conversation` in `context["conversation"]` (the 42.1 mechanism); the newest user message stays the mission's root input (as `MissionChatClient` does). forge-mcl `DirectExpertRunner` sends `system + conversation.Messages` for any step that has a conversation, not only tool steps (today plain chat falls through to `BuildMessages`: one user message). |
 | D3 | Do multi-expert missions (e.g. Janus `Proposer -> Reviewer`) get the history, and with what roles? |
 | D4 | Tool turns, failed/interrupted turns (today a text marker), and history trimming: what replaces each? |
 | D5 | Existing stored conversations already contain invented turns. Leave them as they are (no legacy paths), or not? |
