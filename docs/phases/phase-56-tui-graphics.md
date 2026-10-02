@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1–4 and 2b done (2026-10-02); Task 5 design locked, plan next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1–5 and 2b done (2026-10-02); Task 6 (window) next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -68,32 +68,10 @@ UI: the finish-line mockup is the binding reference by analogy with
 | 2b — **Default theme dark** (G10) | forge-mcl | **Done** ([#36](https://github.com/katasec/forge-mcl/pull/36)): the two default tests went red→green, suite 540 passed, AOT 0 IL; live, with no config `forge chat` opened dark (supervisor capture 2026-10-02). |
 | 3 — **Other shapes** | forge-mcl | **Done** ([#37](https://github.com/katasec/forge-mcl/pull/37)), see [completed](phase-56-tui-graphics_completed.md#task-3--other-shapes-done-2026-10-02). |
 | 4 — **Proportional text** | forge-mcl | **Done** ([#38](https://github.com/katasec/forge-mcl/pull/38)), see [completed](phase-56-tui-graphics_completed.md#task-4--proportional-text-done-2026-10-02). |
-| 5 — **Motion**: fade-in, spinner, streaming caret, card hover, link pointer | forge-mcl | See [Task 5](#task-5--motion). |
+| 5 — **Motion** | forge-mcl | **Done** ([#39](https://github.com/katasec/forge-mcl/pull/39)), see [completed](phase-56-tui-graphics_completed.md#task-5--motion-done-2026-10-02). The `XenoCells` Type-2 exception stands (scope, guard and removal condition in the completed record). |
 | 6 — Window: hidden title bar, padding, cell height, via forge's own Ghostty window (G11) | forge-mcl | Design locked after Task 5. |
 | 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, dark by default and light via config: supervisor captures match the mockup; Ameer accepts live. |
 
-### Task 5 — motion
-
-Facts (read-only investigation, 2026-10-02): XenoAtom ticks about every 15 ms while forge runs (the update callback), and visuals implementing `IAnimatedVisual` repaint on their own; mouse tracking is already on (motion mode) and XenoAtom does its own selection, with Shift-drag as Ghostty's native selection; the composer caret is Ghostty's cursor and already blinks; XenoAtom has no OSC 22 support; links are OSC 8.
-
-| Effect | Decision |
-|---|---|
-| Fade-in | The rows of a reply's body that changed in the last delta fade from `CardSurface` to their text colour over **220 ms** (the mockup's value), through an overlay visual drawn after the body that blends foreground colours (`OverlayCellStyle`). Rows holding image placeholders (headings, code-block edges) are skipped, using a layout hook from forge, so no image id is changed. |
-| Spinner | Image frames of a rotating arc (as the X-ray marks it), sent once at start-up with the tiles; an `IAnimatedVisual` cycles the placeholder id, about 12 frames per second. It runs only while a reply is in flight (`Transcript.Replying`), on the progress row and on a running tool chip. |
-| Streaming caret | The `▌` at the end of a streaming reply becomes an `Accent` block that blinks every 500 ms while the reply streams, then disappears. |
-| Card hover | The card's edge darkens on hover (`Border` instead of `CardBorder`): a second card tile set, swapped through `IsHovered`. |
-| Link pointer | While the pointer is over a link: a hand pointer (OSC 22 `pointer`) through `RawStdout`, reset when it leaves and on every exit path, like the caret colour. |
-| Not doing | A reduced-motion setting (no setting without a need); hover action chips (forge has no card actions). |
-| **Type-2 exception: `XenoCells`** (supervisor, 2026-10-02) | XenoAtom 3.10.0's public API can't read a rendered cell, find the link under the pointer, or restart an idle animation, and its translucent overlay discards the cell's text colour. **Scope:** one file, `Tui/XenoCells.cs`, uses `[UnsafeAccessor]` (AOT-safe) on six internal XenoAtom members: a cell read, the clip rectangle, `RequestAnimation`, and the link/placeholder facts of a cell. Nothing else may touch XenoAtom internals (enforced by a test). **Guard:** a contract test pinned to 3.10.0 fails the build if any accessor stops resolving or behaving. **Reversal path:** the public-only fallback (per-row fade skipping image rows; the hand pointer over a whole paragraph). **Removal condition:** XenoAtom exposes public cell reads and hit-testing; raise the request upstream. |
-| Plan rulings (supervisor, 2026-10-02) | Fade per changed cell (snapshot compare at each delta), from the cell's own background, mixed in sRGB. New `Transcript.Streaming` keeps the spinner and "X is replying …" until the reply ends (`Replying` stays for idle sleep). The streaming caret is an overlay `█` in `Accent`, blinking in the pending card and at the end of streamed text. A running tool chip's spinner replaces its trailing ` …` (TUI only). 10 spinner frames at 80 ms; start-up images 38 + 8 hover + 20 frames = 66, ids with bit 22 set. Accepted: card hover starts in the shadow ring; the pointer reset covers the same exits as the caret colour; hover is one event late after keyboard scrolling. |
-
-**Done when:**
-1. Live, Ghostty: a streamed reply fades in row by row with no flicker; headings and code blocks stay correct while it fades; the spinner turns while a reply runs and stops when it ends; the streaming caret blinks, then goes; hovering a card darkens its edge; hovering a link shows a hand, and the pointer is normal again after leaving and after exit; Cmd-click still opens a link.
-2. Images: tiles + spinner frames + hover tiles sent once at start-up; text images as in Task 4. No images sent per animation frame.
-3. CPU: an idle window uses no more CPU than before Task 5 (measured with `top` or `ps` over 30 s, before and after).
-4. Build 0 warnings, tests pass, AOT 0 IL warnings; every value in `ForgeTheme`.
-5. Default path: `make install` from merged `main`, dark default and light via config.
-
 ## Next
 
-Task 5: assign it to an implementer (plan only), then approve.
+Task 6: forge's own Ghostty window (G11).

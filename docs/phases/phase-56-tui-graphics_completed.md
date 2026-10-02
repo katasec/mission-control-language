@@ -154,3 +154,35 @@ Text drawn as kitty images in Inter, blended on the surface below it (naive sRGB
 | 3 | 55 transmits per session (38 tiles + distinct text images); each image is sent once, checked off screen as well. |
 | 4 | AOT 0 IL, and the `TrimmerSingleWarn=false` warning list is identical to `main` (28 entries); binary +265,456 B (subset fonts about 22.8 KB each); build 0 warnings; 628 passed. Code review PASS. |
 | 5 | `make install` from `f8c82c9`: dark with no config, light via config. |
+
+## Task 5 — motion (done 2026-10-02)
+
+Facts (read-only investigation, 2026-10-02): XenoAtom ticks about every 15 ms while forge runs (the update callback), and visuals implementing `IAnimatedVisual` repaint on their own; mouse tracking is already on (motion mode) and XenoAtom does its own selection, with Shift-drag as Ghostty's native selection; the composer caret is Ghostty's cursor and already blinks; XenoAtom has no OSC 22 support; links are OSC 8.
+
+| Effect | Decision |
+|---|---|
+| Fade-in | The rows of a reply's body that changed in the last delta fade from `CardSurface` to their text colour over **220 ms** (the mockup's value), through an overlay visual drawn after the body that blends foreground colours (`OverlayCellStyle`). Rows holding image placeholders (headings, code-block edges) are skipped, using a layout hook from forge, so no image id is changed. |
+| Spinner | Image frames of a rotating arc (as the X-ray marks it), sent once at start-up with the tiles; an `IAnimatedVisual` cycles the placeholder id, about 12 frames per second. It runs only while a reply is in flight (`Transcript.Replying`), on the progress row and on a running tool chip. |
+| Streaming caret | The `▌` at the end of a streaming reply becomes an `Accent` block that blinks every 500 ms while the reply streams, then disappears. |
+| Card hover | The card's edge darkens on hover (`Border` instead of `CardBorder`): a second card tile set, swapped through `IsHovered`. |
+| Link pointer | While the pointer is over a link: a hand pointer (OSC 22 `pointer`) through `RawStdout`, reset when it leaves and on every exit path, like the caret colour. |
+| Not doing | A reduced-motion setting (no setting without a need); hover action chips (forge has no card actions). |
+| **Type-2 exception: `XenoCells`** (supervisor, 2026-10-02) | XenoAtom 3.10.0's public API can't read a rendered cell, find the link under the pointer, or restart an idle animation, and its translucent overlay discards the cell's text colour. **Scope:** one file, `Tui/XenoCells.cs`, uses `[UnsafeAccessor]` (AOT-safe) on six internal XenoAtom members: a cell read, the clip rectangle, `RequestAnimation`, and the link/placeholder facts of a cell. Nothing else may touch XenoAtom internals (enforced by a test). **Guard:** a contract test pinned to 3.10.0 fails the build if any accessor stops resolving or behaving. **Reversal path:** the public-only fallback (per-row fade skipping image rows; the hand pointer over a whole paragraph). **Removal condition:** XenoAtom exposes public cell reads and hit-testing; raise the request upstream. |
+| Plan rulings (supervisor, 2026-10-02) | Fade per changed cell (snapshot compare at each delta), from the cell's own background, mixed in sRGB. New `Transcript.Streaming` keeps the spinner and "X is replying …" until the reply ends (`Replying` stays for idle sleep). The streaming caret is an overlay `█` in `Accent`, blinking in the pending card and at the end of streamed text. A running tool chip's spinner replaces its trailing ` …` (TUI only). 10 spinner frames at 80 ms; start-up images 38 + 8 hover + 20 frames = 66, ids with bit 22 set. Accepted: card hover starts in the shadow ring; the pointer reset covers the same exits as the caret colour; hover is one event late after keyboard scrolling. |
+
+**Done when:**
+1. Live, Ghostty: a streamed reply fades in row by row with no flicker; headings and code blocks stay correct while it fades; the spinner turns while a reply runs and stops when it ends; the streaming caret blinks, then goes; hovering a card darkens its edge; hovering a link shows a hand, and the pointer is normal again after leaving and after exit; Cmd-click still opens a link.
+2. Images: tiles + spinner frames + hover tiles sent once at start-up; text images as in Task 4. No images sent per animation frame.
+3. CPU: an idle window uses no more CPU than before Task 5 (measured with `top` or `ps` over 30 s, before and after).
+4. Build 0 warnings, tests pass, AOT 0 IL warnings; every value in `ForgeTheme`.
+5. Default path: `make install` from merged `main`, dark default and light via config.
+
+**Acceptance (2026-10-02, supervisor and Ameer):** forge-mcl [#39](https://github.com/katasec/forge-mcl/pull/39) merged at `4cae6e0`, installed.
+
+| Done when | Evidence |
+|---|---|
+| 1 | Ghostty capture: pending card with the blinking `Accent` caret, spinner and "replying …"; then the reply with its link underlined, spinner and caret gone. Ameer checked live: fade, spinner, card hover, link hand pointer. **Cmd-click does not open links**: mouse tracking (on since 53.x) sends clicks to forge, not Ghostty (backlog). A first "empty card" run was a frozen Ghostty window (screen locked or window covered); its typescript held the full reply. |
+| 2 | 66 start-up images (38 tiles + 8 hover + 20 spinner frames) plus text images; nothing re-sent per animation frame. |
+| 3 | Idle CPU in Ghostty, 30 s windows: Task 4 build 0 s / 0.90 s, Task 5 build 0.58 s / 0.61 s, within noise. |
+| 4 | Build 0 warnings; 670 passed; AOT 0 IL, warning list identical to `main`; binary +199,728 B. A real-loop test with the real clock guards the fade. |
+| 5 | `make install` from `4cae6e0`. |
