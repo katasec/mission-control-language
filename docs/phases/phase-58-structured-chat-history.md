@@ -1,7 +1,6 @@
 # Phase 58 — Structured chat history
 
-> **Status: design questions closed 2026-10-03 (D1–D6).** Next: the build plan (tasks per repo), then the
-> architecture-security and engineering-philosophy gate review before any code.
+> **Status: build plan drafted 2026-10-03; refinements R1–R4 await Ameer's approval.** No code until approved.
 
 ## Problem
 
@@ -44,6 +43,36 @@ paired by id. Reference practices: [model-request-payloads.md](../design/model-r
 Gates: [Security Architecture](../design/security-architecture.md),
 [Engineering Philosophy](../design/engineering-philosophy.md),
 [Default-Path Acceptance](../design/default-path-acceptance.md) (`forge chat` defaults).
+
+## Plan refinements (from the code, 2026-10-03) — awaiting approval
+
+| # | Finding | Refinement |
+|---|---|---|
+| R1 | Reusing `context["conversation"]` for every step would change `forge serve` / `forge claude`: its Anthropic door puts the full client transcript there (forge-mcl `MissionChatClient.cs:118,164-171`), and pre-agent steps would start receiving it, scaffolding included. | A **dedicated** typed context object for durable chat history: `ChatHistory` (earlier turns only) under its own key. `context["conversation"]` and `{{conversation}}` keep today's meaning. Refines D2. |
+| R2 | `--hands` runs take Core's root-scoped path, which seeds the context without `ContextObjects` (forge-mcl `PipelineRunner.cs:99-100, 980-983`); history placed there would never reach the model in `--hands` mode. | The root-scoped path carries `ChatHistory` too. Child missions still inherit nothing (unchanged). |
+| R3 | Today's body already ends with the new message (forge-conversations `ConversationGrain.cs:1207`), and the runner reads only one of `MissionInput` / `Goal` (forge-runner `MissionCommandProcessor.cs:88`). | The body holds **earlier turns only**. The runner reads `Goal` as the root input and, when present, `MissionInput` as history. The JSON type lives in **Conversations.Contracts** (forge-conversations' own package, so the Host owns the format; the runner already consumes it). |
+| R4 | No dual format, so old Host + new runner (or the reverse) can't both work. Precedent: Phase 53.3 deployed runner, then Host. | One release window in dev: deploy the runner, then the Host straight away, with no chat turns in between. A runner that receives the old flat text fails the turn with a clear error; nothing tries to parse both formats. |
+
+## Build plan (after R1–R4 are approved)
+
+Tasks run in this order; each is one subagent task under the [supervisor workflow](../design/supervisor-workflow.md), on an `adeen/` branch, one PR per repo.
+
+| Task | Repo | Work | Done when |
+|---|---|---|---|
+| T1 | forge-conversations | Contracts **0.8.0**: a `MissionHistory` body type (list of `{ role: user\|assistant, text }`) with source-generated JSON. Host: `ComposeMissionInputAsync` writes earlier turns only as that JSON (D1, R3); no-reply turns become user + placeholder assistant (D4); trimming measured on the JSON (D4); drop the `CoreConversation.ToString()` use (Core stays referenced for package admission). Update the tests that assert the flat format (`ConversationApiTests.cs:324-396`, `ConversationGrainOutboxTests.cs`, `ConversationContractsRoundTripTests.cs`). Publish Contracts 0.8.0 (tag `forge-conversations-v0.8.0`). | Tests pass; Contracts 0.8.0 on the feed. |
+| T2 | forge-mcl | Core **0.1.4**: `ChatHistory` context object (R1); `DirectExpertRunner` (`RunAsync` and `StreamAsync`) sends `system + history + user(context["output"])` for every step when it is present (D3); the root-scoped path carries it (R2). Tests: `DirectExpertRunnerTests`; request-body captures for Anthropic (existing `CaptureAnthropicRequestAsync` pattern, `ChatClientsTests.cs:120-183`) and a new OpenAI-style capture: system in its own field, alternating roles, no role-labelled transcript, placeholder replies (D6 layer 2). Publish Core 0.1.4 (tag `core-v0.1.4`). | Tests pass, 0 warnings; Core 0.1.4 on the feed. |
+| T3 | forge-runner | **0.20.0**: Core 0.1.4 + Contracts 0.8.0; `MissionCommandProcessor` reads `Goal` as root input and `MissionInput` (if any) as `MissionHistory` → `ChatHistory`; `GenericDurableMissionExecutor` passes it through. Shape log (D6 layer 1): a logging `DelegatingChatClient` in `RunnerExpertRunnerFactory.Build`, always on, roles and counts only, e.g. `model request: system + 7 messages [user, assistant, …, user]`. Tag `forge-runner-v0.20.0` (CI builds the image). | Tests pass; image `forge-runner:0.20.0` in ACR. |
+| T4 | forge-conversations | Host image **0.9.0** (local build, Dockerfile.conversationhost, as today). | Image in ACR. |
+| T5 | forge-infra | Release window (R4): `make 500-app-what-if` / `make 500-app` with runner 0.20.0, then `make 525-conversation-app-what-if` / `make 525-conversation-app` with Host 0.9.0. Then D6 layers 1 and 3 on the default `forge chat` path. | Shape log lines in `log-forge-dev` show one message per turn; Ameer's Go → C# → bash → nodejs repeat has no invented turns. |
+| T6 | Host storage | D5 one-off removal, only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
+
+## Gate review
+
+| Gate | Answer |
+|---|---|
+| [Security](../design/security-architecture.md) | No new entry point, datastore access or tier change. The one cross-context contract change (the `MissionInput` body format, Contracts 0.8.0) is a Type-1 decision, locked here. Shape logs carry roles and counts, never message text. |
+| [Engineering philosophy](../design/engineering-philosophy.md) | No new settings (the shape log is always on). No dual format or legacy path. A named owner per piece: the Host owns the history format, Core owns how a step builds its messages, the runner owns the log. "Done when" names the observation. |
+| [Default path](../design/default-path-acceptance.md) | `forge chat` from `make install` on forge-mcl `main` against ForgeAPI; the client itself is unchanged. Evidence: T5. |
 
 ## Done when
 
