@@ -104,6 +104,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Item | Resolution |
 |------|------------|
+| Code editor spike in the TUI | Done 2026-10-03: `/edit <path>` in `forge chat` ([katasec/forge-mcl#41](https://github.com/katasec/forge-mcl/pull/41), `12e8d41`). XenoAtom `CodeEditor` replaces the transcript; TextMate colours from the first paint; Ctrl+S saves; Esc closes, warning once on unsaved changes; a missing file opens as `· new` and the first save creates it; a missing folder fails the save; `/edit` with no path shows usage. Evidence: 702 tests pass, 0 build/AOT warnings, and supervisor live check in Ghostty (tools/tui-capture) of each behaviour on the installed binary. Gotcha: set `CodeEditor.TextDocument` before `SyntaxHighlighter`, or the first paint has no colours. Follow-ups in the [backlog](backlog.md). |
 | "How conversations work" design doc | Done 2026-10-01: [how-conversations-work.md](design/how-conversations-work.md) is the current conversation reference; it replaces the stale parts of [durable-conversations.md](design/durable-conversations.md). |
 | Cloud as the default local target (replacing Kind) | Done as [Phase 52.1](phases/phase-52.1-cloud-conversations.md). |
 | forge-runner image CI identity | Done 2026-10-01: forge-infra 150-ci federated credential `gh-runner-image` ([katasec/forge-infra#36](https://github.com/katasec/forge-infra/pull/36)), the five CI repo variables, and Write on `ghcr.io/katasec/forge-runner`; runner 0.19.0 was the first CI-built release. |
