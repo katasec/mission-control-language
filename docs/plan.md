@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-01)
+## Now (2026-10-03)
 
 | | |
 |---|---|
-| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
+| **NEXT STEP** | [Phase 58](phases/phase-58-structured-chat-history.md): close the open design questions. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| None — under selection. | | |
+| [Phase 58 — Structured chat history](phases/phase-58-structured-chat-history.md) | Send chat history to the model as separate role-tagged messages, as provider APIs document, instead of one flattened transcript. | Selected 2026-10-03; design not started. |
 
 ## Design docs
 
