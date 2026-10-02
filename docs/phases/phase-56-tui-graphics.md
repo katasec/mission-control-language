@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1, 2 and 2b done (2026-10-02); Task 3 design next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1, 2 and 2b done (2026-10-02); Task 3 design locked; plan next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -66,12 +66,42 @@ UI: the finish-line mockup is the binding reference by analogy with
 | 1 — **Spike** (supervisor scratchpad, not a repo) | — | **Done**, see [completed](phase-56-tui-graphics_completed.md#task-1--spike-done-2026-10-01). |
 | 2 — **Start-up check and card edges**: G8, `Tui/Graphics/`, participant cards framed by the fit ring | forge-mcl | **Done** (#33), see [completed](phase-56-tui-graphics_completed.md#task-2--start-up-check-and-card-edges-done-2026-10-02). |
 | 2b — **Default theme dark** (G10) | forge-mcl | **Done** ([#36](https://github.com/katasec/forge-mcl/pull/36)): the two default tests went red→green, suite 540 passed, AOT 0 IL; live, with no config `forge chat` opened dark (supervisor capture 2026-10-02). |
-| 3 — Other shapes: code blocks, user pill, APPROVED pill, tool lines, composer ring | forge-mcl | Design locked after Task 2. Inputs: one-row items need their own cap-tile design (the fit ring is 2 rows tall at top and bottom). The composer is cramped below: the key bar sits right under the input line while there is a blank row above it (Ameer, 2026-10-01). Match the mockup: equal space above and below the composer, and a gap before the key bar. |
+| 3 — **Other shapes**: code blocks, user pill and block, APPROVED pill, tool lines, composer, composer spacing | forge-mcl | See [Task 3](#task-3--other-shapes). |
 | 4 — Proportional text (StbTrueTypeSharp, Inter, G9 kerning): brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 3. Input: choose the blend per theme (naive sRGB on light, linear-light on dark). |
 | 5 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape | forge-mcl | Design locked after Task 4. |
 | 6 — Window: hidden title bar, padding, cell height, via forge's own Ghostty window (G11) | forge-mcl | Design locked after Task 5. |
 | 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, dark by default and light via config: supervisor captures match the mockup; Ameer accepts live. |
 
+### Task 3 — other shapes
+
+Every shape is a tile set: image tiles at the edges, plain text cells inside. Rules from Task 2 still hold (G6–G8, ids derived per set, transmit once on the first tick).
+
+| Element | Decision | Size (cells) |
+|---|---|---|
+| Code block | Ring: radius 10, hairline `CodeBlockBorder`, fill `CodeBlockFill`, no shadow, drawn on `CardSurface`. Rendered by `ForgeCodeBlockRenderer` returning a frame visual. | 2 cols each side, 1 row top and bottom (today's footprint) |
+| One-line user pill | Filled pill, `UserPillFill`; left and right **cap tiles** (half-round, full cell height) replace the Nerd Font caps. | text + 4 cols, 1 row |
+| Multi-line user message | Ring, radius 14, `UserPillFill`, no border, no shadow; stays right-aligned (the frame does not stretch). | 2 cols, 1 row top and bottom |
+| APPROVED pill | Cap pill on `SurfaceHeader`, `SuccessFill`; the green dot is drawn in the left cap. | 1 row |
+| Tool (hands) lines | **One-row chip** (Ameer): cap pill, fill a new `ToolFill` token, no outline (a hairline can't cross text cells). Stays between cards (placement inside cards is a separate later task). | 1 row |
+| Composer | Ring: radius 14, hairline `Accent`, a 4 mockup-px `Accent` glow at 14 %, **no shadow** (Ameer), fill `CardSurface`; wraps the `PromptEditor` (its background becomes `CardSurface`). | 2 cols, 1 row top and bottom; 3 rows for one line |
+| Spacing (Ameer's note) | Remove the `Rule` above the composer; key bar: one blank row above it, no `SurfaceAlt` fill. Result: progress row / composer ring / blank row / keys. | — |
+| Key-hint chips, send button | **Task 4** (they need image text). | — |
+
+| Area | Decision |
+|---|---|
+| Graphics layer | Shapes without shadows (`CardTiles` must not assume a shadow); a glow layer (hard spread, no blur); padding per tile set; a cap renderer (left/right cap, 1 row); a **tile-set registry** in `ChatScreen` (`UseCards` becomes per set). |
+| Image ids | Repack: theme 1 bit, cell width 7, cell height 8, set 3, slot 3 (22 of 24 bits). A test proves no two inputs share an id across all sets. |
+| Tokens | New: `ToolFill` (light `#eceff6`, dark `#1a2333`; supervisor's starting values, confirmed on the captures), radii per set, glow. Reconciled with the mockup: dark `CodeBlockFill` `#0f1622`, dark `SurfaceAlt` `#141d2b`, light `SurfaceAlt` `#f1f4fb`. All in `ForgeTheme`. |
+| Tests | Edge/seam/interior checks for every ring set over the Task 2 cell-size range; cap tiles: the cap joins its text cells with no step (edge level ≤ 1); id disjointness across sets; snapshot tests for a one-line pill, a tool chip and the composer frame. |
+
+**Done when:**
+1. Supervisor Ghostty captures, both themes, Retina and 1×: code block, one-line and multi-line user message, APPROVED pill, tool chip and composer match the decisions above and the mockup's shapes; spacing as specified.
+2. Images are sent once per session (count from a typescript), however much the transcript grows.
+3. The composer grows from 1 to 6 lines inside its ring; the caret and editing work as before.
+4. Every visual value lives in `ForgeTheme`; the colour scan passes.
+5. Build 0 warnings, tests pass, AOT 0 IL warnings.
+6. Default path: `make install` on merged `main`, Ghostty, a chat with a code block and a hands tool line (`forge chat --hands`), dark default and light via config.
+
 ## Next
 
-Design Task 3.
+Task 3: assign it to an implementer (plan only), then approve.
