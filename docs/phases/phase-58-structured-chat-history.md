@@ -1,6 +1,6 @@
 # Phase 58 — Structured chat history
 
-> **Status: build plan drafted 2026-10-03; refinements R1–R4 await Ameer's approval.** No code until approved.
+> **Status: build plan approved 2026-10-03 (R1–R4 approved by Ameer).** Next: T1 and T2 (independent).
 
 ## Problem
 
@@ -44,7 +44,7 @@ Gates: [Security Architecture](../design/security-architecture.md),
 [Engineering Philosophy](../design/engineering-philosophy.md),
 [Default-Path Acceptance](../design/default-path-acceptance.md) (`forge chat` defaults).
 
-## Plan refinements (from the code, 2026-10-03) — awaiting approval
+## Plan refinements (from the code, approved 2026-10-03)
 
 | # | Finding | Refinement |
 |---|---|---|
@@ -53,7 +53,7 @@ Gates: [Security Architecture](../design/security-architecture.md),
 | R3 | Today's body already ends with the new message (forge-conversations `ConversationGrain.cs:1207`), and the runner reads only one of `MissionInput` / `Goal` (forge-runner `MissionCommandProcessor.cs:88`). | The body holds **earlier turns only**. The runner reads `Goal` as the root input and, when present, `MissionInput` as history. The JSON type lives in **Conversations.Contracts** (forge-conversations' own package, so the Host owns the format; the runner already consumes it). |
 | R4 | No dual format, so old Host + new runner (or the reverse) can't both work. Precedent: Phase 53.3 deployed runner, then Host. | One release window in dev: deploy the runner, then the Host straight away, with no chat turns in between. A runner that receives the old flat text fails the turn with a clear error; nothing tries to parse both formats. |
 
-## Build plan (after R1–R4 are approved)
+## Build plan
 
 Tasks run in this order; each is one subagent task under the [supervisor workflow](../design/supervisor-workflow.md), on an `adeen/` branch, one PR per repo.
 
