@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1, 2 and 2b done (2026-10-02); Tasks 1–3 done (2026-10-02); Tasks 1–4 done (2026-10-02); Task 5 design locked, plan next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1–4 and 2b done (2026-10-02); Task 5 design locked, plan next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
