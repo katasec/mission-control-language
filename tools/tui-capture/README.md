@@ -25,6 +25,7 @@ LC_ALL=C grep -ao $'\x1b_Ga=T' ts | wc -l   # images sent; 8 per session since P
 
 | | |
 |---|---|
+| Absolute paths | Pass absolute paths for the typescript, the keys file and the binary. The Ghostty window starts in `$HOME`, so relative paths fail with `FileNotFoundError`. |
 | Keys file | Write it with a quoted heredoc. `echo` turns `\u0004` into a raw control byte and the JSON breaks. |
 | Cold start | The backend can take 10–20 s. Send the first message at 25 s or later, or it lands in the composer and merges with the next message. |
 | Window placement | Ghostty may ignore the position flags. Check the capture size against the window size: equal means 1×, double means Retina. |

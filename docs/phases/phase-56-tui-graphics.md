@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1–5 and 2b done (2026-10-02); Task 6 (window) next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1–5, 2b and 5b done (2026-10-02); Task 6 (window) next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -50,6 +50,7 @@ image id, so a card that grows while a reply streams sends no new image.
 | G9 | **Kerning: our own GPOS pair-kerning reader inside `GlyphText`** (PairPos formats 1 and 2, Extension lookups, Coverage and ClassDef tables), verified against HarfBuzz's output for Inter. **Image text is simple Latin only**: a heading or name with any other script is drawn as bold terminal text, which Ghostty shapes itself. (Ameer, 2026-10-01) | Every serious renderer uses HarfBuzz, but HarfBuzzSharp brings a native library per platform, and forking it means owning a C++ build per platform. SixLabors.Fonts needs a paid licence above $1M revenue; Typography.OpenFont is unmaintained. We need only pair kerning for one known font: about 200 testable lines and no dependency. Move to stock HarfBuzzSharp, unforked, only if image text must cover every script. |
 | G10 | **Default theme is dark**: a missing `~/.forge/config.json` or a missing `theme` key means **dark**. This supersedes the 53.6 default (light). `light` stays selectable, and an unknown name is still an error. (Ameer, 2026-10-01) | The market prefers dark; Ameer uses light via config. |
 | G11 | **The window look comes from forge launching its own Ghostty window**: a separate Ghostty instance started with per-instance settings (hidden title bar, padding, cell height). The user's Ghostty config and other windows are untouched. The exact command and settings are designed in Task 6. (Ameer, 2026-10-02) | Ghostty's title-bar and padding settings are app-wide; putting them in the user's config would change every Ghostty window. |
+| G12 | **Code blocks get syntax colours from `XenoAtom.Terminal.UI.Extensions.CodeEditor.TextMateSharp` 3.10.0** (Ameer, 2026-10-02): its `TextMateMarkdownCodeBlockRenderer` fills our rounded code-block frame; VS Code's Dark+/Light+ themes follow light and dark. | Evidence: an AOT probe published with 0 IL warnings and ran. Cost accepted: `libonigwrap.dylib` (531 KB) ships beside `forge`, so it is no longer a single file. Scope: chat code blocks only, no editor. |
 
 **Gates.** Security: N/A — local rendering only; no entry point, store, identity or secret.
 Engineering philosophy: named owners per box in the diagram, one adapter per external dependency
@@ -69,6 +70,7 @@ UI: the finish-line mockup is the binding reference by analogy with
 | 3 — **Other shapes** | forge-mcl | **Done** ([#37](https://github.com/katasec/forge-mcl/pull/37)), see [completed](phase-56-tui-graphics_completed.md#task-3--other-shapes-done-2026-10-02). |
 | 4 — **Proportional text** | forge-mcl | **Done** ([#38](https://github.com/katasec/forge-mcl/pull/38)), see [completed](phase-56-tui-graphics_completed.md#task-4--proportional-text-done-2026-10-02). |
 | 5 — **Motion** | forge-mcl | **Done** ([#39](https://github.com/katasec/forge-mcl/pull/39)), see [completed](phase-56-tui-graphics_completed.md#task-5--motion-done-2026-10-02). The `XenoCells` Type-2 exception stands (scope, guard and removal condition in the completed record). |
+| 5b — **Syntax colours in code blocks** (G12) | forge-mcl | **Done** ([#40](https://github.com/katasec/forge-mcl/pull/40), `7ffe600`, 2026-10-02): TextMateSharp's public API in one file (`CodeColours`) colours our existing paragraph inside the unchanged frame; unknown languages stay plain. Live: Go in colour from the installed build; tests cover light and dark. 674 passed, AOT 0 IL, binary +7.2 MB, `libonigwrap.dylib` (531 KB) installed beside `forge` by `make install`. |
 | 6 — Window: hidden title bar, padding, cell height, via forge's own Ghostty window (G11) | forge-mcl | Design locked after Task 5. |
 | 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, dark by default and light via config: supervisor captures match the mockup; Ameer accepts live. |
 
