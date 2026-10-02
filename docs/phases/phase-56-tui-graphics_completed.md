@@ -111,3 +111,46 @@ Every shape is a tile set: image tiles at the edges, plain text cells inside. Ru
 | 6 | `make install` from `8bc9597`: dark with no config (`--hands`, tool chip shown), light via config (code blocks). |
 
 Known gap: linux-x64 compiles with 0 IL warnings, but its native link can't run on a Mac, so the type-ahead flush's `libc` binding is unverified at runtime on Linux.
+
+## Task 4 — proportional text (done 2026-10-02)
+
+Text drawn as kitty images in Inter, blended on the surface below it (naive sRGB on light, linear-light on dark). Everything else stays terminal text.
+
+| Element | When known | Font, size (mockup px) | Cells |
+|---|---|---|---|
+| Brand: logo square + "forge" | Start-up | Bold 17 | 1 row |
+| Breadcrumb "project / **Chat**" | Start-up | SemiBold 14 (prefix in `TextMuted`) | 1 row |
+| Card name ("Answerer") | First time a participant appears | SemiBold 14.5 | 1 row |
+| Markdown heading (h1–h3) | When its line is complete | SemiBold 19 (h1 22, h3 16) | 2 rows per line, wrapped at words; one over-long word ends in `…` |
+| Avatar: circle + initials, before the card name and after "You" | Per participant / user | SemiBold 12, `Accent` fill (user: `TextMuted`) | 1 row (shrunk from the mockup's 1.3) |
+| Key-hint chips (`enter`, `⇧ enter`, `pgup/pgdn`, `ctrl c`, `ctrl d`) | Start-up | SemiBold 11 on a rounded `CardSurface` chip with a `Border` hairline | 1 row |
+| Send button `↵` in the composer | Start-up | Bold, `Accent` rounded square | 1 row |
+
+| Area | Decision |
+|---|---|
+| Glyphs | `GlyphText` (the only StbTrueTypeSharp reference, G2) plus our GPOS pair-kerning reader (G9: PairPos formats 1 and 2, Extension lookups, Coverage 1/2, ClassDef 1/2 — the subset writes ClassDef 1). Verified against a committed golden table of all pairs in the allowed set made once with `hb-shape --features=-calt` (HarfBuzz 12.1.0), so tests don't need HarfBuzz. |
+| Allowed text (G9) | Printable ASCII, Latin-1 letters, and `↵ ⇧ … · → – — ‘ ’ “ ”`. Anything else, or a heading containing inline code, emphasis or a link, stays bold terminal text. |
+| Fonts | Inter 4.1 SemiBold and Bold, **subset** with `hb-subset` to the allowed set, keeping only `kern`, no hinting, no GSUB (about 22 KB each instead of 420 KB). The subset TTFs and the OFL `LICENSE.txt` are committed to forge-mcl and embedded; the subset command is recorded in the README. No Medium weight: SemiBold stands in for the mockup's 500. |
+| Streaming headings | Until a newline follows the heading or the reply ends, it shows as bold terminal text on **2 rows** (the image's height), so nothing jumps when the image replaces it. Route: a Markdig pipeline step turns a qualifying heading into a `forge-heading:N` fenced block that `ForgeCodeBlockRenderer` draws (XenoAtom's Markdown package has no heading hook). |
+| Sending at runtime | Text images are made and sent when first needed, through `RawStdout` on the UI thread (XenoAtom runs UI-thread code strictly between frames, each frame being one synchronized write). `KittyImages.Transmit` asserts it is on the UI thread (`Dispatcher.VerifyAccess`). Start-up tiles are unchanged (38). |
+| Ids and cache | Text ids have bit 23 set (tile ids use 22 bits); 23 bits from a hash of (theme, cell size, style, text, width). A per-session cache maps that key to its id: each image is sent once, and a re-parse only redraws cells. On a hash clash with different content, probe the next id. No deletes within a session. |
+| Accepted | Copying a reply loses image headings. A window resize makes new images for wrapped headings. An image heading takes 2 rows plus XenoAtom's 1 blank row after it (the mockup shows none). |
+| Plan rulings (supervisor, 2026-10-02) | Image headings: h1–h3 at the top level only. User avatar initial: the first letter of the local account name (`Environment.UserName`), uppercased; an empty circle if it isn't allowed (no display name is stored, and `/me` would need a network call). Expert initial: the first letter of the expert name. Pending heading text sits on row 1 of its 2 rows. AOT evidence includes a `-p:TrimmerSingleWarn=false` warning diff against `main` (forge's NoWarn hides per-assembly warnings). The fallback card name is bold `TextStrong`. |
+| Tokens | Font sizes, the avatar fill, and the chip and send-button shapes in `ForgeTheme`; no literals elsewhere. |
+
+**Done when:**
+1. Supervisor Ghostty captures, both themes, at 1× (Retina at Task 7): brand, breadcrumb, card names with avatars, a streamed reply with an h2, key chips and the send button match the mockup. A heading in another script stays terminal text.
+2. The kerning reader matches the HarfBuzz golden table for every pair, for both weights.
+3. A streamed heading switches from text to image with no row jump. Each distinct image is sent once per session (typescript count = 38 + distinct text images).
+4. AOT 0 IL warnings; binary growth recorded (subset fonts); build 0 warnings; tests pass.
+5. Default path: `make install` from merged `main`, Ghostty, dark default and light via config.
+
+**Acceptance (2026-10-02, supervisor):** forge-mcl [#38](https://github.com/katasec/forge-mcl/pull/38) merged at `f8c82c9`.
+
+| Done when | Evidence |
+|---|---|
+| 1 | Ghostty: light on Retina, dark on 1×. Brand and logo, breadcrumb, avatars and names, a streamed h2 as an image, key chips and the send button match the mockup; "## Привет мир" stays terminal text. |
+| 2 | All 28,224 pairs of the 168-character allowed set match HarfBuzz 12.1.0 for both weights; the golden tables are tied to each font's SHA-256. |
+| 3 | 55 transmits per session (38 tiles + distinct text images); each image is sent once, checked off screen as well. |
+| 4 | AOT 0 IL, and the `TrimmerSingleWarn=false` warning list is identical to `main` (28 entries); binary +265,456 B (subset fonts about 22.8 KB each); build 0 warnings; 628 passed. Code review PASS. |
+| 5 | `make install` from `f8c82c9`: dark with no config, light via config. |
