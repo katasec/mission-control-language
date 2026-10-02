@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1, 2 and 2b done (2026-10-02); Tasks 1–3 done (2026-10-02); Task 4 design next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1, 2 and 2b done (2026-10-02); Tasks 1–3 done (2026-10-02); Task 4 design locked; plan next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -67,11 +67,43 @@ UI: the finish-line mockup is the binding reference by analogy with
 | 2 — **Start-up check and card edges**: G8, `Tui/Graphics/`, participant cards framed by the fit ring | forge-mcl | **Done** (#33), see [completed](phase-56-tui-graphics_completed.md#task-2--start-up-check-and-card-edges-done-2026-10-02). |
 | 2b — **Default theme dark** (G10) | forge-mcl | **Done** ([#36](https://github.com/katasec/forge-mcl/pull/36)): the two default tests went red→green, suite 540 passed, AOT 0 IL; live, with no config `forge chat` opened dark (supervisor capture 2026-10-02). |
 | 3 — **Other shapes** | forge-mcl | **Done** ([#37](https://github.com/katasec/forge-mcl/pull/37)), see [completed](phase-56-tui-graphics_completed.md#task-3--other-shapes-done-2026-10-02). |
-| 4 — Proportional text (StbTrueTypeSharp, Inter, G9 kerning): brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 3. Input: choose the blend per theme (naive sRGB on light, linear-light on dark). |
+| 4 — **Proportional text** (StbTrueTypeSharp, Inter, G9 kerning): brand, breadcrumb, card names, headings, avatars, key-hint chips, send button | forge-mcl | See [Task 4](#task-4--proportional-text). |
 | 5 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape | forge-mcl | Design locked after Task 4. |
 | 6 — Window: hidden title bar, padding, cell height, via forge's own Ghostty window (G11) | forge-mcl | Design locked after Task 5. |
 | 7 — Acceptance | — | `forge` from `make install` on merged `main`, in Ghostty, dark by default and light via config: supervisor captures match the mockup; Ameer accepts live. |
 
+### Task 4 — proportional text
+
+Text drawn as kitty images in Inter, blended on the surface below it (naive sRGB on light, linear-light on dark). Everything else stays terminal text.
+
+| Element | When known | Font, size (mockup px) | Cells |
+|---|---|---|---|
+| Brand: logo square + "forge" | Start-up | Bold 17 | 1 row |
+| Breadcrumb "project / **Chat**" | Start-up | SemiBold 14 (prefix in `TextMuted`) | 1 row |
+| Card name ("Answerer") | First time a participant appears | SemiBold 14.5 | 1 row |
+| Markdown heading (h1–h3) | When its line is complete | SemiBold 19 (h1 22, h3 16) | 2 rows per line, wrapped at words; one over-long word ends in `…` |
+| Avatar: circle + initials, before the card name and after "You" | Per participant / user | SemiBold 12, `Accent` fill (user: `TextMuted`) | 1 row (shrunk from the mockup's 1.3) |
+| Key-hint chips (`enter`, `⇧ enter`, `pgup/pgdn`, `ctrl c`, `ctrl d`) | Start-up | SemiBold 11 on a rounded `CardSurface` chip with a `Border` hairline | 1 row |
+| Send button `↵` in the composer | Start-up | Bold, `Accent` rounded square | 1 row |
+
+| Area | Decision |
+|---|---|
+| Glyphs | `GlyphText` (the only StbTrueTypeSharp reference, G2) plus our GPOS pair-kerning reader (G9: PairPos formats 1 and 2, Extension lookups, Coverage 1/2, ClassDef 2). Verified against a committed golden table of all printable-ASCII pairs made once with `hb-shape --features=-calt` (HarfBuzz 12.1.0), so tests don't need HarfBuzz. |
+| Allowed text (G9) | Printable ASCII, Latin-1 letters, and `↵ ⇧ … · →`. Anything else, or a heading containing inline code, emphasis or a link, stays bold terminal text. |
+| Fonts | Inter 4.1 SemiBold and Bold, **subset** with `hb-subset` to the allowed set, keeping `kern` (about 43 KB each instead of 420 KB). The subset TTFs and the OFL `LICENSE.txt` are committed to forge-mcl and embedded; the subset command is recorded in the README. No Medium weight: SemiBold stands in for the mockup's 500. |
+| Streaming headings | Until a newline follows the heading or the reply ends, it shows as bold terminal text on **2 rows** (the image's height), so nothing jumps when the image replaces it. Route: a Markdig pipeline step turns a qualifying heading into a `forge-heading:N` fenced block that `ForgeCodeBlockRenderer` draws (XenoAtom's Markdown package has no heading hook). |
+| Sending at runtime | Text images are made and sent when first needed, through `RawStdout` on the UI thread (XenoAtom runs UI-thread code strictly between frames, each frame being one synchronized write). `KittyImages.Transmit` asserts it is on the UI thread (`Dispatcher.VerifyAccess`). Start-up tiles are unchanged (38). |
+| Ids and cache | Text ids have bit 23 set (tile ids use 22 bits); 23 bits from a hash of (theme, cell size, style, text, width). A per-session cache maps that key to its id: each image is sent once, and a re-parse only redraws cells. On a hash clash with different content, probe the next id. No deletes within a session. |
+| Accepted | Copying a reply loses image headings. A window resize makes new images for wrapped headings. |
+| Tokens | Font sizes, the avatar fill, and the chip and send-button shapes in `ForgeTheme`; no literals elsewhere. |
+
+**Done when:**
+1. Supervisor Ghostty captures, both themes, at 1× (Retina at Task 7): brand, breadcrumb, card names with avatars, a streamed reply with an h2, key chips and the send button match the mockup. A heading in another script stays terminal text.
+2. The kerning reader matches the HarfBuzz golden table for every pair, for both weights.
+3. A streamed heading switches from text to image with no row jump. Each distinct image is sent once per session (typescript count = 38 + distinct text images).
+4. AOT 0 IL warnings; binary growth recorded (subset fonts); build 0 warnings; tests pass.
+5. Default path: `make install` from merged `main`, Ghostty, dark default and light via config.
+
 ## Next
 
-Design Task 4 (proportional text, Inter, G9 kerning; key-hint chips and send button moved here from Task 3).
+Task 4: assign it to an implementer (plan only), then approve.
