@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: Tasks 1, 2 and 2b done (2026-10-02); Task 3 design next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: Tasks 1, 2 and 2b done (2026-10-02); Tasks 1–3 done (2026-10-02); Task 4 design next.** Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -66,7 +66,7 @@ UI: the finish-line mockup is the binding reference by analogy with
 | 1 — **Spike** (supervisor scratchpad, not a repo) | — | **Done**, see [completed](phase-56-tui-graphics_completed.md#task-1--spike-done-2026-10-01). |
 | 2 — **Start-up check and card edges**: G8, `Tui/Graphics/`, participant cards framed by the fit ring | forge-mcl | **Done** (#33), see [completed](phase-56-tui-graphics_completed.md#task-2--start-up-check-and-card-edges-done-2026-10-02). |
 | 2b — **Default theme dark** (G10) | forge-mcl | **Done** ([#36](https://github.com/katasec/forge-mcl/pull/36)): the two default tests went red→green, suite 540 passed, AOT 0 IL; live, with no config `forge chat` opened dark (supervisor capture 2026-10-02). |
-| 3 — Other shapes: code blocks, user pill, APPROVED pill, tool lines, composer ring | forge-mcl | Design locked after Task 2. Inputs: one-row items need their own cap-tile design (the fit ring is 2 rows tall at top and bottom). The composer is cramped below: the key bar sits right under the input line while there is a blank row above it (Ameer, 2026-10-01). Match the mockup: equal space above and below the composer, and a gap before the key bar. |
+| 3 — **Other shapes** | forge-mcl | **Done** ([#37](https://github.com/katasec/forge-mcl/pull/37)), see [completed](phase-56-tui-graphics_completed.md#task-3--other-shapes-done-2026-10-02). |
 | 4 — Proportional text (StbTrueTypeSharp, Inter, G9 kerning): brand, breadcrumb, names, headings, avatars | forge-mcl | Design locked after Task 3. Input: choose the blend per theme (naive sRGB on light, linear-light on dark). |
 | 5 — Motion: fade-in of streamed text, spinner frames, hover and pointer shape | forge-mcl | Design locked after Task 4. |
 | 6 — Window: hidden title bar, padding, cell height, via forge's own Ghostty window (G11) | forge-mcl | Design locked after Task 5. |
@@ -74,4 +74,4 @@ UI: the finish-line mockup is the binding reference by analogy with
 
 ## Next
 
-Design Task 3.
+Design Task 4 (proportional text, Inter, G9 kerning; key-hint chips and send button moved here from Task 3).

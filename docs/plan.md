@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 3 design (code blocks, pills, tool lines, composer). |
+| **NEXT STEP** | [Phase 56](phases/phase-56-tui-graphics.md) Task 4 design (proportional text and kerning). |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges and dark default done; Task 3 next |
+| [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Cards, shapes and dark default done; Task 4 next |
 
 ## Design docs
 

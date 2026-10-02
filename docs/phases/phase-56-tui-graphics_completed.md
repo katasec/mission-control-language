@@ -67,3 +67,47 @@ flowchart LR
 | 7 | `make install` on merged `main`, Ghostty: two-turn chats, light on Retina and dark on 1×, every reply shown. |
 
 Found during acceptance, not caused by Task 2: the live stream dies after about 100 s idle, and also on `main` ([Phase 57](phase-57-chat-idle-stream.md)). Review fixes along the way: the probe moved to the first TUI tick (it had made the `--hands` prompt echo twice); a multiplexer check was added; ring checks became test-only; the narrow-card and padding mismatches were fixed; a test race on XenoAtom's shared dispatcher was isolated.
+
+## Task 3 — other shapes (done 2026-10-02)
+
+Every shape is a tile set: image tiles at the edges, plain text cells inside. Rules from Task 2 still hold (G6–G8, ids derived per set, transmit once on the first tick).
+
+| Element | Decision | Size (cells) |
+|---|---|---|
+| Code block | Ring: radius 10, hairline `CodeBlockBorder`, fill `CodeBlockFill`, no shadow, drawn on `CardSurface`. Rendered by `ForgeCodeBlockRenderer` returning a frame visual. | 2 cols each side, 1 row top and bottom (today's footprint) |
+| One-line user pill | Filled pill, `UserPillFill`; left and right **cap tiles** (half-round, full cell height) replace the Nerd Font caps. | text + 4 cols, 1 row |
+| Multi-line user message | Ring, radius 14, `UserPillFill`, no border, no shadow; stays right-aligned (the frame does not stretch). | 2 cols, 1 row top and bottom |
+| APPROVED pill | Cap pill on `SurfaceHeader`, `SuccessFill`; the green dot is drawn in the left cap. | 1 row |
+| Tool (hands) lines | **One-row chip** (Ameer): cap pill, fill a new `ToolFill` token, no outline (a hairline can't cross text cells). Stays between cards (placement inside cards is a separate later task). | 1 row |
+| Composer | Ring: radius 14, hairline `Accent`, a 4 mockup-px `Accent` glow at 14 %, **no shadow** (Ameer), fill `CardSurface`; wraps the `PromptEditor` (its background becomes `CardSurface`). | 2 cols, 1 row top and bottom; 3 rows for one line |
+| Spacing (Ameer's note) | Remove the `Rule` above the composer; key bar: one blank row above it, no `SurfaceAlt` fill. Result: progress row / composer ring / blank row / keys. | — |
+| Key-hint chips, send button | **Task 4** (they need image text). | — |
+
+| Area | Decision |
+|---|---|
+| Graphics layer | Shapes without shadows (`CardTiles` must not assume a shadow); a glow layer (hard spread, no blur); padding per tile set; a cap renderer (left/right cap, 1 row); a **tile-set registry** in `ChatScreen` (`UseCards` becomes per set). |
+| Image ids | Repack: theme 1 bit, cell width 7, cell height 8, set 3, slot 3 (22 of 24 bits). A test proves no two inputs share an id across all sets. |
+| Tokens | New: `ToolFill` (light `#eceff6`, dark `#1a2333`; supervisor's starting values, confirmed on the captures), radii per set, glow. Reconciled with the mockup: dark `CodeBlockFill` `#0f1622`, dark `SurfaceAlt` `#141d2b`, light `SurfaceAlt` `#f1f4fb`. All in `ForgeTheme`. |
+| Plan rulings (supervisor, 2026-10-02) | One `TileFrame` for all sets (a cap set is a ring with 0 top/bottom rows); rings stay solved, padding tops up to the sizes above. The mockup is binding: dark `CodeBlockText` → `#e8eef7` and dark `SurfaceHeader` → `#111a28`; tool chip text is `TextMuted`, not italic; the tool chip, progress row and key bar align to the 4-column gutter. 38 transmits per session (4 rings × 8 + 3 cap sets × 2). Review rounds (2026-10-02): the composer measures its height at the width it is drawn at (`ComposerEditor`; XenoAtom measures at ≤ 48 columns); wrapped user bubble ≤ 75 % wide, right-aligned, never left of the gutter; type-ahead before the TUI starts is discarded; caret colour from a `Caret` token (OSC 12, restored on exit; Ameer: light caret was invisible). Accepted (Ameer): Ghostty colour-manages cell backgrounds but not images, so a saturated fill such as the dark user bubble shows a faint band; no change. |
+| Tests | Edge/seam/interior checks for every ring set over the Task 2 cell-size range; cap tiles: the cap joins its text cells with no step (edge level ≤ 1); id disjointness across sets; snapshot tests for a one-line pill, a tool chip and the composer frame. |
+
+**Done when:**
+1. Supervisor Ghostty captures, both themes, Retina and 1×: code block, one-line and multi-line user message, APPROVED pill, tool chip and composer match the decisions above and the mockup's shapes; spacing as specified.
+2. Images are sent once per session (count from a typescript), however much the transcript grows.
+3. The composer grows from 1 to 6 lines inside its ring; the caret and editing work as before.
+4. Every visual value lives in `ForgeTheme`; the colour scan passes.
+5. Build 0 warnings, tests pass, AOT 0 IL warnings.
+6. Default path: `make install` on merged `main`, Ghostty, a chat with a code block and a hands tool line (`forge chat --hands`), dark default and light via config.
+
+**Acceptance (2026-10-02, supervisor):** forge-mcl [#37](https://github.com/katasec/forge-mcl/pull/37) merged at `8bc9597`.
+
+| Done when | Evidence |
+|---|---|
+| 1 | Ghostty captures, BenQ 1×, light and dark: code block, one-line pill, wrapped bubble (≤ 75 %, right-aligned), APPROVED with dot, tool chip, composer ring; spacing as specified. Retina is rechecked at Task 7 (Ghostty opens new windows on the BenQ; the Retina mechanism is proven in Task 2). |
+| 2 | 38 transmits in every run (typescripts), including streamed replies. |
+| 3 | The composer sizes to its wrapped text (3 rows for 3 lines) inside its ring; Ctrl-D at 15 s and 24 s exits 0; the caret is visible in both themes (Ameer). |
+| 4 | The colour scan passes; every visual value is in `ForgeTheme` (code review PASS). |
+| 5 | Supervisor build: 0 warnings; 567 then 566 passed; AOT 0 IL. |
+| 6 | `make install` from `8bc9597`: dark with no config (`--hands`, tool chip shown), light via config (code blocks). |
+
+Known gap: linux-x64 compiles with 0 IL warnings, but its native link can't run on a Mac, so the type-ahead flush's `libc` binding is unverified at runtime on Linux.
