@@ -1,6 +1,6 @@
 # Phase 58 — Structured chat history
 
-> **Status: build plan approved 2026-10-03 (R1–R4 approved by Ameer).** Next: T1 and T2 (independent).
+> **Status: building (2026-10-03).** T1, T2 and TB built and in review PRs; next: merge, publish packages, then T3.
 
 ## Problem
 
@@ -53,18 +53,28 @@ Gates: [Security Architecture](../design/security-architecture.md),
 | R3 | Today's body already ends with the new message (forge-conversations `ConversationGrain.cs:1207`), and the runner reads only one of `MissionInput` / `Goal` (forge-runner `MissionCommandProcessor.cs:88`). | The body holds **earlier turns only**. The runner reads `Goal` as the root input and, when present, `MissionInput` as history. The JSON type lives in **Conversations.Contracts** (forge-conversations' own package, so the Host owns the format; the runner already consumes it). |
 | R4 | No dual format, so old Host + new runner (or the reverse) can't both work. Precedent: Phase 53.3 deployed runner, then Host. | One release window in dev: deploy the runner, then the Host straight away, with no chat turns in between. A runner that receives the old flat text fails the turn with a clear error; nothing tries to parse both formats. |
 
+## Build findings (approved by Ameer, 2026-10-03)
+
+| # | Finding | Decision |
+|---|---|---|
+| F1 | On the default Chat mission the flattened history sat in the **system prompt** (starter Answerer prompt ends `{{message}}`, forge-client `ProjectService.cs:423`), and the only user message was Core's fixed "Begin.". | **A** (in T2): when a run has `ChatHistory`, step 1's user message is the root input (`message`), on both pipeline paths and on resume; runs without chat history are unchanged. **B** (new task TB): the starter Answerer/Assistant prompts become instructions only. |
+| F2 | Continuations sent `MissionInput = null`, so a resumed `--hands` run would lose history mid-turn. | In T1: continuations carry the start command's `MissionInput` reference (no new write). |
+| F3 | A resumed agent step lost its original input (`output` overwritten before the pause). | Fixed in T2. |
+| F4 | Ameer's Chat V1 / ChatHands V1 packages are frozen with the old prompts. | After the release: back up and remove `~/Forge/Projects/chat`; the next `forge chat` / `forge chat --hands` recreates the Project with the new starters and a fresh V1 approval. Part of T6. |
+
 ## Build plan
 
 Tasks run in this order; each is one subagent task under the [supervisor workflow](../design/supervisor-workflow.md), on an `adeen/` branch, one PR per repo.
 
 | Task | Repo | Work | Done when |
 |---|---|---|---|
-| T1 | forge-conversations | Contracts **0.8.0**: a `MissionHistory` body type (list of `{ role: user\|assistant, text }`) with source-generated JSON. Host: `ComposeMissionInputAsync` writes earlier turns only as that JSON (D1, R3); no-reply turns become user + placeholder assistant (D4); trimming measured on the JSON (D4); drop the `CoreConversation.ToString()` use (Core stays referenced for package admission). Update the tests that assert the flat format (`ConversationApiTests.cs:324-396`, `ConversationGrainOutboxTests.cs`, `ConversationContractsRoundTripTests.cs`). Publish Contracts 0.8.0 (tag `forge-conversations-v0.8.0`). | Tests pass; Contracts 0.8.0 on the feed. |
-| T2 | forge-mcl | Core **0.1.4**: `ChatHistory` context object (R1); `DirectExpertRunner` (`RunAsync` and `StreamAsync`) sends `system + history + user(context["output"])` for every step when it is present (D3); the root-scoped path carries it (R2). Tests: `DirectExpertRunnerTests`; request-body captures for Anthropic (existing `CaptureAnthropicRequestAsync` pattern, `ChatClientsTests.cs:120-183`) and a new OpenAI-style capture: system in its own field, alternating roles, no role-labelled transcript, placeholder replies (D6 layer 2). Publish Core 0.1.4 (tag `core-v0.1.4`). | Tests pass, 0 warnings; Core 0.1.4 on the feed. |
+| T1 | forge-conversations | Built: `09d306d`, 264/264 tests, [katasec/forge-conversations#19](https://github.com/katasec/forge-conversations/pull/19). Contracts **0.8.0**: a `MissionHistory` body type (list of `{ role: user\|assistant, text }`) with source-generated JSON. Host: `ComposeMissionInputAsync` writes earlier turns only as that JSON (D1, R3); no-reply turns become user + placeholder assistant (D4); trimming measured on the JSON (D4); drop the `CoreConversation.ToString()` use (Core stays referenced for package admission). Update the tests that assert the flat format (`ConversationApiTests.cs:324-396`, `ConversationGrainOutboxTests.cs`, `ConversationContractsRoundTripTests.cs`). Publish Contracts 0.8.0 (tag `forge-conversations-v0.8.0`). | Tests pass; Contracts 0.8.0 on the feed. |
+| T2 | forge-mcl | Built: `7970ca4`, 721 tests, [katasec/forge-mcl#42](https://github.com/katasec/forge-mcl/pull/42); includes F1 A and F3. Core **0.1.4**: `ChatHistory` context object (R1); `DirectExpertRunner` (`RunAsync` and `StreamAsync`) sends `system + history + user(context["output"])` for every step when it is present (D3); the root-scoped path carries it (R2). Tests: `DirectExpertRunnerTests`; request-body captures for Anthropic (existing `CaptureAnthropicRequestAsync` pattern, `ChatClientsTests.cs:120-183`) and a new OpenAI-style capture: system in its own field, alternating roles, no role-labelled transcript, placeholder replies (D6 layer 2). Publish Core 0.1.4 (tag `core-v0.1.4`). | Tests pass, 0 warnings; Core 0.1.4 on the feed. |
+| TB | forge-client | Client **0.7.0**: starter Answerer/Assistant prompts instructions-only (F1 B); forge-mcl CLI then bumps `Katasec.Forge.Client` 0.6.0 → 0.7.0. Built: `e3f4925`, 174/174 tests, [katasec/forge-client#8](https://github.com/katasec/forge-client/pull/8). | Client 0.7.0 on the feed; forge-mcl uses it. |
 | T3 | forge-runner | **0.20.0**: Core 0.1.4 + Contracts 0.8.0; `MissionCommandProcessor` reads `Goal` as root input and `MissionInput` (if any) as `MissionHistory` → `ChatHistory`; `GenericDurableMissionExecutor` passes it through. Shape log (D6 layer 1): a logging `DelegatingChatClient` in `RunnerExpertRunnerFactory.Build`, always on, roles and counts only, e.g. `model request: system + 7 messages [user, assistant, …, user]`. Tag `forge-runner-v0.20.0` (CI builds the image). | Tests pass; image `forge-runner:0.20.0` in ACR. |
 | T4 | forge-conversations | Host image **0.9.0** (local build, Dockerfile.conversationhost, as today). | Image in ACR. |
 | T5 | forge-infra | Release window (R4): `make 500-app-what-if` / `make 500-app` with runner 0.20.0, then `make 525-conversation-app-what-if` / `make 525-conversation-app` with Host 0.9.0. Then D6 layers 1 and 3 on the default `forge chat` path. | Shape log lines in `log-forge-dev` show one message per turn; Ameer's Go → C# → bash → nodejs repeat has no invented turns. |
-| T6 | Host storage | D5 one-off removal, only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
+| T6 | Host storage + Ameer's machine | F4 Project reset (back up, remove `~/Forge/Projects/chat`, recreate via `forge chat`), and the D5 one-off removal, only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
 
 ## Gate review
 
