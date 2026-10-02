@@ -1,6 +1,6 @@
 # Phase 56 — `forge chat` TUI graphics (finish line)
 
-> **Status: ✅ complete 2026-10-02 (Ameer).** Tasks 1–5, 2b and 5b done and live; Tasks 6 (forge's own Ghostty window, G11) and 7 (final acceptance) parked in the [backlog](../backlog.md). Origin: Ameer, 2026-10-01 — "so beautiful people can't
+> **Status: ✅ complete 2026-10-02 (Ameer).** Tasks 1–5, 2b and 5b done and live; Task 7 accepted by Ameer; Task 6 (forge's own Ghostty window, G11) parked in the [backlog](../backlog.md). Origin: Ameer, 2026-10-01 — "so beautiful people can't
 > tell if it's a GUI or a TUI." Builds on [Phase 53](phase-53-forge-client.md)'s TUI (53.5–53.9) and
 > [TUI graphics](../design/tui-graphics.md) (kitty placeholders, verified 2026-09-30).
 
@@ -72,8 +72,8 @@ UI: the finish-line mockup is the binding reference by analogy with
 | 5 — **Motion** | forge-mcl | **Done** ([#39](https://github.com/katasec/forge-mcl/pull/39)), see [completed](phase-56-tui-graphics_completed.md#task-5--motion-done-2026-10-02). The `XenoCells` Type-2 exception stands (scope, guard and removal condition in the completed record). |
 | 5b — **Syntax colours in code blocks** (G12) | forge-mcl | **Done** ([#40](https://github.com/katasec/forge-mcl/pull/40), `7ffe600`, 2026-10-02): TextMateSharp's public API in one file (`CodeColours`) colours our existing paragraph inside the unchanged frame; unknown languages stay plain. Live: Go in colour from the installed build; tests cover light and dark. 674 passed, AOT 0 IL, binary +7.2 MB, `libonigwrap.dylib` (531 KB) installed beside `forge` by `make install`. |
 | 6 — Window: hidden title bar, padding, cell height, via forge's own Ghostty window (G11) | — | **Parked** in the [backlog](../backlog.md) at phase close (Ameer, 2026-10-02). |
-| 7 — Acceptance | — | **Parked** in the [backlog](../backlog.md) at phase close (Ameer, 2026-10-02). |
+| 7 — Acceptance | — | **Done**: Ameer accepted the finish-line look live (2026-10-02). |
 
 ## Next
 
-None: phase complete. Tasks 6–7 are in the backlog.
+None: phase complete. Task 6 is in the backlog.
