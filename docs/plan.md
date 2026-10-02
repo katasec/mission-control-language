@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 58](phases/phase-58-structured-chat-history.md): close the open design questions. |
+| **NEXT STEP** | [Phase 58](phases/phase-58-structured-chat-history.md): write the build plan and pass the design gates. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 58 — Structured chat history](phases/phase-58-structured-chat-history.md) | Send chat history to the model as separate role-tagged messages, as provider APIs document, instead of one flattened transcript. | Selected 2026-10-03; design not started. |
+| [Phase 58 — Structured chat history](phases/phase-58-structured-chat-history.md) | Send chat history to the model as separate role-tagged messages, as provider APIs document, instead of one flattened transcript. | Design decisions closed 2026-10-03; build plan next. |
 
 ## Design docs
 
