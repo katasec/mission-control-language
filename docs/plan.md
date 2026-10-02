@@ -15,6 +15,7 @@
 | Phase | Description | Status |
 |-------|-------------|--------|
 | [56](phases/phase-56-tui-graphics.md) | `forge chat` TUI graphics: the finish-line look in Ghostty | Card edges and dark default done; Task 3 next |
+| [58](phases/phase-58-tui-mission-runs.md) | Mission runs in the `forge chat` TUI: parent chat launches runs; inspect and steer their traces | UI direction agreed; implementation plan next |
 
 ## Design docs
 
