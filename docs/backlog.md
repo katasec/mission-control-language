@@ -7,6 +7,7 @@
 
 | Item | Status / pointer |
 |------|------------------|
+| Piped hands idle-shutdown warning | Existing cleanup race, reproduced 2026-10-04: immediate EOF can mistake a pending status query for a file operation and print a false cancellation error. Owner: forge-mcl `ChatHandsAttachment`; [evidence](phases/phase-63-project-declaration_completed.md#default-path-acceptance). |
 | [Phase 45.5 — Live existing-mission chat](phases/phase-45.5-live-existing-mission-chat.md) | Deferred by operator direction on 2026-09-25. The repository extraction closed 2026-09-26 ([Phase 50](phases/phase-50-repository-extraction.md)); if reselected, resume in `forge-desktop`, not here. |
 | Explorer OCI dependency/portable-lock migration | Separate from the current [Phase 43.23 ownership end state](phases/phase-43.23-domain-ownership_completed.md#task-4--ownership-acceptance-and-documentation-2026-09-06). The linked [43.22 reconstruction](phases/phase-43.22-project-mission-reconstruction.md) is historical reference only; its earlier Core/CLI/lock candidate is not an implicit prerequisite of the mission picker or run history. |
 | Forge Desktop client upgrade (0.1.0 → Katasec.Forge.Client 0.6.0 / Conversations.Contracts 0.7.0) | Deferred by Ameer 2026-09-30 ([Phase 54 Task 8](phases/phase-54-orleans-alignment_completed.md#task-8--every-body-in-blob-via-claim-check-done-2026-10-01)). Desktop hands broken since Host 0.7/0.8: the hands claim reply is status-only (B13) and Desktop still reads the work item from it. Not a version bump: takes client 0.2–0.6 API changes. |

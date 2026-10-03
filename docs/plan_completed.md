@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 63 — Small project declaration](phases/phase-63-project-declaration.md) | Mission/version and folder references; durable local state outside the public file. | Complete 2026-10-04; Client 0.8.0, CLI `c94a1ae`; 950 tests and installed chat/hands acceptance passed. |
 | [Phase 62 — One MCL interpreter: pause by replay](phases/phase-62-single-interpreter-replay.md) | Deletes the root-scoped interpreter; the full interpreter pauses and resumes by replaying a step log. | ✅ Complete 2026-10-03; Core 0.1.7, `forge-runner:0.20.4` live. |
 | [Phase 61 — Hands: one tool call per assistant turn](phases/phase-61-hands-one-tool-call.md) | Fixes `MultipleOutstandingTools` in `forge chat --hands`. | ✅ Complete 2026-10-03; `forge-runner:0.20.2` live. |
 | [Phase 60 — Start page in `forge chat`](phases/phase-60-tui-start-page.md) | A start page like the Desktop's; Chat with a mission opens today's chat. | ✅ Complete 2026-10-03; forge-mcl `b242b1c`. |

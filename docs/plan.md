@@ -8,13 +8,11 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Finish installed interactive hands acceptance for the [small project declaration](phases/phase-63-project-declaration.md) after the Mac is unlocked. |
+| **NEXT STEP** | No active implementation phase. Select the next work from [backlog.md](backlog.md); the small project declaration is complete. |
 
 ## Active phases
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| [63](phases/phase-63-project-declaration.md) | Small project declaration; separate durable local state. | Merged/installed; final acceptance waits for Mac unlock. |
+None.
 
 ## Design docs
 
