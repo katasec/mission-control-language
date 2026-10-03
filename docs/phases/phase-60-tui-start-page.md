@@ -1,6 +1,7 @@
 # Phase 60 — Start page in `forge chat`
 
-> **Status: selected 2026-10-03; building.**
+> **Status: ✅ complete 2026-10-03.** forge-mcl [katasec/forge-mcl#46](https://github.com/katasec/forge-mcl/pull/46) (`b242b1c`); live Ghostty check on the
+> installed build: page with Chat selected, Enter opens the chat. Theme: `FocusBorder = Accent` (one line).
 
 ## Requirement (Ameer, 2026-10-03)
 

@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 60 — Start page in `forge chat`](phases/phase-60-tui-start-page.md) | A start page like the Desktop's; Chat with a mission opens today's chat. | ✅ Complete 2026-10-03; forge-mcl `b242b1c`. |
 | [Phase 59 — Message timestamps in `forge chat`](phases/phase-59-chat-message-timestamps.md) | Every message shows the time it was sent, like a WhatsApp chat. | ✅ Complete 2026-10-03; forge-mcl `3e08b77`; live TUI and line-mode check. |
 | [Phase 58 — Structured chat history](phases/phase-58-structured-chat-history.md) | Chat history reaches the model as separate role-tagged messages, as provider APIs document; starter prompts are instructions only; the user's message is the real last user message. | ✅ Complete 2026-10-03: runner 0.20.1, Host 0.9.0, Core 0.1.4, Contracts 0.8.0, Client 0.7.0; evidence in the phase's release record. |
 | [Phase 53 — forge-client and the `forge` CLI](phases/phase-53-forge-client.md) | Extract the Desktop's client core and Bob into a shared `forge-client` repo; then the `forge chat` TUI for cloud conversations in the terminal. | ✅ All spokes done 2026-10-01; records in the [phase hub](phases/phase-53-forge-client.md). |
