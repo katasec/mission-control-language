@@ -1,6 +1,7 @@
 # Phase 62 — One MCL interpreter: pause by replay
 
-> **Status: design, not started (2026-10-03).** Sized read-only; no code yet.
+> **Status: ✅ complete 2026-10-03.** Core 0.1.7, `forge-runner:0.20.4` live. Release record and
+> evidence: [phase-62-single-interpreter-replay_completed.md](phase-62-single-interpreter-replay_completed.md).
 
 ## Problem
 
@@ -66,17 +67,10 @@ Names alone collide (`Child -> Child`, a loop retry).
 | R7 | Binding (env) values are re-derived on replay, never stored | Today's rule (`AgentToolPipelineTests` env test) |
 | R8 | With root tools, the agent step sends `AllowMultipleToolCalls = false`. Errors keep A's one behaviour (throw); the runner already turns exceptions into `Fail` (`MissionCommandProcessor`) | Phase 61; one error path |
 
-## Tasks (in order)
+## Tasks
 
-| # | Task | Files (forge-mcl) |
-|---|---|---|
-| 1 | Thread the step key through A (`foreach` → indexed loop at the sequence and parallel sites; key carried into child runs) in a private run-state record inside `PipelineRunner`; `PipelineRunOptions` does not change | `PipelineRunner.cs` |
-| 2 | Log and replay at the two invoke points (`InvokeExpertAsync` `:417`, parallel `runner.RunAsync` `:572`): look up → replay writes; else invoke → diff context → record. R4, R5 | `PipelineRunner.cs` |
-| 3 | Pause propagation through child and parallel sites; agent-reaching `parallel` runs in order. R2, R3, R8 | `PipelineRunner.cs` |
-| 4 | Checkpoint v2 (Log, PausedKey, TurnMessages) and `ResumeAsync` on A with the R6 divergence check; keep the fingerprint/ordinal checks | `PipelineToolPause.cs`, `PipelineRunner.cs` |
-| 5 | Delete B: `RootScopedExecution` (`:748`–end), frame records, the dispatch at `:100`, the duplicate fingerprint | `PipelineRunner.cs`, `PipelineToolPause.cs` |
-| 6 | Tests: re-run the ~16 root-scoped tests unchanged; add one each for child called twice, pause in a loop retry, pause in a child inside `parallel`, double value replay, divergence → `InvalidContinuation`, no duplicate trace on replay, logged steps (an `exec`) not re-run across two pauses | `tests/.../Runtime/AgentToolPipelineTests.cs` |
-| 7 | Ship: Core version (csproj, publish workflow, `eng/verify-core-package.sh`); forge-runner package bump + its tests; runner image; forge-infra `runnerImage`, `make 500-app-what-if`, `make 500-app` | forge-mcl, forge-runner, forge-infra |
+All 7 done, see [_completed](phase-62-single-interpreter-replay_completed.md#tasks). Decisions made
+during the build are recorded there under [Build decisions](phase-62-single-interpreter-replay_completed.md#build-decisions).
 
 ## Gates
 
