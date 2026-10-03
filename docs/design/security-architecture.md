@@ -109,6 +109,12 @@ An exception is permitted only when all of the following are recorded in the act
 No exception may be described as the target architecture. “Demo cut” or “temporary” alone is not
 an exception record.
 
+### Accepted exceptions
+
+| Exception | Record |
+|---|---|
+| **Operator data access to the dev conversation store** (accepted by Ameer, 2026-10-03) | **1. Relaxed:** no human identity holds data-plane access to a context's store; reads go through the owning service. Ameer needs to inspect real conversation data to check product direction while we build, and to run one-off operator fixes (Phase 58 D5). **2. Scope:** dev only. Identity: Ameer's user principal `236cf5d9-c1f0-4418-9023-6cb9a6011b20`. Roles: Storage Table Data Contributor (assignment `94317531-dfc3-443b-8469-f4fecf60624d`) and Storage Blob Data Contributor (`5cca1bda-e667-4762-8dbe-3b18b3d7a69e`), on storage account `stforgeconvdev` only (rg-forge-dev). Granted by Ameer with `az role assignment create`, not IaC. Services are unchanged. **3. Type 2:** two role assignments; removal is `az role assignment delete --ids …` for each, with no code or data change. **4. Removed when:** no time limit in dev, by Ameer's choice. It must not carry over to any non-dev environment, and is removed before dev holds anyone else's real data. **5. Verification:** `az role assignment list --assignee 236cf5d9-c1f0-4418-9023-6cb9a6011b20 --all -o table` shows exactly these two data roles on `stforgeconvdev`, and no data roles elsewhere. |
+
 ## Current conversation application implication
 
 The durable conversation store is a distinct Tier-3 bounded context. Its state-owning Conversation

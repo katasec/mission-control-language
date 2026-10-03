@@ -1,6 +1,7 @@
 # Phase 58 — Structured chat history
 
-> **Status: building (2026-10-03).** T1, T2 and TB built and in review PRs; next: merge, publish packages, then T3.
+> **Status: ✅ complete 2026-10-03.** Released and verified on the default path; T6 cleanup done. Not yet
+> exercised live: `forge chat --hands` on the new ChatHands V1.
 
 ## Problem
 
@@ -60,6 +61,7 @@ Gates: [Security Architecture](../design/security-architecture.md),
 | F1 | On the default Chat mission the flattened history sat in the **system prompt** (starter Answerer prompt ends `{{message}}`, forge-client `ProjectService.cs:423`), and the only user message was Core's fixed "Begin.". | **A** (in T2): when a run has `ChatHistory`, step 1's user message is the root input (`message`), on both pipeline paths and on resume; runs without chat history are unchanged. **B** (new task TB): the starter Answerer/Assistant prompts become instructions only. |
 | F2 | Continuations sent `MissionInput = null`, so a resumed `--hands` run would lose history mid-turn. | In T1: continuations carry the start command's `MissionInput` reference (no new write). |
 | F3 | A resumed agent step lost its original input (`output` overwritten before the pause). | Fixed in T2. |
+| F5 | Live after runner 0.20.0: the **first turn** of a conversation has no `MissionInput`, so the runner passed no `ChatHistory`, Core fell back to "Begin.", and with the new prompts the user's first message reached the model nowhere (a generic "Hello!" reply; the first-use evaluation was hit too). | Runner 0.20.1: the conversation path always passes a `ChatHistory` (empty on the first turn), so step 1's input is always the Goal. |
 | F4 | Ameer's Chat V1 / ChatHands V1 packages are frozen with the old prompts. | After the release: back up and remove `~/Forge/Projects/chat`; the next `forge chat` / `forge chat --hands` recreates the Project with the new starters and a fresh V1 approval. Part of T6. |
 
 ## Build plan
@@ -74,7 +76,22 @@ Tasks run in this order; each is one subagent task under the [supervisor workflo
 | T3 | forge-runner | **0.20.0**: Core 0.1.4 + Contracts 0.8.0; `MissionCommandProcessor` reads `Goal` as root input and `MissionInput` (if any) as `MissionHistory` → `ChatHistory`; `GenericDurableMissionExecutor` passes it through. Shape log (D6 layer 1): a logging `DelegatingChatClient` in `RunnerExpertRunnerFactory.Build`, always on, roles and counts only, e.g. `model request: system + 7 messages [user, assistant, …, user]`. Tag `forge-runner-v0.20.0` (CI builds the image). | Tests pass; image `forge-runner:0.20.0` in ACR. |
 | T4 | forge-conversations | Host image **0.9.0** (local build, Dockerfile.conversationhost, as today). | Image in ACR. |
 | T5 | forge-infra | Release window (R4): `make 500-app-what-if` / `make 500-app` with runner 0.20.0, then `make 525-conversation-app-what-if` / `make 525-conversation-app` with Host 0.9.0. Then D6 layers 1 and 3 on the default `forge chat` path. | Shape log lines in `log-forge-dev` show one message per turn; Ameer's Go → C# → bash → nodejs repeat has no invented turns. |
-| T6 | Host storage + Ameer's machine | F4 Project reset (back up, remove `~/Forge/Projects/chat`, recreate via `forge chat`), and the D5 one-off removal, only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
+| T6 | Host storage + Ameer's machine | ✅ Done 2026-10-03. F4 Project reset (see the release record). D5: with Ameer's go-ahead, deleted conversation `bde4becb…` (the polluted chat: 867 table rows + its directory row, 361 blobs) and `371f75a2…` (the F5 bug run: 49 rows + directory row, 19 blobs); 0 rows and 0 blobs remain for either; no reminders were pending; the current chat replays normally. The old Project's other 10 conversations were left. Original plan text: only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
+
+## Release record (2026-10-03)
+
+| Item | Evidence |
+|---|---|
+| Packages | Contracts/Presentation 0.8.0 (`forge-conversations-v0.8.0`, `e1c5b5b`), Core 0.1.4 (`core-v0.1.4`, `56e16e2`, after a missed `eng/verify-core-package.sh` bump, [katasec/forge-mcl#43](https://github.com/katasec/forge-mcl/pull/43)), Client 0.7.0 (`client-v0.7.0`, `6f4b271`). All on the feed, private, repo-linked. Each publish workflow went red only on its final repo-link wait, which timed out before GitHub linked the package ([backlog](../backlog.md)). |
+| Runner | [katasec/forge-runner#20](https://github.com/katasec/forge-runner/pull/20) → 0.20.0, then [katasec/forge-runner#21](https://github.com/katasec/forge-runner/pull/21) → **0.20.1** (F5; merged before its CI started; CI then passed). CI images in ACR. |
+| Host | **0.9.0** built locally from `e1c5b5b` (deploy.md gotcha 8 route), pushed to ACR. |
+| Deploy | [katasec/forge-infra#40](https://github.com/katasec/forge-infra/pull/40): `make 500-app-what-if` / `make 500-app` (runner), `make 525-conversation-app-what-if` / `make 525-conversation-app` (Host). What-ifs: image changes only. Active revisions: runner 0.20.1 and Host 0.9.0, healthy, 100%; the old Host revision deactivated. |
+| Client | `forge` from `make install` on forge-mcl `main` (`0babc04`, Client 0.7.0), 0 IL/AOT warnings. `~/Forge/Projects/chat` moved to `~/Forge/chat-backup-2026-10-03` (and the Project created during F5 to `~/Forge/chat-bugrun-2026-10-03`); the next `forge chat` recreated it with the new starters and a fresh Chat V1. |
+| D6 layer 1 (default path) | `log-forge-dev`, runner, 2026-10-02T23:55Z, Ameer's sequence: `system + 1 messages [user]` (evaluation), then `system + 1 / 3 / 5 / 7 messages`, alternating `user, assistant, …, user`. |
+| D6 layer 2 | forge-mcl request-body capture tests for Anthropic and OpenAI pass (T2). |
+| D6 layer 3 | `forge chat` piped, Ameer's Go → C# → bash → nodejs: one answer each (`# Hello World in Go/C#/Bash/Node.js`), no `user:`/`A:` lines, no other languages. |
+| Operator data access | For T6 and ongoing inspection, Ameer granted himself table and blob data roles on `stforgeconvdev`; an accepted exception in [Security architecture](../design/security-architecture.md#accepted-exceptions). |
+| Not yet exercised live | `forge chat --hands` on the new ChatHands V1 (needs Ameer's one-time approval in the TUI). |
 
 ## Gate review
 

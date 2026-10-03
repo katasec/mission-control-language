@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 58](phases/phase-58-structured-chat-history.md): build T1 (forge-conversations) and T2 (forge-mcl). |
+| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 58 — Structured chat history](phases/phase-58-structured-chat-history.md) | Send chat history to the model as separate role-tagged messages, as provider APIs document, instead of one flattened transcript. | Build plan approved 2026-10-03; building. |
+| None — under selection. | | |
 
 ## Design docs
 
