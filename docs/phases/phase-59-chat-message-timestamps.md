@@ -1,6 +1,9 @@
 # Phase 59 — Message timestamps in `forge chat`
 
-> **Status: selected 2026-10-03; building.**
+> **Status: ✅ complete 2026-10-03.** forge-mcl [katasec/forge-mcl#45](https://github.com/katasec/forge-mcl/pull/45) (`3e08b77`).
+> Evidence: the installed `forge` from `main` (0 IL/AOT warnings) shows `You · 1:44 PM` and `Answerer · 1:45 PM` in a live
+> Ghostty TUI capture, and `you · 1:45 PM> …` and `[Chat:Answerer · 1:45 PM]` in line mode. Times use the system's
+> short format (12-hour on this Mac, like the WhatsApp screenshot).
 
 ## Requirement (Ameer, 2026-10-03)
 
