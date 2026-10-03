@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
+| **NEXT STEP** | [Phase 59](phases/phase-59-chat-message-timestamps.md): build and check live. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| None — under selection. | | |
+| [Phase 59 — Message timestamps in `forge chat`](phases/phase-59-chat-message-timestamps.md) | Every message shows the time it was sent, like a WhatsApp chat. | Selected 2026-10-03; building. |
 
 ## Design docs
 
