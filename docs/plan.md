@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-03)
+## Now (2026-10-04)
 
 | | |
 |---|---|
-| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
+| **NEXT STEP** | Finish installed interactive hands acceptance for the [small project declaration](phases/phase-63-project-declaration.md) after the Mac is unlocked. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| None — under selection. | | |
+| [63](phases/phase-63-project-declaration.md) | Small project declaration; separate durable local state. | Merged/installed; final acceptance waits for Mac unlock. |
 
 ## Design docs
 
