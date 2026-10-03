@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
+| **NEXT STEP** | [Phase 60](phases/phase-60-tui-start-page.md): build and check live. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| None — under selection. | | |
+| [Phase 60 — Start page in `forge chat`](phases/phase-60-tui-start-page.md) | A start page like the Desktop's: Chat with a mission opens today's chat; Create a mission is the hook for later. | Selected 2026-10-03; building. |
 
 ## Design docs
 
