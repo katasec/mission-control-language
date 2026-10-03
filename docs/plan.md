@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Implement and verify the [small project declaration](phases/phase-63-project-declaration.md). |
+| **NEXT STEP** | Finish installed interactive hands acceptance for the [small project declaration](phases/phase-63-project-declaration.md) after the Mac is unlocked. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [63](phases/phase-63-project-declaration.md) | Small project declaration; separate durable local state. | Implementation underway. |
+| [63](phases/phase-63-project-declaration.md) | Small project declaration; separate durable local state. | Merged/installed; final acceptance waits for Mac unlock. |
 
 ## Design docs
 

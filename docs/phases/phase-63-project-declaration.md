@@ -1,6 +1,11 @@
 # Phase 63 — Small project declaration
 
-Status: client accepted locally; CI/package release pending. Owner: forge-client Application/Projects. Consumer: forge-mcl CLI.
+Status: implementation merged and installed; default chat verified. Interactive hands acceptance waits for Mac unlock. Owner: forge-client Application/Projects. Consumer: forge-mcl CLI.
+
+Next: after the Mac is unlocked, finish installed Ghostty hands approval/read/reopen using
+`/tmp/phase63-default-qa/hands-keys.json` and `tools/tui-capture/relay.py`. Check `phase63-qa.txt`
+returns `phase63-hands-ok`, preserve both mission pins/folders, remove only the QA canary, then
+close this phase and move the locked design below into the completed record. No code work remains.
 
 ## Locked scope
 
@@ -27,7 +32,7 @@ This private file is durable state, not a disposable cache: losing it must fail 
 | Ordinary mutation | Read validates declaration syntax and private integrity, without resolving pins; pin validity is checked at list/start/hands admission so authoring inspection and explicit Publish retry remain available during mismatch. Write only private state. Do not regenerate or reformat the public file on Open, evaluation, asset, selection, submission or runtime updates. Preserve hand edits byte-for-byte. |
 | Publish | Under the same project lease, approve private state first, then upsert only the published mission's reference in the latest declaration, preserving other pins and folders. Check external edits before either publication and again before public publication; do not overwrite concurrent edits. |
 | Interrupted publish | Two files are not one atomic rename. If private approval lands but public publication fails, admission of mismatched pins stops. Retry Publish of that exact active Approved version is idempotent and finishes its reference without changing identity, evaluation results or approval time. No implicit repair on Open or chat startup. |
-| CLI bootstrap | First use retains draft/promote/evaluate/publish. If an already approved mission is missing from the declaration, stop with guidance to explicitly add its name/version reference; do not silently put back a reference the user removed. Chat and ChatHands remain separate; auth/profile behavior is unchanged. |
+| CLI bootstrap | First unpublished lineage retains draft/promote/evaluate/publish. If a summary is Approved, stop with its explicit name/version reference even when another draft exists. A later candidate (latest number greater than one) implies prior publication under the current promotion invariant; refuse automatic bootstrap with guidance to restore the approved reference or explicitly publish through authoring. Never suggest an unapproved pin or silently put back a removed reference. Reuse the existing summary DTO. Chat and ChatHands remain separate; auth/profile behavior is unchanged. |
 | Compatibility | User authorized deletion, not migration. Reject old public manifests and require current private schema; remove dead in-memory schema migration helpers/tests. No converter or dual public read lane. Keep unrelated public/wire DTOs, hosted storage and remote contracts unchanged. |
 | Release | Publish Katasec.Forge.Client 0.8.0 through the existing immutable tag/package workflow; CLI consumes the published package. No sibling project references. |
 
@@ -39,6 +44,8 @@ This private file is durable state, not a disposable cache: losing it must fail 
 | Security Architecture | Local persistence change only; tier/hosted credentials and datastore access N/A. Preserve exact version/hash checks, path containment, Bob approval and remote authority. Negative tests prove a declaration alone cannot grant hands or admit a mission. |
 | Engineering Philosophy | Reuse current transaction adapter and state graph. One declarative path, one private state path. Typed failure, no invented defaults/identity, no migration and no speculative format knobs. Simplicity persona reviews design and final diff. |
 | Portable tests | Reuse MCL's established test-only `Xunit.SkippableFact` 1.5.61 for symlink capability refusals. Actual supported macOS/Linux symlink cases execute; absence of Windows privilege records SKIP rather than a false PASS. No production dependency change. |
+| CLI readiness fixture | The existing fake replay's thread-pool `Task.Yield` can deliver before `WakeAsync` returns, outside ChatLink's single-UI-thread contract. Gate only this test's replay until wake returns; assert incomplete wake/not-ready before release and retain every catch-up/turn assertion. No sleeps, custom scheduler or product change. Independent QA review confirmed the ordering defect. |
+| Malformed exec-output fixture | The existing test child prints malformed JSON and exits before consuming protocol stdin, intermittently testing a broken pipe instead of JSON parsing. Make that child consume stdin before printing; retain the exact ExpertLoadException assertion and production runner unchanged. |
 | UI | No Desktop/ForgeUI layout, theme or browser changes; interaction/design-system gate N/A. CLI's clear refusal is the only changed message. |
 | Default path | Applies. Normal installed `forge` from merged forge-mcl main, normal platform credentials and `https://api.forge.katasec.com`, no endpoint override. Back up and reset the old default chat project, create/start chat, send a turn, reopen it and see the same history. Inspect public file and private state; confirm no transcripts in either. Test unapproved piped hands refusal and preserve approval behavior. Controlled test doubles and local package overrides cannot close acceptance. |
 
@@ -47,9 +54,9 @@ This private file is durable state, not a disposable cache: losing it must fail 
 | Task | State | Done when |
 |---|---|---|
 | Design and adversarial review | Passed | Ownership/simplicity findings resolved (structural vs admission validation; inert folder containment). Revised implementer plan approved 2026-10-04; shared existing link traversal and current-only private schema locked. |
-| Project persistence and pin enforcement | Accepted locally | [forge-client PR 9](https://github.com/katasec/forge-client/pull/9), commit `f4931ab`; supervisor Release build 0 warnings/errors, 202/202 tests, package verifier PASS; ownership and corrected simplicity reviews PASS. Hosted CI and published consumer acceptance remain open. |
-| Package and CLI integration | Pending | Client release build/full tests/package verification pass; 0.8.0 published; CLI dependency and bootstrap refusal tested; full CLI tests and Native AOT publish pass. |
-| Acceptance and delivery | Pending | Supervisor independently checks actual diff and personas; published default path passes; all touched repos committed/pushed/PR merged and clean on main. Evidence goes in sibling completed doc. |
+| Project persistence and pin enforcement | Merged | Client 202/202 tests, package verifier and final persona reviews PASS; see [implementation evidence](phase-63-project-declaration_completed.md#implementation-evidence). |
+| Package and CLI integration | Merged/installed | Client 0.8.0, CLI `c94a1ae`; Debug/Release each 748 passed + 10 optional skips, AOT and normal `make install` PASS. Publication assertion failure and independent metadata verification are recorded under [package publication](phase-63-project-declaration_completed.md#package-publication). |
+| Acceptance and delivery | Waiting for Mac unlock | Installed default chat, replay, hand-edit preservation, removed-pin refusal and unapproved hands refusal PASS. Ghostty cannot start a terminal while the Mac is locked. Positive hands is unverified; see [default-path acceptance](phase-63-project-declaration_completed.md#default-path-acceptance). All implementation repos are clean on merged main. |
 
 No conversation unification, session duplication, migration tooling, remote service changes,
 repository discovery, folder UI or generic project authoring UI belongs to this task.
