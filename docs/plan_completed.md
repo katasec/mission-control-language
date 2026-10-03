@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 62 — One MCL interpreter: pause by replay](phases/phase-62-single-interpreter-replay.md) | Deletes the root-scoped interpreter; the full interpreter pauses and resumes by replaying a step log. | ✅ Complete 2026-10-03; Core 0.1.7, `forge-runner:0.20.4` live. |
 | [Phase 61 — Hands: one tool call per assistant turn](phases/phase-61-hands-one-tool-call.md) | Fixes `MultipleOutstandingTools` in `forge chat --hands`. | ✅ Complete 2026-10-03; `forge-runner:0.20.2` live. |
 | [Phase 60 — Start page in `forge chat`](phases/phase-60-tui-start-page.md) | A start page like the Desktop's; Chat with a mission opens today's chat. | ✅ Complete 2026-10-03; forge-mcl `b242b1c`. |
 | [Phase 59 — Message timestamps in `forge chat`](phases/phase-59-chat-message-timestamps.md) | Every message shows the time it was sent, like a WhatsApp chat. | ✅ Complete 2026-10-03; forge-mcl `3e08b77`; live TUI and line-mode check. |
