@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 61](phases/phase-61-hands-one-tool-call.md): fix `MultipleOutstandingTools` in `forge chat --hands`. |
+| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [61](phases/phase-61-hands-one-tool-call.md) | Hands: one tool call per assistant turn. | In progress. |
+| None — under selection. | | |
 
 ## Design docs
 

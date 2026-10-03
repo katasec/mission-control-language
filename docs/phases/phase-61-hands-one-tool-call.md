@@ -1,6 +1,15 @@
 # Phase 61 — Hands: one tool call per assistant turn
 
-> **Status: in progress 2026-10-03.**
+> **Status: ✅ complete 2026-10-03.** forge-mcl [#47](https://github.com/katasec/forge-mcl/pull/47) +
+> [#48](https://github.com/katasec/forge-mcl/pull/48) (Core 0.1.5, ChatClients 0.1.3), forge-runner
+> [#22](https://github.com/katasec/forge-runner/pull/22) (`forge-runner:0.20.2`), forge-infra
+> [#41](https://github.com/katasec/forge-infra/pull/41), `make 500-app` → `ca-forge-runner-dev--0000039` Running on 0.20.2.
+> Live: installed `forge chat --hands` (line mode) with the bug's prompt made its `Read` calls one per
+> turn, no `MultipleOutstandingTools`. Tests: forge-mcl 731/0/10, forge-runner 115/0.
+>
+> Gotchas: version bumps also live in `eng/verify-*-package.sh` (#48). The publish workflows' final
+> "Verify GitHub Packages ownership and visibility" step fails on every release (also 0.1.4); the
+> packages were confirmed in the feed via `gh api /orgs/katasec/packages/nuget/<id>/versions`.
 
 ## Bug (Ameer, 2026-10-03)
 
