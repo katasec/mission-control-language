@@ -90,6 +90,7 @@ Tasks run in this order; each is one subagent task under the [supervisor workflo
 | D6 layer 1 (default path) | `log-forge-dev`, runner, 2026-10-02T23:55Z, Ameer's sequence: `system + 1 messages [user]` (evaluation), then `system + 1 / 3 / 5 / 7 messages`, alternating `user, assistant, …, user`. |
 | D6 layer 2 | forge-mcl request-body capture tests for Anthropic and OpenAI pass (T2). |
 | D6 layer 3 | `forge chat` piped, Ameer's Go → C# → bash → nodejs: one answer each (`# Hello World in Go/C#/Bash/Node.js`), no `user:`/`A:` lines, no other languages. |
+| Operator data access | For T6 and ongoing inspection, Ameer granted himself table and blob data roles on `stforgeconvdev`; an accepted exception in [Security architecture](../design/security-architecture.md#accepted-exceptions). |
 | Not yet exercised live | `forge chat --hands` on the new ChatHands V1 (needs Ameer's one-time approval in the TUI). |
 
 ## Gate review
