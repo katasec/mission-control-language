@@ -1,7 +1,7 @@
 # Phase 58 — Structured chat history
 
-> **Status: released and verified on the default path (2026-10-03).** Remaining: T6 (D5 deletion of the old
-> polluted conversation, awaiting Ameer's go-ahead).
+> **Status: ✅ complete 2026-10-03.** Released and verified on the default path; T6 cleanup done. Not yet
+> exercised live: `forge chat --hands` on the new ChatHands V1.
 
 ## Problem
 
@@ -76,7 +76,7 @@ Tasks run in this order; each is one subagent task under the [supervisor workflo
 | T3 | forge-runner | **0.20.0**: Core 0.1.4 + Contracts 0.8.0; `MissionCommandProcessor` reads `Goal` as root input and `MissionInput` (if any) as `MissionHistory` → `ChatHistory`; `GenericDurableMissionExecutor` passes it through. Shape log (D6 layer 1): a logging `DelegatingChatClient` in `RunnerExpertRunnerFactory.Build`, always on, roles and counts only, e.g. `model request: system + 7 messages [user, assistant, …, user]`. Tag `forge-runner-v0.20.0` (CI builds the image). | Tests pass; image `forge-runner:0.20.0` in ACR. |
 | T4 | forge-conversations | Host image **0.9.0** (local build, Dockerfile.conversationhost, as today). | Image in ACR. |
 | T5 | forge-infra | Release window (R4): `make 500-app-what-if` / `make 500-app` with runner 0.20.0, then `make 525-conversation-app-what-if` / `make 525-conversation-app` with Host 0.9.0. Then D6 layers 1 and 3 on the default `forge chat` path. | Shape log lines in `log-forge-dev` show one message per turn; Ameer's Go → C# → bash → nodejs repeat has no invented turns. |
-| T6 | Host storage + Ameer's machine | F4 Project reset ✅ done (see the release record). Remaining: the D5 one-off removal of the old conversations, only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
+| T6 | Host storage + Ameer's machine | ✅ Done 2026-10-03. F4 Project reset (see the release record). D5: with Ameer's go-ahead, deleted conversation `bde4becb…` (the polluted chat: 867 table rows + its directory row, 361 blobs) and `371f75a2…` (the F5 bug run: 49 rows + directory row, 19 blobs); 0 rows and 0 blobs remain for either; no reminders were pending; the current chat replays normally. The old Project's other 10 conversations were left. Original plan text: only with Ameer's go-ahead then: list the rows of that conversation in table `forgeconversationevents` (PartitionKey `v1\|{tenant}\|{conversationId:N}`) and its blobs in `forgeconversationartifacts/{tenant}/{conversationId:N}/`, confirm the grain is idle, then delete. | Conversation gone; `forge chat` starts a fresh one. |
 
 ## Release record (2026-10-03)
 

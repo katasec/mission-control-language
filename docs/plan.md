@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 58](phases/phase-58-structured-chat-history.md): released and verified; remaining: T6 (D5 deletion), awaiting Ameer's go-ahead. |
+| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| [Phase 58 — Structured chat history](phases/phase-58-structured-chat-history.md) | Send chat history to the model as separate role-tagged messages, as provider APIs document, instead of one flattened transcript. | Released and verified on the default path 2026-10-03; T6 cleanup remains. |
+| None — under selection. | | |
 
 ## Design docs
 
