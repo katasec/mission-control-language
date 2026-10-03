@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Under selection: Ameer will choose the next phase. |
+| **NEXT STEP** | [Phase 62](phases/phase-62-single-interpreter-replay.md): one MCL interpreter, pause by replay. |
 
 ## Active phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| None — under selection. | | |
+| [62](phases/phase-62-single-interpreter-replay.md) | One MCL interpreter: pause by replay. | Design, not started. |
 
 ## Design docs
 
