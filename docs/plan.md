@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Implement and verify explicit CLI project creation in [Phase 68](phases/phase-68-cli-project-creation.md). |
+| **NEXT STEP** | No active implementation remains; select the next item from [backlog.md](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [68 — CLI project creation](phases/phase-68-cli-project-creation.md) | Design locked; supervised implementation pending. |
+| — | No active phases. |
 
 ## Design docs
 

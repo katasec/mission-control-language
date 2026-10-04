@@ -86,6 +86,19 @@ reads the hands work item from the claim reply, which is status-only since Host 
 hands therefore cannot be default-path evidence until the Desktop client upgrade
 ([backlog](../backlog.md)) lands.
 
+### `forge project create [folder]`
+
+| Part | Default fact | Source |
+|---|---|---|
+| Artifact and login | Same installed Native AOT CLI, saved platform login and absent endpoint override as `forge chat` above. | forge-mcl `ForgeProject.cs` |
+| Folder | Current directory when omitted; an explicit folder must already exist. | [Phase 68 contract](../phases/phase-68-cli-project-creation.md) |
+| Local declaration | Projects atomically publishes one `forge.project.json` with a stable GUID, `missions: ["Chat@1"]`, and empty folders; no authoring assets or private state. | forge-client `ProjectService.InitializeChatProjectAsync` |
+| Hosted admission | Missions builds immutable plain Chat v1 and sends existing authenticated `POST /api/CreateMissionConversation`; no hands grant or automatic turn. | forge-client `MissionConversationService.CreateChatProjectAsync` |
+| Retry | An exact starter declaration is preserved byte-for-byte and reuses deterministic command/version IDs, resolving to the same hosted conversation. Other declarations/private state are refused. | [Phase 68 failure contract](../phases/phase-68-cli-project-creation.md#failure-containment) |
+
+Installed create, stable retry, real Chat turn, portable clone replay and unrelated-declaration
+refusal passed on 2026-10-05; [Phase 68 observations](../phases/phase-68-cli-project-creation_completed.md#installed-default-path-acceptance).
+
 ## New or changed defaults
 
 Before a task changes a supported path—or introduces a new one—the active spoke must add or revise

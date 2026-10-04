@@ -1,6 +1,6 @@
 # Phase 68 — CLI project creation
 
-Status: design locked; supervised implementation next.
+Status: complete 2026-10-05; source, immutable packages and installed default-path acceptance verified.
 
 ## Product contract
 
@@ -95,5 +95,5 @@ Controlled boundary tests are supporting evidence, never substituted for install
 
 | Task | State / Done when |
 |---|---|
-| Shared creation | Plan pending; owners, typed failures, focused/full tests and package publication verified. |
-| CLI and acceptance | Depends on published shared creation; thin command, tests, AOT, installed create/retry/chat/clone and clean merged delivery verified. |
+| Shared creation | Source, controlled checks and publication accepted; [evidence](phase-68-cli-project-creation_completed.md#shared-client-baseline). |
+| CLI and acceptance | Complete; [source checks](phase-68-cli-project-creation_completed.md#cli-source-verification) and [installed create/retry/chat/clone evidence](phase-68-cli-project-creation_completed.md#installed-default-path-acceptance). |
