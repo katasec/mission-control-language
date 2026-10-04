@@ -76,6 +76,8 @@ See [Phase 64 observations](../phases/phase-64.1-portable-chat-contracts_complet
 The GitHub-built v0.9.1 ZIP path is verified by native extracted-payload checks on all three hosts,
 matching remote checksums and normal authenticated macOS hosted replay; see
 [Phase 65 release evidence](../phases/phase-65-cli-release-copy_completed.md#published-release).
+The simplified workflow published v0.9.2 automatically from normal main with all native checks
+green and matching published checksums; [Phase 66 distribution evidence](../phases/phase-66-simple-cli-release_completed.md#release-acceptance).
 
 **Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
 reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop
