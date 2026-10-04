@@ -8,7 +8,9 @@ Simple and dumb is reliable. Everything written has to be supported later.
 
 ## When to use
 
-Before approving any implementation PR, and whenever a change looks bigger than its requirement.
+On every design candidate set, implementation plan and implementation diff, and whenever a change
+looks bigger than its requirement. At the design and plan stages, check the proposal instead of a
+diff.
 
 ## What to check
 
@@ -17,6 +19,10 @@ Before approving any implementation PR, and whenever a change looks bigger than 
 | **New apps or libraries (NIH)** | New processes, hosts, full-screen apps, packages, frameworks or helpers | Building something the platform, an existing library or the codebase already does |
 | **Reuse** | Whether an existing control, pattern or method already does the job | A new mechanism where an existing one (a view swap, a built-in control) would do |
 | **Multiple code paths** | Branches, modes or "if X then the new way" splits | Two ways to do one thing; special cases the requirement never asked for |
+| **Legacy paths** | Compatibility shims, fallbacks, dual reads, staged releases | A second path kept "in case an old client exists"; there are none |
+| **Knobs** | New settings, options, modes or flags | A setting no present requirement needs, where a fixed convention would do |
+| **Speculative abstractions** | New interfaces, strategies, wrappers, generic helpers | An abstraction with one caller and no real ownership, side-effect or failure boundary |
+| **Library choice** | Added or avoided dependencies | A hand-rolled worse result to avoid a library, or a library added without a probe (render, AOT, size) |
 | **Copy-paste** | New methods or blocks that mirror existing ones line for line | A near-identical method next to an existing one instead of one shared method |
 | **Redundant definitions** | New styles, constants, types or settings | A new name for something that already exists under another name |
 | **Size versus requirement** | `git diff --stat` against what was asked | More product code than the requirement explains; unrequested features |
