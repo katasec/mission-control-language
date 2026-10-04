@@ -70,7 +70,7 @@ the source of truth.
 | forge-conversations Conversation Host | No image CI: build locally (`--platform linux/amd64`) and push with crane ([gotcha 8](#gotchas)) | bump `hostImage` in `dev/525-conversation-app/main.bicepparam`, `make 525-conversation-app-what-if`, `make 525-conversation-app` |
 | Infra (new secret, env var, scaling, domain, a new DB) | — (Bicep only) | the relevant `make <layer>` target — see `forge-infra/README.md`'s layer table |
 | An EF migration needs to actually run | image already has `/app/migrate` baked in | `make 450-migrate` (updates the job definition only) then start the job — a separate, deliberate operator action |
-| The `forge` **CLI binary** (unrelated to hosting) | forge-mcl `make install` | n/a — not a container |
+| The `forge` **CLI binary** (unrelated to hosting) | forge-mcl [Release CLI workflow](https://github.com/katasec/forge-mcl#cli-releases) produces native platform ZIPs; `make install` remains the local path. | n/a — CLI release, not a hosted container |
 
 ## Verify live
 
