@@ -63,11 +63,16 @@ complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-h
 |---|---|---|---|
 | Artifact | `forge` from `make install` on forge-mcl `main`. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` |
 | Endpoint | ForgeAPI `https://api.forge.katasec.com`, platform key from `forge login` as `Bearer`. | `FORGE_API_ENDPOINT`. | forge-mcl `ForgeExec.cs:24-26`, `ForgeChat.cs` |
-| Project | The default Project under `<profile>/Forge/Projects` (title `chat`), created on first use. | Another Project is a designed starting state for that task. | [Phase 53.2](../phases/phase-53.2-forge-chat.md) |
-| Mission and conversation | Plain: `StarterMissions.Chat` (`Answerer`, `NoHands`). `--hands`: `StarterMissions.ChatHands` (`Assistant`, `ProjectWorkspace`) after the one-time approval. Each mode reopens its own latest conversation. | — | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
+| Project | Current-directory `forge.project.json` with stable `projectId`, declared mission/version references and relative folders. Missing file exits 1 before login/network. No creation or ancestor search. | `--project <folder>` is an explicit open-only folder override. | [Phase 64](../phases/phase-64-portable-chat-project.md) |
+| Mission and conversation | Plain selects declared `Chat@Version` / `NoHands`; `--hands` selects `ChatHands@Version` / `ProjectWorkspace` and asks fresh file consent every launch. Shared Client reconnects to the newest equivalent existing authenticated hosted pin; no match or ambiguous pin stops. No lock or authoring ledger is required. | No implicit starter creation, migration or terminal-access mode. | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
+| History projection | Full authoritative server replay from zero. Write-only profile files under platform-user-home `.forge/sessions/<projectId:N>/<conversationId:N>/`; deletion or corruption rebuilds next opening. Local write failure shows a notice and server chat continues. | No cache display, offline mode or saved-display cursor. | [Phase 64 contracts](../phases/phase-64.1-portable-chat-contracts.md#locked-contracts) |
 | Mode | TUI on a terminal; piped (line) mode when input or output is redirected. Both are the shipped binary. | — | [How conversations work §4](how-conversations-work.md#4-clients-and-turns) |
 | Terminal (from Phase 56 Task 2) | Ghostty, not inside tmux; the TUI needs kitty graphics. Any other terminal stops at start-up with a named message. | Kitty is supported but not the default. | [Phase 56 G8](../phases/phase-56-tui-graphics.md) |
 | Theme | No `~/.forge/config.json` (or no `theme` key): **dark** (Phase 56 Task 2b, 2026-10-02). | `{ "theme": "light" }` in `~/.forge/config.json`. | [Phase 56 G10](../phases/phase-56-tui-graphics.md) |
+
+Current defaults passed installed acceptance on 2026-10-04: missing file, portable clone,
+full replay, projection rebuild/failure, line and Ghostty turns, scoped read and fresh refusal.
+See [Phase 64 observations](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance).
 
 **Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
 reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop

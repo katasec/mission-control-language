@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Validate the portable chat project design in [Phase 64](phases/phase-64-portable-chat-project.md) before implementation. |
+| **NEXT STEP** | Phase 64 is complete and verified; select the next work from [backlog](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [Phase 64 — Portable chat project](phases/phase-64-portable-chat-project.md) | Future state recorded; discovery and contract validation next. |
+| — | No selected active phase. |
 
 ## Design docs
 

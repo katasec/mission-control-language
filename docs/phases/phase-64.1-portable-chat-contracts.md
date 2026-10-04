@@ -1,90 +1,184 @@
 # Phase 64.1 — Portable files and chat reconnection
 
-Status: discovery next; future-state direction agreed 2026-10-04. Not build-ready.
+Status: complete 2026-10-04; published Client, merged CLI and installed default path verified.
 Hub: [Phase 64](phase-64-portable-chat-project.md).
 
-## Agreed future state
+## Locked requirements
 
-| Concern | Future owner / requirement |
+| Concern | Requirement |
 |---|---|
-| Project declaration | `forge.project.json` keeps a stable project ID, declared mission/version references and relative repo folders. Keep it small and suitable for Git. |
-| Resolved mission identity | `mcl.lock` holds resolved mission IDs, exact version identities and hashes. `forge init` resolves the declaration and writes the lock; the exact extension is still to validate. |
-| Reconnection | The checked-in identity and lock, with the signed-in account, identify the same hosted chats after cloning to another folder or machine. A folder path is not the durable project identity. |
-| Mission packages | Rebuild from exact available source or retrieve from the owning service. Establish that source before calling anything reconstructable. No embedded authoring/package ledger in the project declaration. |
-| Chat history | Conversation Host remains canonical. Retrieve its stored messages through ForgeAPI; do not create a second authoritative transcript. |
-| Latest chat/session | Derive selection from the latest message in the ordered chat history. Separate conversation timestamps are not required for this algorithm. Validate the ordering contract across sessions; do not substitute timestamp sorting. |
-| Evaluation results | Remove locally copied run evidence and client evaluation pass/fail requirements from the chat path. Server execution records remain server-owned. This does not remove a separately invoked authoring workflow's requirements. |
-| Publication approval | Chat must not need a locally persisted `Approved` record or its evaluation/publication timestamps merely to open a declared mission. Immutable identity, package integrity and server admission still need explicit owners. |
-| Tool permission | Ask for fresh explicit file/tool approval when enabling hands. Remembered consent is disposable; refusal or absence of approval supplies no local tools. Login authenticates the account; consent authorizes local tools. |
-| Generated/local files | Place reconstructable state outside the project folder, under the profile. Opening a clone must not require the old `obj/forge/project.state.json`. |
-
-### Proposed file layout
+| Startup | `forge chat` opens current-directory `forge.project.json`; missing file prints `No forge.project.json found in the current directory.` and exits 1. No automatic creation/default Project fallback. |
+| Declaration | Stable Project ID, mission/version references, relative repo folders. Git-friendly; path is not durable identity. |
+| Hosted mission | Use existing hosted pinned package. No required `mcl.lock`, `forge init`, `forge run`, starter evaluation, local approval ledger or `obj/forge/project.state.json` for chat. |
+| Conversations | Existing authenticated `ListMissionConversations` result selects newest matching chat. No new ordering, pagination requirement or picker. Full-history display retained. |
+| Profile files | `<user-home>/.forge/sessions/<project-key>/<session-id>/session.json` and `messages.jsonl` are reconstructable projections of hosted state. |
+| Platform home | `Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)` plus `Path.Combine`; no hard-coded operator path. |
+| Consent | Fresh explicit scoped approval each hands launch. Project/mission identity and profile files grant no tools. |
 
 ```text
-<any-project-folder>/
+<project-folder>/
     forge.project.json
-    mcl.lock
-    <source needed to rebuild locked missions, if locally sourced>
+    <declared repo folders>/
 
-/Users/ameerdeen/.forge/sessions/<project-key>/<session-id>/
+<user-home>/.forge/sessions/<project-key>/<session-id>/
     session.json
     messages.jsonl
 ```
 
-The profile session layout was an earlier proposal, not implemented behaviour. Validate whether
-local session metadata and a replay cache are needed at all. If retained, they must be deletable
-and recoverable from the Host; `messages.jsonl` is a derived replay cache, not canonical history.
-Exact session fields, project-key derivation and append/recovery rules are not locked yet.
+## Design review
 
-## Current state and evidence
+| Concern | Owner / decision |
+|---|---|
+| Portable declaration admission | Application Projects; no CLI-owned Project store. |
+| Hosted mission matching/turns | Application Missions and existing authenticated conversation adapter; Host owns packages/history/order. |
+| Profile projection | Application Sessions. Always fetch/display server history from zero; never consume profile files for display, selection, identity or consent. No cached-start optimization, credential fingerprint or transcript hash. |
+| Hands | Application Missions resolves actual authenticated pin; Client Runtime executes. Portable admission supplies no usable legacy tool authority. |
+| Missing hosted chat | Explicit unavailable-chat error; no automatic starter or identity. New mission authoring stays separate. |
+| Security | Normal ForgeAPI login/account ownership; no direct datastore access/new credentials. Server authorizes before history display or profile recording. |
+| Engineering philosophy | Existing owners; remove authoring prerequisites, do not relocate old ledger. Cache failure is a visible notice and server chat continues. |
+| Personas | Apply [Ownership Reviewer](../../personas/ownership-reviewer.md) and [Simplicity Reviewer](../../personas/simplicity-reviewer.md) during design and final review. Supervisor explicitly approves implementer plans. |
+| UI | Keep existing start page/transcript and theme tokens. No layout redesign; supervisor inspects running Ghostty. |
+
+Architect and independent reviewer completed both persona reviews. Supervisor approved each
+bounded implementation plan and accepted the final placement and installed behaviour;
+see [ownership evidence](phase-64.1-portable-chat-contracts_completed.md#ownership-acceptance).
+
+## Locked contracts
+
+Declaration remains strict JSON with `missions` and `folders` string arrays, plus `projectId`:
+
+```json
+{
+  "projectId": "00000000-0000-0000-0000-000000000001",
+  "missions": ["Chat@1", "ChatHands@1"],
+  "folders": ["repo"]
+}
+```
+
+Portable admission requires nonempty `projectId`. The existing authoring declaration may retain
+nullable/omitted `projectId` for compatibility; ordinary authoring Open/Create still use their
+own state. No automatic migration is part of chat. An explicit `--project <folder>` remains an
+open-only folder override; without it the CLI uses its current directory and searches no ancestors.
+Missing-file checking precedes login/network startup. The declaration is never rewritten by chat.
+These typed APIs are direct shared Client-owner calls used by CLI, not new Desktop HTTP/channel
+actions. Desktop remains pinned and unchanged. Portable session replacement preserves admitted
+Project ID, exact admitted mission reference (name/version) and NoHands; missing/changed mission or runtime is rejected. New replacement must
+reauthorize/reconnect; authored-session replacement retains its existing behaviour.
+
+| Shared contract | Shape and semantics |
+|---|---|
+| `IProjectService.OpenChatAsync` | Existing `ProjectOpenRequest` and `ProjectOperationResponse`. Projects validates declaration only; no private-state or lock access. Nonempty `request.Mission` must name a declared mission and freezes selection (CLI Chat/ChatHands mode) in the local session. `ProjectSummary` uses declaration Project ID, folder basename as title, empty goal, validated folder as home. Session retains admitted Project ID and uses legacy `NoHands` execution. |
+| `ReconnectMissionConversationRequest` | `string SessionId, string MissionName`. Name must match admitted immutable mode; Projects re-reads the declaration and checks its ID and exact mission reference against the admitted Project ID/name/version. |
+| `ReconnectedMissionConversation` | `Guid ConversationId, string MissionName, MissionAccessApproval Approval, string ProviderProfile`. Existing `MissionAccessApproval` contains version ID/number, definition hash and profile. No surface package authority. |
+| `ReconnectMissionConversationResponse` | Nullable `ReconnectedMissionConversation Conversation, ProjectOperationError Error`, following existing result conventions. |
+| `IMissionConversationService.ReconnectAsync` | Resolves declared `Name@Version` against authenticated list's `Launch.Package.RootMissionName` and `Launch.VersionNumber`. Missing package/match gives explicit unavailable-chat result. Distinct immutable launches under the same reference give ambiguity error; otherwise choose newest existing match. Validate its authenticated snapshot before projection or display. Provider display comes from pinned definition. |
+| Portable hands acknowledgement | Re-read declaration and authenticated `GetConversation`; require admitted Project ID, current declaration ID and snapshot Project ID match; require MissionConversation purpose, package mission matches immutable selection, current declaration contains exact pinned `RootMissionName@VersionNumber`, and request version/hash matches hosted pin. Use actual pinned launch and existing Host equality check, never local authoring approval or profile files. |
+
+Profile keys are `projectId.ToString("N")` and hosted `conversationId.ToString("N")`; ephemeral
+application/attachment IDs never identify disk sessions. `session.json` has `schemaVersion: 1`,
+`projectId`, `conversationId`, `lastSequence`; `messages.jsonl` contains complete durable
+`ConversationEvent` JSON using the existing generated serializer. Neither contains credentials,
+approval, mission packages or evaluation records.
+
+The shared stream records a server prefix in memory, excluding deltas and repeated sequences.
+Flush full snapshots at stream-enumerator disposal (including replay/line completion) and joined
+shutdown. Do not rewrite the growing transcript for every historical terminal event during replay.
+Only publish a complete prefix originating at sequence zero; nonzero-only streams never publish
+tail-only history. Short OS file lease covers publication only, never HTTP. Unique temporary files
+and atomic replacements serialize complete snapshots. Files can lag active hosted history and are
+rebuilt next opening; no cache reads, fingerprints, transcript hashes or offline flow.
+
+## Failure containment
+
+| Failure | Owner, visible result and recovery |
+|---|---|
+| Missing/invalid declaration or references | Projects/CLI returns explicit error/exit 1, creates nothing; user corrects declaration. Relative folders must remain bounded as in existing validation. |
+| No hosted match / ambiguous identity | Missions returns explicit no-hosted-chat/ambiguous-reference error, no starter creation/evaluation. User selects a valid declaration reference or authors separately. |
+| Changed declaration ID/mode/reference | Projects/Missions refuses reconnection or hands; no new identity/workspace authority. Reopen after correcting declaration. |
+| Auth/Host failure | Existing adapter/Host error; never substitute cached display. Retry/login belongs to user. |
+| Refused or noninteractive hands | No attachment/tool execution. Explicit denial; next interactive launch asks again. |
+| Missing/corrupt profile files | No disk values consumed; authoritative replay replaces them. Selection and display are unchanged. |
+| Cache write failure | Sessions emits one named local-cache notice, disables recording for that local session and continues server chat. Handle actual filesystem errors only; do not mask shutdown/network failures. |
+| Concurrent windows | Host retains turn/attachment authority; short local publication lease prevents interleaved files. Next opening rebuilds current hosted history. |
+
+## Approved task scope
+
+Security design gate PASS: client Project/Sessions data stays client-owned; hosted canonical data
+stays Host-owned. Public entry/auth route remains ForgeAPI platform-key authentication to existing
+internal Host queries/commands; tier-3 stores/roles/queues are unchanged and client holds none of
+their credentials. No cross-context data access. Portable admission/hosted-pin ownership is locked
+before code (Type 1); disposable profile layout is reversible by deleting/rebuilding files (Type 2).
+Verification: authenticated negative cases, NoHands/fresh-ack tests and normal installed API path.
+
+Engineering gate PASS: each behaviour has an existing named owner and failure rule above; no new
+knob/service/abstraction is needed. No warning-based tool authorization: portable session execution
+is structurally NoHands, and a fresh exact-hosted-pin attachment alone enables tools. Existing
+conversation adapter is the sole remote seam. Focused failures and installed-path observations are
+the acceptance evidence. Desktop/ForgeUI visual/deployment gates are N/A: neither is changed.
+
+Client task changes Projects/Sessions/Missions/Transport in forge-client, adds the shared portable
+actions and profile projection, and preserves authoring/legacy Desktop contracts. Release immutable
+Client.Contracts 0.2.0 and Client 0.9.1 with updated verification/publish metadata; Hands stays 0.1.0.
+No sibling references or hosted-service edits. Full Client tests and package/AOT checks required.
+
+CLI task consumes those published packages, removes chat's starter authoring flow and default-home
+fallback, opens the current-folder declaration, reconnects via the shared contract, asks fresh hands
+consent and presents owner cache notices. Current start page, transcript amount, terminal rules,
+theme selection, editor and turn/stream ownership remain. Tests, AOT and live Ghostty review required.
+
+CLI mode intent is closed: plain `Chat` requires the authenticated pin's `NoHands`; `--hands`
+`ChatHands` requires `ProjectWorkspace`. Reject a mismatched actual profile before consent or
+attachment; never coerce the pin or acknowledge terminal access through a file-only prompt.
+Generic Client profile support is unchanged. No terminal-approval UI is included.
+
+Native AOT exception scope is the six existing macOS linker warnings already recorded in
+[Phase 63](phase-63-project-declaration_completed.md): ignored `-ld_classic` and Homebrew
+OpenSSL/Brotli deployment targets newer than macOS 12. No new linker input or warning suppression
+is introduced. Managed/ILCompiler/trim warnings remain unacceptable. Keep the normal `make install`
+path; remove this exception when the existing linker/toolchain compatibility issue is resolved
+under a separate scoped task. It cannot excuse a runtime failure or a new warning.
+
+TUI reference: [operator's current start page](../images/phase-64-start-page-reference.png),
+1043×339 captured slice. Owned behaviour is portable startup and cache-notice presentation;
+the existing breadcrumb pattern, two start choices, helper text, selection and theme tokens remain.
+No layout, graphics or new controls are owned by this task. Supervisor compares a running Ghostty
+start page/transcript with this reference, allowing the Project folder name to reflect the actual
+dedicated test folder. Existing light/dark token suites must pass without new visual literals.
+
+## Evidence and superseded assumptions
 
 | Observation | Source |
 |---|---|
-| Public file has only `missions` and `folders`; identity and authoring facts are private and mandatory. | [Phase 63 verified contract](phase-63-project-declaration_completed.md#locked-scope); forge-client `Projects/ProjectManifest.cs` and `ProjectManifestFile.cs`. |
-| Default chat public file is 12 lines / 130 bytes; private file is 180 lines / 7,302 bytes. | Read 2026-10-04 at `/Users/ameerdeen/Forge/Projects/chat/forge.project.json` and `obj/forge/project.state.json`. |
-| `--project` currently takes a folder; it creates a Project only when that folder does not exist. | forge-mcl `src/ForgeMission.Cli/ForgeChat.cs`, `OpenProjectAsync`. File-name input and existing-folder admission require an explicit contract. |
-| First use currently creates/evaluates/publishes a starter; ordinary startup reuses an already-approved version. | `ForgeChat.EnsureMissionAsync` / `AdvanceAsync`. Do not describe this first-use evaluation as an ordinary user chat turn. |
-| Stored approval participates in Project validation and hands attachment. Published `ChatHands` also remembers file consent. | `ProjectService.ResolveApprovedLaunch`; `ForgeChat.HandsAllowedAsync`. Removing the dependency requires changing these consumers, not just omitting JSON fields. |
-| Evaluation execution is hosted; the client queries its outcome/output/trace and derives pass/fail. | forge-client `Missions/MissionConversationService.cs`, `StartEvaluationAsync` / `ReconcileIfTerminalAsync`; Host `GetEvaluation` projection. |
-| Conversation timestamps are already hosted; current client selection sorts by `UpdatedAtUtc`. | Host `Grains/ConversationState.cs` and `Persistence/AzureTableProjectMissionConversationDirectoryStore.cs`; client `MissionConversationService`. These differ from local evaluation/publication timestamps. |
+| Existing API returns each account's Project chats, with full pinned package. | forge-platform `ConversationEndpoints`; Host `ConversationApiEndpoints.ListMissionConversationsAsync`; Contracts `MissionConversationSummary`/`DurableMissionLaunch`. |
+| Current chat selects newest match then replays from zero. | forge-mcl `ForgeChat.OpenConversationAsync`/`ChatAsync`; Client `MissionConversationService.ListAsync`. |
+| Ledger prerequisites are local Client dependencies. | `ProjectManifestFile.Read`, `ProjectService.ResolveApprovedLaunch`, `MissionConversationService`, `MissionHandsConversationService`. |
 
-## Owners and design gates
+Earlier mandatory mission-lock, cross-conversation message-sequence sorting and hard-coded
+profile-layout proposals are superseded by the locked requirements above. Sequence numbers
+track replay/live progress inside the selected conversation; they do not resume a previous
+launch's display position or compare conversation recency.
 
-| Gate / behaviour | Owner and requirement before handoff |
+## Acceptance / default path
+
+| Case | Required observation |
 |---|---|
-| Declaration, stable Project identity and open/create rules | forge-client Application Projects. CLI composes it; no CLI-owned parallel Project store. |
-| Mission lock parsing and resolution | forge-mcl Core owns generic MCL lock/resolution; Client owns Project admission. Preserve this boundary when defining the lock extension and `forge init` composition. |
-| Hosted replay and ordered conversation selection | forge-conversations Conversation Host owns canonical ordering and projections; Client's conversation adapter consumes those contracts. |
-| Scoped local tools | forge-client Client Runtime/Hands owns authorization and execution; CLI presents fresh consent. A checked-in ID, lock or cached session never grants tools. |
-| Security | Project IDs are identifiers, not credentials. Queries/commands use the signed-in account through ForgeAPI and Host ownership checks. No client/edge direct Table or Blob access, no cross-context store access, no new data credentials. Exact restoration contracts are Type-1 decisions to lock before code. |
-| Engineering philosophy | Use existing owners; remove the authoring prerequisite from chat instead of moving the same ledger to another mandatory file. Reconstructable caches have no independent identity or admission authority. Failure and ordering contracts below remain open until validated. |
-| Default-path acceptance | N/A for this documentation-only task. Future runtime acceptance uses installed `forge` from merged forge-mcl `main`, normal login and `https://api.forge.katasec.com`, with `FORGE_API_ENDPOINT` absent. Dedicated disposable projects and clones are the designed test state; exercise Ghostty and piped mode. |
-| UI / deployment | No Desktop, ForgeUI, UI layout or deployment change in this documentation task. Any later task adding one must read and bind its applicable design/deployment gates first. |
+| Artifact/configuration | Native AOT `forge` installed from merged forge-mcl main using published Client packages; normal login/default ForgeAPI URL, `FORGE_API_ENDPOINT` absent. |
+| Missing file | Named error/exit 1, no creation/default-folder fallback. |
+| Dedicated safe Project clone | Copy only declaration to another folder; same hosted chat/history, no lock/private ledger. Do not migrate/delete operator Project/history. |
+| Profile projection | Platform-user-home files contain durable history; deletion/corruption rebuilds from server without new identities. |
+| Fresh hands | Reopen prompts again; refusal supplies no tools; approval permits scoped operation with authoritative pin. |
+| Runtime | Real turn completes in piped mode and Ghostty against normal dependencies. Stub/branch checks are supporting evidence only. |
 
-Use the [ownership](../../personas/ownership-reviewer.md) and
-[simplicity](../../personas/simplicity-reviewer.md) personas at contract review and final diff review.
-No design-gate PASS or implementation approval is claimed by writing this proposal.
+## Work
 
-## Dependency-ordered tasks
-
-| Task | State | Done when |
-|---|---|---|
-| 1. Validate reconstruction and identity | Next | Trace every chat consumer of private state. For each retained value name its checked-in source or existing owner/API; prove a copied identity is stable but confers no authority. Identify missing contracts instead of assuming server retrieval exists. |
-| 2. Lock file and reconnection contracts | Depends on 1 | Define exact declaration/lock DTOs, `forge init` behaviour, folder versus file input, existing-folder admission, exact package recovery, server reconnection and message-order selection across sessions, including empty/tied/concurrent histories. Decide whether profile session files are necessary. |
-| 3. Lock failures and review the plan | Depends on 2 | Name owner, visible result and recovery for invalid declaration/lock, unresolved version, missing source, unavailable Host, foreign-account IDs, deleted cache, concurrent windows and refused consent. Ownership/simplicity and security/philosophy reviews pass. Bounded implementer plan receives supervisor approval. |
-| 4. Implement and accept | Pending; depends on 3 | Build the approved changes in owning repos, remove chat's local evaluation/publication/remembered-consent dependencies, run contract and negative-path tests, then verify fresh-clone replay and fresh hands consent against the default endpoint. Merge required PRs and record evidence. |
-
-No automatic migration work: validate on dedicated fresh projects, as previously directed. Do not
-delete the operator's existing project/history as part of discovery. Combining `Chat` and
-`ChatHands`, broader mission-authoring redesign and Desktop upgrades are separate scope decisions.
-
-## Acceptance observations to lock during discovery
-
-| Case | Required future observation |
+| Task | State / Done when |
 |---|---|
-| Fresh clone at another path | Same project/conversation identities and prior hosted messages with only the declaration, lock and required source; no private-state ledger copied. |
-| Deleted profile cache | Reopen the same hosted chat and rebuild any retained cache without generating new durable identities. |
-| Latest session | Message order selects the expected session across the histories defined in Task 2, without separate conversation timestamps. |
-| Ordinary startup | No starter evaluation or local evaluation-record requirement to open a resolved chat mission. |
-| Hands off / consent refused / consent granted | No tools without approval; grant allows the scoped operation; reopening asks again without needing a saved approval record. |
-| Invalid or foreign identity | An explicit owner-defined rejection with no replacement Project ID, no access to another account's chat and no tool grant. |
+| Design and contract review | Accepted: architect and independent ownership/simplicity reviews; supervisor locked contracts/failures and passed security/philosophy gates. |
+| Client baseline | Merged/published; 249/249 tests, zero-warning build and source review passed. [Evidence](phase-64.1-portable-chat-contracts_completed.md#client-baseline); corrected revision below is required for CLI. |
+| Client simplicity corrections | Merged/published: [evidence](phase-64.1-portable-chat-contracts_completed.md#client-simplicity-corrections). |
+| CLI integration | Complete: [merged PR, tests and Native AOT evidence](phase-64.1-portable-chat-contracts_completed.md#cli-integration). |
+| Acceptance/delivery | Complete: [installed default path, clone, cache, live Ghostty and fresh consent](phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance). |
+
+No automatic migration, Desktop upgrade, hosted redesign or new UI flow is included.
+
+The initial simplicity review was superseded by the [renewed review and delivered reductions](phase-64.1-portable-chat-contracts_completed.md#renewed-simplicity-review).

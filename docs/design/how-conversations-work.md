@@ -284,9 +284,14 @@ harmless: the step's final `ParticipantMessage` is the durable record.
 
 ## 4. Clients and turns
 
-This section covers `forge chat` on forge-mcl `main` after Phase 53.9
-([katasec/forge-mcl#29](https://github.com/katasec/forge-mcl/pull/29)). Paths in this section are
+This section covers `forge chat` on forge-mcl `main` after Phase 64
+([katasec/forge-mcl#55](https://github.com/katasec/forge-mcl/pull/55)). Paths in this section are
 in `forge-mcl/src/ForgeMission.Cli/` unless they name another repo.
+
+**Portable startup acceptance: PASS, 2026-10-04**
+([record](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance)):
+installed plain line/TUI turns, declaration-only clone, cache reconstruction/failure, scoped
+hands read and fresh approval/refusal. The earlier multi-window evidence below remains historical.
 
 **Live acceptance: PASS, 2026-10-01**
 ([record](../phases/phase-53.9-tui-live-sessions_completed.md)). Two TUIs on one conversation
@@ -307,18 +312,30 @@ flowchart LR
   P --> C2["ChatHands conversation<br/>Assistant, ProjectWorkspace"]
   L["forge chat launch"] --> Q{"latest conversation<br/>on my mode's mission?"}
   Q -->|"yes"| R["reopen it, replay its history"]
-  Q -->|"no"| N["create one on my mission"]
+  Q -->|"no"| N["stop: no hosted chat for declared mission version"]
 ```
 
 `forge chat` and `forge chat --hands` use two separate conversations in the same project, because a
-conversation's hands profile is fixed for life. On launch, each mode reopens the latest conversation
-on its own mission (`LatestFor` in `OpenConversationAsync`, `ForgeChat.cs:265-276, 439-440`) and
-creates one only if that mode has none. So each mode keeps its own history. Before
+conversation's hands profile is fixed for life. On launch, Projects opens the current folder's
+`forge.project.json`, and Missions resolves its exact declared name/version against the authenticated
+hosted list. The newest equivalent immutable launch wins; distinct launches under the same reference
+are an error. Its authenticated snapshot supplies the actual package, profile and provider display.
+No hosted match stops explicitly; chat does not create a Project or publish a starter. Each mode keeps
+its own history. Before
 [katasec/forge-mcl#31](https://github.com/katasec/forge-mcl/pull/31) the CLI looked only at the
 project's single latest conversation, so switching modes started an empty conversation on every
 launch. Two windows share a conversation, and stream each other's turns, only when they are in the
 same mode; a plain window and a `--hands` window are separate chats. Verified live 2026-10-01:
 alternating plain → `--hands` → plain, each run replayed its own history.
+
+The Project declaration's stable ID carries identity across folder copies. Hosted chat requires
+neither `mcl.lock` nor `obj/forge/project.state.json`. Always replay complete hosted history from
+zero: sequence numbers are cursors within that conversation, not ordering across conversations or
+a remembered display position from the previous invocation. Sessions writes reconstructable
+`session.json` and durable `messages.jsonl` under platform-user-home
+`.forge/sessions/<projectId:N>/<conversationId:N>/`. Disk is never read for display, identity or
+consent. Publish at stream disposal and joined shutdown; a local write failure emits one visible
+notice and disables that recorder while server chat continues.
 
 ### One live stream per window
 
@@ -522,25 +539,29 @@ local client (Bob, in forge-client) executes.
 The runner declares tools with Core's `AgentToolDeclarations`, which have real JSON schemas
 (`file_path` required) (`forge-runner/…/Conversations/GenericDurableMissionExecutor.cs:62-68`). Core
 gives tools only to `role: agent` experts (`forge-mcl/src/ForgeMission.Core/Runtime/PipelineRunner.cs:888`),
-so `ChatHands` uses the starter `Assistant` expert. A conversation's launch, and so its profile, is
-pinned at the first attach and cannot change (`ConversationGrain.cs:443-465`).
+so the existing `ChatHands` package uses the `Assistant` expert. A mission conversation's launch,
+and so its profile, is pinned at creation; every hands attachment must match that immutable pin
+(`ConversationGrain.DecideMissionConversationCreate` and `DecideAttachMissionHands`).
 
-### One-time approval (`forge chat --hands`)
+### Fresh file approval (`forge chat --hands`)
 
 ```mermaid
 flowchart TB
-  S["forge chat --hands"] --> F{"approved ChatHands version<br/>in this project?"}
-  F -->|"yes"| A["attach and chat"]
-  F -->|"no"| I{"interactive?"}
-  I -->|"no"| P["stop: run forge chat --hands<br/>in a terminal once"]
+  S["forge chat --hands"] --> F["authenticate declared ChatHands pin<br/>require ProjectWorkspace"]
+  F --> I{"interactive?"}
+  I -->|"no"| P["stop: fresh terminal consent required"]
   I -->|"yes"| Q["Allow Forge to read, write and edit<br/>files in folder? y/N"]
-  Q -->|"y"| PUB["publish ChatHands<br/>draft, evaluate, publish"] --> A
-  Q -->|"N or EOF"| D["stop, nothing changed"]
+  Q -->|"y"| A["acknowledge actual hosted pin<br/>fresh scoped attachment and chat"]
+  Q -->|"N or EOF"| D["stop without tool attachment"]
 ```
 
-The published version is the approval: it is stored in the project manifest's
-`MissionDefinitions`, so later runs do not ask (`forge-mcl/src/ForgeMission.Cli/ForgeChat.cs:217-239`,
-`AskApproval`). File operations are then allowed without asking again.
+Every launch asks again. A portable session initially has `NoHands`; declaration IDs, profile
+files and earlier approval grant no tools. The CLI refuses a pin outside its file-only mode before
+consent. After approval, shared Missions re-reads the declaration and authenticated snapshot,
+checks the exact admitted Project/name/version and acknowledged pin, and attaches Bob using the
+actual hosted launch. File operations remain scoped to the admitted Project folder; terminal
+capability stays denied. This replaces the previous one-time authoring approval described in the
+[Phase 55 historical record](../phases/phase-55-forge-chat-hands_completed.md).
 
 ### Attachment handoff
 
@@ -592,8 +613,9 @@ sequenceDiagram
 
 `forge chat --hands` runs in its own conversation, separate from plain `forge chat` ([section 4](#one-conversation-per-chat-mode)).
 
-Proven live on the default path by Phase 55 (Read of `secret.txt`, codeword returned). Write,
-Edit, cancel mid-tool, the TUI rendering and two `--hands` windows are covered by unit tests only.
+Proven live on the installed default path by [Phase 64](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance):
+scoped Read with exact file content returned, TUI succeeded status, fresh prompt on reopening and
+refusal. Write, Edit, cancel mid-tool and two `--hands` windows remain covered by tests only.
 
 **Desktop is deferred.** Desktop only acknowledges hands and never calls Execute, and it still
 uses Contracts 0.4.0 (backlog: Desktop client upgrade).
