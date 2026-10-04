@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-04)
+## Now (2026-10-05)
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 67 is complete and verified; select the next work from [backlog](backlog.md). |
+| **NEXT STEP** | No active implementation remains; select the next item from [backlog.md](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| — | No selected active phase. |
+| — | No active phases. |
 
 ## Design docs
 
