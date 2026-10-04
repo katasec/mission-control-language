@@ -29,10 +29,6 @@ flowchart TD
     A --> M[7 PR, merge, clean main]
 ```
 
-The old loop found every problem through the supervisor alone, one rejection round at a time.
-Here, parallel designers compare shapes once, and parallel reviewers each check one concern; the
-supervisor merges their results into a single decision per stage.
-
 ## Roles
 
 | Role | Persona | Authority | May not do |
@@ -83,8 +79,7 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    ownership, contract, failure, visual-reference, or theme-boundary question blocks the next
    stage.
 1. **Design — fan out, then reduce.** The supervisor sends the same design assignment to three
-   designers in one message, each with the designer persona inline. Use different models when the
-   agent offers them; otherwise the same model three times. Then:
+   designers in one message, each with the designer persona inline. Then:
    - run one [simplicity reviewer](../../personas/simplicity-reviewer.md) over all candidates in
      parallel with its own reading;
    - score each candidate against the designer rules and `Done when`, rule by rule, not by overall
@@ -281,9 +276,8 @@ Before accepting, the supervisor records a named observation for each applicable
 - the diff, documentation, branch, commit, pull request, merge, and clean-main state meet the
   repository continuity protocol.
 
-## Migration from the former workflows
+## Former workflow
 
-This replaces the serial supervisor ⇄ implementer loop, in which the supervisor alone found every
-problem through repeated rejection rounds. [The former Claude/Codex workflow](claude-codex-workflow.md)
+[The former Claude/Codex workflow](claude-codex-workflow.md)
 is retained only as a pointer for old links and historical context. It is not an implementation
 authority.

@@ -9,8 +9,7 @@ Placement and size are out of scope; the [Ownership Reviewer](ownership-reviewer
 
 ## When to use
 
-On every implementation diff, in parallel with the other reviewers. At the plan stage only when
-the plan proposes function or file structure.
+On every implementation diff, in parallel with the other reviewers.
 
 ## What to check
 
@@ -23,7 +22,7 @@ the plan proposes function or file structure.
 | **Shallow nesting** | Branch depth | More than 2 levels; missing early returns |
 | **Separate side effects** | Database, network, file and process calls | I/O mixed into decision logic |
 | **Zero warnings** | Build and Native AOT publish output | Any warning, including ILC/trim warnings |
-| **Extract for a real reason** | New helpers, interfaces and wrappers | Two-line helpers made for a score; one-caller wrappers that add a layer |
+| **Extract for a real reason** | New helpers, interfaces and wrappers | Helpers split out for a line count or a lower score rather than clearer intent |
 | **Complexity** | Cyclomatic complexity of changed functions | Over 15 without a recorded exception; over 10 where a simpler shape was available |
 
 ## How to check

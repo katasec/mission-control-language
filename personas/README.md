@@ -6,13 +6,9 @@ inside it, so a subagent applies them instead of being pointed at documents it m
 
 ## How to use a persona
 
-1. **Inline it.** Paste the persona file's full text at the top of the subagent's assignment.
-   Pointing to the file is not enough. This works in any agent (Claude, Codex, or another).
-2. **Ask for the principles that changed a decision.** Designers and implementers list each rule
-   that changed a choice and the choice it changed. Reviewers return a verdict per check. A rule
-   the output never mentions was not applied.
-3. **Tag the stage.** Start the subagent's description with its stage tag (see the workflow) so
-   its duration and token use can be measured from the transcript.
+Paste its full text inline at the top of the subagent's assignment, per the workflow's
+[persona rule](../docs/design/supervisor-workflow.md#persona-rule) and
+[stage tags](../docs/design/supervisor-workflow.md#stage-tags).
 
 ## Personas
 

@@ -270,9 +270,8 @@ design and planning documentation; no subagent may modify code, infrastructure, 
 configuration until the supervisor has explicitly approved the implementer's plan.
 
 The required loop is **scope → design fan-out → reduce → plan → plan-review fan-out → approval →
-implementation → code-review fan-out → supervisor acceptance**. Every subagent assignment starts
-with the full text of its [persona](personas/README.md) pasted inline; pointing at a file is not
-enough. The implementer never approves its own plan, resolves an open design question by
+implementation → code-review fan-out → supervisor acceptance**. Each subagent carries its
+[persona](personas/README.md) inline, per the workflow's persona rule. The implementer never approves its own plan, resolves an open design question by
 inference, broadens scope, or marks a task complete. The supervisor independently checks the diff
 and evidence against the task's `Done when` condition. Internal supervisor/subagent handoffs use
 the agent's own subagent tools and do not need a human relay.
