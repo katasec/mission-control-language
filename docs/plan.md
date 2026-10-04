@@ -8,11 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | No active implementation phase. Select the next work from [backlog.md](backlog.md); the small project declaration is complete. |
+| **NEXT STEP** | Validate the portable chat project design in [Phase 64](phases/phase-64-portable-chat-project.md) before implementation. |
 
 ## Active phases
 
-None.
+| Phase | Status |
+|---|---|
+| [Phase 64 — Portable chat project](phases/phase-64-portable-chat-project.md) | Future state recorded; discovery and contract validation next. |
 
 ## Design docs
 

@@ -9,3 +9,6 @@ Status: complete, verified 2026-10-04. Client 0.8.0; forge-mcl `c94a1ae` merged 
 | Installed default-path acceptance | [Chat, history, approval, real hands read and reopen](phase-63-project-declaration_completed.md#default-path-acceptance); final public file 12 lines / 130 bytes. |
 
 Full contract, publication observations and verification are in the [completed record](phase-63-project-declaration_completed.md).
+
+Next design: [Phase 64 — Portable chat project](phase-64-portable-chat-project.md) proposes replacing
+the required private-state arrangement; it is not implemented yet.
