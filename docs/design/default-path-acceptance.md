@@ -61,7 +61,7 @@ complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-h
 
 | Part | Default | Override (not default-path evidence) | Source |
 |---|---|---|---|
-| Artifact | `forge` from `make install` on forge-mcl `main`. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` |
+| Artifact | `forge` from `make install` on forge-mcl `main`, or the complete platform ZIP from forge-mcl's published GitHub Release built at merged main. Extract all native sidecars. macOS keeps the existing Homebrew OpenSSL/Brotli prerequisites. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` / [CLI release README](https://github.com/katasec/forge-mcl#cli-releases) |
 | Endpoint | ForgeAPI `https://api.forge.katasec.com`, platform key from `forge login` as `Bearer`. | `FORGE_API_ENDPOINT`. | forge-mcl `ForgeExec.cs:24-26`, `ForgeChat.cs` |
 | Project | Current-directory `forge.project.json` with stable `projectId`, declared mission/version references and relative folders. Missing file exits 1 before login/network. No creation or ancestor search. | `--project <folder>` is an explicit open-only folder override. | [Phase 64](../phases/phase-64-portable-chat-project.md) |
 | Mission and conversation | Plain selects declared `Chat@Version` / `NoHands`; `--hands` selects `ChatHands@Version` / `ProjectWorkspace` and asks fresh file consent every launch. Shared Client reconnects to the newest equivalent existing authenticated hosted pin; no match or ambiguous pin stops. No lock or authoring ledger is required. | No implicit starter creation, migration or terminal-access mode. | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
@@ -73,6 +73,9 @@ complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-h
 Current defaults passed installed acceptance on 2026-10-04: missing file, portable clone,
 full replay, projection rebuild/failure, line and Ghostty turns, scoped read and fresh refusal.
 See [Phase 64 observations](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance).
+The GitHub-built v0.9.1 ZIP path is verified by native extracted-payload checks on all three hosts,
+matching remote checksums and normal authenticated macOS hosted replay; see
+[Phase 65 release evidence](../phases/phase-65-cli-release-copy_completed.md#published-release).
 
 **Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
 reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop
