@@ -2,6 +2,9 @@
 
 Status: complete, 2026-10-04; copied workflow, native builds and published release verified.
 
+The release workflow design below is historical. [Phase 66](phase-66-simple-cli-release.md)
+owns its replacement with a simple automatic build-and-publish flow.
+
 ## Scope and source
 
 Copy the native CLI release behaviour from the historical
