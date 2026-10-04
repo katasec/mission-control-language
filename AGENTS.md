@@ -34,6 +34,10 @@ missions. Each component lives in its own repo — see the
 
 Do not restore source from any of those repos here or add sibling project references.
 
+**"Forge repos" means the repositories listed in [README.md — Where the code lives](README.md#where-the-code-lives).**
+Use that list as the scope for repo-wide requests such as status checks, reviews, and worktree
+cleanup. Do not expand the scope to every local repository or infer membership from a name prefix.
+
 ---
 
 ## How to orient at the start of a session
