@@ -150,8 +150,8 @@ dedicated test folder. Existing light/dark token suites must pass without new vi
 | Observation | Source |
 |---|---|
 | Existing API returns each account's Project chats, with full pinned package. | forge-platform `ConversationEndpoints`; Host `ConversationApiEndpoints.ListMissionConversationsAsync`; Contracts `MissionConversationSummary`/`DurableMissionLaunch`. |
-| Current chat selects newest match then replays from zero. | forge-mcl `ForgeChat.OpenConversationAsync`/`ChatAsync`; Client `MissionConversationService.ListAsync`. |
-| Ledger prerequisites are local Client dependencies. | `ProjectManifestFile.Read`, `ProjectService.ResolveApprovedLaunch`, `MissionConversationService`, `MissionHandsConversationService`. |
+| Current chat selects newest match then replays from zero. | forge-mcl `ForgeChat.ChatInProjectAsync` → Client `MissionConversationService.ReconnectAsync`; `ForgeChat.ChatAsync` replays. |
+| Historical authoring-ledger prerequisite discovery; portable chat bypasses it. | `ProjectManifestFile.Read`, `ProjectService.ResolveApprovedLaunch`, authored paths in `MissionConversationService` / `MissionHandsConversationService`. |
 
 Earlier mandatory mission-lock, cross-conversation message-sequence sorting and hard-coded
 profile-layout proposals are superseded by the locked requirements above. Sequence numbers
