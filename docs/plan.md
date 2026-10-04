@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Phase 66 is complete and verified; select the next work from [backlog](backlog.md). |
+| **NEXT STEP** | Phase 67 is complete and verified; select the next work from [backlog](backlog.md). |
 
 ## Active phases
 

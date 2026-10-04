@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 67 — Linux ARM64 CLI release](phases/phase-67-linux-arm64-release.md) | Fourth native CLI release target. | Complete 2026-10-04; [v0.9.3](https://github.com/katasec/forge-mcl/releases/tag/v0.9.3) published by a green workflow, eight assets/checksums verified; [evidence](phases/phase-67-linux-arm64-release_completed.md). |
 | [Phase 66 — Simple automatic CLI release](phases/phase-66-simple-cli-release.md) | Parallel native builds and automatic publication. | Complete 2026-10-04; [v0.9.2](https://github.com/katasec/forge-mcl/releases/tag/v0.9.2) published by a green workflow, six assets verified and v0.9.1 untouched; [evidence](phases/phase-66-simple-cli-release_completed.md). |
 | [Phase 65 — Copy the CLI release workflow](phases/phase-65-cli-release-copy.md) | Native CLI ZIPs for macOS ARM64, Linux x64 and Windows ARM64. | Complete 2026-10-04; [v0.9.1 published](https://github.com/katasec/forge-mcl/releases/tag/v0.9.1), native checks and upload-only recovery verified; [evidence](phases/phase-65-cli-release-copy_completed.md). |
 | [Phase 64 — Portable chat project](phases/phase-64-portable-chat-project.md) | Current-folder declaration, hosted reconnection and disposable profile history; fresh hands consent. | Complete 2026-10-04; Client 0.9.1, Contracts 0.2.0, CLI `dc35b99`; [tests and installed default-path acceptance passed](phases/phase-64.1-portable-chat-contracts_completed.md). |
