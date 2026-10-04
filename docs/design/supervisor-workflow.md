@@ -90,6 +90,12 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    | Codex | `codex exec --sandbox read-only "<assignment>"` |
    | Grok | `grok -p "<assignment>" --permission-mode plan` |
 
+   Launch all three from `~/progs` so every Forge repo is readable (`claude --add-dir` for each
+   repo, `codex -C ~/progs`, `grok --cwd ~/progs`). The assignment names each affected repo by
+   absolute path, from the [README repository list](../../README.md#where-the-code-lives).
+   Launch the CLIs through `pwsh`: provider keys are exported only in the operator's PowerShell
+   profile, so a CLI started from another shell cannot sign in.
+
    Then:
    - run one [simplicity reviewer](../../personas/simplicity-reviewer.md) over all candidates in
      parallel with its own reading;
