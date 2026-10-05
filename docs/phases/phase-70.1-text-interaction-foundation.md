@@ -1,6 +1,6 @@
 # Phase 70.1 — Text-interaction foundation
 
-**Status: source/controlled baseline recorded; product design next; manual live acceptance after implementation.**
+**Status: candidate foundation design recorded; reviews pending; no design/plan approval; manual live acceptance after implementation.**
 **Not build-ready.** Parent: [Phase 70](phase-70-tui-text-interaction.md).
 
 ## Requirement
@@ -39,6 +39,7 @@ clipboard/editor rewrite is outside the requested slice.
 | Editor range restoration | `SelectionStart`/`SelectionLength` are protected getters; public caret and payload access do not provide selection restoration. `CodeEditor` is sealed, so a composer subclass cannot solve the same menu-range contract for `/edit`. [Editor base](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorBase.cs#L339), [CodeEditor](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/CodeEditor.cs#L433). |
 | Clipboard transport | Terminal 2.2.0's sealed `TerminalClipboard` delegates `TrySetText`/`TryGetText` directly to its backend. Direct Forge calls receive a bool; subclassing cannot observe native library writes. [Pinned clipboard](https://github.com/XenoAtom/XenoAtom.Terminal/blob/5517cb3d8cdf0532ecc89260067064f98cde6137/src/XenoAtom.Terminal/TerminalClipboard.cs#L69). |
 
+The current published releases still match these pins — [release check](phase-70.1-text-interaction-foundation_completed.md#current-published-capabilities).
 These are source findings, not an approved extension contract or proof that every possible
 adapter is infeasible. Do not substitute a snippet-only or keyboard-only implementation for
 the foundation. A new public/library boundary still requires the reviewed contract and
@@ -71,6 +72,42 @@ pending until the operator records them; the phase cannot close on automated evi
 | Context-menu lifetime | Exact payload/range capture, focus restoration, cancelled-menu behaviour and document-version handling, using public APIs. `SelectionStart`/`SelectionLength` are protected, not public integration points. |
 | Honest results | Concrete way all owned Copy/Paste paths observe the bool result. Decide a narrow Forge adaptation or reviewed upstream extension; define types, signatures, ownership and Native AOT implications. No invented library APIs or new private access. |
 | Visual interaction | Binding revised reference for snippet icon/menu and feedback; exact placement, focus order, disappearance/reset rules, light/dark tokens and contrast pairs. |
+
+## Candidate foundation design — not approved
+
+The first designer proposes retaining native editors, selection, menus, buttons, TextMate
+rendering and clipboard transport, with one Forge policy for target selection and truthful
+clipboard feedback. This is a candidate, not an approved library contract or implementation plan.
+
+```mermaid
+flowchart LR
+    Input[Keyboard or native menu/button] --> Native[Native text owner]
+    Native --> Policy[Forge text-interaction policy]
+    Policy --> Clipboard[Terminal clipboard bool result]
+    Clipboard --> Feedback[Existing themed feedback]
+```
+
+| Concern | Candidate decision / unresolved readiness condition |
+|---|---|
+| Copy routing | Selected focused editor, then active rendered selection; consume the gesture even when extraction/write fails. No selection retains Stop. A proposed native app selection-copy callback would precede command dispatch and replace its currently unchecked write. No such public callback is established at UI 3.10.0. |
+| Menu lifetime | Capture target, payload, native directional range and document identity/version before opening a menu. Cancellation, Copy and failed Paste restore the same target/range; changed or detached targets reject restoration. Successful nonempty Paste uses native insertion/undo. The required public range capture/restore API is proposed, not available at the pinned baseline. |
+| Paste | Explicit read; failure preserves text/range, successful empty text is a no-op. Existing `ClipboardPasteHandler` can transform or suppress native insertion; its context lacks the original clipboard bool and does not restore ranges. Design revision must evaluate this reuse, name actual APIs and cover keyboard Paste as well as menu Paste. |
+| Native API proposal | `SelectionCopyHandler(TerminalApp app, Visual source, ISelectionOwner selection)` on app/run options; `TextEditorBase.CaptureSelection()` and `TryRestoreSelection(TextEditorSelectionSnapshot)` with an immutable native-owned snapshot. These names describe a proposal only; constructor/data validity, delivery and lifecycle contracts are not locked. |
+| Snippets | Native focusable Copy code button in a reserved header row within the existing frame; code remains below with existing styling. Copy immutable full `context.Code`, including trailing newlines. Retired visuals cannot activate another snippet's action. Exclude image-heading pseudo-fences. |
+| Feedback and visuals | Existing `ForgeTheme`/`ForgeStyles` tokens; Copy code, Copied and Copy failed states. Composer/editor use existing hint/message areas. Binding before/after references, placement, reset rules, focus/menu states and both themes must be recorded and reviewed before approval. |
+| Verification | Native controlled event tests for no-click selection, real Copy/Stop routing, failed reads/writes, range/menu lifetime, exact snippet payload and stale actions; full suite and Native AOT. Operator performs the installed Retina/default-path checks under the parent exception. No new live observation is claimed. |
+| Ownership and security | CLI owns local interaction policy and feedback; native library owns editing/selection mechanics and clipboard transport. Hosted tiers/stores/identities N/A; explicit Paste only, no payload logging or automatic model submission. Library/package ownership remains unresolved. |
+
+Rejected: merely restoring Copy commands (pre-command interception still discards failure),
+backend decoration alone (does not restore native ranges), private reflection, input simulation,
+a replacement editor, an assumed fork, and a snippet-only substitute. These rejections do not
+prove that every supported Forge adaptation is infeasible.
+
+Current official releases were checked; no newer published capability closes the gaps above.
+Fresh simplicity and ownership reviews must resolve or retain all open
+contracts above. If a new public/package boundary is still required, the operator must choose its
+owner through the parent hub's Type-1 gate; existing Forge publication authority does not grant
+upstream writes or authorize a fork. No implementation handoff occurs while this remains open.
 
 ## Files and tests to inspect
 
@@ -115,7 +152,7 @@ Reconfirm dependency versions and owning repository instructions before design.
 |---|---|---|
 | 1. Source/library/CodeAlta discovery | Done — [evidence](phase-70.1-text-interaction-foundation_completed.md#discovery-results). | Pinned source and controlled observations distinguish native capability, Forge wiring defects, and library gaps. |
 | 2. Installed Retina reproduction | Agent path blocked; prerequisite superseded by the parent exception. Manual observations move to Task 6. | No live PASS claimed; recorded controlled baseline is available to the designer. Physical delivery, focus/highlight and clipboard round-trip remain manual acceptance cases. |
-| 3. Product design and review | Next; live-before-design dependency removed, design/API gaps still open. | Fresh designer; simplicity and ownership reviews; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
+| 3. Product design and review | Candidate recorded; release check done, fresh simplicity/ownership reviews pending. Design/API/visual gaps remain open. | Fresh designer; simplicity and ownership reviews; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
 | 4. Implementation plan and review | Pending after design approval. | Fresh plan author; simplicity and ownership reviews; supervisor explicitly approves bounded changes, meaningful interaction tests and AOT checks. |
 | 5. Implementation and review | Pending after plan approval. | Fresh implementer; positive/negative interaction evidence including failed clipboard writes; independent simplicity/ownership/style review; no product task marked complete by implementer. |
 | 6. Merge, install, accept, close | Pending after checks pass; operator performs live acceptance. | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |

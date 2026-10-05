@@ -1,8 +1,8 @@
 # Phase 70 — TUI text interaction
 
-**Status: discovery recorded; product design and implementation pending. Not build-ready.**
-**Next:** run foundation product design through the supervisor workflow using the recorded
-source/controlled baseline. The operator will manually verify the installed result on laptop
+**Status: foundation design candidate recorded; design approval and implementation pending. Not build-ready.**
+**Next:** review the foundation candidate and resolve its public contracts through the
+supervisor workflow. The operator will manually verify the installed result on laptop
 Retina after implementation; the agent's Ghostty access remains denied.
 
 ## Outcome and scope
@@ -26,7 +26,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Source/controlled discovery recorded; design next, manual live acceptance pending implementation. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Candidate and current-release check recorded; design reviews next, manual live acceptance pending implementation. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Builds on the approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
