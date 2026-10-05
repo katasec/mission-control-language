@@ -1,0 +1,866 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="2940" viewBox="0 0 1720 2940"><style>text{font-family:ui-monospace,Menlo,monospace}</style>
+<rect x="0" y="0" width="1720" height="2940" rx="0" fill="#F7F8FE"/>
+<text x="30" y="32" font-size="22" fill="#101D34" font-weight="700">Phase 70.1 · light · proposed foundation state reference</text>
+<text x="30" y="58" font-size="15" fill="#101D34" font-weight="400">Synthetic 10×20 cells. Owned slices only; no live terminal or Retina PASS. Current ForgeTheme and exact csharp runs.</text>
+<text x="30" y="88" font-size="16" fill="#101D34" font-weight="700">Before · 100×32</text>
+<svg x="30" y="100" width="1000" height="640" viewBox="0 0 1000 640">
+<rect x="0" y="0" width="1000" height="640" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="100" y="160" width="800" height="100" rx="10" fill="#F7F8FE" stroke="#E7ECF4"/>
+<text x="140" y="216" font-size="16" fill="#0000FF" font-weight="400">v</text>
+<text x="150" y="216" font-size="16" fill="#0000FF" font-weight="400">a</text>
+<text x="160" y="216" font-size="16" fill="#0000FF" font-weight="400">r</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="180" y="216" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="190" y="216" font-size="16" fill="#001080" font-weight="400">r</text>
+<text x="200" y="216" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="216" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#001080" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#001080" font-weight="400">i</text>
+<text x="240" y="216" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="250" y="216" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="260" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="216" font-size="16" fill="#101D34" font-weight="400">=</text>
+<text x="280" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="290" y="216" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="300" y="216" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="310" y="216" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="320" y="216" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="330" y="216" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="340" y="216" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="350" y="216" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="360" y="216" font-size="16" fill="#101D34" font-weight="400">;</text>
+<text x="140" y="236" font-size="16" fill="#001080" font-weight="400">C</text>
+<text x="150" y="236" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="160" y="236" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="170" y="236" font-size="16" fill="#001080" font-weight="400">s</text>
+<text x="180" y="236" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="190" y="236" font-size="16" fill="#001080" font-weight="400">l</text>
+<text x="200" y="236" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="236" font-size="16" fill="#101D34" font-weight="400">.</text>
+<text x="220" y="236" font-size="16" fill="#795E26" font-weight="400">W</text>
+<text x="230" y="236" font-size="16" fill="#795E26" font-weight="400">r</text>
+<text x="240" y="236" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="250" y="236" font-size="16" fill="#795E26" font-weight="400">t</text>
+<text x="260" y="236" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="270" y="236" font-size="16" fill="#795E26" font-weight="400">L</text>
+<text x="280" y="236" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="290" y="236" font-size="16" fill="#795E26" font-weight="400">n</text>
+<text x="300" y="236" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="310" y="236" font-size="16" fill="#101D34" font-weight="400">(</text>
+<text x="320" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="330" y="236" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="340" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="350" y="236" font-size="16" fill="#A31515" font-weight="400">s</text>
+<text x="360" y="236" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="370" y="236" font-size="16" fill="#A31515" font-weight="400">m</text>
+<text x="380" y="236" font-size="16" fill="#A31515" font-weight="400">p</text>
+<text x="390" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="400" y="236" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="410" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="420" y="236" font-size="16" fill="#A31515" font-weight="400">w</text>
+<text x="430" y="236" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="440" y="236" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="450" y="236" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="460" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="470" y="236" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="480" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="490" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="500" y="236" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="510" y="236" font-size="16" fill="#A31515" font-weight="400">n</text>
+<text x="520" y="236" font-size="16" fill="#A31515" font-weight="400">g</text>
+<text x="530" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="540" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="550" y="236" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="560" y="236" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="570" y="236" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="580" y="236" font-size="16" fill="#A31515" font-weight="400">r</text>
+<text x="590" y="236" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="600" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="610" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="620" y="236" font-size="16" fill="#101D34" font-weight="400">)</text>
+<text x="630" y="236" font-size="16" fill="#101D34" font-weight="400">;</text>
+</svg>
+<text x="30" y="788" font-size="16" fill="#101D34" font-weight="700">After · 100×32 · header adds one row</text>
+<svg x="30" y="800" width="1000" height="640" viewBox="0 0 1000 640">
+<rect x="0" y="0" width="1000" height="640" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="100" y="160" width="800" height="120" rx="10" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="710" y="200" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="720" y="216" font-size="16" fill="#101D34" font-weight="400">⧉</text>
+<text x="730" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="740" y="216" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="750" y="216" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="760" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="770" y="216" font-size="16" fill="#101D34" font-weight="400">y</text>
+<text x="780" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="790" y="216" font-size="16" fill="#101D34" font-weight="400">c</text>
+<text x="800" y="216" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="810" y="216" font-size="16" fill="#101D34" font-weight="400">d</text>
+<text x="820" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="140" y="236" font-size="16" fill="#0000FF" font-weight="400">v</text>
+<text x="150" y="236" font-size="16" fill="#0000FF" font-weight="400">a</text>
+<text x="160" y="236" font-size="16" fill="#0000FF" font-weight="400">r</text>
+<text x="170" y="236" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="180" y="236" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="190" y="236" font-size="16" fill="#001080" font-weight="400">r</text>
+<text x="200" y="236" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="236" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="220" y="236" font-size="16" fill="#001080" font-weight="400">t</text>
+<text x="230" y="236" font-size="16" fill="#001080" font-weight="400">i</text>
+<text x="240" y="236" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="250" y="236" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="260" y="236" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="236" font-size="16" fill="#101D34" font-weight="400">=</text>
+<text x="280" y="236" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="290" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="300" y="236" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="310" y="236" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="320" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="330" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="340" y="236" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="350" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="360" y="236" font-size="16" fill="#101D34" font-weight="400">;</text>
+<text x="140" y="256" font-size="16" fill="#001080" font-weight="400">C</text>
+<text x="150" y="256" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="160" y="256" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="170" y="256" font-size="16" fill="#001080" font-weight="400">s</text>
+<text x="180" y="256" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="190" y="256" font-size="16" fill="#001080" font-weight="400">l</text>
+<text x="200" y="256" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="256" font-size="16" fill="#101D34" font-weight="400">.</text>
+<text x="220" y="256" font-size="16" fill="#795E26" font-weight="400">W</text>
+<text x="230" y="256" font-size="16" fill="#795E26" font-weight="400">r</text>
+<text x="240" y="256" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="250" y="256" font-size="16" fill="#795E26" font-weight="400">t</text>
+<text x="260" y="256" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="270" y="256" font-size="16" fill="#795E26" font-weight="400">L</text>
+<text x="280" y="256" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="290" y="256" font-size="16" fill="#795E26" font-weight="400">n</text>
+<text x="300" y="256" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="310" y="256" font-size="16" fill="#101D34" font-weight="400">(</text>
+<text x="320" y="256" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="330" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="340" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="350" y="256" font-size="16" fill="#A31515" font-weight="400">s</text>
+<text x="360" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="370" y="256" font-size="16" fill="#A31515" font-weight="400">m</text>
+<text x="380" y="256" font-size="16" fill="#A31515" font-weight="400">p</text>
+<text x="390" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="400" y="256" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="410" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="420" y="256" font-size="16" fill="#A31515" font-weight="400">w</text>
+<text x="430" y="256" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="440" y="256" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="450" y="256" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="460" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="470" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="480" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="490" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="500" y="256" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="510" y="256" font-size="16" fill="#A31515" font-weight="400">n</text>
+<text x="520" y="256" font-size="16" fill="#A31515" font-weight="400">g</text>
+<text x="530" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="540" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="550" y="256" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="560" y="256" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="570" y="256" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="580" y="256" font-size="16" fill="#A31515" font-weight="400">r</text>
+<text x="590" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="600" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="610" y="256" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="620" y="256" font-size="16" fill="#101D34" font-weight="400">)</text>
+<text x="630" y="256" font-size="16" fill="#101D34" font-weight="400">;</text>
+</svg>
+<text x="30" y="1488" font-size="16" fill="#101D34" font-weight="700">Editor menu · 100×32 · backwards beta range</text>
+<svg x="30" y="1500" width="1000" height="640" viewBox="0 0 1000 640">
+<rect x="0" y="0" width="1000" height="640" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="200" y="200" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="200" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<rect x="180" y="240" width="170" height="120" rx="4" fill="#F1F4FB" stroke="#D5DAE5"/>
+<rect x="200" y="280" width="130" height="20" rx="0" fill="#DBE7FB"/>
+<text x="200" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="210" y="296" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="220" y="296" font-size="16" fill="#101D34" font-weight="700">p</text>
+<text x="230" y="296" font-size="16" fill="#101D34" font-weight="700">y</text>
+<text x="240" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="250" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="260" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="270" y="296" font-size="16" fill="#101D34" font-weight="700">t</text>
+<text x="280" y="296" font-size="16" fill="#101D34" font-weight="700">r</text>
+<text x="290" y="296" font-size="16" fill="#101D34" font-weight="700">l</text>
+<text x="300" y="296" font-size="16" fill="#101D34" font-weight="700">+</text>
+<text x="310" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="200" y="316" font-size="16" fill="#101D34" font-weight="400">P</text>
+<text x="210" y="316" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="220" y="316" font-size="16" fill="#101D34" font-weight="400">s</text>
+<text x="230" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="240" y="316" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="250" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="260" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="316" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="280" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="290" y="316" font-size="16" fill="#101D34" font-weight="400">r</text>
+<text x="300" y="316" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="310" y="316" font-size="16" fill="#101D34" font-weight="400">+</text>
+<text x="320" y="316" font-size="16" fill="#101D34" font-weight="400">V</text>
+</svg>
+<text x="1070" y="88" font-size="16" fill="#101D34" font-weight="700">Before · 60×24</text>
+<svg x="1070" y="100" width="600" height="480" viewBox="0 0 600 480">
+<rect x="0" y="0" width="600" height="480" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="100" y="160" width="400" height="120" rx="10" fill="#F7F8FE" stroke="#E7ECF4"/>
+<text x="140" y="216" font-size="16" fill="#0000FF" font-weight="400">v</text>
+<text x="150" y="216" font-size="16" fill="#0000FF" font-weight="400">a</text>
+<text x="160" y="216" font-size="16" fill="#0000FF" font-weight="400">r</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="180" y="216" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="190" y="216" font-size="16" fill="#001080" font-weight="400">r</text>
+<text x="200" y="216" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="216" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#001080" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#001080" font-weight="400">i</text>
+<text x="240" y="216" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="250" y="216" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="260" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="216" font-size="16" fill="#101D34" font-weight="400">=</text>
+<text x="280" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="290" y="216" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="300" y="216" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="310" y="216" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="320" y="216" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="330" y="216" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="340" y="216" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="350" y="216" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="360" y="216" font-size="16" fill="#101D34" font-weight="400">;</text>
+<text x="140" y="236" font-size="16" fill="#001080" font-weight="400">C</text>
+<text x="150" y="236" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="160" y="236" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="170" y="236" font-size="16" fill="#001080" font-weight="400">s</text>
+<text x="180" y="236" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="190" y="236" font-size="16" fill="#001080" font-weight="400">l</text>
+<text x="200" y="236" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="236" font-size="16" fill="#101D34" font-weight="400">.</text>
+<text x="220" y="236" font-size="16" fill="#795E26" font-weight="400">W</text>
+<text x="230" y="236" font-size="16" fill="#795E26" font-weight="400">r</text>
+<text x="240" y="236" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="250" y="236" font-size="16" fill="#795E26" font-weight="400">t</text>
+<text x="260" y="236" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="270" y="236" font-size="16" fill="#795E26" font-weight="400">L</text>
+<text x="280" y="236" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="290" y="236" font-size="16" fill="#795E26" font-weight="400">n</text>
+<text x="300" y="236" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="310" y="236" font-size="16" fill="#101D34" font-weight="400">(</text>
+<text x="320" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="330" y="236" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="340" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="350" y="236" font-size="16" fill="#A31515" font-weight="400">s</text>
+<text x="360" y="236" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="370" y="236" font-size="16" fill="#A31515" font-weight="400">m</text>
+<text x="380" y="236" font-size="16" fill="#A31515" font-weight="400">p</text>
+<text x="390" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="400" y="236" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="410" y="236" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="420" y="236" font-size="16" fill="#A31515" font-weight="400">w</text>
+<text x="430" y="236" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="440" y="236" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="450" y="236" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="140" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="150" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="160" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="170" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="180" y="256" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="190" y="256" font-size="16" fill="#A31515" font-weight="400">n</text>
+<text x="200" y="256" font-size="16" fill="#A31515" font-weight="400">g</text>
+<text x="210" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="220" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="230" y="256" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="240" y="256" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="250" y="256" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="260" y="256" font-size="16" fill="#A31515" font-weight="400">r</text>
+<text x="270" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="280" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="290" y="256" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="300" y="256" font-size="16" fill="#101D34" font-weight="400">)</text>
+<text x="310" y="256" font-size="16" fill="#101D34" font-weight="400">;</text>
+</svg>
+<text x="1070" y="788" font-size="16" fill="#101D34" font-weight="700">After · 60×24 · header adds one row</text>
+<svg x="1070" y="800" width="600" height="480" viewBox="0 0 600 480">
+<rect x="0" y="0" width="600" height="480" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="100" y="160" width="400" height="140" rx="10" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="310" y="200" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="320" y="216" font-size="16" fill="#101D34" font-weight="400">⧉</text>
+<text x="330" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="340" y="216" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="350" y="216" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="360" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="370" y="216" font-size="16" fill="#101D34" font-weight="400">y</text>
+<text x="380" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="390" y="216" font-size="16" fill="#101D34" font-weight="400">c</text>
+<text x="400" y="216" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="410" y="216" font-size="16" fill="#101D34" font-weight="400">d</text>
+<text x="420" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="140" y="236" font-size="16" fill="#0000FF" font-weight="400">v</text>
+<text x="150" y="236" font-size="16" fill="#0000FF" font-weight="400">a</text>
+<text x="160" y="236" font-size="16" fill="#0000FF" font-weight="400">r</text>
+<text x="170" y="236" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="180" y="236" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="190" y="236" font-size="16" fill="#001080" font-weight="400">r</text>
+<text x="200" y="236" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="236" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="220" y="236" font-size="16" fill="#001080" font-weight="400">t</text>
+<text x="230" y="236" font-size="16" fill="#001080" font-weight="400">i</text>
+<text x="240" y="236" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="250" y="236" font-size="16" fill="#001080" font-weight="400">g</text>
+<text x="260" y="236" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="236" font-size="16" fill="#101D34" font-weight="400">=</text>
+<text x="280" y="236" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="290" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="300" y="236" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="310" y="236" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="320" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="330" y="236" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="340" y="236" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="350" y="236" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="360" y="236" font-size="16" fill="#101D34" font-weight="400">;</text>
+<text x="140" y="256" font-size="16" fill="#001080" font-weight="400">C</text>
+<text x="150" y="256" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="160" y="256" font-size="16" fill="#001080" font-weight="400">n</text>
+<text x="170" y="256" font-size="16" fill="#001080" font-weight="400">s</text>
+<text x="180" y="256" font-size="16" fill="#001080" font-weight="400">o</text>
+<text x="190" y="256" font-size="16" fill="#001080" font-weight="400">l</text>
+<text x="200" y="256" font-size="16" fill="#001080" font-weight="400">e</text>
+<text x="210" y="256" font-size="16" fill="#101D34" font-weight="400">.</text>
+<text x="220" y="256" font-size="16" fill="#795E26" font-weight="400">W</text>
+<text x="230" y="256" font-size="16" fill="#795E26" font-weight="400">r</text>
+<text x="240" y="256" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="250" y="256" font-size="16" fill="#795E26" font-weight="400">t</text>
+<text x="260" y="256" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="270" y="256" font-size="16" fill="#795E26" font-weight="400">L</text>
+<text x="280" y="256" font-size="16" fill="#795E26" font-weight="400">i</text>
+<text x="290" y="256" font-size="16" fill="#795E26" font-weight="400">n</text>
+<text x="300" y="256" font-size="16" fill="#795E26" font-weight="400">e</text>
+<text x="310" y="256" font-size="16" fill="#101D34" font-weight="400">(</text>
+<text x="320" y="256" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="330" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="340" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="350" y="256" font-size="16" fill="#A31515" font-weight="400">s</text>
+<text x="360" y="256" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="370" y="256" font-size="16" fill="#A31515" font-weight="400">m</text>
+<text x="380" y="256" font-size="16" fill="#A31515" font-weight="400">p</text>
+<text x="390" y="256" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="400" y="256" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="410" y="256" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="420" y="256" font-size="16" fill="#A31515" font-weight="400">w</text>
+<text x="430" y="256" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="440" y="256" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="450" y="256" font-size="16" fill="#A31515" font-weight="400">h</text>
+<text x="140" y="276" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="150" y="276" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="160" y="276" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="170" y="276" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="180" y="276" font-size="16" fill="#A31515" font-weight="400">o</text>
+<text x="190" y="276" font-size="16" fill="#A31515" font-weight="400">n</text>
+<text x="200" y="276" font-size="16" fill="#A31515" font-weight="400">g</text>
+<text x="210" y="276" font-size="16" fill="#A31515" font-weight="400"> </text>
+<text x="220" y="276" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="230" y="276" font-size="16" fill="#A31515" font-weight="400">i</text>
+<text x="240" y="276" font-size="16" fill="#A31515" font-weight="400">t</text>
+<text x="250" y="276" font-size="16" fill="#A31515" font-weight="400">e</text>
+<text x="260" y="276" font-size="16" fill="#A31515" font-weight="400">r</text>
+<text x="270" y="276" font-size="16" fill="#A31515" font-weight="400">a</text>
+<text x="280" y="276" font-size="16" fill="#A31515" font-weight="400">l</text>
+<text x="290" y="276" font-size="16" fill="#A31515" font-weight="400">&quot;</text>
+<text x="300" y="276" font-size="16" fill="#101D34" font-weight="400">)</text>
+<text x="310" y="276" font-size="16" fill="#101D34" font-weight="400">;</text>
+</svg>
+<text x="1070" y="1488" font-size="16" fill="#101D34" font-weight="700">Editor menu · 60×24 · backwards beta range</text>
+<svg x="1070" y="1500" width="600" height="480" viewBox="0 0 600 480">
+<rect x="0" y="0" width="600" height="480" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="200" y="200" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="200" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<rect x="180" y="240" width="170" height="120" rx="4" fill="#F1F4FB" stroke="#D5DAE5"/>
+<rect x="200" y="280" width="130" height="20" rx="0" fill="#DBE7FB"/>
+<text x="200" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="210" y="296" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="220" y="296" font-size="16" fill="#101D34" font-weight="700">p</text>
+<text x="230" y="296" font-size="16" fill="#101D34" font-weight="700">y</text>
+<text x="240" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="250" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="260" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="270" y="296" font-size="16" fill="#101D34" font-weight="700">t</text>
+<text x="280" y="296" font-size="16" fill="#101D34" font-weight="700">r</text>
+<text x="290" y="296" font-size="16" fill="#101D34" font-weight="700">l</text>
+<text x="300" y="296" font-size="16" fill="#101D34" font-weight="700">+</text>
+<text x="310" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="200" y="316" font-size="16" fill="#101D34" font-weight="400">P</text>
+<text x="210" y="316" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="220" y="316" font-size="16" fill="#101D34" font-weight="400">s</text>
+<text x="230" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="240" y="316" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="250" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="260" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="316" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="280" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="290" y="316" font-size="16" fill="#101D34" font-weight="400">r</text>
+<text x="300" y="316" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="310" y="316" font-size="16" fill="#101D34" font-weight="400">+</text>
+<text x="320" y="316" font-size="16" fill="#101D34" font-weight="400">V</text>
+</svg>
+<text x="30" y="2190" font-size="16" fill="#101D34" font-weight="700">Native snippet Button · 15 cells · labels below are gallery annotations</text>
+<text x="30" y="2220" font-size="14" fill="#101D34" font-weight="400">idle</text>
+<g transform="translate(30 2228)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#101D34" font-weight="400">⧉</text>
+<text x="20" y="16" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="30" y="16" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="40" y="16" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="50" y="16" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="60" y="16" font-size="16" fill="#101D34" font-weight="400">y</text>
+<text x="70" y="16" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="80" y="16" font-size="16" fill="#101D34" font-weight="400">c</text>
+<text x="90" y="16" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="400">d</text>
+<text x="110" y="16" font-size="16" fill="#101D34" font-weight="400">e</text>
+</g>
+<text x="360" y="2220" font-size="14" fill="#101D34" font-weight="400">hover</text>
+<g transform="translate(360 2228)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#101D34" font-weight="700">⧉</text>
+<text x="20" y="16" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="30" y="16" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="40" y="16" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="50" y="16" font-size="16" fill="#101D34" font-weight="700">p</text>
+<text x="60" y="16" font-size="16" fill="#101D34" font-weight="700">y</text>
+<text x="70" y="16" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="80" y="16" font-size="16" fill="#101D34" font-weight="700">c</text>
+<text x="90" y="16" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="700">d</text>
+<text x="110" y="16" font-size="16" fill="#101D34" font-weight="700">e</text>
+</g>
+<text x="690" y="2220" font-size="14" fill="#101D34" font-weight="400">focus</text>
+<g transform="translate(690 2228)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">⧉</text>
+<text x="20" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline"> </text>
+<text x="30" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">C</text>
+<text x="40" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">o</text>
+<text x="50" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">p</text>
+<text x="60" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">y</text>
+<text x="70" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline"> </text>
+<text x="80" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">c</text>
+<text x="90" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">o</text>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">d</text>
+<text x="110" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">e</text>
+</g>
+<text x="1020" y="2220" font-size="14" fill="#101D34" font-weight="400">focus-hover</text>
+<g transform="translate(1020 2228)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">⧉</text>
+<text x="20" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline"> </text>
+<text x="30" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">C</text>
+<text x="40" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">o</text>
+<text x="50" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">p</text>
+<text x="60" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">y</text>
+<text x="70" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline"> </text>
+<text x="80" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">c</text>
+<text x="90" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">o</text>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">d</text>
+<text x="110" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">e</text>
+</g>
+<text x="1350" y="2220" font-size="14" fill="#101D34" font-weight="400">pressed</text>
+<g transform="translate(1350 2228)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#DBE7FB"/>
+<text x="10" y="16" font-size="16" fill="#101D34" font-weight="700">⧉</text>
+<text x="20" y="16" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="30" y="16" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="40" y="16" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="50" y="16" font-size="16" fill="#101D34" font-weight="700">p</text>
+<text x="60" y="16" font-size="16" fill="#101D34" font-weight="700">y</text>
+<text x="70" y="16" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="80" y="16" font-size="16" fill="#101D34" font-weight="700">c</text>
+<text x="90" y="16" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="700">d</text>
+<text x="110" y="16" font-size="16" fill="#101D34" font-weight="700">e</text>
+</g>
+<text x="30" y="2300" font-size="14" fill="#101D34" font-weight="400">focus-pressed</text>
+<g transform="translate(30 2308)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#DBE7FB"/>
+<text x="10" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">⧉</text>
+<text x="20" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline"> </text>
+<text x="30" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">C</text>
+<text x="40" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">o</text>
+<text x="50" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">p</text>
+<text x="60" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">y</text>
+<text x="70" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline"> </text>
+<text x="80" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">c</text>
+<text x="90" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">o</text>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">d</text>
+<text x="110" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">e</text>
+</g>
+<text x="360" y="2300" font-size="14" fill="#101D34" font-weight="400">copied</text>
+<g transform="translate(360 2308)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">✓</text>
+<text x="20" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline"> </text>
+<text x="30" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">C</text>
+<text x="40" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">o</text>
+<text x="50" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">p</text>
+<text x="60" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">i</text>
+<text x="70" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">e</text>
+<text x="80" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">d</text>
+</g>
+<text x="690" y="2300" font-size="14" fill="#101D34" font-weight="400">failed</text>
+<g transform="translate(690 2308)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">!</text>
+<text x="20" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline"> </text>
+<text x="30" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">C</text>
+<text x="40" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">o</text>
+<text x="50" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">p</text>
+<text x="60" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">y</text>
+<text x="70" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline"> </text>
+<text x="80" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">f</text>
+<text x="90" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">a</text>
+<text x="100" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">i</text>
+<text x="110" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">l</text>
+<text x="120" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">e</text>
+<text x="130" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">d</text>
+</g>
+<text x="1020" y="2300" font-size="14" fill="#101D34" font-weight="400">disabled</text>
+<g transform="translate(1020 2308)">
+<rect x="0" y="0" width="150" height="20" rx="0" fill="#F7F8FE"/>
+<text x="10" y="16" font-size="16" fill="#63748C" font-weight="400">⧉</text>
+<text x="20" y="16" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="30" y="16" font-size="16" fill="#63748C" font-weight="400">C</text>
+<text x="40" y="16" font-size="16" fill="#63748C" font-weight="400">o</text>
+<text x="50" y="16" font-size="16" fill="#63748C" font-weight="400">p</text>
+<text x="60" y="16" font-size="16" fill="#63748C" font-weight="400">y</text>
+<text x="70" y="16" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="80" y="16" font-size="16" fill="#63748C" font-weight="400">c</text>
+<text x="90" y="16" font-size="16" fill="#63748C" font-weight="400">o</text>
+<text x="100" y="16" font-size="16" fill="#63748C" font-weight="400">d</text>
+<text x="110" y="16" font-size="16" fill="#63748C" font-weight="400">e</text>
+</g>
+<text x="30" y="2400" font-size="16" fill="#101D34" font-weight="700">12-cell icon-only header · same 3-cell button; widths 1–2 clip to available cells, width 0 has no hit area</text>
+<text x="30" y="2430" font-size="14" fill="#101D34" font-weight="400">idle</text>
+<g transform="translate(30 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#F7F8FE"/>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="400">⧉</text>
+</g>
+<text x="30" y="2490" font-size="13" fill="#101D34" font-weight="400">Copy code</text>
+<text x="265" y="2430" font-size="14" fill="#101D34" font-weight="400">focus</text>
+<g transform="translate(265 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#F7F8FE"/>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="400" text-decoration="underline">⧉</text>
+</g>
+<text x="265" y="2490" font-size="13" fill="#101D34" font-weight="400">Copy code</text>
+<text x="500" y="2430" font-size="14" fill="#101D34" font-weight="400">pressed</text>
+<g transform="translate(500 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#DBE7FB"/>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="700">⧉</text>
+</g>
+<text x="500" y="2490" font-size="13" fill="#101D34" font-weight="400">Copy code</text>
+<text x="735" y="2430" font-size="14" fill="#101D34" font-weight="400">focus-pressed</text>
+<g transform="translate(735 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#DBE7FB"/>
+<text x="100" y="16" font-size="16" fill="#101D34" font-weight="700" text-decoration="underline">⧉</text>
+</g>
+<text x="735" y="2490" font-size="13" fill="#101D34" font-weight="400">Copy code</text>
+<text x="970" y="2430" font-size="14" fill="#101D34" font-weight="400">copied</text>
+<g transform="translate(970 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#F7F8FE"/>
+<text x="100" y="16" font-size="16" fill="#4E7C0F" font-weight="400" text-decoration="underline">✓</text>
+</g>
+<text x="970" y="2490" font-size="13" fill="#101D34" font-weight="400">Copied</text>
+<text x="1205" y="2430" font-size="14" fill="#101D34" font-weight="400">failed</text>
+<g transform="translate(1205 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#F7F8FE"/>
+<text x="100" y="16" font-size="16" fill="#B91C1C" font-weight="400" text-decoration="underline">!</text>
+</g>
+<text x="1205" y="2490" font-size="13" fill="#101D34" font-weight="400">Copy failed</text>
+<text x="1440" y="2430" font-size="14" fill="#101D34" font-weight="400">disabled</text>
+<g transform="translate(1440 2445)">
+<rect x="0" y="0" width="120" height="20" rx="0" fill="#F7F8FE" stroke="#E7ECF4"/>
+<rect x="90" y="0" width="30" height="20" rx="0" fill="#F7F8FE"/>
+<text x="100" y="16" font-size="16" fill="#63748C" font-weight="400">⧉</text>
+</g>
+<text x="1440" y="2490" font-size="13" fill="#101D34" font-weight="400">Copy code</text>
+<text x="30" y="2530" font-size="16" fill="#101D34" font-weight="700">Menu states · native border + padding, each 1 cell; exact Copy/Paste command set</text>
+<text x="30" y="2560" font-size="14" fill="#101D34" font-weight="400">Before / closed</text>
+<svg x="30" y="2570" width="300" height="170" viewBox="130 195 300 170">
+<rect x="200" y="200" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="200" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+</svg>
+<text x="360" y="2560" font-size="14" fill="#101D34" font-weight="400">Copy selected</text>
+<svg x="360" y="2570" width="300" height="170" viewBox="130 195 300 170">
+<rect x="200" y="200" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="200" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<rect x="180" y="240" width="170" height="120" rx="4" fill="#F1F4FB" stroke="#D5DAE5"/>
+<rect x="200" y="280" width="130" height="20" rx="0" fill="#DBE7FB"/>
+<text x="200" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="210" y="296" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="220" y="296" font-size="16" fill="#101D34" font-weight="700">p</text>
+<text x="230" y="296" font-size="16" fill="#101D34" font-weight="700">y</text>
+<text x="240" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="250" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="260" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="270" y="296" font-size="16" fill="#101D34" font-weight="700">t</text>
+<text x="280" y="296" font-size="16" fill="#101D34" font-weight="700">r</text>
+<text x="290" y="296" font-size="16" fill="#101D34" font-weight="700">l</text>
+<text x="300" y="296" font-size="16" fill="#101D34" font-weight="700">+</text>
+<text x="310" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="200" y="316" font-size="16" fill="#101D34" font-weight="400">P</text>
+<text x="210" y="316" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="220" y="316" font-size="16" fill="#101D34" font-weight="400">s</text>
+<text x="230" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="240" y="316" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="250" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="260" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="316" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="280" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="290" y="316" font-size="16" fill="#101D34" font-weight="400">r</text>
+<text x="300" y="316" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="310" y="316" font-size="16" fill="#101D34" font-weight="400">+</text>
+<text x="320" y="316" font-size="16" fill="#101D34" font-weight="400">V</text>
+</svg>
+<text x="690" y="2560" font-size="14" fill="#101D34" font-weight="400">Paste hovered</text>
+<svg x="690" y="2570" width="300" height="170" viewBox="130 195 300 170">
+<rect x="200" y="200" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="200" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<rect x="180" y="240" width="170" height="120" rx="4" fill="#F1F4FB" stroke="#D5DAE5"/>
+<rect x="200" y="300" width="130" height="20" rx="0" fill="#F1F4FB"/>
+<text x="200" y="296" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="210" y="296" font-size="16" fill="#101D34" font-weight="400">o</text>
+<text x="220" y="296" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="230" y="296" font-size="16" fill="#101D34" font-weight="400">y</text>
+<text x="240" y="296" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="250" y="296" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="260" y="296" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="270" y="296" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="280" y="296" font-size="16" fill="#101D34" font-weight="400">r</text>
+<text x="290" y="296" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="300" y="296" font-size="16" fill="#101D34" font-weight="400">+</text>
+<text x="310" y="296" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="200" y="316" font-size="16" fill="#101D34" font-weight="700">P</text>
+<text x="210" y="316" font-size="16" fill="#101D34" font-weight="700">a</text>
+<text x="220" y="316" font-size="16" fill="#101D34" font-weight="700">s</text>
+<text x="230" y="316" font-size="16" fill="#101D34" font-weight="700">t</text>
+<text x="240" y="316" font-size="16" fill="#101D34" font-weight="700">e</text>
+<text x="250" y="316" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="260" y="316" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="270" y="316" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="280" y="316" font-size="16" fill="#101D34" font-weight="700">t</text>
+<text x="290" y="316" font-size="16" fill="#101D34" font-weight="700">r</text>
+<text x="300" y="316" font-size="16" fill="#101D34" font-weight="700">l</text>
+<text x="310" y="316" font-size="16" fill="#101D34" font-weight="700">+</text>
+<text x="320" y="316" font-size="16" fill="#101D34" font-weight="700">V</text>
+</svg>
+<text x="1020" y="2560" font-size="14" fill="#101D34" font-weight="400">Copy disabled</text>
+<svg x="1020" y="2570" width="300" height="170" viewBox="130 195 300 170">
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="240" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<rect x="180" y="240" width="170" height="120" rx="4" fill="#F1F4FB" stroke="#D5DAE5"/>
+<text x="200" y="296" font-size="16" fill="#63748C" font-weight="400">C</text>
+<text x="210" y="296" font-size="16" fill="#63748C" font-weight="400">o</text>
+<text x="220" y="296" font-size="16" fill="#63748C" font-weight="400">p</text>
+<text x="230" y="296" font-size="16" fill="#63748C" font-weight="400">y</text>
+<text x="240" y="296" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="250" y="296" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="260" y="296" font-size="16" fill="#63748C" font-weight="400">C</text>
+<text x="270" y="296" font-size="16" fill="#63748C" font-weight="400">t</text>
+<text x="280" y="296" font-size="16" fill="#63748C" font-weight="400">r</text>
+<text x="290" y="296" font-size="16" fill="#63748C" font-weight="400">l</text>
+<text x="300" y="296" font-size="16" fill="#63748C" font-weight="400">+</text>
+<text x="310" y="296" font-size="16" fill="#63748C" font-weight="400">C</text>
+<text x="200" y="316" font-size="16" fill="#101D34" font-weight="400">P</text>
+<text x="210" y="316" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="220" y="316" font-size="16" fill="#101D34" font-weight="400">s</text>
+<text x="230" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="240" y="316" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="250" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="260" y="316" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="270" y="316" font-size="16" fill="#101D34" font-weight="400">C</text>
+<text x="280" y="316" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="290" y="316" font-size="16" fill="#101D34" font-weight="400">r</text>
+<text x="300" y="316" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="310" y="316" font-size="16" fill="#101D34" font-weight="400">+</text>
+<text x="320" y="316" font-size="16" fill="#101D34" font-weight="400">V</text>
+</svg>
+<text x="1350" y="2560" font-size="14" fill="#101D34" font-weight="400">Paragraph Copy</text>
+<svg x="1350" y="2570" width="300" height="170" viewBox="130 195 300 170">
+<rect x="200" y="200" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="140" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="150" y="216" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="160" y="216" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="170" y="216" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="180" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="190" y="216" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="200" y="216" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="210" y="216" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="220" y="216" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="230" y="216" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="200" y="200" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<rect x="180" y="240" width="160" height="100" rx="4" fill="#F1F4FB" stroke="#D5DAE5"/>
+<rect x="200" y="280" width="120" height="20" rx="0" fill="#DBE7FB"/>
+<text x="200" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="210" y="296" font-size="16" fill="#101D34" font-weight="700">o</text>
+<text x="220" y="296" font-size="16" fill="#101D34" font-weight="700">p</text>
+<text x="230" y="296" font-size="16" fill="#101D34" font-weight="700">y</text>
+<text x="240" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="250" y="296" font-size="16" fill="#101D34" font-weight="700"> </text>
+<text x="260" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+<text x="270" y="296" font-size="16" fill="#101D34" font-weight="700">t</text>
+<text x="280" y="296" font-size="16" fill="#101D34" font-weight="700">r</text>
+<text x="290" y="296" font-size="16" fill="#101D34" font-weight="700">l</text>
+<text x="300" y="296" font-size="16" fill="#101D34" font-weight="700">+</text>
+<text x="310" y="296" font-size="16" fill="#101D34" font-weight="700">C</text>
+</svg>
+<text x="30" y="2770" font-size="16" fill="#101D34" font-weight="700">Paste failure after close · unchanged directional range/caret; feedback prefixes underlying status</text>
+<rect x="30" y="2785" width="1650" height="100" rx="0" fill="#F7F8FE" stroke="#D5DAE5"/>
+<rect x="100" y="2800" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="40" y="2816" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="50" y="2816" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="60" y="2816" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="70" y="2816" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="80" y="2816" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="90" y="2816" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="100" y="2816" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="110" y="2816" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="120" y="2816" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="130" y="2816" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="100" y="2800" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<text x="40" y="2856" font-size="16" fill="#B91C1C" font-weight="400">P</text>
+<text x="50" y="2856" font-size="16" fill="#B91C1C" font-weight="400">a</text>
+<text x="60" y="2856" font-size="16" fill="#B91C1C" font-weight="400">s</text>
+<text x="70" y="2856" font-size="16" fill="#B91C1C" font-weight="400">t</text>
+<text x="80" y="2856" font-size="16" fill="#B91C1C" font-weight="400">e</text>
+<text x="90" y="2856" font-size="16" fill="#B91C1C" font-weight="400"> </text>
+<text x="100" y="2856" font-size="16" fill="#B91C1C" font-weight="400">f</text>
+<text x="110" y="2856" font-size="16" fill="#B91C1C" font-weight="400">a</text>
+<text x="120" y="2856" font-size="16" fill="#B91C1C" font-weight="400">i</text>
+<text x="130" y="2856" font-size="16" fill="#B91C1C" font-weight="400">l</text>
+<text x="140" y="2856" font-size="16" fill="#B91C1C" font-weight="400">e</text>
+<text x="150" y="2856" font-size="16" fill="#B91C1C" font-weight="400">d</text>
+<text x="160" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="170" y="2856" font-size="16" fill="#63748C" font-weight="400">·</text>
+<text x="180" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="190" y="2856" font-size="16" fill="#63748C" font-weight="400">W</text>
+<text x="200" y="2856" font-size="16" fill="#63748C" font-weight="400">o</text>
+<text x="210" y="2856" font-size="16" fill="#63748C" font-weight="400">r</text>
+<text x="220" y="2856" font-size="16" fill="#63748C" font-weight="400">k</text>
+<text x="230" y="2856" font-size="16" fill="#63748C" font-weight="400">i</text>
+<text x="240" y="2856" font-size="16" fill="#63748C" font-weight="400">n</text>
+<text x="250" y="2856" font-size="16" fill="#63748C" font-weight="400">g</text>
+<text x="260" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="270" y="2856" font-size="16" fill="#63748C" font-weight="400">o</text>
+<text x="280" y="2856" font-size="16" fill="#63748C" font-weight="400">n</text>
+<text x="290" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="300" y="2856" font-size="16" fill="#63748C" font-weight="400">y</text>
+<text x="310" y="2856" font-size="16" fill="#63748C" font-weight="400">o</text>
+<text x="320" y="2856" font-size="16" fill="#63748C" font-weight="400">u</text>
+<text x="330" y="2856" font-size="16" fill="#63748C" font-weight="400">r</text>
+<text x="340" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="350" y="2856" font-size="16" fill="#63748C" font-weight="400">r</text>
+<text x="360" y="2856" font-size="16" fill="#63748C" font-weight="400">e</text>
+<text x="370" y="2856" font-size="16" fill="#63748C" font-weight="400">p</text>
+<text x="380" y="2856" font-size="16" fill="#63748C" font-weight="400">l</text>
+<text x="390" y="2856" font-size="16" fill="#63748C" font-weight="400">y</text>
+<rect x="910" y="2800" width="40" height="20" rx="0" fill="#DBE7FB"/>
+<text x="850" y="2816" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="860" y="2816" font-size="16" fill="#101D34" font-weight="400">l</text>
+<text x="870" y="2816" font-size="16" fill="#101D34" font-weight="400">p</text>
+<text x="880" y="2816" font-size="16" fill="#101D34" font-weight="400">h</text>
+<text x="890" y="2816" font-size="16" fill="#101D34" font-weight="400">a</text>
+<text x="900" y="2816" font-size="16" fill="#101D34" font-weight="400"> </text>
+<text x="910" y="2816" font-size="16" fill="#101D34" font-weight="400">b</text>
+<text x="920" y="2816" font-size="16" fill="#101D34" font-weight="400">e</text>
+<text x="930" y="2816" font-size="16" fill="#101D34" font-weight="400">t</text>
+<text x="940" y="2816" font-size="16" fill="#101D34" font-weight="400">a</text>
+<rect x="910" y="2800" width="1" height="20" rx="0" fill="#0F6FEB"/>
+<text x="850" y="2856" font-size="16" fill="#B91C1C" font-weight="400">P</text>
+<text x="860" y="2856" font-size="16" fill="#B91C1C" font-weight="400">a</text>
+<text x="870" y="2856" font-size="16" fill="#B91C1C" font-weight="400">s</text>
+<text x="880" y="2856" font-size="16" fill="#B91C1C" font-weight="400">t</text>
+<text x="890" y="2856" font-size="16" fill="#B91C1C" font-weight="400">e</text>
+<text x="900" y="2856" font-size="16" fill="#B91C1C" font-weight="400"> </text>
+<text x="910" y="2856" font-size="16" fill="#B91C1C" font-weight="400">f</text>
+<text x="920" y="2856" font-size="16" fill="#B91C1C" font-weight="400">a</text>
+<text x="930" y="2856" font-size="16" fill="#B91C1C" font-weight="400">i</text>
+<text x="940" y="2856" font-size="16" fill="#B91C1C" font-weight="400">l</text>
+<text x="950" y="2856" font-size="16" fill="#B91C1C" font-weight="400">e</text>
+<text x="960" y="2856" font-size="16" fill="#B91C1C" font-weight="400">d</text>
+<text x="970" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="980" y="2856" font-size="16" fill="#63748C" font-weight="400">·</text>
+<text x="990" y="2856" font-size="16" fill="#63748C" font-weight="400"> </text>
+<text x="1000" y="2856" font-size="16" fill="#63748C" font-weight="400">U</text>
+<text x="1010" y="2856" font-size="16" fill="#63748C" font-weight="400">n</text>
+<text x="1020" y="2856" font-size="16" fill="#63748C" font-weight="400">s</text>
+<text x="1030" y="2856" font-size="16" fill="#63748C" font-weight="400">a</text>
+<text x="1040" y="2856" font-size="16" fill="#63748C" font-weight="400">v</text>
+<text x="1050" y="2856" font-size="16" fill="#63748C" font-weight="400">e</text>
+<text x="1060" y="2856" font-size="16" fill="#63748C" font-weight="400">d</text>
+<text x="30" y="2920" font-size="14" fill="#101D34" font-weight="400">Preserve current Kitty frames/headings, syntax runs, wrapping, motion, composer and start page. Final installed check: operator.</text>
+</svg>
