@@ -50,9 +50,9 @@ def claude_runs(task):
         tag = claude_tag(meta_path, task)
         if tag is None:
             continue
-        start, end, tokens = claude_facts(meta_path.with_name(meta_path.name.replace(".meta.json", ".jsonl")))
-        if start is not None:
-            yield {"stage": tag, "start": start, "end": end, "tokens": tokens}
+        facts = claude_facts(meta_path.with_name(meta_path.name.replace(".meta.json", ".jsonl")))
+        if facts is not None:
+            yield {"stage": tag, **facts}
 
 
 def claude_tag(meta_path, task):
@@ -67,19 +67,19 @@ def claude_tag(meta_path, task):
 
 
 def claude_facts(jsonl_path):
-    """First and last timestamp, and the agent's final context size (what the harness reports)."""
+    """First and last timestamp, and the context size at each model call (the harness reports the last)."""
     if not jsonl_path.exists():
-        return None, None, 0
-    stamps, last_usage = [], None
+        return None
+    stamps, readings = [], []
     for line in jsonl_path.read_text().splitlines():
         entry = json.loads(line)
-        if "timestamp" in entry:
-            stamps.append(parse_time(entry["timestamp"]))
-        message = entry.get("message") or {}
-        if message.get("usage"):
-            last_usage = message["usage"]
-    tokens = total_tokens(last_usage) if last_usage else 0
-    return (min(stamps), max(stamps), tokens) if stamps else (None, None, 0)
+        if "timestamp" not in entry:
+            continue
+        stamps.append(parse_time(entry["timestamp"]))
+        usage = (entry.get("message") or {}).get("usage")
+        if usage:
+            readings.append((stamps[-1], total_tokens(usage)))
+    return {"start": min(stamps), "end": max(stamps), "readings": readings} if stamps else None
 
 
 # Codex: one session file per subagent; its first line names it (`agent_path` ends in the task_name).
@@ -107,15 +107,15 @@ def codex_tag(task_name, wanted):
 
 
 def codex_facts(path, meta):
-    """Spawn time to last log line, and the context size of the last model call."""
-    end, last_usage = None, None
+    """Spawn time to last log line, and the context size at each model call."""
+    end, readings = None, []
     for line in path.read_text().splitlines():
         entry = json.loads(line)
         end = entry.get("timestamp", end)
-        info = (entry.get("payload") or {}).get("info") or {}
-        last_usage = info.get("last_token_usage", last_usage)
-    tokens = (last_usage["input_tokens"] + last_usage["output_tokens"]) if last_usage else 0
-    return {"start": parse_time(meta["timestamp"]), "end": parse_time(end), "tokens": tokens}
+        usage = ((entry.get("payload") or {}).get("info") or {}).get("last_token_usage")
+        if usage:
+            readings.append((parse_time(end), usage["input_tokens"] + usage["output_tokens"]))
+    return {"start": parse_time(meta["timestamp"]), "end": parse_time(end), "readings": readings}
 
 
 def codex_name(task):
@@ -160,7 +160,7 @@ def render(task, runs, prs):
         lines.append(f"| PR {pr['ref']} | — | {clock(pr['opened'])} | {clock(pr['merged'])} | {span(pr['opened'], pr['merged'])} | — |")
     first = min(r["start"] for r in runs)
     last = cutoff or max(r["end"] for r in runs)
-    rounds = sum(1 for r in runs if stage_row(r["stage"]) != stage_row(r["stage"]).split(":")[0])
+    rounds = len({stage_row(r["stage"]) for r in runs if ":" in stage_row(r["stage"])})
     lines += ["", f"**End to end:** {clock(first)} → {clock(last)} = {span(first, last)}; "
                   f"{sum(r['tokens'] for r in runs):,} subagent tokens; {rounds} revision round(s)."]
     if not prs:
@@ -171,13 +171,18 @@ def render(task, runs, prs):
 
 
 def within(runs, cutoff):
-    """Runs up to the last product merge, with any run still open at that moment cut off there."""
-    if cutoff is None:
-        return runs, 0
-    kept = [{**r, "end": min(r["end"], cutoff)} for r in runs if r["start"] <= cutoff]
+    """Runs up to the last product merge, cut off there; tokens are the last reading inside the span."""
+    end = cutoff or max(r["end"] for r in runs)
+    kept = [{**r, "end": min(r["end"], end), "tokens": last_reading(r["readings"], end)}
+            for r in runs if r["start"] <= end]
     if not kept:
         sys.exit("Every tagged run starts after the last product merge.")
     return kept, len(runs) - len(kept)
+
+
+def last_reading(readings, end):
+    inside = [tokens for moment, tokens in readings if moment <= end]
+    return inside[-1] if inside else 0
 
 
 def grouped_by_stage(runs):
