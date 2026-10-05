@@ -1,8 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: R3 foundation candidate and synthetic references recorded; fresh reviewer launches rejected, design approval pending. Not build-ready.**
-**Next:** reuse assigned simplicity/ownership role agents to review the foundation candidate and
-references sequentially, then obtain the native delivery-owner decision through the supervisor workflow. The operator will manually
+**Status: R6 foundation candidate and synthetic references passed both complete sequential reviews; Type-1 delivery decision and design approval pending. Not build-ready.**
+**Next:** obtain the operator's decision on the reviewed native-library/public-package route through the supervisor workflow. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -27,7 +26,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | R3 candidate/references recorded; both fresh reviewer launches rejected by tool limit. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Both R6 reviews PASS; native delivery decision pending. | First: select delivery route, obtain actual public capabilities and prove them before Forge handoff. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
@@ -58,11 +57,9 @@ sequential simplicity/style and ownership reviews → merge/publish → default-
 The 2026-10-06 workflow change permits role-agent reuse; it does not approve the candidate or
 resolve the native delivery-owner decision.
 
-This delivery is documentation-only: the fresh R2 ownership retry completed, a fresh R3 designer
-returned corrected contracts, and synthetic references were saved/inspected. Both fresh R3
-reviewer launches returned `agent thread limit reached`; no R3 reviewer ran. Design approval, plan and code
-stages remain pending. Default-path acceptance is N/A for this documentation change. See
-[review evidence](phase-70.1-text-interaction-foundation_completed.md#r3-candidate-and-reference-record).
+R6 — both complete reviews PASS; see [evidence and supervisor assessment](phase-70.1-text-interaction-foundation_completed.md#r6-complete-review-and-supervisor-assessment).
+This delivery is documentation-only. Design approval, plan and code remain pending;
+default-path acceptance, product tests and Native AOT are N/A for this documentation change.
 
 ## Standing constraints and authorizations
 

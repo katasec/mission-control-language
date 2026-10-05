@@ -1,6 +1,6 @@
 # Phase 70.1 — Text-interaction foundation
 
-**Status: R3 candidate and synthetic references recorded; fresh reviewer launches rejected; no design/plan approval.**
+**Status: complete R6 simplicity and ownership reviews PASS; Type-1 delivery decision pending; no design/plan approval.**
 **Not build-ready.** Parent: [Phase 70](phase-70-tui-text-interaction.md).
 
 ## Requirement
@@ -77,7 +77,8 @@ pending until the operator records them; the phase cannot close on automated evi
 
 Retain native editors, selection, commands, menus, buttons, TextMate and clipboard transport.
 Recommend a bounded upstream UI change: native Copy result reporting, fixed close-before-invoke
-text-menu preservation and a native Paste callback guard. Forge owns one local command/feedback policy and snippet composition.
+text-menu preservation, a native Paste callback guard, public input admission and native Button
+detach/visibility cleanup. Forge owns one local command/feedback policy and snippet composition.
 This replaces the public handler/snapshot proposal; it is not an existing API or approved route.
 First-round evidence is [archived](phase-70.1-text-interaction-foundation_completed.md#foundation-design-reviews).
 
@@ -254,22 +255,45 @@ stateDiagram-v2
     Pressed --> Detached: detach cancels press
     Detached --> AttachedIdle: same immutable visual reattaches
     Detached --> Detached: release from old press does nothing
+    AttachedIdle --> Hidden: header width zero
+    Pressed --> Hidden: native hiding cancels input
+    Hidden --> AttachedIdle: positive width; fresh native focus/input
+    Hidden --> Hidden: old release does nothing
 ```
 
 | Event | Contract |
 |---|---|
 | Creation | Renderer captures the complete immutable `context.Code` before display trimming. New rendering gets a new payload/button and idle feedback. No transcript-index lookup or mutable payload reference. |
-| Detach | A bounded native Button subclass overrides supported `OnDetachedFromApp`: set public `IsPressed=false`, reset hover/feedback, invalidate any synchronous pending write-feedback continuation, and call base. Do not permanently disable or retire the button. |
+| Detach | Proposed native Button/app cleanup clears `IsPressed`, internal `IsPressedInside`, hover and the matching app hover-path/pointer-capture references. Forge's bounded Button subclass overrides supported `OnDetachedFromApp` only to invalidate its pending write-feedback continuation and reset feedback, then calls base for native cleanup. Do not permanently disable or retire the button. |
 | Reattach | The same immutable-payload visual is eligible for fresh mouse/Enter/Space activation. It starts idle. No old pointer release may activate it. |
-| Activation | Native `Click` is synchronous. Check current attachment, effective visibility/enabled and ordinary input/modal scope before writing. Make one native `TrySetText(payload)` call; no queued clipboard action. |
-| Feedback | Only true transport result earns `✓ Copied`. False earns `! Copy failed`. Apply the result only if this synchronous activation remains attached/eligible and was not invalidated by detach; otherwise leave reset feedback. A write already accepted by the transport cannot be undone. |
+| Activation | Native `Click` is synchronous. Capture this button's app and begin its bounded pending-feedback attempt; require proposed `app.CanReceiveInput(button)` and a noninvalidated attempt before one native `TrySetText(payload)` call. No queued clipboard action, private access or Forge modal-tree traversal. |
+| Feedback | Only true transport result earns `✓ Copied`. False earns `! Copy failed`. After transport, apply feedback only if the original app still owns the button, `CanReceiveInput(button)` is true and the attempt was not invalidated by detach; otherwise leave reset feedback. Clear pending state in `finally`. A write already accepted by the transport cannot be undone. |
 | Replacement | Existing renderer replacement creates a new visual/payload. The old detached visual cannot write. No new permanent-disposal protocol is introduced. |
 
-Pinned evidence: `DocumentFlow.RecycleActiveBlock` removes/stores the visual; `AcquireRecycledOrCreate` reuses it. `VisualDocumentFlowBlock.CreateVisual` returns its stored visual and `TryUpdate` uses reference equality. Forge’s `ChatScreen.CardItem` uses precisely this visual-backed flow. Button release raises `Click` only when `IsPressed`; resetting that public flag prevents the old press from surviving recycling. Its Enter/Space and release handlers raise Click synchronously.
+Pinned evidence: `DocumentFlow.RecycleActiveBlock` removes/stores the visual; `AcquireRecycledOrCreate` reuses it. `VisualDocumentFlowBlock.CreateVisual` returns its stored visual and `TryUpdate` uses reference equality. Forge’s `ChatScreen.CardItem` uses precisely this visual-backed flow. Button release raises `Click` only when `IsPressed`; cancelling that flag prevents the old press from surviving recycling. Its Enter/Space and release handlers raise Click synchronously.
+
+**Proposed native admission and detach contract**, absent from UI 3.10.0:
+
+```csharp
+// XenoAtom.Terminal.UI.TerminalApp
+public bool CanReceiveInput(Visual source);
+```
+
+| Boundary | Fixed contract |
+|---|---|
+| Admission | UI-thread only (`VerifyAccess`); null throws `ArgumentNullException`. True requires the source attached to this app's root, effective visibility/enabled through its ancestor path, and membership in the app's current native input/modal scope. Detached, other-app, hidden, disabled or out-of-scope sources return false. No focus, selection or clipboard capability is implied. |
+| Scope ownership | Native code uses its existing input-root/scope logic. After any native tree preparation needed to resolve that root, check the current attachment, ancestor eligibility and scope before returning. This is a current-state check, not a reservation; Forge adds no callback between its final admission check and write. The query performs no clipboard operation or focus restoration and introduces no modal exemption. |
+| Pointer cleanup | Native Button detachment or transition to `IsVisible=false` uses the same private cleanup: clear pointer capture when it targets the button or its content subtree, and clear the native hovered leaf/path when that path contains the button. Clear matching app references and both pressed flags before hover-change callbacks; reset native hover without leaving a cached path that suppresses the next hover update. Detachment uses the saved app; hiding uses the owning app. Hiding then showing cannot revive an old press. Unrelated pointer/hover targets remain untouched. This fixed native visibility behaviour is also proposed, absent from 3.10.0. |
+| Reuse | Native cleanup leaves the detached Button idle; reattachment permits fresh native input. It never synthesizes Click or replays an old press. Forge neither writes internal hover state nor introduces a separate pointer tracker. |
+
+The pinned [scope helpers](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/TerminalApp.cs#L3553)
+are private, [hover state](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Visual.cs#L244)
+is internally set, and existing detachment does not clear it. These proposed native changes
+resolve those gaps; they are not capabilities claimed for the current package.
 
 ### Candidate visual reference specification
 
-Saved candidate state galleries (synthetic references, independent review pending):
+Saved candidate state galleries (synthetic references, both independent R6 reviews PASS):
 
 - [Light](../images/phase-70.1/foundation-light.svg)
 - [Dark](../images/phase-70.1/foundation-dark.svg)
@@ -282,15 +306,15 @@ Exact csharp fixture (LF text, including the final LF):
 | Frame | Exact owned slice |
 |---|---|
 | Snippet before/after, both widths | Use the fixture and geometry: frame `(10,8,W-20,height)`; synthetic insets left/right 4, top 2, bottom 1; content width `W-28`. Before code starts `(14,10)`; after header at y=10 and unchanged code at y=11. After adds exactly one row. Button `(W-29,10,15,1)`, with one-cell side padding. Wrap code by terminal cells, retaining syntax-run boundaries. |
-| Button states | Idle `⧉ Copy code`; hover bold; focus underline; pressed bold on Selection; copied `✓ Copied`; failed `! Copy failed`; disabled idle label in TextMuted. Include focused+hovered and focused+pressed combinations. Disabled styling takes precedence. |
-| Icon-only fixture | Separate 12-cell content-width frame; the same three-cell button shows `⧉`, `✓` or `!` with one-cell side padding. Include focused, pressed, failure and disabled states, and exact full tooltips `Copy code`, `Copied`, `Copy failed`. A zero-width header has no hit area; widths 1–2 fit the same glyph within available cells. |
+| Button states | Native Button renders every label bold: idle `⧉ Copy code`, copied `✓ Copied`, failed `! Copy failed`, and disabled idle label in TextMuted. Hover retains the semantic style and supports the full native tooltip; it does not introduce another weight. Focus adds underline; pressed uses Selection, retaining underline when focused. Include focused+hovered and focused+pressed combinations. Disabled styling takes precedence. |
+| Icon-only fixture | Separate 12-cell content-width frame; the same three-cell button shows `⧉`, `✓` or `!` with one-cell side padding. Include focused, pressed, failure and disabled states, and exact full tooltips `Copy code`, `Copied`, `Copy failed`. Add exact available-width 0/1/2/3 frames: at 0 set the same Button's `IsVisible=false` and `IsTabStop=false`, reset/invalidate its local feedback, and retain the one-row header. Derive available width from the enclosing header's content width, never the hidden Button's own bounds. At positive widths restore visibility/Tab eligibility; widths 1–2 use zero horizontal padding, width 3 uses one cell on each side. Native focus repair handles the hidden source; do not restore old focus or add a focus mechanism. Geometry values belong in `ForgeTheme`; `ForgeStyles` supplies native padding/style mappings. |
 | Editor menu before/after | `alpha beta`, backwards beta selection, caret at its left endpoint. Menu anchor `(18,12)`, clamped to the viewport. Retain native Group border and native MenuListStyle padding, each one cell; label/shortcut gap 2. With native `Ctrl+C`/`Ctrl+V` strings, editor menu is **17×6 cells**, Copy-only Paragraph menu **16×5**. Copy initially selected. |
 | Menu states | Selected Copy, hovered Paste, disabled Copy with no selection, and Paragraph Copy-only. Disabled items cannot activate. |
 | Paste failure | Closed menu, unchanged beta range/caret, existing feedback row at y=`H-2` beginning `Paste failed`. Include composer progress and editor unsaved/save text following ` · ` so preservation of underlying status is visible. |
 
 Use these existing token pairs: CodeBlockText/CodeBlockFill, TextMuted/CodeBlockFill, Success/CodeBlockFill, Error/CodeBlockFill; pressed CodeBlockText/Selection; menu/tooltip Text/SurfaceAlt; selected TextStrong/Selection; hover TextStrong/SurfaceAlt; disabled TextMuted/SurfaceAlt. Menu border uses existing Border/SurfaceAlt. Retain the existing selection background and native body/editor/TextMate foregrounds.
 
-`ForgeStyles` owns every state mapping. Native `ButtonStyle.Resolve` applies its Focused style after hover/press; therefore its focused style must preserve the current semantic foreground/background and bold state while adding underline. A constant focused style must not erase copied/failed/pressed feedback.
+`ForgeStyles` owns every state mapping through the existing public reactive `SetStyle<ButtonStyle>(Func<ButtonStyle>)` route. Native `ButtonStyle.Resolve` returns Disabled first, then Pressed immediately; only nonpressed states apply Focused after Hovered. The reactive Pressed slot therefore uses CodeBlockText/Selection and bold, adding underline when `HasFocus` is true. Normal/Hovered/Focused retain the idle/copied/failed semantic foreground on CodeBlockFill; Focused adds underline. Disabled remains TextMuted/CodeBlockFill without focus/press styling. Native Button stamps bold into all content cells, which the default TextBlock inherits; all gallery labels retain that existing bold weight, including idle and disabled. Hover uses the full native tooltip, not a weight transition. No decoration override, new renderer or native style-resolver change is needed.
 
 The galleries bind only the added header/button, contextual menus, selection continuity and clipboard-feedback prefix. Existing Kitty frames, headings, syntax renderer, motion, composer/start page and theme selector remain reused. Gallery palettes must come from both current `ForgeTheme` instances; do not sample screenshots or add component-local colors.
 
@@ -307,16 +331,55 @@ Before approval, save and inspect the galleries. [Controlled colour evidence](..
 | Paste outcomes | Null, empty, nonempty and bracketed input retain their specified feedback, read count and undo behavior. |
 | Snippet recycling | Scroll out/in reuses the same snippet and fresh activation copies exact payload. Press → detach → reattach → release causes zero writes. New press after reattach writes once. |
 | Snippet feedback | False transport cannot show Copied; detach during a synchronous write cannot resurrect old feedback. |
-| Package/AOT | Actual public package exposes retained Copy API and accepted native menu/Paste behavior; public-only probes and Native AOT pass with zero warnings. |
+| Snippet admission/lifecycle | Attached eligible Button admits fresh activation; underlay behind a modal, detached/other-app/hidden/disabled source rejects without writes. Hover/press → detach → reattach starts idle with no stale capture; the next fresh pointer move establishes hover. |
+| Native style/layout | Actual public Button rendering at available widths 0/1/2/3 shows the specified no-hit/glyph/padding result. All labels retain native bold; focused+pressed retains Selection and underline; focused+hovered/copied/failed retains semantic colours. Hover exposes the full native tooltip. Both themes. |
+| Zero-width transitions | Focused Button → header width0 → Enter/Space makes zero snippet writes; header still occupies one row. Press → width0 → positive width → old release also makes zero writes. After widening, fresh native focus/press activates once with the exact original payload. Visibility follows header width, so it can recover from zero bounds. |
+| Package/AOT | Actual public package exposes Copy and `CanReceiveInput`, accepted menu/Paste behavior and native Button detach/visibility cleanup; public-only probes and Native AOT pass with zero warnings. |
 
 Security: local presentation/input only; hosted tiers, stores, identities and credentials are N/A. Explicit user actions alone read/write clipboard; payloads are neither logged nor submitted. The approved manual verification exception remains bounded as recorded in the parent phase.
 
+### Owners, reuse and failure boundaries
+
+| Behaviour | One owner / authority |
+|---|---|
+| Input admission, native selection Copy, menu focus/command lifetime, Paste/undo and pointer cleanup | XenoAtom.Terminal.UI; [pinned README](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/readme.md#features) assigns controls, input, commands and layout. |
+| Clipboard transport | Existing XenoAtom.Terminal backend; no Forge OS clipboard implementation. |
+| Forge command set and local feedback | forge-mcl CLI TUI `TextInteraction`; [CLI owns chat presentation](https://github.com/katasec/forge-mcl/blob/2022b512dd2bd108626124f22bc1cfe7652648d7/src/ForgeMission.Cli/README.md#owns). |
+| Immutable whole-code payload and visual reuse | Existing ForgeCodeBlockRenderer and native flow; same [component inventory](https://github.com/katasec/forge-mcl/blob/2022b512dd2bd108626124f22bc1cfe7652648d7/src/ForgeMission.Cli/README.md#terminal-ui--tui). |
+| State styles and constrained geometry | Existing ForgeStyles/ForgeTheme, respectively; same inventory. No second palette or renderer. |
+
+| Need | Existing thing checked / decision |
+|---|---|
+| Native extraction/result | `ISelectionOwner`, editor commands and clipboard bool reused; the sealed app's early dispatch requires the proposed Copy helper/observer. |
+| Origin continuity | Existing native range/document/interaction versions and Popup.Close reused privately; no public snapshots or generic lifetime framework. |
+| Paste outcomes/edit | Existing Capture, nullable Text, handler, PasteText and undo reused; private native continuation guard contains callback changes. |
+| Snippet eligibility/reset | Private native scope and app pointer tracking are the actual owners; proposed public admission and fixed native cleanup replace inaccessible Forge checks. |
+| State/layout | Public reactive ButtonStyle slots and native measure/arrange reused; zero padding below three cells, no custom rendering. |
+| Duplicate search | Complete R3 ownership review searched the eight README-listed Forge repos and found no equivalent text-interaction owner. [Review record](phase-70.1-text-interaction-foundation_completed.md#reused-role-reviews-and-r4-correction). |
+
+| Expected failure | Owner / containment | Visible result / recovery | Required observation |
+|---|---|---|---|
+| Selection extraction or clipboard write fails | Native Copy consumes selected gesture; Forge feedback observes result. | Copy failed; range/turn retained; user retries explicit Copy. | Failure result, zero Stop calls, unchanged range. |
+| Clipboard read fails or yields empty | Native Capture distinguishes null/empty; editor owns no-op. | Paste failed for null, no failure for empty; user retries explicit Paste. | No edit/undo entry; original range/caret retained. |
+| Callback changes origin or nested Paste recurs | Native menu/Paste invalidation, no stale operation/restoration. | Dismiss/discard; callback effects stand; user reopens/retries from current state. | Zero stale clipboard/insertion calls; recursion adds no second capture. |
+| Detached or modal-blocked snippet activates | Native admission/cleanup; Forge pending-feedback invalidation. | No stale write or resurrected feedback; fresh eligible activation can retry. | Old release has zero writes; fresh reattached press writes once. |
+| Native transport returns false for snippet | Existing transport bool and Forge feedback. | Copy failed; payload/source retained; explicit retry only. | False never shows Copied. |
+| Application result observer/handler throws | Existing UI-loop callback failure path; no retry/fallthrough. | UI-loop failure outcome; operator relaunches after diagnosis. | Exception reaches that existing failure path, with no Stop fallback or second write. |
+
+Designer principles that changed R4–R6: **3 — No NIH** uses reactive native style slots, native bold labels and native visibility/focus repair;
+**4 — One owner** moves input admission and pointer cleanup to native UI;
+**10 — Built-in safety** cancels detached input and stale feedback structurally;
+**11 — Verified means done** adds exact width/focus observations without claiming native PASS.
+Rejected: Forge modal traversal/internal hover assignment (wrong owner/private access),
+custom Button rendering (existing slots suffice), permanent retirement (breaks recycling),
+and one-cell padding at widths 1–2 (hides the glyph). Both complete R6 reviews passed;
+Type-1 route/public package remain the open questions below.
 
 ### Recommended upstream route — operator decision pending
 
 | Fact | Concrete proposal |
 |---|---|
-| Owner/source | `XenoAtom/XenoAtom.Terminal.UI`: Copy helper/result observer, scoped consumption/precedence, fixed close-before-invoke text-menu preservation and native Paste continuation guard. Current source pin `6f4e0cde3890d8ce2510ac0451b861863e4aeeaa`. |
+| Owner/source | `XenoAtom/XenoAtom.Terminal.UI`: Copy helper/result observer, scoped consumption/precedence, fixed close-before-invoke text-menu preservation, native Paste continuation guard, `CanReceiveInput` admission and Button/app detach/visibility cleanup. Current source pin `6f4e0cde3890d8ce2510ac0451b861863e4aeeaa`. |
 | Packages | Current UI/Markdown/CodeEditor.TextMateSharp family 3.10.0; consume an actual compatible public release containing the accepted contract. No guessed version or implied publication. |
 | Transport | XenoAtom.Terminal 2.2.0, pin `5517cb3d8cdf0532ecc89260067064f98cde6137`; no change. |
 | Consumer | forge-mcl CLI/test package pins updated together; no sibling project references, vendoring, fallback dispatch or dual-version path. |
@@ -331,8 +394,8 @@ and transport, Forge owns local policy/feedback. Manual-verification Type-2 exce
 
 | Gate | Required next result |
 |---|---|
-| Independent review | Fresh R3 simplicity and ownership launches both returned `agent thread limit reached`; neither reviewer ran. [R3 evidence](phase-70.1-text-interaction-foundation_completed.md#r3-candidate-and-reference-record). Under the revised [supervisor workflow](../design/supervisor-workflow.md), reuse assigned independent simplicity and ownership role agents sequentially, with full personas and the complete R3 candidate/references. No prior verdict substitutes for R3 review; no supervisor substitution. |
-| Visual binding | Both synthetic galleries saved/rendered/inspected; independent review pending. Native runtime states and all language/viewport cases remain product-verification requirements. |
+| Independent review | Closed for R6 — complete simplicity (all 11 checks) and ownership (all 6 checks) PASS, sequentially through the assigned roles; no inherited verdict. [Evidence](phase-70.1-text-interaction-foundation_completed.md#r6-complete-review-and-supervisor-assessment). |
+| Visual binding | Both current synthetic galleries rendered/inspected by supervisor and each reviewer; accepted as the R6 proposal reference. Native runtime states and all language/viewport cases remain product-verification requirements. |
 | Type-1 delivery | Operator chooses the concrete native owner/package route after reviewed contract; no upstream authority or release is assumed. |
 | Package proof | Actual public API/native menu/Paste route and public-only behaviour/AOT probes with zero warnings before Forge plan approval. |
 | Product acceptance | After approved implementation/reviews/checks and normal merge/install, operator performs installed defaults/Ghostty/Retina checks above. No live PASS yet. |
@@ -383,7 +446,7 @@ Reconfirm dependency versions and owning repository instructions before design.
 |---|---|---|
 | 1. Source/library/CodeAlta discovery | Done — [evidence](phase-70.1-text-interaction-foundation_completed.md#discovery-results). | Pinned source and controlled observations distinguish native capability, Forge wiring defects, and library gaps. |
 | 2. Installed Retina reproduction | Agent path blocked; prerequisite superseded by the parent exception. Manual observations move to Task 6. | No live PASS claimed; recorded controlled baseline is available to the supervisor applying the designer persona. Physical delivery, focus/highlight and clipboard round-trip remain manual acceptance cases. |
-| 3. Product design and review | R3 candidate/references recorded; fresh simplicity/ownership launches rejected by tool limit. No design approval. | Supervisor applies designer persona; assigned simplicity and ownership agents review sequentially; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
+| 3. Product design and review | Both complete R6 reviews PASS; Type-1 delivery route remains open. No design approval. | Supervisor applies designer persona; operator selects native delivery route before supervisor locks the design. Actual package and public-only/AOT proof precede Forge plan approval. |
 | 4. Implementation plan and review | Pending after design approval. | Assigned implementer plans; assigned simplicity and ownership agents review sequentially; supervisor explicitly approves bounded changes, meaningful interaction tests and AOT checks. |
 | 5. Implementation and review | Pending after plan approval. | Same implementer after explicit plan approval; positive/negative interaction evidence including failed clipboard writes; independent sequential simplicity/style and ownership reviews with every checklist; no product task marked complete by implementer. |
 | 6. Merge, install, accept, close | Pending after checks pass; operator performs live acceptance. | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |

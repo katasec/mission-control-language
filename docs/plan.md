@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): review the revised foundation candidate and saved references sequentially using the assigned role agents; operator performs final installed verification. |
+| **NEXT STEP** | Obtain the operator's native delivery-owner decision for the reviewed [TUI text interaction](phases/phase-70-tui-text-interaction.md) candidate. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Revised candidate and synthetic references recorded; fresh review launches hit tool limit, approval pending. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Independent design reviews passed; native delivery decision pending before implementation. |
 
 ## Design docs
 

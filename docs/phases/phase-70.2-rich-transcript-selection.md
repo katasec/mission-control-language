@@ -57,9 +57,9 @@ public capabilities and regression evidence, not extrapolation from CodeAlta.
 | Task | State | Done when |
 |---|---|---|
 | 1. Lock range and semantic scope | Pending foundation scope. | All range/content cases above have explicit decisions; operator resolves any Type-1 change before handoff. |
-| 2. Design and public contract review | Pending scope closure. | Fresh designer and simplicity/ownership reviewers produce a supervisor-approved contract with actual APIs, complete types, lifecycle and visual reference. |
-| 3. Plan and review | Pending design. | Fresh plan author and reviewers; supervisor approves one bounded task sequence and concrete failure/reflow/streaming tests. |
-| 4. Implement and review | Pending plan. | Fresh implementer; simplicity/ownership/style checks and supervisor diff review pass; library work, if needed, precedes consumer integration. |
+| 2. Design and public contract review | Pending scope closure. | Supervisor applies designer persona; assigned simplicity and ownership reviewers check the complete current contract sequentially, including actual APIs, types, lifecycle and visual reference, before supervisor approval. |
+| 3. Plan and review | Pending design. | Assigned implementer plans; assigned reviewers run their complete checklists sequentially; supervisor approves one bounded task sequence and concrete failure/reflow/streaming tests. |
+| 4. Implement and review | Pending plan. | Same implementer after explicit plan approval; reused simplicity/style and ownership reviewers check the complete diff sequentially; supervisor independently reviews evidence. Library work, if needed, precedes consumer integration. |
 | 5. Merge, install and accept | Pending verification; operator performs live acceptance. | Native AOT and required checks pass; normal artifact installed; operator proves continuous selection and exact Copy through real mixed content in both themes on Retina, supervisor assesses and records evidence. |
 
 ## Done when
