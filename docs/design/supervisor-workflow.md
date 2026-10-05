@@ -23,7 +23,7 @@ flowchart TD
     PR --> PS[Simplicity]
     PR --> PO[Ownership]
     PS & PO --> R2[Reduce: approve or<br/>one combined correction]
-    R2 --> I[4 Implement<br/>same implementer]
+    R2 --> I[4 Implement<br/>new implementer, approved plan inline]
     I --> CR{5 Code review fan-out}
     CR --> CS[Simplicity]
     CR --> CO[Ownership]
@@ -51,15 +51,20 @@ access makes this a correctness requirement, not a convention.
 
 Each subagent's assignment starts with the **full text** of its persona file, pasted inline.
 Pointing at the file, or at the governing documents, is not enough: rules that live only in a
-linked file are routinely skipped. Designers and implementers must list the principles that
-changed a decision; reviewers return one verdict per check. A guardrail the output never mentions
-was not applied, and the supervisor treats that as a missing answer.
+linked file are routinely skipped. Two outputs together show the guardrails were applied:
+
+- **Coverage** comes from the reviewers: each returns one verdict per check, so every guardrail in
+  its persona is answered. A missing check is a missing answer.
+- **Effect** comes from the authors: designers and implementers list only the principles that
+  changed a decision, and which decision. A principle that changed nothing is not listed.
 
 ## Stage tags
 
-Each subagent's description starts with a stage tag and the task ID, so
-[task-timing](../../tools/task-timing/README.md) can measure each stage's duration, token use,
-and revision rounds from the transcripts:
+Each stage is its own subagent launch, and its description starts with a stage tag and the task
+ID, so [task-timing](../../tools/task-timing/README.md) can measure each stage's duration, token
+use, and revision rounds from the agents' own session logs. A revision is a new launch with the
+next round tag, carrying the previous output and the correction inline; never continue a finished
+subagent for a new stage or round, or its time is counted in the wrong stage.
 
 | Stage | Tag |
 |---|---|
@@ -72,6 +77,10 @@ and revision rounds from the transcripts:
 | Code review | `[review-code:simplicity]`, `[review-code:ownership]`, `[review-code:style]` |
 
 Example description: `[review-plan:ownership] 64.2 task 3`.
+
+In Codex, the tag goes in `spawn_agent`'s `task_name`, written with letters, digits and
+underscores only: `-` becomes `_`, `:` becomes `__`, and `__` separates the task, so the example becomes
+`review_plan__ownership__64_2_task_3`.
 
 ## Required loop
 
@@ -102,8 +111,9 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    combined correction or an explicit approval. Silence, a summary, or a request to continue is not
    approval. If the same point fails a second time, stop revising the plan: the design is wrong, so
    return to stage 1 for that point.
-4. **Implement.** Only after `PLAN APPROVED` may the implementer edit. It works on the approved
-   branch and reports actual commands, observations, failures, and deviations. A material deviation
+4. **Implement.** A new implementer subagent receives the implementation assignment: the
+   implementer persona, the approved plan, and `PLAN APPROVED`. Only then may it edit. It works on
+   the approved branch and reports actual commands, observations, failures, and deviations. A material deviation
    returns to the supervisor before the change expands. A visual mismatch is a material deviation.
 5. **Code review — fan out, then reduce.** The simplicity, ownership, and code style reviewers run
    in parallel on the real diff. The supervisor triages each finding as fix or dismiss, with a
@@ -112,9 +122,11 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    item, required negative proof, and default-path observation. For a web-rendered surface it
    inspects the running surface with browser tooling and compares it with the reference itself. An
    implementer never accepts its own work.
-7. **Deliver.** Commit, PR, merge, and end on a clean `main` per the continuity protocol. After
-   the last merge, run [task-timing](../../tools/task-timing/README.md) with every merged PR and
-   paste its table into the task's completion record in the spoke.
+7. **Deliver.** Commit, PR, merge, and end on a clean `main` per the continuity protocol. Timing
+   ends at the merge of the task's last product PR (code, infrastructure or configuration). Then
+   run [task-timing](../../tools/task-timing/README.md) with those product PRs and put its table
+   in the task's completion record, in the spoke documentation PR that closes the task. That
+   documentation PR is not part of the timed span.
 
 ## Design assignment
 
@@ -198,12 +210,16 @@ Under review:
 Return the output defined in the persona, with evidence from the actual code or diff.
 ```
 
-## Approval message
+## Implementation assignment
 
-The supervisor sends this only after it has accepted the plan. Any correction requires a revised
-plan and another explicit approval.
+The supervisor sends this to a new implementer subagent only after it has accepted the plan. Any
+correction requires a revised plan and another explicit approval.
 
 ```text
+[paste the full text of personas/implementer.md here]
+
+[paste the approved plan here]
+
 PLAN APPROVED
 
 Implement only the approved plan and scope. Do not broaden the task or resolve a new design
@@ -280,11 +296,10 @@ Before accepting, the supervisor records a named observation for each applicable
   literals; and
 - the diff, documentation, branch, commit, pull request, merge, and clean-main state meet the
   repository continuity protocol; and
-- the task's completion record in the spoke contains its task-timing table, from design to the
-  last merge.
+- the task's completion record in the spoke contains its task-timing table, from the first
+  tagged subagent to the last product PR merge.
 
 ## Former workflow
 
-[The former Claude/Codex workflow](claude-codex-workflow.md)
-is retained only as a pointer for old links and historical context. It is not an implementation
-authority.
+[The former Claude/Codex workflow](claude-codex-workflow.md) is a pointer kept for old links. It
+grants no exception; every task follows this document.
