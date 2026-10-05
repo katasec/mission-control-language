@@ -1,18 +1,20 @@
 # Supervisor workflow
 
 > **Status: governing implementation workflow.** Provider-neutral: the agent the operator works in
-> (Claude, Codex, or another) is the supervisor and uses its own subagents. Checks fan out to
-> parallel subagents, each carrying a [persona](../../personas/README.md) inline; the supervisor
-> merges their results into one decision per stage. Design and code each have one author.
+> (Claude, Codex, or another) is the supervisor and uses its own subagents. The supervisor owns
+> design; a fixed team of three subagents runs sequentially and is reused across stages and revisions. Each assignment carries its
+> [persona](../../personas/README.md) inline. Independent reviews and explicit approvals remain required.
 
 ## Shape
 
 ```mermaid
 flowchart TD
-    S[0 Scope + parallel investigators] --> D[1 Design: one designer]
-    D --> DR{Simplicity + Ownership} --> P[2 Plan: implementer]
-    P --> PR{Simplicity + Ownership} --> I[3 Implement: new implementer]
-    I --> CR{Simplicity + Ownership + Code style} --> RD[4 Ready to merge]
+    S[0 Scope: supervisor] --> D[1 Design: supervisor]
+    D --> DR{Sequential simplicity + ownership reviews} --> DA[Supervisor locks design]
+    DA --> P[2 Plan: implementer]
+    P --> PR{Sequential simplicity + ownership reviews} --> PA[Supervisor approves plan]
+    PA --> I[3 Implement: same implementer]
+    I --> CR{Sequential simplicity/style + ownership reviews} --> RD[4 Ready to merge]
     RD --> M[5 Merge, publish, deploy] --> A[6 Accept on default path] --> C[7 Closure]
 ```
 
@@ -20,55 +22,71 @@ flowchart TD
 
 | Role | Persona | Does | Never |
 |---|---|---|---|
-| Supervisor | This document | Scopes, merges each fan-out into one decision, approves, accepts. | Implements, delegates its decision, or takes a subagent's claim as evidence. |
-| Investigator | None | Gathers facts for the scope, one repo or question each. | Edits, or decides a design question. |
-| Designer | [designer](../../personas/designer.md) | Proposes the design in its reply. | Edits, or decides what the scope leaves open. |
-| Implementer | [implementer](../../personas/implementer.md) | Plans; after approval, makes only the approved change. | Edits before approval, broadens scope, approves or accepts its own work. |
-| Reviewer | [simplicity](../../personas/simplicity-reviewer.md), [ownership](../../personas/ownership-reviewer.md), [code style](../../personas/code-style-reviewer.md) | Returns one verdict per check. | Edits, or approves. |
+| Supervisor | This document + [designer](../../personas/designer.md) | Investigates, writes design/planning docs, combines findings, approves, accepts. | Edits product code, delegates its decision, or treats a subagent's claim as evidence. |
+| Implementer | [implementer](../../personas/implementer.md) | Investigates, plans; after approval, makes only the approved change. | Edits before approval, broadens scope, approves or accepts its own work. |
+| Simplicity/style reviewer | [simplicity](../../personas/simplicity-reviewer.md) + [code style](../../personas/code-style-reviewer.md) | Independently checks simplicity at every review stage and code style at code review. | Authors the design/plan/code, edits, or approves. |
+| Ownership reviewer | [ownership](../../personas/ownership-reviewer.md) | Independently checks ownership at every review stage. | Authors the design/plan/code, edits, or approves. |
 
-Only one implementer edits code at a time; designers, reviewers and investigators are read-only.
+## Team capacity
+
+Use **three subagent threads per bounded task**, in addition to the supervisor. Run **one subagent
+at a time**. Reuse each role's thread for investigation, its next stage, and every revision; resume
+or send a follow-up to that agent rather than spawning a replacement. Investigation is performed
+by the supervisor or the implementer; reviewers may gather facts for their independent checks.
+There is no separate investigator or designer launch. Do not give reviewers authorship to save a
+thread. Existing tasks may reuse eligible role agents already assigned to that task.
+
+This bounds both simultaneous work and new thread creation. Phase 70 hit `agent thread limit
+reached`, including a sequential fresh-review attempt; the exposed tools did not establish a way
+to release capacity. The exact limit is not assumed. Reuse avoids requiring another launch for
+every stage and correction; it does not prove a saturated session has recovered. If a required
+role cannot run, keep the approval gate open and checkpoint for a fresh session rather than
+substituting the supervisor for an independent reviewer.
 
 ## Persona rule
 
-Every assignment starts with the **full text** of its persona file. A link is not enough: rules
-that live only in a linked file get skipped. Reviewers' per-check verdicts show every guardrail was
-covered; designers and implementers list only the principles that changed a decision, and which.
+Every subagent assignment includes the **full text** of each applicable persona file after its
+stage tag. A link is not enough: rules that live only in a linked file get skipped. Reviewers' per-check verdicts show every guardrail was
+covered; the supervisor as designer and the implementer list only the principles that changed a
+decision, and which.
 
 ## Stage tags
 
-Every stage and every revision round is a **new** subagent launch, tagged so
-[task-timing](../../tools/task-timing/README.md) can time it from the agents' own session logs. A
-revision carries the previous output and the correction inline; never continue a finished
-subagent for a new stage or round.
+Tag each **assignment**, including follow-ups, with `[<stage>:<role>:r<N>] <task>`; round 1
+may omit `r1`. Name the three threads for their stable task and role, not a new stage or round.
+A correction includes the latest complete artifact/diff, previous findings, and required changes.
+Every reviewer rechecks the current artifact against its full checklist; an earlier PASS is not
+carried forward as a current verdict. Do not ask a reviewer to check only the correction.
 
-- **Claude:** the description starts `[<stage>(:<role>)(:r<N>)] <task>`, e.g.
-  `[review-plan:ownership:r2] 64.2 task 3`. Round 1 has no `r` part.
-- **Codex:** `spawn_agent`'s `task_name`, letters, digits and `_` only: `-`→`_`, `:`→`__`, then
-  `__<task>`, e.g. `review_plan__ownership__r2__64_2_task_3`.
-- **Stages:** `investigate:<repo>`, `design`, `review-design:<role>`, `plan`, `review-plan:<role>`,
-  `implement`, `review-code:<role>`. Roles: `simplicity`, `ownership`, `style`.
+Stages: `investigate`, `design`, `review-design`, `plan`, `review-plan`, `implement`, `review-code`.
+Roles: `supervisor`, `implementer`, `simplicity`, `ownership`, `style`. At code review, the
+simplicity/style agent returns **two separate verdict tables**, one per persona. Timing uses
+explicit assignment start/end boundaries, including supervisor design, per
+[task-timing](../../tools/task-timing/README.md); thread lifetime is not stage duration.
 
 ## Required loop
 
 0. **Scope.** The supervisor writes the spoke's requirement, `Done when`, default path, and the
    Security Architecture, Engineering Philosophy and UI gates that apply. User-visible work names
    its reference images, viewports, owned slice, states, theme selector and light/dark token map;
-   other visible elements are deferred or omitted. Type-1 decisions go to the operator. Facts from
-   more than one repo or question come from parallel investigators. An open architecture,
-   ownership, contract, failure or visual question blocks the next stage.
-1. **Design.** One designer receives the design assignment, naming each affected repo by absolute
-   path from the [README repository list](../../README.md#where-the-code-lives). The simplicity and
-   ownership reviewers check it in parallel; the supervisor sends one correction or locks the design
-   in the spoke. Skip when the spoke already locks the design, or for documentation-only and
-   Phase 50 move tasks; record why.
+   other visible elements are deferred or omitted. Type-1 decisions go to the operator. The
+   supervisor or existing implementer gathers facts across the affected repos and questions. An
+   open architecture, ownership, contract, failure or visual question blocks the next stage.
+1. **Design.** The supervisor applies the full designer persona and writes the design in the spoke,
+   naming each affected repo by absolute path from the
+   [README repository list](../../README.md#where-the-code-lives). The simplicity reviewer checks
+   it, then the ownership reviewer. The supervisor combines findings, revises, and obtains new
+   verdicts from those same reviewers before explicitly locking the design. Skip when the spoke
+   already locks the design; record why.
 2. **Plan.** One implementer receives the plan assignment and does not edit. The simplicity and
-   ownership reviewers check the plan in parallel; the supervisor also checks compatibility,
+   ownership reviewers check the plan sequentially; the supervisor also checks compatibility,
    security, Native AOT, default path and UI gates, then sends one combined correction (answered by a
    revised plan, `plan:r2`) or explicit approval. A point failing twice returns to Design.
-3. **Implement.** A new implementer receives the implementation assignment; a deviation, including a
-   visual mismatch, returns to the supervisor. Simplicity, ownership and code style reviewers check
-   the diff in parallel. The supervisor dismisses findings with a reason or returns them as one
-   correction within the approved plan (`implement:r2`); a fix outside the plan goes back to Plan.
+3. **Implement.** The same implementer receives the approved plan and explicit `PLAN APPROVED`;
+   a deviation, including a visual mismatch, returns to the supervisor. The simplicity/style
+   reviewer checks both full checklists against the diff, then the ownership reviewer checks it.
+   The supervisor dismisses findings with a reason or returns them as one correction within the
+   approved plan (`implement:r2`); a fix outside the plan goes back to Plan.
 4. **Ready to merge.** The supervisor completes the readiness checklist below.
 5. **Merge, publish, deploy.** Merge the product PRs (code, infrastructure, configuration) and
    publish or deploy through the normal route, so the default path uses the real artifacts.
@@ -76,17 +94,23 @@ subagent for a new stage or round.
    this loop, not routed around.
 7. **Closure.** See [Closure](#closure).
 
+Documentation-only tasks are edited and validated by the supervisor; product design, plan and
+code-review stages, product tests/AOT, and default-path acceptance are N/A, explicitly recorded.
+They do not launch an unused product team for timing. Phase 50 moves follow their own protocol.
+
 ## Assignments
 
-Each assignment is the persona's full text, then:
+Each subagent assignment is its stage tag, the applicable persona's full text, then the task.
+Code review for the simplicity/style agent includes both full personas and requires both tables.
+The supervisor uses this design checklist itself:
 
 ```text
-DESIGN — READ-ONLY. Do not create or modify any file; reply with the design.
+DESIGN — SUPERVISOR. Write design documentation only; do not edit product code.
 Read: [active spoke], [README of every touched component]
 Requirement: [word for word]
 Scope, non-goals, locked decisions: [...]
 Done when: [verbatim]
-Return the output defined in the persona.
+Record the output defined in the designer persona.
 ```
 
 ```text
@@ -101,10 +125,10 @@ Return the plan output defined in the persona.
 ```
 
 ```text
-REVIEW — READ-ONLY. Role: [simplicity | ownership | code style] reviewer.
+REVIEW — READ-ONLY. Role: [simplicity | ownership | simplicity and code style] reviewer.
 Requirement: [word for word]
 Under review: [design text | plan text | branch and repos to diff]
-Return the output defined in the persona, with evidence from the actual code or diff.
+Return the output defined in each assigned persona, with evidence from the current artifact/code/diff.
 ```
 
 ```text
@@ -140,13 +164,14 @@ questions; `Done when` evidence per condition.
 
 ## Closure
 
-1. Run [task-timing](../../tools/task-timing/README.md) with every product PR. Timing runs from the
-   first tagged subagent to the last product merge.
-2. Put its table in the task's completion record, in the spoke docs PR that closes the task, and
-   merge it. That PR is not timed.
+1. Record the explicit stage-boundary table defined in
+   [task-timing](../../tools/task-timing/README.md), with every product PR. The end-to-end span starts
+   with scope and ends at the last product merge; report later acceptance separately.
+2. Put the table in the task's completion record, in the spoke docs PR that closes the task, and
+   merge it. That closure PR is not part of the product timing span.
 3. End every touched repo on a clean, current `main` with no task worktrees.
 
-A **documentation-only task** has no product PR: run task-timing without `--pr` before opening its
-one PR, and include the table in it.
+A **documentation-only task** has no product PR: its timing ends at completed documentation
+validation. Include that boundary table and the N/A product gates in its one PR.
 
 The former [Claude/Codex workflow](claude-codex-workflow.md) is retired and grants no exception.

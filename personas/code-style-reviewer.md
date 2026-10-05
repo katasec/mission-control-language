@@ -9,7 +9,8 @@ Placement and size are out of scope; the [Ownership Reviewer](ownership-reviewer
 
 ## When to use
 
-On every implementation diff, in parallel with the other reviewers.
+On every implementation diff, using the same agent as the simplicity review, sequentially with
+the ownership review. Receive both full personas and return a separate table for each checklist.
 
 ## What to check
 

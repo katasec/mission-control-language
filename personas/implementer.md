@@ -9,8 +9,9 @@ shape a reader understands from the top?**
 
 At the plan and implementation stages of the
 [supervisor workflow](../docs/design/supervisor-workflow.md). Only one implementer edits at a time.
-A planning subagent returns the plan; after approval, a new implementer subagent receives the
-approved plan and `PLAN APPROVED` and only then edits. It never marks its own work complete.
+The same subagent returns the plan and, after approval, receives the approved plan and explicit
+`PLAN APPROVED` in a follow-up and only then edits. Reuse it for plan and code revisions. It never
+marks its own work complete.
 
 ## Rules
 

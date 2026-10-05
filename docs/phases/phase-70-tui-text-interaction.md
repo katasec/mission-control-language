@@ -1,8 +1,8 @@
 # Phase 70 — TUI text interaction
 
 **Status: R3 foundation candidate and synthetic references recorded; fresh reviewer launches rejected, design approval pending. Not build-ready.**
-**Next:** retry fresh simplicity/ownership reviews of the foundation candidate and references,
-then obtain the native delivery-owner decision through the supervisor workflow. The operator will manually
+**Next:** reuse assigned simplicity/ownership role agents to review the foundation candidate and
+references sequentially, then obtain the native delivery-owner decision through the supervisor workflow. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -47,12 +47,16 @@ This repository owns only mission-control documents. CodeAlta is a read-only ref
 
 Use [supervisor workflow](../design/supervisor-workflow.md) and inline the full
 [persona](../../personas/README.md) in every applicable assignment. The supervisor handles
-routine investigation, design review, plan approval, implementation review, merging, and
+routine investigation, design, review coordination, plan approval, implementation review, merging, and
 automated verification without a human relay. The operator performs final live acceptance below.
 Type-1 ownership/public-contract/security decisions still go
-to the operator. Scope → design → simplicity/ownership reviews → implementer plan →
-simplicity/ownership reviews → supervisor approval → fresh implementer →
-simplicity/ownership/style reviews → merge/publish → default-path acceptance → closure.
+to the operator. The supervisor applies the designer persona. Use one implementer, one
+simplicity/code-style reviewer, and one ownership reviewer, one active subagent at a time; reuse
+those roles across stages and revisions. Scope → supervisor design → sequential simplicity/ownership
+reviews → implementer plan → sequential reviews → supervisor approval → same implementer →
+sequential simplicity/style and ownership reviews → merge/publish → default-path acceptance → closure.
+The 2026-10-06 workflow change permits role-agent reuse; it does not approve the candidate or
+resolve the native delivery-owner decision.
 
 This delivery is documentation-only: the fresh R2 ownership retry completed, a fresh R3 designer
 returned corrected contracts, and synthetic references were saved/inspected. Both fresh R3
@@ -80,7 +84,7 @@ security and text-interaction requirements do not change.
 |---|---|
 | Reason | Computer Use still rejects Ghostty “for safety reasons”. System Settings inspection showed Codex Computer Use enabled, but a direct Ghostty access check was denied. No supported access fix was established. |
 | Exact exception | Replace live reproduction before product design with the recorded source/controlled baseline. Replace mandatory supervisor-operated live UI inspection before merge and closure with operator-run installed acceptance after code is ready. This is a scoped exception to the supervisor workflow's live UI readiness check and the applied UI principles' internal-live-PASS prerequisite. No agent live PASS is implied. |
-| Agent responsibility | Resolve product design and public APIs; bind mockups/states and theme tokens; run fresh persona design/plan/code reviews, interaction and failure tests, required suite and Native AOT checks. Controlled visuals/tests are labelled as such. The exception does not resolve library, ownership or design gaps. |
+| Agent responsibility | Resolve product design and public APIs; bind mockups/states and theme tokens; run current-artifact persona design/plan/code reviews sequentially with the assigned role agents, interaction and failure tests, required suite and Native AOT checks. Controlled visuals/tests are labelled as such. The exception does not resolve library, ownership or design gaps. |
 | Delivery for testing | After approved scope, code reviews and required automated checks pass, merge/publish/install through the normal repository route. Record exact artifact version/commit/digest. Status is **implemented; awaiting manual acceptance**, not complete. |
 | Operator responsibility | Launch the installed default artifact in Ghostty on laptop Retina, both themes and normal/narrower windows; perform the spokes' actual user actions and compare copied text, selection, controls and graphics with their locked expectations/references. No endpoint/client/mission substitutions. |
 | Evidence and closure | Record who performed each check, artifact/defaults/dependency/safe state, action and observed PASS/FAIL. Operator observations or voluntarily supplied captures are attributed to the operator; supervisor assesses coverage and records acceptance. Missing/failing cases keep the task open and feed the normal design/plan/fix workflow. Automated results never become default-path PASS. |
