@@ -65,10 +65,10 @@ subagent for a new stage or round.
    ownership reviewers check the plan in parallel; the supervisor also checks compatibility,
    security, Native AOT, default path and UI gates, then sends one combined correction (answered by a
    revised plan, `plan:r2`) or explicit approval. A point failing twice returns to Design.
-3. **Implement.** A new implementer receives the implementation assignment. A material deviation,
-   including a visual mismatch, returns to the supervisor before the change grows. The simplicity,
-   ownership and code style reviewers then check the real diff in parallel; the supervisor fixes or
-   dismisses each finding with a reason and sends one combined correction.
+3. **Implement.** A new implementer receives the implementation assignment; a deviation, including a
+   visual mismatch, returns to the supervisor. Simplicity, ownership and code style reviewers check
+   the diff in parallel. The supervisor dismisses findings with a reason or returns them as one
+   correction within the approved plan (`implement:r2`); a fix outside the plan goes back to Plan.
 4. **Ready to merge.** The supervisor completes the readiness checklist below.
 5. **Merge, publish, deploy.** Merge the product PRs (code, infrastructure, configuration) and
    publish or deploy through the normal route, so the default path uses the real artifacts.
