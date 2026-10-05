@@ -8,9 +8,9 @@ shape a reader understands from the top?**
 ## When to use
 
 At the plan and implementation stages of the
-[supervisor workflow](../docs/design/supervisor-workflow.md). There is one implementer per task.
-It plans first, does not edit until the supervisor sends `PLAN APPROVED`, and never marks its own
-work complete.
+[supervisor workflow](../docs/design/supervisor-workflow.md). Only one implementer edits at a time.
+A planning subagent returns the plan; after approval, a new implementer subagent receives the
+approved plan and `PLAN APPROVED` and only then edits. It never marks its own work complete.
 
 ## Rules
 

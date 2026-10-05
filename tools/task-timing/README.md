@@ -1,8 +1,8 @@
 # task-timing
 
-Prints how long a task took, from design to merge, for its completion record in the spoke. It
-reads the stage-tagged subagent transcripts that Claude Code keeps under `~/.claude/projects/` and
-the merge times of the task's pull requests.
+Prints how long a task took, from its first tagged subagent to its last product PR merge, for its
+completion record in the spoke. It reads the session logs the agents already keep: Claude Code
+under `~/.claude/projects/`, Codex under `~/.codex/sessions/`. PR times come from `gh`.
 
 ```bash
 python3 tools/task-timing/timing.py "69 task 1" --pr katasec/forge-mcl#61 --pr katasec/forge-runner#25
@@ -10,11 +10,13 @@ python3 tools/task-timing/timing.py "69 task 1" --pr katasec/forge-mcl#61 --pr k
 
 | Column | Source |
 |---|---|
-| Stage | The stage tag at the start of each subagent's description (`[plan] 69 task 1`). Parallel agents of one stage share a row; a revision (`[plan:r2]`) gets its own row. |
-| Start, End, Wall | First and last transcript timestamp of the stage's agents. |
-| Tokens | Each agent's final context size, the figure the harness reports, summed per stage. |
-| PR rows | `gh pr view` opened and merged times. Every PR must be merged. |
-| End to end | First tagged subagent start to the last merge. |
+| Stage | Claude: the tag at the start of the subagent's description (`[plan] 69 task 1`). Codex: the `task_name` (`plan__69_task_1`). Parallel agents of one stage share a row; a revision (`[plan:r2]`, `plan__r2__69_task_1`) gets its own row. |
+| Start, End, Wall | First and last log timestamp of the stage's agents. |
+| Tokens | Each agent's context size at its last model call (for Claude, the figure the harness reports), summed per stage. |
+| PR rows | `gh pr view` opened and merged times of the product PRs. Every PR must be merged. |
+| End to end | First tagged subagent start to the last product PR merge. |
 
-**Limits:** only Claude Code subagents are read. Work done in Codex has no transcript here, so
-record its stage times by hand. An untagged subagent is invisible to the tool.
+**Limits:** an untagged subagent is invisible to the tool. A subagent that is continued for a
+later stage or round is counted entirely in its first stage; the workflow launches a new subagent
+per stage and round to prevent that. Work the supervisor does itself, between subagents, appears
+only in the end-to-end span.

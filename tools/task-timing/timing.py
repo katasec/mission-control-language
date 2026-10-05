@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Stage timing for one task, from design to merge.
 
-Reads stage-tagged subagent transcripts (`[stage] <task> ...` descriptions) and the task's merged
-pull requests, and prints a Markdown table for the task's completion record.
+Reads stage-tagged subagent session logs from Claude Code (`[stage] <task> ...` descriptions) and
+Codex (`stage__task` task names), and the task's merged pull requests, and prints a Markdown table
+for the task's completion record.
 
 Usage: timing.py <task> [--pr owner/repo#123 ...]
 """
@@ -14,7 +15,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-TRANSCRIPTS = Path.home() / ".claude" / "projects"
+CLAUDE_LOGS = Path.home() / ".claude" / "projects"
+CODEX_LOGS = Path.home() / ".codex" / "sessions"
 TAG = re.compile(r"^\[([^\]]+)\]\s+(.*)$")
 
 
@@ -37,16 +39,23 @@ def parse_args():
 # --- Subagent runs -------------------------------------------------------------------------------
 
 def find_runs(task):
-    for meta_path in TRANSCRIPTS.glob("*/*/subagents/*.meta.json"):
-        tag = task_tag(meta_path, task)
+    yield from claude_runs(task)
+    yield from codex_runs(task)
+
+
+# Claude Code: one meta file (description) and one transcript per subagent.
+
+def claude_runs(task):
+    for meta_path in CLAUDE_LOGS.glob("*/*/subagents/*.meta.json"):
+        tag = claude_tag(meta_path, task)
         if tag is None:
             continue
-        start, end, tokens = transcript_facts(meta_path.with_name(meta_path.name.replace(".meta.json", ".jsonl")))
+        start, end, tokens = claude_facts(meta_path.with_name(meta_path.name.replace(".meta.json", ".jsonl")))
         if start is not None:
             yield {"stage": tag, "start": start, "end": end, "tokens": tokens}
 
 
-def task_tag(meta_path, task):
+def claude_tag(meta_path, task):
     description = json.loads(meta_path.read_text()).get("description", "")
     match = TAG.match(description)
     if match is None:
@@ -57,7 +66,7 @@ def task_tag(meta_path, task):
     return tag
 
 
-def transcript_facts(jsonl_path):
+def claude_facts(jsonl_path):
     """First and last timestamp, and the agent's final context size (what the harness reports)."""
     if not jsonl_path.exists():
         return None, None, 0
@@ -71,6 +80,53 @@ def transcript_facts(jsonl_path):
             last_usage = message["usage"]
     tokens = total_tokens(last_usage) if last_usage else 0
     return (min(stamps), max(stamps), tokens) if stamps else (None, None, 0)
+
+
+# Codex: one session file per subagent; its first line names it (`agent_path` ends in the task_name).
+
+def codex_runs(task):
+    wanted = codex_name(task)
+    for path in CODEX_LOGS.glob("*/*/*/*.jsonl"):
+        meta = first_entry(path).get("payload") or {}
+        if meta.get("thread_source") != "subagent":
+            continue
+        tag = codex_tag(meta.get("agent_path", "").rsplit("/", 1)[-1], wanted)
+        if tag is not None:
+            yield {"stage": tag, **codex_facts(path, meta)}
+
+
+def codex_tag(task_name, wanted):
+    """`review_plan__ownership__64_2_task_3` -> `review-plan:ownership` when the task matches."""
+    parts = task_name.split("__")
+    if len(parts) not in (2, 3):
+        return None
+    task = parts[-1]
+    if task != wanted and not task.startswith(wanted + "_"):
+        return None
+    stage = parts[0].replace("_", "-")
+    return f"{stage}:{parts[1]}" if len(parts) == 3 else stage
+
+
+def codex_facts(path, meta):
+    """Spawn time to last log line, and the context size of the last model call."""
+    end, last_usage = None, None
+    for line in path.read_text().splitlines():
+        entry = json.loads(line)
+        end = entry.get("timestamp", end)
+        info = (entry.get("payload") or {}).get("info") or {}
+        last_usage = info.get("last_token_usage", last_usage)
+    tokens = (last_usage["input_tokens"] + last_usage["output_tokens"]) if last_usage else 0
+    return {"start": parse_time(meta["timestamp"]), "end": parse_time(end), "tokens": tokens}
+
+
+def codex_name(task):
+    return re.sub(r"[^a-z0-9]+", "_", task.lower()).strip("_")
+
+
+def first_entry(path):
+    with path.open() as handle:
+        line = handle.readline()
+    return json.loads(line) if line.strip() else {}
 
 
 def total_tokens(usage):
