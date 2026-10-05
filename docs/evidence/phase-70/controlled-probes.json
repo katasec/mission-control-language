@@ -1,0 +1,123 @@
+{
+  "capturedOn": "2026-10-05",
+  "layer": "controlled component, not installed/default-path/visual acceptance",
+  "forgeSourceCommit": "2022b512dd2bd108626124f22bc1cfe7652648d7",
+  "forgeDebugAssemblySha256": "1B38A2F5ED3DEB77B96AD6C946F0CD4A56B93809D8AE9C8A32F134C4906EB62D",
+  "uiVersion": "3.10.0",
+  "terminalVersion": "2.2.0",
+  "terminalBackend": "InMemoryTerminalBackend",
+  "terminalCells": [
+    100,
+    32
+  ],
+  "syntheticCellPixels": [
+    19,
+    42
+  ],
+  "imageTransmission": "discarded",
+  "stopAction": "synthetic counter, not hosted cancellation",
+  "clipboard": "in-memory, not OS",
+  "observations": [
+    {
+      "name": "native",
+      "clickedBeforeCopy": false,
+      "selectedByShiftArrows": "beta",
+      "hasSelection": true,
+      "clipboard": "beta",
+      "stops": 0,
+      "bounds": "(0,0) 48x5",
+      "editorCopyCommand": true,
+      "contextMenu": false
+    },
+    {
+      "name": "native",
+      "clickedBeforeCopy": true,
+      "selectedByShiftArrows": "beta",
+      "hasSelection": true,
+      "clipboard": "beta",
+      "stops": 0,
+      "bounds": "(0,0) 48x5",
+      "editorCopyCommand": true,
+      "contextMenu": false
+    },
+    {
+      "name": "Dark",
+      "clickedBeforeCopy": false,
+      "selectedByShiftArrows": "beta",
+      "hasSelection": true,
+      "clipboard": "sentinel",
+      "stops": 1,
+      "bounds": "(6,28) 84x1",
+      "editorCopyCommand": false,
+      "contextMenu": false
+    },
+    {
+      "name": "Dark",
+      "clickedBeforeCopy": true,
+      "selectedByShiftArrows": "beta",
+      "hasSelection": true,
+      "clipboard": "beta",
+      "stops": 0,
+      "bounds": "(6,28) 84x1",
+      "editorCopyCommand": false,
+      "contextMenu": false
+    },
+    {
+      "name": "Light",
+      "clickedBeforeCopy": false,
+      "selectedByShiftArrows": "beta",
+      "hasSelection": true,
+      "clipboard": "sentinel",
+      "stops": 1,
+      "bounds": "(6,28) 84x1",
+      "editorCopyCommand": false,
+      "contextMenu": false
+    },
+    {
+      "name": "Light",
+      "clickedBeforeCopy": true,
+      "selectedByShiftArrows": "beta",
+      "hasSelection": true,
+      "clipboard": "beta",
+      "stops": 0,
+      "bounds": "(6,28) 84x1",
+      "editorCopyCommand": false,
+      "contextMenu": false
+    },
+    {
+      "name": "native-context-menu",
+      "selectedBefore": true,
+      "selectedAfterOpening": false,
+      "menuSnapshot": "beta",
+      "clipboardAfterActivate": "beta"
+    },
+    {
+      "name": "forge-transcript-Dark",
+      "crossParagraphDrag": false,
+      "selected": "first",
+      "secondParagraphSelected": false,
+      "clipboard": "first"
+    },
+    {
+      "name": "forge-transcript-Dark",
+      "crossParagraphDrag": true,
+      "selected": "first paragraph alpha beta",
+      "secondParagraphSelected": false,
+      "clipboard": "first paragraph alpha beta"
+    },
+    {
+      "name": "forge-transcript-Light",
+      "crossParagraphDrag": false,
+      "selected": "first",
+      "secondParagraphSelected": false,
+      "clipboard": "first"
+    },
+    {
+      "name": "forge-transcript-Light",
+      "crossParagraphDrag": true,
+      "selected": "first paragraph alpha beta",
+      "secondParagraphSelected": false,
+      "clipboard": "first paragraph alpha beta"
+    }
+  ]
+}

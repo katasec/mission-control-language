@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | No active implementation remains; select the next item from [backlog.md](backlog.md). |
+| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): close live-reproduction gaps, then run product design through the supervisor workflow. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| — | No active phases. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Discovery recorded; live verification and product design pending. |
 
 ## Design docs
 
