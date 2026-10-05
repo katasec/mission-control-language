@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-05)
+## Now (2026-10-06)
 
 | | |
 |---|---|
-| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): retry fresh foundation reviews of the revised candidate and saved references; operator performs final installed verification. |
+| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): review the revised foundation candidate and saved references sequentially using the assigned role agents; operator performs final installed verification. |
 
 ## Active phases
 

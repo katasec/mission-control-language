@@ -331,7 +331,7 @@ and transport, Forge owns local policy/feedback. Manual-verification Type-2 exce
 
 | Gate | Required next result |
 |---|---|
-| Independent review | Fresh R3 simplicity and ownership launches both returned `agent thread limit reached`; neither reviewer ran. [R3 evidence](phase-70.1-text-interaction-foundation_completed.md#r3-candidate-and-reference-record). Retry fresh launches when supported capacity is available; no completed reviewer reuse or supervisor substitution. |
+| Independent review | Fresh R3 simplicity and ownership launches both returned `agent thread limit reached`; neither reviewer ran. [R3 evidence](phase-70.1-text-interaction-foundation_completed.md#r3-candidate-and-reference-record). Under the revised [supervisor workflow](../design/supervisor-workflow.md), reuse assigned independent simplicity and ownership role agents sequentially, with full personas and the complete R3 candidate/references. No prior verdict substitutes for R3 review; no supervisor substitution. |
 | Visual binding | Both synthetic galleries saved/rendered/inspected; independent review pending. Native runtime states and all language/viewport cases remain product-verification requirements. |
 | Type-1 delivery | Operator chooses the concrete native owner/package route after reviewed contract; no upstream authority or release is assumed. |
 | Package proof | Actual public API/native menu/Paste route and public-only behaviour/AOT probes with zero warnings before Forge plan approval. |
@@ -382,10 +382,10 @@ Reconfirm dependency versions and owning repository instructions before design.
 | Task | State | Done when |
 |---|---|---|
 | 1. Source/library/CodeAlta discovery | Done — [evidence](phase-70.1-text-interaction-foundation_completed.md#discovery-results). | Pinned source and controlled observations distinguish native capability, Forge wiring defects, and library gaps. |
-| 2. Installed Retina reproduction | Agent path blocked; prerequisite superseded by the parent exception. Manual observations move to Task 6. | No live PASS claimed; recorded controlled baseline is available to the designer. Physical delivery, focus/highlight and clipboard round-trip remain manual acceptance cases. |
-| 3. Product design and review | R3 candidate/references recorded; fresh simplicity/ownership launches rejected by tool limit. No design approval. | Fresh designer; simplicity and ownership reviews; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
-| 4. Implementation plan and review | Pending after design approval. | Fresh plan author; simplicity and ownership reviews; supervisor explicitly approves bounded changes, meaningful interaction tests and AOT checks. |
-| 5. Implementation and review | Pending after plan approval. | Fresh implementer; positive/negative interaction evidence including failed clipboard writes; independent simplicity/ownership/style review; no product task marked complete by implementer. |
+| 2. Installed Retina reproduction | Agent path blocked; prerequisite superseded by the parent exception. Manual observations move to Task 6. | No live PASS claimed; recorded controlled baseline is available to the supervisor applying the designer persona. Physical delivery, focus/highlight and clipboard round-trip remain manual acceptance cases. |
+| 3. Product design and review | R3 candidate/references recorded; fresh simplicity/ownership launches rejected by tool limit. No design approval. | Supervisor applies designer persona; assigned simplicity and ownership agents review sequentially; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
+| 4. Implementation plan and review | Pending after design approval. | Assigned implementer plans; assigned simplicity and ownership agents review sequentially; supervisor explicitly approves bounded changes, meaningful interaction tests and AOT checks. |
+| 5. Implementation and review | Pending after plan approval. | Same implementer after explicit plan approval; positive/negative interaction evidence including failed clipboard writes; independent sequential simplicity/style and ownership reviews with every checklist; no product task marked complete by implementer. |
 | 6. Merge, install, accept, close | Pending after checks pass; operator performs live acceptance. | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |
 
 ## Done when

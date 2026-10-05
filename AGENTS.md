@@ -258,24 +258,28 @@ abstractions, prefer structural containment to warnings or remembered procedures
 verification observation in “Done when.” Record any material exception and its removal path in the
 active spoke; do not defer it to implementation.
 
-### Roles — supervisor, designers, implementer, reviewers
+### Roles — supervisor, implementer, reviewers
 
 All implementation work follows the [supervisor workflow](docs/design/supervisor-workflow.md).
 It is provider-neutral: whichever LLM agent the operator is working in (Claude, Codex, or another)
-is the supervisor and uses its own subagents. The operator may run some tasks in one agent and
-others in another. The supervisor owns scope, merges each fan-out into one decision, approves the
-plan, and accepts completion. Investigation and review fan out to parallel read-only subagents;
-one designer owns the design and one implementer owns the code for one explicitly approved task. The supervisor may write or correct
-design and planning documentation; no subagent may modify code, infrastructure, or executable
-configuration until the supervisor has explicitly approved the implementer's plan.
+is the supervisor and uses its own subagents. The supervisor owns scope and design (applying the
+full designer persona), combines review findings, approves the plan, and accepts completion.
+Use a fixed team of **three subagent threads per bounded task**: one implementer, one
+simplicity/code-style reviewer, and one ownership reviewer. Run **one subagent at a time** and
+reuse each role's agent across stages and revisions. The supervisor or existing implementer
+investigates; no separate investigator or designer launch is required.
 
-The required loop is **scope (investigator fan-out) → design → design-review fan-out → plan →
-plan-review fan-out → approval → implementation → code-review fan-out → merge → default-path
-acceptance → closure**. Each subagent carries its
-[persona](personas/README.md) inline, per the workflow's persona rule. The implementer never approves its own plan, resolves an open design question by
-inference, broadens scope, or marks a task complete. The supervisor independently checks the diff
-and evidence against the task's `Done when` condition. Internal supervisor/subagent handoffs use
-the agent's own subagent tools and do not need a human relay.
+The required loop is **scope → supervisor design → sequential design reviews → implementer plan →
+sequential plan reviews → approval → same implementer → sequential code reviews → merge →
+default-path acceptance → closure**. Each subagent carries its
+[persona](personas/README.md) inline, per the workflow's persona rule. The simplicity/code-style
+reviewer covers both full checklists at code review, with separate verdict tables. Reviewers
+remain independent of authorship. The supervisor may write or correct design and planning
+documentation; no subagent may modify code, infrastructure, or executable configuration until
+the supervisor has explicitly approved the implementer's plan. The implementer never approves
+its own plan, resolves an open design question by inference, broadens scope, or marks a task
+complete. The supervisor independently checks the diff and evidence against `Done when`.
+Internal supervisor/subagent handoffs use the agent's own subagent tools without a human relay.
 
 ### Phases and tasks
 Work is broken into phases, each with a spoke document in `docs/phases/`. Phases have a
