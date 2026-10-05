@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: R6 foundation candidate and synthetic references passed both complete sequential reviews; Type-1 delivery decision and design approval pending. Not build-ready.**
-**Next:** obtain the operator's decision on the reviewed native-library/public-package route through the supervisor workflow. The operator will manually
+**Status: both complete public-extension/package reviews PASS; bounded feasibility pending. Not build-ready.**
+**Next:** prove Markdown registration, multi-source input/Copy claim and snippet reset in bounded public-control probes before design/plan approval. Actual package/consumer/integration/AOT checks follow approved implementation, before merge/publication. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -26,7 +26,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Both R6 reviews PASS; native delivery decision pending. | First: select delivery route, obtain actual public capabilities and prove them before Forge handoff. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Both complete R9 reviews PASS; bounded feasibility pending. | Design reviews and bounded public feasibility precede plan approval; actual package/consumer/integration/AOT checks follow approved implementation, before merge/publication. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
@@ -55,9 +55,9 @@ those roles across stages and revisions. Scope → supervisor design → sequent
 reviews → implementer plan → sequential reviews → supervisor approval → same implementer →
 sequential simplicity/style and ownership reviews → merge/publish → default-path acceptance → closure.
 The 2026-10-06 workflow change permits role-agent reuse; it does not approve the candidate or
-resolve the native delivery-owner decision.
+approve any product implementation.
 
-R6 — both complete reviews PASS; see [evidence and supervisor assessment](phase-70.1-text-interaction-foundation_completed.md#r6-complete-review-and-supervisor-assessment).
+Current public-extension/package reviews — both complete R9 PASS; see [probe/review evidence and supervisor assessment](phase-70.1-text-interaction-foundation_completed.md#public-extension-evaluation-and-complete-r7r9-reviews). R6 is superseded and archived there.
 This delivery is documentation-only. Design approval, plan and code remain pending;
 default-path acceptance, product tests and Native AOT are N/A for this documentation change.
 
@@ -69,7 +69,7 @@ default-path acceptance, product tests and Native AOT are N/A for this documenta
 | Computer use | Operator explicitly authorized launch and inspection of the TUI. The tool's Ghostty denial is still an access limitation; authorization does not override it. |
 | Manual verification | Operator selected post-code manual checking on 2026-10-05: “once code complete - i can check manually”. This replaces agent-operated live reproduction as a prerequisite; it does not waive final live acceptance. |
 | Publishing | Operator explicitly authorized publishing packages within the defined Forge repositories and updating their ACLs for consuming solutions. Use normal repository routes once the approved task requires it. Nothing was published or changed in ACLs during discovery. |
-| Library extension | Prefer existing public XenoAtom APIs. An upstream change, Forge adapter, or package ownership change needs a concrete reviewed contract before code; permission to publish Forge packages does not grant write access to XenoAtom. |
+| Library extension | Operator selected minimal Forge-owned public extensions over unchanged UI/Markdown/TextMate 3.10.0 and Terminal 2.2.0, with a separate namespace/assembly/package. Skip fork comparison if clean; compare only concrete complexity/essential gap. No upstream/fork writes. Boundary/API reviews and bounded public feasibility precede plan approval; actual package/consumer/integration/AOT proof follows approved implementation, before merge/publication. |
 | Themes | Existing `ForgeTheme` → `ForgeStyles` is the token owner. Every owned state must work in dark and light and permit future theme instances. |
 
 ## Manual verification exception

@@ -31,6 +31,32 @@ fits only after defining the smallest required public contract. Do not fork Xeno
 `XenoCells` private access as an assumed solution. Library version upgrades require verified
 public capabilities and regression evidence, not extrapolation from CodeAlta.
 
+## Public-extension feasibility and fork comparison
+
+The operator selected unchanged public packages plus Forge-owned extensions as the primary route,
+and asked to skip fork comparison when that stays clean. Foundation's 22 public-only behavior
+cases do not prove continuous rich selection. No fork is authorized or created.
+
+| Required boundary | Pinned capability / remaining cost |
+|---|---|
+| Semantic document | Public MarkdownDocumentContent.GetBlock and DocumentFlowBlock.CreateVisual materialize visuals; they expose no canonical source-offset/range map. MarkdownControl is sealed and its builder internal. [Content](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI.Extensions.Markdown/MarkdownDocumentContent.cs), [block](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/DocumentFlowBlock.cs). |
+| Hit/range mapping | Paragraph's native wrapped-line selection mapping is private. Public Text/Runs and visual bounds alone do not identify offsets for repeated words, graphemes or proportional heading images. A public adapter would need a verified text/layout map; do not assume screen-text search or copied native layout code is adequate. |
+| Drawing | Public CellBuffer.OverlayCellStyle can mark terminal cells; Forge already owns heading logical text/font geometry. This is a candidate rendering seam, not a demonstrated heading/rich-range renderer. [Overlay](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Rendering/CellBuffer.cs#L268). |
+| Package ownership | Reusable native clipboard/menu extensions use the foundation package; Forge Markdown/Kitty semantics stay CLI. A second selection package or a larger extension API is not justified until the required map is proved. |
+
+Before rich design approval, make one bounded public-only geometry/semantics probe: two
+Paragraphs with repeated words, narrow wrapping and graphemes, crossing a logical image heading
+into code. Prove pointer→logical offsets, highlighted cells, exact copied text and reflow, with
+no private access. Also close every promised content case in the decision table below; this probe
+does not authorize a smaller range scope.
+
+If that requires reproducing substantial native wrapping/hit mapping or cannot meet an essential
+case, compare that concrete adapter with a bounded fork exposing existing native mapping/range
+operations. Compare actual code/duplicate mechanisms, compatible UI/Markdown/TextMate package
+maintenance and consumer/AOT verification, rather than assuming a tiny patch is a cheap fork.
+If the public adapter remains small, skip the fork comparison as requested. Route and full rich
+design remain open; library-private methods are never an implementation shortcut.
+
 ## Decisions required before design can close
 
 | Decision | Output that must be written in this spoke |
@@ -39,7 +65,7 @@ public capabilities and regression evidence, not extrapolation from CodeAlta.
 | Copy semantics | Canonical plain-text ordering, paragraph/list/table separators, heading text, links, whitespace and code newlines; decide whether a separately requested Copy message as Markdown is warranted. It is not in the current requested slice. |
 | Stable identity | Source offsets/anchors across Markdown reflow and streamed replacement; exact rule for content inserted or removed during selection and while a context menu is open. |
 | Geometry and gestures | Hit mapping for proportional image headings, Unicode/graphemes, wrapping, scrolling, drag outside viewport, double/Shift-click and deselection; no collision with links or copy buttons. |
-| Ownership and API | Selection owner lifecycle, public interfaces and complete data shapes, clipboard policy integration, disposal and failure handling; upstream extension versus bounded adapter and its package/repository route. Type-1 public-contract/ownership changes need operator decision. |
+| Ownership and API | Selection owner lifecycle, public interfaces and complete data shapes, clipboard policy integration, disposal and failure handling; bounded public adapter and its package/repository route; conditional fork comparison only on a concrete gap/complexity. Type-1 public-contract/ownership changes need operator decision. |
 | Visuals and themes | Binding selected-heading/body/code appearance, both themes' semantic tokens, selected text contrast and focus transitions. Preserve existing Kitty identity. |
 
 ## Entry points and gates
