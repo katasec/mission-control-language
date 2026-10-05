@@ -418,11 +418,16 @@ hosted chat/account, source/package or ACL operation occurred.
 | Actual state inventory before ownership attempt | Root running; four descendants completed: designer R2, ownership R2, simplicity R1, designer R3. Completion is not assumed to release capacity. |
 | Cleanup capability | No agent-close operation exposed by collaboration tools or deferred-tool metadata. Interruption/sidebar archive was not used as a substitute. No numerical quota or lifetime-limit explanation was inferred. |
 
-The next step is **fresh R3 simplicity and ownership launches against the saved candidate and
+The then-required next step was **fresh R3 simplicity and ownership launches against the saved candidate and
 references** when supported capacity is available. Do not continue completed agents for this
 new round, manufacture review PASS, substitute supervisor inspection, or start a product plan.
 The operator's Type-1 route choice and actual public package/probes remain subsequent gates;
 manual post-code installed Ghostty/laptop Retina verification stays approved.
+
+That launch-only instruction is superseded by the operator-approved reusable-role workflow
+in [PR #343](https://github.com/katasec/mission-control-language/pull/343), commit `02eba760`;
+see the [successful continuation](#reused-role-reviews-and-r4-correction) below. No fresh-launch
+capacity recovery is inferred.
 
 ### Documentation continuation timing
 
@@ -447,6 +452,195 @@ whole global hub's top-level-only shape, both SVG XML parses, exact fixture run 
 `git diff --check`. Final light/dark state details were rerendered and inspected after spacing
 correction. The checkpoint skill copies match; no `project_` memory files exist. Forge product
 diff against `origin/main` is empty and its main is 0/0 versus origin/main.
+
+## Reused role reviews and R4 correction
+
+**2026-10-06 local date — both complete R3 reviews ran sequentially through existing role agents.**
+The simplicity role `review_design__simplicity__70_1_foundation` resumed successfully, then the
+ownership role `review_design__ownership__r2__70_1_foundation`. Each assignment carried its full
+persona, all current design/reference artifacts, previous findings and current gates; neither
+inherited an earlier PASS. Both returned **REVISE**, independently confirming four corrections.
+
+| R3 simplicity check | Current verdict |
+|---|---|
+| New apps/libraries | PASS — native/library owners retained; extension proposed, not existing. |
+| Reuse | REVISE — Forge cannot reset internal IsHovered. |
+| Multiple paths | REVISE — snippet modal admission lacks a public hook. |
+| Legacy paths | PASS — one public package route, no fallback/vendor/fork. |
+| Knobs | PASS — fixed commands, layout, feedback and routing. |
+| Speculative abstractions | PASS — private bounded guards correspond to failures. |
+| Library choice | PASS — actual public package/probes/AOT remain prerequisites. |
+| Copy-paste | PASS at design layer — one policy, native edit/render reuse. |
+| Redundant definitions | REVISE — incorrect pressed/focused precedence. |
+| Size versus requirement | PASS — local text interaction only; rich selection dependent. |
+| Test volume | REVISE — name exact width0/1/2/3 and focus+press observations. |
+
+| R3 ownership checklist | Current verdict |
+|---|---|
+| Required behaviours | PASS — selection, menu callbacks, Paste, transport, snippets, styles and delivery listed. |
+| Blind owner derivation | PASS — atlas/component/native READMEs read first. |
+| Existing/new component | PASS — no new Forge component/package. |
+| Placement | REVISE — native admission/detach mechanics inaccessible or misplaced. |
+| Duplicate search | PASS — source trees in all eight README-listed Forge repos searched; no equivalent implementation. |
+| One job per owner | PASS — no unrelated responsibility requires splitting. |
+
+| Combined finding / source observation | R4 supervisor correction |
+|---|---|
+| Native app scope methods are private at TerminalApp:3553/3555/3620. | Proposed public `CanReceiveInput(Visual)` with complete UI-thread/eligibility/scope contract; no Forge modal reconstruction. |
+| IsHovered setter is internal at Visual:244; detach:786 omits hover cleanup; TerminalApp owns hovered path and capture. | Proposed fixed native Button/app detach cleanup. Forge resets/invalidate feedback only; legitimate reattachment remains. |
+| ButtonStyle:100–103 returns Pressed immediately; Focused follows only Hovered. | Existing reactive Pressed slot adds focused underline itself; other semantic styles retain foreground/background/bold. |
+| Button.ArrangeCore:149–157 subtracts both padding cells. | ForgeTheme geometry and ForgeStyles native padding specify zero sides at widths1–2; galleries include exact width0/1/2/3. |
+
+Supervisor independently read the pinned native source and current owning Forge READMEs/atlas.
+Both reviewers rendered/inspected the current SVGs in memory and read the controlled colour
+record; these remain synthetic evidence. Neither found another blocker in close-before-invoke
+or the private Paste guard. No product diff exists; no design/plan approval, upstream authority,
+public release, AOT or installed/Retina PASS is implied. R4 whole-artifact reviews remain required.
+
+### Explicit continuation boundaries
+
+UTC assignment boundaries follow [task-timing](../../tools/task-timing/README.md), rather than
+reused thread lifetime. Tokens **N/A**, not independently measured.
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[review-design:simplicity:r3] 70.1 foundation` | 2026-10-05 20:57:11 | 2026-10-05 21:01:51 | 4m 40s | Complete R3 simplicity verdict above. |
+| `[review-design:ownership:r3] 70.1 foundation` | 2026-10-05 21:01:51 | 2026-10-05 21:09:13 | 7m 22s | Complete R3 ownership verdict above. |
+| `[design:supervisor:r4] 70.1 foundation` | 2026-10-05 21:09:13 | 2026-10-05 21:12:51 | 3m 38s | Complete R4 contract, owner/reuse/failure tables and current rendered/inspected synthetic galleries. |
+| `[review-design:simplicity:r4] 70.1 foundation` | 2026-10-05 21:12:56 | 2026-10-05 21:19:01 | 6m 05s | Whole R4 verdict below. |
+| `[review-design:ownership:r4] 70.1 foundation` | 2026-10-05 21:19:01 | 2026-10-05 21:20:46 | 1m 45s | Interrupted; no verdict. |
+| `[design:supervisor:r5] 70.1 foundation` | 2026-10-05 21:20:46 | 2026-10-05 21:21:51 | 1m 05s | Native bold-label contract; regenerated/rendered/inspected both current galleries. |
+| `[review-design:simplicity:r5] 70.1 foundation` | 2026-10-05 21:21:55 | 2026-10-05 21:25:27 | 3m 32s | Whole R5 verdict below. |
+| `[design:supervisor:r6] 70.1 foundation` | 2026-10-05 21:25:27 | 2026-10-05 21:28:48 | 3m 21s | Zero-width visibility/focus/input contract and inspected current reference captions. |
+| `[review-design:simplicity:r6] 70.1 foundation` | 2026-10-05 21:29:14 | 2026-10-05 21:31:39 | 2m 25s | Complete R6 simplicity verdict below. |
+| `[review-design:ownership:r6] 70.1 foundation` | 2026-10-05 21:34:14 | 2026-10-05 21:38:43 | 4m 29s | Complete R6 ownership verdict below. |
+
+### R4 rendering correction and R5 candidate
+
+R4 simplicity checked all eleven rows: ten **PASS**, **Redundant definitions — REVISE**.
+It independently rendered both current 1720×3020 galleries and traced native Button content
+decoration through default TextBlock/CellBuffer. Pinned Button:219 stamps Bold into every
+content cell; R4's regular-weight idle/focus/copied/failed/disabled references cannot follow
+that native rendering contract. Existing admission, cleanup, close-before-invoke, Paste,
+payload/recycling, package boundaries and failure probes passed this full design review.
+
+The supervisor interrupted the already-started R4 ownership pass to correct the known rejected
+reference contract first. That pass supplied **no verdict**; interruption does not release or
+prove fresh-agent capacity. R5 requires both whole-artifact reviews sequentially.
+
+R5 retains native bold labels in every state, native tooltip on hover, focused underline and
+pressed Selection fill. No renderer, decoration override, native styling change or palette
+value was added. Both complete SVGs were regenerated; current light/dark state crops were
+rendered and inspected. Exact width0/1/2/3, pressed+focus and existing syntax/layout remain.
+SVG XML, dimensions, baseline palette, exact LF fixture/run coverage and all 67 local links
+passed controlled documentation validation. No native, AOT or installed visual PASS is claimed.
+
+### R5 zero-width correction and R6 candidate
+
+R5 simplicity checked all eleven rows: **Reuse/Test volume — REVISE**, the other nine **PASS**.
+Native focus repair and key routing check visible/enabled/scope, not zero bounds or Tab eligibility.
+An already-focused Button could still raise Click on Enter/Space at width0. The supervisor had
+independently flagged this edge for the complete review; source confirmed it. R5 ownership was
+not assigned to the rejected artifact; no verdict was inherited.
+
+R6 sets the same Button hidden/non-Tab at header width0, resets local feedback/continuation,
+keeps the reserved header row and derives width from the header so visibility can recover.
+Positive width restores visibility/Tab eligibility; native focus repair remains the owner.
+The same proposed private native input cleanup now also applies on hiding, preventing a
+press → hide → show → old release from activating. No new public API, focus mechanism, native
+renderer, pointer tracker or palette was added. Exact keyboard/mouse shrink/widen negative
+observations are required. Both current galleries mark width0 hidden, were regenerated and
+rendered/inspected; controlled doc/XML/palette/fixture checks passed. Both complete R6 reviews
+subsequently passed, as recorded below.
+
+### R6 complete review and supervisor assessment
+
+**2026-10-06 local date — R6 simplicity and ownership PASS, sequentially through the same roles.**
+Each assignment carried the full canonical persona, complete current candidate, both current
+1720×3020 SVGs, colour evidence, earlier findings and governing gates. Neither reused an earlier
+PASS. The ownership role explicitly reviewed R4–R6 changes after its interrupted R4 assignment.
+
+| R6 simplicity check | Verdict / observation |
+|---|---|
+| New apps/libraries | PASS — existing native owners; proposed extension, no new Forge process/package. |
+| Reuse | PASS — native visibility/focus repair, editors, menus, controls, rendering and clipboard retained. |
+| Multiple paths | PASS — one Copy operation; menu invocation after close; native Paste and snippet transport boundaries explicit. |
+| Legacy paths | PASS — one public-package route; no vendor/fork/private bridge/fallback. |
+| Knobs | PASS — fixed command set, states, layout and reset rules. |
+| Speculative abstractions | PASS — private menu/Paste guards and bounded feedback state contain named failures. |
+| Library choice | PASS as a proposal — actual public release and public-only/AOT proof remain required. |
+| Copy-paste | PASS at design layer — existing control/edit/render paths reused, no product diff. |
+| Redundant definitions | PASS — existing nullable Paste context, palette, reactive slots and native bold labels. |
+| Size versus requirement | PASS — local foundation slice; continuous rich selection remains dependent. |
+| Test volume | PASS — exact routing, callback, payload, resize, detach and fresh-input observations named. |
+
+| R6 ownership checklist | Verdict / observation |
+|---|---|
+| List behaviours | PASS — all native mechanics and Forge presentation behaviours enumerated. |
+| Derive owners blind | PASS — atlas, owning repo/component READMEs and pinned native responsibilities read first. |
+| Existing/new owner | PASS — existing owners cover every behaviour; no new Forge component/package. |
+| Compare placement | PASS — native selection/input/menu/edit mechanics; Forge local presentation. |
+| Duplicate search | PASS — existing source trees in the eight README-listed Forge repos searched; no equivalent implementation. |
+| One job per owner | PASS — no unrelated responsibility requires splitting. |
+
+| Behaviour | Derived owner / proposed placement | R6 verdict |
+|---|---|---|
+| Selection extraction and Copy result | Native UI Copy operation/observer | PASS |
+| Selected Copy consumption; no-selection Stop | Native dispatch; Forge command policy | PASS |
+| Directional range through menu focus | Native private preservation | PASS |
+| Close before invocation; reject callback changes | Native menu/command lifecycle | PASS |
+| Paste capture; stale/recursive containment | Native private editor-core guard | PASS |
+| Replacement, caret and undo | Existing native insertion | PASS |
+| Clipboard transport | Existing XenoAtom.Terminal backend | PASS |
+| Common local feedback | Forge CLI TUI TextInteraction | PASS |
+| Complete immutable snippet payload | Existing ForgeCodeBlockRenderer | PASS |
+| Syntax, wrapping, headings and frames | Existing renderer/TextMate/graphics owners | PASS |
+| Current input admission | Proposed native TerminalApp.CanReceiveInput | PASS |
+| Detach/hide pointer, hover and press cleanup | Shared private native Button/app cleanup | PASS |
+| Reset/invalidate local feedback | Forge snippet presentation | PASS |
+| Reusable visual/payload | Native DocumentFlow and existing renderer | PASS |
+| State mappings and geometry | Existing ForgeStyles and ForgeTheme | PASS |
+| Zero-width hiding and positive-width recovery | Forge header composition; native focus/input | PASS |
+| Public capability delivery | Native library owner; synchronized Forge consumer pins | PASS placement; delivery prerequisites pending |
+
+Both reviewers rendered and inspected both current SVGs. Bold labels, focus+press, widths 0/1/2/3,
+code-body layout, menus and feedback prefixes match R6; XML/palette checks found no local colours.
+Actual pinned source confirms the private scope/internal hover gap, native bold/Pressed ordering,
+existing Paste insertion and DocumentFlow recycling. Proposed admission/cleanup/Copy/menu/Paste
+changes remain absent from the current published package.
+
+The supervisor independently checked the source-derived corrections, complete contract/diff,
+current references and evidence. **No technical design correction remains from these reviews.**
+The galleries bind the proposed owned slice only. Local presentation/input security and philosophy
+boundaries hold; hosted tiers/stores/service identities are N/A, clipboard actions are explicit,
+and payloads are neither logged nor submitted.
+
+**No final design/plan approval or implementation handoff:** the operator must choose the Type-1
+native-owner/public-package route. Upstream submission authority/agreement, an actual compatible
+public release, and public-only behaviour/AOT proof remain prerequisites. Forge package permission
+does not grant upstream authority. Installed Ghostty/Retina manual acceptance is approved but
+unperformed; no runtime, AOT, OS clipboard or default-path PASS follows from these design reviews.
+The earlier fresh-launch limitation is superseded by successful role reuse, not proven removed.
+
+### Reused-review documentation checkpoint
+
+The operator was asked to approve the reviewed upstream route and submission authority; no
+answer or Type-1 approval is recorded at this checkpoint. The hub's single next step is that
+decision. The message requested by the operator was sent to the **Continue Phase 70** chat;
+its workflow change is already merged in [PR #343](https://github.com/katasec/mission-control-language/pull/343).
+
+| Check | Named observation |
+|---|---|
+| Markdown/hub | Five Phase 70/hub files, all 67 local links/anchors and the whole global hub's top-level-only shape pass. |
+| Synthetic references | Both SVGs parse at 1720×3020; exact LF fixture/run coverage, baseline palette and width/focus captions pass; supervisor and both reviewers inspected renders. |
+| Diff | `git diff --check` passes; only seven mission-control documentation/reference files changed. |
+| Product baseline | forge-mcl remains clean main at `2022b512dd2bd108626124f22bc1cfe7652648d7`, 0 ahead/behind origin/main after fetch. No product/package/ACL change. |
+| Memory/skill | Live and repository checkpoint skill SHA256 match; no `project_`-prefixed memory exists. |
+| Product tests/AOT/default path | N/A for this documentation delivery. Required after approved product work; none is waived or claimed here. |
+
+Explicit review/design assignment boundaries are in the table above. Tokens remain N/A.
+Documentation endpoint is the final validation observation recorded in this delivery's PR;
+there is no product PR or product completion endpoint.
 
 ## Superseded first foundation candidate
 
