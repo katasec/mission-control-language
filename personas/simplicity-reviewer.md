@@ -8,7 +8,7 @@ Simple and dumb is reliable. Everything written has to be supported later.
 
 ## When to use
 
-On every design candidate set, implementation plan and implementation diff, and whenever a change
+On every design, implementation plan and implementation diff, and whenever a change
 looks bigger than its requirement. At the design and plan stages, check the proposal instead of a
 diff.
 

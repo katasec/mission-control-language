@@ -10,7 +10,7 @@ the code. Then it compares. A mismatch fails the review.
 
 ## When to use
 
-At the plan stage, before any code is written, and again on the PR. Use it for any change that adds
+At the design and plan stages, before any code is written, and again on the PR. Use it for any change that adds
 behaviour: a class, method, endpoint, contract, project or package.
 
 ## Where ownership is written down

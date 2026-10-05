@@ -263,14 +263,14 @@ active spoke; do not defer it to implementation.
 All implementation work follows the [supervisor workflow](docs/design/supervisor-workflow.md).
 It is provider-neutral: whichever LLM agent the operator is working in (Claude, Codex, or another)
 is the supervisor and uses its own subagents. The operator may run some tasks in one agent and
-others in another. The supervisor owns scope, reduces each fan-out to one decision, approves the
-plan, and accepts completion. Design and review fan out to parallel read-only subagents; one
-implementer owns the code for one explicitly approved task. The supervisor may write or correct
+others in another. The supervisor owns scope, merges each fan-out into one decision, approves the
+plan, and accepts completion. Investigation and review fan out to parallel read-only subagents;
+one designer owns the design and one implementer owns the code for one explicitly approved task. The supervisor may write or correct
 design and planning documentation; no subagent may modify code, infrastructure, or executable
 configuration until the supervisor has explicitly approved the implementer's plan.
 
-The required loop is **scope → design fan-out → reduce → plan → plan-review fan-out → approval →
-implementation → code-review fan-out → supervisor acceptance**. Each subagent carries its
+The required loop is **scope (investigator fan-out) → design → design-review fan-out → plan →
+plan-review fan-out → approval → implementation → code-review fan-out → supervisor acceptance**. Each subagent carries its
 [persona](personas/README.md) inline, per the workflow's persona rule. The implementer never approves its own plan, resolves an open design question by
 inference, broadens scope, or marks a task complete. The supervisor independently checks the diff
 and evidence against the task's `Done when` condition. Internal supervisor/subagent handoffs use

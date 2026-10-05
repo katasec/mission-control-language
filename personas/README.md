@@ -14,10 +14,10 @@ Paste its full text inline at the top of the subagent's assignment, per the work
 
 | Persona | Stage | Writes | Question it answers |
 |---|---|---|---|
-| [Designer](designer.md) | Design (fan-out) | A design, in its reply | What is the simplest design that reuses what exists and puts each behaviour in its one owner? |
+| [Designer](designer.md) | Design | A design, in its reply | What is the simplest design that reuses what exists and puts each behaviour in its one owner? |
 | [Implementer](implementer.md) | Plan, implement | A plan, then code | Does this change deliver the approved design with the least new code, in the right owner, readable from the top? |
 | [Simplicity Reviewer](simplicity-reviewer.md) | Design, plan and code review (fan-out) | A verdict | Did this stay as simple and dumb as the requirement? |
-| [Ownership Reviewer](ownership-reviewer.md) | Plan and code review (fan-out) | A verdict | Is each new behaviour in the component that owns it? |
+| [Ownership Reviewer](ownership-reviewer.md) | Design, plan and code review (fan-out) | A verdict | Is each new behaviour in the component that owns it? |
 | [Code Style Reviewer](code-style-reviewer.md) | Code review (fan-out) | A verdict | Can a reader get each changed file's intent from its top? |
 
 The supervisor is not a persona file; its role is the

@@ -2,18 +2,22 @@
 
 > **Status: governing implementation workflow.** It is provider-neutral: the LLM agent the
 > operator is working in (Claude, Codex, or another) is the supervisor and uses its own subagents.
-> Design and review fan out to parallel subagents, each carrying a [persona](../../personas/README.md)
-> inline; the supervisor reduces their results to one decision. Coding stays with one implementer.
+> Checks fan out: investigators gather facts in parallel, and reviewers check every guardrail
+> family at once, each carrying a [persona](../../personas/README.md) inline. The supervisor merges
+> their results into one decision per stage. Design and code each have one author.
 
 ## Shape
 
 ```mermaid
 flowchart TD
-    S0[0 Scope<br/>supervisor] --> D{1 Design fan-out}
-    D --> DA[Designer A]
-    D --> DB[Designer B]
-    D --> DC[Designer C]
-    DA & DB & DC --> R1[Reduce: pick base, graft<br/>lock in spoke]
+    S0{0 Scope<br/>supervisor} --> IA[Investigator]
+    S0 --> IB[Investigator]
+    IA & IB --> R0[Reduce: scope in spoke]
+    R0 --> D[1 Design<br/>one designer]
+    D --> DR{Design review fan-out}
+    DR --> DS[Simplicity]
+    DR --> DO[Ownership]
+    DS & DO --> R1[Reduce: lock design<br/>or one correction]
     R1 --> P[2 Plan<br/>implementer]
     P --> PR{3 Plan review fan-out}
     PR --> PS[Simplicity]
@@ -33,11 +37,11 @@ flowchart TD
 
 | Role | Persona | Authority | May not do |
 |---|---|---|---|
-| Supervisor | This document | Scope, reduce each fan-out, approve the plan, accept completion. | Implement the task, delegate its final decision, or treat a subagent's claim as acceptance evidence. |
+| Supervisor | This document | Scope, merge each fan-out into one decision, approve the plan, accept completion. | Implement the task, delegate its final decision, or treat a subagent's claim as acceptance evidence. |
 | Designer | [designer.md](../../personas/designer.md) | Propose one design in its reply. | Edit files, or decide a question the scope leaves open. |
 | Implementer | [implementer.md](../../personas/implementer.md) | Plan, then make only the approved change and return evidence. | Edit before approval, broaden scope, self-approve, or mark work complete. |
 | Reviewer | [simplicity](../../personas/simplicity-reviewer.md), [ownership](../../personas/ownership-reviewer.md), [code style](../../personas/code-style-reviewer.md) | Return a verdict on one concern. | Edit files, or approve a plan. |
-| Investigator | None | Gather bounded evidence. | Edit files, or decide a design question. |
+| Investigator | None | Gather bounded evidence for the scope, one repo or question each. | Edit files, or decide a design question. |
 
 Every code, infrastructure, or executable-configuration task has exactly one implementer at a time.
 Designers, reviewers, and investigators are read-only, so they can run in parallel. Shared worktree
@@ -58,13 +62,13 @@ by stage to measure duration, token use, and revision rounds:
 
 | Stage | Tag |
 |---|---|
-| Design | `[design:A]`, `[design:B]`, `[design:C]` |
-| Design review | `[review-design:simplicity]` |
+| Investigation | `[investigate:<repo or question>]` |
+| Design | `[design]`, `[design:r2]` for a revision |
+| Design review | `[review-design:simplicity]`, `[review-design:ownership]` |
 | Plan | `[plan]`, `[plan:r2]` for a revision |
 | Plan review | `[review-plan:simplicity]`, `[review-plan:ownership]` |
 | Implement | `[implement]` |
 | Code review | `[review-code:simplicity]`, `[review-code:ownership]`, `[review-code:style]` |
-| Investigation | `[investigate]` |
 
 Example description: `[review-plan:ownership] 64.2 task 3`.
 
@@ -77,22 +81,15 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    explicitly deferred, blocked, or omitted. Type-1 decisions (tier boundaries, data ownership,
    public entry points, cross-context contracts) go to the operator. An open architecture,
    ownership, contract, failure, visual-reference, or theme-boundary question blocks the next
-   stage.
-1. **Design — fan out, then reduce.** The supervisor sends the same design assignment, with the
-   designer persona inline, to three designers at once. Designers are ordinary subagents of the
-   agent the operator is working in (Claude, Codex, or another); no second CLI or model is
-   involved. The assignment names each affected repo by absolute path, from the
-   [README repository list](../../README.md#where-the-code-lives).
-
-   Then:
-   - run one [simplicity reviewer](../../personas/simplicity-reviewer.md) over all candidates in
-     parallel with its own reading;
-   - score each candidate against the designer rules and `Done when`, rule by rule, not by overall
-     feel;
-   - pick the base that a maintainer can extend most easily: fewest new components, paths and
-     settings, correct owners;
-   - graft in the best one or two ideas from the others, by hand, so the result stays coherent;
-   - record the locked design, the pick, the grafts, and what was rejected in the active spoke.
+   stage. Facts the scope needs from more than one repo or question are gathered by parallel
+   read-only investigators, one each, rather than one search at a time.
+1. **Design — one designer, then a review fan-out.** One designer, persona inline, receives the
+   design assignment. The assignment names each affected repo by absolute path, from the
+   [README repository list](../../README.md#where-the-code-lives). The
+   [simplicity](../../personas/simplicity-reviewer.md) and
+   [ownership](../../personas/ownership-reviewer.md) reviewers then check the design in parallel.
+   The supervisor merges their findings into one correction or locks the design, and records the
+   locked design and any rejected alternatives in the active spoke.
 
    **Skip** this stage when the spoke already locks the design, and for documentation-only or
    Phase 50 move tasks. Record the skip and its reason.
@@ -123,7 +120,7 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
 
 DESIGN ASSIGNMENT — READ-ONLY
 
-Role: designer [A/B/C]. Do not create or modify any file. Return the design in your reply.
+Role: designer. Do not create or modify any file. Return the design in your reply.
 
 Read first:
 - [active spoke]
