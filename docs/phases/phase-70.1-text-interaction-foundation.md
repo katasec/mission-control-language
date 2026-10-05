@@ -31,6 +31,37 @@ failure, and popup focus can clear selection. Merely restoring `TextEditor.Copy`
 after a failed copy: do not newly expose Cut without defining safe failure behaviour. A broader
 clipboard/editor rewrite is outside the requested slice.
 
+## Public integration gaps — confirmed at the pinned baseline
+
+| Boundary | Fact the design must address |
+|---|---|
+| App Copy interception | UI 3.10.0's sealed `TerminalApp` privately intercepts active-selection Copy before commands and `KeyDown`, discarding the clipboard bool. `TerminalAppOptions` has no interception/result callback. Replacing editor commands cannot govern every Copy result. [Pinned dispatch](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/TerminalApp.cs#L2500). |
+| Editor range restoration | `SelectionStart`/`SelectionLength` are protected getters; public caret and payload access do not provide selection restoration. `CodeEditor` is sealed, so a composer subclass cannot solve the same menu-range contract for `/edit`. [Editor base](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorBase.cs#L339), [CodeEditor](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/CodeEditor.cs#L433). |
+| Clipboard transport | Terminal 2.2.0's sealed `TerminalClipboard` delegates `TrySetText`/`TryGetText` directly to its backend. Direct Forge calls receive a bool; subclassing cannot observe native library writes. [Pinned clipboard](https://github.com/XenoAtom/XenoAtom.Terminal/blob/5517cb3d8cdf0532ecc89260067064f98cde6137/src/XenoAtom.Terminal/TerminalClipboard.cs#L69). |
+
+These are source findings, not an approved extension contract or proof that every possible
+adapter is infeasible. Do not substitute a snippet-only or keyboard-only implementation for
+the foundation. A new public/library boundary still requires the reviewed contract and
+operator decision named in the parent hub.
+
+## Live-reproduction scope gate
+
+Task 2 remains open. The recorded Ghostty denial prohibits alternate automation, screen
+capture, input injection or clipboard access as a workaround. No denied live action was
+retried during the resumption check. Operator-reported observations may inform scope; they
+do not replace the supervisor's required live visual/default-path acceptance.
+
+| Observation still needed | Record on laptop Retina, both themes, normal and narrower windows |
+|---|---|
+| Provenance | Installed artifact/version/digest; actual Ghostty version, font, cell metrics and window dimensions; normal saved login/endpoint and dedicated scratch Project. Prior metrics remain historical or synthetic. |
+| Composer keyboard | Before any click, then after a click: Shift+arrows/Home/End and word selection; Ctrl/Cmd gesture used, focus, highlight, exact pasted payload and whether Copy stops an active turn. |
+| Mouse and menus | App drag/double/Shift-click versus terminal-native selection; multiline Copy, Paste replacement, right-click menu presence, cancellation and restored focus/selection. |
+| Editor and transcript | Disposable `/edit` file's keyboard/mouse Copy/Paste and save/close; real reply's paragraph/rich-range selection and heading/code interaction, with exact pasted text. |
+| Preserved appearance | Start page, Kitty frames/headings, wrapping and syntax colours. Future snippet controls/feedback are acceptance states after implementation, not baseline reproduction observations. |
+
+The workflow's scope closure precedes product design; design and plan approval remain pending
+while these live observations are unavailable. Controlled probes cannot close this gate.
+
 ## Design questions to close before an implementation plan
 
 | Question | Required design output |

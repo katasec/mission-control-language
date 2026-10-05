@@ -96,6 +96,33 @@ clipboard contents and Retina appearance remain unverified for this discovery. S
 in-memory evidence cannot establish why every reported mouse/keyboard action fails in the
 operator's running window. Continue at the live reproduction task before product handoff.
 
+## Resumption check
+
+**2026-10-05 — two fresh read-only investigators; no product approval.** The supervisor
+re-read the hub/spokes and governing workflow, confirmed installed metadata and the source
+baseline independently, and checked the pinned public APIs against primary source. No
+Ghostty launch, live capture, input injection, OS clipboard operation or hosted mutation was
+performed. The existing denial was respected without retry or alternate access.
+
+| Check | Named observation |
+|---|---|
+| Source/artifact parity | forge-mcl remained clean `main` at `2022b512dd2bd108626124f22bc1cfe7652648d7`; installed `forge --version`, SHA256 and empty TUI diff against `4d232d66bf3aef83e5d249b178b17fe95b0f67b5` matched the provenance table above. Metadata only. |
+| Dependency parity | UI/Markdown/TextMate 3.10.0 and Terminal 2.2.0 retain the recorded package source pins. Client 0.9.2 and Client.Contracts 0.2.1 are unchanged. |
+| Public integration | Confirmed sealed app/editor/clipboard classes, private pre-command Copy interception that discards the write bool, no app-options interception callback, and protected read-only range getters. The [active gap table](phase-70.1-text-interaction-foundation.md#public-integration-gaps--confirmed-at-the-pinned-baseline) preserves these facts for the future design. |
+| Workflow outcome | Scope gate remains open. No product designer, plan author or implementer launched; no design/plan approved. Operator live observations were requested to inform scope; no response was received during this checkpoint. Supervisor live/default acceptance remains required. |
+| Delivery | Documentation-only; default-path acceptance, product tests and Native AOT checks N/A. No package or ACL change. |
+| Documentation checks | Four changed Markdown files, all 39 local links/anchors and the global hub's top-level-only shape passed; `git diff --check` passed. Checkpoint skill copies match; active project memory had no `project_` files. |
+
+`task-timing` ran separately for the two tagged investigation questions, with no product PR:
+
+| Question | Stage | Agents | Start | End | Wall | Tokens |
+|---|---|---|---|---|---|---|
+| `70 live scope` | `investigate` | 1 | 10-05 20:05:05 | 10-05 20:06:57 | 1m 51s | 88,258 |
+| `70 clipboard contract` | `investigate` | 1 | 10-05 20:05:17 | 10-05 20:08:30 | 3m 12s | 91,649 |
+
+These runs overlap; do not add their wall times. Timing uses the log timestamps and the
+tool's last-context-size metric, not account usage. Neither timing row implies live verification.
+
 ## Documentation delivery and timing
 
 Default-path acceptance: **N/A — documentation-only delivery**. Supervisor prepared the scope,

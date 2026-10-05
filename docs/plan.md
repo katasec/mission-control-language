@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): close live-reproduction gaps, then run product design through the supervisor workflow. |
+| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): obtain permitted live reproduction, then run product design through the supervisor workflow. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Discovery recorded; live verification and product design pending. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Live access blocked; discovery recorded, product design pending. |
 
 ## Design docs
 
