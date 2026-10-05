@@ -162,6 +162,49 @@ no product code changed. No project-status memory was created.
 Runs overlap; timestamps and last-context-size tokens are the timing tool's metrics. The
 separately tagged foundation product designer is outside this policy checkpoint's timing.
 
+## Current published capabilities
+
+**2026-10-05 — read-only official release/source check.** A fresh investigator checked current
+NuGet and GitHub releases; the supervisor independently read both official NuGet indices.
+The latest listed releases, including prereleases, are still
+[UI 3.10.0](https://api.nuget.org/v3-flatcontainer/xenoatom.terminal.ui/index.json) and
+[Terminal 2.2.0](https://api.nuget.org/v3-flatcontainer/xenoatom.terminal/index.json).
+Release tags resolve to the previously recorded source commits. Upgrading to a newer published
+version cannot currently supply the proposed contracts.
+
+| Source observation | Design consequence |
+|---|---|
+| App selection Copy still runs before commands and discards the write bool; app/run options have no result/interception callback. | Candidate Copy integration remains unresolved. Extraction failure can return to later dispatch; explicitly contain that path before approving. |
+| Editor range getters remain protected; CodeEditor remains sealed. | Native public directional capture/restore remains unresolved. |
+| Existing [ClipboardPasteHandler/context](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorClipboardPasteContext.cs) can transform default pasted text, or suppress insertion with empty text; native insertion retains Paste undo ownership. | Designer must evaluate this existing hook, including keyboard/bracketed Paste, rather than assume no native Paste capability. Context maps failed reads to null but provides no original result bool or insertion-completion result. It does not close the range-restoration gap. |
+
+No design/library-ownership decision or live observation follows from this source check.
+
+## Foundation candidate handoff
+
+**2026-10-05 — candidate only, not design approval.** A fresh designer returned the native
+control/shared-policy proposal now recorded in the [active spoke](phase-70.1-text-interaction-foundation.md#candidate-foundation-design--not-approved).
+The supervisor retained the public-contract, keyboard Paste and visual gaps explicitly. No
+library API, package ownership route, implementation plan or code was approved or changed.
+
+A fresh simplicity-reviewer launch was rejected with `agent thread limit reached`.
+No reviewer ran and no review PASS is claimed. Resume with fresh simplicity and ownership
+reviewers; their findings must be combined before design approval. The current-release
+investigation is separate from those reviews and does not substitute for them.
+
+| Task | Stage | Agents | Start | End | Wall | Tokens |
+|---|---|---|---|---|---|---|
+| `70 1 foundation` | `design` | 1 | 10-05 21:09:44 | 10-05 21:17:12 | 7m 28s | 163,605 |
+| `70 current release` | `investigate` | 1 | 10-05 21:22:15 | 10-05 21:25:32 | 3m 16s | 83,739 |
+
+Timing is the tool's last-context-size metric, not account usage. No product PR exists and
+no product completion is implied. Default-path acceptance, product tests and Native AOT are
+N/A for this candidate-document checkpoint. Manual live acceptance remains pending.
+
+Checkpoint verification passed: four Markdown files, 44 local links/anchors, the whole global
+hub's top-level-only shape and `git diff --check`. No project-status memory exists. Product
+repository remains unchanged; these checks approve only the documentation's accuracy/shape.
+
 ## Documentation delivery and timing
 
 Default-path acceptance: **N/A — documentation-only delivery**. Supervisor prepared the scope,

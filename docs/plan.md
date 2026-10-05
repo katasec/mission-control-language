@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): design through the supervisor workflow; operator performs final installed verification. |
+| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): review the candidate design and resolve public capabilities; operator performs final installed verification. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Discovery recorded; product design next, operator live acceptance after implementation. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Candidate design recorded; approval pending, operator live acceptance after implementation. |
 
 ## Design docs
 
