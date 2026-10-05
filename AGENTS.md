@@ -376,6 +376,6 @@ agents/          — agent definitions
 personas/        — subagent personas for the supervisor workflow (designer, implementer, reviewers)
 missions/        — example + built-in missions
 skills/          — repo copies of agent skills (e.g. checkpoint)
-tools/           — supervisor tools (tui-capture: live Ghostty checks)
+tools/           — supervisor tools (tui-capture: live Ghostty checks; task-timing: design-to-merge timing)
 clients/, editors/, html/ — to be placed (Phase 50 row 7)
 ```

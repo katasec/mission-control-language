@@ -57,8 +57,9 @@ was not applied, and the supervisor treats that as a missing answer.
 
 ## Stage tags
 
-Each subagent's description starts with a stage tag and the task ID, so transcripts can be grouped
-by stage to measure duration, token use, and revision rounds:
+Each subagent's description starts with a stage tag and the task ID, so
+[task-timing](../../tools/task-timing/README.md) can measure each stage's duration, token use,
+and revision rounds from the transcripts:
 
 | Stage | Tag |
 |---|---|
@@ -111,7 +112,9 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    item, required negative proof, and default-path observation. For a web-rendered surface it
    inspects the running surface with browser tooling and compares it with the reference itself. An
    implementer never accepts its own work.
-7. **Deliver.** Commit, PR, merge, and end on a clean `main` per the continuity protocol.
+7. **Deliver.** Commit, PR, merge, and end on a clean `main` per the continuity protocol. After
+   the last merge, run [task-timing](../../tools/task-timing/README.md) with every merged PR and
+   paste its table into the task's completion record in the spoke.
 
 ## Design assignment
 
@@ -276,7 +279,9 @@ Before accepting, the supervisor records a named observation for each applicable
   only, has light/dark values and required contrast pairs, and contains no component-local visual
   literals; and
 - the diff, documentation, branch, commit, pull request, merge, and clean-main state meet the
-  repository continuity protocol.
+  repository continuity protocol; and
+- the task's completion record in the spoke contains its task-timing table, from design to the
+  last merge.
 
 ## Former workflow
 
