@@ -26,7 +26,7 @@ flowchart TD
 | Implementer | [implementer](../../personas/implementer.md) | Plans; after approval, makes only the approved change. | Edits before approval, broadens scope, approves or accepts its own work. |
 | Reviewer | [simplicity](../../personas/simplicity-reviewer.md), [ownership](../../personas/ownership-reviewer.md), [code style](../../personas/code-style-reviewer.md) | Returns one verdict per check. | Edits, or approves. |
 
-Only one implementer edits at a time; everyone else is read-only, so they can run in parallel.
+Only one implementer edits code at a time; designers, reviewers and investigators are read-only.
 
 ## Persona rule
 
@@ -63,8 +63,8 @@ subagent for a new stage or round.
    Phase 50 move tasks; record why.
 2. **Plan.** One implementer receives the plan assignment and does not edit. The simplicity and
    ownership reviewers check the plan in parallel; the supervisor also checks compatibility,
-   security, Native AOT, default path and UI gates, then sends **one** combined correction or
-   explicit approval. If the same point fails twice, return to Design for it.
+   security, Native AOT, default path and UI gates, then sends one combined correction (answered by a
+   revised plan, `plan:r2`) or explicit approval. A point failing twice returns to Design.
 3. **Implement.** A new implementer receives the implementation assignment. A material deviation,
    including a visual mismatch, returns to the supervisor before the change grows. The simplicity,
    ownership and code style reviewers then check the real diff in parallel; the supervisor fixes or
