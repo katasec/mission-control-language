@@ -1,6 +1,6 @@
 # Phase 70.1 — Text-interaction foundation
 
-**Status: discovery complete at source/controlled layers; live reproduction and product design open.**
+**Status: source/controlled baseline recorded; product design next; manual live acceptance after implementation.**
 **Not build-ready.** Parent: [Phase 70](phase-70-tui-text-interaction.md).
 
 ## Requirement
@@ -44,29 +44,30 @@ adapter is infeasible. Do not substitute a snippet-only or keyboard-only impleme
 the foundation. A new public/library boundary still requires the reviewed contract and
 operator decision named in the parent hub.
 
-## Live-reproduction scope gate
+## Verification route
 
-Task 2 remains open. The recorded Ghostty denial prohibits alternate automation, screen
-capture, input injection or clipboard access as a workaround. No denied live action was
-retried during the resumption check. Operator-reported observations may inform scope; they
-do not replace the supervisor's required live visual/default-path acceptance.
+The operator-selected [manual verification exception](phase-70-tui-text-interaction.md#manual-verification-exception)
+supersedes live reproduction as a design prerequisite. Source/controlled findings support
+design; physical terminal/clipboard/Retina observations are deferred to the operator's final
+installed check. The Ghostty denial remains in force; no alternate agent access is allowed.
 
-| Observation still needed | Record on laptop Retina, both themes, normal and narrower windows |
+| Manual observation after implementation | Record on laptop Retina, both themes, normal and narrower windows |
 |---|---|
 | Provenance | Installed artifact/version/digest; actual Ghostty version, font, cell metrics and window dimensions; normal saved login/endpoint and dedicated scratch Project. Prior metrics remain historical or synthetic. |
 | Composer keyboard | Before any click, then after a click: Shift+arrows/Home/End and word selection; Ctrl/Cmd gesture used, focus, highlight, exact pasted payload and whether Copy stops an active turn. |
-| Mouse and menus | App drag/double/Shift-click versus terminal-native selection; multiline Copy, Paste replacement, right-click menu presence, cancellation and restored focus/selection. |
+| Mouse and menus | App drag/double/Shift-click versus terminal-native selection; multiline Copy, Paste replacement, right-click Copy/Paste, cancellation and restored focus/selection. |
 | Editor and transcript | Disposable `/edit` file's keyboard/mouse Copy/Paste and save/close; real reply's paragraph/rich-range selection and heading/code interaction, with exact pasted text. |
-| Preserved appearance | Start page, Kitty frames/headings, wrapping and syntax colours. Future snippet controls/feedback are acceptance states after implementation, not baseline reproduction observations. |
+| Snippets and appearance | Keyboard/mouse code Copy, exact payload including indentation/blank lines/trailing newline; truthful feedback, wrapped/unwrapped/unknown-language snippets and streaming replacement. Compare menu/button/selection states against the locked reference; preserve start page, Kitty frames/headings and syntax colours. |
 
-The workflow's scope closure precedes product design; design and plan approval remain pending
-while these live observations are unavailable. Controlled probes cannot close this gate.
+Controlled event/clipboard-failure tests, theme/state checks and Native AOT remain agent work.
+They do not prove physical key delivery, OS clipboard or Retina rendering. Those cases remain
+pending until the operator records them; the phase cannot close on automated evidence alone.
 
 ## Design questions to close before an implementation plan
 
 | Question | Required design output |
 |---|---|
-| Keyboard and mouse Copy routing | Concrete owner precedence and actual public hooks, including TerminalApp's pre-command active-selection interception; no-selection Stop and failed-copy handling. Confirm what Ghostty delivers for Ctrl/Cmd/terminal-native gestures. |
+| Keyboard and mouse Copy routing | Concrete owner precedence and actual public hooks, including TerminalApp's pre-command active-selection interception; no-selection Stop and failed-copy handling. Name intended gestures; Ghostty's physical Ctrl/Cmd/terminal-native delivery is checked by the operator after implementation. |
 | Context-menu lifetime | Exact payload/range capture, focus restoration, cancelled-menu behaviour and document-version handling, using public APIs. `SelectionStart`/`SelectionLength` are protected, not public integration points. |
 | Honest results | Concrete way all owned Copy/Paste paths observe the bool result. Decide a narrow Forge adaptation or reviewed upstream extension; define types, signatures, ownership and Native AOT implications. No invented library APIs or new private access. |
 | Visual interaction | Binding revised reference for snippet icon/menu and feedback; exact placement, focus order, disappearance/reset rules, light/dark tokens and contrast pairs. |
@@ -106,18 +107,18 @@ Reconfirm dependency versions and owning repository instructions before design.
 | Dependency route | Normal hosted ForgeAPI/Conversation Host route and existing published client dependencies; Ghostty with truecolor/Kitty support, no multiplexer. Record actual terminal version and display provenance. |
 | Safe state | A dedicated scratch folder initialized through normal `forge project create`; plain Chat (no hands grant). Use synthetic non-sensitive messages and an explicitly created disposable file for `/edit`. |
 | User actions | Open `forge chat`, obtain/replay a real normal-path reply with known code, select/copy/paste using keyboard and mouse, copy snippet, edit scratch file, and verify no copy attempt cancels a turn. |
-| Observable result | Paste into a scratch destination and compare exact expected text. Supervisor sees themed selection and button/menu states on Retina. Default-path operation passes; denied/failed clipboard behaviour may additionally be verified with controlled fault injection. |
+| Observable result | Operator pastes into a scratch destination and compares exact expected text, themed selection and button/menu states against the reference on Retina. Supervisor records the attributed manual result. Default-path operation passes; denied/failed clipboard behaviour is additionally verified with controlled fault injection. |
 
 ## Ordered tasks
 
 | Task | State | Done when |
 |---|---|---|
 | 1. Source/library/CodeAlta discovery | Done — [evidence](phase-70.1-text-interaction-foundation_completed.md#discovery-results). | Pinned source and controlled observations distinguish native capability, Forge wiring defects, and library gaps. |
-| 2. Installed Retina reproduction | Open; Ghostty computer-use access denied. | Record actual events/focus/highlight/clipboard results for reported gestures, and separate terminal-native mouse selection from app selection. No bypass of the tool restriction. |
-| 3. Product design and review | Pending after scope gaps close. | Fresh designer; simplicity and ownership reviews; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
+| 2. Installed Retina reproduction | Agent path blocked; prerequisite superseded by the parent exception. Manual observations move to Task 6. | No live PASS claimed; recorded controlled baseline is available to the designer. Physical delivery, focus/highlight and clipboard round-trip remain manual acceptance cases. |
+| 3. Product design and review | Next; live-before-design dependency removed, design/API gaps still open. | Fresh designer; simplicity and ownership reviews; supervisor records one locked design with every question above resolved and complete API/visual contracts. |
 | 4. Implementation plan and review | Pending after design approval. | Fresh plan author; simplicity and ownership reviews; supervisor explicitly approves bounded changes, meaningful interaction tests and AOT checks. |
 | 5. Implementation and review | Pending after plan approval. | Fresh implementer; positive/negative interaction evidence including failed clipboard writes; independent simplicity/ownership/style review; no product task marked complete by implementer. |
-| 6. Merge, install, accept, close | Pending after checks pass. | Normal artifacts merged/published as required; default-path observations above pass; evidence/timing archived; changed repos clean on main. |
+| 6. Merge, install, accept, close | Pending after checks pass; operator performs live acceptance. | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |
 
 ## Done when
 
@@ -125,5 +126,6 @@ Composer and `/edit` provide the agreed selection and contextual Copy/Paste beha
 requiring a prior click; selection-aware Copy never cancels a turn; snippet controls copy exact
 code with truthful feedback; themes and graphics match the binding reference on laptop Retina;
 focused interaction tests, required suite and Native AOT checks pass with zero warnings;
-installed default-path acceptance passes. Continuous rich selection closes in
+operator-run installed default-path acceptance passes and the supervisor records its evidence.
+Continuous rich selection closes in
 [70.2](phase-70.2-rich-transcript-selection.md), not through a snippet-button substitute.

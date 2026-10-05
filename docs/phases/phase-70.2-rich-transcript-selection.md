@@ -4,6 +4,11 @@
 Depends on the approved [foundation](phase-70.1-text-interaction-foundation.md);
 parent [Phase 70](phase-70-tui-text-interaction.md).
 
+The parent's [manual verification exception](phase-70-tui-text-interaction.md#manual-verification-exception)
+applies: agent source/controlled verification supports design and implementation; operator
+installed Ghostty/Retina checks close live acceptance. This does not resolve the rich-selection
+contract or remove the foundation dependency.
+
 ## Requirement
 
 Let the user drag through rich chat content and copy its meaningful text while retaining
@@ -44,7 +49,7 @@ public capabilities and regression evidence, not extrapolation from CodeAlta.
 | Product paths | `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs`, `Transcript.cs`, `ForgeMarkdown.cs`, `ForgeCodeBlockRenderer.cs`, `Graphics/HeadingImage.cs`, `ForgeTheme.cs`, `ForgeStyles.cs`; CLI component README. |
 | Library paths | Pinned `Controls/Paragraph.cs`, `Controls/DocumentFlow.cs`, `Controls/FlowDocument.cs`, Markdown `Controls/MarkdownControl.cs` and rendering models. Confirm public surfaces before proposing types. |
 | Security / philosophy | Local text only; hosted data/identity/tier changes N/A unless scope changes. Clipboard read only on explicit action, no logging of copied payload. Named selection/renderer/clipboard owners and structural failure containment required. |
-| UI | Explicitly name [Desktop Interaction Principles](../design/desktop-interaction-principles.md), [UI Design System](../design/ui-design-system.md), [TUI graphics](../design/tui-graphics.md), and foundation references/theme map in all assignments. Supervisor verifies on laptop Retina only. |
+| UI | Explicitly name [Desktop Interaction Principles](../design/desktop-interaction-principles.md), [UI Design System](../design/ui-design-system.md), [TUI graphics](../design/tui-graphics.md), and foundation references/theme map in all assignments. Operator verifies on laptop Retina only; supervisor records attributed evidence under the parent exception. |
 | Default path | Foundation's installed Native AOT, normal project/sign-in/endpoint and Ghostty route apply unchanged; use a real rich reply and compare clipboard text to the locked semantics. In-memory selection tests supplement acceptance. |
 
 ## Ordered tasks
@@ -55,7 +60,7 @@ public capabilities and regression evidence, not extrapolation from CodeAlta.
 | 2. Design and public contract review | Pending scope closure. | Fresh designer and simplicity/ownership reviewers produce a supervisor-approved contract with actual APIs, complete types, lifecycle and visual reference. |
 | 3. Plan and review | Pending design. | Fresh plan author and reviewers; supervisor approves one bounded task sequence and concrete failure/reflow/streaming tests. |
 | 4. Implement and review | Pending plan. | Fresh implementer; simplicity/ownership/style checks and supervisor diff review pass; library work, if needed, precedes consumer integration. |
-| 5. Merge, install and accept | Pending verification. | Native AOT and required checks pass; normal artifact installed; supervisor proves continuous selection and exact Copy through real mixed content in both themes on Retina. |
+| 5. Merge, install and accept | Pending verification; operator performs live acceptance. | Native AOT and required checks pass; normal artifact installed; operator proves continuous selection and exact Copy through real mixed content in both themes on Retina, supervisor assesses and records evidence. |
 
 ## Done when
 
@@ -63,5 +68,6 @@ The locked continuous range works across all promised rich content, including lo
 heading text; copied text follows the defined semantics and never contains Kitty placeholders,
 decorative chrome or soft wraps. Selection survives or is predictably resolved under streaming,
 reflow, scrolling and menu focus according to the approved contract. Link and snippet actions
-remain usable. Clipboard failure cannot cancel a turn. The supervisor records installed
-default-path and Retina evidence in both themes, and every changed repository is merged/clean.
+remain usable. Clipboard failure cannot cancel a turn. The operator performs installed
+default-path and Retina checks in both themes, the supervisor records attributed evidence,
+and every changed repository is merged/clean.
