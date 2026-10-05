@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 69 — Provider error message](phases/phase-69-provider-error-message.md) | Show Anthropic's own error text instead of `Bad Request`. | Complete 2026-10-05; ChatClients 0.1.4, runner 0.20.5 deployed; [live `forge chat` acceptance](phases/phase-69-provider-error-message_completed.md#task-3--default-path-acceptance). |
 | [Phase 68 — CLI project creation](phases/phase-68-cli-project-creation.md) | Explicit portable Project and plain hosted Chat setup. | Complete 2026-10-05; Client 0.9.2 / Contracts 0.2.1 and CLI PR 60 merged; [installed create/retry/chat/clone acceptance](phases/phase-68-cli-project-creation_completed.md#installed-default-path-acceptance). |
 | [Phase 67 — Linux ARM64 CLI release](phases/phase-67-linux-arm64-release.md) | Fourth native CLI release target. | Complete 2026-10-04; [v0.9.3](https://github.com/katasec/forge-mcl/releases/tag/v0.9.3) published by a green workflow, eight assets/checksums verified; [evidence](phases/phase-67-linux-arm64-release_completed.md). |
 | [Phase 66 — Simple automatic CLI release](phases/phase-66-simple-cli-release.md) | Parallel native builds and automatic publication. | Complete 2026-10-04; [v0.9.2](https://github.com/katasec/forge-mcl/releases/tag/v0.9.2) published by a green workflow, six assets verified and v0.9.1 untouched; [evidence](phases/phase-66-simple-cli-release_completed.md). |
