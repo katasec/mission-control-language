@@ -1,9 +1,10 @@
 # Phase 70 — TUI text interaction
 
-**Status: foundation design candidate recorded; design approval and implementation pending. Not build-ready.**
-**Next:** review the foundation candidate and resolve its public contracts through the
-supervisor workflow. The operator will manually verify the installed result on laptop
-Retina after implementation; the agent's Ghostty access remains denied.
+**Status: revised foundation candidate and review corrections recorded; design approval and implementation pending. Not build-ready.**
+**Next:** finish native menu commit/visual contracts, then obtain fresh foundation reviews and
+the native delivery-owner decision through the supervisor workflow. The operator will manually
+verify the installed result on laptop Retina after implementation; the agent's Ghostty access
+remains denied.
 
 ## Outcome and scope
 
@@ -26,8 +27,8 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Candidate and current-release check recorded; design reviews next, manual live acceptance pending implementation. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
-| [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Builds on the approved foundation; resolve the library's document-selection gap before planning implementation. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Revised candidate/corrections recorded; menu commit, visual binding and fresh ownership review open, manual acceptance pending implementation. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
+| [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
 CodeAlta findings, controlled results, limitations, and timing. Neither spoke has an approved
@@ -53,8 +54,10 @@ to the operator. Scope → design → simplicity/ownership reviews → implement
 simplicity/ownership reviews → supervisor approval → fresh implementer →
 simplicity/ownership/style reviews → merge/publish → default-path acceptance → closure.
 
-This delivery is documentation-only: product design/plan/code review stages are pending,
-not implicitly passed. Default-path acceptance is N/A for this documentation change.
+This delivery is documentation-only: foundation reviews produced a narrower candidate and
+corrections; fresh ownership launch hit the agent-thread limit. Design approval, plan and code
+stages remain pending. Default-path acceptance is N/A for this documentation change. See
+[review evidence](phase-70.1-text-interaction-foundation_completed.md#revised-candidate-review).
 
 ## Standing constraints and authorizations
 
