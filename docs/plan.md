@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Obtain the operator's native delivery-owner decision for the reviewed [TUI text interaction](phases/phase-70-tui-text-interaction.md) candidate. |
+| **NEXT STEP** | Prove bounded public-extension feasibility for [TUI text interaction](phases/phase-70-tui-text-interaction.md) before implementation planning. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Independent design reviews passed; native delivery decision pending before implementation. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Design reviews passed; feasibility, implementation and acceptance remain open. |
 
 ## Design docs
 

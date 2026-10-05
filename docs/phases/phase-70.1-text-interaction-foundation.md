@@ -1,6 +1,6 @@
 # Phase 70.1 — Text-interaction foundation
 
-**Status: complete R6 simplicity and ownership reviews PASS; Type-1 delivery decision pending; no design/plan approval.**
+**Status: both complete R9 reviews PASS; public feasibility gates pending; no design/plan approval.**
 **Not build-ready.** Parent: [Phase 70](phase-70-tui-text-interaction.md).
 
 ## Requirement
@@ -43,7 +43,7 @@ The current published releases still match these pins — [release check](phase-
 These are source findings, not an approved extension contract or proof that every possible
 adapter is infeasible. Do not substitute a snippet-only or keyboard-only implementation for
 the foundation. A new public/library boundary still requires the reviewed contract and
-operator decision named in the parent hub.
+operator-selected public-extension evaluation named in the parent hub.
 
 ## Verification route
 
@@ -70,230 +70,125 @@ pending until the operator records them; the phase cannot close on automated evi
 |---|---|
 | Keyboard and mouse Copy routing | Concrete owner precedence and actual public hooks, including TerminalApp's pre-command active-selection interception; no-selection Stop and failed-copy handling. Name intended gestures; Ghostty's physical Ctrl/Cmd/terminal-native delivery is checked by the operator after implementation. |
 | Context-menu lifetime | Exact payload/range capture, focus restoration, cancelled-menu behaviour and document-version handling, using public APIs. `SelectionStart`/`SelectionLength` are protected, not public integration points. |
-| Honest results | Concrete way all owned Copy/Paste paths observe the bool result. Decide a narrow Forge adaptation or reviewed upstream extension; define types, signatures, ownership and Native AOT implications. No invented library APIs or new private access. |
+| Honest results | Concrete way all owned Copy/Paste paths observe the bool result. Review the operator-selected public Forge extension/package; define types, signatures, ownership and Native AOT implications. No invented library APIs or new private access. |
 | Visual interaction | Binding revised reference for snippet icon/menu and feedback; exact placement, focus order, disappearance/reset rules, light/dark tokens and contrast pairs. |
 
-## Revised foundation candidate — not approved
+## Public-extension candidate — not approved
 
-Retain native editors, selection, commands, menus, buttons, TextMate and clipboard transport.
-Recommend a bounded upstream UI change: native Copy result reporting, fixed close-before-invoke
-text-menu preservation, a native Paste callback guard, public input admission and native Button
-detach/visibility cleanup. Forge owns one local command/feedback policy and snippet composition.
-This replaces the public handler/snapshot proposal; it is not an existing API or approved route.
-First-round evidence is [archived](phase-70.1-text-interaction-foundation_completed.md#foundation-design-reviews).
+**Revision R9:** actual package/consumer/AOT verification follows an approved implementation;
+bounded public feasibility probes precede the plan. Both complete current reviews PASS;
+see [review/probe evidence](phase-70.1-text-interaction-foundation_completed.md#public-extension-evaluation-and-complete-r7r9-reviews).
+
+Keep the current UI/Markdown/TextMate 3.10.0 family and Terminal 2.2.0 unchanged. Forge opts its
+owned text controls out of native app-wide selection ownership, retains their native editing
+and selection, and supplies selection-aware Copy commands with truthful results. Native
+context menus invoke commands against their explicit original target and then close normally.
+Forge's reusable extension assembly owns fixed clipboard commands and native menus. The CLI owns
+target coordination, chat Stop, theme/feedback presentation and snippet composition.
+The rejected R6 native API/mechanics proposal is [archived](phase-70.1-text-interaction-foundation_completed.md#superseded-r6-native-library-proposal);
+its review PASS does not carry forward to this route.
 
 ```mermaid
 flowchart LR
-    Selection[Keyboard or menu selection Copy] --> Native[Native scoped Copy operation]
-    Native --> Clipboard[Existing terminal clipboard]
-    Clipboard --> Result[Proposed native result observer]
-    Result --> Feedback[Forge text-interaction feedback]
-    Snippet[Native snippet button: immutable code] --> Clipboard
-    Snippet --> Feedback
+    Range[Native editor or Paragraph range] --> Copy[Forge Copy command]
+    Copy --> Transport[Existing Terminal clipboard bool]
+    Transport --> Feedback[Forge feedback]
+    Menu[Native menu: explicit CommandTarget] --> Copy
+    Menu --> Paste[Existing editor Paste and undo]
+    Paste --> Feedback
 ```
 
-### Proposed native Copy API
+### Existing public hooks and evidence
 
-All signatures below are proposed for `XenoAtom.Terminal.UI`, absent at 3.10.0:
+All hooks below exist at the pinned baseline; none is a proposed library API.
 
-```csharp
-namespace XenoAtom.Terminal.UI;
-
-public enum SelectionCopyResult
-{
-    NoSelection = 0,
-    Copied = 1,
-    ExtractionFailed = 2,
-    WriteFailed = 3,
-    InvalidTarget = 4,
-}
-
-// TerminalApp
-public SelectionCopyResult CopySelection(Visual source);
-
-// TerminalAppOptions and TerminalRunOptions; run option forwarded unchanged
-public Action<Visual, SelectionCopyResult>? SelectionCopyCompleted { get; init; }
-```
-
-| Boundary | Candidate contract |
+| Public surface | Use / source evidence |
 |---|---|
-| Call | UI-thread only (`VerifyAccess`); null source throws `ArgumentNullException`. Detached, hidden, disabled, nonselectable or out-of-scope source yields `InvalidTarget`. |
-| Extraction | Valid owner's `HasSelection == false` yields `NoSelection`; `HasSelection == true` with failed/empty extraction yields `ExtractionFailed`. Extracted text is written once with native `TrySetText`; its bool determines `Copied` or `WriteFailed`. No selection is cleared. |
-| Observer | Synchronous, once after each operation; receives source/result only. Cannot alter dispatch or replace transport. Callback exceptions use the UI-loop failure path and never reroute into Stop. |
-| Keyboard dispatch | Selected focused `TextEditorBase` first, then active rendered selection, both restricted to the active modal scope. Choosing a `HasSelection` owner consumes every result, including extraction/write failure; never retry another owner or fall through to Stop. No selected owner continues normal command dispatch. |
-| Editor Copy | Native command and raw-key fallback use the same operation. Composer replaces its removed `TextEditor.Copy`: label `Copy`, existing Ctrl+C, `CanExecute=HasSelection`, `ConsumesGestureWhenUnavailable=false`, execution via `CopySelection`. No-selection Stop and existing `/edit` chat-shortcut isolation stay intact. |
-| Origin menu Copy | After close and callback validation, executes against the captured origin via `CopySelection`, never a composer or later coordinate lookup. Normal modal scope applies; no origin exemption exists. |
+| `TextEditorBase.IsSelectable { get; set; }`, `HasSelection`, `TryCopySelection(out string)` | Set false before attachment. It controls app-wide ownership, not core input/range handling. [Base](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorBase.cs#L300), [ownership routing](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/TerminalApp.cs#L501). Public-only probe covers native keyboard/mouse selection with false. |
+| `Paragraph.IsSelectable`, `HasSelection`, `TryCopySelection`; `ISelectionOwner.ClearSelection()` | Same app-ownership opt-out; native Paragraph mouse range remains usable. [Pointer handling](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/Paragraph.cs#L454), [interface](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Input/ISelectionOwner.cs). Clear the previous owned range explicitly; do not register a native app selection owner. |
+| `Visual.RemoveCommand(string)`, `AddCommand(Command)`, `Commands` | Replace owned editor `TextEditor.Copy`; retain the original `TextEditor.Paste`. `CanExecute=HasSelection`, `ConsumesGestureWhenUnavailable=false` allows parent Copy-or-Stop when the editor has no range. |
+| `Visual.ContextMenuFactory: Func<Visual,IEnumerable<MenuItem>>?`; `MenuItem.CommandTarget` | Exact Copy/Paste menu for editors, Copy-only for Paragraph. Command-backed items target the original source. Native invocation-before-close is retained. [Factory dispatch](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/TerminalApp.cs#L3409), [invoke ordering](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/ContextMenuService.cs#L358). No popup lookup, focus restoration or range reconstruction in Forge. |
+| `TextEditorBase.ClipboardPasteHandler`, nullable `TextEditorClipboardPasteContext.Text` | Feedback-only handler returns null; native Capture/insertion/undo retained. Null means failed read, empty means successful no-op. Bracketed input remains native event-text insertion, with no handler/read. |
+| `Visual.PointerPressedRouted`, `RoutingPhase.Preview`, `OriginalSource` | Coordinate only owned sources on left Down: remember the native text target and clear the previous target via the public interface. Do not intercept or reimplement editor navigation/drag. |
+| `EnumerateVisualsDepthFirst()`, `Measure`, `Arrange`; protected child/lifecycle overrides | Enumeration prepares children publicly. A bounded Forge Markdown presentation wrapper arranges its unchanged MarkdownControl, then configures its realized Paragraphs before they become interactive. No access to private Markdown builders or layout caches. [Enumeration](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Visual.cs#L1378). First realization, scroll/recycle and streaming registration must be proved before plan approval. |
+| `Button.ClickRouted`, public `IsPressed`, `IsVisible`, `IsTabStop`, protected `OnDetachedFromApp` | Normal native activation only; cancel the public pressed flag on detach/hide. [Release checks](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/Button.cs#L267). No internal hover/capture reset or new native admission API. |
+| `App`, `Parent`, `FocusedElement`, `HasFocus`; reactive `SetStyle<ButtonStyle>(Func<ButtonStyle>)` | Check the current Forge view and public attachment/ancestor eligibility. Native routing owns modal/focus scope; only native Click/command delivery invokes the action. Existing reactive slots, palette and native bold remain. |
 
-### Proposed native menu preservation
+Controlled feasibility: [public-extension probe](../evidence/phase-70/public-extension-probe.json).
+This is an in-memory library probe, not Forge integration or live acceptance.
 
-This is a proposed XenoAtom.Terminal.UI change, absent from the pinned package. It applies to native text-origin menus for `TextEditorBase` and `Paragraph`, including their native submenu family. Forge supplies exact editor Copy/Paste and Paragraph Copy menus. Other menus retain their current behavior.
+### Fixed target and Copy policy
 
-```mermaid
-flowchart TD
-    Capture[Capture origin before right-click focus or Show] --> Hold[Keep existing range during menu focus]
-    Hold --> Pick[Capture leaf command and target]
-    Pick --> Close[Close root menu and submenus]
-    Close --> Restore[Restore eligible focus while range preservation is active]
-    Restore --> End[End preservation before Closed]
-    End --> Callbacks[Run Closed callbacks]
-    Callbacks --> Valid{Origin still valid?}
-    Valid -->|No| Reject[Discard action]
-    Valid -->|Yes| Availability[Evaluate item and command availability]
-    Availability --> Recheck{Origin still valid after callbacks?}
-    Recheck -->|No| Reject
-    Recheck -->|Yes| Invoke[Invoke captured native command once]
-```
-
-| Private native state | Contract |
-|---|---|
-| Identity | Original `TerminalApp`, source `Visual`, exact `ISelectionOwner`, underlying input/modal scope, and eligible restore-focus target. Editor menus restore that editor; Paragraph menus restore the previously focused eligible visual. |
-| Content | Editor document reference and `ITextDocument.Version`; Paragraph’s proposed text revision, incremented on every Text update. |
-| Range | Exact editor caret, selection anchor/end and existing core `Version`; Paragraph anchor/active and existing `InteractionVersion`. Preserve direction, collapsed/absent representation and native active-owner element/interface references. |
-| Lifetime | A private permanent `Invalidated` latch for this menu invocation. Source detach, content change, unrelated scope/focus transition, menu replacement, app shutdown, or an ineligible source invalidates it. Reattachment cannot revive this captured invocation. |
-| Preservation | Suppress only selection clearing caused by this menu family’s opening, focus transitions and eligible focus restoration. Keep the existing fields; do not clear and reconstruct a selection. |
-| Release | Closing ends preservation before `Closed`. Cancellation releases captured references. Activation retains only its bounded command/origin values until validation and invocation finish, then releases them. |
-
-**Opening and availability**
-
-Capture the text origin before native right-click focus changes and before a programmatic `ContextMenuService.Show` opens the popup. The native text-menu path owns this timing; beginning preservation inside Forge’s factory is too late.
-
-Menu construction/rendering may call application availability callbacks. After each such callback, check the origin again before further use. A changed origin invalidates and dismisses the menu. While it is open, raw keyboard/global Copy retains normal modal scope and cannot copy the underlying text.
-
-**Activation**
-
-1. Capture the selected leaf’s exact `Command`, effective `CommandTarget`, item visibility/enabled state and origin validation values. These fixed text menus contain commands, not arbitrary menu Actions.
-2. Check origin validity before executing availability callbacks. An invalid origin dismisses the menu without a clipboard operation.
-3. Close the root menu and its submenus using native close machinery. Restore eligible focus while preservation remains active; end preservation before raising `Closed`.
-4. Run `Closed` callbacks. Do not repair their effects or restore old fields afterward.
-5. Require the same app, attached source/owner, original document/text revision, exact directional range/caret and interaction versions, active-owner bookkeeping, original input/modal scope, eligible source, and intended restored focus. Effective visibility/enabled means the source and its ancestor path, not just the source’s own flags.
-6. Evaluate the captured item’s visibility/enabled predicates, `Command.IsVisibleFor`, and `Command.CanExecuteFor` against the original effective target. Revalidate after each callback. Stop immediately on false or stale state; do not repeatedly invoke predicates until they pass.
-7. Invoke the captured command once, with no further application availability callback between the final validation and invocation.
-
-A `Closed` or availability callback that edits, moves/restores a range, replaces a document, detaches/reattaches the source, opens a conflicting modal/menu or changes the target invalidates the action. A layout-only reflow remains valid.
-
-Copy runs after the menu closes, under normal native modal-scope rules; no modal-origin exemption exists. If `Closed` opened another modal, the old action is rejected.
-
-| Close reason/action | Result |
-|---|---|
-| Escape | Close restores the eligible focus and retains the original directional range/caret when no callback invalidates it. |
-| Tab / outside pointer input | The close milestone retains that state; native redispatch may subsequently move focus, edit or alter the selection. Test the two milestones separately. |
-| Copy | Executes after close against the validated range through the proposed Copy API. |
-| Failed/empty Paste | Native Paste makes no insertion. Without callback mutations, the original range/caret remains. |
-| Nonempty Paste | Native Paste replaces the range and owns the resulting caret, selection and undo entry. No menu preservation remains to restore old endpoints. |
-| Stale activation | Dismiss/discard. No clipboard access, insertion or invented clipboard-failure notification. |
-
-### Existing Paste reuse and callback ordering
-
-Retain editor menu order **Copy**, **Paste**; Paragraph has **Copy** only. Copy requires selection, Paste requires an eligible editable origin. Use the existing `TextEditor.Paste` command with `CommandTarget=editor`. Do not add Cut, Undo, Select All, incidental ancestor commands, a second clipboard read or direct Forge document mutation.
-
-The pinned implementation’s `TextEditorCore.PasteFromClipboard` captures clipboard data, calls `ClipboardPasteHandler`, then calls `PasteText`; it currently lacks this continuation guard. The guard is a proposed native change.
-
-```mermaid
-flowchart TD
-    Entry[Keyboard or closed-menu TextEditor.Paste] --> Pre[Capture and validate native editor state]
-    Pre --> Read[Existing clipboard Capture]
-    Read --> Check1{State still valid?}
-    Check1 -->|No| Discard[Discard without insertion]
-    Check1 -->|Yes| Handler[Existing ClipboardPasteHandler]
-    Handler --> Check2{State still valid?}
-    Check2 -->|No| Discard
-    Check2 -->|Yes, null or empty| Noop[Native no-op]
-    Check2 -->|Yes, nonempty| Insert[Existing PasteText and one undo operation]
-```
-
-| Private native Paste state | Contract |
-|---|---|
-| Captured identity | Original app, editor host, input/modal scope and focused visual. |
-| Captured edit state | Document reference/version, core `Version`, exact caret/selection anchor/end and native active-owner bookkeeping. |
-| Detachment | A private synchronous pending-Paste invalidation latch. `TextEditorBase` detachment invalidates its core’s pending attempt, even if the same editor reattaches before a callback returns. |
-| Reentrancy | One pending clipboard Paste per editor. A recursive call while pending invalidates the outer attempt and returns without another capture/insertion. The outer call clears its pending state in `finally`. This is private Paste state, not a public token or general interaction framework. |
-
-Capture the state **before** clipboard transport or handler invocation. Validate the source’s attachment, original app/scope/focus, effective visibility/enabled and edit state at entry, immediately after clipboard capture, and immediately after the handler. After the final validation, enter the existing `PasteText`/`InsertText` path without another application callback. The guard ends at entry to the native insertion; the native document and undo operation continue to own mutation notifications and their existing failure semantics.
-
-If clipboard capture changed the origin, skip the handler and insertion. If the handler changed it, skip insertion. Do not restore previous state over either callback’s effects.
-
-Forge’s installed handler is **feedback-only**: inspect `context.Text`, update clipboard feedback and return `null`. It does not mutate documents, ranges, focus or the visual tree, and queues no edit. The native continuation guard still contains a violating or reentrant callback.
-
-| Valid capture | Forge handler | Native outcome |
-|---|---|---|
-| `Text is null` | `Paste failed`; return `null`. | No insertion or undo entry. |
-| `Text.Length == 0` | Clear previous clipboard feedback; return `null`. | Successful no-op; preserve caret/range. |
-| Nonempty `Text` | Clear previous clipboard feedback; return `null`. | Existing replacement/undo exactly once. |
-| Stale origin after callback | No subsequent stale-source notification. | Discard; no insertion/undo and no fabricated transport failure. |
-| Bracketed Paste event | No clipboard handler/read. | Existing event-text insertion and undo. |
-
-Retain native `TextEditorClipboardPasteContext.Capture`: failed text reads become null, successful empty text remains empty, and the backend guarantees non-null text on success. `HasText` does not distinguish these outcomes. Native format/raw-data capture remains native behavior; Forge adds no capture or read.
-
-### Forge snippet and feedback slice
-
-One internal TUI `TextInteraction` boundary presents commands/menus, attaches the existing Paste
-handler and maps clipboard outcomes to feedback. Editors own document/range/undo; renderer owns
-the snippet's immutable payload and control lifetime; XenoAtom retains portable transport.
-
-| Concern | Candidate contract |
-|---|---|
-| Rendering | Heading pseudo-fences are routed first and receive no snippet button. Real fenced/indented code keeps existing Paragraph/Runs, TextMate, wrapping and TileFrame. Inside the frame: native VStack of one reserved header row, then the unchanged code body. |
-| Payload | Capture complete immutable `context.Code` before display `TrimEnd`; preserve indentation, blank lines and trailing LF. Do not copy fences, labels, markup, wraps or placeholders. |
-| Button | Native Button, right-aligned, one row, borderless, 15 reserved cells including one-cell side padding. Below 15 available cells it becomes the same icon-only button of `min(3, availableWidth)` cells with full tooltip. No icon library/global shortcut. Geometry belongs in named ForgeTheme constants. |
-| Activation | Native left-click, Enter, Space; Tab/Shift+Tab follows visual-tree order: snippet buttons in transcript order, then composer. `/edit` keeps CodeEditor focus. |
-| Snippet write | Direct native `button.App.Terminal.Clipboard.TrySetText(payload)` once; map bool through the same Forge feedback policy as native selection results. A whole snippet is not an `ISelectionOwner`; no second backend exists. |
-| Labels/tooltips | Idle `⧉ Copy code` / `Copy code`; success `✓ Copied` / `Copied`; failure `! Copy failed` / `Copy failed`. Only true transport result earns success. |
-| Other feedback | Selection success `Copied`; failures `Copy failed` / `Paste failed`; successful empty Paste has no success string. Existing composer progress and editor message rows prefix clipboard status plus ` · ` without replacing underlying spinner/progress/save/unsaved state. End ellipsis clips trailing progress first. |
-| Reset | Subsequent clipboard action, editing its source, loss of both focus/hover, or detachment/replacement. No timer or idle animation. |
-
-
-### Forge snippet lifetime
-
-Retain the existing snippet rendering, exact immutable `context.Code` payload, native Button/header layout, labels and feedback owner. Detachment supports normal native viewport recycling:
-
-```mermaid
-stateDiagram-v2
-    [*] --> AttachedIdle
-    AttachedIdle --> Pressed: native left press
-    Pressed --> AttachedIdle: valid release activates Copy
-    AttachedIdle --> Detached: viewport recycling
-    Pressed --> Detached: detach cancels press
-    Detached --> AttachedIdle: same immutable visual reattaches
-    Detached --> Detached: release from old press does nothing
-    AttachedIdle --> Hidden: header width zero
-    Pressed --> Hidden: native hiding cancels input
-    Hidden --> AttachedIdle: positive width; fresh native focus/input
-    Hidden --> Hidden: old release does nothing
-```
+`TextInteraction` remains internal to CLI TUI. Its state is the current Forge screen/editor slot,
+the last owned mouse-text target, and clipboard feedback. It consumes the extension assembly's
+result; no backend, global key interceptor or configurable routing policy is introduced.
 
 | Event | Contract |
 |---|---|
-| Creation | Renderer captures the complete immutable `context.Code` before display trimming. New rendering gets a new payload/button and idle feedback. No transcript-index lookup or mutable payload reference. |
-| Detach | Proposed native Button/app cleanup clears `IsPressed`, internal `IsPressedInside`, hover and the matching app hover-path/pointer-capture references. Forge's bounded Button subclass overrides supported `OnDetachedFromApp` only to invalidate its pending write-feedback continuation and reset feedback, then calls base for native cleanup. Do not permanently disable or retire the button. |
-| Reattach | The same immutable-payload visual is eligible for fresh mouse/Enter/Space activation. It starts idle. No old pointer release may activate it. |
-| Activation | Native `Click` is synchronous. Capture this button's app and begin its bounded pending-feedback attempt; require proposed `app.CanReceiveInput(button)` and a noninvalidated attempt before one native `TrySetText(payload)` call. No queued clipboard action, private access or Forge modal-tree traversal. |
-| Feedback | Only true transport result earns `✓ Copied`. False earns `! Copy failed`. After transport, apply feedback only if the original app still owns the button, `CanReceiveInput(button)` is true and the attempt was not invalidated by detach; otherwise leave reset feedback. Clear pending state in `finally`. A write already accepted by the transport cannot be undone. |
-| Replacement | Existing renderer replacement creates a new visual/payload. The old detached visual cannot write. No new permanent-disposal protocol is introduced. |
+| Source setup | Composer and `/edit` set IsSelectable=false before attachment. Their native Copy command is replaced once. Realized owned Paragraphs receive the same flag and fixed Copy-only menu; unrelated framework controls are untouched. The Markdown wrapper delegates measure/arrange/render to the existing child and styles. |
+| Own mouse selection | On preview left Down resolve the nearest owned editor/Paragraph in OriginalSource's public parent chain. Clear ranges on other registered owned sources, and remember this source. This includes a focused editor range created by keyboard without a previous mouse target. Native controls handle drag/double/Shift-click unchanged. Clicking other owned chrome clears the remembered range. Popup clicks are outside the screen subtree, so they do not clear its target. |
+| Copy precedence | A selected focused owned editor first; otherwise the remembered current rendered-text source with selection. Editor commands and the parent chat Copy-or-Stop command share the same extraction/write routine. All owned text sources have native app ownership disabled, so its early unchecked Copy cannot pre-empt this route. |
+| Copy result | Selected source: TryCopySelection once; failed/empty extraction shows Copy failed, with zero write and zero Stop. Nonempty extraction: native TrySetText once; true shows Copied, false Copy failed. Range remains; no retry/fallback. Exceptions retain the existing UI-loop failure boundary and never call Stop. |
+| No selection | Parent command performs the existing Stop action only in chat, retaining Wake/turn ownership. `/edit` retains current isolation and never cancels the chat turn. Native editor commands/navigation unrelated to Copy stay unchanged. |
+| Editor activation | Direct editor KeyDown/TextInput/Paste routed handlers claim that source without handling/preventing native editing. Commands execute before KeyDown, so after the editor and host command construction are complete, decorate existing native editor commands except Copy: preserve every public Command metadata/availability/route field, call the same Claim(editor), then delegate to the original Execute(target) exactly once. Do not copy editing logic. Native menu Paste resolves the current TextEditor.Paste command at menu creation, so it sees this decorator. This is one bounded CLI command decorator for the two owned editors, not a global input subscription. |
+| Copy claim | A selected editor command reports its fixed target and clears other owned ranges as part of the host's action feedback; parent Copy claims the chosen source before extraction. This makes Ctrl+A followed immediately by Ctrl+C correct even in one input batch. Copy never delegates to another source after failure. |
+| Source change | Source Claim clears other registered ranges using ISelectionOwner.ClearSelection. Tab to an empty composer alone leaves a Paragraph range available until new editor input or another text claim, matching the chosen Copy precedence. A native menu focus excursion never claims another text source. Screen/editor-slot changes clear and retire the old target synchronously in existing swap methods. Retired sources are not searched by transcript index. |
 
-Pinned evidence: `DocumentFlow.RecycleActiveBlock` removes/stores the visual; `AcquireRecycledOrCreate` reuses it. `VisualDocumentFlowBlock.CreateVisual` returns its stored visual and `TryUpdate` uses reference equality. Forge’s `ChatScreen.CardItem` uses precisely this visual-backed flow. Button release raises `Click` only when `IsPressed`; cancelling that flag prevents the old press from surviving recycling. Its Enter/Space and release handlers raise Click synchronously.
+This intentionally replaces native app selection coordination only for Forge-owned text surfaces.
+It does not replace their selection renderer, range fields, editing, navigation or undo.
 
-**Proposed native admission and detach contract**, absent from UI 3.10.0:
+### Fixed native menus and Paste
 
-```csharp
-// XenoAtom.Terminal.UI.TerminalApp
-public bool CanReceiveInput(Visual source);
+```mermaid
+flowchart TD
+    Open[Native right-click factory: range retained] --> Menu[Copy/Paste with explicit original target]
+    Menu --> Check{Current source and content?}
+    Check -->|No| Disabled[Disabled action; no clipboard/edit]
+    Check -->|Yes| Invoke[Invoke fixed command once]
+    Invoke --> Close[Native menu closes and restores focus]
+    Invoke --> Edit[Paste owns new range/caret/undo]
 ```
 
-| Boundary | Fixed contract |
-|---|---|
-| Admission | UI-thread only (`VerifyAccess`); null throws `ArgumentNullException`. True requires the source attached to this app's root, effective visibility/enabled through its ancestor path, and membership in the app's current native input/modal scope. Detached, other-app, hidden, disabled or out-of-scope sources return false. No focus, selection or clipboard capability is implied. |
-| Scope ownership | Native code uses its existing input-root/scope logic. After any native tree preparation needed to resolve that root, check the current attachment, ancestor eligibility and scope before returning. This is a current-state check, not a reservation; Forge adds no callback between its final admission check and write. The query performs no clipboard operation or focus restoration and introduces no modal exemption. |
-| Pointer cleanup | Native Button detachment or transition to `IsVisible=false` uses the same private cleanup: clear pointer capture when it targets the button or its content subtree, and clear the native hovered leaf/path when that path contains the button. Clear matching app references and both pressed flags before hover-change callbacks; reset native hover without leaving a cached path that suppresses the next hover update. Detachment uses the saved app; hiding uses the owning app. Hiding then showing cannot revive an old press. Unrelated pointer/hover targets remain untouched. This fixed native visibility behaviour is also proposed, absent from 3.10.0. |
-| Reuse | Native cleanup leaves the detached Button idle; reattachment permits fresh native input. It never synthesizes Click or replays an old press. Forge neither writes internal hover state nor introduces a separate pointer tracker. |
+The factory captures only a bounded source guard: original app/source/parent attachment and effective ancestor eligibility,
+editor document reference plus public Version (editor), or complete Text string (Paragraph).
+`Command.CanExecute` and execution use the same pure current-source/content checks; Copy also
+requires HasSelection. No directional snapshot is captured because the native fields are never
+cleared or restored. A changed source disables the action; dismiss/reopen is the recovery, with
+no invented clipboard failure. No arbitrary application availability, Closed or transforming
+Paste callbacks are installed by this feature.
 
-The pinned [scope helpers](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/TerminalApp.cs#L3553)
-are private, [hover state](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Visual.cs#L244)
-is internally set, and existing detachment does not clear it. These proposed native changes
-resolve those gaps; they are not capabilities claimed for the current package.
+| Operation | Fixed route / outcome |
+|---|---|
+| Menu Copy | Forge command, explicit CommandTarget=original source; same Copy routine and feedback. Native menu invokes then closes. Keyboard Enter and actual left-click must preserve the original range. |
+| Menu Paste | A fixed Forge menu command validates its captured editor guard and calls the retained native TextEditor.Paste command's public Execute(editor). Native range replacement/undo happens before ordinary menu close. Closing restores focus, not old range fields, so the new caret is retained. |
+| Keyboard Paste | Unchanged native TextEditor.Paste, with the same feedback-only ClipboardPasteHandler. Handler reads Text and updates feedback only; returns null, queues no edit and changes no document/range/focus/tree. |
+| Failed read | Text=null: Paste failed; native no-op, range/caret/draft unchanged. No reread or bool/result API. |
+| Empty text | Clear clipboard feedback, return null: successful native no-op, original range/caret retained. |
+| Nonempty text | Clear feedback, return null: native insertion replaces the range and creates its existing Paste undo entry. One Undo restores the original document. |
+| Escape / outside / Tab | Existing native close/focus/redispatch behaviour. Escape preserves the range. Outside/Tab close retains it at the close milestone; subsequent normal input may change it. No Forge restoration over those effects. |
+
+R6's native callback reentrancy guards, permanent detach latches and close-before-invoke were
+solution-specific hardening, not new user requirements. The fixed Forge callbacks are pure or
+feedback-only; this slice does not promise arbitrary hostile callback containment. No native
+failure is silently promoted to success, and no required mouse/edit/menu path is removed.
+
+### Snippets and feedback
+
+Keep the original immutable `context.Code` before display TrimEnd, LF/indentation/blank/trailing
+newlines, pseudo-heading exclusion, Paragraph/Runs/TextMate/wrapping/TileFrame and one reserved
+header row. Use the existing native Button and the same truthful write-result/feedback routine.
+
+| Boundary | Contract |
+|---|---|
+| Activation | Normal native Click (mouse, Enter, Space), current original app, attached/enabled/visible ancestor path, current source and focused Button. Native input routing supplies modal admission; Forge does not reconstruct scope. One synchronous TrySetText of the immutable payload. |
+| Recycling | Bounded Button subclass OnDetachedFromApp resets public IsPressed=false and local feedback/pending feedback before base. Hide at width0 does the same. Do not touch internal IsPressedInside/IsHovered or private app capture. Native release checks IsPressed; old release cannot activate after reset. Fresh reattachment stays supported. |
+| Feedback | Apply bool result only to the still-current attached source and noninvalidated synchronous attempt; clear pending state in finally. Detach during transport cannot resurrect feedback; accepted transport writes cannot be undone. |
+| Small widths | Header retains one row. Width0 hides the same Button and disables Tab; positive header content width restores it. Width1–2: glyph with zero horizontal padding; width3: one padding cell each side. Width<15: same icon-only control/full tooltip; otherwise 15-cell label. Native focus repair handles hiding. |
+| Feedback text | Idle ⧉ Copy code; success ✓ Copied; failure ! Copy failed; native tooltip Copy code/Copied/Copy failed. Editor/composer clipboard feedback prefixes underlying progress/save status with ` · `; reset on next action/source edit/loss of both focus and hover/detach/replacement/hide. No timer. |
 
 ### Candidate visual reference specification
 
-Saved candidate state galleries (synthetic references, both independent R6 reviews PASS):
+Saved candidate state galleries (synthetic references, freshly inspected in both complete R9 reviews):
 
 - [Light](../images/phase-70.1/foundation-light.svg)
 - [Dark](../images/phase-70.1/foundation-dark.svg)
@@ -320,88 +215,140 @@ The galleries bind only the added header/button, contextual menus, selection con
 
 Before approval, save and inspect the galleries. [Controlled colour evidence](../evidence/phase-70/foundation-colours.json) enumerates current tokens and exact fixture syntax foreground/Selection pairs; it is neither native state rendering nor Retina acceptance. The csharp fixture's minimum selected-syntax ratios are 4.89 (light) and 4.26 (dark); other language runs still require controlled product evidence. If a pair is unreadable, return to design for a named theme-token change; do not patch individual runs. Controlled layout checks cover all four width/height corners of `[60,100]×[24,32]` and continuous resizing. Operator-installed Ghostty/laptop Retina comparison remains the approved final observation.
 
-### Required focused probes
 
-| Probe | Required observation |
+### Owners, reuse, failure boundaries and comparison
+
+| Behaviour | Owner / reuse |
 |---|---|
-| Menu callback boundaries | `Closed`, visibility and CanExecute callbacks independently change document, directional range, attachment, focus or modal scope. Old action makes zero clipboard calls/insertion; callback effects remain untouched. |
-| Menu normal path | Both selection directions and collapsed/absent ranges survive opening/cancel; Copy runs after Closed; nonempty Paste owns its resulting caret and one undo operation. |
-| Redispatch | Escape final state differs from Tab/outside-input close milestone only through the native redispatched input. |
-| Paste continuation | Transport and handler independently edit/move the range, replace document, detach/reattach, or open a modal. No stale insertion; recursive Paste performs no second capture and cancels outer insertion. |
-| Paste outcomes | Null, empty, nonempty and bracketed input retain their specified feedback, read count and undo behavior. |
-| Snippet recycling | Scroll out/in reuses the same snippet and fresh activation copies exact payload. Press → detach → reattach → release causes zero writes. New press after reattach writes once. |
-| Snippet feedback | False transport cannot show Copied; detach during a synchronous write cannot resurrect old feedback. |
-| Snippet admission/lifecycle | Attached eligible Button admits fresh activation; underlay behind a modal, detached/other-app/hidden/disabled source rejects without writes. Hover/press → detach → reattach starts idle with no stale capture; the next fresh pointer move establishes hover. |
-| Native style/layout | Actual public Button rendering at available widths 0/1/2/3 shows the specified no-hit/glyph/padding result. All labels retain native bold; focused+pressed retains Selection and underline; focused+hovered/copied/failed retains semantic colours. Hover exposes the full native tooltip. Both themes. |
-| Zero-width transitions | Focused Button → header width0 → Enter/Space makes zero snippet writes; header still occupies one row. Press → width0 → positive width → old release also makes zero writes. After widening, fresh native focus/press activates once with the exact original payload. Visibility follows header width, so it can recover from zero bounds. |
-| Package/AOT | Actual public package exposes Copy and `CanReceiveInput`, accepted menu/Paste behavior and native Button detach/visibility cleanup; public-only probes and Native AOT pass with zero warnings. |
+| Native editor/Paragraph range, input, menu and undo | Existing XenoAtom public controls; unchanged packages. |
+| Fixed Copy/Paste menu, selection-aware editor Copy and transport result | Proposed Forge terminal extensions, below; no native command/editing reimplementation. |
+| Owned target choice, Copy vs Stop, theme and visible feedback | Forge CLI TUI presentation ([CLI owns](https://github.com/katasec/forge-mcl/blob/2022b512dd2bd108626124f22bc1cfe7652648d7/src/ForgeMission.Cli/README.md#owns)); no general native input subsystem. |
+| Immutable snippet/header/native reset | Existing ForgeCodeBlockRenderer plus bounded native Button subclass. |
+| Styles/geometry | Existing ForgeStyles/ForgeTheme and reactive native style slots; no new palette/renderer. |
+| Transport | Existing XenoAtom.Terminal clipboard; no OS backend/decorator. |
+| Continuous rich selection | Separate Forge presentation slice with its own geometry/semantic proof, [route comparison](phase-70.2-rich-transcript-selection.md#public-extension-feasibility-and-fork-comparison). Single Paragraph is not completion. |
 
-Security: local presentation/input only; hosted tiers, stores, identities and credentials are N/A. Explicit user actions alone read/write clipboard; payloads are neither logged nor submitted. The approved manual verification exception remains bounded as recorded in the parent phase.
-
-### Owners, reuse and failure boundaries
-
-| Behaviour | One owner / authority |
+| Expected failure | Containment / result / recovery / proof |
 |---|---|
-| Input admission, native selection Copy, menu focus/command lifetime, Paste/undo and pointer cleanup | XenoAtom.Terminal.UI; [pinned README](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/readme.md#features) assigns controls, input, commands and layout. |
-| Clipboard transport | Existing XenoAtom.Terminal backend; no Forge OS clipboard implementation. |
-| Forge command set and local feedback | forge-mcl CLI TUI `TextInteraction`; [CLI owns chat presentation](https://github.com/katasec/forge-mcl/blob/2022b512dd2bd108626124f22bc1cfe7652648d7/src/ForgeMission.Cli/README.md#owns). |
-| Immutable whole-code payload and visual reuse | Existing ForgeCodeBlockRenderer and native flow; same [component inventory](https://github.com/katasec/forge-mcl/blob/2022b512dd2bd108626124f22bc1cfe7652648d7/src/ForgeMission.Cli/README.md#terminal-ui--tui). |
-| State styles and constrained geometry | Existing ForgeStyles/ForgeTheme, respectively; same inventory. No second palette or renderer. |
+| Copy extraction/write fails | Selected Copy command returns failure feedback without Stop; range remains, explicit retry. Prove zero cancellation and at most one write. |
+| Paste read fails or empty | Existing nullable Capture and native no-op; failed versus empty feedback distinct; explicit retry. Prove no edit/undo and retained range. |
+| Source/content changes with menu open | Fixed public guard disables stale target; user dismisses/reopens. Prove zero stale clipboard/edit and no false transport notification. |
+| Snippet retires/hides | Public pressed reset plus bounded source/feedback lifetime; no old activation, fresh input can retry. Prove detach/hide→reattach/show→old release zero writes. |
+| Owned callback throws | Existing UI-loop failure; no retry/Stop fallthrough. Relaunch after diagnosis. |
 
-| Need | Existing thing checked / decision |
+Public extensions are smaller for this foundation: existing range/edit/menu mechanics remain and
+the upstream package family is unchanged. A fork may simplify continuous rich geometry access, where the
+native hit mapping is private; it also requires compatible UI/Markdown/TextMate releases, AOT and
+upgrade maintenance. Do not infer that small native patches make the whole fork cheaper. No fork
+is authorized or created; the rich spoke records the bounded evaluation and unresolved proof.
+
+### Separate extension package — operator-requested boundary
+
+The operator asked: “Can we mark these as extensions in its own naespace so it's neatly separately
+packaged ?” This requires an independently packable assembly, not just a folder/namespace.
+
+```mermaid
+flowchart LR
+    CLI[forge-mcl CLI: target, Stop, theme, snippets] --> Extension[Forge terminal extensions]
+    Extension --> UI[Unchanged XenoAtom UI 3.10.0]
+    Extension --> Terminal[Unchanged Terminal 2.2.0]
+    CLI --> Markdown[Existing Markdown and TextMate 3.10.0]
+```
+
+| Boundary | Concrete candidate |
 |---|---|
-| Native extraction/result | `ISelectionOwner`, editor commands and clipboard bool reused; the sealed app's early dispatch requires the proposed Copy helper/observer. |
-| Origin continuity | Existing native range/document/interaction versions and Popup.Close reused privately; no public snapshots or generic lifetime framework. |
-| Paste outcomes/edit | Existing Capture, nullable Text, handler, PasteText and undo reused; private native continuation guard contains callback changes. |
-| Snippet eligibility/reset | Private native scope and app pointer tracking are the actual owners; proposed public admission and fixed native cleanup replace inaccessible Forge checks. |
-| State/layout | Public reactive ButtonStyle slots and native measure/arrange reused; zero padding below three cells, no custom rendering. |
-| Duplicate search | Complete R3 ownership review searched the eight README-listed Forge repos and found no equivalent text-interaction owner. [Review record](phase-70.1-text-interaction-foundation_completed.md#reused-role-reviews-and-r4-correction). |
+| Repository/project | `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions`, in the existing solution. No new repository, upstream fork, executable or host. |
+| Assembly, package, namespace | Assembly `ForgeMission.Terminal.Extensions`; package and namespace `Katasec.Forge.Terminal.Extensions`. Target net10.0, IsAotCompatible and IsPackable. No product files have been created. |
+| Why / Owns | Reusable selection-aware clipboard commands and fixed native text menus over published XenoAtom controls. The CLI executable owns chat presentation, Core explicitly excludes command-line UX, and no atlas component owns reusable terminal extensions. The requested packaging splits this bounded reusable responsibility from the executable. |
+| Does not own | Stop, conversations, Forge view identity, themes/status strings, Markdown pipelines/renderers, Kitty images, snippet headers, OS clipboard transport or native editing/range geometry. It references no CLI/client/domain/Markdown/TextMate project. |
+| API | The complete proposed surface below. Fixed conventions only; no options bag, interface hierarchy, service registration or configurable command registry. Result callbacks report transport facts only and run synchronously on the UI thread. |
+| Current consumer | The CLI references the same-repo project, consistent with its existing Core/Serve/etc references; external future consumers can use the independently built package. No sibling repository source reference or parallel legacy path. |
+| Publication/version | Candidate first version 0.1.0, exact upstream UI 3.10.0 and Terminal 2.2.0 dependencies, same private Katasec GitHub Packages route as existing forge-mcl libraries. Follow the merged-ref/provenance/immutable-version and visibility checks in `publish-core-package.yml`; publish only after reviewed implementation and actual checks. No guessed upstream release, ACL changes or publication during design. |
+| Admission within approved implementation | After plan approval, establish the new README's Why/Owns/Does not own/Change admission/API and dependency diagram before writing component code; update forge-mcl repo/CLI README and solution inventory. Add one external-package inventory row to `/Users/ameerdeen/progs/forge-desktop/src/README.md`, linking the owning README; Desktop does not become a consumer. These are planned product documentation changes, not already written. |
 
-| Expected failure | Owner / containment | Visible result / recovery | Required observation |
-|---|---|---|---|
-| Selection extraction or clipboard write fails | Native Copy consumes selected gesture; Forge feedback observes result. | Copy failed; range/turn retained; user retries explicit Copy. | Failure result, zero Stop calls, unchanged range. |
-| Clipboard read fails or yields empty | Native Capture distinguishes null/empty; editor owns no-op. | Paste failed for null, no failure for empty; user retries explicit Paste. | No edit/undo entry; original range/caret retained. |
-| Callback changes origin or nested Paste recurs | Native menu/Paste invalidation, no stale operation/restoration. | Dismiss/discard; callback effects stand; user reopens/retries from current state. | Zero stale clipboard/insertion calls; recursion adds no second capture. |
-| Detached or modal-blocked snippet activates | Native admission/cleanup; Forge pending-feedback invalidation. | No stale write or resurrected feedback; fresh eligible activation can retry. | Old release has zero writes; fresh reattached press writes once. |
-| Native transport returns false for snippet | Existing transport bool and Forge feedback. | Copy failed; payload/source retained; explicit retry only. | False never shows Copied. |
-| Application result observer/handler throws | Existing UI-loop callback failure path; no retry/fallthrough. | UI-loop failure outcome; operator relaunches after diagnosis. | Exception reaches that existing failure path, with no Stop fallback or second write. |
+```csharp
+namespace Katasec.Forge.Terminal.Extensions;
 
-Designer principles that changed R4–R6: **3 — No NIH** uses reactive native style slots, native bold labels and native visibility/focus repair;
-**4 — One owner** moves input admission and pointer cleanup to native UI;
-**10 — Built-in safety** cancels detached input and stale feedback structurally;
-**11 — Verified means done** adds exact width/focus observations without claiming native PASS.
-Rejected: Forge modal traversal/internal hover assignment (wrong owner/private access),
-custom Button rendering (existing slots suffice), permanent retirement (breaks recycling),
-and one-cell padding at widths 1–2 (hides the glyph). Both complete R6 reviews passed;
-Type-1 route/public package remain the open questions below.
+public enum ClipboardResult
+{
+    NoSelection, Copied, CopyFailed, PasteReadSucceeded, PasteReadFailed
+}
 
-### Recommended upstream route — operator decision pending
+public static class ClipboardText
+{
+    public static ClipboardResult CopySelection(
+        XenoAtom.Terminal.UI.Input.ISelectionOwner source,
+        XenoAtom.Terminal.TerminalInstance terminal);
+    public static ClipboardResult CopyText(
+        string text, XenoAtom.Terminal.TerminalInstance terminal);
+}
 
-| Fact | Concrete proposal |
+public static class EditorClipboardExtensions
+{
+    public static void ConfigureClipboard(this XenoAtom.Terminal.UI.Controls.TextEditorBase editor,
+        Action<ClipboardResult> report);
+}
+
+public static class ParagraphClipboardExtensions
+{
+    public static void ConfigureClipboard(this XenoAtom.Terminal.UI.Controls.Paragraph paragraph,
+        Action<ClipboardResult> report);
+}
+```
+
+`CopySelection` returns NoSelection only when HasSelection is false; failed/empty extraction is
+CopyFailed with zero writes. Otherwise it calls the same `CopyText` write once. `CopyText` writes
+its exact string, including a valid empty whole-code payload, and returns Copied/CopyFailed from
+the bool. Null arguments are programmer errors. Neither method clears ranges, invokes Stop,
+logs payloads or catches the existing UI-loop failure.
+
+Both fixed ConfigureClipboard extensions set IsSelectable=false and install the source's native
+menu factory; editor configuration additionally replaces only Copy and installs the feedback-only
+Paste handler. Configuration is once per source; Paragraph factory reassignment is harmless and
+does not accumulate event handlers. Menu guard checks original app/parent attachment, effective
+visible/enabled ancestor path and the captured document/version or Text; no CLI view callback.
+Each fixed command validates again on execution. The editor menu retains native Paste Execute.
+PasteReadSucceeded clears host feedback for empty/nonempty reads, PasteReadFailed reports null;
+the extension returns null to the native handler and never edits. Bracketed Paste stays native.
+
+Callbacks do not edit, close menus or change attachment. The CLI's Copy callback claims the
+explicit original source and maps facts to the named semantic tokens/status text; it never clears
+that source's own range. Snippet activation and root Copy use the
+same ClipboardText routine; no second bool/result implementation is kept in the CLI. The Markdown
+realization wrapper remains a CLI renderer adaptation; it configures native Paragraphs through
+the extension, without making Markdown a dependency of this small clipboard package.
+
+The command decorator preserves Id, LabelMarkup, Name, DescriptionMarkup, SearchText, Gesture,
+Sequence, Importance, Presentation, CanExecute, IsVisible, ConsumesGestureWhenUnavailable and
+RouteGesture. It changes only Execute to claim then delegate. The existing source-level routed
+handlers cover raw navigation, typing and bracketed Paste; no bindable assumption is made about
+HasSelection/CaretIndex, and no asynchronous update callback is used to repair ownership.
+
+This package boundary is a new design candidate; the prior monolithic probe does not prove its
+packed dependencies, API consumer compilation, callbacks or AOT. Actual package and product
+observations follow approved implementation and are required before merge/publication. Exploratory
+public-API feasibility probes precede plan approval; they grant no authority to implement product
+code or write upstream.
+
+Designer principles changing this revision: **3 No NIH** retains native command-backed menus and
+invoke-before-close; **4 One owner** keeps only Forge target/feedback policy local; **7 Minimum
+needed** drops arbitrary native callback hardening; **9 Prove library choices** uses a public-only
+probe; **11 Verified means done** distinguishes controlled feasibility from integration/acceptance.
+Rejected: native API/fork as the default foundation route, nonfocus custom menu, popup ancestry
+lookup/deferred opening, clipboard backend wrapper, manual range restoration and internal state
+access. Each adds work the public route avoids.
+
+### Review and proof gates
+
+| Gate | Current state / required result |
 |---|---|
-| Owner/source | `XenoAtom/XenoAtom.Terminal.UI`: Copy helper/result observer, scoped consumption/precedence, fixed close-before-invoke text-menu preservation, native Paste continuation guard, `CanReceiveInput` admission and Button/app detach/visibility cleanup. Current source pin `6f4e0cde3890d8ce2510ac0451b861863e4aeeaa`. |
-| Packages | Current UI/Markdown/CodeEditor.TextMateSharp family 3.10.0; consume an actual compatible public release containing the accepted contract. No guessed version or implied publication. |
-| Transport | XenoAtom.Terminal 2.2.0, pin `5517cb3d8cdf0532ecc89260067064f98cde6137`; no change. |
-| Consumer | forge-mcl CLI/test package pins updated together; no sibling project references, vendoring, fallback dispatch or dual-version path. |
-| Authority / delivery | Operator must choose the Type-1 route; upstream agreement and an actual public package are required before Forge implementation handoff. Forge publication permission grants no upstream writes/messages or maintained fork. |
-| Reversal | Reject/revise this candidate without product changes; if selected, consume the reviewed public package once. No temporary bridge is introduced; unrelated existing XenoCells exception is neither expanded nor removed. |
-
-Security: local presentation only, hosted tiers/stores/service identities/credentials N/A; reads
-only on explicit Paste; no payload logging or automatic submission. Native library owns mechanics
-and transport, Forge owns local policy/feedback. Manual-verification Type-2 exception remains.
-
-### Open gates and verification
-
-| Gate | Required next result |
-|---|---|
-| Independent review | Closed for R6 — complete simplicity (all 11 checks) and ownership (all 6 checks) PASS, sequentially through the assigned roles; no inherited verdict. [Evidence](phase-70.1-text-interaction-foundation_completed.md#r6-complete-review-and-supervisor-assessment). |
-| Visual binding | Both current synthetic galleries rendered/inspected by supervisor and each reviewer; accepted as the R6 proposal reference. Native runtime states and all language/viewport cases remain product-verification requirements. |
-| Type-1 delivery | Operator chooses the concrete native owner/package route after reviewed contract; no upstream authority or release is assumed. |
-| Package proof | Actual public API/native menu/Paste route and public-only behaviour/AOT probes with zero warnings before Forge plan approval. |
-| Product acceptance | After approved implementation/reviews/checks and normal merge/install, operator performs installed defaults/Ghostty/Retina checks above. No live PASS yet. |
-
-No implementation plan is approved. Continuous rich selection remains in the dependent spoke;
-neither this native proposal nor snippet controls close that requirement.
+| Complete R9 reviews | PASS — all 11 simplicity and six ownership checks, all behavior placements and current references, sequential same-role reviews; [evidence](phase-70.1-text-interaction-foundation_completed.md#public-extension-evaluation-and-complete-r7r9-reviews). No inherited PASS. |
+| Library feasibility | Public-only controlled probe recorded; real Forge registration/routing/menu/snippet integration and full platform AOT remain required. |
+| Before plan approval | Bounded exploratory public-only probes must prove Markdown wrapper first-realization/recycle/stream registration before input, multi-source raw/command claim and Copy routing, and snippet detach/hide reset. Use a scratch native-control harness, not unauthorized Forge implementation. No private helper can fill a gap. |
+| Approved implementation sequence | One bounded same-repo extension-plus-CLI plan includes component README/atlas admission. Review and explicitly approve it before any product writes. After implementation, prove actual packing, isolated API-consumer compilation, resolved dependencies/provenance, callback/fault and CLI integration, and canonical warning-free Native AOT before merge/publication. Operator installed acceptance follows normal delivery. No check is waived or required before its artifact can legitimately exist. |
+| Product implementation | Not authorized by this design-only request; no implementer plan or code approval. |
+| Rich selection | Geometry/semantics/selected-heading proof and route decision still open in the dependent spoke. Do not substitute single-Paragraph or snippet-only scope. |
+| Acceptance | Operator-only installed default Ghostty/laptop Retina after code, both themes/windows; still pending. |
 
 ## Files and tests to inspect
 
@@ -414,6 +361,7 @@ All product paths below are relative to `/Users/ameerdeen/progs/forge-mcl`.
 | Snippets and source text | `src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs`, `ForgeMarkdown.cs`, `Transcript.cs` |
 | Theme/style ownership | `src/ForgeMission.Cli/Tui/ForgeTheme.cs`, `ForgeStyles.cs`, `Graphics/CodeColours.cs` |
 | Existing verification | `tests/ForgeMission.Mcl.Tests/Cli/ChatScreenTileTests.cs`, `ChatScreenMotionTests.cs`, `FileEditorTests.cs`, `ChatTranscriptTests.cs`, `StartPageTests.cs` |
+| Proposed extension component | `src/ForgeMission.Terminal.Extensions/README.md` and project/package, not yet created; owning repo/CLI inventories and Desktop atlas admission must precede product merge. |
 
 The nearest component README is `src/ForgeMission.Cli/README.md`; there is no Tui README.
 Reconfirm dependency versions and owning repository instructions before design.
@@ -446,8 +394,8 @@ Reconfirm dependency versions and owning repository instructions before design.
 |---|---|---|
 | 1. Source/library/CodeAlta discovery | Done — [evidence](phase-70.1-text-interaction-foundation_completed.md#discovery-results). | Pinned source and controlled observations distinguish native capability, Forge wiring defects, and library gaps. |
 | 2. Installed Retina reproduction | Agent path blocked; prerequisite superseded by the parent exception. Manual observations move to Task 6. | No live PASS claimed; recorded controlled baseline is available to the supervisor applying the designer persona. Physical delivery, focus/highlight and clipboard round-trip remain manual acceptance cases. |
-| 3. Product design and review | Both complete R6 reviews PASS; Type-1 delivery route remains open. No design approval. | Supervisor applies designer persona; operator selects native delivery route before supervisor locks the design. Actual package and public-only/AOT proof precede Forge plan approval. |
-| 4. Implementation plan and review | Pending after design approval. | Assigned implementer plans; assigned simplicity and ownership agents review sequentially; supervisor explicitly approves bounded changes, meaningful interaction tests and AOT checks. |
+| 3. Product design and review | Both complete R9 reviews PASS; bounded feasibility pending. No design approval. | Supervisor applies designer persona; full public-extension/package reviews and exploratory native feasibility proofs precede design/plan approval. Actual packed-consumer and canonical AOT checks follow approved implementation, before merge. |
+| 4. Implementation plan and review | Pending after design approval. | Assigned implementer plans one bounded extension-plus-CLI change, including component admission; assigned reviewers review sequentially; supervisor explicitly approves product writes and required package/consumer, integration/failure and AOT observations before merge/publication. |
 | 5. Implementation and review | Pending after plan approval. | Same implementer after explicit plan approval; positive/negative interaction evidence including failed clipboard writes; independent sequential simplicity/style and ownership reviews with every checklist; no product task marked complete by implementer. |
 | 6. Merge, install, accept, close | Pending after checks pass; operator performs live acceptance. | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |
 
