@@ -66,21 +66,25 @@ use, and revision rounds from the agents' own session logs. A revision is a new 
 next round tag, carrying the previous output and the correction inline; never continue a finished
 subagent for a new stage or round, or its time is counted in the wrong stage.
 
-| Stage | Tag |
+A tag is `[<stage>]`, `[<stage>:<role>]`, `[<stage>:r<N>]` or `[<stage>:<role>:r<N>]`. The first
+round has no round part; round 2 is `r2`.
+
+| Stage | Tags |
 |---|---|
 | Investigation | `[investigate:<repo or question>]` |
-| Design | `[design]`, `[design:r2]` for a revision |
-| Design review | `[review-design:simplicity]`, `[review-design:ownership]` |
-| Plan | `[plan]`, `[plan:r2]` for a revision |
-| Plan review | `[review-plan:simplicity]`, `[review-plan:ownership]` |
-| Implement | `[implement]` |
-| Code review | `[review-code:simplicity]`, `[review-code:ownership]`, `[review-code:style]` |
+| Design | `[design]`, `[design:r2]` |
+| Design review | `[review-design:simplicity]`, `[review-design:ownership]`, `[review-design:simplicity:r2]` |
+| Plan | `[plan]`, `[plan:r2]` |
+| Plan review | `[review-plan:simplicity]`, `[review-plan:ownership]`, `[review-plan:ownership:r2]` |
+| Implement | `[implement]`, `[implement:r2]` |
+| Code review | `[review-code:simplicity]`, `[review-code:ownership]`, `[review-code:style]`, `[review-code:style:r2]` |
 
 Example description: `[review-plan:ownership] 64.2 task 3`.
 
 In Codex, the tag goes in `spawn_agent`'s `task_name`, written with letters, digits and
 underscores only: `-` becomes `_`, `:` becomes `__`, and `__` separates the task, so the example becomes
-`review_plan__ownership__64_2_task_3`.
+`review_plan__ownership__64_2_task_3`, and a second round is
+`review_plan__ownership__r2__64_2_task_3`.
 
 ## Required loop
 
@@ -122,11 +126,8 @@ underscores only: `-` becomes `_`, `:` becomes `__`, and `__` separates the task
    item, required negative proof, and default-path observation. For a web-rendered surface it
    inspects the running surface with browser tooling and compares it with the reference itself. An
    implementer never accepts its own work.
-7. **Deliver.** Commit, PR, merge, and end on a clean `main` per the continuity protocol. Timing
-   ends at the merge of the task's last product PR (code, infrastructure or configuration). Then
-   run [task-timing](../../tools/task-timing/README.md) with those product PRs and put its table
-   in the task's completion record, in the spoke documentation PR that closes the task. That
-   documentation PR is not part of the timed span.
+7. **Deliver.** Merge the product PRs (code, infrastructure or configuration), then close the
+   task with the steps in [Closure](#closure-after-the-last-product-merge).
 
 ## Design assignment
 
@@ -280,7 +281,8 @@ Open questions / follow-ups:
 
 ## Supervisor acceptance checklist
 
-Before accepting, the supervisor records a named observation for each applicable item:
+Before accepting, and before any product PR merges, the supervisor records a named observation for
+each applicable item:
 
 - every code-review verdict is ✅, or each ⚠️ is fixed or dismissed with a recorded reason;
 - the implementer changed only the approved scope and all component-fit statements remain true;
@@ -294,10 +296,20 @@ Before accepting, the supervisor records a named observation for each applicable
   packaged parity also pass. The surface uses the approved named theme selector and semantic tokens
   only, has light/dark values and required contrast pairs, and contains no component-local visual
   literals; and
-- the diff, documentation, branch, commit, pull request, merge, and clean-main state meet the
-  repository continuity protocol; and
-- the task's completion record in the spoke contains its task-timing table, from the first
-  tagged subagent to the last product PR merge.
+- the diff, documentation, branch, and commits meet the repository continuity protocol.
+
+## Closure after the last product merge
+
+After acceptance and the merge of the task's last product PR:
+
+1. Run [task-timing](../../tools/task-timing/README.md) with every product PR. Timing runs from the
+   first tagged subagent to the last product PR merge; activity after that merge is excluded.
+2. Put its table in the task's completion record, in the spoke documentation PR that closes the
+   task, and merge it. That PR is not part of the timed span.
+3. End every touched repo on a clean, up-to-date `main` with no task worktrees.
+
+A **documentation-only task** has no product PR. Its timing ends at its last tagged subagent: run
+task-timing without `--pr` before opening the task's one PR, and include the table in that PR.
 
 ## Former workflow
 

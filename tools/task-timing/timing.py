@@ -96,15 +96,14 @@ def codex_runs(task):
 
 
 def codex_tag(task_name, wanted):
-    """`review_plan__ownership__64_2_task_3` -> `review-plan:ownership` when the task matches."""
+    """`review_plan__ownership__r2__64_2_task_3` -> `review-plan:ownership:r2` when the task matches."""
     parts = task_name.split("__")
-    if len(parts) not in (2, 3):
+    if not 2 <= len(parts) <= 4:
         return None
     task = parts[-1]
     if task != wanted and not task.startswith(wanted + "_"):
         return None
-    stage = parts[0].replace("_", "-")
-    return f"{stage}:{parts[1]}" if len(parts) == 3 else stage
+    return ":".join([parts[0].replace("_", "-")] + parts[1:-1])
 
 
 def codex_facts(path, meta):
@@ -150,6 +149,8 @@ def pull_request(ref):
 # --- Rendering -----------------------------------------------------------------------------------
 
 def render(task, runs, prs):
+    cutoff = max(pr["merged"] for pr in prs) if prs else None
+    runs, excluded = within(runs, cutoff)
     lines = [f"Task `{task}`", "", "| Stage | Agents | Start | End | Wall | Tokens |", "|---|---|---|---|---|---|"]
     for stage, group in grouped_by_stage(runs):
         start, end = min(r["start"] for r in group), max(r["end"] for r in group)
@@ -158,13 +159,25 @@ def render(task, runs, prs):
     for pr in prs:
         lines.append(f"| PR {pr['ref']} | — | {clock(pr['opened'])} | {clock(pr['merged'])} | {span(pr['opened'], pr['merged'])} | — |")
     first = min(r["start"] for r in runs)
-    last = max([r["end"] for r in runs] + [pr["merged"] for pr in prs])
-    rounds = sum(1 for r in runs if re.search(r":r\d+$", r["stage"]))
+    last = cutoff or max(r["end"] for r in runs)
+    rounds = sum(1 for r in runs if stage_row(r["stage"]) != stage_row(r["stage"]).split(":")[0])
     lines += ["", f"**End to end:** {clock(first)} → {clock(last)} = {span(first, last)}; "
                   f"{sum(r['tokens'] for r in runs):,} subagent tokens; {rounds} revision round(s)."]
     if not prs:
-        lines.append("No merged PR given: the end point is the last subagent run, not a merge.")
+        lines.append("No product PR given: the end point is the last subagent run (documentation-only task).")
+    if excluded:
+        lines.append(f"{excluded} run(s) starting after the last product merge are excluded.")
     return "\n".join(lines)
+
+
+def within(runs, cutoff):
+    """Runs up to the last product merge, with any run still open at that moment cut off there."""
+    if cutoff is None:
+        return runs, 0
+    kept = [{**r, "end": min(r["end"], cutoff)} for r in runs if r["start"] <= cutoff]
+    if not kept:
+        sys.exit("Every tagged run starts after the last product merge.")
+    return kept, len(runs) - len(kept)
 
 
 def grouped_by_stage(runs):
@@ -176,8 +189,10 @@ def grouped_by_stage(runs):
 
 
 def stage_row(tag):
-    stage, _, suffix = tag.partition(":")
-    return tag if re.fullmatch(r"r\d+", suffix) else stage
+    """`review-plan:ownership:r2` -> `review-plan:r2`; `review-plan:ownership` -> `review-plan`."""
+    segments = tag.split(":")
+    revision = segments[-1] if len(segments) > 1 and re.fullmatch(r"r\d+", segments[-1]) else None
+    return f"{segments[0]}:{revision}" if revision else segments[0]
 
 
 def parse_time(value):
