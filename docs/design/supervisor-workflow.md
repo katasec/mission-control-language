@@ -10,9 +10,9 @@
 ```mermaid
 flowchart TD
     S0[0 Scope<br/>supervisor] --> D{1 Design fan-out}
-    D --> DA[Designer A<br/>Claude]
-    D --> DB[Designer B<br/>Codex]
-    D --> DC[Designer C<br/>Grok]
+    D --> DA[Designer A]
+    D --> DB[Designer B]
+    D --> DC[Designer C]
     DA & DB & DC --> R1[Reduce: pick base, graft<br/>lock in spoke]
     R1 --> P[2 Plan<br/>implementer]
     P --> PR{3 Plan review fan-out}
@@ -79,22 +79,10 @@ Example description: `[review-plan:ownership] 64.2 task 3`.
    ownership, contract, failure, visual-reference, or theme-boundary question blocks the next
    stage.
 1. **Design — fan out, then reduce.** The supervisor sends the same design assignment, with the
-   designer persona inline, to three designers at once: one each on Claude, Codex and Grok.
-   Different models fail differently, which is the point of the fan-out. The designer on the
-   supervisor's own model runs as a normal subagent; the other two run through their CLI's
-   non-interactive, read-only mode with the assignment as the prompt:
-
-   | Model | Command |
-   |---|---|
-   | Claude | `claude -p --permission-mode plan "<assignment>"` |
-   | Codex | `codex exec --sandbox read-only "<assignment>"` |
-   | Grok | `grok -p "<assignment>" --permission-mode plan` |
-
-   Launch all three from `~/progs` so every Forge repo is readable (`claude --add-dir` for each
-   repo, `codex -C ~/progs`, `grok --cwd ~/progs`). The assignment names each affected repo by
-   absolute path, from the [README repository list](../../README.md#where-the-code-lives).
-   Launch the CLIs through `pwsh`: provider keys are exported only in the operator's PowerShell
-   profile, so a CLI started from another shell cannot sign in.
+   designer persona inline, to three designers at once. Designers are ordinary subagents of the
+   agent the operator is working in (Claude, Codex, or another); no second CLI or model is
+   involved. The assignment names each affected repo by absolute path, from the
+   [README repository list](../../README.md#where-the-code-lives).
 
    Then:
    - run one [simplicity reviewer](../../personas/simplicity-reviewer.md) over all candidates in
