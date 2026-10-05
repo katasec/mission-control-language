@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): finish reviewed native menu contracts and foundation approval; operator performs final installed verification. |
+| **NEXT STEP** | Resume [TUI text interaction](phases/phase-70-tui-text-interaction.md): retry fresh foundation reviews of the revised candidate and saved references; operator performs final installed verification. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Revised candidate and review corrections recorded; design approval pending, operator acceptance after implementation. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Revised candidate and synthetic references recorded; fresh review launches hit tool limit, approval pending. |
 
 ## Design docs
 

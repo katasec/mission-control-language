@@ -335,6 +335,119 @@ End to end: **48m 52s**, two revision rounds. Times follow the session logs; tok
 tool's last-context-size metric, not account usage. The rejected ownership launch has no run
 and is not counted. No timing row implies design approval, code delivery or live acceptance.
 
+## Ownership review retry and R3 correction
+
+**2026-10-05 — fresh R2 ownership retry completed: REVISE.** The earlier launch failure
+remains a historical tool result; it did not prevent the later successful fresh launch.
+The exposed collaboration/deferred tools have no agent-close operation. Completion was
+observed, but no numerical lifetime/concurrency quota or automatic capacity release was inferred.
+A fresh `design__r3__70_1_foundation` launch then succeeded; no completed agent was reused.
+
+| Ownership check | Verdict / source-backed correction |
+|---|---|
+| Copy dispatch and policy | Placement fits: XenoAtom UI owns native scoped precedence/results; Forge CLI owns Copy versus Stop and local feedback. Proposed API remains absent at the baseline. |
+| Editing and menu lifecycle | Placement fits; REVISE ordering. Proposed close-before-invoke removes own-Paste mutation and origin modal exceptions. Preserve during focus restoration, end preservation, run `Closed`, then validate origin and exact caret/directional range after availability callbacks. Do not resurrect callback changes. |
+| Paste callback boundary | REVISE. Native handler runs before insertion. Forge handler must be feedback-only; design a narrow native pre-insertion validity guard against reentrant source/document/range changes, retaining native insertion/undo. No generic mutation allowlist or second read. |
+| Snippet lifecycle | REVISE. `DocumentFlow` removes/recycles offscreen visuals and visual-backed `FlowDocument` returns the same instance. Permanent retirement on detach would disable valid snippet buttons after scrolling. Detach blocks activation/resets feedback; same immutable-payload visual may reattach for fresh activation. Bound press/release lifetime without a speculative callback framework. |
+| Transport and visuals | Placement fits: XenoAtom Terminal transport, Forge renderer payload/header, ForgeTheme/ForgeStyles tokens. Saved state references and controlled contrast observations remain pending. |
+| Security / delivery | Local presentation only; explicit Paste, no logging/submission/new hosted authority. Upstream public route still requires operator decision and actual compatible package; Forge publication permission does not authorize upstream writes, messaging or forks. |
+
+The supervisor independently reread pinned native `DocumentFlow.RecycleActiveBlock` and
+`AcquireRecycledOrCreate`, `VisualDocumentFlowBlock` identity-based reuse, `Button` synchronous
+key/press/release events, `ContextMenuService.InvokeOrOpen`, `Popup.Close` and
+`TextEditorCore.PasteFromClipboard`; Forge `ChatScreen.CardItem` uses the visual-backed block.
+These observations confirm the lifecycle findings, not the proposed fixes or runtime acceptance.
+
+Primary sources: [DocumentFlow recycling](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/DocumentFlow.cs),
+[FlowDocument visual reuse](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/FlowDocument.cs),
+[Button input](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/Button.cs),
+[native Paste](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorCore.cs),
+[Forge reply composition](https://github.com/katasec/forge-mcl/blob/2022b512dd2bd108626124f22bc1cfe7652648d7/src/ForgeMission.Cli/Tui/ChatScreen.cs#L358).
+
+Design and plan remain unapproved; product code and pins are unchanged. Manual installed
+Ghostty/laptop Retina acceptance stays approved and pending after implementation.
+
+## R3 candidate and reference record
+
+**2026-10-05 — fresh R3 designer completed; both fresh reviewer launches rejected.**
+The [active candidate](phase-70.1-text-interaction-foundation.md#revised-foundation-candidate--not-approved)
+replaces R2 execute-before-close preservation, own-Paste ambiguity and permanent snippet-detach
+retirement. The private state, callback ordering, outcomes and focused probes remain proposed
+native contracts, absent at the pinned package. No supervisor design/plan approval is recorded.
+
+| Change in the candidate | Design result |
+|---|---|
+| Text-origin menu | Close root/submenus, restore eligible focus under preservation, end preservation before `Closed`, run callbacks, validate original exact directional range/interaction/content/attachment/scope/focus, evaluate availability and revalidate after each callback, invoke captured command once. No modal-origin exemption or own-edit allowlist. |
+| Paste continuation | Capture existing native editor state before transport/handler, reject changed origin before insertion, invalidate pending attempt on detach or recursive Paste. Keep existing context/null-versus-empty distinction, one capture and native insertion/undo; Forge handler is feedback-only. |
+| Snippet recycling | Immutable payload per rendered visual; detach resets public `IsPressed`, hover/feedback and pending feedback continuation. The same visual can reattach for fresh activation; an old release cannot activate. No permanent disposal framework or index lookup. |
+| Visual states | Two saved synthetic galleries replace dozens of draft per-state filenames. Before/after normal/narrow code, all button states/combinations, 12-cell icon-only, exact menu geometry/state set, preserved range and prefixed Paste failure. |
+
+### Saved synthetic references and baseline colours
+
+[Light gallery](../images/phase-70.1/foundation-light.svg) and
+[dark gallery](../images/phase-70.1/foundation-dark.svg) use synthetic 10×20-unit cells,
+100×32 and 60×24 local viewports, plus the isolated 12-cell snippet header. The supervisor
+rendered both with the bundled SVG renderer, personally inspected the images, and corrected
+clipped menu borders and spacing before saving the final references. They show proposed owned
+states, not a running native implementation or Retina/default-path acceptance.
+
+[Colour evidence](../evidence/phase-70/foundation-colours.json) records actual current
+ForgeTheme tokens and `CodeColours.Runs` foregrounds for the exact csharp fixture, extracted
+from the unchanged baseline assembly by a disposable JIT probe. The probe exited 0 with no
+warnings after correcting an initially misnamed public Style getter to `TryGetForeground`.
+Reflection was baseline discovery only, never proposed production integration or AOT proof.
+The assembly digest matches the discovery baseline. Relative luminance ratios enumerate
+every new state pair and the fixture's syntax colours against CodeBlockFill/Selection.
+
+| Exact fixture theme | Minimum syntax contrast on CodeBlockFill | Minimum on Selection |
+|---|---|---|
+| Light | 5.76 | 4.89 |
+| Dark | 6.15 | 4.26 (`#569CD6`) |
+
+These are numerical observations without an invented pass threshold. Other language runs,
+native selected-run styling, real terminal glyph/cell geometry, continuous resizing and
+installed Retina appearance remain future product evidence. No OS clipboard, Ghostty,
+hosted chat/account, source/package or ACL operation occurred.
+
+### Fresh reviewer launch limitation
+
+| Attempt / observed state | Result |
+|---|---|
+| `review_design__simplicity__r3__70_1_foundation` | `agent thread limit reached`; no reviewer ran. |
+| `review_design__ownership__r3__70_1_foundation` | `agent thread limit reached`; no reviewer ran. |
+| Actual state inventory before ownership attempt | Root running; four descendants completed: designer R2, ownership R2, simplicity R1, designer R3. Completion is not assumed to release capacity. |
+| Cleanup capability | No agent-close operation exposed by collaboration tools or deferred-tool metadata. Interruption/sidebar archive was not used as a substitute. No numerical quota or lifetime-limit explanation was inferred. |
+
+The next step is **fresh R3 simplicity and ownership launches against the saved candidate and
+references** when supported capacity is available. Do not continue completed agents for this
+new round, manufacture review PASS, substitute supervisor inspection, or start a product plan.
+The operator's Type-1 route choice and actual public package/probes remain subsequent gates;
+manual post-code installed Ghostty/laptop Retina verification stays approved.
+
+### Documentation continuation timing
+
+`python3 tools/task-timing/timing.py '70 1 foundation'` ran without a product PR before
+opening this documentation PR. The retry joins its original revision group; the row's wall
+span includes the long gap between reviewers, not continuous computation.
+
+| Stage | Agents | Start | End | Wall | Tokens |
+|---|---|---|---|---|---|
+| `design` | 1 | 10-05 21:09:44 | 10-05 21:17:12 | 7m 28s | 163,605 |
+| `review-design` | 2 | 10-05 21:33:36 | 10-05 21:39:16 | 5m 39s | 256,017 |
+| `design:r2` | 1 | 10-05 21:40:57 | 10-05 21:51:17 | 10m 19s | 163,985 |
+| `review-design:r2` | 2 | 10-05 21:54:59 | 10-05 23:10:11 | 1h 15m | 288,122 |
+| `design:r3` | 1 | 10-05 23:13:08 | 10-05 23:20:09 | 7m 00s | 119,981 |
+
+End to end: **2h 10m**, three revision rounds; **991,710** is the summed last-context-size
+metric, not account token usage. Rejected R3 launches produced no runs and are not counted.
+Default-path acceptance, product tests and Native AOT are **N/A for this documentation change**.
+
+Documentation verification passed: five Markdown files, all **64 local links/anchors**, the
+whole global hub's top-level-only shape, both SVG XML parses, exact fixture run coverage and
+`git diff --check`. Final light/dark state details were rerendered and inspected after spacing
+correction. The checkpoint skill copies match; no `project_` memory files exist. Forge product
+diff against `origin/main` is empty and its main is 0/0 versus origin/main.
+
 ## Superseded first foundation candidate
 
 **Superseded by the revised foundation candidate, not an approved design.** The original

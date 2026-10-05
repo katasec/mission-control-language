@@ -1,8 +1,8 @@
 # Phase 70 — TUI text interaction
 
-**Status: revised foundation candidate and review corrections recorded; design approval and implementation pending. Not build-ready.**
-**Next:** finish native menu commit/visual contracts, then obtain fresh foundation reviews and
-the native delivery-owner decision through the supervisor workflow. The operator will manually
+**Status: R3 foundation candidate and synthetic references recorded; fresh reviewer launches rejected, design approval pending. Not build-ready.**
+**Next:** retry fresh simplicity/ownership reviews of the foundation candidate and references,
+then obtain the native delivery-owner decision through the supervisor workflow. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -27,7 +27,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Revised candidate/corrections recorded; menu commit, visual binding and fresh ownership review open, manual acceptance pending implementation. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | R3 candidate/references recorded; both fresh reviewer launches rejected by tool limit. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
@@ -54,10 +54,11 @@ to the operator. Scope → design → simplicity/ownership reviews → implement
 simplicity/ownership reviews → supervisor approval → fresh implementer →
 simplicity/ownership/style reviews → merge/publish → default-path acceptance → closure.
 
-This delivery is documentation-only: foundation reviews produced a narrower candidate and
-corrections; fresh ownership launch hit the agent-thread limit. Design approval, plan and code
+This delivery is documentation-only: the fresh R2 ownership retry completed, a fresh R3 designer
+returned corrected contracts, and synthetic references were saved/inspected. Both fresh R3
+reviewer launches returned `agent thread limit reached`; no R3 reviewer ran. Design approval, plan and code
 stages remain pending. Default-path acceptance is N/A for this documentation change. See
-[review evidence](phase-70.1-text-interaction-foundation_completed.md#revised-candidate-review).
+[review evidence](phase-70.1-text-interaction-foundation_completed.md#r3-candidate-and-reference-record).
 
 ## Standing constraints and authorizations
 
