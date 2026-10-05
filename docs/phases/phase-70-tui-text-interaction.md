@@ -1,8 +1,8 @@
 # Phase 70 — TUI text interaction
 
 **Status: discovery recorded; product design and implementation pending. Not build-ready.**
-**Next:** reproduce the reported gestures in the installed TUI on the laptop Retina display,
-then run the foundation design through the supervisor workflow. Computer-use access to Ghostty
+**Next:** obtain permitted live reproduction of the reported gestures in the installed TUI on
+the laptop Retina display, then run the foundation design through the supervisor workflow. Computer-use access to Ghostty
 was denied by the tool; this live verification remains open.
 
 ## Outcome and scope
@@ -32,6 +32,11 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
 CodeAlta findings, controlled results, limitations, and timing. Neither spoke has an approved
 implementation plan. A snippet button alone does not close transcript selection.
+
+Fresh read-only investigators reconfirmed the unchanged source/artifact baseline and narrowed
+the public-API gaps; see [resumption evidence](phase-70.1-text-interaction-foundation_completed.md#resumption-check).
+The foundation's [scope gate](phase-70.1-text-interaction-foundation.md#live-reproduction-scope-gate)
+remains open: no product designer, plan author or implementer has been launched or approved.
 
 ## Ownership and workflow
 
