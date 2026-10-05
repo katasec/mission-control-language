@@ -1,9 +1,9 @@
 # Phase 70 — TUI text interaction
 
 **Status: discovery recorded; product design and implementation pending. Not build-ready.**
-**Next:** obtain permitted live reproduction of the reported gestures in the installed TUI on
-the laptop Retina display, then run the foundation design through the supervisor workflow. Computer-use access to Ghostty
-was denied by the tool; this live verification remains open.
+**Next:** run foundation product design through the supervisor workflow using the recorded
+source/controlled baseline. The operator will manually verify the installed result on laptop
+Retina after implementation; the agent's Ghostty access remains denied.
 
 ## Outcome and scope
 
@@ -26,7 +26,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Source and controlled discovery complete; live reproduction and design gates open. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using public library capabilities. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Source/controlled discovery recorded; design next, manual live acceptance pending implementation. | First: establish common command, selection, clipboard, context-menu and code-copy behaviour using reviewed public capabilities. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Builds on the approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
@@ -35,8 +35,8 @@ implementation plan. A snippet button alone does not close transcript selection.
 
 Fresh read-only investigators reconfirmed the unchanged source/artifact baseline and narrowed
 the public-API gaps; see [resumption evidence](phase-70.1-text-interaction-foundation_completed.md#resumption-check).
-The foundation's [scope gate](phase-70.1-text-interaction-foundation.md#live-reproduction-scope-gate)
-remains open: no product designer, plan author or implementer has been launched or approved.
+The former live-before-design gate is superseded by the [manual verification exception](#manual-verification-exception).
+Product design and plan approval remain required before implementation.
 
 ## Ownership and workflow
 
@@ -47,7 +47,8 @@ This repository owns only mission-control documents. CodeAlta is a read-only ref
 Use [supervisor workflow](../design/supervisor-workflow.md) and inline the full
 [persona](../../personas/README.md) in every applicable assignment. The supervisor handles
 routine investigation, design review, plan approval, implementation review, merging, and
-acceptance without a human relay. Type-1 ownership/public-contract/security decisions still go
+automated verification without a human relay. The operator performs final live acceptance below.
+Type-1 ownership/public-contract/security decisions still go
 to the operator. Scope → design → simplicity/ownership reviews → implementer plan →
 simplicity/ownership reviews → supervisor approval → fresh implementer →
 simplicity/ownership/style reviews → merge/publish → default-path acceptance → closure.
@@ -61,13 +62,36 @@ not implicitly passed. Default-path acceptance is N/A for this documentation cha
 |---|---|
 | Visual review | Laptop Retina display only, including normal and narrower terminal windows. No external-monitor acceptance requirement. |
 | Computer use | Operator explicitly authorized launch and inspection of the TUI. The tool's Ghostty denial is still an access limitation; authorization does not override it. |
+| Manual verification | Operator selected post-code manual checking on 2026-10-05: “once code complete - i can check manually”. This replaces agent-operated live reproduction as a prerequisite; it does not waive final live acceptance. |
 | Publishing | Operator explicitly authorized publishing packages within the defined Forge repositories and updating their ACLs for consuming solutions. Use normal repository routes once the approved task requires it. Nothing was published or changed in ACLs during discovery. |
 | Library extension | Prefer existing public XenoAtom APIs. An upstream change, Forge adapter, or package ownership change needs a concrete reviewed contract before code; permission to publish Forge packages does not grant write access to XenoAtom. |
 | Themes | Existing `ForgeTheme` → `ForgeStyles` is the token owner. Every owned state must work in dark and light and permit future theme instances. |
 
+## Manual verification exception
+
+**Operator-approved, Phase 70 only, Type 2.** The product, default terminal, ownership,
+security and text-interaction requirements do not change.
+
+| Fact | Locked verification route |
+|---|---|
+| Reason | Computer Use still rejects Ghostty “for safety reasons”. System Settings inspection showed Codex Computer Use enabled, but a direct Ghostty access check was denied. No supported access fix was established. |
+| Exact exception | Replace live reproduction before product design with the recorded source/controlled baseline. Replace mandatory supervisor-operated live UI inspection before merge and closure with operator-run installed acceptance after code is ready. This is a scoped exception to the supervisor workflow's live UI readiness check and the applied UI principles' internal-live-PASS prerequisite. No agent live PASS is implied. |
+| Agent responsibility | Resolve product design and public APIs; bind mockups/states and theme tokens; run fresh persona design/plan/code reviews, interaction and failure tests, required suite and Native AOT checks. Controlled visuals/tests are labelled as such. The exception does not resolve library, ownership or design gaps. |
+| Delivery for testing | After approved scope, code reviews and required automated checks pass, merge/publish/install through the normal repository route. Record exact artifact version/commit/digest. Status is **implemented; awaiting manual acceptance**, not complete. |
+| Operator responsibility | Launch the installed default artifact in Ghostty on laptop Retina, both themes and normal/narrower windows; perform the spokes' actual user actions and compare copied text, selection, controls and graphics with their locked expectations/references. No endpoint/client/mission substitutions. |
+| Evidence and closure | Record who performed each check, artifact/defaults/dependency/safe state, action and observed PASS/FAIL. Operator observations or voluntarily supplied captures are attributed to the operator; supervisor assesses coverage and records acceptance. Missing/failing cases keep the task open and feed the normal design/plan/fix workflow. Automated results never become default-path PASS. |
+| Reversal and removal | Revert the Phase 70 exception in this hub/spokes if permitted native-app access returns and the operator chooses agent live verification; otherwise it expires when Phase 70 closes. It grants no exception to other phases. |
+| Restriction preserved | No agent-operated alternate automation, capture, input injection or clipboard access to Ghostty. Human manual operation is the selected verification route. No permission/policy edits or alternative terminal are introduced. |
+
+Baseline physical key delivery and terminal-native versus app selection remain unknown until
+manual observation. Designers must name intended gestures and observable outcomes explicitly;
+they must not describe those unknowns as reproduced. The normal Ghostty default-path facts in
+[Default-Path Acceptance](../design/default-path-acceptance.md) remain binding.
+
 ## Done when
 
-Both spokes meet their own acceptance conditions; the supervisor has personally verified the
-installed, default-path TUI on the laptop Retina display in light and dark; Copy/Paste preserve
+Both spokes meet their own acceptance conditions; the operator has manually verified the
+installed, default-path TUI on the laptop Retina display in light and dark, with evidence
+assessed and recorded by the supervisor; Copy/Paste preserve
 the intended text and never turn a copy attempt into cancellation; rich transcript selection
 works beyond a single paragraph; all changed repositories are merged and clean on `main`.

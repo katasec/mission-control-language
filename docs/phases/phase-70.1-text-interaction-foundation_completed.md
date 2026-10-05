@@ -94,7 +94,9 @@ observations, not passing tests for a fix.
 denial. Installed launch, physical Shift/Cmd/Control delivery, terminal-native selection,
 clipboard contents and Retina appearance remain unverified for this discovery. Source and
 in-memory evidence cannot establish why every reported mouse/keyboard action fails in the
-operator's running window. Continue at the live reproduction task before product handoff.
+operator's running window. The original live-before-design handoff was later superseded by
+the [manual verification exception](phase-70-tui-text-interaction.md#manual-verification-exception);
+none of these missing observations became PASS.
 
 ## Resumption check
 
@@ -122,6 +124,43 @@ performed. The existing denial was respected without retry or alternate access.
 
 These runs overlap; do not add their wall times. Timing uses the log timestamps and the
 tool's last-context-size metric, not account usage. Neither timing row implies live verification.
+
+## Manual verification decision
+
+**2026-10-05 — operator selected post-code manual checking.** A direct Computer Use call
+for `com.mitchellh.ghostty` returned the same safety denial, despite System Settings showing
+Codex Computer Use enabled under Device Control and Data Access. No access workaround or
+permission change followed. The operator then stated “once code complete - i can check manually”.
+
+Two fresh read-only investigators assessed the workflow change and existing test coverage.
+The supervisor checked the existing event harnesses and package metadata independently:
+
+| Evidence | Coverage / limit |
+|---|---|
+| forge-mcl `FileEditorTests.cs` `RunKeys` and `StartPageTests.cs` `Run`/`Click` | Real `TerminalApp` uses `VirtualTerminalBackend`, programmatic focus and pushed key/text/mouse events. Supports controlled routing/menu/editor tests; no physical key or OS clipboard proof. |
+| Terminal 2.2.0 package XML `ITerminalBackend.TrySetClipboardText` / `TryGetClipboardText` | Public injection boundary for deterministic clipboard results. Virtual backend methods are non-virtual; no assumed subclass override or new OS backend. Production adaptation still needs product design. |
+| Existing tile/transcript/motion/colour/quit tests | Cover theme/layout structure, code colours, streamed replacement, scrolling and lifecycle regression at controlled layers. New selection/menu/snippet behaviour still needs tests. |
+| Manual route | Operator owns real installed Ghostty/Retina/clipboard/physical gestures; agent owns design/reviews/tests/AOT and evidence assessment. Default artifact, project, saved login and hosted route remain unchanged. No live acceptance has occurred. |
+
+The [hub exception](phase-70-tui-text-interaction.md#manual-verification-exception) is the
+current rule. Earlier requirements for supervisor-personal live reproduction/PASS are
+superseded for Phase 70 only; this changes verification ownership and ordering, not product
+behaviour or the evidence needed to close the phase.
+
+Documentation verification passed: five Markdown files, all 50 local links/anchors, global
+hub shape, all active spokes' manual-acceptance ownership, and `git diff --check`.
+Product tests/AOT/default-path acceptance are N/A for this policy documentation change;
+no product code changed. No project-status memory was created.
+
+`task-timing` ran for both completed investigation questions, without a product PR:
+
+| Question | Stage | Agents | Start | End | Wall | Tokens |
+|---|---|---|---|---|---|---|
+| `70 verification alternatives` | `investigate` | 1 | 10-05 21:04:59 | 10-05 21:06:25 | 1m 25s | 71,153 |
+| `70 verification coverage` | `investigate` | 1 | 10-05 21:05:23 | 10-05 21:07:57 | 2m 33s | 93,759 |
+
+Runs overlap; timestamps and last-context-size tokens are the timing tool's metrics. The
+separately tagged foundation product designer is outside this policy checkpoint's timing.
 
 ## Documentation delivery and timing
 
