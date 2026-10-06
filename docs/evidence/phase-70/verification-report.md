@@ -271,3 +271,15 @@ At operator request, the event table was exported outside the repository to
 `/Users/ameerdeen/tmp/phase70-event-timing.md`, with independently checked elapsed durations,
 unknown timing marked and wall-clock totals58m56s before coding /1h07m37s through implementation
 handoff. The export is a convenience copy, not a second evidence archive or product file.
+
+## Future assessment — development checks and release compilation
+
+Operator asked2026-10-06 whether development can use managed tests and reserve AOT for the
+finished published artifact. Current patch already used managed local build/tests before
+canonical AOT; no AOT compilation was required for each local iteration. Current delivery
+still compiles Native AOT twice: pre-merge canonical verification, then the merged-main CLI
+release workflow. Assess whether one verified production AOT artifact can be promoted to
+release without a second compilation. Preserve exact release version/source identity, all
+supported platforms/payload files, actual zero-warning output and existing acceptance gates.
+No workflow or gate change is approved or implemented by this note; current delivery continues
+through its locked route. Use measured build durations from this report in that assessment.
