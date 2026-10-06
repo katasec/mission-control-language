@@ -2191,11 +2191,143 @@ The single Desktop atlas row is commit `b302105b8299d8d49c287871153702e54f9101b7
 
 | Stage / role / round | Start UTC | End UTC | Wall | State |
 |---|---|---|---|---|
-| `[review-code:simplicity:r2] foundation` (includes style) | 2026-10-06T02:38:01.596Z | Pending | Pending | Full current committed artifact, both full personas inline; running |
-| `[review-code:ownership:r2] foundation` | Pending | Pending | Pending | Sequential after the first reviewer finishes |
+| `[review-code:simplicity:r2] foundation` (includes style) | 2026-10-06T02:38:01.596Z | 2026-10-06T02:44:26.190Z | 6m25s | REVISE; both full checklists |
+| `[review-code:ownership:r2] foundation` | 2026-10-06T02:46:03.655Z | 2026-10-06T02:54:10.632Z | 8m07s | REVISE; owner placement PASS; geometry/CI fail |
 
 No current code approval, merge, publication, installed artifact or manual acceptance is inferred from these boundaries.
 
 Root fetched PR62 merge candidate `db4bbadd8668ba34fa7767b8c8cba77d0f8a6606` and independently compared its tree to product HEAD: both are `0ca19d3923b96f25d06b0324149b34ba3d2115be`. This proves the current merge-candidate tree relation; CI artifact `source.txt` and actual build outcomes remain to be checked after the run.
 
 Documentation-only correction-evidence snapshot: seven Markdown files and 280 local links/anchors PASS; Markdown/JSON whitespace PASS; raw logs retain their original whitespace and hashes. Product tests/AOT/default-path acceptance are N/A for this document change. Product gates remain open above.
+
+### Full simplicity and code-style R2 verdict
+
+**REVISE.** The icon button violates the binding geometry. Canonical zero-warning CI remains open.
+
+**Simplicity**
+
+| Check | Verdict |
+|---|---|
+| New apps or libraries | ✅ Operator-requested package; unchanged native dependencies. [Project:25](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj) |
+| Reuse | ✅ Native selection, commands, menus, clipboard capture and editing retained. Paste observer returns to native handling. [Editor extensions:24](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs) |
+| Multiple code paths | ⚠️ Icon widths grow through 4–14 cells; the reference requires one three-cell icon button. Actual logs show width12 at x0, rather than width3 at x9. [Control:66](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs), [contract:391](/Users/ameerdeen/progs/mission-control-language/docs/phases/phase-70.1-text-interaction-foundation.md) |
+| Legacy paths | ✅ One public extension route; no compatibility fallback or fork. [Package README:38](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/README.md) |
+| Knobs | ✅ Fixed commands, menu contents and layout conventions. [Menus:26](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardMenus.cs) |
+| Speculative abstractions | ✅ One CLI lifetime wrapper serves direct and Markdown Paragraphs; package callbacks report clipboard facts. [Wrapper:20](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) |
+| Library choice | ✅ Exact native pins and actual isolated consumer evidence; canonical AOT proof remains pending. [Project:25](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj) |
+| Copy-paste | ✅ Duplicate inner wrapper removed; shared policy owns source claims and retirement. [Policy:50](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs) |
+| Redundant definitions | ✅ Geometry and semantic styles have named owners; native rendering retained. [Theme:18](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeTheme.cs) |
+| Size versus requirement | ✅ Full 34-file, 2595-insertion diff covers package, CLI integration, verification and delivery; Desktop changes one atlas row. |
+| Test volume | ⚠️ Width assertions reproduce the incorrect clamp instead of the binding geometry. Other tests cover actual root extraction failure/Stop, command metadata, menus, editing and lifetimes. [Width tests:122](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs), [root failure:62](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs) |
+
+Correction: use `CodeCopyPaddedWidth` for icon widths 3–14, retain available width at 0–2 and full width15 thereafter; replace both clamp-based assertions with explicit expected bounds and alignment.
+
+**Code style**
+
+| Check | Verdict |
+|---|---|
+| Progressive disclosure / outline first | ✅ Package files state their small purpose; root fixtures now expose scenario intent. [Root fixture:634](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs) |
+| Small functions | ✅ Product steps remain compact; longer native test sequences retain coherent observation flows. [Copy:95](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) |
+| Top-down order | ✅ Entry points precede private helpers and label logic. [Control:118](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) |
+| Explicit errors | ✅ Failed extraction performs no write, selected failure consumes Copy, transport failures report truthfully, exceptions propagate. [Clipboard:14](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs), [root policy:67](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs) |
+| Shallow nesting | ✅ Early returns and bounded native lifecycle steps. [Wrapper:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) |
+| Separate side effects | ✅ Clipboard transport isolated; CI verification and publication have separate authority. [Clipboard:22](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs), [workflow:78](/Users/ameerdeen/progs/forge-mcl/.github/workflows/publish-terminal-extensions-package.yml) |
+| Zero warnings | ⚠️ Build has zero warnings; local native publish contains six linker warnings. Current canonical CI output remains unavailable. [Publish log:21](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r3-review/native-publish.log) |
+| Extract for a real reason | ✅ Shared wrapper and fixture represent real lifetime and test boundaries; no score-driven framework. [Wrapper:20](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) |
+| Complexity | ⚠️ Classic McCabe, counting ternaries/short-circuit decisions and lambdas separately: product `Copy`9; native-menu Paste callback14. Its repeated mutation condition can be stated once. [Paste test:107](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs) |
+
+Correction: name the Paste test’s insertion/no-op condition once; retain the warning failure and obtain actual warning-free canonical output before merge.
+
+Both complete galleries were freshly inspected under Desktop Interaction Principles, UI Design System and TUI graphics. Theme, syntax, selection and native combined states match apart from narrow icon geometry. Security Architecture’s hosted tier/store/identity questions are N/A; Engineering Philosophy and Default-Path Acceptance remain applicable. Controlled tests do not close publication, installed Ghostty/Retina acceptance or rich selection in70.2.
+
+## Canonical CI R2 — actual failure
+
+[Run37404929327](https://github.com/katasec/forge-mcl/actions/runs/37404929327), job112080256794, checked out merge candidate `db4bbadd8668ba34fa7767b8c8cba77d0f8a6606`. Root read the downloaded `source.txt`; its tree equals the frozen reviewed product tree `0ca19d3923b96f25d06b0324149b34ba3d2115be`. Verification ran 2026-10-06 02:36:45–02:42:12 UTC; run completed02:42:14. Full suite: **856 passed,16 failed,10 existing prerequisite skips,882 total,4m45s**. Package checks and Native AOT publication were **not reached**. This run provides no native zero-warning result. Exact downloaded checks/source and full workflow log are retained byte-for-byte with [hash manifest](../evidence/phase-70/foundation-ci-r2/manifest.json).
+
+| Failure group | Actual observation |
+|---|---|
+| Actual ChatTui Copy routing,4 cases | Expected write1; actual0 |
+| Actual keyboard Paste/Undo/Cut,2 cases | Expected replacement; unchanged alpha beta |
+| Existing long user-message ring,1 case | Native Kitty placeholder cells use slots3/4, exceeding asserted0–2 |
+| Actual native right-click close milestone,5 cases | Initial expected range absent |
+| Stale menu availability/execution,4 cases | Initial Copy availability false before mutation |
+
+The ten skips retain existing prerequisite tags; no test was newly skipped. A fixture input/readiness timing explanation is an unproven hypothesis. The ring/Kitty failure is a distinct geometry observation. Diagnose actual causes before correction; no increased arbitrary sleeps, weakened assertions, new skips, changed native defaults or warning suppression are approved. Full ownership R2 runs against the unchanged candidate before one combined correction.
+
+Documentation evidence snapshot [PR347](https://github.com/katasec/mission-control-language/pull/347) merged at2026-10-06 02:43:23 UTC as `bbe3313d596beba61abef05cf033a503a008aa5f`; MCL returned to clean main with0 uncommitted/0 unpushed. That snapshot preceded the failure and R2 verdict above. This update is documentation-only: product tests/AOT/default-path acceptance N/A; product failures remain open.
+
+### Full ownership R2 verdict
+
+**REVISE — component placement PASS; current artifact fails the visual contract and canonical verification.**
+
+Reviewed forge-mcl `9c06e572` / tree `0ca19d39` and Desktop `b302105b` / tree `02f2f57c`. The CI merge candidate `db4bbadd` has the same forge-mcl tree.
+
+Owners were derived first from the Desktop atlas, repository/component READMEs and actual native contracts. `ForgeMission.Cli` owns presentation policy; Core excludes command-line UX. The admitted extension component owns reusable truthful clipboard operations and fixed menus. Native UI retains editing/input/rendering; native Terminal retains transport.
+
+| Behaviour | Derived owner | Actual placement | Verdict |
+|---|---|---|---|
+| Keyboard/mouse ranges, navigation and selection rendering | Native UI | Unchanged PromptEditor, CodeEditor and Paragraph | PASS |
+| Clipboard transport and backend | Native Terminal | [ClipboardText.cs:22](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) delegates the write | PASS |
+| Extract selection once and report truthful Copy result | Terminal Extensions | [ClipboardText.cs:9](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) | PASS |
+| Copy exact whole text, including valid empty payload | Terminal Extensions | [ClipboardText.cs:18](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) | PASS |
+| Replace editor Copy without changing editing | Terminal Extensions | [EditorClipboardExtensions.cs:15](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs) | PASS |
+| Fixed editor Copy/Paste and Paragraph Copy menus | Terminal Extensions | [EditorClipboardExtensions.cs:32](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs), [ParagraphClipboardExtensions.cs:12](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ParagraphClipboardExtensions.cs) | PASS |
+| Refuse stale menu availability and execution | Terminal Extensions | [ClipboardMenus.cs:10](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardMenus.cs): original app/parent, effective eligibility and source-content checks | PASS |
+| Menu invocation, popup closure and focus restoration | Native UI | Explicit original CommandTarget; unchanged native invoke-before-close | PASS |
+| Paste capture, insertion, replacement and Undo | Native UI | Retained native Paste delegate; extension handler returns null | PASS |
+| Observe failed versus successful-empty Paste | Terminal Extensions | [EditorClipboardExtensions.cs:24](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs) reports captured facts without rereading/editing | PASS |
+| Choose current text source and clear other owned ranges | CLI | [TextInteraction.cs:19](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs), [TextInteraction.cs:77](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs) | PASS |
+| Selected Copy consumes success/extraction/write failure; otherwise Stop | CLI | [TextInteraction.cs:67](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs), [ChatTui.cs:87](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatTui.cs) | PASS placement; CI proof fails |
+| Preserve `/edit` isolation | CLI | Shared policy in FileEditor; existing screen command boundaries retained | PASS placement; CI proof fails |
+| Claim editor input without replacing native editing | CLI | [TextInteraction.cs:31](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs): source Bubble observers | PASS |
+| Preserve command metadata and invoke original delegate once | CLI | [TextInteraction.cs:125](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs) preserves every public Command field | PASS |
+| Register/reconcile direct and realized Paragraph lifetimes | CLI | [ParagraphSelection.cs:13](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs), [ParagraphSelection.cs:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) | PASS |
+| Retire old sources before changed Markdown setters | CLI | [ChatScreen.cs:355](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs) calls the single wrapper retirement boundary | PASS |
+| Disable selection on explicitly owned chrome | CLI | ChatScreen/FileEditor/StartPage constructors and scoped wrapper realization | PASS |
+| Preserve complete immutable snippet payload and native syntax rendering | CLI | [ForgeCodeBlockRenderer.cs:22](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs): complete context.Code passed separately from display trimming | PASS |
+| Compose native snippet Button/header/tooltip | CLI | [CodeCopyControl.cs:16](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | PASS |
+| Retire/resume snippet activation and invalidate obsolete feedback | CLI | [ParagraphSelection.cs:20](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs), [CodeCopyControl.cs:69](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | PASS |
+| Native click admission, focus and layout | Native UI | Native Click delivery and delegated Measure/Arrange; no private scope/capture access | PASS |
+| Responsive icon/full-label geometry | CLI | [CodeCopyControl.cs:61](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | **PASS owner; REVISE geometry** |
+| Reactive feedback, status prefixes and theme states | CLI | [TextInteraction.cs:86](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs), [ForgeStyles.cs:137](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeStyles.cs) | PASS |
+| Kitty framing, native Runs/wrap, motion and heading rendering | CLI/native renderer | Existing graphics/rendering owners retained | PASS placement; CI graphics regression unresolved |
+| Package/API/dependencies and consumer boundary | Terminal Extensions / forge-mcl packaging | Separate packable assembly/namespace/package; exact UI `[3.10.0]` and Terminal `[2.2.0]`; no CLI/domain/Markdown dependency | PASS |
+| PR verification and deliberate publication | forge-mcl packaging | [publish-terminal-extensions-package.yml:15](/Users/ameerdeen/progs/forge-mcl/.github/workflows/publish-terminal-extensions-package.yml), publication depends on verify and excludes PR events | PASS placement; verification FAIL |
+| Native release, complete ZIP installation and provenance | forge-mcl delivery | Existing four-RID release route unchanged; actual delivery remains pending | PASS placement; pending |
+| External component inventory | Desktop atlas | [src/README.md:74](/Users/ameerdeen/progs/forge-desktop/src/README.md), documentation-only row | PASS |
+| Continuous rich/logical-heading selection | Required dependent 70.2 presentation work | Explicitly remains open; foundation does not claim completion | PASS scope |
+
+| Persona check | Verdict | Current evidence |
+|---|---|---|
+| 1. List behaviours independently | PASS | Requirement covers editing, results, routing, lifetime, snippets, visuals and delivery above. |
+| 2. Derive owners before placements | PASS | Atlas, CLI/Core/extension/native READMEs read before current code placements. |
+| 3. Classify existing/new/wrongly-new | PASS | Native and CLI responsibilities remain with existing owners. Separate reusable extension has a bounded Why/Owns/Does-not-own/Change-admission and atlas row; no existing Forge component covers this reusable package responsibility. |
+| 4. Compare full actual placements | PASS | Full 34-file change and Desktop’s single-row diff preserve the derived component boundaries. |
+| 5. Search for duplicate implementations | PASS | Searched exactly forge-mcl, runner, conversations, platform, rooms, client, desktop and infra. No second implementation of the same result/menu job. Code Paragraph now uses configuration only; the outer Markdown wrapper owns its lifetime. |
+| 6. Check each owner has one job | PASS | Extension owns reusable clipboard interaction; CLI owns presentation; native owners retain their respective mechanisms. No two-job owner found. |
+
+Required corrections:
+
+| Finding | Evidence and correction |
+|---|---|
+| **Icon button expands incorrectly at available widths 3–14** | [CodeCopyControl.cs:66](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) uses `Math.Min(width,15)`. Both freshly inspected complete galleries bind a fixed three-cell icon button, including the twelve-cell fixture. Use full width15 at available≥15; otherwise `Math.Min(width, ForgeTheme.CodeCopyPaddedWidth)`. Replace mirrored expectations at [CodeCopyControlTests.cs:122](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs) and [CodeCopyControlTests.cs:440](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs) with reference-derived expectations. |
+| **Canonical integration verification fails** | [Actual CI run](https://github.com/katasec/forge-mcl/actions/runs/37404929327): 856 passed, 16 failed, 10 existing prerequisite skips. Four root Copy cases fail at [TextInteractionTests.cs:43](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs); two keyboard Paste cases fail at line468; one wrapped-user-ring test fails at [ChatScreenTileTests.cs:66](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/ChatScreenTileTests.cs). Five menu cases fail initial selection at [ClipboardMenuTests.cs:39](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs); four stale-menu cases fail initial availability at line147. Investigate actual causes without assuming fixture-only failures or relocating native mechanisms. |
+| **Required native/package CI gates were not reached** | The suite failure stopped the workflow before package verification and native publish/identity. Local native publishing still has six linker warnings. Require passing current-tree canonical tests, package verification and zero-warning AOT before merge/publication. |
+
+Actual pinned source confirms native menu execution precedes closure, Paste captures once and uses native insertion/Undo, Paragraph pointer selection remains usable with app ownership disabled, TextBlock pointer selection is flag-gated, and Button stamps bold into content. The current implementation respects these distinctions.
+
+**Security Architecture:** hosted tiers/stores/service identities are N/A; explicit clipboard actions have no payload telemetry. Read-only PR authority and event-gated publication preserve the named identity boundary.
+
+**Engineering Philosophy:** ownership and failure seams are explicit; no backend, editor, modal framework or speculative extension framework is duplicated. Failed integration evidence blocks completion.
+
+**Desktop Interaction Principles, UI Design System and TUI graphics:** both complete light/dark galleries were freshly rendered and inspected, including normal/narrow frames, combined native states, width0–3/full15, menus and status prefixes. Theme ownership remains ForgeTheme→ForgeStyles. The icon-width mismatch fails the binding comparison. Retained four-corner/resize/syntax evidence is controlled; the CI ring failure remains unresolved.
+
+The 27 retained evidence-file hashes match their manifest. Local 180 focused, 876 full-suite and 26 package passes remain lower-layer observations; base-HEAD package/native metadata is not committed-source provenance. **Default-Path Acceptance remains pending** for published package provenance, normal release/whole-ZIP installation and operator Ghostty/laptop Retina checks. No acceptance or merge approval is granted.
+
+**Move nothing between components. Correct icon geometry within CLI and resolve the failed current-tree verification at its demonstrated owning boundary before delivery.**
+
+## Supervisor combined R2 correction
+
+Both complete current-artifact reviews return REVISE. Component placement passes; move nothing. Binding three-cell icon geometry, the repeated Paste-test insertion condition and actual16 CI failures must be corrected at their demonstrated boundaries. Root authorizes the same implementer under the unchanged complete approved R3 plan at **2026-10-06T02:55:01.905Z**, assignment `[implement:implementer:r4] foundation`. No inherited current-code PASS; after frozen corrected handoff, obtain both fresh full code reviews and actual canonical package/native verification before delivery.
+
+Diagnose CI causes before changing code. Readiness/timing and culture-dependent side-label width are hypotheses only. Retain all assertions and negative paths; no new skips, arbitrary larger sleeps, private native access, CI-only mode, default/library/linker/environment changes or warning suppression. Any necessary deviation from locked design/public ownership/API/reference returns to the supervisor before dependent edits. Full source/evidence hashes and current observation map are required in `artifacts/phase70-foundation/r4-review`; publication/install/manual acceptance remain open.

@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Complete reviews and canonical verification of the foundation change for [TUI text interaction](phases/phase-70-tui-text-interaction.md), then verify its delivery. |
+| **NEXT STEP** | Resolve foundation review findings and CI failures for [TUI text interaction](phases/phase-70-tui-text-interaction.md), then verify its delivery. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Foundation reviews and canonical verification underway; delivery and acceptance remain open. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Foundation review corrections and CI failures open; delivery and acceptance remain open. |
 
 ## Design docs
 
