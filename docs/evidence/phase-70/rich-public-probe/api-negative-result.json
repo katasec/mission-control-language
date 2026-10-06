@@ -1,5 +1,0 @@
-{
-  "command": "dotnet build /tmp/phase70-rich-public-probe/ApiNegative.csproj -warnaserror",
-  "exitCode": 1,
-  "expected": "Compile rejection of inaccessible native point/range seams; no private call executed"
-}

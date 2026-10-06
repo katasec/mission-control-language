@@ -1,9 +1,0 @@
-[
-  "dotnet build /tmp/phase70-narrow-paragraph-probe/Probe.csproj -warnaserror",
-  "dotnet run --project /tmp/phase70-narrow-paragraph-probe/Probe.csproj --no-build",
-  "dotnet list /tmp/phase70-narrow-paragraph-probe/Probe.csproj package --include-transitive",
-  "git -C /Users/ameerdeen/progs/forge-mcl status --porcelain --untracked-files=normal",
-  "git -C /Users/ameerdeen/progs/forge-mcl rev-parse HEAD",
-  "git -C /Users/ameerdeen/progs/forge-desktop status --porcelain --untracked-files=normal",
-  "git -C /Users/ameerdeen/progs/forge-desktop rev-parse HEAD"
-]
