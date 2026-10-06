@@ -146,3 +146,30 @@ tabs is awaiting the operator's answer. No host setting or product code was chan
 
 Product design/plan/code approvals, product tests/AOT and physical/default-path acceptance
 are N/A to this documentation checkpoint; the shortcut remains unimplemented.
+
+## Forge-only shortcut feasibility
+
+Operator selected **Forge-only**, with normal terminal behaviour restored after exit. Static
+supervisor/implementer investigation found no supported automatic current-window route in
+Ghostty1.3.1, pinned `332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28`.
+
+| Observation | Primary source / implication |
+|---|---|
+| Host binding precedes encoding; Select All has no Forge/alternate-screen condition | [Surface.zig](https://github.com/ghostty-org/ghostty/blob/332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28/src/Surface.zig#L2646), Select All at5785. A Forge alias alone cannot receive the key. |
+| Conditions cover OS/theme, not foreground application | [conditional.zig](https://github.com/ghostty-org/ghostty/blob/332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28/src/config/conditional.zig#L9). No per-process binding condition. |
+| Tables activate/pop explicitly; VT/OSC offers no binding push/pop | Surface5815–5893 and native stream/OSC handlers. No application-exit/crash lifetime. |
+| AppleScript can target known UUIDs but cannot identify this child surface reliably | Installed/source scripting dictionaries match; [Exec.zig](https://github.com/ghostty-org/ghostty/blob/332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28/src/termio/Exec.zig#L626) exports no own-surface UUID. Frontmost/title/cwd matching can target another tab. Explicit cleanup and Automation permissions would still be required. No calls made. |
+| Dedicated process is a candidate, not an approved design | Scoped CLI override/direct Forge command leaves ordinary instances unchanged. Normal exit closes its surface; very early abnormal exit may retain an error surface (Surface1203–1279). Launch/config/exit contracts and manual acceptance remain unproved. |
+
+Tar/raw Surface hashes match `320f36fba48cdcd9ed3add5c0e2e294137732f5d779ff064c0c7b62f7b129f5c`.
+Raw-source lines2646/5785 correct earlier web-page indexing2424/5301. No product/config changes,
+app launches, automation, input, captures or clipboard calls occurred. Global config rewriting,
+OS hooks and unconsumed host selection were rejected for violating isolation/containment.
+
+| Stage | Start UTC | Result observed UTC | Limit |
+|---|---|---|---|
+| Scope, supervisor | 09:11:26 | 09:17:30 | Static feasibility only; no design/plan approval. |
+| `[investigate:implementer:r1]` shortcut | Not recorded | 09:17:30 | Duration unavailable; reused thread lifetime is not stage timing. |
+
+Dedicated launch choice is pending. Product tests/AOT and physical/default-path acceptance are
+N/A to this investigation; existing Ctrl+A remains supported and Cmd+A is unimplemented.

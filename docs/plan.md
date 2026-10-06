@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resolve terminal scope and deliver the requested isolated Mac shortcut in [TUI text interaction](phases/phase-70-tui-text-interaction.md); package visibility, manual acceptance and rich design remain open. |
+| **NEXT STEP** | Resolve the dedicated Forge launch decision for the requested Mac shortcut in [TUI text interaction](phases/phase-70-tui-text-interaction.md); package visibility, manual acceptance and rich design remain open. |
 
 ## Active phases
 
