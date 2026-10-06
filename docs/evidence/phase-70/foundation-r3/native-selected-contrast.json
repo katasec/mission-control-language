@@ -1,0 +1,92 @@
+[
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#101D34",
+    "Contrast": 13.5
+  },
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#267F99",
+    "Contrast": 3.68
+  },
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#A31515",
+    "Contrast": 6.29
+  },
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#098658",
+    "Contrast": 3.69
+  },
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#0000FF",
+    "Contrast": 6.89
+  },
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#795E26",
+    "Contrast": 4.89
+  },
+  {
+    "Theme": "light",
+    "NativeSelection": "#DBE7FB",
+    "RetainedNativeForeground": "#001080",
+    "Contrast": 12.15
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#E8EEF7",
+    "Contrast": 10.76
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#4EC9B0",
+    "Contrast": 6.16
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#CE9178",
+    "Contrast": 4.75
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#B5CEA8",
+    "Contrast": 7.39
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#569CD6",
+    "Contrast": 4.26
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#DCDCAA",
+    "Contrast": 8.88
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#9CDCFE",
+    "Contrast": 8.42
+  },
+  {
+    "Theme": "dark",
+    "NativeSelection": "#16345A",
+    "RetainedNativeForeground": "#D4D4D4",
+    "Contrast": 8.47
+  }
+]

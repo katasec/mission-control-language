@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: both complete public-extension/package reviews PASS; bounded feasibility pending. Not build-ready.**
-**Next:** prove Markdown registration, multi-source input/Copy claim and snippet reset in bounded public-control probes before design/plan approval. Actual package/consumer/integration/AOT checks follow approved implementation, before merge/publication. The operator will manually
+**Status: R12/R3 foundation corrections underway after both full code reviews requested changes. Canonical native verification, delivery and manual acceptance remain open.**
+**Next:** complete the combined approved correction, obtain fresh full code reviews and run actual canonical verification. Full independent code reviews and actual package/consumer/integration/AOT checks precede merge/publication. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -26,17 +26,17 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Both complete R9 reviews PASS; bounded feasibility pending. | Design reviews and bounded public feasibility precede plan approval; actual package/consumer/integration/AOT checks follow approved implementation, before merge/publication. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | R12/R3 candidate under correction after full reviews. | Complete corrections, fresh full reviews and actual warning-free native CI, then normal delivery. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
-CodeAlta findings, controlled results, limitations, and timing. Neither spoke has an approved
-implementation plan. A snippet button alone does not close transcript selection.
+CodeAlta findings, controlled results, limitations, and timing. The same implementer returned the approved foundation candidate; neither spoke has delivered a verified implementation.
+A snippet button alone does not close transcript selection.
 
 Fresh read-only investigators reconfirmed the unchanged source/artifact baseline and narrowed
 the public-API gaps; see [resumption evidence](phase-70.1-text-interaction-foundation_completed.md#resumption-check).
 The former live-before-design gate is superseded by the [manual verification exception](#manual-verification-exception).
-Product design and plan approval remain required before implementation.
+Current R12 design and complete R3 plan passed both full reviews and are supervisor-approved; current canonical native checks and code reviews remain required.
 
 ## Ownership and workflow
 
@@ -54,12 +54,16 @@ simplicity/code-style reviewer, and one ownership reviewer, one active subagent 
 those roles across stages and revisions. Scope → supervisor design → sequential simplicity/ownership
 reviews → implementer plan → sequential reviews → supervisor approval → same implementer →
 sequential simplicity/style and ownership reviews → merge/publish → default-path acceptance → closure.
-The 2026-10-06 workflow change permits role-agent reuse; it does not approve the candidate or
-approve any product implementation.
+The 2026-10-06 workflow change permits role-agent reuse; it does not itself approve design, a plan or product implementation.
 
-Current public-extension/package reviews — both complete R9 PASS; see [probe/review evidence and supervisor assessment](phase-70.1-text-interaction-foundation_completed.md#public-extension-evaluation-and-complete-r7r9-reviews). R6 is superseded and archived there.
-This delivery is documentation-only. Design approval, plan and code remain pending;
-default-path acceptance, product tests and Native AOT are N/A for this documentation change.
+Both complete R10 reviews and bounded public feasibility passed; supervisor locked the foundation
+design. See [current evidence](phase-70.1-text-interaction-foundation_completed.md#r10-bounded-public-foundation-feasibility). R6 is superseded and archived there.
+The R9 handoff was documentation-only. The operator has since requested completion.
+R11's complete source/lifetime audit and the complete R2 plan passed both full reviews. The resulting
+draft exposed an old snippet-button action between native Markdown assignment and layout; R12
+closes its retirement placement and records canonical CI/release verification after six local
+linker warnings. The complete R3 plan passed both full reviews and was approved before resumed writes. Code review, delivery and acceptance remain pending. Product checks and default-path acceptance
+apply to implementation under the manual verification exception below.
 
 ## Standing constraints and authorizations
 
@@ -69,6 +73,7 @@ default-path acceptance, product tests and Native AOT are N/A for this documenta
 | Computer use | Operator explicitly authorized launch and inspection of the TUI. The tool's Ghostty denial is still an access limitation; authorization does not override it. |
 | Manual verification | Operator selected post-code manual checking on 2026-10-05: “once code complete - i can check manually”. This replaces agent-operated live reproduction as a prerequisite; it does not waive final live acceptance. |
 | Publishing | Operator explicitly authorized publishing packages within the defined Forge repositories and updating their ACLs for consuming solutions. Use normal repository routes once the approved task requires it. Nothing was published or changed in ACLs during discovery. |
+| Continue delivery | Operator requested “Proceed to completion please” on 2026-10-06. Proceed through dependency-ordered feasibility, design/plan approvals, implementation, reviews and normal delivery. This authorizes the next stages; it does not skip their gates or supply manual acceptance. |
 | Library extension | Operator selected minimal Forge-owned public extensions over unchanged UI/Markdown/TextMate 3.10.0 and Terminal 2.2.0, with a separate namespace/assembly/package. Skip fork comparison if clean; compare only concrete complexity/essential gap. No upstream/fork writes. Boundary/API reviews and bounded public feasibility precede plan approval; actual package/consumer/integration/AOT proof follows approved implementation, before merge/publication. |
 | Themes | Existing `ForgeTheme` → `ForgeStyles` is the token owner. Every owned state must work in dark and light and permit future theme instances. |
 

@@ -33,6 +33,9 @@ public capabilities and regression evidence, not extrapolation from CodeAlta.
 
 ## Public-extension feasibility and fork comparison
 
+Current [source-boundary observations](phase-70.2-rich-transcript-selection_completed.md#source-boundaries--2026-10-06)
+name the native mapping cases and package-family cost; the bounded public geometry probe remains unperformed.
+
 The operator selected unchanged public packages plus Forge-owned extensions as the primary route,
 and asked to skip fork comparison when that stays clean. Foundation's 22 public-only behavior
 cases do not prove continuous rich selection. No fork is authorized or created.

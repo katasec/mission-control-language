@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Prove bounded public-extension feasibility for [TUI text interaction](phases/phase-70-tui-text-interaction.md) before implementation planning. |
+| **NEXT STEP** | Complete corrections and review the foundation change for [TUI text interaction](phases/phase-70-tui-text-interaction.md), then verify its delivery. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Design reviews passed; feasibility, implementation and acceptance remain open. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Foundation corrections underway; native verification, delivery and acceptance remain open. |
 
 ## Design docs
 
