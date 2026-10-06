@@ -81,7 +81,7 @@ No real project, account, turn, file edit or terminal GUI was involved.
 | Drag within first Forge reply paragraph, then Ctrl+C | Dark and light: `first` selected/copied. |
 | Drag from first paragraph into second, then Ctrl+C | Dark and light: only `first paragraph alpha beta` selected/copied; second paragraph unselected. |
 
-[Raw observations](../evidence/phase-70/controlled-probes.json) preserve all 11 cases and baseline
+[verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) preserve all 11 cases and baseline
 metadata. `dotnet run --project /tmp/forge-text-interaction-20261005/Probe.csproj` exited 0 with
 no warnings. Independent assertions checked every recorded case: **PASS: all 11 controlled
 observations match their recorded expectations**. These are baseline defect/capability
@@ -391,7 +391,7 @@ rendered both with the bundled SVG renderer, personally inspected the images, an
 clipped menu borders and spacing before saving the final references. They show proposed owned
 states, not a running native implementation or Retina/default-path acceptance.
 
-[Colour evidence](../evidence/phase-70/foundation-colours.json) records actual current
+[verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) records actual current
 ForgeTheme tokens and `CodeColours.Runs` foregrounds for the exact csharp fixture, extracted
 from the unchanged baseline assembly by a disposable JIT probe. The probe exited 0 with no
 warnings after correcting an initially misnamed public Style getter to `TryGetForeground`.
@@ -956,7 +956,7 @@ Use these existing token pairs: CodeBlockText/CodeBlockFill, TextMuted/CodeBlock
 
 The galleries bind only the added header/button, contextual menus, selection continuity and clipboard-feedback prefix. Existing Kitty frames, headings, syntax renderer, motion, composer/start page and theme selector remain reused. Gallery palettes must come from both current `ForgeTheme` instances; do not sample screenshots or add component-local colors.
 
-Before approval, save and inspect the galleries. [Controlled colour evidence](../evidence/phase-70/foundation-colours.json) enumerates current tokens and exact fixture syntax foreground/Selection pairs; it is neither native state rendering nor Retina acceptance. The csharp fixture's minimum selected-syntax ratios are 4.89 (light) and 4.26 (dark); other language runs still require controlled product evidence. If a pair is unreadable, return to design for a named theme-token change; do not patch individual runs. Controlled layout checks cover all four width/height corners of `[60,100]×[24,32]` and continuous resizing. Operator-installed Ghostty/laptop Retina comparison remains the approved final observation.
+Before approval, save and inspect the galleries. [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) enumerates current tokens and exact fixture syntax foreground/Selection pairs; it is neither native state rendering nor Retina acceptance. The csharp fixture's minimum selected-syntax ratios are 4.89 (light) and 4.26 (dark); other language runs still require controlled product evidence. If a pair is unreadable, return to design for a named theme-token change; do not patch individual runs. Controlled layout checks cover all four width/height corners of `[60,100]×[24,32]` and continuous resizing. Operator-installed Ghostty/laptop Retina comparison remains the approved final observation.
 
 ### Required focused probes
 
@@ -1051,7 +1051,7 @@ rich-selection map remains open and is not proved by single-Paragraph/menu cases
 
 ### Controlled public-library observation
 
-[Public-extension probe](../evidence/phase-70/public-extension-probe.json) records the actual
+[verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) records the actual
 packages, source pins, synthetic configuration, source/project/binary SHA-256, individual results
 and limitations. No Forge assembly, reflection/private API, vendored/native source build, live
 terminal/OS clipboard or hosted state was used.
@@ -1186,7 +1186,7 @@ completed document validation; no product PR/merge or acceptance span is implied
 Operator requested “Proceed to completion please” on 2026-10-06. The existing implementer role
 ran bounded scratch native controls; no product files changed. The supervisor independently
 reran the final harness and rebuilt it: exit 0, 64 PASS observations, zero warnings/errors.
-[Durable results, pins, hashes, commands and limits](../evidence/phase-70/foundation-feasibility-r10.json).
+[verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence).
 
 | Boundary | Observed result / correction |
 |---|---|
@@ -1492,7 +1492,7 @@ compiled-product stale-button probe and actual packed metadata verifier.
 | Integration | 23/23 PASS; combined draft run 103/104 followed by corrected renderer fixture 1/1. A complete current rerun and full suite remain required. |
 | Canonical local CLI AOT | Exit 0 but **zero-warning gate FAIL**: unsupported ld_classic and five Homebrew dylib minimum-OS warnings. Native help/version exit 0 does not waive these. |
 | Local native identity | `1.0.0+2022b512…`; SHA256 `1a287fa8fcede21f0f401da315ca08d452134043a3e44465225882bb5af21075`. This is an uncommitted draft labelled with its base SHA, not committed-source provenance or a deliverable. |
-| Pre-layout replacement | Actual compiled ChatScreen posted setter left the old Button pressed/attached/enabled; queued release wrote its old immutable payload once before detach. Supervisor independent rerun exit 0 reproduced the same failing outcome. [Controlled evidence](../evidence/phase-70/foundation-replacement-regression-r12.json). |
+| Pre-layout replacement | Actual compiled ChatScreen posted setter left the old Button pressed/attached/enabled; queued release wrote its old immutable payload once before detach. Supervisor independent rerun exit 0 reproduced the same failing outcome. [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence). |
 
 Logs: `/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/`. Controlled memory-only
 clipboard and no-op Kitty transport; no Ghostty, OS clipboard, physical input or Retina PASS.
@@ -1757,7 +1757,7 @@ NoSelection means `HasSelection=false`. Failed/empty extraction means CopyFailed
 
 Apply [Desktop Interaction Principles](/Users/ameerdeen/progs/mission-control-language/docs/design/desktop-interaction-principles.md), [UI Design System](/Users/ameerdeen/progs/mission-control-language/docs/design/ui-design-system.md) and [TUI graphics](/Users/ameerdeen/progs/mission-control-language/docs/design/tui-graphics.md).
 
-Binding references are [foundation light](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-70.1/foundation-light.svg), [foundation dark](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-70.1/foundation-dark.svg) and [colour/run evidence](/Users/ameerdeen/progs/mission-control-language/docs/evidence/phase-70/foundation-colours.json). Reuse surrounding appearance from the finish-line mockup, Phase 64 plain/hands images and operator chat reference.
+Binding references are [foundation light](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-70.1/foundation-light.svg), [foundation dark](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-70.1/foundation-dark.svg) and [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence). Reuse surrounding appearance from the finish-line mockup, Phase 64 plain/hands images and operator chat reference.
 
 | Owned slice | Required comparison |
 |---|---|
@@ -1962,7 +1962,7 @@ Positive and negative observations include no-click keyboard Copy, failed Copy c
 
 Both themes have current native cells/runs/tooltips and combined hover/focus/press/result/disabled evidence. All four viewport corners, continuous resizing, width0–3/icon/full-label transitions and selected csharp/go/json foreground preservation pass. Selected contrast observations range from3.68 in light and4.26 in dark at the minimum; no new threshold or palette was introduced. These are controlled observations, not Retina acceptance.
 
-Evidence is under [retained R3 manifest](../evidence/phase-70/foundation-r3/manifest.json), including complete logs and hashes.
+Evidence is under [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence), including complete logs and hashes.
 
 - Nupkg/cache nupkg SHA256: `3C120F4331B604F0A709ADEBE3802345FA401B8DCF536F334B5241A955ABCA52`
 - Packed/cache/consumer-output extension DLL SHA256: `E765DCFC6C8BCE50F96C30AA0CA141898FE4F74DC593AA5D94727218959A9365`
@@ -1975,7 +1975,7 @@ Principles affecting implementation: native reuse avoided editing/transport dupl
 
 No open design question or scope deviation remains. Done-when interaction conditions have controlled evidence; laptop Retina, warning-free current CI AOT and installed default-path acceptance remain unproved. Root owns reviews, committed provenance, CI, merge/publication, release/install and attributed operator acceptance. Continuous rich selection remains Phase70.2.
 
-Supervisor independently inspected the final build, focused/full-suite and native logs, ran the actual package verifier, reran the genuinely fresh packed consumer, and independently compared package/cache/output hashes. [Packed consumer evidence](../evidence/phase-70/foundation-packed-consumer-r12.json). The later occupied-port replay and fresh-port health observation support startup investigation; the original test discarded startup output, so they do not prove the exact original timeout cause. Local AOT remains FAIL; canonical CI must pass before merge.
+Supervisor independently inspected the final build, focused/full-suite and native logs, ran the actual package verifier, reran the genuinely fresh packed consumer, and independently compared package/cache/output hashes. [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence). The later occupied-port replay and fresh-port health observation support startup investigation; the original test discarded startup output, so they do not prove the exact original timeout cause. Local AOT remains FAIL; canonical CI must pass before merge.
 
 ## R3 full code reviews — R1
 
@@ -2080,7 +2080,7 @@ Required corrections and open evidence:
 | [Extension README:23](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/README.md) | After excluding editing, selection storage, backends, input routing, focus and popup lifetime, “The CLI owns these policies” assigns that entire list to CLI. Explicitly assign native mechanisms to XenoAtom UI/Terminal and source coordination, Stop, themes/status/snippets to CLI. |
 | [Renderer:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs), [outer wrapper:296](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs) | Both wrappers register/retire the same code Paragraph. This is confirmed **intra-CLI duplication**, covered by simplicity; retain the outer Markdown lifetime owner and remove the inner wrapper. No component move is justified. |
 | [CLI tests:23](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs), [metadata test:84](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs), [menu tests:72](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs) | Existing observations do not complete the approved boundary proof: root extraction failure without Stop; nondefault metadata and delegate-once; keyboard Paste/Undo/Cut; actual left-click menu activation; ancestor/modal guards; chrome drag; focused zero-width Enter/Space. Keep these tests with their extension/CLI owners; add no production framework to obtain them. |
-| [Native publish evidence](/Users/ameerdeen/progs/mission-control-language/docs/evidence/phase-70/foundation-r3/native-publish.log) | Six actual linker warnings remain FAIL. Execute the canonical macOS-14 verification on the reviewed corrected tree before merge. No suppression, environment workaround or historical release result closes this gate. |
+| [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) | Six actual linker warnings remain FAIL. Execute the canonical macOS-14 verification on the reviewed corrected tree before merge. No suppression, environment workaround or historical release result closes this gate. |
 
 Actual native source confirms `ContextMenuService` executes before close, Paste Capture reads text once and preserves null versus empty, and native insertion creates the Paste undo entry. The command decorator preserves all public metadata fields. Button retirement uses public state and delegates native lifecycle; no new private access was found.
 
@@ -2181,7 +2181,7 @@ Implementation correction assignment: **2026-10-06T02:00:16.608Z**; complete ver
 
 ### Supervisor frozen artifact and draft verification
 
-Root independently validates all six corrected source hashes, 27 evidence-entry sizes/hashes and four native artifact sizes/hashes. Exact raw evidence and manifest are retained in [foundation-code-r3](../evidence/phase-70/foundation-code-r3/manifest.json); intermediate failing fixture logs are preserved. The [complete observation map](../evidence/phase-70/foundation-code-r3/observation-map.json) maps 25 controlled groups and 11 execution/delivery gates. Root reruns the fresh consumer and independently matches package/cache/output identities in [consumer evidence](../evidence/phase-70/foundation-packed-consumer-code-r3.json). Candidate-native base-HEAD metadata remains labelled; it is not committed provenance.
+Root independently validates all six corrected source hashes, 27 evidence-entry sizes/hashes and four native artifact sizes/hashes. Exact raw evidence and manifest are retained in [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence); intermediate failing fixture logs are preserved. The [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) maps 25 controlled groups and 11 execution/delivery gates. Root reruns the fresh consumer and independently matches package/cache/output identities in [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence). Candidate-native base-HEAD metadata remains labelled; it is not committed provenance.
 
 After the implementer confirms frozen source and the final identity/manifest, root stages the complete candidate and validates whitespace. Product commit `9c06e5729bbd06837758344c203a76067626451c`, tree `0ca19d3923b96f25d06b0324149b34ba3d2115be`, base `2022b512dd2bd108626124f22bc1cfe7652648d7`, contains all 34 changed files (2595 insertions, 36 deletions). [Draft product PR62](https://github.com/katasec/forge-mcl/pull/62) starts [canonical read-only verification run37404929327](https://github.com/katasec/forge-mcl/actions/runs/37404929327). Actual zero-warning result remains pending.
 
@@ -2242,7 +2242,7 @@ Both complete galleries were freshly inspected under Desktop Interaction Princip
 
 ## Canonical CI R2 — actual failure
 
-[Run37404929327](https://github.com/katasec/forge-mcl/actions/runs/37404929327), job112080256794, checked out merge candidate `db4bbadd8668ba34fa7767b8c8cba77d0f8a6606`. Root read the downloaded `source.txt`; its tree equals the frozen reviewed product tree `0ca19d3923b96f25d06b0324149b34ba3d2115be`. Verification ran 2026-10-06 02:36:45–02:42:12 UTC; run completed02:42:14. Full suite: **856 passed,16 failed,10 existing prerequisite skips,882 total,4m45s**. Package checks and Native AOT publication were **not reached**. This run provides no native zero-warning result. Exact downloaded checks/source and full workflow log are retained byte-for-byte with [hash manifest](../evidence/phase-70/foundation-ci-r2/manifest.json).
+[Run37404929327](https://github.com/katasec/forge-mcl/actions/runs/37404929327), job112080256794, checked out merge candidate `db4bbadd8668ba34fa7767b8c8cba77d0f8a6606`. Root read the downloaded `source.txt`; its tree equals the frozen reviewed product tree `0ca19d3923b96f25d06b0324149b34ba3d2115be`. Verification ran 2026-10-06 02:36:45–02:42:12 UTC; run completed02:42:14. Full suite: **856 passed,16 failed,10 existing prerequisite skips,882 total,4m45s**. Package checks and Native AOT publication were **not reached**. This run provides no native zero-warning result. Exact downloaded checks/source and full workflow log are retained byte-for-byte with [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence).
 
 | Failure group | Actual observation |
 |---|---|
@@ -2352,7 +2352,7 @@ The implementer explicitly confirms frozen source while its current local native
 
 [Fresh canonical run37407903290](https://github.com/katasec/forge-mcl/actions/runs/37407903290) starts2026-10-06 03:12:44 UTC on current draft PR62. Root independently fetches merge candidate `c4536e416e89931873ed6ad9171f308c7d8c66ca`; its tree exactly equals the frozen product tree90e0f26f. Actual CI outcomes/source artifact remain pending. Earlier failed CI remains preserved, not overwritten. Current full code reviews will start sequentially after the implementer finishes evidence; no merge/publication approval is inferred.
 
-Root independently reruns the fresh packed code-r4 consumer and matches package/cache/output identities in [consumer evidence](../evidence/phase-70/foundation-packed-consumer-code-r4.json). Sole reference `[0.1.0]`, isolated cache, exact native UI3.10.0/Terminal2.2.0 and all public API/result observations pass. Package SHA256 `3a528a22a24b7dfe7db54078db8672cb6a2d9f26b0fd39760f6c46d5aaa1935f`; packed/cache/output DLL `ca8111b4ce86bc393c1f369a75c9feee54ad380e44cef078a73474e45e44bf73`. The producer's pack/native compile began before this commit and remains explicitly base-HEAD9c06e572 metadata; this is controlled evidence, not committed/published provenance.
+Root independently reruns the fresh packed code-r4 consumer and matches package/cache/output identities in [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence). Sole reference `[0.1.0]`, isolated cache, exact native UI3.10.0/Terminal2.2.0 and all public API/result observations pass. Package SHA256 `3a528a22a24b7dfe7db54078db8672cb6a2d9f26b0fd39760f6c46d5aaa1935f`; packed/cache/output DLL `ca8111b4ce86bc393c1f369a75c9feee54ad380e44cef078a73474e45e44bf73`. The producer's pack/native compile began before this commit and remains explicitly base-HEAD9c06e572 metadata; this is controlled evidence, not committed/published provenance.
 
 ## Corrected R4 candidate — full handoff
 
@@ -2420,7 +2420,7 @@ Principles affecting the correction: reuse public native seams; use reference-de
 
 No new design decision or implementation deviation remains open. Against Done when, interaction/snippet behavior has current controlled evidence and managed/package checks pass; physical Retina/reference acceptance, warning-free canonical AOT, publication/install and operator-run installed default-path acceptance remain outstanding. Continuous rich selection remains Phase70.2. No source edits or running local checks remain; this handoff does not mark the task complete.
 
-Implementation correction assignment **2026-10-06T02:55:01.905Z**, complete handoff **2026-10-06T03:16:32.729Z**, wall **21m31s**. Tokens N/A. Root validates all31 artifact sizes/hashes (29 listed files plus2 packages), all35 complete-plan and five correction source hashes, and manifest SHA397f5f8ea891172133bafdaa9012019314f61931e003112bc2ea08a4b6ea2f47. Twenty exact raw logs/JSON plus manifest are retained in [foundation-code-r4](../evidence/phase-70/foundation-code-r4/manifest.json); binary/debug/package and probe source files remain at their product artifact paths, with exact hashes retained. Mission-control contains no copied product source or sibling project reference. [Complete current observation map](../evidence/phase-70/foundation-code-r4/observation-map.json):26 requirement groups/11 gates. Raw captures retain original bytes and whitespace.
+Implementation correction assignment **2026-10-06T02:55:01.905Z**, complete handoff **2026-10-06T03:16:32.729Z**, wall **21m31s**. Tokens N/A. Root validates all31 artifact sizes/hashes (29 listed files plus2 packages), all35 complete-plan and five correction source hashes, and manifest SHA397f5f8ea891172133bafdaa9012019314f61931e003112bc2ea08a4b6ea2f47. Twenty exact raw logs/JSON plus manifest are retained in [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence); binary/debug/package and probe source files remain at their product artifact paths, with exact hashes retained. Mission-control contains no copied product source or sibling project reference. [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence):26 requirement groups/11 gates. Raw captures retain original bytes and whitespace.
 
 ## Full code reviews — R3
 
@@ -2435,14 +2435,14 @@ Root independently executes R4 local native `--version` and `--help`: both exit0
 
 ## Canonical CI R3 — current candidate passes
 
-[Run37407903290](https://github.com/katasec/forge-mcl/actions/runs/37407903290), actual PR candidate8718347, verifies merge-source `c4536e416e89931873ed6ad9171f308c7d8c66ca`. Root independently resolves both trees to `90e0f26f2adc1ffb9ed79e96379bc9f01b709d47`, downloads the complete authenticated artifact, reads the entire raw product/package and native publish output, and retains byte-exact logs plus all artifact identities in [foundation-ci-r3](../evidence/phase-70/foundation-ci-r3/manifest.json).
+[Run37407903290](https://github.com/katasec/forge-mcl/actions/runs/37407903290), actual PR candidate8718347, verifies merge-source `c4536e416e89931873ed6ad9171f308c7d8c66ca`. Root independently resolves both trees to `90e0f26f2adc1ffb9ed79e96379bc9f01b709d47`, downloads the complete authenticated artifact, reads the entire raw product/package and native publish output, and retains byte-exact logs plus all artifact identities in [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence).
 
 | Observation | Actual result |
 |---|---|
 | Build | PASS, zero warnings/errors,19.72s |
 | Full suite | 873 passed,0 failed,10 existing prerequisite skips/883,2m37s; no new skips |
 | Package tests/pack/verifier | 26/26; package and symbols created; exact public pins/readme/license and actual committed source metadata PASS |
-| Fresh current packed consumer | `/tmp/phase70-packed-consumer-ci-r3`, sole extension `[0.1.0]` reference, separate cache, actual canonical artifact feed plus nuget.org; every public API/all5 result values PASS,0 warnings/project references. [Matched package/cache/output identities](../evidence/phase-70/foundation-packed-consumer-ci-r3.json) |
+| Fresh current packed consumer | `/tmp/phase70-packed-consumer-ci-r3`, sole extension `[0.1.0]` reference, separate cache, actual canonical artifact feed plus nuget.org; every public API/all5 result values PASS,0 warnings/project references. [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence) |
 | Native publish | macOS-14, unchanged OpenSSL/Brotli prerequisites; full `-warnaserror` output has zero compiler/linker warning matches; step ends03:29:59UTC |
 | Native identity | Step ends03:30:00UTC; root downloaded binary help/version both exit0, version `1.0.0+c4536e416e89931873ed6ad9171f308c7d8c66ca`, SHA256 `eee92831abced7a7f97210ed9bae7bde6b430df135a97302c35e3c523ea3f9b8`, matching native checksum |
 | Job completion | Verify job112089486958 SUCCESS03:30:15UTC; package publication correctly skipped for pull_request event |

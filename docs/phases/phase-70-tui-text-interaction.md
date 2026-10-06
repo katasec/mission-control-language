@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: Foundation merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. CLI v0.9.4 installed/verified; package visibility decision, manual acceptance and rich selection remain open.**
-**Next:** resolve whether a dedicated Forge launch is acceptable for the requested Forge-only Mac shortcut; the installed terminal has no supported automatic current-window route. Package visibility, installed foundation manual acceptance and full rich-selection design remain open. Full independent code reviews and actual package/consumer/integration/AOT checks passed before merge/publication. The operator will manually
+**Status: Foundation merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. CLI v0.9.5 installed/verified; package visibility decision, manual acceptance and rich selection remain open.**
+**Next:** record operator acceptance of the installed dedicated Mac launch; current full code reviews, canonical verification and release/install pass. Package visibility, installed foundation manual acceptance and full rich-selection design remain open. Full independent code reviews and actual package/consumer/integration/AOT checks passed before merge/publication. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -18,17 +18,17 @@ existing Kitty graphics, typography, syntax highlighting, motion, and light/dark
 | Transcript | Mouse selection and Copy for rendered text, including continuous selection through rich content. |
 | Code snippets | A focusable copy icon with mouse/keyboard activation, discoverable label, and truthful feedback; exact code payload independent of display wrapping. |
 
-Start-page mission creation, link launching, a new terminal window, a general editor redesign,
-new themes, and hosted/client changes are outside this phase. The start page is a regression
+Start-page mission creation, link launching, a general editor redesign,
+new themes, and hosted/client changes are outside this phase. The dedicated Mac window is limited to the approved shortcut follow-up. The start page is a regression
 surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 ## Dependency order
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Full reviews/canonical checks PASS; product/atlas merged; v0.9.4 installed. | Resolve public-versus-private package mismatch and record operator acceptance. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Full reviews/canonical checks PASS; product/atlas merged; current CLI v0.9.5 installed. | Resolve public-versus-private package mismatch and record operator acceptance. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Public gap/current comparison verified and reviewed; full rich design open. | Resolve full semantics/public contract and operator library-route decision before implementation planning. |
-| [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Forge-only scope locked; no supported automatic current-window route found. | Operator decides dedicated launch; then prove/design/review its lifetime boundary. |
+| [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Six-file patch merged; full reviews/canonical zero-warning checks PASS; v0.9.5 installed. | Operator window/key/Retina acceptance. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
 CodeAlta findings, controlled results, limitations, and timing. Foundation product/atlas are merged and the normal CLI release is installed; package visibility remains unresolved. Rich selection remains unapproved and unimplemented.
@@ -101,7 +101,7 @@ they must not describe those unknowns as reproduced. The normal Ghostty default-
 
 ## Done when
 
-Both spokes meet their own acceptance conditions; the operator has manually verified the
+All three spokes meet their own acceptance conditions; the operator has manually verified the
 installed, default-path TUI on the laptop Retina display in light and dark, with evidence
 assessed and recorded by the supervisor; Copy/Paste preserve
 the intended text and never turn a copy attempt into cancellation; rich transcript selection
