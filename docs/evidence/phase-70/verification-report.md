@@ -1,6 +1,6 @@
 # Phase 70 — Foundation delivery and selection investigation report
 
-Recorded 2026-10-06. **Foundation CLI installed; package visibility, operator acceptance
+Recorded 2026-10-06. **Foundation and Forge-only Mac shortcut CLI v0.9.5 installed; package visibility, operator acceptance
 and continuous rich-selection design remain open.** This report replaces raw Phase70 evidence, at the operator's request. The first cleanup removed71 recent artifacts; the follow-up removed91 older foundation files, leaving this single report. Earlier foundation design,
 plan and code-review records remain in the [foundation archive](../../phases/phase-70.1-text-interaction-foundation_completed.md).
 All times below are UTC.
@@ -281,6 +281,9 @@ verification and publishing after development is finished. Current local checks 
 managed builds; assess the complete development feedback path and when native CI runs. See
 [backlog](../../backlog.md). No workflow or gate change is approved or implemented by this
 note; the current patch continues through its locked delivery route.
+Static development fact: the managed Debug build produces a124696-byte `forge` apphost
+without running Native AOT. Assess the interactive Mac chat feedback path as well as tests;
+no agent launch or physical managed-chat acceptance was performed.
 
 Canonical PR63 run37456671786 completed SUCCESS at12:00:41 UTC; verify job31m44s,
 11:28:56→12:00:40. Product/package step4m42s; full920 passed/10 existing prerequisite skips,
@@ -312,3 +315,28 @@ remote main and unused v0.9.5 tag before dispatching the unchanged normal releas
 [Release run37461528621](https://github.com/katasec/forge-mcl/actions/runs/37461528621)
 created12:11:43 UTC from that exact merged main commit, all four native hosts. Release,
 whole-ZIP installation and physical acceptance are pending; no release/install PASS yet.
+
+
+## Mac release and installation — verified; manual acceptance open
+
+| Check | Named observation |
+|---|---|
+| Product merge | PR63 merged12:10:58 UTC; `b11e6e3ba1f18b13e28d7c10dd3c12937c2e2059`, same reviewed/CI tree. |
+| Release | [Run37461528621](https://github.com/katasec/forge-mcl/actions/runs/37461528621) SUCCESS; created12:11:43, completed12:42:40 =30m57s. [v0.9.5](https://github.com/katasec/forge-mcl/releases/tag/v0.9.5) published12:42:37. |
+| Native hosts | All four native build/sign/archive/help/version jobs PASS; root inspected complete compiler/linker output, zero actual warnings. Mac publish12:12:20→12:41:35 =29m15s; Linux x649m45s, Linux ARM13m36s, Windows ARM15m51s. |
+| Assets | Eight assets; all four ZIP sidecar hashes match GitHub asset digests. Mac ZIP independently downloaded and hashed; other platforms not downloaded/executed locally. |
+| Installation | All seven unchanged payload files atomically installed12:46:54.745 UTC under `/Users/ameerdeen/.local/bin`; every installed SHA256 matches the extracted payload. Prior files backed up in temporary storage; unrelated files preserved. |
+| Installed identity | Normal PowerShell PATH resolved `/Users/ameerdeen/.local/bin/forge`; actual `forge --help` and `forge --version` exited0. Version `0.9.5+b11e6e3ba1f18b13e28d7c10dd3c12937c2e2059`; extracted and installed strict ad-hoc signature checks PASS. |
+| Shared config bytes | `/Users/ameerdeen/Library/Application Support/com.mitchellh.ghostty/config.ghostty` SHA256 still baseline `e2a910c754718b31d2e2a8e86d976d446d2bf57968cff3e322652b10486fdd49`. Static bytes only; native preferences/key behaviour require operator observation. |
+| Manual/default acceptance | Pending operator. Initial window/composer/editor/quit/ordinary-terminal check requested after installation. Both themes, normal/narrow Retina, mouse focus/modal, graceful errors/additional dedicated surfaces and retained Ctrl+A/Copy remain in Done when; no physical PASS inferred. |
+
+Mac ZIP SHA256: `306e2715bee2b51731ebcbad3c85e19b4fc723ff125c255a3d6a23493f4e05f5`.
+Installed binary SHA256: `18da97d27d34264a5818108a03693cc051484eb0a7c86afd11e773be8ed8ef4a`.
+
+Timing: estimate given11:18:39 UTC was80–90 minutes to installation, around16:40–16:50 Dubai.
+Actual installation12:46:54.745 UTC /16:46:54.745 Dubai =88m15.745s after that estimate.
+Scope→installation10:15:44→12:46:54.745 =2h31m10.745s; product merge remains the timing-span
+end for workflow accounting, and installation/operator acceptance are recorded separately.
+The Native AOT stages alone took26m17s pre-merge plus29m15s release =55m32s; their elapsed
+sum is not a claim of exclusive critical-path cost. Current delivery is implemented/installed,
+awaiting manual acceptance, with no package-visibility or rich-selection closure implied.
