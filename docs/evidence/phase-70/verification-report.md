@@ -274,12 +274,10 @@ handoff. The export is a convenience copy, not a second evidence archive or prod
 
 ## Future assessment — development checks and release compilation
 
-Operator asked2026-10-06 whether development can use managed tests and reserve AOT for the
-finished published artifact. Current patch already used managed local build/tests before
-canonical AOT; no AOT compilation was required for each local iteration. Current delivery
-still compiles Native AOT twice: pre-merge canonical verification, then the merged-main CLI
-release workflow. Assess whether one verified production AOT artifact can be promoted to
-release without a second compilation. Preserve exact release version/source identity, all
-supported platforms/payload files, actual zero-warning output and existing acceptance gates.
-No workflow or gate change is approved or implemented by this note; current delivery continues
-through its locked route. Use measured build durations from this report in that assessment.
+Operator clarified2026-10-06: the requested assessment is **fast development cycles without
+AOT**, not chiefly eliminating duplicate delivery builds. Assess managed build/run/test feedback
+so development iterations do not require or wait for AOT compilation. Reserve AOT for final
+verification and publishing after development is finished. Current local checks already use
+managed builds; assess the complete development feedback path and when native CI runs. See
+[backlog](../../backlog.md). No workflow or gate change is approved or implemented by this
+note; the current patch continues through its locked delivery route.
