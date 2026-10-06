@@ -2101,3 +2101,101 @@ The same implementer received `[implement:implementer:r3] 70.1 foundation` with 
 ## Documentation checkpoint — R12/R3 review state
 
 The mission-control-only change records the locked design/approved plan, full independent verdicts, controlled evidence and known failures, with corrections in progress. Documentation validation passes seven Markdown files and 268 local links/anchors; the global hub contains no sub-phase detail. Markdown/JSON whitespace checks pass. Eight whitespace findings in raw consumer/help output are retained byte for byte to preserve original evidence hashes; the first unrestricted whitespace check reports them, rather than a whole-tree PASS. Product tests, Native AOT and default-path acceptance are N/A for this documentation-only checkpoint. Their implementation gates remain open as recorded above; this record is not product completion.
+
+Documentation checkpoint delivered through [PR346](https://github.com/katasec/mission-control-language/pull/346), merged at **2026-10-06T02:07:11Z**, commit `f0c5e067e73525da248303054c712ae26584f6e2`. No CI checks were reported; root documentation validation passed, and the PR was CLEAN. After fast-forward, mission control was on `main`, zero uncommitted and zero unpushed. Ongoing correction/review records continue on a new isolated branch; product branches remain unfinished and unmerged.
+
+## Corrected R3 candidate — full handoff
+
+Product source is frozen. The current corrected candidate passes focused tests, the full suite, package verification and the fresh consumer. **Local Native AOT fails the zero-warning gate: six linker warnings remain.** Native help/version succeed. No delivery or manual acceptance is claimed.
+
+| Current check | Command / observation | Result |
+|---|---|---|
+| Focused serialized checks | `dotnet test tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj -warnaserror` with Terminal, TextInteraction, CodeCopyControl, FileEditor, ChatScreenTile, ChatScreenMotion and StartPage filters | **180/180 PASS**, 58.1201s, zero warnings |
+| Build | `make build` | **PASS**, zero warnings/errors |
+| Full suite | Approved `env -u MCL_API_KEY make test` | **876 PASS, 6 existing skips, 882 total**, 2m27s, zero warnings |
+| Package | `make verify-terminal-extensions-package` | **26/26 PASS**; actual 0.1.0 pack and metadata/dependency verifier PASS |
+| Public consumer | Fresh `/tmp/phase70-packed-consumer-code-r3`; `dotnet restore --no-cache`, `dotnet run --no-restore -warnaserror`, resolved-package listing | **PASS**; every public API/result exercised; isolated cache and matching package/assembly hashes |
+| Native | `dotnet publish src/ForgeMission.Cli -c Release -r osx-arm64 -o artifacts/phase70-foundation/r3-review/native -warnaserror` | Exit0, **six actual linker warnings: FAIL** |
+| Native identity | Current binary `--help`, `--version` | Both exit0; `1.0.0+2022b512dd2bd108626124f22bc1cfe7652648d7` |
+
+The six skips are existing prerequisite skips covering Claude multi-tool/live/two-turn, ForgeClaude launcher, Copilot SDK live and wire capture. No test was newly skipped.
+
+The six native warnings concern `ld_classic`, two OpenSSL dylibs built for macOS27 and three Brotli dylibs built for macOS26 while targeting macOS12. No OS, library, linker target, native environment or suppression was changed.
+
+| File changed in this correction | Result |
+|---|---|
+| [ForgeCodeBlockRenderer.cs](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs) | Removed the duplicate inner ParagraphSelection. Configure the native body before attachment; the outer Markdown wrapper alone owns registration/retirement. Native Runs, wrap, frame and header remain intact. |
+| [CodeCopyControl.cs](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | Moved label/helpers below lifecycle entry points. Retained approved R12 retirement, eligibility and continuation behavior. |
+| [Extension README](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/README.md) | Corrected native editing/range/input/focus/popup ownership to XenoAtom.UI and transport/backend ownership to XenoAtom.Terminal. |
+| [TextInteractionTests.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs) | Coherent actual-root fixture; public fault injection; complete command metadata/delegation, native editor input, lifecycle, modal/chrome and Copy-versus-Stop coverage. Helpers follow tests. |
+| [CodeCopyControlTests.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs) | Focused width0/Tab repair, real outer scrolling, empty fence and single-wrapper assertions. |
+| [ClipboardMenuTests.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs) | Actual mouse activation, backwards-range continuity, empty/failed Paste caret/Undo and independently checked stale availability/execution guards. |
+
+The complete candidate retains the approved extension project, ClipboardResult/Text/Menus/editor/Paragraph extensions; CLI TextInteraction/ParagraphSelection/ChatScreen/ChatTui/FileEditor/StartPage/ForgeTheme/ForgeStyles integration; solution/project references; public test host and regression tests; Makefile/verifier/package workflow; repo/component inventories and the single Desktop atlas row. Core, release.yml, native pins and linker ownership remain unchanged.
+
+The [full observation map](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r3-review/observation-map.json) maps all 25 controlled requirement groups and 11 execution/delivery gates to current evidence. Notable observations:
+
+- Actual root failed **and successful-empty extraction** consume selected Copy with zero writes and no Stop. Clearing selection restores chat Stop.
+- Actual composer/CodeEditor no-click arrow/Home/End/word ranges, caret/highlight, drag/double-click/Shift-click and Paste/Undo pass. Every decorated command preserves nondefault metadata and invokes its original delegate once.
+- Keyboard Cut retains native behavior, including deletion after a failed copy write; Undo restores it. No menu Cut is exposed.
+- Native mouse/keyboard menus retain directional range/caret. Failed/empty Paste preserves prior Undo; nonempty Paste adds one native Undo entry. Stale document/content/source/ancestor/screen guards refuse both availability and execution.
+- Posted retirement/setter followed by old pointer/Copy before layout produces zero stale writes. Setter-before-release snippet races also produce zero writes, followed by successful fresh activation.
+- Actual outer DocumentFlow scrolling detaches the old snippet and cancels its press. **The returned button is newly realized (`returnedSameButton=False`)**: old release writes0; fresh activation writes1 exact payload. Separate genuine retained-visual tests prove Resume preserves original enabled=true or deliberately false. Production realization was not changed to force identity reuse.
+- Already-focused feedback, progress/unsaved status, widths0–3/15 transitions, native focus repair, combined states, both themes, four corners, continuous resize and selected csharp/go/json foregrounds pass controlled native checks.
+
+Evidence is in [r3-review](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r3-review/manifest.json). Prior R12 and intermediate failing fixture logs remain preserved.
+
+| Identity | SHA256 |
+|---|---|
+| Manifest | `1E587CCC12DDAF1F50832A0414260D7660897E6D7E800C900FDDD35AB97EA0F3` |
+| Observation map | `2C63296CC53851BDF508FE5D7CBDFD11AB90EFC92D928CD74C8A94273E0EDBBD` |
+| Native binary | `20C609C0FF4EC171D5A6295CB5148304CD6D2E9BF8AF272104426A903A7858FB` |
+| Packed/cached nupkg | `C4C06093B263E5D28EDEEA28BAB08B875A6D4A22F382AC0139B746C81AE6D264` |
+| Packed/cache/consumer DLL | `E765DCFC6C8BCE50F96C30AA0CA141898FE4F74DC593AA5D94727218959A9365` |
+
+Candidate base-HEAD metadata is explicitly labelled; it does not prove uncommitted code originated from that commit.
+
+| Principles affecting the correction | Decision |
+|---|---|
+| No NIH / no duplicate paths | Retained native editing and removed duplicate lifetime ownership. |
+| No speculative abstractions | Used coherent existing test fixtures; added no production registry/framework. |
+| Verified means done | Recorded actual new realization identity and current routing observations. |
+| Outline/top-down | Lifecycle entry points precede helpers; test helpers follow tests. |
+| Explicit errors / zero warnings | Asserted transport/extraction failures and retained native warning failure despite exit0. |
+
+No new design decision or product deviation is outstanding.
+
+| Done-when condition | Current evidence/state |
+|---|---|
+| Composer and `/edit` agreed no-click selection/context behavior | Controlled actual-root/native checks PASS |
+| Selection-aware Copy never cancels a turn | Success/extraction/write failure integration PASS |
+| Exact snippet payload and truthful feedback | Current controlled rendering/routing/lifetime checks PASS |
+| Themes/graphics match laptop Retina reference | Controlled native comparisons PASS; **operator Retina acceptance pending** |
+| Focused/full suite and warning-free Native AOT | Tests/build/package PASS; **local AOT FAIL**, canonical macos14 CI pending |
+| Installed default-path acceptance | Root delivery and attributed operator acceptance pending |
+| Continuous rich selection | Required dependent Phase70.2 remains separate |
+
+Current full code reviews, canonical CI, committed/package provenance, publication, whole-ZIP installation and manual installed acceptance remain root/operator gates.
+
+Implementation correction assignment: **2026-10-06T02:00:16.608Z**; complete verdict: **2026-10-06T02:36:56.314Z**, wall **36m 40s**. Tokens N/A.
+
+### Supervisor frozen artifact and draft verification
+
+Root independently validates all six corrected source hashes, 27 evidence-entry sizes/hashes and four native artifact sizes/hashes. Exact raw evidence and manifest are retained in [foundation-code-r3](../evidence/phase-70/foundation-code-r3/manifest.json); intermediate failing fixture logs are preserved. The [complete observation map](../evidence/phase-70/foundation-code-r3/observation-map.json) maps 25 controlled groups and 11 execution/delivery gates. Root reruns the fresh consumer and independently matches package/cache/output identities in [consumer evidence](../evidence/phase-70/foundation-packed-consumer-code-r3.json). Candidate-native base-HEAD metadata remains labelled; it is not committed provenance.
+
+After the implementer confirms frozen source and the final identity/manifest, root stages the complete candidate and validates whitespace. Product commit `9c06e5729bbd06837758344c203a76067626451c`, tree `0ca19d3923b96f25d06b0324149b34ba3d2115be`, base `2022b512dd2bd108626124f22bc1cfe7652648d7`, contains all 34 changed files (2595 insertions, 36 deletions). [Draft product PR62](https://github.com/katasec/forge-mcl/pull/62) starts [canonical read-only verification run37404929327](https://github.com/katasec/forge-mcl/actions/runs/37404929327). Actual zero-warning result remains pending.
+
+The single Desktop atlas row is commit `b302105b8299d8d49c287871153702e54f9101b7`, tree `02f2f57c83658025ebe73601ae39b99582710f0c`, base `4e29b0e5e46c4ec911d8aec1e96e3f6b21e8330c`, in [draft atlas PR9](https://github.com/katasec/forge-desktop/pull/9). Desktop runtime/package references are unchanged. Both drafts are attached to this chat and unmerged.
+
+## Full code reviews — R2
+
+| Stage / role / round | Start UTC | End UTC | Wall | State |
+|---|---|---|---|---|
+| `[review-code:simplicity:r2] foundation` (includes style) | 2026-10-06T02:38:01.596Z | Pending | Pending | Full current committed artifact, both full personas inline; running |
+| `[review-code:ownership:r2] foundation` | Pending | Pending | Pending | Sequential after the first reviewer finishes |
+
+No current code approval, merge, publication, installed artifact or manual acceptance is inferred from these boundaries.
+
+Root fetched PR62 merge candidate `db4bbadd8668ba34fa7767b8c8cba77d0f8a6606` and independently compared its tree to product HEAD: both are `0ca19d3923b96f25d06b0324149b34ba3d2115be`. This proves the current merge-candidate tree relation; CI artifact `source.txt` and actual build outcomes remain to be checked after the run.
+
+Documentation-only correction-evidence snapshot: seven Markdown files and 280 local links/anchors PASS; Markdown/JSON whitespace PASS; raw logs retain their original whitespace and hashes. Product tests/AOT/default-path acceptance are N/A for this document change. Product gates remain open above.

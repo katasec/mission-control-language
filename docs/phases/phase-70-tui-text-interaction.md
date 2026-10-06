@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: R12/R3 foundation corrections underway after both full code reviews requested changes. Canonical native verification, delivery and manual acceptance remain open.**
-**Next:** complete the combined approved correction, obtain fresh full code reviews and run actual canonical verification. Full independent code reviews and actual package/consumer/integration/AOT checks precede merge/publication. The operator will manually
+**Status: Corrected R12/R3 foundation candidate frozen; fresh full code reviews and canonical verification underway. Canonical native verification, delivery and manual acceptance remain open.**
+**Next:** complete fresh full code reviews and actual canonical verification of the frozen candidate. Full independent code reviews and actual package/consumer/integration/AOT checks precede merge/publication. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -26,7 +26,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | R12/R3 candidate under correction after full reviews. | Complete corrections, fresh full reviews and actual warning-free native CI, then normal delivery. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Corrected R12/R3 candidate frozen; fresh full reviews/CI underway. | Complete fresh full reviews and actual warning-free native CI, then normal delivery. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
