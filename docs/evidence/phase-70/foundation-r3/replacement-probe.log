@@ -1,0 +1,3 @@
+before replacement: pressed=True, attached=True, writes=0
+inside posted setter before input/layout: pressed=False, attached=True, enabled=False, writes=0
+after setter→release drain/layout: writes=0, oldPayloadWritten=False, oldAttached=False, oldPressed=False

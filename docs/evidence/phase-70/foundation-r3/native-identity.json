@@ -1,0 +1,8 @@
+{
+  "HelpExit": 0,
+  "VersionExit": 0,
+  "Version": "1.0.0+2022b512dd2bd108626124f22bc1cfe7652648d7",
+  "Sha256": "0A0C6620EDE15F08C44CDBA9EB32578A5B28CBDA57C771DFF9645CC7EB2468EC",
+  "ActualWarningCount": 6,
+  "Gate": "FAIL: actual local linker warnings"
+}

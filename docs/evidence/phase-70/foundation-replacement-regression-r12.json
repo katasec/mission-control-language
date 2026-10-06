@@ -1,0 +1,25 @@
+{
+  "kind": "controlled compiled-product regression",
+  "observedUtc": "2026-10-06",
+  "productRepository": "/Users/ameerdeen/progs/forge-mcl",
+  "branch": "adeen/phase70-text-foundation",
+  "baseCommit": "2022b512dd2bd108626124f22bc1cfe7652648d7",
+  "sourceState": "uncommitted R2 implementation draft; base commit is not built-source provenance",
+  "probePath": "/tmp/phase70-replacement-probe/Program.cs",
+  "probeSha256": "aa866744d032eda0845a2336ce7fc9f19781f0f0a311330268c86858a9d3b644",
+  "supervisorCommand": "dotnet run --no-build --project /tmp/phase70-replacement-probe/Probe.csproj",
+  "supervisorExitCode": 0,
+  "observations": [
+    "before replacement: pressed=True, attached=True, writes=0",
+    "inside posted setter before input/layout: pressed=True, attached=True, enabled=True, writes=0",
+    "after setter-to-release drain/layout: writes=1, oldPayloadWritten=True, oldAttached=False, oldPressed=False"
+  ],
+  "result": "FAIL: retired content allowed one stale snippet write before native layout",
+  "limits": [
+    "Native controls with a memory-only clipboard backend and no-op Kitty image transport.",
+    "Reflection locates Forge internal presentation types; native library access remains public.",
+    "No physical input, Ghostty access, OS clipboard operation, Retina observation or installed default-path acceptance.",
+    "Correction is an unapproved R12 design candidate; no corrected-product PASS is claimed."
+  ],
+  "compiledAssemblySha256": "47d8ddb52c36a5a7ee80dea8b30901cff2c44c1257376f03b76139834ffd9500"
+}

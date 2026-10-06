@@ -709,7 +709,7 @@ the tool's last-context-size metric, not an account usage measurement.
 ## Superseded R6 native-library proposal
 
 The operator rejected upstream changes/a maintained fork as the default route on 2026-10-06.
-The [public-extension candidate](phase-70.1-text-interaction-foundation.md#public-extension-candidate--not-approved) replaces this proposal. R6 review PASS is historical and grants no R7 approval; no native API or product code was implemented.
+The [public-extension contract](phase-70.1-text-interaction-foundation.md#public-extension-contract) replaces this proposal. R6 review PASS is historical and grants no later approval; no native API or product code was implemented in R6.
 
 ## Revised foundation candidate — not approved
 
@@ -1180,3 +1180,924 @@ Review assignment/result timestamps come from this chat's recorded tool and agen
 events; other boundaries are the supervisor's explicit UTC clock observations. Tokens N/A:
 reused-role per-stage usage was not independently measured. Documentation-only span ends at
 completed document validation; no product PR/merge or acceptance span is implied.
+
+## R10 bounded public foundation feasibility
+
+Operator requested “Proceed to completion please” on 2026-10-06. The existing implementer role
+ran bounded scratch native controls; no product files changed. The supervisor independently
+reran the final harness and rebuilt it: exit 0, 64 PASS observations, zero warnings/errors.
+[Durable results, pins, hashes, commands and limits](../evidence/phase-70/foundation-feasibility-r10.json).
+
+| Boundary | Observed result / correction |
+|---|---|
+| Markdown | First realization, 9 newly realized inner-scroll Paragraphs, genuine outer DocumentFlow detach/re-attach and streamed replacement; registry equals live Paragraphs plus editor. |
+| Selection claims | Both native editor types, 9 scenarios each; Ctrl+A→Ctrl+C same batch writes once, metadata preserved, raw typing/key/Paste clears prior Paragraph, menu Paste and native Undo retained. Source handlers receive Bubble, not Direct. |
+| Snippet | Native mouse/Enter/Space copy exact immutable whitespace/trailing-LF payload. Detach/hide cancels old release; fresh activation after reuse succeeds. |
+| Retirement | Tick drains posted actions/input before layout. Clear ranges/remembered target and unregister/disable Paragraphs before native content writes and detach; reconcile/re-enable live sources after arrangement. Captured fixed menu refuses retired old attached text before and after same-batch input. |
+| Supervisor correction | Initial retired-menu assertion used CLI Sources.Contains and did not prove the independent package. Replaced with captured app/parent/Text/effective native eligibility/HasSelection only; final execution has no registry predicate. |
+| Measurement | Arrange-only showing retained zero-size native hints. Visibility now precedes delegated native Measure; actual arranged zero width resets/hides. No native rendering/input logic copied. |
+
+Public HitTest prepares children, but the tested pinned Markdown setter did not realize new
+interactive Paragraphs before layout. The old physically attached source was observed and
+contained. No arbitrary dynamic-tree safety claim is made. Both complete sequential R10 design
+reviews PASS; supervisor locked the foundation design at 2026-10-05 23:43:50 UTC. Design approval
+and scratch results approve no product writes. Packed API consumer, actual CLI/fault checks and canonical warning-free product
+Native AOT remain post-implementation requirements. Prior scratch-native five linker warnings
+are not waived. Default Ghostty/Retina acceptance remains operator-only and pending.
+
+### Complete R10 design reviews
+
+Both independent reviewers read the complete current contract, evidence and owning READMEs,
+applied the governing gates and freshly inspected both complete current reference galleries.
+Neither returned a required correction. Simplicity's eleven checks:
+
+| Check | Current verdict and evidence |
+|---|---|
+| NIH | PASS — requested bounded extension; no editor, backend or framework replacement. |
+| Existing reuse | PASS — native ranges, menus, Paste/Undo and Button activation/reset. |
+| Multiple paths | PASS — one Copy result; Bubble observers and command decoration cover distinct native dispatch. |
+| Legacy | PASS — no compatibility route or stale alternate implementation. |
+| Knobs | PASS — no new settings or configurable policy. |
+| Abstractions | PASS — reusable clipboard package and CLI source-lifetime boundary; pure menus need no registry callback. |
+| Library | PASS — unchanged pins and 64 JIT observations; actual package/integration/fault/AOT remain required. |
+| Copy/paste duplication | PASS — common extraction/write routines and once-only retained native delegates. |
+| Definitions and styles | PASS — existing theme/style owner, native bold/focus semantics and complete width/state references. |
+| Size | PASS — bounded package/CLI placement; current change is docs and scratch evidence only. |
+| Test volume | PASS — actual dispatch, retirement, recycling, Undo and stale-release cases match risk. |
+
+Ownership independently derived all 23 behavior placements before comparing the candidate:
+
+| Behavior | Derived owner | Verdict |
+|---|---|---|
+| Keyboard/ranges/selection rendering | Native UI controls | PASS |
+| Paste replacement/insertion/Undo | Native editor | PASS |
+| Clipboard transport | XenoAtom Terminal | PASS |
+| Selected extraction/single truthful write | Extension ClipboardText | PASS |
+| Exact whole-text Copy | Extension ClipboardText | PASS |
+| Source Copy commands | Extension ConfigureClipboard | PASS |
+| Fixed menus | Extension | PASS |
+| Captured source/content eligibility | Pure extension menu guards | PASS |
+| Modal routing/invoke/close/focus | Native menu service | PASS |
+| Paste-result observation | Feedback-only extension handler | PASS |
+| Current Forge text target | CLI TextInteraction | PASS |
+| Copy versus Stop and editor isolation | CLI | PASS |
+| Bubble observation/native command claim | CLI | PASS |
+| Competing range clearing | CLI/public ISelectionOwner | PASS |
+| Paragraph registration/retirement/reconciliation | Bounded CLI Markdown wrapper | PASS |
+| Markdown syntax/wrapping/Kitty | Existing CLI/native rendering | PASS |
+| Immutable snippet payload | Existing CLI renderer | PASS |
+| Native header/Button composition | CLI | PASS |
+| Stale press/feedback cancellation | CLI lifecycle/public native reset | PASS |
+| Width-dependent measurement | CLI composition/delegated native Measure | PASS |
+| Feedback/theme mapping | Existing CLI theme/status owners | PASS |
+| Packing/consumption/publication | forge-mcl | PASS |
+| Component admission/inventories | New owner README/repo inventories/Desktop atlas | PASS as plan requirement |
+
+All six ownership checks PASS: complete behavior inventory, independent owner derivation from
+READMEs/atlas, existing/new classification, placement comparison, duplicate search within exactly
+the eight README-listed Forge repos, and each owner's one-job boundary. Ownership independently
+reran the final public harness: exit 0, 64 PASS observations. It checked Tick's input-before-layout
+order, disabled-source routing, Markdown setters, public Button release/reset and measurement.
+
+Security Architecture and Engineering Philosophy PASS proportionately: local presentation only,
+no hosted/store/identity change, explicit clipboard action, no payload logging/submission and
+named ownership/failure boundaries. Desktop Interaction Principles, UI Design System and TUI
+graphics apply to the current complete synthetic references; installed physical acceptance is
+pending. Rich selection remains a separate open design. The supervisor accepts both reviews
+and locks R10; the same implementer must now return a plan for sequential independent reviews
+and explicit PLAN APPROVED before writing product files.
+
+### R10 stage boundaries
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[investigate:implementer:r10] foundation feasibility` | 2026-10-05 23:14:40 | 2026-10-05 23:29:29 | 14m 49s | Final 64-observation public harness; includes supervisor corrections |
+| `[design:supervisor:r10] foundation` | 2026-10-05 23:29:40 | 2026-10-05 23:31:23 | 1m 43s | Contract reconciliation and independent JIT build/run |
+| `[review-design:simplicity:r10] foundation` | 2026-10-05 23:31:52 | 2026-10-05 23:37:07 | 5m 15s | Complete eleven-check PASS and fresh references |
+| `[review-design:ownership:r10] foundation` | 2026-10-05 23:37:50 | 2026-10-05 23:43:07 | 5m 17s | All 23 placements/six checks PASS and independent probe |
+| Supervisor design lock | 2026-10-05 23:43:50 | 2026-10-05 23:43:50 | Milestone | Both verdicts accepted; plan remains gated |
+
+Assignment/result times use recorded tool/message events, rounded down to seconds;
+supervisor design/lock use explicit clock observations. Tokens N/A. Plan and product stages
+continue separately; no product merge or installed acceptance is implied by this table.
+
+## R11 complete source-lifetime design review
+
+Planning found native direct Paragraphs outside Markdown and a differing TextBlock selection
+contract. The supervisor swept all current TUI factories and the pinned Markdown builder and
+recorded the complete source/type/lifetime audit in the active contract before the review pair.
+One zero-inset native-delegating CLI wrapper now covers direct and realized Paragraphs; the host
+owns one retire-before-native-Markdown-setter boundary. Explicitly owned chrome and scoped
+Markdown alert-title TextBlocks are nonselectable. Native TextBlock requires its flag for pointer
+selection, unlike Paragraph; no new TextBlock range mechanism or global tree mutation is added.
+TileFrame.OneLineOr accepts Visual and chooses its existing geometry from native measured height.
+Custom Forge code rendering returns before native LogControl fallback; table cells are Paragraphs.
+StartPage text flags preserve OptionList activation/appearance. Rich logical headings remain in 70.2.
+
+Both complete current R11 reviews PASS with no required correction. Supervisor accepts them and
+locks design at 2026-10-06 00:02:26 UTC. The R1 implementer plan returned one open placement;
+the same implementer must reconcile the complete R2 plan with this lock before full plan reviews.
+No product files changed and no PLAN APPROVED has been issued.
+
+| Simplicity check | R11 verdict / current observation |
+|---|---|
+| NIH | PASS — requested extension only; no host/backend/fork/framework. |
+| Reuse | PASS — native zero-inset layout, existing OneLineOr measurement, TextBlock flag. |
+| Multiple paths | PASS — one shared lifetime/Copy policy; native dispatch distinctions preserved. |
+| Legacy | PASS — no fallback, shim, range restoration or renderer. |
+| Knobs | PASS — fixed policy, no mode/options/generic update callback. |
+| Abstractions | PASS — actual source lifetime, transport and CLI policy boundaries. |
+| Library | PASS — unchanged public native hooks; R10 evidence does not claim R11 product proof. |
+| Duplication | PASS — shared retirement/write/decorator; scoped duplicate search found no equivalent. |
+| Definitions | PASS — existing tokens/styles and freshly inspected complete native-state references. |
+| Size | PASS — bounded source sweep; product diff empty; package API/rich scope unchanged. |
+| Tests | PASS — direct-source, chrome/StartPage and geometry checks address actual new paths. |
+
+Ownership derived every behavior before comparing placements:
+
+| Behavior | Derived/proposed owner | R11 verdict |
+|---|---|---|
+| Keyboard navigation/range rendering | Native UI controls | PASS |
+| Paste replacement/insertion/Undo | Native editor | PASS |
+| Clipboard transport | XenoAtom Terminal | PASS |
+| Selection extraction/truthful write | Reusable extension | PASS |
+| Exact whole-text Copy | Same extension | PASS |
+| Configure Copy commands | Same extension | PASS |
+| Fixed menus | Same extension | PASS |
+| Captured eligibility/content guards | Same extension | PASS |
+| Modal invoke/close/focus | Native menu service | PASS |
+| Nullable Paste observation | Extension feedback-only handler | PASS |
+| Current Forge target | CLI TextInteraction | PASS |
+| Copy-versus-Stop/editor isolation | CLI | PASS |
+| Raw Bubble input claim | CLI | PASS |
+| Metadata-preserving command claim | CLI | PASS |
+| Clear competing ranges | CLI/public native interface | PASS |
+| Markdown source reconciliation | Bounded CLI lifetime wrapper | PASS |
+| Direct Paragraph setup/lifetime | Same CLI wrapper | PASS |
+| Retire before content change/detach | Host update boundary/same wrapper | PASS |
+| User-pill geometry | Existing native/frame measurement | PASS |
+| Explicit chrome selection flags | CLI composition | PASS |
+| Scoped alert/snippet label flags | CLI presentation lifecycle | PASS |
+| Syntax/wrapping/Kitty | Existing CLI/native rendering | PASS |
+| Immutable code payload | CLI renderer | PASS |
+| Header/native Button | CLI renderer | PASS |
+| Stale press/feedback cancellation/reuse | CLI snippet lifecycle | PASS |
+| Width measurement/visibility | CLI/native layout | PASS |
+| Feedback/theme mapping | Existing CLI theme/status | PASS |
+| Package/consume/publish | forge-mcl extension owner | PASS |
+| Component admission/inventories | Owner README/repo/Desktop atlas | PASS as mandatory implementation requirement |
+
+All six ownership checks PASS: complete behavior inventory, independent derivation from atlas
+and READMEs before placements, existing/new classification, full current placement comparison,
+duplicate search within exactly eight README-listed Forge repos, and each owner's one-job check.
+No move or split is required. Both reviewers freshly rendered and personally inspected both
+complete current galleries, including width0–3 and combined native states; synthetic only.
+
+Security/Engineering Philosophy PASS: local presentation, hosted tier/store/identity N/A,
+explicit clipboard actions, no copied-payload logging, named failure owners. UI principles,
+TUI graphics and default-path requirements remain binding. Actual R11 product geometry/lifetime,
+package/consumer/fault and canonical warning-free AOT remain required after approved code and
+before merge/publication; prior scratch linker warnings are not waived. Installed Ghostty/Retina
+acceptance remains operator-only and pending. Tokens N/A; exact stage events follow in timing.
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[plan:implementer:r1] foundation` | 2026-10-05 23:47:02 | 2026-10-05 23:53:52 | 6m 50s | Complete plan returned with one open source-lifetime placement; no writes |
+| `[design:supervisor:r11] complete source sweep` | 2026-10-05 23:51:11 | 2026-10-05 23:54:48 | 3m 37s | Native source/type/lifetime audit, fixed shared placement and chrome policy |
+| `[review-design:simplicity:r11] foundation` | 2026-10-05 23:55:22 | 2026-10-05 23:58:21 | 2m 59s | All eleven checks PASS, complete references freshly inspected |
+| `[review-design:ownership:r11] foundation` | 2026-10-05 23:59:02 | 2026-10-06 00:02:17 | 3m 15s | All 29 placements/six checks PASS, complete references freshly inspected |
+| Supervisor design lock | 2026-10-06 00:02:26 | 2026-10-06 00:02:26 | Milestone | Complete R11 accepted; plan remains gated |
+
+Assignment/result times use recorded events rounded down to seconds; supervisor boundaries
+use explicit clock observations. R1 planning and supervisor design overlap as read-only planning
+returned the placement question; only one subagent was active. No product timing or acceptance
+is implied. Plan reconciliation/review and product stages continue separately.
+
+## Complete R2 plan reviews and approval
+
+Complete implementer R2 has no open design question; both complete independent plan reviews
+PASS without correction. Supervisor checked scope/component fit, locked R11 public/failure
+boundaries, security/philosophy, exact UI/reference/token contract, actual package/consumer/fault/
+full-suite/canonical zero-warning AOT requirements and the manual default-path exception.
+PLAN APPROVED at 2026-10-06 00:12:47 UTC. Only approval/status metadata changed after review.
+Reviewed plan SHA256: `336867f60a1efa54a3d5cb06a2f8ebf4eb3e42b8087139579cce2e56e9cd075a`.
+
+Fresh fetched clean main 0/0 baselines: forge-mcl `2022b512dd2bd108626124f22bc1cfe7652648d7`;
+forge-desktop `4e29b0e5e46c4ec911d8aec1e96e3f6b21e8330c`. Root created isolated branches
+`adeen/phase70-text-foundation` and `adeen/phase70-extension-atlas`. The same implementer owns
+only approved product edits; root owns Git/delivery and mission-control documents.
+
+### Complete simplicity verdict
+
+| Check | Verdict |
+|---|---|
+| New apps or libraries (NIH) | ✅ One requested packable assembly with the locked API and exact upstream dependencies; no host, fork or framework. [Plan:15](phase-70.1-text-interaction-foundation-plan.md) |
+| Reuse | ✅ Native extraction, menus, nullable Paste capture, editing/undo, Button and tooltip remain reused. [Plan:37](phase-70.1-text-interaction-foundation-plan.md); native [Paste:1835](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorCore.cs#L1835) |
+| Multiple code paths | ✅ One write routine and one Paragraph lifetime wrapper; native raw-event and command paths share Claim without duplicating editing. [Plan:39](phase-70.1-text-interaction-foundation-plan.md) |
+| Legacy paths | ✅ No compatibility fallback, alternate transport or parallel renderer. Existing package family and product components remain reused. [Plan:30](phase-70.1-text-interaction-foundation-plan.md) |
+| Knobs | ✅ Fixed menus, guards, source policies and feedback; no options, modes, timers or global tree mutation. [Plan:38](phase-70.1-text-interaction-foundation-plan.md) |
+| Speculative abstractions | ✅ Each new helper owns a real transport, menu, target, lifetime or snippet boundary. Admission precedes code. [Plan:18](phase-70.1-text-interaction-foundation-plan.md), [89](phase-70.1-text-interaction-foundation-plan.md) |
+| Library choice | ✅ Public feasibility supports the route; actual package consumer, CLI/fault and warning-free canonical AOT checks remain mandatory. [Plan:112](phase-70.1-text-interaction-foundation-plan.md) |
+| Copy-paste | ✅ Shared lifetime, clipboard and native-loop test setup; command decorator preserves all metadata and delegates once. Scoped Forge-repo searches found no equivalent. [Plan:40](phase-70.1-text-interaction-foundation-plan.md) |
+| Redundant definitions | ✅ Existing theme tokens and native style slots remain authoritative. Both current galleries freshly inspected against the plan’s complete state/width specification. [Plan:125](phase-70.1-text-interaction-foundation-plan.md) |
+| Size versus requirement | ✅ Proposed files cover the locked foundation and requested packaging; Desktop receives only an inventory row. Product diff remains empty. [Plan:13](phase-70.1-text-interaction-foundation-plan.md) |
+| Test volume | ✅ Tests prove routing, failure containment, stale actions, direct-source geometry, recycling and real packaging; existing regression suites are reused. [Plan:103](phase-70.1-text-interaction-foundation-plan.md) |
+
+Applied Security Architecture, Engineering Philosophy, Default-Path Acceptance, Desktop Interaction Principles, UI Design System and TUI graphics. Hosted tiers/stores/identities are N/A for this local presentation change. Historical linker warnings are not waived; operator installed acceptance and rich selection remain separate required gates.
+
+**PASS — no simplicity correction or additional abstraction required.** This verdict grants no plan or product-write approval.
+
+### Complete ownership verdict
+
+**PASS — complete plan ownership review. No required corrections.** This verdict is not `PLAN APPROVED`.
+
+References below use the current [implementation plan](phase-70.1-text-interaction-foundation-plan.md).
+
+| Behaviour | Independently derived owner | Proposed placement / plan line | Verdict |
+|---|---|---|---|
+| Keyboard navigation, selection and range rendering | Native UI controls | Existing editors/Paragraph; :37 | PASS |
+| Paste insertion, replacement and undo | Native editor | Retained native Paste; :90 | PASS |
+| Clipboard transport | XenoAtom Terminal | Existing bool transport; :36 | PASS |
+| Selected extraction and truthful single write | Reusable terminal extension | `ClipboardText`; :16, :84 | PASS |
+| Exact whole-text Copy | Same extension | `ClipboardText.CopyText`; :65 | PASS |
+| Configure editor/Paragraph Copy | Same extension | Fixed public extensions; :71, :78 | PASS |
+| Construct contextual menus | Same extension | `ClipboardMenus`; :16, :37 | PASS |
+| Guard captured menu source/content | Same extension | Pure public guards; :38 | PASS |
+| Modal routing, invocation, close and focus | Native menu service | Native behaviour retained; :37 | PASS |
+| Observe nullable Paste facts without editing | Extension | Feedback-only handler; :37 | PASS |
+| Choose current Forge text target | CLI TUI | `TextInteraction`; :18 | PASS |
+| Resolve Copy versus Stop and `/edit` isolation | CLI TUI | ChatTui/ChatScreen/FileEditor; :20 | PASS |
+| Claim raw editor input | CLI TUI | Source Bubble observers; :91 | PASS |
+| Claim commands while preserving native behaviour | CLI TUI | Metadata-preserving Execute decoration; :40 | PASS |
+| Clear competing owned ranges | CLI TUI | Public `ClearSelection`; :39 | PASS |
+| Reconcile realized Markdown Paragraphs | CLI presentation lifecycle | `ParagraphSelection`; :19, :92 | PASS |
+| Configure direct transcript Paragraphs before attachment | Same CLI lifecycle | Same wrapper; :92 | PASS |
+| Retire sources before mutation/detach | Same CLI lifecycle and host | Named ChatScreen boundary; :93 | PASS |
+| Preserve user-pill geometry | Existing CLI frame/native layout | Zero-inset wrapper and `OneLineOr`; :48 | PASS |
+| Disable explicitly owned chrome selection | CLI composition | ChatScreen/FileEditor/StartPage; :20–21, :94 | PASS |
+| Disable scoped alert/snippet label selection | CLI presentation lifecycle | Owned descendants and code control; :22, :92 | PASS |
+| Preserve Markdown, syntax, wrapping and Kitty graphics | Existing CLI/native rendering | Existing renderers reused; :30, :43 | PASS |
+| Capture immutable complete code payload | CLI code renderer | `ForgeCodeBlockRenderer`; :22 | PASS |
+| Compose header/native Button/tooltip | CLI code renderer | `CodeCopyControl`; :22 | PASS |
+| Cancel stale presses/feedback and permit reuse | CLI snippet lifecycle | Bounded native Button composition; :95 | PASS |
+| Measure visibility and constrained widths | CLI composition/native measurement | Header/native Measure; :95, :126 | PASS |
+| Map feedback, semantic styles and geometry | Existing CLI theme/status owners | ForgeTheme/ForgeStyles; :23, :129 | PASS |
+| Pack, consume and publish the extension | forge-mcl package owner | Project, verifier, Makefile and workflow; :15–17, :27 | PASS |
+| Admit component and update inventories | Owning README/repositories/system atlas | README before code; Desktop external row only; :28, :89 | PASS |
+
+| Ownership persona check | Verdict and evidence |
+|---|---|
+| 1. List required behaviours | PASS — all foundation behaviours, lifecycle and delivery responsibilities covered. |
+| 2. Derive owners before placements | PASS — atlas and actual repository/component/native READMEs read first. Core excludes command-line UX. |
+| 3. Classify existing/new ownership | PASS — native mechanics remain native; the requested package owns one bounded reusable clipboard/menu responsibility. |
+| 4. Compare complete plan | PASS — all six sections match the locked contract, source audit and verification order. |
+| 5. Search duplicates | PASS — searched exactly the eight README-listed Forge repositories; no competing implementation found. |
+| 6. Check one job per owner | PASS — CLI presentation, extension clipboard conventions and native mechanics remain distinct responsibilities. |
+
+The new component’s README precedes code. Its exact UI `[3.10.0]`/Terminal `[2.2.0]` dependencies exclude CLI, domain, Markdown and TextMate references. CLI consumption stays within the same repository; Desktop receives only an atlas row.
+
+Verification covers actual APIs and routing, failure counts, stale actions, native Paste/Undo, direct Paragraph geometry, chrome dragging, recycling and snippet reuse. Actual packing, isolated public-consumer execution, resolved dependencies/provenance and canonical warning-free CLI AOT precede merge/publication. Publication then verifies immutable version, private repository association and authenticated restore. No historical warning waiver or premature package proof appears in the plan.
+
+Both complete current light/dark galleries were freshly rendered and inspected against the plan’s geometry, widths, states, menus and tokens. They remain synthetic references. Actual product-control comparisons and operator-installed Ghostty/Retina acceptance are separately required.
+
+Security Architecture, Engineering Philosophy, Default-Path Acceptance, Desktop Interaction Principles, UI Design System and TUI graphics boundaries pass at plan-review level. Hosted tier/store/identity changes are N/A. R10’s 64 JIT observations are supporting mechanism evidence; product/package/fault/AOT acceptance remains unperformed. Continuous rich selection remains required in 70.2.
+
+Product and Desktop remain clean on their stated main baselines. **One-job findings: none. Move nothing.**
+
+### Plan-stage boundaries
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[plan:implementer:r2] foundation` | 2026-10-06 00:03:26 | 2026-10-06 00:05:47 | 2m 21s | Complete plan, no open question |
+| `[review-plan:simplicity:r1] foundation` | 2026-10-06 00:07:07 | 2026-10-06 00:09:06 | 1m 59s | Eleven-check PASS |
+| `[review-plan:ownership:r1] foundation` | 2026-10-06 00:09:47 | 2026-10-06 00:12:36 | 2m 49s | 29 placements/all six checks PASS |
+| Supervisor PLAN APPROVED | 2026-10-06 00:12:47 | 2026-10-06 00:12:47 | Milestone | Explicit root approval and isolated branches |
+
+Assignment/result times use recorded events rounded down to seconds; approval uses explicit
+clock observation. Tokens N/A. Plan approval does not prove product checks or acceptance.
+Implementation assignment began 2026-10-06 00:14:33 UTC; its held-draft result is below. Code reviews and delivery remain open.
+
+## R2 implementation draft held — 2026-10-06
+
+This is evidence of a held draft, not product completion or code-review acceptance. Same
+implementer returned the draft with product writes paused. No commit, publication or install
+occurred. The supervisor independently inspected the actual build/AOT output and reran the
+compiled-product stale-button probe and actual packed metadata verifier.
+
+| Observation | Result / limit |
+|---|---|
+| `make build` | Build log: zero warnings/errors. |
+| Package tests/pack | 16/16 tests; actual package created. First metadata spelling assertion failed; actual nuspec exact shorthand is `[3.10.0]`/`[2.2.0]`. Corrected verifier and supervisor rerun exit 0. |
+| Isolated public consumer | Implementer log reports every public API/all five results PASS; dependency log resolves UI 3.10.0 and Terminal 2.2.0 without CLI/project references. Final committed-source consumer verification remains required. |
+| Integration | 23/23 PASS; combined draft run 103/104 followed by corrected renderer fixture 1/1. A complete current rerun and full suite remain required. |
+| Canonical local CLI AOT | Exit 0 but **zero-warning gate FAIL**: unsupported ld_classic and five Homebrew dylib minimum-OS warnings. Native help/version exit 0 does not waive these. |
+| Local native identity | `1.0.0+2022b512…`; SHA256 `1a287fa8fcede21f0f401da315ca08d452134043a3e44465225882bb5af21075`. This is an uncommitted draft labelled with its base SHA, not committed-source provenance or a deliverable. |
+| Pre-layout replacement | Actual compiled ChatScreen posted setter left the old Button pressed/attached/enabled; queued release wrote its old immutable payload once before detach. Supervisor independent rerun exit 0 reproduced the same failing outcome. [Controlled evidence](../evidence/phase-70/foundation-replacement-regression-r12.json). |
+
+Logs: `/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/`. Controlled memory-only
+clipboard and no-op Kitty transport; no Ghostty, OS clipboard, physical input or Retina PASS.
+The draft's never-realized registry and nonreactive feedback-source issues were corrected within
+R2 and exercised; replacement lifetime returned to design before its correction was implemented.
+
+### Current revision and timing
+
+R12 adds synchronous Button retirement/resume at the existing CLI wrapper and canonical
+pre-merge warning enforcement in the already-planned package workflow. The unchanged main-only
+CLI release route supplies the supported installed ZIP artifact. These are candidate decisions;
+the complete current design and revised plan must pass both reviews before resumed writes.
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[implement:implementer:r1] foundation` | 2026-10-06 00:14:33 | 2026-10-06 00:43:12 | 28m 39s | Held draft and actual observations above; no completion approval |
+| `[design:supervisor:r12] foundation` | 2026-10-06 00:36:45 | 2026-10-06 00:46:54 | 10m 09s | Complete candidate, controlled regression, selected normal CI/release route and documentation validation |
+
+The supervisor design overlapped only the implementer's already-running read-only AOT/probe
+observations after product writes were paused. One active subagent at a time. Tokens N/A.
+Candidate validation: six Markdown files, 123 local links/anchors, clean whitespace; global hub
+contains no sub-phase detail. No R12 review, plan approval, corrected regression, native CI PASS,
+publication or manual acceptance is claimed here.
+
+## R12 complete design reviews
+
+### Complete simplicity verdict
+
+| Check | Verdict |
+|---|---|
+| New apps or libraries | ✅ One operator-requested packable assembly; unchanged native dependencies, no new host/backend. [foundation:447](phase-70.1-text-interaction-foundation.md) |
+| Reuse | ✅ Native ranges, menus, Paste/Undo, Button, tooltip and clipboard transport retained. [foundation:118](phase-70.1-text-interaction-foundation.md) |
+| Multiple code paths | ✅ Shared Copy routine, one source policy and one lifetime wrapper; native command delegates run once with metadata preserved. [foundation:144](phase-70.1-text-interaction-foundation.md) |
+| Legacy paths | ✅ No compatibility shim, fallback transport or retained native-patch route. [foundation:251](phase-70.1-text-interaction-foundation.md) |
+| Knobs | ✅ Fixed conventions; nullable retirement marker preserves enabled state without introducing an option. [foundation:292](phase-70.1-text-interaction-foundation.md) |
+| Speculative abstractions | ✅ Retirement/resume belongs to existing CLI wrapper/Button ownership and addresses the reproduced stale write. No additional registry or framework. [foundation:291](phase-70.1-text-interaction-foundation.md) |
+| Library choice | ✅ Public mechanisms verified against pinned source; canonical verification reuses the existing release environment. Actual warning-free output remains required. [foundation:332](phase-70.1-text-interaction-foundation.md) |
+| Copy-paste | ✅ Reuses existing reset, retirement boundary, native layout and shared clipboard helper; no duplicated editing or selection implementation. [foundation:308](phase-70.1-text-interaction-foundation.md) |
+| Redundant definitions | ✅ Existing theme tokens and native style slots. Freshly rendered/inspected both complete galleries: bold labels, combined states, widths 0–3, icon-only mode, menus and status fixtures agree. [foundation:399](phase-70.1-text-interaction-foundation.md) |
+| Size versus requirement | ✅ Bounded lifetime correction plus one verification job in the planned package workflow; release workflow remains unchanged. [foundation:350](phase-70.1-text-interaction-foundation.md) |
+| Test volume | ✅ Focused ordering, reuse, disabled-state and write-continuation cases prove actual failure boundaries; package, native layout and default-path checks remain distinct. [foundation:298](phase-70.1-text-interaction-foundation.md) |
+
+Source confirms public `IsPressed` reset prevents native release activation ([Button:276](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/Button.cs#L276)), menu execution precedes close ([ContextMenuService:372](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/ContextMenuService.cs#L372)), and nullable Paste retains native insertion/Undo ([TextEditorCore:1847](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorCore.cs#L1847)).
+
+Applied Security Architecture, Engineering Philosophy, Default-Path Acceptance, Desktop Interaction Principles, UI Design System and TUI graphics. Hosted tier/store/identity changes are N/A. Corrected-product regression, warning-free CI/release output, final package/consumer verification and operator-installed acceptance remain gates; no product PASS or approval.
+
+**PASS for simplicity. Correction:** replace the stale “foundation plan is approved” sentence in [parent:34](phase-70-tui-text-interaction.md) with the current held-draft/revised-plan status; no mechanism needs removal or expansion.
+
+Supervisor correction: swept the complete parent hub and replaced its stale present-tense plan authorization with the held-draft/revised-plan status. This changed no design mechanism. Ownership review is running; R12 is not yet locked.
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[review-design:simplicity:r12] foundation` | 2026-10-06 00:47:38 | 2026-10-06 00:54:31 | 6m 53s | Complete eleven-check PASS; status-only correction applied |
+
+Result time is the recorded agent result, rounded down to seconds; tokens N/A. Product checks, publication, installation and operator acceptance remain open.
+
+### Complete ownership verdict
+
+**PASS — current R12 ownership design.** No plan, product, AOT or installed acceptance approval.
+
+Owners were derived from the Desktop atlas, owning repo/component READMEs and pinned native READMEs before comparing placements. References below are to the current [foundation design](phase-70.1-text-interaction-foundation.md).
+
+| Behaviour | Derived owner | Proposed placement / current design line | Verdict |
+|---|---|---|---|
+| Keyboard and mouse editor selection/navigation | Native UI controls | PromptEditor/CodeEditor retained; :113 | PASS |
+| Paragraph range extraction and selection rendering | Native Paragraph | Existing public range mechanics; :114 | PASS |
+| Portable clipboard transport | Native Terminal | Existing clipboard bool APIs; :415 | PASS |
+| Truthful selection Copy and exact text writes | Terminal Extensions | `ClipboardText`; :464 | PASS |
+| Fixed editor Copy/Paste menus | Terminal Extensions | Editor configuration/native menu factory; :243 | PASS |
+| Fixed Paragraph Copy menu | Terminal Extensions | Paragraph configuration; :479 | PASS |
+| Reject stale captured menu sources/content | Terminal Extensions | Pure app/parent/eligibility/document-version/Text guards; :233 | PASS |
+| Menu invocation, closure and focus restoration | Native UI | Invoke against original target before native close; :243 | PASS |
+| Paste capture, replacement and undo | Native editor | Retained native Paste command; :244 | PASS |
+| Distinguish failed, empty and nonempty clipboard reads | Terminal Extensions | Nullable native context, feedback-only handler; :245 | PASS |
+| Bracketed Paste insertion | Native editor | Existing event-text path; :499 | PASS |
+| Choose the current Forge text source | CLI TUI | `TextInteraction`; :140 | PASS |
+| Copy precedence over Stop and editor isolation | CLI TUI | Focused editor/remembered Paragraph policy; :149 | PASS |
+| Coordinate raw input and command claims | CLI TUI | Source Bubble handlers/native delegate decoration; :152 | PASS |
+| Preserve native command metadata and execution | CLI TUI | All metadata preserved; original Execute once; :508 | PASS |
+| Configure realized Markdown Paragraphs | CLI TUI | Existing native-delegating wrapper; :166 | PASS |
+| Configure direct user/pending/notice/error Paragraphs | CLI TUI | Same wrapper before attachment; :173 | PASS |
+| Retire old Paragraph sources synchronously | CLI TUI | Named host setter/wrapper retirement; :166 | PASS |
+| Exclude owned chrome from native app selection | CLI TUI | Explicit TextBlock flags, bounded realized subtree; :183 | PASS |
+| Preserve list/quote/HTML/table/code rendering | Native Markdown plus CLI renderer | Existing native types and Forge renderer; :198 | PASS |
+| Preserve Kitty headings, frames and overlays | CLI graphics | Existing graphics owners; :206 | PASS |
+| Capture immutable complete snippet payload | CLI code renderer | Original `context.Code`, separate display trimming; :258 | PASS |
+| Native snippet activation and truthful Copy result | CLI snippet control + Extensions | Native Button and shared `ClipboardText`; :264 | PASS |
+| Detach/hide press and feedback reset | CLI snippet control | Existing public pressed reset/generation; :265 | PASS |
+| Retire snippet activation before changed Markdown setters | CLI source-lifetime wrapper | Enumerate owned attached Buttons and call Retire; :291 | PASS |
+| Preserve prior enabled state across retirement | CLI snippet control | Nullable captured flag, idempotent Retire/Resume; :292 | PASS |
+| Resume only current realized snippet visuals | CLI source-lifetime wrapper | After delegated native Arrange; :294 | PASS |
+| Reject retired write-feedback continuations | CLI snippet control | Existing generation/attachment/eligibility checks; :295 | PASS |
+| Responsive header/button geometry | CLI theme/styles and native layout | Visibility before Measure, actual-width Arrange; :267 | PASS |
+| Semantic light/dark states and status feedback | CLI theme/styles | Native reactive style slots and existing status prefix; :399 | PASS |
+| Package API, dependencies and consumer boundary | Terminal Extensions / forge-mcl packaging | Separate package, exact native dependencies, CLI project consumer; :445 | PASS |
+| Component admission and atlas inventory | Owning README/inventories | Existing held admission; Desktop external row only; :454 | PASS |
+| Pre-merge canonical native verification | forge-mcl packaging | Existing package workflow, macOS-14 verify job; :350 | PASS |
+| Verification identity and publication exclusion | forge-mcl packaging | Read-only verify; event-gated publish depends on verify; :351 | PASS |
+| Immutable private package publication/provenance | forge-mcl packaging | Existing merged-ref/package ownership route; :354 | PASS |
+| Complete native CLI release and installation | forge-mcl release owner | Unchanged four-host release, complete ZIP/sidecars; :356 | PASS |
+| Installed default-path acceptance | Supervisor/operator | Supported artifact, saved defaults, operator Ghostty/Retina; :568 | PASS |
+| Continuous rich selection and logical headings | CLI rich-selection slice | Required separate 70.2 design; :416 | PASS |
+
+| Persona check | Verdict | Current evidence |
+|---|---|---|
+| 1. List behaviours from requirement | PASS | Complete selection, clipboard, menu, snippet, lifetime, presentation and delivery rows above. |
+| 2. Derive owners independently | PASS | Atlas, forge-mcl/CLI/Core/Extensions READMEs and native library responsibilities distinguish presentation, reusable clipboard policy, editing and packaging. |
+| 3. Existing/new/wrongly-new classification | PASS | R12 adds no component. The admitted extension owns one reusable clipboard/menu concern; Core and hosted/client components do not own it. |
+| 4. Compare proposed placement | PASS | Current design matches those owners. Held source and workflow remain explicitly awaiting correction. |
+| 5. Search for duplicate implementations | PASS | Searched exactly the eight README-listed Forge repos. Matching extraction/write/menu paths are in the intended extension; CLI delegates to it. No competing implementation found. Infra has no `src` tree; its repository search produced no competing path. |
+| 6. Check owning components have one job | PASS | No owner’s Why combines unrelated responsibilities. |
+
+Actual source supports the correction and retained boundaries:
+
+- [Native Button](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/Button.cs#L276) raises mouse Click only while `IsPressed` remains true. Its renderer stamps bold at line 219.
+- [Native Tick](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/TerminalApp.cs#L694) drains posted actions and input before layout. The held [wrapper](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) currently retires only Paragraphs, explaining the observed stale Button write.
+- [Native menu invocation](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/ContextMenuService.cs#L372) executes before closing and uses explicit `CommandTarget`.
+- [Native Paste](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorCore.cs#L1847) captures once, retains nullable text and performs its existing Paste undo operation. Paragraph and TextBlock pointer handlers have different `IsSelectable` semantics.
+- Native Markdown’s custom code-renderer return bypasses its fallback; actual Forge factories retain Paragraph/Runs/TextMate and Kitty ownership.
+
+Fresh inspection of both complete light/dark SVGs found no current reference correction: normal/narrow layouts, native bold, focus/press combinations, width0–3 fixtures, menus and feedback match the specified owned slice. Four-corner resizing, corrected native rendering and Retina acceptance remain required observations.
+
+**Security Architecture, Engineering Philosophy and Default-Path Acceptance pass at design level.** Hosted tier/store/service identities are N/A. CI permissions and deliberate publication are separated; no payload logging, clipboard backend, private native access or default override is added. Desktop Interaction Principles, UI Design System and TUI graphics remain binding, under the recorded operator-only live-verification exception.
+
+The reproduced stale write and six local linker warnings remain **FAIL** observations. No corrected-product or canonical CI PASS exists.
+
+**Two-job owners: none. Move nothing across components; correct snippet retirement/resume inside the existing CLI lifetime wrapper and native warning enforcement inside forge-mcl packaging, after revised plan approval.**
+
+Ownership result event: 2026-10-06T01:00:48.791Z. Full current design ownership PASS; no product approval. Supervisor combines both full verdicts and locks R12. The sole parent-status finding was corrected without changing mechanisms. A complete replacement R3 plan and both current plan reviews are required before resumed product writes.
+
+### R12 closure and next-stage boundaries
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[review-design:ownership:r12] foundation` | 2026-10-06 00:55:53 | 2026-10-06 01:00:48 | 4m 55s | Complete ownership table/all six checks PASS |
+| Supervisor R12 design locked | 2026-10-06 01:01:15 | 2026-10-06 01:01:15 | Milestone | Both full design verdicts combined; status-only correction |
+| `[plan:implementer:r3] foundation` | 2026-10-06 01:01:54 | 2026-10-06 01:07:54 | 6m 00s | Complete six-section replacement plan; writes remain paused |
+
+Ownership and plan start use the actual recorded assignment event; result uses recorded agent event, all rounded down to seconds. Tokens N/A. No product or acceptance PASS follows from design lock.
+
+## Superseded complete R2 implementation plan
+
+Superseded by the complete R3 plan following locked R12 design. Historical approval only; no resumed-write authority.
+
+### R2 plan artifact
+
+**Status: R2 was PLAN APPROVED at 2026-10-06 00:12:47 UTC. Product writes are now paused for R12 design review and a complete revised plan; this historical plan does not authorize the retirement correction.**
+
+Parent: [foundation contract](phase-70.1-text-interaction-foundation.md).
+
+## 1. Files
+
+R11 design is locked; the supervisor approves this complete R2 plan. Product baseline is `/Users/ameerdeen/progs/forge-mcl` at `2022b512dd2bd108626124f22bc1cfe7652648d7`. The supervisor owns branches, Git and mission-control documentation.
+
+Requirement: Make composer, file-editor, and rendered-text Copy/Paste behave consistently, using native XenoAtom selection, commands, context menus, buttons, and clipboard transport wherever they meet the contract. Add a copy icon to real code snippets while preserving syntax highlighting and the established UI. Shared behaviour belongs at the TUI’s text-interaction boundary; individual controls retain editing/rendering ownership.
+
+| Files | Change and component fit |
+|---|---|
+| `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/{README.md,ForgeMission.Terminal.Extensions.csproj}` | Establish Why/Owns/Does not own/Change admission/API and dependency diagram before code. Create the independently packable net10.0/AOT-compatible assembly `ForgeMission.Terminal.Extensions`, namespace/package `Katasec.Forge.Terminal.Extensions`, candidate version 0.1.0. |
+| `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/{ClipboardResult.cs,ClipboardText.cs,EditorClipboardExtensions.cs,ParagraphClipboardExtensions.cs,ClipboardMenus.cs}` | Implement the exact public contract and internal fixed menu guards. Exact dependency constraints: UI `[3.10.0]`, Terminal `[2.2.0]`. No CLI, client, domain, Markdown or TextMate reference. |
+| [Solution](/Users/ameerdeen/progs/forge-mcl/ForgeMission.slnx), [CLI project](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj), [test project](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj) | Admit the component and add same-repo CLI and direct public-extension test references. |
+| `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs` | One internal owner for current screen/editor, live registered sources, Claim, Copy precedence and feedback. Install source-level Bubble observers and metadata-preserving native command decoration. |
+| `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs` | One zero-inset wrapper around the existing native Paragraph or MarkdownControl. Configure direct Paragraphs before attachment; delegate native layout; reconcile realized Paragraphs and disable owned descendant TextBlock selection; share retirement on content change/detach. No paint, input handling, mode or update callback. |
+| [ChatScreen](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs), [ChatTui](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatTui.cs), [FileEditor](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/FileEditor.cs) | Wire the common policy through composer, `/edit`, reply bodies and direct user/pending-user/notice/error Paragraphs. Replace Copy-versus-Stop routing while retaining Wake/turn ownership. Keep Markdown mutation in one named host boundary. Prefix existing progress/editor status with feedback. Set explicitly owned chrome TextBlocks nonselectable at construction. |
+| [StartPage](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/StartPage.cs) | Set only prompt and option-label/description TextBlocks nonselectable at construction. Preserve OptionList activation, focus, appearance and layout. |
+| [ForgeCodeBlockRenderer](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs), `/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs` | Preserve immutable complete `context.Code`; compose a native Button, native tooltip and reserved header inside the existing TileFrame. Bounded header/Button classes own measurement, pressed reset and feedback lifetime. Label/tooltip TextBlocks are nonselectable. |
+| [ForgeTheme](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeTheme.cs), [ForgeStyles](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeStyles.cs) | Add named reference geometry and semantic native style mappings. Existing colour tokens remain authoritative; no component-local palette or CSS. |
+| `/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/{ClipboardTextTests.cs,ClipboardMenuTests.cs,TerminalInteractionTestHost.cs}` | Test actual public APIs with native app routing and memory-only clipboard failure/count observations. Share bounded native-loop test setup. |
+| `/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/{TextInteractionTests.cs,CodeCopyControlTests.cs}` | Verify actual CLI routing, source/type coverage, wrapper lifetime, button lifecycle and themed native states. |
+| [FileEditorTests](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/FileEditorTests.cs), [ChatScreenTileTests](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/ChatScreenTileTests.cs), [ChatScreenMotionTests](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/ChatScreenMotionTests.cs), [StartPageTests](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/StartPageTests.cs) | Update changed constructor consumers and deliberate header-row assertions; add direct Paragraph geometry/lifetime and chrome-drag checks. Preserve graphics, motion, editor and start-page regression assertions. |
+| [Makefile](/Users/ameerdeen/progs/forge-mcl/Makefile), `/Users/ameerdeen/progs/forge-mcl/eng/verify-terminal-extensions-package.sh`, `/Users/ameerdeen/progs/forge-mcl/.github/workflows/publish-terminal-extensions-package.yml` | Add package-specific test/pack/verification targets and the existing Core publication pattern: merged ref, provenance, immutable version and private ownership/visibility. Leave Core’s files and versions unchanged. |
+| [Repository README](/Users/ameerdeen/progs/forge-mcl/README.md), [CLI README](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/README.md), [Desktop atlas](/Users/ameerdeen/progs/forge-desktop/src/README.md) | Admit the new owner/API/build routes; add one external-package atlas row linking its README. Desktop changes are documentation-only; it does not become a consumer. |
+
+`ComposerEditor`, `ForgeMarkdown`, `Transcript`, `EditFile`, CodeColours, Kitty graphics adapters and the native package family remain reused.
+
+## 2. Reuse
+
+| New item | Existing equivalent checked | Decision |
+|---|---|---|
+| Clipboard result/helper | Forge source search; native selection extraction and TerminalClipboard bool transport | No existing truthful common routine. Reuse native extraction and one write; add only the locked result vocabulary. |
+| Editor/Paragraph configuration | Native commands, menu factory, explicit CommandTarget and nullable ClipboardPasteHandler | Preserve native range, input, menu close/focus and Paste/Undo. Replace editor Copy only; the handler observes facts, returns null and never edits. |
+| Fixed menu guards | Public App/Parent/effective eligibility, document reference/Version and Paragraph.Text | Capture these facts at invocation; availability and execution validate the same pure guard. Resolve retained native Paste at invocation so CLI decoration remains effective. No CLI registry callback. |
+| TextInteraction | Existing AddKey, WakeOnInput and Stop; public routed events and ClearSelection | Add one presentation policy because existing wiring lacks selection-aware claims and precedence. Preserve native editing and existing Wake/turn ownership. |
+| Command decoration | Public Command metadata and Execute | Preserve Id, LabelMarkup, Name, DescriptionMarkup, SearchText, Gesture, Sequence, Importance, Presentation, CanExecute, IsVisible, ConsumesGestureWhenUnavailable and RouteGesture. Change only Execute: Claim, then original delegate once. |
+| ParagraphSelection | Padder layout/lifecycle, public enumeration, current CardBody/Text factories | No existing lifetime adaptation. One wrapper serves both native child types; one host Markdown update boundary performs mutation. |
+| TextBlock chrome | Native TextBlock.IsSelectable | Its pointer handlers require this flag, unlike Paragraph. Set false on owned chrome; introduce no TextBlock range mechanism. Do not modify unrelated menu/framework controls. |
+| Code control | Existing renderer/TileFrame, native Button and TooltipHost | Add one reserved row; preserve Paragraph/Runs/TextMate/wrapping. Use native activation and public pressed reset. |
+| Styles/geometry | ForgeTheme/ForgeStyles and native reactive ButtonStyle | Add named geometry and state mappings in their existing owners. |
+| Tests | XenoAtomUiCollection, native-loop tests, ForgeText and visual snapshots | Serialize native app tests; exercise extension APIs directly. Existing CLI test loading remains test-only; no production reflection/private access. |
+| Packaging | Core project metadata, verifier, Makefile and workflow | Follow the package-specific normal route without introducing a release framework. |
+
+`TileFrame.OneLineOr` accepts a Visual and chooses caps/ring from native measured height. It does not require a Paragraph type; the zero-inset wrapper must preserve those measurements.
+
+Implement this exact public surface:
+
+```csharp
+namespace Katasec.Forge.Terminal.Extensions;
+
+public enum ClipboardResult
+{
+    NoSelection, Copied, CopyFailed, PasteReadSucceeded, PasteReadFailed
+}
+
+public static class ClipboardText
+{
+    public static ClipboardResult CopySelection(
+        XenoAtom.Terminal.UI.Input.ISelectionOwner source,
+        XenoAtom.Terminal.TerminalInstance terminal);
+    public static ClipboardResult CopyText(
+        string text, XenoAtom.Terminal.TerminalInstance terminal);
+}
+
+public static class EditorClipboardExtensions
+{
+    public static void ConfigureClipboard(
+        this XenoAtom.Terminal.UI.Controls.TextEditorBase editor,
+        Action<ClipboardResult> report);
+}
+
+public static class ParagraphClipboardExtensions
+{
+    public static void ConfigureClipboard(
+        this XenoAtom.Terminal.UI.Controls.Paragraph paragraph,
+        Action<ClipboardResult> report);
+}
+```
+
+NoSelection means `HasSelection=false`. Failed/empty extraction means CopyFailed with zero writes; otherwise CopySelection calls CopyText once. CopyText writes the exact string, including empty whole-code text, and maps the transport bool. Null arguments are programmer errors; exceptions retain the UI-loop boundary.
+
+## 3. Sequence
+
+1. Complete sequential full plan reviews; await explicit `PLAN APPROVED`.
+2. On the supervisor-provided branch, establish component README admission before code, then inventories and project/solution references.
+3. Implement the exact extension API, fixed native menus and feedback-only Paste handler. Native Paste remains the sole insertion/undo path.
+4. Implement TextInteraction and wire editors before attachment. Subscribe on actual Bubble delivery; decorate native commands except Copy after construction; update all changed consumers together.
+5. Add ParagraphSelection around direct and Markdown content. Configure direct Paragraphs before attachment. After delegated native Arrange, retire absent sources and configure/register current Paragraphs with `IsSelectable=false`, `IsEnabled=true`; disable owned descendant TextBlock selection.
+6. Make ChatScreen’s single Markdown update compare Pipeline and Markdown. If either changes, retire once before native setters; unchanged content retains ranges. Retirement unregisters, clears ranges/remembered target and disables Paragraphs. Detach uses the same retirement.
+7. Sweep explicit ChatScreen/FileEditor/StartPage and snippet label/tooltip TextBlock construction for nonselectable chrome. Preserve native styles, OptionList behaviour and unrelated framework controls.
+8. Add snippet composition, semantic styles and feedback. Preserve exact payload separately from display trimming; establish width-dependent visibility before native measurement and reset pressed/local/pending feedback on detach, replacement and zero width.
+9. Add focused tests and execute verification below. Return material deviations to the supervisor.
+10. Return evidence for sequential code reviews. Supervisor then merges, publishes and installs through normal routes; manual acceptance remains a separate gate.
+
+## 4. Verification
+
+| Layer | Required observation |
+|---|---|
+| Public clipboard API | No selection, failed/empty extraction, exact nonempty/empty whole-text payload, true/false write, explicit retry and propagated exceptions. Count zero or one operation; no payload logging. |
+| Actual editors | Composer and CodeEditor keyboard selection before clicking: Shift+arrows/Home/End, native word selection and Ctrl+A→Ctrl+C in one batch. Mouse drag/double/Shift-click; raw key/text/bracketed Paste claims. Metadata preserved; native delegates run once. Selected Copy failure never calls Stop; no-selection chat retains Stop; `/edit` isolates chat shortcuts. |
+| Native menus/Paste | Right-click factory and keyboard/mouse activation against explicit original target; backwards/multiline ranges; Copy retention; Escape/outside/Tab close milestones. Null failed read versus successful empty read preserve document/range/caret/undo with distinct feedback. Nonempty Paste replaces the range and native Undo restores it. Bracketed Paste performs no clipboard reread. Retain keyboard Cut regression behaviour without adding menu Cut. |
+| Stale actions | Menu-open document replacement/version change, Paragraph.Text change, disable/hide/detach and screen swap produce zero stale clipboard/edit operations and no fabricated failure notification. Test availability and execution independently. |
+| Source/type sweep | Actual user/pending-user/notice/error Paragraphs, Markdown body/list/quote/HTML/table cells and custom code Paragraphs use the fixed policy. Explicit chrome and realized alert-title TextBlocks are nonselectable. Dragging chrome cannot intercept content Copy or applicable no-selection Stop. StartPage OptionList activation and layout remain intact. HeadingImage/Kitty/overlays remain unchanged; native LogControl fallback stays unreachable through the custom renderer. |
+| Lifetime/layout | First realization, inner scroll, genuine outer DocumentFlow recycling, streaming and screen/editor swaps. Registry contains live sources only; old trees/targets are released. Test changed setter→mouse/Copy before layout, unchanged-content range retention, detached menu refusal, direct Paragraph reattachment and single-row/wrapped user pill geometry. |
+| Snippets | Exact indentation, blank lines, LF/trailing newline, empty payload, wrapping, unknown language and pseudo-heading exclusion. Mouse/Enter/Space and focus order. Detach/hide→reattach/show→old release writes zero; fresh activation works. Failed transport and detach during an attempt cannot revive feedback. |
+| Focused commands | Run the Terminal test namespace filter, then TextInteraction/CodeCopyControl/FileEditor/ChatScreenTile/ChatScreenMotion/StartPage filters through the existing serialized UI collection. |
+| Full suite | `make build`, `make test`; zero warnings/errors. Retain graphics, motion, save/close, colour ownership and private-access boundary checks. Record existing skips accurately. |
+| Actual package | `make verify-terminal-extensions-package`: test/build/pack actual assembly; verify ID/version, exact dependencies, README/license, assembly and source commit. Restore/build/run an isolated public API consumer from the nupkg using an isolated cache, no project/CLI reference; exercise every public API and inspect resolved dependencies/provenance. |
+| Product Native AOT before merge | Publish the actual CLI for `osx-arm64` into task artifacts with `-warnaserror`, using its unchanged `AddMacNativeAotLinkerArgs` target: ld_classic and existing Homebrew paths. Run native help/version; record output/digest. Require zero warnings with no added suppression or OS workaround. Historical scratch linker warnings grant no waiver. |
+| Publication after merge | Supervisor dispatches the new package workflow at the approved merged ref; rechecks candidate 0.1.0 immutability; verifies private, repository-associated visibility, exactly one version, provenance and authenticated restore. The earlier read-only versions query returned 404; it is not publication evidence. No ACL change without an actual consuming solution. |
+| Install/release | Supervisor runs `make install` from merged main and records actual version/commit/digest. If using a CLI release, the unchanged main-only workflow must perform its actual cross-platform native checks; no unexecuted PASS is assumed. |
+
+**UI reference contract**
+
+Apply [Desktop Interaction Principles](/Users/ameerdeen/progs/mission-control-language/docs/design/desktop-interaction-principles.md), [UI Design System](/Users/ameerdeen/progs/mission-control-language/docs/design/ui-design-system.md) and [TUI graphics](/Users/ameerdeen/progs/mission-control-language/docs/design/tui-graphics.md).
+
+Binding references are [foundation light](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-70.1/foundation-light.svg), [foundation dark](/Users/ameerdeen/progs/mission-control-language/docs/images/phase-70.1/foundation-dark.svg) and [colour/run evidence](/Users/ameerdeen/progs/mission-control-language/docs/evidence/phase-70/foundation-colours.json). Reuse surrounding appearance from the finish-line mockup, Phase 64 plain/hands images and operator chat reference.
+
+| Owned slice | Required comparison |
+|---|---|
+| Geometry | Synthetic 10×20 cells, normal 100×32 and narrow 60×24; all four `[60,100]×[24,32]` corners and continuous resize. Reference frame `(10,8,W−20,height)`, insets left/right 4, top 2, bottom 1; content width `W−28`. Header y=10 shifts unchanged code from y=10 to y=11. Button `(W−29,10,15,1)`. Product geometry comes from named theme tokens. |
+| Narrow layout | Available widths 0/1/2/3 and transition around 15 cells. Zero retains header, hides/untabs the same Button and resets feedback. Positive width restores visibility before native measurement. Widths 1–2 use glyph/zero padding; width 3 uses one-cell side padding; below 15 uses icon with full tooltip. Native focus repair remains authoritative. |
+| Button states | `⧉ Copy code`, `✓ Copied`, `! Copy failed`; exact tooltips Copy code/Copied/Copy failed. Native bold, focus underline, hover, pressed, disabled and combined states. Disabled takes precedence; pressed retains focus underline through reactive style mapping. |
+| Menus/status | Native editor Copy/Paste 17×6 and Paragraph Copy-only 16×5; selected/hovered/disabled states. Failed Paste retains backwards beta range/caret. Clipboard prefix preserves progress/save status using ` · `. |
+| Tokens | CodeBlockText/TextMuted/Success/Error on CodeBlockFill; pressed CodeBlockText on Selection. Menu/tooltip Text on SurfaceAlt; selected TextStrong on Selection; hover TextStrong on SurfaceAlt; disabled TextMuted on SurfaceAlt; Border on SurfaceAlt. Preserve native/TextMate selection foregrounds. |
+| Theme/state lifetime | ForgeConfig selects dark/light; absent theme remains dark. No local colours or new theme selector. Reset feedback on next action/source edit, loss of both focus and hover, detach/replacement/hide; no timer. |
+| Controlled evidence | Render actual product native controls; compare cells, runs, bounds, tooltips and state semantics with both galleries. Verify recognised-language selected runs beyond historical csharp evidence. Unreadable pairs return to design. Preserve Kitty frames/headings, syntax, motion, composer and StartPage appearance. |
+
+**Installed default-path acceptance**
+
+The operator uses installed merged Native AOT `forge`, normal saved login, absent `FORGE_API_ENDPOINT`, normal hosted dependencies, Ghostty with Kitty/truecolor and no multiplexer. Use a dedicated scratch Project created through normal `forge project create`, plain Chat without hands, synthetic messages and a disposable `/edit` file.
+
+Record actual artifact/version/commit/digest, Ghostty version, laptop Retina provenance, font/cell/window metrics, both themes and normal/narrow windows. Observe physical gestures, exact pasted content, menu cancellation/Paste, file save/close, active-turn Copy, snippet feedback and graphics comparison. Restore temporary theme configuration. No agent Ghostty, alternative capture/input or OS clipboard access. Automated evidence remains controlled.
+
+Done when: Composer and `/edit` provide the agreed selection and contextual Copy/Paste behaviour without requiring a prior click; selection-aware Copy never cancels a turn; snippet controls copy exact code with truthful feedback; themes and graphics match the binding reference on laptop Retina; focused interaction tests, required suite and Native AOT checks pass with zero warnings; operator-run installed default-path acceptance passes and the supervisor records its evidence. Continuous rich selection closes in 70.2, not through a snippet-button substitute.
+
+Until manual observations pass, delivery status is **implemented; awaiting manual acceptance**. Rich logical headings, alert-title and continuous multi-Paragraph semantics remain required in 70.2.
+
+Security tier/store/identity changes are N/A: local presentation and explicit clipboard actions only. The selected public package boundary is locked; copied payloads are neither logged nor submitted.
+
+## 5. Principles that changed a decision
+
+| Implementer rule | Choice |
+|---|---|
+| 1 — No NIH | Retain native range/input/menu/Paste/Undo/Button/tooltip/transport and normal packaging routes. |
+| 2 — No duplicate paths | One extraction/write result and one Paragraph lifetime wrapper; no unchecked owned-source or compatibility route. |
+| 3 — Minimum needed | TextBlock chrome uses its existing flag; add no new selection mechanism or rich-selection substitute. |
+| 4 — No speculative abstractions | Fixed menus and a bounded native-child wrapper; no options, mode, registry callback or input framework. |
+| 5 — Stay in scope | Build the locked R11 source audit; return any newly discovered owned type or contract deviation to design. |
+| 6 — Verified means done | Separate package/product/AOT checks, publication and attributed installed acceptance. |
+| 7–9 — Outline/small/top-down | Put operations and lifecycle entry points first; helpers represent coherent guard, transport or presentation steps. |
+| 10–12 — Explicit errors/shallow flow/isolated side effects | Preserve bool/null facts, early stale rejection and native Paste ownership; transport stays in ClipboardText. |
+| 13 — Zero warnings | Use canonical linker ownership without new suppressions. |
+| 14–15 — Real extraction/complexity | Extract real shared eligibility/lifetime/transport seams; assess changed functions against ≤15, preferably ≤10, without trivial helper splitting. |
+
+## 6. Open questions and assumptions
+
+None. R11 resolves the source/type/lifetime placement. Candidate package 0.1.0 remains subject to the required immutable-version observation; a collision returns to the supervisor rather than silently changing it.
+
+Supervisor issued explicit `PLAN APPROVED` at 2026-10-06 00:12:47 UTC. Implement only this plan
+on `adeen/phase70-text-foundation` in forge-mcl and `adeen/phase70-extension-atlas` in
+forge-desktop. Root owns Git/mission-control documents. Focused/full/package/consumer/fault,
+actual product native-control comparison and canonical warning-free AOT observations must pass
+before merge/publication; no live acceptance or rich-selection completion is implied.
+
+### Prior canonical release environment observation
+
+Supervisor read the complete [v0.9.3 release run](https://github.com/katasec/forge-mcl/actions/runs/37219462386) log on 2026-10-06. At source `19f2e78d9154e5ba2d05bb216b01a910b2c52cf6`, all four native publish steps generated native code, reached dist output, and contained zero actual compiler/linker warning lines. macOS job used macOS 14.8.9 / macos-14-arm64 image 20260831.0302.1. Complete downloaded log SHA256: `cc21dc9cfb0b0b97b3432bb861d367635f808206729360844d556db2f263cea1`. This confirms historical baseline viability of the existing environment; it is not current foundation, package, CI or acceptance PASS. Current reviewed-tree verification remains mandatory.
+
+## Complete R3 plan reviews
+
+Current candidate SHA256: `f9396379f759a0d6e8d90bb4924ea3c9f36ee2d8c0da9cabe9d3341c4dff6edc`. No product-write authorization.
+
+### Complete simplicity verdict
+
+| Check | Verdict |
+|---|---|
+| New apps or libraries | ✅ Requested packable extension only; exact native dependencies, no new host, backend or framework. [plan:17](phase-70.1-text-interaction-foundation-plan.md) |
+| Reuse | ✅ Native selection, menus, nullable Paste, insertion/Undo, Button and tooltip retained. [plan:39](phase-70.1-text-interaction-foundation-plan.md); [native Paste:1847](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Controls/TextEditorCore.cs#L1847) |
+| Multiple code paths | ✅ One Copy routine, source policy, wrapper and pre-setter retirement boundary; native commands delegate once. [plan:107](phase-70.1-text-interaction-foundation-plan.md) |
+| Legacy paths | ✅ No compatibility/fallback route; existing release workflow and linker targets remain authoritative. [plan:32](phase-70.1-text-interaction-foundation-plan.md) |
+| Knobs | ✅ Fixed conventions; nullable enabled-state marker serves retirement, with no option, timer or mode. [plan:126](phase-70.1-text-interaction-foundation-plan.md) |
+| Speculative abstractions | ✅ Package, wrapper and Button have concrete boundaries. Retirement reuses existing ownership without another registry or callback framework. [plan:44](phase-70.1-text-interaction-foundation-plan.md) |
+| Library choice | ✅ Pinned public hooks support the route. Actual package consumer and warning-free product AOT remain mandatory observations. [plan:160](phase-70.1-text-interaction-foundation-plan.md) |
+| Copy-paste | ✅ Shared reset/lifetime/transport; no copied native editing. All command metadata is preserved. No equivalent found outside the held draft in the eight Forge repositories. [plan:101](phase-70.1-text-interaction-foundation-plan.md) |
+| Redundant definitions | ✅ Existing theme tokens and native styles; both complete galleries freshly rendered/inspected against widths, combined states, menus and feedback. [plan:184](phase-70.1-text-interaction-foundation-plan.md) |
+| Size versus requirement | ✅ All untracked files included in review. Planned helpers, extension, tests and verification workflow match the foundation/package requirement; Desktop adds one atlas row. [plan:15](phase-70.1-text-interaction-foundation-plan.md) |
+| Test volume | ✅ Tests target actual routing, failure, lifecycle, geometry and packaging boundaries. Fresh setter-before-input regression and native rendered feedback are required. [plan:144](phase-70.1-text-interaction-foundation-plan.md) |
+
+Security Architecture, Engineering Philosophy, Default-Path Acceptance, Desktop Interaction Principles, UI Design System and TUI graphics are covered. Read-only PR verification and event-gated publication remain separate; corrected regression, current CI/AOT, committed provenance and operator-installed acceptance are unproved execution gates. Rich selection remains required in 70.2.
+
+**PASS — no remove/merge correction or unresolved design/API/verification gap in the R3 plan. This grants no plan approval or product PASS.**
+
+Plan simplicity assignment event: 2026-10-06T01:08:59.950Z; result event: 2026-10-06T01:11:24.680Z. Both are stage boundaries, not thread lifetime; tokens N/A.
+
+### Complete ownership verdict
+
+**PASS — complete current R3 plan ownership review.** Reviewed plan SHA256 `f9396379f759a0d6e8d90bb4924ea3c9f36ee2d8c0da9cabe9d3341c4dff6edc`. This grants no plan approval or held-code acceptance.
+
+`P` below denotes the current [implementation plan](phase-70.1-text-interaction-foundation-plan.md).
+
+| Behaviour | Independently derived owner | Proposed placement / evidence | Verdict |
+|---|---|---|---|
+| Editor keyboard/mouse range and navigation | Native UI editors | Retained PromptEditor/CodeEditor; P:145 | PASS |
+| Paragraph selection/rendering | Native Paragraph | Native mechanics retained; P:39 | PASS |
+| Clipboard transport | Native Terminal | Existing bool transport; P:38 | PASS |
+| Selection extraction and truthful Copy results | Terminal Extensions | `ClipboardText`; P:93 | PASS |
+| Exact whole-text writes, including empty payload | Terminal Extensions | Shared `CopyText`; P:93 | PASS |
+| Fixed editor Copy/Paste menus | Terminal Extensions | Editor configuration; P:95 | PASS |
+| Fixed Paragraph Copy menu | Terminal Extensions | Paragraph configuration; P:95 | PASS |
+| Captured-menu identity/content/eligibility guards | Terminal Extensions | Same pure availability/execution guard; P:96 | PASS |
+| Menu invocation, closure, modal routing and focus | Native UI | Original target, native invocation-before-close; P:95 | PASS |
+| Paste capture, insertion and undo | Native editor | Retained current native Paste Execute; P:97 | PASS |
+| Failed versus empty clipboard-read facts | Terminal Extensions | Nullable feedback-only handler; P:98 | PASS |
+| Bracketed Paste | Native editor | Event-text insertion without reread; P:98 | PASS |
+| Current Forge text targeting | CLI TUI | `TextInteraction`; P:20 | PASS |
+| Selection-aware Copy versus Stop | CLI TUI | Existing chat/turn policy, editor isolation; P:113 | PASS |
+| Mouse and raw-input source claims | CLI TUI | Preview selection claims and source Bubble observers; P:110 | PASS |
+| Native command claim/delegation | CLI TUI | Every public metadata field preserved, original Execute once; P:101 | PASS |
+| Direct Paragraph configuration | CLI source lifetime | Same wrapper before attachment; P:116 | PASS |
+| Realized Markdown registration/reconciliation | CLI source lifetime | Post-native Arrange; P:118 | PASS |
+| Synchronous Paragraph retirement | CLI host/wrapper | Named pre-setter boundary; P:120 | PASS |
+| Owned chrome selection exclusion | CLI presentation | Explicit TextBlock flags/scoped realization; P:132 | PASS |
+| StartPage option activation/layout | CLI StartPage and native OptionList | Selection flag only; P:23 | PASS |
+| Immutable complete snippet payload | CLI code renderer | Original `context.Code`; P:24 | PASS |
+| Snippet header/native Button/tooltip composition | CLI code renderer/control | Existing frame and rendering; P:133 | PASS |
+| Detach/hide press and feedback reset | CLI snippet control | Existing reset, native public fields; P:130 | PASS |
+| Retire snippet Buttons before native setters | CLI source-lifetime wrapper | Bounded owned subtree, no registry; P:125 | PASS |
+| Preserve retirement-owned enabled state | CLI snippet control | Nullable marker, repeated retirement preserves original value; P:126 | PASS |
+| Resume current retained/recycled Buttons | CLI source-lifetime wrapper | After delegated native Arrange; P:128 | PASS |
+| Reject obsolete transport/feedback continuation | CLI snippet control | App/parent/generation/effective ancestor guards; P:129 | PASS |
+| Width-dependent layout and focus eligibility | CLI header/theme/styles plus native layout | Visibility before Measure, width0 reset, native focus repair; P:185 | PASS |
+| Reactive feedback and status preservation | CLI presentation | Actual native feedback/state observations; P:156 | PASS |
+| Light/dark semantic styling and geometry | CLI ForgeTheme/ForgeStyles | Existing token owners, native style slots; P:188 | PASS |
+| Syntax, wrapping, frames, Kitty headings and motion | Existing CLI/native rendering owners | Explicit preservation; P:190 | PASS |
+| Package API/dependencies/consumer boundary | Terminal Extensions / forge-mcl packaging | Exact package identity and pins, same-repo CLI reference; P:17 | PASS |
+| README/inventory/component admission | Owning component/repo documentation | Reconcile before code correction; P:106 | PASS |
+| Desktop atlas admission | Desktop atlas documentation | One external row, no consumption; P:30 | PASS |
+| Actual package and isolated consumer verification | forge-mcl packaging | Packed artifact, dependencies and committed provenance; P:159 | PASS |
+| Read-only pre-merge native verification | forge-mcl packaging | Existing package workflow, macOS-14 job; P:134 | PASS |
+| Warning enforcement and tested-tree identity | forge-mcl packaging/supervisor | Complete output, warning/nonzero failure, merge-tree comparison; P:162 | PASS |
+| Private immutable publication authority | forge-mcl packaging/supervisor | Event-gated publish depends on verify; P:163 | PASS |
+| Native release and complete ZIP installation | Existing forge-mcl release owner/supervisor | Unchanged four-host workflow and supported install directory; P:164 | PASS |
+| Installed default-path acceptance | Operator/supervisor | Normal artifact/configuration/dependencies, attributed observations; P:194 | PASS |
+| Continuous rich selection/logical headings | Dependent CLI rich-selection design | Remains required in 70.2; P:202 | PASS |
+
+| Persona check | Verdict | Evidence |
+|---|---|---|
+| 1. List required behaviours | PASS | Complete selection, clipboard, source lifetime, snippet, presentation and delivery table above. |
+| 2. Derive owners before placements | PASS | Current Desktop atlas, forge-mcl/CLI/Core/Extensions READMEs and native responsibilities were checked before the plan. |
+| 3. Existing/new/wrongly-new classification | PASS | R3 introduces no additional component. The admitted extension’s Why covers reusable clipboard/menu behaviour; CLI retains presentation policy and lifetime. |
+| 4. Compare placements | PASS | All six plan sections match locked R12 responsibilities. Untracked product/package/test/workflow files were considered as held draft, not accepted implementation. |
+| 5. Search duplicates | PASS | Fresh search covered exactly the eight README-listed Forge repositories. CLI delegates transport/results to the extension; no competing implementation was found. |
+| 6. Check owners have one job | PASS | No component acquires an unrelated responsibility. |
+
+Actual pinned sources confirm native menu execution before close, nullable Paste capture and native undo, source Bubble routing, disabled-input exclusion, public Button press reset, and complete Command metadata. Native Tick drains posted actions/input before layout, supporting the planned synchronous retirement boundary.
+
+Fresh inspection of both complete galleries agrees with P:184–190: normal/narrow geometry, bold labels, combined focus/press states, width0–3/full-label cases, menus, ranges and feedback. Actual product rendering, four-corner resizing, broader selected-syntax checks and operator Retina acceptance remain required.
+
+Security Architecture, Engineering Philosophy, Default-Path Acceptance, Desktop Interaction Principles, UI Design System and TUI graphics are satisfied at plan level. Hosted tiers/stores/service identities are N/A; verification uses read authority and publication remains deliberate. The stale snippet write and six local linker warnings remain FAIL observations; historical successful release logs do not prove current CI success.
+
+One supervisor documentation correction: [parent hub:4](phase-70-tui-text-interaction.md) still says to review the design despite its locked status. Change Next to complete the replacement plan reviews and obtain explicit plan approval before resumed writes. The R3 plan needs no ownership correction.
+
+**Two-job owners: none. Move nothing.**
+
+### Supervisor R3 approval
+
+Both complete plan verdicts PASS. Supervisor independently checked complete scope, owner/component fit, defined public/internal shapes, native reuse, synchronous retirement/continuation failure boundaries, CI permission/event guards, package and committed-source verification, current warning-free AOT, exact UI references/tokens/controls, supported ZIP delivery and operator-only default acceptance. No design gap remains. The parent Next/status sweep below changes authorization metadata only.
+
+**PLAN APPROVED at 2026-10-06 01:15:19 UTC** for the same implementer to execute the complete R3 plan against locked R12 design. Reviewed candidate SHA256 remains `f9396379f759a0d6e8d90bb4924ea3c9f36ee2d8c0da9cabe9d3341c4dff6edc`; only approval/status metadata changes after review. Product evidence, full code reviews, actual CI, merge/publication/install and attributed manual acceptance remain required.
+
+Ownership result event: 2026-10-06T01:15:06.659Z. Assignment starts are taken from recorded events; tokens N/A. No product acceptance follows from approval.
+
+### Complete R3 plan and resumed implementation boundaries
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[review-plan:simplicity:r2] foundation` | 2026-10-06 01:08:59 | 2026-10-06 01:11:24 | 2m 25s | Complete eleven-check PASS |
+| `[review-plan:ownership:r2] foundation` | 2026-10-06 01:12:23 | 2026-10-06 01:15:06 | 2m 43s | Complete behaviour table/all six checks PASS; parent Next status corrected |
+| Supervisor R3 PLAN APPROVED | 2026-10-06 01:15:19 | 2026-10-06 01:15:19 | Milestone | Both full verdicts combined, no mechanism change |
+| `[implement:implementer:r2] foundation` | 2026-10-06 01:16:56 | 2026-10-06 01:39:22 | 22m 26s | R3 draft returned; managed/package/control checks PASS, local AOT warning gate FAIL |
+
+Times use recorded assignment/result events rounded down to seconds; approval is an explicit clock observation. Tokens N/A. The new approval-artifact SHA256 is `e4747db9ce55c411fb92eb23631f99270cbcc33130ce3132c95481de6c013a13`; only approval/status metadata differs from the reviewed candidate. No code, CI, delivery or manual PASS follows from this table.
+
+## R3 implemented candidate — controlled evidence
+
+Returned at 2026-10-06T01:39:22.003Z. This is an implementation report and controlled evidence, not independent code approval, merged delivery or installed acceptance. Supervisor verified all 18 manifest file sizes/hashes and retained their complete output in the evidence directory. Reviewed staged trees: forge-mcl `bb3770c5b9efab0ccb652fe9560d47779e704779`; Desktop atlas `02f2f57c83658025ebe73601ae39b99582710f0c`.
+
+Phase 70.1 foundation R3 implementation is ready for independent code review. Focused tests, full suite, build, package and fresh consumer checks pass. **Local Native AOT fails the zero-warning gate with six linker warnings.** CI, delivery and operator acceptance remain open.
+
+| Files | Change |
+|---|---|
+| `src/ForgeMission.Terminal.Extensions/README.md`, project, `ClipboardResult.cs`, `ClipboardText.cs`, `EditorClipboardExtensions.cs`, `ParagraphClipboardExtensions.cs`, `ClipboardMenus.cs` | Independently packable public extension; truthful Copy/Paste results; fixed guarded native menus; exact UI3.10.0/Terminal2.2.0 pins. Native editing, insertion and Undo retained. |
+| `ForgeMission.slnx`, CLI/test projects | Admit the extension and same-repository consumers/tests. |
+| `TextInteraction.cs` | Owned-source claims, selected editor/rendered Copy precedence, Copy versus Stop isolation, Bubble observers, native command metadata/delegate preservation, reactive feedback. |
+| `ParagraphSelection.cs` | Configure direct Paragraphs before attachment; register only realized sources after native Arrange; reconcile/unregister removed trees; scoped chrome opt-out; synchronous snippet retirement and post-Arrange resume. |
+| `ChatScreen.cs`, `ChatTui.cs`, `FileEditor.cs`, `StartPage.cs` | Integrate composer/editor/transcript sources; retire before changed Markdown setters; preserve existing behavior; make owned chrome nonselectable. |
+| `ForgeCodeBlockRenderer.cs`, `CodeCopyControl.cs` | Exact immutable code payload, native reserved header/Button/tooltip, narrow-width states, truthful feedback. R12 nullable prior-enabled retirement, effective ancestor eligibility and stale continuation guards. |
+| `ForgeTheme.cs`, `ForgeStyles.cs` | Semantic geometry and light/dark native state mappings. Existing syntax foregrounds retained. |
+| Terminal/CLI interaction tests and existing FileEditor, tile, motion, StartPage tests | Actual native routing, menus, Paste/Undo, lifecycle, rendered feedback, source/chrome and responsive evidence. |
+| Makefile, package verifier, package workflow | Pack verification; read-only macOS-14 PR verification; complete warning enforcement and identity artifacts; publication depends on verification and permitted events. |
+| Repository/CLI READMEs; Desktop `src/README.md` | Component inventories and one external-package atlas row. No Desktop consumer code. |
+
+The constructor registration retention defect is corrected: never-realized Paragraph wrappers configure without entering the live registry. Feedback source identity is reactive, so already-focused buttons repaint immediately. R12 fixes the actual setter-before-input race: the old button becomes disabled/unpressed before its queued release, producing zero writes; replacement activation succeeds.
+
+| Actual command/check | Result |
+|---|---|
+| `make build` | PASS; zero warnings/errors, 1.92s. |
+| `dotnet test tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj -warnaserror --filter 'FullyQualifiedName~ForgeMission.Tests.Terminal\|FullyQualifiedName~TextInteractionTests\|FullyQualifiedName~CodeCopyControlTests\|FullyQualifiedName~FileEditorTests\|FullyQualifiedName~ChatScreenTileTests\|FullyQualifiedName~ChatScreenMotionTests\|FullyQualifiedName~StartPageTests'` | **135 passed**, zero skipped, 46s; zero actual warnings. |
+| Approved `env -u MCL_API_KEY make test` | **831 passed, six skipped, total837**, 2m36s; zero actual warnings. Existing live Claude/Copilot/wire tests skip for absent prerequisites. |
+| Original `make test` | Retained FAIL: 832 passed, two failed, three skipped. Inherited-key expectation and live Claude server startup timeout. Replay reports port58500 already in use; copied scratch fixture on59861 starts with `/health`200. No unrelated fix or new skip. |
+| `make verify-terminal-extensions-package` | PASS; Release Terminal tests20/20; actual nupkg/snupkg; metadata, contents and exact native dependency verification. |
+| Fresh `/tmp/phase70-packed-consumer-r12-current` restore/run/list | PASS using its sole fresh cache; every public API/result exercised; extension0.1.0, UI3.10.0, Terminal2.2.0 resolved without CLI/project references. |
+| `dotnet publish src/ForgeMission.Cli -c Release -r osx-arm64 -o artifacts/phase70-foundation/r12/native -warnaserror` | Exit0, **warning gate FAIL**: unsupported `ld_classic`, two OpenSSL and three Brotli macOS-version warnings. No suppression/environment changes. |
+| Native `--help`, `--version` | Both exit0; version `1.0.0+2022b512dd2bd108626124f22bc1cfe7652648d7`. |
+| Workflow static checks | Ten shell blocks pass syntax; read-only PR verification, publication dependency/event gates and C#/IL/linker warning matcher pass. Actual CI unexecuted. Existing system Ruby PATH warning retained separately. |
+
+Positive and negative observations include no-click keyboard Copy, failed Copy consuming without Stop, actual ChatTui/editor isolation, native menu cancellation/backwards ranges/Paste/Undo, stale menu refusal, bounded Markdown/DocumentFlow source registration, discarded wrappers, exact whitespace payload, retirement/detach/hide/disabled ancestor containment and fresh retry.
+
+Both themes have current native cells/runs/tooltips and combined hover/focus/press/result/disabled evidence. All four viewport corners, continuous resizing, width0–3/icon/full-label transitions and selected csharp/go/json foreground preservation pass. Selected contrast observations range from3.68 in light and4.26 in dark at the minimum; no new threshold or palette was introduced. These are controlled observations, not Retina acceptance.
+
+Evidence is under [retained R3 manifest](../evidence/phase-70/foundation-r3/manifest.json), including complete logs and hashes.
+
+- Nupkg/cache nupkg SHA256: `3C120F4331B604F0A709ADEBE3802345FA401B8DCF536F334B5241A955ABCA52`
+- Packed/cache/consumer-output extension DLL SHA256: `E765DCFC6C8BCE50F96C30AA0CA141898FE4F74DC593AA5D94727218959A9365`
+- Native executable SHA256: `0A0C6620EDE15F08C44CDBA9EB32578A5B28CBDA57C771DFF9645CC7EB2468EC`
+- Manifest SHA256: `37C1C441008BC0050A44E1417603168C16B7994906D27D48742E4EAFBF06B458`
+
+Candidate base-HEAD package/native metadata is a controlled check; it does not prove uncommitted code originated from that commit.
+
+Principles affecting implementation: native reuse avoided editing/transport duplication; existing host/wrapper/reset boundaries contained retirement without a registry/framework; explicit bool/null results preserved failures; reactive state preserved feedback ownership; zero-warning checks retain the local AOT failure honestly.
+
+No open design question or scope deviation remains. Done-when interaction conditions have controlled evidence; laptop Retina, warning-free current CI AOT and installed default-path acceptance remain unproved. Root owns reviews, committed provenance, CI, merge/publication, release/install and attributed operator acceptance. Continuous rich selection remains Phase70.2.
+
+Supervisor independently inspected the final build, focused/full-suite and native logs, ran the actual package verifier, reran the genuinely fresh packed consumer, and independently compared package/cache/output hashes. [Packed consumer evidence](../evidence/phase-70/foundation-packed-consumer-r12.json). The later occupied-port replay and fresh-port health observation support startup investigation; the original test discarded startup output, so they do not prove the exact original timeout cause. Local AOT remains FAIL; canonical CI must pass before merge.
+
+## R3 full code reviews — R1
+
+Candidate trees remain `bb3770c5b9efab0ccb652fe9560d47779e704779` (forge-mcl) and `02f2f57c83658025ebe73601ae39b99582710f0c` (Desktop atlas). Findings are open in the active spoke; no current merge approval.
+
+### Simplicity and code style
+
+Simplicity — **REVISE**
+
+| Check | Verdict |
+|---|---|
+| New apps or libraries | ✅ Separate package is explicitly required; native dependencies remain exact pins. [Project:24](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj) |
+| Reuse | ⚠️ Code Paragraph gets an additional lifetime wrapper inside the existing Markdown wrapper. Both register and retire the same source. [Renderer:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs), [outer wrapper:296](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs) |
+| Multiple code paths | ⚠️ Two lifetime owners for code Paragraphs; clipboard transport itself has one route. [Reconciliation:33](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) |
+| Legacy paths | ✅ No fallback clipboard implementation or compatibility route. [Copy:9](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) |
+| Knobs | ✅ Fixed menus, widths, tokens and lifecycle conventions. [Geometry:15](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeTheme.cs) |
+| Speculative abstractions | ⚠️ The inner wrapper adds another registry without a separate ownership boundary. [Renderer:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs) |
+| Library choice | ✅ Retains native menus, Paste capture/insertion/Undo, selection, Button and transport. [Editor adaptation:24](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs) |
+| Copy-paste | ✅ One extraction/write implementation; eligibility checks remain at their distinct owners. [Clipboard boundary:18](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) |
+| Redundant definitions | ✅ New geometry is named in ForgeTheme; colors reuse existing semantic tokens. [Styles:137](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeStyles.cs) |
+| Size versus requirement | ✅ Full 34-file diff includes the required package, integration, tests and verification workflow; scope otherwise matches the requirement. [Component admission:17](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/README.md) |
+| Test volume | ⚠️ The 1,130 new test lines cover meaningful behavior, but required negative observations remain missing. Actual-root tests cover write failure, while extraction failure/empty extraction is API-only. [Root test:23](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs), [API cases:13](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardTextTests.cs) |
+
+Remove the inner code wrapper, configure its Paragraph before attachment, and let the existing Markdown wrapper own registration and retirement.
+
+Code style — **REVISE**
+
+| Check | Verdict |
+|---|---|
+| Progressive disclosure / outline first | ✅ New production files identify their narrow responsibility before their entry points. [Interaction boundary:10](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs) |
+| Small functions | ⚠️ Actual-root test combines substantial TUI fixture construction with the routing/assertion timeline. Extract fixture construction as a coherent step. [Test:23](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs) |
+| Top-down order | ⚠️ Private label/helper implementations precede lifecycle entry points or later tests. [Label:61](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs), [test helpers:442](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs) |
+| Explicit errors | ✅ Bool/null failures remain truthful; exceptions propagate; pending cleanup uses finally. [Write continuation:105](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) |
+| Shallow nesting | ✅ Changed production flows use early exits and bounded loops. [Lifetime:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs) |
+| Separate side effects | ✅ Clipboard I/O is isolated from source policy and native editing. [Transport:18](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) |
+| Zero warnings | ⚠️ Build has zero warnings, but local native publish contains six linker warnings. Canonical CI remains unexecuted. [Actual log:21](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r12/native-publish.log), [enforcement:54](/Users/ameerdeen/progs/forge-mcl/.github/workflows/publish-terminal-extensions-package.yml) |
+| Extract for a real reason | ⚠️ Keep the shared wrapper; remove its redundant nested instance. [Renderer:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs) |
+| Complexity | ✅ Manual classic McCabe counting, treating lambdas separately: new production maximum 9 (`Copy`); largest new lifecycle test callback 12; changed `UpdateAsync` 11. None exceeds 15. [Copy:105](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs), [test callback:300](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs) |
+
+Move helpers below entry points and separate actual-root fixture construction from its assertions.
+
+Complete the missing controlled checks: root extraction failure/empty extraction without Stop; all decorated commands’ metadata and once-only delegation; keyboard Paste/Undo and Cut; mouse menu activation, ancestor guards and modal underlay refusal; chrome input isolation; focused Button→width0→Enter/Space with zero writes. Existing menu mutations cover the source itself, and the width0 lifecycle test restores positive width before keyboard activation. [Menu tests:116](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs), [width lifecycle:308](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs).
+
+Freshly inspected both complete galleries and controlled native theme/state/resize/syntax evidence. Security Architecture, Engineering Philosophy, Default-Path Acceptance, Desktop Interaction Principles, UI Design System and TUI graphics apply: hosted tier/store/identity changes are N/A; native CI, committed provenance/publication and operator-installed Ghostty/Retina acceptance remain open gates.
+
+Assignment: 2026-10-06T01:40:22.496Z; verdict: 2026-10-06T01:49:17.356Z. Full independent current-artifact review; tokens N/A.
+
+### Code-review boundaries
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[review-code:simplicity:r1] foundation` (includes style) | 2026-10-06 01:40:22 | 2026-10-06 01:49:17 | 8m 55s | Both full checklists REVISE; source unchanged |
+| `[review-code:ownership:r1] foundation` | 2026-10-06 01:50:08 | 2026-10-06 01:58:48 | 8m 40s | Full checklist REVISE; canonical full persona supplied inline |
+
+No approval or merge follows from a review-stage boundary. Tokens N/A.
+
+### Ownership — full R1 verdict
+
+**REVISE. Product behavior is in the derived components; the extension README misassigns native responsibilities to the CLI. Required failure-path evidence and canonical warning-free CI remain incomplete.**
+
+Owners were derived from the Desktop atlas, README-scoped Forge repositories, CLI/Core/component READMEs and pinned native READMEs before inspecting placements.
+
+| Behavior | Derived owner | Actual placement | Verdict |
+|---|---|---|---|
+| Keyboard and mouse text selection | XenoAtom UI controls | Existing PromptEditor, CodeEditor and Paragraph | PASS |
+| Editing, Paste insertion, Cut and Undo | XenoAtom UI | Retained native commands/core; no new Cut menu | PASS |
+| Disable unchecked app-wide Copy for owned sources | Extensions; CLI admits sources | [Editor configuration:15](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs), [Paragraph configuration:11](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ParagraphClipboardExtensions.cs) | PASS |
+| Transport clipboard text | XenoAtom.Terminal | Existing `TerminalClipboard`; extension calls public transport | PASS |
+| Extract once and report truthful Copy results | Terminal Extensions | [ClipboardText:9](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardText.cs) | PASS |
+| Replace editor Copy without replacing editing | Terminal Extensions | [EditorClipboardExtensions:16](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs) | PASS |
+| Supply fixed editor/Paragraph menus | Terminal Extensions | [Editor menu:32](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs), [Paragraph menu:12](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ParagraphClipboardExtensions.cs) | PASS |
+| Reject stale menu targets using pure guards | Terminal Extensions | [ClipboardMenus:10](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ClipboardMenus.cs) | PASS |
+| Invoke menus, preserve ranges and restore focus | XenoAtom UI | Existing ContextMenuService invocation-before-close | PASS code; README correction required |
+| Observe failed versus empty native Paste reads | Terminal Extensions | [Feedback-only handler:24](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/EditorClipboardExtensions.cs) | PASS |
+| Choose current text and Copy versus Stop | CLI TUI | [TextInteraction:67](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs), [ChatTui:85](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatTui.cs) | PASS |
+| Claim editor input and preserve native command metadata/delegation | CLI TUI | [Bubble handlers:31](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs), [decorator:125](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/TextInteraction.cs) | PASS |
+| Register and retire direct/realized transcript sources | CLI TUI | [ParagraphSelection:13](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs), [ChatScreen:420](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs) | PASS placement |
+| Exclude explicitly owned chrome from selection | CLI TUI | ChatScreen, FileEditor, StartPage and bounded realized subtree | PASS |
+| Preserve immutable complete snippet payload | CLI renderer | [ForgeCodeBlockRenderer:21](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs), readonly Button payload | PASS |
+| Retire snippets before changed native setters; resume current visuals | CLI presentation lifetime | [ChatScreen:355](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs), [wrapper:20](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ParagraphSelection.cs), [Button:79](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | PASS placement |
+| Guard snippet activation and feedback continuation | CLI TUI over native Button activation | [CodeCopyControl:105](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | PASS |
+| Compose header and constrained-width behavior | CLI composition/geometry | [Header:25](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs), [width:71](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs), ForgeTheme constants | PASS |
+| Map themes, control states and clipboard feedback | CLI ForgeTheme → ForgeStyles | Existing semantic mappings, native reactive styles and TextInteraction status | PASS |
+| Preserve syntax, wrapping, Kitty graphics and native layout | Existing CLI renderers plus native UI/TextMate | Existing Paragraph.Runs, CodeColours, TileFrame and image controls | PASS |
+| Supply separate reusable package/API | New admitted Terminal Extensions component | [Component README](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/README.md), exact pinned dependencies; no CLI/domain dependencies | PASS admission |
+| Verify and publish package with bounded authority | forge-mcl packaging | [Workflow:15](/Users/ameerdeen/progs/forge-mcl/.github/workflows/publish-terminal-extensions-package.yml), [publish guard:78](/Users/ameerdeen/progs/forge-mcl/.github/workflows/publish-terminal-extensions-package.yml) | PASS placement; actual CI pending |
+| Deliver supported release and maintain atlas inventory | forge-mcl releases; Desktop atlas | Unchanged four-host release workflow; [external row:74](/Users/ameerdeen/progs/forge-desktop/src/README.md) | PASS placement; delivery pending |
+
+| Persona check | Verdict | Evidence |
+|---|---|---|
+| 1. List behaviors from requirement | PASS | Complete table above, including package and delivery boundaries |
+| 2. Derive owners before placements | PASS | Atlas, owning READMEs and native component contracts |
+| 3. Classify existing/new/wrongly-new owners | PASS | CLI owns presentation; Core excludes command-line UX. Separately requested reusable extension has README and atlas admission |
+| 4. Compare actual placement | **REVISE** | Code fits owners; extension README incorrectly assigns native responsibilities to CLI |
+| 5. Search for duplicates | PASS at component scope | Search covered exactly eight README-listed Forge repositories; no second clipboard backend or competing component found |
+| 6. Check each owner has one job | PASS | No owning component’s Why combines unrelated jobs |
+
+Required corrections and open evidence:
+
+| Location | Finding / correction |
+|---|---|
+| [Extension README:23](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/README.md) | After excluding editing, selection storage, backends, input routing, focus and popup lifetime, “The CLI owns these policies” assigns that entire list to CLI. Explicitly assign native mechanisms to XenoAtom UI/Terminal and source coordination, Stop, themes/status/snippets to CLI. |
+| [Renderer:29](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs), [outer wrapper:296](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs) | Both wrappers register/retire the same code Paragraph. This is confirmed **intra-CLI duplication**, covered by simplicity; retain the outer Markdown lifetime owner and remove the inner wrapper. No component move is justified. |
+| [CLI tests:23](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs), [metadata test:84](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs), [menu tests:72](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs) | Existing observations do not complete the approved boundary proof: root extraction failure without Stop; nondefault metadata and delegate-once; keyboard Paste/Undo/Cut; actual left-click menu activation; ancestor/modal guards; chrome drag; focused zero-width Enter/Space. Keep these tests with their extension/CLI owners; add no production framework to obtain them. |
+| [Native publish evidence](/Users/ameerdeen/progs/mission-control-language/docs/evidence/phase-70/foundation-r3/native-publish.log) | Six actual linker warnings remain FAIL. Execute the canonical macOS-14 verification on the reviewed corrected tree before merge. No suppression, environment workaround or historical release result closes this gate. |
+
+Actual native source confirms `ContextMenuService` executes before close, Paste Capture reads text once and preserves null versus empty, and native insertion creates the Paste undo entry. The command decorator preserves all public metadata fields. Button retirement uses public state and delegates native lifecycle; no new private access was found.
+
+Fresh inspection of both complete SVG galleries agrees with controlled geometry/state evidence. All 18 retained manifest entries match their hashes. Logs report zero-warning build, 135 focused passes, 831 full-suite passes with six existing skips, and 20 package-test passes. These establish controlled observations, not committed provenance, canonical AOT or installed acceptance.
+
+Security Architecture has no hosted tier/store/service-identity change; PR verification has read authority and cannot publish. Engineering Philosophy remains open on the missing failure observations and duplicate lifetime handling. Desktop Interaction Principles, UI Design System and TUI graphics preserve their named token/rendering owners. Default-Path Acceptance remains operator-only after supported installed delivery; rich continuous selection remains open in 70.2.
+
+No two-job component owner found. **Move native editing/range/backend/input/focus/popup responsibilities out of the CLI ownership sentence and assign them explicitly to XenoAtom UI/Terminal; no product-code component move is required.**
+
+Assignment: 2026-10-06T01:50:08.557Z; verdict: 2026-10-06T01:58:48.835Z. Full independent current-artifact review; tokens N/A.
+
+### Supervisor combined correction — R3
+
+Both full reviews request changes. The supervisor approves only corrections within the locked R12 design and complete R3 plan: remove the duplicate inner code Paragraph wrapper; correct the native/CLI ownership sentence; order lifecycle entry points before helpers and extract coherent test construction; complete actual-root extraction-failure/empty-extraction, decorated-command metadata/delegation, keyboard Paste/Undo/Cut, mouse menu activation, ancestor/modal guards, chrome isolation and focused zero-width activation proof. Sweep the whole approved verification matrix, including both editor navigation paths, DocumentFlow reuse, direct Paragraph lifetime and failed/empty Paste state. Preserve current native ownership and all public APIs/package/library/default/visual choices. Return any production mechanism outside the plan for approval.
+
+The same implementer received `[implement:implementer:r3] 70.1 foundation` with its full persona at **2026-10-06T02:00:16.608Z**. Fresh corrected evidence must be retained separately; earlier logs remain historical. The six local native linker warnings remain FAIL until actual canonical macOS-14 verification passes on the reviewed tree. No suppression or environment workaround is approved. Product commits/publication/install and operator default-path acceptance remain open.
+
+## Documentation checkpoint — R12/R3 review state
+
+The mission-control-only change records the locked design/approved plan, full independent verdicts, controlled evidence and known failures, with corrections in progress. Documentation validation passes seven Markdown files and 268 local links/anchors; the global hub contains no sub-phase detail. Markdown/JSON whitespace checks pass. Eight whitespace findings in raw consumer/help output are retained byte for byte to preserve original evidence hashes; the first unrestricted whitespace check reports them, rather than a whole-tree PASS. Product tests, Native AOT and default-path acceptance are N/A for this documentation-only checkpoint. Their implementation gates remain open as recorded above; this record is not product completion.
