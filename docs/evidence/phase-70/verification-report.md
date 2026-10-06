@@ -340,3 +340,83 @@ end for workflow accounting, and installation/operator acceptance are recorded s
 The Native AOT stages alone took26m17s pre-merge plus29m15s release =55m32s; their elapsed
 sum is not a claim of exclusive critical-path cost. Current delivery is implemented/installed,
 awaiting manual acceptance, with no package-visibility or rich-selection closure implied.
+
+## Icon-only Copy follow-up
+
+Requirement: remove the persistent Copy code words beside the snippet icon. The operator selected
+exactly `return glyph;` in the existing CodeCopyButton.Label. Idle/success/failure remain
+`⧉`/`✓`/`!`; full TooltipText, dimensions, padding, styles, activation, immutable payload and native
+clipboard/lifecycle remain unchanged. Owner is the existing Forge CLI snippet presentation.
+Security tier/store/identity/credential/contracts are N/A for this presentation-only change;
+Engineering Philosophy reuses one owner/path without new side effects, dependencies or knobs.
+Desktop Interaction Principles/UI Design System bind the existing light/dark icon-only state
+fixtures within unchanged native button bounds. The former width/layout proposal was withdrawn.
+No new solution design is needed: operator explicitly locked the exact line. Existing assertions
+are aligned with that line; no new tests/components/public APIs or workflow changes.
+
+Operator evidence on 2026-10-06: first reported Cmd+A works in v0.9.5, later edited the label and
+ran `make install`, reported the local AOT build compiled/worked, then stated “Everything works
+now. both changes. commit andmerge plesae”. This confirms both requested fixes by operator manual
+observation. Exact local build flags, terminal dimensions, theme matrix and warning output were
+not supplied; no additional cases or canonical zero-warning result are inferred. No agent-operated
+Ghostty, capture, input or clipboard occurred. The earlier fast managed development iteration was
+stopped before any delivered dev executable; normal final checks resume for requested merge.
+
+Scope/merge continuation observed at 2026-10-06 14:35:24 UTC. Operator implementation happened
+before that boundary; its exact start/end are unavailable. Existing tests aligned in commit `716ec7b0dbe6af9c7bbc84282a95c9ed0cb0e176` after
+operator source commit `8b13747`. [PR64](https://github.com/katasec/forge-mcl/pull/64) opened
+14:44:04 UTC. Four files, 45 insertions/19 deletions; executable behavior changes only the
+existing label return. No new tests or production mechanisms. Cmd+A PR63 remains already merged.
+
+Managed `make build` completed in11.63s with0 warnings/errors. Existing focused button/tile/motion
+run passed69/69, zero failures/skips,17s; logs remain temporary at `/tmp/phase70-icon-only/`.
+Supervisor read the complete source/test diff and focused/build logs. Current full simplicity/style
+source review14:45:25→14:46:24 UTC PASS; all11 simplicity and8 source-style checks pass. The
+remaining zero-warning style condition was satisfied by current canonical Native AOT without
+source changes or another design/review round. Manual classic
+complexity Label3, TooltipText3, AssertLabel1, Find3, changed tests/callbacks≤11. No source correction
+or new exception. The operator's commented-out return is not an executable legacy path.
+
+GitHub initially exposed no PR checks; the supervisor reopened the same PR14:46:30 UTC, without
+source changes. Two same-head runs appeared; the older duplicate37481790069 was canceled to avoid
+redundant work. Current [run37481849696](https://github.com/katasec/forge-mcl/actions/runs/37481849696)
+created14:46:58 UTC; verify job started14:47:07 and product/package checks14:47:28.
+Product/package step passed14:51:33 UTC (4m05s); Native AOT began14:51:33 UTC.
+The workflow is unchanged, PR-event verification only; package publication is not requested.
+
+Current ownership review14:47:07→14:49:24 UTC PASS: all5 behaviors and6 persona checks, actual
+four-file head716ec7b. Both reviewers independently read the diff; no source correction requested.
+The supervisor separately checked the existing native glyph mapping, retained TooltipText,
+unchanged geometry/transport/launch and the complete assertions. Native/full verification passed,
+and no new CLI release is part of the operator's commit/merge request.
+
+Local installed observation at14:47:07 UTC: normal executable version is
+`1.0.0+b11e6e3ba1f18b13e28d7c10dd3c12937c2e2059`, SHA256
+`d1aa1210a2a02bb5cd52020328d8a5396430ae56c4166ce9e77cc660c7df5b2d`.
+The version identifies the base commit, not the uncommitted label change at operator build time;
+this is the operator's local make-install artifact, not a newly published CLI version.
+
+Canonical run37481849696 completed successfully: managed build0 warnings/errors; full suite920
+passed,10 prerequisite skips,0 failures; Terminal Extensions26/26,0 skips; package metadata,
+contents and exact native dependencies PASS. Native publish passed with0 actual compiler/linker
+warnings; help/version identity PASS. Package publication correctly skipped on the PR event.
+Supervisor read the actual workflow output and warning gate. Verified candidate
+`98a220ca8c6b073f1fa399f6ace116771497bfcd` and reviewed head716ec7b both have tree
+`9944cebdfea93c04a06604cbebe679cce3ce6eac`; merged main has the same tree.
+
+| Event | Start UTC | End UTC | Elapsed |
+|---|---|---|---|
+| Test alignment and local checks | 14:41:20 | 14:43:44 | 2m24s |
+| Simplicity/style source review | 14:45:25 | 14:46:24 | 59s |
+| Ownership review | 14:47:07 | 14:49:24 | 2m17s |
+| Canonical verification job | 14:47:07 | 15:20:40 | 33m33s |
+| Native publish within that job | 14:51:33 | 15:20:14 | 28m41s |
+| Product PR64 merged | — | 15:22:36 | Timestamp only |
+| **Resumed scope through product merge** | **14:35:24** | **15:22:36** | **47m12s** |
+
+Rows overlap and must not be summed. These are elapsed stage durations, not measured agent idle
+or provider queue time; no queue-delay claim is supported. PR64 merged as
+`d212e8149b022479bc4ad3f138c8b0ac07302e61`; forge-mcl is clean on main, matching origin/main.
+Raw workflow logs remain outside the repository in `/tmp/phase70-icon-only-ci/`.
+The single report records this delivery; package visibility and unreported broader manual cases
+remain open. Documentation-only reconciliation has default-path acceptance N/A.
