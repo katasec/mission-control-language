@@ -1,19 +1,21 @@
 # Phase 70.3 — Mac Select All shortcut
 
-**Status: scoped; terminal scope decision pending. No implementation approved.**
+**Status: Forge-only scope locked; no supported automatic current-window route found. Dedicated launch decision pending. No implementation approved.**
 Parent: [Phase 70](phase-70-tui-text-interaction.md). Operator selected this independent
 keyboard follow-up; it does not depend on the unfinished rich-selection design.
 
 ## Requirement and scope
 
 Make Cmd+A select all text in the focused Forge composer or `/edit` editor on macOS.
+Operator decision on 2026-10-06: **“yes - need forge specific”**. Other Ghostty tabs retain
+normal shortcuts, and quitting Forge restores normal behaviour in the terminal used for Forge.
 The operator's two screenshots on 2026-10-06 identify the chat input and file editor in
 the existing Ghostty window; the transcript is not the Select All target.
 Keep the change at the terminal shortcut boundary, reusing native Select All. No clipboard,
 editor/range, renderer, package or generic keyboard-framework changes. The icon-label request
 and package visibility issue are separate tasks.
 
-## Verified boundary and proposed mapping
+## Verified boundary and rejected shared mapping
 
 ```mermaid
 flowchart LR
@@ -27,29 +29,32 @@ configuration manual documents `text:` with Zig string escapes. The native Termi
 decoder maps U+0001 to Ctrl+A; native UI3.10.0 registers `TextEditor.SelectAll` for that
 gesture. No new Forge command is needed. Ghostty handles bindings before PTY input.
 
-Candidate configuration line: `keybind = cmd+a=text:\x01`.
+The forwarding syntax is `keybind = cmd+a=text:\x01`; installing it in the shared
+configuration is rejected because it persists after Forge exits.
 
 The existing config is `/Users/ameerdeen/Library/Application Support/com.mitchellh.ghostty/config.ghostty`;
 no explicit Cmd+A binding was found there. Both checked XDG config paths were absent.
 These are static file observations, not running-app or physical-key acceptance.
 
-| Scope choice | Effect / design consequence |
+| Route | Effect / design consequence |
 |---|---|
-| Current Ghostty configuration | One mapping line; normal existing-window `forge chat` launch retained. Other terminal programs receive their own Ctrl+A when Cmd+A is pressed. |
-| Dedicated Forge Ghostty window | Mapping contained to a dedicated terminal launch. Requires explicit launch/default-path definition and verified argument/config isolation; not an automatic fix in an already-running window. |
+| Shared Ghostty mapping | Rejected by operator; changes other terminal programs and remains after Forge exits. |
+| Current-window temporary binding | Static investigation found no supported automatic application-lifetime mechanism; [findings](../evidence/phase-70/verification-report.md#forge-only-shortcut-feasibility). |
+| Dedicated Forge Ghostty process/window | Candidate alternative only. Requires operator agreement to a changed launch flow, explicit default-path definition and verified argument/config isolation. Closing its Forge-only surface would contain the mapping; it does not retrofit the already-running window. |
 
-The screenshots settle the Forge surfaces; they do not authorize changing shortcut behaviour
-in other terminal programs. A plain-language question is pending: apply the one-line mapping
-throughout Ghostty, or keep the requirement limited to Forge. Do not modify the shared config,
-introduce a launcher or claim a Forge-only binding before that answer and design/plan reviews.
+The operator has been asked whether a dedicated Forge window/new launch shortcut is acceptable.
+Do not modify the shared config or introduce a launcher before that route decision and reviews.
 Installed Ghostty1.3.1 source tag resolves to `332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28`;
 its [Surface](https://github.com/ghostty-org/ghostty/blob/332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28/src/Surface.zig)
 and the [official binding reference](https://ghostty.org/docs/config/reference#keybind) support
 the host ownership. The shipped manual is the syntax authority for this installed version.
-Pinned `Surface.zig` handles host bindings before PTY encoding (lines2424–2430); its
+Pinned `Surface.zig` handles host bindings before PTY encoding (raw-source lines2646–2652); its
 `select_all` action selects the active terminal screen without a Forge or alternate-screen
-condition (lines5301–5309). Adding only a Forge Cmd+A alias therefore cannot bypass the
+condition (raw-source lines5785–5793). Adding only a Forge Cmd+A alias therefore cannot bypass the
 host binding. No automatic Forge-only forwarding mechanism has been established.
+These raw-source lines correct the earlier web tool's page indexing. Configuration conditions
+cover OS/theme only. Key tables require explicit activation/pop; AppleScript has no exported
+self-surface ID or Forge-crash cleanup. None supplies the required lifetime boundary.
 
 ## Owners, reuse and gates
 
@@ -65,15 +70,18 @@ host binding. No automatic Forge-only forwarding mechanism has been established.
 
 ## Next and Done when
 
-Lock the operator's terminal scope, finish the small design and sequential simplicity/ownership
-reviews, then plan/review/approve one implementation. Evidence stays in a concise report;
+Resolve the proposed dedicated Forge launch flow with the operator. If declined, retain Ctrl+A
+and leave Cmd+A unimplemented until a supported host boundary exists. If accepted, prove the
+launch/config/exit contracts, then finish design and sequential simplicity/ownership
+reviews, followed by plan/review/approval of one implementation. Evidence stays in a concise report;
 do not create raw artifact directories.
 
 Done when the approved mapping is installed without unrelated configuration changes, its syntax
 and delivery are verified, and the operator proves physical Cmd+A selects the focused editor's
 complete text without mutation, before/after mouse focus, in composer and `/edit`. Ctrl+A still
 works; non-editor/modal focus does not gain a Forge global Select All action. Existing Ctrl+C
-Copy remains unchanged. The observed effects outside Forge match the chosen terminal scope.
+Copy remains unchanged. Other Ghostty tabs retain normal behaviour, and the Forge terminal's
+normal behaviour is restored on exit; a proposed crash path must not leave altered shortcuts.
 Record controlled versus manual observations honestly; clean merged task documentation alone
 does not prove physical key delivery.
 
