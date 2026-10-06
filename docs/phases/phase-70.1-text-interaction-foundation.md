@@ -1,6 +1,6 @@
 # Phase 70.1 — Text-interaction foundation
 
-**Status: Foundation product and atlas merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. CLI v0.9.4 installed and verified; package visibility and operator manual acceptance remain open.**
+**Status: Foundation product and atlas merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. CLI v0.9.4 installed and verified; extension package accepted public by the operator (2026-10-07); operator manual acceptance remains open.**
 **R11/R2 approvals are historical; [R3 plan](phase-70.1-text-interaction-foundation-plan.md) is PLAN APPROVED at 2026-10-06 01:15:19 UTC.** Parent: [Phase 70](phase-70-tui-text-interaction.md).
 
 Installed [v0.9.4 provenance](phase-70.1-text-interaction-foundation_completed.md#normal-cli-release-and-installation--v094) is recorded. Package [visibility incident and authenticated-consumer evidence](phase-70.1-text-interaction-foundation_completed.md#merged-main-publication--visibility-gate-failed) is recorded; no public-visibility approval or closure is claimed.
@@ -348,7 +348,7 @@ warnings before merge; the selected environment is not assumed to pass.
 flowchart LR
     PR[Reviewed product PR] --> Check[Read-only macOS-14 package and CLI verification]
     Check --> Merge[Merge only after zero-warning PASS]
-    Merge --> Package[Verify and publish private extension]
+    Merge --> Package[Verify and publish public extension]
     Merge --> Release[Existing main-only CLI release matrix]
     Release --> Install[Verify and extract complete macOS ZIP]
     Install --> Manual[Operator default Ghostty acceptance]
@@ -360,7 +360,7 @@ flowchart LR
 | Verification authority | Job-level `contents: read`, `packages: read`; existing NuGet authentication via its scoped GitHub token. No provider keys, deployment credentials or package write permission. Native control tests use their memory-only backend. |
 | Verification steps | Checkout the actual selected commit, install .NET 10 and the existing Homebrew OpenSSL/Brotli prerequisites, run the package test/pack/verifier route, publish the actual CLI `osx-arm64` with `-warnaserror` and exact SourceRevisionId, using the unchanged project/linker target. Run native help/version and record SHA256. Preserve the full native publish log and source identity as workflow artifacts. |
 | Linker warning enforcement | Native linker warnings can leave exit code zero. Capture the complete publish output and fail the verification job on either nonzero exit or any actual compiler/linker warning (including `ld: warning:`). Do not filter warnings from the evidence. Ordinary `0 Warning(s)` summaries are not warnings. Supervisor/reviewers inspect the actual log as well. |
-| Publication guard | Existing `publish` depends on `verify` and runs only for existing tag/manual publication events, never a pull request. Retain merged-ref, immutable 0.1.0, private visibility/repository association and committed provenance checks. Pull-request verification cannot publish. |
+| Publication guard | Existing `publish` depends on `verify` and runs only for existing tag/manual publication events, never a pull request. Retain merged-ref, immutable 0.1.0, repository association and committed provenance checks. Visibility is public: the operator accepted it on 2026-10-07 (the repo is public and GitHub cannot make a public package private). Pull-request verification cannot publish. |
 | Pre-merge acceptance | Actual verification job passes on the reviewed tree; required tests and both full code reviews pass. Compare the tested tree with the merge candidate. A failing CI/AOT observation remains open; no local warning waiver follows from selecting this route. |
 | Post-merge CLI delivery | Dispatch the unchanged `release.yml` on merged main with an unused patch version (latest observed release v0.9.3; candidate v0.9.4 must be rechecked before dispatch). All four existing host/RID native jobs, help/version checks and eight published ZIP/checksum assets must pass. Inspect warning output rather than assuming green means zero. |
 | Installed default artifact | Authenticated download of the complete published macOS ARM64 ZIP and checksum; verify remote/local digest, extract every native sidecar, run native help/version at the exact merged SHA, then extract the complete payload into the existing /Users/ameerdeen/.local/bin install directory, replacing only matching release entries. Record the installed forge and sidecar digests and verify normal PATH resolution. This supported route replaces local `make install` for this task. No branch binary or warning-bearing local build is accepted. |

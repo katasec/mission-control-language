@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: Foundation, Mac shortcut and icon-only Copy fixes merged after current reviews and canonical zero-warning Native AOT verification. Operator confirmed both requested fixes work in the local installed build; package visibility, broader manual acceptance and rich selection remain open.**
-**Next:** resolve the public-versus-private package visibility mismatch. The agent's Ghostty access remains denied; unreported physical acceptance cases remain open. Current artifact and scoped operator observations are in the [single report](../evidence/phase-70/verification-report.md#icon-only-copy-follow-up).
+**Status: Foundation, Mac shortcut and icon-only Copy fixes merged after current reviews and canonical zero-warning Native AOT verification. Operator confirmed both requested fixes work in the local installed build and accepted the extension package as public (2026-10-07); broader manual acceptance and rich selection remain open.**
+**Next:** operator decides whether to close the phase or continue broader manual acceptance / rich selection. The agent's Ghostty access remains denied; unreported physical acceptance cases remain open. Current artifact and scoped operator observations are in the [single report](../evidence/phase-70/verification-report.md#icon-only-copy-follow-up).
 
 ## Outcome and scope
 
@@ -24,18 +24,18 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Foundation and icon-only Copy follow-up merged; current reviews/canonical checks PASS; requested Copy fix operator-tested. | Resolve public-versus-private package mismatch and remaining manual acceptance cases. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Foundation and icon-only Copy follow-up merged; current reviews/canonical checks PASS; requested Copy fix operator-tested; package accepted public. | Remaining manual acceptance cases. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Public gap/current comparison verified and reviewed; full rich design open. | Resolve full semantics/public contract and operator library-route decision before implementation planning. |
 | [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Six-file patch merged; full reviews/canonical zero-warning checks PASS; v0.9.5 installed. | Requested shortcut confirmed by operator; detailed matrix observations unspecified. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
-CodeAlta findings, controlled results, limitations, and timing. Foundation product/atlas are merged and the normal CLI release is installed; package visibility remains unresolved. Rich selection remains unapproved and unimplemented.
+CodeAlta findings, controlled results, limitations, and timing. Foundation product/atlas are merged and the normal CLI release is installed; the extension package is accepted as public. Rich selection remains unapproved and unimplemented.
 A snippet button alone does not close transcript selection.
 
 Fresh read-only investigators reconfirmed the unchanged source/artifact baseline and narrowed
 the public-API gaps; see [resumption evidence](phase-70.1-text-interaction-foundation_completed.md#resumption-check).
 The former live-before-design gate is superseded by the [manual verification exception](#manual-verification-exception).
-Current R12 design and complete R3 plan passed both full reviews and are supervisor-approved; current full code reviews and canonical native checks pass. Package visibility and operator default-path acceptance remain required.
+Current R12 design and complete R3 plan passed both full reviews and are supervisor-approved; current full code reviews and canonical native checks pass. Operator default-path acceptance remains required.
 
 ## Ownership and workflow
 
@@ -61,7 +61,7 @@ The R9 handoff was documentation-only. The operator has since requested completi
 R11's complete source/lifetime audit and the complete R2 plan passed both full reviews. The resulting
 draft exposed an old snippet-button action between native Markdown assignment and layout; R12
 closes its retirement placement and records canonical CI/release verification after six local
-linker warnings. The complete R3 plan passed both full reviews and was approved before resumed writes. Current code reviews and canonical verification pass; CLI delivery is verified; package visibility and manual acceptance remain pending. Product checks and default-path acceptance
+linker warnings. The complete R3 plan passed both full reviews and was approved before resumed writes. Current code reviews and canonical verification pass; CLI delivery is verified; the package is accepted public; manual acceptance remains pending. Product checks and default-path acceptance
 apply to implementation under the manual verification exception below.
 
 ## Standing constraints and authorizations
