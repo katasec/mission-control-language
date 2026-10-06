@@ -1,0 +1,236 @@
+{
+  "task": "Phase70.1 foundation current corrected approved R3",
+  "productSourceFrozen": true,
+  "createdUtc": "2026-10-06T02:35:33.8224420Z",
+  "evidenceScope": "Current product controlled native memory-backend checks only; operator default-path/Retina and actual CI/delivery pending",
+  "sourceProvenance": "Precommit current base-HEAD candidate metadata; no claim uncommitted code was built from that commit",
+  "correctedSource": [
+    {
+      "path": "src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs",
+      "sha256": "C381F56827142F2F13560F6E0372DB438C4D8A2A60F4EE03C5F0CAB66A3ECFFA",
+      "frozenMatch": true
+    },
+    {
+      "path": "src/ForgeMission.Cli/Tui/CodeCopyControl.cs",
+      "sha256": "E48F4312BE61CEF3BB2CE97E7438F5E34DF95224EE8D4D939D36CF520159B9EA",
+      "frozenMatch": true
+    },
+    {
+      "path": "src/ForgeMission.Terminal.Extensions/README.md",
+      "sha256": "44DDD6154FDDB620AA16D6C2CE86EBBC17F0C01DD7456B1B5D7D20DA8EB7FA4E",
+      "frozenMatch": true
+    },
+    {
+      "path": "tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs",
+      "sha256": "B837E7F3134C40B791D49DC45070C449B26E1324556847ABE9ADE4DCEB85FB19",
+      "frozenMatch": true
+    },
+    {
+      "path": "tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs",
+      "sha256": "E34B4D918B5D65F6C94345AD5E8C93487C8D6271A72F877F401E77BD7BF8AB97",
+      "frozenMatch": true
+    },
+    {
+      "path": "tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs",
+      "sha256": "4CB3F04918B967C790DEF64BD5D2F3C36B2525AA1435E2DA5D03F94BA08CEA23",
+      "frozenMatch": true
+    }
+  ],
+  "currentWarningObservations": [
+    {
+      "log": "build-current.log",
+      "actualWarningCount": 0
+    },
+    {
+      "log": "focused-current.log",
+      "actualWarningCount": 0
+    },
+    {
+      "log": "full-suite.log",
+      "actualWarningCount": 0
+    },
+    {
+      "log": "package.log",
+      "actualWarningCount": 0
+    },
+    {
+      "log": "consumer.log",
+      "actualWarningCount": 0
+    },
+    {
+      "log": "native-publish.log",
+      "actualWarningCount": 6
+    }
+  ],
+  "currentResults": {
+    "focused": "180/180 PASS",
+    "build": "PASS, zero warnings/errors",
+    "fullSuite": "876 PASS, 6 built-in prerequisite skips, 882 total",
+    "package": "26/26 PASS; actual pack/verifier PASS",
+    "consumer": "Fresh cache/API/dependency/hash equality PASS",
+    "native": "Exit0, --help/--version exit0; zero-warning gate FAIL with6 linker warnings",
+    "codeReviews": "Root-owned current complete reviews pending",
+    "ci": "Root-owned current macos14 verification pending",
+    "installedAcceptance": "Operator/root pending",
+    "richSelection": "Dependent70.2 open"
+  },
+  "evidenceFiles": [
+    {
+      "path": "build-current.log",
+      "bytes": 1487,
+      "sha256": "4A0DAD6C0C0387B60E8BB2AF4F4A34020E5CACF3A275BA333D3A8ACE94400A8E"
+    },
+    {
+      "path": "build-final.log",
+      "bytes": 1487,
+      "sha256": "CAE0E57971151530875A5563114620D8307A46EB48C65A84DE83E759F1FF5EDD"
+    },
+    {
+      "path": "build.log",
+      "bytes": 1487,
+      "sha256": "D4FAF9DE6836D9F2DA01A218ADD1350D435ED7EFC373D003E57DE847472704E6"
+    },
+    {
+      "path": "consumer-provenance.json",
+      "bytes": 508,
+      "sha256": "2597F25BC9EC23EF5F5877050CD315AB0DDA10AB87F6713528D7FD6EEDEEF849"
+    },
+    {
+      "path": "consumer.log",
+      "bytes": 767,
+      "sha256": "210D7AD69E57F2655082307BFE5D8791F4D1D3EE85823C7493D177CF024B1CE0"
+    },
+    {
+      "path": "corrected-source-hashes.json",
+      "bytes": 949,
+      "sha256": "4341252A8C38CC675C38A6372BA9AD3EA118B2899DEDEF4C89F5749F78E47331"
+    },
+    {
+      "path": "coverage-corrected.log",
+      "bytes": 4867,
+      "sha256": "18BC22C31ADFFC4A3C3D9147167044BA3391757866DECC940999818C219E9068"
+    },
+    {
+      "path": "coverage-first.log",
+      "bytes": 15282,
+      "sha256": "78CEADDC6D0EB94D3FD9535913575CB4D7AEE6554DAC8B37A8F501703F0B0F29"
+    },
+    {
+      "path": "coverage-recycling.log",
+      "bytes": 1708,
+      "sha256": "608547584444D089F56DFCF95A290CED056BA06E9121BBA544AF6EF7A804A82E"
+    },
+    {
+      "path": "focused-current.log",
+      "bytes": 108091,
+      "sha256": "9F0E7AEC241A63C9CDD659384E786E7EF2776AC7E7486F1E63CD04061CD9D202"
+    },
+    {
+      "path": "focused-final.log",
+      "bytes": 107748,
+      "sha256": "7FCDBD761B801A9F3865BEB36AC34BF5B676A2D16D7E0B7B31D65AFEE9F458EB"
+    },
+    {
+      "path": "focused.log",
+      "bytes": 106838,
+      "sha256": "E5C438B09EC32F455B92560AAB61DAA44A00AE341206635585D25B4A79424FB0"
+    },
+    {
+      "path": "full-suite.log",
+      "bytes": 3197,
+      "sha256": "4162EECD34E65AB86D80D85201D46DAB34C27B9D57E7C8D5F35C863ABF58404C"
+    },
+    {
+      "path": "mouse-menu.log",
+      "bytes": 1708,
+      "sha256": "058A49A463A46A94FE0442F13E55CFAA4481B6E7224EFB13DA82D40F2B76B37B"
+    },
+    {
+      "path": "native-cut.log",
+      "bytes": 1708,
+      "sha256": "7296316080E02FAD1D780A6A64A9C819EC875D01D8FD4D07C39F7AC68F6E8100"
+    },
+    {
+      "path": "native-help.log",
+      "bytes": 1745,
+      "sha256": "8BF2FB94029C72531805EFE163EB495A9B2B1B85119B0F73329CB130D2621374"
+    },
+    {
+      "path": "native-identity.json",
+      "bytes": 872,
+      "sha256": "6FEEBB8D31B021FF3E42C931F48B185CF923585AB8D6665741E48AC4853676B0"
+    },
+    {
+      "path": "native-publish.log",
+      "bytes": 3227,
+      "sha256": "D944C68586CADB64CAE56E4D27ACC722864E39C64212BCDB1E84A83FD5D41C6C"
+    },
+    {
+      "path": "native-version.log",
+      "bytes": 47,
+      "sha256": "9756445192B4F8308DC0EC87717F2C96EE06B2D23CF6A5C45869995EC489D2C6"
+    },
+    {
+      "path": "navigation-payload-corrected.log",
+      "bytes": 1708,
+      "sha256": "EAA37330074C6F2047FD6D12F7A00380689450B1C9C26D45B60AC2DD1B7A6B5E"
+    },
+    {
+      "path": "navigation-payload.log",
+      "bytes": 1642,
+      "sha256": "6848EB3E82B6080521297A0A107861E5B51327347DD8D43EEA1C240BA14AE9B1"
+    },
+    {
+      "path": "observation-map.json",
+      "bytes": 13408,
+      "sha256": "2C63296CC53851BDF508FE5D7CBDFD11AB90EFC92D928CD74C8A94273E0EDBBD"
+    },
+    {
+      "path": "package.log",
+      "bytes": 2835,
+      "sha256": "3507E7E7D15E2795649F2E11A0B4B617904F1195D4FDFAA9625C06F219E339F5"
+    },
+    {
+      "path": "pre-layout.log",
+      "bytes": 1711,
+      "sha256": "0F1F865670AD3F67E21D1FAECA209BD51DA59E10A7AE63585B86A61FC2C6F0D7"
+    },
+    {
+      "path": "routing-first.log",
+      "bytes": 3229,
+      "sha256": "10B37AD0C5E48EA5A6F2C5D9062D70A8349FD92DE08F2C3AB505A1CC3C243F0F"
+    },
+    {
+      "path": "routing-menu.log",
+      "bytes": 1576,
+      "sha256": "7FC951219E034AD17627590AE6B2CE597D79F722865181570EE5E3CD0073676B"
+    },
+    {
+      "path": "status.log",
+      "bytes": 1711,
+      "sha256": "C15B96199FDF19A03DF74F584A5AD49516B479A19836089BCFA215D8CCC49F97"
+    }
+  ],
+  "nativeFiles": [
+    {
+      "path": "native/forge",
+      "bytes": 145495048,
+      "sha256": "20C609C0FF4EC171D5A6295CB5148304CD6D2E9BF8AF272104426A903A7858FB"
+    },
+    {
+      "path": "native/ForgeMission.Docker.pdb",
+      "bytes": 44548,
+      "sha256": "C2930DE3ED384D89ABFBB24C2C918F22ECE25D9B9F097B5E6F031E55B6FA47BF"
+    },
+    {
+      "path": "native/libonigwrap.dylib",
+      "bytes": 531424,
+      "sha256": "5922D0C6C3CD31BFDF9997EA03D48D7AFF952D891E8D46C2B9BFCCD8D8160665"
+    },
+    {
+      "path": "native/libonnxruntime.dylib",
+      "bytes": 38313360,
+      "sha256": "E96565BC1139FD136327C449B11D210DA79ACBE2AED53D959224815B4E448FAC"
+    }
+  ]
+}

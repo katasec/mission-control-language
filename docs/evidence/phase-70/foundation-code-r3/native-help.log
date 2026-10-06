@@ -1,0 +1,33 @@
+Description:
+  forge — Mission Control Language runtime
+
+Usage:
+  forge [command] [options]
+
+Options:
+  -?, -h, --help  Show help and usage information
+  --version       Show version information
+
+Commands:
+  init <mission>             Resolve expert sources and generate mcl.lock
+  run <mission>              Run a mission
+  validate <mission>         Validate a mission file and its expert references
+  list                       List available resources
+  expert                     Manage experts
+  registry                   OCI registry operations
+  login                      Sign in to Forge (browser) and store a platform key
+  whoami                     Show the signed-in Forge user and credit balance
+  logout                     Sign out of Forge (remove the stored platform key)
+  exec <target> <prompt>     Run a hosted mission once and print the answer
+  chat                       Chat with a hosted mission in the current Forge project
+  project                    Manage portable Forge projects
+  publish <reference> <dir>  Package a mission directory into a self-contained OCI artifact and push it
+  clean                      Remove cached OCI experts from ~/.forge/experts
+  serve <agent>              Serve a mission as an OpenAI-compatible endpoint
+  claude <target>            Launch Claude Code talking to a forge mission
+  connect                    Wire an editor's Claude Code extension to a forge mission
+  agent                      Manage forge agents running in Docker
+  webui                      Manage Open WebUI connected to a forge agent
+  provider                   Manage LLM provider profiles
+  mcp <mission>              Expose a mission as a stdio MCP server (for Claude Desktop and MCP-aware tools)
+
