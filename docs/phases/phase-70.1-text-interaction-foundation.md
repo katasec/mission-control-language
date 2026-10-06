@@ -13,6 +13,14 @@ meet the contract. Add a copy icon to real code snippets while preserving syntax
 and the established UI. Shared behaviour belongs at the TUI's text-interaction boundary;
 individual controls retain editing/rendering ownership.
 
+## Icon-only Copy follow-up
+
+Operator selected the exact `return glyph;` change, then built/installed with `make install` and
+confirmed both the icon-only control and Cmd+A work. [PR64](https://github.com/katasec/forge-mcl/pull/64) merged after current reviews and canonical zero-warning Native AOT verification. Layout, TooltipText,
+clipboard behavior and tokens are unchanged; this supersedes only the older persistent button
+labels below. Existing tests now assert glyph-only rendering. See the [single report](../evidence/phase-70/verification-report.md#icon-only-copy-follow-up)
+for the bounded scope, operator observation and verification.
+
 ## Constraints for design
 
 | Area | Required behaviour / existing public capability |

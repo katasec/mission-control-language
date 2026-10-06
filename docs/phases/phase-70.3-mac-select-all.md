@@ -1,6 +1,6 @@
 # Phase 70.3 — Mac Select All shortcut
 
-**Status: six-file patch merged in forge-mcl PR63 after full current reviews and canonical zero-warning Native AOT verification. v0.9.5 fully installed/verified; operator window/key/Retina acceptance pending.**
+**Status: six-file patch merged in forge-mcl PR63 after full current reviews and canonical zero-warning Native AOT verification. v0.9.5 installed/verified; operator confirmed Cmd+A and later both requested fixes work. Detailed viewport/theme observations were not supplied.**
 Parent: [Phase 70](phase-70-tui-text-interaction.md). Independent keyboard follow-up;
 rich transcript selection, icon labels and package visibility remain separate.
 
@@ -112,7 +112,7 @@ restoration preference overrides. Prior investigations are in the single report.
 R2 full simplicity (all11 checks,10:44:08 UTC) and ownership (all23 behaviours/all6 checks,
 10:47:21 UTC) reviews PASS. Supervisor locks this complete design on2026-10-06.
 R1 corrections and timing are in the single report. No open design questions.
-Next: operator acceptance on the installed v0.9.5 default. Current source/code/CI evidence and stage timings are in the [single report](../evidence/phase-70/verification-report.md). Approved contracts remain below.
+Operator confirmed the requested Mac shortcut works; the icon-only follow-up is tracked in the single report. Unreported matrix cases are not inferred. Current source/code/CI evidence and stage timings are in the [single report](../evidence/phase-70/verification-report.md). Approved contracts remain below.
 ## Implementation plan R2 — approved
 
 Product baseline: forge-mcl main `d23387492de4563abe9a57d5a51dfb538745f725`.
@@ -198,7 +198,7 @@ Removal: when a separately designed startup refactor meaningfully separates admi
 composition, restore≤15; reverting this launch branch also removes the exception. Supervisor
 records this decision before code review; independent reviewers still assess the full method.
 
-Implementation/current full reviews/canonical verification/merge/release/install — verified; see [delivery evidence](../evidence/phase-70/verification-report.md#mac-release-and-installation--verified-manual-acceptance-open). Operator acceptance remains open.
+Implementation/current full reviews/canonical verification/merge/release/install — verified; see [delivery evidence](../evidence/phase-70/verification-report.md#mac-release-and-installation--verified-manual-acceptance-open). Operator functional acceptance of Cmd+A is recorded in the [single report](../evidence/phase-70/verification-report.md#icon-only-copy-follow-up); detailed matrix observations remain unspecified.
 
 Test-only nesting exception: `MacChatWindowTests.AdmissionCases` uses three nested `foreach`
 loops solely to enumerate the12 required OS/interactive/marker fixtures in seven lines. There

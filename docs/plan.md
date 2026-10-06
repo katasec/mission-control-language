@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Record operator acceptance of the installed Forge-only Mac shortcut in [TUI text interaction](phases/phase-70-tui-text-interaction.md); package visibility, manual acceptance and rich design remain open. |
+| **NEXT STEP** | Resolve the package visibility decision in [TUI text interaction](phases/phase-70-tui-text-interaction.md); broader manual acceptance and rich design remain open. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI installed/verified; package visibility decision, manual acceptance and rich design remain open. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI fixes merged and operator-tested; package visibility decision, broader manual acceptance and rich design remain open. |
 
 ## Design docs
 
