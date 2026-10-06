@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
 **Status: Foundation merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. CLI v0.9.4 installed/verified; package visibility decision, manual acceptance and rich selection remain open.**
-**Next:** resolve the operator package-visibility decision and record installed foundation manual acceptance; continue full rich-selection design. Full independent code reviews and actual package/consumer/integration/AOT checks passed before merge/publication. The operator will manually
+**Next:** clarify the requested isolated Mac shortcut's terminal scope, then complete its design and reviews. Package visibility, installed foundation manual acceptance and full rich-selection design remain open. Full independent code reviews and actual package/consumer/integration/AOT checks passed before merge/publication. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -28,6 +28,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 |---|---|---|
 | [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Full reviews/canonical checks PASS; product/atlas merged; v0.9.4 installed. | Resolve public-versus-private package mismatch and record operator acceptance. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Public gap/current comparison verified and reviewed; full rich design open. | Resolve full semantics/public contract and operator library-route decision before implementation planning. |
+| [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Chat input and file editor confirmed by operator screenshots; terminal scope pending. | Resolve effects in other Ghostty tabs, then design/review the isolated integration. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
 CodeAlta findings, controlled results, limitations, and timing. Foundation product/atlas are merged and the normal CLI release is installed; package visibility remains unresolved. Rich selection remains unapproved and unimplemented.

@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resolve the package-visibility decision and record installed manual acceptance for [TUI text interaction](phases/phase-70-tui-text-interaction.md), then continue dependent rich-selection design. |
+| **NEXT STEP** | Resolve terminal scope and deliver the requested isolated Mac shortcut in [TUI text interaction](phases/phase-70-tui-text-interaction.md); package visibility, manual acceptance and rich design remain open. |
 
 ## Active phases
 
