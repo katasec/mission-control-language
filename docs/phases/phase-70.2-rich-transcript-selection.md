@@ -1,6 +1,6 @@
 # Phase 70.2 — Rich transcript selection
 
-**Status: scoped; design open. Not build-ready.**
+**Status: scoped; design open. Bounded public geometry probe verified; essential public point/range gap and conditional comparison recorded. Not build-ready.**
 Depends on the approved [foundation](phase-70.1-text-interaction-foundation.md);
 parent [Phase 70](phase-70-tui-text-interaction.md).
 
@@ -34,7 +34,8 @@ public capabilities and regression evidence, not extrapolation from CodeAlta.
 ## Public-extension feasibility and fork comparison
 
 Current [source-boundary observations](phase-70.2-rich-transcript-selection_completed.md#source-boundaries--2026-10-06)
-name the native mapping cases and package-family cost; the bounded public geometry probe remains unperformed.
+name the native mapping cases and package-family cost. The [verified controlled probe](phase-70.2-rich-transcript-selection_completed.md#bounded-public-geometry-probe--2026-10-06)
+found an essential public point/range gap. The [current comparison passed both independent reviews](phase-70.2-rich-transcript-selection_completed.md#current-comparison-r2--both-independent-reviews-pass); no clean adapter or library-route approval is claimed.
 
 The operator selected unchanged public packages plus Forge-owned extensions as the primary route,
 and asked to skip fork comparison when that stays clean. Foundation's 22 public-only behavior
@@ -47,11 +48,12 @@ cases do not prove continuous rich selection. No fork is authorized or created.
 | Drawing | Public CellBuffer.OverlayCellStyle can mark terminal cells; Forge already owns heading logical text/font geometry. This is a candidate rendering seam, not a demonstrated heading/rich-range renderer. [Overlay](https://github.com/XenoAtom/XenoAtom.Terminal.UI/blob/6f4e0cde3890d8ce2510ac0451b861863e4aeeaa/src/XenoAtom.Terminal.UI/Rendering/CellBuffer.cs#L268). |
 | Package ownership | Reusable native clipboard/menu extensions use the foundation package; Forge Markdown/Kitty semantics stay CLI. A second selection package or a larger extension API is not justified until the required map is proved. |
 
-Before rich design approval, make one bounded public-only geometry/semantics probe: two
-Paragraphs with repeated words, narrow wrapping and graphemes, crossing a logical image heading
-into code. Prove pointer→logical offsets, highlighted cells, exact copied text and reflow, with
-no private access. Also close every promised content case in the decision table below; this probe
-does not authorize a smaller range scope.
+The probe covered two Paragraphs, repeated words, narrow wrapping, graphemes and an actual
+image heading beside code. It recorded local highlighting, exact copied text and reflow
+without private access, but found no public point/range boundary for continuous selection.
+Every promised content case below still needs a decision; the probe does not narrow range scope.
+
+The [narrow native isolation](phase-70.2-rich-transcript-selection_completed.md#narrow-native-paragraph-isolation--2026-10-06) reproduced leading-space wrap budgeting loss for ASCII and two-cell graphemes while exact Copy succeeded. Native whitespace/wrap correction needs a reviewed design; the comparison's facade estimate excludes this correction. No patch or fork is approved.
 
 If that requires reproducing substantial native wrapping/hit mapping or cannot meet an essential
 case, compare that concrete adapter with a bounded fork exposing existing native mapping/range
@@ -85,7 +87,7 @@ design remain open; library-private methods are never an implementation shortcut
 
 | Task | State | Done when |
 |---|---|---|
-| 1. Lock range and semantic scope | Pending foundation scope. | All range/content cases above have explicit decisions; operator resolves any Type-1 change before handoff. |
+| 1. Lock range and semantic scope | Probe/current comparison verified and reviewed; narrow wrap defect isolated; full semantics/route decisions open. | All range/content cases above have explicit decisions; operator resolves any Type-1 change before handoff. |
 | 2. Design and public contract review | Pending scope closure. | Supervisor applies designer persona; assigned simplicity and ownership reviewers check the complete current contract sequentially, including actual APIs, types, lifecycle and visual reference, before supervisor approval. |
 | 3. Plan and review | Pending design. | Assigned implementer plans; assigned reviewers run their complete checklists sequentially; supervisor approves one bounded task sequence and concrete failure/reflow/streaming tests. |
 | 4. Implement and review | Pending plan. | Same implementer after explicit plan approval; reused simplicity/style and ownership reviewers check the complete diff sequentially; supervisor independently reviews evidence. Library work, if needed, precedes consumer integration. |

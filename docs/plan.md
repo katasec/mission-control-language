@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Verify normal foundation publication and installation for [TUI text interaction](phases/phase-70-tui-text-interaction.md), then continue dependent rich-selection design. |
+| **NEXT STEP** | Resolve the package-visibility decision and record installed manual acceptance for [TUI text interaction](phases/phase-70-tui-text-interaction.md), then continue dependent rich-selection design. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Foundation merged after full reviews and canonical verification; normal publication/install underway; manual acceptance and rich selection remain open. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI installed/verified; package visibility decision, manual acceptance and rich design remain open. |
 
 ## Design docs
 

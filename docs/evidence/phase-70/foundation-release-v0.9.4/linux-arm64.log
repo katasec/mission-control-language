@@ -1,0 +1,427 @@
+﻿2026-10-06T03:43:14.2830347Z Current runner version: '2.337.0'
+2026-10-06T03:43:14.2864481Z ##[group]Runner Image Provisioner
+2026-10-06T03:43:14.2865654Z Hosted Compute Agent
+2026-10-06T03:43:14.2866407Z Version: 20260901.588
+2026-10-06T03:43:14.2867104Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-06T03:43:14.2867927Z Build Date: 2026-09-01T19:56:44Z
+2026-10-06T03:43:14.2868997Z Worker ID: {9838165d-bf3b-48ad-82da-d9f498a3d83a}
+2026-10-06T03:43:14.2869714Z Azure Region: eastus
+2026-10-06T03:43:14.2870411Z ##[endgroup]
+2026-10-06T03:43:14.2872927Z ##[group]Operating System
+2026-10-06T03:43:14.2873827Z Ubuntu
+2026-10-06T03:43:14.2874374Z 24.04.5
+2026-10-06T03:43:14.2874896Z LTS
+2026-10-06T03:43:14.2875487Z ##[endgroup]
+2026-10-06T03:43:14.2876111Z ##[group]Runner Image
+2026-10-06T03:43:14.2877324Z Image: ubuntu-24.04-arm
+2026-10-06T03:43:14.2877974Z Version: 20260927.135.1
+2026-10-06T03:43:14.2879818Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24-arm64/20260927.135/images/ubuntu/Ubuntu2404-Arm64-Readme.md
+2026-10-06T03:43:14.2881466Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24-arm64%2F20260927.135
+2026-10-06T03:43:14.2882539Z ##[endgroup]
+2026-10-06T03:43:14.2883782Z ##[group]GITHUB_TOKEN Permissions
+2026-10-06T03:43:14.2887649Z Contents: read
+2026-10-06T03:43:14.2888354Z Metadata: read
+2026-10-06T03:43:14.2889304Z Packages: read
+2026-10-06T03:43:14.2890014Z ##[endgroup]
+2026-10-06T03:43:14.2894289Z Secret source: Actions
+2026-10-06T03:43:14.2895538Z Cache mode: write
+2026-10-06T03:43:14.2896608Z Prepare workflow directory
+2026-10-06T03:43:14.3517339Z Prepare all required actions
+2026-10-06T03:43:14.3571283Z Getting action download info
+2026-10-06T03:43:14.5944681Z Download action repository 'actions/checkout@v6' (SHA:d23441a48e516b6c34aea4fa41551a30e30af803)
+2026-10-06T03:43:14.7449649Z Download action repository 'actions/setup-dotnet@v5' (SHA:26b0ec14cb23fa6904739307f278c14f94c95bf1)
+2026-10-06T03:43:14.9617969Z Download action repository 'actions/upload-artifact@v7' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-10-06T03:43:15.1542569Z Complete job name: build (ubuntu-24.04-arm, linux-arm64, forge)
+2026-10-06T03:43:15.2325190Z ##[group]Run set -euo pipefail
+2026-10-06T03:43:15.2326184Z [36;1mset -euo pipefail[0m
+2026-10-06T03:43:15.2327637Z [36;1mif [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then[0m
+2026-10-06T03:43:15.2329166Z [36;1m  echo "Version must be major.minor.patch, without v." >&2[0m
+2026-10-06T03:43:15.2330058Z [36;1m  exit 1[0m
+2026-10-06T03:43:15.2330830Z [36;1mfi[0m
+2026-10-06T03:43:15.2331570Z [36;1mif [[ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then[0m
+2026-10-06T03:43:15.2332680Z [36;1m  echo "Release must be dispatched from the default branch." >&2[0m
+2026-10-06T03:43:15.2333571Z [36;1m  exit 1[0m
+2026-10-06T03:43:15.2334157Z [36;1mfi[0m
+2026-10-06T03:43:15.2467009Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T03:43:15.2468743Z env:
+2026-10-06T03:43:15.2469637Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T03:43:15.2470532Z   VERSION: 0.9.4
+2026-10-06T03:43:15.2471466Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:15.2472282Z   DEFAULT_BRANCH: main
+2026-10-06T03:43:15.2472902Z   RID: linux-arm64
+2026-10-06T03:43:15.2473610Z   BINARY: forge
+2026-10-06T03:43:15.2474188Z ##[endgroup]
+2026-10-06T03:43:15.2936924Z ##[group]Run actions/checkout@v6
+2026-10-06T03:43:15.2938086Z with:
+2026-10-06T03:43:15.2939019Z   ref: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:15.2939933Z   repository: katasec/forge-mcl
+2026-10-06T03:43:15.2944340Z   token: ***
+2026-10-06T03:43:15.2944961Z   ssh-strict: true
+2026-10-06T03:43:15.2945676Z   ssh-user: git
+2026-10-06T03:43:15.2946288Z   persist-credentials: true
+2026-10-06T03:43:15.2947004Z   clean: true
+2026-10-06T03:43:15.2947655Z   sparse-checkout-cone-mode: true
+2026-10-06T03:43:15.2948895Z   fetch-depth: 1
+2026-10-06T03:43:15.2950189Z   fetch-tags: false
+2026-10-06T03:43:15.2950834Z   show-progress: true
+2026-10-06T03:43:15.2952037Z   lfs: false
+2026-10-06T03:43:15.2952706Z   submodules: false
+2026-10-06T03:43:15.2953302Z   set-safe-directory: true
+2026-10-06T03:43:15.2954110Z   allow-unsafe-pr-checkout: false
+2026-10-06T03:43:15.2954795Z env:
+2026-10-06T03:43:15.2955367Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T03:43:15.2956350Z   VERSION: 0.9.4
+2026-10-06T03:43:15.2957030Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:15.2957939Z   DEFAULT_BRANCH: main
+2026-10-06T03:43:15.2958930Z   RID: linux-arm64
+2026-10-06T03:43:15.2959687Z   BINARY: forge
+2026-10-06T03:43:15.2960295Z ##[endgroup]
+2026-10-06T03:43:15.3878070Z Syncing repository: katasec/forge-mcl
+2026-10-06T03:43:15.3881370Z ##[group]Getting Git version info
+2026-10-06T03:43:15.3882661Z Working directory is '/home/runner/work/forge-mcl/forge-mcl'
+2026-10-06T03:43:15.3884105Z [command]/usr/bin/git version
+2026-10-06T03:43:15.3937746Z git version 2.55.0
+2026-10-06T03:43:15.3962525Z ##[endgroup]
+2026-10-06T03:43:15.3976857Z Temporarily overriding HOME='/home/runner/work/_temp/fff3b01f-e31e-412f-a2c3-7f80f984887b' before making global git config changes
+2026-10-06T03:43:15.3979109Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T03:43:15.3982543Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/forge-mcl/forge-mcl
+2026-10-06T03:43:15.4040250Z Deleting the contents of '/home/runner/work/forge-mcl/forge-mcl'
+2026-10-06T03:43:15.4045454Z ##[group]Determining repository object format
+2026-10-06T03:43:15.4047389Z ##[endgroup]
+2026-10-06T03:43:15.4049418Z ##[group]Initializing the repository
+2026-10-06T03:43:15.4051008Z [command]/usr/bin/git init /home/runner/work/forge-mcl/forge-mcl
+2026-10-06T03:43:15.4154497Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-06T03:43:15.4158763Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-06T03:43:15.4160005Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-06T03:43:15.4161098Z hint: call:
+2026-10-06T03:43:15.4161650Z hint:
+2026-10-06T03:43:15.4162329Z hint: 	git config --global init.defaultBranch <name>
+2026-10-06T03:43:15.4163202Z hint:
+2026-10-06T03:43:15.4163943Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-06T03:43:15.4165247Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-06T03:43:15.4166167Z hint:
+2026-10-06T03:43:15.4166708Z hint: 	git branch -m <name>
+2026-10-06T03:43:15.4167480Z hint:
+2026-10-06T03:43:15.4168317Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-06T03:43:15.4170526Z Initialized empty Git repository in /home/runner/work/forge-mcl/forge-mcl/.git/
+2026-10-06T03:43:15.4174869Z [command]/usr/bin/git remote add origin https://github.com/katasec/forge-mcl
+2026-10-06T03:43:15.4223932Z ##[endgroup]
+2026-10-06T03:43:15.4226363Z ##[group]Disabling automatic garbage collection
+2026-10-06T03:43:15.4227850Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-06T03:43:15.4284397Z ##[endgroup]
+2026-10-06T03:43:15.4285754Z ##[group]Setting up auth
+2026-10-06T03:43:15.4286539Z Removing SSH command configuration
+2026-10-06T03:43:15.4301397Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T03:43:15.4343673Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T03:43:15.4682994Z Removing HTTP extra header
+2026-10-06T03:43:15.4688161Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T03:43:15.4722916Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-06T03:43:15.4921957Z Removing includeIf entries pointing to credentials config files
+2026-10-06T03:43:15.4928522Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T03:43:15.4962565Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T03:43:15.5175007Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-06T03:43:15.5216935Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git.path /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T03:43:15.5256313Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T03:43:15.5294034Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T03:43:15.5332136Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T03:43:15.5367786Z ##[endgroup]
+2026-10-06T03:43:15.5369146Z ##[group]Fetching the repository
+2026-10-06T03:43:15.5377833Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:16.1490230Z From https://github.com/katasec/forge-mcl
+2026-10-06T03:43:16.1492654Z  * branch            d23387492de4563abe9a57d5a51dfb538745f725 -> FETCH_HEAD
+2026-10-06T03:43:16.1501225Z [command]/usr/bin/git rev-parse --verify --quiet d23387492de4563abe9a57d5a51dfb538745f725^{object}
+2026-10-06T03:43:16.1526938Z d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:16.1531114Z ##[endgroup]
+2026-10-06T03:43:16.1532712Z ##[group]Determining the checkout info
+2026-10-06T03:43:16.1534287Z ##[endgroup]
+2026-10-06T03:43:16.1536852Z [command]/usr/bin/git sparse-checkout disable
+2026-10-06T03:43:16.1590086Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-06T03:43:16.1629132Z ##[group]Checking out the ref
+2026-10-06T03:43:16.1631793Z [command]/usr/bin/git checkout --progress --force d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:16.1780988Z Note: switching to 'd23387492de4563abe9a57d5a51dfb538745f725'.
+2026-10-06T03:43:16.1782922Z 
+2026-10-06T03:43:16.1784838Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-06T03:43:16.1786810Z changes and commit them, and you can discard any commits you make in this
+2026-10-06T03:43:16.1789067Z state without impacting any branches by switching back to a branch.
+2026-10-06T03:43:16.1790172Z 
+2026-10-06T03:43:16.1790967Z If you want to create a new branch to retain commits you create, you may
+2026-10-06T03:43:16.1792905Z do so (now or later) by using -c with the switch command. Example:
+2026-10-06T03:43:16.1793963Z 
+2026-10-06T03:43:16.1794446Z   git switch -c <new-branch-name>
+2026-10-06T03:43:16.1795202Z 
+2026-10-06T03:43:16.1795640Z Or undo this operation with:
+2026-10-06T03:43:16.1796382Z 
+2026-10-06T03:43:16.1797340Z   git switch -
+2026-10-06T03:43:16.1797974Z 
+2026-10-06T03:43:16.1799175Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-06T03:43:16.1800412Z 
+2026-10-06T03:43:16.1801578Z HEAD is now at d233874 feat(tui): add truthful native text clipboard and snippet Copy (#62)
+2026-10-06T03:43:16.1805640Z ##[endgroup]
+2026-10-06T03:43:16.1829863Z [command]/usr/bin/git log -1 --format=%H
+2026-10-06T03:43:16.1856751Z d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:16.2123063Z ##[group]Run actions/setup-dotnet@v5
+2026-10-06T03:43:16.2124944Z with:
+2026-10-06T03:43:16.2125692Z   dotnet-version: 10.x
+2026-10-06T03:43:16.2126881Z   cache: false
+2026-10-06T03:43:16.2128021Z env:
+2026-10-06T03:43:16.2129116Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T03:43:16.2130039Z   VERSION: 0.9.4
+2026-10-06T03:43:16.2131020Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:16.2132033Z   DEFAULT_BRANCH: main
+2026-10-06T03:43:16.2132867Z   RID: linux-arm64
+2026-10-06T03:43:16.2133675Z   BINARY: forge
+2026-10-06T03:43:16.2134371Z ##[endgroup]
+2026-10-06T03:43:16.3337152Z [command]/home/runner/work/_actions/actions/setup-dotnet/v5/externals/install-dotnet.sh --skip-non-versioned-files --runtime dotnet --channel LTS
+2026-10-06T03:43:16.6368534Z dotnet-install: .NET Core Runtime with version '10.0.12' is already installed.
+2026-10-06T03:43:16.6394878Z [command]/home/runner/work/_actions/actions/setup-dotnet/v5/externals/install-dotnet.sh --skip-non-versioned-files --channel 10.0
+2026-10-06T03:43:16.8473206Z dotnet-install: .NET Core SDK with version '10.0.401' is already installed.
+2026-10-06T03:43:16.8698061Z ##[group]Run sudo apt-get install -y clang zlib1g-dev
+2026-10-06T03:43:16.8699946Z [36;1msudo apt-get install -y clang zlib1g-dev[0m
+2026-10-06T03:43:16.8765041Z shell: /usr/bin/bash -e {0}
+2026-10-06T03:43:16.8765928Z env:
+2026-10-06T03:43:16.8766607Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T03:43:16.8767629Z   VERSION: 0.9.4
+2026-10-06T03:43:16.8768631Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:16.8770120Z   DEFAULT_BRANCH: main
+2026-10-06T03:43:16.8770898Z   RID: linux-arm64
+2026-10-06T03:43:16.8771565Z   BINARY: forge
+2026-10-06T03:43:16.8772352Z   DOTNET_ROOT: /usr/share/dotnet
+2026-10-06T03:43:16.8773142Z ##[endgroup]
+2026-10-06T03:43:24.9756952Z Reading package lists...
+2026-10-06T03:43:25.3126872Z Building dependency tree...
+2026-10-06T03:43:25.3181466Z Reading state information...
+2026-10-06T03:43:25.8040410Z zlib1g-dev is already the newest version (1:1.3.dfsg-3.1ubuntu2.2).
+2026-10-06T03:43:25.8041482Z The following NEW packages will be installed:
+2026-10-06T03:43:25.8050902Z   clang
+2026-10-06T03:43:26.1372102Z 0 upgraded, 1 newly installed, 0 to remove and 6 not upgraded.
+2026-10-06T03:43:26.1372743Z Need to get 5854 B of archives.
+2026-10-06T03:43:26.1373675Z After this operation, 20.5 kB of additional disk space will be used.
+2026-10-06T03:43:26.1374378Z Get:1 http://ports.ubuntu.com/ubuntu-ports noble/universe arm64 clang arm64 1:18.0-59~exp2 [5854 B]
+2026-10-06T03:43:26.4613785Z Fetched 5854 B in 0s (18.5 kB/s)
+2026-10-06T03:43:26.5108936Z Selecting previously unselected package clang.
+2026-10-06T03:43:26.5764591Z (Reading database ... 
+2026-10-06T03:43:26.5765391Z (Reading database ... 5%
+2026-10-06T03:43:26.5766023Z (Reading database ... 10%
+2026-10-06T03:43:26.5766679Z (Reading database ... 15%
+2026-10-06T03:43:26.5767263Z (Reading database ... 20%
+2026-10-06T03:43:26.5767824Z (Reading database ... 25%
+2026-10-06T03:43:26.5768330Z (Reading database ... 30%
+2026-10-06T03:43:26.5769310Z (Reading database ... 35%
+2026-10-06T03:43:26.5769763Z (Reading database ... 40%
+2026-10-06T03:43:26.5770572Z (Reading database ... 45%
+2026-10-06T03:43:26.5771112Z (Reading database ... 50%
+2026-10-06T03:43:26.6970660Z (Reading database ... 55%
+2026-10-06T03:43:27.0766348Z (Reading database ... 60%
+2026-10-06T03:43:27.3514157Z (Reading database ... 65%
+2026-10-06T03:43:27.6390929Z (Reading database ... 70%
+2026-10-06T03:43:27.9229592Z (Reading database ... 75%
+2026-10-06T03:43:28.2391043Z (Reading database ... 80%
+2026-10-06T03:43:28.7088727Z (Reading database ... 85%
+2026-10-06T03:43:29.2840831Z (Reading database ... 90%
+2026-10-06T03:43:29.8163023Z (Reading database ... 95%
+2026-10-06T03:43:29.8163462Z (Reading database ... 100%
+2026-10-06T03:43:29.8164114Z (Reading database ... 201617 files and directories currently installed.)
+2026-10-06T03:43:29.8210701Z Preparing to unpack .../clang_1%3a18.0-59~exp2_arm64.deb ...
+2026-10-06T03:43:29.8562125Z Unpacking clang (1:18.0-59~exp2) ...
+2026-10-06T03:43:29.9154613Z Setting up clang (1:18.0-59~exp2) ...
+2026-10-06T03:43:29.9517068Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-10-06T03:43:29.9586831Z Not building database; man-db/auto-update is not 'true'.
+2026-10-06T03:43:33.0111387Z 
+2026-10-06T03:43:33.0112477Z Running kernel seems to be up-to-date.
+2026-10-06T03:43:33.0113075Z 
+2026-10-06T03:43:33.0113268Z No services need to be restarted.
+2026-10-06T03:43:33.0113453Z 
+2026-10-06T03:43:33.0113887Z No containers need to be restarted.
+2026-10-06T03:43:33.0114071Z 
+2026-10-06T03:43:33.0114300Z No user sessions are running outdated binaries.
+2026-10-06T03:43:33.0114532Z 
+2026-10-06T03:43:33.0114855Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-10-06T03:43:34.5302444Z ##[group]Run dotnet publish src/ForgeMission.Cli -c Release -r "$env:RID" -o dist "-p:Version=$env:VERSION" "-p:SourceRevisionId=$env:SOURCE_SHA" -warnaserror
+2026-10-06T03:43:34.5303653Z [36;1mdotnet publish src/ForgeMission.Cli -c Release -r "$env:RID" -o dist "-p:Version=$env:VERSION" "-p:SourceRevisionId=$env:SOURCE_SHA" -warnaserror[0m
+2026-10-06T03:43:34.5322362Z shell: /usr/bin/pwsh -command ". '{0}'"
+2026-10-06T03:43:34.5322814Z env:
+2026-10-06T03:43:34.5323048Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T03:43:34.5323326Z   VERSION: 0.9.4
+2026-10-06T03:43:34.5323677Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T03:43:34.5324013Z   DEFAULT_BRANCH: main
+2026-10-06T03:43:34.5324270Z   RID: linux-arm64
+2026-10-06T03:43:34.5324509Z   BINARY: forge
+2026-10-06T03:43:34.5324731Z   DOTNET_ROOT: /usr/share/dotnet
+2026-10-06T03:43:34.5327716Z   NUGET_AUTH_TOKEN: ***
+2026-10-06T03:43:34.5328016Z ##[endgroup]
+2026-10-06T03:43:42.1336410Z   Determining projects to restore...
+2026-10-06T03:43:46.0171778Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 1.92 sec).
+2026-10-06T03:43:46.0682882Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 1.92 sec).
+2026-10-06T03:43:46.0684184Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 1.92 sec).
+2026-10-06T03:43:46.2154233Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 4 ms).
+2026-10-06T03:43:46.3266305Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 302 ms).
+2026-10-06T03:43:46.3642539Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 261 ms).
+2026-10-06T03:43:47.3940138Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 3.53 sec).
+2026-10-06T03:43:47.6910830Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 1.35 sec).
+2026-10-06T03:43:48.2036985Z   Restored /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 1.98 sec).
+2026-10-06T03:43:54.5446994Z   ForgeMission.Terminal.Extensions -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+2026-10-06T03:43:54.8661890Z   ForgeMission.Serve -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+2026-10-06T03:43:54.9034002Z   ForgeMission.Docker -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+2026-10-06T03:43:54.9148689Z   ForgeMission.Parser -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+2026-10-06T03:43:55.0479050Z   ForgeMission.MissionRegistry -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+2026-10-06T03:43:56.2060328Z   ForgeMission.Scout -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+2026-10-06T03:44:00.6800150Z   ForgeMission.Core -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+2026-10-06T03:44:01.1621792Z   ForgeMission.ChatClients -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+2026-10-06T03:44:09.4833644Z   ForgeMission.Cli -> /home/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/linux-arm64/forge.dll
+2026-10-06T03:44:10.0391470Z   Generating native code
+2026-10-06T04:00:36.4256918Z   ForgeMission.Cli -> /home/runner/work/forge-mcl/forge-mcl/dist/
+2026-10-06T04:00:40.1425664Z ##[group]Run set -euo pipefail
+2026-10-06T04:00:40.1426309Z [36;1mset -euo pipefail[0m
+2026-10-06T04:00:40.1426647Z [36;1m(cd dist && zip -r "$RUNNER_TEMP/forge-$RID.zip" .)[0m
+2026-10-06T04:00:40.1462690Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-06T04:00:40.1463062Z env:
+2026-10-06T04:00:40.1463638Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T04:00:40.1463982Z   VERSION: 0.9.4
+2026-10-06T04:00:40.1464276Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T04:00:40.1464659Z   DEFAULT_BRANCH: main
+2026-10-06T04:00:40.1464918Z   RID: linux-arm64
+2026-10-06T04:00:40.1465191Z   BINARY: forge
+2026-10-06T04:00:40.1465434Z   DOTNET_ROOT: /usr/share/dotnet
+2026-10-06T04:00:40.1465708Z ##[endgroup]
+2026-10-06T04:00:40.8188848Z   adding: libonnxruntime.so (deflated 62%)
+2026-10-06T04:00:40.8200106Z   adding: ForgeMission.Docker.pdb (deflated 27%)
+2026-10-06T04:00:40.8209075Z   adding: libonnxruntime_providers_shared.so (deflated 99%)
+2026-10-06T04:00:40.8423239Z   adding: libonigwrap.so (deflated 65%)
+2026-10-06T04:00:47.1543834Z   adding: forge.dbg (deflated 79%)
+2026-10-06T04:00:50.9844123Z   adding: forge (deflated 70%)
+2026-10-06T04:00:50.9899135Z ##[group]Run $archive = Join-Path $env:RUNNER_TEMP "forge-$env:RID.zip"
+2026-10-06T04:00:50.9899824Z [36;1m$archive = Join-Path $env:RUNNER_TEMP "forge-$env:RID.zip"[0m
+2026-10-06T04:00:50.9900527Z [36;1m$hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()[0m
+2026-10-06T04:00:50.9901729Z [36;1m"$hash  forge-$env:RID.zip" | Set-Content -Encoding ascii "$archive.sha256"[0m
+2026-10-06T04:00:50.9902305Z [36;1m$binary = (Resolve-Path "dist/$env:BINARY").Path[0m
+2026-10-06T04:00:50.9902654Z [36;1m& $binary --help[0m
+2026-10-06T04:00:50.9902985Z [36;1mif ($LASTEXITCODE -ne 0) { throw 'Native --help failed.' }[0m
+2026-10-06T04:00:50.9903458Z [36;1m$version = (& $binary --version | Out-String).Trim()[0m
+2026-10-06T04:00:50.9903936Z [36;1mif ($LASTEXITCODE -ne 0 -or $version -ne "$env:VERSION+$env:SOURCE_SHA") {[0m
+2026-10-06T04:00:50.9904391Z [36;1m  throw "Native version/source mismatch: $version"[0m
+2026-10-06T04:00:50.9904770Z [36;1m}[0m
+2026-10-06T04:00:50.9922986Z shell: /usr/bin/pwsh -command ". '{0}'"
+2026-10-06T04:00:50.9923333Z env:
+2026-10-06T04:00:50.9923684Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T04:00:50.9923980Z   VERSION: 0.9.4
+2026-10-06T04:00:50.9924318Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T04:00:50.9924680Z   DEFAULT_BRANCH: main
+2026-10-06T04:00:50.9924920Z   RID: linux-arm64
+2026-10-06T04:00:50.9925187Z   BINARY: forge
+2026-10-06T04:00:50.9925424Z   DOTNET_ROOT: /usr/share/dotnet
+2026-10-06T04:00:50.9925674Z ##[endgroup]
+2026-10-06T04:00:52.2443882Z Description:
+2026-10-06T04:00:52.2445458Z   forge — Mission Control Language runtime
+2026-10-06T04:00:52.2445748Z 
+2026-10-06T04:00:52.2445854Z Usage:
+2026-10-06T04:00:52.2446091Z   forge [command] [options]
+2026-10-06T04:00:52.2446315Z 
+2026-10-06T04:00:52.2446474Z Options:
+2026-10-06T04:00:52.2446797Z   -?, -h, --help  Show help and usage information
+2026-10-06T04:00:52.2447238Z   --version       Show version information
+2026-10-06T04:00:52.2447520Z 
+2026-10-06T04:00:52.2447609Z Commands:
+2026-10-06T04:00:52.2447966Z   init <mission>             Resolve expert sources and generate mcl.lock
+2026-10-06T04:00:52.2449133Z   run <mission>              Run a mission
+2026-10-06T04:00:52.2450229Z   validate <mission>         Validate a mission file and its expert references
+2026-10-06T04:00:52.2450794Z   list                       List available resources
+2026-10-06T04:00:52.2451160Z   expert                     Manage experts
+2026-10-06T04:00:52.2451505Z   registry                   OCI registry operations
+2026-10-06T04:00:52.2452013Z   login                      Sign in to Forge (browser) and store a platform key
+2026-10-06T04:00:52.2452493Z   whoami                     Show the signed-in Forge user and credit balance
+2026-10-06T04:00:52.2453069Z   logout                     Sign out of Forge (remove the stored platform key)
+2026-10-06T04:00:52.2453587Z   exec <target> <prompt>     Run a hosted mission once and print the answer
+2026-10-06T04:00:52.2454120Z   chat                       Chat with a hosted mission in the current Forge project
+2026-10-06T04:00:52.2454626Z   project                    Manage portable Forge projects
+2026-10-06T04:00:52.2455218Z   publish <reference> <dir>  Package a mission directory into a self-contained OCI artifact and push it
+2026-10-06T04:00:52.2455840Z   clean                      Remove cached OCI experts from ~/.forge/experts
+2026-10-06T04:00:52.2456416Z   serve <agent>              Serve a mission as an OpenAI-compatible endpoint
+2026-10-06T04:00:52.2456955Z   claude <target>            Launch Claude Code talking to a forge mission
+2026-10-06T04:00:52.2457522Z   connect                    Wire an editor's Claude Code extension to a forge mission
+2026-10-06T04:00:52.2458013Z   agent                      Manage forge agents running in Docker
+2026-10-06T04:00:52.2458765Z   webui                      Manage Open WebUI connected to a forge agent
+2026-10-06T04:00:52.2459765Z   provider                   Manage LLM provider profiles
+2026-10-06T04:00:52.2460438Z   mcp <mission>              Expose a mission as a stdio MCP server (for Claude Desktop and MCP-aware tools)
+2026-10-06T04:00:52.2460812Z 
+2026-10-06T04:00:52.3425477Z ##[group]Run actions/upload-artifact@v7
+2026-10-06T04:00:52.3425915Z with:
+2026-10-06T04:00:52.3426260Z   name: forge-linux-arm64
+2026-10-06T04:00:52.3426565Z   path: /home/runner/work/_temp/forge-linux-arm64.zip*
+2026-10-06T04:00:52.3426963Z   if-no-files-found: error
+2026-10-06T04:00:52.3427219Z   compression-level: 6
+2026-10-06T04:00:52.3427451Z   overwrite: false
+2026-10-06T04:00:52.3427765Z   include-hidden-files: false
+2026-10-06T04:00:52.3428020Z   archive: true
+2026-10-06T04:00:52.3429098Z env:
+2026-10-06T04:00:52.3429361Z   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+2026-10-06T04:00:52.3429651Z   VERSION: 0.9.4
+2026-10-06T04:00:52.3429954Z   SOURCE_SHA: d23387492de4563abe9a57d5a51dfb538745f725
+2026-10-06T04:00:52.3430272Z   DEFAULT_BRANCH: main
+2026-10-06T04:00:52.3430518Z   RID: linux-arm64
+2026-10-06T04:00:52.3430778Z   BINARY: forge
+2026-10-06T04:00:52.3431006Z   DOTNET_ROOT: /usr/share/dotnet
+2026-10-06T04:00:52.3431324Z ##[endgroup]
+2026-10-06T04:00:52.4681834Z With the provided path, there will be 2 files uploaded
+2026-10-06T04:00:52.4682550Z Artifact name is valid!
+2026-10-06T04:00:52.4682928Z Root directory input is valid!
+2026-10-06T04:00:52.6421042Z Uploading artifact: forge-linux-arm64.zip
+2026-10-06T04:00:52.6457509Z Beginning upload of artifact content to blob storage
+2026-10-06T04:00:53.0862256Z Uploaded bytes 8388608
+2026-10-06T04:00:53.3075827Z Uploaded bytes 16777216
+2026-10-06T04:00:53.5049739Z Uploaded bytes 25165824
+2026-10-06T04:00:53.7318296Z Uploaded bytes 33554432
+2026-10-06T04:00:53.7995549Z Uploaded bytes 41943040
+2026-10-06T04:00:54.0304394Z Uploaded bytes 50331648
+2026-10-06T04:00:54.2256465Z Uploaded bytes 58720256
+2026-10-06T04:00:54.3961585Z Uploaded bytes 67108864
+2026-10-06T04:00:54.5993933Z Uploaded bytes 75497472
+2026-10-06T04:00:54.9147358Z Uploaded bytes 83886080
+2026-10-06T04:00:55.0840874Z Uploaded bytes 92274688
+2026-10-06T04:00:55.1796018Z Uploaded bytes 100663296
+2026-10-06T04:00:55.4198666Z Uploaded bytes 109051904
+2026-10-06T04:00:55.6558493Z Uploaded bytes 117440512
+2026-10-06T04:00:55.8829670Z Uploaded bytes 125829120
+2026-10-06T04:00:55.9695777Z Uploaded bytes 130066962
+2026-10-06T04:00:55.9866163Z Finished uploading artifact content to blob storage!
+2026-10-06T04:00:55.9867745Z SHA256 digest of uploaded artifact is 83fe9b6527c466dbd6350681795016734030f69c222232c6fbba7f5b329b66fb
+2026-10-06T04:00:55.9870112Z Finalizing artifact upload
+2026-10-06T04:00:56.2376636Z Artifact forge-linux-arm64 successfully finalized. Artifact ID 11389102905
+2026-10-06T04:00:56.2377425Z Artifact forge-linux-arm64 has been successfully uploaded! Final size is 130066962 bytes. Artifact ID is 11389102905
+2026-10-06T04:00:56.2382510Z Artifact download URL: https://github.com/katasec/forge-mcl/actions/runs/37410293172/artifacts/11389102905
+2026-10-06T04:00:56.2707286Z Post job cleanup.
+2026-10-06T04:00:56.3953647Z Post job cleanup.
+2026-10-06T04:00:56.4754498Z [command]/usr/bin/git version
+2026-10-06T04:00:56.4777088Z git version 2.55.0
+2026-10-06T04:00:56.4837319Z Temporarily overriding HOME='/home/runner/work/_temp/0772a0ad-a17c-46c6-83a9-d7e13050b7cf' before making global git config changes
+2026-10-06T04:00:56.4838293Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-06T04:00:56.4839512Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/forge-mcl/forge-mcl
+2026-10-06T04:00:56.4885784Z Removing SSH command configuration
+2026-10-06T04:00:56.4895247Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-06T04:00:56.4941903Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-06T04:00:56.5189358Z Removing HTTP extra header
+2026-10-06T04:00:56.5196449Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-06T04:00:56.5277375Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-06T04:00:56.5600641Z Removing includeIf entries pointing to credentials config files
+2026-10-06T04:00:56.5601713Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-06T04:00:56.5619949Z includeif.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git.path
+2026-10-06T04:00:56.5620713Z includeif.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git/worktrees/*.path
+2026-10-06T04:00:56.5621269Z includeif.gitdir:/github/workspace/.git.path
+2026-10-06T04:00:56.5621746Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T04:00:56.5623211Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git.path
+2026-10-06T04:00:56.5660890Z /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5679451Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git.path /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5739976Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git/worktrees/*.path
+2026-10-06T04:00:56.5764402Z /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5780342Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/forge-mcl/forge-mcl/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5834702Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-10-06T04:00:56.5866823Z /github/runner_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5875304Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5923083Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-10-06T04:00:56.5952790Z /github/runner_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.5964434Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config
+2026-10-06T04:00:56.6015924Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-06T04:00:56.6235428Z Removing credentials config '/home/runner/work/_temp/git-credentials-59d78f92-72a8-4ce8-8444-f721500e70b2.config'
+2026-10-06T04:00:56.6396310Z Cleaning up orphan processes
+2026-10-06T04:00:56.6710272Z Terminate orphan process: pid (2598) (dotnet)
+2026-10-06T04:00:56.6734113Z Terminate orphan process: pid (2599) (dotnet)
+2026-10-06T04:00:56.6756250Z Terminate orphan process: pid (2600) (dotnet)

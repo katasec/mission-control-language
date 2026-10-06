@@ -1,0 +1,255 @@
+{
+  "task": "70.2 public geometry read-only scratch",
+  "sourcePins": {
+    "ForgeReportedMerged": "d23387492de4563abe9a57d5a51dfb538745f725",
+    "UI": "6f4e0cde3890d8ce2510ac0451b861863e4aeeaa",
+    "Terminal": "5517cb3d8cdf0532ecc89260067064f98cde6137"
+  },
+  "linkedProductFiles": [
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/TerminalInteractionTestHost.cs",
+      "sha256": "F20CA684A181B1A7C2C090DB33D49A460E676A41F35AD6112C1756F1594A0766"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeTheme.cs",
+      "sha256": "FCB6B992D5AB61B037AFE3BCFDCE16535F7B3F603BA0C0AE8AA9632386BAA223"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/RawStdout.cs",
+      "sha256": "049F32A820EC1B96132570CA025CE0775B5FEDA2B7BC2FCE26CA932B1EE25F1E"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/HeadingImage.cs",
+      "sha256": "7CB01C8D10A9648FE4E4E5522E71E5FC621EB75C3BF6ADB133FE1388702963F0"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/TextImages.cs",
+      "sha256": "23B83AD65C4A4451A3FB9889FEFAD8A2FBE96A49A58BD91AE6448B5E78A2516E"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/TextArt.cs",
+      "sha256": "CFD4D8F1F43A926B7E052140E9EF9B0EE3DF3DEC30A74F0785EFE7B2EB6892A6"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/GlyphText.cs",
+      "sha256": "F9C54CC035A4C342DEC8894A25B48EB7F8E4CFE6D8F44933D7F5FC7F3F43FE45"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/GposKerning.cs",
+      "sha256": "66100C5891DC0CF22402FE26F3B6489012351666B1D02B73A980C23C1ACC7462"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/Raster.cs",
+      "sha256": "AFDC597CED44E62BC8591E82FAA3F5F746936D69B40386E7DB62582BF8C08AEC"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/Png.cs",
+      "sha256": "D7998C1B3DFF5E7471E1B2F50C953ED423BB4FF5F2167C6F9E022C3A9DC28E2D"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/TerminalFacts.cs",
+      "sha256": "2C1E5BD13FA7CFEEABE7895E0C72B2ED10AC5836B82F07F014F24B49F8684FEC"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/ImageCells.cs",
+      "sha256": "002A4D6C6B4191BDFA2391C3349D3662BAA59E58588B20ABCBEDBDF65FB016C1"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/KittyImages.cs",
+      "sha256": "8B7C4F53677F8C1C569D214191247DA5E6CA5DC3EF4537C39316D6810902E749"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/PlaceholderDiacritics.cs",
+      "sha256": "A43DC9CA46713A01A9AA58CB85B3B665C580E789ABC542B1F52102D9609EF8EF"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/Fonts/Inter-SemiBold.ttf",
+      "sha256": "F1FBB3185854A1E9E5552A2E7875B633D0C2029B6A63612D9CF141650790A37E"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Graphics/Fonts/Inter-Bold.ttf",
+      "sha256": "D94951CE48F6907C588E07E2666B9202D9DD506AA4400BCEF2CDD48E88D1315F"
+    }
+  ],
+  "inspectedNativeFiles": [
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Controls/Paragraph.cs",
+      "sha256": "9FEC3A3B922B7B2A7F7D41D653DF0215DC69D78FC2A15400CF25F8292E48687D"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Input/ISelectionOwner.cs",
+      "sha256": "14AD99ED0F2C6508BE68168FA06A26B194E010761E9DA93E4C7CE644E3BD34C9"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Rendering/CellBuffer.cs",
+      "sha256": "4460319F1C6182BDC526420C7333C0AF72107F69710E957633BDF96FD033646C"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Visual.cs",
+      "sha256": "185E6187AE94AFF7CFD0EEEC1C70183B3CD3BA722D2AA4C76F620ED4E4BEC05E"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Controls/DocumentFlowBlock.cs",
+      "sha256": "0DC6F0A0CCF4D865D8CF97B976921F816C48F6C6E7E7787846A70668096A56D3"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI.Extensions.Markdown/Controls/MarkdownControl.cs",
+      "sha256": "1260DB472F68997AD98A38D470F52EE465166FEFA402611F9016227D2A818295"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI.Extensions.Markdown/MarkdownDocumentBuilder.cs",
+      "sha256": "C15349D0244EC3E9EFBFE261153FC405BBCBE18DBAFFF1146DC87022C951B3A3"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI.Extensions.Markdown/MarkdownDocumentContent.cs",
+      "sha256": "79E6F9365436021DD5652939D1D96F9645F28957D191718C7F0B0AC624D68BFA"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/XenoAtom.Terminal.UI.csproj",
+      "sha256": "1DB975998ECEE0E458DC134DA6AE2DBFE3A49EC162A477448ECABD12B0B8455A"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI.Extensions.Markdown/XenoAtom.Terminal.UI.Extensions.Markdown.csproj",
+      "sha256": "1DEB56907725C01705E45F0E7CDB64F0E350E67AC1B89ACE5C841B8BF16E1EBC"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI.Extensions.CodeEditor.TextMateSharp/XenoAtom.Terminal.UI.Extensions.CodeEditor.TextMateSharp.csproj",
+      "sha256": "0C4DEC703809BC39EC35C824F1C8F15EE3B1DF84A2A2B3710B6F8772767B4CCD"
+    }
+  ],
+  "terminalTextUtility": {
+    "path": "/tmp/phase70-public-sources/XenoAtom.Terminal/src/XenoAtom.Terminal/TerminalTextUtility.cs",
+    "sha256": "D38FC2DD9F54C2F7BDBB7F9431B3A687B9962EED99DD850F030428E09E898B0E"
+  },
+  "artifactFiles": [
+    {
+      "path": "/tmp/phase70-rich-public-probe/api-negative-build.log",
+      "sha256": "2AF25538B382082BB686D573AB6D0003168C9BBC226B0A583A15E73894D80C37",
+      "bytes": 1685
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/api-negative-result.json",
+      "sha256": "3E172653A3B12F61AC8CE2A255D3D791E6B670A4BE9DB610B86636BCD338C441",
+      "bytes": 214
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/ApiNegative.csproj",
+      "sha256": "A8457921D582373776E7A26E419DC6D0BA2F95B377024C8048DA116C56949E5F",
+      "bytes": 308
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/ApiNegative.txt",
+      "sha256": "A245FA756DF3FDDB692CA5C1C3ABBAEE54542B4BB8C08060A94CFF7BD5233FC1",
+      "bytes": 275
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/build-initial.log",
+      "sha256": "5A3F7A6DE8EA2F6898A88593860DE1C93D3404CA5403FC0113D15769CD5B646A",
+      "bytes": 928
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/build.log",
+      "sha256": "80C30BE345FE4E8C283CCDFBDEB9298C33FA23DBF56FD6BC0025CF5BD52F1B54",
+      "bytes": 389
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/comparison.md",
+      "sha256": "E3ED03C42D44451B5AA15FD9D44FF395B4D1D3F3009DAEF363559E9DE08CC123",
+      "bytes": 8736
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/current-consumers.log",
+      "sha256": "014DA0B20F68DDD10AA68C195E2CB4A5CF8460EAC9A0C870D55373120088F4C1",
+      "bytes": 1439
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/dependencies.log",
+      "sha256": "E5D72CAC0401DEB074441F9008F950619EEB2C1082B4F99ADFF4FCDA7A9BC88E",
+      "bytes": 972
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/mechanism-cost.json",
+      "sha256": "22F44A310C7472FA47DAB34EFBBE8E34A2F3954157927B8E0F21E4D36B5AA9A4",
+      "bytes": 611
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/observations.json",
+      "sha256": "96798F0134296A90641936A1BA19814443434C42C80009C5EA51821197D30132",
+      "bytes": 34848
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/Probe.csproj",
+      "sha256": "B9E80017615370A05680864491B380D451825FFA74D549BD86372B428DBDA186",
+      "bytes": 3015
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/Program.cs",
+      "sha256": "5F23DFA990D2C37959693FD0C135BE42EF5FDDE0FB19F12829DA63955826754B",
+      "bytes": 9658
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/result.json",
+      "sha256": "CF0B83C3CA90A375CAEE8ABEBC8B3E186BB17BA16372107D90BDDAC49BDA5725",
+      "bytes": 138
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/run-before-whole-code.log",
+      "sha256": "E9A2EABA2B6DD1B58F2DF3E16631BCCB40C569D9E7E74CD209E6A7481415F781",
+      "bytes": 34478
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/run-initial.log",
+      "sha256": "CCDE0A4CEBCA3BD3D30E464F5C1A195934834801643A22C9069A69341C38D533",
+      "bytes": 17304
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/run.log",
+      "sha256": "F4B69ABFC47F6B164F1928D4388B2E9DA34F19A3C99C8C075F431C2881B47F5E",
+      "bytes": 38185
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/source-api.log",
+      "sha256": "58DC66448C2D144351D91B7EF52268180BF43CCA0E30831D23DB86A1CDFB1170",
+      "bytes": 7942
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/summary.json",
+      "sha256": "EFB1E3B2E6C7FCF7F7FE9845D847049E3458F6389FF3C50711FC9D45ED601C95",
+      "bytes": 1585
+    }
+  ],
+  "inspectedConsumerAndGeneratorFiles": [
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI.SourceGen/XenoAtom.Terminal.UI.SourceGen.csproj",
+      "sha256": "51374DDDDA88615E7010D4331261C86F1F89FD8FC2518D1B1458E38EF08D72AD"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj",
+      "sha256": "3E96E7F4EA3EDFCF9898C4B45FA28376953D5A8924F99088E77B6F4326C8B4DE"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj",
+      "sha256": "AC48227AC55665F21FCBCB8365A1EB8217B2F8B3550E4E5A6B410522286DA4A2"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj",
+      "sha256": "56B9DAC5436D44A9CB97F8C6FE895A56305A9894B6A0EA717D0359EBE6E6D4E6"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ChatScreen.cs",
+      "sha256": "FD92220DC2A8186123770FDC7022490380B22F941594273773E0048A67281B09"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/Transcript.cs",
+      "sha256": "84EF44437B3A387F8E2066F60FC06052D667DFAD902B43DCCDA594237BCDD660"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeMarkdown.cs",
+      "sha256": "156D04979D64DCD5C067B48FC980437E638560DE51D4EA43BC5A3657D8B99FC7"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/ForgeCodeBlockRenderer.cs",
+      "sha256": "C381F56827142F2F13560F6E0372DB438C4D8A2A60F4EE03C5F0CAB66A3ECFFA"
+    }
+  ]
+}
