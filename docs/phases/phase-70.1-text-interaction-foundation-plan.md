@@ -177,7 +177,7 @@ make verify-terminal-extensions-package
 
 Apply [Desktop Interaction Principles](../design/desktop-interaction-principles.md), [UI Design System](../design/ui-design-system.md) and [TUI graphics](../design/tui-graphics.md).
 
-Binding owned-slice galleries are [light](../images/phase-70.1/foundation-light.svg), [dark](../images/phase-70.1/foundation-dark.svg) and [colour evidence](../evidence/phase-70/foundation-colours.json). Preserve surrounding appearance from [finish-line mockup](../design/forge_tui_finish_line_mockup.html), [plain turn](../images/phase-64-plain-turn.png), [hands turn](../images/phase-64-hands-read.png) and [operator reference](../images/phase-70/chat-user-reference.png).
+Binding owned-slice galleries are [light](../images/phase-70.1/foundation-light.svg), [dark](../images/phase-70.1/foundation-dark.svg) and [verification report](../evidence/phase-70/verification-report.md#foundation-controlled-evidence). Preserve surrounding appearance from [finish-line mockup](../design/forge_tui_finish_line_mockup.html), [plain turn](../images/phase-64-plain-turn.png), [hands turn](../images/phase-64-hands-read.png) and [operator reference](../images/phase-70/chat-user-reference.png).
 
 | Owned slice | Required comparison |
 |---|---|

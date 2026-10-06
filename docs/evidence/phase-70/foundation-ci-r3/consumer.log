@@ -1,1 +1,0 @@
-PASS: isolated packed consumer exercised every public API and all result values; native pins resolved without project/CLI references.

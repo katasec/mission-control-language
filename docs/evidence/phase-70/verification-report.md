@@ -1,8 +1,7 @@
 # Phase 70 — Foundation delivery and selection investigation report
 
 Recorded 2026-10-06. **Foundation CLI installed; package visibility, operator acceptance
-and continuous rich-selection design remain open.** This report replaces the 71 individual
-artifacts from the latest checkpoint, at the operator's request. Earlier foundation design,
+and continuous rich-selection design remain open.** This report replaces raw Phase70 evidence, at the operator's request. The first cleanup removed71 recent artifacts; the follow-up removed91 older foundation files, leaving this single report. Earlier foundation design,
 plan and code-review records remain in the [foundation archive](../../phases/phase-70.1-text-interaction-foundation_completed.md).
 All times below are UTC.
 
@@ -128,8 +127,7 @@ installed default-path or physical acceptance. Existing UI principles, design sy
 graphics and both-theme/operator gates remain binding.
 
 The [original checkpoint PR351](https://github.com/katasec/mission-control-language/pull/351)
-retains historical audit provenance. The current repository uses this report instead of the
-71 raw artifacts, intermediate runs and duplicate summaries. This consolidation changes
+retains historical audit provenance. The current repository uses this report instead of raw artifacts, intermediate runs and duplicate summaries. This consolidation changes
 documentation only: runtime/default-path/security/UI implementation gates N/A.
 
 ## Mac shortcut scope checkpoint
@@ -137,15 +135,14 @@ documentation only: runtime/default-path/security/UI implementation gates N/A.
 Operator screenshots identify the chat input and `/edit` file editor. Installed Ghostty1.3.1
 static source handles host bindings before PTY input; native Terminal2.2.0/UI3.10.0 already
 decode and execute Ctrl+A Select All. A one-line Cmd+A forwarding candidate is documented in
-[the shortcut spoke](../../phases/phase-70.3-mac-select-all.md). Its effect on other Ghostty
-tabs is awaiting the operator's answer. No host setting or product code was changed.
+[the shortcut spoke](../../phases/phase-70.3-mac-select-all.md). That initial checkpoint preceded the operator's Forge-only choice and dedicated-window approval below; it is historical, not the current next action.
 
 | Documentation stage | Start UTC | Validation UTC | Evidence |
 |---|---|---|---|
 | Scope checkpoint | 07:40:51 | 07:46:45 | Nine Markdown files / 428 local links and anchors PASS; whitespace PASS. |
 
 Product design/plan/code approvals, product tests/AOT and physical/default-path acceptance
-are N/A to this documentation checkpoint; the shortcut remains unimplemented.
+were N/A to that documentation checkpoint. Current implementation status is below.
 
 ## Forge-only shortcut feasibility
 
@@ -171,5 +168,106 @@ OS hooks and unconsumed host selection were rejected for violating isolation/con
 | Scope, supervisor | 09:11:26 | 09:17:30 | Static feasibility only; no design/plan approval. |
 | `[investigate:implementer:r1]` shortcut | Not recorded | 09:17:30 | Duration unavailable; reused thread lifetime is not stage timing. |
 
-Dedicated launch choice is pending. Product tests/AOT and physical/default-path acceptance are
-N/A to this investigation; existing Ctrl+A remains supported and Cmd+A is unimplemented.
+At that checkpoint the dedicated launch choice was pending; it is now approved below. Product tests/AOT and physical/default-path acceptance were
+N/A to that investigation; implementation followed the later dedicated-window approval.
+
+## Dedicated Mac launch design
+
+Operator approved normal `forge chat` opening a dedicated Forge window on2026-10-06.
+The complete [R2 design](../../phases/phase-70.3-mac-select-all.md) passed both independent reviews and was supervisor-locked at10:50:22 UTC. The complete R2 plan passed both reviewers and was approved at11:14:38 UTC. Implementation R1 returned at11:23:21 UTC; current code review and canonical verification are pending.
+Static pinned Ghostty1.3.1/open(1) evidence supports new-instance argv/environment inheritance,
+identical initial/global Forge commands and native last-window quitting. A controlled shell probe
+passed4/4 exact argument cases including spaces, quotes, backslashes, shell metacharacters and Unicode;
+no actual Ghostty/LaunchServices operation was performed.
+
+R1 full simplicity and ownership reviews required removing a Linux-only delay and preserving
+cwd/endpoint values through native trimming. R2 uses one Base64 cwd/endpoint context with explicit
+endpoint absence, literal outer quotes for host cwd, and child-held restoration failures.
+Recursive includes are cleared only in the dedicated profile; themes replay the protected CLI values.
+No shared config or restoration preference is written. Native restored window count/activation,
+physical key delivery and actual LaunchServices inheritance remain manual acceptance observations.
+Existing PR-event verification supplies full tests and warning-enforced Mac Native AOT; no new workflow.
+
+| Stage | Start UTC | Result available UTC | Verdict |
+|---|---|---|---|
+| Scope, supervisor |10:15:44|10:16:37| Approved dedicated-window requirement |
+| Investigation, implementer R2 |10:16:37|10:26:25| Static contracts + controlled argv4/4; no physical proof |
+| Design, supervisor R1 |10:17:44|10:28:29| Candidate; docs links/whitespace PASS |
+| Design review, simplicity R1 |10:28:29|Unavailable| REVISE; verdict available by10:35:19; no inferred duration |
+| Design review, ownership R1 |Unavailable|10:40:51| REVISE; complete owner/checklist tables |
+| Design, supervisor R2 |10:42:04|10:42:36| Combined corrections;9 Markdown/427 local links PASS |
+| Design review, simplicity R2 |10:42:36|10:44:08| All11 checks PASS |
+| Design review, ownership R2 |10:44:44|10:47:21| All23 behaviours/all6 checks PASS |
+| Supervisor design lock |10:50:22|10:50:22| Complete R2 approved; no implementation approval |
+| Implementation plan, R1 |10:50:29|10:55:59| Six bounded product-repo files; no writes |
+| Plan review, simplicity R1 |10:59:32|11:02:03| REVISE; name source versus executable production-wiring evidence |
+| Plan review, ownership R1 |11:02:53|11:05:39| Same evidence-layer correction; placement PASS |
+| Implementation plan R2 |11:06:21|11:07:13| Same files/APIs; explicit source/controlled/default evidence layers |
+| Plan review, simplicity R2 |11:08:56|11:11:30| Full11 checks PASS |
+| Plan review, ownership R2 |11:12:12|11:13:34| All28 behaviours/all6 checks PASS |
+| Supervisor plan approval / branch |11:14:38|11:14:38| Approved six-file R2; branch isolated from main |
+| Implementation R1 |11:14:40|11:23:21| Frozen six files; managed checks PASS; physical/default pending |
+| Code review, simplicity/style R1 |11:28:21|11:30:05| All11 simplicity checks PASS; all style source checks PASS, native-warning gate pending |
+| Code review, ownership R1 |11:31:28|11:33:33| All28 behaviours/all6 checks PASS; same manifest/source |
+
+## Foundation controlled evidence
+
+Older foundation JSON/log artifacts are consolidated here. Historical full audit remains in
+[checkpoint PR351](https://github.com/katasec/mission-control-language/pull/351) and the prior Git commits;
+current raw artifacts are removed rather than duplicated. Current final delivery observations are
+[in the delivery table](#foundation-delivery).
+
+| Controlled observation | Recorded outcome / limit |
+|---|---|
+| Public native feasibility | R10 public-control probe64/64 and independent rerun PASS, zero managed build warnings. Uses existing native geometry/menu/Paste; does not prove continuous rich selection. |
+| Mutation retirement | R12 requires synchronous snippet/source retirement before native content replacement or detach; reviewed controlled regression proves stale actions are not kept alive until layout. |
+| Light/dark reference | Existing SVG galleries remain binding. Csharp selected syntax minimum contrast4.89 light/4.26 dark; broader language coverage and physical Retina acceptance are separate. |
+| Final controlled foundation | Focused181/181, package26/26 and full canonical873 passed/10 existing prerequisite skips; earlier failing intermediate tests were corrected, not accepted. |
+| Pre-merge canonical source | [Run37407903290](https://github.com/katasec/forge-mcl/actions/runs/37407903290), merge candidate `c4536e416e89931873ed6ad9171f308c7d8c66ca`, exact reviewed tree `90e0f26f2adc1ffb9ed79e96379bc9f01b709d47`. Managed/native output zero compiler/linker warnings; native SHA256 `eee92831abced7a7f97210ed9bae7bde6b430df135a97302c35e3c523ea3f9b8`. |
+| Local AOT limit | Local publish exited0 with six linker warnings: zero-warning FAIL. Canonical PASS did not relabel or waive this result. |
+| Physical/default acceptance | Pending operator; controlled backends and fixtures never prove installed Ghostty delivery or Retina appearance. |
+
+Normal top-level Ghostty config baseline SHA256:
+`e2a910c754718b31d2e2a8e86d976d446d2bf57968cff3e322652b10486fdd49`.
+It contains only font-size16; static reading/hashing does not prove physical shortcut behaviour.
+Report consolidation is documentation-only:91 older files removed, all old evidence links redirected,
+exactly one tracked/physical file remains in this evidence directory;9 Markdown/428 local links and
+whitespace checks PASS. This cleanup adds no product/default-path behaviour.
+
+
+## Mac patch verification and pre-code elapsed allocation
+
+[Product PR63](https://github.com/katasec/forge-mcl/pull/63) is draft, head
+`742e5ed`, six files/483 insertions/4 deletions. Both source code reviews found no required source changes; the style reviewer's native-warning gate remains open. [Canonical run37456671786](https://github.com/katasec/forge-mcl/actions/runs/37456671786) started11:28:48 UTC and is in progress; no native PASS yet. Managed build:0 warnings/0 errors,11.70s. Focused81 passed/0 failed/0 skipped.
+Full process-scoped key-unset suite:924 passed/0 failed/6 existing prerequisite skips,930 total,
+2m12s. Controlled process and shell tests did not invoke open/Ghostty. Root independently read
+full command entry and RunAsync: all preflights precede direct launch return before HTTP/client
+composition. This is source evidence only. Existing RunAsync complexity16 versus15 has a
+scoped supervisor exception in the active spoke; no score-only refactor broadened the patch.
+
+| Elapsed activity before coding | Duration | Contents |
+|---|---|---|
+| Scope, investigation and design corrections |14m30s| First candidate and correction; root work partly overlapped investigation |
+| Implementation plan and correction |6m22s| First plan5m30s; revised verification wording52s |
+| Four review rounds including handoffs |27m52s| Design12m22s +4m45s; plan6m07s +4m38s |
+| Supervisor documentation, approval and handoffs |10m12s| Recording, cleanup, assignments, branch and approval |
+| Total scope start→coding assignment |58m56s|10:15:44→11:14:40 UTC |
+
+These are elapsed allocations, not exclusive person-hours or measured active reviewer thinking.
+Review sequence: simplicity→ownership for initial design, repeated after the design correction;
+then simplicity→ownership for the initial plan, repeated after evidence-layer clarification.
+Eight individual assignments ran sequentially. Initial design changes fixed unsupported Mac
+options and exact context transport; the first plan correction changed evidence wording, not
+product files/APIs/scope. Initial review boundaries are partly unavailable above; no fabricated
+individual duration is supplied. The largest measured pre-code block is review cycles27m52s.
+
+
+Canonical CI product/package step completed successfully and Native AOT started11:34:01 UTC.
+Root fetched PR63 merge candidate `32af6c2b8a15d0b86502232a382cff16d0921582` and independently
+matched its tree to the reviewed head: `415174ec3f572ae88d9f059db0c7e34bbe1f5057`.
+Full artifact/log inspection and Native AOT completion remain pending; no native PASS recorded.
+
+At operator request, the event table was exported outside the repository to
+`/Users/ameerdeen/tmp/phase70-event-timing.md`, with independently checked elapsed durations,
+unknown timing marked and wall-clock totals58m56s before coding /1h07m37s through implementation
+handoff. The export is a convenience copy, not a second evidence archive or product file.
