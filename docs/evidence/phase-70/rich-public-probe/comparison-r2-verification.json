@@ -1,0 +1,20 @@
+{
+  "stageStartUTC": "2026-10-06T03:58:15.536Z",
+  "stageEndUTC": "2026-10-06T04:04:15.352Z",
+  "verdict": "REVISE comparison precision",
+  "correction": "Directional anchor/active endpoints versus sorted range; identity-dependent compatible-family packaging",
+  "inspectedPublishedMetadata": [
+    {
+      "path": "/Users/ameerdeen/.nuget/packages/xenoatom.terminal.ui.extensions.markdown/3.10.0/xenoatom.terminal.ui.extensions.markdown.nuspec",
+      "sha256": "442b28f1c81f2481768fb4cf487225f483aa12ee8a8a402e039070acc0f584b9",
+      "text": "\ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<package xmlns=\"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd\">\n  <metadata>\n    <id>XenoAtom.Terminal.UI.Extensions.Markdown</id>\n    <version>3.10.0</version>\n    <authors>Alexandre Mutel</authors>\n    <license type=\"expression\">BSD-2-Clause</license>\n    <licenseUrl>https://licenses.nuget.org/BSD-2-Clause</licenseUrl>\n    <icon>XenoAtom.Terminal.UI.png</icon>\n    <readme>readme.md</readme>\n    <projectUrl>https://github.com/XenoAtom/XenoAtom.Terminal.UI</projectUrl>\n    <description>Markdown rendering for XenoAtom.Terminal.UI (powered by Markdig)</description>\n    <releaseNotes>https://github.com/XenoAtom/XenoAtom.Terminal.UI/releases/tag/3.10.0</releaseNotes>\n    <copyright>Alexandre Mutel</copyright>\n    <tags>terminal console tui ui markdown markdig commonmark rendering ansi cross-platform</tags>\n    <repository type=\"git\" url=\"https://github.com/XenoAtom/XenoAtom.Terminal.UI\" commit=\"6f4e0cde3890d8ce2510ac0451b861863e4aeeaa\" />\n    <dependencies>\n      <group targetFramework=\"net10.0\">\n        <dependency id=\"XenoAtom.Terminal.UI\" version=\"3.10.0\" exclude=\"Build,Analyzers\" />\n        <dependency id=\"Markdig\" version=\"1.4.0\" exclude=\"Build,Analyzers\" />\n        <dependency id=\"XenoAtom.Terminal\" version=\"2.2.0\" exclude=\"Build,Analyzers\" />\n      </group>\n    </dependencies>\n  </metadata>\n</package>"
+    },
+    {
+      "path": "/Users/ameerdeen/.nuget/packages/xenoatom.terminal.ui.extensions.codeeditor.textmatesharp/3.10.0/xenoatom.terminal.ui.extensions.codeeditor.textmatesharp.nuspec",
+      "sha256": "b3f32e8525302d4a13f42801d062c020cd635b46ded1f6741f1cf6c589cb5ba4",
+      "text": "\ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<package xmlns=\"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd\">\n  <metadata>\n    <id>XenoAtom.Terminal.UI.Extensions.CodeEditor.TextMateSharp</id>\n    <version>3.10.0</version>\n    <authors>Alexandre Mutel</authors>\n    <license type=\"expression\">BSD-2-Clause</license>\n    <licenseUrl>https://licenses.nuget.org/BSD-2-Clause</licenseUrl>\n    <icon>XenoAtom.Terminal.UI.png</icon>\n    <readme>readme.md</readme>\n    <projectUrl>https://github.com/XenoAtom/XenoAtom.Terminal.UI</projectUrl>\n    <description>TextMateSharp-backed syntax highlighting for XenoAtom.Terminal.UI CodeEditor and Markdown fenced code blocks.</description>\n    <releaseNotes>https://github.com/XenoAtom/XenoAtom.Terminal.UI/releases/tag/3.10.0</releaseNotes>\n    <copyright>Alexandre Mutel</copyright>\n    <tags>terminal console tui ui codeeditor syntax-highlighting textmate markdown</tags>\n    <repository type=\"git\" url=\"https://github.com/XenoAtom/XenoAtom.Terminal.UI\" commit=\"6f4e0cde3890d8ce2510ac0451b861863e4aeeaa\" />\n    <dependencies>\n      <group targetFramework=\"net10.0\">\n        <dependency id=\"XenoAtom.Terminal.UI.Extensions.Markdown\" version=\"3.10.0\" exclude=\"Build,Analyzers\" />\n        <dependency id=\"XenoAtom.Terminal.UI\" version=\"3.10.0\" exclude=\"Build,Analyzers\" />\n        <dependency id=\"TextMateSharp\" version=\"2.0.4\" exclude=\"Build,Analyzers\" />\n        <dependency id=\"TextMateSharp.Grammars\" version=\"2.0.4\" exclude=\"Build,Analyzers\" />\n        <dependency id=\"XenoAtom.Terminal\" version=\"2.2.0\" exclude=\"Build,Analyzers\" />\n      </group>\n    </dependencies>\n  </metadata>\n</package>"
+    }
+  ],
+  "currentComparisonSHA256": "d327b01d2103d8495f4327a4c641ec26e91a30ac1cbddba193193620a2a8e4be",
+  "routeApproved": false
+}

@@ -1,0 +1,117 @@
+{
+  "task": "70.2 narrow native Paragraph rendering isolation",
+  "scope": "Scratch only; no product/fork/package changes",
+  "sourcePins": {
+    "Forge": "d23387492de4563abe9a57d5a51dfb538745f725",
+    "Terminal": "5517cb3d8cdf0532ecc89260067064f98cde6137",
+    "UI": "6f4e0cde3890d8ce2510ac0451b861863e4aeeaa"
+  },
+  "observations": 20,
+  "exactCopyAssertions": 20,
+  "renderingLossCases": 7,
+  "buildWarnings": 0,
+  "artifacts": [
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/build.log",
+      "sha256": "B36341D73B1678859E6EC8F03E99DCAC80A805BB27F59C3BB0629815596D2420"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/commands.json",
+      "sha256": "2270140CDC8601AD3754FEFC3C702FF5C6382D1886E0F3A3375D8F98609D485B"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/dependencies.log",
+      "sha256": "019A21650C083950B54B57264BEA5DFBF44F8E3C2A47F0BE3F761346BA9091EF"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/diagnosis.md",
+      "sha256": "3E31531AF06DF15CEA7777A34DA08E8F557C75727CD2AC47E62DBAFBA8AD00B3"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/exit-codes.json",
+      "sha256": "6A0DE551603197F4DB092CE0BFC21584034C623649C4BBF2C779EDDF81D8C0C2"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/observations.json",
+      "sha256": "D59A8AC57BD420E69025F45EFE13C09D06A831523D8DD67D1401DD182E6FA891"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/package-provenance.json",
+      "sha256": "DCFD01BF2B8E39B55A12FFAE9C60469EF9DBF43FC4A7AD912F0397B16BEA64DE"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/Probe.csproj",
+      "sha256": "8BC0AA55D22AB67792ECD93994DAD1A278B5675162BF20EB15955923A389E1B8"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/Program.cs",
+      "sha256": "9F3ABC3F70E9B3E6FE47DEC73DCA6CE08C55117EEB82E21A816901D2F1A9559F"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/run.log",
+      "sha256": "19470918B1A12888D164B62C86B7CC0E5299E64387053C339C16CB1EAC818DB3"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/source-api.log",
+      "sha256": "E7751B0D4BDD0489CAD52F31626941A02E1C10A12AD5ED5478016262EA952023"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/source-cleanliness.json",
+      "sha256": "D9483C78429BFC998FDAA27609D058DA5EB7220B46A63CCAB2600A7675E7DFB0"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/summary.json",
+      "sha256": "91DCA7445AAC3C596179071A76F0FCB7E4EE23D34A200F9B293880E06D03BDD4"
+    }
+  ],
+  "linkedAndInspectedSources": [
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Controls/Paragraph.cs",
+      "sha256": "9FEC3A3B922B7B2A7F7D41D653DF0215DC69D78FC2A15400CF25F8292E48687D"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal.UI/src/XenoAtom.Terminal.UI/Rendering/CellBuffer.cs",
+      "sha256": "4460319F1C6182BDC526420C7333C0AF72107F69710E957633BDF96FD033646C"
+    },
+    {
+      "path": "/tmp/phase70-public-sources/XenoAtom.Terminal/src/XenoAtom.Terminal/TerminalTextUtility.cs",
+      "sha256": "D38FC2DD9F54C2F7BDBB7F9431B3A687B9962EED99DD850F030428E09E898B0E"
+    },
+    {
+      "path": "/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/TerminalInteractionTestHost.cs",
+      "sha256": "F20CA684A181B1A7C2C090DB33D49A460E676A41F35AD6112C1756F1594A0766"
+    },
+    {
+      "path": "/tmp/phase70-rich-public-probe/manifest.json",
+      "sha256": "5ED52E3E7779D16889CA5455C4B24DA9CCB6D473B5FCC156E48DA0D3B00D2FA4"
+    }
+  ],
+  "outputAssemblies": [
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/bin/Debug/net10.0/Probe.dll",
+      "sha256": "24208DFFDBA8AC8E3E06EE7D48A4283AD86A462E78623A576B725212D0AD14F3"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/bin/Debug/net10.0/Wcwidth.dll",
+      "sha256": "D7B4366F0024CA0A5516D6D83417487DD421E4DF35006BCA6982FCA8E20F9B8B"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/bin/Debug/net10.0/XenoAtom.Ansi.dll",
+      "sha256": "E52405C640F203C2B4CC9FD5AD05D57B5EDB31DD67B82966BCB51D885B4CF54C"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/bin/Debug/net10.0/XenoAtom.Terminal.dll",
+      "sha256": "4B147864C9983DC740DBF94631BA81F2B8247713A2D110D489877CDC7E21C9CA"
+    },
+    {
+      "path": "/tmp/phase70-narrow-paragraph-probe/bin/Debug/net10.0/XenoAtom.Terminal.UI.dll",
+      "sha256": "BAB0B330A438B391B382793927A9E00F414DDDCCC4F774613A2176206A33D3E4"
+    }
+  ],
+  "limitations": [
+    "No private cached fields inspected",
+    "No library fix tested",
+    "DefaultLight only for isolation",
+    "AOT/default-path/live Retina N/A scratch"
+  ]
+}

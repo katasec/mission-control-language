@@ -1,0 +1,16 @@
+[
+  {
+    "repo": "/Users/ameerdeen/progs/forge-mcl",
+    "head": "d23387492de4563abe9a57d5a51dfb538745f725",
+    "branch": "main",
+    "porcelain": [],
+    "clean": true
+  },
+  {
+    "repo": "/Users/ameerdeen/progs/forge-desktop",
+    "head": "39e3ba2eec498d09048cc79bcee2ffcb7cdf2cd0",
+    "branch": "main",
+    "porcelain": [],
+    "clean": true
+  }
+]

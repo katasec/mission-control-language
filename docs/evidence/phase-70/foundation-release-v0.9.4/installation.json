@@ -1,0 +1,78 @@
+{
+  "installedAtUTC": "2026-10-06T04:13:46.786446+00:00",
+  "installDirectory": "/Users/ameerdeen/.local/bin",
+  "allPayloadFilesMatched": 7,
+  "installedFiles": [
+    {
+      "path": "ForgeMission.Docker.pdb",
+      "bytes": 44640,
+      "sha256": "9b088fdb9aa7254196eb846ab76583bb059292926ecf746e8015dc6a9daeb47a"
+    },
+    {
+      "path": "forge",
+      "bytes": 145397136,
+      "sha256": "1061317ab01994170cb76811abfb7e25e2047b051cec4b6a9620cf272d7e12af"
+    },
+    {
+      "path": "forge.dSYM/Contents/Info.plist",
+      "bytes": 634,
+      "sha256": "5c275eda62e1f2e3f35c8567bc0628658901771854684df024089d26f91fb39d"
+    },
+    {
+      "path": "forge.dSYM/Contents/Resources/DWARF/forge",
+      "bytes": 597496817,
+      "sha256": "cd90965901a41a5e7574965060e36bd7197f3ce4384267ae6d3bc306ca99cb9b"
+    },
+    {
+      "path": "forge.dSYM/Contents/Resources/Relocations/aarch64/forge.yml",
+      "bytes": 134300997,
+      "sha256": "7929f20733bfe660909b2fca0b7d5a5534940040ce91655383a1e7bf97596fb0"
+    },
+    {
+      "path": "libonigwrap.dylib",
+      "bytes": 531424,
+      "sha256": "5922d0c6c3cd31bfdf9997ea03d48d7aff952d891e8d46c2b9bfccd8d8160665"
+    },
+    {
+      "path": "libonnxruntime.dylib",
+      "bytes": 38313360,
+      "sha256": "e96565bc1139fd136327c449b11d210da79acbe2aed53d959224815b4e448fac"
+    }
+  ],
+  "version": "0.9.4+d23387492de4563abe9a57d5a51dfb538745f725",
+  "nativeHelpExit": 0,
+  "nativeVersionExit": 0,
+  "backupDirectory": "/tmp/phase70-release-v0.9.4/previous-installed",
+  "previousMatchingFiles": [
+    {
+      "path": "ForgeMission.Docker.pdb",
+      "sha256": "bb9a6aa77671848c18a8b70da28b404c641778440f080c4a308961263bae3c16"
+    },
+    {
+      "path": "forge",
+      "sha256": "575e18d960136ea788d45f7c8d737b11384d57c83acff95ecc7e770b6a5ae1c1"
+    },
+    {
+      "path": "forge.dSYM/Contents/Info.plist",
+      "sha256": "5c275eda62e1f2e3f35c8567bc0628658901771854684df024089d26f91fb39d"
+    },
+    {
+      "path": "forge.dSYM/Contents/Resources/DWARF/forge",
+      "sha256": "e204c58ff46c5af2abb43edf6b0c8ae1e8d8cabb68e64c1dd168b78f9e1c98a2"
+    },
+    {
+      "path": "forge.dSYM/Contents/Resources/Relocations/aarch64/forge.yml",
+      "sha256": "e9d61c7904c9816cbf93647f4451f5da1c6da4cedeebbad1174d436e58ce5215"
+    },
+    {
+      "path": "libonigwrap.dylib",
+      "sha256": "5922d0c6c3cd31bfdf9997ea03d48d7aff952d891e8d46c2b9bfccd8d8160665"
+    },
+    {
+      "path": "libonnxruntime.dylib",
+      "sha256": "e96565bc1139fd136327c449b11d210da79acbe2aed53d959224815b4e448fac"
+    }
+  ],
+  "unrelatedFiles": "preserved",
+  "defaultPathUIAcceptance": "pending operator Ghostty/Retina; no agent UI access"
+}

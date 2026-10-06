@@ -1,0 +1,21 @@
+  Determining projects to restore...
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 166 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 170 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 171 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 4 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 3 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 11 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 32 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 35 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 53 ms).
+  ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+  ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+  ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+  ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+  ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+  ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/osx-arm64/forge.dll
+  Generating native code
+  ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/artifacts/verification/native/

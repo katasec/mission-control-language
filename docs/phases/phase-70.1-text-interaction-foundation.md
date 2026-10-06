@@ -1,7 +1,9 @@
 # Phase 70.1 — Text-interaction foundation
 
-**Status: Foundation product and atlas merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. Normal publication/install underway; manual acceptance remains open.**
+**Status: Foundation product and atlas merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. CLI v0.9.4 installed and verified; package visibility and operator manual acceptance remain open.**
 **R11/R2 approvals are historical; [R3 plan](phase-70.1-text-interaction-foundation-plan.md) is PLAN APPROVED at 2026-10-06 01:15:19 UTC.** Parent: [Phase 70](phase-70-tui-text-interaction.md).
+
+Installed [v0.9.4 provenance](phase-70.1-text-interaction-foundation_completed.md#normal-cli-release-and-installation--v094) is recorded. Package [visibility incident and authenticated-consumer evidence](phase-70.1-text-interaction-foundation_completed.md#merged-main-publication--visibility-gate-failed) is recorded; no public-visibility approval or closure is claimed.
 
 ## Requirement
 
@@ -57,7 +59,7 @@ installed check. The Ghostty denial remains in force; no alternate agent access 
 | Provenance | Installed artifact/version/digest; actual Ghostty version, font, cell metrics and window dimensions; normal saved login/endpoint and dedicated scratch Project. Prior metrics remain historical or synthetic. |
 | Composer keyboard | Before any click, then after a click: Shift+arrows/Home/End and word selection; Ctrl/Cmd gesture used, focus, highlight, exact pasted payload and whether Copy stops an active turn. |
 | Mouse and menus | App drag/double/Shift-click versus terminal-native selection; multiline Copy, Paste replacement, right-click Copy/Paste, cancellation and restored focus/selection. |
-| Editor and transcript | Disposable `/edit` file's keyboard/mouse Copy/Paste and save/close; real reply's paragraph/rich-range selection and heading/code interaction, with exact pasted text. |
+| Editor and transcript | Disposable `/edit` file's keyboard/mouse Copy/Paste and save/close; real reply's single-paragraph Copy and heading/code interaction (continuous rich ranges remain in 70.2), with exact pasted text. |
 | Snippets and appearance | Keyboard/mouse code Copy, exact payload including indentation/blank lines/trailing newline; truthful feedback, wrapped/unwrapped/unknown-language snippets and streaming replacement. Compare menu/button/selection states against the locked reference; preserve start page, Kitty frames/headings and syntax colours. |
 
 Controlled event/clipboard-failure tests, theme/state checks and Native AOT remain agent work.
@@ -536,7 +538,7 @@ access. Each adds work the public route avoids.
 | Product implementation | [Product PR62](https://github.com/katasec/forge-mcl/pull/62) and [atlas PR9](https://github.com/katasec/forge-desktop/pull/9) merged; exact reviewed trees preserved. [Delivery observations](phase-70.1-text-interaction-foundation_completed.md#merged-source-and-delivery-dispatch). |
 | Current code review | Both complete R3 reviews PASS; root readiness approves merge. Both R2 REVISE verdicts remain historical. [Full verdicts/boundaries](phase-70.1-text-interaction-foundation_completed.md#full-code-reviews--r3). |
 | Full suite | R4 local877 passed/6 existing skips; focused181/181; current canonical873 passed/10 existing prerequisite skips/883 and package26/26 PASS. [Current canonical evidence](phase-70.1-text-interaction-foundation_completed.md#canonical-ci-r3--current-candidate-passes); earlier failures remain archived. |
-| Packed consumer | Fresh actual canonical packed consumer/all public APIs PASS; root matches committed package/cache/output identities and exact native pins in [controlled evidence](../evidence/phase-70/foundation-packed-consumer-ci-r3.json). Published provenance/authenticated restore remain required. |
+| Packed/published consumer | Canonical packed and fresh authenticated published consumers/all public APIs PASS, exact merged provenance/native pins and matching package/cache/output identities; package public visibility conflicts with the private contract. [Published evidence](phase-70.1-text-interaction-foundation_completed.md#merged-main-publication--visibility-gate-failed). |
 | Native AOT | Current canonical [run37407903290](https://github.com/katasec/forge-mcl/actions/runs/37407903290) PASS; full compiler/linker output zero warnings, downloaded help/version/digest and current tree matched. [Evidence](phase-70.1-text-interaction-foundation_completed.md#canonical-ci-r3--current-candidate-passes); local six-warning FAIL and prior CI failure retained separately. |
 | Rich selection | Geometry/semantics/selected-heading proof and route decision still open in the dependent spoke. Do not substitute single-Paragraph or snippet-only scope. |
 | Acceptance | Operator-only installed default Ghostty/laptop Retina after code, both themes/windows; still pending. |
@@ -588,7 +590,7 @@ Reconfirm dependency versions and owning repository instructions before design.
 | 3. Product design and review | R12 locked after [both complete review verdicts](phase-70.1-text-interaction-foundation_completed.md#r12-complete-design-reviews); R11 is historical. | Public-extension/package reviews and bounded native feasibility passed. Current lifecycle placement passed both complete design reviews. Actual packed-consumer and canonical AOT checks precede merge. |
 | 4. Implementation plan and review | Complete [R3 plan](phase-70.1-text-interaction-foundation-plan.md) approved; [R2 history](phase-70.1-text-interaction-foundation_completed.md#superseded-complete-r2-implementation-plan) preserved. | Assigned implementer plans one bounded extension-plus-CLI change, including component admission; assigned reviewers review sequentially; supervisor explicitly approves product writes and required package/consumer, integration/failure and AOT observations before merge/publication. |
 | 5. Implementation and review | Done at controlled code-readiness layer — [full R3 verdicts](phase-70.1-text-interaction-foundation_completed.md#full-code-reviews--r3) and canonical evidence; overall task remains open. | Same implementer after explicit revised plan approval; full controlled matrix/evidence retained, sequential independent current-artifact reviews, no implementer completion claim. |
-| 6. Merge, install, accept, close | Product/atlas merged; normal publication/install running; operator performs live acceptance afterward. | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |
+| 6. Merge, install, accept, close | Product/atlas merged; v0.9.4 installed/verified; package visibility decision and operator live acceptance pending. [Delivery](phase-70.1-text-interaction-foundation_completed.md#normal-cli-release-and-installation--v094). | Normal artifacts merged/published as required; operator records passing default-path/Retina observations above, supervisor assesses coverage; evidence/timing archived; changed repos clean on main. |
 
 ## Done when
 

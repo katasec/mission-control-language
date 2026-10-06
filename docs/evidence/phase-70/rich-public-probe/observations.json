@@ -1,0 +1,916 @@
+[
+  {
+    "kind": "cross-before",
+    "theme": "Light",
+    "one": "(0,0) 20x2",
+    "two": "(0,3) 20x2",
+    "lines": [
+      "[#101d34 on #ffffff]echo echo echo echo [/]",
+      "[#101d34 on #ffffff]tail                [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]echo echo é 👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail                [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]é 👩‍💻 中             [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]"
+    ]
+  },
+  {
+    "kind": "cross-two",
+    "theme": "Light",
+    "one": "(0,0) 20x2",
+    "two": "(0,3) 20x2",
+    "extracted": true,
+    "selected": "echo echo echo tail",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo echo tail",
+    "runs": [],
+    "lines": [
+      "[#101d34 on #ffffff]echo [/][bold #101d34 on #dbe7fb]echo echo echo[/][#101d34 on #ffffff] [/]",
+      "[bold #101d34 on #dbe7fb]tail[/][#101d34 on #ffffff]                [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]echo echo é 👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail                [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]é 👩‍💻 中             [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]"
+    ]
+  },
+  {
+    "kind": "reflow-preserves-native-range",
+    "theme": "Light",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "echo echo echo tail",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo echo tail",
+    "runs": [],
+    "lines": [
+      "[#101d34 on #ffffff]echo    [/]",
+      "[bold #101d34 on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]tail[/][#101d34 on #ffffff]    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo é  [/]",
+      "[#101d34 on #ffffff]👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]é 👩‍💻 中 [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "repeat-first-line",
+    "theme": "Light",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "echo",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo",
+    "runs": [],
+    "lines": [
+      "[bold #101d34 on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo é  [/]",
+      "[#101d34 on #ffffff]👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]é 👩‍💻 中 [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "repeat-second-line",
+    "theme": "Light",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "echo",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo",
+    "runs": [],
+    "lines": [
+      "[#101d34 on #ffffff]echo    [/]",
+      "[bold #101d34 on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo é  [/]",
+      "[#101d34 on #ffffff]👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]é 👩‍💻 中 [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "wrapped-interior-range",
+    "theme": "Light",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "cho ec",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "cho ec",
+    "runs": [],
+    "lines": [
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]e[/][bold #101d34 on #dbe7fb]cho[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]ec[/][#101d34 on #ffffff]ho    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo é  [/]",
+      "[#101d34 on #ffffff]👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]é 👩‍💻 中 [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "grapheme-range",
+    "theme": "Light",
+    "one": "(0,11) 8x1",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "é 👩‍💻 ",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "é 👩‍💻 ",
+    "runs": [],
+    "lines": [
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]echo    [/]",
+      "[#101d34 on #ffffff]echo é  [/]",
+      "[#101d34 on #ffffff]👩‍💻 中   [/]",
+      "[#101d34 on #ffffff]tail    [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[bold #101d34 on #dbe7fb]é 👩‍💻 [/][#101d34 on #ffffff]中 [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "heading-before",
+    "theme": "Light",
+    "logicalHeading": "echo echo heading",
+    "heading": "(0,0) 20x2",
+    "code": "(0,3) 20x3",
+    "sends": 1,
+    "selectionOwner": false,
+    "hitType": "HeadingImage",
+    "headingWrap": [
+      "echo echo heading"
+    ],
+    "lines": [
+      "[#d21c24 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#d21c24 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#0f6feb on #ffffff]echo[/][#101d34 on #ffffff] [/][#4e7c0f on #ffffff]echo[/][#101d34 on #ffffff]           [/]",
+      "[#101d34 on #ffffff]  echo 👩‍💻           [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]"
+    ]
+  },
+  {
+    "kind": "heading-to-code",
+    "theme": "Light",
+    "one": "(0,3) 20x3",
+    "two": "(0,3) 20x3",
+    "extracted": false,
+    "selected": "",
+    "secondSelected": false,
+    "result": "NoSelection",
+    "writes": 0,
+    "copied": null,
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#d21c24 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#d21c24 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#0f6feb on #ffffff]echo[/][#101d34 on #ffffff] [/][#4e7c0f on #ffffff]echo[/][#101d34 on #ffffff]           [/]",
+      "[#101d34 on #ffffff]  echo 👩‍💻           [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]"
+    ]
+  },
+  {
+    "kind": "code-to-heading",
+    "theme": "Light",
+    "one": "(0,3) 20x3",
+    "two": "(0,3) 20x3",
+    "extracted": false,
+    "selected": "",
+    "secondSelected": false,
+    "result": "NoSelection",
+    "writes": 0,
+    "copied": null,
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#d21c24 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#d21c24 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#0f6feb on #ffffff]echo[/][#101d34 on #ffffff] [/][#4e7c0f on #ffffff]echo[/][#101d34 on #ffffff]           [/]",
+      "[#101d34 on #ffffff]  echo 👩‍💻           [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]"
+    ]
+  },
+  {
+    "kind": "native-code-highlight",
+    "theme": "Light",
+    "one": "(0,3) 20x3",
+    "two": "(0,3) 20x3",
+    "extracted": true,
+    "selected": "echo echo\n  ec",
+    "secondSelected": true,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo\n  ec",
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#d21c24 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#d21c24 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#101d34 on #ffffff]  [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[bold #0f6feb on #dbe7fb]echo[/][bold #101d34 on #dbe7fb] [/][bold #4e7c0f on #dbe7fb]echo[/][#101d34 on #ffffff]           [/]",
+      "[bold #101d34 on #dbe7fb]  ec[/][#101d34 on #ffffff]ho 👩‍💻           [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]",
+      "[#101d34 on #ffffff]                    [/]"
+    ]
+  },
+  {
+    "kind": "heading-reflow",
+    "theme": "Light",
+    "heading": "(0,0) 8x6",
+    "code": "(0,7) 8x4",
+    "sends": 3,
+    "logicalHeading": "echo echo heading",
+    "headingWrap": [
+      "echo",
+      "echo",
+      "heading"
+    ],
+    "lines": [
+      "[#d79eec on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#101d34 on #ffffff]   [/]",
+      "[#940aa5 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿[/]",
+      "[#940aa5 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿[/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[bold #0f6feb on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #4e7c0f on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]  ec[/][#101d34 on #ffffff]ho  [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "code-reflow",
+    "theme": "Light",
+    "one": "(0,7) 8x4",
+    "two": "(0,7) 8x4",
+    "extracted": true,
+    "selected": "echo echo\n  ec",
+    "secondSelected": true,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo\n  ec",
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#d79eec on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#101d34 on #ffffff]   [/]",
+      "[#940aa5 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿[/]",
+      "[#940aa5 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿[/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[bold #0f6feb on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #4e7c0f on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]  ec[/][#101d34 on #ffffff]ho  [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "whole-code-narrow",
+    "theme": "Light",
+    "one": "(0,7) 8x4",
+    "two": "(0,7) 8x4",
+    "extracted": true,
+    "selected": "echo echo\n  echo 👩‍💻\n",
+    "secondSelected": true,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo\n  echo 👩‍💻\n",
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#d79eec on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#101d34 on #ffffff]   [/]",
+      "[#d79eec on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#101d34 on #ffffff]   [/]",
+      "[#940aa5 on #ffffff]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿[/]",
+      "[#940aa5 on #ffffff]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿[/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[bold #0f6feb on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #4e7c0f on #dbe7fb]echo[/][#101d34 on #ffffff]    [/]",
+      "[bold #101d34 on #dbe7fb]  echo [/][#101d34 on #ffffff] [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]",
+      "[#101d34 on #ffffff]        [/]"
+    ]
+  },
+  {
+    "kind": "public-cell-overlay",
+    "theme": "Light",
+    "bounds": "(0,7) 8x4",
+    "lines": [
+      "[#0f6feb on #ffffff]e[/][#0f6feb on #dbe7fb]c[/][#0f6feb on #ffffff]ho[/]    "
+    ],
+    "geometryMappingProvided": false
+  },
+  {
+    "kind": "cross-before",
+    "theme": "Dark",
+    "one": "(0,0) 20x2",
+    "two": "(0,3) 20x2",
+    "lines": [
+      "[#c9d4e3 on #151f2e]echo echo echo echo [/]",
+      "[#c9d4e3 on #151f2e]tail                [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]echo echo é 👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail                [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]é 👩‍💻 中             [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]"
+    ]
+  },
+  {
+    "kind": "cross-two",
+    "theme": "Dark",
+    "one": "(0,0) 20x2",
+    "two": "(0,3) 20x2",
+    "extracted": true,
+    "selected": "echo echo echo tail",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo echo tail",
+    "runs": [],
+    "lines": [
+      "[#c9d4e3 on #151f2e]echo [/][bold #c9d4e3 on #16345a]echo echo echo[/][#c9d4e3 on #151f2e] [/]",
+      "[bold #c9d4e3 on #16345a]tail[/][#c9d4e3 on #151f2e]                [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]echo echo é 👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail                [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]é 👩‍💻 中             [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]",
+      "[#c9d4e3 on #151f2e]                    [/]"
+    ]
+  },
+  {
+    "kind": "reflow-preserves-native-range",
+    "theme": "Dark",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "echo echo echo tail",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo echo tail",
+    "runs": [],
+    "lines": [
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[bold #c9d4e3 on #16345a]echo[/][#c9d4e3 on #151f2e]    [/]",
+      "[bold #c9d4e3 on #16345a]echo[/][#c9d4e3 on #151f2e]    [/]",
+      "[bold #c9d4e3 on #16345a]echo[/][#c9d4e3 on #151f2e]    [/]",
+      "[bold #c9d4e3 on #16345a]tail[/][#c9d4e3 on #151f2e]    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo é  [/]",
+      "[#c9d4e3 on #151f2e]👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]é 👩‍💻 中 [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "repeat-first-line",
+    "theme": "Dark",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "echo",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo",
+    "runs": [],
+    "lines": [
+      "[bold #c9d4e3 on #16345a]echo[/][#c9d4e3 on #151f2e]    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo é  [/]",
+      "[#c9d4e3 on #151f2e]👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]é 👩‍💻 中 [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "repeat-second-line",
+    "theme": "Dark",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "echo",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo",
+    "runs": [],
+    "lines": [
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[bold #c9d4e3 on #16345a]echo[/][#c9d4e3 on #151f2e]    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo é  [/]",
+      "[#c9d4e3 on #151f2e]👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]é 👩‍💻 中 [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "wrapped-interior-range",
+    "theme": "Dark",
+    "one": "(0,0) 8x5",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "cho ec",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "cho ec",
+    "runs": [],
+    "lines": [
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]e[/][bold #c9d4e3 on #16345a]cho[/][#c9d4e3 on #151f2e]    [/]",
+      "[bold #c9d4e3 on #16345a]ec[/][#c9d4e3 on #151f2e]ho    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo é  [/]",
+      "[#c9d4e3 on #151f2e]👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]é 👩‍💻 中 [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "grapheme-range",
+    "theme": "Dark",
+    "one": "(0,11) 8x1",
+    "two": "(0,6) 8x4",
+    "extracted": true,
+    "selected": "é 👩‍💻 ",
+    "secondSelected": false,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "é 👩‍💻 ",
+    "runs": [],
+    "lines": [
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]echo    [/]",
+      "[#c9d4e3 on #151f2e]echo é  [/]",
+      "[#c9d4e3 on #151f2e]👩‍💻 中   [/]",
+      "[#c9d4e3 on #151f2e]tail    [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[bold #c9d4e3 on #16345a]é 👩‍💻 [/][#c9d4e3 on #151f2e]中 [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]",
+      "[#c9d4e3 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "heading-before",
+    "theme": "Dark",
+    "logicalHeading": "echo echo heading",
+    "heading": "(0,0) 20x2",
+    "code": "(0,3) 20x3",
+    "sends": 1,
+    "selectionOwner": false,
+    "hitType": "HeadingImage",
+    "headingWrap": [
+      "echo echo heading"
+    ],
+    "lines": [
+      "[#cdd6d4 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#cdd6d4 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#4f9bff on #151f2e]echo[/][#e8eef7 on #151f2e] [/][#8cc152 on #151f2e]echo[/][#e8eef7 on #151f2e]           [/]",
+      "[#e8eef7 on #151f2e]  echo 👩‍💻           [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]"
+    ]
+  },
+  {
+    "kind": "heading-to-code",
+    "theme": "Dark",
+    "one": "(0,3) 20x3",
+    "two": "(0,3) 20x3",
+    "extracted": false,
+    "selected": "",
+    "secondSelected": false,
+    "result": "NoSelection",
+    "writes": 0,
+    "copied": null,
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#cdd6d4 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#cdd6d4 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#4f9bff on #151f2e]echo[/][#e8eef7 on #151f2e] [/][#8cc152 on #151f2e]echo[/][#e8eef7 on #151f2e]           [/]",
+      "[#e8eef7 on #151f2e]  echo 👩‍💻           [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]"
+    ]
+  },
+  {
+    "kind": "code-to-heading",
+    "theme": "Dark",
+    "one": "(0,3) 20x3",
+    "two": "(0,3) 20x3",
+    "extracted": false,
+    "selected": "",
+    "secondSelected": false,
+    "result": "NoSelection",
+    "writes": 0,
+    "copied": null,
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#cdd6d4 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#cdd6d4 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#4f9bff on #151f2e]echo[/][#e8eef7 on #151f2e] [/][#8cc152 on #151f2e]echo[/][#e8eef7 on #151f2e]           [/]",
+      "[#e8eef7 on #151f2e]  echo 👩‍💻           [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]"
+    ]
+  },
+  {
+    "kind": "native-code-highlight",
+    "theme": "Dark",
+    "one": "(0,3) 20x3",
+    "two": "(0,3) 20x3",
+    "extracted": true,
+    "selected": "echo echo\n  ec",
+    "secondSelected": true,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo\n  ec",
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#cdd6d4 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿􎻮̅͆􎻮̅͊􎻮̅͋􎻮̅͌􎻮̅͐􎻮̅͑􎻮̅͒􎻮̅͗􎻮̅͛􎻮̅ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#cdd6d4 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿􎻮̍͆􎻮̍͊􎻮̍͋􎻮̍͌􎻮̍͐􎻮̍͑􎻮̍͒􎻮̍͗􎻮̍͛􎻮̍ͣ[/][#e8eef7 on #151f2e]  [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[bold #4f9bff on #16345a]echo[/][bold #e8eef7 on #16345a] [/][bold #8cc152 on #16345a]echo[/][#e8eef7 on #151f2e]           [/]",
+      "[bold #e8eef7 on #16345a]  ec[/][#e8eef7 on #151f2e]ho 👩‍💻           [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]",
+      "[#e8eef7 on #151f2e]                    [/]"
+    ]
+  },
+  {
+    "kind": "heading-reflow",
+    "theme": "Dark",
+    "heading": "(0,0) 8x6",
+    "code": "(0,7) 8x4",
+    "sends": 3,
+    "logicalHeading": "echo echo heading",
+    "headingWrap": [
+      "echo",
+      "echo",
+      "heading"
+    ],
+    "lines": [
+      "[#ab2632 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#944fde on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿[/]",
+      "[#944fde on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿[/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[bold #4f9bff on #16345a]echo[/][#e8eef7 on #151f2e]    [/]",
+      "[bold #8cc152 on #16345a]echo[/][#e8eef7 on #151f2e]    [/]",
+      "[bold #e8eef7 on #16345a]  ec[/][#e8eef7 on #151f2e]ho  [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "code-reflow",
+    "theme": "Dark",
+    "one": "(0,7) 8x4",
+    "two": "(0,7) 8x4",
+    "extracted": true,
+    "selected": "echo echo\n  ec",
+    "secondSelected": true,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo\n  ec",
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#ab2632 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#944fde on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿[/]",
+      "[#944fde on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿[/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[bold #4f9bff on #16345a]echo[/][#e8eef7 on #151f2e]    [/]",
+      "[bold #8cc152 on #16345a]echo[/][#e8eef7 on #151f2e]    [/]",
+      "[bold #e8eef7 on #16345a]  ec[/][#e8eef7 on #151f2e]ho  [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "whole-code-narrow",
+    "theme": "Dark",
+    "one": "(0,7) 8x4",
+    "two": "(0,7) 8x4",
+    "extracted": true,
+    "selected": "echo echo\n  echo 👩‍💻\n",
+    "secondSelected": true,
+    "result": "Copied",
+    "writes": 1,
+    "copied": "echo echo\n  echo 👩‍💻\n",
+    "runs": [
+      {
+        "Start": 0,
+        "Length": 4
+      },
+      {
+        "Start": 5,
+        "Length": 4
+      }
+    ],
+    "lines": [
+      "[#ab2632 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#ab2632 on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒[/][#e8eef7 on #151f2e]   [/]",
+      "[#944fde on #151f2e]􎻮̅̅􎻮̅̍􎻮̅̎􎻮̅̐􎻮̅̒􎻮̅̽􎻮̅̾􎻮̅̿[/]",
+      "[#944fde on #151f2e]􎻮̍̅􎻮̍̍􎻮̍̎􎻮̍̐􎻮̍̒􎻮̍̽􎻮̍̾􎻮̍̿[/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[bold #4f9bff on #16345a]echo[/][#e8eef7 on #151f2e]    [/]",
+      "[bold #8cc152 on #16345a]echo[/][#e8eef7 on #151f2e]    [/]",
+      "[bold #e8eef7 on #16345a]  echo [/][#e8eef7 on #151f2e] [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]",
+      "[#e8eef7 on #151f2e]        [/]"
+    ]
+  },
+  {
+    "kind": "public-cell-overlay",
+    "theme": "Dark",
+    "bounds": "(0,7) 8x4",
+    "lines": [
+      "[#4f9bff on #151f2e]e[/][#4f9bff on #16345a]c[/][#4f9bff on #151f2e]ho[/]    "
+    ],
+    "geometryMappingProvided": false
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "stage": "[investigate:implementer:r2] 70.2 narrow native Paragraph rendering isolation",
+  "startUTC": "2026-10-06T04:11:32.312Z",
+  "endUTC": "2026-10-06T04:19:31.921Z",
+  "supervisorVerifiedUTC": "2026-10-06T04:20:20.527885+00:00",
+  "manifestSHA256": "a6d6101b3d261374f4e8917ebb4f57c31e317195749dbb9831bfe5bf7a0d840b",
+  "verifiedSourceArtifactAndAssemblyHashes": 23,
+  "supervisorRunExitCode": 0,
+  "all20ObservationObjectsIncludingRawFramesMatch": true,
+  "exactCopyCases": 20,
+  "renderingLossCases": 7,
+  "limitations": "DefaultLight in-memory isolation only; no patched fix, fork authorization, product/default-path/Retina acceptance",
+  "retainedFileHashes": {
+    "summary.json": "91dca7445aac3c596179071a76f0fcb7e4ee23d34a200f9b293880e06d03bdd4",
+    "dependencies.log": "019a21650c083950b54b57264bea5dfbf44f8e3c2a47f0be3f761346ba9091ef",
+    "run.log": "19470918b1a12888d164b62c86b7cc0e5299e64387053c339c16cb1eac818db3",
+    "exit-codes.json": "6a0de551603197f4db092ce0bfc21584034c623649c4bbf2c779eddf81d8c0c2",
+    "source-api.log": "e7751b0d4bdd0489cad52f31626941a02e1c10a12ad5ed5478016262ea952023",
+    "commands.json": "2270140cdc8601ad3754fefc3c702ff5c6382d1886e0f3a3375d8f98609d485b",
+    "package-provenance.json": "dcfd01bf2b8e39b55a12ffae9c60469ef9dbf43fc4a7ad912f0397b16bea64de",
+    "implementer-final.md": "e603183d4e2cf8579e2fa8c52e05795503d5ac7b19d85b6283b787bc354e36d2",
+    "observations.json": "d59a8ac57bd420e69025f45efe13c09d06a831523d8dd67d1401dd182e6fa891",
+    "source-cleanliness.json": "d9483c78429bfc998fdaa27609d058da5eb7220b46a63ccab2600a7675e7dfb0",
+    "manifest.json": "a6d6101b3d261374f4e8917ebb4f57c31e317195749dbb9831bfe5bf7a0d840b",
+    "supervisor-run.log": "19470918b1a12888d164b62c86b7cc0e5299e64387053c339c16cb1eac818db3",
+    "diagnosis.md": "3e31531af06df15cea7777a34da08e8f557c75727cd2ac47e62dbafba8ad00b3",
+    "build.log": "b36341d73b1678859e6ec8f03e99dcac80a805bb27f59c3bb0629815596d2420"
+  }
+}

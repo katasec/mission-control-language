@@ -2626,3 +2626,73 @@ Next: merge productPR62 and atlasPR9, validate merged trees, publish private imm
 | CLIv0.9.4 | Root checks unused tag before unchanged main-only [release workflow37410293172](https://github.com/katasec/forge-mcl/actions/runs/37410293172), dispatched03:43:06UTC, head d233874. Four native builds/complete warning output/help/version, all8 assets and whole authenticated Mac ZIP install pending |
 
 Verification-workflow binary version1.0.0+source and release-workflow binary version0.9.4+source are distinct: unchanged release.yml explicitly passes Version input. No version is inferred from the other workflow. Manual/default-path acceptance and continuous rich selection remain open after delivery.
+
+## Merged-main publication — visibility gate failed
+
+Normal package workflow [37410290293](https://github.com/katasec/forge-mcl/actions/runs/37410290293)
+verified exact merged source `d23387492de4563abe9a57d5a51dfb538745f725`: 873 PASS,
+0 FAIL, 10 existing prerequisite skips/883 total (2m30); package tests 26/26. The entire
+managed/native output has zero actual compiler/linker warnings; native identity and checksum
+match. These observations do not turn the overall publication run into PASS.
+
+The publication job pushed immutable 0.1.0 at 04:03:51 UTC, then its final visibility guard
+failed at 04:04:50 UTC. Supervisor API observation: package15632832/version1342072708,
+one version, repository `katasec/forge-mcl`, **public**, required **private**. Repository API
+also reports forge-mcl public; no repository/organization ACL or visibility was changed.
+The cause of the initial public visibility has not been established. The post-push guard
+detects the mismatch but did not prevent publication. No retry, deletion or overwrite was made.
+
+GitHub's [visibility documentation](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility)
+states public packages cannot become private again. The supervisor requested the operator's
+Type-1 decision: accept this public package and review a corrected publication contract, or
+retain private visibility and design a new identity/route. The locked design remains private
+until resolved; default-path acceptance and delivery closure remain open.
+
+The fresh isolated authenticated consumer restored from the normal GitHub NuGet source and
+passed every public API/all five result values, zero warnings, sole extension reference, no
+project/CLI references. Its actual nuspec records the merged commit and exact native pins;
+packed/cache/output DLL hashes match. This proves usable publication, not approved visibility.
+
+Evidence: [full workflow](../evidence/phase-70/foundation-main-publication/workflow.log),
+[run](../evidence/phase-70/foundation-main-publication/run.json),
+[actual package](../evidence/phase-70/foundation-main-publication/package.json),
+[full managed checks](../evidence/phase-70/foundation-main-publication/checks.log),
+[full native output](../evidence/phase-70/foundation-main-publication/native-publish.log),
+[consumer](../evidence/phase-70/foundation-main-publication/consumer.log),
+[provenance/digests](../evidence/phase-70/foundation-main-publication/manifest.json).
+
+## Normal CLI release and installation — v0.9.4
+
+Normal [Release CLI run37410293172](https://github.com/katasec/forge-mcl/actions/runs/37410293172)
+completed SUCCESS at 2026-10-06 04:12:05 UTC and published [v0.9.4](https://github.com/katasec/forge-mcl/releases/tag/v0.9.4)
+from exact merged `d23387492de4563abe9a57d5a51dfb538745f725`. All four native hosts passed
+publish/help/version checks; the supervisor inspected each complete compiler/linker step and
+scanned the entire saved logs: zero actual compiler/linker warning matches. The unchanged normal
+workflow attached all eight platform archives/checksums. The four published checksums match
+GitHub's asset digests. Other platform ZIPs were not independently downloaded or run locally.
+
+The authenticated whole macOS ZIP's local SHA256 matches its published checksum and GitHub digest:
+`58e89226b4d5e8e805182c7963507f87c30a902602150cb94e99ea3848cc5115`.
+Extracted native help/version exited 0; source identity is
+`0.9.4+d23387492de4563abe9a57d5a51dfb538745f725`; ad-hoc signature verification passed.
+No local warning-bearing build or pre-merge CI binary was installed.
+
+At 04:13:46.786 UTC the supervisor installed **all seven matching payload files**, including
+the native dylibs and complete dSYM, into `/Users/ameerdeen/.local/bin`. Every installed hash
+matches the authenticated extracted payload. Only matching release entries were replaced;
+unrelated files were preserved. Prior matching files were retained under
+`/tmp/phase70-release-v0.9.4/previous-installed` for reversal.
+Normal PowerShell PATH resolves `/Users/ameerdeen/.local/bin/forge`; its version/help exit 0,
+and installed signature verification reports valid on disk / satisfies its designated requirement.
+Installed binary SHA256: `1061317ab01994170cb76811abfb7e25e2047b051cec4b6a9620cf272d7e12af`.
+
+CLI implementation/delivery is ready for the operator's [foundation checks](phase-70.1-text-interaction-foundation.md#verification-route)
+on normal Ghostty/laptop Retina, both themes and normal/narrower windows. No agent UI/clipboard
+access, live PASS or full default-path acceptance is claimed. Package private/public mismatch
+remains a separate open Type-1 delivery decision; rich continuous selection remains unimplemented.
+
+Evidence: [all native/publish job logs and provenance](../evidence/phase-70/foundation-release-v0.9.4/manifest.json),
+[release metadata](../evidence/phase-70/foundation-release-v0.9.4/release.json),
+[all seven installed identities and reversal](../evidence/phase-70/foundation-release-v0.9.4/installation.json),
+[normal PATH/signature verification](../evidence/phase-70/foundation-release-v0.9.4/supervisor-verification.json).
+Binaries/source/ZIPs are not copied into mission-control.

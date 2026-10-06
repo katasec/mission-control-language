@@ -1,0 +1,96 @@
+dotnet build ForgeMission.slnx
+  Determining projects to restore...
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 1.32 sec).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 1.31 sec).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 196 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 2 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 2.15 sec).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 822 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 5.65 sec).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj (in 6.44 sec).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 257 ms).
+  Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 6.13 sec).
+  ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+  ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+  Downloading Copilot CLI 1.0.90 for darwin-arm64...
+  ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+  Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/SHA256SUMS.txt" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Debug/net10.0/copilot-cli/1.0.90/darwin-arm64/SHA256SUMS.txt" (1,740 bytes).
+  ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+  Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/github-copilot-1.0.90-darwin-arm64.tgz" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Debug/net10.0/copilot-cli/1.0.90/darwin-arm64/copilot.tgz" (61,378,900 bytes).
+  ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+  ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+  ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:25.00
+dotnet test ForgeMission.slnx
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+  ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+  ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+  ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+  ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+  ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+  ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Test run for /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.42]     ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [SKIP]
+  Skipped ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [1 ms]
+[xUnit.net 00:00:00.45]     ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult [SKIP]
+[xUnit.net 00:00:00.45]     ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer [SKIP]
+  Skipped ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult [1 ms]
+  Skipped ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer [1 ms]
+[xUnit.net 00:00:00.58]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [SKIP]
+[xUnit.net 00:00:00.58]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [SKIP]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [1 ms]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [1 ms]
+[xUnit.net 00:00:02.08]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [SKIP]
+[xUnit.net 00:00:02.08]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [SKIP]
+[xUnit.net 00:00:02.08]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [SKIP]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [1 ms]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [1 ms]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [1 ms]
+[xUnit.net 00:00:02.41]     ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [SKIP]
+  Skipped ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [1 ms]
+[xUnit.net 00:00:04.57]     ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [SKIP]
+  Skipped ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [1 ms]
+
+Passed!  - Failed:     0, Passed:   873, Skipped:    10, Total:   883, Duration: 2 m 30 s - ForgeMission.Mcl.Tests.dll (net10.0)
+dotnet test tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj -c Release --filter "FullyQualifiedName~ForgeMission.Tests.Terminal"
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Downloading Copilot CLI 1.0.90 for darwin-arm64...
+  Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/SHA256SUMS.txt" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Release/net10.0/copilot-cli/1.0.90/darwin-arm64/SHA256SUMS.txt" (1740 bytes).
+  Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/github-copilot-1.0.90-darwin-arm64.tgz" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Release/net10.0/copilot-cli/1.0.90/darwin-arm64/copilot.tgz" (61378900 bytes).
+  ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+  ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+  ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+  ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+  ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+  ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/forge.dll
+  ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll
+Test run for /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    26, Skipped:     0, Total:    26, Duration: 5 s - ForgeMission.Mcl.Tests.dll (net10.0)
+dotnet pack src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj -c Release --output artifacts/packages -p:ContinuousIntegrationBuild=true -p:RepositoryCommit=d23387492de4563abe9a57d5a51dfb538745f725
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+  Successfully created package '/Users/runner/work/forge-mcl/forge-mcl/artifacts/packages/Katasec.Forge.Terminal.Extensions.0.1.0.nupkg'.
+  Successfully created package '/Users/runner/work/forge-mcl/forge-mcl/artifacts/packages/Katasec.Forge.Terminal.Extensions.0.1.0.snupkg'.
+bash ./eng/verify-terminal-extensions-package.sh artifacts/packages d23387492de4563abe9a57d5a51dfb538745f725
+PASS: Katasec.Forge.Terminal.Extensions 0.1.0 has the expected package metadata, contents, and exact native dependencies.

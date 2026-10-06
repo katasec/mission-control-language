@@ -1,0 +1,98 @@
+{
+  "checkedAtUTC": "2026-10-06T04:14:49.368539+00:00",
+  "normalPATH": "/Users/ameerdeen/.local/bin/forge",
+  "normalPATHVersion": "0.9.4+d23387492de4563abe9a57d5a51dfb538745f725",
+  "normalPATHVersionExit": 0,
+  "installedSignatureExit": 0,
+  "installedSignatureObservation": "valid on disk; satisfies its Designated Requirement",
+  "installedPayloadHashMatches": 7,
+  "nativeHelpExit": 0,
+  "manualAcceptance": "pending operator; no Ghostty agent access",
+  "retainedFiles": [
+    {
+      "path": "forge-linux-arm64.zip.sha256",
+      "sha256": "262e16e1a36cf73dc24f6d7ead127c5cc0582946fa4394bbc1f50dc050bbd8da",
+      "bytes": 88
+    },
+    {
+      "path": "forge-linux-x64.zip.sha256",
+      "sha256": "ec18aca1ac453547f4a8c54977ca91245a9b8486a1a04b67c579ed8a5eeb6ba1",
+      "bytes": 86
+    },
+    {
+      "path": "forge-osx-arm64.zip.sha256",
+      "sha256": "5054c9d4b9ace3fd504ce32b1ca8051a305ddcf78dc4d175125ea9118f838282",
+      "bytes": 86
+    },
+    {
+      "path": "forge-win-arm64.zip.sha256",
+      "sha256": "24c1250035c2664c691c8412290c8c868500f613cd55089aa6c1d4908eefb9ab",
+      "bytes": 87
+    },
+    {
+      "path": "installation.json",
+      "sha256": "48877f36fb25642b2b580ef8a82b477d0623d41fb80b41798e67855807ca9d9a",
+      "bytes": 2656
+    },
+    {
+      "path": "installed-help.txt",
+      "sha256": "8bf2fb94029c72531805efe163eb495a9b2b1b85119b0f73329cb130d2621374",
+      "bytes": 1745
+    },
+    {
+      "path": "installed-version.txt",
+      "sha256": "60bce46df72356d58460e016720fe9c7f195e83848a2669ae1bfb7cb76c4c301",
+      "bytes": 47
+    },
+    {
+      "path": "linux-arm64.log",
+      "sha256": "147c6a0bec25c7595dfb4f29b8e0ca61d2f1c189769cecbe7a5b04f2290bbcd3",
+      "bytes": 33894
+    },
+    {
+      "path": "linux-x64.log",
+      "sha256": "f6e5b62ad84beae33354974a9061e66714b6e7ec4031940ebecf37eca68f598f",
+      "bytes": 33976
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "6681bdb53bcfbb44539531b5e801d7ea0788a9d517f3657e145d23a6b33bfbb1",
+      "bytes": 3950
+    },
+    {
+      "path": "native-help.txt",
+      "sha256": "8bf2fb94029c72531805efe163eb495a9b2b1b85119b0f73329cb130d2621374",
+      "bytes": 1745
+    },
+    {
+      "path": "native-version.txt",
+      "sha256": "60bce46df72356d58460e016720fe9c7f195e83848a2669ae1bfb7cb76c4c301",
+      "bytes": 47
+    },
+    {
+      "path": "osx-arm64.log",
+      "sha256": "e1c823a261272e6bbb8c6a7ec226527eb3c24c9de74f8f3182314572653cd2b6",
+      "bytes": 34341
+    },
+    {
+      "path": "publish.log",
+      "sha256": "8ec631f8d6a26b1daef30905befb5fe8744f1b17e08009de0ded22bd3e3d36ac",
+      "bytes": 21046
+    },
+    {
+      "path": "release.json",
+      "sha256": "70305c015816064f4e52906cc0abe6871f7f415903bff210de0bda887f5157e7",
+      "bytes": 18323
+    },
+    {
+      "path": "run.json",
+      "sha256": "8c3cd1544b3a17829589ce8c0f75c4fb07c211f84e17a211563d579539b9f193",
+      "bytes": 19246
+    },
+    {
+      "path": "win-arm64.log",
+      "sha256": "712c21d47fc3e5875dbafd8271bfa1a89195b0b691da76d5999aad4a00a23a36",
+      "bytes": 29889
+    }
+  ]
+}

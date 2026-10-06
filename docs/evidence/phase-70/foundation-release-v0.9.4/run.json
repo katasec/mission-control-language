@@ -1,0 +1,593 @@
+{
+  "conclusion": "success",
+  "createdAt": "2026-10-06T03:43:06Z",
+  "headSha": "d23387492de4563abe9a57d5a51dfb538745f725",
+  "jobs": [
+    {
+      "completedAt": "2026-10-06T03:53:58Z",
+      "conclusion": "success",
+      "databaseId": 112096996047,
+      "name": "build (ubuntu-latest, linux-x64, forge)",
+      "startedAt": "2026-10-06T03:43:11Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-06T03:43:13Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-06T03:43:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:13Z",
+          "conclusion": "success",
+          "name": "Require a valid version and default-branch dispatch",
+          "number": 2,
+          "startedAt": "2026-10-06T03:43:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:14Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 3,
+          "startedAt": "2026-10-06T03:43:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:15Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-dotnet@v5",
+          "number": 4,
+          "startedAt": "2026-10-06T03:43:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:15Z",
+          "conclusion": "skipped",
+          "name": "Install AOT prerequisites (macOS)",
+          "number": 5,
+          "startedAt": "2026-10-06T03:43:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:20Z",
+          "conclusion": "success",
+          "name": "Install AOT prerequisites (Linux)",
+          "number": 6,
+          "startedAt": "2026-10-06T03:43:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:32Z",
+          "conclusion": "success",
+          "name": "Publish native AOT with release identity",
+          "number": 7,
+          "startedAt": "2026-10-06T03:43:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:32Z",
+          "conclusion": "skipped",
+          "name": "Ad-hoc sign (macOS)",
+          "number": 8,
+          "startedAt": "2026-10-06T03:53:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:49Z",
+          "conclusion": "success",
+          "name": "Archive publish output (macOS and Linux)",
+          "number": 9,
+          "startedAt": "2026-10-06T03:53:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:49Z",
+          "conclusion": "skipped",
+          "name": "Archive publish output (Windows)",
+          "number": 10,
+          "startedAt": "2026-10-06T03:53:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:50Z",
+          "conclusion": "success",
+          "name": "Checksum and check native help/version",
+          "number": 11,
+          "startedAt": "2026-10-06T03:53:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:56Z",
+          "conclusion": "success",
+          "name": "Upload verified payload for release attachment",
+          "number": 12,
+          "startedAt": "2026-10-06T03:53:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:56Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-dotnet@v5",
+          "number": 23,
+          "startedAt": "2026-10-06T03:53:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:56Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 24,
+          "startedAt": "2026-10-06T03:53:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:53:56Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 25,
+          "startedAt": "2026-10-06T03:53:56Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/katasec/forge-mcl/actions/runs/37410293172/job/112096996047"
+    },
+    {
+      "completedAt": "2026-10-06T03:58:38Z",
+      "conclusion": "success",
+      "databaseId": 112096996208,
+      "name": "build (windows-11-arm, win-arm64, forge.exe)",
+      "startedAt": "2026-10-06T03:43:12Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-06T03:43:17Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-06T03:43:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:18Z",
+          "conclusion": "success",
+          "name": "Require a valid version and default-branch dispatch",
+          "number": 2,
+          "startedAt": "2026-10-06T03:43:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:28Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 3,
+          "startedAt": "2026-10-06T03:43:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:32Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-dotnet@v5",
+          "number": 4,
+          "startedAt": "2026-10-06T03:43:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:32Z",
+          "conclusion": "skipped",
+          "name": "Install AOT prerequisites (macOS)",
+          "number": 5,
+          "startedAt": "2026-10-06T03:43:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:32Z",
+          "conclusion": "skipped",
+          "name": "Install AOT prerequisites (Linux)",
+          "number": 6,
+          "startedAt": "2026-10-06T03:43:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:12Z",
+          "conclusion": "success",
+          "name": "Publish native AOT with release identity",
+          "number": 7,
+          "startedAt": "2026-10-06T03:43:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:12Z",
+          "conclusion": "skipped",
+          "name": "Ad-hoc sign (macOS)",
+          "number": 8,
+          "startedAt": "2026-10-06T03:58:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:12Z",
+          "conclusion": "skipped",
+          "name": "Archive publish output (macOS and Linux)",
+          "number": 9,
+          "startedAt": "2026-10-06T03:58:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:22Z",
+          "conclusion": "success",
+          "name": "Archive publish output (Windows)",
+          "number": 10,
+          "startedAt": "2026-10-06T03:58:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:23Z",
+          "conclusion": "success",
+          "name": "Checksum and check native help/version",
+          "number": 11,
+          "startedAt": "2026-10-06T03:58:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:30Z",
+          "conclusion": "success",
+          "name": "Upload verified payload for release attachment",
+          "number": 12,
+          "startedAt": "2026-10-06T03:58:23Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-dotnet@v5",
+          "number": 23,
+          "startedAt": "2026-10-06T03:58:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:36Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 24,
+          "startedAt": "2026-10-06T03:58:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:58:36Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 25,
+          "startedAt": "2026-10-06T03:58:36Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/katasec/forge-mcl/actions/runs/37410293172/job/112096996208"
+    },
+    {
+      "completedAt": "2026-10-06T04:11:35Z",
+      "conclusion": "success",
+      "databaseId": 112096996264,
+      "name": "build (macos-14, osx-arm64, forge)",
+      "startedAt": "2026-10-06T03:43:18Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-06T03:43:21Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-06T03:43:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:21Z",
+          "conclusion": "success",
+          "name": "Require a valid version and default-branch dispatch",
+          "number": 2,
+          "startedAt": "2026-10-06T03:43:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:22Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 3,
+          "startedAt": "2026-10-06T03:43:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:37Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-dotnet@v5",
+          "number": 4,
+          "startedAt": "2026-10-06T03:43:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:40Z",
+          "conclusion": "success",
+          "name": "Install AOT prerequisites (macOS)",
+          "number": 5,
+          "startedAt": "2026-10-06T03:43:37Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:40Z",
+          "conclusion": "skipped",
+          "name": "Install AOT prerequisites (Linux)",
+          "number": 6,
+          "startedAt": "2026-10-06T03:43:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:06Z",
+          "conclusion": "success",
+          "name": "Publish native AOT with release identity",
+          "number": 7,
+          "startedAt": "2026-10-06T03:43:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:07Z",
+          "conclusion": "success",
+          "name": "Ad-hoc sign (macOS)",
+          "number": 8,
+          "startedAt": "2026-10-06T04:11:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:25Z",
+          "conclusion": "success",
+          "name": "Archive publish output (macOS and Linux)",
+          "number": 9,
+          "startedAt": "2026-10-06T04:11:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:25Z",
+          "conclusion": "skipped",
+          "name": "Archive publish output (Windows)",
+          "number": 10,
+          "startedAt": "2026-10-06T04:11:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:26Z",
+          "conclusion": "success",
+          "name": "Checksum and check native help/version",
+          "number": 11,
+          "startedAt": "2026-10-06T04:11:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:31Z",
+          "conclusion": "success",
+          "name": "Upload verified payload for release attachment",
+          "number": 12,
+          "startedAt": "2026-10-06T04:11:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-dotnet@v5",
+          "number": 23,
+          "startedAt": "2026-10-06T04:11:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:32Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 24,
+          "startedAt": "2026-10-06T04:11:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:34Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 25,
+          "startedAt": "2026-10-06T04:11:32Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/katasec/forge-mcl/actions/runs/37410293172/job/112096996264"
+    },
+    {
+      "completedAt": "2026-10-06T04:00:57Z",
+      "conclusion": "success",
+      "databaseId": 112096996285,
+      "name": "build (ubuntu-24.04-arm, linux-arm64, forge)",
+      "startedAt": "2026-10-06T03:43:13Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-06T03:43:15Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-06T03:43:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:15Z",
+          "conclusion": "success",
+          "name": "Require a valid version and default-branch dispatch",
+          "number": 2,
+          "startedAt": "2026-10-06T03:43:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:16Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 3,
+          "startedAt": "2026-10-06T03:43:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:16Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-dotnet@v5",
+          "number": 4,
+          "startedAt": "2026-10-06T03:43:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:16Z",
+          "conclusion": "skipped",
+          "name": "Install AOT prerequisites (macOS)",
+          "number": 5,
+          "startedAt": "2026-10-06T03:43:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T03:43:34Z",
+          "conclusion": "success",
+          "name": "Install AOT prerequisites (Linux)",
+          "number": 6,
+          "startedAt": "2026-10-06T03:43:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:40Z",
+          "conclusion": "success",
+          "name": "Publish native AOT with release identity",
+          "number": 7,
+          "startedAt": "2026-10-06T03:43:34Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:40Z",
+          "conclusion": "skipped",
+          "name": "Ad-hoc sign (macOS)",
+          "number": 8,
+          "startedAt": "2026-10-06T04:00:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:50Z",
+          "conclusion": "success",
+          "name": "Archive publish output (macOS and Linux)",
+          "number": 9,
+          "startedAt": "2026-10-06T04:00:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:50Z",
+          "conclusion": "skipped",
+          "name": "Archive publish output (Windows)",
+          "number": 10,
+          "startedAt": "2026-10-06T04:00:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:52Z",
+          "conclusion": "success",
+          "name": "Checksum and check native help/version",
+          "number": 11,
+          "startedAt": "2026-10-06T04:00:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:56Z",
+          "conclusion": "success",
+          "name": "Upload verified payload for release attachment",
+          "number": 12,
+          "startedAt": "2026-10-06T04:00:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:56Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-dotnet@v5",
+          "number": 23,
+          "startedAt": "2026-10-06T04:00:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:56Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 24,
+          "startedAt": "2026-10-06T04:00:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:00:56Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 25,
+          "startedAt": "2026-10-06T04:00:56Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/katasec/forge-mcl/actions/runs/37410293172/job/112096996285"
+    },
+    {
+      "completedAt": "2026-10-06T04:12:05Z",
+      "conclusion": "success",
+      "databaseId": 112103925008,
+      "name": "publish",
+      "startedAt": "2026-10-06T04:11:39Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-06T04:11:41Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-06T04:11:39Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:42Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v6",
+          "number": 2,
+          "startedAt": "2026-10-06T04:11:41Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:11:49Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@v8",
+          "number": 3,
+          "startedAt": "2026-10-06T04:11:42Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:12:03Z",
+          "conclusion": "success",
+          "name": "Publish the new release with all assets",
+          "number": 4,
+          "startedAt": "2026-10-06T04:11:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:12:03Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v6",
+          "number": 8,
+          "startedAt": "2026-10-06T04:12:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-06T04:12:03Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 9,
+          "startedAt": "2026-10-06T04:12:03Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/katasec/forge-mcl/actions/runs/37410293172/job/112103925008"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-10-06T04:12:05Z",
+  "url": "https://github.com/katasec/forge-mcl/actions/runs/37410293172"
+}
