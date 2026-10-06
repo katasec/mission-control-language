@@ -7,6 +7,8 @@ keyboard follow-up; it does not depend on the unfinished rich-selection design.
 ## Requirement and scope
 
 Make Cmd+A select all text in the focused Forge composer or `/edit` editor on macOS.
+The operator's two screenshots on 2026-10-06 identify the chat input and file editor in
+the existing Ghostty window; the transcript is not the Select All target.
 Keep the change at the terminal shortcut boundary, reusing native Select All. No clipboard,
 editor/range, renderer, package or generic keyboard-framework changes. The icon-label request
 and package visibility issue are separate tasks.
@@ -36,13 +38,18 @@ These are static file observations, not running-app or physical-key acceptance.
 | Current Ghostty configuration | One mapping line; normal existing-window `forge chat` launch retained. Other terminal programs receive their own Ctrl+A when Cmd+A is pressed. |
 | Dedicated Forge Ghostty window | Mapping contained to a dedicated terminal launch. Requires explicit launch/default-path definition and verified argument/config isolation; not an automatic fix in an already-running window. |
 
-The operator has been asked to choose the scope. Do not modify the shared config, introduce
-a launcher or claim a Forge-only binding before that decision and design/plan reviews.
-The operator requested to share a screenshot before answering; awaiting that clarification.
+The screenshots settle the Forge surfaces; they do not authorize changing shortcut behaviour
+in other terminal programs. A plain-language question is pending: apply the one-line mapping
+throughout Ghostty, or keep the requirement limited to Forge. Do not modify the shared config,
+introduce a launcher or claim a Forge-only binding before that answer and design/plan reviews.
 Installed Ghostty1.3.1 source tag resolves to `332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28`;
 its [Surface](https://github.com/ghostty-org/ghostty/blob/332b2aefc6e72d363aa93ab6ecfc86eeeeb5ed28/src/Surface.zig)
 and the [official binding reference](https://ghostty.org/docs/config/reference#keybind) support
 the host ownership. The shipped manual is the syntax authority for this installed version.
+Pinned `Surface.zig` handles host bindings before PTY encoding (lines2424–2430); its
+`select_all` action selects the active terminal screen without a Forge or alternate-screen
+condition (lines5301–5309). Adding only a Forge Cmd+A alias therefore cannot bypass the
+host binding. No automatic Forge-only forwarding mechanism has been established.
 
 ## Owners, reuse and gates
 

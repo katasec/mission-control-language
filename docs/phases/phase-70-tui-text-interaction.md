@@ -28,7 +28,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 |---|---|---|
 | [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Full reviews/canonical checks PASS; product/atlas merged; v0.9.4 installed. | Resolve public-versus-private package mismatch and record operator acceptance. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Public gap/current comparison verified and reviewed; full rich design open. | Resolve full semantics/public contract and operator library-route decision before implementation planning. |
-| [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Independent operator-selected keyboard follow-up; scope decision pending. | Choose shared Ghostty mapping or dedicated Forge launch, then design/review the isolated integration. |
+| [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Chat input and file editor confirmed by operator screenshots; terminal scope pending. | Resolve effects in other Ghostty tabs, then design/review the isolated integration. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
 CodeAlta findings, controlled results, limitations, and timing. Foundation product/atlas are merged and the normal CLI release is installed; package visibility remains unresolved. Rich selection remains unapproved and unimplemented.

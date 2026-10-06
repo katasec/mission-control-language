@@ -131,3 +131,18 @@ The [original checkpoint PR351](https://github.com/katasec/mission-control-langu
 retains historical audit provenance. The current repository uses this report instead of the
 71 raw artifacts, intermediate runs and duplicate summaries. This consolidation changes
 documentation only: runtime/default-path/security/UI implementation gates N/A.
+
+## Mac shortcut scope checkpoint
+
+Operator screenshots identify the chat input and `/edit` file editor. Installed Ghostty1.3.1
+static source handles host bindings before PTY input; native Terminal2.2.0/UI3.10.0 already
+decode and execute Ctrl+A Select All. A one-line Cmd+A forwarding candidate is documented in
+[the shortcut spoke](../../phases/phase-70.3-mac-select-all.md). Its effect on other Ghostty
+tabs is awaiting the operator's answer. No host setting or product code was changed.
+
+| Documentation stage | Start UTC | Validation UTC | Evidence |
+|---|---|---|---|
+| Scope checkpoint | 07:40:51 | 07:46:45 | Nine Markdown files / 428 local links and anchors PASS; whitespace PASS. |
+
+Product design/plan/code approvals, product tests/AOT and physical/default-path acceptance
+are N/A to this documentation checkpoint; the shortcut remains unimplemented.
