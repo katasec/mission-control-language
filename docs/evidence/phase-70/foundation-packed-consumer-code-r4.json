@@ -1,0 +1,20 @@
+{
+  "observedUtc": "2026-10-06T03:10:35.896192+00:00",
+  "action": "Root reran dotnet run --no-build --no-restore on isolated actual packed consumer; every API/all results PASS",
+  "scope": "Controlled packed consumer; not published provenance/default acceptance",
+  "sourceLimit": "Package metadata is base HEAD9c06e572; uncommitted R4 correction is not attributed to it",
+  "packageSha256": "3a528a22a24b7dfe7db54078db8672cb6a2d9f26b0fd39760f6c46d5aaa1935f",
+  "cachedPackageSha256": "3a528a22a24b7dfe7db54078db8672cb6a2d9f26b0fd39760f6c46d5aaa1935f",
+  "packedDllSha256": "ca8111b4ce86bc393c1f369a75c9feee54ad380e44cef078a73474e45e44bf73",
+  "cachedDllSha256": "ca8111b4ce86bc393c1f369a75c9feee54ad380e44cef078a73474e45e44bf73",
+  "consumerDllSha256": "ca8111b4ce86bc393c1f369a75c9feee54ad380e44cef078a73474e45e44bf73",
+  "resolved": [
+    "Katasec.Forge.Terminal.Extensions/0.1.0",
+    "Wcwidth/4.0.1",
+    "XenoAtom.Ansi/1.7.1",
+    "XenoAtom.Terminal.UI/3.10.0",
+    "XenoAtom.Terminal/2.2.0"
+  ],
+  "soleReference": "Katasec.Forge.Terminal.Extensions [0.1.0]",
+  "isolatedCache": "/tmp/phase70-packed-consumer-code-r4/packages"
+}

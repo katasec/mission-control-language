@@ -1,0 +1,4 @@
+/private/tmp/phase70-readiness-r4/Program.cs(25,35): error CS9035: Required member 'TerminalKeyEvent.Key' must be set in the object initializer or attribute constructor. [/tmp/phase70-readiness-r4/Probe.csproj]
+/private/tmp/phase70-readiness-r4/Program.cs(26,35): error CS9035: Required member 'TerminalKeyEvent.Key' must be set in the object initializer or attribute constructor. [/tmp/phase70-readiness-r4/Probe.csproj]
+
+The build failed. Fix the build errors and run again.
