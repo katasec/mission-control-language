@@ -1,0 +1,20 @@
+OLD elapsed phase2: delivered=0, selected=False, written=
+Same queued native input after gate release: delivered=2, selected=True, copied=alpha beta
+CURRENT actual host: relay blocked, native Post ran, phase1 did not advance before delivery
+CURRENT actual host: phase1 after input drain/render, native selection true, exact write1
+RING culture=en-GB, time=04:00, viewport=40x40, flow=(0,2) 40x14, offsetY=0, extent=14, frame=(14,2) 9x14
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                 [/]
+RING culture=en-GB, time=00:00, viewport=40x40, flow=(0,2) 40x14, offsetY=0, extent=14, frame=(14,2) 9x14
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                 [/]
+RING culture=en-GB, time=04:00, viewport=40x80, flow=(0,2) 40x14, offsetY=0, extent=14, frame=(14,2) 9x14
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                 [/]
+RING culture=en-GB, time=00:00, viewport=40x80, flow=(0,2) 40x14, offsetY=0, extent=14, frame=(14,2) 9x14
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                 [/]
+RING culture=en-US, time=4:00 AM, viewport=40x40, flow=(0,2) 40x26, offsetY=0, extent=26, frame=(14,2) 7x26
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                   [/]
+RING culture=en-US, time=12:00 AM, viewport=40x40, flow=(0,2) 40x32, offsetY=30, extent=62, frame=(14,-28) 5x62
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca93 on #eff5fe]􎻮̅̅􎻮̅̍[/][#103f87 on #eff5fe]s[/][#04ca94 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe] [/][#63748c on #f7f8fe]You · 12:00 AM[/][#101d34 on #f7f8fe] [/][#c8276c on #f7f8fe]􎻮̅̅􎻮̅̍􎻮̅̎[/][#101d34 on #f7f8fe] [/][#f7f8fe on #f7f8fe]░[/]
+RING culture=en-US, time=4:00 AM, viewport=40x80, flow=(0,2) 40x26, offsetY=0, extent=26, frame=(14,2) 7x26
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                   [/]
+RING culture=en-US, time=12:00 AM, viewport=40x80, flow=(0,2) 40x38, offsetY=0, extent=38, frame=(14,2) 6x38
+First visible flow row: [#101d34 on #f7f8fe]              [/][#04ca90 on #eff5fe]􎻮̅̅􎻮̅̍[/][#04ca91 on #eff5fe]􎻮̅̅􎻮̅̅[/][#04ca92 on #eff5fe]􎻮̅̅􎻮̅̍[/][#101d34 on #f7f8fe]                    [/]

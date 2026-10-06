@@ -1,0 +1,16 @@
+  Determining projects to restore...
+  Restored /tmp/phase70-packed-consumer-code-r4/Consumer.csproj (in 2.42 sec).
+PASS: isolated packed consumer exercised every public API and all result values; native pins resolved without project/CLI references.
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+Project 'Consumer' has the following package references
+   [net10.0]: 
+   Top-level Package                        Requested   Resolved
+   > Katasec.Forge.Terminal.Extensions      [0.1.0]     0.1.0   
+
+   Transitive Package          Resolved
+   > Wcwidth                   4.0.1   
+   > XenoAtom.Ansi             1.7.1   
+   > XenoAtom.Terminal         2.2.0   
+   > XenoAtom.Terminal.UI      3.10.0  
+

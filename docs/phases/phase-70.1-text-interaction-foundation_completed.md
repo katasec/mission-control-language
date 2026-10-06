@@ -2331,3 +2331,104 @@ The 27 retained evidence-file hashes match their manifest. Local 180 focused, 87
 Both complete current-artifact reviews return REVISE. Component placement passes; move nothing. Binding three-cell icon geometry, the repeated Paste-test insertion condition and actual16 CI failures must be corrected at their demonstrated boundaries. Root authorizes the same implementer under the unchanged complete approved R3 plan at **2026-10-06T02:55:01.905Z**, assignment `[implement:implementer:r4] foundation`. No inherited current-code PASS; after frozen corrected handoff, obtain both fresh full code reviews and actual canonical package/native verification before delivery.
 
 Diagnose CI causes before changing code. Readiness/timing and culture-dependent side-label width are hypotheses only. Retain all assertions and negative paths; no new skips, arbitrary larger sleeps, private native access, CI-only mode, default/library/linker/environment changes or warning suppression. Any necessary deviation from locked design/public ownership/API/reference returns to the supervisor before dependent edits. Full source/evidence hashes and current observation map are required in `artifacts/phase70-foundation/r4-review`; publication/install/manual acceptance remain open.
+
+## R4 correction — supervisor observations
+
+Evidence snapshot [PR348](https://github.com/katasec/mission-control-language/pull/348) merged at2026-10-06 02:56:19 UTC as `2436de7bfe4e4281e10d685809a78ecf600eb169`; MCL returned to clean main,0 uncommitted/0 unpushed. Seven Markdown files/337 local links and Markdown/JSON whitespace passed; raw CI logs remained byte-exact. Product gates were not waived.
+
+Root independently read the pinned input relay and update loop: each event is queued before the next backend read; posted actions run before event drain, update callback and render. A test-only batch-end marker consumed on that relay can acknowledge preceding enqueues; the fixture must still cross the event-drain/render boundary before the next phase. Native private queues are read only as source evidence, never accessed at runtime.
+
+Root read the actual public probe log: holding input reproduces phase2 delivered0/selectionFalse/write0; release produces delivered2/selectionTrue/exact Copy. The corrected-host probe reports that an App.Post runs during deliberately blocked relay while phase1 remains held, then phase1 observes selection/exact write1 after release. These observations prove the missing old-fixture readiness boundary and the corrected barrier; **the original canonical run contains no delivery counters**, so its15 input failures were not independently instrumented there. Current canonical rerun remains required.
+
+The separate ring probe captures en-US local midnight at40x40: native flowOffsetY30, extent62, frame(14,-28)5x62, first visible slots3/4. At40x80 offset0 and full top0–2/bottom5–7; en-GB has offset0 atboth sizes. A complete-frame assertion uses a taller controlled capture; a new explicit midnight viewport-clipping regression retains the side-slot observation. Production time formatting, viewport defaults, scrolling, tiles and geometry remain unchanged.
+
+Root freshly renders and inspects both complete current binding SVG galleries, including normal/narrow frames and all native combined states. The twelve-cell header binds x9/width3, and explicit expected-bounds fixtures now name that fact. Saved-reference inspection is controlled evidence, not running Ghostty/Retina acceptance.
+
+Implementer reports targeted32/32 and focused181/181, zero warnings; full suite/package/fresh consumer and complete frozen manifest are still running. These provisional observations do not constitute current full review or delivery approval.
+
+### Corrected R4 frozen source and fresh CI
+
+The implementer explicitly confirms frozen source while its current local native build finishes. Root independently validates all35 plan/atlas source hashes and all5 correction hashes, reviews the five-file within-plan diff and whitespace, and fetches unchanged product main `2022b512dd2bd108626124f22bc1cfe7652648d7`. Root commits/pushes only those frozen files as `8718347f68c3853d6dab956da2bf42146e8b51f2`, tree `90e0f26f2adc1ffb9ed79e96379bc9f01b709d47`. The complete product diff remains34 files,2659 insertions/41 deletions; Desktop remains its single atlas row. No product code is authored by root.
+
+[Fresh canonical run37407903290](https://github.com/katasec/forge-mcl/actions/runs/37407903290) starts2026-10-06 03:12:44 UTC on current draft PR62. Root independently fetches merge candidate `c4536e416e89931873ed6ad9171f308c7d8c66ca`; its tree exactly equals the frozen product tree90e0f26f. Actual CI outcomes/source artifact remain pending. Earlier failed CI remains preserved, not overwritten. Current full code reviews will start sequentially after the implementer finishes evidence; no merge/publication approval is inferred.
+
+Root independently reruns the fresh packed code-r4 consumer and matches package/cache/output identities in [consumer evidence](../evidence/phase-70/foundation-packed-consumer-code-r4.json). Sole reference `[0.1.0]`, isolated cache, exact native UI3.10.0/Terminal2.2.0 and all public API/result observations pass. Package SHA256 `3a528a22a24b7dfe7db54078db8672cb6a2d9f26b0fd39760f6c46d5aaa1935f`; packed/cache/output DLL `ca8111b4ce86bc393c1f369a75c9feee54ad380e44cef078a73474e45e44bf73`. The producer's pack/native compile began before this commit and remains explicitly base-HEAD9c06e572 metadata; this is controlled evidence, not committed/published provenance.
+
+## Corrected R4 candidate — full handoff
+
+The R4 correction is frozen at supervisor commit `8718347f68c3853d6dab956da2bf42146e8b51f2`, tree `90e0f26f2adc1ffb9ed79e96379bc9f01b709d47`. Managed checks, packing and the fresh consumer pass. **Local Native AOT fails the zero-warning gate with six linker warnings.** Fresh canonical CI, full code reviews and delivery acceptance remain pending.
+
+| Current check | Actual result | Evidence |
+|---|---|---|
+| Correction filter | 32/32 pass | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/corrections-first.log) |
+| Focused interaction/UI suite | 181/181 pass; zero warnings | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/focused.log) |
+| `make build` | Pass; zero warnings/errors | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/build.log) |
+| `env -u MCL_API_KEY make test` | 877 pass, six existing prerequisite skips, 883 total | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/full-suite.log) |
+| `make verify-terminal-extensions-package` | 26/26 pass; actual package, symbols and verifier pass | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/package.log) |
+| Fresh packed public consumer | Pass; matching package and assembly hashes; exact native dependencies | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/consumer.log) |
+| Current local native publish | Exit 0, **six warnings: gate FAIL** | [log](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/native-publish.log) |
+| Native `--help` / `--version` | Both exit 0 | [identity](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/native-identity.json) |
+
+[Commands.json](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/commands.json) records the exact filters, consumer commands and unchanged native publish command. The six skips are the existing Copilot, Claude multi-tool/live/two-turn, wire-capture and ForgeClaude launcher prerequisites.
+
+**Changed files**
+
+| File | R4 correction |
+|---|---|
+| [CodeCopyControl.cs](/Users/ameerdeen/progs/forge-mcl/src/ForgeMission.Cli/Tui/CodeCopyControl.cs) | Widths 3–14 now use the binding’s fixed three-cell button; width 12 produces `x=9,width=3`. Zero, 1–2 and full-label widths retain native lifecycle/focus behavior. |
+| [CodeCopyControlTests.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/CodeCopyControlTests.cs) | Both mirrored expectations replaced with explicit reference-derived bounds, including continuous transitions through 0–3, 12, 14 and 15. |
+| [ClipboardMenuTests.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/ClipboardMenuTests.cs) | Names the nonempty successful insertion condition once; retains failed/empty Paste range, caret and Undo assertions. |
+| [TerminalInteractionTestHost.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Terminal/TerminalInteractionTestHost.cs) | Replaces elapsed-time phase scheduling with public backend acknowledgment followed by a completed input-drain/render boundary. Incomplete phases fail explicitly. |
+| [ChatScreenTileTests.cs](/Users/ameerdeen/progs/forge-mcl/tests/ForgeMission.Mcl.Tests/Cli/ChatScreenTileTests.cs) | Separates complete-frame inspection from a controlled narrow, localized clipping regression. Product layout and time formatting remain unchanged. |
+
+The complete retained foundation comprises the extension API/menu implementation and README/project; CLI interaction, source wrapper, snippet renderer/button, theme/styles and screen integrations; their tests; solution/package workflow/verifier/inventories; and the Desktop atlas row. All **35 complete-plan file hashes and five correction hashes** match the frozen source. Their absolute paths are in [the complete source inventory](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/complete-plan-source-hashes.json). No public API, package pin, ownership, product default, release workflow or linker target changed in R4.
+
+**Fault and readiness observations**
+
+The public delayed-backend probe reproduced the old fixture advancing with zero delivered input, no selection and no write. Releasing the same native input produced the expected selection and exact Copy. The actual corrected host remained in its phase while delivery was blocked, then advanced only after acknowledgment and input drain/render. Native relay ordering establishes that preceding events are enqueued before the marker’s next backend read; `App.Post` acknowledgment precedes input draining, and the additional completed frame supplies the observation boundary.
+
+The actual product ring probe reproduced slots 3/4 at an en-US midnight timestamp in a 40×40 viewport: native scroll offset 30, frame `(14,-28)5×62`. At 40×80 the same source has offset zero and the complete top/bottom tiles. Original canonical logs contain neither delivery counters nor culture/frame metrics, so these are reproducible explanations, **not independently instrumented facts about the original CI machine**. [Diagnosis and limits](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/diagnosis.json), [probe output](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/readiness-ring-probe.log).
+
+**Positive and negative coverage**
+
+[The complete observation map](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/observation-map.json) maps **26 requirement groups and 11 delivery gates** to current tests/logs. It includes:
+
+- Actual composer/CodeEditor no-click ranges, directional caret/highlight, mouse gestures, Copy failures and empty extraction consuming Copy without Stop; no-selection Stop and `/edit` isolation.
+- Command metadata and once-only native delegates; keyboard Paste/Undo/Cut; bracketed Paste without clipboard reread.
+- Actual menu mouse/keyboard activation and close milestones; failed/empty Paste preserving caret/range/Undo; availability and execution separately rejecting stale, detached, hidden, disabled, ancestor-ineligible and screen-swapped targets.
+- Modal/chrome isolation, first realization and bounded registration, never-realized wrappers, direct Paragraph detach/reattach and unchanged-range retention.
+- Setter-before-input retirement, exact immutable snippet payloads, feedback reactivity and transport continuations refusing obsolete feedback.
+- Real outer DocumentFlow scroll-out/in: **the returned button is newly realized**, old press/release writes zero, fresh activation copies exact code. Supported retained same-visual retirement/resume is proven separately.
+- Both themes, viewport corners, continuous widths, combined native states, selected syntax foregrounds, and existing graphics/motion/save/close/start-page regressions.
+
+Retained native failed-write keyboard Cut still deletes, and Undo restores it; no menu Cut was added.
+
+**Artifact identity**
+
+Fresh consumer cache: `/tmp/phase70-packed-consumer-code-r4/packages`, with no earlier cache or project/CLI reference.
+
+| Artifact | SHA256 |
+|---|---|
+| Packed/cached `.nupkg` | `3A528A22A24B7DFE7DB54078DB8672CB6A2D9F26B0FD39760F6C46D5AAA1935F` |
+| Packed/cache/output extension DLL | `CA8111B4CE86BC393C1F369A75C9FEEE54AD380E44CEF078A73474E45E44BF73` |
+| Current native binary, 145,495,048 bytes | `B4681B55FEDA2FF5CE96A7AC06E54FC291793A4FC6ED58A0B318F9C2A4233E0C` |
+| [Final manifest](/Users/ameerdeen/progs/forge-mcl/artifacts/phase70-foundation/r4-review/manifest.json) | `397F5F8EA891172133BAFDAA9012019314F61931E003112BC2EA08A4B6EA2F47` |
+
+Pack/native started before the supervisor’s correction commit. Their actual metadata remains `9c06e572…`; native version is `1.0.0+9c06e5729bbd06837758344c203a76067626451c`. This is explicitly **not committed-source provenance for `8718347`**.
+
+Principles affecting the correction: reuse public native seams; use reference-derived expectations rather than mirrored implementation; name the Paste condition coherently; contain readiness structurally; preserve ownership and avoid a new framework; report actual warnings as failure.
+
+No new design decision or implementation deviation remains open. Against Done when, interaction/snippet behavior has current controlled evidence and managed/package checks pass; physical Retina/reference acceptance, warning-free canonical AOT, publication/install and operator-run installed default-path acceptance remain outstanding. Continuous rich selection remains Phase70.2. No source edits or running local checks remain; this handoff does not mark the task complete.
+
+Implementation correction assignment **2026-10-06T02:55:01.905Z**, complete handoff **2026-10-06T03:16:32.729Z**, wall **21m31s**. Tokens N/A. Root validates all31 artifact sizes/hashes (29 listed files plus2 packages), all35 complete-plan and five correction source hashes, and manifest SHA397f5f8ea891172133bafdaa9012019314f61931e003112bc2ea08a4b6ea2f47. Twenty exact raw logs/JSON plus manifest are retained in [foundation-code-r4](../evidence/phase-70/foundation-code-r4/manifest.json); binary/debug/package and probe source files remain at their product artifact paths, with exact hashes retained. Mission-control contains no copied product source or sibling project reference. [Complete current observation map](../evidence/phase-70/foundation-code-r4/observation-map.json):26 requirement groups/11 gates. Raw captures retain original bytes and whitespace.
+
+## Full code reviews — R3
+
+| Stage / role / round | Start UTC | End UTC | Wall | State |
+|---|---|---|---|---|
+| `[review-code:simplicity:r3] foundation` (includes style) | 2026-10-06T03:17:25.204Z | Pending | Pending | Both full personas verbatim; full current committed artifact/galleries/evidence; running |
+| `[review-code:ownership:r3] foundation` | Pending | Pending | Pending | Sequential after first review |
+
+Current source remains frozen at8718347/tree90e0f26; actual canonical run37407903290 is in progress. No current full code approval, zero-warning native PASS, merge/publication/install/default acceptance is inferred.
+
+Root independently executes R4 local native `--version` and `--help`: both exit0, actual version1.0.0+9c06e5729bbd06837758344c203a76067626451c. The six-warning FAIL remains. Current canonical product/package step succeeds at03:16:28 UTC; native step is still in progress. The simplicity/style reviewer reports the full current source/galleries/evidence review has no actionable source finding, but keeps this same stage open until complete current canonical output/identity. No current full PASS is recorded before its final verdict.
