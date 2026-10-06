@@ -1,6 +1,6 @@
 # Phase 70.3 — Mac Select All shortcut
 
-**Status: automatic dedicated Mac window approved by operator; full design R2 reviews PASS; supervisor locks design. Full plan R2 reviews PASS; PLAN APPROVED; implementation starting.**
+**Status: six-file patch merged in forge-mcl PR63 after full current reviews and canonical zero-warning Native AOT verification. v0.9.5 release running; installation and operator acceptance pending.**
 Parent: [Phase 70](phase-70-tui-text-interaction.md). Independent keyboard follow-up;
 rich transcript selection, icon labels and package visibility remain separate.
 
@@ -112,7 +112,7 @@ restoration preference overrides. Prior investigations are in the single report.
 R2 full simplicity (all11 checks,10:44:08 UTC) and ownership (all23 behaviours/all6 checks,
 10:47:21 UTC) reviews PASS. Supervisor locks this complete design on2026-10-06.
 R1 corrections and timing are in the single report. No open design questions.
-Next: complete current code reviews and canonical PR verification → merge/release/install → operator acceptance. Approved plan and implementation evidence follow.
+Next: finish the normal v0.9.5 release → install complete ZIP → operator acceptance. Current source/code/CI evidence and stage timings are in the [single report](../evidence/phase-70/verification-report.md). Approved contracts remain below.
 ## Implementation plan R2 — approved
 
 Product baseline: forge-mcl main `d23387492de4563abe9a57d5a51dfb538745f725`.
@@ -202,3 +202,10 @@ Implementation R1 returned2026-10-06 11:23:21 UTC: six files frozen, build0 warn
 focused81/81 and full924 passed/0 failed/6 existing prerequisite skips. Source and controlled
 observations only; canonical Native AOT, current code reviews, delivery and operator acceptance
 remain pending. See the single report for evidence and timing.
+
+Test-only nesting exception: `MacChatWindowTests.AdmissionCases` uses three nested `foreach`
+loops solely to enumerate the12 required OS/interactive/marker fixtures in seven lines. There
+are no side effects or application decisions. Supervisor dismisses this observation with that
+scope; helpers/LINQ solely to hide loop depth would obscure the data. Remove the exception if
+this generator gains decisions or side effects beyond Cartesian fixture enumeration. Production
+nesting rules remain unchanged.

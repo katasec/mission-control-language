@@ -281,3 +281,34 @@ verification and publishing after development is finished. Current local checks 
 managed builds; assess the complete development feedback path and when native CI runs. See
 [backlog](../../backlog.md). No workflow or gate change is approved or implemented by this
 note; the current patch continues through its locked delivery route.
+
+Canonical PR63 run37456671786 completed SUCCESS at12:00:41 UTC; verify job31m44s,
+11:28:56→12:00:40. Product/package step4m42s; full920 passed/10 existing prerequisite skips,
+930 total; package26/26. Native publish11:34:01→12:00:18 =26m17s. Root read complete workflow
+and artifact logs: zero actual compiler/linker warnings. GitHub's Node20 deprecation annotation
+is workflow tooling, not a product compiler warning. Package publication was SKIPPED as required.
+
+Artifact source.txt is `32af6c2b8a15d0b86502232a382cff16d0921582`; version is
+`1.0.0+32af6c2b8a15d0b86502232a382cff16d0921582`. Root independently matched its tree to
+reviewed HEAD and matched downloaded binary SHA256 to its recorded digest:
+`4cb027520febfad558902755118f7d37fa35fc7f89cde4f6220acf917ced5db5`.
+Downloaded native help/version checks are in progress; current final reviewer verdict and merge
+remain pending. A seven-line Cartesian test fixture's third nested foreach received a scoped
+supervisor test-only exception/removal condition in the active spoke, with no source change.
+
+Final full simplicity/style review R2 ran12:07:36→12:10:05 UTC: all11 simplicity and all9 style
+checks PASS with the two recorded scoped exceptions. Ownership remains current on the unchanged
+six-file source. Root actual downloaded native --help/--version both exited0, exact CI source
+identity matched. No source corrections were requested. Supervisor readiness gate passes:
+approved scope/owners/identity/failure contracts retained; focused/full/package/current zero-warning
+AOT evidence and identical reviewed/CI tree independently checked; compiler warnings not waived;
+UI live readiness uses the operator-approved Phase70 exception and remains physical acceptance
+pending. Product merge/release/install follows the normal route.
+
+Product [PR63](https://github.com/katasec/forge-mcl/pull/63) merged at12:10:58 UTC,
+commit `b11e6e3ba1f18b13e28d7c10dd3c12937c2e2059`. Product scope→merge span:
+10:15:44→12:10:58 =1h55m14s; operator acceptance is later and still open. Root rechecked
+remote main and unused v0.9.5 tag before dispatching the unchanged normal release workflow.
+[Release run37461528621](https://github.com/katasec/forge-mcl/actions/runs/37461528621)
+created12:11:43 UTC from that exact merged main commit, all four native hosts. Release,
+whole-ZIP installation and physical acceptance are pending; no release/install PASS yet.
