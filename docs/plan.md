@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Resolve the package visibility decision in [TUI text interaction](phases/phase-70-tui-text-interaction.md); broader manual acceptance and rich design remain open. |
+| **NEXT STEP** | Operator chooses: close [TUI text interaction](phases/phase-70-tui-text-interaction.md) (broader manual acceptance and rich design remain open) or select from [backlog](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI fixes merged and operator-tested; package visibility decision, broader manual acceptance and rich design remain open. |
+| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI fixes merged and operator-tested; package accepted public; broader manual acceptance and rich design remain open. |
 
 ## Design docs
 

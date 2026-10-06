@@ -1,6 +1,6 @@
 # Phase 70 — Foundation delivery and selection investigation report
 
-Recorded 2026-10-06. **Foundation and Forge-only Mac shortcut CLI v0.9.5 installed; package visibility, operator acceptance
+Recorded 2026-10-06. **Foundation and Forge-only Mac shortcut CLI v0.9.5 installed; package accepted public; operator acceptance
 and continuous rich-selection design remain open.** This report replaces raw Phase70 evidence, at the operator's request. The first cleanup removed71 recent artifacts; the follow-up removed91 older foundation files, leaving this single report. Earlier foundation design,
 plan and code-review records remain in the [foundation archive](../../phases/phase-70.1-text-interaction-foundation_completed.md).
 All times below are UTC.
@@ -41,9 +41,9 @@ Package SHA256: `22504559336333dc0f97f921c293e7a854ef7372b295832829e1ece9f271209
 Packed/cache/output DLL SHA256: `77c731ba514b419a5633c16b587349d91bfac0d8b1af0aa0347f199ca0fba685`.
 
 GitHub [documents that public packages cannot become private again](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility).
-Operator decision pending: accept public visibility and review the corrected publication
-contract, or retain private visibility and design a new identity/route. No retry, deletion,
-overwrite or visibility-contract change was made. Delivery closure remains open.
+**Resolved 2026-10-07: operator accepted public visibility.** Re-checked with `gh api` that day:
+package 15632832 public, one version 0.1.0 (1342072708), linked to `katasec/forge-mcl`, which is
+public. No retry, deletion or overwrite was made. Package delivery is closed.
 
 ## Rich-selection public probe and comparison
 
