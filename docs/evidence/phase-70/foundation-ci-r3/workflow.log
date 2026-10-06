@@ -1,0 +1,374 @@
+Verify package and macOS ARM64 CLI	Set up job	﻿2026-10-06T03:12:51.8324350Z Current runner version: '2.337.0'
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8338640Z ##[group]Runner Image Provisioner
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8339150Z Hosted Compute Agent
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8339510Z Version: 20260828.587
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8339890Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8340350Z Build Date: 2026-08-28T16:44:25Z
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8340770Z Worker ID: {01af9a84-0f04-47e0-a7f0-a4f4cf989c63}
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8341220Z Azure Region: westus
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8341560Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8342320Z ##[group]Operating System
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8342720Z macOS
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8343040Z 14.8.9
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8343360Z 23J631
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8343670Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8344010Z ##[group]Runner Image
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8344370Z Image: macos-14-arm64
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8344720Z Version: 20260831.0302.1
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8345410Z Included Software: https://github.com/actions/runner-images/blob/macos-14-arm64/20260831.0302/images/macos/macos-14-arm64-Readme.md
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8346450Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-14-arm64%2F20260831.0302
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8347090Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8347830Z ##[group]GITHUB_TOKEN Permissions
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8348700Z Contents: read
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8349050Z Metadata: read
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8349390Z Packages: read
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8349730Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8350900Z Secret source: Actions
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8351450Z Cache mode: write
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8351850Z Prepare workflow directory
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8638500Z Prepare all required actions
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:51.8669220Z Getting action download info
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:52.1728750Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:52.4902720Z Download action repository 'actions/setup-dotnet@v4' (SHA:67a3573c9a986a3f9c594539f4ab511d57bb3ce9)
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:53.2492400Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+Verify package and macOS ARM64 CLI	Set up job	2026-10-06T03:12:53.4252400Z Complete job name: Verify package and macOS ARM64 CLI
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	﻿2026-10-06T03:12:53.4835060Z ##[group]Run actions/checkout@v4
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4835690Z with:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4836070Z   ref: c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4836740Z   repository: katasec/forge-mcl
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4839490Z   token: ***
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4839830Z   ssh-strict: true
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4840170Z   ssh-user: git
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4840530Z   persist-credentials: true
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4840910Z   clean: true
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4841260Z   sparse-checkout-cone-mode: true
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4841670Z   fetch-depth: 1
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4842020Z   fetch-tags: false
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4842370Z   show-progress: true
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4842730Z   lfs: false
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4843060Z   submodules: false
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4843420Z   set-safe-directory: true
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4843820Z   allow-unsafe-pr-checkout: false
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4844400Z env:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4847450Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.4847900Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6327620Z Syncing repository: katasec/forge-mcl
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6329490Z ##[group]Getting Git version info
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6330090Z Working directory is '/Users/runner/work/forge-mcl/forge-mcl'
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6330900Z [command]/opt/homebrew/bin/git version
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6523490Z git version 2.55.0
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6535660Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6540780Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/190af395-4b0c-4bf7-a6eb-417e93984bf9/.gitconfig'
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6545220Z Temporarily overriding HOME='/Users/runner/work/_temp/190af395-4b0c-4bf7-a6eb-417e93984bf9' before making global git config changes
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6546300Z Adding repository directory to the temporary git global config as a safe directory
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6548220Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/forge-mcl/forge-mcl
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6632640Z Deleting the contents of '/Users/runner/work/forge-mcl/forge-mcl'
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6635100Z ##[group]Initializing the repository
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6638200Z [command]/opt/homebrew/bin/git init /Users/runner/work/forge-mcl/forge-mcl
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6800960Z hint: Using 'master' as the name for the initial branch. This default branch name
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6801960Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6802710Z hint: to use in all of your new repositories, which will suppress this warning,
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6803380Z hint: call:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6803710Z hint:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6804150Z hint: 	git config --global init.defaultBranch <name>
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6804650Z hint:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6805130Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6805860Z hint: 'development'. The just-created branch can be renamed via this command:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6806490Z hint:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6806830Z hint: 	git branch -m <name>
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6807230Z hint:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6807750Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6808550Z Initialized empty Git repository in /Users/runner/work/forge-mcl/forge-mcl/.git/
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6810180Z [command]/opt/homebrew/bin/git remote add origin https://github.com/katasec/forge-mcl
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6858320Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6859020Z ##[group]Disabling automatic garbage collection
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6860180Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6895390Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6896000Z ##[group]Setting up auth
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6899910Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.6936260Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.7596700Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.7633530Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.8069950Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.8109540Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.8558810Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.8599370Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.8600020Z ##[group]Fetching the repository
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:53.8603620Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3901020Z From https://github.com/katasec/forge-mcl
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3902480Z  * branch            c4536e416e89931873ed6ad9171f308c7d8c66ca -> FETCH_HEAD
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3905500Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3906960Z ##[group]Determining the checkout info
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3907780Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3908280Z [command]/opt/homebrew/bin/git sparse-checkout disable
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.3958650Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.4002840Z ##[group]Checking out the ref
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.4004410Z [command]/opt/homebrew/bin/git checkout --progress --force c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.4338950Z HEAD is now at c4536e4 Merge 8718347f68c3853d6dab956da2bf42146e8b51f2 into 2022b512dd2bd108626124f22bc1cfe7652648d7
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.4345380Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.4401600Z [command]/opt/homebrew/bin/git log -1 --format=%H
+Verify package and macOS ARM64 CLI	Run actions/checkout@v4	2026-10-06T03:12:54.4440560Z c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	﻿2026-10-06T03:12:54.4596800Z ##[group]Run actions/setup-dotnet@v4
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.4597300Z with:
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.4597680Z   dotnet-version: 10.0.x
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.4598080Z   cache: false
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.4598410Z env:
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.4601100Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.4601540Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.5568430Z (node:2870) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.5569670Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:54.5581580Z [command]/Users/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --runtime dotnet --channel LTS
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:55.1984830Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.0803500Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-osx-arm64.tar.gz size is 33249724 bytes.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.0845220Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4382590Z dotnet-install: Downloaded file size is 33249724 bytes.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4386050Z dotnet-install: The remote and local file sizes are equal.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4539780Z dotnet-install: Installed version is 10.0.12
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4591900Z dotnet-install: Adding to current process PATH: `/Users/runner/.dotnet`. Note: This change will be visible only when sourcing script.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4592770Z dotnet-install: Note that the script does not resolve dependencies during installation.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4593760Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4594520Z dotnet-install: Installation finished successfully.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:56.4604880Z [command]/Users/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --channel 10.0
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:12:57.3086140Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:00.6885250Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz size is 230753980 bytes.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:00.6887850Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.0861890Z dotnet-install: Downloaded file size is 230753980 bytes.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.0862800Z dotnet-install: The remote and local file sizes are equal.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.3471980Z dotnet-install: Installed version is 10.0.401
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.3529220Z dotnet-install: Adding to current process PATH: `/Users/runner/.dotnet`. Note: This change will be visible only when sourcing script.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.3530070Z dotnet-install: Note that the script does not resolve dependencies during installation.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.3530850Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+Verify package and macOS ARM64 CLI	Run actions/setup-dotnet@v4	2026-10-06T03:13:05.3531630Z dotnet-install: Installation finished successfully.
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	﻿2026-10-06T03:13:05.3635300Z ##[group]Run brew install openssl@3 brotli
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:05.3635620Z [36;1mbrew install openssl@3 brotli[0m
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:05.3706800Z shell: /bin/bash -e {0}
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:05.3707010Z env:
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:05.3708970Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:05.3712310Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:05.3712560Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:06.5181440Z [33mWarning:[0m openssl@3 3.6.3 is already installed and up-to-date.
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:06.5181960Z To reinstall 3.6.3, run:
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:06.5182200Z   brew reinstall openssl@3
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:06.5215450Z [33mWarning:[0m brotli 1.2.0 is already installed and up-to-date.
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:06.5215840Z To reinstall 1.2.0, run:
+Verify package and macOS ARM64 CLI	Install existing native prerequisites	2026-10-06T03:13:06.5216050Z   brew reinstall brotli
+Verify package and macOS ARM64 CLI	Verify current product and package	﻿2026-10-06T03:13:06.5293580Z ##[group]Run set -euo pipefail
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5293830Z [36;1mset -euo pipefail[0m
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5294040Z [36;1mmkdir -p artifacts/verification[0m
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5294320Z [36;1mgit rev-parse HEAD > artifacts/verification/source.txt[0m
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5294820Z [36;1m{ make build; make test; make verify-terminal-extensions-package; } 2>&1 | tee artifacts/verification/checks.log[0m
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5345900Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5346180Z env:
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5347980Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5348230Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.5348460Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:06.9379090Z dotnet build ForgeMission.slnx
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:08.2312210Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:12.9995680Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 4.47 sec).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:12.9996870Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 4.47 sec).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0009600Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 4.47 sec).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0052430Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 0.7 ms).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0067900Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 2 ms).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0097170Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 3 ms).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0133980Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 1 ms).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0135360Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 1 ms).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:13.0136290Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 1 ms).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:14.1697410Z   Restored /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj (in 1.16 sec).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:15.9403250Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.3518220Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.3619810Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.4122160Z   Downloading Copilot CLI 1.0.90 for darwin-arm64...
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.4561560Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.7383780Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/SHA256SUMS.txt" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Debug/net10.0/copilot-cli/1.0.90/darwin-arm64/SHA256SUMS.txt" (1,740 bytes).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.7795320Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:16.9514670Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:17.0731430Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/github-copilot-1.0.90-darwin-arm64.tgz" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Debug/net10.0/copilot-cli/1.0.90/darwin-arm64/copilot.tgz" (61,378,900 bytes).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:20.8894260Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:21.1346570Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:24.8985710Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.3926210Z   ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4162790Z 
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4180950Z Build succeeded.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4181480Z     0 Warning(s)
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4181680Z     0 Error(s)
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4181850Z 
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4182370Z Time Elapsed 00:00:19.72
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:27.4666070Z dotnet test ForgeMission.slnx
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.0748100Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.3658950Z   All projects are up-to-date for restore.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.7288700Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.7490630Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.7642200Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.7886380Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.8371650Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.8576590Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.9027570Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:28.9409560Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.0544190Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.1612780Z   ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.1902170Z Test run for /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.3248980Z A total of 1 test files matched the specified pattern.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.8452350Z [xUnit.net 00:00:00.27]     ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.8477180Z [xUnit.net 00:00:00.28]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.8515740Z [xUnit.net 00:00:00.28]     ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.8518260Z [xUnit.net 00:00:00.28]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.8519890Z [xUnit.net 00:00:00.28]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.9243270Z   Skipped ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.9255750Z   Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.9256820Z   Skipped ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.9260440Z   Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:29.9265380Z   Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:31.1974550Z [xUnit.net 00:00:01.63]     ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:31.3661580Z   Skipped ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:33.1935790Z [xUnit.net 00:00:03.63]     ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:33.1942450Z   Skipped ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:34.0349830Z [xUnit.net 00:00:04.47]     ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:34.0438750Z   Skipped ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:34.0490190Z [xUnit.net 00:00:04.48]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:34.0539860Z   Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:34.0593280Z [xUnit.net 00:00:04.48]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [SKIP]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:13:34.0697020Z   Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [1 ms]
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:07.2405990Z 
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:07.2426330Z Passed!  - Failed:     0, Passed:   873, Skipped:    10, Total:   883, Duration: 2 m 37 s - ForgeMission.Mcl.Tests.dll (net10.0)
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:07.3769010Z dotnet test tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj -c Release --filter "FullyQualifiedName~ForgeMission.Tests.Terminal"
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:07.7881050Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:08.4280610Z   All projects are up-to-date for restore.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:08.4755360Z   Downloading Copilot CLI 1.0.90 for darwin-arm64...
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:08.8100470Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/SHA256SUMS.txt" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Release/net10.0/copilot-cli/1.0.90/darwin-arm64/SHA256SUMS.txt" (1740 bytes).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:09.0654590Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.90/github-copilot-1.0.90-darwin-arm64.tgz" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Release/net10.0/copilot-cli/1.0.90/darwin-arm64/copilot.tgz" (61378900 bytes).
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:10.3894800Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:10.9612470Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:11.0018750Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:11.2338510Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:11.2868860Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:11.3001030Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:13.5187800Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:13.7277010Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:17.3444500Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/forge.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:20.2333940Z   ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:20.2481770Z Test run for /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:20.3531530Z A total of 1 test files matched the specified pattern.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:26.9388680Z 
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:26.9425350Z Passed!  - Failed:     0, Passed:    26, Skipped:     0, Total:    26, Duration: 6 s - ForgeMission.Mcl.Tests.dll (net10.0)
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:26.9686360Z dotnet pack src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj -c Release --output artifacts/packages -p:ContinuousIntegrationBuild=true -p:RepositoryCommit=c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:27.3155630Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:27.5627250Z   All projects are up-to-date for restore.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:27.7782880Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:27.9787820Z   Successfully created package '/Users/runner/work/forge-mcl/forge-mcl/artifacts/packages/Katasec.Forge.Terminal.Extensions.0.1.0.nupkg'.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:27.9805790Z   Successfully created package '/Users/runner/work/forge-mcl/forge-mcl/artifacts/packages/Katasec.Forge.Terminal.Extensions.0.1.0.snupkg'.
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:27.9943750Z bash ./eng/verify-terminal-extensions-package.sh artifacts/packages c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Verify current product and package	2026-10-06T03:16:28.0233720Z PASS: Katasec.Forge.Terminal.Extensions 0.1.0 has the expected package metadata, contents, and exact native dependencies.
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	﻿2026-10-06T03:16:28.0606420Z ##[group]Run set -euo pipefail
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0606870Z [36;1mset -euo pipefail[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0607050Z [36;1mset +e[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0607390Z [36;1mdotnet publish src/ForgeMission.Cli -c Release -r osx-arm64 -o artifacts/verification/native \[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0607990Z [36;1m  -p:SourceRevisionId="$GITHUB_SHA" -warnaserror 2>&1 | tee artifacts/verification/native-publish.log[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0608400Z [36;1mpublish_status=("${PIPESTATUS[@]}")[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0608670Z [36;1mset -e[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0608950Z [36;1mif (( publish_status[0] != 0 )); then exit "${publish_status[0]}"; fi[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0609320Z [36;1mif (( publish_status[1] != 0 )); then exit "${publish_status[1]}"; fi[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0609910Z [36;1mif grep -Ei '(^|[[:space:]])warning([[:space:]]+[A-Z]+[0-9]+)?[[:space:]]*:' artifacts/verification/checks.log artifacts/verification/native-publish.log; then[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0610490Z [36;1m  echo "Actual compiler or linker warnings fail verification." >&2[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0610880Z [36;1m  exit 1[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0611060Z [36;1mfi[0m
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0758620Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0759240Z env:
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0761230Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0761410Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.0761590Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:28.4191170Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.5515360Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 141 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.5517750Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 141 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.5518520Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 141 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.5827680Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 27 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.5863210Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 28 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.5961890Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 10 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.6054810Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 12 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.6055560Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 2 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:29.6105880Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 50 ms).
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.2029490Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.2349850Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.2977430Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.3278100Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.3394840Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.4028700Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.4533080Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:30.5020570Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:31.8621360Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/osx-arm64/forge.dll
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:16:33.6552330Z   Generating native code
+Verify package and macOS ARM64 CLI	Publish native CLI and enforce zero warnings	2026-10-06T03:29:59.1987300Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/artifacts/verification/native/
+Verify package and macOS ARM64 CLI	Check native identity	﻿2026-10-06T03:29:59.5948760Z ##[group]Run set -euo pipefail
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.5950020Z [36;1mset -euo pipefail[0m
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.5950600Z [36;1martifacts/verification/native/forge --help > artifacts/verification/native-help.txt[0m
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.5951290Z [36;1martifacts/verification/native/forge --version > artifacts/verification/native-version.txt[0m
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.5951980Z [36;1mtest "$(cat artifacts/verification/native-version.txt)" = "1.0.0+$GITHUB_SHA"[0m
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.5952620Z [36;1mshasum -a 256 artifacts/verification/native/forge > artifacts/verification/native-sha256.txt[0m
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.6141900Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.6142300Z env:
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.6145170Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.6145540Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	Check native identity	2026-10-06T03:29:59.6153050Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	﻿2026-10-06T03:30:00.5743170Z ##[group]Run actions/upload-artifact@v4
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5743640Z with:
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5744110Z   name: terminal-extensions-verification-c4536e416e89931873ed6ad9171f308c7d8c66ca
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5744630Z   path: artifacts/verification
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	artifacts/packages
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5744930Z   if-no-files-found: error
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5745250Z   compression-level: 6
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5750330Z   overwrite: false
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5750560Z   include-hidden-files: false
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5750860Z env:
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5752820Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5753060Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.5753310Z ##[endgroup]
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8652480Z (node:22752) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8653320Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8715140Z Multiple search paths detected. Calculating the least common ancestor of all paths
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8716190Z The least common ancestor is /Users/runner/work/forge-mcl/forge-mcl/artifacts. This will be the root directory of the artifact
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8716750Z With the provided path, there will be 15 files uploaded
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8718650Z Artifact name is valid!
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:00.8719010Z Root directory input is valid!
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:01.1395210Z Beginning upload of artifact content to blob storage
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:01.6700810Z (node:22752) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:02.2558840Z Uploaded bytes 8388608
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:02.5863110Z Uploaded bytes 16777216
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:02.8539640Z Uploaded bytes 25165824
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:03.2247730Z Uploaded bytes 33554432
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:03.6254220Z Uploaded bytes 41943040
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:04.5880880Z Uploaded bytes 50331648
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:06.0886300Z Uploaded bytes 58720256
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:07.3722350Z Uploaded bytes 67108864
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:08.1837190Z Uploaded bytes 75497472
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:09.1945570Z Uploaded bytes 83886080
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:09.7487380Z Uploaded bytes 92274688
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:10.4346740Z Uploaded bytes 100663296
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:11.0951220Z Uploaded bytes 109051904
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:11.7923940Z Uploaded bytes 117440512
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.2886720Z Uploaded bytes 124756068
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.3381530Z Finished uploading artifact content to blob storage!
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.3385760Z SHA256 digest of uploaded artifact zip is a78831362065178f55acc8e19203d56d29a33b9a3fea72582c93a923dfd7bbb4
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.3389130Z Finalizing artifact upload
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.6466980Z Artifact terminal-extensions-verification-c4536e416e89931873ed6ad9171f308c7d8c66ca.zip successfully finalized. Artifact ID 11388411554
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.6473210Z Artifact terminal-extensions-verification-c4536e416e89931873ed6ad9171f308c7d8c66ca has been successfully uploaded! Final size is 124756068 bytes. Artifact ID is 11388411554
+Verify package and macOS ARM64 CLI	Preserve full verification evidence	2026-10-06T03:30:12.6502360Z Artifact download URL: https://github.com/katasec/forge-mcl/actions/runs/37407903290/artifacts/11388411554
+Verify package and macOS ARM64 CLI	Post Run actions/setup-dotnet@v4	﻿2026-10-06T03:30:12.6940880Z Post job cleanup.
+Verify package and macOS ARM64 CLI	Post Run actions/setup-dotnet@v4	2026-10-06T03:30:12.8002920Z (node:22986) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Verify package and macOS ARM64 CLI	Post Run actions/setup-dotnet@v4	2026-10-06T03:30:12.8003660Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	﻿2026-10-06T03:30:12.8099290Z Post job cleanup.
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.8838540Z [command]/opt/homebrew/bin/git version
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9014710Z git version 2.55.0
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9035710Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/270c70aa-b38b-4f65-a8d8-2ea1ee6a747d/.gitconfig'
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9037140Z Temporarily overriding HOME='/Users/runner/work/_temp/270c70aa-b38b-4f65-a8d8-2ea1ee6a747d' before making global git config changes
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9038160Z Adding repository directory to the temporary git global config as a safe directory
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9040480Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/forge-mcl/forge-mcl
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9123230Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9160570Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9699770Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9730670Z http.https://github.com/.extraheader
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9736030Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:12.9779990Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:13.0224080Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Verify package and macOS ARM64 CLI	Post Run actions/checkout@v4	2026-10-06T03:30:13.0261590Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Verify package and macOS ARM64 CLI	Complete job	﻿2026-10-06T03:30:13.0793660Z Cleaning up orphan processes
+Verify package and macOS ARM64 CLI	Complete job	2026-10-06T03:30:14.1856620Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-dotnet@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

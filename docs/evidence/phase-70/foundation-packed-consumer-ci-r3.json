@@ -1,0 +1,21 @@
+{
+  "actualSource": "c4536e416e89931873ed6ad9171f308c7d8c66ca",
+  "candidateHead": "8718347f68c3853d6dab956da2bf42146e8b51f2",
+  "tree": "90e0f26f2adc1ffb9ed79e96379bc9f01b709d47",
+  "consumer": "/tmp/phase70-packed-consumer-ci-r3",
+  "packageSha256": "00fb2543dd6ac2f01f5b47cebb0cfb4d9a5ba5d3d8b85a2c6b40134d37f767b2",
+  "packageCacheSha256": "00fb2543dd6ac2f01f5b47cebb0cfb4d9a5ba5d3d8b85a2c6b40134d37f767b2",
+  "packageCacheOutputDllSha256": "6bc74c6e2e3973305a592777c04d47d6013c402cc12a1ff9f8148098fbb6ee63",
+  "resolved": [
+    "Katasec.Forge.Terminal.Extensions/0.1.0",
+    "Wcwidth/4.0.1",
+    "XenoAtom.Ansi/1.7.1",
+    "XenoAtom.Terminal.UI/3.10.0",
+    "XenoAtom.Terminal/2.2.0"
+  ],
+  "solePackageReference": "Katasec.Forge.Terminal.Extensions [0.1.0]",
+  "projectReferences": 0,
+  "runExit": 0,
+  "warningCount": 0,
+  "limitations": "Fresh isolated consumer of actual canonical packed candidate; local artifact feed plus nuget.org, not published/authenticated-source acceptance."
+}

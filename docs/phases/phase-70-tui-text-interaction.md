@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: Both full code reviews R2 REVISE; canonical CI failed 16 tests before native publish. Corrected R4 full handoff frozen; fresh full code reviews and canonical CI running. Delivery and manual acceptance remain open.**
-**Next:** complete both fresh full code reviews and actual canonical verification of frozen R4 before delivery. Full independent code reviews and actual package/consumer/integration/AOT checks precede merge/publication. The operator will manually
+**Status: Foundation merged after both full current reviews and canonical product/package/zero-warning Native AOT verification. Normal publication/install underway; manual acceptance and rich selection remain open.**
+**Next:** verify merged-main package publication/authenticated consumption and whole CLI release installation. Full independent code reviews and actual package/consumer/integration/AOT checks passed before merge/publication. The operator will manually
 verify the installed result on laptop Retina after implementation; the agent's Ghostty access
 remains denied.
 
@@ -26,17 +26,17 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 
 | Spoke | State | Dependency / next action |
 |---|---|---|
-| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Corrected R4 full handoff frozen; fresh full reviews/CI running. | Complete full current reviews and canonical verification before delivery. |
+| [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Full R3 reviews/canonical CI/readiness PASS; product and atlas merged. | Verify normal publication/installation, then operator acceptance. |
 | [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Scoped; design open. | Requires an approved foundation; resolve the library's document-selection gap before planning implementation. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
-CodeAlta findings, controlled results, limitations, and timing. The same implementer returned the approved foundation candidate; neither spoke has delivered a verified implementation.
+CodeAlta findings, controlled results, limitations, and timing. Foundation product and atlas are merged; normal artifact delivery is underway. Rich selection remains unapproved and unimplemented.
 A snippet button alone does not close transcript selection.
 
 Fresh read-only investigators reconfirmed the unchanged source/artifact baseline and narrowed
 the public-API gaps; see [resumption evidence](phase-70.1-text-interaction-foundation_completed.md#resumption-check).
 The former live-before-design gate is superseded by the [manual verification exception](#manual-verification-exception).
-Current R12 design and complete R3 plan passed both full reviews and are supervisor-approved; current canonical native checks and code reviews remain required.
+Current R12 design and complete R3 plan passed both full reviews and are supervisor-approved; current full code reviews and canonical native checks pass. Published/default-path acceptance remains required.
 
 ## Ownership and workflow
 
@@ -62,7 +62,7 @@ The R9 handoff was documentation-only. The operator has since requested completi
 R11's complete source/lifetime audit and the complete R2 plan passed both full reviews. The resulting
 draft exposed an old snippet-button action between native Markdown assignment and layout; R12
 closes its retirement placement and records canonical CI/release verification after six local
-linker warnings. The complete R3 plan passed both full reviews and was approved before resumed writes. Code review, delivery and acceptance remain pending. Product checks and default-path acceptance
+linker warnings. The complete R3 plan passed both full reviews and was approved before resumed writes. Current code reviews and canonical verification pass; normal delivery and acceptance remain pending. Product checks and default-path acceptance
 apply to implementation under the manual verification exception below.
 
 ## Standing constraints and authorizations
