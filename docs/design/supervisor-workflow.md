@@ -147,6 +147,11 @@ questions; `Done when` evidence per condition.
 
 **Ready to merge** — a named observation for each applicable item:
 
+Use non-AOT builds and tests during the local development cycle. Run Native AOT publish after
+implementation and managed checks have stabilized, as the final artifact gate; do not repeat it
+for every development iteration. A later source correction requires current-source final evidence.
+This changes verification timing, not the zero-warning or installed-default acceptance requirements.
+
 - every code-review ⚠️ is fixed or dismissed with a reason;
 - only the approved scope changed, and component fit still holds;
 - public, wire, persistence, ownership, credential and failure boundaries match the design;
