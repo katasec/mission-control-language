@@ -23,6 +23,12 @@ The operator evidence is from the locally installed branch artifact. It proves t
 - First CLI PR check started before the NuGet publication and failed NU1102. Rerun requested after successful remote restore; no failing check bypassed.
 - Worktree inventory covers the README repository map: forge-mcl, forge-runner, forge-conversations, forge-platform, forge-rooms, forge-client, forge-desktop, forge-infra and mission-control-language. All initially had only primary checkouts; no linked worktrees or attached managed worktrees.
 
+## CLI merge and cleanup
+
+[CLI PR 66](https://github.com/katasec/forge-mcl/pull/66) merged as `22059aa95d85408a15465f1aee1a9511c4712e12` after the [CI rerun](https://github.com/katasec/forge-mcl/actions/runs/37643017856) succeeded. Remote verification passed 925 tests with 10 skips, another 26 Terminal Extensions tests, package contents/metadata, native zero-warning compilation and native source identity. The verification job took 36m17s; local correction testing remained managed.
+
+After the product merges, `git worktree prune` and `git worktree list --porcelain` were run in all nine Forge repositories named above. Every repository contained only its primary checkout; no linked worktrees required deletion and primary repositories were preserved. Client and CLI returned to clean main checkouts. [Documentation PR 358](https://github.com/katasec/mission-control-language/pull/358) closes the requested documentation delivery.
+
 ## Earlier fixed-filename delivery (superseded)
 
 # Phase 71 — Earlier fixed-filename delivery (superseded)

@@ -8,14 +8,14 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Deliver the accepted [chat project file paths](phases/phase-71-chat-project-file.md): merge Client, publish its package, then merge CLI and docs. |
+| **NEXT STEP** | Verify merged-main artifact provenance for the accepted [chat project file paths](phases/phase-71-chat-project-file.md); implementation and merges are complete. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI fixes merged and operator-tested; package accepted public; broader manual acceptance and rich design remain open. |
-| [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; merge and package delivery in progress. |
+| [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 
 ## Design docs
 

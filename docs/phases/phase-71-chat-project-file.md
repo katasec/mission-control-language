@@ -1,6 +1,6 @@
 # Phase 71 — Chat project file paths
 
-Status: implemented, tested, locally installed and explicitly accepted by the operator on 2026-10-07. Commit/merge authorized; delivery in progress. See [verification and operator evidence](phase-71-chat-project-file_completed.md#arbitrary-filenames--accepted-2026-10-07).
+Status: implemented, tested, locally installed and explicitly accepted by the operator on 2026-10-07. Client and CLI changes are merged; Client 0.9.3 is published. See [verification and operator evidence](phase-71-chat-project-file_completed.md#arbitrary-filenames--accepted-2026-10-07).
 
 ## Locked design
 
@@ -27,10 +27,10 @@ Client 0.9.3 replaces the local-only prerelease and is published from merged for
 |---|---|
 | Implementation and operator acceptance | Verified; [evidence](phase-71-chat-project-file_completed.md#arbitrary-filenames--accepted-2026-10-07) |
 | Client merge/publication | [PR 13](https://github.com/katasec/forge-client/pull/13) merged; package 0.9.3 independently verified |
-| CLI and documentation merges | [CLI PR 66](https://github.com/katasec/forge-mcl/pull/66) awaiting rerun; documentation prepared |
-| Worktrees | Initial inventory: all nine Forge repositories have only their primary checkouts; no linked worktrees |
+| CLI and documentation merges | [CLI PR 66](https://github.com/katasec/forge-mcl/pull/66) merged after passing CI; [docs PR 358](https://github.com/katasec/mission-control-language/pull/358) records acceptance |
+| Worktrees | Post-product-merge cleanup: pruned metadata in all nine Forge repositories; only primary checkouts remain, with no linked worktrees |
 | Published default-path provenance | Pending; operator screenshots use the accepted local branch installation |
 
 ## Next
 
-Merge the passing CLI PR and documentation, then confirm all Forge repositories have no linked worktrees.
+No further implementation requested. The accepted changes are merged; formal Default-Path Acceptance still requires a merged-main installed artifact check. The operator screenshots and local install evidence are preserved without relabelling their provenance.
