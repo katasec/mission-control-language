@@ -14,6 +14,24 @@ import harness
 
 
 class HarnessTests(unittest.TestCase):
+    def test_timestamp_uses_host_clock_and_preserves_payload_between_steps(self):
+        with tempfile.TemporaryDirectory() as directory:
+            payload = 'Draft\n```json\n{"design":"line one\\nline two"}\n```'
+            with patch.object(harness.time, "monotonic_ns", side_effect=[1_000_000_000, 4_000_000_000, 6_000_000_000]), \
+                    patch.object(harness, "utc_now", return_value="2026-10-07T18:00:00+00:00"), \
+                    patch.object(harness, "call_codex", side_effect=AssertionError("Timing must not call a model")), \
+                    patch.object(harness, "run_process", side_effect=AssertionError("Timing must not start processes")):
+                for stage in ("Start", "SupervisorDesign", "RememberDesign"):
+                    with contextlib.redirect_stdout(io.StringIO()) as output:
+                        harness.record_mcl_time({"resultsDir": directory, "timingLabel": stage, "output": payload})
+                    self.assertEqual(payload, json.loads(output.getvalue())["output"])
+            records = harness.read_timing_records(Path(directory) / "timings.jsonl")
+            self.assertEqual([0, 3, 2], [row["interval_seconds"] for row in records])
+            self.assertEqual([0, 3, 5], [row["elapsed_seconds"] for row in records])
+            with contextlib.redirect_stdout(io.StringIO()):
+                harness.write_mcl_timing_report(Path(directory))
+            self.assertIn("SupervisorDesign | 3.000", (Path(directory) / "timings.md").read_text())
+
     def test_schema_rejects_missing_fields_wrong_types_and_false_approval(self):
         schema = harness.read_json(harness.ROOT / "schemas.json")["final"]
         good = {"design": "Plan", "decision": "approved", "resolved_findings": [], "remaining_issues": []}

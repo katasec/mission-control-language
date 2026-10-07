@@ -40,3 +40,40 @@ Local inspectable comparison: `tools/supervisor-test/results/comparison.md`. Res
 local artifacts, not committed or published. This compact record preserves the observations across
 clones; exact saved output files remain on the operator's machine. Operator output review and any
 subsequent refinement remain open in the active spoke.
+
+## Per-stage timing verification — 2026-10-07
+
+One deterministic Timestamp expert now runs before the pipeline and after every model,
+extraction and save step. It uses host UTC/monotonic clocks and preserves the prior output.
+
+| Check | Observation |
+|---|---|
+| Focused tests | Eight tests pass; the new test checks cumulative/interval arithmetic and exact preservation of a mixed prose/JSON-fence payload |
+| Default action | Zero-argument run-mcl.ps1 from `/tmp`, installed Forge and normal provider credentials; no new setting/tool/provider override |
+| Run | `tools/supervisor-test/results/mcl/20261007T193442Z-c4f57320`: completed, 94.219 seconds, final approved, both reviews pass |
+| Timing records | Ten ordered markers: Start, each of four LLM calls, each of four Remember steps, SaveResults. Nonnegative intervals and ordered monotonic timestamps checked. |
+| Payload boundary | Parsed Forge stdout equals saved final.json after the final Timestamp; all original/review/final artifacts validate |
+| Reports | timings.jsonl contains real UTC/monotonic timestamps; timings.md and console output report intervals and cumulative time |
+
+| MCL interval | Seconds |
+|---|---:|
+| SupervisorDesign | 57.914905 |
+| SimplicityReview | 12.366021 |
+| OwnershipReview | 7.108771 |
+| SupervisorDecision | 14.380517 |
+| Four extraction intervals plus saving | 0.276391 |
+| Full marker window | 92.046605 |
+| Full script including time outside markers | 94.219 |
+
+These are stage wall-time intervals, including adjacent marker-process overhead and
+provider/runtime latency. They are not provider compute-only timings or token measurements.
+The approximately 2.17 seconds outside the marker window include CLI/harness startup and teardown;
+the instrumentation does not break those costs down. This new MCL sample is distinct from the
+earlier 83.423-second sample and does not replace its recorded result.
+
+The existing native trace also gives useful intervals: task start to first reviewer launch
+73.321s; first launch to returned review 10.995s; first review return to second launch 45.080s;
+second launch to review return 9.972s; second return to task completion 59.640s. Launch receipts
+arrived in 0.088s and 0.074s. Thus the 45-second interval is before launching the next reviewer,
+not a 45-second launch operation. The trace does not distinguish model processing, backend latency
+and scheduling within that supervisor interval, or establish a Desktop-app defect.
