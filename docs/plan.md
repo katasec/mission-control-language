@@ -4,17 +4,18 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-06)
+## Now (2026-10-07)
 
 | | |
 |---|---|
-| **NEXT STEP** | Operator chooses: close [TUI text interaction](phases/phase-70-tui-text-interaction.md) (broader manual acceptance and rich design remain open) or select from [backlog](backlog.md). |
+| **NEXT STEP** | Deliver the accepted [chat project file paths](phases/phase-71-chat-project-file.md): merge Client, publish its package, then merge CLI and docs. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI fixes merged and operator-tested; package accepted public; broader manual acceptance and rich design remain open. |
+| [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; merge and package delivery in progress. |
 
 ## Design docs
 
