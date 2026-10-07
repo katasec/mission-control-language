@@ -29,9 +29,9 @@ fewer knobs, simplicity over flexibility — aimed at how code reads.
 - **No deeply nested branching.** Max 2 levels. Use early returns.
 - **Side effects isolated.** DB, network, file, process exec — in clearly named
   functions, not mixed with logic.
-- **Zero warnings.** The build must pass with zero warnings; treat warnings as
-  errors. (Reinforces the AOT-first rule in `CLAUDE.md` — an ILC warning is a
-  real defect here.)
+- **Zero warnings.** Managed builds and final Native AOT publish must pass with zero
+  warnings; treat compiler, trim and ILC warnings as defects. Use non-AOT builds and
+  tests for local iteration; publish Native AOT after the final source is stable.
 - **No speculative abstractions.** Build for what the task requires. Three similar
   lines of code are better than a premature abstraction.
 

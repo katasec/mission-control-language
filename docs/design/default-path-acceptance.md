@@ -101,6 +101,23 @@ refusal passed on 2026-10-05; [Phase 68 observations](../phases/phase-68-cli-pro
 
 ## New or changed defaults
 
+### `forge run` Hands default — Phase 73
+
+Implemented and accepted on installed merged main; [actual observations](../phases/phase-73-forge-run-hands_completed.md#installed-default-path-acceptance). [Phase 73](../phases/phase-73-forge-run-hands.md) owns the change
+and evidence; the table defines the required acceptance path before implementation.
+
+| Part | Default fact |
+|---|---|
+| Artifact | Installed Native AOT `forge` from merged-main `make install`, with normal native sidecars/prerequisites. |
+| Invocation | `forge init` then `forge run`, without a Hands mode flag; every run uses one Bob session and Core root-tool pause/resume. |
+| Authority | Canonical current working directory, even when the mission argument is elsewhere; fixed `ProjectWorkspace` profile, file AutoApproved, default AutoDenied, no terminal tools or interactive/piped policy split. Invoking run grants scoped file operations. |
+| Provider | Normal local mission/experts/`forge.toml` and exported provider credentials; no fake provider, endpoint injection or provider test override for acceptance. |
+| Starting state | Dedicated disposable cwd and an outside sentinel; no unrelated checkout/project mutation. |
+| Action / result | Real provider Write → Read returns independently verified bytes; outside-root request leaves sentinel unchanged; tool-free run completes through the same path; cancellation exits nonzero after session disposal. |
+
+Existing trusted `kind: exec` experts and explicit output declarations remain outside the model-tool
+boundary. This default does not claim whole-run OS sandboxing.
+
 Before a task changes a supported path—or introduces a new one—the active spoke must add or revise
 its default facts: artifact, configuration that must be absent/present, dependency route and
 provenance, safe starting state, action, and expected observable result. A missing row is a
