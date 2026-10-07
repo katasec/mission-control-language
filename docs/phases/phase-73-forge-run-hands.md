@@ -28,6 +28,10 @@ message timestamp unavailable). Subsequent stages record actual assignment/verdi
 
 ### Live workflow table (Dubai UTC+4, 2026-10-08)
 
+Pre-merge documentation snapshot for [closure PR362](https://github.com/katasec/mission-control-language/pull/362).
+All product and installed-acceptance gates are closed. The enclosing PR records the documentation
+merge timestamp; final worktree cleanup and table publication are reported in the session.
+
 | Stage / event | Work actually performed | Status / result | Time started | Time finished |
 |---|---|---|---|---|
 | 0 | Scope | Done; precise times unavailable | Not recorded | Not recorded |
@@ -68,4 +72,3 @@ message timestamps; missing precise boundaries stay unavailable. CI overlaps loc
 The operator additionally requested a timer subagent to report this table every five minutes,
 with an actual table-publication date/time in Dubai (UTC+4) on each user-facing report.
 It is a reporting-only exception to the fixed three-role team; product stages remain sequential.
-
