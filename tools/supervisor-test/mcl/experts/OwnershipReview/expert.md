@@ -1,15 +1,28 @@
 ---
 name: OwnershipReview
-kind: exec
-command: python3
-args: [../../../harness.py, stage, OwnershipReview]
-inputs: [run_dir, work_dir, design]
-outputKey: ownership_review
-timeout: 12m
-input: Explicit experiment artifacts
-output: Structured ownership_review
+kind: llm
+input: Shared request and original design
+output: Independent ownership review as JSON
+inputKeys:
+  design: string
 outputKeys:
   ownership_review: string
 ---
 
-Runs only this stage through the shared Codex adapter.
+MCL stage: review behaviour ownership and failure boundaries only.
+
+{{workflow}}
+
+## Your persona
+{{ownershipPersona}}
+
+## Build request
+{{request}}
+
+## Original design
+{{design}}
+
+Return only this JSON object as your answer text:
+{"ownership_review": {"verdict": "pass", "findings": []}}
+
+Use "revise" when there are actionable findings. Do not revise the design or approve it.

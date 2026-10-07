@@ -1,15 +1,40 @@
 ---
 name: SupervisorDecision
-kind: exec
-command: python3
-args: [../../../harness.py, stage, SupervisorDecision]
-inputs: [run_dir, work_dir, design, simplicity_review, ownership_review]
-outputKey: final
-timeout: 12m
-input: Explicit experiment artifacts
-output: Structured final
-outputKeys:
-  final: string
+kind: llm
+input: Shared request, original design and both independent reviews
+output: Revised design and supervisor decision as JSON
+inputKeys:
+  design: string
+  simplicity_review: string
+  ownership_review: string
 ---
 
-Runs only this stage through the shared Codex adapter.
+MCL stage: revise the design and make the final decision only.
+
+{{workflow}}
+
+## Your persona
+{{supervisorPersona}}
+
+## Build request
+{{request}}
+
+## Original design
+{{design}}
+
+## Simplicity review
+{{simplicity_review}}
+
+## Ownership review
+{{ownership_review}}
+
+Return only this JSON object as your answer text:
+{
+  "design": "<revised design>",
+  "decision": "approved",
+  "resolved_findings": [],
+  "remaining_issues": []
+}
+
+Use "needs_revision" when substantive issues remain. An approval must have no remaining issues.
+Explain resolved findings in the array. Preserve the requirement and ownership boundaries.

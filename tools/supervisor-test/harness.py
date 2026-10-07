@@ -15,20 +15,14 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parent
-STAGES = {
-    "SupervisorDesign": ("design", "supervisor", "design"),
-    "SimplicityReview": ("simplicity_review", "simplicity", "review"),
-    "OwnershipReview": ("ownership_review", "ownership", "review"),
-    "SupervisorDecision": ("final", "supervisor", "final"),
-}
 
 
 def main():
-    if len(sys.argv) == 3 and sys.argv[1] == "stage":
-        return run_stage(sys.argv[2], json.load(sys.stdin))
+    if len(sys.argv) == 2 and sys.argv[1] == "save-mcl":
+        return save_mcl_results(json.load(sys.stdin))
     if len(sys.argv) == 2 and sys.argv[1] in ("codex", "mcl"):
         return run_experiment(sys.argv[1])
-    raise ValueError("Usage: harness.py codex|mcl, or stage <expert-name> with JSON stdin")
+    raise ValueError("Usage: harness.py codex|mcl|save-mcl (save-mcl reads JSON stdin)")
 
 
 def run_experiment(engine):
@@ -44,7 +38,7 @@ def run_experiment(engine):
             if engine == "codex":
                 run_codex_workflow(run_dir, work_dir)
             else:
-                run_mcl_workflow(run_dir, work_dir)
+                run_mcl_workflow(run_dir)
         record["state"] = "completed"
         print(f"Decision: {read_json(run_dir / 'final.json')['decision']}")
         return 0
@@ -68,13 +62,26 @@ def run_codex_workflow(run_dir, work_dir):
         save_artifact(run_dir, key, answer[key])
 
 
-def run_mcl_workflow(run_dir, work_dir):
+def run_mcl_workflow(run_dir):
     mission_dir = run_dir / "mcl"
+    settings = read_json(run_dir / "settings.json")
+    if settings["reasoning_effort"] != "medium":
+        raise ValueError("This MCL draft supports medium reasoning only; its provider uses the default")
+    environment = dict(os.environ, MCL_HARNESS_MODEL=settings["model"])
+    variables = {
+        "request": (run_dir / "input.md").read_text(encoding="utf-8"),
+        "workflow": (run_dir / "workflow.md").read_text(encoding="utf-8"),
+        "resultsDir": str(run_dir),
+    }
+    variables.update({name + "Persona": path.read_text(encoding="utf-8")
+                      for name, path in persona_paths(run_dir).items()})
     run_process(["forge", "init"], mission_dir, run_dir, "forge-init", timeout=30)
     run_process(["forge", "validate"], mission_dir, run_dir, "forge-validate", timeout=30)
+    command = ["forge", "run"]
+    for name, value in variables.items():
+        command += ["--var", f"{name}={value}"]
     output = run_process(
-        ["forge", "run", "--var", f"run_dir={run_dir}", "--var", f"work_dir={work_dir}"],
-        mission_dir, run_dir, "forge-run", timeout=2700,
+        command, mission_dir, run_dir, "forge-run", timeout=2700, environment=environment,
     )
     final = json.loads(output)
     validate_schema(final, read_json(run_dir / "schemas.json")["final"])
@@ -82,24 +89,21 @@ def run_mcl_workflow(run_dir, work_dir):
         raise ValueError("forge output differs from the final stage artifact")
 
 
-def run_stage(name, context):
-    key, persona, schema_name = STAGES[name]
-    run_dir = Path(context["run_dir"])
-    artifacts = {}
-    if name != "SupervisorDesign":
-        artifacts["design"] = context["design"]
-    if name == "SupervisorDecision":
-        artifacts.update({key: json.loads(context[key]) for key in ("simplicity_review", "ownership_review")})
-    prompt = shared_context(run_dir) + f"\n\nAssigned MCL stage: {name}. Perform only this stage.\n"
-    prompt += f"\n## Persona\n{persona_paths(run_dir)[persona].read_text()}\n"
-    prompt += "\n## Supplied artifacts\n" + json.dumps(artifacts, ensure_ascii=False)
-    session = None
-    if name == "SupervisorDecision":
-        session = read_json(run_dir / "stages" / "design.metadata.json")["session_id"]
-    answer, _ = call_codex(run_dir, context["work_dir"], key, prompt, schema_name, session=session)
-    value = answer["design"] if name == "SupervisorDesign" else answer
-    save_artifact(run_dir, key, value)
-    print(json.dumps({key: value}, ensure_ascii=False))
+def save_mcl_results(context):
+    run_dir = Path(context["resultsDir"])
+    schemas = read_json(run_dir / "schemas.json")
+    artifacts = {
+        "design": context["design"],
+        "simplicity_review": json.loads(context["simplicity_review"]),
+        "ownership_review": json.loads(context["ownership_review"]),
+        "final": json.loads(context["output"]),
+    }
+    validate_schema({"design": artifacts["design"]}, schemas["design"])
+    for key in ("simplicity_review", "ownership_review", "final"):
+        validate_schema(artifacts[key], schemas["final" if key == "final" else "review"])
+    for key, value in artifacts.items():
+        save_artifact(run_dir, key, value)
+    print(json.dumps({"final": artifacts["final"]}, ensure_ascii=False))
     return 0
 
 
@@ -155,15 +159,13 @@ def snapshot_inputs(run_dir, engine):
     if not (run_dir / "input.md").read_text().strip():
         raise ValueError("prompt.md is empty")
     shutil.copytree(ROOT / "personas", run_dir / "personas")
-    # Copy the mission and adapter together: each expert's relative argv stays valid, and init
+    # Copy the mission and file writer together: each expert's relative argv stays valid, and init
     # writes its lock inside this run rather than mutating the checked-in experiment.
     shutil.copytree(ROOT / "mcl", run_dir / "mcl", ignore=shutil.ignore_patterns("mcl.lock"))
     shutil.copyfile(ROOT / "harness.py", run_dir / "harness.py")
     versions = {}
-    for command in (["codex", "--version"], ["python3", "--version"]):
+    for command in ([engine if engine == "codex" else "forge", "--version"], ["python3", "--version"]):
         versions[command[0]] = run_process(command, run_dir, run_dir, command[0] + "-version", timeout=30).strip()
-    if engine == "mcl":
-        versions["forge"] = run_process(["forge", "--version"], run_dir, run_dir, "forge-version", timeout=30).strip()
     sources = ["input.md", "settings.json", "schemas.json", "workflow.md", "harness.py"]
     sources += [str(path.relative_to(run_dir)) for path in sorted((run_dir / "personas").glob("*.md"))]
     sources += [str(path.relative_to(run_dir)) for path in sorted((run_dir / "mcl").rglob("*")) if path.is_file()]
@@ -182,12 +184,13 @@ def save_artifact(run_dir, key, value):
         (run_dir / "final.md").write_text(value["design"] + "\n", encoding="utf-8")
 
 
-def run_process(command, cwd, log_dir, label, input_text=None, timeout=30):
+def run_process(command, cwd, log_dir, label, input_text=None, timeout=30, environment=None):
     if not shutil.which(command[0]):
         raise RuntimeError(f"Required executable is not on PATH: {command[0]}")
     started = time.monotonic()
     process = subprocess.Popen(command, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, text=True, encoding="utf-8", start_new_session=os.name != "nt")
+                               stderr=subprocess.PIPE, text=True, encoding="utf-8", env=environment,
+                               start_new_session=os.name != "nt")
     try:
         stdout, stderr = process.communicate(input_text, timeout=timeout)
     except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:

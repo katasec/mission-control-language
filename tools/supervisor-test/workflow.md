@@ -15,4 +15,4 @@ the first review. Return the original design, both actual reviews and final deci
 requested JSON schema; do not simulate reviewer outputs yourself.
 
 For an MCL stage, perform ONLY the assigned role/stage and return its requested JSON schema.
-MCL owns the ordering and independent reviewer sessions; do not spawn additional subagents.
+MCL owns the ordering and separate provider calls; do not spawn additional subagents.

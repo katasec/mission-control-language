@@ -1,65 +1,74 @@
-# Phase 72 — Supervisor comparison
+# Phase 72 — Native Codex versus native MCL
 
-## Scope and status
-
-Two independently runnable PowerShell scripts read one build-request file and write separate
-Codex/MCL result directories. First slice: design → sequential independent simplicity and ownership
-reviews → supervisor revision/decision. No product implementation, deployment or automatic grading.
+## Status
 
 | Item | State |
 |---|---|
-| Runner baseline | Verified; see [completion evidence](phase-72-supervisor-comparison_completed.md) |
-| Next | Compare the saved final designs and refine the MCL handoffs against a frozen native baseline |
+| Proposal | Native MCL rewrite prepared for operator review |
+| Approval | Required before either comparison runner executes or the PR merges |
+| Evidence | No accepted comparison evidence; prior experiment outputs, rollouts and claims removed |
+| Static check | Rewritten mission: `forge init` resolved six experts and `forge validate` returned `OK — mission is valid`; Python AST parsing and `git diff --check` pass. Temporary validation files deleted. No model run or rewritten test-suite execution. |
+| Next | Operator reviews the saved mission, expert prompts and provider configuration |
 
-## Locked design
+## Scope and proposed design
 
-Owner: this repository's `tools/supervisor-test/`, which owns agent mission-control experiments.
-No forge-mcl runtime change. `prompt.md` alone owns the build requirements; small shared persona
-files own role instructions; `settings.json` pins the same model and reasoning effort for both paths.
+Two scripts read the same `tools/supervisor-test/prompt.md` and shared personas. Codex runs its native
+supervisor and sequential reviewers. MCL runs four native `kind: llm` experts through `forge`,
+calling the provider directly. MCL never launches Codex. The first slice remains design, two
+independent reviews, and one revision/decision. No implementation, retries, search or automatic grading.
+
+Owner: this repository's mission-control tooling. No product source change.
 
 ```mermaid
 flowchart LR
-    P[prompt.md + personas + settings] --> C[run-codex.ps1]
-    P --> M[run-mcl.ps1]
-    C --> N[Codex supervisor + two sequential native reviewers]
-    M --> F[forge run: four exec experts calling Codex]
-    N --> RC[results/codex/run-id]
-    F --> RM[results/mcl/run-id]
+    P[prompt.md + personas] --> C[Native Codex supervisor]
+    P --> M[MCL mission]
+    C --> CC[Codex runtime and native reviewers]
+    M --> L[Four direct provider LLM calls]
+    L --> R[Named design and review handoffs]
+    R --> S[Deterministic result writer]
 ```
 
-The Codex runner gives one supervisor the full simplified workflow and asks it to delegate two
-independent reviews sequentially. MCL explicitly schedules four `kind: exec` experts. One small
-Python adapter owns subprocess invocation, schema checking, artifact writing and failure reporting.
-The supervisor session is resumed for MCL's final revision; reviewers use distinct sessions. Both
-reviewers see the original design, not one another's review. Named exec output keys preserve the
-design and both reviews; `output` alone would discard those earlier artifacts.
+Three `Remember` steps use native `json_extract` to retain `design`, `simplicity_review` and
+`ownership_review`. Each LLM step sets `output: ""` so the runtime's implicit previous-output
+message cannot leak a review into the other reviewer. The request, applicable shared persona and
+named artifacts are interpolated explicitly. No dialogue loop is declared.
 
-Each immutable run directory contains the exact input, persona/settings snapshots and hashes,
-design, two JSON reviews, final JSON/Markdown, stage prompts, JSONL events and execution logs.
-Final contract: `design`, `decision` (`approved`/`needs_revision`), `resolved_findings`,
-`remaining_issues`. A completed execution may return `needs_revision`; transport/schema failures
-exit nonzero and preserve partial artifacts with a failed run record. No retry or grading loop yet.
+`SaveResults` is an exec step only for schema validation and file writing. It launches no model,
+agent or network request. Python owns subprocesses and artifact storage; MCL owns its reasoning
+and sequencing. Each new run will preserve input/configuration snapshots, the original design,
+two reviews, final JSON/Markdown and process logs in its own results subfolder.
 
-## Gates and failure boundaries
+## Model and capability boundaries
+
+- Codex uses saved CLI authentication; MCL uses `MCL_API_KEY` for direct OpenAI calls.
+- Both use the model in `settings.json`. The MCL profile reads `MCL_HARNESS_MODEL`, set only in its
+  child process environment from those settings.
+- This draft supports medium reasoning only. Codex requests it; MCL currently leaves it at the
+  provider default. Record that distinction rather than claiming explicit reasoning-setting parity.
+  GPT-6.1 Sol's documented default is medium; actual account/provider compatibility is untested.
+- This MCL draft has no tools/search step. Codex receives the instruction to use supplied text only.
+  That is an instruction, not proof that its tools are disabled; this is not a web-capability test.
+- MCL's final call receives saved artifacts and the supervisor persona; it has no persistent agent
+  session. This differs from the native supervisor's continuous context.
+
+## Gates and verification
 
 | Gate | Answer |
 |---|---|
-| Supervisor workflow | Operator explicitly waived it for this session on 2026-10-07; no implementation subagents/reviews |
-| Security | Local experiment only; hosted tiers, stores, ingress and cross-context contracts N/A. Codex alone uses existing CLI authentication; no credentials written into inputs/results. Codex runs read-only in a temporary directory outside every Forge checkout. |
-| Engineering | One subprocess seam; Python standard library and existing Codex/forge CLIs. Two paths are required by the comparison. Fixed stages and result conventions; no new framework. |
-| Default path | From any cwd, invoke either saved PowerShell script with no arguments; normal installed `codex`/`forge`/`python3`, saved CLI auth and checked-in settings; no API stub or custom URL. Actual runs must be observed. |
-| CLI provider initialization | Installed forge initializes a default client for an exec-only mission. Use the normal exported `MCL_API_KEY` in the checked-in manifest; this client makes no model call. All reasoning uses Codex saved authentication. |
-| UI / AOT | N/A: no Desktop/ForgeUI/runtime source changes |
-| Failure | Adapter owns missing CLI, nonzero exit, timeout and malformed/schema-invalid response. Caller gets nonzero exit plus failed `run.json`; partial logs remain. New run is the recovery path; previous evidence is never overwritten. Timeout/interruption terminates the owned process group on POSIX. |
-| Verification | Real default runs for both paths; matching input/settings hashes and complete stage artifacts. Focused negative tests for malformed results, child failure and timeout; forge validate/init for exec contracts. |
+| Supervisor workflow | Operator waived it for this session; explicit operator approval before execution/merge remains required |
+| Security | Local tooling; hosted tiers/stores/ingress N/A. Keys stay in process environments, never artifacts. Codex is read-only outside Forge checkouts; the MCL writer owns only run artifacts. |
+| Engineering | Fixed four reasoning stages, native JSON extraction and one deterministic file writer; no reasoning adapter/framework |
+| Default path | Independently run either saved script without arguments from any cwd, with installed CLIs and normal credentials |
+| Failure | Helper owns missing CLI, timeout, nonzero exit and invalid artifact errors; failed run record plus partial logs. Recovery is a fresh run. |
+| UI/AOT/deploy | N/A: no product code, UI or deployment changes |
+| Before approval | Static validation only; no comparison execution |
+| After approval | Both real commands, direct-provider provenance for MCL, complete artifacts, matching request/persona hashes; report model/tool differences |
 
-## Done when
+## Done when (after approval)
 
-1. Both no-argument scripts run independently from outside the harness directory.
-2. Both read the same prompt/personas/settings and write only their own timestamped result folder.
-3. Both preserve all four stage artifacts, logs and measured run metadata.
-4. Negative paths report failure honestly; installed forge executes the actual MCL mission.
-5. Initial outputs are inspected; similarity is reported as observation, not a claim of full workflow parity.
-
-Future: manually compare frozen cases, then refine MCL handoffs/loops. Implementation stages and
-automatic comparison are deliberately outside this first slice.
+1. Both scripts complete independently from an outside cwd.
+2. MCL uses native LLM experts and never invokes Codex.
+3. Both reviewers receive the original design independently; the decision receives both reviews.
+4. Complete artifacts and explicit errors are preserved.
+5. Operator inspects the outputs; one sample does not establish speed/quality equivalence.

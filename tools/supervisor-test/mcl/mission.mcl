@@ -1,12 +1,20 @@
-// Both variables are supplied by run-mcl.ps1 via the harness.
-let run_dir = ""
-let work_dir = ""
+// run-mcl.ps1 supplies these from the shared prompt/persona files.
+let request = ""
+let workflow = ""
+let supervisorPersona = ""
+let simplicityPersona = ""
+let ownershipPersona = ""
+let resultsDir = ""
 
 mission SupervisorComparison = {
-    SupervisorDesign
-    -> SimplicityReview
-    -> OwnershipReview
-    -> SupervisorDecision
+    SupervisorDesign(output: "")
+    -> Remember
+    -> SimplicityReview(output: "")
+    -> Remember
+    -> OwnershipReview(output: "")
+    -> Remember
+    -> SupervisorDecision(output: "")
+    -> SaveResults
 }
 
 output(SupervisorComparison)

@@ -1,10 +1,10 @@
-# forge currently initializes a default provider even for an exec-only mission.
-# This client is never called: all four experts invoke Codex using saved CLI auth.
+# Native MCL experts call this provider directly.
+# The runner supplies MCL_HARNESS_MODEL from shared settings.json for this child only.
 [providers.default]
 provider = "openai"
-model = "gpt-6.1-sol"
+model = env("MCL_HARNESS_MODEL", "gpt-6.1-sol")
 apiKey = env("MCL_API_KEY")
 
 [execution]
 backend = "process"
-defaultTimeout = "12m"
+defaultTimeout = "30s"

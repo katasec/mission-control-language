@@ -1,7 +1,9 @@
 """Focused failure-boundary tests; these do not claim live Codex/MCL acceptance."""
 
 from pathlib import Path
-import shutil
+import contextlib
+import io
+import json
 import subprocess
 import sys
 import tempfile
@@ -48,28 +50,27 @@ class HarnessTests(unittest.TestCase):
             self.assertTrue(all(harness.read_json(path)["state"] == "failed" for path in records))
 
     def test_invalid_exec_input_exits_nonzero_without_json_success(self):
-        result = subprocess.run([sys.executable, str(harness.ROOT / "harness.py"), "stage", "SupervisorDesign"],
+        result = subprocess.run([sys.executable, str(harness.ROOT / "harness.py"), "save-mcl"],
                                 input="not JSON", text=True, capture_output=True)
         self.assertEqual(1, result.returncode)
         self.assertEqual("", result.stdout)
         self.assertIn("Harness error", result.stderr)
 
-    @unittest.skipUnless(shutil.which("forge"), "Installed forge required for controlled exec probe")
-    def test_installed_forge_preserves_json_exec_output(self):
+    def test_mcl_writer_saves_artifacts_without_calling_codex(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
-            expert = folder / "experts" / "Probe"
-            expert.mkdir(parents=True)
-            (folder / "mission.mcl").write_text('let probe = ""\nmission ProbeMission = { Probe }\noutput(ProbeMission)\n')
-            shutil.copyfile(harness.ROOT / "mcl" / "forge.toml", folder / "forge.toml")
-            (expert / "expert.md").write_text('---\nname: Probe\nkind: exec\ncommand: python3\nargs: [./emit.py]\ninputs: [probe]\noutputKey: final\ninput: Probe\noutput: JSON\n---\n')
-            (expert / "emit.py").write_text('print(\'{"final":{"decision":"approved"}}\')\n')
-            harness.run_process(["forge", "init"], folder, folder, "init")
-            try:
-                output = harness.run_process(["forge", "run"], folder, folder, "run")
-            except RuntimeError:
-                self.fail((folder / "run.stderr.log").read_text())
-            self.assertEqual({"decision": "approved"}, harness.json.loads(output))
+            harness.write_json(folder / "schemas.json", harness.read_json(harness.ROOT / "schemas.json"))
+            final = {"design": "Revised", "decision": "approved", "resolved_findings": [], "remaining_issues": []}
+            review = {"verdict": "pass", "findings": []}
+            context = {"resultsDir": directory, "design": "Original", "simplicity_review": json.dumps(review),
+                       "ownership_review": json.dumps(review), "output": json.dumps(final)}
+            with patch.object(harness, "call_codex", side_effect=AssertionError("MCL must not invoke Codex")), \
+                    patch.object(harness, "run_process", side_effect=AssertionError("Writer must not start processes")), \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(0, harness.save_mcl_results(context))
+            self.assertEqual({"final": final}, json.loads(output.getvalue()))
+            self.assertEqual(final, harness.read_json(folder / "final.json"))
+            self.assertEqual("Original\n", (folder / "design.md").read_text())
 
 
 if __name__ == "__main__":
