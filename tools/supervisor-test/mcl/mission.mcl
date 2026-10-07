@@ -5,17 +5,28 @@ let supervisorPersona = ""
 let simplicityPersona = ""
 let ownershipPersona = ""
 let resultsDir = ""
+let timingLabel = ""
 
 mission SupervisorComparison = {
-    SupervisorDesign(output: "")
+    Timestamp(timingLabel: "Start")
+    -> SupervisorDesign(output: "")
+    -> Timestamp(timingLabel: "SupervisorDesign")
     -> Remember
+    -> Timestamp(timingLabel: "RememberDesign")
     -> SimplicityReview(output: "")
+    -> Timestamp(timingLabel: "SimplicityReview")
     -> Remember
+    -> Timestamp(timingLabel: "RememberSimplicity")
     -> OwnershipReview(output: "")
+    -> Timestamp(timingLabel: "OwnershipReview")
     -> Remember
+    -> Timestamp(timingLabel: "RememberOwnership")
     -> SupervisorDecision(output: "")
+    -> Timestamp(timingLabel: "SupervisorDecision")
     -> Remember
+    -> Timestamp(timingLabel: "RememberFinal")
     -> SaveResults
+    -> Timestamp(timingLabel: "SaveResults")
 }
 
 output(SupervisorComparison)

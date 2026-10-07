@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Compare the saved [native MCL and Codex outputs](phases/phase-72-supervisor-comparison.md) and choose the next refinement. |
+| **NEXT STEP** | Compare the [measured MCL stages and native supervisor intervals](phases/phase-72-supervisor-comparison.md) and choose the next refinement. |
 
 ## Active phases
 

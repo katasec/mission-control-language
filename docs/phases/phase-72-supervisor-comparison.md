@@ -6,8 +6,8 @@
 |---|---|
 | Proposal | Native MCL harness approved and independently exercised |
 | Approval | Operator approved proceeding on 2026-10-07 |
-| Evidence | Both default scripts complete; seven tests pass; see [initial harness verification](phase-72-supervisor-comparison_completed.md#native-mcl--native-codex-run--2026-10-07) |
-| Next | Operator compares saved outputs; choose the next prompt or MCL refinement |
+| Evidence | Both default scripts complete; eight tests and instrumented MCL run pass; see [verification](phase-72-supervisor-comparison_completed.md) |
+| Next | Compare measured MCL stage intervals with native supervisor intervals; choose the next prompt/refinement |
 
 ## Scope and design
 
@@ -41,6 +41,27 @@ named artifacts are interpolated explicitly. No dialogue loop is declared.
 agent or network request. Python owns subprocesses and artifact storage; MCL owns its reasoning
 and sequencing. Each new run will preserve input/configuration snapshots, the original design,
 two reviews, final JSON/Markdown and process logs in its own results subfolder.
+
+## Per-stage timing
+
+One reusable `Timestamp` exec expert runs before the pipeline and after each reasoning, extraction
+and save step. It reads only `resultsDir`, `timingLabel` and the current `output`. Python records
+real UTC and monotonic timestamps in `timings.jsonl`, then returns the incoming output unchanged.
+Timing uses no model calls. Duplicate Remember invocations receive distinct labels.
+
+Each marker reports cumulative wall time and the interval since the previous marker. Intervals
+include adjacent marker process overhead and provider/runtime latency; they are not isolated
+model-compute time. Sequential execution needs no shared logger service or concurrency controls.
+Partial timing records survive a later stage failure. The run script writes `timings.md` after
+successful completion. The four model prompts and review isolation stay the same.
+
+Owner/failure boundary: the existing harness file-writing boundary owns timing records, propagates
+file/JSON errors and preserves failed-run logs. Credentials remain outside marker inputs. Hosted
+tiers/stores, UI and deployment are N/A. Default acceptance is the existing zero-argument MCL script
+from outside the repo; done when the real run has an initial marker, nine post-step markers,
+nonnegative intervals, preserved design/review/final JSON and a readable timing report. A focused
+test checks timestamp arithmetic and lossless JSON/fence payload handoff. Verified; see
+[per-stage timing evidence](phase-72-supervisor-comparison_completed.md#per-stage-timing-verification--2026-10-07).
 
 ## Model and capability boundaries
 

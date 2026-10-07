@@ -18,11 +18,13 @@ ROOT = Path(__file__).resolve().parent
 
 
 def main():
+    if len(sys.argv) == 2 and sys.argv[1] == "mark-time":
+        return record_mcl_time(json.load(sys.stdin))
     if len(sys.argv) == 2 and sys.argv[1] == "save-mcl":
         return save_mcl_results(json.load(sys.stdin))
     if len(sys.argv) == 2 and sys.argv[1] in ("codex", "mcl"):
         return run_experiment(sys.argv[1])
-    raise ValueError("Usage: harness.py codex|mcl|save-mcl (save-mcl reads JSON stdin)")
+    raise ValueError("Usage: harness.py codex|mcl|save-mcl|mark-time (helpers read JSON stdin)")
 
 
 def run_experiment(engine):
@@ -87,6 +89,39 @@ def run_mcl_workflow(run_dir):
     validate_schema(final, read_json(run_dir / "schemas.json")["final"])
     if final != read_json(run_dir / "final.json"):
         raise ValueError("forge output differs from the final stage artifact")
+    write_mcl_timing_report(run_dir)
+
+
+def record_mcl_time(context):
+    now = time.monotonic_ns()
+    path = Path(context["resultsDir"]) / "timings.jsonl"
+    records = read_timing_records(path) if path.exists() else []
+    first = records[0]["monotonic_ns"] if records else now
+    previous = records[-1]["monotonic_ns"] if records else now
+    record = {
+        "stage": context["timingLabel"], "timestamp_utc": utc_now(), "monotonic_ns": now,
+        "elapsed_seconds": round((now - first) / 1e9, 6),
+        "interval_seconds": round((now - previous) / 1e9, 6),
+    }
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(record) + "\n")
+    print(json.dumps({"output": context.get("output", "")}, ensure_ascii=False))
+    return 0
+
+
+def write_mcl_timing_report(run_dir):
+    records = read_timing_records(run_dir / "timings.jsonl")
+    lines = ["# MCL stage wall times", "", "Intervals include adjacent timestamp-process overhead and provider/runtime latency.",
+             "", "| Completed stage | Interval (s) | Since start (s) | UTC timestamp |", "|---|---:|---:|---|"]
+    for record in records:
+        lines.append(f"| {record['stage']} | {record['interval_seconds']:.3f} | {record['elapsed_seconds']:.3f} | {record['timestamp_utc']} |")
+        if record["stage"] != "Start":
+            print(f"{record['stage']}: {record['interval_seconds']:.3f}s")
+    (run_dir / "timings.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def read_timing_records(path):
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def save_mcl_results(context):

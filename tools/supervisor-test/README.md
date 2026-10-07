@@ -36,8 +36,8 @@ previous output so the second reviewer cannot inherit the first review.
 Both reviewers see the original design and request independently.
 
 `harness.py` owns subprocess calls, snapshots, schemas and result files. The MCL mission owns the
-MCL sequence and named handoffs. Its sole exec step validates and writes files; it never calls
-Codex or a model. `workflow.md` and `personas/` hold shared role instructions; the requirement
+MCL sequence and named handoffs. Its exec steps record timestamps or validate and write files;
+they never call Codex or a model. `workflow.md` and `personas/` hold shared role instructions; the requirement
 lives only in `prompt.md`. Native Codex runs read-only in a temporary workspace outside Forge
 checkouts. MCL receives supplied text with no tool/search steps. This tool changes no product source.
 
@@ -56,6 +56,10 @@ Each folder contains `input.md`, `config.json` (settings, versions and input has
 personas/workflow/mission/file writer, and subprocess logs. Codex's `stages/` includes exact
 prompts, schemas, JSONL events and session/usage metadata. MCL includes init/validate/run output;
 its direct-provider token usage is not collected by this draft.
+MCL also includes `timings.jsonl` and `timings.md`: one starting timestamp and one after each
+reasoning, extraction and save step. The reusable `Timestamp` expert preserves the previous
+output unchanged. Times come from the host's UTC and monotonic clocks, with no model call.
+Each interval includes adjacent timestamp-process overhead and provider/runtime latency.
 
 `run.json` distinguishes completed execution from failed/interrupted execution. A completed run
 may decide `needs_revision`: that is a design verdict, not a subprocess failure. Timeout, missing
@@ -76,6 +80,7 @@ python3 -m unittest discover -s ./tools/supervisor-test -p 'test_*.py'
 
 These focused tests cover schema failures, false approvals, failed children, timeouts, MCL artifact
 writing without Codex and preservation of previous results. No live model run is part of the suite.
-Seven focused tests and both live default commands passed. The first new MCL attempt failed at the
+Eight focused tests, both original live default commands and the instrumented MCL command passed.
+The first new MCL attempt failed at the
 final JSON handoff; the final answer now passes through native JSON extraction like the other stages.
 Design and closure evidence: [Phase 72](../../docs/phases/phase-72-supervisor-comparison.md).
