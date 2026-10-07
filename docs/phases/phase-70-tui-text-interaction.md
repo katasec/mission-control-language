@@ -1,7 +1,7 @@
 # Phase 70 — TUI text interaction
 
-**Status: Foundation, Mac shortcut and icon-only Copy fixes merged after current reviews and canonical zero-warning Native AOT verification. Operator confirmed both requested fixes work in the local installed build and accepted the extension package as public (2026-10-07); broader manual acceptance and rich selection remain open.**
-**Next:** operator decides whether to close the phase or continue broader manual acceptance / rich selection. The agent's Ghostty access remains denied; unreported physical acceptance cases remain open. Current artifact and scoped operator observations are in the [single report](../evidence/phase-70/verification-report.md#icon-only-copy-follow-up).
+**Status: Foundation, Mac shortcut and icon-only Copy fixes are merged and operator-tested. Rich selection implementation and sequential code reviews now pass on its isolated branch; merge, Native AOT artifact verification and operator Ghostty acceptance remain open.**
+**Next:** complete the Phase 70.2 merge/install/default-path acceptance route. The agent's Ghostty access remains denied; unreported physical acceptance cases remain open. Current artifact and scoped operator observations are in the [single report](../evidence/phase-70/verification-report.md#icon-only-copy-follow-up).
 
 ## Outcome and scope
 
@@ -25,7 +25,7 @@ surface, not a new text editor. See [backlog](../backlog.md) for unrelated work.
 | Spoke | State | Dependency / next action |
 |---|---|---|
 | [70.1 — Foundation](phase-70.1-text-interaction-foundation.md) | Foundation and icon-only Copy follow-up merged; current reviews/canonical checks PASS; requested Copy fix operator-tested; package accepted public. | Remaining manual acceptance cases. |
-| [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | Public gap/current comparison verified and reviewed; full rich design open. | Resolve full semantics/public contract and operator library-route decision before implementation planning. |
+| [70.2 — Rich transcript selection](phase-70.2-rich-transcript-selection.md) | One-assistant-card implementation and sequential code reviews pass; the narrow CLI bridge is contained and tested. | Merge, build/install and operator default-path acceptance. |
 | [70.3 — Mac Select All](phase-70.3-mac-select-all.md) | Six-file patch merged; full reviews/canonical zero-warning checks PASS; v0.9.5 installed. | Requested shortcut confirmed by operator; detailed matrix observations unspecified. |
 
 [Discovery evidence](phase-70.1-text-interaction-foundation_completed.md) includes source pins,
