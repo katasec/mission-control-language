@@ -1,0 +1,10 @@
+# forge currently initializes a default provider even for an exec-only mission.
+# This client is never called: all four experts invoke Codex using saved CLI auth.
+[providers.default]
+provider = "openai"
+model = "gpt-6.1-sol"
+apiKey = env("MCL_API_KEY")
+
+[execution]
+backend = "process"
+defaultTimeout = "12m"

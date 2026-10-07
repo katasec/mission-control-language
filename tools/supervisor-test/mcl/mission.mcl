@@ -1,0 +1,12 @@
+// Both variables are supplied by run-mcl.ps1 via the harness.
+let run_dir = ""
+let work_dir = ""
+
+mission SupervisorComparison = {
+    SupervisorDesign
+    -> SimplicityReview
+    -> OwnershipReview
+    -> SupervisorDecision
+}
+
+output(SupervisorComparison)

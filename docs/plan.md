@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Verify merged-main artifact provenance for the accepted [chat project file paths](phases/phase-71-chat-project-file.md); implementation and merges are complete. |
+| **NEXT STEP** | Compare the saved [supervisor experiment](phases/phase-72-supervisor-comparison.md) outputs and refine the MCL handoffs against the native baseline. |
 
 ## Active phases
 
@@ -16,6 +16,7 @@
 |---|---|
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | CLI fixes merged and operator-tested; package accepted public; broader manual acceptance and rich design remain open. |
 | [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
+| [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent runner baseline verified; saved outputs ready for comparison and MCL refinement. |
 
 ## Design docs
 
