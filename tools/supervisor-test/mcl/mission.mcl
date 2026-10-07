@@ -1,0 +1,21 @@
+// run-mcl.ps1 supplies these from the shared prompt/persona files.
+let request = ""
+let workflow = ""
+let supervisorPersona = ""
+let simplicityPersona = ""
+let ownershipPersona = ""
+let resultsDir = ""
+
+mission SupervisorComparison = {
+    SupervisorDesign(output: "")
+    -> Remember
+    -> SimplicityReview(output: "")
+    -> Remember
+    -> OwnershipReview(output: "")
+    -> Remember
+    -> SupervisorDecision(output: "")
+    -> Remember
+    -> SaveResults
+}
+
+output(SupervisorComparison)
