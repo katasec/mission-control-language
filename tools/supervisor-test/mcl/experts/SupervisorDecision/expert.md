@@ -3,6 +3,8 @@ name: SupervisorDecision
 kind: llm
 input: Shared request, original design and both independent reviews
 output: Revised design and supervisor decision as JSON
+outputKeys:
+  final: string
 inputKeys:
   design: string
   simplicity_review: string
@@ -30,10 +32,12 @@ MCL stage: revise the design and make the final decision only.
 
 Return only this JSON object as your answer text:
 {
-  "design": "<revised design>",
-  "decision": "approved",
-  "resolved_findings": [],
-  "remaining_issues": []
+  "final": {
+    "design": "<revised design>",
+    "decision": "approved",
+    "resolved_findings": [],
+    "remaining_issues": []
+  }
 }
 
 Use "needs_revision" when substantive issues remain. An approval must have no remaining issues.

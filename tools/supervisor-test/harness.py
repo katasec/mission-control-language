@@ -92,12 +92,13 @@ def run_mcl_workflow(run_dir):
 def save_mcl_results(context):
     run_dir = Path(context["resultsDir"])
     schemas = read_json(run_dir / "schemas.json")
-    artifacts = {
-        "design": context["design"],
-        "simplicity_review": json.loads(context["simplicity_review"]),
-        "ownership_review": json.loads(context["ownership_review"]),
-        "final": json.loads(context["output"]),
-    }
+    write_json(run_dir / "mcl-artifacts.raw.json", context)
+    artifacts = {"design": context["design"]}
+    for key in ("simplicity_review", "ownership_review", "final"):
+        try:
+            artifacts[key] = json.loads(context[key])
+        except json.JSONDecodeError as error:
+            raise ValueError(f"{key}: invalid JSON; see {run_dir / 'mcl-artifacts.raw.json'}") from error
     validate_schema({"design": artifacts["design"]}, schemas["design"])
     for key in ("simplicity_review", "ownership_review", "final"):
         validate_schema(artifacts[key], schemas["final" if key == "final" else "review"])

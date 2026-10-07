@@ -4,13 +4,12 @@
 
 | Item | State |
 |---|---|
-| Proposal | Native MCL rewrite prepared for operator review |
-| Approval | Required before either comparison runner executes or the PR merges |
-| Evidence | No accepted comparison evidence; prior experiment outputs, rollouts and claims removed |
-| Static check | Rewritten mission: `forge init` resolved six experts and `forge validate` returned `OK — mission is valid`; Python AST parsing and `git diff --check` pass. Temporary validation files deleted. No model run or rewritten test-suite execution. |
-| Next | Operator reviews the saved mission, expert prompts and provider configuration |
+| Proposal | Native MCL harness approved and independently exercised |
+| Approval | Operator approved proceeding on 2026-10-07 |
+| Evidence | Both default scripts complete; seven tests pass; see [initial harness verification](phase-72-supervisor-comparison_completed.md#native-mcl--native-codex-run--2026-10-07) |
+| Next | Operator compares saved outputs; choose the next prompt or MCL refinement |
 
-## Scope and proposed design
+## Scope and design
 
 Two scripts read the same `tools/supervisor-test/prompt.md` and shared personas. Codex runs its native
 supervisor and sequential reviewers. MCL runs four native `kind: llm` experts through `forge`,
@@ -29,8 +28,12 @@ flowchart LR
     R --> S[Deterministic result writer]
 ```
 
-Three `Remember` steps use native `json_extract` to retain `design`, `simplicity_review` and
-`ownership_review`. Each LLM step sets `output: ""` so the runtime's implicit previous-output
+Four `Remember` steps use native `json_extract` to retain `design`, `simplicity_review`,
+`ownership_review` and `final`. The final expert wraps its result under `final`, preserving the
+original `design`. All four model answers pass through the same JSON extraction boundary (including
+the runtime's supported JSON fences) before the writer receives named JSON fields. The writer
+preserves its declared incoming artifacts before validation for failure diagnosis.
+Each LLM step sets `output: ""` so the runtime's implicit previous-output
 message cannot leak a review into the other reviewer. The request, applicable shared persona and
 named artifacts are interpolated explicitly. No dialogue loop is declared.
 
@@ -46,7 +49,7 @@ two reviews, final JSON/Markdown and process logs in its own results subfolder.
   child process environment from those settings.
 - This draft supports medium reasoning only. Codex requests it; MCL currently leaves it at the
   provider default. Record that distinction rather than claiming explicit reasoning-setting parity.
-  GPT-6.1 Sol's documented default is medium; actual account/provider compatibility is untested.
+  GPT-6.1 Sol's documented default is medium; the installed provider completed the real mission.
 - This MCL draft has no tools/search step. Codex receives the instruction to use supplied text only.
   That is an instruction, not proof that its tools are disabled; this is not a web-capability test.
 - MCL's final call receives saved artifacts and the supervisor persona; it has no persistent agent
@@ -56,19 +59,18 @@ two reviews, final JSON/Markdown and process logs in its own results subfolder.
 
 | Gate | Answer |
 |---|---|
-| Supervisor workflow | Operator waived it for this session; explicit operator approval before execution/merge remains required |
+| Supervisor workflow | Operator waived it for this session and approved proceeding with the native MCL rewrite |
 | Security | Local tooling; hosted tiers/stores/ingress N/A. Keys stay in process environments, never artifacts. Codex is read-only outside Forge checkouts; the MCL writer owns only run artifacts. |
 | Engineering | Fixed four reasoning stages, native JSON extraction and one deterministic file writer; no reasoning adapter/framework |
 | Default path | Independently run either saved script without arguments from any cwd, with installed CLIs and normal credentials |
 | Failure | Helper owns missing CLI, timeout, nonzero exit and invalid artifact errors; failed run record plus partial logs. Recovery is a fresh run. |
 | UI/AOT/deploy | N/A: no product code, UI or deployment changes |
-| Before approval | Static validation only; no comparison execution |
-| After approval | Both real commands, direct-provider provenance for MCL, complete artifacts, matching request/persona hashes; report model/tool differences |
+| Verification | Both real scripts, complete artifacts, matching shared-input hashes, native delegation and direct-provider MCL provenance; evidence in the completed record |
 
-## Done when (after approval)
+## Acceptance
 
-1. Both scripts complete independently from an outside cwd.
-2. MCL uses native LLM experts and never invokes Codex.
-3. Both reviewers receive the original design independently; the decision receives both reviews.
-4. Complete artifacts and explicit errors are preserved.
-5. Operator inspects the outputs; one sample does not establish speed/quality equivalence.
+Harness checks 1–4 are verified: separate scripts from an outside cwd, native MCL LLM experts,
+independent original-design reviewers and explicit named handoffs, complete artifacts/failure logs.
+See the completed record for observations and limits. Operator inspection of the outputs remains
+open; one sample does not establish speed/quality equivalence. Both first reviews passed, so a
+future comparison should exercise actionable findings before claiming revision-behaviour parity.

@@ -63,7 +63,7 @@ class HarnessTests(unittest.TestCase):
             final = {"design": "Revised", "decision": "approved", "resolved_findings": [], "remaining_issues": []}
             review = {"verdict": "pass", "findings": []}
             context = {"resultsDir": directory, "design": "Original", "simplicity_review": json.dumps(review),
-                       "ownership_review": json.dumps(review), "output": json.dumps(final)}
+                       "ownership_review": json.dumps(review), "final": json.dumps(final)}
             with patch.object(harness, "call_codex", side_effect=AssertionError("MCL must not invoke Codex")), \
                     patch.object(harness, "run_process", side_effect=AssertionError("Writer must not start processes")), \
                     contextlib.redirect_stdout(io.StringIO()) as output:
@@ -71,6 +71,18 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual({"final": final}, json.loads(output.getvalue()))
             self.assertEqual(final, harness.read_json(folder / "final.json"))
             self.assertEqual("Original\n", (folder / "design.md").read_text())
+
+    def test_mcl_writer_keeps_invalid_artifacts_and_names_the_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            harness.write_json(folder / "schemas.json", harness.read_json(harness.ROOT / "schemas.json"))
+            review = json.dumps({"verdict": "pass", "findings": []})
+            context = {"resultsDir": directory, "design": "Original", "simplicity_review": review,
+                       "ownership_review": review, "final": "invalid"}
+            with self.assertRaisesRegex(ValueError, "final: invalid JSON"):
+                harness.save_mcl_results(context)
+            self.assertEqual(context, harness.read_json(folder / "mcl-artifacts.raw.json"))
+            self.assertFalse((folder / "final.json").exists())
 
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
 # Supervisor comparison test
 
-Draft awaiting operator approval. The previous Codex-backed MCL experiment and its comparison
-data have been discarded. Neither rewritten runner has accepted live execution evidence.
+The approved native MCL and Codex runners completed independently on 2026-10-07. The previous
+Codex-backed MCL experiment and its comparison data remain discarded. This first sample does not
+establish timing or quality equivalence; see the [verification record](../../docs/phases/phase-72-supervisor-comparison_completed.md).
 
 Run the same build request independently through native Codex orchestration and an MCL mission:
 
@@ -20,16 +21,17 @@ independent reviews, then a revised design/decision; it does not implement the r
 - Codex path: Codex CLI with saved authentication (`codex login`). Personal config is ignored.
 - MCL path: installed `forge` and exported `MCL_API_KEY`; Codex is not required.
 - `settings.json` supplies the shared model. The MCL child receives it through
-  `MCL_HARNESS_MODEL` and calls OpenAI directly. Actual provider/account access is untested.
-- This draft supports medium reasoning only. Codex explicitly requests it; MCL uses the provider
+  `MCL_HARNESS_MODEL` and calls OpenAI directly. The installed provider completed the real mission.
+- This harness supports medium reasoning only. Codex explicitly requests it; MCL uses the provider
   default. The harness does not claim that both runtimes expose identical settings or tools.
 
 ## Flow and ownership
 
 Native path: one Codex supervisor delegates to a simplicity reviewer, waits, delegates to an
 ownership reviewer, waits, then revises. MCL path: four `kind: llm` experts call the provider
-directly. Native `json_extract` steps retain named artifacts. Its final call receives those
-artifacts explicitly, without a persistent supervisor session. Each LLM step clears implicit
+directly. Native `json_extract` steps retain all four named artifacts, including the final result.
+Its final call receives the original design and both reviews explicitly, without a persistent
+supervisor session. Each LLM step clears implicit
 previous output so the second reviewer cannot inherit the first review.
 Both reviewers see the original design and request independently.
 
@@ -60,10 +62,11 @@ may decide `needs_revision`: that is a design verdict, not a subprocess failure.
 CLI, invalid result or failed child returns nonzero and leaves partial artifacts. Run the script
 again to recover into a new folder. POSIX timeout/interruption kills the owned process group.
 
-After approval, compare matching request/persona hashes, then final designs, actionable findings
+Compare matching request/persona hashes, then final designs, actionable findings
 and remaining issues. The harness does not automatically grade delegation or output quality.
 Different wording is expected. Native subagent usage is not assumed to be included in its
 supervisor's CLI-reported token counts. No timing or behavioural equivalence is established yet.
+MCL preserves its declared writer inputs as `mcl-artifacts.raw.json`, including on validation failure.
 
 ## Verification
 
@@ -73,5 +76,6 @@ python3 -m unittest discover -s ./tools/supervisor-test -p 'test_*.py'
 
 These focused tests cover schema failures, false approvals, failed children, timeouts, MCL artifact
 writing without Codex and preservation of previous results. No live model run is part of the suite.
-Live default commands above remain pending operator approval.
+Seven focused tests and both live default commands passed. The first new MCL attempt failed at the
+final JSON handoff; the final answer now passes through native JSON extraction like the other stages.
 Design and closure evidence: [Phase 72](../../docs/phases/phase-72-supervisor-comparison.md).
