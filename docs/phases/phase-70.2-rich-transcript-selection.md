@@ -279,7 +279,10 @@ This ledger preserves the failed first delivery and every correction event. Time
 | 14 | Local install and Ghostty acceptance rerun | **Failed:** trailing-row case improved, but cross-paragraph/gap drags select only one block and slight vertical drift clears the range | 2026-10-08 03:08 | 2026-10-08 03:16 |
 | 14.1 | Scope correction: continuous card text flow | Passed: one resolver and one logical reply-body text box locked after sequential design/plan reviews | 2026-10-08 03:16 | 2026-10-08 03:28:38 |
 | 14.2 | Implementation and local verification | Passed: `26f92c6`; Debug 0 warnings; 149 focused tests; 27 extension tests; managed Ghostty acceptance confirmed by operator | 2026-10-08 03:28:55 | 2026-10-08 03:43:27 |
-| 15 | Native AOT, CI, merge and closure | **Current:** accepted correction publishing | 2026-10-08 03:43:27 | — |
+| 15 | Native AOT publish | Passed: `osx-arm64` artifact; non-fatal local Homebrew linker warnings | 2026-10-08 03:43:27 | 2026-10-08 03:49 |
+| 15.1 | Accepted-correction CI | **Failed:** changing unrelated failures: ForgeRun broken-pipe and ChatScreenLiveMotion virtual-timing assertion | 2026-10-08 03:44 | 2026-10-08 03:57 |
+| 15.2 | CI timing-test containment | **Current:** exact two-class CI-only exclusion under sequential review | 2026-10-08 04:19 | — |
+| 16 | CI, merge and closure | Pending containment approval | — | — |
 
 The operator's installed default-path observation is decisive: dragging inside an assistant card
 shows a range, but reaching trailing space at a line end clears it, so no rich text can be copied.
@@ -392,6 +395,24 @@ and the operator proves one continuous range and exact Copy in installed Ghostty
 | Ownership and API | CLI `XenoCells` contains exactly two private Paragraph calls; `ParagraphSelection` composes card ranges; `TextInteraction` owns policy; Terminal Extensions owns menu/clipboard behaviour. |
 | Visuals and themes | Native Paragraph selection and HeadingImage overlay use existing `ForgeTheme.Selection`/`ForgeStyles` in light/dark normal/narrow Ghostty. |
 
+### CI timing-test containment — locked 2026-10-08
+
+The operator directed the release workflow to exclude only
+`ForgeMission.Tests.Cli.StartPageTests` and
+`ForgeMission.Tests.Cli.ChatScreenLiveMotionTests`. They are virtual-terminal UI tests whose
+fixed-tick and real-clock rendering assertions produced changing failures across identical PR
+commits. This is CI-only containment in `.github/workflows/publish-terminal-extensions-package.yml`:
+`Makefile`'s local `test` target remains the full suite.
+
+The workflow continues to run all other tests, including Phase 70 `TextInteractionTests` and
+non-UI `ForgeRunTests`, plus terminal-extension package verification and Native AOT publish.
+The exact replacement in the workflow's `Verify current product and package` step is:
+`{ make build; dotnet test ForgeMission.slnx --filter 'FullyQualifiedName!~ForgeMission.Tests.Cli.StartPageTests&FullyQualifiedName!~ForgeMission.Tests.Cli.ChatScreenLiveMotionTests'; make verify-terminal-extensions-package; }`.
+No `Makefile` target changes. The evidence is CI run `37699171757` (the named StartPage test
+failed twice) and CI run `37703917618` (the named ChatScreenLiveMotion test failed on a later
+rerun). This is a Type-2 test-gate exception: scope is exactly the two named classes; reversal is
+deleting the workflow filter; removal condition is deterministic virtual-terminal synchronization
+in those tests.
 ## Entry points and gates
 
 | Area | Read / prove |
