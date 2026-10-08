@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Review the [supervisor comparison](phases/phase-72-supervisor-comparison.md) outputs and select the next comparison; Hands local-run delivery is verified. |
+| **NEXT STEP** | Complete final native verification and normal delivery for [Responses provider integration](phases/phase-74-responses-provider.md); successful local code-writing comparison and rebased managed checks are verified. |
 
 ## Active phases
 
@@ -17,6 +17,7 @@
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
 | [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 | [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
+| [74 — Responses provider integration](phases/phase-74-responses-provider.md) | Successful local code-writing comparison and rebased managed checks verified; native/default delivery pending. |
 
 ## Design docs
 
