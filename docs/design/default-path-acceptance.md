@@ -61,7 +61,8 @@ complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-h
 
 | Part | Default | Override (not default-path evidence) | Source |
 |---|---|---|---|
-| Artifact | `forge` from `make install` on forge-mcl `main`, or the complete platform ZIP from forge-mcl's published GitHub Release built at merged main. Extract all native sidecars. macOS keeps the existing Homebrew OpenSSL/Brotli prerequisites. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` / [CLI release README](https://github.com/katasec/forge-mcl#cli-releases) |
+| Artifact | `forge` from `make install` on forge-mcl `main`, or the complete platform ZIP from forge-mcl's published GitHub Release built at merged main. Make invokes shared PowerShell scripts locally and in CI. Extract all native sidecars. macOS keeps the existing Homebrew OpenSSL/Brotli prerequisites. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` / [CLI release README](https://github.com/katasec/forge-mcl#cli-releases) |
+| Build identity | Default local install derives `X.Y.Z-dev.N+<full-sha>` from the nearest CLI tag and commit distance, including `dev.0` on an exact tag. A release prints `X.Y.Z+<full-sha>` at its exact immutable tag. Merged PRs release automatically: minor by default, `release:patch` for a bug fix; major requires a separate explicit operator request/approval. | `RELEASE_TAG`, `RID`, `CLI_OUTPUT`; these must be absent for normal laptop acceptance. A dirty local tree adds `.dirty`. | [Phase 75](../phases/phase-75-cli-merge-releases.md), forge-mcl [version/build/release scripts](https://github.com/katasec/forge-mcl/tree/main/scripts) |
 | Endpoint | ForgeAPI `https://api.forge.katasec.com`, platform key from `forge login` as `Bearer`. | `FORGE_API_ENDPOINT`. | forge-mcl `ForgeExec.cs:24-26`, `ForgeChat.cs` |
 | Project | Current-directory `forge.project.json` with stable `projectId`, declared mission/version references and relative folders. Missing file exits 1 before login/network. No creation or ancestor search. | `--project <file>` opens the exact declaration with any filename; directories are rejected. | [Phase 71](../phases/phase-71-chat-project-file.md) |
 | Mission and conversation | Plain selects declared `Chat@Version` / `NoHands`; `--hands` selects `ChatHands@Version` / `ProjectWorkspace` and asks fresh file consent every launch. Shared Client reconnects to the newest equivalent existing authenticated hosted pin; no match or ambiguous pin stops. No lock or authoring ledger is required. | No implicit starter creation, migration or terminal-access mode. | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
@@ -80,6 +81,11 @@ The simplified workflow published v0.9.2 automatically from normal main with all
 green and matching published checksums; [Phase 66 distribution evidence](../phases/phase-66-simple-cli-release_completed.md#release-acceptance).
 Linux ARM64 joined the release matrix in v0.9.3: native host checks, sidecar packaging and all
 eight published assets verified; [Phase 67 evidence](../phases/phase-67-linux-arm64-release_completed.md#release-acceptance).
+Shared Make/script builds and merged-PR releases passed on 2026-10-08: default minor `v0.10.0`,
+labelled patch `v0.10.1`, all four native hosts and eight remote assets. Clean-main laptop install
+prints `0.10.1-dev.0+8d28dc1ff8f127facfd708b1c89369179e98cf18`; the independently downloaded
+published macOS ZIP runs with `0.10.1+8d28dc1ff8f127facfd708b1c89369179e98cf18` and a matching
+checksum. See [Phase 75 default-artifact evidence](../phases/phase-75-cli-merge-releases_completed.md#published-default-artifact-acceptance).
 
 **Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
 reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop

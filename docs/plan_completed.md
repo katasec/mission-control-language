@@ -23,6 +23,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 75 — Shared CLI merge releases](phases/phase-75-cli-merge-releases.md) | Portable Make/script builds, Git identities and semver releases on merge. | Verified 2026-10-08; PR71/PR72 merged, v0.10.0/v0.10.1 published; [four-host and default-artifact evidence](phases/phase-75-cli-merge-releases_completed.md). |
 | [Phase 74 — Responses provider integration](phases/phase-74-responses-provider.md) | Existing SDK Responses adapter and generic tool continuation; preserved code-writing comparison. | Verified 2026-10-08; PR70 merged; [native/default acceptance and session inventory](phases/phase-74-responses-provider_completed.md). |
 | [Phase 73 — Hands in local runs](phases/phase-73-forge-run-hands.md) | One scoped Hands session and Core tool loop in every local run. | Complete 2026-10-08; PR68 merged; [canonical native and installed real-provider acceptance](phases/phase-73-forge-run-hands_completed.md). |
 | [Phase 69 — Provider error message](phases/phase-69-provider-error-message.md) | Show Anthropic's own error text instead of `Bad Request`. | Complete 2026-10-05; ChatClients 0.1.4, runner 0.20.5 deployed; [live `forge chat` acceptance](phases/phase-69-provider-error-message_completed.md#task-3--default-path-acceptance). |
