@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-08)
+## Now (2026-10-09)
 
 | | |
 |---|---|
-| **NEXT STEP** | Review the [native supervisor comparison outputs](phases/phase-72-supervisor-comparison.md) and choose the next refinement. |
+| **NEXT STEP** | Design and review the execution contracts for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md); product requirements are recorded, implementation is not build-ready. |
 
 ## Active phases
 
@@ -17,6 +17,7 @@
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
 | [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 | [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Product requirements agreed; contract design and review precede implementation. |
 
 ## Design docs
 
