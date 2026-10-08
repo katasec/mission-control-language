@@ -281,11 +281,13 @@ This ledger preserves the failed first delivery and every correction event. Time
 | 14.2 | Implementation and local verification | Passed: `26f92c6`; Debug 0 warnings; 149 focused tests; 27 extension tests; managed Ghostty acceptance confirmed by operator | 2026-10-08 03:28:55 | 2026-10-08 03:43:27 |
 | 15 | Native AOT publish | Passed: `osx-arm64` artifact; non-fatal local Homebrew linker warnings | 2026-10-08 03:43:27 | 2026-10-08 03:49 |
 | 15.1 | Accepted-correction CI | **Failed:** changing unrelated failures: ForgeRun broken-pipe and ChatScreenLiveMotion virtual-timing assertion | 2026-10-08 03:44 | 2026-10-08 03:57 |
-| 15.2 | CI timing-test containment | **Current:** exact two-class CI-only exclusion under sequential review | 2026-10-08 04:19 | — |
-| 16 | CI, merge and closure | Pending containment approval | — | — |
+| 15.2 | CI timing-test containment and release CI | Passed: exact two-class CI-only exclusion; CI run `37708331114` passed package verification and macOS ARM64 CLI in 30m31s | 2026-10-08 04:19 | 2026-10-08 04:55 |
+| 16 | Product merge and installed Native AOT | Passed: PR #69 merged as `b53df9c`; accepted `26f92c6` Native AOT installed locally (`forge --version` confirmed) | 2026-10-08 05:01 | 2026-10-08 05:05:47 |
 
-The operator's installed default-path observation is decisive: dragging inside an assistant card
-shows a range, but reaching trailing space at a line end clears it, so no rich text can be copied.
+The initial installed default-path observation was decisive: dragging inside an assistant card
+showed a range, but reaching trailing space at a line end cleared it. Stage 14.2 records the
+operator's managed Ghostty PASS for the corrected one-text-box behaviour; Stage 16 records final
+Native AOT installation.
 The same observation and supplied visual references show that the shared selected-text background
 is too close to its surfaces in both assistant content and the composer.
 
