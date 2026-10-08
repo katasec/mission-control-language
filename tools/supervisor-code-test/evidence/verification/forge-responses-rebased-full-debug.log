@@ -1,0 +1,32 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  ForgeMission.MissionRegistry -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.Terminal.Extensions -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+  ForgeMission.Serve -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Docker -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+  ForgeMission.Parser -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+  ForgeMission.Scout -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+  ForgeMission.Core -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+  ForgeMission.ChatClients -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+  ForgeMission.Mcl.Tests -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Test run for /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.34]     ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [SKIP]
+  Skipped ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [1 ms]
+[xUnit.net 00:00:00.40]     ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [SKIP]
+  Skipped ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [1 ms]
+[xUnit.net 00:00:00.63]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [SKIP]
+[xUnit.net 00:00:00.63]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [SKIP]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [1 ms]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [1 ms]
+[xUnit.net 00:00:01.91]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [SKIP]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [1 ms]
+[xUnit.net 00:00:01.94]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [SKIP]
+[xUnit.net 00:00:01.94]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [SKIP]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [1 ms]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [1 ms]
+[xUnit.net 00:00:02.18]     ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [SKIP]
+  Skipped ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [1 ms]
+
+Passed!  - Failed:     0, Passed:   988, Skipped:     8, Total:   996, Duration: 2 m 32 s - ForgeMission.Mcl.Tests.dll (net10.0)

@@ -1,0 +1,6 @@
+{
+  "verdict": "revise",
+  "findings": [
+    "The doubling algorithm can overflow for valid mixed-type inputs: retry_delay(2, 1e308, 10**400) passes the exact-ratio cap check, then doubling the float produces infinity instead of the uncapped delay. With further iterations, calling as_integer_ratio() on that infinity raises OverflowError rather than returning the cap. Make intermediate arithmetic overflow-safe even when an integer cap exceeds the float range, while preserving support for large integer inputs. Add tests for this mixed-type case and for a huge attempt with the same bounds returning the cap."
+  ]
+}

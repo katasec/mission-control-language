@@ -1,0 +1,34 @@
+// run-mcl.ps1 supplies these from the shared prompt/persona files.
+let request = ""
+let workflow = ""
+let supervisorPersona = ""
+let simplicityPersona = ""
+let ownershipPersona = ""
+let resultsDir = ""
+let timingLabel = ""
+
+mission SupervisorComparison = {
+    Timestamp(timingLabel: "Start")
+    -> SupervisorDesign(output: "")
+    -> Timestamp(timingLabel: "SupervisorDesign")
+    -> Remember
+    -> Timestamp(timingLabel: "RememberDesign")
+    -> SimplicityReview(output: "")
+    -> Timestamp(timingLabel: "SimplicityReview")
+    -> Remember
+    -> Timestamp(timingLabel: "RememberSimplicity")
+    -> OwnershipReview(output: "")
+    -> Timestamp(timingLabel: "OwnershipReview")
+    -> Remember
+    -> Timestamp(timingLabel: "RememberOwnership")
+    -> SupervisorDecision(output: "")
+    -> Timestamp(timingLabel: "SupervisorDecision")
+    -> Remember
+    -> Timestamp(timingLabel: "RememberFinal")
+    -> SaveResults
+    -> Timestamp(timingLabel: "SaveResults")
+    -> BuildCode(output: "")
+    -> Timestamp(timingLabel: "BuildCode")
+}
+
+output(SupervisorComparison)

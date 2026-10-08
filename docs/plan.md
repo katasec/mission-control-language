@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Review the [supervisor comparison](phases/phase-72-supervisor-comparison.md) outputs and select the next comparison; Hands local-run delivery is verified. |
+| **NEXT STEP** | Review the [supervisor comparison](phases/phase-72-supervisor-comparison.md) outputs and select the next comparison; Responses/Hands local-run delivery and code-writing comparison are verified. |
 
 ## Active phases
 

@@ -1,0 +1,27 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  ForgeMission.MissionRegistry -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.Docker -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+  ForgeMission.Terminal.Extensions -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+  ForgeMission.Parser -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+  ForgeMission.Scout -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+  ForgeMission.Serve -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Core -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+  ForgeMission.ChatClients -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+  ForgeMission.Mcl.Tests -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Test run for /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.64]     ForgeMission.Tests.ChatClients.ChatClientsTests.OpenAi_FailedStreamWithoutResponseStatus_UsesSummary [FAIL]
+  Failed ForgeMission.Tests.ChatClients.ChatClientsTests.OpenAi_FailedStreamWithoutResponseStatus_UsesSummary [462 ms]
+  Error Message:
+   Assert.Single() Failure: The collection was empty
+  Stack Trace:
+     at ForgeMission.Tests.ChatClients.ChatClientsTests.<>c.<<OpenAi_FailedStreamWithoutResponseStatus_UsesSummary>b__8_0>d.MoveNext() in /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/ChatClients/ChatClientsTests.cs:line 186
+--- End of stack trace from previous location ---
+   at ForgeMission.Tests.ChatClients.ChatClientsTests.ServeOpenAiAsync(ValueTuple`3[] replies, Func`2 call) in /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/ChatClients/ChatClientsTests.cs:line 260
+   at ForgeMission.Tests.ChatClients.ChatClientsTests.ServeOpenAiAsync(ValueTuple`3[] replies, Func`2 call) in /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/ChatClients/ChatClientsTests.cs:line 270
+   at ForgeMission.Tests.ChatClients.ChatClientsTests.OpenAi_FailedStreamWithoutResponseStatus_UsesSummary() in /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/ChatClients/ChatClientsTests.cs:line 182
+--- End of stack trace from previous location ---
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 470 ms - ForgeMission.Mcl.Tests.dll (net10.0)

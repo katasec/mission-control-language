@@ -1,0 +1,20 @@
+Test run for /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:01.00]     ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [SKIP]
+  Skipped ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [1 ms]
+[xUnit.net 00:00:01.00]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [SKIP]
+[xUnit.net 00:00:01.00]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [SKIP]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [1 ms]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [1 ms]
+[xUnit.net 00:00:01.14]     ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [SKIP]
+  Skipped ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [1 ms]
+[xUnit.net 00:00:02.40]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [SKIP]
+[xUnit.net 00:00:02.41]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [SKIP]
+[xUnit.net 00:00:02.41]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [SKIP]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [1 ms]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [1 ms]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [1 ms]
+[xUnit.net 00:00:02.45]     ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [SKIP]
+  Skipped ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [1 ms]
+
+Passed!  - Failed:     0, Passed:   976, Skipped:     8, Total:   984, Duration: 2 m 28 s - ForgeMission.Mcl.Tests.dll (net10.0)

@@ -1,0 +1,374 @@
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	﻿2026-10-08T01:37:07.3864920Z Current runner version: '2.337.0'
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3881710Z ##[group]Runner Image Provisioner
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3882360Z Hosted Compute Agent
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3883220Z Version: 20260828.587
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3883650Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3884170Z Build Date: 2026-08-28T16:44:25Z
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3884640Z Worker ID: {e4b193df-f9e9-4123-8a29-eecb090c8beb}
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3885150Z Azure Region: westus
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3885680Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3886890Z ##[group]Operating System
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3887290Z macOS
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3887650Z 14.8.9
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3888000Z 23J631
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3888340Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3888720Z ##[group]Runner Image
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3889110Z Image: macos-14-arm64
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3889510Z Version: 20260831.0302.1
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3890430Z Included Software: https://github.com/actions/runner-images/blob/macos-14-arm64/20260831.0302/images/macos/macos-14-arm64-Readme.md
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3891560Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-14-arm64%2F20260831.0302
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3892230Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3893300Z ##[group]GITHUB_TOKEN Permissions
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3895030Z Contents: read
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3895430Z Metadata: read
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3895800Z Packages: read
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3896200Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3897860Z Secret source: Actions
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3898610Z Cache mode: write
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.3899200Z Prepare workflow directory
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.4335430Z Prepare all required actions
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.4377170Z Getting action download info
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:07.8479660Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:08.3285850Z Download action repository 'actions/setup-dotnet@v4' (SHA:67a3573c9a986a3f9c594539f4ab511d57bb3ce9)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.1557730Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4159520Z Complete job name: Verify package and macOS ARM64 CLI
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4843000Z ##[group]Run actions/checkout@v4
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4843990Z with:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4844390Z   ref: e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4844870Z   repository: katasec/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4847910Z   token: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4848280Z   ssh-strict: true
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4848640Z   ssh-user: git
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4849000Z   persist-credentials: true
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4849380Z   clean: true
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4849730Z   sparse-checkout-cone-mode: true
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4850150Z   fetch-depth: 1
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4850550Z   fetch-tags: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4850960Z   show-progress: true
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4851340Z   lfs: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4852220Z   submodules: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4852620Z   set-safe-directory: true
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4853040Z   allow-unsafe-pr-checkout: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4854170Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4857110Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.4857950Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9017490Z Syncing repository: katasec/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9024440Z ##[group]Getting Git version info
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9027250Z Working directory is '/Users/runner/work/forge-mcl/forge-mcl'
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9030410Z [command]/opt/homebrew/bin/git version
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9323970Z git version 2.55.0
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9344230Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9364380Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/b5c3c8e7-63d2-41ab-8731-4e7868952026/.gitconfig'
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9378190Z Temporarily overriding HOME='/Users/runner/work/_temp/b5c3c8e7-63d2-41ab-8731-4e7868952026' before making global git config changes
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9379670Z Adding repository directory to the temporary git global config as a safe directory
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9386120Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/forge-mcl/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9529980Z Deleting the contents of '/Users/runner/work/forge-mcl/forge-mcl'
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9538970Z ##[group]Initializing the repository
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9541880Z [command]/opt/homebrew/bin/git init /Users/runner/work/forge-mcl/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9837560Z hint: Using 'master' as the name for the initial branch. This default branch name
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9838700Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9839570Z hint: to use in all of your new repositories, which will suppress this warning,
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9840760Z hint: call:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9841300Z hint:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9841930Z hint: 	git config --global init.defaultBranch <name>
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9842560Z hint:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9844260Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9846910Z hint: 'development'. The just-created branch can be renamed via this command:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9847700Z hint:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9848190Z hint: 	git branch -m <name>
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9856110Z hint:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9858650Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9861340Z Initialized empty Git repository in /Users/runner/work/forge-mcl/forge-mcl/.git/
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9866850Z [command]/opt/homebrew/bin/git remote add origin https://github.com/katasec/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9934920Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9936960Z ##[group]Disabling automatic garbage collection
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9938750Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9995850Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:09.9996600Z ##[group]Setting up auth
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.0002130Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.0081260Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.1565770Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.1699440Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.2581060Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.2631130Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.4113950Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.4115570Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.4116270Z ##[group]Fetching the repository
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:10.4117280Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1079180Z From https://github.com/katasec/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1080910Z  * branch            e06c1975deb8b68d97260c2a3a8f9b874fb02df3 -> FETCH_HEAD
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1083550Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1084660Z ##[group]Determining the checkout info
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1086060Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1086920Z [command]/opt/homebrew/bin/git sparse-checkout disable
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1161110Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1236620Z ##[group]Checking out the ref
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.1240130Z [command]/opt/homebrew/bin/git checkout --progress --force e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2426870Z HEAD is now at e06c197 Merge 3019249d8420e2818544dea4b35dd50ff5a6f7b0 into b53df9c16924d01e9a05a8f35f9a0d2526a4f911
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2446240Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2531650Z [command]/opt/homebrew/bin/git log -1 --format=%H
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2620210Z e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2922880Z ##[group]Run actions/setup-dotnet@v4
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2923780Z with:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2924390Z   dotnet-version: 10.0.x
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2925140Z   cache: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2925740Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2933190Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.2933970Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.4641660Z (node:8238) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.4706520Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.4709420Z [command]/Users/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --runtime dotnet --channel LTS
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:11.8516440Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:12.3127370Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-osx-arm64.tar.gz size is 33249724 bytes.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:12.3133630Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0099610Z dotnet-install: Downloaded file size is 33249724 bytes.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0101890Z dotnet-install: The remote and local file sizes are equal.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0416030Z dotnet-install: Installed version is 10.0.12
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0538880Z dotnet-install: Adding to current process PATH: `/Users/runner/.dotnet`. Note: This change will be visible only when sourcing script.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0540690Z dotnet-install: Note that the script does not resolve dependencies during installation.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0543590Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0545420Z dotnet-install: Installation finished successfully.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.0560780Z [command]/Users/runner/work/_actions/actions/setup-dotnet/v4/externals/install-dotnet.sh --skip-non-versioned-files --channel 10.0
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:13.3900180Z dotnet-install: Attempting to download using aka.ms link https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:15.7746900Z dotnet-install: Remote file https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz size is 230753980 bytes.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:15.7748360Z dotnet-install: Extracting archive from https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-osx-arm64.tar.gz
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.2354850Z dotnet-install: Downloaded file size is 230753980 bytes.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.2356820Z dotnet-install: The remote and local file sizes are equal.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.7300500Z dotnet-install: Installed version is 10.0.401
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.7605930Z dotnet-install: Adding to current process PATH: `/Users/runner/.dotnet`. Note: This change will be visible only when sourcing script.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.7702330Z dotnet-install: Note that the script does not resolve dependencies during installation.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.7703820Z dotnet-install: To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install, select your operating system and check the "Dependencies" section.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.7704660Z dotnet-install: Installation finished successfully.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8155300Z ##[group]Run brew install openssl@3 brotli
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8156630Z [36;1mbrew install openssl@3 brotli[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8347760Z shell: /bin/bash -e {0}
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8348290Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8350640Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8357860Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:23.8358310Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6617490Z [33mWarning:[0m openssl@3 3.6.3 is already installed and up-to-date.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6619480Z To reinstall 3.6.3, run:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6620950Z   brew reinstall openssl@3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6669100Z [33mWarning:[0m brotli 1.2.0 is already installed and up-to-date.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6676570Z To reinstall 1.2.0, run:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6683520Z   brew reinstall brotli
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6868740Z ##[group]Run set -euo pipefail
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6870130Z [36;1mset -euo pipefail[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6870980Z [36;1mmkdir -p artifacts/verification[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6872140Z [36;1mgit rev-parse HEAD > artifacts/verification/source.txt[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.6875780Z [36;1m{ make build; dotnet test ForgeMission.slnx --filter 'FullyQualifiedName!~ForgeMission.Tests.Cli.StartPageTests&FullyQualifiedName!~ForgeMission.Tests.Cli.ChatScreenLiveMotionTests'; make verify-terminal-extensions-package; } 2>&1 | tee artifacts/verification/checks.log[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.7047400Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.7048190Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.7054780Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.7055400Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:26.7056260Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:27.4773290Z dotnet build ForgeMission.slnx
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:29.6233660Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:30.6944050Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 600 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:30.6952000Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 601 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:30.9034710Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 203 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:30.9896820Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 79 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:31.2162270Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 515 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:31.5390320Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 538 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:35.3186130Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 4.09 sec).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:35.4143550Z   Restored /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj (in 5.32 sec).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:35.4679490Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 141 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:35.4765310Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 3.92 sec).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:40.0899960Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:40.3318640Z   Downloading Copilot CLI 1.0.93 for darwin-arm64...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:40.7190920Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.93/SHA256SUMS.txt" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Debug/net10.0/copilot-cli/1.0.93/darwin-arm64/SHA256SUMS.txt" (1,740 bytes).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:41.0883210Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.93/github-copilot-1.0.93-darwin-arm64.tgz" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Debug/net10.0/copilot-cli/1.0.93/darwin-arm64/copilot.tgz" (64,221,641 bytes).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:41.1400310Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:41.2380770Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:43.2816400Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:43.3521800Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:43.8123220Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:48.8022530Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:49.4691410Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:37:56.3142870Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6434730Z   ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6869120Z 
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6886740Z Build succeeded.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6889290Z     0 Warning(s)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6897190Z     0 Error(s)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6906190Z 
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:01.6908200Z Time Elapsed 00:00:33.11
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:02.8354990Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:03.5811430Z   All projects are up-to-date for restore.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.2018200Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Debug/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.2123510Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Debug/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.2659330Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Debug/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.3081540Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Debug/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.3124200Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Debug/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.4634520Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Debug/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.4762400Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Debug/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.5543340Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Debug/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:04.7947280Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Debug/net10.0/forge.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:05.0762790Z   ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:05.1315200Z Test run for /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:05.4805000Z A total of 1 test files matched the specified pattern.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:06.6329130Z [xUnit.net 00:00:00.71]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:06.6335550Z [xUnit.net 00:00:00.71]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:06.8033890Z   Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:06.8082920Z   Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:10.4564940Z [xUnit.net 00:00:04.53]     ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:10.4570750Z   Skipped ForgeMission.Tests.Integration.WireCaptureTests.Capture_RealClaudeCli_RequestBodies [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.0259910Z [xUnit.net 00:00:07.10]     ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.2580070Z   Skipped ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.5832190Z [xUnit.net 00:00:07.66]     ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.5868690Z [xUnit.net 00:00:07.66]     ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.6072470Z   Skipped ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.StreamingSearch_RealGrok_NarratesSubSearches_AndReturnsResult [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.6120330Z   Skipped ForgeMission.Tests.Scout.GrokWebSearchIntegrationTests.WebSearch_RealGrok_ReturnsSourceTaggedAnswer [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.9662130Z [xUnit.net 00:00:08.05]     ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.9764010Z [xUnit.net 00:00:08.05]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.9866390Z [xUnit.net 00:00:08.05]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:13.9969590Z [xUnit.net 00:00:08.05]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [SKIP]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:14.0190750Z   Skipped ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:14.0296680Z   Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_MultiToolTask_ThroughForgeServe_AgenticMission [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:14.0399430Z   Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:38:14.0431870Z   Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [1 ms]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:22.7060680Z 
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:22.7112110Z Passed!  - Failed:     0, Passed:   982, Skipped:    10, Total:   992, Duration: 4 m 16 s - ForgeMission.Mcl.Tests.dll (net10.0)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:23.0458740Z dotnet test tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj -c Release --filter "FullyQualifiedName~ForgeMission.Tests.Terminal"
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:23.8398390Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:24.8948000Z   All projects are up-to-date for restore.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:24.9990810Z   Downloading Copilot CLI 1.0.93 for darwin-arm64...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:25.3983890Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.93/SHA256SUMS.txt" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Release/net10.0/copilot-cli/1.0.93/darwin-arm64/SHA256SUMS.txt" (1740 bytes).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:25.6277660Z   Downloading from "https://github.com/github/copilot-cli/releases/download/v1.0.93/github-copilot-1.0.93-darwin-arm64.tgz" to "/Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/obj/Release/net10.0/copilot-cli/1.0.93/darwin-arm64/copilot.tgz" (64221641 bytes).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:27.8913340Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:29.0634460Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:29.5338890Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:29.9078230Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:29.9364660Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:30.1939170Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:33.9259440Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:34.2667330Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:41.7209150Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/forge.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:46.4153200Z   ForgeMission.Mcl.Tests -> /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:46.4442200Z Test run for /Users/runner/work/forge-mcl/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:46.7980250Z A total of 1 test files matched the specified pattern.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:53.7829750Z 
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:53.7933130Z Passed!  - Failed:     0, Passed:    27, Skipped:     0, Total:    27, Duration: 5 s - ForgeMission.Mcl.Tests.dll (net10.0)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:53.8810220Z dotnet pack src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj -c Release --output artifacts/packages -p:ContinuousIntegrationBuild=true -p:RepositoryCommit=e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:54.9211350Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:55.2951710Z   All projects are up-to-date for restore.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:55.7724520Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.0862530Z   Successfully created package '/Users/runner/work/forge-mcl/forge-mcl/artifacts/packages/Katasec.Forge.Terminal.Extensions.0.1.0.nupkg'.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.1012380Z   Successfully created package '/Users/runner/work/forge-mcl/forge-mcl/artifacts/packages/Katasec.Forge.Terminal.Extensions.0.1.0.snupkg'.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.1316640Z bash ./eng/verify-terminal-extensions-package.sh artifacts/packages e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2173170Z PASS: Katasec.Forge.Terminal.Extensions 0.1.0 has the expected package metadata, contents, and exact native dependencies.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2585470Z ##[group]Run set -euo pipefail
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2586160Z [36;1mset -euo pipefail[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2586430Z [36;1mset +e[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2586880Z [36;1mdotnet publish src/ForgeMission.Cli -c Release -r osx-arm64 -o artifacts/verification/native \[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2587530Z [36;1m  -p:SourceRevisionId="$GITHUB_SHA" -warnaserror 2>&1 | tee artifacts/verification/native-publish.log[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2588060Z [36;1mpublish_status=("${PIPESTATUS[@]}")[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2588330Z [36;1mset -e[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2588680Z [36;1mif (( publish_status[0] != 0 )); then exit "${publish_status[0]}"; fi[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2589160Z [36;1mif (( publish_status[1] != 0 )); then exit "${publish_status[1]}"; fi[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2589820Z [36;1mif grep -Ei '(^|[[:space:]])warning([[:space:]]+[A-Z]+[0-9]+)?[[:space:]]*:' artifacts/verification/checks.log artifacts/verification/native-publish.log; then[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2590970Z [36;1m  echo "Actual compiler or linker warnings fail verification." >&2[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2591840Z [36;1m  exit 1[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2593050Z [36;1mfi[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2933060Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2933470Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2936730Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2937790Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:56.2938420Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:57.4310860Z   Determining projects to restore...
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.3678000Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/ForgeMission.Scout.csproj (in 202 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.3683500Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/ForgeMission.Terminal.Extensions.csproj (in 202 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.3688180Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/ForgeMission.Serve.csproj (in 202 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.4237770Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/ForgeMission.Core.csproj (in 49 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.4438000Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/ForgeMission.ChatClients.csproj (in 54 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.4475520Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/ForgeMission.Parser.csproj (in 17 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.4577160Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/ForgeMission.Docker.csproj (in 2 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.4630540Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/ForgeMission.MissionRegistry.csproj (in 6 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:42:59.4751350Z   Restored /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/ForgeMission.Cli.csproj (in 96 ms).
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:00.6275370Z   ForgeMission.Parser -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:00.6375270Z   ForgeMission.MissionRegistry -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:00.8189490Z   ForgeMission.Scout -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:00.8889440Z   ForgeMission.Terminal.Extensions -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:00.9792950Z   ForgeMission.Core -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:01.0356800Z   ForgeMission.Docker -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:01.1578010Z   ForgeMission.Serve -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:01.1683330Z   ForgeMission.ChatClients -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:04.7940270Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/osx-arm64/forge.dll
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T01:43:08.7042270Z   Generating native code
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.1994440Z   ForgeMission.Cli -> /Users/runner/work/forge-mcl/forge-mcl/artifacts/verification/native/
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.9532480Z ##[group]Run set -euo pipefail
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.9533410Z [36;1mset -euo pipefail[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.9534340Z [36;1martifacts/verification/native/forge --help > artifacts/verification/native-help.txt[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.9535500Z [36;1martifacts/verification/native/forge --version > artifacts/verification/native-version.txt[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.9536440Z [36;1mtest "$(cat artifacts/verification/native-version.txt)" = "1.0.0+$GITHUB_SHA"[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:34.9538490Z [36;1mshasum -a 256 artifacts/verification/native/forge > artifacts/verification/native-sha256.txt[0m
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:35.0163300Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:35.0174750Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:35.0178250Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:35.0178830Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:35.0179280Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3280390Z ##[group]Run actions/upload-artifact@v4
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3281040Z with:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3281570Z   name: terminal-extensions-verification-e06c1975deb8b68d97260c2a3a8f9b874fb02df3
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3282490Z   path: artifacts/verification
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	artifacts/packages
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3282930Z   if-no-files-found: error
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3283380Z   compression-level: 6
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3283600Z   overwrite: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3283900Z   include-hidden-files: false
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3284130Z env:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3286160Z   NUGET_AUTH_TOKEN: ***
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3286470Z   DOTNET_ROOT: /Users/runner/.dotnet
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.3286720Z ##[endgroup]
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6758010Z (node:54093) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6759800Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6854420Z Multiple search paths detected. Calculating the least common ancestor of all paths
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6857000Z The least common ancestor is /Users/runner/work/forge-mcl/forge-mcl/artifacts. This will be the root directory of the artifact
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6858440Z With the provided path, there will be 15 files uploaded
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6859250Z Artifact name is valid!
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:36.6859750Z Root directory input is valid!
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:37.1248370Z Beginning upload of artifact content to blob storage
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:37.7646400Z (node:54093) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:38.6332150Z Uploaded bytes 8388608
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:39.1574140Z Uploaded bytes 16777216
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:39.2178680Z Uploaded bytes 25165824
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:39.6918010Z Uploaded bytes 33554432
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:40.1819310Z Uploaded bytes 41943040
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:41.2091910Z Uploaded bytes 50331648
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:43.2964750Z Uploaded bytes 58720256
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:44.9096790Z Uploaded bytes 67108864
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:46.1215880Z Uploaded bytes 75497472
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:47.2861890Z Uploaded bytes 83886080
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:48.0420020Z Uploaded bytes 92274688
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:48.9008670Z Uploaded bytes 100663296
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:49.6015930Z Uploaded bytes 109051904
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:50.7038060Z Uploaded bytes 117440512
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.2308610Z Uploaded bytes 125829120
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.3581320Z Uploaded bytes 128122771
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.4314610Z Finished uploading artifact content to blob storage!
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.4318850Z SHA256 digest of uploaded artifact zip is 3975ac06d46e70df8dd2e050a58e993c03fd1708228023a6ae17a804aab0ca70
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.4321960Z Finalizing artifact upload
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.8378450Z Artifact terminal-extensions-verification-e06c1975deb8b68d97260c2a3a8f9b874fb02df3.zip successfully finalized. Artifact ID 11524291247
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.8381490Z Artifact terminal-extensions-verification-e06c1975deb8b68d97260c2a3a8f9b874fb02df3 has been successfully uploaded! Final size is 128122771 bytes. Artifact ID is 11524291247
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.8406080Z Artifact download URL: https://github.com/katasec/forge-mcl/actions/runs/37713808889/artifacts/11524291247
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:51.8881950Z Post job cleanup.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.2020560Z (node:54209) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.2022670Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.2198900Z Post job cleanup.
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.5935830Z [command]/opt/homebrew/bin/git version
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.6694800Z git version 2.55.0
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.6725270Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/9065a593-781e-40a0-90b7-99ec7b7b64d2/.gitconfig'
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.6749200Z Temporarily overriding HOME='/Users/runner/work/_temp/9065a593-781e-40a0-90b7-99ec7b7b64d2' before making global git config changes
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.6750840Z Adding repository directory to the temporary git global config as a safe directory
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.6752970Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/forge-mcl/forge-mcl
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.7091140Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.7149930Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.9226350Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.9286340Z http.https://github.com/.extraheader
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.9313190Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:52.9459390Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:53.0754070Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:53.0811650Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:53.2222300Z Cleaning up orphan processes
+Verify package and macOS ARM64 CLI	UNKNOWN STEP	2026-10-08T02:17:54.9156120Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-dotnet@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

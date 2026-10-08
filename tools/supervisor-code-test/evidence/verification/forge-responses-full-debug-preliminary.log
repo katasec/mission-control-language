@@ -1,0 +1,25 @@
+Test run for /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Debug/net10.0/ForgeMission.Mcl.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.89]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [SKIP]
+[xUnit.net 00:00:00.92]     ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [SKIP]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.TwoStepPipeline_RealLlm_ContextFlowsBetweenSteps [1 ms]
+  Skipped ForgeMission.Tests.Adapters.DirectExpertRunnerIntegrationTests.SingleExpert_RealLlm_ReturnsNonEmptyResponse [1 ms]
+[xUnit.net 00:00:02.94]     ForgeMission.Tests.Runtime.PipelineRunnerTests.MissingApiKey_ThrowsClearly [FAIL]
+  Failed ForgeMission.Tests.Runtime.PipelineRunnerTests.MissingApiKey_ThrowsClearly [8 ms]
+  Error Message:
+   Assert.Throws() Failure: No exception was thrown
+Expected: typeof(System.InvalidOperationException)
+  Stack Trace:
+     at ForgeMission.Tests.Runtime.PipelineRunnerTests.MissingApiKey_ThrowsClearly() in /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/Runtime/PipelineRunnerTests.cs:line 254
+   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)
+   at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:02.99]     ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [SKIP]
+  Skipped ForgeMission.Tests.Integration.ForgeClaudeLauncherTests.ForgeClaude_OneShotPrompt_AnswersAndTearsDown [1 ms]
+[xUnit.net 00:00:05.31]     ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [SKIP]
+  Skipped ForgeMission.Tests.Integration.CopilotSdkTests.CopilotSdk_LiveRoundTrip_ThroughNoopMission [1 ms]
+[xUnit.net 00:00:12.67]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [SKIP]
+[xUnit.net 00:00:12.67]     ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [SKIP]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_LiveRoundTrip_ThroughNoopMission [1 ms]
+  Skipped ForgeMission.Tests.Integration.ClaudeCodeTests.ClaudeCode_TwoTurn_ThroughForgeServe_AnthropicWire [1 ms]

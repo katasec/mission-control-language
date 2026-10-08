@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "medium"
+  },
+  "versions": {
+    "codex": "codex-cli 0.160.0",
+    "python3": "Python 3.14.6"
+  },
+  "forge_path": "/Users/ameerdeen/.local/bin/forge",
+  "comparison_mode": "design-plus-build",
+  "sha256": {
+    "input.md": "32cfa1c315c34b2d75a12c3ff026bdacf3eeaa05d29d06b2636369c5948e831e",
+    "settings.json": "0ce18767519d8c9403738b114e2a2c33a306024d2479c6b331b747098032c3a2",
+    "schemas.json": "f67dbbdb99db6e44fc1913868190889925569a480af13bbb5f442302a9e0fc66",
+    "workflow.md": "19404448076b218ddb9883b2feec0717bc6d7b62a5e81d68111969cf0edf61dc",
+    "harness.py": "75db2a6dd29661612284fa818ecef609fc6b5e7e9ece9046915cd0d84c920801",
+    "acceptance_test.py": "ff2a400944bb6e8885d75953d5e7c4efa8adeeed0d92110e993a0cd3345a6d1b",
+    "personas/ownership.md": "1d4d095a8ce25743f0f70972acf55948c068308f95375644641ec49c14ab1e16",
+    "personas/simplicity.md": "444aeec53bb22ee70f9855a610a74d9283380b88c4e820e9e72351524be2871f",
+    "personas/supervisor.md": "cf24b016e33c6caed65651ac5c825e5f32a006925216e896ff4b322e1203591e",
+    "mcl/experts/BuildCode/expert.md": "3ce4278f2979b4581819537621c062ff761cbf157abd5e977d61533b3d67ae44",
+    "mcl/experts/OwnershipReview/expert.md": "5b48ab7d34a28550a6dde8c0a6dfe570236b55122a0d994eb25dc82bd8ae72d2",
+    "mcl/experts/Remember/expert.md": "f430c29469f33f1ed73b971cb3ce7d61e174074bd8f54a871c0d0a5f4924ff17",
+    "mcl/experts/SaveResults/expert.md": "50fc9d3da9353686eedf23394afaf4dcd506b75776e9428a0407ba632010f44a",
+    "mcl/experts/SimplicityReview/expert.md": "08603155821a9e39800e3b95b29c7d91a8f10091712891b99b85cab5afdcc90b",
+    "mcl/experts/SupervisorDecision/expert.md": "5e8b716afc3b2752a1d77f914a5dd94fddcbae32c9ceb5b8e023e1a1fbc4055e",
+    "mcl/experts/SupervisorDesign/expert.md": "c4431d921dd7e62d7949e25dfbf43beda55772c11e8f52a13b1548ed96609141",
+    "mcl/experts/Timestamp/expert.md": "7ae433bf9e47f225b69b947428687331385d1d3d8de1aeb3db98141cb162ad0d",
+    "mcl/forge.toml": "8d817b88a0dcaee526ef30b2d405224117c04d326de06b76bca00b6bf211bfb1",
+    "mcl/mission.mcl": "09197ba60563fc95afc5e25270fa4414e12a41f591b7592e470e3a84bc50aa6c"
+  }
+}

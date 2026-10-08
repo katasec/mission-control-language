@@ -1,0 +1,8 @@
+{
+  "engine": "codex",
+  "state": "interrupted",
+  "started_at": "2026-10-08T01:08:33.194682+00:00",
+  "error": "Interrupted by operator",
+  "ended_at": "2026-10-08T01:09:34.638268+00:00",
+  "elapsed_seconds": 61.443
+}

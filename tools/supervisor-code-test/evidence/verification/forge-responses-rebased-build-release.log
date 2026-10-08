@@ -1,0 +1,18 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  ForgeMission.Terminal.Extensions -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Terminal.Extensions/bin/Release/net10.0/ForgeMission.Terminal.Extensions.dll
+  ForgeMission.MissionRegistry -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.MissionRegistry/bin/Release/net10.0/ForgeMission.MissionRegistry.dll
+  ForgeMission.Docker -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Docker/bin/Release/net10.0/ForgeMission.Docker.dll
+  ForgeMission.Serve -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Serve/bin/Release/net10.0/ForgeMission.Serve.dll
+  ForgeMission.Parser -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Parser/bin/Release/net10.0/ForgeMission.Parser.dll
+  ForgeMission.Scout -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Scout/bin/Release/net10.0/ForgeMission.Scout.dll
+  ForgeMission.Core -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Core/bin/Release/net10.0/ForgeMission.Core.dll
+  ForgeMission.ChatClients -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.ChatClients/bin/Release/net10.0/ForgeMission.ChatClients.dll
+  ForgeMission.Cli -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/src/ForgeMission.Cli/bin/Release/net10.0/forge.dll
+  ForgeMission.Mcl.Tests -> /Users/ameerdeen/.codex/worktrees/responses-provider/forge-mcl/tests/ForgeMission.Mcl.Tests/bin/Release/net10.0/ForgeMission.Mcl.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.84

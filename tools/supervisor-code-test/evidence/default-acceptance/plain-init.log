@@ -1,0 +1,5 @@
+Resolving experts...
+
+  ✓ Probe                          local    experts/Probe/expert.md
+
+mcl.lock written (1 expert). Run 'forge run' to execute the mission.

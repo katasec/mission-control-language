@@ -1,0 +1,32 @@
+schema=Read:{
+  "type": "object",
+  "properties": {
+    "file_path": { "type": "string",  "description": "The absolute path to the file to read" },
+    "offset":    { "type": "integer", "description": "The line number to start reading from. Only provide if the file is too large to read at once" },
+    "limit":     { "type": "integer", "description": "The number of lines to read. Only provide if the file is too large to read at once" }
+  },
+  "required": ["file_path"],
+  "additionalProperties": false
+}
+schema=Edit:{
+  "type": "object",
+  "properties": {
+    "file_path":   { "type": "string",  "description": "The absolute path to the file to modify" },
+    "old_string":  { "type": "string",  "description": "The text to replace" },
+    "new_string":  { "type": "string",  "description": "The text to replace it with (must be different from old_string)" },
+    "replace_all": { "type": "boolean", "description": "Replace all occurrences of old_string (default false)", "default": false }
+  },
+  "required": ["file_path", "old_string", "new_string"],
+  "additionalProperties": false
+}
+schema=Write:{
+  "type": "object",
+  "properties": {
+    "file_path": { "type": "string", "description": "The absolute path to the file to write" },
+    "content":   { "type": "string", "description": "The content to write to the file" }
+  },
+  "required": ["file_path", "content"],
+  "additionalProperties": false
+}
+missing_parent.error=True result=Failed to write code/diagnostic.txt: Could not find a part of the path '/tmp/forge-build-response-probe/bob-write-diagnostic/code/diagnostic.txt'. bytes_exist=False
+parent_exists.error=False result=Wrote code/diagnostic.txt bytes=BOB_WRITE_DIAGNOSTIC

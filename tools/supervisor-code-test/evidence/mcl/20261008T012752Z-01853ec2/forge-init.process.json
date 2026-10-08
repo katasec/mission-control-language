@@ -1,0 +1,8 @@
+{
+  "command": [
+    "forge",
+    "init"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.126
+}
