@@ -1,10 +1,8 @@
 # Phase 75 — Shared CLI builds and releases on merge
 
-**Status:** Simplicity and ownership design reviews PASS; implementation awaits operator approval. The operator requested a
-design and sequential simplicity/ownership reviews, then a terse proposal. They explicitly waived
-the implementation supervisor workflow for this CI task. The branch
-`adeen/cli-merge-release-versioning` was created in both repositories; the forge-mcl branch is
-reserved for implementation, with no executable changes made.
+**Status:** Complete 2026-10-08; [automatic releases, installed CLI and published-archive acceptance](phase-75-cli-merge-releases_completed.md)
+verified. The operator explicitly waived the implementation supervisor workflow for this CI task
+and required sequential independent simplicity/ownership reviews; both passed.
 
 ## Design
 
@@ -79,7 +77,7 @@ never fall back to SDK `1.0.0`. CI checks out full history and fetches tags.
 For a new release, use the numerically highest CLI tag in the repository, including reserved tags.
 Default `x.y.z -> x.(y+1).0`; `release:patch` gives `x.y.(z+1)`. Read labels from the frozen merge
 event, not a shell-interpolated PR title/body or mutable later labels. The first default merge
-after current `v0.9.5` reserves `v0.10.0`.
+after the `v0.9.5` baseline reserved `v0.10.0`.
 
 Major increments require the operator's explicit request or approval. This bounded change adds no
 automatic major mechanism: `release:major` is an explicit failure explaining that a separately
@@ -131,11 +129,16 @@ may become latest. Native signing/archive/checksum/GitHub operations are scripts
 only orchestration, env, prerequisites, Make calls and platform artifact actions. Install Make on
 Windows explicitly if required; `pwsh` is available on all four hosted runners.
 
+The same build matrix also runs on ordinary PR events in read-only development mode before merge.
+Preparation/publication stay skipped there. This proves the four-host build path before turning
+it into a release, without a second matrix or publish recipe; PR runs use independent concurrency
+groups so they cannot delay queued releases.
+
 | Failure | Containment / visible result / recovery |
 |---|---|
 | Tag conflict or invalid context | Prepare fails; no force/move/delete. Only an existing exact CLI tag at the same source SHA is reusable; multiple tags there fail as ambiguous. |
 | Managed/native/sign/checksum failure | Build fails, publish is blocked; reserved immutable tag remains. Rerun that workflow at the original SHA, reusing its tag. |
-| Partial upload | An unpublished draft is disposable staging. Rerun reuses its exact tag/source and replaces all eight draft assets with the current verified build set, then validates all pairs before publishing. Asset replacement is allowed only while draft; tags and published assets stay immutable. |
+| Partial upload / delayed draft discovery | Retain the draft creation response and ID; refresh by ID after upload/publication. List lookup is initial discovery only. Rerun reuses its exact tag/source and replaces all eight draft assets with the current verified build set, then validates all pairs before publishing. Asset replacement is allowed only while draft; tags and published assets stay immutable. |
 | Rerun after success | Validate tag/source and the published complete asset/checksum set, then no-op; never replace a published asset or toggle latest during an idempotent rerun. |
 | Queued old run / retry | Must not move latest back to an ancestor. Publish older-source release with `latest=false`; retain source/tag identity. |
 | GitHub outage or queue overflow | Visible failed/cancelled run. Operator reruns the affected original workflow; no hidden background queue/retry service. |
@@ -145,6 +148,19 @@ Release preparation and publication alone have `contents: write`; builds have `c
 Public service entry points/tier/data ownership are N/A: this changes repository distribution only.
 This is a reversible Type-2 workflow change; revert scripts/Make/workflow edits to restore manual
 dispatch, retaining all already-created tags/releases. No Type-1 product boundary changes.
+
+**Existing local install diagnostic exception (Type 2).** The unchanged macOS27/Homebrew toolchain
+emits six Apple linker warnings: obsolete `ld_classic` and five OpenSSL/Brotli dylib deployment-target
+mismatches, previously recorded in [Phase 73 installed acceptance](phase-73-forge-run-hands_completed.md#installed-default-path-acceptance).
+The extracted blanket scanner initially broke laptop builds on these pre-existing diagnostics.
+Native `install` therefore preserves the old exit-code/identity checks and visible linker output;
+all native paths keep identical compile/version arguments and `-warnaserror`. Only native install
+omits the extra raw-output warning rejection; managed operations and canonical verify/package
+retain it. No suppressed warning, custom SDK, dependency swap, CI/local compile fork or public bypass
+flag. Removal: restore that final scanner for install when the supported local toolchain/prerequisites
+link without these six diagnostics. Simplicity reviewer explicitly approved this minimal repair.
+Installed functionality must still pass normally; local evidence does not claim zero linker warnings
+or replace the independent canonical zero-warning evidence.
 
 ## Reuse and simplicity decisions
 
@@ -163,7 +179,7 @@ automatic major bumps; a retained manual CLI dispatch as a second release path.
 
 ## Default path and Done when
 
-The design-only delivery records runtime acceptance N/A; implementation must satisfy the following
+The design-only delivery recorded runtime acceptance N/A; implementation satisfied the following
 distribution gate. Default-path acceptance applies to the changed artifact/version/install path,
 not Azure or a redesign of hosted chat.
 
@@ -180,14 +196,15 @@ No whole-product runtime test matrix or new UI acceptance: the runtime is unchan
 normal native prerequisites. Update forge-mcl README and [Default-Path Acceptance](../design/default-path-acceptance.md)
 with the shared Make route, tag/dev identities and actual observed release evidence.
 
-## Review status / next action
+## Completion and reviews
 
 | Reviewer | Verdict |
 |---|---|
 | Simplicity | PASS, 2026-10-08, independent `simplicity_review` agent after the complete-draft-replacement simplification |
 | Ownership | PASS, 2026-10-08, independent `ownership_review` agent; received full repo/project map, derived placement from READMEs/atlas, searched the nine mapped repositories |
+| Implementation simplicity/style | PASS after identity propagation correction; [verified checks](phase-75-cli-merge-releases_completed.md#implementation-checks) |
+| Implementation ownership | PASS on actual product diff; [verified checks](phase-75-cli-merge-releases_completed.md#implementation-checks) |
+| Publication repair | Design/code PASS from both reviewers; merged patch and first-attempt automatic release PASS; [repair evidence](phase-75-cli-merge-releases_completed.md#draft-discovery-repair) |
 
-Design-only validation: both independent reviews PASS and `git diff --check` PASS; runtime/default-path
-execution is N/A for this documentation delivery, and every implementation observation above remains
-unverified. The reviewed proposal is the next operator decision. No implementation or remote CLI
-release mutation before the operator approves it. No unresolved design question is delegated to implementation.
+All Done-when observations passed; [verified completion evidence](phase-75-cli-merge-releases_completed.md).
+No remaining task under this phase.
