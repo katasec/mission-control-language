@@ -1,0 +1,1 @@
+Preserved code-writing harness used for successful MCL run 20261008T012752Z-01853ec2 (managed Forge 6772383) and native Codex run 20261008T013029Z-315f8836. Shared inputs and common checks are preserved. See README.md and evidence/README.md for the setup and results.

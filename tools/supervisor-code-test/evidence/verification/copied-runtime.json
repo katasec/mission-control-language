@@ -1,0 +1,8 @@
+{
+  "copied_at": "2026-10-08T00:55:01.4099300+00:00",
+  "source_commit": "67723833ab7b4868df692fe6c67fbec678030859",
+  "source_tree": "c640a11b9988fbce56499dd63546da908d945504",
+  "runtime": "/var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/forge-responses-copy-1eb2154c81ce4de6ae6ba3183079d671",
+  "forge_dll_sha256": "2E5F919D07CF0E78DF576662AA6A8CA99D0EBFB1736FA7419E1447EC291818EA",
+  "build": "managed Release"
+}

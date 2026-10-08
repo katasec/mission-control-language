@@ -1,0 +1,13 @@
+{
+  "session_id": "01a11922-247a-79b2-90e3-b54cd2983b06",
+  "usage": [
+    {
+      "input_tokens": 160568,
+      "cached_input_tokens": 134656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 6685,
+      "reasoning_output_tokens": 1935
+    }
+  ],
+  "usage_scope": "CLI-emitted turn usage; native subagent totals are not assumed"
+}

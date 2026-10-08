@@ -1,0 +1,10 @@
+{
+  "case": "cancellation",
+  "started_at": "2026-10-08T07:54:12.133252+00:00",
+  "finished_at": "2026-10-08T07:54:12.171953+00:00",
+  "exit_code": 130,
+  "outcome": "PASS",
+  "signal": "SIGINT after observed Probe admission",
+  "stderr": "Running mission 'FileProbe'...\n\u2192 Probe...\nMission cancelled.\n",
+  "stdout": ""
+}

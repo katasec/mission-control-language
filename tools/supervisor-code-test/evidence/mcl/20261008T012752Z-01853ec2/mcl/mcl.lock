@@ -1,0 +1,34 @@
+version: 1
+experts:
+  BuildCode:
+    source: experts
+    path: experts/BuildCode/expert.md
+    hash: 3ce4278f2979b4581819537621c062ff761cbf157abd5e977d61533b3d67ae44
+  OwnershipReview:
+    source: experts
+    path: experts/OwnershipReview/expert.md
+    hash: 5b48ab7d34a28550a6dde8c0a6dfe570236b55122a0d994eb25dc82bd8ae72d2
+  Remember:
+    source: experts
+    path: experts/Remember/expert.md
+    hash: f430c29469f33f1ed73b971cb3ce7d61e174074bd8f54a871c0d0a5f4924ff17
+  SaveResults:
+    source: experts
+    path: experts/SaveResults/expert.md
+    hash: 50fc9d3da9353686eedf23394afaf4dcd506b75776e9428a0407ba632010f44a
+  SimplicityReview:
+    source: experts
+    path: experts/SimplicityReview/expert.md
+    hash: 08603155821a9e39800e3b95b29c7d91a8f10091712891b99b85cab5afdcc90b
+  SupervisorDecision:
+    source: experts
+    path: experts/SupervisorDecision/expert.md
+    hash: 5e8b716afc3b2752a1d77f914a5dd94fddcbae32c9ceb5b8e023e1a1fbc4055e
+  SupervisorDesign:
+    source: experts
+    path: experts/SupervisorDesign/expert.md
+    hash: c4431d921dd7e62d7949e25dfbf43beda55772c11e8f52a13b1548ed96609141
+  Timestamp:
+    source: experts
+    path: experts/Timestamp/expert.md
+    hash: 7ae433bf9e47f225b69b947428687331385d1d3d8de1aeb3db98141cb162ad0d

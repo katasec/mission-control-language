@@ -1,0 +1,12 @@
+Resolving experts...
+
+  ✓ BuildCode                      local    experts/BuildCode/expert.md
+  ✓ OwnershipReview                local    experts/OwnershipReview/expert.md
+  ✓ Remember                       local    experts/Remember/expert.md
+  ✓ SaveResults                    local    experts/SaveResults/expert.md
+  ✓ SimplicityReview               local    experts/SimplicityReview/expert.md
+  ✓ SupervisorDecision             local    experts/SupervisorDecision/expert.md
+  ✓ SupervisorDesign               local    experts/SupervisorDesign/expert.md
+  ✓ Timestamp                      local    experts/Timestamp/expert.md
+
+mcl.lock written (8 experts). Run 'forge run' to execute the mission.

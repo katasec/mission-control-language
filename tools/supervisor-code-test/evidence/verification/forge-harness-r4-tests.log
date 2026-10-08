@@ -1,0 +1,9 @@
+.Results: /var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/tmpo632k_ne/results/codex/20261008T012720Z-9a450645
+Experiment failed: malformed config
+Results: /var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/tmpo632k_ne/results/codex/20261008T012720Z-cd0a8b9d
+Experiment failed: malformed config
+.......
+----------------------------------------------------------------------
+Ran 8 tests in 0.175s
+
+OK

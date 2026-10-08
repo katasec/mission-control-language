@@ -1,0 +1,12 @@
+Results: /private/var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/mcl-codex-code-compare-mitsjkqo/harness/results/mcl/20261008T012752Z-01853ec2
+SupervisorDesign: 46.295s
+RememberDesign: 0.054s
+SimplicityReview: 13.568s
+RememberSimplicity: 0.055s
+OwnershipReview: 4.214s
+RememberOwnership: 0.056s
+SupervisorDecision: 29.402s
+RememberFinal: 0.054s
+SaveResults: 0.113s
+BuildCode: 40.806s
+Decision: approved

@@ -1,0 +1,11 @@
+{"stage": "Start", "timestamp_utc": "2026-10-08T01:27:53.301825+00:00", "monotonic_ns": 267216656288333, "elapsed_seconds": 0.0, "interval_seconds": 0.0}
+{"stage": "SupervisorDesign", "timestamp_utc": "2026-10-08T01:28:39.596780+00:00", "monotonic_ns": 267262950836791, "elapsed_seconds": 46.294548, "interval_seconds": 46.294548}
+{"stage": "RememberDesign", "timestamp_utc": "2026-10-08T01:28:39.650854+00:00", "monotonic_ns": 267263004920166, "elapsed_seconds": 46.348632, "interval_seconds": 0.054083}
+{"stage": "SimplicityReview", "timestamp_utc": "2026-10-08T01:28:53.218545+00:00", "monotonic_ns": 267276572502166, "elapsed_seconds": 59.916214, "interval_seconds": 13.567582}
+{"stage": "RememberSimplicity", "timestamp_utc": "2026-10-08T01:28:53.273947+00:00", "monotonic_ns": 267276627889791, "elapsed_seconds": 59.971601, "interval_seconds": 0.055388}
+{"stage": "OwnershipReview", "timestamp_utc": "2026-10-08T01:28:57.488002+00:00", "monotonic_ns": 267280841928541, "elapsed_seconds": 64.18564, "interval_seconds": 4.214039}
+{"stage": "RememberOwnership", "timestamp_utc": "2026-10-08T01:28:57.543843+00:00", "monotonic_ns": 267280897759833, "elapsed_seconds": 64.241472, "interval_seconds": 0.055831}
+{"stage": "SupervisorDecision", "timestamp_utc": "2026-10-08T01:29:26.945843+00:00", "monotonic_ns": 267310299524875, "elapsed_seconds": 93.643237, "interval_seconds": 29.401765}
+{"stage": "RememberFinal", "timestamp_utc": "2026-10-08T01:29:26.999473+00:00", "monotonic_ns": 267310353154791, "elapsed_seconds": 93.696866, "interval_seconds": 0.05363}
+{"stage": "SaveResults", "timestamp_utc": "2026-10-08T01:29:27.112205+00:00", "monotonic_ns": 267310465898750, "elapsed_seconds": 93.80961, "interval_seconds": 0.112744}
+{"stage": "BuildCode", "timestamp_utc": "2026-10-08T01:30:07.918714+00:00", "monotonic_ns": 267351272047416, "elapsed_seconds": 134.615759, "interval_seconds": 40.806149}

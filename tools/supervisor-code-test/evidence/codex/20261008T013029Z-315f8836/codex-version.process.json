@@ -1,0 +1,8 @@
+{
+  "command": [
+    "codex",
+    "--version"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.015
+}

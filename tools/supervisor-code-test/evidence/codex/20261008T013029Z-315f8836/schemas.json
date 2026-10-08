@@ -1,0 +1,166 @@
+{
+  "design": {
+    "type": "object",
+    "properties": {
+      "design": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "design"
+    ],
+    "additionalProperties": false
+  },
+  "review": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "enum": [
+          "pass",
+          "revise"
+        ]
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "verdict",
+      "findings"
+    ],
+    "additionalProperties": false
+  },
+  "final": {
+    "type": "object",
+    "properties": {
+      "design": {
+        "type": "string"
+      },
+      "decision": {
+        "type": "string",
+        "enum": [
+          "approved",
+          "needs_revision"
+        ]
+      },
+      "resolved_findings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "remaining_issues": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "design",
+      "decision",
+      "resolved_findings",
+      "remaining_issues"
+    ],
+    "additionalProperties": false
+  },
+  "workflow": {
+    "type": "object",
+    "properties": {
+      "design": {
+        "type": "string"
+      },
+      "simplicity_review": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "revise"
+            ]
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "verdict",
+          "findings"
+        ],
+        "additionalProperties": false
+      },
+      "ownership_review": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "revise"
+            ]
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "verdict",
+          "findings"
+        ],
+        "additionalProperties": false
+      },
+      "final": {
+        "type": "object",
+        "properties": {
+          "design": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "needs_revision"
+            ]
+          },
+          "resolved_findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "remaining_issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "design",
+          "decision",
+          "resolved_findings",
+          "remaining_issues"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "design",
+      "simplicity_review",
+      "ownership_review",
+      "final"
+    ],
+    "additionalProperties": false
+  }
+}

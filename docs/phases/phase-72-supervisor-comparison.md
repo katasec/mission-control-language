@@ -95,3 +95,8 @@ independent original-design reviewers and explicit named handoffs, complete arti
 See the completed record for observations and limits. Operator inspection of the outputs remains
 open; one sample does not establish speed/quality equivalence. Both first reviews passed, so a
 future comparison should exercise actionable findings before claiming revision-behaviour parity.
+
+
+## Code-writing comparison
+
+The subsequent [code-writing harness](../../tools/supervisor-code-test/README.md) and [successful sample](../../tools/supervisor-code-test/evidence/README.md) extend this experiment with actual file creation. Both engines pass the shared acceptance tests; Phase 74 records the Responses integration, diagnostics and installed acceptance. The original design-only slice above remains available. Operator output review and selection of the next experiment remain open.

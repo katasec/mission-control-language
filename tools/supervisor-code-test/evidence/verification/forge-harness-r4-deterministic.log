@@ -1,0 +1,36 @@
+MCL code directory present before ['forge', 'init']
+Results: /var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/forge-harness-r4-check-s4ia0ilh/results/codex/20261008T012740Z-7602370a
+Codex code directory present before execution
+--- before/harness.py
++++ after/harness.py
+@@ -39,6 +39,7 @@
+         if engine == "codex":
+             work_dir = run_dir / "native-workspace"
+             work_dir.mkdir()
++            (work_dir / "code").mkdir()
+             run_codex_workflow(run_dir, work_dir)
+         else:
+             run_mcl_workflow(run_dir)
+@@ -69,6 +70,7 @@
+ 
+ def run_mcl_workflow(run_dir):
+     mission_dir = run_dir / "mcl"
++    (mission_dir / "code").mkdir()
+     settings = read_json(run_dir / "settings.json")
+     if settings["reasoning_effort"] != "medium":
+         raise ValueError("This MCL draft supports medium reasoning only; its provider uses the default")
+
+--- before/mcl/experts/BuildCode/expert.md
++++ after/mcl/experts/BuildCode/expert.md
+@@ -19,5 +19,7 @@
+ {{final}}
+ 
+ Write code/retry_delay.py and code/test_retry_delay.py, then Read both files to verify their contents.
+-After file operations, return EXACTLY the existing final decision JSON shown above, no fences or
+-extra keys. Preserve it unchanged so the design/review artifacts stay comparable.
++After file operations, return exactly one StepEnvelope JSON object with keys text, status, and
++reason. Set text to a JSON-encoded string containing the unchanged final decision JSON shown
++above, status to "pass", and reason to null. Do not use fences or extra keys. Preserve the final
++decision unchanged inside text so the design/review artifacts stay comparable.
+
+Python compile/setup checks PASS

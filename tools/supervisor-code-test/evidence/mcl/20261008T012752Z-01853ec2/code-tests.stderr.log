@@ -1,0 +1,25 @@
+test_cap_exact_crossed_and_initial (test_retry_delay.RetryDelayTests.test_cap_exact_crossed_and_initial) ... ok
+test_first_attempt_and_doubling (test_retry_delay.RetryDelayTests.test_first_attempt_and_doubling) ... ok
+test_float_range_and_integer_overflow_fallback (test_retry_delay.RetryDelayTests.test_float_range_and_integer_overflow_fallback) ... ok
+test_fractional_and_subnormal_floats (test_retry_delay.RetryDelayTests.test_fractional_and_subnormal_floats) ... ok
+test_huge_attempt (test_retry_delay.RetryDelayTests.test_huge_attempt) ... ok
+test_invalid_attempts (test_retry_delay.RetryDelayTests.test_invalid_attempts) ... ok
+test_invalid_seconds_in_each_position (test_retry_delay.RetryDelayTests.test_invalid_seconds_in_each_position) ... ok
+test_large_integers (test_retry_delay.RetryDelayTests.test_large_integers) ... ok
+test_repeatability (test_retry_delay.RetryDelayTests.test_repeatability) ... ok
+test_validation_before_early_return (test_retry_delay.RetryDelayTests.test_validation_before_early_return) ... ok
+test_base_over_cap (acceptance_test.Acceptance.test_base_over_cap) ... ok
+test_cap (acceptance_test.Acceptance.test_cap) ... ok
+test_double (acceptance_test.Acceptance.test_double) ... ok
+test_first (acceptance_test.Acceptance.test_first) ... ok
+test_huge_attempt (acceptance_test.Acceptance.test_huge_attempt) ... ok
+test_invalid_attempt (acceptance_test.Acceptance.test_invalid_attempt) ... ok
+test_invalid_numbers (acceptance_test.Acceptance.test_invalid_numbers) ... ok
+test_overflow_boundary (acceptance_test.Acceptance.test_overflow_boundary) ... ok
+test_small_matrix (acceptance_test.Acceptance.test_small_matrix) ... ok
+test_subnormal (acceptance_test.Acceptance.test_subnormal) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.003s
+
+OK

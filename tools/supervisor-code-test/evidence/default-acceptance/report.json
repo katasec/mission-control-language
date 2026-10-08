@@ -1,0 +1,41 @@
+{
+  "started_at": "2026-10-08T07:53:11.110651+00:00",
+  "artifact": "/Users/ameerdeen/.local/bin/forge",
+  "version": "1.0.0+4976129a15a5961421134079b520f15f3d6a2cd5",
+  "sha256": "0064dbd7f87d3dad042bd1c6e4d8048a4de715c4b5bb94a15427aa2c10821197",
+  "cwd": "/var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/forge-responses-default-2a445a5ceadf4b68b7c90412e3a58846/workspace",
+  "provider": "openai",
+  "model": "gpt-6.1-sol",
+  "endpoint_override": false,
+  "observations": [
+    {
+      "case": "files",
+      "exit_code": 0,
+      "elapsed_seconds": 8.007,
+      "outcome": "PASS",
+      "stdout": "hands-default-ok"
+    },
+    {
+      "case": "outside",
+      "exit_code": 0,
+      "elapsed_seconds": 5.542,
+      "outcome": "PASS",
+      "stdout": "ERROR [Failed]: '/var/folders/kl/zcltgz9s1hv4c2p8tlh_13d40000gn/T/forge-responses-default-2a445a5ceadf4b68b7c90412e3a58846/outside.txt' resolves outside the workspace roots"
+    },
+    {
+      "case": "symlink",
+      "exit_code": 0,
+      "elapsed_seconds": 14.368,
+      "outcome": "PASS",
+      "stdout": "ERROR [Failed]: 'escape/outside.txt' resolves outside the workspace roots"
+    },
+    {
+      "case": "plain",
+      "exit_code": 0,
+      "elapsed_seconds": 2.825,
+      "outcome": "PASS",
+      "stdout": "tool-free-ok"
+    }
+  ],
+  "finished_at": "2026-10-08T07:53:44.141827+00:00"
+}
