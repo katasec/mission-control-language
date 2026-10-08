@@ -1,6 +1,6 @@
 # Phase 70.2 — Rich transcript selection
 
-**Status: implementation and sequential code reviews passed 2026-10-07. The operator-approved one-assistant-card scope now has a reviewed implementation; focused interaction, bridge, rendering and terminal-extension checks pass. Merge, Native AOT artifact verification and operator-installed Ghostty acceptance remain open.**
+**Status: the first merged implementation failed installed Ghostty acceptance at 2026-10-08 02:07 Dubai: dragging into trailing line space cleared the range, blocking Copy; selection contrast was also too weak. The narrow acceptance-correction design below is awaiting sequential review before a replacement implementation.**
 Depends on the approved [foundation](phase-70.1-text-interaction-foundation.md);
 parent [Phase 70](phase-70-tui-text-interaction.md).
 
@@ -245,6 +245,149 @@ timestamp is deliberately marked unavailable rather than reconstructed.
 
 ## Locked design decisions
 
+### Acceptance-correction design — 2026-10-08
+
+### Acceptance-correction workflow ledger
+
+This ledger preserves the failed first delivery and every correction event. Times are Dubai
+(`UTC+4`); `Not recorded` is never reconstructed as a guessed timestamp.
+
+| Stage/event | Work | Status/result | Started | Finished |
+|---:|---|---|---|---|
+| 1 | Initial design and reviews | Approved | 2026-10-07 20:18:24 | 2026-10-07 21:15:42 |
+| 2 | Initial plan and reviews | Approved | 2026-10-07 21:15:42 | 2026-10-07 21:27:58 |
+| 3 | Initial implementation and code reviews | Passed | 2026-10-07 21:27:58 | 2026-10-08 00:50:03 |
+| 4 | Initial required CI checks | Passed | 2026-10-08 01:01:52 | 2026-10-08 01:28:06 |
+| 5 | Initial merge | Merged, commit `b6ecb52` | 2026-10-08 01:34:37 | 2026-10-08 01:34:37 |
+| 6 | Initial install and Ghostty acceptance | **Failed:** trailing line-space cleared selection; selection contrast too weak | 2026-10-08 01:34:37 | 2026-10-08 02:07:31 |
+| 6.1 | First local install | **Failed:** MSBuild workers exited during AOT | 2026-10-08 01:34 | 2026-10-08 01:35 |
+| 6.2 | Install after build-server reset | Passed: installed `forge` reported `1.0.0+b6ecb52…` | 2026-10-08 01:49 | 2026-10-08 01:54 |
+| 7 | Scope correction | Trailing-space endpoint and shared selection contrast locked | 2026-10-08 02:07 | 2026-10-08 02:13 |
+| 8 | Correction design and reviews | Passed after one simplicity correction | 2026-10-08 02:13 | 2026-10-08 02:18:48 |
+| 9 | Correction plan draft | Produced | 2026-10-08 02:19:38 | 2026-10-08 02:19:58 |
+| 9.1 | First plan review | **Failed:** plan had not yet been recorded in the spoke | Not recorded | Not recorded |
+| 9.2 | Revised plan and reviews | Passed after adding Light/Dark composer/body/heading coverage | 2026-10-08 02:21 | 2026-10-08 02:25 |
+| 10 | Implement correction | Passed: bounded `ParagraphSelection` fallback, shared theme token and focused tests | 2026-10-08 02:25 | 2026-10-08 02:43 |
+| 11 | Simplicity code review | Passed: no findings | 2026-10-08 02:37:10 | 2026-10-08 02:38 |
+| 11.1 | Ownership code review | **Failed P2:** topology tests had not proved rightmost same-row selection or inside-card fallback rejection | 2026-10-08 02:38 | 2026-10-08 02:39 |
+| 11.2 | P2 test correction and repeated reviews | Passed: test-only correction proves rightmost same-row member and card-owned inter-block rejection; both reviewers passed | 2026-10-08 02:39 | 2026-10-08 02:46:15 |
+| 12 | Focused release validation | Passed: Debug 0 warnings; focused interaction/selection/contract/art/menu suite 147/147; terminal extensions 27/27 | 2026-10-08 02:46 | 2026-10-08 02:48 |
+| 12.1 | Native AOT publish | Passed: `osx-arm64` output produced. macOS linker emitted non-fatal deployment-target warnings for local Homebrew OpenSSL/Brotli libraries. | 2026-10-08 02:48 | 2026-10-08 02:54 |
+| 13 | Code commit and PR | Passed: commit `30457e0`; [forge-mcl PR #69](https://github.com/katasec/forge-mcl/pull/69) opened | 2026-10-08 02:54 | 2026-10-08 02:56 |
+| 13.1 | First PR CI run | **Failed:** unrelated `StartPageTests.Create_does_nothing_and_a_click_on_Chat_opens_the_chat` expected `[True, False]`, got `[True, True]`; 943 passed, 1 failed, 10 skipped | 2026-10-08 02:55:22 | 2026-10-08 03:00:25 |
+| 13.2 | CI rerun | **Failed the same StartPage test, then cancelled at operator direction:** local Ghostty proof precedes remote CI | 2026-10-08 03:04:36 | 2026-10-08 03:09:11 |
+| 14 | Local install and Ghostty acceptance rerun | **Failed:** trailing-row case improved, but cross-paragraph/gap drags select only one block and slight vertical drift clears the range | 2026-10-08 03:08 | 2026-10-08 03:16 |
+| 14.1 | Scope correction: continuous card text flow | Passed: one resolver and one logical reply-body text box locked after sequential design/plan reviews | 2026-10-08 03:16 | 2026-10-08 03:28:38 |
+| 14.2 | Implementation and local verification | Passed: `26f92c6`; Debug 0 warnings; 149 focused tests; 27 extension tests; managed Ghostty acceptance confirmed by operator | 2026-10-08 03:28:55 | 2026-10-08 03:43:27 |
+| 15 | Native AOT publish | Passed: `osx-arm64` artifact; non-fatal local Homebrew linker warnings | 2026-10-08 03:43:27 | 2026-10-08 03:49 |
+| 15.1 | Accepted-correction CI | **Failed:** changing unrelated failures: ForgeRun broken-pipe and ChatScreenLiveMotion virtual-timing assertion | 2026-10-08 03:44 | 2026-10-08 03:57 |
+| 15.2 | CI timing-test containment and release CI | Passed: exact two-class CI-only exclusion; CI run `37708331114` passed package verification and macOS ARM64 CLI in 30m31s | 2026-10-08 04:19 | 2026-10-08 04:55 |
+| 16 | Product merge and installed Native AOT | Passed: PR #69 merged as `b53df9c`; accepted `26f92c6` Native AOT installed locally (`forge --version` confirmed) | 2026-10-08 05:01 | 2026-10-08 05:05:47 |
+
+The initial installed default-path observation was decisive: dragging inside an assistant card
+showed a range, but reaching trailing space at a line end cleared it. Stage 14.2 records the
+operator's managed Ghostty PASS for the corrected one-text-box behaviour; Stage 16 records final
+Native AOT installation.
+The same observation and supplied visual references show that the shared selected-text background
+is too close to its surfaces in both assistant content and the composer.
+
+### First acceptance correction — superseded history
+
+The first correction changed the shared `ForgeTheme.Selection` token to `#A9C9F5` light and
+`#24558A` dark, which remains active. Its same-row trailing-space endpoint rule is **superseded**:
+installed Ghostty acceptance at ledger stage 14 proved that treating vertical gaps as invalid made
+the reply behave as separate graphic blocks. The full evidence and failure remain in the ledger;
+the only active selection contract is **Second acceptance correction — locked 2026-10-08** below.
+The binding visual references are the [foundation light](../images/phase-70.1/foundation-light.svg)
+and [foundation dark](../images/phase-70.1/foundation-dark.svg) galleries, the
+[finish-line mockup](../design/forge_tui_finish_line_mockup.html), and the
+[operator chat reference](../images/phase-70/chat-user-reference.png). `ForgeTheme.Selection`
+must be `#A9C9F5` light and `#24558A` dark: its background contrast is respectively 1.70:1 and
+2.16:1 against CardSurface, and 1.60:1 and 2.37:1 against CodeBlockFill; normal text on the
+selection is respectively 9.91:1 and 5.11:1. Controlled frames must show that exact token for
+composer, body/code and heading overlay. The installed default-path rerun must show, at normal
+and narrow Ghostty widths in both themes, a continuous selection rectangle visibly distinct from
+the unselected CardSurface/CodeBlockFill for composer, assistant body, code and headings.
+
+This remains local presentation only: no tier, datastore, identity, credential, endpoint or
+clipboard payload boundary changes. The default path is unchanged; the failed Ghostty observation
+must be replaced by a named operator PASS before closure.
+
+### Second acceptance correction — locked 2026-10-08
+
+**The red-circled assistant reply body is one logical selectable text box.** Paragraphs,
+blank lines, headings, code blocks and their graphics are layout inside that one box; they are
+never selection boundaries. This supersedes the preceding same-row/gap-invalid fallback design.
+
+1. `ParagraphSelection` has **one** pointer-to-logical-text resolver for every non-control point
+   inside its reply-body bounds. There is no direct-member route plus trailing-space fallback, no
+   same-row requirement, and no rule that clears a range merely because the pointer crosses a
+   rendered gap or drifts vertically.
+2. The resolver maps any body coordinate to the nearest valid endpoint in the card's ordered text
+   stream. A range includes every text member between anchor and endpoint, in either drag
+   direction. Existing member mappers retain their responsibility for source-text indices.
+3. Interactive controls, including the code-copy button, stay controls rather than text endpoints.
+   Card chrome outside the reply body remains outside the text box.
+4. The correction is not accepted on a screenshot or a claim. Automated proof must drag both
+   lower-to-upper and upper-to-lower across a real blank paragraph gap and copy both paragraphs;
+   it must retain selection across small vertical drift during a horizontal drag; it must cover
+   heading and code members in the same continuous range; and it must retain control rejection.
+5. Installed Ghostty acceptance must reproduce the red-circled case as one continuous range and
+   exact copied text before CI is restarted or any merge is considered.
+### One-text-box implementation design — 2026-10-08
+
+`ParagraphSelection.RefreshMembers()` already provides the ordered stream of realized native
+`Paragraph` and `HeadingImage` members. `ApplyRange`, `Ordered` and `TryCopy` already make a
+cross-member range and copy it in source order. The only implementation change is to replace the
+current `TryMemberEndpoint` plus `TryTrailingEndpoint` split with one `TryEndpoint` resolver:
+
+1. Reject only a missing reply body, a descendant `Button`, or a point outside
+   `ParagraphSelection.Content.Bounds`.
+2. For each realized member rectangle `[X, Right) × [Y, Bottom)`, compute `verticalDistance` as
+   `Y - uiY` when `uiY < Y`, `uiY - Bottom + 1` when `uiY >= Bottom`, otherwise `0`; compute
+   `horizontalDistance` the same way from `[X, Right)`. Choose the lexicographically smallest
+   `(verticalDistance, horizontalDistance, memberSourceIndex)`. A point inside either interval has
+   distance zero; an exact geometry tie chooses the earlier source member.
+3. Pass the original point to that member's existing `TextIndexAt`; native `Paragraph` and
+   `HeadingImage` already clamp it to the appropriate source boundary.
+4. Keep the resulting `Endpoint(memberIndex, textIndex)` unchanged. Existing range/copy behavior
+   then selects partial endpoint members and all intervening members in source order.
+
+This is one pointer-to-text route, not a direct-hit path plus fallback. It makes a blank
+paragraph gap, rendered graphics, trailing space and small vertical drift ordinary positions in
+one reply-body text box. `TextInteraction`, XenoCells, renderers, HeadingImage, theme,
+Terminal Extensions and public APIs remain unchanged.
+
+Tests must replace the superseded gap-rejection and artificial same-row fixture with routed
+lower-to-upper and upper-to-lower gap drags that copy both paragraphs; a horizontal drag with
+vertical drift that retains its range; and a real heading/body/code range that copies canonical
+text and shows native plus overlay selections. They retain button and outside-body rejection.
+### Approved implementation plan — second acceptance correction
+
+1. In `src/ForgeMission.Cli/Tui/ParagraphSelection.cs`, delete the direct-member plus same-row
+   trailing fallback split. Implement the one locked resolver over `RefreshMembers()` using the
+   specified distance tuple. It rejects only controls and points outside reply-body bounds, then
+   calls the chosen member's existing `TextIndexAt` with the original point.
+2. Keep `ForgeTheme.Selection` exactly as already corrected: `#A9C9F5` light and `#24558A` dark.
+   No theme, renderer, `TextInteraction`, XenoCells, Terminal Extensions, package, or public API
+   change is permitted.
+3. In `tests/ForgeMission.Mcl.Tests/Cli/TextInteractionTests.cs`, replace superseded same-row and
+   gap-rejection tests with routed body tests. Drag lower-to-upper and upper-to-lower over a real
+   gap between `first body` and `second body`; both copies must exactly equal
+   `"first body\n\nsecond body"`. A one-row vertical drift during a horizontal drag must retain
+   the range and copy its expected source text. An equidistant geometry tie must choose the earlier
+   source member. A mixed `Heading text`, `body text`, `using System;` range must exactly copy
+   `"Heading text\n\nbody text\n\nusing System;"` and show HeadingImage plus native code
+   selection. Retain code-copy-button and outside-body rejection.
+4. Rebuild Debug CLI before reflection tests, run the focused interaction, code-selection,
+   bridge-contract, TextArt and menu suites plus terminal-extension tests, and use a local install
+   for Ghostty acceptance **before** restarting CI. Native AOT and CI remain post-acceptance
+   release gates.
+
+Done when there is one resolver for any non-control point in the reply body; cross-block and
+drift selection copies the exact source-order payload; control/chrome boundaries remain invalid;
+and the operator proves one continuous range and exact Copy in installed Ghostty.
+
 | Decision | Locked outcome |
 |---|---|
 | Range scope | One assistant reply card; paragraphs, lists, quotes, code and eligible headings. User cards, chrome, tables and collapsed content excluded. |
@@ -254,6 +397,24 @@ timestamp is deliberately marked unavailable rather than reconstructed.
 | Ownership and API | CLI `XenoCells` contains exactly two private Paragraph calls; `ParagraphSelection` composes card ranges; `TextInteraction` owns policy; Terminal Extensions owns menu/clipboard behaviour. |
 | Visuals and themes | Native Paragraph selection and HeadingImage overlay use existing `ForgeTheme.Selection`/`ForgeStyles` in light/dark normal/narrow Ghostty. |
 
+### CI timing-test containment — locked 2026-10-08
+
+The operator directed the release workflow to exclude only
+`ForgeMission.Tests.Cli.StartPageTests` and
+`ForgeMission.Tests.Cli.ChatScreenLiveMotionTests`. They are virtual-terminal UI tests whose
+fixed-tick and real-clock rendering assertions produced changing failures across identical PR
+commits. This is CI-only containment in `.github/workflows/publish-terminal-extensions-package.yml`:
+`Makefile`'s local `test` target remains the full suite.
+
+The workflow continues to run all other tests, including Phase 70 `TextInteractionTests` and
+non-UI `ForgeRunTests`, plus terminal-extension package verification and Native AOT publish.
+The exact replacement in the workflow's `Verify current product and package` step is:
+`{ make build; dotnet test ForgeMission.slnx --filter 'FullyQualifiedName!~ForgeMission.Tests.Cli.StartPageTests&FullyQualifiedName!~ForgeMission.Tests.Cli.ChatScreenLiveMotionTests'; make verify-terminal-extensions-package; }`.
+No `Makefile` target changes. The evidence is CI run `37699171757` (the named StartPage test
+failed twice) and CI run `37703917618` (the named ChatScreenLiveMotion test failed on a later
+rerun). This is a Type-2 test-gate exception: scope is exactly the two named classes; reversal is
+deleting the workflow filter; removal condition is deterministic virtual-terminal synchronization
+in those tests.
 ## Entry points and gates
 
 | Area | Read / prove |
@@ -271,8 +432,8 @@ timestamp is deliberately marked unavailable rather than reconstructed.
 | 1. Lock range and semantic scope | Done — operator scope plus locked two-method `XenoCells` exception. | Recorded above with R9 simplicity and R5 ownership PASS. |
 | 2. Design and public contract review | Done — design locked 2026-10-07 17:15:42 UTC. | Actual APIs, lifecycle, visual reference and Type-2 removal path reviewed sequentially. |
 | 3. Plan and review | Done — supervisor approved plan 2026-10-07 17:27:58 UTC. | Two `XenoCells` bridges; card-owned range composition; `TextInteraction` policy; HeadingImage overlay; public menu callback; exact contract/integration/menu coverage. No renderer change. |
-| 4. Implement and review | Done — implementation, correction loop and sequential reviews complete. | Focused checked evidence is recorded in the workflow table; see Task 5 for merge/default-path work. |
-| 5. Merge, install and accept | Next — automated release verification, merge and operator live acceptance. | Native AOT and required checks pass; normal artifact installed; operator proves continuous selection and exact Copy through real mixed content in both themes on Retina, supervisor assesses and records evidence. |
+| 4. Implement and review | Reopened — acceptance correction awaits design/plan reviews. | Same implementer and reviewers must approve the trailing-space endpoint and shared-token correction before code changes. |
+| 5. Merge, install and accept | First revision merged and installed; acceptance failed. | Rerun required checks, merge/install the correction, then operator proves continuous selection, exact Copy and visible selection contrast through real mixed content in both themes on Retina. |
 
 ### Approved implementation plan
 
