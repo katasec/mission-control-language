@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Review the [supervisor comparison](phases/phase-72-supervisor-comparison.md) outputs and select the next comparison; Responses/Hands local-run delivery and code-writing comparison are verified. |
+| **NEXT STEP** | Review the [shared CLI merge-release proposal](phases/phase-75-cli-merge-releases.md); implementation awaits operator approval. |
 
 ## Active phases
 
@@ -17,6 +17,7 @@
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
 | [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 | [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
+| [75 — Shared CLI merge releases](phases/phase-75-cli-merge-releases.md) | Independent design reviews passed; implementation awaits operator approval. |
 
 ## Design docs
 
