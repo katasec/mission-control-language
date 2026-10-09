@@ -1,9 +1,8 @@
 # Phase 76 — Unified cloud mission execution
 
-**Status:** The initial MCL package-input slice and the Desktop compatibility slice are merged;
-the OCI client package is published. A bounded MCL process-runner repair is verified locally and
-awaits merge before the blocked package publication can be retried. The remaining cloud-run slices
-are pending. **Build-ready.**
+**Status:** Product requirements agreed with the operator on 2026-10-09 and recorded in
+[the requirements spoke](phase-76.1-unified-cloud-run-requirements.md). No product changes,
+implementation plan approval, deployment, or runtime acceptance in this session. **Not build-ready.**
 
 ## Intent
 
@@ -18,35 +17,9 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Documentation verification | 2026-10-09: `git diff --check` and a local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A. |
-| Initial MCL package-input slice | Merged as [forge-mcl PR #73](https://github.com/katasec/forge-mcl/pull/73); managed suite passed before release retry. |
-| OCI client dependency | `Katasec.OciClient` 0.4.0 published after [PR #3](https://github.com/katasec/oci-client-dotnet/pull/3). |
-| Desktop compatibility | Merged as [forge-desktop PR #10](https://github.com/katasec/forge-desktop/pull/10). |
-| Package publication unblock | Bounded `ExecExpertRunner` macOS closed-stdin repair verified locally: 1,003 passed, 0 failed, 8 skipped; awaiting PR/merge and release retry. |
-| Contract design | Locked; [Phase 76.2 contract design](phase-76.2-unified-cloud-run-contracts.md) |
-| Implementation plan | Approved; [Phase 76.3 plan](phase-76.3-unified-cloud-run-implementation.md) |
-| Remaining implementation and acceptance | Pending after package publication; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
-
-## Supervisor workflow status
-
-| Step | Start (Dubai, UTC+04:00) | End (Dubai, UTC+04:00) | Status |
-|---|---|---|---|
-| 0 — Scope | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 1 — Supervisor contract design | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 1a — Simplicity design reviews | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 1b — Ownership design reviews | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 2 — Implementer plan | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 2a — Simplicity plan reviews | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 2b — Ownership plan reviews | Unavailable; not recorded at boundary | Unavailable; not recorded at boundary | Completed |
-| 2c — Supervisor plan approval | 2026-10-09; exact time not recorded | 2026-10-09; exact time not recorded | Completed |
-| 1c — OCI dependency design correction | 2026-10-09T03:33:22+04:00 | 2026-10-09T03:44:25+04:00 | Completed |
-| 2d — Revised plan review/approval | 2026-10-09T03:33:22+04:00 | 2026-10-09T03:44:25+04:00 | Completed |
-| 3 — Initial MCL package-input implementation | Unavailable; not recorded at boundary | Unavailable; pre-current-timestamp capture | Completed (PR #73 merged) |
-| 3a — Desktop compatibility implementation | Unavailable; not recorded at boundary | Unavailable; pre-current-timestamp capture | Completed (PR #10 merged) |
-| 3b — Package-publication unblock plan/reviews | Unavailable; not recorded at boundary | Unavailable; pre-current-timestamp capture | Completed |
-| 3c — Package-publication unblock implementation/reviews | Unavailable; not recorded at boundary | Unavailable; pre-current-timestamp capture | Completed locally; 1,003 passed, 0 failed, 8 skipped |
-| 4 — Merge/publish/deploy | 2026-10-09T09:39:44+04:00 | Pending | In progress — commit, PR, merge, then retry package publication |
-| 5 — Default-path acceptance | Pending | Pending | Pending |
-| 6 — Closure | Pending | Pending | Pending |
+| Current implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
+| Contract design | Next; [required design work](phase-76.1-unified-cloud-run-requirements.md#contract-work-before-implementation) |
+| Product implementation and acceptance | Not started; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
 
 ## Dependency-ordered work
 
@@ -59,9 +32,10 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 
 ## Next
 
-Merge the verified MCL runner repair, retry package publication on its default release path, then
-continue the dependency-ordered cloud-run implementation slices. Native AOT publication remains
-the final confirmation only, after managed testing is complete.
+Design and review immutable mission admission, named inputs/artifact bindings, Project/session
+identity, config/auth resolution, multi-folder Hands authority, and result/diagnostic contracts.
+Requirements are settled; DTOs, APIs, failure boundaries, and migration details are not yet a
+reviewed implementation design. Do not infer missing contracts while building.
 
 ## Supervisor autonomy
 
