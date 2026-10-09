@@ -5,6 +5,13 @@
 Original plan and complete r7 correction plan approved after fresh full independent reviews.
 Correction implementation/publication/default acceptance remain open.
 
+Latest bounded r7 approval delivered through [MCL PR377](https://github.com/katasec/mission-control-language/pull/377),
+merged2026-10-09T23:28:43Z atff88ce361217e3240cf82ab6a0924a2f09aef655. Documentation validation
+passed11 docs/77 links/2 JSON examples/fences/global index and git diff --check; GitHub reported
+mergeable/CLEAN with no required checks. Product tests/AOT/default acceptance N/A for this
+documentation delivery; product gates remain mandatory. The same implementer is completing
+current-source verification; final code-review/native/publication/default gates remain open.
+
 Complete correction-plan approval delivered through [MCL PR376](https://github.com/katasec/mission-control-language/pull/376),
 merged2026-10-09T23:15:01Z atb79252de6d9c412f3fa82f1c96a8e0a6bd35dbd0. Named documentation
 checks passed:11 Phase76/hub files,77 local links/anchors,2 JSON examples, balanced fences,
@@ -36,6 +43,49 @@ not corrected product or Native AOT acceptance. The complete round7 plan records
 one-import, retained-root-only observation; all42 files/public contracts remain unchanged.
 Supervisor clarification boundaries:2026-10-09 23:23:18–23:23:38 UTC. New full sequential plan
 reviews are required before that clarification is implemented.
+
+Current r7 implementation verification subsequently observed by supervisor: full Debug
+build0warnings/errors (full-build-final.log); unfiltered Debug1062PASS/6 existing live skips/0fail,
+2m19s with env -u MCL_API_KEY and blame-hang90s (full-debug-r3b.log); Release package406PASS/0skip
+and metadata PASS (release-package-final.log). Managed lifecycle probe passed closed stdin,
+literal argv/cwd/PATH, already-exited descendants, early-root timeout/caller cancel and unrelated
+child ownership (lifecycle-managed-final.log). Source is still uncommitted at this observation;
+final commit/package identity, native CI and acceptance remain open. full-debug-r3.log preserves
+the stopped first attempt with the inherited key; the unchanged missing-key test failed there.
+No test/product change or exclusion supplied the successful full rerun.
+
+## Corrected frozen source — code review/native pending
+
+Same implementer r3 ended2026-10-09 23:38:49 UTC, frozen/pushed product source
+`dc03b7b9f295bf923436eaec5f645771142e061a`, [draftPR77](https://github.com/katasec/forge-mcl/pull/77).
+All42 changed paths match the approved inventory; product tree clean. Complete diff SHA256
+`585ddceaeb6ec5ced608966d89efa0fe88cf1156c5e6e5d34fc33c0a779519be`,2442 insertions/457 deletions.
+Full handback/commands/per-file details: `/private/tmp/phase76-core-corrections-20261009T231509Z/EVIDENCE.md`.
+
+| Corrected-source observation | Result / retained log |
+|---|---|
+| Debug solution build | 0warnings/errors; full-build-final.log |
+| Unfiltered full Debug | 1062PASS/6 existing live skips/0fail,2m19s; full-debug-r3b.log |
+| Full focused boundary slice | 190PASS/0skip/0fail; focused-final.log |
+| Release Core/package | 0warnings/errors,406PASS/0skip, metadata PASS; core-release-final.log/release-package-final.log |
+| Existing CLI scripts | 30PASS; script-tests.log |
+| Managed lifecycle | macOS arm64 PASS; lifecycle-managed-final.log; not native/PID1 acceptance |
+| Fresh normal-version branch consumer | PASS; consumer-run-final.log/consumer-restore-normal-final.log; lower-layer local package only |
+| Actual published Client ABI | Client0.9.3 Create/Open/Reconnect without recompilation; Application DLL hashcf472b56aec324111750d6f03a7695e5e134a050bcb11c2a51076aac9cda23ca |
+| Canonical native | [run38005239039](https://github.com/katasec/forge-mcl/actions/runs/38005239039), pending atdc03b7b |
+| Four hosts/PID1 | [run38005239137](https://github.com/katasec/forge-mcl/actions/runs/38005239137), pending atdc03b7b |
+
+Supervisor independently compared local normal0.1.8 nupkg with the fresh consumer-cache bytes:
+both SHA256`e6f6a3e8b138a34db85b7a15d38b8bb53e547b8d7a59e7a6ef1db3eb9afc155b`.
+Nuspec source isdc03b7b and Parser/Scout dependencies remain0.1.0. Extracted exact normal metadata
+in normal-branch-package.nuspec. Preserved earlier branch-package.nuspec is the failed disposable
+prerelease attempt, whose global Version override incorrectly relabeled those dependencies and
+failed restore NU1102. No product changes fixed it; the approved normal-version isolated-cache
+route passed. Neither local package is published/default acceptance.
+
+Full current simplicity/style code review r2 assigned23:39:10 UTC; end not yet observed.
+No prior plan/code PASS is inherited. Reviewer checks code while native CI runs, keeping its
+zero-warning verdict open until final current-source logs exist. Ownership follows sequentially.
 
 ## Source investigation
 

@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Core corrections are written; full Debug build and focused parser/checkpoint checks passed. Complete r7 with the precise private macOS cleanup clarification passed fresh full reviews and received supervisor approval 2026-10-09 23:27:01 UTC. Final code reviews, current-source native checks, merge/publication and acceptance remain open.
+**Status:** Corrected source dc03b7b is frozen and pushed; full Debug1062PASS, focused190PASS and Release/package406PASS with zero build warnings. Independent simplicity/style code review and current-source native CI are in progress. Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -192,7 +192,8 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Complete r6](phase-76.4-core-cloud-primitives-plan.md) approved 23:13:40 UTC; same implementer receives bounded correction handoff |
-| Independent plan reviews | Fresh complete r6 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md) |
-| Plan approval / implementation | Initial round1 handback770778d; correction implementation assigned23:15:09 UTC under complete r6 approval, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
+| Implementer plan | [Complete r7](phase-76.4-core-cloud-primitives-plan.md) approved 23:27:01 UTC; same42-file scope and public contracts |
+| Independent plan reviews | Fresh complete r7 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md#complete-round-7-clarification--full-reviews-and-approval) |
+| Plan approval / implementation | Correction handbackdc03b7b at23:38:49 UTC; all42 paths match scope; clean/pushed draftPR77; [managed/package evidence](phase-76.4-core-cloud-primitives_completed.md#corrected-frozen-source--code-reviewnative-pending) |
+| Code review / native CI | Simplicity/style r2 assigned23:39:10 UTC; canonical38005239039 and four-host38005239137 pending atdc03b7b; ownership follows sequentially |
 | Published/default acceptance | Required; not performed |
