@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Both implementation round 1 code reviews require corrections; complete correction plan returned for new full plan reviews. Canonical macOS verification failed before AOT; no further product edits, merge or publication approved.
+**Status:** Complete r6 correction plan passed fresh full reviews and received supervisor approval 2026-10-09 23:13:40 UTC; correction implementation is next. Canonical macOS failure, final code reviews, merge/publication and acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -32,8 +32,8 @@ broker or cloud-aware Core dependency.
 The complete parent design passed full sequential round 7 simplicity/ownership reviews before
 supervisor lock. This bounded task directly implements its Core rows. Round 3 implementation
 received approval after both full plan reviews; code review found lifecycle, checkpoint and style
-defects. Read-only round 5 refinement returned after round 4 investigation; any launch change outside the
-approved file inventory must pass new full plan reviews before further product edits.
+defects. Complete round6 correction plan now passes fresh full sequential reviews; the expanded bounded
+file inventory is approved. Any further material deviation returns before product edits.
 
 ## Required changes and order
 
@@ -120,13 +120,12 @@ failure observations. Desktop/ForgeUI/TUI visual gates are N/A: no layout change
 ### Code-review correction boundaries
 
 The existing lifecycle contract requires ownership through pipe completion even if the direct
-parent exits first. Its private launch implementation is being replanned; it has no new public
-API, permission policy, datastore or identity authority. Product edits remain paused until the
-complete correction plan receives full sequential reviews and supervisor approval.
+parent exits first. Its private launch implementation is approved in the complete r6 plan; it has no new public
+API, permission policy, datastore or identity authority. Product edits are authorized only through the same implementer's explicit r6 handoff; no further scope expansion is approved.
 
 | Boundary | Required correction / proof |
 |---|---|
-| Exec ownership | Establish OS ownership before target execution; retain it through stream completion and termination. No post-launch race or descendant snapshot substitutes. POSIX unreaped-leader and Windows job ownership are investigation candidates, not approved implementation. |
+| Exec ownership | Establish OS ownership before target execution; retain it through stream completion and termination. No post-launch race or descendant snapshot substitutes. The approved plan uses POSIX unreaped-leader and atomic Windows job ownership. |
 | Exec failure | Failed ownership setup never falls back to an unowned launch. Timeout/caller cancellation and I/O failure keep their declared results; termination failure remains visible. Parent-first-exit tests prove no surviving ordinary descendant or later sentinel write. |
 | Cleanup failure precedence | An observed OS termination/reap failure propagates as a visible IOException even when caller cancellation is requested; do not replace it with OCE. Normal caller cancellation propagates OCE after successful cleanup. Preserve the cleanup operation/error and original failure context through a private distinction at the exec boundary; no new public exception contract or fallback. |
 | Supported PID1 runtime | The Runner image directly starts dotnet as its entrypoint. If it adopts ordinary descendants, reap only owned-group children after termination; never reap unrelated processes or set a global subreaper policy. Distinguish stopped execution from zombie process entries. Native observation and I/O must remain joinable when cleanup itself fails. |
@@ -193,7 +192,7 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Complete round 5](phase-76.4-core-cloud-primitives-plan.md) returned; full reviews/approval pending |
-| Independent plan reviews | Complete correction plan: simplicity review in progress, ownership next; no current PASS; [evidence/timing](phase-76.4-core-cloud-primitives_completed.md) |
-| Plan approval / implementation | Granted 22:07:32 UTC; round1 handback at770778d; code-review corrections pending, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
+| Implementer plan | [Complete r6](phase-76.4-core-cloud-primitives-plan.md) approved 23:13:40 UTC; same implementer receives bounded correction handoff |
+| Independent plan reviews | Fresh complete r6 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md) |
+| Plan approval / implementation | Initial round1 handback770778d; complete correction plan approved23:13:40 UTC; implementation next, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
 | Published/default acceptance | Required; not performed |

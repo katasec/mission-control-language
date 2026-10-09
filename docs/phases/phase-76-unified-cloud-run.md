@@ -6,7 +6,7 @@
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
-Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Core producer code reviews require corrections; its complete correction plan is being reviewed before further implementation. Later consumer tasks, deployment
+Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Core producer code reviews require corrections; its complete correction plan passed fresh reviews and is approved for implementation. Later consumer tasks, deployment
 and unified runtime acceptance remain open.
 
 ## Intent
@@ -22,11 +22,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Generic contract reviews PASS and supervisor lock recorded; Core producer correction planning in progress. OCI product evidence is recorded separately. |
+| Current documentation handoff | Generic contract reviews PASS and supervisor lock recorded; Core producer correction plan approved; implementation next. OCI product evidence is recorded separately. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) code-review corrections require a revised approved plan; unified default-path acceptance not started |
+| Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) complete correction plan approved for implementation; unified default-path acceptance not started |
 
 ## Dependency-ordered work
 
@@ -42,7 +42,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 
 These are required outcomes of tasks 4–5 above, not completed work. Detailed implementation
 spokes follow the reviewed contracts in dependency order; only the bounded Core producer has
-entered implementation, and its correction-plan approval is pending.
+entered implementation; its reviewed correction plan is now approved.
 The implementation areas are coverage groups, not a fixed count of PRs. Keep future tasks small
 and independently deliverable: complete review, merge/publication and applicable default-path
 acceptance for one bounded increment before starting the next.
@@ -58,8 +58,8 @@ acceptance for one bounded increment before starting the next.
 
 ## Next
 
-Review and approve the complete correction plan for [Core package/execution primitives](phase-76.4-core-cloud-primitives.md)
-under the locked generic design, then resume implementation and full code reviews. The OCI prerequisite is accepted;
+Implement the approved complete correction plan for [Core package/execution primitives](phase-76.4-core-cloud-primitives.md)
+under the locked generic design, then obtain full current code reviews and required verification. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.
