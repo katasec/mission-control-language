@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Settle executable trust and the Host-owned content boundary for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md), then lock the reviewed contracts and plan implementation. |
+| **NEXT STEP** | Settle content ownership and revise executable contracts for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md), then review and plan implementation. |
 
 ## Active phases
 
@@ -17,7 +17,7 @@
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
 | [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 | [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | OCI dependency published and accepted; cloud contracts technically reviewed, boundary decisions pending. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | OCI dependency accepted; executable trust decided, execution redesign and content ownership remain open. |
 
 ## Design docs
 
