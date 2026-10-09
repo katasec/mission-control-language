@@ -613,7 +613,91 @@ retained-root-only proof: query does not establish authority or choose kill targ
 root-only membership resolves pending EPERM; all other errors/deadlines stay visible. Fixed
 budget, public contracts, same42-file inventory, AOT and normal default-path gates remain.
 **PLAN APPROVED2026-10-09 23:27:01 UTC**. No merge/publication/acceptance approval.
-Same implementer resumed at23:27:10 UTC under implement:r3; stage end not yet observed.
+Same implementer resumed at23:27:10 UTC under implement:r3; stage ended23:38:49 UTC.
+
+## Full corrected-source code review — round 2
+
+Simplicity/style reviewed the complete42-path diff atdc03b7b from23:39:10 to23:42:25 UTC.
+All ten structural simplicity checks passed; the test-volume check requires two already-approved
+observations: native duplex pressure/environment assertions in the existing self-spawning probe,
+and an actual PipelineRunner parallel sibling launch while native ONNX inference remains unfinished,
+followed by joined cancellation with no score write. No new product defect or style refactor was
+found. Full managed/Release logs show zero warnings; current-source canonical/four-host AOT logs
+remain pending, so the style zero-warning row is open. These findings require an implementation
+correction within approvedr7, after the sequential full ownership review assigned23:42:55 UTC.
+
+| Simplicity check | Current corrected-source verdict |
+|---|---|
+| New apps/libraries | PASS; probe is test tooling, no production dependency |
+| Reuse | PASS; live caller registry, parser and managed pipes retained |
+| Multiple paths | PASS; one adapter/private OS ownership implementations |
+| Legacy paths | PASS; actual Client ABI retained, old checkpoints refused |
+| Knobs | PASS; fixed private cleanup budget |
+| Speculative abstractions | PASS; concrete lifetime/pipe/cleanup owner |
+| Library choice | PASS; existing pipes/platform/ONNX packages |
+| Copy-paste | PASS; shared exchange/error boundary |
+| Redundant definitions | PASS; existing StepKey/output convention |
+| Size versus requirement | PASS; approved42 paths,2442 insertions/457 deletions |
+| Test volume | REVISE; native duplex/env and ONNX pipeline sibling observations missing |
+
+| Code-style check | Current corrected-source verdict |
+|---|---|
+| Progressive disclosure | PASS; execution/parser entry flow |
+| Small functions | PASS; coherent parser/native stages |
+| Top-down order | PASS; public RunAsync/StreamAsync precede helpers |
+| Explicit errors | PASS; cleanup failure precedence and macOS retained-root proof |
+| Shallow nesting | PASS; bounded guards/stages |
+| Separate side effects | PASS; named launch/observe/reap/argument boundaries |
+| Zero warnings | OPEN; managed/Release zero, native CI pending |
+| Extract for real reason | PASS; actual lifetime/parser/error boundaries |
+| Complexity | PASS; manual classic AddRow9,ExchangeAsync8,POSIX JoinAsync8,probe RunAsync10 |
+
+Full ownership review assigned23:42:55 UTC, observed work23:43:23–23:47:22 UTC:
+placement PASS, technical REVISE for the same two verification gaps. Reviewer independently
+derived owners from the Desktop atlas, Core and build READMEs before comparing the complete diff.
+
+| Behavior | Derived owner / current code verdict |
+|---|---|
+| Package asset declarations | Core manifest; PASS |
+| Distribution metadata before local/provider environment evaluation | Core manifest; PASS |
+| Full local TOML behavior | Core manifest; PASS |
+| Immutable markdown diagnostics/no filesystem fallback | Core ExpertLoader; PASS |
+| Declared parameters as strings | Core semantic validation; PASS |
+| Pure resolved package construction/validation | Core package; PASS |
+| Legacy hash and asset/executable identity | Core package; PASS |
+| Actual generated JSON size | Core package; PASS |
+| Safe/collision-free assets/admitted ONNX model | Core package; PASS |
+| Reachable admitted names/exact reserved names | Core input semantics; PASS |
+| Reachable profile reporting | Core semantics/deployment availability; PASS |
+| Six-argument ABI/generated JSON constructor | Core public contract; PASS |
+| Actual published Client Create/Open/Reconnect | Core compatibility tests; PASS |
+| Malformed checkpoint/unsupported format refusal | Core codec; PASS |
+| Admitted root input retention/resume | Core replay; PASS |
+| Execution-semantic fingerprint/no scratch identity | Core replay; PASS |
+| Runtime workspace/deterministic output allocation | Core primitive; PASS |
+| Live artifact registry/caller registration authority | Caller writes/Core reads; PASS |
+| Child workspace/exact lifecycle StepKey | Core pipeline/trace; PASS |
+| Process-only verified input/runtime alias mapping | Core exec; PASS |
+| Literal command/argv/lookup/expert cwd | Core exec; PASS |
+| Bounded concurrent joined streams | Core exec; PASS |
+| Precise declined-input classification | Core exec; PASS |
+| Output/status/reason/judge/streaming behavior | Core exec; PASS |
+| Atomic POSIX group/retained root | Private Core lifetime; PASS |
+| macOS exact held-root-only observation | Private Core lifetime; PASS |
+| Linux exact owned adopted reap | Private Core lifetime/scoped Type2; PASS |
+| Atomic Windows job and completion | Private Core lifetime; PASS |
+| Cleanup failure precedence/resource release | Core lifetime/error boundary; PASS |
+| Numeric ONNX/relative model/joined cancellation | Core ONNX; PASS |
+| Actual parallel ONNX sibling observation | Core test owner; REVISE missing observation |
+| All-host native lifecycle/PID1 proof | Existing probe/build owner; REVISE missing duplex/env cases |
+| Immutable normal publication/provenance | Existing Core package owner; placement PASS, delivery pending |
+
+No duplicate component, second job, new credential/datastore/permission authority or additional
+established product defect. Move nothing. Supervisor independently confirmed both missing cases
+are already required by approvedr7, combined both reviews and resumed the same implementer under
+**implement:r4 at2026-10-09 23:47:54 UTC, PLAN APPROVED** for those existing-file verification
+corrections only. No new scope or plan mechanism; full current-source reviews/native gates and
+published/installed acceptance remain mandatory.
 
 ## Timing
 
@@ -649,5 +733,9 @@ canonical macOS managed suite is still failing and corrected-launch behavior is 
 | Review plan / simplicity / r5 | 2026-10-09 23:23:48 | 2026-10-09 23:24:47 | 59s | Full current r7, all11PASS; historical approval metadata corrected |
 | Review plan / ownership / r5 | 2026-10-09 23:25:08 | 2026-10-09 23:26:21 | 1m13s | Full current r7, all30 technical/placement PASS |
 | Plan approval / supervisor / r7 | 2026-10-09 23:27:01 | 2026-10-09 23:27:01 | Instant boundary | Full artifact/primary source/authority/failure/default gates checked; bounded PLAN APPROVED |
+| Implement / same implementer / r3 | 2026-10-09 23:27:10 | 2026-10-09 23:38:49 | 11m39s | Frozendc03b7b; full1062/focused190/Release406/scripts30 PASS; current-source native CI pending |
+| Review code / simplicity and style / r2 | 2026-10-09 23:39:10 | 2026-10-09 23:42:25 | 3m15s | Full separate tables; required native duplex/env and ONNX pipeline sibling observations missing; native warnings pending |
+| Review code / ownership / r2 | 2026-10-09 23:42:55 | 2026-10-09 23:47:22 | 4m27s | Full33-behavior table; placement PASS, same2 verification gaps; observed work began23:43:23 |
+| In-plan correction approval / supervisor / r4 | 2026-10-09 23:47:54 | 2026-10-09 23:47:54 | Instant boundary | Combined reviews, same approvedr7 scope, same implementer; native/default gates retained |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.

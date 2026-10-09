@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Corrected source dc03b7b is frozen and pushed; full Debug1062PASS, focused190PASS and Release/package406PASS with zero build warnings. Independent simplicity/style code review and current-source native CI are in progress. Merge/publication/default acceptance remain open.
+**Status:** Corrected source dc03b7b passed managed/package gates and full code reviews found two required verification gaps. The same implementer is adding the approved native duplex/environment and ONNX pipeline sibling observations. Current-source native CI, merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -32,7 +32,7 @@ broker or cloud-aware Core dependency.
 The complete parent design passed full sequential round 7 simplicity/ownership reviews before
 supervisor lock. This bounded task directly implements its Core rows. Round 3 implementation
 received approval after both full plan reviews; code review found lifecycle, checkpoint and style
-defects. Complete round6 correction plan now passes fresh full sequential reviews; the expanded bounded
+defects. Complete round7 correction plan passed fresh full sequential reviews; the expanded bounded
 file inventory is approved. Any further material deviation returns before product edits.
 
 ## Required changes and order
@@ -120,8 +120,8 @@ failure observations. Desktop/ForgeUI/TUI visual gates are N/A: no layout change
 ### Code-review correction boundaries
 
 The existing lifecycle contract requires ownership through pipe completion even if the direct
-parent exits first. Its private launch implementation is approved in the complete r6 plan; it has no new public
-API, permission policy, datastore or identity authority. Product edits are authorized only through the same implementer's explicit r6 handoff; no further scope expansion is approved.
+parent exits first. Its private launch implementation is approved in the complete r7 plan; it has no new public
+API, permission policy, datastore or identity authority. Product edits require the same implementer's explicit approved-plan handoff; no further scope expansion is approved.
 
 | Boundary | Required correction / proof |
 |---|---|
