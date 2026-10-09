@@ -5,6 +5,14 @@
 > design; a fixed team of three subagents runs sequentially and is reused across stages and revisions. Each assignment carries its
 > [persona](../../personas/README.md) inline. Independent reviews and explicit approvals remain required.
 
+## Task quality
+
+**Quality over quantity.** You are assessed on each task's quality, not phase completion, code
+volume, commit count or checked-off items. The phase provides context; the assigned task is the
+work to finish. Break that work into smaller working steps where possible without inventing
+features to create steps. Complete and demonstrate one assigned task, then stop after its closure;
+do not automatically continue through the phase.
+
 ## Shape
 
 ```mermaid
@@ -66,21 +74,26 @@ explicit assignment start/end boundaries, including supervisor design, per
 
 ## Required loop
 
-0. **Scope.** The supervisor writes the spoke's requirement, `Done when`, default path, and the
-   Security Architecture, Engineering Philosophy and UI gates that apply. User-visible work names
+0. **Scope.** The supervisor records the user's requirement word for word, scope and non-goals,
+   `Done when`, default path, and applicable Security Architecture, Engineering Philosophy and UI
+   gates. User-visible work names
    its reference images, viewports, owned slice, states, theme selector and light/dark token map;
    other visible elements are deferred or omitted. Type-1 decisions go to the operator. The
-   supervisor or existing implementer gathers facts across the affected repos and questions. An
-   open architecture, ownership, contract, failure or visual question blocks the next stage.
+   supervisor or existing implementer checks what already works across the affected repos and
+   explains why any supporting change is needed for the request. Plans and reviewer suggestions
+   do not authorize extra work; ask the operator before expanding scope.
 1. **Design.** The supervisor applies the full designer persona and writes the design in the spoke,
    naming each affected repo by absolute path from the
    [README repository list](../../README.md#where-the-code-lives). The simplicity reviewer checks
    it, then the ownership reviewer. The supervisor combines findings, revises, and obtains new
-   verdicts from those same reviewers before explicitly locking the design. Skip when the spoke
-   already locks the design; record why.
+   verdicts from those same reviewers before explicitly locking the design. Required types,
+   contracts and behavior must be defined; an open architecture, ownership, failure or visual
+   question blocks approval. Skip when the spoke already locks the design; record why.
 2. **Plan.** One implementer receives the plan assignment and does not edit. The simplicity and
    ownership reviewers check the plan sequentially; the supervisor also checks compatibility,
-   security, Native AOT, default path and UI gates, then sends one combined correction (answered by a
+   security, Native AOT, default path and UI gates. Check that the exact dependency packages contain
+   the needed APIs, rather than assuming a published version includes newly merged source. The
+   supervisor then sends one combined correction (answered by a
    revised plan, `plan:r2`) or explicit approval. A point failing twice returns to Design.
 3. **Implement.** The same implementer receives the approved plan and explicit `PLAN APPROVED`;
    a deviation, including a visual mismatch, returns to the supervisor. The simplicity/style
@@ -88,7 +101,8 @@ explicit assignment start/end boundaries, including supervisor design, per
    The supervisor dismisses findings with a reason or returns them as one correction within the
    approved plan (`implement:r2`); a fix outside the plan goes back to Plan.
 4. **Ready to merge.** The supervisor completes the readiness checklist below.
-5. **Merge, publish, deploy.** Merge the product PRs (code, infrastructure, configuration) and
+5. **Merge, publish, deploy.** Before invoking a workflow, check its purpose and the exact artifact
+   it will use. Merge the product PRs (code, infrastructure, configuration) and
    publish or deploy through the normal route, so the default path uses the real artifacts.
 6. **Accept.** The supervisor runs the default-path acceptance below. A failure is fixed through
    this loop, not routed around.
@@ -128,6 +142,7 @@ Return the plan output defined in the persona.
 REVIEW — READ-ONLY. Role: [simplicity | ownership | simplicity and code style] reviewer.
 Requirement: [word for word]
 Under review: [design text | plan text | branch and repos to diff]
+Check whether each change is needed for the requirement as well as correct.
 Return the output defined in each assigned persona, with evidence from the current artifact/code/diff.
 ```
 
@@ -152,6 +167,10 @@ implementation and managed checks have stabilized, as the final artifact gate; d
 for every development iteration. A later source correction requires current-source final evidence.
 This changes verification timing, not the zero-warning or installed-default acceptance requirements.
 
+If previously passing code fails, compare the checkout, commands, dependencies and environment
+with the successful run before blaming the code. Record observed differences; do not label an
+unexplained failure a defect in the old code or ask the operator to waive it before investigating.
+
 - every code-review ⚠️ is fixed or dismissed with a reason;
 - only the approved scope changed, and component fit still holds;
 - public, wire, persistence, ownership, credential and failure boundaries match the design;
@@ -162,9 +181,11 @@ This changes verification timing, not the zero-warning or installed-default acce
 
 **Accept** — after merge and publish or deploy:
 
-- the published default path passes for every user-visible, runtime, integration or deployment
-  change ([Default-Path Acceptance](default-path-acceptance.md)); controlled evidence is labelled
-  and never substituted;
+- the supervisor demonstrates the requested behavior on the published default path for every
+  user-visible, runtime, integration or deployment change
+  ([Default-Path Acceptance](default-path-acceptance.md)) and records the action and result;
+  merged code and passing helper tests alone do not establish completion, and controlled evidence
+  is labelled and never substituted;
 - packaged UI parity holds where applicable.
 
 ## Closure
