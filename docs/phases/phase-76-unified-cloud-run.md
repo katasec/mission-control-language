@@ -1,8 +1,9 @@
 # Phase 76 — Unified cloud mission execution
 
-**Status:** Product requirements agreed with the operator on 2026-10-09 and recorded in
-[the requirements spoke](phase-76.1-unified-cloud-run-requirements.md). No product changes,
-implementation plan approval, deployment, or runtime acceptance in this session. **Not build-ready.**
+**Status:** The failed implementation attempt is being reverted at the operator's request;
+[rollback evidence](phase-76-rollback.md). Original product requirements remain recorded in
+[the requirements spoke](phase-76.1-unified-cloud-run-requirements.md).
+**Paused and not build-ready.** No replacement implementation is authorized.
 
 ## Intent
 
@@ -17,9 +18,9 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Documentation verification | 2026-10-09: `git diff --check` and a local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A. |
-| Current implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
-| Contract design | Next; [required design work](phase-76.1-unified-cloud-run-requirements.md#contract-work-before-implementation) |
-| Product implementation and acceptance | Not started; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
+| Current implementation | Exact rollback to the pre-attempt source baseline prepared; [rollback evidence](phase-76-rollback.md) |
+| Contract design | Paused; the reverted design is retained on its original reference branch. |
+| Product implementation and acceptance | Paused pending a new operator instruction; no cloud-run delivery accepted. |
 
 ## Dependency-ordered work
 
