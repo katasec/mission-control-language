@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Implementation round 1 is under independent code review; simplicity/style requires corrections. Canonical macOS verification failed before AOT; no merge or publication approved.
+**Status:** Both implementation round 1 code reviews require corrections; complete correction plan returned for new full plan reviews. Canonical macOS verification failed before AOT; no further product edits, merge or publication approved.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -32,7 +32,7 @@ broker or cloud-aware Core dependency.
 The complete parent design passed full sequential round 7 simplicity/ownership reviews before
 supervisor lock. This bounded task directly implements its Core rows. Round 3 implementation
 received approval after both full plan reviews; code review found lifecycle, checkpoint and style
-defects. Read-only round 4 planning/investigation is now assigned; any launch change outside the
+defects. Read-only round 5 refinement returned after round 4 investigation; any launch change outside the
 approved file inventory must pass new full plan reviews before further product edits.
 
 ## Required changes and order
@@ -129,10 +129,26 @@ complete correction plan receives full sequential reviews and supervisor approva
 | Exec ownership | Establish OS ownership before target execution; retain it through stream completion and termination. No post-launch race or descendant snapshot substitutes. POSIX unreaped-leader and Windows job ownership are investigation candidates, not approved implementation. |
 | Exec failure | Failed ownership setup never falls back to an unowned launch. Timeout/caller cancellation and I/O failure keep their declared results; termination failure remains visible. Parent-first-exit tests prove no surviving ordinary descendant or later sentinel write. |
 | Cleanup failure precedence | An observed OS termination/reap failure propagates as a visible IOException even when caller cancellation is requested; do not replace it with OCE. Normal caller cancellation propagates OCE after successful cleanup. Preserve the cleanup operation/error and original failure context through a private distinction at the exec boundary; no new public exception contract or fallback. |
+| Supported PID1 runtime | The Runner image directly starts dotnet as its entrypoint. If it adopts ordinary descendants, reap only owned-group children after termination; never reap unrelated processes or set a global subreaper policy. Distinguish stopped execution from zombie process entries. Native observation and I/O must remain joinable when cleanup itself fails. |
 | Declined stdin | A child may close unread stdin. Recognize only the platform's concrete broken-pipe/closed-input condition; still join the process and remaining streams, honor cancellation, validate exit code and parse declared JSON output. Other I/O errors remain failures. The correction plan must name the exact error mapping and tests; blanket IOException swallowing or message matching is not approved. |
 | Checkpoint input | Existing codec rejects missing/null required current-format shape before resume dereferences it; InvalidContinuation occurs without provider/executable invocation. |
 | Existing parser / adapters | Refactor coherent parser stages to satisfy complexity/nesting limits, preserve one parser, place public streaming entry points before helpers, diagnose the canonical fast-child failure from observed envelope/error evidence. |
 | Platform evidence | Any new platform launch primitive requires behavioral checks on every supported host as well as current-source zero-warning AOT. Existing release help/version probes alone do not exercise launch semantics. |
+
+Supervisor Type-2 decision (2026-10-09): Linux PID1 adopted-child reaping stays
+private to the existing exec lifetime owner. After checked termination of the atomically owned
+process group and observation of root exit, retain the root unreaped; enumerate this process's
+task children, exclude the root, verify each candidate belongs to that held group, and reap exact
+owned children. Repeat through intermediate-parent exit/adoption until no owned descendants
+remain, then reap the root last. This post-termination scan neither establishes ownership nor
+chooses kill targets. No global subreaper, waitpid(-1), unrelated-child reaping or silent procfs
+failure fallback. Native/procfs cleanup failures retain visible IOException precedence. Reversal
+and removal: replace this private drain with an authoritative supported OS primitive if one
+provides equivalent root-excluding adopted-child reaping, preserving the same public contract and
+tests. The normal Linux x64 CI gate must prove actual PID1 behavior in a container without
+--init, including an unrelated .NET child remaining waitable by its original owner; all four
+supported native hosts still require their ordinary lifecycle checks. Docker's absent local
+daemon is an observed environment limitation, not PID1 acceptance or a gate waiver.
 
 ### Existing required gates
 
@@ -177,7 +193,7 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Round 3](phase-76.4-core-cloud-primitives-plan.md) approved; complete round 4 correction plan/investigation pending |
-| Independent plan reviews | Full current round3 simplicity and ownership PASS; actual ABI/JSON corrections included; [evidence/timing](phase-76.4-core-cloud-primitives_completed.md) |
+| Implementer plan | [Complete round 5](phase-76.4-core-cloud-primitives-plan.md) returned; full reviews/approval pending |
+| Independent plan reviews | Complete correction plan: simplicity review in progress, ownership next; no current PASS; [evidence/timing](phase-76.4-core-cloud-primitives_completed.md) |
 | Plan approval / implementation | Granted 22:07:32 UTC; round1 handback at770778d; code-review corrections pending, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
 | Published/default acceptance | Required; not performed |

@@ -2,7 +2,8 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Plan approved after full current independent reviews; implementation/publication/default acceptance remain open.
+Original plan approved after full independent reviews; correction-plan refinement and new full
+reviews are pending. Implementation/publication/default acceptance remain open.
 
 ## Source investigation
 
@@ -306,7 +307,36 @@ At2026-10-09 22:41:43 UTC, supervisor directly observed release run37999080639 j
 on Windows ARM64, Linux ARM64 and Linux x64; macOS remained running. These help/version/AOT
 checks at the old frozen source do not prove a future platform launcher or close this task.
 
+## Correction plan round 4 — supervisor findings before reviews
+
+Complete round4 returned a 42-file Core/test/build inventory with one private platform lifetime
+seam, POSIX spawn/unreaped leader and preexecution Windows job ownership. Original package APIs,
+ABI, generated JSON, parser, replay, workspace, ONNX and default gates were retained. No product
+or repository-document edits occurred during the read-only stage. No independent PASS is claimed.
+
+Before assigning reviews, supervisor identified required detail: the actual Runner entrypoint can
+be PID1 and adopt ordinary grandchildren; owned-group reaping must cover that runtime. Closed
+stdin mapping must name every platform's concrete errors. A blocking observer cannot be abandoned
+or hang indefinitely if termination itself fails. Deliberately externally reaping the leader before
+termination for a fault test would break the identity invariant being protected; a safe, honestly
+controlled boundary test is acceptable. Complete round5 read-only refinement was assigned before
+independent plan reviews; no implementation approval.
+
+Supervisor independently read `/private/tmp/phase76-posix-r5-probe/Program.cs` and `probe.log`:
+fixed-owned-root waitid WNOHANG observation cancelled and was awaited, then a second observation
+retained root50184 unreaped while descendant50185 held the pipes. Checked group termination and
+exact root reap completed; delayed sentinel remained absent. Managed macOS mechanism evidence
+only, not Linux/PID1, Native AOT or default acceptance. [.NET10 PipeStream.Windows](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.IO.Pipes/src/System/IO/Pipes/PipeStream.Windows.cs) source also
+confirms its synchronous-pipe ReadAsync/WriteAsync use [AsyncOverSyncWithIoCancellation](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/Common/src/System/Threading/AsyncOverSyncWithIoCancellation.cs), which
+attempts CancelSynchronousIo and joins the cancellation callback; reuse the BCL pipe boundary
+rather than author another I/O thread-cancellation mechanism. Product behavior still needs the
+reviewed current-source native checks.
+
 ## Timing
+
+Supervisor later directly observed release run37999080639 completed successfully on all four
+native hosts at source770778d (GitHub updatedAt2026-10-09T22:54:45Z). These frozen-source build/help/version results remain lower-layer evidence; the
+canonical macOS managed suite is still failing and corrected-launch behavior is not yet tested.
 
 | Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
 |---|---|---|---|---|
@@ -322,5 +352,7 @@ checks at the old frozen source do not prove a future platform launcher or close
 | Implement / same implementer / r1 | 2026-10-09 22:07:32 | 2026-10-09 22:27:04 | 19m32s | Frozen770778d, attached draft product PR77; managed/package facts pass; canonical native pending |
 | Review code / simplicity and style / r1 | 2026-10-09 22:27:56 | 2026-10-09 22:31:52 | 3m56s | Full current tables REVISE; early-parent-exit cleanup reproduction, parser complexity and canonical macOS test failure |
 | Review code / ownership / r1 | 2026-10-09 22:33:18 | 2026-10-09 22:35:47 | 2m29s | Full18-behaviour placement PASS; technical REVISE for lifecycle/checkpoint shape; canonical failure independently confirmed |
+| Plan / implementer / r4 | 2026-10-09 22:36:12 | 2026-10-09 22:49:09 | 12m57s | Read-only library/native/closed-stdin probes and complete42-file correction plan; supervisor refinement required before reviews |
+| Plan / implementer / r5 | 2026-10-09 22:51:07 | 2026-10-09 23:03:22 | 12m15s | Complete42-file correction plan returned and transcribed; product frozen; full reviews/approval pending |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.
