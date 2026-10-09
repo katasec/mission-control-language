@@ -71,6 +71,51 @@ sequenceDiagram
 | Config and login | `ForgeConfig` atomically creates/updates `~/.forge/config.json`, preserving unrelated keys. `api.endpoint` is the sole CLI API base and must be an absolute HTTPS URI; invalid JSON/URL fails before sign-in/network. `oci.endpoint` is the default registry base. `forge registry login <base>` writes host-scoped credentials only after authentication succeeds, preserves previous selection on failure, and selects the successful base. CLI/client composition alone reads the host-scoped registry credential and passes it to Mission Registry/OciClient for one pull; Mission Registry stores and reads no user credential. `FORGE_API_ENDPOINT` is removed from every CLI hosted path. |
 | Failure/recovery | Local parse/package/input failures perform no remote mutation. A staging/start failure returns a named stderr error and leaves only Host-owned unreferenced staged blobs for Host cleanup. A lost staging/start reply is retried only by its deterministic ID and byte-identical request. Runner/provider interruption remains terminal `Interrupted`; it is never silently replayed. A lost result/event stream reconnects from the durable cursor. A tool result is committed once by its deterministic continuation command; failed delivery is recovered by existing Host outbox/replay, never by repeating the local tool operation. Cancellation requests Host cancellation, cancels Hands, and exits nonzero after drain. |
 
+### Project Mission admission wire shape
+
+`StartProjectMissionRunRequest` and its ingress counterpart gain one optional additive
+`ProjectMissionRunManifest` member; it is the staged-content adjunct to the existing
+`DurableMissionLaunch`, not a second launch/provenance model. `Input` becomes nullable so the two
+valid shapes are unambiguous: a historic request has a non-blank `Input` and no manifest; a cloud
+request has a complete manifest and `Input == null`. Empty input, both members, neither member, or
+a partially supplied manifest is invalid before ingress. Historic callers therefore retain their
+existing shape only until their migration slice; a cloud request never also creates the legacy
+`input` body.
+
+```csharp
+ProjectMissionRunManifest(
+    string SourceDisplay,
+    string PackageHash,
+    ConversationBodyReference PackageBody,
+    DurableMissionInputManifest Inputs,
+    ProjectMissionInputBody[] InputBodies);
+
+ProjectMissionInputBody(
+    DurableMissionInputBinding Input,
+    ConversationBodyReference Body);
+```
+
+`SourceDisplay` is diagnostic provenance only and has no effect on equality or resolution.
+`PackageHash` is Core's canonical package hash, while `PackageBody.Sha256` remains the SHA-256 of
+the staged bytes. Each `InputBodies` member names one Core binding and exactly one Host body. The
+Host requires a name-for-name, byte-count-for-byte-count, and hash-for-hash match between
+`Inputs.Bindings` and `InputBodies`; it rejects duplicates, omissions, additions, an invalid Core
+manifest, or an invalid body reference. The Runner later deserializes the package body with Core
+and verifies its canonical hash equals `PackageHash` before execution.
+
+For a cloud request, ingress creates bodies from the submission `CommandId`: field `missionPackage`
+owns package bytes, and field `input:<name>` owns the matching named input. These field names are
+constants in `ConversationBodyFields`; byte bodies use the same `ConversationBodies`
+reference/chunk path as text bodies. A historic request alone creates the existing `input` body.
+Consequently a lost reply reissues identical body IDs, bytes, hashes, manifest and command record.
+Host admission compares the complete manifest structurally with the stored command; the source
+display is deliberately excluded from the equality decision.
+
+`StartProjectMissionRunResponse.RunId` remains the deterministic child-run identity derived from
+the submission `CommandId`; for this one-start/one-run route it is also the execution attempt
+identity. No distinct attempt field is added and clients must not invent one. A new command ID is a
+new run; a retry reuses the same command ID and returns the same `RunId`.
+
 ```mermaid
 flowchart LR
   D[project.json folders] --> H[Hands root labels]
