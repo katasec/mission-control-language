@@ -30,8 +30,17 @@ An OCI registry is a distribution service, not a mission execution API.
 
 Operator permits arbitrary executable mission code and defers execution permissions. Users are
 responsible for vetting their OCI registry content. No image-owned/OCR-only executable allowlist
-is requested. This settles executable trust policy; technical execution contracts must be revised
-and reviewed before implementation. [Recorded decision and design state](phase-76.2-unified-cloud-run-contracts.md#executable-trust--operator-decision-recorded-2026-10-10).
+is requested. This settles executable trust policy; the revised technical contracts passed full
+current reviews and are locked before implementation. [Recorded decision and design state](phase-76.2-unified-cloud-run-contracts.md#executable-trust--operator-decision-recorded-2026-10-10).
+
+## Additional storage decision — 2026-10-10
+
+> Agreed - convo host - persistent. Runner ephermeral
+
+Conversation Host owns persistent mission content, named input bytes and generated output files,
+linked to the conversation/run in its existing store. Runner owns temporary execution scratch and
+rehydrates durable content through Host on each segment. The approved owner does not give Runner
+or ForgeAPI direct datastore access. [Content contract](phase-76.2-unified-cloud-run-contracts.md#persistent-content--operator-decision-recorded-2026-10-10).
 
 ## Command and named inputs
 
@@ -51,7 +60,8 @@ extension or existence. A missing file is an error. Each artifact is bound by it
 not by list position; there is no additional `source` alias for the OCR expert's `source_file`.
 HTTP fetching, other input protocols, file-to-text `<file` syntax, and automatic JSON/type parsing
 are outside this initial input scope. A representation for literal values starting with `@`
-was discussed but not locked; do not silently adopt the earlier `@@` suggestion.
+was discussed; the locked contract leaves that literal unavailable in the initial grammar and
+does not adopt the earlier `@@` suggestion.
 
 ```powershell
 # Both sources use cloud reasoning and the current Project's Hands workspace.
@@ -61,15 +71,15 @@ forge run my-mission --input "goal=Create a C# hello world program" --steps
 # Explicit registry; no OCI protocol prefix.
 forge run company.jfrog.io/missions/my-mission --input "goal=Review this project"
 
-# Named local artifact plus named string; availability awaits OCR contract design.
+# Named local artifact plus named string; implementation remains pending.
 forge run ocr --input "source_file=@./scan.jpg" --input mode=text
 ```
 
 All examples describe intended UX, not commands accepted by today's CLI. No new `--out` or
 automatic artifact-download interface is agreed: the earlier format-dependent output proposal
 was superseded by final-response-as-text. Output files produced through requested client tools
-belong to Hands. Existing OCR binary artifact delivery must be reconciled explicitly during
-contract design while preserving the agreed final-text interface.
+belong to Hands. The locked contract defines Host-owned OCR binary delivery while preserving
+the agreed final-text interface; implementation and runtime acceptance remain pending.
 
 ## Project identity and multi-folder workspace
 

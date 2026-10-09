@@ -164,7 +164,7 @@ AOT, normal publication and restored-package default evidence, then explicitly a
 the bounded OCI Plan and assigned the same implementer. Commit/merge/publication remain gated
 on current code reviews and evidence. This approval does not settle either cloud Type-1 choice.
 
-OCI product implementation/publication/acceptance subsequently passed; see the [bounded completion record](phase-76.3-oci-integrity-auth_completed.md). Earlier gates above describe their recorded stage, not current outstanding OCI work. Cloud Type-1 choices remain pending.
+OCI product implementation/publication/acceptance subsequently passed; see the [bounded completion record](phase-76.3-oci-integrity-auth_completed.md). Earlier gates above describe their recorded stage, not current outstanding OCI work. Both cloud Type-1 choices were subsequently settled by the operator; see the current contracts.
 
 ## Superseded executable proposal — 2026-10-10
 
@@ -252,3 +252,225 @@ links/anchors, two JSON examples, balanced fences, top-level-only hub and diff c
 | Stage | Start (UTC) | End (UTC) | Wall | Evidence |
 |---|---|---|---|---|
 | Documentation / supervisor / operator policy | Unavailable; not recorded | 2026-10-09 21:13:36 UTC | Unavailable | Recorded decision, superseded proposal archived, local checks PASS |
+
+## Generic execution redesign — investigation and library probe
+
+Operator subsequently approved: **"Agreed - convo host - persistent. Runner ephermeral"**.
+Both ownership and executable trust decisions are now settled. Current generic execution design
+reuses Core's existing adapters, expert-relative cwd and root replay with a runtime-only workspace
+value; it does not retain the rejected image-owned identity whitelist.
+
+Read-only implementer investigation found existing exec stdin/output deadlock and child-lifecycle
+gaps relevant to the requested generic execution. The revised design covers concurrent bounded
+I/O and joined cancellation. Existing OCR reads environment only and returns a summary; its own
+script must adopt generic stdin/default semantics and return recognized text in text mode. No
+runtime OCR response adapter is needed. Both product repos remained clean during investigation.
+
+Supervisor probe of existing Microsoft.ML.OnnxRuntime **1.27.0** loaded the normal macOS ARM64
+native library and a minimal numeric Identity model: float input `[1,2]`, probabilities index 1
+observed `0.8`; `RunOptions.Terminate=true` rejected inference; the existing
+`SessionOptions.SetLoadCancellationFlag(true)` rejected session creation. Observed command result:
+`PASS: ONNX Runtime 1.27.0 native macOS ARM64, [1,2] float inference, probabilities[1]=0.8,
+terminated inference rejected, cancelled session load rejected.`
+Evidence: `/private/tmp/phase76-onnx-probe-20261009/result.txt` and `identity.onnx`, model SHA-256
+`691a2d6476544d32195258db2e889967b1b25964ba89c209363b40bc9593425a`.
+This is a library/native API probe, not Linux Runner-image, Native AOT or cloud acceptance.
+Local Docker daemon was unavailable (`docker version` failed to connect to its configured socket);
+that observation grants no waiver for the later real image/runtime gate.
+
+| Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
+|---|---|---|---|---|
+| Design / supervisor / generic execution | 2026-10-09 21:15:43 | 2026-10-09 21:21:35 | 5m52s | Revised contracts and approved ownership record |
+| Investigation / implementer / r2 | Unavailable; not recorded | 2026-10-09 21:19:34 | Unavailable | Read-only source/API report; no product changes |
+
+### Generic execution design review — simplicity round 5
+
+Full current checklist; **REVISE**, with no inherited verdict from the superseded design.
+Settled operator trust/ownership decisions are not reopened.
+
+| Check | Verdict / current-artifact evidence |
+|---|---|
+| New apps or libraries | PASS — existing services, store, interpreter and adapters |
+| Reuse | REVISE — newly produced current-segment files were not registered in the workspace artifact-path set |
+| Multiple code paths | PASS — source adapters converge; existing Core adapter routing reused |
+| Legacy paths | PASS — old CLI removed; HTTP path serves actual non-CLI consumers; persisted launch normalization preserves real history |
+| Knobs | PASS — existing timeout/profile convention, fixed transfer/output budgets |
+| Speculative abstractions | PASS — workspace value and content/manifest DTOs have named runtime/store boundaries |
+| Library choice | PASS — OCI 0.5.0 and existing ONNX APIs reused; real Linux/image acceptance still required |
+| Copy-paste | PASS — common validator, preparation, intake and settlement seams reused |
+| Redundant definitions | PASS — existing Artifact and ParticipantMessage events extended |
+| Size versus requirement | PASS — revised detail covers executable code and durable files; no product changes |
+| Test volume | PASS — focused failure/default observations; add same-segment output chaining and staging-collision cases |
+
+Combined corrections required: register validated newly produced paths before downstream execution,
+define concurrent visibility and distinguish it from Host commit; reserve `inputs/` and `outputs/`
+against package assets before any staging. Both belong in the existing workspace/common validator.
+
+| Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
+|---|---|---|---|---|
+| Review design / simplicity / r5 | 2026-10-09 21:21:35 | 2026-10-09 21:23:32 | 1m57s | Full 11-check REVISE table and two concrete contract gaps |
+
+### Generic execution design review — ownership round 5
+
+**REVISE.** Owners independently derived from the Desktop atlas and component READMEs before
+comparison; all existing-owner placements passed. No owner acquired a second unrelated job.
+
+| Behaviour | Derived / proposed owner | Verdict |
+|---|---|---|
+| Command/input/diagnostic presentation | CLI | PASS |
+| Saved endpoint/registry configuration | CLI ForgeConfig | PASS |
+| Project identity/declaration/roots | Application Projects | PASS |
+| Frozen preparation/admission/reconciliation | Application Missions | PASS |
+| Attachment lifetime/joined shutdown | Application Sessions | PASS |
+| Local tool authority/execution | Client Runtime Hands | PASS |
+| OCI reference/retrieval/auth | MissionRegistry / OCI dependency | PASS |
+| Semantic package/assets | Core | Placement PASS; metadata/layout contracts incomplete |
+| Shared action and conversation DTOs | Application Transport / Conversations.Contracts | PASS |
+| Authenticated public command/query routing | ForgeAPI | PASS |
+| Content/admission/receipts/continuations | Conversation Host | PASS |
+| Process execution/lifecycle | Existing Core exec adapter | PASS |
+| ONNX/HTTP/search semantics | Core adapters; Runner deployment bindings | PASS |
+| Scratch/collection/rehydration | Runner | Placement PASS; same-segment path registration incomplete |
+| Profiles/usage settlement | Runner; Billing retains pricing/ledger | PASS |
+| OCR behavior/files | Authored script; generic execution/collection owners | PASS |
+| Trace/final production, persistence and output | Core → Runner → Host → CLI | Placement PASS; failed-step text projection incomplete |
+| Publication/deployment | Owning repos / forge-infra | PASS |
+
+Supervisor accepted four combined blockers: same-segment output visibility, reserved runtime
+namespaces, failed-step output persistence distinct from reason, and provider-free distribution
+metadata reads before environment evaluation. Additional clarifications: retain ordinary
+`token_count` names under exact reserved-key validation; fingerprint all execution-affecting
+expert fields while excluding scratch; distinguish macOS native probe from future Linux/image
+acceptance; new run does not use an MCL output declaration to write local files.
+The next full review covers all corrections and newly explicit Core APIs, not just these findings.
+
+| Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
+|---|---|---|---|---|
+| Review design / ownership / r5 | 2026-10-09 21:24:07 | 2026-10-09 21:28:32 | 4m25s | Full 18-behavior table; four contract blockers |
+| Design / supervisor / r6 corrections | 2026-10-09 21:29:45 | 2026-10-09 21:30:51 | 1m06s | Combined corrections and exact Core DTO/API shapes |
+
+### Generic execution design review — round 6
+
+Both full current reviews returned **REVISE** for one shared technical blocker: parallel Core
+trace callbacks could race over Runner's captured session state, progress ordinals, delta buffer
+and cumulative output checks. All earlier findings were resolved. Ownership placement passed;
+no component gained a second unrelated job. No product files changed.
+
+| Simplicity check | Verdict / evidence |
+|---|---|
+| New apps or libraries | PASS — existing services, store, interpreter and adapters |
+| Reuse | REVISE — existing outbox lacked a concurrent callback sequencing contract |
+| Multiple code paths | PASS — local/OCI converge; one metadata parser and interpreter |
+| Legacy paths | PASS — actual persisted/non-CLI consumers justify retained contracts |
+| Knobs | PASS — fixed bounds and existing runtime conventions |
+| Speculative abstractions | PASS — pure common construction and runtime workspace have real boundaries |
+| Library choice | PASS — published OCI and observed macOS ONNX probe; Linux evidence remains required |
+| Copy-paste | PASS — common parser, validator, progress and settlement seams |
+| Redundant definitions | PASS — existing Text/Reason and event kinds reused |
+| Size versus requirement | PASS — seven docs, +366/−72 at review; no product changes |
+| Test volume | PASS — add concurrent outbox/budget failure observations |
+
+| Ownership behaviour | Existing owner / verdict |
+|---|---|
+| Run arguments, named spelling, diagnostics | CLI — PASS |
+| Project filename, identity and roots | Projects — PASS |
+| Immutable preparation and uncertain admission | Missions / Sessions — PASS |
+| Local/OCI retrieval | MissionRegistry / OCI library — PASS |
+| Provider-free distribution metadata | Core manifest reader — PASS |
+| Package/assets/input-name validation | Core — PASS |
+| Semantics and compatible replay | Core / Runner identity checks — PASS |
+| Wire DTOs and generated JSON | Conversations.Contracts — PASS |
+| Public authentication/content proxy | ForgeAPI — PASS |
+| Canonical admission/transitions | Conversation Host — PASS |
+| Content persistence/commit/sweep | Conversation Host — PASS |
+| Scratch rehydration/verified paths | Runner — PASS |
+| Generic adapter execution | Core; Runner host bindings — PASS |
+| Output collection/downstream visibility | Runner — PASS |
+| Output publication/continuation | Runner → Host — placement PASS, sequencing incomplete |
+| Cumulative output limits | Runner / Host — REVISE atomic reservation |
+| Profile usage and settlement | Runner / Billing — PASS |
+| OCR code and assets | Authored mission — PASS |
+| Local file authority | Hands — PASS |
+| Attachment/retry/disposal | Sessions / Host correlation — PASS |
+| Exact trace/final text and rendering | Core → Runner → Host → CLI — placement PASS, sequencing incomplete |
+| Configuration and credentials | CLI / existing credential seam / OCI — PASS |
+| Publication/deployment/default proof | Owning repos / infra / supervisor — PASS design, evidence pending |
+
+Supervisor correction puts one awaited per-command asynchronous gate inside the existing Runner
+processor/outbox owner, covering delta batching, ordinals, budget reservation, chunk-before-fact
+publication and pending/sent captured state. Execution remains parallel outside the gate; final
+publication follows joined callbacks. Publication failure keeps existing pending/redelivery failure
+semantics. Source inspection confirmed UsageAccumulator already uses interlocked counters; reuse it.
+Fresh full reviews are required after this correction.
+
+| Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
+|---|---|---|---|---|
+| Review design / simplicity / r6 | 2026-10-09 21:31:15 | 2026-10-09 21:32:22 | 1m07s | Full 11-check REVISE table |
+| Review design / ownership / r6 | 2026-10-09 21:32:52 | 2026-10-09 21:36:00 | 3m08s | Full 23-behaviour table; one sequencing blocker |
+| Design / supervisor / r7 correction | 2026-10-09 21:36:37 | 2026-10-09 21:36:37 | <1s | Explicit existing-owner asynchronous sequencing contract |
+
+### Generic execution design review — round 7
+
+Full current artifact independently reviewed: **simplicity PASS; technical/ownership PASS**.
+The supervisor locked the generic design at **2026-10-09 21:40:31 UTC**. No implementation plan
+approval or runtime acceptance is implied. Both reviews found the one Runner-owned asynchronous
+gate sufficient for concurrent trace/budget/outbox state without serializing expert execution.
+
+| Simplicity check | Verdict / evidence |
+|---|---|
+| New apps or libraries | PASS — existing engine, Host store and Runner |
+| Reuse | PASS — parser, guards, dispatch, claims and outbox |
+| Multiple code paths | PASS — converged preparation and one metadata parser |
+| Legacy paths | PASS — clean CLI cut; actual non-CLI consumers/persisted data accounted for |
+| Knobs | PASS — required settings/inputs and fixed bounds |
+| Speculative abstractions | PASS — runtime workspace and one existing-owner async gate |
+| Library choice | PASS — OCI accepted; ONNX probe observed; Linux/image evidence required later |
+| Copy-paste | PASS — shared construction, validation and publication seams |
+| Redundant definitions | PASS — existing event vocabulary and interlocked usage counters |
+| Size versus requirement | PASS — seven docs, +443/−73 at review; required boundaries only |
+| Test volume | PASS — proportionate failure, concurrency and default observations |
+
+| Ownership behaviour | Existing owner / verdict |
+|---|---|
+| Command/named spelling | CLI — PASS |
+| Project identity/default filename | Projects — PASS |
+| Frozen intent/admission reconciliation | Missions — PASS |
+| Invocation/attachment/disposal lifetime | Sessions — PASS |
+| OCI retrieval/authentication | MissionRegistry / OCI — PASS |
+| Distribution metadata | Core manifest reader — PASS |
+| Package/assets/input names | Core — PASS |
+| Semantic/replay compatibility | Core / Runner identity — PASS |
+| Shared action JSON/DTOs | Application.Transport — PASS |
+| Conversation transfer vocabulary | Conversations.Contracts — PASS |
+| Public authentication/query proxy | ForgeAPI — PASS |
+| Canonical launch/run/receipts | Conversation Host — PASS |
+| Binary persistence/adoption/sweep | Conversation Host — PASS |
+| Scratch rehydration/paths | Runner — PASS |
+| Generic adapter semantics | Core / Runner bindings — PASS |
+| Generated file collection/visibility | Runner — PASS |
+| Trace/outbox/budget sequencing | Runner command processor/outbox — PASS |
+| Produced-file continuation | Runner → Host — PASS |
+| Profile usage/settlement | Runner / Billing — PASS |
+| OCR behavior | Authored mission — PASS |
+| Local multi-root authority | Hands — PASS |
+| Tool correlation/exact-result retry | Sessions/Hands / Host — PASS |
+| Exact step/final text and presentation | Core → Runner → Host → CLI — PASS |
+| Settings/credential persistence | CLI / existing credential seam / OCI — PASS |
+| CLI clean cut | CLI — PASS |
+| Normal publication/deploy/default proof | Owning repos / infra / supervisor — PASS design |
+
+No owner acquires unrelated duties, new datastore access or duplicate execution paths. Security,
+transfer/failure and required DTO/API contracts are sufficiently defined for bounded planning.
+Current design diff check passed. Linux/image and unified installed-path evidence remain future.
+
+| Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
+|---|---|---|---|---|
+| Review design / simplicity / r7 | 2026-10-09 21:36:54 | 2026-10-09 21:38:34 | 1m40s | Full 11-check PASS |
+| Review design / ownership / r7 | 2026-10-09 21:38:52 | 2026-10-09 21:39:51 | 59s | Full 26-behaviour PASS |
+| Design lock / supervisor | 2026-10-09 21:40:31 | 2026-10-09 21:40:31 | <1s | Locked generic contracts; no code approval |
+
+Documentation checkpoint after lock: **2026-10-09 21:43:05 UTC**, nine docs, 68 local
+links/anchors, two JSON examples, balanced fences, top-level-only hub and `git diff --check` PASS.
+This snapshot changes documentation only; product tests, Native AOT and default-path runtime
+acceptance are N/A for the snapshot, still required for implementation. The first bounded Core
+producer task is scoped and its read-only implementer Plan is in progress; no code approval.

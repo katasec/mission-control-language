@@ -1,8 +1,9 @@
 # Phase 76.2 — Unified cloud run: execution contracts
 
 **Status:** Operator permits arbitrary user-vetted executable code; execution permissions are
-deferred. Prior technical reviews covered the superseded image-owned-only proposal. Executable
-contracts need redesign/full review; Host-owned content remains an unapproved proposal. Cloud design is not locked. The independent OCI prerequisite is merged, published as
+deferred. Operator approved persistent Conversation Host content and ephemeral Runner execution.
+The revised generic contracts passed full simplicity and ownership round 7 reviews; the supervisor
+locks this design on 2026-10-10 (Dubai). The independent OCI prerequisite is merged, published as
 Katasec.OciClient 0.5.0 and accepted through a fresh remote-package Native AOT consumer. No cloud implementation plan is approved.
 Parent: [unified cloud execution](phase-76-unified-cloud-run.md).
 Requirements: [operator decisions](phase-76.1-unified-cloud-run-requirements.md).
@@ -40,14 +41,25 @@ preparation path remains required. Existing authenticated account admission, con
 client Hands folder rules still apply; this decision concerns cloud executable trust.
 
 The previous image-owned-only proposal is [superseded](phase-76.2-unified-cloud-run-contracts_completed.md#superseded-executable-proposal--2026-10-10).
-Technical design must now cover generic command/asset execution, runtime dependencies, environment,
+The revised design below covers generic command/asset execution, runtime dependencies, environment,
 named input/output binding and resume behavior under this user-vetted-code model. No process
 sandbox or credential isolation is established merely by registry vetting; do not describe it as one.
 Execution permissions are deferred by explicit operator decision, not an implementer assumption.
 The changed executable design requires sequential full design reviews before any cloud plan approval.
-Host-owned content is still a proposal: the operator requested an explanation and has not approved it.
+Persistent content ownership is approved below; no further operator approval is required for that decision.
 
-## Contract design — draft for independent review
+## Persistent content — operator decision recorded 2026-10-10
+
+> Agreed - convo host - persistent. Runner ephermeral
+
+**Locked ownership:** Conversation Host persists mission packages, named input files, generated
+output files and their conversation/run references in its existing Conversation store. Runner
+uses temporary scratch, fetches committed content through Host, publishes generated content
+through the existing private progress channel, and deletes scratch after its execution segment.
+ForgeAPI remains the authenticated edge; API and Runner receive no datastore credentials or direct
+Blob URLs. Ownership is settled; the binary protocol still requires implementation and acceptance.
+
+## Locked contract design
 
 One shared Missions operation prepares a package and named inputs, creates a fresh Project-linked
 conversation, attaches invocation-scoped Hands and submits one turn. Local and OCI differ only in
@@ -206,6 +218,16 @@ without writing a lock or changing the source tree. Only referenced expert markd
 runtime assets are included. Never tar the mission directory, arbitrary folders, `.forge`,
 credentials, private Project state, provider keys or evaluated environment values. A local
 `forge.toml` can identify expert sources; provider secrets/endpoints are never transferred.
+Core adds `ForgeTomlReader.TryReadDistribution(string missionFilePath): ForgeManifest?` using
+the existing TOML parser. This operation selects only `[experts]` literal string locators and
+`[package] assets` literal string arrays **before** `ResolveValue` can evaluate environment
+expressions; all provider, execution and capability rows are excluded without evaluation.
+No manifest returns null. An environment expression in selected distribution metadata is an
+explicit error. `ForgeManifest.Package` is `PackageConfig(Assets: IReadOnlyList<string>)`, empty
+by default. Full local configuration reads retain the existing `TryRead` operation; both reads
+share one parser, not copied TOML implementations. Cloud preparation and OCI publication use
+only the distribution read, never the provider-bearing object or raw TOML. Verify preparation
+with missing local provider keys and assert that no provider value enters distribution bytes.
 The selected root is the first declared mission, matching current local run; no new root selector.
 Additional scripts/assets are declared as relative paths in `[package] assets = ["experts/Ocr/ocr.py"]`
 in `forge.toml`. An OCI bundle must contain the selected source, lock, referenced experts and these
@@ -215,11 +237,21 @@ provider-bearing TOML: distribution metadata contains only expert locators and t
 
 The existing `DurableMissionPackage` remains the semantic package: mission source, selected root,
 primary input metadata, resolved experts and added explicit `Assets` entries
-`(Path, ContentType, Bytes, Sha256)`. Assets are regular relative paths. Hash canonicalization
+`(Path, ContentType, Bytes, Sha256, Executable = false)`. Assets are regular relative paths;
+the common path validator reserves `inputs/` and `outputs/` (case-insensitive first segment)
+for runtime staging. Assets cannot replace expert markdown or collide with another canonical
+package path. Reject collisions during preparation and Host admission, and recheck before Runner
+staging, without overwriting any staged input. This constrains package layout, not command authority.
+the executable bit is copied from a declared local asset or bounded OCI tar entry, never guessed
+from its extension. On Unix scratch staging restores only owner read/write plus owner execute
+when that bit is true; it never restores setuid, group/world write or arbitrary tar modes.
+Windows treats the bit as inert metadata. Hash canonicalization
 extends the existing format-1 ordered content hash with a tagged asset section only when assets
-are nonempty: length-prefixed UTF-8 fields `assets`, invariant-decimal asset count, then each
+are nonempty: fields use the existing `Append` convention (UTF-16 code-unit length plus `:` and
+the string, then UTF-8 encoding of the completed canonical string), beginning with `assets`,
+invariant-decimal asset count, then each
 ordinal-path-sorted entry's `Path`, `ContentType`, invariant-decimal byte length and lowercase
-`sha256:<hex>` over decoded bytes. Raw bytes are verified against that digest. Preserve the
+`sha256:<hex>` over decoded bytes and `1` or `0` for `Executable`. Raw bytes are verified against that digest. Preserve the
 existing canonical prefix verbatim; old packages with no assets retain their existing hash.
 This is an additive format-1 extension; missing Assets means empty, never an unvalidated filesystem
 lookup. `RootInputName` remains the first root parameter for chat;
@@ -229,27 +261,49 @@ loops and parallel steps follow the existing engine. Remove the two-expert and 8
 transport restrictions; package serialized content is capped at the existing 4 MiB text-body
 boundary, and is carried by reference rather than embedded in state/commands.
 
+The Core-side asset DTO is `DurableMissionAssetInput(Path: string, ContentType: string,
+Bytes: byte[], Sha256: string, Executable: bool = false)`. Add optional
+`Assets: IReadOnlyList<DurableMissionAssetInput>? = null` to `DurableMissionPackageInput`;
+null/empty assets have the same no-assets hash. Source-generated camelCase JSON with nulls omitted
+measures the Core input value against 4 MiB, including encoded bytes/escaping. Host separately
+enforces its actual serialized wire/body budget. No size estimate substitutes for either check.
+`DurableMissionPackageValidator.TryCreate(string missionSource,
+IReadOnlyList<DurableResolvedExpertInput> resolvedExperts,
+IReadOnlyList<DurableMissionAssetInput> assets, out DurableMissionPackageInput? package,
+out string? reason)` selects the first mission and primary parameter, computes the canonical hash
+and calls the same validator; failure returns false/null plus a visible reason. This is pure
+construction from already-resolved content, never a filesystem/network/credential reader.
+Validated output adds ordinal `AdmittedInputNames` and `ProviderProfileNames` collections;
+the latter replaces the single-profile result field and lists distinct actual LLM profiles.
+`TryValidateInputNames(ValidatedDurableMissionPackage package, IReadOnlyCollection<string> names,
+out string? reason)` is the common root-required/declared/reserved/duplicate-name check used by
+preparation, Host and Runner. Values/file references and transfer limits remain their owners'
+responsibility. No common validator reads a provider secret or evaluates environment expressions.
+
 Core's common validator is used at Host admission and again by Runner before execution. It
-rejects all AST `EnvLetValue`/`EnvBindingValue` occurrences, provider/credential/runtime reserved
-bindings, and unsupported expert kinds before evaluating context. `llm`, `rule`, `json_extract`
-use existing adapters. Arbitrary executable code is permitted by the operator; concrete exec/ONNX
-runtime support must be designed and reviewed, without the former identity allowlist. No remote
-credentials, arbitrary HTTP endpoints or cloud process environment are authorable package data.
+rejects all AST `EnvLetValue`/`EnvBindingValue` occurrences and provider/credential/runtime reserved
+bindings before evaluating context. Environment expressions are not a cloud configuration or
+secret-transfer interface; this validation is not a process sandbox. Admit the existing engine
+kinds `llm`, `rule`, `json_extract`, `exec`, `onnx`, `http` and `search`, using their existing
+adapters rather than a second interpreter. Unknown kinds fail admission. `http` retains its
+expert endpoint contract; search uses Runner's existing `RunnerWebSearch` deployment binding and
+fails explicitly when absent. LLM providers, keys and endpoints remain deployment-owned; packages
+cannot override them. Executable code retains the operator-approved process authority below.
 
 ### Named inputs, binary content and transfer
 
-**Proposed physical storage:** reuse the existing Conversation Storage Azure Blob container,
+**Approved storage owner and existing physical target:** reuse the Conversation Storage Azure Blob container,
 `forgeconversationartifacts` in dev account `stforgeconvdev`, configured in `uaenorth`.
 The Conversation Host owns the storage adapter and durable references; its process disk is not
 the durable store. ForgeAPI handles authenticated transfer and Runner uses temporary working
 copies. This extends existing conversation storage rather than proposing a new storage service.
 Source: [conversation data-plane configuration](https://github.com/katasec/forge-infra/tree/main/dev/350-conversation-data).
-Binary mission storage remains proposed, not deployed or accepted.
+The new binary protocol is not implemented, deployed or accepted.
 Read-only Azure observation on 2026-10-10: account `stforgeconvdev` exists in `rg-forge-dev`,
 location `uaenorth`, with Blob endpoint `https://stforgeconvdev.blob.core.windows.net/`;
 `az storage container show --auth-mode login` confirmed `forgeconversationartifacts`, with
 publicAccess null. This confirms existing storage, not implementation of the new binary protocol.
-Example: an OCR mission takes `scan.jpg` and produces `content.pdf` or `content.txt`; the proposal
+Example: an OCR mission takes `scan.jpg` and produces `content.pdf` or `content.txt`; the design
 stores the output bytes in Blob and links their references to that conversation's run record.
 
 Split each `--input` at the first `=`. Names are case-sensitive identifiers
@@ -264,17 +318,32 @@ directory. No positional file-to-input alias exists.
 The named bag permits declared root parameters and explicit expert `inputs`; undeclared names
 and reserved runtime/credential names fail. Reserved names include `output`, `feedback`,
 `attempt`, `max_loops`, `history`, `conversation`, `apiKey`, `model`, `provider`, `endpoint`,
-`__*` and `FORGE_*`. All root parameters must be supplied explicitly; a mission parameter has no
+`__*`, `FORGE_*`, `work_dir`, `input_dir` and `output_dir`. All root parameters must be supplied explicitly; a mission parameter has no
 default syntax. Expert inputs are collected from reachable experts only; input-name validation is
 against their names plus root parameters, not every unused expert in a lock. Explicit named inputs
 override ordinary nonreserved `let` strings, matching ContextBuilder.Seed precedence; omitted
-non-parameter values may come from those literal lets. No expert-defaults map is invented. Missing
-values otherwise fail runtime validation rather than becoming an invented positional goal.
-OCR requires `source_file`; the previous image-owned adapter's mode/output binding is superseded.
-Generic declared input/default/output-directory binding remains a design gap to resolve before handoff. Core's pausable
-`RootInputs` filter must preserve this validated admitted input-name set, including parameterless
-OCR's `source_file`/`mode`. The set is part of the opaque checkpoint and root fingerprint; arbitrary
-undeclared Vars still cannot bypass filtering. Runtime, not a user input, supplies OCR `output_dir`.
+non-parameter values may come from those literal lets. No expert-defaults map is invented.
+An expert's `inputs` lists values forwarded when present, matching `ExecExpertRunner.BuildInputJson`;
+it is not a mandatory-argument schema. Required root parameters fail before admission, while an
+expert owns its own absent-input/default behavior. ONNX keeps its explicit missing-feature failure.
+OCR owns the required `source_file` and its default `mode=text`; missing source is a failed step,
+not a positional alias. Runtime supplies `output_dir` for executable steps and reserves it, plus
+`input_dir` and `work_dir`, against authored/named overrides. These names are permitted in an
+expert's declared `inputs` solely as runtime bindings. Core's pausable `RootInputs` filter
+preserves the validated admitted input-name set, including parameterless OCR's `source_file`/`mode`.
+Carry `AdmittedInputNames: string[]` inside the opaque checkpoint and definition fingerprint;
+resume checks it against the current validated package before restoring values. A caller cannot
+widen filtering by passing arbitrary Vars, and the segment's absolute scratch root is never a
+root input or checkpoint field.
+Replace the old credential-shaped substring filter with this common exact reserved-name policy
+and reachable declared-name set: ordinary names such as `token_count` survive start and resume.
+Core's continuation fingerprint includes every execution-affecting expert field (command, args,
+timeout, model, threshold, endpoint, check, failure behavior, inputs, typed input/output keys,
+output key, kind/role/prompt), with deterministic ordering. It excludes `ExpertDirectory` and
+the runtime workspace. Runner additionally retains its existing verified package-hash and engine
+version resume check, which binds asset bytes. A changed exec/ONNX declaration fails direct Core
+resume even without the Runner wrapper; rehydrating an unchanged package under a different
+scratch directory does not change its fingerprint.
 
 | DTO / route | Exact proposed value and behavior |
 |---|---|
@@ -363,25 +432,126 @@ must be restaged; no committed content expires while its conversation exists.
 
 ### Artifact staging, execution and outputs
 
+```mermaid
+flowchart LR
+  H[Host: immutable package and files] --> S[Runner: fresh segment scratch]
+  S --> C[Core: same interpreter and StepKey]
+  C --> E[Existing exec / ONNX adapters]
+  E --> O[Allocated step output directory]
+  O --> P[Private progress: chunks then Artifact fact]
+  P --> H
+```
+
 Every start/resume segment creates its own scratch directory and fetches/verifies committed
 artifacts before crossing the execution boundary. Bind each artifact name to a stable relative
 path `inputs/<name>/content.<validated extension>`; do not persist a random scratch absolute path
 in Core RootInputs. Runtime maps validated media types to the fixed extensions `png`, `jpg`, `pdf`
 or `bin`; uploaded filenames do not select a path. OCR's PDF detection depends on `.pdf`.
-The previous image-owned adapter/identity restriction is superseded by the operator decision
-above. Generic executable staging, command/asset resolution, runtime dependencies and explicit
-process cwd/environment must be redesigned before handoff. Stable per-segment input/output paths
-and rehydration remain required; their implementation must work for user-supplied code. Do not
-implement the former no-fallback/OCR-only routing. The output transport below is a draft, with
-its OCR-specific assumptions requiring revision for generic declared outputs.
+Runner materializes each resolved expert as `experts/<validated ExpertName>/expert.md`, with
+declared assets at their canonical package paths beneath the segment root. The validated
+`ExpertDefinition` is copied with `ExpertDirectory` set to that staged expert directory.
+Existing exec command/args and ONNX model resolution remain expert-relative. No fallback to
+image-owned code or a baked catalog is used. Local/OCI asset paths must be regular, relative,
+unique and contained; `inputs/` and `outputs/` are reserved and an asset cannot replace expert markdown. These checks protect
+package integrity and staging, not the process's operating-system authority.
 
-Output collection for OCR uses only the fixed file returned by its known mode in the allocated
-step output directory; no recursive arbitrary scratch scan. `step-key-hash` is lowercase SHA-256
-of the UTF-8 StepKey. Slot is `output/<step-key-hash>/<attempt>/<fixed filename>` and
-`ContentId = Body(RunId, "mission-content/" + Slot)`; attempt uses invariant decimal and the fixed
-filename is `content.txt` or `content.pdf`, matching the image script's fixed staged-source stem
-`content`. Relative path is `outputs/<step-key-hash>/<attempt>/<fixed
-filename>`. Runner's private raw chunk envelope adds this RunId/slot/descriptor to the existing
+Core adds the value `PipelineExecutionWorkspace(RootDirectory: string,
+ArtifactPaths: IReadOnlyDictionary<string,string>)` to `PipelineRunOptions`. `RootDirectory` is an absolute
+segment scratch directory; `ArtifactPaths` maps validated root-relative paths to their SHA-256
+digests. Runner owns its `ConcurrentDictionary<string,string>` backing registry, initially filled
+from rehydrated admitted inputs and committed produced-file references. It is runtime-only,
+not a package/checkpoint field. Child options inherit this value. `InvokeStepAsync` supplies
+the existing exact StepKey to `RunnerFor`, which constructs the existing `ExecExpertRunner`
+with this workspace/key; no new interpreter or general runner factory is introduced.
+
+Exec retains `UseShellExecute=false`, literal argument list, expert-relative cwd, declared-input
+stdin JSON, declared `outputKey`, status/reason and judge feedback semantics. Any command is
+permitted, including an explicitly authored shell command. In the adapter's process-local input
+copy, a declared input value equal to a verified `ArtifactPaths` key is made absolute against
+the segment root. This handles explicit `with(source_file: invoice)` aliases without a positional
+fallback or heuristically treating other strings as files. Literal strings not equal to a known
+artifact path remain unchanged. The pipeline context and checkpoint retain root-relative values.
+
+After authored bindings, the process-local copy supplies `work_dir`, `input_dir`, `output_dir`
+from runtime allocation. Add `FORGE_WORK_DIR`, `FORGE_INPUT_DIR`, `FORGE_OUTPUT_DIR` and
+`FORGE_INPUT_<declared input name>` for each verified file input; `FORGE_SOURCE_FILE` is present
+only when the actual declared `source_file` value names such a file. Other literal values travel
+through stdin, with no generated mode-specific variables. Runtime values overwrite inherited
+variables of those names. Inherited `FORGE_INPUT_*`/`FORGE_SOURCE_FILE` entries are removed before
+adding the current step's bindings. No absolute scratch path is written into pipeline context.
+Executables that return reusable file paths must return paths relative to `FORGE_WORK_DIR`;
+opaque output text is never searched/replaced to repair absolute paths.
+
+The process inherits Runner's remaining environment and identity under the operator-approved
+user-vetted-code policy. There is no executable allowlist, credential-isolation claim, registry
+scanner, egress policy or dependency-installation service in this phase. The normal Runner image
+provides .NET 10, Python 3, Tesseract and Poppler; packaged scripts/native assets use that Linux
+image's architecture/toolchain. Missing commands, missing shared libraries or incompatible native
+assets fail visibly at the existing execution boundary. The asset executable bit above supports
+submitted programs without a whitelist. Image toolchain changes use normal reviewed image/deploy
+work. Execution permission design remains deferred until an operator-authorized follow-up replaces
+this policy; reversal is a common validator/Runner policy change, not a CLI source allowlist.
+
+Reuse the exec adapter's default 30-second / expert `timeout` contract. Run stdin writing, stdout
+and stderr reads concurrently under the linked caller/timeout token. Cap stdin JSON and stdout
+at 4 MiB each, stderr at 64 KiB; over-limit output is a failed step, never silent truncation.
+Start failure, timeout, cancellation, malformed JSON and nonzero exit have explicit results.
+On cancellation, timeout or I/O failure, kill the still-running process tree and await exit before
+disposing it and scratch; do not leave a child because the caller token was cancelled. This is
+process lifecycle management, not containment of hostile code that escapes its process tree.
+
+ONNX reuses the existing numeric-classifier adapter and packaged expert-relative model, with
+its declared numeric inputs, output key and threshold. Package validation requires a relative
+model path resolving to an admitted asset; no numeric/file conversion or OCR model interface is
+invented. Register cancellation with existing ONNX Runtime 1.27.0 `RunOptions.Terminate` and
+session-load cancellation support; dispose native options/session/results after the call ends.
+The installed package XML and supervisor's native macOS probe establish both APIs, numeric
+inference and cancellation behavior; [probe evidence](phase-76.2-unified-cloud-run-contracts_completed.md#generic-execution-redesign--investigation-and-library-probe).
+The implementation plan must include exact restored-package native checks, Linux inference in
+the normal publication checks, and subsequent real Runner-image/cloud acceptance. Linux/image
+support is unverified until those observations pass; a future image is not a precondition to
+planning its producer change, and the macOS probe cannot close Linux/cloud acceptance.
+
+Each executable step receives `outputs/<step-key-hash>/<attempt>` as its allocated output
+directory; `step-key-hash` is lowercase SHA-256 of UTF-8 StepKey and attempt is invariant decimal.
+On its completed trace, Runner collects the top-level regular files in that directory, in ordinal
+filename order, reusing the existing `RunWorkspace` output/media convention. No recursive scratch
+scan, arbitrary supplied path or fixed OCR filename list is used. Refuse links/outside paths and
+filenames with separators/control characters; filename is at most 128 UTF-8 bytes, total relative
+path at most 256. Content type follows the existing extension map, defaulting to octet-stream.
+Collection failures fail the run before pause/Completed. After verifying bytes, bounded paths and
+hashes, publish the output chunks and corresponding Artifact facts through the awaited existing
+progress producer, then register each current-segment relative path/digest in `ArtifactPaths`
+before returning from that step's completed trace. Thus the next dependent step sees newly
+generated files without requiring a pause. Concurrent branches have separate StepKey directories;
+registry reads/writes are thread-safe, exact repeated registration is idempotent and a conflicting
+digest fails the run. Parallel completion is joined before subsequent sequential steps. A branch
+does not gain an ordering guarantee on a different still-running branch's outputs.
+Core may invoke trace callbacks concurrently. Within the existing `MissionCommandProcessor` /
+progress-outbox owner, use one awaited per-command asynchronous gate shared by start/continue
+trace handling and pause/final publication. Inside that gate, handle/drain the delta batcher,
+allocate the next progress ordinal from the latest session state, reserve cumulative output
+count/bytes before staging, publish chunks before their Artifact fact, save pending/sent outbox
+state and replace the captured current state before releasing the gate. Register verified output
+paths before the completed callback returns. Actual expert execution stays outside the gate and
+remains parallel; a gate is not held while waiting for another branch to execute. The final/pause
+path runs only after Core has joined all trace callbacks and uses the same sequencing boundary.
+An outbox failure retains `WorkerOutboxFailureException` semantics: stop publication/execution,
+leave the pending record for existing redelivery, and emit no successful terminal status. Do not
+introduce another queue, progress sequencer service or state owner. Existing per-profile
+`UsageAccumulator` already uses interlocked counters and needs no additional synchronization.
+Verify two simultaneously completing branches with delayed publication: distinct durable EventIds,
+both exact step outputs/files retained, no overwritten pending fact after publication failure and
+redelivery, and aggregate output reservations enforced before extra chunks are staged.
+Local registration means validated scratch availability, not Host commitment; Host alone commits
+the Artifact fact and validates it before accepting pause/Completed. Test exec A → exec B both in
+one segment and after fresh-worker rehydration, plus concurrent branch collection and collisions.
+Files written elsewhere are ordinary
+ephemeral scratch and are not promised persistent delivery.
+
+Slot is `output/<step-key-hash>/<attempt>/<filename>` and
+`ContentId = Body(RunId, "mission-content/" + Slot)`. Relative path is
+`outputs/<step-key-hash>/<attempt>/<filename>`. Runner's private raw chunk envelope adds this RunId/slot/descriptor to the existing
 progress publisher's per-conversation session, with deterministic chunk IDs. Host classifies it
 as a binary chunk, stages it through the binary store seam, and checks the active producing run;
 it is not a new public event kind. The corresponding existing Artifact fact commits/verifies its
@@ -415,18 +585,21 @@ default compute segment. Billing's existing segment idempotency is reused; no le
 pricing owner moves to Runner. Required profile/config bindings are named in the implementation
 plan and tested against the exact published package before deployment.
 
-OCR text mode returns its produced UTF-8 text as the OCR step output through the runtime-owned
-adapter; normal engine composition determines the mission's final output. A mission ending at
-that step therefore returns recognized text. PDF mode produces a text summary plus a durable
-binary output reference. Runner uploads
+OCR remains authored executable mission code: include `ocr.py` in its explicit package assets
+and update the script to read the same declared stdin inputs, own its `mode=text` default,
+resolve `source_file`, and use runtime `output_dir`. In text mode the script returns recognized
+text in its declared `summary` output key; PDF mode returns its text summary. Normal engine
+composition determines final mission text; Runner never chooses text/PDF response behavior.
+Both modes' generated files use the same generic output collection and durable references.
+Runner uploads
 bytes through progress chunks; extend existing `ConversationArtifactReference` with its
 `MissionContentReference` and stable relative output path, preserving existing artifact ID,
 content type and filename fields. Use existing Artifact progress/event kind and RunId association,
-not a second artifact event vocabulary. Never return ephemeral `/tmp` filenames as usable artifacts. Output collection follows
-the executable expert's declared output directory and refuses links/outside paths. The CLI prints
+not a second artifact event vocabulary. Never return ephemeral `/tmp` filenames as usable artifacts.
+The CLI prints
 the final response verbatim and lists artifact identity in diagnostics; it neither parses the text
-nor downloads/writes the PDF automatically. Binary storage/query is a Type-1 proposal pending
-operator settlement; executable trust is already decided, with its technical redesign open; it preserves Host ownership of run records.
+nor downloads/writes the PDF automatically. Binary storage/query preserves the approved Host
+ownership of persistent content.
 
 ### Hands and local side effects
 
@@ -482,14 +655,30 @@ Every progress/error/identity notice goes to stderr. `--steps` includes each com
 `--verbose` adds source/content resolution and execution identity, never keys or auth headers.
 
 Add trace identity to existing progress/event DTOs: `MissionPath: string[]`, `ExpertName: string`,
-`StepKey: string`, `Attempt: int` on step facts; final response has no step key. Extend Core's
+`StepKey: string`, `Attempt: int` and `StepStatus: string?` on step facts; final response has no step key. Extend Core's
 trace DTOs to expose its existing internal execution key (including nested call path, mission
 attempt, element index and parallel branch index), then forward that identity at the producer;
-current trace records do not expose StepKey. Never pair parallel step outputs by arrival order. Persist these facts
-regardless of diagnostic flags. Live deltas remain optional display data, never authoritative
+current trace records do not expose StepKey. Never pair parallel step outputs by arrival order.
+Every completed step persists its exact `Envelope.Text`, including empty text, and exact status.
+A successful completed step uses the existing ParticipantMessage/Text body. A failed completed
+step keeps the existing Error kind/Reason body and additionally carries its exact output in the
+existing Text body, with the same EventId/StepKey and `StepStatus`; do not replace output with
+`Reason ?? Text`. Null reason is represented as no Reason body, not invented output text.
+Host intake, event hydration, JSON metadata and payload validation permit this precise Error
+trace shape (Text plus optional Reason, nonempty StepKey); other Error facts retain their current
+reason contract. Publish these bodies before their fact, and the completed-step fact before any
+subsequent retry step, pause or terminal status, using existing outbox sequencing. Existing chat
+error presentation can keep reading Reason; `--steps` reads Text and normal diagnostics show the
+failure reason separately. Verify a failed judge whose Text differs from Reason, a later successful
+retry and zero-length step output through durable replay without flags and with `--steps`.
+Persist these facts regardless of diagnostic flags. Live deltas remain optional display data, never authoritative
 final text. On a lost stream reconnect from the durable cursor and query/replay terminal state;
 do not submit another turn. A permanent follow failure exits nonzero with the durable IDs and
 explicitly states the cloud run may remain active.
+An MCL `output Mission "file"` declaration does not redirect the new run's stdout or authorize a
+local file write; remove the former CLI output-declaration writer from this command. Language
+parsing and other consumers retain their own documented semantics. Persistent binary outputs
+come only from the allocated Runner output convention, and local file writes from Hands.
 
 Ctrl-C closes local admission, requests existing Host cancellation, drains/disposes Bob, detaches
 and exits 130. Cleanup uses a bounded independent cancellation budget (10 seconds), rather than
@@ -561,7 +750,8 @@ probes may return a concrete missing dependency to supervisor before approval.
 | Registry/auth/archive/hash failure | MissionRegistry, verified immutable preparation | Exit 1 before admission; no fallback/default change on auth refusal | Anonymous pull, bad token, digest mismatch, traversal/link tar |
 | Interrupted content upload | Host staging, uncommitted content cannot execute | IDs + error; exact same-invocation retry or expiry | Missing chunk and conflicting bytes produce no dispatch |
 | Create/submit reply lost | Missions + Host deterministic receipts | Reconcile exact IDs; never silently start new work | Accepted command with response dropped yields one run |
-| Disallowed env/code/profile | Runtime validator before execution | Explicit rejection, no provider/process side effect | Env leakage probes in root and step bindings, altered OCR |
+| Invalid package/bindings or unavailable runtime dependency/profile | Common validator / Runner execution | Invalid package fails before execution; missing command/profile fails visibly at its owning boundary | Root/step environment-expression rejection; changed arbitrary exec fixture accepted; missing command/profile failure |
+| Process timeout/cancellation or excess output | Existing Core exec adapter, bounded concurrent I/O and joined exit | Failed/cancelled run; no child left by ordinary cancellation and no oversized result | Blocked stdin plus noisy stdout, timeout, cancelled child and output-cap probes |
 | Local tool result reply lost | Hands claim and retained exact result | Retry result delivery only; abrupt client death leaves the old run pending until explicit cancellation | Write/Edit side effect observed once after dropped reply |
 | Restart between segments | Runner scratch / Host immutable inputs | Rehydrate same named relative paths; engine/package mismatch explicit | Artifact consumed after fresh-worker resume |
 | Provider/process outcome uncertain | Existing worker session boundary | Interrupted, no blind execution replay; user owns deliberate new run | Crash after execution marker does not duplicate execution |
@@ -576,10 +766,10 @@ probes may return a concrete missing dependency to supervisor before approval.
 | Public and internal routes | Authenticated ForgeAPI message routes; mutations via ingress/reply only; queries direct to Host; worker via existing private queues |
 | Identity / secrets | API key to edge; edge queue roles only; Host store roles; Runner provider/financial/work roles; registry credential remains local; Hands only local file grant |
 | Cross-store access | None. API/Runner receive neither Blob/Table credential nor direct storage URL |
-| Type-1 state | Operator permits arbitrary user-vetted code and defers execution permissions; generic execution design/reviews remain open. Durable binary transfer/query ownership awaits operator choice |
+| Type-1 state | Operator permits arbitrary user-vetted code, defers execution permissions, and approves persistent Host / ephemeral Runner ownership; revised technical design passed full current reviews |
 | Type-2 details | Fixed bounded transport, scratch and retry conventions; reversible within existing owners, no transitional data-role exception |
 | One flow / no speculative framework | Local/OCI sources converge before admission; reuse engine, queue/outbox, claims, workspace guard, profile settlement and existing stores |
-| Built-in containment | Immutable hash/ref checks, account-scoped intake, atomic receipts, runtime environment treatment still under redesign, declared-root Hands, no blind side-effect retry |
+| Built-in containment | Immutable hash/ref checks, account-scoped intake, atomic receipts, bounded joined process I/O, declared-root Hands, no blind side-effect retry; submitted code retains Runner authority by explicit operator decision |
 | UI / Desktop gates | N/A: no Desktop/ForgeUI or TUI layout change; shared application actions remain surface-neutral |
 | Default path | Required below; controlled tests cannot close it |
 
@@ -601,16 +791,16 @@ lost replies, cancellation and no repeated side effects. Record exact artifacts/
 defaults, safe state, actions and observed outcomes in the completed spoke.
 
 The independent [OCI prerequisite](phase-76.3-oci-integrity-auth.md) is complete with full reviews
-and published-package acceptance while the changed executable design and content-ownership choice remain open.
+and published-package acceptance; the revised generic executable technical design also passed full current reviews.
 It tightens existing retrieval/authentication authority and adds no cloud owner, public service
 route, identity or data-plane role. Its approval cannot authorize the remaining cloud changes.
 
-After Type-1 settlement and full independent design review, write the remaining implementation spokes
+Write the remaining implementation spokes from this locked design
 in dependency order: Core/package transport primitives; Host contracts/storage/admission; Runner
 execution/artifacts/settlement; shared Client Projects/Missions/Sessions/Hands; CLI/config/registry
 and clean cut; publication/deployment/default acceptance. Each gets implementer Plan, sequential
 full plan reviews, supervisor approval, same implementer, sequential full code reviews. Do not
-approve implementation from this draft. Cross-repo packages are published/verified before consumer
+approve implementation without the bounded implementer plan and its reviews. Cross-repo packages are published/verified before consumer
 plans rely on them; no sibling source references.
 
 ### Reuse and principles that changed decisions
@@ -628,7 +818,7 @@ plans rely on them; no sibling source references.
 
 Designer rules that changed choices: **one code path** (source adapters converge); **one owner**
 (binary storage stays Host, authority stays Hands); **no NIH** (reuse guards/claims/settlement);
-**built-in safety** (use immutable references; executable environment treatment requires redesign);
+**built-in safety** (immutable references and joined process lifecycle; user-vetted executable authority is explicitly deferred policy);
 **minimum needed** (no download/inspection command or Desktop changes);
 **prove library choices** (probe before approval); **verified means done** (installed default
 cloud action, not health checks); **progressive disclosure** (contracts by boundary).
@@ -638,17 +828,16 @@ upload); positional first-file mapping (breaks named inputs); shared absolute sc
 (restart/concurrency); match parallel step outputs by order (wrong identity); rerun a tool after
 a delivery error (duplicates side effects); interpret JSON/PDF on stdout (breaks opaque response).
 
-Open work: redesign generic executable contracts for the operator-approved user-vetted-code policy;
-settle Host-owned content; obtain full current design reviews. Prior reviews are historical after
-this policy change. Exact OCI 0.5.0 package/API/AOT verification remains complete.
+Open work: plan and deliver the bounded implementation spokes from this locked design.
+Exact OCI 0.5.0 package/API/AOT verification remains complete. No implementation plan is approved.
 
 ## Current work
 
 | Item | State |
 |---|---|
 | Source investigation | Read-only baseline complete; OCI package accepted separately, cloud acceptance pending |
-| Contract design | Executable policy decided; generic execution redesign/full review and content-ownership choice open. [Completed investigation/review rounds](phase-76.2-unified-cloud-run-contracts_completed.md) |
-| Independent design reviews | Prior round 4 PASS covered the superseded executable policy; no inherited PASS for the changed design |
+| Contract design | Supervisor locked the revised generic contracts after full current round 7 PASS; [review evidence](phase-76.2-unified-cloud-run-contracts_completed.md#generic-execution-design-review--round-7) |
+| Independent design reviews | Round 7 simplicity and ownership PASS on the complete revised artifact; no inherited prior verdict |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation approval | Not granted |
 | Cloud default-path acceptance | Required; not performed |
