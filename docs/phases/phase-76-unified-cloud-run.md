@@ -4,8 +4,8 @@
 [the requirements spoke](phase-76.1-unified-cloud-run-requirements.md); the supervisor's
 [contract proposal](phase-76.2-unified-cloud-run-contracts.md) had passed technical reviews for
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
-and deferred execution permissions. Executable contracts require redesign/full review; Host-owned
-content remains an unapproved proposal, with an explanation requested. The independent OCI integrity/authentication prerequisite is merged, published as
+and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
+Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
 Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. No cloud implementation approval, deployment
 or runtime acceptance. **Cloud work is not build-ready.**
 
@@ -22,11 +22,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Local validation PASS: eight files, 60 local links/anchors, two JSON examples, balanced fences and whole hub checked; diff checks PASS. OCI product evidence is recorded separately. |
+| Current documentation handoff | Generic contract reviews PASS and supervisor lock recorded; Core producer planning next. OCI product evidence is recorded separately. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
-| Contract design | Executable policy decided; generic execution redesign/reviews and content choice open; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
+| Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | Not started; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
+| Cloud implementation and acceptance | First bounded [Core producer task](phase-76.4-core-cloud-primitives.md) awaiting implementer plan; code and unified default-path acceptance not started |
 
 ## Dependency-ordered work
 
@@ -38,10 +38,24 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | 4 | Plan and implement remaining repository tasks | Follow the [supervisor workflow](../design/supervisor-workflow.md); no executable changes before implementer-plan approval. Define dependency-ordered implementation spokes after the cloud contracts are locked. |
 | 5 | Merge, publish/deploy, accept, close | Required checks and the real default path pass, including cloud reasoning and client tool execution across multiple declared folders; completion evidence names actual artifacts and observations. |
 
+## Required delivery coverage
+
+These are required outcomes of tasks 4–5 above, not completed work. Detailed implementation
+spokes follow the reviewed contracts in dependency order; none is implementation-ready yet.
+
+| Required outcome | Implementation owner / task coverage | Completion observation |
+|---|---|---|
+| One local/OCI `forge run`, named text and file inputs | Core/package primitives → shared Client preparation → CLI/source resolution | Installed CLI runs both sources through the same real cloud path; each named file reaches its matching input |
+| Cloud expert workflow and user-vetted executable code | Core adapters/package validation → Runner execution | Real multi-expert run, arbitrary packaged executable fixture, OCR text/PDF and fresh-worker continuation succeed |
+| Local Read/Write/Edit across declared folders | Client Projects/Sessions/Hands | Independent byte inspection in both disposable roots; outside/symlink/terminal requests denied; empty roots grant no file tools |
+| Persistent conversation, steps, inputs and generated files; ephemeral Runner scratch | Host contracts/content storage/admission → Runner staging/progress | Authenticated history and artifact bytes remain readable after CLI exit and Runner segment replacement |
+| Opaque final stdout, diagnostics stderr, clean command migration | Shared Client follow → CLI/config/registry and clean cut | Exact final bytes including JSON/empty text, flag-independent durable step history; removed syntax rejected |
+| Delivered product on supported defaults | Normal package publication → infrastructure deployment → supervisor acceptance | Merged source/package/image provenance, required checks and default-path actions recorded; all touched repos clean on current main |
+
 ## Next
 
-Explain/settle Host-owned content, redesign generic executable contracts under the recorded user-vetted
-code policy, then obtain full current design reviews before locking and planning implementation. The OCI prerequisite is accepted;
+Obtain and review the implementer's plan for [Core package/execution primitives](phase-76.4-core-cloud-primitives.md)
+under the locked generic design. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.
@@ -61,9 +75,8 @@ decisions must therefore be presented as concrete proposals where existing opera
 do not already settle them. A requirement change also returns to the operator. This record
 was requirements-only. The operator has now invoked the full flow and authorized autonomous
 execution within the agreed requirements. The supervisor handles reversible technical decisions
-and plan approval. The workflow's explicit Type-1 operator gate remains applicable to the
-remaining public content boundary. Executable trust is decided by the operator; its technical
-execution/environment design still needs full review. The independent OCI prerequisite
+and plan approval. The operator has settled executable trust and persistent Host / ephemeral Runner
+ownership. Their technical execution/environment and content contracts have passed full current reviews and are locked. The independent OCI prerequisite
 narrows existing library authority and creates no cloud boundary or permission grant.
 
 ## Prior requirements-documentation gates

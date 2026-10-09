@@ -3,7 +3,8 @@
 **Status:** Product accepted 2026-10-09: full design/plan/code reviews passed, OCI PR 5 merged,
 Katasec.OciClient 0.5.0 published normally and accepted from a fresh remote-package Native AOT
 consumer. [Completion evidence and timing](phase-76.3-oci-integrity-auth_completed.md).
-The contract remains here for future consumer work; cloud Type-1 decisions remain open.
+The contract remains here for future consumer work; cloud ownership and executable trust are now
+operator-approved, and the revised generic cloud design has passed full current reviews and is locked.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Contract: [source and authentication design](phase-76.2-unified-cloud-run-contracts.md).
 
@@ -27,7 +28,7 @@ branch convention. Tests live in its existing test project. Read-only source bas
 |---|---|
 | Security ownership/tier/data | Existing local OCI client talks to the operator-selected registry and its delegated token realm. No context/store/queue owner or service entry point changes. |
 | Identity/secrets | Existing constructor credential remains local; HTTPS realm validation, scoped caching and redirect handling narrow current authority. No new provider/platform keys or cloud credential grants. |
-| Type 1/2 | Reversible local-library API and hardening behind the existing registry contract; no new cloud Type-1 boundary. Cloud executable/content decisions remain blocked independently. |
+| Type 1/2 | Reversible local-library API and hardening behind the existing registry contract; no new cloud Type-1 boundary. Remaining cloud technical work is independent. |
 | Engineering failure boundaries | Library owns HTTP/auth/integrity/bounds; callers own settings/cache/package policy. Fail with existing OciException/OciAuthException, preserve cancellation, never report unverifiable content/auth as success. |
 | UI | N/A: library behavior only, no visual surface. |
 | Default-path acceptance | Required for this behavior change: publish from merged main through existing workflow, restore exact package in a disposable Native AOT consumer using its public constructor against real GHCR. No endpoint override or internal handler can close it. CLI consumer adoption and full cloud acceptance remain later tasks. |
@@ -126,7 +127,7 @@ Documentation closure accompanies this record. Cloud acceptance remains open.
 | Implementer plan | [Completed approved plan](phase-76.3-oci-integrity-auth-plan_completed.md); full simplicity/ownership PASS |
 | Implementation | [OCI PR 5 merged](https://github.com/katasec/oci-client-dotnet/pull/5); both full code reviews PASS |
 | Product tests/AOT/default evidence | [All required observations passed](phase-76.3-oci-integrity-auth_completed.md), including exact remote 0.5.0 package/source/hash and Native AOT public/private GHCR |
-| Phase-wide Type-1 decisions | Pending; this prerequisite does not settle them |
+| Phase-wide Type-1 decisions | Subsequently settled by operator; this prerequisite does not authorize cloud implementation |
 
 Principles that changed decisions: reuse the existing authentication/manifest path; bounded
 streaming and scoped tokens contain failures structurally; exact published/source inspection

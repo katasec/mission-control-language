@@ -1,7 +1,8 @@
 # Phase 76.3 — OCI integrity/authentication evidence
 
 **Accepted 2026-10-09 20:27:58 UTC.** The bounded OCI prerequisite is complete. This does not
-close unified cloud execution or settle its two pending Type-1 choices.
+close unified cloud execution. Its two then-pending Type-1 choices were subsequently settled by
+the operator; the revised cloud design subsequently passed full round 7 independent reviews and is locked.
 [Contract](phase-76.3-oci-integrity-auth.md) · [approved plan](phase-76.3-oci-integrity-auth-plan_completed.md).
 
 ## Product and publication
