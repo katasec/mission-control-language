@@ -245,6 +245,12 @@ the durable store. ForgeAPI handles authenticated transfer and Runner uses tempo
 copies. This extends existing conversation storage rather than proposing a new storage service.
 Source: [conversation data-plane configuration](https://github.com/katasec/forge-infra/tree/main/dev/350-conversation-data).
 Binary mission storage remains proposed, not deployed or accepted.
+Read-only Azure observation on 2026-10-10: account `stforgeconvdev` exists in `rg-forge-dev`,
+location `uaenorth`, with Blob endpoint `https://stforgeconvdev.blob.core.windows.net/`;
+`az storage container show --auth-mode login` confirmed `forgeconversationartifacts`, with
+publicAccess null. This confirms existing storage, not implementation of the new binary protocol.
+Example: an OCR mission takes `scan.jpg` and produces `content.pdf` or `content.txt`; the proposal
+stores the output bytes in Blob and links their references to that conversation's run record.
 
 Split each `--input` at the first `=`. Names are case-sensitive identifiers
 `[A-Za-z][A-Za-z0-9_]*`; duplicate names, empty names and missing `=` fail. Empty literal values
