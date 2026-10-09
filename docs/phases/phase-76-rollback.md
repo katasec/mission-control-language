@@ -1,7 +1,8 @@
 # Phase 76 — Revert failed implementation
 
-**Status:** Five exact reverts committed and pushed; independent source reviews passed.
-Merge pending. Design and plan passed sequential reviews. The restored baseline has validation failures below.
+**Status:** OCI rollback merged; MCL and Desktop exact rollback PRs await an operator override
+of the validation gates below. Independent design, plan, and source reviews passed.
+The failed implementation documentation is reverted by the documentation PR below.
 Operator requested reverting the failed session's merges while preserving its branches.
 No Phase 76 implementation is resumed.
 
@@ -65,7 +66,7 @@ The original requirements spoke remains byte-for-byte unchanged.
 | MCL | `fbde8d2`, `e239e97` | Release build: zero warnings/errors; affected tests 28 passed. Key-free full suite: 972 passed, 12 failed, 8 skipped. | Binary produced; canonical publish script exit 1 on six raw linker warnings. Same binary help/version exit 0. |
 | Desktop | `079850b` | 188 passed, 1 existing skip. | Binary produced, exit 0; five raw linker warnings. |
 | OCI | `985144a` | Existing non-integration Release suite: 18 passed. | Library; existing AOT compatibility analysis. |
-| Documentation | `2d08d3b` | Baseline comparison passed; rollback/status documentation checks pending. | N/A |
+| Documentation | `2d08d3b` | Baseline and unchanged-requirements comparisons, relative links, balanced fences, and whitespace checks passed. | N/A |
 
 The 12 MCL failures are `ForgeProjectTests` initialization failures: the `forge` assembly is
 already loaded. They repeat in a fresh key-free process on the exact restored tree. The initial
@@ -80,11 +81,12 @@ Logs are in `/tmp/phase76-rollback-validation/`; source restoration does not cla
 full MCL suite, zero-warning native acceptance, or installed/cloud acceptance.
 
 Implementation began 2026-10-09T12:44:14+04:00. Exact earlier review boundaries were not captured;
-do not infer them. Merge and post-merge reference verification remain pending.
+do not infer them. OCI merged at 2026-10-09T12:57:37+04:00; merged source matches its baseline.
+MCL/Desktop merge and post-merge verification remain pending explicit operator disposition.
 
 | Revert PR | State |
 |---|---|
-| [OCI #4](https://github.com/katasec/oci-client-dotnet/pull/4) | Reviewed; managed checks passed; merge pending. |
+| [OCI #4](https://github.com/katasec/oci-client-dotnet/pull/4) | Merged as `0f9d498`; source baseline verified on current `main`. |
 | [Desktop #11](https://github.com/katasec/forge-desktop/pull/11) | Reviewed exact restoration; zero-warning native gate blocked. |
 | [MCL #76](https://github.com/katasec/forge-mcl/pull/76) | Reviewed exact restoration; full managed and zero-warning native gates blocked. |
-| [Documentation #369](https://github.com/katasec/mission-control-language/pull/369) | Reviewed source rollback; final documentation validation and merge pending. |
+| [Documentation #369](https://github.com/katasec/mission-control-language/pull/369) | This documentation rollback; source review and documentation validation passed. |
