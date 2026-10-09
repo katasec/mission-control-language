@@ -39,6 +39,36 @@ init/run stdout/stderr files are retained with the fixture. This is also baselin
 Approved-plan documentation merged in [MCL PR374](https://github.com/katasec/mission-control-language/pull/374),
 commit `6a0b4fc8584ee2062b9ba1809a1f73771e4d71ca`, 2026-10-09 22:08:34 UTC.
 
+## Implementation evidence — review pending
+
+Frozen source `770778d2d20a8c202552d7c3f3dd1e2cbdc7425c`, 29 approved files,
+[draft product PR77](https://github.com/katasec/forge-mcl/pull/77). Evidence retained in
+`/private/tmp/phase76-core-primitives-20261009T220732Z`.
+
+| Observation | Result / evidence |
+|---|---|
+| Full Debug build | Zero warnings/errors, full-build-final.log |
+| Focused boundary tests | 167 passed, zero skips, focused-current-final.log |
+| Unfiltered full Debug tests | 1039 passed, six existing live skips, zero failures, 2m36s, full-debug-r2.log; normal repository test environment clears MCL_API_KEY only, no test exclusions |
+| Normal make verify-core-package | Release slice 383 passed, zero skips, package metadata PASS, core-package-final.log |
+| Explicit Release Core build | Zero warnings/errors, core-release-build-final.log |
+| Exact committed-source package | final-packages, source provenance770778d; SHA256 920ddf3742295e581403ea86d3ffd823683b6f8726d481d8d2aa02d3849a9421 |
+| Fresh isolated branch-package consumer | consumer-final-restore/run.log; generated JSON/assets/executable-bit/old hash/six-argument ctor, exec alias/cwd/runtime directories, exact StepKey, real numeric/in-flight cancelled ONNX all PASS |
+| Canonical Native AOT | Pending existing PR workflows37999080680 (macOS package/CLI verification) and37999080639 (four-host release build) |
+
+First full attempt, retained as full-debug-final.log, was stopped before completion after the
+exported MCL_API_KEY defeated the unchanged MissingApiKey_ThrowsClearly assertion and a new
+delta assertion omitted inherited child streaming. Supervisor independently compared the
+missing-key test with origin/main and observed identical source. The delta assertion was corrected;
+standard key-cleared unfiltered run completed normally. Stack sampling investigated its longer
+duration; no established hang or terminal workaround was claimed and no exclusions were added.
+
+Controlled branch-package evidence is not publication/default acceptance. Independent full code
+reviews, supervisor readiness, merge, normal publication and post-merge default observations remain.
+Tiny identity.onnx protobuf has no NUL and Git treats it as text, reporting two byte-level
+whitespace lines; its reviewed SHA and real numeric result are retained. Text-source whitespace
+checks pass. No extra gitattributes owner or fixture-byte mutation was introduced for this report.
+
 ## Plan review — simplicity round 1
 
 Full current artifact **PASS**; product source unchanged.
@@ -175,5 +205,6 @@ only; later consumer/cloud tasks remain unapproved. Implementation uses a new ad
 | Review plan / simplicity / r2 | 2026-10-09 22:05:02 | 2026-10-09 22:05:42 | 40s | Full current round3 plan, all 11 checks PASS |
 | Review plan / ownership / r2 | 2026-10-09 22:06:02 | 2026-10-09 22:07:02 | 1m00s | Full current round3 plan, all 19 behaviours PASS |
 | Plan approval / supervisor | 2026-10-09 22:07:32 | 2026-10-09 22:07:32 | Instant boundary | Explicit bounded PLAN APPROVED; implementation assigned same agent |
+| Implement / same implementer / r1 | 2026-10-09 22:07:32 | 2026-10-09 22:27:04 | 19m32s | Frozen770778d, attached draft product PR77; managed/package facts pass; canonical native pending |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.
