@@ -6,8 +6,8 @@
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
-Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. No cloud implementation approval, deployment
-or runtime acceptance. **Cloud work is not build-ready.**
+Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. The first bounded Core producer plan is approved; implementation is in progress. Later consumer tasks, deployment
+and unified runtime acceptance remain open.
 
 ## Intent
 
@@ -22,11 +22,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Generic contract reviews PASS and supervisor lock recorded; Core producer planning next. OCI product evidence is recorded separately. |
+| Current documentation handoff | Generic contract reviews PASS and supervisor lock recorded; Core producer implementation in progress. OCI product evidence is recorded separately. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | First bounded [Core producer task](phase-76.4-core-cloud-primitives.md) awaiting implementer plan; code and unified default-path acceptance not started |
+| Cloud implementation and acceptance | First bounded [Core producer task](phase-76.4-core-cloud-primitives.md) plan approved; implementation in progress; unified default-path acceptance not started |
 
 ## Dependency-ordered work
 
@@ -41,7 +41,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 ## Required delivery coverage
 
 These are required outcomes of tasks 4–5 above, not completed work. Detailed implementation
-spokes follow the reviewed contracts in dependency order; none is implementation-ready yet.
+spokes follow the reviewed contracts in dependency order; only the bounded Core producer plan is approved.
 
 | Required outcome | Implementation owner / task coverage | Completion observation |
 |---|---|---|
@@ -54,7 +54,7 @@ spokes follow the reviewed contracts in dependency order; none is implementation
 
 ## Next
 
-Obtain and review the implementer's plan for [Core package/execution primitives](phase-76.4-core-cloud-primitives.md)
+Implement and review the approved plan for [Core package/execution primitives](phase-76.4-core-cloud-primitives.md)
 under the locked generic design. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
