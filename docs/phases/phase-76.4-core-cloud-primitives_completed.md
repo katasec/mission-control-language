@@ -16,6 +16,29 @@ MCL011 gap. Supervisor resolved immutable-source injection and parameter string 
 active task before planning. Internally derived admitted names, inner format3/old-format refusal
 and portable asset collision policy also recorded before plan reviews.
 
+## Pre-change installed-default baseline
+
+Supervisor observation 2026-10-09 22:09 UTC, before Core implementation publication:
+installed CLI `0.10.1-dev.0+8d28dc1ff8f127facfd708b1c89369179e98cf18` successfully executed
+`forge project create /private/tmp/phase76-core-baseline-20261009T2210` (exit0), then a piped
+plain `forge chat --project .../forge.project.json` turn (exit0). Requested literal
+`PHASE76_BASELINE_OK` was returned by Chat:Answerer. Produced declaration has Project ID
+`9e8f5dad-1622-47c8-a3ca-352d7f7d10cd`, Chat@1 and empty folders. Normal saved login/API
+route used; FORGE_API_ENDPOINT, FORGE_PLATFORM_ENDPOINT, RID, RELEASE_TAG and CLI_OUTPUT were
+observed absent. Source and stdout/stderr evidence are retained in that disposable directory.
+This proves the pre-change baseline only; the merged/published Core default regression is still
+required. No new Core/cloud behavior is accepted by this result.
+
+The same installed baseline also ran normal `forge init` then `forge run --steps` in the sibling
+`local-run` fixture (both exit0), using normal MCL_PROVIDER/MCL_MODEL/MCL_API_KEY environment
+resolution and no provider endpoint override. A role:agent expert requested Write then Read.
+Supervisor independently read `result.txt` as exactly `PHASE76_HANDS_BASELINE`; final stdout
+returned that text and the outside sentinel remained `outside-unchanged`. Source and separate
+init/run stdout/stderr files are retained with the fixture. This is also baseline-only evidence.
+
+Approved-plan documentation merged in [MCL PR374](https://github.com/katasec/mission-control-language/pull/374),
+commit `6a0b4fc8584ee2062b9ba1809a1f73771e4d71ca`, 2026-10-09 22:08:34 UTC.
+
 ## Plan review — simplicity round 1
 
 Full current artifact **PASS**; product source unchanged.
