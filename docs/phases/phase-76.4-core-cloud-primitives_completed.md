@@ -2,8 +2,40 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Original plan and complete r6 correction plan approved after fresh full independent reviews.
+Original plan and complete r7 correction plan approved after fresh full independent reviews.
 Correction implementation/publication/default acceptance remain open.
+
+Complete correction-plan approval delivered through [MCL PR376](https://github.com/katasec/mission-control-language/pull/376),
+merged2026-10-09T23:15:01Z atb79252de6d9c412f3fa82f1c96a8e0a6bd35dbd0. Named documentation
+checks passed:11 Phase76/hub files,77 local links/anchors,2 JSON examples, balanced fences,
+global top-level phase index and git diff --check. No required GitHub checks were present;
+mergeable/CLEAN and manual validation were observed. Product tests/AOT/default acceptance
+are N/A for that documentation PR; the approved product plan retains them as mandatory gates.
+
+Correction implementation assigned to the same implementer at2026-10-09 23:15:09 UTC, beginning
+from clean770778d on the existing unfinished product branch/draftPR77. Stage ended at23:23:29 UTC
+with an uncommitted intermediate diff, no merge/publication or acceptance approval.
+
+## Correction implementation — intermediate handback
+
+Evidence `/private/tmp/phase76-core-corrections-20261009T231509Z`: complete-intermediate.diff and
+status-intermediate.txt freeze the handback. Full Debug solution build passed with zero warnings
+and errors (managed-build-r2.log); parser/checkpoint/error-policy slice passed41/41 with no skips
+(independent-focused.log); existing CLI scripts passed30/30 (script-tests.log). Later command
+lookup/classifier test additions were not included in that full build. The exec-inclusive slice
+had75 pass/11 fail and the managed native probe failed at the same visible macOS EPERM boundary.
+No final full/package/native/default-path PASS is inferred from these intermediate results.
+
+The implementer stopped the material deviation before adding a workaround. Supervisor inspected
+Apple XNU kern_sig.c: group signalling filters zombie members, then POSIX nfound==0 returns EPERM.
+proc_info.c's PROC_PGRP_ONLY list holds the process-list lock and includes zombies. Scratch
+`/private/tmp/phase76-macos-held-group.py` observed an exited unreaped root with kill error1 and
+a four-byte root-only group result; a root with an ordinary descendant had kill success and
+root-only membership after two bounded observations. This is disposable mechanism evidence,
+not corrected product or Native AOT acceptance. The complete round7 plan records the minimal
+one-import, retained-root-only observation; all42 files/public contracts remain unchanged.
+Supervisor clarification boundaries:2026-10-09 23:23:18–23:23:38 UTC. New full sequential plan
+reviews are required before that clarification is implemented.
 
 ## Source investigation
 
@@ -471,6 +503,68 @@ and failure boundaries, package/default gates and N/A visual/security-data chang
 2026-10-09 23:13:40 UTC** for this bounded complete r6 plan only. No merge/publication/acceptance
 approval. The same implementer receives correction implementation after this record is delivered.
 
+## Complete round 7 clarification — full reviews and approval
+
+The supervisor corrected the complete six-section plan after the stopped macOS deviation;
+no new scope, files, public APIs, credentials, permissions or persistence owner. Fresh full
+simplicity review r5 PASS (23:23:48–23:24:47 UTC); its inherited r6 approval-text comment was
+corrected as metadata. Fresh full ownership review r5 technical/placement PASS
+(assignment23:25:08, observed agent work23:25:40, end23:26:21 UTC).
+
+| Simplicity check | Current r7 verdict / evidence |
+|---|---|
+| New apps/libraries | PASS; probe outside payload, no dependency |
+| Reuse | PASS; parser/pipes/live registry/platform APIs retained |
+| Multiple paths | PASS; one exec adapter, private macOS observation |
+| Legacy paths | PASS; actual Client ABI, old checkpoints refused |
+| Knobs | PASS; same private five-second budget |
+| Speculative abstractions | PASS; observed lifetime/failure boundary only |
+| Library choice | PASS; existing system libproc, independently checked XNU |
+| Copy-paste | PASS; shared exchange/error policy and single parser |
+| Redundant definitions | PASS; existing keys/hash/build owners; one native import |
+| Size versus requirement | PASS; same42-file inventory and authority |
+| Test volume | PASS; real group-state cases, no invented permission-fault proof |
+
+| Behavior | Derived owner / current r7 verdict |
+|---|---|
+| Distribution before environment evaluation | Core manifest reader; PASS |
+| Full local TOML behavior | Core manifest reader; PASS |
+| Immutable expert-source diagnostics | Core ExpertLoader; PASS |
+| Mission parameters typed as strings | Core semantic validation; PASS |
+| Pure resolved-package construction | Core package validator; PASS |
+| Asset/hash/executable/collision/model validation | Core package validator; PASS |
+| No-assets identity/actual serialized size | Core package contract; PASS |
+| Reachable admitted inputs/reserved names | Core input semantics; PASS |
+| Existing kinds/reachable profile names | Core validation; deployment availability; PASS |
+| Actual Client ABI/generated JSON | Core DTO/CLI integration tests; PASS |
+| Semantic fingerprint/incompatible replay | Core checkpoint; PASS |
+| Malformed checkpoint refusal before invocation | Core codec; PASS |
+| Relative replay/completed effects once | Core pipeline; PASS |
+| Internal StepKey/attempt lifecycle traces | Core trace contract; PASS |
+| Workspace inheritance/pure output directories | Core execution primitive; PASS |
+| Verified artifact registration | Caller/Runner; PASS |
+| Same-workspace registration visibility | Core reads/caller writes; PASS |
+| Process-only absolute mappings | Core exec; PASS |
+| Command/argv/cwd/inherited authority | Core exec; PASS |
+| Bounded streams/exact declined stdin | Core exec; PASS |
+| Atomic POSIX group/retained root | Private Core exec lifetime; PASS |
+| Atomic Windows job | Private Core exec lifetime; PASS |
+| Descendant termination/joined process and I/O | Private Core exec lifetime; PASS |
+| macOS root-only observation after pending EPERM/success | Private Core exec lifetime; PASS |
+| Linux PID1 exact owned adopted reap | Private Core exec lifetime/scoped Type2; PASS |
+| Cleanup failure over cancellation | Core exchange boundary; PASS |
+| Numeric ONNX/joined native cancellation | Core ONNX adapter; PASS |
+| All-host lifecycle/macOS states/PID1 proof | Test tooling/existing build scripts; PASS |
+| Immutable publication/fresh restored APIs | Existing Core publication owner; PASS |
+| Published Client/installed defaults | Existing CLI integration/acceptance owners; PASS |
+
+Supervisor independently checked the full artifact, primary XNU signal/list code and the
+retained-root-only proof: query does not establish authority or choose kill targets; only exact
+root-only membership resolves pending EPERM; all other errors/deadlines stay visible. Fixed
+budget, public contracts, same42-file inventory, AOT and normal default-path gates remain.
+**PLAN APPROVED2026-10-09 23:27:01 UTC**. No merge/publication/acceptance approval.
+Same implementer resumed at23:27:10 UTC under implement:r3; stage end not yet observed.
+
 ## Timing
 
 Supervisor later directly observed release run37999080639 completed successfully on all four
@@ -499,5 +593,11 @@ canonical macOS managed suite is still failing and corrected-launch behavior is 
 | Review plan / simplicity / r4 | 2026-10-09 23:11:34 | 2026-10-09 23:12:08 | 34s | Full current r6 plan, all11 checks PASS; ownership next |
 | Review plan / ownership / r4 | 2026-10-09 23:12:24 | 2026-10-09 23:13:04 | 40s | Full current r6 plan, all29 behaviors technical/placement PASS |
 | Correction-plan approval / supervisor | 2026-10-09 23:13:40 | 2026-10-09 23:13:40 | Instant boundary | Complete r6, fresh full reviews and independent supervisor check; bounded PLAN APPROVED |
+
+| Implement / same implementer / r2 | 2026-10-09 23:15:09 | 2026-10-09 23:23:29 | 8m20s | Intermediate code; managed build0warnings, focused41PASS, scripts30PASS; macOS EPERM deviation stopped |
+| Plan clarification / supervisor / r7 | 2026-10-09 23:23:18 | 2026-10-09 23:23:38 | 20s | Same42 files; exact retained-root-only libproc observation |
+| Review plan / simplicity / r5 | 2026-10-09 23:23:48 | 2026-10-09 23:24:47 | 59s | Full current r7, all11PASS; historical approval metadata corrected |
+| Review plan / ownership / r5 | 2026-10-09 23:25:08 | 2026-10-09 23:26:21 | 1m13s | Full current r7, all30 technical/placement PASS |
+| Plan approval / supervisor / r7 | 2026-10-09 23:27:01 | 2026-10-09 23:27:01 | Instant boundary | Full artifact/primary source/authority/failure/default gates checked; bounded PLAN APPROVED |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.

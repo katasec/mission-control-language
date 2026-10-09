@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Complete r6 correction plan passed fresh full reviews and received supervisor approval 2026-10-09 23:13:40 UTC; correction implementation is next. Canonical macOS failure, final code reviews, merge/publication and acceptance remain open.
+**Status:** Core corrections are written; full Debug build and focused parser/checkpoint checks passed. Complete r7 with the precise private macOS cleanup clarification passed fresh full reviews and received supervisor approval 2026-10-09 23:27:01 UTC. Final code reviews, current-source native checks, merge/publication and acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -194,5 +194,5 @@ be marked complete by this package probe.
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
 | Implementer plan | [Complete r6](phase-76.4-core-cloud-primitives-plan.md) approved 23:13:40 UTC; same implementer receives bounded correction handoff |
 | Independent plan reviews | Fresh complete r6 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md) |
-| Plan approval / implementation | Initial round1 handback770778d; complete correction plan approved23:13:40 UTC; implementation next, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
+| Plan approval / implementation | Initial round1 handback770778d; correction implementation assigned23:15:09 UTC under complete r6 approval, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
 | Published/default acceptance | Required; not performed |
