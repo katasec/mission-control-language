@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Locked parent design; implementer Plan required. No code approval.
+**Status:** Complete round 3 plan reviewed and supervisor-approved 2026-10-09 22:07:32 UTC; implementation in progress.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -31,7 +31,7 @@ broker or cloud-aware Core dependency.
 
 The complete parent design passed full sequential round 7 simplicity/ownership reviews before
 supervisor lock. This bounded task directly implements its Core rows, so a second design is N/A;
-its implementer plan and both plan reviews remain mandatory.
+its complete implementer plan and both full plan reviews have now passed.
 
 ## Required changes and order
 
@@ -50,12 +50,52 @@ sorted. Core collects profile names; deployment availability remains Runner's re
 No configured provider secrets are read by package construction/validation. Runtime scratch
 does not enter fingerprints, context writes or checkpoint payloads.
 
+Supervisor clarification before plan (2026-10-09 21:44:30 UTC): Core derives the admitted-name
+set internally from root parameters and reachable expert inputs using the single shared traversal
+and reserved-name policy; there is no caller-widenable run option. Store/check the sorted set in
+inner checkpoint format **3**, retaining outer envelope version 1; explicitly reject old inner
+format 2 rather than adding a compatibility reader. Engine/build identity already prevents durable
+cross-build resume. Asset paths have canonical forward-slash relative spelling; duplicate and all
+staged-file collisions use `OrdinalIgnoreCase` for portability, including mission/lock/distribution
+metadata/expert markdown paths. Reserved input names/prefixes remain exact `Ordinal` matching.
+These complete reversible implementation details within the locked design, with no new owner.
+
+Pure-validation source seam: existing `ExpertLoader.Validate` reads expert files for typed-key
+diagnostic locations. Add a final optional `IReadOnlyDictionary<string,string>?
+expertMarkdownByName` argument and pass the complete immutable package markdown map from the
+validator. When supplied, use existing `SplitFrontmatter`/`FindKeyInBlock`; a missing required
+source is explicit failure and never falls back to filesystem reads. Existing local callers omit
+the map and retain their file-based diagnostic source. This changes the source of evidence, not
+the diagnostic policy, and avoids a second semantic validator.
+Verified named-input correction: the existing typed-key walk currently omits mission parameters
+and rejects a required `goal` with `inputKeys: { goal: string }` as MCL011. Seed that mission's
+declared parameters as strings in its existing availability map without replacing runtime keys;
+common admission rejects reserved root parameters. Preserve optional expert-input, binding and
+nested-call diagnostic policy. Paired in-memory regressions accept `goal:string` and report the
+existing MCL012 for `goal:double`, using supplied source rather than filesystem fallback.
+
 Package candidate: `Katasec.Forge.Mcl.Core 0.1.8` (current 0.1.7; GitHub package inventory checked
 before planning). Recheck availability before implementation/publication; never overwrite a
 published version. Existing publish workflow and `eng/verify-core-package.sh` must agree with
 the project version. Update all in-repo callers affected by public shape changes; downstream
 repositories retain their pinned old package until their own reviewed upgrade tasks. No sibling
 repository references. The implementer plan inventories those future consumers.
+
+Actual retained binary contract: CLI loads published Client0.9.3 alongside current Core. Metadata
+inspection confirms that DLL calls the six-argument `DurableMissionPackageInput` constructor.
+Adding optional Assets alone removes that CLR member. Preserve an explicit six-argument overload
+delegating to the seven-argument constructor with null Assets; this serves the current loaded
+binary, not a speculative compatibility path. Add a focused regression exercising that published
+Client's Project/chat launch through existing application composition, without recompiling Client,
+and installed-default `forge project create` followed by a real piped Chat turn after publication.
+The actual selected Client/Contracts/Conversations.Contracts/Hands DLL inventory found no changed
+ExpertLoader.Validate or ValidatedDurableMissionPackage member reference requiring another shim.
+Select the seven-argument semantic constructor with `[method: JsonConstructor]` so retaining the
+six-argument CLR member does not make source-generated deserialization ambiguous. Verify JSON
+round trips for no-assets/null (old hash unchanged) and real asset bytes/executable metadata.
+Supervisor .NET10 source-generated probe observed unannotated record deserialization throwing
+NotSupportedException and annotated primary constructor succeeding; evidence is in
+`/private/tmp/phase76-json-ctor-probe`. No runtime dependency or compatibility reader is added.
 
 ## Failure, security and engineering gates
 
@@ -80,6 +120,12 @@ normal repository managed tests/builds pass with zero warnings. Controlled provi
 only their named layer. Run final current-source Native AOT through the canonical normal build
 route after managed checks stabilize, with zero warnings; no warning suppression or alternate
 release configuration supplies acceptance.
+The existing PR verify job in `.github/workflows/publish-terminal-extensions-package.yml` runs
+`make cli-script-test cli-verify verify-terminal-extensions-package` on macOS 14 and supplies the
+premerge canonical zero-warning Native AOT route. The existing `release.yml` also runs its
+four-host native build matrix on pull requests, then publishes after merge; those native checks
+are additional premerge evidence and published assets are separate postmerge evidence. Existing local-install linker diagnostics cannot
+substitute for the canonical warning-free gate; no build-script workaround is part of this task.
 
 This producer's default artifact is the normally published private Core NuGet package from merged
 main, independently restored into a fresh consumer with no sibling source reference or manually
@@ -110,6 +156,7 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | Next; read-only, no product edits authorized |
-| Plan approval / implementation | Not granted / not started |
+| Implementer plan | [Complete round 3](phase-76.4-core-cloud-primitives-plan.md), 22:00:54 UTC; approved after full reviews |
+| Independent plan reviews | Full current round3 simplicity and ownership PASS; actual ABI/JSON corrections included; [evidence/timing](phase-76.4-core-cloud-primitives_completed.md) |
+| Plan approval / implementation | Granted 22:07:32 UTC / in progress |
 | Published/default acceptance | Required; not performed |
