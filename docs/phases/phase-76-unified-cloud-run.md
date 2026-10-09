@@ -1,8 +1,12 @@
 # Phase 76 — Unified cloud mission execution
 
-**Status:** Product requirements agreed with the operator on 2026-10-09 and recorded in
-[the requirements spoke](phase-76.1-unified-cloud-run-requirements.md). No product changes,
-implementation plan approval, deployment, or runtime acceptance in this session. **Not build-ready.**
+**Status:** Supervisor workflow authorized on 2026-10-09. Product requirements remain recorded in
+[the requirements spoke](phase-76.1-unified-cloud-run-requirements.md); the supervisor's
+[contract proposal](phase-76.2-unified-cloud-run-contracts.md) has passed technical reviews.
+Executable trust and the Host-owned content boundary are unsettled Type-1 decisions presented to
+the operator. The independent OCI integrity/authentication prerequisite is merged, published as
+Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. No cloud implementation approval, deployment
+or runtime acceptance. **Cloud work is not build-ready.**
 
 ## Intent
 
@@ -16,10 +20,12 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | Item | State / evidence |
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
-| Documentation verification | 2026-10-09: `git diff --check` and a local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A. |
-| Current implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
-| Contract design | Next; [required design work](phase-76.1-unified-cloud-run-requirements.md#contract-work-before-implementation) |
-| Product implementation and acceptance | Not started; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
+| Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
+| Current documentation handoff | Local validation PASS: eight files, 60 local links/anchors, two JSON examples, balanced fences and whole hub checked; diff checks PASS. OCI product evidence is recorded separately. |
+| Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
+| Contract design | Technical reviews PASS, operator boundary decisions pending; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
+| OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
+| Cloud implementation and acceptance | Not started; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
 
 ## Dependency-ordered work
 
@@ -27,15 +33,17 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|---|
 | 1 | Capture operator requirements | The spoke records the final decisions, rejected alternatives, ownership, current facts, and remaining contract work; documentation checks pass. |
 | 2 | Supervisor designs the contracts | Every item in the spoke's contract-work table is defined against the owning repositories, with explicit failure/recovery behavior, security/engineering gates, and default-path observations. Sequential independent design reviews pass before the design is locked. |
-| 3 | Plan and implement bounded repository tasks | Follow the [supervisor workflow](../design/supervisor-workflow.md); no executable changes before implementer-plan approval. Define dependency-ordered implementation spokes after the contracts are locked. |
-| 4 | Merge, publish/deploy, accept, close | Required checks and the real default path pass, including cloud reasoning and client tool execution across multiple declared folders; completion evidence names actual artifacts and observations. |
+| 3 | Deliver the independent OCI prerequisite | Its own complete design/plan/code reviews and restored published-package acceptance pass. It grants no approval for the pending cloud boundaries. |
+| 4 | Plan and implement remaining repository tasks | Follow the [supervisor workflow](../design/supervisor-workflow.md); no executable changes before implementer-plan approval. Define dependency-ordered implementation spokes after the cloud contracts are locked. |
+| 5 | Merge, publish/deploy, accept, close | Required checks and the real default path pass, including cloud reasoning and client tool execution across multiple declared folders; completion evidence names actual artifacts and observations. |
 
 ## Next
 
-Design and review immutable mission admission, named inputs/artifact bindings, Project/session
-identity, config/auth resolution, multi-folder Hands authority, and result/diagnostic contracts.
-Requirements are settled; DTOs, APIs, failure boundaries, and migration details are not yet a
-reviewed implementation design. Do not infer missing contracts while building.
+Settle executable trust and the Host-owned content boundary, then lock the technically reviewed cloud
+contracts and write dependency-ordered implementation spokes. The OCI prerequisite is accepted;
+future consumers adopt the exact published 0.5.0 package. Follow the
+[current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
+must not infer missing contracts.
 
 ## Supervisor autonomy
 
@@ -50,10 +58,13 @@ Zero further operator involvement is not yet assured. The governing
 operator."** New cross-context contracts, ownership, public-entry-point or credential-boundary
 decisions must therefore be presented as concrete proposals where existing operator decisions
 do not already settle them. A requirement change also returns to the operator. This record
-does not delegate those decisions or authorize product implementation; invoking the full flow
-is a separate instruction from documenting its requirements.
+was requirements-only. The operator has now invoked the full flow and authorized autonomous
+execution within the agreed requirements. The supervisor handles reversible technical decisions
+and plan approval. The workflow's explicit Type-1 operator gate remains applicable to the
+unresolved executable/credential and public content boundaries. The independent OCI prerequisite
+narrows existing library authority and creates no cloud boundary or permission grant.
 
-## Gates for this documentation task
+## Prior requirements-documentation gates
 
 Documentation-only: supervisor edits and validates. Product tests, Native AOT, visual acceptance,
 and Default-Path Acceptance are **N/A**. Security and engineering ownership requirements for the
