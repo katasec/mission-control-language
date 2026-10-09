@@ -1,7 +1,8 @@
 # Phase 76.4 — implementer plan, round 3
 
 **Status:** Complete round 3 plan passed full simplicity and ownership reviews; supervisor
-**PLAN APPROVED** 2026-10-09 22:07:32 UTC. Implementation is open.
+**PLAN APPROVED** 2026-10-09 22:07:32 UTC. Round 1 code review requires corrections; complete
+round 4 investigation/plan is pending and must receive new approval before an expanded launch implementation.
 [Task/design](phase-76.4-core-cloud-primitives.md).
 This records the complete proposed implementation and verification; approval is bounded to this Core task.
 
