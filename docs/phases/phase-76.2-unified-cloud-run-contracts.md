@@ -238,6 +238,14 @@ credentials, arbitrary HTTP endpoints or cloud process environment are authorabl
 
 ### Named inputs, binary content and transfer
 
+**Proposed physical storage:** reuse the existing Conversation Storage Azure Blob container,
+`forgeconversationartifacts` in dev account `stforgeconvdev`, configured in `uaenorth`.
+The Conversation Host owns the storage adapter and durable references; its process disk is not
+the durable store. ForgeAPI handles authenticated transfer and Runner uses temporary working
+copies. This extends existing conversation storage rather than proposing a new storage service.
+Source: [conversation data-plane configuration](https://github.com/katasec/forge-infra/tree/main/dev/350-conversation-data).
+Binary mission storage remains proposed, not deployed or accepted.
+
 Split each `--input` at the first `=`. Names are case-sensitive identifiers
 `[A-Za-z][A-Za-z0-9_]*`; duplicate names, empty names and missing `=` fail. Empty literal values
 are valid. Values are strings without JSON/number coercion. A leading `@` always means file
