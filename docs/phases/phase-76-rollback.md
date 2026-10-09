@@ -1,7 +1,7 @@
 # Phase 76 — Revert failed implementation
 
-**Status:** Five exact reverts committed locally; independent code review and merge pending.
-Design and plan passed sequential reviews. The restored baseline has validation failures below.
+**Status:** Five exact reverts committed and pushed; independent source reviews passed.
+Merge pending. Design and plan passed sequential reviews. The restored baseline has validation failures below.
 Operator requested reverting the failed session's merges while preserving its branches.
 No Phase 76 implementation is resumed.
 
@@ -62,7 +62,7 @@ The original requirements spoke remains byte-for-byte unchanged.
 
 | Repository | Revert commits | Managed result | Final native result |
 |---|---|---|---|
-| MCL | `fbde8d2`, `e239e97` | Release build: zero warnings/errors; affected tests 28 passed. Key-free full suite: 972 passed, 12 failed, 8 skipped. | Pending |
+| MCL | `fbde8d2`, `e239e97` | Release build: zero warnings/errors; affected tests 28 passed. Key-free full suite: 972 passed, 12 failed, 8 skipped. | Binary produced; canonical publish script exit 1 on six raw linker warnings. Same binary help/version exit 0. |
 | Desktop | `079850b` | 188 passed, 1 existing skip. | Binary produced, exit 0; five raw linker warnings. |
 | OCI | `985144a` | Existing non-integration Release suite: 18 passed. | Library; existing AOT compatibility analysis. |
 | Documentation | `2d08d3b` | Baseline comparison passed; rollback/status documentation checks pending. | N/A |
@@ -73,9 +73,18 @@ provider-bearing suite also failed a missing-key assertion; that failure disappe
 `MCL_API_KEY` and `XAI_API_KEY` were absent. No test or exclusion was changed.
 
 Desktop's five linker warnings concern existing Homebrew OpenSSL/Brotli dylibs targeting newer
-macOS versions than the executable's deployment target. No suppression or repair was added.
+macOS versions than the executable's deployment target. MCL emitted those warnings plus
+unsupported `-ld_classic`. No suppression or repair was added. Native MCL version was
+`0.12.0-dev.2+e239e9740dc7c58b5768a3344eedb93f67fcee02`.
 Logs are in `/tmp/phase76-rollback-validation/`; source restoration does not claim a passing
 full MCL suite, zero-warning native acceptance, or installed/cloud acceptance.
 
 Implementation began 2026-10-09T12:44:14+04:00. Exact earlier review boundaries were not captured;
 do not infer them. Merge and post-merge reference verification remain pending.
+
+| Revert PR | State |
+|---|---|
+| [OCI #4](https://github.com/katasec/oci-client-dotnet/pull/4) | Reviewed; managed checks passed; merge pending. |
+| [Desktop #11](https://github.com/katasec/forge-desktop/pull/11) | Reviewed exact restoration; zero-warning native gate blocked. |
+| [MCL #76](https://github.com/katasec/forge-mcl/pull/76) | Reviewed exact restoration; full managed and zero-warning native gates blocked. |
+| [Documentation #369](https://github.com/katasec/mission-control-language/pull/369) | Reviewed source rollback; final documentation validation and merge pending. |
