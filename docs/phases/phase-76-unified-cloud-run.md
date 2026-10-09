@@ -6,7 +6,7 @@
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
-Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Corrected Core code passed managed/package checks; independent code review and native CI are in progress. Later consumer tasks, deployment
+Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Corrected Core code passed managed/package checks; actual PID1 native failure requires a reviewed Runner hosting prerequisite. Later consumer tasks, deployment
 and unified runtime acceptance remain open.
 
 ## Intent
@@ -27,6 +27,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) corrections written; remaining cleanup/native gates open; unified default-path acceptance not started |
+| Process-hosting prerequisite | Actual PID1 native failure; [Runner init proposal](phase-76.5-runner-process-hosting.md) awaits full design reviews; no product change approved |
 
 ## Dependency-ordered work
 
@@ -58,8 +59,9 @@ acceptance for one bounded increment before starting the next.
 
 ## Next
 
-Implement the approved complete correction plan for [Core package/execution primitives](phase-76.4-core-cloud-primitives.md)
-under the locked generic design, then obtain full current code reviews and required verification. The OCI prerequisite is accepted;
+Review and deliver the bounded [Runner process-hosting prerequisite](phase-76.5-runner-process-hosting.md)
+for the observed native PID1 failure, then revise the [Core producer](phase-76.4-core-cloud-primitives.md)
+plan before changing its mechanism; obtain full current code reviews and required verification. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.

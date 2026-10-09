@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Corrected source dc03b7b passed managed/package gates and full code reviews found two required verification gaps. The same implementer is adding the approved native duplex/environment and ONNX pipeline sibling observations. Current-source native CI, merge/publication/default acceptance remain open.
+**Status:** Managed/package gates pass; approved verification corrections are being completed. Actual Linux PID1 native CI failed with retained-root ECHILD; the [hosting prerequisite proposal](phase-76.5-runner-process-hosting.md) requires review before any mechanism change. Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume

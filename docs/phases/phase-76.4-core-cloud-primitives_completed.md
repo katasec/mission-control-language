@@ -701,6 +701,46 @@ published/installed acceptance remain mandatory.
 
 ## Timing
 
+### Verification correction r4 and Linux container failure
+
+Same implementer23:47:54–23:52:26 UTC changed only existing probe Program/ExecProbeChild,
+ONNX tests and scripts README. Held uncommitted at supervisor direction when current-source
+Linux PID1 failed. No production workaround, commit or push. Evidence:
+`/private/tmp/phase76-core-corrections-20261009T234754Z/EVIDENCE.md`,
+correction-uncommitted.diff and complete-current.diff. Full Debug1063PASS/6 existing skips/0fail;
+focused191PASS/0skip; Release/package407PASS; final Debug/CoreRelease zero warnings/errors.
+Managed probe validates2MB stdin/1MB JSON stdout/48KiB stderr, actual PipelineRunner workspace
+and environment bindings with unchanged relative caller source; native ONNX parallel sibling
+case passes with bounded joined cancellation/no Numeric completion. Direct adapter no-score
+assertion retained. These new observations are managed only; native CI has not run these edits.
+Supervisor read the complete four-file correction independently. Its pressure child starts
+stdout/stderr writes while concurrently reading stdin, so a sequential parent could still
+drain stdin first and pass. The revised Core plan must make that existing test decisive:
+finish the large stdout/stderr writes before reading stdin, retaining valid JSON, caps and
+bounded cleanup. This is verification of the already-required duplex behavior, not a new
+production mechanism or feature. No additional product defect was established by that read.
+
+Atdc03, normal Linuxx64 native probe passed all old lifecycle cases. Actual PID1 container then
+failed during VerifyArgumentsAsync with waitid ECHILD10 after standalone Process.Start initialized
+the managed child reaper. Raw log native-linux-x64-dc03.log in the previous evidence directory;
+[run38005239137](https://github.com/katasec/forge-mcl/actions/runs/38005239137), job114072387155.
+SDK10.0.401/runtime10.0.12; base image digest222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4.
+Supervisor checked exact .NET10.0.12 primary source: PID1 reapAll eventually uses waitpid(-1),
+competing with Core's retained native root. Correct identity-loss handling refused further
+numeric-group signalling and exposed IOException; it does not establish successful cleanup.
+The [hosting proposal](phase-76.5-runner-process-hosting.md) is a new reviewed-design gate,
+not approval to patch runtime handlers or waive the native/default path. No new implementation
+until its sequential design/plan loop approves the changed hosting boundary.
+
+Additional frozen-dc03 native observations: LinuxARM64 job114072387316 and WindowsARM64
+job114072387441 succeeded. Supervisor downloaded raw logs native-linux-arm64-dc03.log and
+native-windows-arm64-dc03.log into the earlier evidence directory, observed lifecycle/cwd/PATH/
+closed-stdin/early-root timeout and caller-cancel PASS and no raw compiler/linker warning.
+Windows closed-input HRESULT800700E8 confirms the approved232 mapping; Linux reports native32.
+These runs precede uncommitted verification additions and the pending hosting correction;
+they do not close the final-source/native/default gates. Canonical macOS and macOS matrix
+were still running at the last snapshot.
+
 Supervisor later directly observed release run37999080639 completed successfully on all four
 native hosts at source770778d (GitHub updatedAt2026-10-09T22:54:45Z). These frozen-source build/help/version results remain lower-layer evidence; the
 canonical macOS managed suite is still failing and corrected-launch behavior is not yet tested.
@@ -737,5 +777,7 @@ canonical macOS managed suite is still failing and corrected-launch behavior is 
 | Review code / simplicity and style / r2 | 2026-10-09 23:39:10 | 2026-10-09 23:42:25 | 3m15s | Full separate tables; required native duplex/env and ONNX pipeline sibling observations missing; native warnings pending |
 | Review code / ownership / r2 | 2026-10-09 23:42:55 | 2026-10-09 23:47:22 | 4m27s | Full33-behavior table; placement PASS, same2 verification gaps; observed work began23:43:23 |
 | In-plan correction approval / supervisor / r4 | 2026-10-09 23:47:54 | 2026-10-09 23:47:54 | Instant boundary | Combined reviews, same approvedr7 scope, same implementer; native/default gates retained |
+| Implement / same implementer / r4 | 2026-10-09 23:47:54 | 2026-10-09 23:52:26 | 4m32s | Four existing test/doc files, full1063/focused191/Release407 PASS; held uncommitted for actual PID1 failure |
+| Hosting correction design / supervisor | 2026-10-09 23:52:24 | 2026-10-09 23:53:00 | 36s | Standard init ownership proposal; documentation12files/81links/2JSON/fences/global/diff PASS; no product approval |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.
