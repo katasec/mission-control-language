@@ -1,6 +1,6 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Complete round 3 plan reviewed and supervisor-approved 2026-10-09 22:07:32 UTC; implementation in progress.
+**Status:** Implementation round 1 is under independent code review; simplicity/style requires corrections. Canonical macOS verification failed before AOT; no merge or publication approved.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -30,8 +30,10 @@ remain the implementation. No second interpreter, provider client, registry read
 broker or cloud-aware Core dependency.
 
 The complete parent design passed full sequential round 7 simplicity/ownership reviews before
-supervisor lock. This bounded task directly implements its Core rows, so a second design is N/A;
-its complete implementer plan and both full plan reviews have now passed.
+supervisor lock. This bounded task directly implements its Core rows. Round 3 implementation
+received approval after both full plan reviews; code review found lifecycle, checkpoint and style
+defects. Read-only round 4 planning/investigation is now assigned; any launch change outside the
+approved file inventory must pass new full plan reviews before further product edits.
 
 ## Required changes and order
 
@@ -156,7 +158,7 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Complete round 3](phase-76.4-core-cloud-primitives-plan.md), 22:00:54 UTC; approved after full reviews |
+| Implementer plan | [Round 3](phase-76.4-core-cloud-primitives-plan.md) approved; complete round 4 correction plan/investigation pending |
 | Independent plan reviews | Full current round3 simplicity and ownership PASS; actual ABI/JSON corrections included; [evidence/timing](phase-76.4-core-cloud-primitives_completed.md) |
-| Plan approval / implementation | Granted 22:07:32 UTC / in progress |
+| Plan approval / implementation | Granted 22:07:32 UTC; round1 handback at770778d; code-review corrections pending, see [review evidence](phase-76.4-core-cloud-primitives_completed.md#code-review--simplicitystyle-round-1) |
 | Published/default acceptance | Required; not performed |
