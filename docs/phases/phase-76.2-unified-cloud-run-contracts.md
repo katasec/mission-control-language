@@ -1,7 +1,8 @@
 # Phase 76.2 — Unified cloud run: execution contracts
 
-**Status:** Technical contract reviews PASS; operator Type-1 executable/content decisions remain
-pending, so the cloud design is not locked. The independent OCI prerequisite is merged, published as
+**Status:** Operator permits arbitrary user-vetted executable code; execution permissions are
+deferred. Prior technical reviews covered the superseded image-owned-only proposal. Executable
+contracts need redesign/full review; Host-owned content remains an unapproved proposal. Cloud design is not locked. The independent OCI prerequisite is merged, published as
 Katasec.OciClient 0.5.0 and accepted through a fresh remote-package Native AOT consumer. No cloud implementation plan is approved.
 Parent: [unified cloud execution](phase-76-unified-cloud-run.md).
 Requirements: [operator decisions](phase-76.1-unified-cloud-run-requirements.md).
@@ -28,44 +29,23 @@ merged/published artifacts perform the stated real cloud and local-tool actions 
 path; every touched repository ends on clean, current main. Documentation alone cannot close
 the phase. Desktop/ForgeUI visual gates are N/A because this scope changes no such surface.
 
-## Executable trust — Type-1 proposal requiring operator decision
+## Executable trust — operator decision recorded 2026-10-10
 
-```mermaid
-flowchart LR
-  Package[Local or OCI package] --> Validation[Mission Runtime validation]
-  Validation --> Declarative[Declarative experts through existing engine]
-  Validation --> Trusted[Exact server-owned executable identity]
-  Validation --> Refusal[Other executable content: explicit refusal]
-```
+> 1. We manage permissions later. Right now it can run anything. to ensure safety it's up to the user to ensure clean code is in their oci registry. Today that's what corporates do ...the scan their internal registries and ensure it's clean
 
-**Proposed first implementation:** retain arbitrary local/OCI *selection*, with admission policy
-owned by Mission Runtime. Expand declarative execution independently of source. For executable
-experts, accept only an exact server-owned immutable implementation, initially the existing OCR
-expert and its accompanying script. Runner matches the submitted executable content to a digest
-of the reviewed implementation shipped in its image; it runs its own copy, never a submitted
-command/script. Unknown or modified executable experts fail explicitly before process creation.
-The CLI does not maintain this policy or silently substitute an OCR catalog entry for a package.
+**Locked policy:** arbitrary submitted executable mission code is permitted. The user owns vetting
+content in their OCI registry. Phase 76 does not introduce an executable allowlist, an image-owned
+OCR-only identity check, registry scanning, or fine-grained execution permissions. The same local/OCI
+preparation path remains required. Existing authenticated account admission, content integrity and
+client Hands folder rules still apply; this decision concerns cloud executable trust.
 
-This preserves the current service's trusted-code boundary and supplies the required OCR case.
-It does **not** promise cloud execution of arbitrary uploaded Python/native code. Supporting
-that requires a separate isolated compute boundary with no provider keys, managed identity,
-broker/store access or host filesystem authority. Merely starting a child process, removing
-environment variables, or putting it in the runner container does not establish that boundary.
-
-| Observation | Source |
-|---|---|
-| Durable packages currently reject `exec`/`onnx` and accept only `llm`/`rule`/`json_extract` | `forge-mcl/src/ForgeMission.Core/Runtime/DurableMissionPackageValidator.cs` |
-| Exec starts the declared command with inherited process environment | `forge-mcl/src/ForgeMission.Core/Adapters/ExecExpertRunner.cs` |
-| Hosted OCR executes `python3 ./ocr.py`, takes `source_file`, `output_dir`, `mode`, and can create a PDF | `forge-runner/missions/ocr/experts/Ocr/expert.md`, `forge.toml` |
-| Runner holds provider credentials and internal service authority | [deployment ownership](../design/deploy.md#topology) |
-
-The decision concerns a service credential/execution boundary, classified Type 1 by
-[Security Architecture](../design/security-architecture.md#type-1-versus-type-2-decisions).
-[Supervisor workflow scope](../design/supervisor-workflow.md#required-loop) says
-“Type-1 decisions go to the operator.” Selection requirements do not settle this executable trust
-policy. Operator choice: approve the proposed server-owned executable policy, or include isolated
-arbitrary executable compute in this phase's design. The second choice changes infrastructure
-scope; it must be designed before implementation rather than inferred by the implementer.
+The previous image-owned-only proposal is [superseded](phase-76.2-unified-cloud-run-contracts_completed.md#superseded-executable-proposal--2026-10-10).
+Technical design must now cover generic command/asset execution, runtime dependencies, environment,
+named input/output binding and resume behavior under this user-vetted-code model. No process
+sandbox or credential isolation is established merely by registry vetting; do not describe it as one.
+Execution permissions are deferred by explicit operator decision, not an implementer assumption.
+The changed executable design requires sequential full design reviews before any cloud plan approval.
+Host-owned content is still a proposal: the operator requested an explanation and has not approved it.
 
 ## Contract design — draft for independent review
 
@@ -252,10 +232,25 @@ boundary, and is carried by reference rather than embedded in state/commands.
 Core's common validator is used at Host admission and again by Runner before execution. It
 rejects all AST `EnvLetValue`/`EnvBindingValue` occurrences, provider/credential/runtime reserved
 bindings, and unsupported expert kinds before evaluating context. `llm`, `rule`, `json_extract`
-use existing adapters. Executable/ONNX policy awaits the Type-1 decision above. No remote
+use existing adapters. Arbitrary executable code is permitted by the operator; concrete exec/ONNX
+runtime support must be designed and reviewed, without the former identity allowlist. No remote
 credentials, arbitrary HTTP endpoints or cloud process environment are authorable package data.
 
 ### Named inputs, binary content and transfer
+
+**Proposed physical storage:** reuse the existing Conversation Storage Azure Blob container,
+`forgeconversationartifacts` in dev account `stforgeconvdev`, configured in `uaenorth`.
+The Conversation Host owns the storage adapter and durable references; its process disk is not
+the durable store. ForgeAPI handles authenticated transfer and Runner uses temporary working
+copies. This extends existing conversation storage rather than proposing a new storage service.
+Source: [conversation data-plane configuration](https://github.com/katasec/forge-infra/tree/main/dev/350-conversation-data).
+Binary mission storage remains proposed, not deployed or accepted.
+Read-only Azure observation on 2026-10-10: account `stforgeconvdev` exists in `rg-forge-dev`,
+location `uaenorth`, with Blob endpoint `https://stforgeconvdev.blob.core.windows.net/`;
+`az storage container show --auth-mode login` confirmed `forgeconversationartifacts`, with
+publicAccess null. This confirms existing storage, not implementation of the new binary protocol.
+Example: an OCR mission takes `scan.jpg` and produces `content.pdf` or `content.txt`; the proposal
+stores the output bytes in Blob and links their references to that conversation's run record.
 
 Split each `--input` at the first `=`. Names are case-sensitive identifiers
 `[A-Za-z][A-Za-z0-9_]*`; duplicate names, empty names and missing `=` fail. Empty literal values
@@ -275,8 +270,8 @@ against their names plus root parameters, not every unused expert in a lock. Exp
 override ordinary nonreserved `let` strings, matching ContextBuilder.Seed precedence; omitted
 non-parameter values may come from those literal lets. No expert-defaults map is invented. Missing
 values otherwise fail runtime validation rather than becoming an invented positional goal.
-OCR's `mode` defaults to `text` in the image-owned adapter, and only that adapter supplies
-`output_dir`; `source_file` is required. Core's pausable
+OCR requires `source_file`; the previous image-owned adapter's mode/output binding is superseded.
+Generic declared input/default/output-directory binding remains a design gap to resolve before handoff. Core's pausable
 `RootInputs` filter must preserve this validated admitted input-name set, including parameterless
 OCR's `source_file`/`mode`. The set is part of the opaque checkpoint and root fingerprint; arbitrary
 undeclared Vars still cannot bypass filtering. Runtime, not a user input, supplies OCR `output_dir`.
@@ -373,28 +368,12 @@ artifacts before crossing the execution boundary. Bind each artifact name to a s
 path `inputs/<name>/content.<validated extension>`; do not persist a random scratch absolute path
 in Core RootInputs. Runtime maps validated media types to the fixed extensions `png`, `jpg`, `pdf`
 or `bin`; uploaded filenames do not select a path. OCR's PDF detection depends on `.pdf`.
-The trusted executable adapter uses that segment scratch as explicit process cwd and invokes its
-image-owned implementation by a fixed absolute script path. It does not change process-wide cwd.
-Resume recreates the same relative layout from immutable content refs before Core replay. Cleanup
-only disposes that segment's scratch. The read-only implementer probe confirmed relative paths
-work with current OCR and Core replay; it did not execute a product acceptance test. Produced
-files needed after a pause must be uploaded before that pause and rehydrated at their stable
-relative output path: Core skips completed executable steps during replay. Each executable
-invocation has its own output path derived from its stable step key/attempt, preventing overwrite.
-Core currently hardcodes `exec` routing; a host-supplied execution adapter seam is required before
-any trusted executable can run. There is no fallback to `ExecExpertRunner` for an admitted package.
-
-Trusted OCR identity is the tuple of exact expert markdown hash, every declared executable asset's
-relative path/content hash and command/args/timeout. Runner builds the allowed
-tuple from its reviewed image files, never a client-provided name/digest allowlist. It selects the
-fixed OCR adapter only after equality; changed/extra executable assets fail closed. `source_file`
-must be a verified named artifact with supported magic bytes/media type. A literal path, package
-let/step binding for `source_file`, or override of `output_dir` is rejected. Before process spawn,
-the adapter constructs `FORGE_SOURCE_FILE` and `FORGE_OUTPUT_DIR` solely from its own verified
-stage/output allocation; it ignores package context for those authority-bearing values. Mode is
-validated `text`/`pdf`. Use an explicit environment with only required fixed process/PATH/locale
-entries and those three OCR values, no inherited provider keys or managed-identity variables.
-This is least privilege for reviewed code, not a sandbox for untrusted executables.
+The previous image-owned adapter/identity restriction is superseded by the operator decision
+above. Generic executable staging, command/asset resolution, runtime dependencies and explicit
+process cwd/environment must be redesigned before handoff. Stable per-segment input/output paths
+and rehydration remain required; their implementation must work for user-supplied code. Do not
+implement the former no-fallback/OCR-only routing. The output transport below is a draft, with
+its OCR-specific assumptions requiring revision for generic declared outputs.
 
 Output collection for OCR uses only the fixed file returned by its known mode in the allocated
 step output directory; no recursive arbitrary scratch scan. `step-key-hash` is lowercase SHA-256
@@ -444,10 +423,10 @@ bytes through progress chunks; extend existing `ConversationArtifactReference` w
 `MissionContentReference` and stable relative output path, preserving existing artifact ID,
 content type and filename fields. Use existing Artifact progress/event kind and RunId association,
 not a second artifact event vocabulary. Never return ephemeral `/tmp` filenames as usable artifacts. Output collection follows
-the trusted expert's declared output directory and refuses links/outside paths. The CLI prints
+the executable expert's declared output directory and refuses links/outside paths. The CLI prints
 the final response verbatim and lists artifact identity in diagnostics; it neither parses the text
 nor downloads/writes the PDF automatically. Binary storage/query is a Type-1 proposal pending
-operator settlement alongside executable trust; it preserves Host ownership of run records.
+operator settlement; executable trust is already decided, with its technical redesign open; it preserves Host ownership of run records.
 
 ### Hands and local side effects
 
@@ -597,10 +576,10 @@ probes may return a concrete missing dependency to supervisor before approval.
 | Public and internal routes | Authenticated ForgeAPI message routes; mutations via ingress/reply only; queries direct to Host; worker via existing private queues |
 | Identity / secrets | API key to edge; edge queue roles only; Host store roles; Runner provider/financial/work roles; registry credential remains local; Hands only local file grant |
 | Cross-store access | None. API/Runner receive neither Blob/Table credential nor direct storage URL |
-| New Type-1 decisions | Uploaded executable trust and durable binary transfer/query proposal await operator choice; no security PASS before that and independent review |
+| Type-1 state | Operator permits arbitrary user-vetted code and defers execution permissions; generic execution design/reviews remain open. Durable binary transfer/query ownership awaits operator choice |
 | Type-2 details | Fixed bounded transport, scratch and retry conventions; reversible within existing owners, no transitional data-role exception |
 | One flow / no speculative framework | Local/OCI sources converge before admission; reuse engine, queue/outbox, claims, workspace guard, profile settlement and existing stores |
-| Built-in containment | Immutable hash/ref checks, account-scoped intake, atomic receipts, closed runtime env/code access, declared-root Hands, no blind side-effect retry |
+| Built-in containment | Immutable hash/ref checks, account-scoped intake, atomic receipts, runtime environment treatment still under redesign, declared-root Hands, no blind side-effect retry |
 | UI / Desktop gates | N/A: no Desktop/ForgeUI or TUI layout change; shared application actions remain surface-neutral |
 | Default path | Required below; controlled tests cannot close it |
 
@@ -622,7 +601,7 @@ lost replies, cancellation and no repeated side effects. Record exact artifacts/
 defaults, safe state, actions and observed outcomes in the completed spoke.
 
 The independent [OCI prerequisite](phase-76.3-oci-integrity-auth.md) is complete with full reviews
-and published-package acceptance while cloud execution/content Type-1 decisions remain pending.
+and published-package acceptance while the changed executable design and content-ownership choice remain open.
 It tightens existing retrieval/authentication authority and adds no cloud owner, public service
 route, identity or data-plane role. Its approval cannot authorize the remaining cloud changes.
 
@@ -649,27 +628,27 @@ plans rely on them; no sibling source references.
 
 Designer rules that changed choices: **one code path** (source adapters converge); **one owner**
 (binary storage stays Host, authority stays Hands); **no NIH** (reuse guards/claims/settlement);
-**built-in safety** (deny ambient env and unknown code, use immutable references);
+**built-in safety** (use immutable references; executable environment treatment requires redesign);
 **minimum needed** (no download/inspection command or Desktop changes);
 **prove library choices** (probe before approval); **verified means done** (installed default
 cloud action, not health checks); **progressive disclosure** (contracts by boundary).
 
-Rejected alternatives: direct Blob upload credentials for CLI/edge (tier violation); submitted
-exec in the provider-key runner (no isolation); tar entire local tree (accidental secrets/data
+Rejected alternatives: direct Blob upload credentials for CLI/edge (tier violation); tar entire local tree (accidental secrets/data
 upload); positional first-file mapping (breaks named inputs); shared absolute scratch paths
 (restart/concurrency); match parallel step outputs by order (wrong identity); rerun a tool after
 a delivery error (duplicates side effects); interpret JSON/PDF on stdout (breaks opaque response).
 
-Open questions: unsettled Type-1 executable and binary contracts. These block cloud build-readiness;
-full technical design reviews passed. Exact OCI 0.5.0 package/API/AOT verification is complete.
+Open work: redesign generic executable contracts for the operator-approved user-vetted-code policy;
+settle Host-owned content; obtain full current design reviews. Prior reviews are historical after
+this policy change. Exact OCI 0.5.0 package/API/AOT verification remains complete.
 
 ## Current work
 
 | Item | State |
 |---|---|
 | Source investigation | Read-only baseline complete; OCI package accepted separately, cloud acceptance pending |
-| Contract design | Technical review PASS; Type-1 choices pending. [Completed investigation/review rounds](phase-76.2-unified-cloud-run-contracts_completed.md) |
-| Independent design reviews | Full simplicity/ownership round 4 technical PASS; source wording corrected. No cloud design lock/security approval |
+| Contract design | Executable policy decided; generic execution redesign/full review and content-ownership choice open. [Completed investigation/review rounds](phase-76.2-unified-cloud-run-contracts_completed.md) |
+| Independent design reviews | Prior round 4 PASS covered the superseded executable policy; no inherited PASS for the changed design |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation approval | Not granted |
 | Cloud default-path acceptance | Required; not performed |

@@ -165,3 +165,90 @@ the bounded OCI Plan and assigned the same implementer. Commit/merge/publication
 on current code reviews and evidence. This approval does not settle either cloud Type-1 choice.
 
 OCI product implementation/publication/acceptance subsequently passed; see the [bounded completion record](phase-76.3-oci-integrity-auth_completed.md). Earlier gates above describe their recorded stage, not current outstanding OCI work. Cloud Type-1 choices remain pending.
+
+## Superseded executable proposal — 2026-10-10
+
+The operator rejected this proposed whitelist and chose user-vetted arbitrary code. This text and
+the matching image-owned adapter below are historical, never current implementation instructions.
+The replacement policy and open redesign work are in the active contract.
+
+## Executable trust — Type-1 proposal requiring operator decision
+
+```mermaid
+flowchart LR
+  Package[Local or OCI package] --> Validation[Mission Runtime validation]
+  Validation --> Declarative[Declarative experts through existing engine]
+  Validation --> Trusted[Exact server-owned executable identity]
+  Validation --> Refusal[Other executable content: explicit refusal]
+```
+
+**Proposed first implementation:** retain arbitrary local/OCI *selection*, with admission policy
+owned by Mission Runtime. Expand declarative execution independently of source. For executable
+experts, accept only an exact server-owned immutable implementation, initially the existing OCR
+expert and its accompanying script. Runner matches the submitted executable content to a digest
+of the reviewed implementation shipped in its image; it runs its own copy, never a submitted
+command/script. Unknown or modified executable experts fail explicitly before process creation.
+The CLI does not maintain this policy or silently substitute an OCR catalog entry for a package.
+
+This preserves the current service's trusted-code boundary and supplies the required OCR case.
+It does **not** promise cloud execution of arbitrary uploaded Python/native code. Supporting
+that requires a separate isolated compute boundary with no provider keys, managed identity,
+broker/store access or host filesystem authority. Merely starting a child process, removing
+environment variables, or putting it in the runner container does not establish that boundary.
+
+| Observation | Source |
+|---|---|
+| Durable packages currently reject `exec`/`onnx` and accept only `llm`/`rule`/`json_extract` | `forge-mcl/src/ForgeMission.Core/Runtime/DurableMissionPackageValidator.cs` |
+| Exec starts the declared command with inherited process environment | `forge-mcl/src/ForgeMission.Core/Adapters/ExecExpertRunner.cs` |
+| Hosted OCR executes `python3 ./ocr.py`, takes `source_file`, `output_dir`, `mode`, and can create a PDF | `forge-runner/missions/ocr/experts/Ocr/expert.md`, `forge.toml` |
+| Runner holds provider credentials and internal service authority | [deployment ownership](../design/deploy.md#topology) |
+
+The decision concerns a service credential/execution boundary, classified Type 1 by
+[Security Architecture](../design/security-architecture.md#type-1-versus-type-2-decisions).
+[Supervisor workflow scope](../design/supervisor-workflow.md#required-loop) says
+“Type-1 decisions go to the operator.” Selection requirements do not settle this executable trust
+policy. Operator choice: approve the proposed server-owned executable policy, or include isolated
+arbitrary executable compute in this phase's design. The second choice changes infrastructure
+scope; it must be designed before implementation rather than inferred by the implementer.
+
+
+### Superseded image-owned adapter
+
+The trusted executable adapter uses that segment scratch as explicit process cwd and invokes its
+image-owned implementation by a fixed absolute script path. It does not change process-wide cwd.
+Resume recreates the same relative layout from immutable content refs before Core replay. Cleanup
+only disposes that segment's scratch. The read-only implementer probe confirmed relative paths
+work with current OCR and Core replay; it did not execute a product acceptance test. Produced
+files needed after a pause must be uploaded before that pause and rehydrated at their stable
+relative output path: Core skips completed executable steps during replay. Each executable
+invocation has its own output path derived from its stable step key/attempt, preventing overwrite.
+Core currently hardcodes `exec` routing; a host-supplied execution adapter seam is required before
+any trusted executable can run. There is no fallback to `ExecExpertRunner` for an admitted package.
+
+Trusted OCR identity is the tuple of exact expert markdown hash, every declared executable asset's
+relative path/content hash and command/args/timeout. Runner builds the allowed
+tuple from its reviewed image files, never a client-provided name/digest allowlist. It selects the
+fixed OCR adapter only after equality; changed/extra executable assets fail closed. `source_file`
+must be a verified named artifact with supported magic bytes/media type. A literal path, package
+let/step binding for `source_file`, or override of `output_dir` is rejected. Before process spawn,
+the adapter constructs `FORGE_SOURCE_FILE` and `FORGE_OUTPUT_DIR` solely from its own verified
+stage/output allocation; it ignores package context for those authority-bearing values. Mode is
+validated `text`/`pdf`. Use an explicit environment with only required fixed process/PATH/locale
+entries and those three OCR values, no inherited provider keys or managed-identity variables.
+This is least privilege for reviewed code, not a sandbox for untrusted executables.
+
+## Operator policy record — documentation validation
+
+2026-10-10 (Dubai): executable trust is decided by the operator, while content ownership is
+still an explanation request. The current contract records the verbatim instruction, archives
+the rejected image-owned-only design, and makes generic execution redesign/full reviews explicit.
+Earlier technical PASS does not carry over to the changed executable contract.
+
+This bounded update is documentation-only: runtime, Native AOT, default-path and UI acceptance
+are N/A; no product changes or unused subagent team. No new security/implementation approval is
+claimed. Existing OCI acceptance remains valid. Local validation PASS: eight files, 62 local
+links/anchors, two JSON examples, balanced fences, top-level-only hub and diff checks.
+
+| Stage | Start (UTC) | End (UTC) | Wall | Evidence |
+|---|---|---|---|---|
+| Documentation / supervisor / operator policy | Unavailable; not recorded | 2026-10-09 21:13:36 UTC | Unavailable | Recorded decision, superseded proposal archived, local checks PASS |

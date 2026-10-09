@@ -2,9 +2,10 @@
 
 **Status:** Supervisor workflow authorized on 2026-10-09. Product requirements remain recorded in
 [the requirements spoke](phase-76.1-unified-cloud-run-requirements.md); the supervisor's
-[contract proposal](phase-76.2-unified-cloud-run-contracts.md) has passed technical reviews.
-Executable trust and the Host-owned content boundary are unsettled Type-1 decisions presented to
-the operator. The independent OCI integrity/authentication prerequisite is merged, published as
+[contract proposal](phase-76.2-unified-cloud-run-contracts.md) had passed technical reviews for
+the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
+and deferred execution permissions. Executable contracts require redesign/full review; Host-owned
+content remains an unapproved proposal, with an explanation requested. The independent OCI integrity/authentication prerequisite is merged, published as
 Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. No cloud implementation approval, deployment
 or runtime acceptance. **Cloud work is not build-ready.**
 
@@ -23,7 +24,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
 | Current documentation handoff | Local validation PASS: eight files, 60 local links/anchors, two JSON examples, balanced fences and whole hub checked; diff checks PASS. OCI product evidence is recorded separately. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
-| Contract design | Technical reviews PASS, operator boundary decisions pending; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
+| Contract design | Executable policy decided; generic execution redesign/reviews and content choice open; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation and acceptance | Not started; [proposed default-path evidence](phase-76.1-unified-cloud-run-requirements.md#future-default-path-acceptance) |
 
@@ -39,8 +40,8 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 
 ## Next
 
-Settle executable trust and the Host-owned content boundary, then lock the technically reviewed cloud
-contracts and write dependency-ordered implementation spokes. The OCI prerequisite is accepted;
+Explain/settle Host-owned content, redesign generic executable contracts under the recorded user-vetted
+code policy, then obtain full current design reviews before locking and planning implementation. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.
@@ -61,7 +62,8 @@ do not already settle them. A requirement change also returns to the operator. T
 was requirements-only. The operator has now invoked the full flow and authorized autonomous
 execution within the agreed requirements. The supervisor handles reversible technical decisions
 and plan approval. The workflow's explicit Type-1 operator gate remains applicable to the
-unresolved executable/credential and public content boundaries. The independent OCI prerequisite
+remaining public content boundary. Executable trust is decided by the operator; its technical
+execution/environment design still needs full review. The independent OCI prerequisite
 narrows existing library authority and creates no cloud boundary or permission grant.
 
 ## Prior requirements-documentation gates

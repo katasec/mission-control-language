@@ -26,6 +26,13 @@ An OCI registry is a distribution service, not a mission execution API.
 | 3 — Final response | The final response is text, printed to stdout with the expert's formatting preserved, including JSON. The CLI does not parse, convert, or choose output handling based on that format. The full conversation/run record remains in the cloud. |
 | 4 — Migration and diagnostics | Clean cut: remove `forge exec`, `--var`, and `--mode`, without compatibility aliases. Progress and Project/conversation/run IDs go to stderr. `--steps` adds each expert's output to stderr; `--verbose` adds mission resolution and execution details to stderr. Cloud recording does not depend on diagnostic flags. |
 
+## Additional execution decision — 2026-10-10
+
+Operator permits arbitrary executable mission code and defers execution permissions. Users are
+responsible for vetting their OCI registry content. No image-owned/OCR-only executable allowlist
+is requested. This settles executable trust policy; technical execution contracts must be revised
+and reviewed before implementation. [Recorded decision and design state](phase-76.2-unified-cloud-run-contracts.md#executable-trust--operator-decision-recorded-2026-10-10).
+
 ## Command and named inputs
 
 ```text
