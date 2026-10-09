@@ -2,7 +2,8 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Plan approved after full current independent reviews; implementation/publication/default acceptance remain open.
+Original plan and complete r6 correction plan approved after fresh full independent reviews.
+Correction implementation/publication/default acceptance remain open.
 
 ## Source investigation
 
@@ -282,7 +283,199 @@ default gates stay fixed. A native/library launch change outside the original in
 to full Plan review before approval. No polling snapshot or post-launch ownership race proves the
 required containment; no unsupported .NET11 API may be assumed available on .NET10.
 
+## Read-only correction investigation
+
+Frozen Core public-API scratch probe in `/private/tmp/phase76-core-r4-probes`: Python closes
+stdin, writes valid JSON and exits0. Declared input sizes1 and16384 produced30/30 pass envelopes
+each; size262144 produced30/30 failure envelopes with `Executable I/O failed: Broken pipe`.
+Separate writer/close after observed child exit threw IOException HResult80131620 with inner
+SocketException. Supervisor independently read the probe source and actual retained log. This
+reproduces a defect but does **not** establish the failed CI test's exact reason; CI only logged
+its pass/fail assertion. Preserve that assertion and include reason diagnostics in the correction.
+
+Managed macOS P/Invoke scratch prototype `/private/tmp/phase76-posix-launch-probe/probe-r3.log`
+observed POSIX spawn with a new group, root exit via waitid WEXITED|WNOWAIT, and pipes still open
+through the ordinary descendant. An unrelated .NET Process child started/waited successfully;
+group SIGKILL then closed pipes and waitpid reaped the exact root. Captured child JSON names root
+and group44182, descendant44183; the delayed sentinel was absent after2.2s. Supervisor read source
+and retained output independently. This is a managed macOS mechanism probe, **not** a product,
+Native AOT, other-host or default-path acceptance result. The same investigation identified inner
+SocketException native code32 / Shutdown for EPIPE. Complete reviewed plan and product changes
+remain pending.
+
+At2026-10-09 22:41:43 UTC, supervisor directly observed release run37999080639 jobs successful
+on Windows ARM64, Linux ARM64 and Linux x64; macOS remained running. These help/version/AOT
+checks at the old frozen source do not prove a future platform launcher or close this task.
+
+## Correction plan round 4 — supervisor findings before reviews
+
+Complete round4 returned a 42-file Core/test/build inventory with one private platform lifetime
+seam, POSIX spawn/unreaped leader and preexecution Windows job ownership. Original package APIs,
+ABI, generated JSON, parser, replay, workspace, ONNX and default gates were retained. No product
+or repository-document edits occurred during the read-only stage. No independent PASS is claimed.
+
+Before assigning reviews, supervisor identified required detail: the actual Runner entrypoint can
+be PID1 and adopt ordinary grandchildren; owned-group reaping must cover that runtime. Closed
+stdin mapping must name every platform's concrete errors. A blocking observer cannot be abandoned
+or hang indefinitely if termination itself fails. Deliberately externally reaping the leader before
+termination for a fault test would break the identity invariant being protected; a safe, honestly
+controlled boundary test is acceptable. Complete round5 read-only refinement was assigned before
+independent plan reviews; no implementation approval.
+
+Supervisor independently read `/private/tmp/phase76-posix-r5-probe/Program.cs` and `probe.log`:
+fixed-owned-root waitid WNOHANG observation cancelled and was awaited, then a second observation
+retained root50184 unreaped while descendant50185 held the pipes. Checked group termination and
+exact root reap completed; delayed sentinel remained absent. Managed macOS mechanism evidence
+only, not Linux/PID1, Native AOT or default acceptance. [.NET10 PipeStream.Windows](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.IO.Pipes/src/System/IO/Pipes/PipeStream.Windows.cs) source also
+confirms its synchronous-pipe ReadAsync/WriteAsync use [AsyncOverSyncWithIoCancellation](https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/Common/src/System/Threading/AsyncOverSyncWithIoCancellation.cs), which
+attempts CancelSynchronousIo and joins the cancellation callback; reuse the BCL pipe boundary
+rather than author another I/O thread-cancellation mechanism. Product behavior still needs the
+reviewed current-source native checks.
+
+## Correction-plan review — simplicity round 3
+
+Complete round5 artifact reviewed, with a fresh full checklist. **REVISE** for one contract
+wording mismatch; the thirteen added paths were independently judged necessary for the agreed
+cross-platform joined lifetime and normal native proof, with no scope removal proposed.
+
+| Check | Verdict / current evidence |
+|---|---|
+| New apps or libraries | PASS — probe is test tooling outside shipped payload; no added product app/dependency |
+| Reuse | REVISE — plan calls ArtifactPaths registry immutable; locked contract requires Runner-owned live ConcurrentDictionary backing registry, retained by read-only Core API |
+| Multiple code paths | PASS — one exec adapter with private platform ownership implementations |
+| Legacy paths | PASS — actual published Client ABI overload; no old checkpoint reader |
+| Knobs | PASS — fixed private cleanup deadline, no user setting |
+| Speculative abstractions | PASS — present lifetime/failure seams, no public process framework |
+| Library choice | PASS — inspected implementations do not supply required joined lifecycle unchanged; BCL pipes/ONNX reused |
+| Copy-paste | PASS — shared adapter exchange/error boundary and parser |
+| Redundant definitions | PASS — existing key/hash/parser/build authorities retained |
+| Size versus requirement | PASS — six native/lifetime/argument files, three probe files, four existing build integration files; no equivalent native harness found |
+| Test volume | PASS — observed defects, retained contracts and required native proof; controlled error test labeled accurately |
+
+Supervisor independently confirms frozen PipelineExecutionWorkspace already retains the supplied
+ArtifactPaths reference. Correct the plan's immutability statement; no corresponding product-code
+change is required. Complete ownership review is next; no current plan approval.
+
+## Correction-plan review — ownership round 3
+
+Complete round5 plan, task, locked parent, atlas/READMEs and frozen clean770778d independently
+reviewed. **Placement PASS; technical REVISE** for the same live-registry mismatch. Reviewer
+observed working start23:07:39 UTC; assignment boundary was23:07:16 UTC, used in timing below.
+
+| Behavior | Derived owner / proposed placement | Verdict |
+|---|---|---|
+| Distribution literals before environment evaluation | Existing Core manifest reader | PASS |
+| Full local TOML evaluation/diagnostics | Same Core parser | PASS |
+| Supplied markdown diagnostics without disk fallback | Core ExpertLoader | PASS |
+| Declared mission parameters as strings | Core semantic validation | PASS |
+| Pure package construction/validation | Core package validator | PASS |
+| Portable assets/executable metadata/collisions/models | Core package validator | PASS |
+| No-assets hash and actual serialized budget | Core package contract | PASS |
+| Reachable inputs/exact reserved names | Core input semantics | PASS |
+| Existing kinds/reachable profile names | Core validation; deployment retains availability | PASS |
+| Actual Client ABI/generated JSON | Core DTO and existing CLI integration tests | PASS |
+| Semantic fingerprint/incompatible replay | Core pipeline/checkpoint | PASS |
+| Malformed current checkpoint shape | Existing Core codec | PASS |
+| Relative replay/effects once/nested workspace | Core pipeline | PASS |
+| Exact StepKey/attempt facts | Core trace contract | PASS |
+| Workspace/pure output directory | Core shared primitive | PASS |
+| Live verified artifact registry | Runner owns mutable backing map; Core retains read-only reference | REVISE plan wording |
+| Process-local verified paths/runtime directories | Existing Core exec | PASS subject to registry correction |
+| Command/args/cwd/inherited authority | Existing Core exec | PASS |
+| Bounded concurrent I/O/precise declined stdin | Existing Core exec | PASS |
+| Atomic retained POSIX group | Private Core exec lifetime | PASS |
+| Atomic retained Windows job | Private Core exec lifetime | PASS |
+| Descendant termination/joined I/O/observation | Private Core exec lifetime | PASS |
+| Linux PID1 owned adopted-child reaping | Private Core exec lifetime; scoped Type2 | PASS |
+| Cleanup failure over cancellation | Core exchange boundary | PASS |
+| Numeric ONNX/joined native cancellation | Existing Core ONNX adapter | PASS |
+| Native/PID1 proof | Core test tooling and existing build owner | PASS |
+| Immutable publication/retained consumers/defaults | Existing publication and CLI acceptance owners | PASS |
+
+No new runtime component, second job, duplicate lifetime owner, credential or persistent-data
+authority. Desktop termination, Hands containment and LocalDiskWorkspace terminal execution
+serve different owners/protocols. Atlas excludes test projects; the maintained probe is test
+tooling outside the shipped payload. Combined correction: state the live retained backing map,
+and add a focused existing exec-test regression showing a caller-registered path becomes usable
+by a subsequent exec through the same workspace. Actual frozen product already retains the
+reference; no new registry mechanism/file is required. Same implementer assigned complete r6
+plan correction only, without further investigation or product edits.
+
+## Correction-plan review — simplicity round 4
+
+Complete current r6 plan rechecked independently against all eleven checks; **PASS**, no inherited
+verdicts or remaining plan blocker. The live backing registry and same-workspace public behavior
+regression match the locked contract; all42 files and original proof/default gates remain scoped.
+
+| Check | Current verdict |
+|---|---|
+| New apps or libraries | PASS — probe outside shipped payload, no added dependency |
+| Reuse | PASS — retain caller-owned live registry; no snapshot/new mechanism |
+| Multiple code paths | PASS — one exec/parser/interpreter with private OS lifetime details |
+| Legacy paths | PASS — actual published ABI overload, no checkpoint compatibility reader |
+| Knobs | PASS — fixed private budget, no user setting |
+| Speculative abstractions | PASS — present ownership/error boundaries |
+| Library choice | PASS — inspected libraries miss joined lifecycle; BCL/ONNX reused |
+| Copy-paste | PASS — shared exchange/error/parser implementation |
+| Redundant definitions | PASS — existing key/hash/parser/build authority |
+| Size versus requirement | PASS — thirteen added paths substantiate agreed lifetime/proof |
+| Test volume | PASS — observed failures/contracts/native outcomes and same-workspace regression |
+
+Nothing to remove or merge. Code review/native/PID1/publication/default acceptance remain required.
+
+## Correction-plan review — ownership round 4 and approval
+
+Complete current r6 artifact independently rechecked against task, locked contracts, owner
+READMEs and clean770778d. **Technical PASS; placement PASS**, no inherited verdict. Reviewer
+observed working start23:12:44 UTC; assignment boundary23:12:24 UTC is used below.
+
+| Behavior | Derived owner / proposed placement | Current verdict |
+|---|---|---|
+| Literal distribution before environment evaluation | Core manifest reader | PASS |
+| Full local parsing/evaluation/diagnostics | Same Core parser | PASS |
+| Immutable source diagnostics without disk fallback | Core ExpertLoader | PASS |
+| Mission parameter string typing | Core semantic validation | PASS |
+| Pure resolved package construction/validation | Core package validator | PASS |
+| Assets/executable metadata/collisions/models | Core package validator | PASS |
+| No-assets hash/actual JSON budget | Core package contract | PASS |
+| Reachable inputs/exact reserved policy | Core input semantics | PASS |
+| Existing kinds/reachable profiles | Core validation; deployment owns availability | PASS |
+| Published Client ABI/generated JSON | Core DTO and CLI integration tests | PASS |
+| Full semantic fingerprint/incompatible replay | Core pipeline/checkpoint | PASS |
+| Malformed current checkpoint refusal | Existing Core codec | PASS |
+| Relative replay/completed effects once | Existing Core pipeline | PASS |
+| Exact StepKey/attempt traces | Core trace contract | PASS |
+| Workspace inheritance/pure output directory | Core shared primitive | PASS |
+| Verified artifact registration | Caller/Runner; Core retains live read-only reference | PASS |
+| Same-workspace newly registered path observation | Core exec reads, caller/Runner writes; existing test file | PASS |
+| Absolute process-only JSON/environment mapping | Core exec; root/context/checkpoint stay relative | PASS |
+| Command/args/cwd/inherited authority | Core exec | PASS |
+| Bounded concurrent streams/precise declined stdin | Core exec | PASS |
+| Atomic POSIX group/retained root identity | Private Core exec lifetime | PASS |
+| Atomic Windows job | Private Core exec lifetime | PASS |
+| Descendant termination/joined process and I/O | Private Core exec lifetime | PASS |
+| Linux PID1 owned adopted-child reap | Private Core exec lifetime; scoped Type2 | PASS |
+| Visible cleanup error over cancellation | Core exchange/error boundary | PASS |
+| Numeric ONNX/joined native disposal | Existing Core ONNX adapter | PASS |
+| Four native hosts/PID1 proof | Core test tooling and existing build scripts | PASS |
+| Immutable Core provenance/public APIs | Existing publication owner | PASS |
+| Retained Client/installed defaults | Existing CLI integration/acceptance owners | PASS |
+
+No second job, duplicate lifetime owner or new runtime component. No public, credential,
+persistent-data or permission authority expands. No placement change required. Native/PID1,
+canonical macOS diagnosis, actual publication and installed defaults remain future required gates.
+
+Supervisor independently checked the full r6 artifact and the exact r5→r6 diff, confirmed all42
+files, retained ABI/public shapes, live caller-owned registry, .NET10 mechanisms, existing owner
+and failure boundaries, package/default gates and N/A visual/security-data changes. **PLAN APPROVED
+2026-10-09 23:13:40 UTC** for this bounded complete r6 plan only. No merge/publication/acceptance
+approval. The same implementer receives correction implementation after this record is delivered.
+
 ## Timing
+
+Supervisor later directly observed release run37999080639 completed successfully on all four
+native hosts at source770778d (GitHub updatedAt2026-10-09T22:54:45Z). These frozen-source build/help/version results remain lower-layer evidence; the
+canonical macOS managed suite is still failing and corrected-launch behavior is not yet tested.
 
 | Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
 |---|---|---|---|---|
@@ -298,5 +491,13 @@ required containment; no unsupported .NET11 API may be assumed available on .NET
 | Implement / same implementer / r1 | 2026-10-09 22:07:32 | 2026-10-09 22:27:04 | 19m32s | Frozen770778d, attached draft product PR77; managed/package facts pass; canonical native pending |
 | Review code / simplicity and style / r1 | 2026-10-09 22:27:56 | 2026-10-09 22:31:52 | 3m56s | Full current tables REVISE; early-parent-exit cleanup reproduction, parser complexity and canonical macOS test failure |
 | Review code / ownership / r1 | 2026-10-09 22:33:18 | 2026-10-09 22:35:47 | 2m29s | Full18-behaviour placement PASS; technical REVISE for lifecycle/checkpoint shape; canonical failure independently confirmed |
+| Plan / implementer / r4 | 2026-10-09 22:36:12 | 2026-10-09 22:49:09 | 12m57s | Read-only library/native/closed-stdin probes and complete42-file correction plan; supervisor refinement required before reviews |
+| Plan / implementer / r5 | 2026-10-09 22:51:07 | 2026-10-09 23:03:22 | 12m15s | Complete42-file correction plan returned and transcribed; product frozen; full reviews/approval pending |
+| Review plan / simplicity / r3 | 2026-10-09 23:04:07 | 2026-10-09 23:07:02 | 2m55s | Complete current r5 artifact; full11-check REVISE for live registry wording, bounded expansion otherwise justified |
+| Review plan / ownership / r3 | 2026-10-09 23:07:16 | 2026-10-09 23:09:56 | 2m40s | Full27-behavior placement PASS; technical REVISE for live registry wording and missing behavior regression |
+| Plan / same implementer / r6 | 2026-10-09 23:10:31 | 2026-10-09 23:11:13 | 42s | Complete current plan corrects live registry ownership and adds existing-file behavior regression; no extra investigation or product change |
+| Review plan / simplicity / r4 | 2026-10-09 23:11:34 | 2026-10-09 23:12:08 | 34s | Full current r6 plan, all11 checks PASS; ownership next |
+| Review plan / ownership / r4 | 2026-10-09 23:12:24 | 2026-10-09 23:13:04 | 40s | Full current r6 plan, all29 behaviors technical/placement PASS |
+| Correction-plan approval / supervisor | 2026-10-09 23:13:40 | 2026-10-09 23:13:40 | Instant boundary | Complete r6, fresh full reviews and independent supervisor check; bounded PLAN APPROVED |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.
