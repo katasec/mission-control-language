@@ -282,6 +282,30 @@ default gates stay fixed. A native/library launch change outside the original in
 to full Plan review before approval. No polling snapshot or post-launch ownership race proves the
 required containment; no unsupported .NET11 API may be assumed available on .NET10.
 
+## Read-only correction investigation
+
+Frozen Core public-API scratch probe in `/private/tmp/phase76-core-r4-probes`: Python closes
+stdin, writes valid JSON and exits0. Declared input sizes1 and16384 produced30/30 pass envelopes
+each; size262144 produced30/30 failure envelopes with `Executable I/O failed: Broken pipe`.
+Separate writer/close after observed child exit threw IOException HResult80131620 with inner
+SocketException. Supervisor independently read the probe source and actual retained log. This
+reproduces a defect but does **not** establish the failed CI test's exact reason; CI only logged
+its pass/fail assertion. Preserve that assertion and include reason diagnostics in the correction.
+
+Managed macOS P/Invoke scratch prototype `/private/tmp/phase76-posix-launch-probe/probe-r3.log`
+observed POSIX spawn with a new group, root exit via waitid WEXITED|WNOWAIT, and pipes still open
+through the ordinary descendant. An unrelated .NET Process child started/waited successfully;
+group SIGKILL then closed pipes and waitpid reaped the exact root. Captured child JSON names root
+and group44182, descendant44183; the delayed sentinel was absent after2.2s. Supervisor read source
+and retained output independently. This is a managed macOS mechanism probe, **not** a product,
+Native AOT, other-host or default-path acceptance result. The same investigation identified inner
+SocketException native code32 / Shutdown for EPIPE. Complete reviewed plan and product changes
+remain pending.
+
+At2026-10-09 22:41:43 UTC, supervisor directly observed release run37999080639 jobs successful
+on Windows ARM64, Linux ARM64 and Linux x64; macOS remained running. These help/version/AOT
+checks at the old frozen source do not prove a future platform launcher or close this task.
+
 ## Timing
 
 | Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |

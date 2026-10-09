@@ -117,6 +117,25 @@ failure observations. Desktop/ForgeUI/TUI visual gates are N/A: no layout change
 
 ## Verification and default path
 
+### Code-review correction boundaries
+
+The existing lifecycle contract requires ownership through pipe completion even if the direct
+parent exits first. Its private launch implementation is being replanned; it has no new public
+API, permission policy, datastore or identity authority. Product edits remain paused until the
+complete correction plan receives full sequential reviews and supervisor approval.
+
+| Boundary | Required correction / proof |
+|---|---|
+| Exec ownership | Establish OS ownership before target execution; retain it through stream completion and termination. No post-launch race or descendant snapshot substitutes. POSIX unreaped-leader and Windows job ownership are investigation candidates, not approved implementation. |
+| Exec failure | Failed ownership setup never falls back to an unowned launch. Timeout/caller cancellation and I/O failure keep their declared results; termination failure remains visible. Parent-first-exit tests prove no surviving ordinary descendant or later sentinel write. |
+| Cleanup failure precedence | An observed OS termination/reap failure propagates as a visible IOException even when caller cancellation is requested; do not replace it with OCE. Normal caller cancellation propagates OCE after successful cleanup. Preserve the cleanup operation/error and original failure context through a private distinction at the exec boundary; no new public exception contract or fallback. |
+| Declined stdin | A child may close unread stdin. Recognize only the platform's concrete broken-pipe/closed-input condition; still join the process and remaining streams, honor cancellation, validate exit code and parse declared JSON output. Other I/O errors remain failures. The correction plan must name the exact error mapping and tests; blanket IOException swallowing or message matching is not approved. |
+| Checkpoint input | Existing codec rejects missing/null required current-format shape before resume dereferences it; InvalidContinuation occurs without provider/executable invocation. |
+| Existing parser / adapters | Refactor coherent parser stages to satisfy complexity/nesting limits, preserve one parser, place public streaming entry points before helpers, diagnose the canonical fast-child failure from observed envelope/error evidence. |
+| Platform evidence | Any new platform launch primitive requires behavioral checks on every supported host as well as current-source zero-warning AOT. Existing release help/version probes alone do not exercise launch semantics. |
+
+### Existing required gates
+
 Focused tests cover the changed package, manifest, replay, trace and adapter boundaries; full
 normal repository managed tests/builds pass with zero warnings. Controlled provider fixtures prove
 only their named layer. Run final current-source Native AOT through the canonical normal build
