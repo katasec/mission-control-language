@@ -1,7 +1,8 @@
 # Phase 76.6 — Mission content contract producer
 
-**Status:** DESIGN LOCKED2026-10-10 05:00:09UTC after both full current independent reviews PASS.
-Implementation not approved. Scope/design starts2026-10-10 04:54:53UTC.
+**Status:** PLAN APPROVED2026-10-10 05:06:50UTC after both full current independent plan reviews PASS.
+Design locked05:00:09UTC. Same implementer proceeds within seven approved paths.
+Scope/design starts2026-10-10 04:54:53UTC.
 Core and OCI producers plus Runner hosting are verified.
 
 ## Scope
@@ -104,5 +105,5 @@ Open design questions: none. Exact files/release-script details belong in the re
 | Stage | State |
 |---|---|
 | Supervisor design | Locked05:00:09UTC after complete current simplicity/ownership PASS; [evidence](phase-76.6-mission-content-contracts_completed.md#design-reviews) |
-| Plan / implementation | Implementer plan next; no product edit authorized |
+| Plan / implementation | [Complete seven-path plan](phase-76.6-mission-content-contracts-plan.md) approved05:06:50UTC after both full current reviews PASS; same implementer proceeds |
 | Publication / default acceptance | Not started |

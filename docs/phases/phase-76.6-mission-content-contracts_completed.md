@@ -49,6 +49,57 @@ Technical design PASS: security/authority unchanged, no role/credential/store/en
 engineering owner/reuse/dependency PASS; additive ABI design PASS; default producer acceptance
 legitimate. Actual Native AOT/publication evidence remains outstanding. UI N/A. Move nothing.
 
+## Complete plan reviews and approval
+
+Simplicity observed05:05:03–05:05:21UTC; ownership05:05:54–05:06:24UTC. Both rechecked the
+complete current seven-path artifact, not only a change. Reviewed plan SHA256
+`b7908913167f5ba06b6f8850421f699d036ba3b63ec16dd5fa8aa66945cd0434`.
+Root ordinary-SDK-target clarification was present in both reviewed artifacts. No finding waived.
+
+| Simplicity check | Current complete-plan verdict |
+|---|---|
+| New apps/libraries | PASS: seven existing-owner paths, no dependency/runtime |
+| Reuse | PASS: existing context/enum annotations/chunk/IDs/release owners |
+| Multiple paths | PASS: one format; controlled branch proof then real normal-feed acceptance |
+| Legacy | PASS: existing DTO/ctor/ordinals/registries/consumer pins unchanged |
+| Knobs | PASS: four fixed bounds; no preemptive native target override |
+| Abstractions | PASS: plain values; one needed private verifier expected-version arg |
+| Library choice | PASS: dependency-free existing STJ; ordinary-target native proof |
+| Copy-paste | PASS: extend existing verifier/publisher |
+| Redundancy | PASS: distinct binary semantics; text/chunk primitives preserved |
+| Size | PASS: seven paths; audit unchanged Presentation without republishing |
+| Tests | PASS: wire/compatibility/modified release-negative boundaries only |
+
+Ownership derived from Contracts README15/Host README19 before placement. Current full table:
+
+| Behavior | Derived owner / planned placement | Verdict |
+|---|---|---|
+| Input/output kinds | Contracts / same enum | PASS |
+| Binary reference values | Contracts / same record | PASS |
+| Named strings/artifact maps | Contracts / same record | PASS |
+| Chunk request values | Contracts / same record | PASS |
+| Scoped query values | Contracts / same record | PASS |
+| Fixed bounds/reused chunk+IDs | Contracts / same existing conventions | PASS |
+| Generated wire metadata | Contracts / same existing context | PASS |
+| Byte/map/long/malformed JSON tests | Contracts verification / dedicated tests | PASS |
+| Existing ABI/wire/registry/consumer pins | Existing owners / untouched | PASS |
+| Authority/integrity/adoption/storage | Host / deferred, no implementation | PASS |
+| Both package audits | Existing engineering verifier / private expected version | PASS |
+| Immutable merged Contracts-only publication | Existing publisher / narrowed target | PASS |
+| Public Native AOT proof | Producer verification / supervisor normal-feed acceptance | PASS |
+
+Technical plan PASS: security/data/credentials unchanged; exact additive API/ABI/JSON;
+seven paths/one owner/explicit JSON+audit+immutable+visibility errors; both dependency audits;
+full Ubuntu/Azurite integration and ordinary-SDK native remain mandatory; normal-feed fresh
+acceptance defined. UI/deployment N/A. No competing types found across named Forge repos.
+
+Root PLAN APPROVED05:06:50UTC after independently inspecting complete artifact and those gates.
+Original local Docker absence was recoverable: installed `/Applications/Docker.app` started by
+normal `open -a Docker`, exit0 available05:06:23UTC; actual `docker info`05:06:34UTC reports
+29.1.2/Docker Desktop on existing desktop-linux context. No settings/source change. Both local
+full suites and normal CI remain required; no fixture skip or waiver. Same implementer assigned
+05:07:08UTC; only approved seven paths, no merge/publication/acceptance authority.
+
 ## Stage boundaries
 
 All2026-10-10UTC. Agent activity times above are distinct from result-available boundaries.
@@ -59,5 +110,11 @@ All2026-10-10UTC. Agent activity times above are distinct from result-available 
 | review-design:simplicity |04:55:55 |04:57:57 |2m02s | Current full11-check PASS |
 | review-design:ownership |04:57:57 |05:00:09 |2m12s | Current full12-behavior/technical PASS |
 | Supervisor DESIGN LOCKED |05:00:09 |05:00:09 |0s | Full design accepted, no product edits |
+| plan:implementer |05:00:36 |05:03:39 |3m03s | Seven-path complete returned plan; observed05:01:11–05:02:31 |
+| Plan transcription/default-target clarification:supervisor |05:03:39 |05:04:44 |1m05s | Complete artifact, ordinary SDK native target before any observed failure |
+| review-plan:simplicity |05:04:44 |05:05:33 |49s | Full current11-check PASS |
+| review-plan:ownership |05:05:33 |05:06:50 |1m17s | Full current13-behavior/technical PASS |
+| Supervisor PLAN APPROVED |05:06:50 |05:06:50 |0s | Exact seven-path current plan |
+| implement:implementer |05:07:08 | In progress | Pending | Same implementer, bounded approved scope |
 
 Product PR/timing and acceptance remain future. Tokens N/A.
