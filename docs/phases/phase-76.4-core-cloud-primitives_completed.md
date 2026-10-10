@@ -24,6 +24,13 @@ native [canonical38013941959](https://github.com/katasec/forge-mcl/actions/runs/
 Fresh full sequential code reviews r5 are required, with simplicity/style running first.
 No local full AOT repeated; no speculative macOS fix, deadline change or gate waiver.
 
+Supervisor fetched current PR merge ref `f8696c714ae83e9fb2506884ec3d8d0f2cdcbb33`:
+parents `8d28dc1` and `5a80c56e`, empty tree diff against reviewed HEAD. Current native jobs:
+canonical `114099979075`; macOS `114099979637`; Windows ARM64 `114099979764`;
+Linux x64 `114099979796`; Linux ARM64 `114099979935`. These are running, not accepted observations.
+Documentation tracking [draft PR380](https://github.com/katasec/mission-control-language/pull/380)
+remains open until the Core task's required native/publication/default gates close.
+
 ## Full code review r5 — portable expectation
 
 Simplicity/style observed **2026-10-10 01:39:27–01:40:45 UTC**. Exact assignment timestamp
