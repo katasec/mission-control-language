@@ -2,8 +2,27 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Complete r9 plan and its approved cleanup correction are implemented; current handback is below.
-Full current source reviews pass; native verification/publication/default acceptance remain open.
+Complete r9 plan and its approved corrections are implemented; current handback is below.
+Fresh full current code reviews/native verification/publication/default acceptance remain open.
+
+## Approved Windows expectation correction — implementation r9
+
+Same implementer stage **2026-10-10 01:37:02–01:38:24 UTC**. Frozen/pushed clean source
+`5a80c56e690c2a1d6e51f4ea24e797b70f32d28c`, existing draft PR77. Only one expected-path
+line changed in `tests/ForgeMission.Exec.Probe/Program.cs`; canonical separators convert to
+the OS separator before combining the assertion's absolute path. The caller-relative-value
+assertion, all payloads/deadlines and every production `src` byte remain unchanged.
+
+Supervisor independently checked empty production diff, full42-path diff SHA256
+`38CFF7AA3E51AC11988A98D2EFF4F524F5F485941F7C3E7A937EE4E96D2CAFCE`, clean push,
+zero-warning managed probe build, all corrected managed probe cases and30script checks.
+Open-peer blocked read/write cancellation observed6ms/1ms. Complete current inventory/raw logs:
+`/private/tmp/phase76-core-windows-expectation-20261010T013702Z/EVIDENCE.md`.
+Previous full managed/package/consumer checks support unchanged production sources; current
+native [canonical38013941959](https://github.com/katasec/forge-mcl/actions/runs/38013941959) and
+[four-host38013941972](https://github.com/katasec/forge-mcl/actions/runs/38013941972) are queued.
+Fresh full sequential code reviews r5 are required, with simplicity/style running first.
+No local full AOT repeated; no speculative macOS fix, deadline change or gate waiver.
 
 ## Approved pipe correction — implementation r8
 

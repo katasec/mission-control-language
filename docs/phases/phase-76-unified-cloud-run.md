@@ -22,11 +22,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Hosting verified; complete Core plan approved, combined code-review correction underway. OCI accepted. |
+| Current documentation handoff | Hosting verified; Core source reviews pass, native probe correction and fresh verification underway. OCI accepted. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) correcting a reviewed cleanup-order defect; native/default gates open; unified default-path acceptance not started |
+| Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) resolving native verification failures; publication/default gates open; unified default-path acceptance not started |
 | Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) verified: merged/published0.20.6, normal Make deployment, actual process/source and installed ChatPASS |
 
 ## Dependency-ordered work

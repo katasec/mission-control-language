@@ -1,9 +1,10 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** The approved cleanup correction is committed and pushed at `8f0fa851`.
-Current managed, package and fresh branch-consumer checks pass; both full independent code reviews
-pass. Native CI found a Windows probe expectation defect and a macOS pressure-child crash;
-both Linux gates pass. Investigation is in progress; no merge/publication is approved.
+**Status:** The approved Windows probe expectation correction is committed/pushed at `5a80c56e`;
+production source is unchanged from `8f0fa851`. Corrected managed probe/script checks pass.
+Fresh full sequential code reviews and normal native CI are in progress. Earlier native checks
+found the corrected Windows expectation defect and an unexplained canonical macOS child crash;
+both Linux and the macOS matrix gates passed. No merge/publication is approved.
 [Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
