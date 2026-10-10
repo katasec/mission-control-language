@@ -1,7 +1,9 @@
 # Phase 76.6 — Mission content contract producer
 
-**Status:** Product PR20 merged2026-10-10 05:25:03UTC after complete current sequential code reviews
-and normal CI PASS. Normal Contracts0.9.0 publication and fresh managed acceptance are in progress.
+**Status:** Contracts0.9.0 published and fresh normal-feed managed consumer accepted2026-10-10
+05:35:53UTC. Product PR20 merged05:25:03UTC after complete current sequential reviews/PR CI PASS.
+The final publisher metadata check failed; the exact same private/repository/version criteria were
+independently verified. Closure record: [docs PR381](https://github.com/katasec/mission-control-language/pull/381).
 Design locked05:00:09UTC; plan approved05:06:50UTC; only seven approved product paths changed.
 Scope/design starts2026-10-10 04:54:53UTC.
 Core and OCI producers plus Runner hosting are verified.
@@ -108,7 +110,16 @@ Open design questions: none. Exact files/release-script details belong in the re
 |---|---|
 | Supervisor design | Locked05:00:09UTC after complete current simplicity/ownership PASS; [evidence](phase-76.6-mission-content-contracts_completed.md#design-reviews) |
 | Plan / implementation | Reviewed and merged; [complete evidence](phase-76.6-mission-content-contracts_completed.md#implementation-and-current-code-reviews) |
-| Publication / default acceptance | Normal workflow38027450839 running from merged main; fresh managed normal-feed acceptance remains |
+| Publication / default acceptance | Published0.9.0/fresh managed acceptance verified; [actual observations and CI discrepancy](phase-76.6-mission-content-contracts_completed.md#normal-publication-and-managed-default-observation) |
+
+Type2 operational supplement, exact scope **Contracts0.9.0 only**: workflow38027450839 pushed the
+package after its274-test/audit gate passed, then its GITHUB_TOKEN metadata view reported
+`repository=missing`. Supervisor normal credentials independently verified private visibility,
+repository`katasec/forge-conversations`, exactly one0.9.0, merged-source bytes and fresh normal-feed
+consumer behavior. No guard/auth/permission/source change or package overwrite. This does not make
+the workflow green. Retire this supplement when the normal publisher metadata gate observes the
+same repository criterion; investigate that view before the next Contracts publication. A later
+version gets no automatic exception or permission change. Native remains final-phase-only.
 
 Native timing follows the [operator's explicit final-delivery correction](phase-76.6-mission-content-contracts_completed.md#operator-correction-native-verification-timing).
 No further native/Docker consumer tests for this increment.

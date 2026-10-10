@@ -1,6 +1,8 @@
 # Phase 76.6 — Content contract review and delivery evidence
 
-Task remains open. This record holds completed review stages, not a product completion claim.
+Contracts0.9.0 product delivery accepted through the actual observations below. Closure record:
+[docs PR381](https://github.com/katasec/mission-control-language/pull/381). Full Phase76 remains open;
+native verification is reserved for final delivery and the publisher metadata discrepancy is explicit.
 
 ## Design reviews
 
@@ -224,6 +226,53 @@ Normal managed builds/tests, publication and fresh normal-feed managed consumer 
 increment; the final native delivery gate stays open for the full phase. This is an explicit
 operator instruction about timing, not a linker-warning waiver or default acceptance claim.
 
+## Normal publication and managed default observation
+
+Product PR20 merged05:25:03UTC as`d4d013e577e4e57f3eaf3310527094b5d2dfa851`; actual merged tree
+equals the reviewed/CI tree above. Supervisor dispatched the existing workflow from main05:25:23UTC;
+[run38027450839](https://github.com/katasec/forge-conversations/actions/runs/38027450839) created05:25:25UTC.
+Private-package/API observation05:30UTC: repository`katasec/forge-conversations`, visibility`private`,
+Contracts0.9.0 version id1364807069 created05:29:56UTC. Verify job114141213613SUCCESS:
+274PASS/0skip/0fail3m11s,0compiler warnings/errors, both source/package/symbol audits PASS,
+artifact11661330787/431001bytes. The actual package push succeeded.
+
+Publication job114141937179 failed05:35:11UTC **only at its final metadata check**:
+`visibility=private repository=missing expected_repository=katasec/forge-conversations`,
+`version_0.9.0_count=1`. Overall run is FAILURE, never recorded as green. Prior run36655211551
+on2026-09-30 has the identical missing-repository observation for0.6.0; this is a retained
+reporting discrepancy, not a content-contract regression established by the evidence.
+
+Supervisor independently exercised the exact private/repository/exactly-one-version predicates
+with normal authenticated GH credentials05:33:08UTC: private, repo1381261480/
+katasec/forge-conversations, one0.9.0/id1364807069. The normal local NuGet credential also returned
+the same repository/visibility/version05:35:53UTC. This establishes the actual association and
+shows a credential-view difference; why the workflow view omits the repository is unresolved.
+No claim of a particular missing permission. Raw publication log
+`/private/tmp/phase76-content-contracts-publication.log` and prior failure log
+`/private/tmp/phase76-conversations-prior-publish-failure.log` retain both observations.
+
+Supervisor acceptance05:35:53UTC uses those actual identical criteria plus the normal published
+consumer below. The active spoke records a Type2 operational supplement for0.9.0 only, with
+reversal/removal condition. No product/security predicate, token permission or immutable version
+rule is waived/changed. Do not republish or rerun the immutable publisher against0.9.0.
+The next Contracts release must investigate the CI metadata view; there is no standing exception.
+
+| Default fact | Named observation |
+|---|---|
+| Published artifact | Contracts0.9.0,184292bytes,SHA256`811a42aca121a3d8a3b335309ad037315d9d898061a2c556c2e0d6b74b5be54f` |
+| Source/dependencies | Nuspec commit`d4d013e577e4e57f3eaf3310527094b5d2dfa851`, correct repo URL, no dependencies; README/license/net10 DLL present |
+| Normal route | Actual restored `.nupkg.metadata` source`https://nuget.pkg.github.com/katasec/index.json`; unchanged repo nuget.config/normal PowerShell credentials |
+| Safe starting state | Dedicated scratch consumer and NEW cache`/private/tmp/phase76-content-contracts-default/published-packages-20261010T0527`; no existing project/account/data mutation |
+| Absent replacements | One PackageReferenceContracts0.9.0; no local feed/sibling/project/DLL reference/custom JSON context/native target override; reflection serialization disabled |
+| Actual action | Normal restore, Release managed build with warnaserror, actual consumer run using all five generated types, exact enum/long/byte/map/query fields/limits/malformedJSON and retained shapes/registries |
+| Result |05:30:17UTC all actions PASS;0warnings/0errors; consumer assembly9728bytesSHA256`57e39498f478d198a81c6e2f580693096878dfa8de324134f8111b7a3221cc2e` |
+| Limits | Pure-library producer acceptance; no hosted route/storage behavior claimed. Native AOT remains final-phase-only under operator instruction. |
+
+Root inspected actual restore/build/run/provenance output. Raw files under
+`/private/tmp/phase76-content-contracts-default`: published-restore.log,published-build.log,
+published-run.log,published-observation.json; consumer ProgramSHA256
+`316ab45e66098cac0494bc70f588a998be4705bc3d06e29d4ac903ce8874416a`.
+
 ## Stage boundaries
 
 All2026-10-10UTC. Agent activity times above are distinct from result-available boundaries.
@@ -244,7 +293,8 @@ All2026-10-10UTC. Agent activity times above are distinct from result-available 
 | review-code:ownership |05:23:10 |05:24:46 |1m36s | Own observed05:23:48–05:24:14; full15behavior/technical PASS |
 | Supervisor ready-to-merge |05:24:58 |05:24:58 |0s | Scope/diff/rawCI/tree evidence accepted; baseline nesting finding disposition above |
 | Product merge |05:24:58 |05:25:03 |5s | PR20 reviewed head merged as d4d013e577e4e57f3eaf3310527094b5d2dfa851 |
-| Normal publication/default acceptance |05:25:23 | In progress | Pending | Existing workflow38027450839; later acceptance separate from product span |
+| Normal publication/default acceptance |05:25:23 |05:35:53 |10m30s | Normal push/private source/fresh managed consumer PASS; workflow metadata-report failure and exact independent supplement above |
+| Closure documentation validation | Unavailable; updates interleaved with acceptance |05:37:00 | Unavailable |17docs/122local links+anchors/2JSON/fences/globalhub/diff PASS; docs-only product gates N/A |
 
 Product end-to-end scope04:54:53→last product merge05:25:03 =30m10s.
 Product PR20 open05:14:43→merge05:25:03 =10m20s. Acceptance/docs closure are later, not part
