@@ -2,7 +2,7 @@
 
 **Status:** Diagnostic correction r10 is committed/pushed at `0d0a338f`; production source remains
 unchanged from `8f0fa851`. Script parser,30existing and23controlled diagnostic checks pass.
-Fresh full code reviews r6 and instrumented canonical/four-host CI are in progress. Prior Linux
+Fresh full code reviews r6 pass; instrumented canonical/four-host CI is in progress. Prior Linux
 and Windows native checks pass; both prior macOS checks fail with pressure-child SIGSEGV139.
 Cause remains unobserved. No merge/publication approved.
 [Current evidence](phase-76.4-core-cloud-primitives_completed.md#diagnostic-correction--implementation-r10).
@@ -200,5 +200,5 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r10](phase-76.4-core-cloud-primitives-plan.md) approved02:19:30 UTC; same42-file scope, diagnostic change only in build script/README |
 | Independent plan reviews | Fresh full r10 simplicity11/ownership42behaviors+technical gates PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-10-plan-reviews--crash-evidence) |
 | Plan approval / implementation | Diagnostic correction pushed `0d0a338f` in [PR77](https://github.com/katasec/forge-mcl/pull/77); parser/30scripts/23controlled checks PASS. Production tree unchanged; no production correction authorized. |
-| Code review / native CI | Fresh full r6 reviews in progress, simplicity/style first. Current canonical38016928681/four-host38016928684 pending. Prior macOS SIGSEGV remains unresolved; publication/default gates open. |
+| Code review / native CI | Fresh full r6 simplicity/style and ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r6--scoped-crash-evidence). Current canonical38016928681/four-host38016928684 pending. Prior macOS SIGSEGV remains unresolved; publication/default gates open. |
 | Published/default acceptance | Required; not performed |

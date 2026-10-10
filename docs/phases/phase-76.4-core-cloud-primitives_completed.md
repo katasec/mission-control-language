@@ -2,7 +2,7 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Complete r9 plan and its approved corrections are implemented; current handback is below.
+Complete r10 plan and its approved corrections are implemented; current handback is below.
 Both fresh full current code reviews pass; native verification/publication/default acceptance remain open.
 
 ## Retained local overrides — investigation r10
@@ -43,8 +43,121 @@ API, dependency, fixture, payload, deadline or source change. Version inventory0
 
 Current [canonical38016928681](https://github.com/katasec/forge-mcl/actions/runs/38016928681)
 and [four-host38016928684](https://github.com/katasec/forge-mcl/actions/runs/38016928684) running;
-fresh full sequential code reviews r6 required, simplicity/style assigned02:27:13 UTC.
+fresh full sequential code reviews r6 PASS; verdicts below.
 No current native PASS, causal diagnosis, merge/publication or default acceptance claimed.
+
+Supervisor fetched actual current PR merge `9cca9cca2ae2a18eb300e033889e3699641978bb`, parents
+`8d28dc1`/`0d0a338f`; empty tree diff against reviewed HEAD. Current canonical job114109157175;
+matrix Windows114109157543/macOS114109157651/LinuxARM114109157682/Linuxx64114109157756.
+
+## Full code review r6 — scoped crash evidence
+
+Simplicity/style assignment02:27:13 UTC; observed **02:27:56–02:30:55 UTC**. Full42current paths,
+binary diff/source identity independently matched, no previous PASS inherited. Source PASS,
+no correction. Ownership assigned02:31:30 UTC after simplicity finished; observed
+**02:32:05–02:33:27 UTC**, source/ownership PASS with no correction. Both reviewed the full
+current42-path artifact independently. Neither verdict closes native or default acceptance.
+
+| Simplicity check | Current verdict / evidence |
+|---|---|
+| New apps/libraries | PASS: maintained native verification probe, no dependency/host |
+| Reuse | PASS: shared input policy/parser, existing build owner |
+| Multiple paths | PASS: one interpreter/adapter, required OS lifetime implementations |
+| Legacy paths | PASS: actual published Client ctor retained, old checkpoints refused |
+| Knobs | PASS: fixed cleanup/report limits, no setting |
+| Speculative abstractions | PASS: private native owner/live caller authority |
+| Library choice | PASS: existing ONNX/BCL/built-in PowerShell |
+| Copy-paste | PASS: shared exchange/fingerprint/admission; distinct selector/collector |
+| Redundant definitions | PASS: existing StepKey/output convention |
+| Size/requirement | PASS: exact approved42paths,2diagnostic edits |
+| Test volume | PASS: real admission/replay/ABI/lifecycle/cancellation obligations |
+
+| Code-style check | Current verdict / evidence |
+|---|---|
+| Progressive disclosure | PASS: public flow before mappings/exchange/native detail |
+| Small functions | PASS: cohesive stages;46line collector narrow recorded exception |
+| Top-down | PASS: build/adapter callers before helpers |
+| Explicit errors | PASS: termination→pipejoins→reap, cleanup precedence; diagnostic failure cannot replace probe error |
+| Shallow nesting | PASS: early guards, recorded per-report catch exception |
+| Separate side effects | PASS: named launch/observation/collection/selection boundaries |
+| Zero warnings | Managed Debug/Release PASS; current canonical/four-host native OPEN |
+| Extract for reason | PASS: real ownership/parsing/failure duties, no metric-only third helper |
+| Complexity | PASS: manual classic collector12/selector5/exchange8/POSIXjoin7/parserAddRow9/pipecancel10/childdispatcher12/retainedwalker13 |
+
+Actual191focused/1063full+6existing live skips/407Release-package/consumer evidence read for
+unchanged product tree; current parser/30script/23controlled logs read. Current native runs
+confirmed in progress, not accepted. Both prior macOS failures remain unresolved; publication
+and installed-default acceptance stay open.
+
+Ownership derived owners before implementation inspection from the Desktop atlas and Core,
+build and Runner READMEs. Complete current behavior verdicts:
+
+| Behavior | Derived owner / actual placement | Verdict |
+|---|---|---|
+| Distribution-only metadata | Core manifest / ForgeTomlReader | PASS |
+| One parser and retained local configuration | Core manifest / ForgeTomlReader | PASS |
+| Explicit package assets | Core contracts / DurableMissionPackageInput | PASS |
+| Published six-argument CLR constructor | Core contracts / retained overload | PASS |
+| Generated JSON constructor selection | Core contracts / JsonConstructor | PASS |
+| First-root and parameterless package construction | Core validator / TryCreate | PASS |
+| Immutable validation without filesystem/config reads | Core validator / TryValidate | PASS |
+| Immutable diagnostic source without disk fallback | Core expert loader / Validate | PASS |
+| Declared root parameter string typing | Core expert loader / availability map | PASS |
+| Reachable admitted input names | Core shared input policy | PASS |
+| Exact reserved names with token_count retained | Core shared input policy | PASS |
+| Required root versus optional expert inputs | Core validator | PASS |
+| Actual reachable provider profiles | Core semantic validation | PASS |
+| Environment and reserved-binding refusal | Core admission semantics | PASS |
+| Existing generic expert kinds | Core admission semantics | PASS |
+| Asset hashes/collisions/reserved directories | Core package validator | PASS |
+| ONNX model-to-asset resolution | Core package validator | PASS |
+| Extended hash with no-assets compatibility | Core package validator | PASS |
+| Actual generated JSON size | Core package validator | PASS |
+| Semantic fingerprint without scratch paths | Core interpreter / PipelineDefinitionFingerprint | PASS |
+| Current checkpoint shape and old-format refusal | Core checkpoint codec | PASS |
+| Admitted inputs and completed-effect replay | Core interpreter | PASS |
+| Caller-owned live artifact registry | Caller/Runner registers; Core workspace consumes | PASS |
+| Deterministic output-directory paths | Core workspace primitive | PASS |
+| Nested runtime workspace inheritance | Core interpreter | PASS |
+| Exact lifecycle/stream/tool StepKey | Core interpreter / trace contract | PASS |
+| Process-local registered-path mapping | Core exec adapter | PASS |
+| Runtime directories and current artifact aliases | Core exec adapter | PASS |
+| Expert cwd and literal arguments | Core exec adapter / argument helper | PASS |
+| Concurrent bounded three-stream I/O | Core exec adapter | PASS |
+| Concrete declined-stdin errors | Core exec adapter | PASS |
+| Output/status/reason and explicit JSON failures | Core exec adapter | PASS |
+| Bare Linux PID1 refusal before allocation | Core exec start boundary | PASS |
+| Atomic POSIX group and retained root | Core private exec lifetime | PASS |
+| macOS retained-root-only group observation | Core private POSIX lifetime | PASS |
+| Atomic Windows job/handle association | Core private exec lifetime | PASS |
+| Terminate, join I/O, exactly reap/dispose | Core exec lifetime | PASS |
+| Cleanup IOException precedence/context | Core exec failure boundary | PASS |
+| Adopted container orphan reaping | Existing Runner init; no Core global reaper | PASS |
+| Numeric ONNX and joined native cancellation | Core ONNX adapter | PASS |
+| Unfinished native work and actual sibling launch | Core adapter tests | PASS |
+| Native pipe cancellation and duplex pressure | Core native probe | PASS |
+| Actual image topology and separate PID1 refusal | Build verification / native probe | PASS |
+| Failed macOS invocation diagnostic collection | Existing build verification owner | PASS |
+| Exact identities/current launch report selection | Build diagnostic selector | PASS |
+| Bounded polling/no cwd fallback/copy once | Build diagnostic collector | PASS |
+| Collection errors preserve original probe error | Build invocation/collector boundary | PASS |
+| Immutable publication/source verification | Existing package/release owners | PASS |
+| Actual published Client ABI verification | Existing ForgeProjectTests | PASS |
+
+| Technical gate | Current observation/verdict |
+|---|---|
+| Security/data/credentials | PASS: no endpoint/store/identity/credential authority added; inherited process authority is explicit; only validated probe reports collected |
+| API/ABI/generated JSON | PASS: retained ctor/generated ctor and actual published Client/package round trips |
+| Failure containment | PASS: checked terminate→joined I/O→exact reap; collection failure cannot replace probe failure |
+| Diagnostic verification | PASS: actual parser/30script/23controlled observations, including write failure/empty roots/original error |
+| Production verification | Supporting191focused/1063full+6existing live skips/407Release-package/consumer evidence inspected against identical production tree |
+| Current Native AOT | OPEN: instrumented canonical/four-host pending; recurring macOS SIGSEGV cause unobserved |
+| Normal publication/fresh restore | OPEN; branch package cannot close it |
+| Installed defaults | OPEN: normal Project Chat and Hands still required |
+| UI | N/A: no visual/layout change |
+
+Named-repository searches found no competing validator, adapter, native lifetime or report collector.
+Consumer calls are reuse. No owner gains a second job. Reviewer recommendation: move nothing.
 
 ## Complete round 10 plan reviews — crash evidence
 
