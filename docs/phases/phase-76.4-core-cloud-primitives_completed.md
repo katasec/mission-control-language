@@ -159,6 +159,13 @@ build and Runner READMEs. Complete current behavior verdicts:
 Named-repository searches found no competing validator, adapter, native lifetime or report collector.
 Consumer calls are reuse. No owner gains a second job. Reviewer recommendation: move nothing.
 
+Supervisor independently rechecked final source/tree/diff identity and the actual collector,
+selector, invocation boundary and controlled raw logs after both reviews. Clean source is pushed
+0/0; exact full binary diff hash matches both reviewers. Both current source reviews accepted;
+no finding requires a correction. This is source acceptance only: native recurrence remains
+unexplained, so merge/publication/default readiness is explicitly withheld. Full text whitespace
+check excludes only the already recorded ONNX binary heuristic; fixture identities remain checked.
+
 ## Complete round 10 plan reviews — crash evidence
 
 Same implementer read-only plan observed02:09:58–02:11:28 UTC; full42-path producer scope
