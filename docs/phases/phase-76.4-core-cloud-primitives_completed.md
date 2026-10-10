@@ -2906,4 +2906,136 @@ later fresh normal remote published-package acceptance. Global cache remains unt
 |---|---|---|---|
 | Implement:r12, root assignment/result available |2026-10-10 04:00:17 |2026-10-10 04:12:32 | Same implementer, final source/evidence available before next assignment |
 | Implement:r12, agent observed |2026-10-10 04:00:45 |2026-10-10 04:11:26 | Frozen handback and own clock |
-| Full code review:r8 simplicity/style assignment |2026-10-10 04:12:32 | Pending | Complete current43-path artifact; two full checklist tables required |
+| Full code review:r8 simplicity/style assignment/result available |2026-10-10 04:12:32 |2026-10-10 04:15:42 | Complete current43-path artifact; both full checklist tables below |
+
+## Full code review r8 — caught-default current source
+
+Simplicity/style independently read all43 paths at7952012 and reproduced full binary diff
+SHA256`59ed6711abbd7d4e50e7a39a6be49c56e85dbc5077204df2ed1e9af34440f05c`.
+Source PASS; native/publication/default evidence remains open. No inherited current verdict.
+
+| Simplicity check | Verdict / current evidence |
+|---|---|
+| New apps/libraries | PASS: no runtime dependency; existing probe/SDKclang, ExecProbeChild48 |
+| Reuse | PASS: shared input policy/parser/validator/interpreter, DurableMissionInputPolicy9 |
+| Multiple paths | PASS: one generic adapter/current macOS spawn configuration, Posix117 |
+| Legacy | PASS: no old checkpoint reader; actual Client0.9.3 six-arg constructor, ToolPause101/Validator215 |
+| Knobs | PASS: fixed limits/caught-only defaults, no policy setting/retry, Posix133 |
+| Abstractions | PASS: private atomic launch/lifetime/cleanup boundary, ExecProcess6 |
+| Library choice | PASS: existing ONNX/BCL cancellation/private Darwin ABI, Onnx18/PosixNative15 |
+| Copy-paste | PASS: independent test ABI observation; reused production helpers, Child209 |
+| Redundancy | PASS: one live registry/output convention, Workspace10 |
+| Size | PASS:43approved producer paths, five-file correction; no consumer/image changes, CoreREADME56 |
+| Tests | PASS: ABI/admission/replay/parallel native cancellation/process semantics; meaningful C witness/restoration, Program38 |
+
+Remove/merge nothing.
+
+| Code-style check | Verdict / current evidence |
+|---|---|
+| Outline first | PASS: probe flow/adapter entrypoints precede details, Program10 |
+| Small functions | PASS: correction functions coherent/under40; existing46-line collector narrow exception remains, Child48/active spoke |
+| Top-down | PASS: callers before native configuration/cleanup, Posix117 |
+| Errors | PASS: query errno/direct attribute errors distinct; compiler/independent restoration preserve originals, Posix139/Child101 |
+| Nesting | PASS: shallow new branches; unchanged scoped collector exception, Posix133 |
+| Side effects | PASS: pure admission/path separate from native/file/compiler effects, Workspace22 |
+| Zero warnings | OPEN: actual current managed builds zero; canonical/all-host Native AOT logs still required. No source defect established. |
+| Extraction | PASS: real native configuration/compiler lifetime/restoration boundaries, Child112 |
+| Complexity | PASS: manual predicate-level McCabe below; no analyzer claim |
+
+Manual measure starts1 and counts control-flow conditions, loops, catches, conditional expressions
+and non-default switch arms; compound predicates count as one condition. Values:
+ConfigureMacSignalDefaults5, VerifyMacSignalDefaults8, BuildSignalWitness7, JoinSignalCompiler7,
+Exchange8, POSIXJoin7, parserAddRow9, childdispatcher12, collector12, retainedtypedkeywalk13.
+Reviewer independently read raw191focused,1063full/6existing skips,407Release/package,30scripts,
+managed probe and isolated consumer evidence. No source change requested.
+
+| Stage boundary | StartUTC | EndUTC | Evidence |
+|---|---|---|---|
+| Full simplicity/style:r8, root assignment/result available |2026-10-10 04:12:32 |2026-10-10 04:15:42 | Complete current43-path/two-table verdict |
+| Full simplicity/style:r8, agent observed |2026-10-10 04:13:02 |2026-10-10 04:15:21 | Same independent reviewer |
+| Full ownership:r8, root assignment/result available |2026-10-10 04:15:42 |2026-10-10 04:19:46 | Same independent reviewer, full current artifact |
+
+### Ownership r8 — full current behavior review
+
+Source/ownership PASS; no concrete correction required. Independently matched clean7952012/base8d28,
+43paths/+2924/−457 and full diff SHA59ed6711…. Owners derived before plan/diff from atlas, Core,
+build and Runner/init READMEs. Every row below PASS; actual files are under forge-mcl unless named.
+
+| Behavior | Derived/actual owner and current evidence | Verdict |
+|---|---|---|
+| Distribution before environment evaluation | Core manifest, ForgeTomlReader17/shared parser | PASS |
+| Full local TOML/diagnostics | Same reader44 | PASS |
+| Explicit assets | Core manifest/package, ForgeManifest5/Validator209 | PASS |
+| Pure construct/validate | Core validator19 | PASS |
+| Immutable diagnostic source/no disk fallback | Core ExpertLoader273 | PASS |
+| Declared parameters as strings | Core ExpertLoader221 | PASS |
+| First/parameterless root | Core validator26 | PASS |
+| Existing kinds/no authored env/reserved bindings | Core validator142 | PASS |
+| Reachable admitted inputs/exact reserved policy | Core InputPolicy9 | PASS |
+| Required roots/unknown/duplicate/reserved inputs | Core validator69 | PASS |
+| Actual distinct provider profiles/deployment availability separate | Core validator58 | PASS |
+| Assets/content identity/old no-assets hash | Core validator84 | PASS |
+| Actual generated UTF8JSON/base64 budget | Core validator47 | PASS |
+| Portable collisions/runtime paths/model resolution | Core validator164 | PASS |
+| Published Client six-arg CLR member | Core public contract, Validator215 | PASS |
+| Generated JSON semantic constructor | Same contract, Validator210 | PASS |
+| Complete semantic fingerprint/no scratch identity | Core fingerprint12/62 | PASS |
+| Relative inputs/effects once on resume | Core interpreter55/75 | PASS |
+| Old/malformed checkpoint rejection before invocation | Core ToolPause102 | PASS |
+| Live caller registry/no Core registration/freeze | Core workspace10/caller registration | PASS |
+| Pure output allocation | Core workspace22 | PASS |
+| Child workspace inheritance | Core interpreter633 | PASS |
+| Exact lifecycle StepKey | Core trace21/interpreter495 | PASS |
+| Verified paths only in process copies | Core exec71 | PASS |
+| Runtime directory/aliases/other identity inherited | Core exec110 | PASS |
+| Literal argv/lookup/expertcwd | Core Arguments8/exec96 | PASS |
+| Bare LinuxPID1 preallocation refusal | Core lifetime28 | PASS |
+| Atomic POSIX group/held root | Core POSIX15 | PASS |
+| macOS held-root-only completion | Core POSIX88 | PASS |
+| Actual caught macOS defaults/ignored-mask-parent preserved | Core existing POSIX133 | PASS |
+| Exact Darwin ABI/range/error conventions | Core private PosixNative8/40 | PASS |
+| Windows preexecution job | Core Windows14 | PASS |
+| Bounded concurrent I/O | Core exec127 | PASS |
+| Precise declined-input/other failures | Core exec184 | PASS |
+| Terminate/streamjoin/reap/dispose/cleanup IOException | Core exec143/164 | PASS |
+| JSON/output/status/reason/judge semantics | Core exec210 | PASS |
+| Numeric ONNX/joined cancellation/disposal | Core ONNX11 | PASS |
+| Before-runtime public-adapter observation | Probe Program38/Child129 | PASS |
+| Bounded joined compiler/independent parent restores | Probe Child48/101 | PASS |
+| BCL blocked-pipe cancellation/decisive pressure | Probe Program77/Child164 | PASS |
+| Early-parent descendants/unrelated child ownership | Probe Program240 | PASS |
+| Adopted orphan reaping | Runner image init only; probe317 observes disappearance | PASS |
+| Exact image topology/separate barePID1 negative | Existing build113 | PASS |
+| Actual Client/parallel native sibling proofs | Existing Core regressions ForgeProject18/OnnxTests36 | PASS |
+| Scoped report selection/original failure | Existing build53/99 | PASS |
+| Failed matrix transport outside shipped selection | Existing release86/forge-* publisher | PASS |
+| Immutable source/dependency/private package verification | Existing Core publisher22/verify-script16 | PASS |
+
+| Technical gate | Current verdict |
+|---|---|
+| Public/ABI/JSON | PASS: six-arg member, actual Client0.9.3 Create/Open/Reconnect and generated round trips |
+| Security/data/credentials | PASS: no new service/store/role/credential/authority; no isolation claim |
+| Engineering/failure | PASS: fixed private boundaries/joined work/cleanup precedence; scoped collector exception |
+| Managed | PASS: independently read1063/6existing skips,191focused,407package,30scripts/zero-warning builds |
+| Branch consumer | PASS controlled: exact8e74351… built/restored package/public exec/trace/numeric/cancel/ABI |
+| Current canonical/four-host native | OPEN: no historical substitution |
+| Normal main publication/fresh remote | OPEN: local feed cannot close |
+| Installed Project/Chat/Hands/tool-free/cancel | OPEN |
+| Unified cloud/image/content | Separate downstream obligations |
+| UI/browser | N/A |
+
+No owner gains unrelated duties. Named-repository searches found one validator/adapter/platform
+implementation; Host/Runner/Client call Core. Test ABI/witness observes behavior without a new
+production path. Init remains exclusive adopted-orphan owner. Move nothing.
+Agent observed04:16:11–04:18:54UTC; root result available04:19:46UTC.
+
+### Supervisor source acceptance r8
+
+**SOURCE ACCEPTED2026-10-10 04:19:46UTC; NOT MERGE APPROVAL.** Both full current reviews pass
+source; only actual native warning/behavior, normal publication and default gates remain open.
+Root read full five-file correction and actual current logs/nuspec/consumer, retained full-baseline
+reviewed behavior, and independently reproduced complete diff/tree/source/inventory/clean0/0
+in `supervisor-source-check.json` beside the implementation evidence. Only approved five paths
+differ fromc4176ba5. Public/ABI/persistence/admission/authority/default boundaries stay exact.
+No source finding is dismissed or waived. Current-source canonical/all-four-native must pass
+with zero warnings before product merge; pending work is not marked complete.

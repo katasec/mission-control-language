@@ -3,8 +3,9 @@
 **Status:** The five-file macOS correction is committed at `79520120` after approved r12 design
 and plan reviews. Normal PowerShell full Debug passes1063/6 existing skips/0 failures; Release
 package407/0/0 and managed public-adapter signal/pressure/lifecycle probes pass. Fresh-cache branch
-consumer passes; the commit is pushed. Fresh complete code reviews, current-source
-canonical/four-host native checks, merge/publication and default acceptance remain open.
+consumer passes; the commit is pushed. Fresh complete simplicity/style and ownership source
+reviews PASS; supervisor accepted source04:19:46UTC. Current-source canonical/four-host native
+checks, merge/publication and default acceptance remain open.
 Prior `c4176ba5` source reviews and Linux/Windows native PASS are historical; both macOS jobs
 failed pressure-child SIGSEGV139. Retained reports and UUID-matched executable/dSYM support
 the inherited-disposition cause. No merge/publication approved.
@@ -202,8 +203,8 @@ be marked complete by this package probe.
 | Design | Parent round7 locked21:40:31 UTC; macOS correction r12 locked03:48:45 UTC after fresh complete reviews; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-correction-design-reviews-r12) |
 | Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
 | Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
-| Plan approval / implementation | Same implementer authorized04:00:17 UTC on [PR77](https://github.com/katasec/forge-mcl/pull/77). Baselinec4176ba5 retained reports/three-host PASS; production correction implementation in progress. |
-| Code review / native CI | Fresh full r7 source reviews PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r7--failed-matrix-retention). Linux x64/ARM64 and Windows ARM64 PASS; canonical38019324267 and matrix38019324271 macOS FAIL139. Retained reports and focused disposition reproduction support the correction below; production/current-source/default gates remain open. |
+| Plan approval / implementation | Same implementer authorized04:00:17 UTC; finished and pushed7952012 on [PR77](https://github.com/katasec/forge-mcl/pull/77). Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
+| Code review / native CI | Fresh full r8 simplicity/style and ownership source PASS; supervisor source accepted04:19:46UTC. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Current canonical38023130353 and four-host38023130348 running; native/default gates remain open. |
 | Published/default acceptance | Required; not performed |
 
 ### Implemented retention correction
