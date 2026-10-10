@@ -160,6 +160,24 @@ No source correction requested. Required native/publication/default observations
 
 ## Current native verification — source 5a80c56e
 
+### Recurrent macOS crash — investigation r11
+
+Observed read-only stage **2026-10-10 02:06:54–02:09:38 UTC**. Exact previous failed executable
+passed40direct pressure runs and4complete public probes locally. Exact current failed executable
+passed direct pressure and a complete public probe locally. JSON contains1,000,000output
+characters and exactly64KiB stderr; failures were not retried into acceptance. Local macOS27
+success does not close the failed macOS14 gate. Existing local DiagnosticReports contain earlier
+managed SIGABRTs, no matching native SIGSEGV. No product edit or causal conclusion.
+
+Supervisor independently read the current canonical raw artifact log: signal11/exit139, distinct
+from termination signal9/exit137. The current artifacts preserve executable and symbols but lack
+the child crashreport/faulting stack. The same implementer is preparing a diagnostic-only plan
+for the existing native build boundary to collect new probe crashreports into the already-uploaded
+destination, preserving the failing result. No retry, payload/deadline change, new workflow or
+production workaround. Existing locked design applies; diagnostic evidence adds no runtime,
+identity/data boundary or UI behavior. Plan approval remains open until fresh sequential reviews.
+Raw reproduction and evidence: `/private/tmp/phase76-native-crash-20261010T020654Z/EVIDENCE.md`.
+
 Four-host run38013941972 actually checks out `f8696c714ae83e9fb2506884ec3d8d0f2cdcbb33`,
 the synthetic merge whose tree matches reviewed `5a80c56e`. Both completed Linux jobs print
 native CLI identity `0.10.1-dev.6+f8696c714ae83e9fb2506884ec3d8d0f2cdcbb33`.
