@@ -204,7 +204,7 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
 | Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
 | Plan approval / implementation | Same implementer authorized04:00:17 UTC; finished and pushed7952012 on [PR77](https://github.com/katasec/forge-mcl/pull/77). Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
-| Code review / native CI | Fresh full r8 simplicity/style and ownership source PASS; supervisor source accepted04:19:46UTC. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Current canonical38023130353 and four-host38023130348 running; native/default gates remain open. |
+| Code review / native CI | Fresh full r8 simplicity/style and ownership source PASS; supervisor source accepted04:19:46UTC. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Current Linux x64/ARM64 native PASS, including exact published init image; Windows and both macOS jobs pending; native/default gates remain open. |
 | Published/default acceptance | Required; not performed |
 
 ### Implemented retention correction
