@@ -2,8 +2,40 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Complete r9 correction plan approved after fresh full independent reviews; current implementation
-handback is below. Code review/native verification/publication/default acceptance remain open.
+Complete r9 plan and its approved cleanup correction are implemented; current handback is below.
+Code review/native verification/publication/default acceptance remain open.
+
+## Approved pipe correction — implementation r8
+
+Same implementer stage **2026-10-10 01:03:13–01:08:43 UTC** (5m30s). Frozen and pushed source
+`8f0fa851b439d45af4cdd68bb4aed06f257096e8`, clean branch, existing
+[PR77](https://github.com/katasec/forge-mcl/pull/77). Three existing approved paths changed:
+`ExecExpertRunner.cs` joins final pipe work before exact native join/reap;
+`tests/ForgeMission.Exec.Probe/Program.cs` proves blocked read/filled write cancellation with
+opposite endpoints open and joins the underlying operation on failure; `scripts/README.md`
+documents that proof. No new product boundary, dependency, option, API or file.
+
+Complete current 42-file diff against `8d28dc1` has 2618 insertions / 457 deletions, SHA256
+`C7842F9664EBB8FB7FCA51E5E08D53EEF4CBAE051CFCB74360A93BBA5D4078BC`.
+Full per-file inventory, commands and raw observations:
+`/private/tmp/phase76-core-pipes-20261010T010313Z/EVIDENCE.md`.
+
+| Gate | Current observation |
+|---|---|
+| Debug solution / Core Release builds | Zero warnings and errors |
+| Focused eight families | 191 passed, no failures/skips; actual published Client 0.9.3 ABI exercised |
+| Full unfiltered Debug | 1063 passed, no failures, six existing live skips; 2m20s; all tests finished |
+| Release package / script checks | 407 passed / 30 checks passed; normal package metadata and dependencies verified |
+| Managed public probe | Open-peer blocked read cancelled in 4ms and filled write in 0ms; retained pressure/workspace/argv/timeout/cancellation/lifecycle checks pass |
+| Final-source branch package | Exact source `8f0fa851`; built/restored SHA256 `D549E8EF2C1A68AD4204A5E9D51A0B65889DFF53402DD4335566DFB36A077BB1` match |
+| Fresh isolated branch consumer | Generated JSON, asset metadata/hash/admission, packaged exec/runtime/output bytes, exact StepKey, numeric ONNX, actual joined native cancellation/no score, six-argument constructor and no-assets old hash pass |
+| Current-source native gates | Canonical [38011993998](https://github.com/katasec/forge-mcl/actions/runs/38011993998), four-host [38011993926](https://github.com/katasec/forge-mcl/actions/runs/38011993926) running; no PASS inferred |
+
+Supervisor independently read the complete three-path correction, raw full-test/probe/consumer/
+pack logs and unchanged 42-file inventory. This is controlled branch-package evidence;
+published package and installed defaults remain mandatory. Full current simplicity/style r4
+assigned **01:09:43 UTC**; ownership follows sequentially. Earlier native runs were cancelled as
+superseded source, not accepted. No merge or publication yet.
 
 ## Approved init correction — implementation r7
 
@@ -99,45 +131,45 @@ scripts READMEs before comparison. No competing implementation found across name
 
 | Behavior | Derived owner / actual placement | Verdict |
 |---|---|---|
-| Explicit package assets | CoreManifest / ForgeManifest | PASS |
-| Distribution metadata before environment evaluation | CoreTOML / ForgeTomlReader | PASS |
-| Full local parsing | Same CoreTOML parser | PASS |
-| Immutable diagnostic sources | CoreExpertLoader | PASS |
-| Declared string parameters | CoreExpertLoader | PASS |
-| Pure package construction/validation | Corepackage validator | PASS |
-| Reachable admitted inputs | Coreinput policy | PASS |
-| Exact reserved names/token_count | Coreinput policy | PASS |
-| Provider profile collection, not availability | Corevalidator; Runner owns availability | PASS |
-| Asset path/collision/digest/model checks | Corevalidator | PASS |
-| Empty-assets hash/new-assets identity | Corevalidator | PASS |
-| Actual generated JSON size | Corevalidator | PASS |
-| Published six-argument ABI | Corecontract producer | PASS |
-| Explicit generated JSON constructor | Corecontract producer | PASS |
+| Explicit package assets | Core manifest / ForgeManifest | PASS |
+| Distribution metadata before environment evaluation | Core TOML / ForgeTomlReader | PASS |
+| Full local parsing | Same Core TOML parser | PASS |
+| Immutable diagnostic sources | Core ExpertLoader | PASS |
+| Declared string parameters | Core ExpertLoader | PASS |
+| Pure package construction/validation | Core package validator | PASS |
+| Reachable admitted inputs | Core input policy | PASS |
+| Exact reserved names/token_count | Core input policy | PASS |
+| Provider profile collection, not availability | Core validator; Runner owns availability | PASS |
+| Asset path/collision/digest/model checks | Core validator | PASS |
+| Empty-assets hash/new-assets identity | Core validator | PASS |
+| Actual generated JSON size | Core validator | PASS |
+| Published six-argument ABI | Core contract producer | PASS |
+| Explicit generated JSON constructor | Core contract producer | PASS |
 | Actual Client Create/Open/Reconnect proof | Existing integration tests | PASS |
-| Complete execution fingerprint | Corereplay owner | PASS |
-| Malformed/current-incompatible checkpoint refusal | Corecheckpoint codec | PASS |
-| Relative inputs/completed effects across resume | CorePipelineRunner | PASS |
-| Exact lifecycleStepKey | Coretrace/PipelineRunner | PASS |
-| Runtime workspace inheritance | CorePipelineRunner | PASS |
-| Caller-owned live registry | Coreworkspace retains view; caller registers | PASS |
-| Deterministic allocation path | Coreworkspace | PASS |
-| Process-local verified aliases | Coreexec adapter | PASS |
-| cwd/literal args/runtime environment | Coreexec adapter/argument owner | PASS |
-| Preallocation bare LinuxPID1 refusal | Coreexec launch | PASS |
-| Adopted orphan reaping | Runnerinit; removed fromCore | PASS |
-| Atomic POSIX group ownership | Coreprivate exec lifetime | PASS |
-| Root retention through stream joins | Coreprivate exec lifetime; current ExchangeAsync violates order | FAIL |
-| macOS held-root-only completion | Coreprivate POSIX lifetime | PASS |
-| Preexecution Windowsjob ownership | Coreprivate Windows lifetime | PASS |
-| Bounded concurrent stdin/stdout/stderr | Coreexec adapter | PASS |
-| Precise declined-stdin classification | Coreexec write boundary | PASS |
-| CleanupIOException over cancellation | Coreexec failure boundary | PASS |
-| Numeric ONNX/joined cancellation | Existing CoreONNX adapter | PASS |
-| Actual parallel sibling progress | Corepipeline/adapter tests | PASS |
+| Complete execution fingerprint | Core replay owner | PASS |
+| Malformed/current-incompatible checkpoint refusal | Core checkpoint codec | PASS |
+| Relative inputs/completed effects across resume | Core PipelineRunner | PASS |
+| Exact lifecycle StepKey | Core trace/PipelineRunner | PASS |
+| Runtime workspace inheritance | Core PipelineRunner | PASS |
+| Caller-owned live registry | Core workspace retains view; caller registers | PASS |
+| Deterministic allocation path | Core workspace | PASS |
+| Process-local verified aliases | Core exec adapter | PASS |
+| cwd/literal args/runtime environment | Core exec adapter/argument owner | PASS |
+| Preallocation bare LinuxPID1 refusal | Core exec launch | PASS |
+| Adopted orphan reaping | Runner init; removed fromCore | PASS |
+| Atomic POSIX group ownership | Core private exec lifetime | PASS |
+| Root retention through stream joins | Core private exec lifetime; current ExchangeAsync violates order | FAIL |
+| macOS held-root-only completion | Core private POSIX lifetime | PASS |
+| Preexecution Windows job ownership | Core private Windows lifetime | PASS |
+| Bounded concurrent stdin/stdout/stderr | Core exec adapter | PASS |
+| Precise declined-stdin classification | Core exec write boundary | PASS |
+| CleanupIOException over cancellation | Core exec failure boundary | PASS |
+| Numeric ONNX/joined cancellation | Existing Core ONNX adapter | PASS |
+| Actual parallel sibling progress | Core pipeline/adapter tests | PASS |
 | Output-before-input pressure | Existing native verification owner | PASS |
 | Public workspace/environment/native assertions | Existing native verification owner | PASS |
-| Immutable normal Runnerentrypoint/negativePID1 proof | Build/probe owner; Runnerhosts | PlacementPASS; execution pending |
-| Immutable Corepublication/content checks | Existing publication owner | PlacementPASS; publication pending |
+| Immutable normal Runner entrypoint/negativePID1 proof | Build/probe owner; Runner hosts | PlacementPASS; execution pending |
+| Immutable Core publication/content checks | Existing publication owner | PlacementPASS; publication pending |
 | Installed Project/Chat/Hands defaults | Supervisor through existing CLI/Client | Correct owner; acceptance pending |
 
 | Ownership technical gate | Current verdict |

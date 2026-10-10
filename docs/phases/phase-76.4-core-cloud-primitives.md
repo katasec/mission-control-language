@@ -1,9 +1,8 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Full current code reviews found a final-reap-before-stream-join defect at1d962702.
-Supervisor approved the combined in-plan correction2026-10-10 01:03:13 UTC; same implementer r8
-is correcting order and adding actual blocked-pipe cancellation evidence. Prior managed/package
-checks and branch consumer pass; revised-source verification/reviews remain required.
+**Status:** The approved cleanup correction is committed and pushed at `8f0fa851`.
+Current managed, package and fresh branch-consumer checks pass; full independent code reviews
+and current-source native CI are running. [Implementation evidence](phase-76.4-core-cloud-primitives_completed.md#approved-pipe-correction--implementation-r8).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
@@ -197,6 +196,6 @@ be marked complete by this package probe.
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
 | Implementer plan | [Complete r9](phase-76.4-core-cloud-primitives-plan.md) approved00:47:38 UTC; only defined42-file producer scope |
 | Independent plan reviews | Complete r9 simplicity11/ownership38+11gatesPASS; [current verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-9-plan-reviews) |
-| Plan approval / implementation | Complete r9 approved; combined in-plan r8 code correction approved01:03:13 UTC and assigned to same implementer; PR77. |
-| Code review / native CI | Full r3 reviews require stream joins before final reap and blocked-pipe cancellation proof; [verdicts/evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r3--init-correction). Superseded1d962702 native runs cancelled; revised-source full reviews/native/default gates required. |
+| Plan approval / implementation | Complete r9 and in-plan r8 correction implemented at `8f0fa851`; [PR77](https://github.com/katasec/forge-mcl/pull/77), local checks and fresh branch consumer pass. |
+| Code review / native CI | Full current simplicity/style r4 assigned 01:09:43 UTC; ownership follows sequentially. Canonical 38011993998 and four-host 38011993926 run against `8f0fa851`; all native/default gates remain open. |
 | Published/default acceptance | Required; not performed |
