@@ -145,6 +145,26 @@ Supervisor accepts both full current source reviews **2026-10-10 01:44:09 UTC**,
 checking the actual correction, byte-identical production tree, complete hash and raw evidence.
 No source correction requested. Required native/publication/default observations still govern readiness.
 
+## Current native verification — source 5a80c56e
+
+Four-host run38013941972 actually checks out `f8696c714ae83e9fb2506884ec3d8d0f2cdcbb33`,
+the synthetic merge whose tree matches reviewed `5a80c56e`. Both completed Linux jobs print
+native CLI identity `0.10.1-dev.6+f8696c714ae83e9fb2506884ec3d8d0f2cdcbb33`.
+
+| Gate | Current observation |
+|---|---|
+| Linux x64 | Job114099979796 SUCCESS,12m27s; complete public native probe PASS, read/write cancellation0ms/0ms; pressure/workspace/argv/lifecycle checks pass |
+| Linux ARM64 | Job114099979935 SUCCESS,13m5s; same complete public native probe PASS, cancellation0ms/0ms |
+| Exact published Runner image | Same immutable0.20.6 index `c0031d…670331c`, source17080b73; unchanged tini entrypoint, actual tiniPID1/dotnetPID8/probePID15 observed01:50:26 UTC |
+| Under-init lifecycle | All native assertions PASS; orphan entries disappear01:50:27 and01:50:30, separately from no-late-sentinel timeout/cancel checks |
+| Bare PID1 negative | Refused before child/root/sentinel creation01:50:32 UTC; owned test container removed |
+| Linux zero warnings | Supervisor read both completed-job logs; no compiler/linker/ILC/trim warning match |
+| Windows/macOS/canonical | Still running; no accepted result yet |
+
+Actual raw logs `/private/tmp/phase76-core-r9-linux-x64.log` and
+`/private/tmp/phase76-core-r9-linux-arm64.log`. These are fresh current-source component checks;
+normal publication and installed-default acceptance remain open.
+
 ## Approved pipe correction — implementation r8
 
 Same implementer stage **2026-10-10 01:03:13–01:08:43 UTC** (5m30s). Frozen and pushed source
