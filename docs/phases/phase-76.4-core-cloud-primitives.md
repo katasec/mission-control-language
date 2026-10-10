@@ -1,9 +1,11 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Managed/package gates pass; four-file verification correction is held uncommitted.
-Actual Linux PID1 native CI failed with retained-root ECHILD; the [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
-Full revised implementer plan r9 approved2026-10-10 00:47:38 UTC after full current sequential
-reviews; same implementer applying correction. Merge/publication/default acceptance remain open.
+**Status:** Full current code reviews found a final-reap-before-stream-join defect at1d962702.
+Supervisor approved the combined in-plan correction2026-10-10 01:03:13 UTC; same implementer r8
+is correcting order and adding actual blocked-pipe cancellation evidence. Prior managed/package
+checks and branch consumer pass; revised-source verification/reviews remain required.
+The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
+Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -195,6 +197,6 @@ be marked complete by this package probe.
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
 | Implementer plan | [Complete r9](phase-76.4-core-cloud-primitives-plan.md) approved00:47:38 UTC; only defined42-file producer scope |
 | Independent plan reviews | Complete r9 simplicity11/ownership38+11gatesPASS; [current verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-9-plan-reviews) |
-| Plan approval / implementation | Same implementer r7 applying approved guard/scan-removal/verification correction overdc03b7b; draftPR77; final-source evidence pending |
-| Code review / native CI | Full r2 reviews found two verification gaps; local r4 correction passes. Atdc03b7b canonical macOS1054PASS/10skips/AOT0warnings; four-host Linux x64 host PASS/bare PID1 FAIL, other3 native PASS. Final revised-source gates/fresh full reviews remain required. |
+| Plan approval / implementation | Complete r9 approved; combined in-plan r8 code correction approved01:03:13 UTC and assigned to same implementer; PR77. |
+| Code review / native CI | Full r3 reviews require stream joins before final reap and blocked-pipe cancellation proof; [verdicts/evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r3--init-correction). Superseded1d962702 native runs cancelled; revised-source full reviews/native/default gates required. |
 | Published/default acceptance | Required; not performed |

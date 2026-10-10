@@ -2,6 +2,15 @@
 
 **Status: PLAN APPROVED** 2026-10-10 00:47:38 UTC after fresh full simplicity11 and ownership38behaviors/11gates PASS; supervisor independently checked scope, actual APIs/ABI, native/security/default/dependency/failure gates and current held source. Supervisor transcription of the same implementer’s complete read-only return. Prior r7 artifact moved to [completion evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-round-7-full-plan). [Current design/task](phase-76.4-core-cloud-primitives.md); [verified hosting prerequisite](phase-76.5-runner-process-hosting.md).
 
+**Combined in-plan code correction approved01:03:13 UTC:** retain checked termination, join all
+outstanding pipe work, then perform final native join/exact root reap. Existing native probe must
+independently prove cancellation of a blocked read and filled blocked write on the exact BCL
+anonymous-pipe type while opposite endpoints remain open; require completion within5s before
+peer closure, and close owned peer endpoints/join pending work on verification failure. No
+abandoned task, replacement pipe framework, product factory, public option or additional file.
+This enforces the already-approved retention/cancellable-I/O contract; full
+[code review findings](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r3--init-correction).
+
 ## 1. Files
 
 Complete revised Core plan r9. Assignment start **2026-10-10 00:39:04 UTC**; observed stage end **2026-10-10 00:41:04 UTC**. Plan only: no file, branch or external state changed.

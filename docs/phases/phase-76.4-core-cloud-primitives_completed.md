@@ -2,10 +2,173 @@
 
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
-Original plan and complete r7 correction plan approved after fresh full independent reviews.
-Correction implementation/publication/default acceptance remain open.
+Complete r9 correction plan approved after fresh full independent reviews; current implementation
+handback is below. Code review/native verification/publication/default acceptance remain open.
 
-Latest bounded r7 approval delivered through [MCL PR377](https://github.com/katasec/mission-control-language/pull/377),
+## Approved init correction — implementation r7
+
+Same implementer stage2026-10-10 **00:47:38–00:56:27 UTC** (8m49s), following explicit complete-r9
+approval. Frozen/pushed source`1d962702e38650fce73a8e3c6a759c4299d7081a`, existing
+[product PR77](https://github.com/katasec/forge-mcl/pull/77), clean branch. Complete42-path diff
+against8d28dc1 has2581 insertions/457 deletions; SHA256
+`43772CC090BC11FB7EFF16F099CB061D097019A48CB97B328886C926BCC8388C` independently matched by supervisor.
+Full per-file handback and raw commands/logs:
+`/private/tmp/phase76-core-init-20261010T004738Z/EVIDENCE.md`.
+
+Current correction spans nine already-approved paths: preallocation bare-Linux-PID1 guard,
+removed adopted-child scan/reap/getpgid, decisive duplex pressure, retained public-Pipeline
+workspace/environment and real parallel ONNX cancellation proof, exact immutable published-image
+positive/negative native gates and corresponding READMEs. Supervisor corrected an overconstrained
+probe assumption before freeze: find the direct dotnet Runner child among init's children;
+do not require exactly one total child. No material deviation or additional scope.
+
+| Gate | Named observed result |
+|---|---|
+| Debug solution build | Initial/final logs0warnings/0errors |
+| Focused eight families |191passed/0failed/0skipped; actual published Client0.9.3 Create/Open/Reconnect included |
+| Unfiltered full Debug |1063passed/0failed/6existing live-integration skips,2m54s; MCL_API_KEY absent,90s diagnostic timeout; all tests finished |
+| Release/package |407passed/0failed/0skipped and normal metadata/content/dependenciesPASS; precommit metadata correctly labelleddc03, replaced by final-source package proof below |
+| Build script checks |30boundary casesPASS; PowerShell syntaxPASS |
+| Managed public Core probe | Concrete Unix declined-stdin native32; pressure, runtime/workspace/environment, literal argv/cwd/lookup, already-exited/early-root descendants, timeout/cancel and no late sentinelPASS |
+| Fixture/source hygiene | Text diff checkPASS; unchanged binary ONNX heuristic excluded only from whitespace inspection, exact fixture hashes retained; no test suppression |
+| Final-source branch package | Source1d962702; normal nuspec/license/README/Parser-Scout0.1.0PASS; built/restored SHA256`55FA01688A63F9D8DD69AE091E672B7918A773DE1E585DBBD8696B0FDD7068A2` match |
+| Fresh isolated consumer | Generated JSON/assets/executable/hash/admission, packaged exec alias/cwd/runtime/output bytes, exactStepKey, numeric pipeline, actual in-flight joined cancellation/no score and six-argument/no-assets round tripsPASS |
+| Actual retained Client DLL |0.9.3 Application DLL SHA256`CF472B56AEC324111750D6F03A7695E5E134A050BCB11C2A51076AAC9CDA23CA`; no rebuild |
+| Final native gates | Canonical[38011044851](https://github.com/katasec/forge-mcl/actions/runs/38011044851) and four-host[38011044774](https://github.com/katasec/forge-mcl/actions/runs/38011044774) started at1d962702; supervisor requested cancellation after independently confirming the code-review ordering defect below. No native PASS inferred; revised-source gates remain mandatory. |
+
+Supervisor independently read actual source/diff, raw build/full/probe/consumer logs and final nuspec.
+Branch-package/managed probes are controlled evidence; published0.1.8 and installed defaults remain
+required. Local Docker absence is not a waiver. Full current simplicity/style review assigned
+**00:56:43 UTC**; ownership follows sequentially. Product remains unmerged/unpublished.
+
+The simplicity/style reviewer identified `ExchangeAsync` final `JoinProcessAsync` before its final
+`await io`: on cancellation/I/O failure the first try can leave pipe work unfinished, so POSIX
+final reap releases the retained root before stream joins. Supervisor independently confirmed the
+source violates the approved complete-r9 retained-root-through-stream-joins requirement. Complete
+sequential reviews must finish before the same implementer receives one combined in-plan correction.
+No new scope, lifetime framework or public contract is approved. Superseded-source native runs were
+cancelled to avoid spending the final gate on code already known to require correction; this is
+not a waiver of any revised-source verification.
+
+## Full code review r3 — init correction
+
+Simplicity/style assignment boundary00:56:43 UTC; observed2026-10-10
+**00:57:12–01:00:19 UTC**, source1d962702/full42 paths. No earlier PASS inherited.
+
+| Simplicity check | Current verdict / evidence |
+|---|---|
+| New apps/libraries | PASS: verification probe only; dependencies unchanged |
+| Reuse | PASS: existing interpreter, validator, adapters and parser |
+| Multiple paths | PASS: platform lifetime implementations under one exchange; one metadata parser |
+| Legacy paths | PASS: actual published six-argument ABI retained; older checkpoints refused |
+| Knobs | PASS: runtime workspace values, no new policy setting |
+| Speculative abstractions | PASS: private native lifetime owns launch/identity/termination/cleanup |
+| Library choice | PASS: existing ONNX1.27.0 |
+| Copy-paste | PASS: shared admission, fingerprint and child options |
+| Redundant definitions | PASS: caller-owned live artifact registry |
+| Size/requirement | PASS:1331 product-text additions cover approved producer scope |
+| Test volume | PASS:1175 test/probe/fixture-text additions prove required admission/replay/ABI/native behavior |
+
+| Code-style check | Current verdict / evidence |
+|---|---|
+| Progressive disclosure | PASS: adapter entry flow precedes helpers |
+| Small functions | PASS: coherent operations |
+| Top-down order | PASS: parser entry points precede helpers |
+| Explicit errors | REVISE: exact root reap precedes final pipe joins; reviewer also requests bounded pipe cleanup proof |
+| Shallow nesting | PASS: parser/process early exits and bounded nesting |
+| Separate side effects | PASS: pure workspace allocation; exec owns directory/process I/O |
+| Zero warnings | Managed0warningsPASS; final NativeAOT gate open, cancelled superseded-source runs not counted |
+| Extract for reason | PASS: semantic/native resource boundaries |
+| Complexity | PASS: manual classic counts Exchange8, POSIXJoin7, parserAddRow9, Resume7, probe dispatcher12, retained diagnostics13 |
+
+Supervisor accepts the concrete ordering defect. A separate uninterruptible-task premise is not
+supported by actual.NET10.0.12: Windows anonymous-pipe async operations use
+[PipeStream cancellation](https://raw.githubusercontent.com/dotnet/runtime/v10.0.12/src/libraries/System.IO.Pipes/src/System/IO/Pipes/PipeStream.Windows.cs)
+and[CancelSynchronousIo](https://raw.githubusercontent.com/dotnet/runtime/v10.0.12/src/libraries/Common/src/System/Threading/AsyncOverSyncWithIoCancellation.cs);
+Unix uses token-aware[Socket ReceiveAsync/SendAsync](https://raw.githubusercontent.com/dotnet/runtime/v10.0.12/src/libraries/System.IO.Pipes/src/System/IO/Pipes/PipeStream.Unix.cs).
+Local source evidence`/private/tmp/phase76-dotnet10-async-io-cancel.cs` and
+`/private/tmp/phase76-dotnet10-pipe-unix.cs`. These APIs are cancellation-capable, not an absolute
+guarantee against arbitrary kernel failure. Do not add a second pipe framework or abandon tasks
+behind a wait timeout. Full ownership review is running; supervisor will combine findings and
+require concrete blocked-pipe cancellation/join evidence using the exact existing BCL pipe type,
+with opposite endpoints held open, alongside the in-plan final-reap ordering correction.
+
+Ownership observed2026-10-10 **01:01:35–01:02:36 UTC**, complete same42-path diff/hash independently
+matched; exact dispatch timestamp unavailable. Owners derived again from Desktop atlas, Core and
+scripts READMEs before comparison. No competing implementation found across named Forge repos.
+
+| Behavior | Derived owner / actual placement | Verdict |
+|---|---|---|
+| Explicit package assets | CoreManifest / ForgeManifest | PASS |
+| Distribution metadata before environment evaluation | CoreTOML / ForgeTomlReader | PASS |
+| Full local parsing | Same CoreTOML parser | PASS |
+| Immutable diagnostic sources | CoreExpertLoader | PASS |
+| Declared string parameters | CoreExpertLoader | PASS |
+| Pure package construction/validation | Corepackage validator | PASS |
+| Reachable admitted inputs | Coreinput policy | PASS |
+| Exact reserved names/token_count | Coreinput policy | PASS |
+| Provider profile collection, not availability | Corevalidator; Runner owns availability | PASS |
+| Asset path/collision/digest/model checks | Corevalidator | PASS |
+| Empty-assets hash/new-assets identity | Corevalidator | PASS |
+| Actual generated JSON size | Corevalidator | PASS |
+| Published six-argument ABI | Corecontract producer | PASS |
+| Explicit generated JSON constructor | Corecontract producer | PASS |
+| Actual Client Create/Open/Reconnect proof | Existing integration tests | PASS |
+| Complete execution fingerprint | Corereplay owner | PASS |
+| Malformed/current-incompatible checkpoint refusal | Corecheckpoint codec | PASS |
+| Relative inputs/completed effects across resume | CorePipelineRunner | PASS |
+| Exact lifecycleStepKey | Coretrace/PipelineRunner | PASS |
+| Runtime workspace inheritance | CorePipelineRunner | PASS |
+| Caller-owned live registry | Coreworkspace retains view; caller registers | PASS |
+| Deterministic allocation path | Coreworkspace | PASS |
+| Process-local verified aliases | Coreexec adapter | PASS |
+| cwd/literal args/runtime environment | Coreexec adapter/argument owner | PASS |
+| Preallocation bare LinuxPID1 refusal | Coreexec launch | PASS |
+| Adopted orphan reaping | Runnerinit; removed fromCore | PASS |
+| Atomic POSIX group ownership | Coreprivate exec lifetime | PASS |
+| Root retention through stream joins | Coreprivate exec lifetime; current ExchangeAsync violates order | FAIL |
+| macOS held-root-only completion | Coreprivate POSIX lifetime | PASS |
+| Preexecution Windowsjob ownership | Coreprivate Windows lifetime | PASS |
+| Bounded concurrent stdin/stdout/stderr | Coreexec adapter | PASS |
+| Precise declined-stdin classification | Coreexec write boundary | PASS |
+| CleanupIOException over cancellation | Coreexec failure boundary | PASS |
+| Numeric ONNX/joined cancellation | Existing CoreONNX adapter | PASS |
+| Actual parallel sibling progress | Corepipeline/adapter tests | PASS |
+| Output-before-input pressure | Existing native verification owner | PASS |
+| Public workspace/environment/native assertions | Existing native verification owner | PASS |
+| Immutable normal Runnerentrypoint/negativePID1 proof | Build/probe owner; Runnerhosts | PlacementPASS; execution pending |
+| Immutable Corepublication/content checks | Existing publication owner | PlacementPASS; publication pending |
+| Installed Project/Chat/Hands defaults | Supervisor through existing CLI/Client | Correct owner; acceptance pending |
+
+| Ownership technical gate | Current verdict |
+|---|---|
+| Public APIs/generatedJSON/actualClientABI | PASS |
+| Hash/pure admission/replay/trace/live registry | PASS |
+| Security/data/credentials | PASS: no new service/store/identity/public entry point or credential authority |
+| Duplicates/component jobs | PASS: no competing implementation/unrelated second job; orphan duplication removed |
+| Failure containment | REVISE: definite root-reap order; actual blocked-pipe cancellation evidence required |
+| Managed/package | Rawfocused191/full1063+6skips/Release407/scripts30/branchconsumerPASS, managed0warnings |
+| Final native | Open; cancelled source does not satisfy gates |
+| Published/default | Open; controlled branch package cannot close |
+| UI | N/A |
+
+### Combined correction approval
+
+Supervisor approved **01:03:13 UTC**, assigned same implementer`implement:r8`. Placement moves
+none. In existing ExchangeAsync keep checked termination before final pipe joins, then final
+native join/exact reap, preserving cleanupIOException precedence and original context. Existing
+native probe adds exact anonymous-pipe blocked-read/filled-write cancellation with opposite ends
+held open, requiring actual operation completion within5s before closing those ends. Failure
+cleanup closes only owned peer endpoints and joins pending operations; a wait timeout cannot
+abandon work or supply PASS. No new product abstraction, framework, factory, option or file.
+Root accepts the narrower ownership evidence finding; a hypothetical failure of kernel
+cancellation is not authorization for speculative replacement machinery. Revised-source managed,
+fresh consumer, full sequential code reviews and final canonical/all-host native gates remain
+mandatory. Same42-path scope/public/security/default contracts remain approved.
+
+## Prior correction delivery
+
+Prior bounded r7 approval delivered through [MCL PR377](https://github.com/katasec/mission-control-language/pull/377),
 merged2026-10-09T23:28:43Z atff88ce361217e3240cf82ab6a0924a2f09aef655. Documentation validation
 passed11 docs/77 links/2 JSON examples/fences/global index and git diff --check; GitHub reported
 mergeable/CLEAN with no required checks. Product tests/AOT/default acceptance N/A for this
