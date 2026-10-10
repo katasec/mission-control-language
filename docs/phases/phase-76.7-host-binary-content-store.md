@@ -1,6 +1,7 @@
 # Phase 76.7 — Host binary content storage primitive
 
-**Status:** Supervisor design, not yet locked or implementation-approved.
+**Status:** DESIGN LOCKED2026-10-10 05:56:22UTC after complete current simplicity r2 and ownership r1 PASS.
+Implementer plan/reviews/approval remain required; no product edits authorized.
 Scope start2026-10-10 05:38:26UTC after content producer docs PR381 merged05:38:05UTC as
 `fd059b844657d046686d827da8d08743d01c39af`. Product baseline forge-conversations clean main
 `d4d013e577e4e57f3eaf3310527094b5d2dfa851`; no product edits authorized yet.
