@@ -125,10 +125,9 @@ dotnet build ForgeMission.Conversations.slnx -c Release --no-restore -warnaserro
 dotnet test ForgeMission.Conversations.slnx -c Release --no-build --no-restore
 ```
 
-Local Docker daemon is absent and existing Azurite fixture fails without it. Record the actual
-local full outcome, never skip/replace that fixture. Existing normal Ubuntu PR verify job's
-unfiltered full Release suite with real Azurite must pass before readiness. This is an environment
-limit, not a failing behavior waived; no change to tests/fixtures beyond the approved new file.
+The original local Docker absence was recovered before implementation by starting the installed
+Docker Desktop. Full local Debug/Release and normal Ubuntu PR verification use real Azurite;
+never skip/replace the fixture. No tests/fixtures change beyond the approved new file.
 
 | Generated-wire/compatibility test | Observation |
 |---|---|
@@ -158,7 +157,9 @@ no project/DLL reference/custom context. Branch feed plus normal feeds, NEW empt
 Exercise all five generated types/bytes/long/maps/limits/invalid JSON/representative old shapes;
 managed run then `dotnet publish <project> -c Release -r osx-arm64 -p:PublishAot=true -warnaserror -o <output>`
 and actual executable. Retain raw compiler/linker output, no suppression. Report actual failure
-before altering the target or default dependency. No old-macOS support claim.
+before altering the target or default dependency. No old-macOS support claim. After the observed
+Mac linker failures, the supervisor approved the official ordinary-target Linux ARM64 AOT image
+for both native checks; [exact adjustment](phase-76.6-mission-content-contracts.md#native-verification-environment).
 
 Default acceptance: supervisor rechecks0.9.0 absent, dispatches existing workflow from merged main,
 then NEW empty cache/ordinary authenticated feeds only/no local feed/sibling/DLL substitution.

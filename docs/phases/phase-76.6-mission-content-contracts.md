@@ -107,3 +107,18 @@ Open design questions: none. Exact files/release-script details belong in the re
 | Supervisor design | Locked05:00:09UTC after complete current simplicity/ownership PASS; [evidence](phase-76.6-mission-content-contracts_completed.md#design-reviews) |
 | Plan / implementation | [Complete seven-path plan](phase-76.6-mission-content-contracts-plan.md) approved05:06:50UTC after both full current reviews PASS; same implementer proceeds |
 | Publication / default acceptance | Not started |
+
+### Native verification environment
+
+The ordinary macOS SDK target was attempted first. The local linker could not find OpenSSL;
+using the existing documented Homebrew prerequisites then produced five deployment-target warnings
+(SDK macOS12 versus installed OpenSSL27/Brotli26 on macOS27.0.1). Neither attempt passes the
+zero-warning gate. Product source and compiler warnings remain unchanged.
+
+Supervisor-approved verification adjustment2026-10-10 05:16UTC: use the official
+`mcr.microsoft.com/dotnet/sdk:10.0-aot` ARM64 image, manifest digest
+`sha256:407a2711f25619956ffc5febc9245a1bf9105d73a2bb42876b512ffa87094637`, with its ordinary
+`linux-arm64` target and supplied native toolchain. Both controlled branch and fresh published-package
+consumers must publish and execute with zero warnings. No deployment-target override, custom
+linker environment, product configuration change or macOS12 support claim. Normal private NuGet
+publication/restoration, new isolated cache and exact source provenance remain the acceptance path.
