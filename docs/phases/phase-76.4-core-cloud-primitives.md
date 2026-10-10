@@ -2,7 +2,8 @@
 
 **Status:** Matrix-retention correction r11 is committed/pushed at `c4176ba5`; production source
 remains unchanged from `8f0fa851`. Its21 routing/scope checks,4parser checks and30existing script
-checks pass. Fresh complete code reviews r7 and current-source canonical/four-host CI are running.
+checks pass. Fresh complete code reviews r7 pass for source; current-source native CI is running,
+with Linux x64 passed, including the exact published Runner image and separate bare-PID1 refusal.
 Prior r10 canonical macOS passed while matrix macOS repeated pressure-child SIGSEGV139; its two
 collected reports were not uploaded. The new failure-only route retains those scoped reports and
 matching symbols if failure recurs. Cause remains unproven; no merge/publication approved.
@@ -201,7 +202,7 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r11](phase-76.4-core-cloud-primitives-plan.md) approved03:02:53 UTC;43-path inventory, new change only release workflow/README for failed-matrix evidence |
 | Independent plan reviews | Fresh full r11 simplicity/ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-11-plan-reviews--failed-matrix-retention); prior verdicts historical |
 | Plan approval / implementation | Retention correction pushed `c4176ba5` in [PR77](https://github.com/katasec/forge-mcl/pull/77);21routing/4parser/30script checks PASS. Production tree unchanged; no production correction authorized. |
-| Code review / native CI | Fresh full r7 reviews in progress; [canonical38019324267](https://github.com/katasec/forge-mcl/actions/runs/38019324267) and [four-host38019324271](https://github.com/katasec/forge-mcl/actions/runs/38019324271) pending. Prior r6 verdicts and r10 native observations are historical. Causal/publication/default gates open. |
+| Code review / native CI | Fresh full r7 simplicity/style and ownership source PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r7--failed-matrix-retention). Current Linux x64 PASS; [canonical38019324267](https://github.com/katasec/forge-mcl/actions/runs/38019324267) and remaining [four-host38019324271](https://github.com/katasec/forge-mcl/actions/runs/38019324271) jobs pending. Causal/publication/default gates open. |
 | Published/default acceptance | Required; not performed |
 
 ### Current bounded correction — retain the failed matrix evidence

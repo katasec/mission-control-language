@@ -2277,3 +2277,124 @@ failures. Successful CLI ZIP/publication/permissions/commands unchanged. No prod
 Normal push dispatched canonical38019324267 and four-host38019324271 at03:05:20 UTC; supervisor
 observed both in progress at reviewed HEAD. Required fresh full code reviews, actual native causal
 evidence, final required checks, immutable publication and published/default acceptance remain open.
+
+## Full code review r7 — failed matrix retention
+
+Both existing reviewers independently re-read the complete current43-path artifact at
+`c4176ba5598b77538829350e8bb7c8fc986bf8b0`, base8d28dc1; no inherited PASS or correction-only
+review. Both matched binary diff SHA256
+`4b90536b4e8db66929df06935448c5dc7ce05805e9bd3e4d1b368b17a0005131`,43paths2716+/457-, clean0/0
+branch and production tree6c7cfd84. Separate full simplicity/style tables, then full ownership
+table; no actionable source correction found. Source PASS does not close native/default gates.
+
+| Stage | Assignment start UTC | Result available UTC | Wall | Agent observed activity UTC |
+|---|---|---|---|---|
+| `[review-code:simplicity:r7]` including full style | 03:07:48 | 03:11:52 | 4m04s | 03:08:20–03:11:24 |
+| `[review-code:ownership:r7]` | 03:11:52 | 03:17:02 | 5m10s | 03:12:25–03:15:58 |
+
+All2026-10-10. Result-available boundaries measured by supervisor after receiving final verdicts;
+agent-observed ends are recorded separately, not substituted for assignment ends.
+
+| Simplicity check | Verdict / current evidence |
+|---|---|
+| New apps/libraries | PASS: no dependency; probe uses existing Core |
+| Reuse | PASS: shared input policy/parser/interpreter/collector/action |
+| Multiple paths | PASS: OS launch implementations own required lifetime; one interpreter |
+| Legacy paths | PASS: actual Client0.9.3 ctor; old checkpoints refused |
+| Knobs | PASS: fixed cleanup/output/diagnostic conventions |
+| Speculative abstractions | PASS: native identities/resources and caller-owned workspace view |
+| Library choice | PASS: existing ONNX1.27/BCL pipes |
+| Copy-paste | PASS: shared invocation; existing uploader/collector |
+| Redundant definitions | PASS: existing StepKey, one output convention, distinct artifact routing |
+| Size/requirement | PASS:43approved paths; latest21+/3- only two retention files |
+| Test volume | PASS: meaningful admission/replay/ABI/live-registry/pressure/cancellation/lifecycle proof |
+
+| Code-style check | Verdict / current evidence |
+|---|---|
+| Outline first | PASS: public preparation/execution before named details |
+| Small functions | PASS with recorded narrow46-line collector exception |
+| Top-down order | PASS: public Run/Stream/build orchestration before helpers |
+| Explicit errors | PASS: cleanup precedence, narrow declined stdin, failed build/upload preserved |
+| Shallow nesting | PASS with recorded bounded per-report catch exception |
+| Separate side effects | PASS: pure validation/fingerprints separated from process/artifact effects |
+| Zero warnings | OPEN for pending current native jobs; supporting unchanged Debug/Release0warnings; Ruby PATH warning disclosed |
+| Extract for real reason | PASS: helpers follow admission/identity/ownership/exchange/report selection |
+| Complexity | PASS: manual classic McCabe; counts below |
+
+Manual count base1 plus branches/loops/nondefault cases/catches/ternaries; no separate boolean
+operand or final-else count. Exchange8, POSIX Join7, AddRow9, pipe-cancellation10, child dispatcher12,
+collector12, selector5, retained typed-key walk13. Reassess collector after diagnosis; remove/merge
+nothing currently required. Reviewer read actual raw191focused/1063full(6existing skips)/407Release,
+fresh branch consumer/managed probe and current21routing/4parser/30script evidence; historical
+native success is not current acceptance.
+
+Ownership derived blind before plan/diff from actual Desktop atlas/Core/build/Runner READMEs:
+
+| Behavior | Derived owner / actual placement | Verdict |
+|---|---|---|
+| Explicit package assets | Core manifest | PASS |
+| Distribution without provider evaluation | Core manifest reader | PASS |
+| Full local configuration parsing | Same Core reader | PASS |
+| Immutable diagnostics/no disk fallback | Core expert validation | PASS |
+| Declared mission parameters as strings | Core expert validation | PASS |
+| Package construction/first root | Core package validator | PASS |
+| Resolved content/language validation | Core validator/ExpertLoader | PASS |
+| Existing kinds/reachable profiles | Core semantic validation | PASS |
+| Reachable declared inputs | Core input policy | PASS |
+| Invalid/reserved/duplicate names/root requirements | Core validator/input policy | PASS |
+| Exact reserved policy/token_count | Core input policy | PASS |
+| Asset identity/old hashes | Core package validator | PASS |
+| Actual serialized4MiB | Core package validator | PASS |
+| Portable collisions/runtime directories/model assets | Core package validator | PASS |
+| Actual Client six-argument ABI/generated JSON | Core public contract | PASS |
+| Published Client Create/Open/Reconnect regression | Core consumer tests | PASS |
+| Admitted inputs across resume | Core interpreter/checkpoint | PASS |
+| Complete semantic identity/no scratch | Core replay fingerprint | PASS |
+| Old/malformed checkpoint refusal | Core codec | PASS |
+| Completed effects replayed once | Core interpreter/log | PASS |
+| Live registry authority | Caller owns registration; Core retains view | PASS |
+| Deterministic step output directory | Core workspace convention | PASS |
+| Nested workspace inheritance | Core interpreter | PASS |
+| Exact StepKey lifecycle/tool/delta facts | Core trace/interpreter | PASS |
+| Verified process-local path/environment mappings | Core exec adapter | PASS |
+| Literal argv/cwd/lookup | Core exec/private launch support | PASS |
+| Concurrent bounded stream exchange | Core exec adapter | PASS |
+| Concrete declined stdin/other errors | Core exec adapter | PASS |
+| Atomic POSIX group/retained root | Core private lifetime | PASS |
+| macOS root-only proof/exact reap | Core private lifetime | PASS |
+| Atomic Windows job/handle ownership | Core private lifetime | PASS |
+| Termination/pipe joins/exact reap/disposal | Core lifetime | PASS |
+| Cleanup IOException precedence | Core exec failure boundary | PASS |
+| Bare LinuxPID1 preallocation refusal | Core launch boundary | PASS |
+| Adopted orphan reaping | Existing image init, excluded from Core | PASS |
+| Numeric ONNX/expert-relative model | Existing Core ONNX | PASS |
+| Parallel sibling/joined native cancellation | Existing ONNX/interpreter | PASS |
+| Actual BCL pipe cancellation/duplex pressure | Public-Core native probe | PASS |
+| Exact Runner image/entrypoint/negative topology | Build verification | PASS |
+| Scoped new-report selection/original failure | Build verification | PASS |
+| Failed macOS artifact transport/release exclusion | Existing release workflow | PASS |
+| Immutable package/provenance/visibility | Existing package workflow/verifier | PASS |
+
+No owner gains a second job. Named-Forge searches found consumer adapters calling Core validation,
+not duplicate validators; wire admission/profiles/project identity stay outside Core. No competing
+launcher/replay codec/registry/collector. Move nothing.
+
+Technical review: source scope/security/data/credentials/API/ABI/generated JSON PASS; current
+21routing/4parser/30scripts PASS; current Linuxx64 native/image proof PASS from actual raw log.
+Remaining current native/zero-warning gates, actual crash report plus matching UUID, normal
+publication/fresh restore and installed Project/Chat/Hands defaults OPEN. UI N/A.
+
+Supervisor independently checked the actual two-file delta, all43-path inventory/hash, production
+and full-tree identity, raw checks/logs, clean0/0 status and unchanged failure/release boundaries.
+Synthetic merge `049c61029f0a766992f02a462c1710d97eb3b512` has parents8d28dc1/c4176ba5 and exact
+reviewed full tree `c802391445fd7d105a697295adb6f760080f250b`. Source accepted03:17:50 UTC;
+merge/publication/causal/default approval withheld.
+
+Current Linuxx64 job114116566177 SUCCESS, raw `/private/tmp/phase76-core-r11-linux-x64.log`:
+identity0.10.1-dev.8+049c61029f0a766992f02a462c1710d97eb3b512;30scriptchecks; native pipes0/0ms,
+pressure/workspace/argv/cwd/lookup/exited-descendant/cancel/timeout PASS. Exact published Runner
+index/platform/source and unchanged entrypoint verified03:14:10; tiniPID1/dotnetRunner7/probe14.
+Bounded orphan-entry disappearance03:14:12/03:14:14 and no later sentinel independently asserted.
+Bare PID1 refused before child/root/sentinel03:14:17; owned container removed. Actual log has no
+compiler/AOT warning; git's default-branch hint contains the word warning but is not a compiler
+diagnostic. Other current native jobs still running at source acceptance; no all-host PASS inferred.
