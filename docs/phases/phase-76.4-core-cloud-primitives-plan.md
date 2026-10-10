@@ -13,6 +13,17 @@ This enforces the already-approved retention/cancellable-I/O contract; full
 
 ## 1. Files
 
+**In-plan probe correction approved2026-10-10 01:37:02 UTC:** only
+`tests/ForgeMission.Exec.Probe/Program.cs`, normalize the canonical relative suffix with
+`relative.Replace('/', Path.DirectorySeparatorChar)` before combining the expected absolute path.
+Preserve the unchanged-relative-input assertion and every probe/deadline. Windows native failure
+is an evidenced expectation defect; Core already normalizes correctly. No production change is
+justified by the unexplained canonical macOS SIGSEGV: the exact artifact passed direct pressure
+and full public-probe reproduction, and its same-source macOS sibling passed. After the probe
+correction, fresh full code reviews and normal current-source canonical/four-host CI remain
+required; no previous failure is waived. Existing full managed/package results remain evidence
+for unchanged product sources; run the corrected managed probe and script checks before pushing.
+
 Complete revised Core plan r9. Assignment start **2026-10-10 00:39:04 UTC**; observed stage end **2026-10-10 00:41:04 UTC**. Plan only: no file, branch or external state changed.
 
 Continue `/Users/ameerdeen/progs/forge-mcl`, branch `adeen/phase-76-core-primitives`, pushed `dc03b7b9f295bf923436eaec5f645771142e061a`, draft PR77, against intended base `8d28dc1ff8f127facfd708b1c89369179e98cf18`. Preserve the four held test/document corrections. Recheck source/status and immutable version availability before implementation.

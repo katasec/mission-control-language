@@ -29,7 +29,7 @@ Full per-file inventory, commands and raw observations:
 | Managed public probe | Open-peer blocked read cancelled in 4ms and filled write in 0ms; retained pressure/workspace/argv/timeout/cancellation/lifecycle checks pass |
 | Final-source branch package | Exact source `8f0fa851`; built/restored SHA256 `D549E8EF2C1A68AD4204A5E9D51A0B65889DFF53402DD4335566DFB36A077BB1` match |
 | Fresh isolated branch consumer | Generated JSON, asset metadata/hash/admission, packaged exec/runtime/output bytes, exact StepKey, numeric ONNX, actual joined native cancellation/no score, six-argument constructor and no-assets old hash pass |
-| Current-source native gates | Canonical [38011993998](https://github.com/katasec/forge-mcl/actions/runs/38011993998) FAILED; four-host [38011993926](https://github.com/katasec/forge-mcl/actions/runs/38011993926): Linux both PASS, Windows FAILED, macOS pending at last observation |
+| Current-source native gates | Canonical [38011993998](https://github.com/katasec/forge-mcl/actions/runs/38011993998) FAILED; four-host [38011993926](https://github.com/katasec/forge-mcl/actions/runs/38011993926): Linux both and macOS PASS, Windows FAILED |
 
 Supervisor independently read the complete three-path correction, raw full-test/probe/consumer/
 pack logs and unchanged 42-file inventory. This is controlled branch-package evidence;
@@ -161,7 +161,7 @@ the identity is recorded rather than mislabelled as the branch commit.
 | Linux warning gate | Supervisor read raw compiler/probe logs; no compiler/linker/ILC/trim warning match; ordinary Git initial-branch hint is not a compiler warning |
 | Windows ARM64 | Job114093839095 FAILED: native pressure and blocked-pipe checks pass; workspace assertion reports source_file mismatch. Probe expected absolute path preserves forward-slash suffix while Core converts it to OS separators. Later lifecycle cases were not reached |
 | Canonical macOS | Run38011993998 FAILED: managed1055 passed/10 existing skips; CLI/probe native compilation and CLI help/version pass. Detailed artifact exec-probe-run.log reports pressure-child exit139 (SIGSEGV11), after64KiB stderr; cause remains under investigation |
-| Four-host macOS | Job114093839215 still running at01:33 UTC; no result inferred |
+| Four-host macOS | Job114093839215 SUCCESS, completed01:34:47 UTC: all blocked-pipe/pressure/workspace/argv/cwd/descendant/timeout/cancellation native checks pass; no compiler warning match in raw log |
 
 Raw completed-job logs `/private/tmp/phase76-core-r8-linux-arm64.log` and
 `/private/tmp/phase76-core-r8-linux-x64.log`, obtained through the completed-job logs API.
@@ -176,6 +176,21 @@ full archive. Source.txt records the same synthetic merge identity above. Exact 
 `/private/tmp/phase76-core-r8-canonical-range-logs`; the failed pressure child produced no managed
 exception. Exit139 establishes a child crash, not a timeout or its cause. Same implementer continues
 read-only diagnosis; no source edit or relaxed gate is authorized. Draft PR77 remains unmerged.
+
+Supervisor compared failed/successful macOS runs: same source, macOS14.8.9/23J631,
+runner image20260831.0302.1, SDK10.0.401/runtime10.0.12. Setup action v4/v5 and canonical
+`cli-verify`/release `cli-package` differ, but both invoke the same Release/AOT native probe build;
+these differences are observations, not a cause. Successful raw log:
+`/private/tmp/phase76-core-r8-macos-arm64.log`. Exact failed canonical probe executable and
+ONNX sidecar extracted to `/private/tmp/phase76-core-r8-canonical-binary` for reproduction.
+
+Read-only continuation observed **01:33:45–01:36:46 UTC**. Exact canonical executable SHA256
+`8af6dac56872297311059f4c97f480bd0d59af2cb931608c6f18f5d27bcda4a6` passed three direct child
+pressure runs and the unchanged full public probe on local macOS27.0.1/arm64: exit0,6.642s,
+all assertions, zero stderr. Supervisor independently read stdout and result JSON. These local
+observations do not explain or waive the CI crash on macOS14. Only the confirmed Windows
+expectation correction is approved at01:37:02 UTC; production source/deadlines unchanged,
+fresh full code reviews and normal current-source native CI still required.
 
 ## Approved init correction — implementation r7
 
