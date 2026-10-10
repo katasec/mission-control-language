@@ -1,6 +1,6 @@
 # Phase 76.5 — Hosting evidence
 
-The task is open; this file holds resolved review detail, not a completion claim.
+Verified 2026-10-10 00:37:11 UTC; exact default-path observations below close this hosting task.
 [Active design](phase-76.5-runner-process-hosting.md).
 
 ## Design reviews
@@ -56,8 +56,8 @@ actual image or default-path success or approves implementation.
 | Ownership design r9 | 2026-10-09 23:59:29 | 2026-10-10 00:00:00 | Full15/gates PASS; observed start23:59:45 |
 | Supervisor design lock | 2026-10-10 00:00:19 | 2026-10-10 00:00:19 | Independent full artifact check; DESIGN LOCKED |
 
-Product implementation, code reviews, merge, publication, deployment and acceptance are future
-boundaries. Tokens unavailable; no measured token claim.
+At design lock, product implementation/reviews/merge/publication/deployment/acceptance were
+future boundaries; their later observations follow below. Tokens unavailable.
 
 ## Plan reviews
 
@@ -266,3 +266,132 @@ deployment/default acceptance remain open.
 | Code review / ownership r3 | 2026-10-10 00:14:29 | 2026-10-10 00:15:22 | Full16/gatesPASS; observed start00:14:48 |
 | Readiness / supervisor | 2026-10-10 00:15:46 | 2026-10-10 00:15:46 | Independent full gate check |
 | Runner product merge | 2026-10-10 00:15:50 | 2026-10-10 00:15:50 | PR26; infra product merge remains future |
+
+## Infrastructure image pin
+
+Same implementer r6 assigned00:28:50, ended00:29:54 UTC. Infra
+`codex/phase-76-runner-init` HEAD`0420a5281977e653e1cc5f2455b1fe3b65187be2`
+against main`7d849c92b035866061418daf779a2be8fde29e96`; exactly the approved sixth path,
+`dev/500-app/main.bicepparam:14`, Runner0.20.5→0.20.6. Full diff SHA256
+`B57E1C7C9B0ACD7A876E960261D9B05312DAF1445AB58BF70E60C66CF3AEE104`.
+[PR45](https://github.com/katasec/forge-infra/pull/45) attached. Local template/parameter
+compilation and diff check PASS; existing Bicep upgrade notices retained. Normal current-source
+[infra CI38009292447](https://github.com/katasec/forge-infra/actions/runs/38009292447)
+SUCCESS00:31:00 UTC, all existing layers compiled. Raw local/CI evidence:
+`/private/tmp/phase76-runner-hosting-20261010T000649Z/infra/`.
+
+Full current simplicity/style r4 assigned00:30:14, observed00:30:39–00:30:57 UTC; no findings.
+
+| Simplicity check | Current r4 verdict |
+|---|---|
+| New apps/libraries | PASS: none |
+| Reuse | PASS: existing image parameter/deploy route |
+| Multiple paths | PASS: none added |
+| Legacy | PASS: pin replaced, no fallback |
+| Knobs | PASS: no new setting |
+| Speculative abstraction | PASS: none |
+| Library choice | N/A: published image selection |
+| Copy-paste | PASS: none |
+| Redundant definitions | PASS: one existing parameter |
+| Size | PASS: one insertion/deletion, approved sixth path |
+| Test volume | PASS: existing Bicep/CI sufficient |
+
+| Code-style check | Current r4 verdict |
+|---|---|
+| Progressive disclosure | PASS: named runnerImage declaration |
+| Small functions | N/A: no function |
+| Top-down | PASS: existing order |
+| Explicit errors | N/A: no error behavior changed |
+| Shallow nesting | N/A: literal |
+| Side effects | PASS: existing Make boundary |
+| Zero warnings | PASS: no template diagnostics; existing tool upgrade notices disclosed |
+| Extraction | PASS: none |
+| Complexity | N/A: no control flow |
+
+Full current ownership r4 assigned00:32:48, observed00:33:12–00:33:47 UTC. Technical and
+placement PASS; no blocker/move. Full current verdict:
+
+| Behavior / gate | Derived and actual owner / observation | Verdict |
+|---|---|---|
+| Deployed image selection | Infra500-app parameter | PASS |
+| Registry/container resolution | Existing unchanged Bicep | PASS |
+| Init/signals/orphans | Published Runner image; no infra wrapper | PASS |
+| Input validation | Existing infra CI | PASS |
+| Preview/apply | Existing Make; supervisor | Correct owner; pending |
+| Live topology/default Chat | Supervisor through existing product | Correct owner; pending |
+| Scope/compatibility | One approved path/line | PASS |
+| Dependency/provenance | Merged source/normal publication/both native legs | PASS |
+| Published identity | Both registries/index/platform manifests agree | PASS |
+| Compilation | Local/current CI13layers | PASS |
+| Security | Existing ingress/identity/secrets/data boundaries | PASS |
+| Engineering/failure | One existing deployment path, no fallback | PASS |
+| Deployment/default | Actual what-if/deploy/Chat still required | Open |
+| AOT/UI | Parameter-only | N/A |
+
+Root readiness00:34:04 UTC: exact clean HEAD/diff/checks independently checked; all findings
+clear, approved scope/ownership/contracts/failure/security retained; AOT/UI N/A. PR45 merged
+00:34:10 UTC to`fa49f916e85eb637f735e2b9e61e57ea26b3de8d`; clean/current infra main.
+Mandatory Make what-if started after merge; inspection/deploy/default acceptance remain open.
+
+Supervisor `make 500-app-what-if` exited0; full raw`infra/what-if.log`. Two resources predicted
+modified, two unchanged,23ignored: intended Runner image0.20.5→0.20.6; other differences are
+unresolved Bicep reference expressions and API-owned `runningStatus`/`exposedPort`. Before
+deploy, independent restricted Azure queries confirmed exact referenced Host/Runner/Billing
+FQDNs and Runner identity clientId match their current values. No datastore/identity/secret/role
+change is predicted; alert rules unchanged. Root approved this observed preview and started
+only `make 500-app` after those checks; raw`infra/deploy.log`, completion pending. Exact
+approval/start clock boundary unavailable; no timestamp inferred from the earlier query clock.
+
+## Default-path acceptance
+
+Supervisor observed Make apply exit0, then restricted deployment query `main` Succeeded,
+timestamp2026-10-10T00:35:44.364926+00:00, correlation0a8a524c-96cc-410b-aae6-f9fe56d1c206.
+Ready/latest revision both`ca-forge-runner-dev--0000043`, provisioningSucceeded, image
+`crforgeroomsdev.azurecr.io/forge-runner:0.20.6`. Observation stage began00:36:14 UTC.
+Read-only `az containerapp exec` on replica`ca-forge-runner-dev--0000043-7f969f6db-4q56l`
+returned exit0 and actual `/proc` facts: init`tini`, PID1; direct child`dotnet`, PID7,
+command`dotnet ForgeMission.Runner.dll`. Assembly bytes contain exact merged source
+`17080b73a84ad0b0e42a891024090e8f997194ed`. Raw observations under handback`infra/`:
+`deployed-image.json`, `deployment-observation.json`, `process-observation.txt` (tool-output
+transcription); full normal Make output`deploy.log`. No secret/environment values inspected.
+
+The prior live image0.20.5/revision42 was independently observed with `/proc/1/comm=dotnet`
+at2026-10-09 23:54:16 UTC. Its actual .NET10 bare-PID1 reaper conflict is recorded in the
+[Core failure evidence](phase-76.4-core-cloud-primitives_completed.md#verification-correction-r4-and-linux-container-failure).
+The new topology is an actual observation, not inferred from the Dockerfile.
+
+| Required default fact | Supervisor observation |
+|---|---|
+| Artifact | Installed `/Users/ameerdeen/.local/bin/forge`, version0.10.1-dev.0+8d28dc1ff8f127facfd708b1c89369179e98cf18; SHA25618a18adde627dd49ff37aae6d6a7d1a9910b82c0a90e635eb933e47a15a24340 |
+| Defaults | FORGE_API_ENDPOINT, FORGE_PLATFORM_ENDPOINT, RID, RELEASE_TAG, CLI_OUTPUT absent; normal saved login/ForgeAPI |
+| Dependency | Normal ACR image0.20.6, immutable index/platform/source above; merged infrafa49f916, Make deployment/revision43/process facts above |
+| Starting state | Fresh disposable `/private/tmp/phase76-hosting-default-20261010T003630Z`; Projectad4abac3-4a08-42bf-af3c-9f6acdf1f556; Chat@1, emptyfolders |
+| Action | Installed `forge project create`, then plain piped `forge chat` with unique exact-response prompt |
+| Result | Both exit0; actual `[Chat:Answerer]` body exactly PHASE76_HOSTING_OK_20261010T003630Z; no stderr; projection identifies conversationed7c1acb-747e-5c55-8f06-4aea67c97a84 |
+| Raw proof | Disposable directory observation.json/version/create/chat stdout/stderr; supervisor inspected actual answer separately from request echo |
+| Controlled evidence | Native image probe cases above are supporting component proof; no default override/stub/entrypoint replacement used for installed Chat |
+
+All hosting Done-when conditions now PASS. Core code/package/native/publication/default gates
+remain separate and open; hosting acceptance does not claim unified execution is delivered.
+Runner and infra both clean/current main, no task worktree. MCL closure PR records this evidence.
+
+## Final stage boundaries
+
+Earlier full design/plan/Runner implementation/review tables remain above. Product PR timestamps
+come from `gh pr view`, not agent lifetimes. Tokens unavailable.
+
+| Stage | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| Scope→last product merge | 2026-10-09 23:52:24 | 2026-10-10 00:34:10 | 41m46s | Runner26 + infra45 |
+| Runner product PR | 2026-10-10 00:10:29 | 2026-10-10 00:15:50 | 5m21s | source c6d9411→main17080b73 |
+| Infra implement r6 | 2026-10-10 00:28:50 | 2026-10-10 00:29:54 | 1m4s | approved one-line pin |
+| Infra simplicity/style r4 | 2026-10-10 00:30:14 | 2026-10-10 00:30:57 | 43s | observed start00:30:39, full11/9PASS |
+| Infra ownership r4 | 2026-10-10 00:32:48 | 2026-10-10 00:33:47 | 59s | observed start00:33:12, full gatesPASS |
+| Infra readiness | 2026-10-10 00:34:04 | 2026-10-10 00:34:04 | Boundary | independent diff/checks/security/default review |
+| Infra product PR | 2026-10-10 00:29:47 | 2026-10-10 00:34:10 | 4m23s |0420a528→mainfa49f916 |
+| Make preview/apply | Exact start unavailable | 2026-10-10 00:36:14 | Unavailable | reviewed preview, apply exit0 available before observation start |
+| Postmerge supervisor acceptance | 2026-10-10 00:36:14 | 2026-10-10 00:37:11 | 57s | actual image/process/source + installed Project/ChatPASS |
+
+Closure documentation validation/PR is outside the product timing span. Next: full revised Core
+implementer plan against the locked init split and exact published image; no mechanism edit
+until full sequential plan reviews and supervisor approval.

@@ -1,13 +1,10 @@
 # Phase 76.5 — Runner process hosting prerequisite
 
-**Status: DESIGN LOCKED** 2026-10-10 00:00:19 UTC after fresh full sequential simplicity and
-ownership PASS. [Complete six-file plan](phase-76.5-runner-process-hosting-plan.md) approved
-2026-10-10 00:06:49 UTC after full current plan reviews. Runner
-[PR26](https://github.com/katasec/forge-runner/pull/26) merged after full code reviews/native image
-PASS; normal image0.20.6 publication verified from merged main. Approved single infra pin is
-being implemented for review/deploy/default acceptance.
-Core remains open.
-No deployment/default PASS yet.
+**Status: VERIFIED** 2026-10-10 00:37:11 UTC. RunnerPR26 and infraPR45 merged after full
+reviews/checks; normal published image0.20.6 deployed through reviewed Make what-if/apply.
+Supervisor observed actual init/source identity and installed default Project/Chat PASS.
+[Complete evidence and timing](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance).
+Core remains open; obtain its full revised plan before mechanism edits.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 
@@ -82,15 +79,9 @@ were inspected before this proposal. No new application project or product packa
 | Existing packaging | Dockerfile.runner already installs Python/Tesseract/Poppler with apt; reuse that stage/package source. Existing image workflow publishes amd64/arm64 to ACR/public GHCR. |
 | Existing duplicates | No init/subreaper/entrypoint wrapper exists in Runner or its deployment configuration. Core must not acquire container-wide reaping or .NET signal ownership. |
 
-The failing base image was aspnet10.0 digest
-`sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4`.
-The test exposed a real incompatibility; no container PASS or init probe is claimed yet.
-Supervisor read-only Azure observation: current image is
-`crforgeroomsdev.azurecr.io/forge-runner:0.20.5`; `az containerapp exec --name ca-forge-runner-dev
---resource-group rg-forge-dev --command 'cat /proc/1/comm'` succeeded on revision
-`ca-forge-runner-dev--0000042`, replica`ca-forge-runner-dev--0000042-845f449d7-2wf6m`, output
-`dotnet`. The deployed runtime therefore has the same PID1 topology; this is not inferred from
-Dockerfile alone. No environment/secret values were read or changed.
+The original runtime incompatibility and before/after deployed observations are recorded in
+the [completion evidence](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance).
+Current ready revision43 runs image0.20.6 with actual tiniPID1/dotnet child7.
 
 ## Failure, security and default gates
 
@@ -149,8 +140,5 @@ failure/security/default gates and closure dependency before lock. Merge and acc
 
 | Item | State |
 |---|---|
-| Runner source | PR26 merged17080b73a84ad0b0e42a891024090e8f997194ed; clean/current main |
-| Local gates | Full115PASS/0skip, Release0warnings/errors, script/embedded/YAML syntaxPASS; [raw evidence](phase-76.5-runner-process-hosting_completed.md#runner-implementation-handback) |
-| Code reviews | Full current simplicity11/style9/ownership16 PASS; supervisor readiness checked |
-| Native image CI | run38007944173 both native architectures actual hosting PASS; NuGet verifyPASS; [image identities/raw observations](phase-76.5-runner-process-hosting_completed.md#native-image-verification) |
-| Publication/infra/default | Normal merged-main image0.20.6 publication/provenance PASS; approved single infra pin in progress, deploy/default pending |
+| Hosting delivery | Verified; [publication, both product PRs, native and default evidence](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance) |
+| Downstream Core | Full revised plan required; exact published image digest and retained gates above apply |

@@ -6,7 +6,7 @@
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
-Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Corrected Core code passed managed/package checks; actual PID1 native failure requires a reviewed Runner hosting prerequisite. Later consumer tasks, deployment
+Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Corrected Core code passed managed/package checks; actual PID1 native failure led to a verified Runner hosting prerequisite. Later consumer tasks, deployment
 and unified runtime acceptance remain open.
 
 ## Intent
@@ -22,12 +22,12 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Core local correction passes; observed native PID1 failure has a locked, independently reviewed hosting correction. OCI accepted. |
+| Current documentation handoff | Hosting merged/published/deployed and installed Chat accepted; Core full revised plan is next. OCI accepted. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) corrections written; remaining cleanup/native gates open; unified default-path acceptance not started |
-| Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) reviewed, merged and normally published0.20.6; approved single deployment pin in progress, default acceptance pending |
+| Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) verified: merged/published0.20.6, normal Make deployment, actual process/source and installed ChatPASS |
 
 ## Dependency-ordered work
 
@@ -42,8 +42,8 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 ## Required delivery coverage
 
 These are required outcomes of tasks 4–5 above, not completed work. Detailed implementation
-spokes follow the reviewed contracts in dependency order; only the bounded Core producer has
-entered implementation; its correction verification remains in progress.
+spokes follow the reviewed contracts in dependency order; the hosting prerequisite is verified
+and the bounded Core producer's correction verification remains in progress.
 The implementation areas are coverage groups, not a fixed count of PRs. Keep future tasks small
 and independently deliverable: complete review, merge/publication and applicable default-path
 acceptance for one bounded increment before starting the next.
@@ -59,9 +59,9 @@ acceptance for one bounded increment before starting the next.
 
 ## Next
 
-Plan and deliver the bounded [Runner process-hosting prerequisite](phase-76.5-runner-process-hosting.md)
-for the observed native PID1 failure, then revise the [Core producer](phase-76.4-core-cloud-primitives.md)
-plan before changing its mechanism; obtain full current code reviews and required verification. The OCI prerequisite is accepted;
+The [Runner hosting prerequisite](phase-76.5-runner-process-hosting.md) is verified. Obtain the full
+revised [Core producer](phase-76.4-core-cloud-primitives.md) plan before changing its mechanism;
+then full current code reviews and required verification. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.
