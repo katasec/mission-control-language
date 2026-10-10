@@ -5,7 +5,7 @@ unchanged from `8f0fa851`. Script parser,30existing and23controlled diagnostic c
 Fresh full code reviews r6 pass; current Linux x64/ARM64 and Windows native checks pass.
 Instrumented macOS matrix repeats pressure-child SIGSEGV139 and collects two reports, but its
 existing route does not upload failure reports. Canonical macOS passes on the same tree and
-therefore has no crash reports. A bounded matrix-retention correction is being planned.
+therefore has no crash reports. The bounded matrix-retention plan passed both full reviews and is approved03:02:53 UTC.
 No merge/publication approved.
 [Current evidence](phase-76.4-core-cloud-primitives_completed.md#diagnostic-correction--implementation-r10).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
@@ -199,8 +199,8 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Complete r10](phase-76.4-core-cloud-primitives-plan.md) approved02:19:30 UTC; same42-file scope, diagnostic change only in build script/README |
-| Independent plan reviews | Fresh full r10 simplicity11/ownership42behaviors+technical gates PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-10-plan-reviews--crash-evidence) |
+| Implementer plan | [Complete r11](phase-76.4-core-cloud-primitives-plan.md) approved03:02:53 UTC;43-path inventory, new change only release workflow/README for failed-matrix evidence |
+| Independent plan reviews | Fresh full r11 simplicity/ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-11-plan-reviews--failed-matrix-retention); prior verdicts historical |
 | Plan approval / implementation | Diagnostic correction pushed `0d0a338f` in [PR77](https://github.com/katasec/forge-mcl/pull/77); parser/30scripts/23controlled checks PASS. Production tree unchanged; no production correction authorized. |
 | Code review / native CI | Fresh full r6 simplicity/style and ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r6--scoped-crash-evidence). Current Linux/Windows/canonical macOS PASS; matrix macOS SIGSEGV recurs, reports copied but not uploaded. Causal/publication/default gates open. |
 | Published/default acceptance | Required; not performed |

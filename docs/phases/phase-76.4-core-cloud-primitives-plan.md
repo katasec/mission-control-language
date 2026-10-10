@@ -1,125 +1,140 @@
-# Phase 76.4 — Complete implementer correction plan, round 10
+# Phase 76.4 — Complete implementer correction plan, round 11
 
-**Current r10 status: PLAN APPROVED2026-10-10 02:19:30 UTC.** Same implementer observed
-**2026-10-10 02:09:58–02:11:28 UTC**. Supervisor transcription of its complete read-only return:
-all retained contracts,42-path inventory, sequence and checks below remain applicable, plus the
-following diagnostic correction. Current clean source `5a80c56e`, base `8d28dc1`, draft PR77;
-production tree unchanged from `8f0fa851`. Supervisor approves r10 after fresh full simplicity
-and ownership PASS, independently checking exact scope, existing artifact route, observed report
-format, original-failure preservation, bounded polling, security/engineering/API/default gates.
-Only paths41–42 may change; production correction and merge/publication remain unauthorized.
+**PLAN APPROVED2026-10-10 03:02:53 UTC.** Same implementer observed
+**2026-10-10 02:54:07–02:56:02 UTC**, read-only. Supervisor transcribes the complete return into
+this artifact: the current43-path inventory, retained API/sequence/gates below plus this correction
+are one complete plan. Fresh full r11 simplicity and ownership reviews PASS; supervisor independently checked exact artifact paths/routing, unchanged production tree, failure/API/security/default gates. This approval authorizes only the two current retention edits, not a production fix or merge/publication.
+Source `0d0a338f672469356b3c412e7a4ccf2dc11d74e7`, base `8d28dc1`, same branch/PR77.
+Only paths42–43 may change after fresh full sequential reviews and explicit approval.
+The implemented r10 plan is [historical evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-diagnostic-correction-plan-r10).
 
-## Diagnostic correction r10 — proposed
+## Current correction r11 — failed matrix retention
 
-Both current macOS jobs fail in the pressure child with SIGSEGV/139. Exact failed binaries pass
-locally on macOS27; this does not establish cause or close macOS14 verification. Investigation
-r11 ended02:09:38 UTC; [evidence](phase-76.4-core-cloud-primitives_completed.md#recurrent-macos-crash--investigation-r11).
-Only inventory paths41–42 (`scripts/build.ps1`, `scripts/README.md`) change. No production,
-workflow, dependency, public API, payload, cap, timeout, process mechanism or test-fixture change.
-Existing locked design applies; no new service/identity/data/UI boundary. Browser/UI N/A.
+### 1. Files
 
-Add two private script functions below their caller:
+Complete inventory is below, expanded42→43 only by `.github/workflows/release.yml`.
+Only that workflow and `scripts/README.md` change now. Every other path remains frozen.
+No production/API/fixture/dependency/image/process/payload/deadline/warning/consumer/deploy change.
+Existing build-verification design/owners and locked Core design apply; no new architecture choice.
+UI/browser N/A. Runtime, security/engineering and default-path gates remain applicable.
 
-```powershell
-function Save-NativeProbeCrashReports {
-    param([string]$Destination, [DateTimeOffset]$StartedAt)
-}
-function Read-NativeProbeCrashReport {
-    param([string]$Path, [DateTimeOffset]$StartedAt)
-}
+### 2. Reuse
+
+Reuse existing matrix `actions/upload-artifact@v7`, existing collector's validated output and native
+probe publish. No new action, helper, dependency, collector or release path. The existing publisher
+selects `forge-*`; diagnostic artifact naming must remain outside that pattern. Existing Core APIs,
+ABI, generated JSON, pure admission, workspace, native lifetime, ONNX and package owners below
+remain exact. Installed Ruby Psych3.1.0 parses YAML; PyYAML is absent and is not installed.
+Availability check's existing world-writable-PATH warning is preserved, not suppressed.
+
+### 3. Sequence
+
+Reconfirm source/branch/base/PR/inventory and unique evidence path after approval. Immediately
+following the existing native matrix build, before the unchanged successful ZIP upload, add:
+
+```yaml
+- name: Preserve failed macOS native probe evidence
+  if: ${{ failure() && runner.os == 'macOS' }}
+  uses: actions/upload-artifact@v7
+  with:
+    name: native-exec-diagnostics-${{ matrix.rid }}-${{ github.run_id }}-${{ github.run_attempt }}
+    path: |
+      dist/cli/exec-probe-crashreports
+      dist/cli/exec-probe-run.log
+      dist/cli/exec-probe-publish.log
+      dist/cli/exec-probe/ForgeMission.Exec.Probe
+      dist/cli/exec-probe/ForgeMission.Exec.Probe.dSYM
+      dist/cli/exec-probe/libonnxruntime.dylib
+    if-no-files-found: error
 ```
 
-Immediately before the existing native probe invocation record `[DateTimeOffset]::UtcNow`.
-Wrap only that invocation; preserve its original exception/nonzero failure unchanged. Failure-only
-macOS cleanup invokes the collector. Collector failure is recorded independently and cannot
-replace the probe failure. Successful/non-macOS invocations do not collect. No failed-test retry.
+The dSYM bundle includes only this probe's existing Info.plist/DWARF/relocations. Report directory
+contains only existing validated reports/status. Do not upload general DiagnosticReports,
+credentials, environment, broad workspace or shipped CLI payload. Preserve successful
+`forge-${{ matrix.rid }}` ZIP/path, publisher `forge-*`, permissions/dependencies/concurrency/
+commands. No continue-on-error, retry or failure replacement; upload failure keeps the job failed.
 
-Collector contract:
+README records this route and the actual earlier loss: two matrix reports were copied but not
+uploaded. Canonical success does not diagnose that same-tree matrix failure. Reassess retention
+once diagnosed; no general observability. Keep collector unchanged: failed macOS only, exact
+header/body identity and procLaunch>=invocation start, nonrecursive user/system directories,
+250ms/10s bounded selection/copy-once/source separation/status/errors, terminating status writes,
+original probe error preserved. No mtime substitution, payload/deadline change or failed-test retry.
 
-- Search only user `~/Library/Logs/DiagnosticReports` and system
-  `/Library/Logs/DiagnosticReports`, nonrecursively, for native probe `.ips` candidates.
-- Parse observed separate header/body JSON with built-in `ConvertFrom-Json`. Require exact
-  header `app_name` and body `procName`, both `ForgeMission.Exec.Probe`. Parse body `procLaunch`
-  using invariant `DateTimeOffset.TryParse`; require launch UTC at/after this invocation start.
-  New mtime never authorizes an older process's delayed report. Do not guess legacy formats.
-- Poll250ms for at most10s, after failure only. Copy eligible reports once into
-  `Destination/exec-probe-crashreports`, separating user/system source directories.
-- Record collection start/end, copied filenames/launch times, absent directories/no reports and
-  access/read/parse/copy errors in a small status file. Incomplete reports may be retried inside
-  that same bounded window. Never copy unvalidated reports or dump unrelated report contents.
-- If status writing itself fails, print that diagnostic failure; retain the original probe failure.
+Retain every producer step below: actual published Client six-argument ABI and generated constructor,
+shared parser/pure diagnostic source, internal named admission, assets/hash/actual JSON cap,
+format3 semantic replay/consumed-shape refusal, exact StepKey/live workspace, prelaunch PID1 refusal,
+atomic retained POSIX groups/Windows jobs, checked termination→pipejoins→exact reap, error precedence,
+joined numeric ONNX cancellation/parallel sibling, unchanged decisive native pressure/pipe probes,
+exact Runner image/init proof and bare-PID1 negative. No consumer changes or guessed signal fix.
 
-Actual local `.ips` fields/launch offset were inspected, and both source directories exist.
-Existing `Invoke-Checked` owns probe failure/run log; existing canonical `always()` artifact
-already includes Destination. The matrix still uploads only its successful CLI ZIP; no claim that
-it retains reports. No new workflow or framework. Reuse Stopwatch, JSON/date/filesystem APIs.
+After meaningful checks, freeze/commit/push the same PR77; hand back full43-path binary diff/hash/
+inventory and unchanged production tree. Fresh full sequential code reviews and normal current
+canonical/four-host CI follow. Retrieve actual failing matrix report/thread/exception/PC/image UUID
+and exact executable/dSYM before proposing a production fix. No normal merge/publication until
+required gates pass; no completion until published-package/installed defaults pass.
 
-Meaningful controlled scratch verification calls the actual script selector/collector and existing
-`Test-NativeExec` with the repository's function-interception pattern, without real crashes,
-native rebuilds, OS report-directory writes or public hooks. Prove exact-new launch acceptance,
-old launch despite new mtime/wrong identity/malformed launch/unsupported content rejection,
-eligible-only copies/user-system separation, no-report/access/read/copy failures, bounded polling,
-and original-failure preservation when collection succeeds/fails. Script syntax and existing
-`make cli-script-test` pass. No43rd test path; `scripts/tests.ps1` unchanged.
+### 4. Verification
 
-After fresh full sequential plan reviews and explicit approval: reconfirm clean source/inventory,
-edit only paths41–42, document scoped behavior/removal condition, run these meaningful checks,
-freeze/push PR77, and obtain fresh full sequential code reviews. No repeated full local AOT or
-unchanged consumer rebuild for report copying; normal current canonical/four-host gates remain
-mandatory. Inspect actual new child crashreport/stack against exact executable/symbols before
-proposing any production fix. An absent report is a recorded gap, not a waiver or guessed cause.
-After diagnosis the supervisor decides whether retaining this small collector remains justified;
-it may not grow into general observability or report/environment bundling.
+| Gate | Required observation |
+|---|---|
+| YAML | Installed `ruby -rpsych -e 'Psych.parse_file(ARGV.fetch(0)); puts "YAML parse PASS"' .github/workflows/release.yml` |
+| Exact step | Parsed condition/actionv7/name/six paths match above |
+| Negative routing | Successful macOS/failing non-macOS do not qualify; name cannot match forge-* |
+| Release preservation | Existing ZIP/publisher pattern/dependencies/permissions unchanged |
+| Scope | Only README/workflow delta;43-path inventory; src tree byte-identical |
+| Existing scripts | make cli-script-test; parser and text diff hygiene |
+| Reviews | Fresh complete sequential simplicity/style and ownership/technical reviews |
+| Native | Normal current canonical/all four hosts; unchanged warning/payload/deadline gates |
+| Diagnostic | Normally retained failed matrix artifact; actual child report and matching binary/symbol UUID |
 
-Supervisor implementation clarification: retain the two reviewed helpers. A cohesive collector
-around45lines is acceptable under the approximate20–40line guidance; do not extract only to hit
-a count. Polling/foreach use two loop levels and early guards. A per-report try/catch may add one
-syntactic level solely to preserve each report's visible failure and continue bounded collection;
-this narrow style exception applies only to that diagnostic collector, changes no failure contract,
-and is removed with the collector or reassessed after causal diagnosis. No third helper authorized.
+All retained focused/full/Release/package/ABI/branch-consumer/normal publication/default gates
+below remain required. Current unchanged production evidence is source-specific; no unchanged
+local full managed/AOT/consumer rebuild solely for an upload declaration. A passing sibling or
+missing reports never closes the unresolved SIGSEGV. Recheck immutable0.1.8/tag before publication.
 
-All15 implementer principles affect this plan: reuse existing owner/APIs(1), one invocation/no
-retry(2), same42paths(3), two coherent private functions(4), evidence before guessed fix(5), failed
-gates remain open(6), visible caller flow(7), selection versus collection duties(8), helpers below
-caller(9), original failure plus visible collection errors(10), early guards(11), named I/O(12),
-unchanged warning gates(13), real failure/test boundary(14), coherent complexity≤15(15).
+### 5. Principles that changed a decision
 
-Open causal question remains the SIGSEGV; no unresolved architecture choice in this diagnostic
-plan. Normal immutable publication and fresh published-package/installed-default acceptance
-below remain required. Prior source-specific PASS results support unchanged code; no prior
-review verdict or other-host success closes the failed macOS gates.
+| Implementer rule | Choice |
+|---|---|
+| 1 No NIH | Existing action/collector/destinations/installed Psych |
+| 2 No duplicate paths | One scoped transport; no second collector/publisher |
+| 3 Minimum | Two edited files, one inventory addition |
+| 4 No speculative abstractions | Direct YAML step, no helper/dependency/hook |
+| 5 Scope | Evidence before cause/fix |
+| 6 Verified | Actual failed-job report/binary correlation and defaults |
+| 7 Outline | Explicit step purpose |
+| 8 Small functions | No new function |
+| 9 Top-down | Retention follows native execution |
+| 10 Explicit errors | Failed build/upload remain failed |
+| 11 Shallow nesting | One condition |
+| 12 Side effects | Artifact action transports; script selects |
+| 13 Warnings | Existing raw-warning gates unchanged |
+| 14 Extraction | No helper for YAML declaration |
+| 15 Complexity | No added parser/wrapper complexity |
 
-## Retained complete producer plan — earlier approval history
+### 6. Open questions and assumptions
 
-**Status: PLAN APPROVED** 2026-10-10 00:47:38 UTC after fresh full simplicity11 and ownership38behaviors/11gates PASS; supervisor independently checked scope, actual APIs/ABI, native/security/default/dependency/failure gates and current held source. Supervisor transcription of the same implementer’s complete read-only return. Prior r7 artifact moved to [completion evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-round-7-full-plan). [Current design/task](phase-76.4-core-cloud-primitives.md); [verified hosting prerequisite](phase-76.5-runner-process-hosting.md).
+No unresolved architecture or implementation choice for retention. Cause remains unknown:
+current matrix38016928684 copied two reports but did not upload; canonical38016928681 passed.
+Actual faulting child thread/PC/UUID remain missing. No production correction, waiver, merge,
+publication or completion approved. Ordinary descendants remain the lifetime guarantee; deliberate
+escape/isolation/permissions/egress remain outside scope. Exact Runner source/digests below remain.
 
-**Combined in-plan code correction approved01:03:13 UTC:** retain checked termination, join all
-outstanding pipe work, then perform final native join/exact root reap. Existing native probe must
-independently prove cancellation of a blocked read and filled blocked write on the exact BCL
-anonymous-pipe type while opposite endpoints remain open; require completion within5s before
-peer closure, and close owned peer endpoints/join pending work on verification failure. No
-abandoned task, replacement pipe framework, product factory, public option or additional file.
-This enforces the already-approved retention/cancellable-I/O contract; full
-[code review findings](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r3--init-correction).
+## Complete retained producer contract
+
+The following APIs, inventory, sequence and gates remain part of current r11. Earlier approval
+history is [recorded separately](phase-76.4-core-cloud-primitives_completed.md#retained-producer-approval-history-before-r11);
+it does not authorize the new correction. Already implemented producer behavior stays frozen.
+Windows expected-path normalization remains implemented; no signal-mask or production fix is
+justified by an unexplained native failure. Current r11's no-unchanged-rebuild rule governs this
+workflow-only correction, while the retained source-specific production evidence remains required.
 
 ## 1. Files
 
-**In-plan probe correction approved2026-10-10 01:37:02 UTC:** only
-`tests/ForgeMission.Exec.Probe/Program.cs`, normalize the canonical relative suffix with
-`relative.Replace('/', Path.DirectorySeparatorChar)` before combining the expected absolute path.
-Preserve the unchanged-relative-input assertion and every probe/deadline. Windows native failure
-is an evidenced expectation defect; Core already normalizes correctly. No production change is
-justified by the unexplained canonical macOS SIGSEGV: the exact artifact passed direct pressure
-and full public-probe reproduction, and its same-source macOS sibling passed. After the probe
-correction, fresh full code reviews and normal current-source canonical/four-host CI remain
-required; no previous failure is waived. Existing full managed/package results remain evidence
-for unchanged product sources; run the corrected managed probe and script checks before pushing.
-
-Complete revised Core plan r9. Assignment start **2026-10-10 00:39:04 UTC**; observed stage end **2026-10-10 00:41:04 UTC**. Plan only: no file, branch or external state changed.
-
-Continue `/Users/ameerdeen/progs/forge-mcl`, branch `adeen/phase-76-core-primitives`, pushed `dc03b7b9f295bf923436eaec5f645771142e061a`, draft PR77, against intended base `8d28dc1ff8f127facfd708b1c89369179e98cf18`. Preserve the four held test/document corrections. Recheck source/status and immutable version availability before implementation.
-
-All 42 paths below are relative to that product repository. This is the complete inventory, including retained implemented work and the replacement hosting correction.
+Continue current clean0d0a338f on `adeen/phase-76-core-primitives`, base8d28dc1, same draftPR77.
+All43 paths below are relative to `/Users/ameerdeen/progs/forge-mcl`. This is the complete current
+inventory. Only42–43 change after current plan approval.
 
 | # | File | Purpose |
 |---|---|---|
@@ -164,9 +179,10 @@ All 42 paths below are relative to that product repository. This is the complete
 | 39 | `tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj` | Existing probe build reference, `ReferenceOutputAssembly=false` |
 | 40 | `ForgeMission.slnx` | Probe included in normal managed compilation |
 | 41 | `scripts/build.ps1` | Normal native gates; exact published-image proof and separate PID1 negative |
-| 42 | `scripts/README.md` | Correct native commands, image identity and ownership/evidence distinctions |
+| 42 | `scripts/README.md` | Correct native commands, image identity, scoped diagnostic retention and ownership/evidence distinctions |
+| 43 | `.github/workflows/release.yml` | Failure-only macOS probe diagnostic artifact outside shipped-release pattern |
 
-No additional file, dependency, process framework, public factory or configuration knob. No Registry, CLI behavioral migration, Host, Runner, Client, infra or deployment change. Existing consumers remain pinned until their separately reviewed upgrades.
+No file beyond this43-path inventory, dependency, process framework, public factory or configuration knob. No Registry, CLI behavioral migration, Host, Runner, Client, infra or deployment change. Existing consumers remain pinned until their separately reviewed upgrades.
 
 UI reference, layout, theme, responsive and browser gates are **N/A**. Runtime/default-path acceptance applies. Core changes no public service entry point, datastore, managed identity or credential boundary. Persistent Host and ephemeral Runner ownership, arbitrary user-vetted code and inherited process authority remain locked; no sandbox or egress claim.
 
@@ -359,7 +375,7 @@ internal sealed class ExecProcessCleanupException : IOException;
     ```
     No `--init`. Negative mode passes only after public failed-envelope/no-child proof; it does not execute the ordinary lifecycle suite. Docker unavailable/probe failure fails required Linuxx64 CI, never skips. No Runner/image edit.
 
-22. **Stabilize then freeze.** Run focused/full managed, Release/package and managed probe first, then commit/push same PR77 and normal final-source canonical/four-host native gates. Preserve failed logs and exact Reason/error evidence; do not invent the historical canonical failure’s cause. Fresh branch-package public consumer is required because Core production source changes. Supervisor receives full42-path diff/evidence, conducts sequential complete reviews and owns CI follow-through, merge, normal publication, published/installed acceptance and closure.
+22. **Stabilize then freeze.** Run focused/full managed, Release/package and managed probe first, then commit/push same PR77 and normal final-source canonical/four-host native gates. Preserve failed logs and exact Reason/error evidence; do not invent the historical canonical failure’s cause. The existing branch-package public consumer remains production-source evidence; current retention-only correction does not rebuild unchanged source. Supervisor receives full43-path diff/evidence, conducts sequential complete reviews and owns CI follow-through, merge, normal publication, published/installed acceptance and closure.
 
 ## 4. Verification
 
@@ -407,7 +423,7 @@ Unchanged fixtures:
 
 Keep Python3.13/onnx1.19.0 test-only generation provenance; runtime tests need only normal native ONNX package.
 
-Read-only readiness facts: Core inventory returned0.1.7 through0.1.0, with0.1.8 absent; supervisor independently observed release tag404. Recheck immediately before mutation/publication. Current four held paths and `dc03b7b` remain unchanged. Prior managed/native observations and hosting acceptance are supporting history, not revised Core acceptance.
+Read-only readiness facts: Core inventory returned0.1.7 through0.1.0, with0.1.8 absent; supervisor independently observed release tag404. Recheck immediately before mutation/publication. Current production source remains unchanged at0d0a338f; exact tree identity is recorded. Prior managed/native observations and hosting acceptance retain only their named source/layer; failed macOS matrix and normal publication/default gates remain open.
 
 The producer default is normal published Core plus installed CLI regressions. Exact-image native verification is controlled component proof; later cloud content/protocol/client tasks remain open.
 
@@ -417,7 +433,7 @@ The producer default is normal published Core plus installed CLI regressions. Ex
 |---|---|
 | 1 No NIH | Reuse verified tini, existing parser/diagnostics/pipes/native ONNX/build/publication owners |
 | 2 No duplicate paths | Remove Core orphan reaper; keep one generic adapter and exact existing image entrypoint |
-| 3 Minimum needed | Same42 paths; no consumer, runtime image, protocol or deployment work |
+| 3 Minimum needed | Complete43-path producer inventory; only README/workflow delta, no consumer/runtime image/protocol/deployment work |
 | 4 No speculative abstractions | Direct private PID1 guard; no process framework, factory, capacity knob or serialization reader |
 | 5 Stay in scope | Apply locked init split and resolved pressure obligation; deviations return before edits |
 | 6 Verified means done | Require final-source native, published-package and installed-default observations |
