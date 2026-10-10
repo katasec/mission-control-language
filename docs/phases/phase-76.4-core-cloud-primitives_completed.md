@@ -794,3 +794,19 @@ managed suite failed and did not test corrected-launch behavior.
 | Hosting correction design / supervisor | 2026-10-09 23:52:24 | 2026-10-09 23:53:00 | 36s | Standard init ownership proposal; documentation12files/81links/2JSON/fences/global/diff PASS; no product approval |
 
 Tokens N/A; not independently measured. Product PR and acceptance timing remain future.
+
+## Hosting closed — full Core plan revision
+
+Hosting independently verified00:37:11 UTC; [actual source/image/process and installed Chat
+observations](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance).
+Documentation closurePR379 merged00:38:55 UTC to MCLmaincf6e8c7804ea8e0d6367f332dd53f672cd44817e.
+Runner main17080b73, infra mainfa49f916 both clean/current. This is not Core completion.
+
+Same implementer read-only full plan:r9 assigned2026-10-10 00:39:04 UTC. Existing full generic
+design and independently reviewed init split are already locked, so Design is not repeated;
+plan must retain every current42-file API/ABI/semantic/native/default obligation and specify
+barePID1 prelaunch refusal, adopted-scan removal, stronger duplex pressure and exact published
+Runner0.20.6 immutable-image probe with unchanged entrypoint. Full sequential current plan
+reviews/approval precede all mechanism edits. Existing four-file corrections remain held;
+root independently observed unchanged CoreHEADdc03b7b and exact four modified paths.
+No later consumer upgrade or additional product repository is authorized by this bounded task.

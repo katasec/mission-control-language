@@ -2,7 +2,8 @@
 
 **Status:** Managed/package gates pass; four-file verification correction is held uncommitted.
 Actual Linux PID1 native CI failed with retained-root ECHILD; the [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
-Next: full revised implementer plan before mechanism edits. Merge/publication/default acceptance remain open.
+Full revised implementer plan r9 assigned2026-10-10 00:39:04 UTC, read-only before mechanism
+edits. Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -138,9 +139,16 @@ API, permission policy, datastore or identity authority. Product edits require t
 
 The former Core PID1 adopted-child decision is superseded by the locked hosting design;
 [failure and source evidence](phase-76.4-core-cloud-primitives_completed.md#verification-correction-r4-and-linux-container-failure).
-After hosting closes, the full revised Core plan must exercise the public native probe under the
-exact published init-bearing image and retain all four-host/canonical gates, unrelated managed
+The full revised Core plan must exercise the public native probe under published Runner0.20.6,
+GHCR index`sha256:c0031d451d046d4f28a75ca7f7c7f26169b26e92555de4b601128a005670331c`,
+and retain all four-host/canonical gates, unrelated managed
 child ownership, bounded joins and explicit cleanup failures. Local Docker absence is not a waiver.
+Use the actual unchanged Runner entrypoint and run the mounted native probe with Docker exec;
+separately prove unsupported bare Linux PID1 refusal before child launch. Verify stopped execution,
+no late sentinel and bounded orphan process-entry removal by init as separate facts. This is
+controlled native component verification, not a replacement for published NuGet/default acceptance.
+The pressure child must finish stdout/stderr writes larger than the pipe before reading stdin,
+so the required concurrent I/O proof cannot pass a sequential parent accidentally.
 
 ### Existing required gates
 
@@ -185,7 +193,7 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Prior r7](phase-76.4-core-cloud-primitives-plan.md) approval is historical; hosting design supersedes PID1 mechanism; full revision required after hosting |
+| Implementer plan | [Prior r7](phase-76.4-core-cloud-primitives-plan.md) historical; hosting verified; full read-only r9 assigned00:39:04 UTC |
 | Independent plan reviews | Fresh complete r7 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md#complete-round-7-clarification--full-reviews-and-approval) |
 | Plan approval / implementation | Correction handbackdc03b7b at23:38:49 UTC; all42 paths match scope; clean/pushed draftPR77; [managed/package evidence](phase-76.4-core-cloud-primitives_completed.md#corrected-frozen-source--code-reviewnative-pending) |
 | Code review / native CI | Full r2 reviews found two verification gaps; local r4 correction passes. Atdc03b7b canonical macOS1054PASS/10skips/AOT0warnings; four-host Linux x64 host PASS/bare PID1 FAIL, other3 native PASS. Final revised-source gates/fresh full reviews remain required. |
