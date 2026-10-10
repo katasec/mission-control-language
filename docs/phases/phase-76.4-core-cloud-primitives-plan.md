@@ -95,7 +95,7 @@ failure. Attribute setter returns direct errno and uses existing Check, never st
    deadlines, BCL pipe cancellation and joined native ONNX/parallel sibling. Do not redo implemented
    behavior or broaden this correction.
 7. Because production changes, run fresh managed/focused/full/Release/package/managed probe, actual
-   published Client ABI and new distinct prerelease local package/cache public consumer before AOT.
+   published Client ABI and final-source local package in a new empty isolated consumer cache before AOT.
    Freeze/commit/push same PR77, full43-path binary diff/inventory/hash and exact five-path delta.
    Fresh complete sequential code reviews and normal final-source canonical/all-four-host CI follow;
    supervisor owns merge/publication/published/default acceptance/closure.

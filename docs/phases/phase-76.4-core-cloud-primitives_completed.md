@@ -2856,3 +2856,54 @@ product remained clean c4176ba5. No duplicate caught-default path or owner with 
 Move nothing. Root independently confirmed actual plan hash, clean product baseline, precise five-path
 scope, signal ABI/error/failure/parent/ignored behavior and unchanged default/security boundaries,
 then approved04:00:12 UTC. Approval stamp changes document hash only; reviewed contents stay exact.
+
+## Caught-default implementation r12 — current source, acceptance open
+
+Same implementer changed only the five approved paths, committed/pushed
+`7952012074730451c85b8cdcba79a2acf7c7ea15` to product PR77, clean and synchronized.
+Complete43-path diff2924+/457− SHA256
+`59ed6711abbd7d4e50e7a39a6be49c56e85dbc5077204df2ed1e9af34440f05c`;
+full tree`39d48da4776c315c5508c70be5077fcc4dbd5ece`, Core source tree
+`b0866b9ba4fde62ea4fc1ad6d73f097890058d2b`. Five-path delta212+/4−.
+The production change queries caught macOS dispositions and defaults them through existing
+spawn attributes. Linux flags2, Windows, pressure payload/deadline, public APIs and workflow stay
+unchanged. The C witness observes before managed startup; test-parent actions are independently
+restored/read back. Compiler I/O, process exit and cleanup are joined with visible errors.
+
+| Current-source observation | Evidence |
+|---|---|
+| Debug solution and Core Release | Zero warnings/errors; final managed probe rebuilt after helper cleanup/order/ABI assertions |
+| Focused eight families |191passed/0failed/0skipped; actual published Client0.9.3 Create/Open/Reconnect ABI covered |
+| Normal PowerShell full Debug |1063passed/6existing live skips/0failed,2m31; only MCL_API_KEY removed |
+| Normal PowerShell Release package |407passed/0skipped/0failed; metadata/content/provenance/dependencies PASS |
+| Existing scripts |30PASS; controlled compiler-failure fixture is expected negative evidence |
+| Managed public probe | C witness caught0/flags0,ignored1/flags0,parent unchanged/restored; existing pipes/pressure/workspace/argv/descendant checks PASS |
+| Fresh isolated branch consumer | Generated JSON/assets/executable/hash/admission, arbitrary exec/workspace/file bytes/StepKey, numeric ONNX, observed in-flight cancellation joined/no score, six-arg constructor/old hashes PASS |
+| Branch package identity | Normal0.1.8 exact7952012 nuspec, Parser/Scout0.1.0; built/restored SHA256`8e74351d51ba474937a0c140d4e45c565130d4c011c016328e0c8fd66494f0ba` |
+| Current normal CI | [Canonical38023130353](https://github.com/katasec/forge-mcl/actions/runs/38023130353), [four-host38023130348](https://github.com/katasec/forge-mcl/actions/runs/38023130348), created04:10:26UTC/head7952012; in progress at handback |
+
+Raw commands/logs/full inventory/diffs/fixture hashes and failure observations:
+`/private/tmp/phase76-core-caught-defaults-20261010T040045Z/EVIDENCE.md`.
+Root independently read the five-path diff, normal full/package/probe/consumer logs, exact nuspec
+and CI source/run identities. Current full code reviews/native gates/publication/default acceptance
+remain open; no merge or task completion claimed.
+
+### Disposable verification command correction
+
+Bash omitted normal PowerShell provider/NuGet exports: supporting full suite1059/10/0 and package
+405/2/0 passed, but fresh restore reported401 and was stopped. Normal profile runs above replace
+those as required managed evidence. No credential was printed or configuration changed.
+The temporary `-p:Version=0.1.8-phase76.12` pack propagated its global version to Parser/Scout;
+authenticated restore correctly failedNU1102. SDK pack targets show global PackageVersion would
+also propagate. The failed candidate/hash/cache remain labelled failed evidence.
+Supervisor approved the verification-command adjustment04:09:32UTC: normal final-source0.1.8
+package in a NEW empty isolated cache/local feed, with source/dependency/built-restored-byte checks.
+The unnecessary prerelease wording was corrected in the active plan. This changes no product
+scope/contract or required observation, creates no pack framework, and cannot substitute for the
+later fresh normal remote published-package acceptance. Global cache remains untouched.
+
+| Stage boundary | StartUTC | EndUTC | Evidence |
+|---|---|---|---|
+| Implement:r12, root assignment/result available |2026-10-10 04:00:17 |2026-10-10 04:12:32 | Same implementer, final source/evidence available before next assignment |
+| Implement:r12, agent observed |2026-10-10 04:00:45 |2026-10-10 04:11:26 | Frozen handback and own clock |
+| Full code review:r8 simplicity/style assignment |2026-10-10 04:12:32 | Pending | Complete current43-path artifact; two full checklist tables required |

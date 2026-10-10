@@ -1,11 +1,13 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Core implementation and complete source reviews are finished at `c4176ba5`;
-Linux x64/ARM64 and Windows ARM64 native checks pass. Both current macOS jobs fail with
-pressure-child SIGSEGV139. Failed-matrix retention now works: actual child/parent reports and
-UUID-matched executable/dSYM identify a strongly supported macOS inherited-disposition cause.
-The focused correction design and complete r12 plan passed both reviews. Supervisor approved
-the five-file correction04:00:12 UTC; implementation is in progress. No merge/publication approved.
+**Status:** The five-file macOS correction is committed at `79520120` after approved r12 design
+and plan reviews. Normal PowerShell full Debug passes1063/6 existing skips/0 failures; Release
+package407/0/0 and managed public-adapter signal/pressure/lifecycle probes pass. Fresh-cache branch
+consumer passes; the commit is pushed. Fresh complete code reviews, current-source
+canonical/four-host native checks, merge/publication and default acceptance remain open.
+Prior `c4176ba5` source reviews and Linux/Windows native PASS are historical; both macOS jobs
+failed pressure-child SIGSEGV139. Retained reports and UUID-matched executable/dSYM support
+the inherited-disposition cause. No merge/publication approved.
 [Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
