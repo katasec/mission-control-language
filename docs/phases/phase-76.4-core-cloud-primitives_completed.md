@@ -2404,3 +2404,9 @@ independently read by supervisor. Exact same synthetic source identity verified0
 checks, native pipe read/write cancellation0/0ms, pressure/workspace/argv/cwd/lookup/exited-descendant
 and root-first timeout/cancel PASS03:17:42–03:17:48. No compiler/AOT warnings found. At03:22:13 UTC,
 Windows and both macOS jobs still running; no remaining-platform PASS or causal conclusion inferred.
+
+Current Windows ARM64 job114116567016 SUCCESS, completed03:23:08 UTC. Supervisor read actual
+`/private/tmp/phase76-core-r11-windows-arm64.log`: identity0.10.1-dev.8+049c61029f0a766992f02a462c1710d97eb3b512;
+30scriptchecks; blocked read3ms/write0ms; pressure/workspace/argv/cwd/lookup/exited-descendant/
+root-first timeout/cancel PASS03:22:36–03:22:43. No compiler/AOT warnings found. Both macOS jobs
+still pending at this observation; no causal conclusion or all-host PASS inferred.
