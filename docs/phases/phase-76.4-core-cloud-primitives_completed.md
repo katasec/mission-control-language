@@ -5,6 +5,19 @@
 Complete r9 plan and its approved corrections are implemented; current handback is below.
 Both fresh full current code reviews pass; native verification/publication/default acceptance remain open.
 
+## Retained local overrides — investigation r10
+
+Read-only stage **2026-10-10 02:00:23–02:02:52 UTC**; no repository change.
+Supervisor suspected that pausable execution dropped global-let `--var` overrides. Actual
+production CLI regressions both PASS (2/2,874ms), including successive Hands calls. A controlled
+public-API first execution and fresh-runner resume both retain overrides through the CLI's
+existing `Vars + ContextObjects` composition. `Vars` alone filters lets on original main
+`8d28dc1` as well as current source; this behavior predates this phase. Checkpoint inputs exclude
+process-local values, and cloud admission still rejects undeclared, global-let and reserved names.
+Supervisor independently read raw test/probe output. No demonstrated regression and no correction
+authorized. This controlled evidence does not replace installed-default acceptance. Reproduction,
+original source excerpts and raw logs: `/private/tmp/phase76-vars-probe-20261010T020023Z/EVIDENCE.md`.
+
 ## Approved Windows expectation correction — implementation r9
 
 Same implementer stage **2026-10-10 01:37:02–01:38:24 UTC**. Frozen/pushed clean source
@@ -159,11 +172,18 @@ native CLI identity `0.10.1-dev.6+f8696c714ae83e9fb2506884ec3d8d0f2cdcbb33`.
 | Under-init lifecycle | All native assertions PASS; orphan entries disappear01:50:27 and01:50:30, separately from no-late-sentinel timeout/cancel checks |
 | Bare PID1 negative | Refused before child/root/sentinel creation01:50:32 UTC; owned test container removed |
 | Linux zero warnings | Supervisor read both completed-job logs; no compiler/linker/ILC/trim warning match |
-| Windows/macOS/canonical | Still running; no accepted result yet |
+| Windows ARM64 | Job114099979764 SUCCESS,18m6s; corrected workspace assertion and all later native lifecycle checks pass; blocked read/write3ms/0ms; exact f8696c7 CLI/source identity |
+| Windows warning gate | No compiler/linker/ILC/trim warnings; the separate Git LF-to-CRLF notice is not a compiler diagnostic |
+| macOS matrix | Job114099979637 FAILED,26m27s; blocked-pipe2ms/0ms PASS, then pressure child exits139(SIGSEGV)02:04:42; later assertions not reached |
+| Canonical macOS | Job114099979075 FAILED; managed1055PASS/10existing skips/0fail, nativepipe0ms/0ms PASS, then same pressure-child SIGSEGV02:06:16; artifact11655851471 retained |
 
 Actual raw logs `/private/tmp/phase76-core-r9-linux-x64.log` and
-`/private/tmp/phase76-core-r9-linux-arm64.log`. These are fresh current-source component checks;
-normal publication and installed-default acceptance remain open.
+`/private/tmp/phase76-core-r9-linux-arm64.log` and
+`/private/tmp/phase76-core-r9-windows-arm64.log`,
+`/private/tmp/phase76-core-r9-macos-arm64.log` and `/private/tmp/phase76-core-r9-canonical.log`.
+The repeated macOS failure is not waived. Read-only investigation r11 compares the child/native
+runtime behavior and exact binaries; no speculative correction is authorized. Normal publication
+and installed-default acceptance remain open.
 
 ## Approved pipe correction — implementation r8
 

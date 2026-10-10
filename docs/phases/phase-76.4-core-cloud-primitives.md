@@ -2,10 +2,9 @@
 
 **Status:** The approved Windows probe expectation correction is committed/pushed at `5a80c56e`;
 production source is unchanged from `8f0fa851`. Corrected managed probe/script checks pass.
-Both fresh full code reviews pass; normal native CI is in progress. Earlier native checks
-found the corrected Windows expectation defect and an unexplained canonical macOS child crash;
-both Linux and the macOS matrix gates passed. No merge/publication is approved.
-[Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction).
+Both fresh full code reviews pass. Current Linux and Windows native checks pass; both macOS
+checks fail in the pressure child with exit139 (SIGSEGV), under investigation. No merge/publication
+is approved. [Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r5--portable-expectation).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
@@ -199,6 +198,6 @@ be marked complete by this package probe.
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
 | Implementer plan | [Complete r9](phase-76.4-core-cloud-primitives-plan.md) approved00:47:38 UTC; only defined42-file producer scope |
 | Independent plan reviews | Complete r9 simplicity11/ownership38+11gatesPASS; [current verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-9-plan-reviews) |
-| Plan approval / implementation | Complete r9 and in-plan r8 correction implemented at `8f0fa851`; [PR77](https://github.com/katasec/forge-mcl/pull/77), local checks and fresh branch consumer pass. |
-| Code review / native CI | Full current simplicity/style and ownership r4 PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction). Canonical 38011993998 and four-host 38011993926 run against `8f0fa851`; native/default gates remain open. |
+| Plan approval / implementation | Approved plan and in-plan corrections implemented at `5a80c56e`; [PR77](https://github.com/katasec/forge-mcl/pull/77). Corrected managed probe/scripts pass; production source matches the previously tested package/consumer. |
+| Code review / native CI | Full current simplicity/style and ownership r5 PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r5--portable-expectation). Current canonical38013941959/four-host38013941972: Linux both and Windows PASS; both macOS fail with pressure-child SIGSEGV. Read-only investigation r11 in progress. Publication/default gates open. |
 | Published/default acceptance | Required; not performed |
