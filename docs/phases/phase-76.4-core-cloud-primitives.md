@@ -1,6 +1,8 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Managed/package gates pass; approved verification corrections are being completed. Actual Linux PID1 native CI failed with retained-root ECHILD; the [hosting prerequisite proposal](phase-76.5-runner-process-hosting.md) requires review before any mechanism change. Merge/publication/default acceptance remain open.
+**Status:** Managed/package gates pass; four-file verification correction is held uncommitted.
+Actual Linux PID1 native CI failed with retained-root ECHILD; deliver the [locked hosting prerequisite](phase-76.5-runner-process-hosting.md),
+then approve a full revised Core plan before mechanism edits. Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -128,26 +130,17 @@ API, permission policy, datastore or identity authority. Product edits require t
 | Exec ownership | Establish OS ownership before target execution; retain it through stream completion and termination. No post-launch race or descendant snapshot substitutes. The approved plan uses POSIX unreaped-leader and atomic Windows job ownership. |
 | Exec failure | Failed ownership setup never falls back to an unowned launch. Timeout/caller cancellation and I/O failure keep their declared results; termination failure remains visible. Parent-first-exit tests prove no surviving ordinary descendant or later sentinel write. |
 | Cleanup failure precedence | An observed OS termination/reap failure propagates as a visible IOException even when caller cancellation is requested; do not replace it with OCE. Normal caller cancellation propagates OCE after successful cleanup. Preserve the cleanup operation/error and original failure context through a private distinction at the exec boundary; no new public exception contract or fallback. |
-| Supported PID1 runtime | The Runner image directly starts dotnet as its entrypoint. If it adopts ordinary descendants, reap only owned-group children after termination; never reap unrelated processes or set a global subreaper policy. Distinguish stopped execution from zombie process entries. Native observation and I/O must remain joinable when cleanup itself fails. |
+| Supported container runtime | Locked hosting correction places dotnet below standard init. Subsequent reviewed Core plan must reject bare Linux PID1 before launch and remove adopted-child scanning. Core retains its direct root/group; init reaps orphans. Native observation and I/O must remain joinable on failure; distinguish stopped execution from zombie entries. |
 | Declined stdin | A child may close unread stdin. Recognize only the platform's concrete broken-pipe/closed-input condition; still join the process and remaining streams, honor cancellation, validate exit code and parse declared JSON output. Other I/O errors remain failures. The correction plan must name the exact error mapping and tests; blanket IOException swallowing or message matching is not approved. |
 | Checkpoint input | Existing codec rejects missing/null required current-format shape before resume dereferences it; InvalidContinuation occurs without provider/executable invocation. |
 | Existing parser / adapters | Refactor coherent parser stages to satisfy complexity/nesting limits, preserve one parser, place public streaming entry points before helpers, diagnose the canonical fast-child failure from observed envelope/error evidence. |
 | Platform evidence | Any new platform launch primitive requires behavioral checks on every supported host as well as current-source zero-warning AOT. Existing release help/version probes alone do not exercise launch semantics. |
 
-Supervisor Type-2 decision (2026-10-09): Linux PID1 adopted-child reaping stays
-private to the existing exec lifetime owner. After checked termination of the atomically owned
-process group and observation of root exit, retain the root unreaped; enumerate this process's
-task children, exclude the root, verify each candidate belongs to that held group, and reap exact
-owned children. Repeat through intermediate-parent exit/adoption until no owned descendants
-remain, then reap the root last. This post-termination scan neither establishes ownership nor
-chooses kill targets. No global subreaper, waitpid(-1), unrelated-child reaping or silent procfs
-failure fallback. Native/procfs cleanup failures retain visible IOException precedence. Reversal
-and removal: replace this private drain with an authoritative supported OS primitive if one
-provides equivalent root-excluding adopted-child reaping, preserving the same public contract and
-tests. The normal Linux x64 CI gate must prove actual PID1 behavior in a container without
---init, including an unrelated .NET child remaining waitable by its original owner; all four
-supported native hosts still require their ordinary lifecycle checks. Docker's absent local
-daemon is an observed environment limitation, not PID1 acceptance or a gate waiver.
+The former Core PID1 adopted-child decision is superseded by the locked hosting design;
+[failure and source evidence](phase-76.4-core-cloud-primitives_completed.md#verification-correction-r4-and-linux-container-failure).
+After hosting closes, the full revised Core plan must exercise the public native probe under the
+exact published init-bearing image and retain all four-host/canonical gates, unrelated managed
+child ownership, bounded joins and explicit cleanup failures. Local Docker absence is not a waiver.
 
 ### Existing required gates
 
@@ -192,8 +185,8 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Complete r7](phase-76.4-core-cloud-primitives-plan.md) approved 23:27:01 UTC; same42-file scope and public contracts |
+| Implementer plan | [Prior r7](phase-76.4-core-cloud-primitives-plan.md) approval is historical; hosting design supersedes PID1 mechanism; full revision required after hosting |
 | Independent plan reviews | Fresh complete r7 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md#complete-round-7-clarification--full-reviews-and-approval) |
 | Plan approval / implementation | Correction handbackdc03b7b at23:38:49 UTC; all42 paths match scope; clean/pushed draftPR77; [managed/package evidence](phase-76.4-core-cloud-primitives_completed.md#corrected-frozen-source--code-reviewnative-pending) |
-| Code review / native CI | Simplicity/style r2 assigned23:39:10 UTC; canonical38005239039 and four-host38005239137 pending atdc03b7b; ownership follows sequentially |
+| Code review / native CI | Full r2 reviews found two verification gaps; local r4 correction passes. Linux x64 native host PASS, bare PID1 FAIL; Windows/Linux ARM64 native PASS atdc03b7b. Final revised-source gates and fresh full reviews remain required. |
 | Published/default acceptance | Required; not performed |

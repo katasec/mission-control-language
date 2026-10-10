@@ -1,8 +1,8 @@
 # Phase 76.5 — Runner process hosting prerequisite
 
-**Status:** Supervisor design proposal; not build-ready or approved. Required by the observed
-Core container failure. Core verification remains open; no product change under this proposal is
-authorized until sequential design/plan reviews and explicit plan approval.
+**Status: DESIGN LOCKED** 2026-10-10 00:00:19 UTC after fresh full sequential simplicity and
+ownership PASS. Implementer read-only plan is next; no product edit until full plan reviews and
+explicit approval. Core verification remains open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 
@@ -22,9 +22,16 @@ Done when: normal image build proves init is PID1, .NET is its child, direct chi
 and SIGTERM forwarding remain correct, and orphaned descendants are reaped. The immutable
 merged-main multi-architecture Runner image is published through its existing workflow and
 deployed through forge-infra Make/what-if; supervisor observes the normal hosted Chat path
-still works and checks deployed process/image provenance. The later corrected Core gate runs
-its native public-API probe under that exact published init-bearing image, observes no surviving
-descendant/sentinel and bounded orphan reaping, and retains all four-host/canonical AOT gates.
+still works and checks deployed process/image provenance. Hosting closes independently at those
+observations; it does not wait for downstream Core code or acceptance.
+
+### Downstream Core gate
+
+After hosting closes, the separately revised/reviewed Core plan runs its native public-API probe
+under that exact published init-bearing image, observes no surviving descendant/sentinel and
+bounded orphan reaping, and retains all four-host/canonical AOT gates. Core remains open until
+that observation and all its existing publication/default gates pass. This is a consumer
+obligation, not part of this hosting task's Done when.
 
 ## Design
 
@@ -122,11 +129,13 @@ evidence, explicitly separate. No branch image or overridden entrypoint closes t
 
 ## Open questions
 
-None in the hosting behavior. Design review is pending. The implementer's subsequent read-only
+None in the hosting behavior. Full design reviews passed. The implementer's subsequent read-only
 plan must name exact existing-file image verification and normal CI commands before approval;
 no image/CI/product edit is authorized by this proposal. Core r7's raw-PID1 adopted-reap choice
-is superseded only after this revised hosting design is reviewed/locked and a full revised Core
-plan is approved. Preserve all other Core contracts and current verification corrections.
+is superseded by this locked design; source edits still require a full revised Core plan approval.
+Preserve all other Core contracts and current verification corrections.
 
-Supervisor design:2026-10-09 23:52:24–23:53:00 UTC. Initial validation passed12docs/81links,
-2JSON examples/fences/global index and git diff --check; subsequent live evidence also validates.
+Full current design r9: simplicity11 checks PASS, ownership15 behaviors and gates PASS;
+[review tables and stage boundaries](phase-76.5-runner-process-hosting_completed.md#design-reviews).
+Supervisor independently checked the complete design, source/runtime failure evidence, ownership,
+failure/security/default gates and closure dependency before lock. Implementation remains gated.

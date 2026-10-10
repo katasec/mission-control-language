@@ -728,9 +728,9 @@ SDK10.0.401/runtime10.0.12; base image digest222759b391a1aaf241166672c8f99b2d4ad
 Supervisor checked exact .NET10.0.12 primary source: PID1 reapAll eventually uses waitpid(-1),
 competing with Core's retained native root. Correct identity-loss handling refused further
 numeric-group signalling and exposed IOException; it does not establish successful cleanup.
-The [hosting proposal](phase-76.5-runner-process-hosting.md) is a new reviewed-design gate,
-not approval to patch runtime handlers or waive the native/default path. No new implementation
-until its sequential design/plan loop approves the changed hosting boundary.
+The [hosting design](phase-76.5-runner-process-hosting.md) locked00:00:19 UTC after full current
+reviews supersedes the former Core PID1 adopted-child choice. No runtime-handler patch or native/default
+waiver is approved. Hosting plan approval comes first; full revised Core plan follows its closure.
 
 Additional frozen-dc03 native observations: LinuxARM64 job114072387316 and WindowsARM64
 job114072387441 succeeded. Supervisor downloaded raw logs native-linux-arm64-dc03.log and
@@ -743,7 +743,7 @@ were still running at the last snapshot.
 
 Supervisor later directly observed release run37999080639 completed successfully on all four
 native hosts at source770778d (GitHub updatedAt2026-10-09T22:54:45Z). These frozen-source build/help/version results remain lower-layer evidence; the
-canonical macOS managed suite is still failing and corrected-launch behavior is not yet tested.
+that old source's canonical macOS managed suite failed; it did not test corrected-launch behavior.
 
 | Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
 |---|---|---|---|---|

@@ -22,12 +22,12 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Corrected Core code passed managed/package checks; independent code review and native CI in progress. OCI evidence recorded separately. |
+| Current documentation handoff | Core local correction passes; observed native PID1 failure has a locked, independently reviewed hosting correction. OCI accepted. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) corrections written; remaining cleanup/native gates open; unified default-path acceptance not started |
-| Process-hosting prerequisite | Actual PID1 native failure; [Runner init proposal](phase-76.5-runner-process-hosting.md) awaits full design reviews; no product change approved |
+| Process-hosting prerequisite | [Runner init design](phase-76.5-runner-process-hosting.md) locked after full current reviews; implementer read-only plan in progress; no product edit approved |
 
 ## Dependency-ordered work
 
@@ -59,7 +59,7 @@ acceptance for one bounded increment before starting the next.
 
 ## Next
 
-Review and deliver the bounded [Runner process-hosting prerequisite](phase-76.5-runner-process-hosting.md)
+Plan and deliver the bounded [Runner process-hosting prerequisite](phase-76.5-runner-process-hosting.md)
 for the observed native PID1 failure, then revise the [Core producer](phase-76.4-core-cloud-primitives.md)
 plan before changing its mechanism; obtain full current code reviews and required verification. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
