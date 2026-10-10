@@ -2410,3 +2410,123 @@ Current Windows ARM64 job114116567016 SUCCESS, completed03:23:08 UTC. Supervisor
 30scriptchecks; blocked read3ms/write0ms; pressure/workspace/argv/cwd/lookup/exited-descendant/
 root-first timeout/cancel PASS03:22:36–03:22:43. No compiler/AOT warnings found. Both macOS jobs
 still pending at this observation; no causal conclusion or all-host PASS inferred.
+
+## Matched native crash — investigation r13
+
+Current source `c4176ba5598b77538829350e8bb7c8fc986bf8b0`; actual synthetic merge
+`049c61029f0a766992f02a462c1710d97eb3b512` has the identical source tree. Matrix38019324271
+macOS job114116566327 failed pressure-child139 and parent134. Canonical38019324267
+job114116565649 independently failed pressure139 at03:38:15 UTC, completed03:38:46 UTC.
+Linux x64/ARM64 and Windows ARM64 current checks passed as recorded above. No retry or waiver.
+
+### Retention and exact identity
+
+The failure-only matrix upload succeeded: [artifact11658167304](https://github.com/katasec/forge-mcl/actions/runs/38019324271/artifacts/11658167304),
+`native-exec-diagnostics-osx-arm64-38019324271-1`,23,340,627bytes,
+archive SHA256 `435b538a51cf9a09f185abcd710043fd56630801cf98dfc832a1f156e3b53b42`.
+It contains two actual reports plus logs and exact executable/dSYM. Collector copied both user
+reports, no errors/absent directories, and preserved original failed probe134. This closes the
+retention observation only, not runtime acceptance. The successful ZIP upload remained skipped.
+
+Root downloaded reports to `/private/tmp/phase76-core-r11-matrix-reports` and complete symbols to
+`/private/tmp/phase76-core-r11-matrix-symbols`; independently matched executable AND DWARF UUID
+`E1082A2A-29B5-396E-B741-3491896B2982` to the child report before successful atos symbolication.
+Binary SHA256 `ccb7fd1b0ae1882d6baaacc7b871415b23efddd90306ec902b20784089ef3c6f`.
+`matched-child-symbolication.json` retains actual command observations. An initial dwarf check
+before the download finished failed; the completed-download check succeeded, with no diagnostic.
+Raw failed logs: `/private/tmp/phase76-core-r11-macos-arm64.log` and
+`/private/tmp/phase76-core-r11-canonical.log`. Emitted CI error time is not asserted to be crash time.
+
+### Child and parent are separate failures
+
+Child39655 launched03:34:06.3550 UTC, faultingThread2: SIGSEGV/EXC_BAD_ACCESS,
+KERN_INVALID_ADDRESS0, instruction-abort PC0/FAR0. Registers x0=30(SIGUSR1), x1/x2 point to
+signal info/context, x3=0, x8=66(0x42). Reported UTF8 frame imageoffset0x2e2be8 maps to an ADD
+following a direct ASCII-widening call, not an indirect null branch. Exact matching binary's
+ActivationHandler instead loads saved handler into x3 and saved flags into w8, tests SA_SIGINFO,
+then tail-branches `br x3` at0x10006f52c. Report state matches a null previous-handler chain.
+No ONNX image was loaded. Parent39652 is a separate SIGABRT assertion failure after child139;
+its FailFast/TaskAwaiter/Program frames are not the child cause.
+
+### Report-grounded mechanism and bounded correction
+
+Same implementer read-only stage observed03:36:57–03:41:36 UTC; result available to supervisor
+by03:42:57 UTC (the exact arrival boundary was not captured). Root independently read matched
+reports/disassembly and executed the safe scratch disposition probe at03:43:26 UTC:
+
+```
+child mode=implicit-exec-default handler=0x0 flags=0x42 SIGUSR1=30 SA_SIGINFO=1
+child mode=explicit-default handler=0x0 flags=0x0 SIGUSR1=30 SA_SIGINFO=0
+```
+
+This installs a harmless caught action only in its own scratch process, spawns inspection-only
+children with existing group/CLOEXEC flags, and waits exact children. No signal delivery, crash,
+workload stress loop, AOT rebuild or repository mutation. clang -Wall -Wextra -Werror passed.
+Local host27.0.1 differs from CI14.8.9: this proves the launch-state mechanism, not corrected CI
+or published acceptance. The first scratch attempt lacked preserved stdout under CLOEXEC_DEFAULT;
+only the corrected captured probe supplies evidence. Full scratch evidence:
+`/private/tmp/phase76-core-native-r13-20261010T033657Z/EVIDENCE.md`.
+
+Exact embedded runtime identifies commit95017c711e6afc1085133d440e42b4bd78155701.
+Its [NativeAOT ActivationHandler](https://github.com/dotnet/dotnet/blob/95017c711e6afc1085133d440e42b4bd78155701/src/runtime/src/coreclr/nativeaot/Runtime/unix/PalUnix.cpp#L1050)
+chains sa_sigaction whenever SA_SIGINFO is set. [System.Native documents macOS default plus SA_SIGINFO](https://github.com/dotnet/runtime/blob/v10.0.12/src/native/libs/System.Native/pal_signal.c#L63)
+and its [normal process launcher resets caught dispositions before exec](https://github.com/dotnet/runtime/blob/v10.0.12/src/native/libs/System.Native/pal_process.c#L365).
+[Apple's spawn SETSIGDEF path](https://github.com/apple-oss-distributions/xnu/blob/xnu-10063.141.1/bsd/kern/kern_exec.c)
+sets default actions with flags0; its exec signal reset leaves the signal-info bitmap.
+The Apple tag is relevant23-series source, not claimed exact CI23J631 source.
+
+Strongly supported cause: macOS exec resets caught handler to default/null while retaining
+SA_SIGINFO; the child NativeAOT activation handler later chains that null action. Limits:
+no crash-time saved-handler memory snapshot and no exact system-LR symbolication. This supports
+private pre-exec caught-disposition default attributes; it does not justify a serialization rewrite,
+signal-mask reset, blanket ignore removal, runtime patch, deadline change or retry. Supervisor
+correction design is in the active spoke; full design/plan reviews and approval must precede edits.
+
+## Implemented retention design r11
+
+### Implemented retention correction
+
+Retention r11 is implemented and verified by an actual failed-matrix artifact containing two
+reports and exact UUID-matched symbols. See the completed record for the prior missing evidence.
+
+This remains the locked build-verification design and owner, not a new product/security boundary.
+No design decision is deferred to implementation; no new hosted service, permission, dependency,
+public API, retry, payload, deadline, warning policy or process mechanism. Existing Core design
+and full producer Done when remain authoritative. Product/default gates apply; visual/browser N/A.
+The plan must explicitly expand the full inventory from42 to43 paths by adding
+`.github/workflows/release.yml`; only that workflow and `scripts/README.md` may change now.
+Other existing product paths remain frozen at0d0a338f. Both complete plan reviews passed and
+supervisor approved03:02:53 UTC; the same implementer delivered only the two permitted files.
+
+Use the already referenced `actions/upload-artifact@v7` in the existing matrix build job, after
+the native build, only on failed macOS execution. Give the diagnostic artifact a distinct name
+outside the release publisher's `forge-*` download pattern. Retain only the existing validated
+`dist/cli/exec-probe-crashreports`, native probe run/publish logs, exact probe executable/dSYM and
+its required native sidecar. Do not upload the general DiagnosticReports tree, environment,
+credentials, broad workspace or shipped CLI payload. Preserve the existing successful CLI ZIP
+artifact unchanged and preserve the original failed job; upload failure cannot make it pass.
+Use the normal current-source CI route; collect faulting report and exact matching symbols before
+any production fix. The completed record must state that the earlier reports were not retained.
+
+The unchanged collector retains the previously reviewed narrow style exception: its cohesive
+46-line body and per-report try/catch beyond two syntactic nesting levels are allowed only for
+bounded independent report failure handling. Two helpers remain; no metric-only extraction.
+Reassess this exception with the collector after diagnosis.
+
+Verification: inspect actual output/artifact paths, YAML parse/action condition/name/path routing,
+existing script checks, fresh complete sequential code reviews, and normal canonical/four-host
+checks. No unchanged local AOT/managed/consumer rebuild merely for artifact retention. The decisive
+diagnostic observation is a normally uploaded failed-matrix artifact containing its actual child
+report and matching executable/symbol UUID. Missing evidence remains an open gate. Reassess
+diagnostic retention after diagnosis; it cannot grow into general observability.
+
+
+### Corroborating canonical report
+
+Root downloaded canonical artifact11658107726,151,658,447bytes, from
+[run38019324267](https://github.com/katasec/forge-mcl/actions/runs/38019324267).
+Its one retained child report is PID48596, launch03:38:10.6848 UTC, SIGSEGV PC0/FAR0,
+faultingThread2, x0=30/x3=0/x8=66: the same signal-shaped null-call register state.
+UUID644a0ac4-6305-3357-948c-77f8494378e6 differs from the independently built matrix binary;
+root did not use matrix symbols to claim exact canonical symbolication. Reports/logs retained in
+`/private/tmp/phase76-core-r11-canonical-reports`; parsed-report command completed successfully.

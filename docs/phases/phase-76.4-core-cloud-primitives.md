@@ -1,14 +1,11 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Matrix-retention correction r11 is committed/pushed at `c4176ba5`; production source
-remains unchanged from `8f0fa851`. Its21 routing/scope checks,4parser checks and30existing script
-checks pass. Fresh complete code reviews r7 pass for source; current-source native CI is running,
-with Linux x64/ARM64 and Windows ARM64 passed; x64 includes the exact published Runner image
-and separate bare-PID1 refusal. Both macOS jobs remain pending.
-Prior r10 canonical macOS passed while matrix macOS repeated pressure-child SIGSEGV139; its two
-collected reports were not uploaded. The new failure-only route retains those scoped reports and
-matching symbols if failure recurs. Cause remains unproven; no merge/publication approved.
-[Current evidence](phase-76.4-core-cloud-primitives_completed.md#matrix-retention--implementation-r11).
+**Status:** Core implementation and complete source reviews are finished at `c4176ba5`;
+Linux x64/ARM64 and Windows ARM64 native checks pass. Both current macOS jobs fail with
+pressure-child SIGSEGV139. Failed-matrix retention now works: actual child/parent reports and
+UUID-matched executable/dSYM identify a strongly supported macOS inherited-disposition cause.
+The focused correction design below is under review; no production correction or merge is approved.
+[Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
@@ -203,43 +200,64 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r11](phase-76.4-core-cloud-primitives-plan.md) approved03:02:53 UTC;43-path inventory, new change only release workflow/README for failed-matrix evidence |
 | Independent plan reviews | Fresh full r11 simplicity/ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-11-plan-reviews--failed-matrix-retention); prior verdicts historical |
 | Plan approval / implementation | Retention correction pushed `c4176ba5` in [PR77](https://github.com/katasec/forge-mcl/pull/77);21routing/4parser/30script checks PASS. Production tree unchanged; no production correction authorized. |
-| Code review / native CI | Fresh full r7 simplicity/style and ownership source PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r7--failed-matrix-retention). Current Linux x64/ARM64 and Windows ARM64 PASS; [canonical38019324267](https://github.com/katasec/forge-mcl/actions/runs/38019324267) and [matrix macOS38019324271](https://github.com/katasec/forge-mcl/actions/runs/38019324271) pending. Causal/publication/default gates open. |
+| Code review / native CI | Fresh full r7 source reviews PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r7--failed-matrix-retention). Linux x64/ARM64 and Windows ARM64 PASS; canonical38019324267 and matrix38019324271 macOS FAIL139. Retained reports and focused disposition reproduction support the correction below; production/current-source/default gates remain open. |
 | Published/default acceptance | Required; not performed |
 
-### Current bounded correction — retain the failed matrix evidence
+### Implemented retention correction
 
-Read-only investigation r12 confirms the exact gap: the failed matrix copied two validated reports
-inside its runner, but only the successful canonical job retained an artifact. No faulting child
-PC/thread/UUID is available, and no production correction is justified. Retain the failing job's
-existing scoped diagnostic output through the existing GitHub artifact action.
+Retention r11 is verified by the actual failed matrix artifact; [design and evidence](phase-76.4-core-cloud-primitives_completed.md#implemented-retention-design-r11). The collector retains its narrowly scoped46-line/per-report-catch style exception for independent report failures; reassess after corrected native evidence. No general observability expansion.
 
-This remains the locked build-verification design and owner, not a new product/security boundary.
-No design decision is deferred to implementation; no new hosted service, permission, dependency,
-public API, retry, payload, deadline, warning policy or process mechanism. Existing Core design
-and full producer Done when remain authoritative. Product/default gates apply; visual/browser N/A.
-The plan must explicitly expand the full inventory from42 to43 paths by adding
-`.github/workflows/release.yml`; only that workflow and `scripts/README.md` may change now.
-Other existing product paths remain frozen at0d0a338f. Both complete plan reviews passed and
-supervisor approved03:02:53 UTC; the same implementer delivered only the two permitted files.
+### Correction design r12 — macOS pre-exec caught dispositions
 
-Use the already referenced `actions/upload-artifact@v7` in the existing matrix build job, after
-the native build, only on failed macOS execution. Give the diagnostic artifact a distinct name
-outside the release publisher's `forge-*` download pattern. Retain only the existing validated
-`dist/cli/exec-probe-crashreports`, native probe run/publish logs, exact probe executable/dSYM and
-its required native sidecar. Do not upload the general DiagnosticReports tree, environment,
-credentials, broad workspace or shipped CLI payload. Preserve the existing successful CLI ZIP
-artifact unchanged and preserve the original failed job; upload failure cannot make it pass.
-Use the normal current-source CI route; collect faulting report and exact matching symbols before
-any production fix. The completed record must state that the earlier reports were not retained.
+**DESIGN UNDER REVIEW.** Supervisor design started2026-10-10 03:43:26 UTC. Existing full Core
+design and Done when remain authoritative; this corrects the private launch boundary only.
+The actual child has PC0, x3=0, x8=0x42 and SIGUSR1 arguments. Its exact NativeAOT handler
+tail-branches through the saved previous action when SA_SIGINFO is set. A safe C probe reproduces
+the macOS spawn state: caught parent action becomes default/null with flags0x42; explicitly
+defaulting it pre-exec clears flags0. This supports the cause; no crash-time memory snapshot exists.
 
-The unchanged collector retains the previously reviewed narrow style exception: its cohesive
-46-line body and per-report try/catch beyond two syntactic nesting levels are allowed only for
-bounded independent report failure handling. Two helpers remain; no metric-only extraction.
-Reassess this exception with the collector after diagnosis.
+```mermaid
+flowchart LR
+  A[Existing POSIX launch setup] --> B[macOS: inspect caught dispositions]
+  B --> C[Checked spawn signal-default attribute]
+  C --> D[Atomic process-group launch]
+```
 
-Verification: inspect actual output/artifact paths, YAML parse/action condition/name/path routing,
-existing script checks, fresh complete sequential code reviews, and normal canonical/four-host
-checks. No unchanged local AOT/managed/consumer rebuild merely for artifact retention. The decisive
-diagnostic observation is a normally uploaded failed-matrix artifact containing its actual child
-report and matching executable/symbol UUID. Missing evidence remains an open gate. Reassess
-diagnostic retention after diagnosis; it cannot grow into general observability.
+Only macOS configuration in existing `PosixExecProcess.ConfigureSpawn` explicitly defaults the
+actual inherited **caught** signal set using `posix_spawnattr_setsigdefault` and
+`POSIX_SPAWN_SETSIGDEF`, before the existing atomic spawn. Use the documented macOS sigaction
+layout and signal range; check every query/attribute return. Preserve SIG_IGN and SIG_DFL actions,
+caller signal mask, parent process dispositions, group ownership, pipes, argv/cwd/environment,
+cleanup/error precedence and all public contracts. Linux and Windows launch semantics remain
+unchanged. Platform ABI belongs in existing private PosixNative, not a new abstraction or dependency.
+Do not hard-code SIGUSR1 as a runtime-specific production policy or reset all signals indiscriminately.
+
+| Behaviour | Owner / existing thing reused |
+|---|---|
+| Spawn attributes and platform ABI | Core's existing ExecProcess.Posix/PosixNative; [Core README](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/README.md) owns reusable execution primitives |
+| Signal-state regression observation | Existing public ExecExpertRunner native probe and child dispatcher; platform libc, no new process host |
+| Artifact verification and failure retention | Existing canonical/matrix builds and narrowly scoped collector; no extra CI route |
+
+The implementer plan must give exact ABI sizes/constants/errno semantics and a meaningful
+regression that proves caught flags are cleared and ignored dispositions preserved through the
+public adapter. It must safely restore any test-parent dispositions and avoid replacing runtime
+activation handlers. A source-level assertion alone cannot prove the correction. Existing decisive
+duplex pressure, payloads, deadlines and warning gates stay unchanged. No new general signal API,
+mask policy, global handler, runtime patch, retries, UTF-8 rewrite or consumer change.
+
+| Gate / failure | Required boundary and observation |
+|---|---|
+| Setup failure | Core returns the existing explicit execution failure before child launch; attributes/pipes still disposed; caller owns retry/new run |
+| Ignored actions / parent state | Focused native probe shows SIG_IGN survives and parent dispositions remain unchanged/restored |
+| Runtime cause | Current exact-source canonical and all four native hosts pass original pressure and lifecycle checks with zero warnings |
+| Security | No tier/data/identity/entry-point/authority change; user-vetted arbitrary code remains supported |
+| Default | Normally published Core0.1.8 fresh restore plus clean merged-main installed run/Hands and Chat regressions already defined above; controlled C probe is not acceptance |
+| UI | N/A: no visible surface change |
+
+Designer principles that changed decisions: no NIH reuses native spawn attributes; one owner keeps
+launch semantics in Core; minimum limits correction to the observed macOS boundary; built-in safety
+uses pre-exec attributes without mutating the parent's handlers; verified means current native and
+published default observations. Rejected alternatives: reset-all loses ignored semantics;
+SIGUSR1-only embeds a runtime assumption; signal-mask reset lacks evidence; serialization changes
+contradict the exact disassembly; retrying the failing probe hides the defect. Open design questions:
+none. Exact implementation ABI and test arrangement must be specified and reviewed in the plan.
