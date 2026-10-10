@@ -2398,3 +2398,9 @@ Bounded orphan-entry disappearance03:14:12/03:14:14 and no later sentinel indepe
 Bare PID1 refused before child/root/sentinel03:14:17; owned container removed. Actual log has no
 compiler/AOT warning; git's default-branch hint contains the word warning but is not a compiler
 diagnostic. Other current native jobs still running at source acceptance; no all-host PASS inferred.
+
+Current Linux ARM64 job114116566338 SUCCESS: raw `/private/tmp/phase76-core-r11-linux-arm64.log`
+independently read by supervisor. Exact same synthetic source identity verified03:17:13;30script
+checks, native pipe read/write cancellation0/0ms, pressure/workspace/argv/cwd/lookup/exited-descendant
+and root-first timeout/cancel PASS03:17:42–03:17:48. No compiler/AOT warnings found. At03:22:13 UTC,
+Windows and both macOS jobs still running; no remaining-platform PASS or causal conclusion inferred.
