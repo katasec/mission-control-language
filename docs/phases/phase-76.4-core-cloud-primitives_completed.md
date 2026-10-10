@@ -3042,19 +3042,19 @@ with zero warnings before product merge; pending work is not marked complete.
 
 ### Current-source native observations r12
 
-The completed Linux ARM64/x64 jobs use synthetic merge`ca0f179e9a8858d8cf71e8529aad3154831c0d86`,
+The four completed matrix jobs use synthetic merge`ca0f179e9a8858d8cf71e8529aad3154831c0d86`,
 parents8d28dc1/7952012 and tree`39d48da4776c315c5508c70be5077fcc4dbd5ece`, independently
 confirmed through GitHub's commit API. This is byte-identical to the reviewed branch tree.
 Their native identity is`0.10.1-dev.9+ca0f179e9a8858d8cf71e8529aad3154831c0d86`.
-Remaining job identities are checked from their completed logs before acceptance.
+The canonical job's identity is checked from its completed log before acceptance.
 
 | Current job | Observation / retained evidence |
 |---|---|
 | Linux ARM64,114128218627 | PASS04:23:04UTC; root read `/private/tmp/phase76-core-r12-linux-arm64.log`:30script checks, native CLI/probe publish, blocked pipes, original pressure/JSON, PipelineRunner workspace/aliases/relative caller, literal argv/cwd/PATH, already-exited descendant and root-exits-first timeout/cancel lifecycle PASS; no compiler/linker warning match. Artifact11659181066,137794229bytes. |
 | Linux x64,114128218683 | PASS04:24:07UTC; root read `/private/tmp/phase76-core-r12-linux-x64.log`, zero compiler/linker warning matches,30scripts and all ordinary native probes PASS. Exact Runner0.20.6 indexc0031d…/amd64cf2a7e…/source17080b7/unchanged entrypoint verified; tiniPID1,directdotnetPID7,probePID14. Separate process-entry disappearance under init80/89/85 and109/104/113; timeout/cancel lifecycle PASS. Separate barePID1 refusal before child/root/sentinel creation PASS. Artifact11659146209,145345381bytes. |
-| Windows ARM64,114128218600 | Pending |
-| macOS ARM64 matrix,114128218424 | Pending |
+| Windows ARM64,114128218600 | PASS04:28:55UTC; root read `/private/tmp/phase76-core-r12-windows-arm64.log`:30scripts, exact native CLI identity, blocked pipe cancellation, original pressure, workspace/relative source, literal argv/cwd/PATH, exited descendant and root-exits-first timeout/cancel lifecycle PASS. No compiler/linker warning. One Git LF→CRLF fixture warning before compilation is also present in historical r11 log; exact context is scripts/tests.ps1 fixture git-add111–112, not a build warning. Artifact11659796732,167698109bytes. |
+| macOS ARM64 matrix,114128218424 | PASS04:29:16UTC; root read `/private/tmp/phase76-core-r12-macos-matrix.log`, zero compiler/linker warnings. New native C witness caught flags cleared/ignored inherited/parent unchanged/restored PASS04:28:55.366999; unchanged pressure PASS04:28:55.467346, all pipes/workspace/argv/PATH/descendants/lifecycle PASS. Artifact11660181446,124637650bytes; successful payload unchanged in selection. |
 | macOS ARM64 canonical,114128217708 | Pending |
 
-Runs38023130348/38023130353 remain open. One native host PASS does not close other gates;
-no retry/waiver/merge/publication/default acceptance claimed.
+Matrix38023130348 passes on all four hosts. Canonical38023130353 remains open; a matrix PASS
+does not close it. No retry/waiver/merge/publication/default acceptance claimed.

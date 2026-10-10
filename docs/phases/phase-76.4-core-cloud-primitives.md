@@ -1,17 +1,11 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** The five-file macOS correction is committed at `79520120` after approved r12 design
-and plan reviews. Normal PowerShell full Debug passes1063/6 existing skips/0 failures; Release
-package407/0/0 and managed public-adapter signal/pressure/lifecycle probes pass. Fresh-cache branch
-consumer passes; the commit is pushed. Fresh complete simplicity/style and ownership source
-reviews PASS; supervisor accepted source04:19:46UTC. Current-source canonical/four-host native
-checks, merge/publication and default acceptance remain open.
-Prior `c4176ba5` source reviews and Linux/Windows native PASS are historical; both macOS jobs
-failed pressure-child SIGSEGV139. Retained reports and UUID-matched executable/dSYM support
-the inherited-disposition cause. No merge/publication approved.
+**Status:** Source `79520120` accepted after fresh full simplicity/style and ownership reviews.
+Managed, package and fresh-cache branch consumer checks pass; all four native matrix hosts pass.
+Separate canonical macOS verification is pending. Merge/publication/default acceptance remain open.
+Current [review and native evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source).
 [Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
-Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -204,7 +198,7 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
 | Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
 | Plan approval / implementation | Same implementer authorized04:00:17 UTC; finished and pushed7952012 on [PR77](https://github.com/katasec/forge-mcl/pull/77). Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
-| Code review / native CI | Fresh full r8 simplicity/style and ownership source PASS; supervisor source accepted04:19:46UTC. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Current Linux x64/ARM64 native PASS, including exact published init image; Windows and both macOS jobs pending; native/default gates remain open. |
+| Code review / native CI | Fresh full r8 simplicity/style and ownership source PASS; supervisor source accepted04:19:46UTC. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Current four-host native matrix PASS, including macOS signal/pressure and exact published init image. Separate canonical macOS job pending; merge/publication/default gates remain open. |
 | Published/default acceptance | Required; not performed |
 
 ### Implemented retention correction
