@@ -1,4 +1,85 @@
-# Phase 76.4 — Complete implementer correction plan, round 9
+# Phase 76.4 — Complete implementer correction plan, round 10
+
+**Current r10 status: PLAN REVIEW REQUIRED; not approved.** Same implementer observed
+**2026-10-10 02:09:58–02:11:28 UTC**. Supervisor transcription of its complete read-only return:
+all retained contracts,42-path inventory, sequence and checks below remain applicable, plus the
+following diagnostic correction. Current clean source `5a80c56e`, base `8d28dc1`, draft PR77;
+production tree unchanged from `8f0fa851`. Earlier r9 approval below does not authorize r10.
+
+## Diagnostic correction r10 — proposed
+
+Both current macOS jobs fail in the pressure child with SIGSEGV/139. Exact failed binaries pass
+locally on macOS27; this does not establish cause or close macOS14 verification. Investigation
+r11 ended02:09:38 UTC; [evidence](phase-76.4-core-cloud-primitives_completed.md#recurrent-macos-crash--investigation-r11).
+Only inventory paths41–42 (`scripts/build.ps1`, `scripts/README.md`) change. No production,
+workflow, dependency, public API, payload, cap, timeout, process mechanism or test-fixture change.
+Existing locked design applies; no new service/identity/data/UI boundary. Browser/UI N/A.
+
+Add two private script functions below their caller:
+
+```powershell
+function Save-NativeProbeCrashReports {
+    param([string]$Destination, [DateTimeOffset]$StartedAt)
+}
+function Read-NativeProbeCrashReport {
+    param([string]$Path, [DateTimeOffset]$StartedAt)
+}
+```
+
+Immediately before the existing native probe invocation record `[DateTimeOffset]::UtcNow`.
+Wrap only that invocation; preserve its original exception/nonzero failure unchanged. Failure-only
+macOS cleanup invokes the collector. Collector failure is recorded independently and cannot
+replace the probe failure. Successful/non-macOS invocations do not collect. No failed-test retry.
+
+Collector contract:
+
+- Search only user `~/Library/Logs/DiagnosticReports` and system
+  `/Library/Logs/DiagnosticReports`, nonrecursively, for native probe `.ips` candidates.
+- Parse observed separate header/body JSON with built-in `ConvertFrom-Json`. Require exact
+  header `app_name` and body `procName`, both `ForgeMission.Exec.Probe`. Parse body `procLaunch`
+  using invariant `DateTimeOffset.TryParse`; require launch UTC at/after this invocation start.
+  New mtime never authorizes an older process's delayed report. Do not guess legacy formats.
+- Poll250ms for at most10s, after failure only. Copy eligible reports once into
+  `Destination/exec-probe-crashreports`, separating user/system source directories.
+- Record collection start/end, copied filenames/launch times, absent directories/no reports and
+  access/read/parse/copy errors in a small status file. Incomplete reports may be retried inside
+  that same bounded window. Never copy unvalidated reports or dump unrelated report contents.
+- If status writing itself fails, print that diagnostic failure; retain the original probe failure.
+
+Actual local `.ips` fields/launch offset were inspected, and both source directories exist.
+Existing `Invoke-Checked` owns probe failure/run log; existing canonical `always()` artifact
+already includes Destination. The matrix still uploads only its successful CLI ZIP; no claim that
+it retains reports. No new workflow or framework. Reuse Stopwatch, JSON/date/filesystem APIs.
+
+Meaningful controlled scratch verification calls the actual script selector/collector and existing
+`Test-NativeExec` with the repository's function-interception pattern, without real crashes,
+native rebuilds, OS report-directory writes or public hooks. Prove exact-new launch acceptance,
+old launch despite new mtime/wrong identity/malformed launch/unsupported content rejection,
+eligible-only copies/user-system separation, no-report/access/read/copy failures, bounded polling,
+and original-failure preservation when collection succeeds/fails. Script syntax and existing
+`make cli-script-test` pass. No43rd test path; `scripts/tests.ps1` unchanged.
+
+After fresh full sequential plan reviews and explicit approval: reconfirm clean source/inventory,
+edit only paths41–42, document scoped behavior/removal condition, run these meaningful checks,
+freeze/push PR77, and obtain fresh full sequential code reviews. No repeated full local AOT or
+unchanged consumer rebuild for report copying; normal current canonical/four-host gates remain
+mandatory. Inspect actual new child crashreport/stack against exact executable/symbols before
+proposing any production fix. An absent report is a recorded gap, not a waiver or guessed cause.
+After diagnosis the supervisor decides whether retaining this small collector remains justified;
+it may not grow into general observability or report/environment bundling.
+
+All15 implementer principles affect this plan: reuse existing owner/APIs(1), one invocation/no
+retry(2), same42paths(3), two coherent private functions(4), evidence before guessed fix(5), failed
+gates remain open(6), visible caller flow(7), selection versus collection duties(8), helpers below
+caller(9), original failure plus visible collection errors(10), early guards(11), named I/O(12),
+unchanged warning gates(13), real failure/test boundary(14), coherent complexity≤15(15).
+
+Open causal question remains the SIGSEGV; no unresolved architecture choice in this diagnostic
+plan. Normal immutable publication and fresh published-package/installed-default acceptance
+below remain required. Prior source-specific PASS results support unchanged code; no prior
+review verdict or other-host success closes the failed macOS gates.
+
+## Retained complete producer plan — earlier approval history
 
 **Status: PLAN APPROVED** 2026-10-10 00:47:38 UTC after fresh full simplicity11 and ownership38behaviors/11gates PASS; supervisor independently checked scope, actual APIs/ABI, native/security/default/dependency/failure gates and current held source. Supervisor transcription of the same implementer’s complete read-only return. Prior r7 artifact moved to [completion evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-round-7-full-plan). [Current design/task](phase-76.4-core-cloud-primitives.md); [verified hosting prerequisite](phase-76.5-runner-process-hosting.md).
 
