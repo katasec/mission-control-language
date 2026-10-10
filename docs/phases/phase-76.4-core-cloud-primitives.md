@@ -2,7 +2,7 @@
 
 **Status:** The approved Windows probe expectation correction is committed/pushed at `5a80c56e`;
 production source is unchanged from `8f0fa851`. Corrected managed probe/script checks pass.
-Fresh full sequential code reviews and normal native CI are in progress. Earlier native checks
+Both fresh full code reviews pass; normal native CI is in progress. Earlier native checks
 found the corrected Windows expectation defect and an unexplained canonical macOS child crash;
 both Linux and the macOS matrix gates passed. No merge/publication is approved.
 [Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction).

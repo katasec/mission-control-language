@@ -3,7 +3,7 @@
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
 Complete r9 plan and its approved corrections are implemented; current handback is below.
-Fresh full current code reviews/native verification/publication/default acceptance remain open.
+Both fresh full current code reviews pass; native verification/publication/default acceptance remain open.
 
 ## Approved Windows expectation correction — implementation r9
 
@@ -23,6 +23,120 @@ native [canonical38013941959](https://github.com/katasec/forge-mcl/actions/runs/
 [four-host38013941972](https://github.com/katasec/forge-mcl/actions/runs/38013941972) are queued.
 Fresh full sequential code reviews r5 are required, with simplicity/style running first.
 No local full AOT repeated; no speculative macOS fix, deadline change or gate waiver.
+
+## Full code review r5 — portable expectation
+
+Simplicity/style observed **2026-10-10 01:39:27–01:40:45 UTC**. Exact assignment timestamp
+was not separately captured; no duration is reconstructed. All42 current paths at `5a80c56e`
+reviewed afresh against `8d28dc1`, full diff hash above matched. Source PASS, no correction.
+
+| Simplicity check | Current verdict / evidence |
+|---|---|
+| New apps/libraries | PASS: no dependency/host added; private ExecProcess owner |
+| Reuse | PASS: existing TOML parser and pipeline extended |
+| Multiple paths | PASS: one exchange with required OS lifetime branches |
+| Legacy paths | PASS: six-argument member serves actual published Client; generated JSON selects primary constructor |
+| Knobs | PASS: fixed cleanup/PID1 policy, no new setting |
+| Speculative abstractions | PASS: real native resource boundary; live caller registry retained |
+| Library choice | PASS: existing ONNX Runtime inference/cancellation |
+| Copy-paste | PASS: shared admission/replay policy and single fingerprint encoder |
+| Redundant definitions | PASS: asset/admission/workspace values have distinct roles |
+| Size/requirement | PASS: complete approved42-path producer scope |
+| Test volume | PASS: required public/failure/ABI facts; corrected expectation preserves payload and relative assertion |
+
+| Code-style check | Current verdict / evidence |
+|---|---|
+| Progressive disclosure | PASS: adapter flow precedes mappings/exchange/result detail |
+| Small functions | PASS: cohesive new stages; retained pipeline bodies receive narrow threading changes |
+| Top-down | PASS: parser entry points precede dispatch/value helpers |
+| Explicit errors | PASS: checked termination → joined I/O → exact reap; cleanup error precedence retained |
+| Shallow nesting | PASS: staged parsing/early native and shape guards |
+| Separate side effects | PASS: pure package/fingerprint decisions separate from native lifetime |
+| Zero warnings | Managed/probe logs PASS; fresh Native AOT OPEN |
+| Extract for reason | PASS: real parsing/resource/failure boundaries |
+| Complexity | PASS: manual classic exchange8, POSIXjoin7, row dispatch9, pipe proof10; retained walker13/dispatcher12 |
+
+Reviewer read actual current probe logs, prior unchanged-product191focused/1063full+6skips/
+407Release-package/30scripts and fresh branch consumer. Current full managed probe cancellation
+6ms/1ms and all pressure/workspace/lifecycle cases pass. Current native runs remain open;
+earlier unexplained macOS crash is not waived. Ownership assigned **01:41:11 UTC** after
+simplicity/style completed. Ownership observed **01:41:52–01:43:19 UTC**: full current source
+PASS, no correction. Owners rederived blind from Desktop atlas and Core/build READMEs before
+comparing the actual complete diff. The following paths are relative to forge-mcl; Core paths
+below use `src/ForgeMission.Core/`.
+
+| Behavior | Derived owner / current placement | Verdict |
+|---|---|---|
+| Explicit asset declarations | Core manifest; Manifest/ForgeManifest.cs:5 | PASS |
+| Distribution selection before environment evaluation | Core manifest; ForgeTomlReader.cs:57 | PASS |
+| Full local parsing/diagnostics | Core manifest; ForgeTomlReader.cs:15 | PASS |
+| Construct resolved package | Core admission; DurableMissionPackageValidator.cs:19 | PASS |
+| Validate without local/config/credential lookup | Core admission; validator:39 | PASS |
+| First mission/primary input/parameterless root | Core semantics; validator:26 | PASS |
+| Existing expert kinds | Core semantics; validator:142 | PASS |
+| Reachable profiles without deployment availability policy | Core reports/Runner supplies; validator:58 | PASS |
+| Internally derive reachable names | Core input policy; DurableMissionInputPolicy.cs:9 | PASS |
+| Reserved/duplicate/undeclared/missing root rejection | Core admission; validator:69 | PASS |
+| token_count/named-over-let values | Core execution; PipelineRunner.cs:763 | PASS |
+| Reject authored environment expressions/reserved bindings | Core semantics; validator:149 | PASS |
+| Asset digest/executable/path collision validation | Core admission; validator:164 | PASS |
+| ONNX models within admitted assets | Core admission; validator:184 | PASS |
+| Old no-assets hash/extended asset identity | Core identity; validator:84 | PASS |
+| Actual generated JSON4MiB budget | Core admission; validator:47 | PASS |
+| Actual published six-argument CLR member | Core contract; validator:215 | PASS |
+| Generated JSON semantic constructor | Core contract; validator:210 | PASS |
+| Immutable diagnostic source/no disk fallback | Core loader; ExpertLoader.cs:273 | PASS |
+| Declared parameters recognized as strings | Core loader; ExpertLoader.cs:220 | PASS |
+| Complete fingerprint/excluded scratch identity | Core replay identity; PipelineDefinitionFingerprint.cs:12 | PASS |
+| Malformed consumed checkpoints/old format rejection | Core codec; PipelineToolPause.cs:103 | PASS |
+| Relative inputs/completed effects across resume | Core replay; PipelineRunner.cs:77 | PASS |
+| Stable lifecycle StepKey | Core trace; PipelineTraceEvent.cs:21/PipelineRunner.cs:172 | PASS |
+| Live caller registry | Caller registers/Core consumes; PipelineExecutionWorkspace.cs:16 | PASS |
+| Pure deterministic output directory | Core workspace; workspace:22 | PASS |
+| Nested workspace inheritance | Core execution; PipelineRunner.cs:633 | PASS |
+| Process-local verified path mapping | Core exec; ExecExpertRunner.cs:71 | PASS |
+| Current runtime aliases/stale alias removal | Core exec; runner:110 | PASS |
+| Command/literal argv/cwd | Core exec; ExecProcessArguments.cs:8 | PASS |
+| Bare Linux PID1 refusal before allocation/spawn | Core lifecycle; ExecProcess.cs:28 | PASS |
+| Atomic POSIX group/direct-root retention | Core lifecycle; ExecProcess.Posix.cs:15 | PASS |
+| macOS root-only completion before reap | Core lifecycle; POSIX:88 | PASS |
+| Preexecution Windows job ownership | Core lifecycle; ExecProcess.Windows.cs:14 | PASS |
+| Concurrent bounded stdin/stdout/stderr | Core exec; runner:127 | PASS |
+| Exact declined-stdin classifications | Core exec; runner:184 | PASS |
+| JSON/output/status/reason/judge semantics | Core exec; runner:210 | PASS |
+| Terminate/join I/O/reap/dispose | Core lifecycle; runner:143 | PASS |
+| Cleanup IOException precedence | Core failure boundary; runner:164 | PASS |
+| Adopted-orphan reap | Existing Runner init; no Core scanner/reaper; probe:277 observes separately | PASS |
+| Numeric ONNX/parallel sibling launch | Core ONNX; OnnxExpertRunner.cs:11 | PASS |
+| Joined native cancellation/disposal | Core ONNX; runner:19 | PASS |
+| Open-peer BCL cancellation proof/no abandoned work | Existing probe; Program.cs:37 | PASS source/local |
+| Decisive duplex pressure proof | Existing probe; ExecProbeChild.cs:58 | PASS source/local |
+| Native expected path/relative caller assertion | Existing probe; Program.cs:186/176 | PASS |
+| Unchanged published-image entrypoint/separate PID1 negative | Existing build owner; scripts/build.ps1:44 | PASS placement/native OPEN |
+| Actual retained Client ABI verification | Existing integration tests; ForgeProjectTests.cs:17 | PASS |
+| Immutable publication/source/dependencies | Existing Core publication/verifier | PASS placement/publication OPEN |
+
+No owner acquires a second job; no new credential, datastore, provider-construction or policy
+authority. Fresh search across named Forge repositories found one production exec, ONNX and
+package validator, and no Core adopted-child/global-subreaper/waitpid(-1) path. Move nothing.
+
+| Technical gate | Current observation |
+|---|---|
+| Artifact/scope | Clean frozen HEAD/full hash independently matched |
+| Production identity | Both src trees `6c7cfd841a81fd60ad0fd3d7213ae75e4bd202f9` |
+| API/ABI/admission/hash/JSON/replay/trace/live registry | PASS |
+| Current probe build/all assertions/scripts | Zero warnings; read/write6ms/1ms/all cases/30checks PASS |
+| Unchanged production evidence | Actual191focused/1063full+6skips/407Release-package, retained Client ABI and fresh branch consumer inspected |
+| Branch package | Supporting source8f0 identity only; no normal publication claim |
+| Security/engineering ownership | PASS; arbitrary-code policy and joined failures retained |
+| Current canonical/four-host native | OPEN; earlier unexplained SIGSEGV not waived |
+| Normal publication/fresh published restore | OPEN |
+| Installed Project/Chat/Hands defaults | OPEN |
+| UI | N/A |
+
+Supervisor accepts both full current source reviews **2026-10-10 01:44:09 UTC**, after independently
+checking the actual correction, byte-identical production tree, complete hash and raw evidence.
+No source correction requested. Required native/publication/default observations still govern readiness.
 
 ## Approved pipe correction — implementation r8
 

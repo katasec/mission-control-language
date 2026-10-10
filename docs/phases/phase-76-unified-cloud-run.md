@@ -60,8 +60,8 @@ acceptance for one bounded increment before starting the next.
 ## Next
 
 The [Runner hosting prerequisite](phase-76.5-runner-process-hosting.md) is verified. Deliver the
-approved complete [Core correction](phase-76.4-core-cloud-primitives.md), then full current code
-reviews and required verification/publication/default acceptance. The OCI prerequisite is accepted;
+implemented [Core producer](phase-76.4-core-cloud-primitives.md) through required current-source
+native verification, publication and default acceptance. The OCI prerequisite is accepted;
 future consumers adopt the exact published 0.5.0 package. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.
