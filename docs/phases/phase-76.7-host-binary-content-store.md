@@ -1,13 +1,8 @@
 # Phase 76.7 — Host binary content storage primitive
 
-**Status:** DESIGN LOCKED2026-10-10 05:56:22UTC after complete current simplicity r2 and ownership r1 PASS.
-The [implementer plan](phase-76.7-host-binary-content-store-plan.md) is APPROVED06:04:00UTC after
-both complete current plan reviews and supervisor checks. A narrow malformed-receipt/bounded-read
-clarification recorded05:58:30UTC was included in both current plan reviews. Only that five-file
-plan is authorized for implementation; no broader runtime behavior is approved by this increment.
-Scope start2026-10-10 05:38:26UTC after content producer docs PR381 merged05:38:05UTC as
-`fd059b844657d046686d827da8d08743d01c39af`. Product baseline forge-conversations clean main
-`d4d013e577e4e57f3eaf3310527094b5d2dfa851`.
+**Status:** Verified internal storage primitive; [product PR21](https://github.com/katasec/forge-conversations/pull/21)
+merged06:15:13UTC. Local binary25/text7 and full CI299 PASS; [reviews, exact source and timing](phase-76.7-host-binary-content-store_completed.md).
+No active runtime file route/adoption/lifecycle is claimed; Host integration follows.
 
 ## Scope
 
@@ -27,7 +22,8 @@ component. Existing Contracts0.9.0 supplies the descriptor/limits/generated JSON
 version/publisher change, Core upgrade, new service/interface/store/credential or infrastructure.
 The operator's arbitrary user-vetted code/persistent Host/ephemeral Runner decisions remain locked.
 Managed builds and tests only; AOT is final phase delivery, not testing. No extra Docker/native
-consumer route. Existing normal PR managed verification retains its required Azurite fixture.
+consumer route. Latest operator steering requires focused local functional checks before full CI;
+use the existing managed Azurite fixture locally as well as normal PR verification.
 
 ## Design
 
@@ -162,7 +158,8 @@ writers, missing blocks, wrong whole hash/conditional cleanup, corrupt/missing s
 invalid/over-limit references/chunk bounds before mutation and cancellation without false success.
 Retain all existing text tests. Local managed Debug/Release builds zero warnings; normal existing
 PR workflow unfiltered full Release/Azurite suite required, zero compiler warnings/skips/failures.
-No local extra container/native route or new workflow. Tests target meaningful integrity boundaries,
+No ad-hoc container/native route or new workflow. Existing local managed Azurite checks precede
+full CI under latest operator steering. Tests target meaningful integrity boundaries,
 not another copy of DTO wire tests.
 
 Designer principles that changed choices: no NIH/one owner extends the one adapter; built-in safety
@@ -175,7 +172,7 @@ uncommitted-block overwrite alone (cannot reject conflicting first writers), bin
 Open design questions: none for this bounded primitive. Later canonical lifecycle integration
 remains unimplemented and cannot be called complete from these tests.
 
-## Done when
+## Completion conditions
 
 1. Exact internal stage/commit/read contract and immutable binary storage are implemented in the
    existing seam/adapter; existing text behavior is unchanged and all named positive/negative

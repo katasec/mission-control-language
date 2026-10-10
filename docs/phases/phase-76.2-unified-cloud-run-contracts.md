@@ -841,7 +841,7 @@ increment from these locked contracts. Later consumer plans remain unapproved.
 | Contract design | Supervisor locked the revised generic contracts after full current round 7 PASS; [review evidence](phase-76.2-unified-cloud-run-contracts_completed.md#generic-execution-design-review--round-7) |
 | Independent design reviews | Round 7 simplicity and ownership PASS on the complete revised artifact; no inherited prior verdict |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
-| Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md) and [content contracts0.9.0](phase-76.6-mission-content-contracts.md) accepted; [Host binary storage](phase-76.7-host-binary-content-store.md) plan approved, implementation in progress. |
+| Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md), [content contracts0.9.0](phase-76.6-mission-content-contracts.md) and [Host binary storage](phase-76.7-host-binary-content-store.md) verified; Host admission/canonical lifecycle next. |
 | Cloud default-path acceptance | Required; not performed |
 
 ## Timing

@@ -22,7 +22,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | OCI, hosting, Core and [content contracts0.9.0](phase-76.6-mission-content-contracts.md) accepted; [Host binary storage](phase-76.7-host-binary-content-store.md) implementation approved/in progress; admission follows. |
+| Current documentation handoff | OCI, hosting, Core, [content contracts0.9.0](phase-76.6-mission-content-contracts.md) and [Host binary storage](phase-76.7-host-binary-content-store.md) verified; admission/canonical lifecycle next. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
@@ -52,6 +52,10 @@ Operator clarification2026-10-10: **"AOT is at the end after everything works...
 Use managed builds and functional tests during implementation. Native AOT is a final delivery
 gate after the complete unified flow works, not a repeated per-increment test. The supervisor's
 extra Docker native-consumer route was stopped at the operator's correction; do not resume it.
+Operator clarification2026-10-10: **"before CI full CI - you need to check if the code works"**.
+Run relevant focused functional checks locally before triggering full CI; compilation and unrelated
+tests are insufficient. Use existing managed fixtures, including Azurite for storage. **"Also leave
+AOT last"** remains the final whole-phase gate.
 
 | Required outcome | Implementation owner / task coverage | Completion observation |
 |---|---|---|
@@ -67,7 +71,8 @@ extra Docker native-consumer route was stopped at the operator's correction; do 
 OCI, [Runner hosting](phase-76.5-runner-process-hosting.md) and [Core](phase-76.4-core-cloud-primitives.md)
 are verified. [Content contracts0.9.0](phase-76.6-mission-content-contracts.md) are published and
 accepted through a fresh managed consumer. [Host binary storage](phase-76.7-host-binary-content-store.md)
-implementation is approved and in progress. Admission/canonical lifecycle follows.
+is merged and verified with local functional checks and full managed CI. Scope Host admission,
+canonical references and lifecycle next; persistent user files are not yet active.
 Before another Contracts release, investigate the publisher's metadata-view discrepancy recorded
 in that spoke; no package/authentication guard was changed. Future consumers adopt exact
 published OCI0.5.0/Core0.1.8 packages. Follow the
