@@ -3054,7 +3054,34 @@ The canonical job's identity is checked from its completed log before acceptance
 | Linux x64,114128218683 | PASS04:24:07UTC; root read `/private/tmp/phase76-core-r12-linux-x64.log`, zero compiler/linker warning matches,30scripts and all ordinary native probes PASS. Exact Runner0.20.6 indexc0031d…/amd64cf2a7e…/source17080b7/unchanged entrypoint verified; tiniPID1,directdotnetPID7,probePID14. Separate process-entry disappearance under init80/89/85 and109/104/113; timeout/cancel lifecycle PASS. Separate barePID1 refusal before child/root/sentinel creation PASS. Artifact11659146209,145345381bytes. |
 | Windows ARM64,114128218600 | PASS04:28:55UTC; root read `/private/tmp/phase76-core-r12-windows-arm64.log`:30scripts, exact native CLI identity, blocked pipe cancellation, original pressure, workspace/relative source, literal argv/cwd/PATH, exited descendant and root-exits-first timeout/cancel lifecycle PASS. No compiler/linker warning. One Git LF→CRLF fixture warning before compilation is also present in historical r11 log; exact context is scripts/tests.ps1 fixture git-add111–112, not a build warning. Artifact11659796732,167698109bytes. |
 | macOS ARM64 matrix,114128218424 | PASS04:29:16UTC; root read `/private/tmp/phase76-core-r12-macos-matrix.log`, zero compiler/linker warnings. New native C witness caught flags cleared/ignored inherited/parent unchanged/restored PASS04:28:55.366999; unchanged pressure PASS04:28:55.467346, all pipes/workspace/argv/PATH/descendants/lifecycle PASS. Artifact11660181446,124637650bytes; successful payload unchanged in selection. |
-| macOS ARM64 canonical,114128217708 | Pending |
+| macOS ARM64 canonical,114128217708 | PASS04:42:14UTC; root read `/private/tmp/phase76-core-r12-canonical.log`: zero compiler/linker warning matches;30scripts, managed build0warnings/errors,1055passed/10existing CI skips/0fail (3m41), exactca0f179 native identity, C signal witness04:41:11.938481 and original pressure04:41:12.154474 PASS; all pipes/workspace/args/PATH/descendants/lifecycle PASS; existing Terminal package27tests/metadata/native deps PASS. Artifact11659487232,151724000bytes. |
 
-Matrix38023130348 passes on all four hosts. Canonical38023130353 remains open; a matrix PASS
-does not close it. No retry/waiver/merge/publication/default acceptance claimed.
+Matrix38023130348 and canonical38023130353 pass. Root independently read all five completed logs
+and exact identities before approving merge. No retry or gate waiver. Publication/default acceptance
+remain open.
+
+### Ready to merge — current source accepted43:17UTC
+
+**MERGE APPROVED2026-10-10 04:43:17UTC.** Root readiness review04:42:37–04:43:17UTC.
+Full current source reviews PASS; root's source/diff/tree
+proof remains exact7952012/43paths/59ed6711…. Actual normal managed/focused/package/current native
+gates pass; root closes the reviewers' pending native-warning observation from all five raw logs.
+Windows' single precompile fixture Git LF→CRLF notice is not a compiler/linker warning; no build
+warning is dismissed. Public/ABI/checkpoint/workspace/ownership/credentials/failure/default contracts
+match reviewed design; no UI surface. Product tree clean/synchronized, branchisolated; all eight
+feature commit bodies have no Co-Authored-By. GitHub still reports head7952012/base8d28/MERGEABLE,
+all five required checksSUCCESS and only expected premerge publish/prepareSKIPs. Core0.1.8 absent
+on actual package-version recheck immediately before merge/publication; existing latest0.1.7.
+Normal Core publisher purpose/ref/immutable/private/source/dependency gates personally reread.
+
+Collector reassessed after both corrected macOS native proofs: retain the narrow verification-owned
+route. It supplied the actual cause evidence after earlier matrix reports were lost; normal success
+ZIPs contain no equivalent probe reports/executable/dSYM. Existing46-line/per-report-catch exception
+stays confined to independent report-copy failures, ten-second app/time-scoped collection and
+failure-only artifact transport outside forge-*. No production policy/workaround/observability
+framework. Reversal: remove collector/read helper/call/upload/docs in a reviewed verification-only
+change once normal CI retention supplies equivalent scoped reports and UUID-matchable symbols.
+No product edit or scope expansion results from this reassessment.
+
+Merge approval is not task closure. Normal merged-main publication, fresh remote consumer and
+clean-main installed Project/Chat/Hands/tool-free/cancel checks remain required.

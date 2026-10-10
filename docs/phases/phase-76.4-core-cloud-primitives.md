@@ -2,7 +2,8 @@
 
 **Status:** Source `79520120` accepted after fresh full simplicity/style and ownership reviews.
 Managed, package and fresh-cache branch consumer checks pass; all four native matrix hosts pass.
-Separate canonical macOS verification is pending. Merge/publication/default acceptance remain open.
+Separate canonical macOS verification also passes; merge approved04:43:17UTC.
+Merge/publication/default acceptance remain open.
 Current [review and native evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source).
 [Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
@@ -198,12 +199,12 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
 | Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
 | Plan approval / implementation | Same implementer authorized04:00:17 UTC; finished and pushed7952012 on [PR77](https://github.com/katasec/forge-mcl/pull/77). Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
-| Code review / native CI | Fresh full r8 simplicity/style and ownership source PASS; supervisor source accepted04:19:46UTC. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Current four-host native matrix PASS, including macOS signal/pressure and exact published init image. Separate canonical macOS job pending; merge/publication/default gates remain open. |
+| Code review / native CI | Fresh full r8 reviews and canonical/all-four-host zero-warning native PASS. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Supervisor merge approved04:43:17UTC; publication/default gates remain open. |
 | Published/default acceptance | Required; not performed |
 
 ### Implemented retention correction
 
-Retention r11 is verified by the actual failed matrix artifact; [design and evidence](phase-76.4-core-cloud-primitives_completed.md#implemented-retention-design-r11). The collector retains its narrowly scoped46-line/per-report-catch style exception for independent report failures; reassess after corrected native evidence. No general observability expansion.
+Retention r11 is verified by the actual failed matrix artifact; [design and evidence](phase-76.4-core-cloud-primitives_completed.md#implemented-retention-design-r11). Reassessed after both corrected macOS native proofs: retain the narrowly scoped46-line/per-report-catch exception for independent report failures until normal CI supplies equivalent scoped reports/matched symbols. No general observability expansion.
 
 ### Correction design r12 — macOS pre-exec caught dispositions
 
