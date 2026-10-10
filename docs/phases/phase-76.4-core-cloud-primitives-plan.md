@@ -71,6 +71,13 @@ proposing any production fix. An absent report is a recorded gap, not a waiver o
 After diagnosis the supervisor decides whether retaining this small collector remains justified;
 it may not grow into general observability or report/environment bundling.
 
+Supervisor implementation clarification: retain the two reviewed helpers. A cohesive collector
+around45lines is acceptable under the approximate20–40line guidance; do not extract only to hit
+a count. Polling/foreach use two loop levels and early guards. A per-report try/catch may add one
+syntactic level solely to preserve each report's visible failure and continue bounded collection;
+this narrow style exception applies only to that diagnostic collector, changes no failure contract,
+and is removed with the collector or reassessed after causal diagnosis. No third helper authorized.
+
 All15 implementer principles affect this plan: reuse existing owner/APIs(1), one invocation/no
 retry(2), same42paths(3), two coherent private functions(4), evidence before guessed fix(5), failed
 gates remain open(6), visible caller flow(7), selection versus collection duties(8), helpers below
