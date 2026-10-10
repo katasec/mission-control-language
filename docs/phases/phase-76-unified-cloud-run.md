@@ -73,8 +73,10 @@ are verified. [Content contracts0.9.0](phase-76.6-mission-content-contracts.md) 
 accepted through a fresh managed consumer. [Host binary storage](phase-76.7-host-binary-content-store.md)
 is merged and verified with local functional checks and full managed CI. Scope Host admission,
 canonical references and lifecycle next; persistent user files are not yet active.
-Before another Contracts release, investigate the publisher's metadata-view discrepancy recorded
-in that spoke; no package/authentication guard was changed. Future consumers adopt exact
+The [publisher metadata prerequisite](phase-76.8-publisher-metadata.md) is merged and verified;
+future Contracts releases use the same mandatory guard. Host admission/lifecycle source investigation
+continues without executable edits.
+Future consumers adopt exact
 published OCI0.5.0/Core0.1.8 packages. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.

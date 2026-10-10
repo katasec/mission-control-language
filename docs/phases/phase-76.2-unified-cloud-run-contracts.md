@@ -4,7 +4,8 @@
 deferred. Operator approved persistent Conversation Host content and ephemeral Runner execution.
 The revised generic contracts passed full simplicity and ownership round 7 reviews; the supervisor
 locks this design on 2026-10-10 (Dubai). The independent OCI prerequisite is merged, published as
-Katasec.OciClient 0.5.0 and accepted through a fresh remote-package Native AOT consumer. No cloud implementation plan is approved.
+Katasec.OciClient 0.5.0 and accepted through a fresh remote-package Native AOT consumer. Delivered
+producer increments are recorded below; remaining consumer plans require their own approval.
 Parent: [unified cloud execution](phase-76-unified-cloud-run.md).
 Requirements: [operator decisions](phase-76.1-unified-cloud-run-requirements.md).
 
@@ -58,6 +59,14 @@ uses temporary scratch, fetches committed content through Host, publishes genera
 through the existing private progress channel, and deletes scratch after its execution segment.
 ForgeAPI remains the authenticated edge; API and Runner receive no datastore credentials or direct
 Blob URLs. Ownership is settled; the binary protocol still requires implementation and acceptance.
+
+Operator clarification2026-10-10: asked what “File admission, ownership checks, conversation
+references and cleanup” meant, and noted those were not explicit feature requests. These are
+technical descriptions: accepting input/output bytes, reusing account/conversation authentication,
+linking files for later retrieval, and deleting Runner scratch. The abandoned-upload expiry policy
+below was a supervisor technical addition, not an explicit operator requirement. Do not present it
+as operator-requested work or conflate file authentication with the deferred execution-permission
+system.
 
 ## Locked contract design
 
@@ -841,7 +850,8 @@ increment from these locked contracts. Later consumer plans remain unapproved.
 | Contract design | Supervisor locked the revised generic contracts after full current round 7 PASS; [review evidence](phase-76.2-unified-cloud-run-contracts_completed.md#generic-execution-design-review--round-7) |
 | Independent design reviews | Round 7 simplicity and ownership PASS on the complete revised artifact; no inherited prior verdict |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
-| Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md), [content contracts0.9.0](phase-76.6-mission-content-contracts.md) and [Host binary storage](phase-76.7-host-binary-content-store.md) verified; Host admission/canonical lifecycle next. |
+| Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md), [content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md) and [publisher metadata prerequisite](phase-76.8-publisher-metadata.md) verified. |
+| Next Host dependency | Existing turn/grain/outbox path needs normalized inputs and canonical content lookup/adoption/expiry; current storage alone cannot admit files. Host Core0.1.1 must consume published0.1.8 validation; Platform/Runner/Client require exact published Contracts updates. No execution compatibility inferred from additive JSON. |
 | Cloud default-path acceptance | Required; not performed |
 
 ## Timing
