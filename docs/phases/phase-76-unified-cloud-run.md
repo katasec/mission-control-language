@@ -6,7 +6,7 @@
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
-Katasec.OciClient 0.5.0, and accepted from a fresh restored-package Native AOT consumer. Corrected Core code passed managed/package checks; actual PID1 native failure led to a verified Runner hosting prerequisite. Later consumer tasks, deployment
+Katasec.OciClient0.5.0, and accepted from a fresh restored-package Native AOT consumer. Core0.1.8 is merged, normally published and accepted through fresh remote-package and installed default checks; the Runner hosting prerequisite is verified. Later consumer tasks, deployment
 and unified runtime acceptance remain open.
 
 ## Intent
@@ -22,11 +22,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Hosting and OCI verified; Core macOS correction passes managed/package checks, with fresh code/native/default gates open. |
+| Current documentation handoff | OCI, hosting and Core verified; next bounded Host increment awaits scope/design and plan approval. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) resolving native verification failures; publication/default gates open; unified default-path acceptance not started |
+| Cloud implementation and acceptance | [Core producer](phase-76.4-core-cloud-primitives.md) verified; Host, Runner and Client consumers remain; unified default-path acceptance not started |
 | Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) verified: merged/published0.20.6, normal Make deployment, actual process/source and installed ChatPASS |
 
 ## Dependency-ordered work
@@ -42,8 +42,8 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 ## Required delivery coverage
 
 These are required outcomes of tasks 4–5 above, not completed work. Detailed implementation
-spokes follow the reviewed contracts in dependency order; the hosting prerequisite is verified
-and the bounded Core producer's correction verification remains in progress.
+spokes follow the reviewed contracts in dependency order; OCI, hosting and the bounded Core
+producer are verified.
 The implementation areas are coverage groups, not a fixed count of PRs. Keep future tasks small
 and independently deliverable: complete review, merge/publication and applicable default-path
 acceptance for one bounded increment before starting the next.
@@ -59,10 +59,10 @@ acceptance for one bounded increment before starting the next.
 
 ## Next
 
-The [Runner hosting prerequisite](phase-76.5-runner-process-hosting.md) is verified. Deliver the
-implemented [Core producer](phase-76.4-core-cloud-primitives.md) through required current-source
-native verification, publication and default acceptance. The OCI prerequisite is accepted;
-future consumers adopt the exact published 0.5.0 package. Follow the
+OCI, [Runner hosting](phase-76.5-runner-process-hosting.md) and [Core](phase-76.4-core-cloud-primitives.md)
+are verified. Scope and deliver the next small Host-owned contracts/content/admission increment;
+read its owning component before defining the implementer plan. Future consumers adopt exact
+published OCI0.5.0/Core0.1.8 packages. Follow the
 [current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
 must not infer missing contracts.
 

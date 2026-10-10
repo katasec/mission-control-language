@@ -1,5 +1,9 @@
 # Phase 76.4 — Complete implementer correction plan, round 12
 
+**Implemented and accepted.** PR77 merged as `1ecef9ae`; Core0.1.8 and installed defaults pass.
+This is the retained approved plan, not a new implementation assignment. See
+[completion evidence](phase-76.4-core-cloud-primitives_completed.md#installed-default-acceptance-and-core-closure).
+
 **PLAN APPROVED2026-10-10 04:00:12 UTC.** Both complete current plan reviews PASS; supervisor
 independently checked source/hash, exact native ABI, failure/parent-state/public/default gates.
 Reviewed pre-approval SHA25655314806A4C23EF0724236B4DB90BD7DAA1883CD33313E3EE2D6BE964E50448A.

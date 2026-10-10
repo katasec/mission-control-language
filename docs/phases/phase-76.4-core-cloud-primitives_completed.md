@@ -1,5 +1,9 @@
 # Phase 76.4 — review evidence and stage timing
 
+**Final state: verified.** PR77 merged as `1ecef9ae`; Core0.1.8 published and fresh remote-package/
+installed-default acceptance PASS. Earlier OPEN/REVISE statements below describe their dated
+stage, not the final delivery state. [Final acceptance and closure](#installed-default-acceptance-and-core-closure).
+
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
 Complete r10 plan and its approved corrections are implemented; current handback is below.
@@ -2769,7 +2773,7 @@ ignored preservation are specified; no old retention-only authority remains acti
 | review-plan:simplicity:r12 | 03:56:01→03:57:48 | 03:56:24–03:57:22 |
 | review-plan:ownership:r12 | 03:57:48→04:00:08 | 03:58:14–03:59:05 |
 | supervisor approval | 04:00:12 | After independent hash/source/contract/failure/default checks |
-| implement:implementer:r12 | 04:00:17→pending | Same implementer; only five paths authorized |
+| implement:implementer:r12 | 04:00:17→04:12:32 | Same implementer; only five paths authorized |
 
 ### Simplicity — complete corrected plan
 
@@ -3085,3 +3089,194 @@ No product edit or scope expansion results from this reassessment.
 
 Merge approval is not task closure. Normal merged-main publication, fresh remote consumer and
 clean-main installed Project/Chat/Hands/tool-free/cancel checks remain required.
+
+## Product merge and normal publication r12
+
+Product [PR77](https://github.com/katasec/forge-mcl/pull/77) opened2026-10-09 22:24:51UTC,
+merged2026-10-10 04:44:10UTC as`1ecef9aee2b6a1667c558711ea4904037d8f05c9`.
+Root marked ready and merged with exact head7952012 guard, then fetched/switched/fast-forwarded
+clean main. Actual merged tree`39d48da4776c315c5508c70be5077fcc4dbd5ece` equals the reviewed
+branch and all five native CI artifacts. No source correction after current review/verification.
+
+| Stage / boundary | StartUTC | EndUTC | Wall | Observation |
+|---|---|---|---|---|
+| Core scope to last product merge |2026-10-09 21:40:31 |2026-10-10 04:44:10 |7h03m39s | Scope table above and GitHub mergedAt; this includes elapsed prerequisite/investigation time |
+| Product PR77 open to merge |2026-10-09 22:24:51 |2026-10-10 04:44:10 |6h19m19s | GitHub createdAt/mergedAt |
+| Root ready-to-merge check |2026-10-10 04:42:37 |2026-10-10 04:43:17 |40s | Raw five-host/canonical logs and complete checklist above |
+| Root merge action/result available |2026-10-10 04:44:01 |2026-10-10 04:44:13 |12s | Ready/exact-head merge/actual merge SHA/time |
+| Normal Core publication |2026-10-10 04:44:46 |2026-10-10 04:46:06 |1m20s | Workflow dispatch main; exact source1ecef9ae |
+| Normal main CLI install |2026-10-10 04:44:46 |2026-10-10 04:51:23 |6m37s | make install exit0 available; exact merged-source native identity and sidecar |
+| Installed default acceptance | Start boundary unavailable |2026-10-10 04:52:14 | N/A | Both scripts exit0 available; root independently read bytes/provenance |
+
+Immediately before dispatch, actual Core package inventory again showed0.1.8 absent/latest0.1.7.
+Root had personally reread the reviewed publisher's purpose, main-ancestor/immutable/private/source
+and dependency checks. Normal [publication38025128984](https://github.com/katasec/forge-mcl/actions/runs/38025128984)
+created04:44:46UTC/head1ecef9ae; job114134256778 running at04:45:23UTC. No Core tag or alternate
+publisher. Normal merged-main `make install` runs under inherited PowerShell environment;
+`/private/tmp/phase76-core-main-install-20261010T0444.log` retains output. Publication/install/default
+success was not yet claimed at that initial dispatch. Final observations follow below. Postmerge acceptance is outside the product timing span; tokens N/A.
+
+### Normal published Core0.1.8 — accepted public package
+
+Publication38025128984/job114134256778 PASS04:46:06UTC. Root read raw
+`/private/tmp/phase76-core-r12-publication.log`: build0warnings/errors; actual Linux Core slice
+405passed/2existing optional live skips/0fail (407total,15s), metadata/content/dependencies PASS,
+push confirmed04:46:03.642976UTC and reviewed private/repository/version check succeeded.
+Independent GitHub API confirms private `katasec/forge-mcl` ownership and version0.1.8
+id1364724952 created04:46:03UTC. No overwrite/tag/alternate publisher.
+
+Root fresh remote consumer uses only PackageReferenceCore0.1.8 and a NEW cache at
+`/private/tmp/phase76-core-published-acceptance-20261009T2332/published-packages-20261010T0446`.
+Actual `.nupkg.metadata` source is normal `https://nuget.pkg.github.com/katasec/index.json`;
+actual NuGet library type is package, no sibling source reference/manually swapped DLL/local
+Forge feed. Remote nupkg397848bytes, SHA256
+`dfd96bfc5de079cb40a37711d3c430b667783b0d2ec5e7f3ea6a1eea6518af75`, nuspec source
+`1ecef9aee2b6a1667c558711ea4904037d8f05c9`, Parser/Scout0.1.0 and ONNX1.27.0 verified.
+Normal repo NuGet configuration supplies GitHub/nuget.org; installed SDK additionally supplies
+its built-in library-packs source (contains no Katasec package). Initial root metadata assertion
+incorrectly expected only two sources; inspecting the SDK source corrected that audit expectation,
+without restore/runtime rerun or product/config change. Actual Core source remained GitHub.
+
+Fresh restore/run exited0, no compiler warnings. Public consumer passes generated JSON/assets/
+executable/hash/input admission/rejection, actual arbitrary Python file binding/cwd/runtime aliases,
+independently read output bytes/exact StepKey, actual numeric0.8 within1e-6, observed unfinished
+native inference cancellation joined/no score write, six-arg constructor/missing-null-assets/old
+format1 hashes. Expected native ONNX terminate diagnostic accompanies the successful cancellation
+assertion. This is actual published-package acceptance, not the earlier branch-local feed proof.
+
+| Default fact | Named observation |
+|---|---|
+| Artifact | Core0.1.8/source1ecef9ae/remote SHA above |
+| Defaults/dependency | Normal private GitHub feed/nuget.org/default SDK packs; Core metadata proves GitHub origin; no local Forge package/source/DLL replacement |
+| Starting state | NEW isolated cache and disposable generated runtime workspace |
+| Action | dotnet restore with normal repo NuGet config; dotnet run Release public consumer, no PublishAot claim |
+| Outcome | All package/exec/trace/numeric/cancel/ABI assertions PASS; restored/runtime exit0 |
+| Controlled evidence | Earlier branch package and native image probe remain separately labelled; neither substituted |
+
+Root consumer assignment04:46:41UTC, actual successful runtime available04:46:58UTC;
+metadata/provenance acceptance04:48:11UTC. Raw `published-restore.log`, `published-run.log`,
+`published-package.nuspec`, `published-observation.json` in the same consumer directory.
+Normal installed Project/Chat/Hands/tool-free/cancel subsequently passed; see final acceptance below.
+
+## Retained private correction design — completed
+
+### Implemented retention correction
+
+Retention r11 is verified by the actual failed matrix artifact; [design and evidence](phase-76.4-core-cloud-primitives_completed.md#implemented-retention-design-r11). Reassessed after both corrected macOS native proofs: retain the narrowly scoped46-line/per-report-catch exception for independent report failures until normal CI supplies equivalent scoped reports/matched symbols. No general observability expansion.
+
+### Correction design r12 — macOS pre-exec caught dispositions
+
+**DESIGN LOCKED2026-10-10 03:48:45 UTC.** Full sequential simplicity/ownership design reviews PASS.
+Supervisor design observed2026-10-10 03:43:26–03:44:00 UTC. Existing full Core
+design and Done when remain authoritative; this corrects the private launch boundary only.
+The actual child has PC0, x3=0, x8=0x42 and SIGUSR1 arguments. Its exact NativeAOT handler
+tail-branches through the saved previous action when SA_SIGINFO is set. A safe C probe reproduces
+the macOS spawn state: caught parent action becomes default/null with flags0x42; explicitly
+defaulting it pre-exec clears flags0. This supports the cause; no crash-time memory snapshot exists.
+
+```mermaid
+flowchart LR
+  A[Existing POSIX launch setup] --> B[macOS: inspect caught dispositions]
+  B --> C[Checked spawn signal-default attribute]
+  C --> D[Atomic process-group launch]
+```
+
+Only macOS configuration in existing `PosixExecProcess.ConfigureSpawn` explicitly defaults the
+actual inherited **caught** signal set using `posix_spawnattr_setsigdefault` and
+`POSIX_SPAWN_SETSIGDEF`, before the existing atomic spawn. Use the documented macOS sigaction
+layout and signal range; check every query/attribute return. Preserve SIG_IGN and SIG_DFL actions,
+caller signal mask, parent process dispositions, group ownership, pipes, argv/cwd/environment,
+cleanup/error precedence and all public contracts. Linux and Windows launch semantics remain
+unchanged. Platform ABI belongs in existing private PosixNative, not a new abstraction or dependency.
+Do not hard-code SIGUSR1 as a runtime-specific production policy or reset all signals indiscriminately.
+
+| Behaviour | Owner / existing thing reused |
+|---|---|
+| Spawn attributes and platform ABI | Core's existing ExecProcess.Posix/PosixNative; [Core README](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/README.md) owns reusable execution primitives |
+| Signal-state regression observation | Existing public ExecExpertRunner native probe and child dispatcher; platform libc, no new process host |
+| Artifact verification and failure retention | Existing canonical/matrix builds and narrowly scoped collector; no extra CI route |
+
+The implementer plan must give exact ABI sizes/constants/errno semantics and a meaningful
+regression that proves caught flags are cleared and ignored dispositions preserved through the
+public adapter. It must safely restore any test-parent dispositions and avoid replacing runtime
+activation handlers. A source-level assertion alone cannot prove the correction. Existing decisive
+duplex pressure, payloads, deadlines and warning gates stay unchanged. No new general signal API,
+mask policy, global handler, runtime patch, retries, UTF-8 rewrite or consumer change.
+
+| Gate / failure | Required boundary and observation |
+|---|---|
+| Setup failure | Core returns the existing explicit execution failure before child launch; attributes/pipes still disposed; caller owns retry/new run |
+| Ignored actions / parent state | Focused native probe shows SIG_IGN survives and parent dispositions remain unchanged/restored |
+| Runtime cause | Current exact-source canonical and all four native hosts pass original pressure and lifecycle checks with zero warnings |
+| Security | No tier/data/identity/entry-point/authority change; user-vetted arbitrary code remains supported |
+| Default | Normally published Core0.1.8 fresh restore plus clean merged-main installed run/Hands and Chat regressions already defined above; controlled C probe is not acceptance |
+| UI | N/A: no visible surface change |
+
+Designer principles that changed decisions: no NIH reuses native spawn attributes; one owner keeps
+launch semantics in Core; minimum limits correction to the observed macOS boundary; built-in safety
+uses pre-exec attributes without mutating the parent's handlers; verified means current native and
+published default observations. Rejected alternatives: reset-all loses ignored semantics;
+SIGUSR1-only embeds a runtime assumption; signal-mask reset lacks evidence; serialization changes
+contradict the exact disassembly; retrying the failing probe hides the defect. Open design questions:
+none. Exact implementation ABI and test arrangement must be specified and reviewed in the plan.
+
+## Installed default acceptance and Core closure
+
+Supervisor accepted2026-10-10 04:52:14UTC after personally reading both script outputs and
+independently checking the actual file bytes, sentinel/symlink and clean source state.
+Normal merged-main `make install` exit0 was available04:51:23UTC. Actual installed identity is
+`0.13.0-dev.0+1ecef9aee2b6a1667c558711ea4904037d8f05c9`, SHA256
+`51a4e18efa49904a11a7afa20a5c3d62ca4c3c71942f3ce95710ef2fbdc825f1`;
+normal payload includes `libonnxruntime.dylib`38313360bytes. No manually swapped DLL or install override.
+Normal PowerShell inherits existing keys, openai/gpt-4o-mini; FORGE_API_ENDPOINT,
+FORGE_PLATFORM_ENDPOINT,RID,RELEASE_TAG,CLI_OUTPUT absent. No test service/provider URL.
+
+| Default action | Actual observation |
+|---|---|
+| Disposable local mission, source outside workspace, normal forge init/config | Installed run with steps/global var returned hands-default-ok; independently read16exact bytes after Hands Write then Read |
+| Read-only mission with random content absent from prompt | Returned exact read-proof-9e5432cce3c47b46a68cf4c914e86b93e3d46f265f385e45; independent unchanged file bytes |
+| Outside root and symlink targets | Both returned existing ERROR Failed/outside workspace roots; outside-sentinel bytes unchanged; actual symlink verified |
+| Tool-free | Exit0/exact tool-free-ok |
+| Real Ctrl-C after observed running admission | Joined exit130, empty stdout, Mission cancelled stderr |
+| Normal project create then authenticated hosted chat | Both exit0; new Projectba10f631-5a46-4f7e-a484-a91bbfb4a57c defaults Chat@1/folders[]; exact PHASE76_CORE_CHAT_OK_20261010T045135Z answer, one authoritative projection/conversation63b93f9d-4828-5632-a07b-e03f5db590e4 |
+| Repository state | forge-mcl clean main1ecef9ae, origin/main divergence0/0 |
+
+Raw installed evidence: `/private/tmp/phase76-core-default-accepted-20261010.json`
+(records actual actions/stdout/stderr/bytes, completed04:51:50.095083UTC),
+`/private/tmp/phase76-core-project-chat-20261010T045135Z/observation.json` plus raw create/chat
+streams, and install log above. Supervisor acceptance scripts use installed normal binary and
+fresh disposable working roots; existing credentials are consumed normally, never printed.
+The first local action starts04:51:35.437051UTC; the precise whole-script assignment start was
+not separately clocked, so the stage table does not infer it from a case timestamp.
+
+All Core Done when conditions pass: approved API/semantics; current full independent reviews;
+focused/full/package/native zero-warning checks; actual normal immutable publication/fresh consumer;
+installed Hands/Project/Chat/tool-free/cancel defaults; this reconciled closure record.
+The documentation closure PR380 is outside product timing and merges after documentation validation.
+UI/browser N/A: no visible surface change. Downstream unified run/content/Runner/Client obligations
+remain open; these producer observations do not claim their implementation or cloud acceptance.
+
+### Final correction assignment boundaries
+
+All rows2026-10-10 UTC. Assignment boundaries are supervisor-observed; agent activity times
+remain separately recorded above. Earlier revision tables remain the record for those rounds.
+
+| Stage / role / round | Start UTC | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| design:supervisor:r12 |03:43:26 |03:44:00 |34s | Retained private correction design |
+| review-design:simplicity:r12 |03:44:00 |03:46:28 |2m28s | Complete current design verdict |
+| review-design:ownership:r12 |03:46:28 |03:48:45 |2m17s | Complete current design verdict; DESIGN LOCKED |
+| plan:implementer:r12 |03:48:49 |03:54:39 |5m50s | Complete implementer plan |
+| review-plan:simplicity:r12 |03:56:01 |03:57:48 |1m47s | Full current plan verdict |
+| review-plan:ownership:r12 |03:57:48 |04:00:08 |2m20s | Full current plan verdict |
+| Supervisor PLAN APPROVED |04:00:12 |04:00:12 |0s | Exact reviewed five-path correction/full43-path artifact |
+| implement:implementer:r12 |04:00:17 |04:12:32 |12m15s | Same implementer/source7952012 |
+| review-code:simplicity:r8 plus style |04:12:32 |04:15:42 |3m10s | Both complete checklist tables |
+| review-code:ownership:r8 |04:15:42 |04:19:46 |4m04s | Complete current behavior/technical tables |
+| Supervisor ready-to-merge |04:42:37 |04:43:17 |40s | All actual five native logs; MERGE APPROVED |
+| Product merge action/result |04:44:01 |04:44:13 |12s | PR77 merged04:44:10 as1ecef9ae |
+| Published consumer/provenance |04:46:41 |04:48:11 |1m30s | Actual normal remote package/public API acceptance |
+| Installed acceptance | Unavailable |04:52:14 | N/A | Actual scripts exit0 and independent bytes/source observation |
+
+Product scope→last merge7h03m39s and PR77open→merge6h19m19s are recorded in the product table.
+Publication/install/default acceptance are postmerge; no token accounting is inferred.

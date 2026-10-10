@@ -1,9 +1,9 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Source `79520120` accepted after fresh full simplicity/style and ownership reviews.
-Managed, package and fresh-cache branch consumer checks pass; all four native matrix hosts pass.
-Separate canonical macOS verification also passes; merge approved04:43:17UTC.
-Merge/publication/default acceptance remain open.
+**Status:** Verified. [PR77](https://github.com/katasec/forge-mcl/pull/77) merged04:44:10UTC as `1ecef9ae`;
+normal Core0.1.8 publication and fresh remote-package acceptance PASS. Clean-main installed CLI
+Hands, opaque Read, guard denials, tool-free, Ctrl-C and real hosted Project/Chat PASS.
+Full Phase76 remains open for dependent Host, Runner and Client tasks.
 Current [review and native evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source).
 [Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
@@ -198,66 +198,9 @@ be marked complete by this package probe.
 | Design | Parent round7 locked21:40:31 UTC; macOS correction r12 locked03:48:45 UTC after fresh complete reviews; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-correction-design-reviews-r12) |
 | Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
 | Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
-| Plan approval / implementation | Same implementer authorized04:00:17 UTC; finished and pushed7952012 on [PR77](https://github.com/katasec/forge-mcl/pull/77). Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
-| Code review / native CI | Fresh full r8 reviews and canonical/all-four-host zero-warning native PASS. [Current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Supervisor merge approved04:43:17UTC; publication/default gates remain open. |
-| Published/default acceptance | Required; not performed |
+| Plan approval / implementation | Same implementer finished7952012; PR77 merged as1ecef9ae04:44:10UTC with exact reviewed tree. Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
+| Code review / native CI | Fresh full r8 reviews and canonical/all-four-host zero-warning native PASS; [current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Supervisor merge approved04:43:17UTC. |
+| Published/default acceptance | Core0.1.8 normal publication/fresh remote consumer and clean-main installed defaults PASS; [acceptance and closure](phase-76.4-core-cloud-primitives_completed.md#installed-default-acceptance-and-core-closure). |
 
-### Implemented retention correction
-
-Retention r11 is verified by the actual failed matrix artifact; [design and evidence](phase-76.4-core-cloud-primitives_completed.md#implemented-retention-design-r11). Reassessed after both corrected macOS native proofs: retain the narrowly scoped46-line/per-report-catch exception for independent report failures until normal CI supplies equivalent scoped reports/matched symbols. No general observability expansion.
-
-### Correction design r12 — macOS pre-exec caught dispositions
-
-**DESIGN LOCKED2026-10-10 03:48:45 UTC.** Full sequential simplicity/ownership design reviews PASS.
-Supervisor design observed2026-10-10 03:43:26–03:44:00 UTC. Existing full Core
-design and Done when remain authoritative; this corrects the private launch boundary only.
-The actual child has PC0, x3=0, x8=0x42 and SIGUSR1 arguments. Its exact NativeAOT handler
-tail-branches through the saved previous action when SA_SIGINFO is set. A safe C probe reproduces
-the macOS spawn state: caught parent action becomes default/null with flags0x42; explicitly
-defaulting it pre-exec clears flags0. This supports the cause; no crash-time memory snapshot exists.
-
-```mermaid
-flowchart LR
-  A[Existing POSIX launch setup] --> B[macOS: inspect caught dispositions]
-  B --> C[Checked spawn signal-default attribute]
-  C --> D[Atomic process-group launch]
-```
-
-Only macOS configuration in existing `PosixExecProcess.ConfigureSpawn` explicitly defaults the
-actual inherited **caught** signal set using `posix_spawnattr_setsigdefault` and
-`POSIX_SPAWN_SETSIGDEF`, before the existing atomic spawn. Use the documented macOS sigaction
-layout and signal range; check every query/attribute return. Preserve SIG_IGN and SIG_DFL actions,
-caller signal mask, parent process dispositions, group ownership, pipes, argv/cwd/environment,
-cleanup/error precedence and all public contracts. Linux and Windows launch semantics remain
-unchanged. Platform ABI belongs in existing private PosixNative, not a new abstraction or dependency.
-Do not hard-code SIGUSR1 as a runtime-specific production policy or reset all signals indiscriminately.
-
-| Behaviour | Owner / existing thing reused |
-|---|---|
-| Spawn attributes and platform ABI | Core's existing ExecProcess.Posix/PosixNative; [Core README](https://github.com/katasec/forge-mcl/blob/main/src/ForgeMission.Core/README.md) owns reusable execution primitives |
-| Signal-state regression observation | Existing public ExecExpertRunner native probe and child dispatcher; platform libc, no new process host |
-| Artifact verification and failure retention | Existing canonical/matrix builds and narrowly scoped collector; no extra CI route |
-
-The implementer plan must give exact ABI sizes/constants/errno semantics and a meaningful
-regression that proves caught flags are cleared and ignored dispositions preserved through the
-public adapter. It must safely restore any test-parent dispositions and avoid replacing runtime
-activation handlers. A source-level assertion alone cannot prove the correction. Existing decisive
-duplex pressure, payloads, deadlines and warning gates stay unchanged. No new general signal API,
-mask policy, global handler, runtime patch, retries, UTF-8 rewrite or consumer change.
-
-| Gate / failure | Required boundary and observation |
-|---|---|
-| Setup failure | Core returns the existing explicit execution failure before child launch; attributes/pipes still disposed; caller owns retry/new run |
-| Ignored actions / parent state | Focused native probe shows SIG_IGN survives and parent dispositions remain unchanged/restored |
-| Runtime cause | Current exact-source canonical and all four native hosts pass original pressure and lifecycle checks with zero warnings |
-| Security | No tier/data/identity/entry-point/authority change; user-vetted arbitrary code remains supported |
-| Default | Normally published Core0.1.8 fresh restore plus clean merged-main installed run/Hands and Chat regressions already defined above; controlled C probe is not acceptance |
-| UI | N/A: no visible surface change |
-
-Designer principles that changed decisions: no NIH reuses native spawn attributes; one owner keeps
-launch semantics in Core; minimum limits correction to the observed macOS boundary; built-in safety
-uses pre-exec attributes without mutating the parent's handlers; verified means current native and
-published default observations. Rejected alternatives: reset-all loses ignored semantics;
-SIGUSR1-only embeds a runtime assumption; signal-mask reset lacks evidence; serialization changes
-contradict the exact disassembly; retrying the failing probe hides the defect. Open design questions:
-none. Exact implementation ABI and test arrangement must be specified and reviewed in the plan.
+Private launch correction and scoped diagnostic retention are verified; see the
+[retained design and reversal condition](phase-76.4-core-cloud-primitives_completed.md#retained-private-correction-design--completed).
