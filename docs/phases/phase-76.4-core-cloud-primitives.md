@@ -1,13 +1,12 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Diagnostic correction r10 is committed/pushed at `0d0a338f`; production source remains
-unchanged from `8f0fa851`. Script parser,30existing and23controlled diagnostic checks pass.
-Fresh full code reviews r6 pass; current Linux x64/ARM64 and Windows native checks pass.
-Instrumented macOS matrix repeats pressure-child SIGSEGV139 and collects two reports, but its
-existing route does not upload failure reports. Canonical macOS passes on the same tree and
-therefore has no crash reports. The bounded matrix-retention plan passed both full reviews and is approved03:02:53 UTC.
-No merge/publication approved.
-[Current evidence](phase-76.4-core-cloud-primitives_completed.md#diagnostic-correction--implementation-r10).
+**Status:** Matrix-retention correction r11 is committed/pushed at `c4176ba5`; production source
+remains unchanged from `8f0fa851`. Its21 routing/scope checks,4parser checks and30existing script
+checks pass. Fresh complete code reviews r7 and current-source canonical/four-host CI are running.
+Prior r10 canonical macOS passed while matrix macOS repeated pressure-child SIGSEGV139; its two
+collected reports were not uploaded. The new failure-only route retains those scoped reports and
+matching symbols if failure recurs. Cause remains unproven; no merge/publication approved.
+[Current evidence](phase-76.4-core-cloud-primitives_completed.md#matrix-retention--implementation-r11).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
@@ -201,11 +200,11 @@ be marked complete by this package probe.
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
 | Implementer plan | [Complete r11](phase-76.4-core-cloud-primitives-plan.md) approved03:02:53 UTC;43-path inventory, new change only release workflow/README for failed-matrix evidence |
 | Independent plan reviews | Fresh full r11 simplicity/ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-11-plan-reviews--failed-matrix-retention); prior verdicts historical |
-| Plan approval / implementation | Diagnostic correction pushed `0d0a338f` in [PR77](https://github.com/katasec/forge-mcl/pull/77); parser/30scripts/23controlled checks PASS. Production tree unchanged; no production correction authorized. |
-| Code review / native CI | Fresh full r6 simplicity/style and ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r6--scoped-crash-evidence). Current Linux/Windows/canonical macOS PASS; matrix macOS SIGSEGV recurs, reports copied but not uploaded. Causal/publication/default gates open. |
+| Plan approval / implementation | Retention correction pushed `c4176ba5` in [PR77](https://github.com/katasec/forge-mcl/pull/77);21routing/4parser/30script checks PASS. Production tree unchanged; no production correction authorized. |
+| Code review / native CI | Fresh full r7 reviews in progress; [canonical38019324267](https://github.com/katasec/forge-mcl/actions/runs/38019324267) and [four-host38019324271](https://github.com/katasec/forge-mcl/actions/runs/38019324271) pending. Prior r6 verdicts and r10 native observations are historical. Causal/publication/default gates open. |
 | Published/default acceptance | Required; not performed |
 
-### Next bounded correction — retain the failed matrix evidence
+### Current bounded correction — retain the failed matrix evidence
 
 Read-only investigation r12 confirms the exact gap: the failed matrix copied two validated reports
 inside its runner, but only the successful canonical job retained an artifact. No faulting child
@@ -218,8 +217,8 @@ public API, retry, payload, deadline, warning policy or process mechanism. Exist
 and full producer Done when remain authoritative. Product/default gates apply; visual/browser N/A.
 The plan must explicitly expand the full inventory from42 to43 paths by adding
 `.github/workflows/release.yml`; only that workflow and `scripts/README.md` may change now.
-Other existing product paths remain frozen at0d0a338f; no edit is authorized until a reviewed
-plan is approved.
+Other existing product paths remain frozen at0d0a338f. Both complete plan reviews passed and
+supervisor approved03:02:53 UTC; the same implementer delivered only the two permitted files.
 
 Use the already referenced `actions/upload-artifact@v7` in the existing matrix build job, after
 the native build, only on failed macOS execution. Give the diagnostic artifact a distinct name
@@ -230,6 +229,11 @@ credentials, broad workspace or shipped CLI payload. Preserve the existing succe
 artifact unchanged and preserve the original failed job; upload failure cannot make it pass.
 Use the normal current-source CI route; collect faulting report and exact matching symbols before
 any production fix. The completed record must state that the earlier reports were not retained.
+
+The unchanged collector retains the previously reviewed narrow style exception: its cohesive
+46-line body and per-report try/catch beyond two syntactic nesting levels are allowed only for
+bounded independent report failure handling. Two helpers remain; no metric-only extraction.
+Reassess this exception with the collector after diagnosis.
 
 Verification: inspect actual output/artifact paths, YAML parse/action condition/name/path routing,
 existing script checks, fresh complete sequential code reviews, and normal canonical/four-host

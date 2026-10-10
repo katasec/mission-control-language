@@ -2253,3 +2253,27 @@ identity/source clean0/0, actual successful canonical archive probe/dSYM/sidecar
 failure, six allowed paths, successful ZIP/publisher separation, unchanged permissions and all
 retained producer gates. **PLAN APPROVED03:02:53 UTC**, only README/release-workflow correction.
 No production fix, Native AOT waiver, merge/publication or completion approved.
+
+## Matrix retention — implementation r11
+
+Same implementer observed03:03:53–03:06:00 UTC on2026-10-10, after supervisor approval03:02:53.
+Exact implementation-assignment boundary was not separately recorded; those observed times do
+not stand in for it. Supervisor received the final handback before03:07:48 UTC.
+Committed/pushed `c4176ba5598b77538829350e8bb7c8fc986bf8b0`, PR77, clean branch with0/0 upstream
+count independently observed by supervisor. Increment only release.yml/scripts README21+/3-;
+full43paths2716+/457-, binary diff SHA256
+`4b90536b4e8db66929df06935448c5dc7ce05805e9bd3e4d1b368b17a0005131`.
+Production tree unchanged `6c7cfd841a81fd60ad0fd3d7213ae75e4bd202f9`; tests/collector also unchanged.
+
+Evidence: `/private/tmp/phase76-core-matrix-retention-20261010T030353Z/EVIDENCE.md`, full.diff,
+inventory.txt, correction.diff and raw retention/parser/script logs. Supervisor read actual
+two-file diff and logs:21parsed routing/preservation/scope checks,4PowerShell parsers and30existing
+CLI script checks PASS; diff hygiene PASS. Existing Ruby PATH warning retained; initial parser-log
+redirect orchestration error corrected and recorded, with no source change. No new warning waiver.
+
+Existing matrix action now uploads the six approved paths only on failed macOS builds, using a
+distinct diagnostic name excluded from forge-* publication. Original build/upload failures remain
+failures. Successful CLI ZIP/publication/permissions/commands unchanged. No production fix guessed.
+Normal push dispatched canonical38019324267 and four-host38019324271 at03:05:20 UTC; supervisor
+observed both in progress at reviewed HEAD. Required fresh full code reviews, actual native causal
+evidence, final required checks, immutable publication and published/default acceptance remain open.
