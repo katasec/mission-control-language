@@ -74,7 +74,7 @@ or chunk algorithm is introduced. Deterministic IDs reuse `ConversationDetermini
 | Malformed JSON | Existing System.Text.Json exception contract; round-trip exact bytes/long/enums and reject malformed base64/unknown string kind with no effects. Semantic invalid descriptors remain Host admission's later responsibility. |
 | Publication conflict/outage | Existing immutable-version preflight and private/repository verification fail explicitly; supervisor retries only transport failure, never overwrites0.9.0. Recheck package inventory before publishing. |
 | UI | N/A: no visual surface change. |
-| Default | Normal merged-main private NuGet publication; fresh isolated-cache PackageReference-only consumer/no sibling source/DLL swap, then zero-warning Native AOT executable using all new generated types. No deployed runtime behavior is claimed. |
+| Default | Normal merged-main private NuGet publication; fresh isolated-cache managed PackageReference-only consumer/no sibling source/DLL swap exercises all new generated types. Native AOT belongs to final phase delivery under the operator's clarified timing. No deployed runtime behavior is claimed. |
 
 Package inventory04:54:53UTC: Contracts and Presentation latest0.8.0,0.9.0 absent. Baseline
 forge-conversations clean main`e1c5b5bd661ccebaf05fe316d3e5fd512ef2c278`; no local AGENTS.md.
@@ -93,10 +93,10 @@ Open design questions: none. Exact files/release-script details belong in the re
 ## Done when
 
 1. Exact additive types, fixed limits and generated JSON are implemented in Contracts; focused/full
-   checks and final Native AOT verification pass with zero warnings; old public shapes stay intact.
+   managed checks pass with zero warnings; old public shapes stay intact. Native AOT remains a final phase gate.
 2. Full sequential design, plan and code reviews pass; supervisor independently checks diff/evidence.
 3. Product PR is merged and Contracts0.9.0 normally published privately with merged-source provenance;
-   a fresh normal-feed PackageReference consumer exercises exact types/bytes/limits in Native AOT.
+   a fresh normal-feed managed PackageReference consumer exercises exact types/bytes/limits.
 4. Stage boundaries, product PR times and postmerge acceptance are recorded, docs closure merged,
    touched repos clean on current main. Next is Host content storage/admission, not phase completion.
 
@@ -115,10 +115,13 @@ using the existing documented Homebrew prerequisites then produced five deployme
 (SDK macOS12 versus installed OpenSSL27/Brotli26 on macOS27.0.1). Neither attempt passes the
 zero-warning gate. Product source and compiler warnings remain unchanged.
 
-Supervisor-approved verification adjustment2026-10-10 05:16UTC: use the official
+Historical supervisor-approved verification adjustment2026-10-10 05:16UTC used the official
 `mcr.microsoft.com/dotnet/sdk:10.0-aot` ARM64 image, manifest digest
 `sha256:407a2711f25619956ffc5febc9245a1bf9105d73a2bb42876b512ffa87094637`, with its ordinary
-`linux-arm64` target and supplied native toolchain. Both controlled branch and fresh published-package
-consumers must publish and execute with zero warnings. No deployment-target override, custom
-linker environment, product configuration change or macOS12 support claim. Normal private NuGet
-publication/restoration, new isolated cache and exact source provenance remain the acceptance path.
+`linux-arm64` target and supplied native toolchain. Its controlled branch consumer passed, but the
+operator then stopped this extra Docker route and clarified that AOT is only at final delivery,
+after everything works, not for testing. Do not repeat native verification here. Both Mac attempts
+remain failed environmental observations; the Docker result supplies no default-path acceptance.
+Normal private NuGet publication/restoration, a new isolated cache, exact source provenance and
+managed public-consumer actions remain this increment's acceptance path. No product configuration
+change or macOS12 support claim.

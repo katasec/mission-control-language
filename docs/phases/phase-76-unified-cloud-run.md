@@ -48,6 +48,11 @@ The implementation areas are coverage groups, not a fixed count of PRs. Keep fut
 and independently deliverable: complete review, merge/publication and applicable default-path
 acceptance for one bounded increment before starting the next.
 
+Operator clarification2026-10-10: **"AOT is at the end after everything works..."**, **"not for testing"**.
+Use managed builds and functional tests during implementation. Native AOT is a final delivery
+gate after the complete unified flow works, not a repeated per-increment test. The supervisor's
+extra Docker native-consumer route was stopped at the operator's correction; do not resume it.
+
 | Required outcome | Implementation owner / task coverage | Completion observation |
 |---|---|---|
 | One local/OCI `forge run`, named text and file inputs | Core/package primitives → shared Client preparation → CLI/source resolution | Installed CLI runs both sources through the same real cloud path; each named file reaches its matching input |

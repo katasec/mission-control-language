@@ -152,6 +152,8 @@ no Presentation push/skip-duplicate/permission expansion/new workflow. Exercise 
 with scratch JSON/intercepted commands: existing/unrelated versions, non404 API failure, wrong
 visibility/repository, missing/duplicate version. These remain controlled script checks.
 
+Historical approved native commands below retain what was actually attempted; the operator's
+subsequent AOT-at-final-delivery instruction supersedes repeated native checks for this increment.
 Final controlled consumer uses only PackageReferenceContracts0.9.0, reflection serialization disabled,
 no project/DLL reference/custom context. Branch feed plus normal feeds, NEW empty NUGET_PACKAGES.
 Exercise all five generated types/bytes/long/maps/limits/invalid JSON/representative old shapes;
@@ -164,7 +166,8 @@ for both native checks; [exact adjustment](phase-76.6-mission-content-contracts.
 Default acceptance: supervisor rechecks0.9.0 absent, dispatches existing workflow from merged main,
 then NEW empty cache/ordinary authenticated feeds only/no local feed/sibling/DLL substitution.
 Inspect actual private visibility/repository/version and merged-source nuspec/bytes, run fresh
-PackageReference-only native consumer against ordinary SDK target with zero warnings. A tag is
+PackageReference-only managed consumer with zero warnings. Native AOT is deferred to final phase
+delivery by the operator's explicit clarification. A tag is
 supported but not needed. No hosted/deployment behavior claimed. All four spoke Done when apply.
 
 ## Principles that changed choices
