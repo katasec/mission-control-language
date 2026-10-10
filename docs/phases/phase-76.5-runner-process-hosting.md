@@ -1,8 +1,9 @@
 # Phase 76.5 — Runner process hosting prerequisite
 
 **Status: DESIGN LOCKED** 2026-10-10 00:00:19 UTC after fresh full sequential simplicity and
-ownership PASS. Implementer read-only plan is next; no product edit until full plan reviews and
-explicit approval. Core verification remains open.
+ownership PASS. [Complete six-file plan](phase-76.5-runner-process-hosting-plan.md) approved
+2026-10-10 00:06:49 UTC after full current plan reviews. Same implementer owns implementation;
+Core verification remains open. No publication/deployment/default PASS yet.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 

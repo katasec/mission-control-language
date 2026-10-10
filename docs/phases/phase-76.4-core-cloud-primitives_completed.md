@@ -738,12 +738,18 @@ native-windows-arm64-dc03.log into the earlier evidence directory, observed life
 closed-stdin/early-root timeout and caller-cancel PASS and no raw compiler/linker warning.
 Windows closed-input HRESULT800700E8 confirms the approved232 mapping; Linux reports native32.
 These runs precede uncommitted verification additions and the pending hosting correction;
-they do not close the final-source/native/default gates. Canonical macOS and macOS matrix
-were still running at the last snapshot.
+they do not close the final-source/native/default gates. Canonical macOS remained running at
+the next snapshot. macOSARM64 job114072387427 subsequently completed SUCCESS; supervisor
+downloaded native-macos-arm64-dc03.log in the same raw-log directory. Native argv/cwd, PATH/spaced
+lookup, already-exited descendant cleanup, early-root timeout/caller-cancel and lifecycle PASS
+at00:03:19 UTC; no raw compiler/linker warning. The four-host run completed FAILURE solely
+because of Linuxx64 bare-PID1. This still precedes the four-file test correction and required
+hosting/Core revision; no final-source PASS.
 
 Supervisor later directly observed release run37999080639 completed successfully on all four
-native hosts at source770778d (GitHub updatedAt2026-10-09T22:54:45Z). These frozen-source build/help/version results remain lower-layer evidence; the
-that old source's canonical macOS managed suite failed; it did not test corrected-launch behavior.
+native hosts at source770778d (GitHub updatedAt2026-10-09T22:54:45Z). These frozen-source
+build/help/version results remain lower-layer evidence; that old source's canonical macOS
+managed suite failed and did not test corrected-launch behavior.
 
 | Stage / role / round | Start (UTC) | End (UTC) | Wall | Evidence |
 |---|---|---|---|---|

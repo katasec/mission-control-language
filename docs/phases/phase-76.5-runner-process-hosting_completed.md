@@ -56,5 +56,58 @@ actual image or default-path success or approves implementation.
 | Ownership design r9 | 2026-10-09 23:59:29 | 2026-10-10 00:00:00 | Full15/gates PASS; observed start23:59:45 |
 | Supervisor design lock | 2026-10-10 00:00:19 | 2026-10-10 00:00:19 | Independent full artifact check; DESIGN LOCKED |
 
-Product plan, approval, implementation, reviews, merge, publication, deployment and acceptance
-are future boundaries. Tokens unavailable; no measured token claim.
+Product implementation, code reviews, merge, publication, deployment and acceptance are future
+boundaries. Tokens unavailable; no measured token claim.
+
+## Plan reviews
+
+Read-only implementer plan00:00:19–00:03:08 UTC; [complete artifact](phase-76.5-runner-process-hosting-plan.md).
+Root transcription/document validation PASS14docs/88links/2JSON/fences/global hub and diff check.
+
+| Simplicity check | Current plan r6 verdict |
+|---|---|
+| New apps/libraries | PASS: apt tini, no application/project dependency |
+| Reuse | PASS: existing Dockerfile/workflow/tests/secret/Make |
+| Multiple paths | PASS: fixed production entrypoint/shared probe; controlled cases labelled |
+| Legacy paths | PASS: no fallback/handler replacement/Core edit |
+| Knobs | PASS: no product setting/authority; version recheck |
+| Speculative abstractions | PASS: bounded stdlib script outside payload |
+| Library choice | PASS: standard init; native image observations mandatory |
+| Copy-paste | PASS: existing workflow; no second publisher/test project |
+| Redundant definitions | PASS: no DTO/provider/identity/durable-owner duplication |
+| Size versus requirement | PASS: six paths; independent hosting increment |
+| Test volume | PASS: two native images, topology/health/orphan/shutdown/exit37/missing init/default Chat |
+
+Simplicity full review assigned00:04:46, observed00:05:02–00:05:17 UTC. Security/engineering/default
+consistent; JIT-image AOT and UI N/A. No removal/merge finding. Ownership review assigned00:05:31
+UTC, observed00:05:49–00:06:14 UTC; full18 behaviors/gates PASS below.
+
+| Ownership behavior | Derived/proposed owner | Current plan r6 verdict |
+|---|---|---|
+| Install/fixed init→dotnet | Runner image | PASS |
+| Direct signals/exit propagation | Init composed by image | PASS |
+| Image/PID1/child/health proof | Runner image probe | PASS |
+| Orphan adoption/kill/reap/sentinel | Runner image probe | PASS |
+| Normal graceful shutdown | Runner image probe | PASS |
+| Nonzero37 propagation | Runner image probe, controlled | PASS |
+| Missing init/no fallback | Runner image probe, controlled | PASS |
+| Deadlines/owned-container cleanup | Runner image probe | PASS |
+| Managed/both-native-architecture checks | Existing image workflow | PASS |
+| PR no Azure/OIDC/push authority | Existing image workflow | PASS |
+| Publication verification/main gate | Existing image workflow | PASS |
+| Image-only publication | Existing image workflow | PASS |
+| Version/revision/registry digests | Publication owner/supervisor | PASS |
+| Published version pin | forge-infra | PASS |
+| Validate/merge/Make/what-if | forge-infra/supervisor | PASS |
+| Live topology/default Chat | Supervisor/product owners | PASS |
+| Core independent correction gates | Core, held | PASS |
+| Ownership documentation | Existing Runner READMEs | PASS |
+
+Scope/dependency/security/engineering/default plan PASS; AOT/UI N/A. Fresh duplicate search,
+no existing probe/competing init, no second job. Existing image/NuGet tag triggers confirm
+image-only main dispatch avoids unrelated package publication. Infra nearest AGENTS confirms
+codex/ branch. No placement change. Actual image/default evidence remains pending.
+
+Supervisor independently checked full plan, actual workflow/Dockerfile/runtime startup, infra
+AGENTS/README/layer, unchanged dependencies/authority, failure/negative/default evidence and
+six-path scope. **PLAN APPROVED00:06:49 UTC**; same implementer receives bounded handoff.
