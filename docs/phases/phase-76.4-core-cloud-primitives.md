@@ -1,8 +1,8 @@
 # Phase 76.4 — Core package and execution primitives
 
 **Status:** The approved cleanup correction is committed and pushed at `8f0fa851`.
-Current managed, package and fresh branch-consumer checks pass; full independent code reviews
-and current-source native CI are running. [Implementation evidence](phase-76.4-core-cloud-primitives_completed.md#approved-pipe-correction--implementation-r8).
+Current managed, package and fresh branch-consumer checks pass; both full independent code reviews
+pass. Current-source native CI remains open. [Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
@@ -197,5 +197,5 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r9](phase-76.4-core-cloud-primitives-plan.md) approved00:47:38 UTC; only defined42-file producer scope |
 | Independent plan reviews | Complete r9 simplicity11/ownership38+11gatesPASS; [current verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-9-plan-reviews) |
 | Plan approval / implementation | Complete r9 and in-plan r8 correction implemented at `8f0fa851`; [PR77](https://github.com/katasec/forge-mcl/pull/77), local checks and fresh branch consumer pass. |
-| Code review / native CI | Full current simplicity/style r4 assigned 01:09:43 UTC; ownership follows sequentially. Canonical 38011993998 and four-host 38011993926 run against `8f0fa851`; all native/default gates remain open. |
+| Code review / native CI | Full current simplicity/style and ownership r4 PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction). Canonical 38011993998 and four-host 38011993926 run against `8f0fa851`; native/default gates remain open. |
 | Published/default acceptance | Required; not performed |
