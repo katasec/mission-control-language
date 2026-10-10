@@ -1,7 +1,8 @@
 # Phase 76.6 — Mission content contract producer
 
-**Status:** PLAN APPROVED2026-10-10 05:06:50UTC after both full current independent plan reviews PASS.
-Design locked05:00:09UTC. Same implementer proceeds within seven approved paths.
+**Status:** Product PR20 merged2026-10-10 05:25:03UTC after complete current sequential code reviews
+and normal CI PASS. Normal Contracts0.9.0 publication and fresh managed acceptance are in progress.
+Design locked05:00:09UTC; plan approved05:06:50UTC; only seven approved product paths changed.
 Scope/design starts2026-10-10 04:54:53UTC.
 Core and OCI producers plus Runner hosting are verified.
 
@@ -31,7 +32,7 @@ and runtime writers remain unchanged. This is a producer dependency, not a secon
 flowchart LR
   Contracts[Contracts: immutable transport values] --> Host[Later Host storage/admission]
   Contracts --> Consumers[Later API, Runner, Client]
-  Feed[Normal private NuGet publication] --> Probe[Fresh native public consumer]
+  Feed[Normal private NuGet publication] --> Probe[Fresh managed public consumer]
 ```
 
 | Type | Exact shape |
@@ -84,8 +85,9 @@ No package consumer can assume new Host routes until later runtime delivery.
 Designer principles that changed choices: minimum needed restricts this increment to content values;
 one owner keeps transport types in Contracts; no NIH reuses JSON/publisher/body limits; built-in safety
 retains immutable publication and denies any authority implication; verified means a normally restored
-published Native AOT consumer. No new library: existing AOT-compatible System.Text.Json suffices,
-with a real native probe required before acceptance. Rejected alternatives: republish unchanged
+published managed consumer. No new library: existing AOT-compatible System.Text.Json suffices;
+native verification belongs to final phase delivery under the operator's clarified timing.
+Rejected alternatives: republish unchanged
 Presentation (immutable conflict/unneeded release); relax text-body validation (conflates contracts);
 implement routes here (broadens the task); DTO validation framework (duplicates later owner policy).
 Open design questions: none. Exact files/release-script details belong in the reviewed implementer plan.
@@ -105,23 +107,8 @@ Open design questions: none. Exact files/release-script details belong in the re
 | Stage | State |
 |---|---|
 | Supervisor design | Locked05:00:09UTC after complete current simplicity/ownership PASS; [evidence](phase-76.6-mission-content-contracts_completed.md#design-reviews) |
-| Plan / implementation | [Complete seven-path plan](phase-76.6-mission-content-contracts-plan.md) approved05:06:50UTC after both full current reviews PASS; same implementer proceeds |
-| Publication / default acceptance | Not started |
+| Plan / implementation | Reviewed and merged; [complete evidence](phase-76.6-mission-content-contracts_completed.md#implementation-and-current-code-reviews) |
+| Publication / default acceptance | Normal workflow38027450839 running from merged main; fresh managed normal-feed acceptance remains |
 
-### Native verification environment
-
-The ordinary macOS SDK target was attempted first. The local linker could not find OpenSSL;
-using the existing documented Homebrew prerequisites then produced five deployment-target warnings
-(SDK macOS12 versus installed OpenSSL27/Brotli26 on macOS27.0.1). Neither attempt passes the
-zero-warning gate. Product source and compiler warnings remain unchanged.
-
-Historical supervisor-approved verification adjustment2026-10-10 05:16UTC used the official
-`mcr.microsoft.com/dotnet/sdk:10.0-aot` ARM64 image, manifest digest
-`sha256:407a2711f25619956ffc5febc9245a1bf9105d73a2bb42876b512ffa87094637`, with its ordinary
-`linux-arm64` target and supplied native toolchain. Its controlled branch consumer passed, but the
-operator then stopped this extra Docker route and clarified that AOT is only at final delivery,
-after everything works, not for testing. Do not repeat native verification here. Both Mac attempts
-remain failed environmental observations; the Docker result supplies no default-path acceptance.
-Normal private NuGet publication/restoration, a new isolated cache, exact source provenance and
-managed public-consumer actions remain this increment's acceptance path. No product configuration
-change or macOS12 support claim.
+Native timing follows the [operator's explicit final-delivery correction](phase-76.6-mission-content-contracts_completed.md#operator-correction-native-verification-timing).
+No further native/Docker consumer tests for this increment.

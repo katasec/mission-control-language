@@ -100,6 +100,130 @@ normal `open -a Docker`, exit0 available05:06:23UTC; actual `docker info`05:06:3
 full suites and normal CI remain required; no fixture skip or waiver. Same implementer assigned
 05:07:08UTC; only approved seven paths, no merge/publication/acceptance authority.
 
+## Implementation and current code reviews
+
+Frozen product head`fa7acb0f6d06abec97b45302031eda440eca91fb`, tree
+`b673926d6ffb1310f3e76e14d9a52f25a31aa573`; seven approved paths201+/21−.
+Complete binary diff SHA256`3bbc1d03f9cb9760a6452c241ade36940983fa4b915b949888fdb79e93a7ac54`.
+[Product PR20](https://github.com/katasec/forge-conversations/pull/20) opened05:14:43UTC.
+Implementer own observed05:07:41–05:20:05UTC; assignment05:07:08UTC.
+
+| Verification | Actual observation |
+|---|---|
+| Managed build | Debug and Release0warnings/0errors |
+| Focused |103PASS/0skip/0fail |
+| Full local, real Azurite | Debug274PASS/0skip/0fail2m27s; Release274PASS/0skip/0fail2m30s |
+| Normal PR CI | [38026846346](https://github.com/katasec/forge-conversations/actions/runs/38026846346), job114139388424SUCCESS;274PASS/0skip/0fail2m56s;0compiler warnings/errors |
+| CI source/artifact | Synthetic merge5aeeebae0d0e01c245a7c35491660cd53a5e4562, parents baseline+reviewedhead; artifact11660826717,430845bytes, zipSHA2ed2188c39bf4b175a165b76731564d1efa90d25e64b2c0faa43563749563169 |
+| Controlled package | Contracts0.9.0 SHA256b0e2ca263c506cb9750b9055c09b7be3ddc1156f0eda4e56476b38612c25f138; restored bytes identical; exact reviewed-source nuspec/no dependencies |
+| Controlled audit negatives | Missing package/symbol, wrong version/commit, extra Contracts dependency rejected |
+| Controlled release negatives | Existing version, non404 API error, public/foreign/missing/duplicate package version, old tag, unmerged ref rejected; correct guards pass |
+| Controlled managed consumer | All generated kinds/references/maps/chunks/query IDs, exact bytes/long/Unicode, malformed JSON and retained shapes PASS |
+
+Root independently read all seven diffs, raw build/test/audit/consumer output and raw CI log.
+Only five new JSON registrations and the locked inert vocabulary are added; existing contracts,
+active17commands/9queries, pins and runtime files are byte-identical. Both packages are audited;
+only Contracts0.9.0 is eligible for immutable private publication. Root rechecked0.9.0 absent05:22:42UTC.
+Raw evidence directory`/private/tmp/phase76-content-contracts-20261010T050708Z` and root CI log
+`/private/tmp/phase76-content-contracts-pr-ci.log`; GH observations above are the durable CI pointers.
+Ruby PATH and GitHub Action Node deprecation notices are separate from compiler/trim/linker warnings.
+
+Simplicity/style reviewer read the complete current frozen diff and existing counterparts,
+observed05:21:39–05:22:44UTC. Full simplicity table:
+
+| Check | Verdict/evidence |
+|---|---|
+| New apps/libraries | PASS: plain existing Contracts values; no dependency; values7–32 |
+| Reuse | PASS: existing context/enum annotations/verifier; context111–115/verifier13 |
+| Multiple paths | PASS: one serialization path; no routes/active registrations; values5–6/tests113–124 |
+| Legacy | PASS: no fallback/reader; old request/body shapes retained; tests97–109 |
+| Knobs | PASS: fixed parent bounds/no duplicated chunk setting; values27–32/tests123 |
+| Abstractions | PASS: no validator/service framework; values13–25 |
+| Library choice | PASS: existing generated STJ; context111–115 |
+| Copy-paste | PASS: shared verify_package/two audits/one push; verifier52–53/workflow115 |
+| Redundancy | PASS: binary length/media/kind semantics distinct; values13–15/tests101–109 |
+| Size | PASS: seven exact approved paths; workflow97/115/122 |
+| Test volume | PASS:133lines prove actual wire/malformed/retained boundaries; tests13–124 |
+
+Full separate code-style table:
+
+| Check | Verdict/evidence |
+|---|---|
+| Outline first | PASS: values5–6/tests6–7/release namedsteps72/92/117 |
+| Small functions | PASS: new tests≤17lines; existing verifier38lines/one audit |
+| Top-down | PASS: tests before helpers127–132; verifier calls52–53 |
+| Explicit errors | PASS: JSON errors/audit/immutable/visibility exit nonzero; tests79–93/verifier22–48/workflow100–107/133–146 |
+| Shallow nesting | Observation: baseline visibility step retains four control levels; workflow122–140; new C# shallow |
+| Separate effects | PASS: inert values; release effects in existing owner; values13–32/workflow89–148 |
+| Zero warnings | PASS managed raw builds/CI; operator explicitly reserves native for final phase delivery |
+| Real extraction | PASS: needed private version arg/fixture reuse; verifier15/tests127–132 |
+| Complexity | PASS manual classic McCabe: verifier9/visibility11 including short circuits, unchanged/new C#≤3; all<15 |
+
+Supervisor disposition of nesting observation: independently compared current and baseline full
+visibility step. Control structure is identical; only the package selection/version changes.
+Its retry, private/repository/exact-version checks and final diagnostic failure remain explicit,
+with all modified predicates exercised. No new nesting or weakened failure boundary. Dismiss
+cleanup for this bounded vocabulary/release change because it would expand into unrelated workflow
+restructuring without correcting a regression. No warning, integrity or functional failure waived.
+Reviewer-reported stale current native-before-acceptance sentences were corrected throughout the
+active spoke/plan. Historical reviewed commands/tables remain labelled historical.
+
+Ownership reviewer independently derived owners from the atlas and baseline component READMEs
+before inspecting the full diff. Own observed05:23:48–05:24:14UTC; supervisor dispatch05:23:10UTC.
+Independently recomputed the exact frozen diff hash above. Full current table:
+
+| Behavior | Derived owner / actual placement | Verdict |
+|---|---|---|
+| Stable kind ordinals/wire names | Contracts / MissionContentKind:7 | PASS |
+| Binary identity/long/hash/media/kind | Contracts / MissionContentReference:13 | PASS |
+| Named strings/artifacts | Contracts / MissionNamedInputs:17 | PASS |
+| Chunk owner/slot/sequence/ref/bytes | Contracts / StageMissionContentChunkRequest:21 | PASS |
+| Conversation-scoped query value | Contracts / GetMissionContentRequest:25 | PASS |
+| Fixed bounds | Contracts / MissionContentLimits:27 | PASS |
+| Generated wire metadata | Contracts / existing context:111 | PASS |
+| Exact wire and malformed JSON | Contracts verification / tests:10/78 | PASS |
+| Existing ABI/shapes/registries | Existing Contracts / unchanged plus tests:96 | PASS |
+| Authority/integrity/adoption/storage | Host / excluded; Contracts README:27 | PASS |
+| Version without new dependencies | Contracts / csproj:9 | PASS |
+| Both package/provenance/symbol audits | Existing eng verifier / :13/52 | PASS |
+| Verified merged-source publication | Existing publisher / workflow:59 | PASS |
+| Immutable sole Contracts0.9.0 push | Existing publisher / workflow:92/115 | PASS |
+| Private/repository/exact-version visibility | Existing publisher / workflow:117 | PASS |
+
+| Technical gate | Current verdict |
+|---|---|
+| API/ABI/JSON | PASS exact additive shape; old constructors/ordinals/registries untouched; no replacement serializer/chunk helper |
+| Security/data/credentials | PASS inert values; Host retains semantic validation; no route/storage/permission grant |
+| Engineering/scope | PASS seven approved paths/one owner; consumer/Core/Presentation behavior untouched |
+| Managed verification | PASS actual103/274/274/CI274; zero skips/failures/compiler warnings |
+| Package/failure paths | PASS controlled exact-source audit/JSON/release negatives/reflection-disabled consumer |
+| Normal publication/default | OPEN at review; supervisor must merge/publish/fresh normal-feed managed accept |
+| Native | Operator defers to final full-phase delivery; historical runs not default acceptance |
+| UI/deployment | N/A |
+
+Fresh search across named Forge repos found no competing vocabulary/owner; UTF-8 body references
+have different semantics. No owner acquires a second job. Move nothing. Supervisor independently
+checked this result against scope/Done when and raw evidence. Ready-to-merge05:24:58UTC after
+current required CI SUCCESS and verified synthetic-merge tree equals reviewed tree. No code correction.
+
+## Operator correction: native verification timing
+
+Original Mac ordinary-target native attempt failed because SSL was not on the linker path.
+The supervisor's process-local existing Homebrew library path rerun linked but emitted five
+deployment-target warnings: macOS12 target versus OpenSSL27/Brotli26 on actual macOS27.0.1.
+Neither is a zero-warning PASS. The supervisor then chose an extra controlled native consumer
+in official .NET10 AOT ARM64 image407a2711f25619956ffc5febc9245a1bf9105d73a2bb42876b512ffa87094637.
+It executed with zero warnings and exact package bytes, but is controlled evidence only.
+
+The operator corrected this: **"There wesa no erquest to use docker - what are you dong ?"**,
+then **"AOT is at the end after everything works..."**, **"not for testing"**. Supervisor stopped
+the extra Docker route and moved AOT to final phase delivery. No more Docker/native consumer
+runs for this increment. The sole scratch container already exited0 with `--rm`; no daemon stop,
+prune or unrelated-container removal. Product architecture/configuration/source unchanged.
+Normal managed builds/tests, publication and fresh normal-feed managed consumer close this
+increment; the final native delivery gate stays open for the full phase. This is an explicit
+operator instruction about timing, not a linker-warning waiver or default acceptance claim.
+
 ## Stage boundaries
 
 All2026-10-10UTC. Agent activity times above are distinct from result-available boundaries.
@@ -115,6 +239,14 @@ All2026-10-10UTC. Agent activity times above are distinct from result-available 
 | review-plan:simplicity |05:04:44 |05:05:33 |49s | Full current11-check PASS |
 | review-plan:ownership |05:05:33 |05:06:50 |1m17s | Full current13-behavior/technical PASS |
 | Supervisor PLAN APPROVED |05:06:50 |05:06:50 |0s | Exact seven-path current plan |
-| implement:implementer |05:07:08 | In progress | Pending | Same implementer, bounded approved scope |
+| implement:implementer |05:07:08 |05:20:31 |13m23s | Same implementer; own observed05:07:41–05:20:05; result known by supervisor clock05:20:31 |
+| review-code:simplicity/style | Dispatch timestamp unavailable |05:23:10 | Unavailable | Own observed05:21:39–05:22:44; full11/9 tables; result known before next dispatch |
+| review-code:ownership |05:23:10 |05:24:46 |1m36s | Own observed05:23:48–05:24:14; full15behavior/technical PASS |
+| Supervisor ready-to-merge |05:24:58 |05:24:58 |0s | Scope/diff/rawCI/tree evidence accepted; baseline nesting finding disposition above |
+| Product merge |05:24:58 |05:25:03 |5s | PR20 reviewed head merged as d4d013e577e4e57f3eaf3310527094b5d2dfa851 |
+| Normal publication/default acceptance |05:25:23 | In progress | Pending | Existing workflow38027450839; later acceptance separate from product span |
 
-Product PR/timing and acceptance remain future. Tokens N/A.
+Product end-to-end scope04:54:53→last product merge05:25:03 =30m10s.
+Product PR20 open05:14:43→merge05:25:03 =10m20s. Acceptance/docs closure are later, not part
+of that product span. Dispatch time not sampled for simplicity code review is explicitly unavailable;
+agent activity times are preserved rather than invented as assignment times. Tokens N/A.

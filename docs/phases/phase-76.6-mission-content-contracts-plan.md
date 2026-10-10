@@ -4,7 +4,9 @@
 independently checked exact public shapes/seven paths, private immutable release, preserved
 ABI/registry/dependency/authority and ordinary-target/default verification. Reviewed artifact SHA256
 `b7908913167f5ba06b6f8850421f699d036ba3b63ec16dd5fa8aa66945cd0434`.
-Only this plan is authorized; merge/publication/default acceptance still require evidence.
+Seven-path implementation reviewed and merged in product PR20 on2026-10-10 05:25:03UTC.
+Normal publication/default acceptance still require evidence. Native verification timing below is
+historical and superseded by the operator's final-phase-delivery instruction.
 Environment update: root started installed Docker Desktop05:06:23UTC; `docker info`
 returned29.1.2/Docker Desktop05:06:34UTC. Full local and CI checks remain required; original
 absence below records the planning baseline and grants no fixture skip.
@@ -107,8 +109,8 @@ Microsoft.AspNetCore.Components.Web10.0.0 dependency. All other source remains b
 7. Freeze stable commit; pack Release with ContinuousIntegrationBuild and exact RepositoryCommit.
    Scratch PackageReference-only consumer of branch-built normal0.9.0 in new isolated cache/local
    feed, no global cache mutation/prerelease propagation. This is controlled, not remote proof.
-8. After managed stabilization: managed consumer, then ordinary SDK Native AOT publish/run with
-   zero raw warnings; package/restored-byte hashes/source/executable identity. No preemptive target override.
+8. Fresh managed consumer; package/restored-byte hashes/source identity. The original per-increment
+   native step is superseded by the operator's final-delivery-only AOT instruction.
 9. Push/create/attach draft PR under the approved implementation assignment; frozen full diff/evidence
    for sequential full code reviews. Supervisor owns merge/normal publication/remote acceptance.
 
@@ -161,7 +163,7 @@ managed run then `dotnet publish <project> -c Release -r osx-arm64 -p:PublishAot
 and actual executable. Retain raw compiler/linker output, no suppression. Report actual failure
 before altering the target or default dependency. No old-macOS support claim. After the observed
 Mac linker failures, the supervisor approved the official ordinary-target Linux ARM64 AOT image
-for both native checks; [exact adjustment](phase-76.6-mission-content-contracts.md#native-verification-environment).
+for both native checks; [historical adjustment and operator correction](phase-76.6-mission-content-contracts_completed.md#operator-correction-native-verification-timing).
 
 Default acceptance: supervisor rechecks0.9.0 absent, dispatches existing workflow from merged main,
 then NEW empty cache/ordinary authenticated feeds only/no local feed/sibling/DLL substitution.
@@ -177,11 +179,11 @@ supported but not needed. No hosted/deployment behavior claimed. All four spoke 
 | No NIH / duplicate paths | Same context/chunk convention/ID/verifier/publisher |
 | Minimum / no abstractions | Seven paths/plain values/direct tests; no consumer/Presentation release |
 | Stay in scope | Host alone later validates/authorizes/stores/dispatches |
-| Verified means done | Branch proof controlled; real fresh normal-feed native mandatory |
+| Verified means done | Branch proof controlled; real fresh normal-feed managed consumer mandatory; AOT at final phase delivery |
 | Outline / small / top-down | Coherent vocabulary/tests, entrypoints before needed helpers |
 | Explicit errors | JSON/audit/immutable/private errors preserved |
 | Shallow / separate effects | Pure values, release operations in existing owners |
-| Zero warnings | Managed first then final native, raw output |
+| Zero warnings | Managed raw output now; final phase native gate after everything works |
 | Real extraction / complexity | One private version arg, no selection framework; ≤15/prefer≤10 |
 
 Open questions: none. Full integration requires existing CI Docker. Authority/data/credential/
