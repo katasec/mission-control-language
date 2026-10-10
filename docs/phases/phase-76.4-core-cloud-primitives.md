@@ -196,8 +196,8 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Complete r10](phase-76.4-core-cloud-primitives-plan.md) awaiting approval; same42-file scope, proposed diagnostic change only in build script/README |
-| Independent plan reviews | Fresh full r10 simplicity review in progress; ownership follows sequentially. Earlier r9 [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-9-plan-reviews) are historical |
-| Plan approval / implementation | Approved plan and in-plan corrections implemented at `5a80c56e`; [PR77](https://github.com/katasec/forge-mcl/pull/77). Corrected managed probe/scripts pass; production source matches the previously tested package/consumer. |
-| Code review / native CI | Full current simplicity/style and ownership r5 PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r5--portable-expectation). Current canonical38013941959/four-host38013941972: Linux both and Windows PASS; both macOS fail with pressure-child SIGSEGV. Read-only investigation complete; diagnostic-only plan r10 under review. Publication/default gates open. |
+| Implementer plan | [Complete r10](phase-76.4-core-cloud-primitives-plan.md) approved02:19:30 UTC; same42-file scope, diagnostic change only in build script/README |
+| Independent plan reviews | Fresh full r10 simplicity11/ownership42behaviors+technical gates PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-10-plan-reviews--crash-evidence) |
+| Plan approval / implementation | Diagnostic correction in progress in [PR77](https://github.com/katasec/forge-mcl/pull/77). Existing production at `5a80c56e` matches the tested package/consumer; no production correction authorized. |
+| Code review / native CI | Existing5a80 full code reviews r5 PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r5--portable-expectation). Native: Linux both/Windows PASS, both macOS fail with pressure-child SIGSEGV. Diagnostic correction requires fresh full code reviews/current native evidence. Publication/default gates open. |
 | Published/default acceptance | Required; not performed |

@@ -18,6 +18,93 @@ Supervisor independently read raw test/probe output. No demonstrated regression 
 authorized. This controlled evidence does not replace installed-default acceptance. Reproduction,
 original source excerpts and raw logs: `/private/tmp/phase76-vars-probe-20261010T020023Z/EVIDENCE.md`.
 
+## Complete round 10 plan reviews — crash evidence
+
+Same implementer read-only plan observed02:09:58–02:11:28 UTC; full42-path producer scope
+retained, proposed diagnostic delta only in build script/README. Simplicity assignment02:14:20;
+observed review **02:14:50–02:15:37 UTC**. Whole current plan independently reviewed; no earlier
+PASS inherited. Ownership assigned02:15:54 UTC after simplicity finished; observed full review
+**02:16:27–02:18:21 UTC**, all42behavior placements PASS. Owners derived blind from atlas,
+Core/build/Runner READMEs before reading the full plan. No duplicate owner or second component job.
+
+| Simplicity check | Current verdict / evidence |
+|---|---|
+| New apps/libraries | PASS: two private helpers, built-in PowerShell/.NET APIs |
+| Reuse | PASS: existing invocation/failure log/canonical always-upload |
+| Multiple paths | PASS: failed macOS only, no retry/alternative execution |
+| Legacy paths | PASS: observed ips only; retained constructor serves actual published Client ABI |
+| Knobs | PASS: fixed directories, identity, launch-time selection and bounded polling |
+| Speculative abstractions | PASS: actual validation and filesystem duties separated |
+| Library choice | PASS: built-in JSON/date/files; retained ONNX/native choices unchanged |
+| Copy-paste | PASS: one collector; shared producer owners retained |
+| Redundant definitions | PASS: collection cannot replace original failure or warning/runtime policy |
+| Size/requirement | PASS: same42paths, only2diagnostic edits; reassess retention after diagnosis |
+| Test volume | PASS: precise selection/bounded copying/failure-preservation checks; required defaults retained |
+
+Reviewer independently read actual local separate header/body JSON with exact process and offset
+launch fields. No service/identity/datastore/authority boundary changes. Both macOS failures remain
+open; diagnostic plan readiness does not close native/publication/default gates.
+
+| Behavior | Fresh derived owner / plan placement | Verdict |
+|---|---|---|
+| Distribution before environment evaluation | Core manifest/shared parser | PASS |
+| Explicit assets/executable metadata | Core package contracts | PASS |
+| Published six-argument ABI | Core contract overload | PASS |
+| Generated JSON constructor | Core annotated semantic constructor | PASS |
+| Pure package validation | Core validator/supplied diagnostics | PASS |
+| Root including parameterless | Core TryCreate | PASS |
+| Reachable inputs/profiles | Core traversal | PASS |
+| Required/optional inputs | Core shared input policy | PASS |
+| Environment/reserved-name refusal | Core admission | PASS |
+| token_count/string parameters | Core validator/interpreter | PASS |
+| Canonical paths/collisions/runtime reservations | Core validator | PASS |
+| Digests/model resolution | Core validator | PASS |
+| Hash extension/old identity | Core validator | PASS |
+| Actual4MiB JSON | Core validator | PASS |
+| Semantic fingerprint | Core replay | PASS |
+| Checkpoint/old format rejection | Core codec | PASS |
+| Relative inputs/completed effects | Core replay | PASS |
+| Child workspace inheritance | Core runtime | PASS |
+| Artifact registration | Caller/Runner; Core retains live map only | PASS |
+| Output path calculation | Core pure workspace | PASS |
+| Exact StepKey | Core trace/interpreter | PASS |
+| Process-local mappings | Core exec | PASS |
+| cwd/lookup/literal argv | Core exec | PASS |
+| Bounded concurrent pipes | Core exec | PASS |
+| Concrete declined stdin | Core exec | PASS |
+| Atomic group/direct-root retention | Core POSIX lifecycle | PASS |
+| macOS root-only proof | Core POSIX lifecycle | PASS |
+| Atomic Windows job | Core Windows lifecycle | PASS |
+| Bare PID1 prelaunch refusal | Core start boundary | PASS |
+| Adopted orphan reap | Existing Runner init exclusively | PASS |
+| Terminate/stream join/exact reap | Core lifecycle | PASS |
+| Numeric/joined ONNX cancellation | Core ONNX | PASS |
+| Pipe/pressure/workspace proof | Existing probe/build | PASS |
+| Exact-image and separate negative | Existing build/Runner image | PASS |
+| Failure-only macOS collection | Existing build boundary | PASS |
+| Exact identity/current launch selector | Private build selector | PASS |
+| Bounded validated copy | Private build collector | PASS |
+| Original failure preservation | Existing build invocation | PASS |
+| Evidence retention | Existing canonical always-upload | PASS |
+| Meaningful controlled verification | Existing script verification/scratch | PASS |
+| Immutable publication/restore/ABI | Existing package/release/supervisor | PASS |
+| Installed Chat/Hands acceptance | Supervisor/default product | PASS |
+
+| Gate | Fresh assessment |
+|---|---|
+| Security/data/credentials | PASS: scoped validated probe reports only, no hosted boundary change |
+| API/ABI | PASS: complete producer shapes/JSON/actual published ABI defined |
+| Engineering/failure | PASS: joined ownership, fixed conventions, no retry; original failure preserved |
+| Scope/dependencies | PASS: same42paths,2diagnostic edits; existing ONNX/image |
+| Native | OPEN: both macOS SIGSEGV failures unresolved |
+| Diagnostic proof | OPEN pending implementation/actual crash stack |
+| Publication/default | OPEN: normal merged publication/fresh cache/installed Chat and Hands required |
+| UI | N/A |
+
+Supervisor approval **02:19:30 UTC**: full current plan, scope and actual report/build/artifact
+contract checked independently. No product correction justified; only diagnostic paths41–42
+authorized. Next normal CI must supply causal evidence; no failure waiver.
+
 ## Approved Windows expectation correction — implementation r9
 
 Same implementer stage **2026-10-10 01:37:02–01:38:24 UTC**. Frozen/pushed clean source
