@@ -27,7 +27,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation and acceptance | [Core producer task](phase-76.4-core-cloud-primitives.md) corrections written; remaining cleanup/native gates open; unified default-path acceptance not started |
-| Process-hosting prerequisite | [Runner init design/plan](phase-76.5-runner-process-hosting.md) fully reviewed and approved; same implementer building the bounded hosting increment |
+| Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) reviewed, merged and normally published0.20.6; approved single deployment pin in progress, default acceptance pending |
 
 ## Dependency-ordered work
 

@@ -4,9 +4,10 @@
 ownership PASS. [Complete six-file plan](phase-76.5-runner-process-hosting-plan.md) approved
 2026-10-10 00:06:49 UTC after full current plan reviews. Runner
 [PR26](https://github.com/katasec/forge-runner/pull/26) merged after full code reviews/native image
-PASS; normal image0.20.6 publication started from merged main. Infra pin follows publication.
+PASS; normal image0.20.6 publication verified from merged main. Approved single infra pin is
+being implemented for review/deploy/default acceptance.
 Core remains open.
-No publication/deployment/default PASS yet.
+No deployment/default PASS yet.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 
@@ -152,4 +153,4 @@ failure/security/default gates and closure dependency before lock. Merge and acc
 | Local gates | Full115PASS/0skip, Release0warnings/errors, script/embedded/YAML syntaxPASS; [raw evidence](phase-76.5-runner-process-hosting_completed.md#runner-implementation-handback) |
 | Code reviews | Full current simplicity11/style9/ownership16 PASS; supervisor readiness checked |
 | Native image CI | run38007944173 both native architectures actual hosting PASS; NuGet verifyPASS; [image identities/raw observations](phase-76.5-runner-process-hosting_completed.md#native-image-verification) |
-| Publication/infra/default | Normal merged-main image0.20.6 publication started; infra/deploy/default pending |
+| Publication/infra/default | Normal merged-main image0.20.6 publication/provenance PASS; approved single infra pin in progress, deploy/default pending |

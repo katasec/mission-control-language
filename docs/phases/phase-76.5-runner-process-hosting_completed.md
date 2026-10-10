@@ -239,7 +239,25 @@ merged00:15:50 UTC to`17080b73a84ad0b0e42a891024090e8f997194ed`; Runner clean/cu
 Exact prepublication checks00:16:03 UTC: GHCR manifest0.20.6 HTTP404, ACR explicit tag-does-not-exist,
 Git tag forge-runner-v0.20.6 HTTP404. No authorization error inferred as absence. Supervisor
 dispatched only forge-runner-image.yml from merged main with version0.20.6; no tag/NuGet release.
-Publication result/digests remain pending.
+[Publication run38008306610](https://github.com/katasec/forge-runner/actions/runs/38008306610)
+head17080b73a84ad0b0e42a891024090e8f997194ed; both native merged-source verify legs SUCCESS,
+build-push job114082747564 SUCCESS00:28:00 UTC. Normal merged-main image0.20.6 published.
+Root downloaded named runner-image-publication artifact into handback/publication; source.txt
+matches exact merged main. (Downloading every artifact encountered a non-ZIP Docker build record;
+named evidence download succeeded, without changing/repeating publication.) Independent GHCR
+manifestGET200 and ACR repository-show returned the same index digest00:28:50 UTC.
+
+| Published fact | Both ACR and public GHCR |
+|---|---|
+| Version | forge-runner0.20.6 |
+| Source | 17080b73a84ad0b0e42a891024090e8f997194ed |
+| OCI index | sha256:c0031d451d046d4f28a75ca7f7c7f26169b26e92555de4b601128a005670331c |
+| linux/amd64 | sha256:cf2a7e14f639519af223dd1efa0a2adf4d40cf1cac5f1b7d2017c5860ca1078b |
+| linux/arm64 | sha256:ff3eab0400405722fc0ff4059624bd7617aa64600f4eaa3e5473c16cf43087c9 |
+
+Native merged-source verify jobs114082150766/114082151008 SUCCESS00:18:43/00:18:20 UTC,
+respectively. No NuGet tag/release. Approved sixth-file infra implementation assigned00:28:50;
+deployment/default acceptance remain open.
 
 | Stage | Assignment start UTC | Observed end UTC | Observation |
 |---|---|---|---|
