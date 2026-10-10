@@ -3,7 +3,7 @@
 **Task remains open.** This file records finished investigations/reviews, not product completion.
 [Active task](phase-76.4-core-cloud-primitives.md) · [Current plan](phase-76.4-core-cloud-primitives-plan.md).
 Complete r9 plan and its approved cleanup correction are implemented; current handback is below.
-Code review/native verification/publication/default acceptance remain open.
+Full current source reviews pass; native verification/publication/default acceptance remain open.
 
 ## Approved pipe correction — implementation r8
 
@@ -29,7 +29,7 @@ Full per-file inventory, commands and raw observations:
 | Managed public probe | Open-peer blocked read cancelled in 4ms and filled write in 0ms; retained pressure/workspace/argv/timeout/cancellation/lifecycle checks pass |
 | Final-source branch package | Exact source `8f0fa851`; built/restored SHA256 `D549E8EF2C1A68AD4204A5E9D51A0B65889DFF53402DD4335566DFB36A077BB1` match |
 | Fresh isolated branch consumer | Generated JSON, asset metadata/hash/admission, packaged exec/runtime/output bytes, exact StepKey, numeric ONNX, actual joined native cancellation/no score, six-argument constructor and no-assets old hash pass |
-| Current-source native gates | Canonical [38011993998](https://github.com/katasec/forge-mcl/actions/runs/38011993998), four-host [38011993926](https://github.com/katasec/forge-mcl/actions/runs/38011993926) running; no PASS inferred |
+| Current-source native gates | Canonical [38011993998](https://github.com/katasec/forge-mcl/actions/runs/38011993998) FAILED; four-host [38011993926](https://github.com/katasec/forge-mcl/actions/runs/38011993926): Linux both PASS, Windows FAILED, macOS pending at last observation |
 
 Supervisor independently read the complete three-path correction, raw full-test/probe/consumer/
 pack logs and unchanged 42-file inventory. This is controlled branch-package evidence;
@@ -142,6 +142,40 @@ credentials or artifact-registration ownership. Move nothing.
 Supervisor accepts both source reviews with no correction required, after independently checking
 the current diff/order/probe and raw evidence. This does not supply readiness while native gates
 remain open. Immutable publication and installed-default gates also remain open.
+
+## Current native verification — source 8f0fa851
+
+Four-host run [38011993926](https://github.com/katasec/forge-mcl/actions/runs/38011993926)
+tests PR head `8f0fa851`. Actual checkout/build identity is GitHub's synthetic merge
+`afe58a79719673b170403d87d6280ac5b8bf5e29`, parents `8d28dc1` and `8f0fa851`.
+Supervisor fetched the exact PR merge ref and observed an empty tree diff against `8f0fa851`;
+the identity is recorded rather than mislabelled as the branch commit.
+
+| Gate | Named current observation |
+|---|---|
+| Linux ARM64 native | Job114093839242 SUCCESS, 12m52s. CLI and public exec probe compiled and ran; blocked read/write cancelled0ms/0ms with peers open; pressure, actual workspace/environment, argv/cwd, early-root timeout/cancellation/no-sentinel pass |
+| Linux x64 native | Job114093839259 SUCCESS,13m15s; same ordinary native probe pass,0ms/0ms blocked pipe cancellation |
+| Exact published Runner image | Actual pulled index `c0031d451d046d4f28a75ca7f7c7f26169b26e92555de4b601128a005670331c`, amd64 manifest `cf2a7e14f639519af223dd1efa0a2adf4d40cf1cac5f1b7d2017c5860ca1078b`, source17080b73; normal unchanged tini entrypoint; actual tiniPID1/dotnetPID7/probePID14 observed01:21:23 UTC |
+| Native proof under init | Open-peer cancellation0ms/0ms, pressure/workspace/argv and parent-first timeout/cancel/no late sentinel pass; orphan-entry disappearance separately observed01:21:24 and01:21:27 UTC |
+| Bare PID1 negative | Refusal before child/root/sentinel creation PASS01:21:29 UTC; separate overridden-entrypoint controlled negative |
+| Linux warning gate | Supervisor read raw compiler/probe logs; no compiler/linker/ILC/trim warning match; ordinary Git initial-branch hint is not a compiler warning |
+| Windows ARM64 | Job114093839095 FAILED: native pressure and blocked-pipe checks pass; workspace assertion reports source_file mismatch. Probe expected absolute path preserves forward-slash suffix while Core converts it to OS separators. Later lifecycle cases were not reached |
+| Canonical macOS | Run38011993998 FAILED: managed1055 passed/10 existing skips; CLI/probe native compilation and CLI help/version pass. Detailed artifact exec-probe-run.log reports pressure-child exit139 (SIGSEGV11), after64KiB stderr; cause remains under investigation |
+| Four-host macOS | Job114093839215 still running at01:33 UTC; no result inferred |
+
+Raw completed-job logs `/private/tmp/phase76-core-r8-linux-arm64.log` and
+`/private/tmp/phase76-core-r8-linux-x64.log`, obtained through the completed-job logs API.
+The CLI run-log command waits for the entire workflow and initially refused while siblings ran;
+that command refusal is not a native failure. Owned image test container removed successfully.
+These are controlled component observations; published package/installed acceptance remain open.
+
+Read-only implementer investigation r9 observed **01:29:02–01:31:43 UTC** on2026-10-10;
+Windows expectation defect confirmed independently by supervisor. Canonical detailed logs became
+available afterwards through bounded ranges of GitHub artifact11655741274, avoiding its150MiB
+full archive. Source.txt records the same synthetic merge identity above. Exact logs are in
+`/private/tmp/phase76-core-r8-canonical-range-logs`; the failed pressure child produced no managed
+exception. Exit139 establishes a child crash, not a timeout or its cause. Same implementer continues
+read-only diagnosis; no source edit or relaxed gate is authorized. Draft PR77 remains unmerged.
 
 ## Approved init correction — implementation r7
 

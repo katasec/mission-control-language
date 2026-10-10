@@ -2,7 +2,9 @@
 
 **Status:** The approved cleanup correction is committed and pushed at `8f0fa851`.
 Current managed, package and fresh branch-consumer checks pass; both full independent code reviews
-pass. Current-source native CI remains open. [Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction).
+pass. Native CI found a Windows probe expectation defect and a macOS pressure-child crash;
+both Linux gates pass. Investigation is in progress; no merge/publication is approved.
+[Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r4--pipe-correction).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
