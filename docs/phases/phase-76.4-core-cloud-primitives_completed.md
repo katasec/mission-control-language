@@ -42,7 +42,8 @@ API, dependency, fixture, payload, deadline or source change. Version inventory0
 `/private/tmp/phase76-core-crash-evidence-20261010T022011Z/EVIDENCE.md`.
 
 Current [canonical38016928681](https://github.com/katasec/forge-mcl/actions/runs/38016928681)
-and [four-host38016928684](https://github.com/katasec/forge-mcl/actions/runs/38016928684) running;
+passes; [four-host38016928684](https://github.com/katasec/forge-mcl/actions/runs/38016928684)
+fails only macOS matrix. Report retention gap recorded below;
 fresh full sequential code reviews r6 PASS; verdicts below.
 No current native PASS, causal diagnosis, merge/publication or default acceptance claimed.
 
@@ -151,7 +152,7 @@ build and Runner READMEs. Complete current behavior verdicts:
 | Failure containment | PASS: checked terminate→joined I/O→exact reap; collection failure cannot replace probe failure |
 | Diagnostic verification | PASS: actual parser/30script/23controlled observations, including write failure/empty roots/original error |
 | Production verification | Supporting191focused/1063full+6existing live skips/407Release-package/consumer evidence inspected against identical production tree |
-| Current Native AOT | OPEN: instrumented canonical/four-host pending; recurring macOS SIGSEGV cause unobserved |
+| Current Native AOT | OPEN: canonical/Linux/Windows pass, matrix macOS SIGSEGV repeats; cause unobserved |
 | Normal publication/fresh restore | OPEN; branch package cannot close it |
 | Installed defaults | OPEN: normal Project Chat and Hands still required |
 | UI | N/A: no visual/layout change |
@@ -165,6 +166,61 @@ selector, invocation boundary and controlled raw logs after both reviews. Clean 
 no finding requires a correction. This is source acceptance only: native recurrence remains
 unexplained, so merge/publication/default readiness is explicitly withheld. Full text whitespace
 check excludes only the already recorded ONNX binary heuristic; fixture identities remain checked.
+
+### Current r10 native observations
+
+All use synthetic checkout `9cca9cca2ae2a18eb300e033889e3699641978bb`, with the reviewed tree.
+Supervisor fetched each completed job's actual raw log while the macOS jobs remained running.
+
+| Current job | Result / actual observations |
+|---|---|
+| Linux x64,114109157756 | SUCCESS02:39:59 UTC; zero compiler warnings,30scripts/native identity/blocked read-write0ms/pressure/workspace/argv/cwd/PATH/exited descendant/timeout/cancel lifecycle PASS |
+| Linux ARM64,114109157682 | SUCCESS02:41:38 UTC; zero compiler warnings,30scripts/native identity/blocked read-write0ms/pressure/workspace/argv/cwd/PATH/exited descendant/timeout/cancel lifecycle PASS |
+| Windows ARM64,114109157543 | SUCCESS02:42:16 UTC; zero compiler warnings,30scripts/native identity/blocked read3ms-write0ms/pressure/workspace/argv/cwd/PATH/exited descendant/timeout/cancel lifecycle PASS |
+| macOS matrix,114109157651 | FAILED; pressure child SIGSEGV13902:49:54 UTC, outer probe abort134. Collector reports two matching reports copied02:50:00. Matrix failure artifact unavailable by existing design; canonical retained artifact pending |
+| Canonical macOS,114109157175 | SUCCESS:1055managed PASS/10existing skips/0failed, zero compiler warnings; all native probe assertions PASS02:50:40–02:50:47; terminal27tests/package verification PASS. Failure-only collector correctly has no reports |
+
+Current x64 additionally observed Runner index `c0031d451d046d4f28a75ca7f7c7f26169b26e92555de4b601128a005670331c`,
+amd64 `cf2a7e14f639519af223dd1efa0a2adf4d40cf1cac5f1b7d2017c5860ca1078b`,
+image source `17080b73a84ad0b0e42a891024090e8f997194ed`, unchanged tini entrypoint.
+Actual topology02:39:36 UTC: tiniPID1/dotnetRunnerPID7/nativeprobePID14. Both under-init
+completion/cancellation pressure and lifecycle checks PASS, with separate bounded orphan process
+entry disappearance02:39:37/02:39:40. Bare PID1 refusal before child/root/sentinel PASS02:39:42.
+This component proof does not close later unified cloud acceptance.
+Raw logs: `/private/tmp/phase76-core-r10-linux-x64.log`,
+`/private/tmp/phase76-core-r10-linux-arm64.log`, `/private/tmp/phase76-core-r10-windows-arm64.log`,
+`/private/tmp/phase76-core-r10-macos-arm64.log`.
+
+Canonical always-upload artifact11657526336 is151,674,861bytes; supervisor inspected ZIP inventory
+and extracted raw source/native-publish/probe-publish/probe-run logs via bounded ranges at
+`/private/tmp/phase76-core-r10-canonical-range-logs`. No crash reports/status file exist, as expected
+for success. Executable/dSYM/native sidecar paths are confirmed in the actual archive. Earlier
+failed matrix reports cannot be recovered through its successful-ZIP-only artifact route.
+
+Read-only investigation r12 observed02:51:56–02:52:37 UTC. Same-tree canonical success and matrix
+failure establish recurrence, not a causal diagnosis. Child139 and parent134 are distinct failures;
+actual child faulting thread/PC/image UUID/symbolication remain missing. No production correction
+or failed-check waiver is justified. Evidence:
+`/private/tmp/phase76-core-native-r12-20261010T025156Z/EVIDENCE.md`.
+Supervisor acknowledges that failure retention should have covered both macOS routes initially.
+The next bounded plan retains the matrix's existing scoped diagnostic outputs; no native fix is
+guessed from successful local repetitions or another successful sibling.
+
+### Current diagnostic revision stage boundaries
+
+Assignment start/end are used where recorded; observed agent activity is explicitly distinguished.
+Earlier Core stage tables remain below. ProductPR77 remains open, so end-to-end merge span and
+post-publication acceptance are open. Tokens N/A; no agent context size is treated as usage.
+
+| Stage / role / round | Start UTC,2026-10-10 | End UTC | Wall | Evidence |
+|---|---|---|---|---|
+| `[plan:implementer:r10]` | Assignment unavailable; observed02:09:58 | 02:11:28 | Assignment duration unavailable | Complete current plan; observed activity1m30s |
+| `[review-plan:simplicity:r10]` | 02:14:20 | 02:15:37 | 1m17s | Full11 checks PASS |
+| `[review-plan:ownership:r10]` | 02:15:54 | 02:18:21 | 2m27s | Full42 behavior placements and technical gates PASS |
+| `[approval:supervisor:r10]` | 02:19:30 | 02:19:30 | Boundary | Explicit bounded PLAN APPROVED |
+| `[implement:implementer:r10]` | 02:19:30 | 02:27:00 | 7m30s | Observed activity02:20:11–02:27:00; frozen0d0a338f/parser30scripts23controlled |
+| `[review-code:simplicity/style:r6]` | 02:27:13 | 02:30:55 | 3m42s | Full42 paths; separate11simplicity/9style verdicts |
+| `[review-code:ownership:r6]` | 02:31:30 | 02:33:27 | 1m57s | Full49 behavior placements/technical gates PASS |
 
 ## Complete round 10 plan reviews — crash evidence
 

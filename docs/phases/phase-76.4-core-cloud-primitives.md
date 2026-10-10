@@ -2,9 +2,11 @@
 
 **Status:** Diagnostic correction r10 is committed/pushed at `0d0a338f`; production source remains
 unchanged from `8f0fa851`. Script parser,30existing and23controlled diagnostic checks pass.
-Fresh full code reviews r6 pass; instrumented canonical/four-host CI is in progress. Prior Linux
-and Windows native checks pass; both prior macOS checks fail with pressure-child SIGSEGV139.
-Cause remains unobserved. No merge/publication approved.
+Fresh full code reviews r6 pass; current Linux x64/ARM64 and Windows native checks pass.
+Instrumented macOS matrix repeats pressure-child SIGSEGV139 and collects two reports, but its
+existing route does not upload failure reports. Canonical macOS passes on the same tree and
+therefore has no crash reports. A bounded matrix-retention correction is being planned.
+No merge/publication approved.
 [Current evidence](phase-76.4-core-cloud-primitives_completed.md#diagnostic-correction--implementation-r10).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
@@ -200,5 +202,38 @@ be marked complete by this package probe.
 | Implementer plan | [Complete r10](phase-76.4-core-cloud-primitives-plan.md) approved02:19:30 UTC; same42-file scope, diagnostic change only in build script/README |
 | Independent plan reviews | Fresh full r10 simplicity11/ownership42behaviors+technical gates PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-10-plan-reviews--crash-evidence) |
 | Plan approval / implementation | Diagnostic correction pushed `0d0a338f` in [PR77](https://github.com/katasec/forge-mcl/pull/77); parser/30scripts/23controlled checks PASS. Production tree unchanged; no production correction authorized. |
-| Code review / native CI | Fresh full r6 simplicity/style and ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r6--scoped-crash-evidence). Current canonical38016928681/four-host38016928684 pending. Prior macOS SIGSEGV remains unresolved; publication/default gates open. |
+| Code review / native CI | Fresh full r6 simplicity/style and ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r6--scoped-crash-evidence). Current Linux/Windows/canonical macOS PASS; matrix macOS SIGSEGV recurs, reports copied but not uploaded. Causal/publication/default gates open. |
 | Published/default acceptance | Required; not performed |
+
+### Next bounded correction — retain the failed matrix evidence
+
+Read-only investigation r12 confirms the exact gap: the failed matrix copied two validated reports
+inside its runner, but only the successful canonical job retained an artifact. No faulting child
+PC/thread/UUID is available, and no production correction is justified. Retain the failing job's
+existing scoped diagnostic output through the existing GitHub artifact action.
+
+This remains the locked build-verification design and owner, not a new product/security boundary.
+No design decision is deferred to implementation; no new hosted service, permission, dependency,
+public API, retry, payload, deadline, warning policy or process mechanism. Existing Core design
+and full producer Done when remain authoritative. Product/default gates apply; visual/browser N/A.
+The plan must explicitly expand the full inventory from42 to43 paths by adding
+`.github/workflows/release.yml`; only that workflow and `scripts/README.md` may change now.
+Other existing product paths remain frozen at0d0a338f; no edit is authorized until a reviewed
+plan is approved.
+
+Use the already referenced `actions/upload-artifact@v7` in the existing matrix build job, after
+the native build, only on failed macOS execution. Give the diagnostic artifact a distinct name
+outside the release publisher's `forge-*` download pattern. Retain only the existing validated
+`dist/cli/exec-probe-crashreports`, native probe run/publish logs, exact probe executable/dSYM and
+its required native sidecar. Do not upload the general DiagnosticReports tree, environment,
+credentials, broad workspace or shipped CLI payload. Preserve the existing successful CLI ZIP
+artifact unchanged and preserve the original failed job; upload failure cannot make it pass.
+Use the normal current-source CI route; collect faulting report and exact matching symbols before
+any production fix. The completed record must state that the earlier reports were not retained.
+
+Verification: inspect actual output/artifact paths, YAML parse/action condition/name/path routing,
+existing script checks, fresh complete sequential code reviews, and normal canonical/four-host
+checks. No unchanged local AOT/managed/consumer rebuild merely for artifact retention. The decisive
+diagnostic observation is a normally uploaded failed-matrix artifact containing its actual child
+report and matching executable/symbol UUID. Missing evidence remains an open gate. Reassess
+diagnostic retention after diagnosis; it cannot grow into general observability.
