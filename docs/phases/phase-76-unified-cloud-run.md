@@ -22,7 +22,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | OCI, hosting, Core and [content contracts0.9.0](phase-76.6-mission-content-contracts.md) accepted; [Host binary storage](phase-76.7-host-binary-content-store.md) in design review; admission follows. |
+| Current documentation handoff | OCI, hosting, Core and [content contracts0.9.0](phase-76.6-mission-content-contracts.md) accepted; [Host binary storage](phase-76.7-host-binary-content-store.md) plan in review; admission follows. |
 | Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
@@ -67,7 +67,7 @@ extra Docker native-consumer route was stopped at the operator's correction; do 
 OCI, [Runner hosting](phase-76.5-runner-process-hosting.md) and [Core](phase-76.4-core-cloud-primitives.md)
 are verified. [Content contracts0.9.0](phase-76.6-mission-content-contracts.md) are published and
 accepted through a fresh managed consumer. [Host binary storage](phase-76.7-host-binary-content-store.md)
-is in design review; no product edits approved yet. Admission/canonical lifecycle follows.
+design is locked and its plan is in review; no product edits approved yet. Admission/canonical lifecycle follows.
 Before another Contracts release, investigate the publisher's metadata-view discrepancy recorded
 in that spoke; no package/authentication guard was changed. Future consumers adopt exact
 published OCI0.5.0/Core0.1.8 packages. Follow the

@@ -1,7 +1,9 @@
 # Phase 76.7 — Host binary content storage primitive
 
 **Status:** DESIGN LOCKED2026-10-10 05:56:22UTC after complete current simplicity r2 and ownership r1 PASS.
-Implementer plan/reviews/approval remain required; no product edits authorized.
+The [implementer plan](phase-76.7-host-binary-content-store-plan.md) is in sequential review;
+no product edits authorized. A narrow malformed-receipt/bounded-metadata-read clarification
+recorded05:58:30UTC is included in both current plan reviews before approval.
 Scope start2026-10-10 05:38:26UTC after content producer docs PR381 merged05:38:05UTC as
 `fd059b844657d046686d827da8d08743d01c39af`. Product baseline forge-conversations clean main
 `d4d013e577e4e57f3eaf3310527094b5d2dfa851`; no product edits authorized yet.
@@ -96,7 +98,10 @@ the existing chunk count and exact expected chunk length. The internal contract 
 validated values; future intake translates caller errors into its locked HTTP/broker statuses.
 Do not make a validator framework or add knobs.
 
-Missing descriptor/required receipts/chunks on commit is Incomplete. An existing payload with
+Missing descriptor/required receipts/chunks on commit is Incomplete. A malformed persisted receipt
+(not64ASCII lowercase SHA-256 hex bytes) is unusable staging evidence and also Incomplete; stage
+still returns Conflict for any differing existing receipt. Descriptor and receipt downloads are
+bounded to their expected size before allocation, like payload reads. An existing payload with
 matching descriptor, exact size and hash returns Committed, including repeated empty commits.
 A different descriptor or differing existing payload is Conflict and never overwrites/deletes
 that existing payload. Assemble through existing block
