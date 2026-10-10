@@ -1,10 +1,11 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** The approved Windows probe expectation correction is committed/pushed at `5a80c56e`;
-production source is unchanged from `8f0fa851`. Corrected managed probe/script checks pass.
-Both fresh full code reviews pass. Current Linux and Windows native checks pass; both macOS
-checks fail in the pressure child with exit139 (SIGSEGV), under investigation. No merge/publication
-is approved. [Review evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r5--portable-expectation).
+**Status:** Diagnostic correction r10 is committed/pushed at `0d0a338f`; production source remains
+unchanged from `8f0fa851`. Script parser,30existing and23controlled diagnostic checks pass.
+Fresh full code reviews r6 and instrumented canonical/four-host CI are in progress. Prior Linux
+and Windows native checks pass; both prior macOS checks fail with pressure-child SIGSEGV139.
+Cause remains unobserved. No merge/publication approved.
+[Current evidence](phase-76.4-core-cloud-primitives_completed.md#diagnostic-correction--implementation-r10).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
@@ -198,6 +199,6 @@ be marked complete by this package probe.
 | Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
 | Implementer plan | [Complete r10](phase-76.4-core-cloud-primitives-plan.md) approved02:19:30 UTC; same42-file scope, diagnostic change only in build script/README |
 | Independent plan reviews | Fresh full r10 simplicity11/ownership42behaviors+technical gates PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-10-plan-reviews--crash-evidence) |
-| Plan approval / implementation | Diagnostic correction in progress in [PR77](https://github.com/katasec/forge-mcl/pull/77). Existing production at `5a80c56e` matches the tested package/consumer; no production correction authorized. |
-| Code review / native CI | Existing5a80 full code reviews r5 PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r5--portable-expectation). Native: Linux both/Windows PASS, both macOS fail with pressure-child SIGSEGV. Diagnostic correction requires fresh full code reviews/current native evidence. Publication/default gates open. |
+| Plan approval / implementation | Diagnostic correction pushed `0d0a338f` in [PR77](https://github.com/katasec/forge-mcl/pull/77); parser/30scripts/23controlled checks PASS. Production tree unchanged; no production correction authorized. |
+| Code review / native CI | Fresh full r6 reviews in progress, simplicity/style first. Current canonical38016928681/four-host38016928684 pending. Prior macOS SIGSEGV remains unresolved; publication/default gates open. |
 | Published/default acceptance | Required; not performed |

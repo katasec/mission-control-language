@@ -18,6 +18,34 @@ Supervisor independently read raw test/probe output. No demonstrated regression 
 authorized. This controlled evidence does not replace installed-default acceptance. Reproduction,
 original source excerpts and raw logs: `/private/tmp/phase76-vars-probe-20261010T020023Z/EVIDENCE.md`.
 
+## Diagnostic correction — implementation r10
+
+Approval02:19:30 UTC; same implementer observed **02:20:11–02:27:00 UTC**. Clean/pushed source
+`0d0a338f672469356b3c412e7a4ccf2dc11d74e7`, draftPR77. Only build script/README delta81+/1-;
+full42paths2698+/457-. Complete `git diff --binary 8d28dc1 HEAD` SHA256 independently matched
+by supervisor: `194334957aebd581ddfd90ccf035ae1ff9d2e67d9ea5d98e946c84d17c291909`.
+Plain text Git diff has a different hash because it omits binary fixture patches; the recorded
+artifact and review identity is explicitly the complete binary diff. Production tree remains
+`6c7cfd841a81fd60ad0fd3d7213ae75e4bd202f9`, identical to8f0fa851/5a80c56e.
+
+Supervisor independently read actual final diff/parser/script/controlled logs: parserPASS,
+30existing script checksPASS,23controlled checksPASS. Exact-new process launch admitted;
+old despite newmtime/wrongidentity/malformedtime/unsupported rejected. Eligible user/system
+copies occur once; actual10s poll, absent roots/no cwd fallback and directory/read/copy errors
+observed. Actual status-file path occupied by a directory makes Set-Content fail; terminating
+write behavior preserves the original probe failure. Successful/non-macOS probes do not collect.
+All failed development logs remain retained; no native production test was retried into acceptance.
+
+Existing two helpers and narrow collector nesting clarification implemented; no new workflow,
+API, dependency, fixture, payload, deadline or source change. Version inventory0.1.7latest/
+0.1.8absent and tag404 observed. Full commands/inventory/raw evidence:
+`/private/tmp/phase76-core-crash-evidence-20261010T022011Z/EVIDENCE.md`.
+
+Current [canonical38016928681](https://github.com/katasec/forge-mcl/actions/runs/38016928681)
+and [four-host38016928684](https://github.com/katasec/forge-mcl/actions/runs/38016928684) running;
+fresh full sequential code reviews r6 required, simplicity/style assigned02:27:13 UTC.
+No current native PASS, causal diagnosis, merge/publication or default acceptance claimed.
+
 ## Complete round 10 plan reviews — crash evidence
 
 Same implementer read-only plan observed02:09:58–02:11:28 UTC; full42-path producer scope
