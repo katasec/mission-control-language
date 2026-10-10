@@ -841,7 +841,7 @@ was supervisor-approved 2026-10-09 22:07:32 UTC; later consumer plans remain una
 | Contract design | Supervisor locked the revised generic contracts after full current round 7 PASS; [review evidence](phase-76.2-unified-cloud-run-contracts_completed.md#generic-execution-design-review--round-7) |
 | Independent design reviews | Round 7 simplicity and ownership PASS on the complete revised artifact; no inherited prior verdict |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
-| Implementation approval | Core r7 implemented; native PID1 failure supersedes its reaping choice. [Hosting design](phase-76.5-runner-process-hosting.md) locked; hosting plan and later full Core revision require approval before edits; later consumers unapproved |
+| Implementation approval | [Hosting prerequisite verified](phase-76.5-runner-process-hosting.md). Core r7 implemented; full revised plan required for superseded PID1 mechanism. Later consumers remain unapproved |
 | Cloud default-path acceptance | Required; not performed |
 
 ## Timing

@@ -1,9 +1,10 @@
 # Phase 76.5 — Runner process hosting prerequisite
 
-**Status: DESIGN LOCKED** 2026-10-10 00:00:19 UTC after fresh full sequential simplicity and
-ownership PASS. [Complete six-file plan](phase-76.5-runner-process-hosting-plan.md) approved
-2026-10-10 00:06:49 UTC after full current plan reviews. Same implementer owns implementation;
-Core verification remains open. No publication/deployment/default PASS yet.
+**Status: VERIFIED** 2026-10-10 00:37:11 UTC. RunnerPR26 and infraPR45 merged after full
+reviews/checks; normal published image0.20.6 deployed through reviewed Make what-if/apply.
+Supervisor observed actual init/source identity and installed default Project/Chat PASS.
+[Complete evidence and timing](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance).
+Core remains open; obtain its full revised plan before mechanism edits.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 
@@ -78,15 +79,9 @@ were inspected before this proposal. No new application project or product packa
 | Existing packaging | Dockerfile.runner already installs Python/Tesseract/Poppler with apt; reuse that stage/package source. Existing image workflow publishes amd64/arm64 to ACR/public GHCR. |
 | Existing duplicates | No init/subreaper/entrypoint wrapper exists in Runner or its deployment configuration. Core must not acquire container-wide reaping or .NET signal ownership. |
 
-The failing base image was aspnet10.0 digest
-`sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4`.
-The test exposed a real incompatibility; no container PASS or init probe is claimed yet.
-Supervisor read-only Azure observation: current image is
-`crforgeroomsdev.azurecr.io/forge-runner:0.20.5`; `az containerapp exec --name ca-forge-runner-dev
---resource-group rg-forge-dev --command 'cat /proc/1/comm'` succeeded on revision
-`ca-forge-runner-dev--0000042`, replica`ca-forge-runner-dev--0000042-845f449d7-2wf6m`, output
-`dotnet`. The deployed runtime therefore has the same PID1 topology; this is not inferred from
-Dockerfile alone. No environment/secret values were read or changed.
+The original runtime incompatibility and before/after deployed observations are recorded in
+the [completion evidence](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance).
+Current ready revision43 runs image0.20.6 with actual tiniPID1/dotnet child7.
 
 ## Failure, security and default gates
 
@@ -130,13 +125,20 @@ evidence, explicitly separate. No branch image or overridden entrypoint closes t
 
 ## Open questions
 
-None in the hosting behavior. Full design reviews passed. The implementer's subsequent read-only
-plan must name exact existing-file image verification and normal CI commands before approval;
-no image/CI/product edit is authorized by this proposal. Core r7's raw-PID1 adopted-reap choice
+None in the hosting behavior. Full design/plan reviews passed; the approved complete plan names
+exact files, actual-image verification and normal CI commands. Product edits are limited to that
+approval. Core r7's raw-PID1 adopted-reap choice
 is superseded by this locked design; source edits still require a full revised Core plan approval.
 Preserve all other Core contracts and current verification corrections.
 
 Full current design r9: simplicity11 checks PASS, ownership15 behaviors and gates PASS;
 [review tables and stage boundaries](phase-76.5-runner-process-hosting_completed.md#design-reviews).
 Supervisor independently checked the complete design, source/runtime failure evidence, ownership,
-failure/security/default gates and closure dependency before lock. Implementation remains gated.
+failure/security/default gates and closure dependency before lock. Merge and acceptance remain gated.
+
+## Current work
+
+| Item | State |
+|---|---|
+| Hosting delivery | Verified; [publication, both product PRs, native and default evidence](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance) |
+| Downstream Core | Full revised plan required; exact published image digest and retained gates above apply |
