@@ -121,3 +121,130 @@ six-path scope. **PLAN APPROVED00:06:49 UTC**; same implementer receives bounded
 
 Design/plan record merged in [documentation PR378](https://github.com/katasec/mission-control-language/pull/378),
 main`b78a3ce200929030e60143795eb76036255cd046`. This is not runtime completion.
+
+## Runner implementation handback
+
+Same implementer r5 boundary00:06:49–00:12:23 UTC. Five approved Runner paths, 301insertions/
+4deletions, frozen clean/pushed`c6d9411c471a8d105389eea6da7f244f1e484b9a`; attached draft
+[PR26](https://github.com/katasec/forge-runner/pull/26). Infra and four-file Core HOLD unchanged.
+Actual Core pin0.1.7, no application/package/wire/identity/permission change. Full raw commands,
+logs and complete diff: `/private/tmp/phase76-runner-hosting-20261010T000649Z/EVIDENCE.md`.
+Complete.diffSHA256`8084071D4691049E560892005978F2F1D29F567AE601BC79832EA21FA4D4E1C7`.
+
+| Observation | Result / raw file |
+|---|---|
+| Normal restore | PASS restore.log |
+| Normal Release solution -warnaserror build | 0warnings/errors build.log |
+| Full normal Runner tests, MCL_API_KEY absent | 115PASS/0fail/0skip tests.log |
+| Python/main +5embedded scripts | PASS python-syntax-final.log / embedded-syntax.log |
+| Workflow YAML syntax | PASS yaml-syntax.log; auxiliary Ruby hostPATH-mode warning disclosed, no suppression or permission edit |
+| Local Docker | Absent daemon docker-local.log; no lifecycle PASS inferred |
+| Final source native image CI | run38007944173 in progress, both native hosts at actual hosting probe |
+| Existing NuGet PR verify | run38007944090 in progress; no package publication requested |
+
+Supervisor independently read full five-file frozen diff, matched inventory/hash and raw build/
+test results; no additional concrete blocker established. Sequential full code review begins
+00:12:51 UTC. Earlier31505a5 CI is not final-source evidence. Product merge, publication,
+infra pin/deployment, actual image proofs and default Chat remain pending.
+
+## Native image verification
+
+Current-source run38007944173 completed SUCCESS; native amd64 job114080991180 and arm64
+job114080991122 each built the actual Dockerfile, passed115tests/0skips/0warnings and observed
+all hosting cases PASS00:13:18 UTC. Existing NuGet verify38007944090 SUCCESS. Both publication
+jobs were correctly SKIPPED for the PR. Root downloaded raw native-amd64.log/native-arm64.log
+and native-artifacts into the handback directory and inspected actual identities/commands.
+
+| Fact | amd64 / arm64 observation |
+|---|---|
+| PR source | c6d9411; GitHub test-merge revision labela61b2e8876eb6c9baedc50cc9370b6bc1e960ce3 |
+| Local image ID amd64 | sha256:f3864259f7ea82ec5bf549ad11fffcb7863dff4a930f962bfb9c7af7a533479e |
+| Local image ID arm64 | sha256:cae5273866e2ecbef0247d7adb3a923f3c416a16d6e09d19004e0d355f914196 |
+| Entrypoint | Exact locked tini--dotnet Runner DLL, both |
+| Topology | tiniPID1, dotnet direct childPID7, both |
+| Init package | tini0.19.0, apt0.19.0-1, both |
+| Actual lifecycle | Health, orphan adoption→termination→process-entry reap/no sentinel, SIGTERM/graceful0, controlled37, missing-init/no fallback PASS, both |
+
+These are controlled premerge actual-image observations, not publication/deployment/default
+acceptance. Full current code reviews and the remaining gates still apply.
+
+## Runner code reviews
+
+Full current c6d9411 simplicity/style review assigned00:12:51, observed00:13:15–00:14:09 UTC.
+No blocking finding; no removal/change required. Full diff/raw logs and reuse searches checked.
+
+| Simplicity check | Current r3 verdict |
+|---|---|
+| New apps/libraries | PASS: distribution init/existing apt |
+| Reuse | PASS: existing image workflow/tests/publication |
+| Multiple paths | PASS: fixed production entrypoint, controlled cases separate |
+| Legacy | PASS: no bare-dotnet fallback/duplicate reaper |
+| Knobs | PASS: no product configuration |
+| Speculative abstraction | PASS: bounded probe outside payload |
+| Library choice | PASS: both actual native images prove tini behavior |
+| Copy-paste | PASS: shared checked Docker operation/cohesive scenarios |
+| Redundant definitions | PASS: no public contract/runtime owner duplication |
+| Size | PASS: five approved Runner paths301/4; infra deferred |
+| Test volume | PASS: required topology/shutdown/exit/orphan/missing-init facts |
+
+| Code-style check | Current r3 verdict |
+|---|---|
+| Outline first | PASS: intent/scenario flow first |
+| Small functions | PASS:5–20lines |
+| Top-down | PASS: main/scenarios/helpers |
+| Explicit errors | PASS: checked timeouts/aggregated owned cleanup |
+| Shallow nesting | PASS:≤2levels |
+| Side effects | PASS: named Docker/evidence boundary |
+| Zero warnings | PASS: local/both native managed0warnings/errors; AOT N/A |
+| Extraction | PASS: actual scenario/observation/cleanup seams |
+| Complexity | PASS: classicMcCabe PythonAST max4(remove_containers), others1–3; assertions/Boolean operators excluded |
+
+Actual PR merge-test revision parents95d677c+c6d9411 verified. Native lifecycle/full115tests
+PASS on both hosts, existing NuGet verifyPASS, publication skipped. Actions tooling deprecation
+messages are disclosed separately from compiler warnings. Publication/deployment/default remain
+open. Full ownership review assigned00:14:29, observed00:14:48–00:15:22 UTC; complete current
+technical/placement PASS below, no concrete blocker or move required.
+
+| Ownership behavior | Derived/actual owner | Current r3 verdict |
+|---|---|---|
+| Distribution init install | Existing Runner apt stage | PASS |
+| Fixed init→dotnet | Runner Dockerfile entrypoint | PASS |
+| Image/platform/source/entrypoint facts | Runner probe | PASS |
+| Normal readiness | Runner probe | PASS |
+| Actual PID1/direct child | Runner probe | PASS |
+| Orphan adoption/termination/reap/sentinel | Runner probe | PASS |
+| Normal SIGTERM/graceful exit | Runner probe | PASS |
+| Nonzero child propagation | Runner probe, controlled | PASS |
+| Missing-init refusal/no fallback | Runner probe, controlled | PASS |
+| Bounded operations/all-owned cleanup | Runner probe | PASS |
+| Managed/both native images | Existing image workflow | PASS |
+| PR authority restrictions | Existing image workflow | PASS |
+| Verify/main-before-publication gate | Existing image workflow | PASS |
+| Multiarch publication/digest record | Existing image workflow | PASS; execution pending |
+| Ownership documentation | Existing Runner READMEs | PASS |
+| Published pin/deploy/default Chat | Infra/supervisor, deferred sixth path | Correct owner; pending |
+
+Full scope/security/failure/engineering/native gates PASS; AOT/UI N/A. Actual five-file diff,
+hash/clean tree and PR merge-test parents independently confirmed. Fresh named-repository search:
+no duplicate init/probe, no owner second job. No public/data/identity expansion; existing secret
+seam preserved. This verdict does not close publication/deployment/default acceptance.
+
+## Runner merge and publication
+
+Supervisor readiness00:15:46 UTC: all code-review findings clear, exact approved five-file
+source c6d9411 clean/pushed, current checks green, full diff/raw observations checked, unchanged
+contracts/authority, JIT-image AOT/UI N/A. [PR26](https://github.com/katasec/forge-runner/pull/26)
+merged00:15:50 UTC to`17080b73a84ad0b0e42a891024090e8f997194ed`; Runner clean/current main.
+
+Exact prepublication checks00:16:03 UTC: GHCR manifest0.20.6 HTTP404, ACR explicit tag-does-not-exist,
+Git tag forge-runner-v0.20.6 HTTP404. No authorization error inferred as absence. Supervisor
+dispatched only forge-runner-image.yml from merged main with version0.20.6; no tag/NuGet release.
+Publication result/digests remain pending.
+
+| Stage | Assignment start UTC | Observed end UTC | Observation |
+|---|---|---|---|
+| Implement / same implementer r5 | 2026-10-10 00:06:49 | 2026-10-10 00:12:23 | Five-file frozen c6d9411, local gatesPASS |
+| Code review / simplicity+style r3 | 2026-10-10 00:12:51 | 2026-10-10 00:14:09 | Full11/9PASS; observed start00:13:15 |
+| Code review / ownership r3 | 2026-10-10 00:14:29 | 2026-10-10 00:15:22 | Full16/gatesPASS; observed start00:14:48 |
+| Readiness / supervisor | 2026-10-10 00:15:46 | 2026-10-10 00:15:46 | Independent full gate check |
+| Runner product merge | 2026-10-10 00:15:50 | 2026-10-10 00:15:50 | PR26; infra product merge remains future |

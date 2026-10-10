@@ -2,8 +2,11 @@
 
 **Status: DESIGN LOCKED** 2026-10-10 00:00:19 UTC after fresh full sequential simplicity and
 ownership PASS. [Complete six-file plan](phase-76.5-runner-process-hosting-plan.md) approved
-2026-10-10 00:06:49 UTC after full current plan reviews. Same implementer owns implementation;
-Core verification remains open. No publication/deployment/default PASS yet.
+2026-10-10 00:06:49 UTC after full current plan reviews. Runner
+[PR26](https://github.com/katasec/forge-runner/pull/26) merged after full code reviews/native image
+PASS; normal image0.20.6 publication started from merged main. Infra pin follows publication.
+Core remains open.
+No publication/deployment/default PASS yet.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 
@@ -130,13 +133,23 @@ evidence, explicitly separate. No branch image or overridden entrypoint closes t
 
 ## Open questions
 
-None in the hosting behavior. Full design reviews passed. The implementer's subsequent read-only
-plan must name exact existing-file image verification and normal CI commands before approval;
-no image/CI/product edit is authorized by this proposal. Core r7's raw-PID1 adopted-reap choice
+None in the hosting behavior. Full design/plan reviews passed; the approved complete plan names
+exact files, actual-image verification and normal CI commands. Product edits are limited to that
+approval. Core r7's raw-PID1 adopted-reap choice
 is superseded by this locked design; source edits still require a full revised Core plan approval.
 Preserve all other Core contracts and current verification corrections.
 
 Full current design r9: simplicity11 checks PASS, ownership15 behaviors and gates PASS;
 [review tables and stage boundaries](phase-76.5-runner-process-hosting_completed.md#design-reviews).
 Supervisor independently checked the complete design, source/runtime failure evidence, ownership,
-failure/security/default gates and closure dependency before lock. Implementation remains gated.
+failure/security/default gates and closure dependency before lock. Merge and acceptance remain gated.
+
+## Current work
+
+| Item | State |
+|---|---|
+| Runner source | PR26 merged17080b73a84ad0b0e42a891024090e8f997194ed; clean/current main |
+| Local gates | Full115PASS/0skip, Release0warnings/errors, script/embedded/YAML syntaxPASS; [raw evidence](phase-76.5-runner-process-hosting_completed.md#runner-implementation-handback) |
+| Code reviews | Full current simplicity11/style9/ownership16 PASS; supervisor readiness checked |
+| Native image CI | run38007944173 both native architectures actual hosting PASS; NuGet verifyPASS; [image identities/raw observations](phase-76.5-runner-process-hosting_completed.md#native-image-verification) |
+| Publication/infra/default | Normal merged-main image0.20.6 publication started; infra/deploy/default pending |
