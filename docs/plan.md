@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Plan and implement [unified cloud mission execution](phases/phase-76-unified-cloud-run.md) in dependency order from the reviewed, locked design. |
+| **NEXT STEP** | Continue [unified cloud mission execution](phases/phase-76-unified-cloud-run.md) implementation and verification in dependency order from the locked design. |
 
 ## Active phases
 

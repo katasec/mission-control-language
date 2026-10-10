@@ -829,9 +829,9 @@ upload); positional first-file mapping (breaks named inputs); shared absolute sc
 a delivery error (duplicates side effects); interpret JSON/PDF on stdout (breaks opaque response).
 
 Open work: plan and deliver the bounded implementation spokes from this locked design.
-Exact OCI 0.5.0 package/API/AOT verification remains complete. The bounded
-[Core producer plan](phase-76.4-core-cloud-primitives-plan.md) passed full current reviews and
-was supervisor-approved 2026-10-09 22:07:32 UTC; later consumer plans remain unapproved.
+Exact OCI0.5.0 and Core0.1.8 are published and accepted. The bounded
+[Core producer](phase-76.4-core-cloud-primitives.md) is verified; define the next small Host-owned
+increment from these locked contracts. Later consumer plans remain unapproved.
 
 ## Current work
 
@@ -841,7 +841,7 @@ was supervisor-approved 2026-10-09 22:07:32 UTC; later consumer plans remain una
 | Contract design | Supervisor locked the revised generic contracts after full current round 7 PASS; [review evidence](phase-76.2-unified-cloud-run-contracts_completed.md#generic-execution-design-review--round-7) |
 | Independent design reviews | Round 7 simplicity and ownership PASS on the complete revised artifact; no inherited prior verdict |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
-| Implementation approval | [Hosting prerequisite verified](phase-76.5-runner-process-hosting.md). Core r7 implemented; full revised plan required for superseded PID1 mechanism. Later consumers remain unapproved |
+| Implementation approval | [Hosting prerequisite](phase-76.5-runner-process-hosting.md) and [Core producer](phase-76.4-core-cloud-primitives.md) verified. Next: bounded Host contracts/content/admission task; its plan is not yet approved. |
 | Cloud default-path acceptance | Required; not performed |
 
 ## Timing

@@ -1,8 +1,12 @@
 # Phase 76.4 — Core package and execution primitives
 
-**Status:** Managed/package gates pass; four-file verification correction is held uncommitted.
-Actual Linux PID1 native CI failed with retained-root ECHILD; the [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
-Next: full revised implementer plan before mechanism edits. Merge/publication/default acceptance remain open.
+**Status:** Verified. [PR77](https://github.com/katasec/forge-mcl/pull/77) merged04:44:10UTC as `1ecef9ae`;
+normal Core0.1.8 publication and fresh remote-package acceptance PASS. Clean-main installed CLI
+Hands, opaque Read, guard denials, tool-free, Ctrl-C and real hosted Project/Chat PASS.
+Full Phase76 remains open for dependent Host, Runner and Client tasks.
+Current [review and native evidence](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source).
+[Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
+The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Parent: [Phase 76](phase-76-unified-cloud-run.md).
 Design authority: [locked execution contracts](phase-76.2-unified-cloud-run-contracts.md).
 Prerequisite: [accepted OCI library](phase-76.3-oci-integrity-auth.md); this task does not consume
@@ -138,9 +142,16 @@ API, permission policy, datastore or identity authority. Product edits require t
 
 The former Core PID1 adopted-child decision is superseded by the locked hosting design;
 [failure and source evidence](phase-76.4-core-cloud-primitives_completed.md#verification-correction-r4-and-linux-container-failure).
-After hosting closes, the full revised Core plan must exercise the public native probe under the
-exact published init-bearing image and retain all four-host/canonical gates, unrelated managed
+The full revised Core plan must exercise the public native probe under published Runner0.20.6,
+GHCR index`sha256:c0031d451d046d4f28a75ca7f7c7f26169b26e92555de4b601128a005670331c`,
+and retain all four-host/canonical gates, unrelated managed
 child ownership, bounded joins and explicit cleanup failures. Local Docker absence is not a waiver.
+Use the actual unchanged Runner entrypoint and run the mounted native probe with Docker exec;
+separately prove unsupported bare Linux PID1 refusal before child launch. Verify stopped execution,
+no late sentinel and bounded orphan process-entry removal by init as separate facts. This is
+controlled native component verification, not a replacement for published NuGet/default acceptance.
+The pressure child must finish stdout/stderr writes larger than the pipe before reading stdin,
+so the required concurrent I/O proof cannot pass a sequential parent accidentally.
 
 ### Existing required gates
 
@@ -184,9 +195,12 @@ be marked complete by this package probe.
 
 | Item | State |
 |---|---|
-| Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
-| Implementer plan | [Prior r7](phase-76.4-core-cloud-primitives-plan.md) approval is historical; hosting design supersedes PID1 mechanism; full revision required after hosting |
-| Independent plan reviews | Fresh complete r7 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md#complete-round-7-clarification--full-reviews-and-approval) |
-| Plan approval / implementation | Correction handbackdc03b7b at23:38:49 UTC; all42 paths match scope; clean/pushed draftPR77; [managed/package evidence](phase-76.4-core-cloud-primitives_completed.md#corrected-frozen-source--code-reviewnative-pending) |
-| Code review / native CI | Full r2 reviews found two verification gaps; local r4 correction passes. Atdc03b7b canonical macOS1054PASS/10skips/AOT0warnings; four-host Linux x64 host PASS/bare PID1 FAIL, other3 native PASS. Final revised-source gates/fresh full reviews remain required. |
-| Published/default acceptance | Required; not performed |
+| Design | Parent round7 locked21:40:31 UTC; macOS correction r12 locked03:48:45 UTC after fresh complete reviews; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-correction-design-reviews-r12) |
+| Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
+| Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
+| Plan approval / implementation | Same implementer finished7952012; PR77 merged as1ecef9ae04:44:10UTC with exact reviewed tree. Fresh managed/package/isolated consumer checks PASS; [evidence](phase-76.4-core-cloud-primitives_completed.md#caught-default-implementation-r12--current-source-acceptance-open). |
+| Code review / native CI | Fresh full r8 reviews and canonical/all-four-host zero-warning native PASS; [current verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r8--caught-default-current-source). Supervisor merge approved04:43:17UTC. |
+| Published/default acceptance | Core0.1.8 normal publication/fresh remote consumer and clean-main installed defaults PASS; [acceptance and closure](phase-76.4-core-cloud-primitives_completed.md#installed-default-acceptance-and-core-closure). |
+
+Private launch correction and scoped diagnostic retention are verified; see the
+[retained design and reversal condition](phase-76.4-core-cloud-primitives_completed.md#retained-private-correction-design--completed).
