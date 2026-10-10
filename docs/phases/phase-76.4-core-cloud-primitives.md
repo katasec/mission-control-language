@@ -4,7 +4,8 @@
 Linux x64/ARM64 and Windows ARM64 native checks pass. Both current macOS jobs fail with
 pressure-child SIGSEGV139. Failed-matrix retention now works: actual child/parent reports and
 UUID-matched executable/dSYM identify a strongly supported macOS inherited-disposition cause.
-The focused correction design below is under review; no production correction or merge is approved.
+The focused correction design below is locked after both reviews; implementer planning is in
+progress. No production correction or merge is approved.
 [Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
@@ -196,7 +197,7 @@ be marked complete by this package probe.
 
 | Item | State |
 |---|---|
-| Design | Parent round 7 PASS; supervisor locked 2026-10-09 21:40:31 UTC |
+| Design | Parent round7 locked21:40:31 UTC; macOS correction r12 locked03:48:45 UTC after fresh complete reviews; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-correction-design-reviews-r12) |
 | Implementer plan | [Complete r11](phase-76.4-core-cloud-primitives-plan.md) approved03:02:53 UTC;43-path inventory, new change only release workflow/README for failed-matrix evidence |
 | Independent plan reviews | Fresh full r11 simplicity/ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-11-plan-reviews--failed-matrix-retention); prior verdicts historical |
 | Plan approval / implementation | Retention correction pushed `c4176ba5` in [PR77](https://github.com/katasec/forge-mcl/pull/77);21routing/4parser/30script checks PASS. Production tree unchanged; no production correction authorized. |
@@ -209,7 +210,8 @@ Retention r11 is verified by the actual failed matrix artifact; [design and evid
 
 ### Correction design r12 — macOS pre-exec caught dispositions
 
-**DESIGN UNDER REVIEW.** Supervisor design started2026-10-10 03:43:26 UTC. Existing full Core
+**DESIGN LOCKED2026-10-10 03:48:45 UTC.** Full sequential simplicity/ownership design reviews PASS.
+Supervisor design observed2026-10-10 03:43:26–03:44:00 UTC. Existing full Core
 design and Done when remain authoritative; this corrects the private launch boundary only.
 The actual child has PC0, x3=0, x8=0x42 and SIGUSR1 arguments. Its exact NativeAOT handler
 tail-branches through the saved previous action when SA_SIGINFO is set. A safe C probe reproduces

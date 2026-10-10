@@ -2530,3 +2530,97 @@ faultingThread2, x0=30/x3=0/x8=66: the same signal-shaped null-call register sta
 UUID644a0ac4-6305-3357-948c-77f8494378e6 differs from the independently built matrix binary;
 root did not use matrix symbols to claim exact canonical symbolication. Reports/logs retained in
 `/private/tmp/phase76-core-r11-canonical-reports`; parsed-report command completed successfully.
+
+## Complete correction design reviews r12
+
+Supervisor applied full designer persona, observed03:43:26–03:44:00 UTC. Source remains frozen
+c4176ba5. Both reviewers read the complete current Core design, derive/recheck their own evidence,
+and treat earlier verdicts as history. Root independently inspected actual child reports, matched
+UUIDs/disassembly, executed the safe disposition probe and checked SDK signal/spawn declarations.
+Design locked03:48:45 UTC; same implementer plan assigned03:48:49 UTC. No code authorized.
+
+| Stage | Supervisor assignment clock → result available (UTC) | Agent observed (UTC) |
+|---|---|---|
+| review-design:simplicity:r12 | 03:44:00 →03:46:28 | 03:44:30–03:46:08 |
+| review-design:ownership:r12 | 03:46:28 →03:48:45 | 03:46:53–03:47:49 |
+
+### Simplicity — complete current design
+
+| Check | Verdict / current evidence |
+|---|---|
+| New apps/libraries | PASS: existing Core/libc/probe, no dependency |
+| Reuse | PASS: shared parser/validator/interpreter/adapters; private POSIX launcher |
+| Multiple paths | PASS: one exec path; observed macOS ABI correction in existing platform branch |
+| Legacy | PASS: reject checkpoint2; actual loaded Client0.9.3 six-arg ABI retained |
+| Knobs | PASS: fixed caught defaults; no mask/retry/permission setting |
+| Speculative abstractions | PASS: private PosixNative ABI and existing failure owner |
+| Library | PASS: existing ONNX1.27/libc; matched report/source/repro |
+| Copy-paste | PASS: existing semantic traversal/diagnostic parser/probe dispatcher |
+| Redundant definitions | PASS: no second runtime/signal API; exact private ABI is plan gate |
+| Size | PASS: producer and observed macOS boundary only |
+| Test volume | PASS: caught/ignored/parent observations plus unchanged decisive/native/default gates |
+
+Remove/merge nothing. Exact ABI and regression arrangement require plan review; no current corrected
+native or published acceptance claim.
+
+### Ownership — complete current design
+
+Blind derivation first: forge-desktop/src/README atlas, Core README Why/Owns, scripts README and
+Runner README. Named Forge repo searches found no existing caught-default implementation or
+competing semantic/process owner. No component gains a second unrelated job.
+
+| Behaviour | Derived / proposed owner | Verdict |
+|---|---|---|
+| Explicit assets | Core manifest DTOs | PASS |
+| Distribution before environment evaluation | Existing ForgeTomlReader | PASS |
+| Immutable package construction/validation | Core package validator | PASS |
+| Old hashes and extended asset identity | Same canonical hash | PASS |
+| Actual serialized4MiB cap | Same generated JSON validator | PASS |
+| Paths/collisions/bytes/models | Same semantic/asset validation | PASS |
+| Parameterless roots/reachable inputs | Core shared semantic/input traversal | PASS |
+| Exact reserved names/token_count | Core input policy | PASS |
+| Existing expert kinds/profile names | Core validation; deployment owns availability | PASS |
+| Immutable diagnostics/no disk fallback | Core ExpertLoader | PASS |
+| Mission parameter typing | Existing ExpertLoader availability map | PASS |
+| Actual Client constructor ABI | Core package contract | PASS |
+| Generated JSON construction | Same annotated semantic constructor | PASS |
+| Admitted inputs across pause | Core interpreter/checkpoint3 | PASS |
+| Complete replay fingerprint | Core replay identity | PASS |
+| Malformed/old continuation rejection | Core codec before invocation | PASS |
+| Completed-effect replay | Core interpreter/log | PASS |
+| Live artifact registry | Core workspace view; Runner registers | PASS |
+| Child workspace inheritance | Core interpreter options | PASS |
+| Deterministic outputs | Core StepKey/attempt convention | PASS |
+| Exact trace StepKey | Core trace/interpreter | PASS |
+| Verified process-local path conversion | Core exec adapter | PASS |
+| Literal argv/cwd/environment | Core exec/private launcher | PASS |
+| Concurrent bounded I/O | Same exec adapter | PASS |
+| Precise declined stdin | Same I/O failure owner | PASS |
+| Atomic group/job | Core private lifetime | PASS |
+| Retained root/termination/joins/reap | Same lifetime | PASS |
+| Cleanup error precedence | Same failure boundary | PASS |
+| BareLinuxPID1 refusal | Same prelaunch guard | PASS |
+| Adopted orphan reaping | Existing image init, outside Core | PASS |
+| Numeric ONNX/joined cancellation | Existing Core ONNX adapter | PASS |
+| Derive caught macOS dispositions | Existing Core ConfigureSpawn/private ABI | PASS |
+| Default caught before exec | Same checked spawn attributes/group | PASS |
+| Preserve ignored/default/mask/parent | Same launch owner, no global mutation | PASS |
+| Signal setup failure/disposal | Existing start failure/resource boundary | PASS |
+| Public-adapter signal observation | Existing native probe/child dispatcher | PASS |
+| Native gates/scoped retention | Existing build/release owners | PASS |
+| Publication/installed defaults | Existing package/build; supervisor accepts | PASS |
+
+| Technical gate | Verdict |
+|---|---|
+| Causal evidence | Strongly supported, qualified; exact matrix symbols/registers/source/repro |
+| Canonical report | Corroborating PC0/x3=0/x8=66/SIGUSR1; differentUUID, no cross-symbol claim |
+| ABI | Plan must specify exactlayout/range/flags/errno/checkedcleanup |
+| Regression | Plan must avoid runtime reinstall masking observation; ignored and parent preservation |
+| Security | PASS: no new service/store/identity/credential/authority/isolation |
+| Engineering | PASS: one owner/fixed platform correction/no blanketreset/retry/framework |
+| Corrected native | OPEN: correction unimplemented; both currentmacFAIL |
+| Publication/default | OPEN: normal Core publication/freshrestore/cleanmainHands/Chat |
+| UI | N/A |
+
+Move nothing. Supervisor agrees with both complete verdicts and locks the bounded design, while
+withholding implementation approval until full current implementer plan reviews pass.
