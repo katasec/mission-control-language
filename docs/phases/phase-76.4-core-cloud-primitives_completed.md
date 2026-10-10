@@ -2624,3 +2624,235 @@ competing semantic/process owner. No component gains a second unrelated job.
 
 Move nothing. Supervisor agrees with both complete verdicts and locks the bounded design, while
 withholding implementation approval until full current implementer plan reviews pass.
+
+
+## Superseded complete correction plan r11
+
+# Phase 76.4 — Complete implementer correction plan, round 11
+
+**PLAN APPROVED2026-10-10 03:02:53 UTC.** Same implementer observed
+**2026-10-10 02:54:07–02:56:02 UTC**, read-only. Supervisor transcribes the complete return into
+this artifact: the current43-path inventory, retained API/sequence/gates below plus this correction
+are one complete plan. Fresh full r11 simplicity and ownership reviews PASS; supervisor independently checked exact artifact paths/routing, unchanged production tree, failure/API/security/default gates. This approval authorizes only the two current retention edits, not a production fix or merge/publication.
+Source `0d0a338f672469356b3c412e7a4ccf2dc11d74e7`, base `8d28dc1`, same branch/PR77.
+Only paths42–43 may change after fresh full sequential reviews and explicit approval.
+The implemented r10 plan is [historical evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-diagnostic-correction-plan-r10).
+
+## Current correction r11 — failed matrix retention
+
+### 1. Files
+
+Complete inventory is below, expanded42→43 only by `.github/workflows/release.yml`.
+Only that workflow and `scripts/README.md` change now. Every other path remains frozen.
+No production/API/fixture/dependency/image/process/payload/deadline/warning/consumer/deploy change.
+Existing build-verification design/owners and locked Core design apply; no new architecture choice.
+UI/browser N/A. Runtime, security/engineering and default-path gates remain applicable.
+
+### 2. Reuse
+
+Reuse existing matrix `actions/upload-artifact@v7`, existing collector's validated output and native
+probe publish. No new action, helper, dependency, collector or release path. The existing publisher
+selects `forge-*`; diagnostic artifact naming must remain outside that pattern. Existing Core APIs,
+ABI, generated JSON, pure admission, workspace, native lifetime, ONNX and package owners below
+remain exact. Installed Ruby Psych3.1.0 parses YAML; PyYAML is absent and is not installed.
+Availability check's existing world-writable-PATH warning is preserved, not suppressed.
+
+### 3. Sequence
+
+Reconfirm source/branch/base/PR/inventory and unique evidence path after approval. Immediately
+following the existing native matrix build, before the unchanged successful ZIP upload, add:
+
+```yaml
+- name: Preserve failed macOS native probe evidence
+  if: ${{ failure() && runner.os == 'macOS' }}
+  uses: actions/upload-artifact@v7
+  with:
+    name: native-exec-diagnostics-${{ matrix.rid }}-${{ github.run_id }}-${{ github.run_attempt }}
+    path: |
+      dist/cli/exec-probe-crashreports
+      dist/cli/exec-probe-run.log
+      dist/cli/exec-probe-publish.log
+      dist/cli/exec-probe/ForgeMission.Exec.Probe
+      dist/cli/exec-probe/ForgeMission.Exec.Probe.dSYM
+      dist/cli/exec-probe/libonnxruntime.dylib
+    if-no-files-found: error
+```
+
+The dSYM bundle includes only this probe's existing Info.plist/DWARF/relocations. Report directory
+contains only existing validated reports/status. Do not upload general DiagnosticReports,
+credentials, environment, broad workspace or shipped CLI payload. Preserve successful
+`forge-${{ matrix.rid }}` ZIP/path, publisher `forge-*`, permissions/dependencies/concurrency/
+commands. No continue-on-error, retry or failure replacement; upload failure keeps the job failed.
+
+README records this route and the actual earlier loss: two matrix reports were copied but not
+uploaded. Canonical success does not diagnose that same-tree matrix failure. Reassess retention
+once diagnosed; no general observability. Keep collector unchanged: failed macOS only, exact
+header/body identity and procLaunch>=invocation start, nonrecursive user/system directories,
+250ms/10s bounded selection/copy-once/source separation/status/errors, terminating status writes,
+original probe error preserved. No mtime substitution, payload/deadline change or failed-test retry.
+
+Retain every producer step below: actual published Client six-argument ABI and generated constructor,
+shared parser/pure diagnostic source, internal named admission, assets/hash/actual JSON cap,
+format3 semantic replay/consumed-shape refusal, exact StepKey/live workspace, prelaunch PID1 refusal,
+atomic retained POSIX groups/Windows jobs, checked termination→pipejoins→exact reap, error precedence,
+joined numeric ONNX cancellation/parallel sibling, unchanged decisive native pressure/pipe probes,
+exact Runner image/init proof and bare-PID1 negative. No consumer changes or guessed signal fix.
+
+After meaningful checks, freeze/commit/push the same PR77; hand back full43-path binary diff/hash/
+inventory and unchanged production tree. Fresh full sequential code reviews and normal current
+canonical/four-host CI follow. Retrieve actual failing matrix report/thread/exception/PC/image UUID
+and exact executable/dSYM before proposing a production fix. No normal merge/publication until
+required gates pass; no completion until published-package/installed defaults pass.
+
+### 4. Verification
+
+| Gate | Required observation |
+|---|---|
+| YAML | Installed `ruby -rpsych -e 'Psych.parse_file(ARGV.fetch(0)); puts "YAML parse PASS"' .github/workflows/release.yml` |
+| Exact step | Parsed condition/actionv7/name/six paths match above |
+| Negative routing | Successful macOS/failing non-macOS do not qualify; name cannot match forge-* |
+| Release preservation | Existing ZIP/publisher pattern/dependencies/permissions unchanged |
+| Scope | Only README/workflow delta;43-path inventory; src tree byte-identical |
+| Existing scripts | make cli-script-test; parser and text diff hygiene |
+| Reviews | Fresh complete sequential simplicity/style and ownership/technical reviews |
+| Native | Normal current canonical/all four hosts; unchanged warning/payload/deadline gates |
+| Diagnostic | Normally retained failed matrix artifact; actual child report and matching binary/symbol UUID |
+
+All retained focused/full/Release/package/ABI/branch-consumer/normal publication/default gates
+below remain required. Current unchanged production evidence is source-specific; no unchanged
+local full managed/AOT/consumer rebuild solely for an upload declaration. A passing sibling or
+missing reports never closes the unresolved SIGSEGV. Recheck immutable0.1.8/tag before publication.
+
+### 5. Principles that changed a decision
+
+| Implementer rule | Choice |
+|---|---|
+| 1 No NIH | Existing action/collector/destinations/installed Psych |
+| 2 No duplicate paths | One scoped transport; no second collector/publisher |
+| 3 Minimum | Two edited files, one inventory addition |
+| 4 No speculative abstractions | Direct YAML step, no helper/dependency/hook |
+| 5 Scope | Evidence before cause/fix |
+| 6 Verified | Actual failed-job report/binary correlation and defaults |
+| 7 Outline | Explicit step purpose |
+| 8 Small functions | No new function |
+| 9 Top-down | Retention follows native execution |
+| 10 Explicit errors | Failed build/upload remain failed |
+| 11 Shallow nesting | One condition |
+| 12 Side effects | Artifact action transports; script selects |
+| 13 Warnings | Existing raw-warning gates unchanged |
+| 14 Extraction | No helper for YAML declaration |
+| 15 Complexity | No added parser/wrapper complexity |
+
+### 6. Open questions and assumptions
+
+No unresolved architecture or implementation choice for retention. Cause remains unknown:
+current matrix38016928684 copied two reports but did not upload; canonical38016928681 passed.
+Actual faulting child thread/PC/UUID remain missing. No production correction, waiver, merge,
+publication or completion approved. Ordinary descendants remain the lifetime guarantee; deliberate
+escape/isolation/permissions/egress remain outside scope. Exact Runner source/digests below remain.
+
+## Complete round 12 plan reviews — caught dispositions
+
+Implementer assignment03:48:49→result available03:54:39 UTC; own observed03:49:28–03:52:28 UTC.
+Complete current plan includes all43 paths/exact public/native contracts/retained producer sequence
+and gates plus five correction edits. Initial root transcription accidentally matched an old
+subheading while retaining the producer section, leaving contradictory r11 instructions. Simplicity
+found it; root independently found/remediated the same prefix03:56:45 UTC. Initial artifact
+F6C520F09CE925418A089FC4254543B6D322A0E715CED78D81FCF83A09F0CF8A was not approved.
+Both reviewers re-read COMPLETE corrected artifact
+SHA25655314806A4C23EF0724236B4DB90BD7DAA1883CD33313E3EE2D6BE964E50448A.
+No product edit occurred before approval. Native layout/constants/errno/test-state/parent and
+ignored preservation are specified; no old retention-only authority remains active.
+
+| Stage | Assignment clock→result available (UTC) | Agent observed (UTC) |
+|---|---|---|
+| review-plan:simplicity:r12 | 03:56:01→03:57:48 | 03:56:24–03:57:22 |
+| review-plan:ownership:r12 | 03:57:48→04:00:08 | 03:58:14–03:59:05 |
+| supervisor approval | 04:00:12 | After independent hash/source/contract/failure/default checks |
+| implement:implementer:r12 | 04:00:17→pending | Same implementer; only five paths authorized |
+
+### Simplicity — complete corrected plan
+
+| Check | Verdict / current plan evidence |
+|---|---|
+| Apps/libraries | PASS: existing libc/SDK clang/probe, no dependency/project |
+| Reuse | PASS: ConfigureSpawn/PosixNative/public adapter plus existing producer owners |
+| Multiple paths | PASS: existing macOS branch only; Linux/Windows unchanged |
+| Legacy | PASS: old authority historical; actual Client0.9.3 ABI/old checkpoint refusal |
+| Knobs | PASS: caught-only; no runtime list/mask reset/retry |
+| Abstractions | PASS: concrete native configuration/compiler/restoration lifetime boundaries |
+| Library choice | PASS: exact Darwin ABI/error conventions and generic rooted delegate; finalAOT required |
+| Copy-paste | PASS: obsolete prefix removed; test-only ABI is independent observation |
+| Redundancy | PASS: private native declarations, no existing equivalent found |
+| Size | PASS: five edits within43, no consumer/image/infra/workflow/authority expansion |
+| Tests | PASS: before-runtime witness/ignored/parent/restores plus fresh full/package/native/default gates |
+
+Nothing further to remove/merge. No concrete remaining plan blocker. Implementation approval,
+current native/publication/default observations remain separate gates.
+
+### Ownership — complete corrected plan
+
+Blind atlas/Core/build/Runner owner derivation preceded current plan. Full current hash matched;
+product remained clean c4176ba5. No duplicate caught-default path or owner with unrelated jobs.
+
+| Behaviour | Derived/proposed owner | Verdict |
+|---|---|---|
+| Package assets | Core manifest | PASS |
+| Distribution before env evaluation | Existing Core TOML reader | PASS |
+| Full local parsing | Same parser | PASS |
+| Immutable diagnostics/no disk fallback | Core ExpertLoader | PASS |
+| Declared parameter typing/runtime keys | Same availability walk | PASS |
+| Construct/select first root | Core package validator | PASS |
+| Reachable declared inputs | Core shared input traversal | PASS |
+| Required root/optional experts/reserved names | Core input policy/validator | PASS |
+| Named-over-let/token_count | Core interpreter/input policy | PASS |
+| Existing kinds/reachable profiles | Core validation; deployment availability | PASS |
+| Asset/model/collision validation | Core package validator | PASS |
+| Old hash/asset identity | Same canonical hash | PASS |
+| Actual serialized4MiB | Same generated JSON measurement | PASS |
+| Client six-arg constructor | Core public package contract | PASS |
+| Generated JSON constructor/round trip | Same annotated primary contract | PASS |
+| Actual Client Create/Open/Reconnect ABI proof | Existing Core consumer regression | PASS |
+| Semantic/admitted checkpoint identity | Core fingerprint/interpreter | PASS |
+| Malformed/old continuation refusal | Core codec | PASS |
+| Completed effects once | Core interpreter/log | PASS |
+| Live registry reference | Core workspace view/caller registration | PASS |
+| Workspace inheritance/exact StepKey | Core options/trace/interpreter | PASS |
+| Deterministic outputs | Core workspace convention | PASS |
+| Verified runtime aliases in process copies | Existing exec adapter | PASS |
+| Literal argv/cwd/lookup/authority | Same adapter/private launcher | PASS |
+| Bounded I/O/precise declined input | Same exchange/failure owner | PASS |
+| BareLinuxPID1 prelaunch refusal | Core Start guard | PASS |
+| Atomic POSIX group/unreaped root | Existing Core private lifetime | PASS |
+| macOS root-only completion | Same narrow libproc observation | PASS |
+| Atomic Windows job/handles | Existing Core Windows lifetime | PASS |
+| Joined work/cleanup error precedence | Core failure/lifetime | PASS |
+| Adopted orphans | Existing image init, excluded from Core | PASS |
+| Numeric/joined native ONNX | Existing adapter | PASS |
+| Actual caught macOS queries | Existing private ConfigureSpawn owner | PASS |
+| Exact Darwin ABI/distinct errno | Existing private PosixNative | PASS |
+| Defaults before atomic exec | Same spawn attributes | PASS |
+| Ignored/default/mask/production parent unchanged | Same caught-only launch boundary | PASS |
+| Before-runtime observation | Existing probe embedded C witness/public adapter | PASS |
+| Bounded joined compiler/errors | Existing test process support | PASS |
+| Scoped test actions/independent restores/readbacks | Existing probe; rooted Cdecl callback | PASS |
+| Decisive pressure/BCL cancellation | Existing native probe | PASS |
+| Exact init image/PID1 negative | Existing build verification | PASS |
+| Scoped failure diagnostics | Existing build/release, unchanged | PASS |
+| Immutable publication/installed defaults | Existing publication/build; supervisor accepts | PASS |
+
+| Gate | Verdict |
+|---|---|
+| Native contract | PASS: size16/0,8,12,uint32,NSIG32,skip9/17,exclude0/1,flags0x4006; query errno/direct attribute return |
+| Regression | PASS: C before managed startup; caught0/flags0,ignored1,parent/readbacks/restores checked |
+| ABI | PASS: existing exact six-arg binary constructor/generated semantic JSON |
+| Security/scope | PASS: five edits/43paths; no service/store/credential/authority/dependency/isolation change |
+| Failure/engineering | PASS: one owner/no reset-all/runtime list/retry/abandoned work; original+restore errors visible |
+| Verification plan | PASS: fresh managed/full/Release/package/ABI/consumer and current canonical/all4zero-warningnative |
+| Actual correction/native | OPEN: implementation just approved |
+| Publication/default | OPEN: normal immutable/freshremote/Project/Chat/Hands/cancel required |
+| UI | N/A |
+
+Move nothing. Root independently confirmed actual plan hash, clean product baseline, precise five-path
+scope, signal ABI/error/failure/parent/ignored behavior and unchanged default/security boundaries,
+then approved04:00:12 UTC. Approval stamp changes document hash only; reviewed contents stay exact.

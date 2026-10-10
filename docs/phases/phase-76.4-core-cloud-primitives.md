@@ -4,8 +4,8 @@
 Linux x64/ARM64 and Windows ARM64 native checks pass. Both current macOS jobs fail with
 pressure-child SIGSEGV139. Failed-matrix retention now works: actual child/parent reports and
 UUID-matched executable/dSYM identify a strongly supported macOS inherited-disposition cause.
-The focused correction design below is locked after both reviews; implementer planning is in
-progress. No production correction or merge is approved.
+The focused correction design and complete r12 plan passed both reviews. Supervisor approved
+the five-file correction04:00:12 UTC; implementation is in progress. No merge/publication approved.
 [Report and reproduction evidence](phase-76.4-core-cloud-primitives_completed.md#matched-native-crash--investigation-r13).
 The [hosting prerequisite is verified](phase-76.5-runner-process-hosting.md).
 Merge/publication/default acceptance remain open.
@@ -198,9 +198,9 @@ be marked complete by this package probe.
 | Item | State |
 |---|---|
 | Design | Parent round7 locked21:40:31 UTC; macOS correction r12 locked03:48:45 UTC after fresh complete reviews; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-correction-design-reviews-r12) |
-| Implementer plan | [Complete r11](phase-76.4-core-cloud-primitives-plan.md) approved03:02:53 UTC;43-path inventory, new change only release workflow/README for failed-matrix evidence |
-| Independent plan reviews | Fresh full r11 simplicity/ownership PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-11-plan-reviews--failed-matrix-retention); prior verdicts historical |
-| Plan approval / implementation | Retention correction pushed `c4176ba5` in [PR77](https://github.com/katasec/forge-mcl/pull/77);21routing/4parser/30script checks PASS. Production tree unchanged; no production correction authorized. |
+| Implementer plan | [Complete r12](phase-76.4-core-cloud-primitives-plan.md) approved04:00:12 UTC;43-path inventory, five current launch/probe/README edits |
+| Independent plan reviews | Fresh full r12 simplicity/ownership PASS on corrected complete artifact; [verdicts](phase-76.4-core-cloud-primitives_completed.md#complete-round-12-plan-reviews--caught-dispositions); earlier approvals historical |
+| Plan approval / implementation | Same implementer authorized04:00:17 UTC on [PR77](https://github.com/katasec/forge-mcl/pull/77). Baselinec4176ba5 retained reports/three-host PASS; production correction implementation in progress. |
 | Code review / native CI | Fresh full r7 source reviews PASS; [verdicts](phase-76.4-core-cloud-primitives_completed.md#full-code-review-r7--failed-matrix-retention). Linux x64/ARM64 and Windows ARM64 PASS; canonical38019324267 and matrix38019324271 macOS FAIL139. Retained reports and focused disposition reproduction support the correction below; production/current-source/default gates remain open. |
 | Published/default acceptance | Required; not performed |
 

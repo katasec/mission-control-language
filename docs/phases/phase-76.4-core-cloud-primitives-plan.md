@@ -1,140 +1,160 @@
-# Phase 76.4 — Complete implementer correction plan, round 11
+# Phase 76.4 — Complete implementer correction plan, round 12
 
-**PLAN APPROVED2026-10-10 03:02:53 UTC.** Same implementer observed
-**2026-10-10 02:54:07–02:56:02 UTC**, read-only. Supervisor transcribes the complete return into
-this artifact: the current43-path inventory, retained API/sequence/gates below plus this correction
-are one complete plan. Fresh full r11 simplicity and ownership reviews PASS; supervisor independently checked exact artifact paths/routing, unchanged production tree, failure/API/security/default gates. This approval authorizes only the two current retention edits, not a production fix or merge/publication.
-Source `0d0a338f672469356b3c412e7a4ccf2dc11d74e7`, base `8d28dc1`, same branch/PR77.
-Only paths42–43 may change after fresh full sequential reviews and explicit approval.
-The implemented r10 plan is [historical evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-diagnostic-correction-plan-r10).
+**PLAN APPROVED2026-10-10 04:00:12 UTC.** Both complete current plan reviews PASS; supervisor
+independently checked source/hash, exact native ABI, failure/parent-state/public/default gates.
+Reviewed pre-approval SHA25655314806A4C23EF0724236B4DB90BD7DAA1883CD33313E3EE2D6BE964E50448A.
+Approval authorizes only the five correction paths; no merge/publication approval. Same implementer observed2026-10-10
+03:49:28–03:52:28 UTC; supervisor assignment03:48:49, result available03:54:39 UTC.
+Supervisor transcribes the complete returned plan: the current43-path inventory, retained exact
+contracts/sequence/gates below and this correction form one complete artifact. Prior r11 plan is
+[historical evidence](phase-76.4-core-cloud-primitives_completed.md#superseded-complete-correction-plan-r11).
+Baselinec4176ba5598b77538829350e8bb7c8fc986bf8b0, base8d28dc1, same branch/PR77.
+Locked correction design r12 passed both complete design reviews. Only31,32,37,38,42 may change
+after fresh complete plan reviews and explicit supervisor approval. No new path or dependency.
 
-## Current correction r11 — failed matrix retention
+## Current correction r12 — macOS caught-disposition defaults
 
-### 1. Files
+### 1. Files and scope
 
-Complete inventory is below, expanded42→43 only by `.github/workflows/release.yml`.
-Only that workflow and `scripts/README.md` change now. Every other path remains frozen.
-No production/API/fixture/dependency/image/process/payload/deadline/warning/consumer/deploy change.
-Existing build-verification design/owners and locked Core design apply; no new architecture choice.
-UI/browser N/A. Runtime, security/engineering and default-path gates remain applicable.
+All43 retained paths are listed below. New edits only:
 
-### 2. Reuse
+| Inventory | File | Correction |
+|---|---|---|
+| 31 | src/ForgeMission.Core/Adapters/ExecProcess.Posix.cs | Checked caught-default attributes before existing atomic macOS spawn |
+| 32 | src/ForgeMission.Core/Adapters/ExecProcess.PosixNative.cs | Exact private Darwin layout/constants and two libc imports |
+| 37 | tests/ForgeMission.Exec.Probe/Program.cs | macOS public-adapter disposition scenario in normal probe flow |
+| 38 | tests/ForgeMission.Exec.Probe/ExecProbeChild.cs | Embedded native C witness/build and scoped test-parent helpers |
+| 42 | scripts/README.md | Matched crash cause, regression and narrow retention reassessment |
 
-Reuse existing matrix `actions/upload-artifact@v7`, existing collector's validated output and native
-probe publish. No new action, helper, dependency, collector or release path. The existing publisher
-selects `forge-*`; diagnostic artifact naming must remain outside that pattern. Existing Core APIs,
-ABI, generated JSON, pure admission, workspace, native lifetime, ONNX and package owners below
-remain exact. Installed Ruby Psych3.1.0 parses YAML; PyYAML is absent and is not installed.
-Availability check's existing world-writable-PATH warning is preserved, not suppressed.
+No new public API/configuration/consumer/image/infra/workflow/version/permission policy. UI/browser
+N/A. Runtime/security/engineering/default gates apply; no tier/store/identity/credential/authority
+change. Arbitrary user-vetted code and inherited executable authority remain, with no isolation claim.
 
-### 3. Sequence
+### 2. Reuse and exact native additions
 
-Reconfirm source/branch/base/PR/inventory and unique evidence path after approval. Immediately
-following the existing native matrix build, before the unchanged successful ZIP upload, add:
+Existing ConfigureSpawn, allocated attributes, PosixNative.Check and normal probe scratch/dispatcher
+remain owners. No alternative launcher/signal policy/production callback/helper framework. Native C
+witness uses SDK clang already required by macOS native gates; no library or unsafe project change.
+Existing probe imports duplicate only test-observation ABI, without exposing production internals.
+Parent callback uses statically rooted explicitly Cdecl three-argument delegate and generic BCL
+Marshal.GetFunctionPointerForDelegate. Existing parser/diagnostics/admission/replay/live workspace,
+anonymous pipes/retained roots/atomic Windows jobs/ONNX1.27/build/publication owners stay exact below.
 
-```yaml
-- name: Preserve failed macOS native probe evidence
-  if: ${{ failure() && runner.os == 'macOS' }}
-  uses: actions/upload-artifact@v7
-  with:
-    name: native-exec-diagnostics-${{ matrix.rid }}-${{ github.run_id }}-${{ github.run_attempt }}
-    path: |
-      dist/cli/exec-probe-crashreports
-      dist/cli/exec-probe-run.log
-      dist/cli/exec-probe-publish.log
-      dist/cli/exec-probe/ForgeMission.Exec.Probe
-      dist/cli/exec-probe/ForgeMission.Exec.Probe.dSYM
-      dist/cli/exec-probe/libonnxruntime.dylib
-    if-no-files-found: error
+```csharp
+[StructLayout(LayoutKind.Sequential)]
+internal struct MacSignalAction
+{
+    internal IntPtr Handler;
+    internal uint Mask;
+    internal int Flags;
+}
+[DllImport("libc", EntryPoint = "sigaction", SetLastError = true)]
+internal static extern int QuerySignalAction(
+    int signal, IntPtr action, out MacSignalAction previous);
+[DllImport("libc", EntryPoint = "posix_spawnattr_setsigdefault")]
+internal static extern int AttributeSignalDefaults(IntPtr attributes, ref uint signals);
 ```
 
-The dSYM bundle includes only this probe's existing Info.plist/DWARF/relocations. Report directory
-contains only existing validated reports/status. Do not upload general DiagnosticReports,
-credentials, environment, broad workspace or shipped CLI payload. Preserve successful
-`forge-${{ matrix.rid }}` ZIP/path, publisher `forge-*`, permissions/dependencies/concurrency/
-commands. No continue-on-error, retry or failure replacement; upload failure keeps the job failed.
+Verified public Darwin struct (not kernel __sigaction):16bytes, offsets0/8/12; sigset_t unsigned32.
+Named private constants NSIG32, SIGKILL9, SIGSTOP17, SIG_DFL0, SIG_IGN1, SETSIGDEF0x4; existing
+group0x2/CLOEXEC0x4000. Test SIGUSR2=31, SIGURG=16, SA_SIGINFO0x40, SA_RESTART0x2.
+sigaction query null new-action returns0/-1; immediately capture Marshal.GetLastPInvokeError on
+failure. Attribute setter returns direct errno and uses existing Check, never stale errno.
 
-README records this route and the actual earlier loss: two matrix reports were copied but not
-uploaded. Canonical success does not diagnose that same-tree matrix failure. Reassess retention
-once diagnosed; no general observability. Keep collector unchanged: failed macOS only, exact
-header/body identity and procLaunch>=invocation start, nonrecursive user/system directories,
-250ms/10s bounded selection/copy-once/source separation/status/errors, terminating status writes,
-original probe error preserved. No mtime substitution, payload/deadline change or failed-test retry.
+### 3. New correction sequence
 
-Retain every producer step below: actual published Client six-argument ABI and generated constructor,
-shared parser/pure diagnostic source, internal named admission, assets/hash/actual JSON cap,
-format3 semantic replay/consumed-shape refusal, exact StepKey/live workspace, prelaunch PID1 refusal,
-atomic retained POSIX groups/Windows jobs, checked termination→pipejoins→exact reap, error precedence,
-joined numeric ONNX cancellation/parallel sibling, unchanged decisive native pressure/pipe probes,
-exact Runner image/init proof and bare-PID1 negative. No consumer changes or guessed signal fix.
+1. After approval recheck baseline/branch/base/inventory/version absence, preserve actual failed
+   reports/matched symbols/r13 evidence and create a unique evidence directory. No rebase/other repo.
+2. Existing macOS ConfigureSpawn calls one private ConfigureMacSignalDefaults(attributes) below its
+   caller. Query1..31 except9/17; include only handler neither0 nor1, with1u<<(signal-1). Check every
+   query; failures throw named Win32Exception with captured errno before launch. Check set-default
+   attribute, then checked flags0x4006; continue existing group/dup/cwd/atomic spawn. Linux flags2 and
+   Windows unchanged. No signal delivery, parent mutation or mask setter. Existing failed-envelope
+   and setup-resource disposal remain. No runtime-specific signal list/reset-all/retry/JSON rewrite.
+3. Embed small C witness source in existing ExecProbeChild.cs. Compile in unique probe scratch with
+   /usr/bin/xcrun clang -std=c11 -Wall -Wextra -Werror. Static assert SDK sizes4/16 and offsets0/8/12.
+   main immediately queries SIGUSR2/SIGURG with checked errno before any runtime installs handlers;
+   emit existing valid {"result":"..."} containing numeric handler/flags. Compiler helper uses literal
+   ProcessStartInfo args, concurrent stdout/stderr drains, ten-second bounded joined lifetime and
+   owned cleanup; timeout/nonzero/compiler warning fails, no retry. No environment dump/payload.
+4. Program normal flow invokes VerifyMacSignalDefaultsAsync only on macOS. Save both complete
+   original actions; install no-op rooted Cdecl three-argument callback on SIGUSR2 with flags0x42
+   and empty mask, SIGURG ignored1/flags0/empty mask. Check installs and installed snapshots. Never
+   replace SIGUSR1/runtime activation handlers or send a signal. Launch compiled witness directly
+   through public ExecExpertRunner.RunAsync with existing expert/cwd/JSON/deadline conventions.
+   Require pass, caught handler0/flags0 and ignored handler1/configured flags unchanged. Query parent
+   afterward and compare handler/mask/flags to installed snapshots. Finally restore each saved/changed
+   signal independently even if another restore fails, check readbacks and preserve original plus
+   restoration errors. Static field roots callback throughout/afterward. No skip if clang/witness fails.
+5. Update scripts README with exact matched cause/regression without premature CI acceptance.
+   Retain existing narrow collector/upload unchanged while corrected-source checks are outstanding;
+   supervisor reassesses value after acceptance. No removal/expansion in this correction.
+6. Preserve every producer behavior below: exact Client ABI/generated JSON, pure common admission,
+   actual4MiB/assets/hash, checkpoint3/semantic replay, live registry/StepKey, literal exec bindings,
+   PID1 guard/init owner, atomic group/job/root/error precedence, decisive unchanged pressure/caps/
+   deadlines, BCL pipe cancellation and joined native ONNX/parallel sibling. Do not redo implemented
+   behavior or broaden this correction.
+7. Because production changes, run fresh managed/focused/full/Release/package/managed probe, actual
+   published Client ABI and new distinct prerelease local package/cache public consumer before AOT.
+   Freeze/commit/push same PR77, full43-path binary diff/inventory/hash and exact five-path delta.
+   Fresh complete sequential code reviews and normal final-source canonical/all-four-host CI follow;
+   supervisor owns merge/publication/published/default acceptance/closure.
 
-After meaningful checks, freeze/commit/push the same PR77; hand back full43-path binary diff/hash/
-inventory and unchanged production tree. Fresh full sequential code reviews and normal current
-canonical/four-host CI follow. Retrieve actual failing matrix report/thread/exception/PC/image UUID
-and exact executable/dSYM before proposing a production fix. No normal merge/publication until
-required gates pass; no completion until published-package/installed defaults pass.
+### 4. Verification additions and retained gates
 
-### 4. Verification
+No earlier PASS closes revised-source gates. Managed size/offset assertions16/0/8/12 and C static
+assertions prove the exact ABI. Real C witness through public adapter proves caught reset/ignored
+preservation/unchanged parent/exact restore before managed child startup. Setup/restore/compiler
+errors fail visibly. Signal regression is mandatory on macOS, with no new cross-host semantics.
+Run fresh focused eight families, full unfiltered Debug build/tests, Core Release and package checks,
+30existing script/parser/hygiene checks, actual Client0.9.3 DLL regression, distinct branch-consumer
+cache and all ordinary managed probe scenarios. Final normal macOS14 canonical and all-four-host
+native routes retain zero compiler/linker/trim/ILC warnings and original payload/deadline checks.
+Mandatory exact Runner0.20.6 image/init positive and bare-PID1 negative stay unchanged. Linux ONNX
+publication slice remains real numeric/in-flight/parallel proof. All exact commands/default facts
+are retained below. Recheck immutable0.1.8/tag absence immediately before normal merged-main
+workflow_dispatch publication; tag trigger exists but is not required. Fresh remote published package
+consumer and installed Project/Chat/Hands/default/cancellation observations remain supervisor gates.
 
-| Gate | Required observation |
-|---|---|
-| YAML | Installed `ruby -rpsych -e 'Psych.parse_file(ARGV.fetch(0)); puts "YAML parse PASS"' .github/workflows/release.yml` |
-| Exact step | Parsed condition/actionv7/name/six paths match above |
-| Negative routing | Successful macOS/failing non-macOS do not qualify; name cannot match forge-* |
-| Release preservation | Existing ZIP/publisher pattern/dependencies/permissions unchanged |
-| Scope | Only README/workflow delta;43-path inventory; src tree byte-identical |
-| Existing scripts | make cli-script-test; parser and text diff hygiene |
-| Reviews | Fresh complete sequential simplicity/style and ownership/technical reviews |
-| Native | Normal current canonical/all four hosts; unchanged warning/payload/deadline gates |
-| Diagnostic | Normally retained failed matrix artifact; actual child report and matching binary/symbol UUID |
-
-All retained focused/full/Release/package/ABI/branch-consumer/normal publication/default gates
-below remain required. Current unchanged production evidence is source-specific; no unchanged
-local full managed/AOT/consumer rebuild solely for an upload declaration. A passing sibling or
-missing reports never closes the unresolved SIGSEGV. Recheck immutable0.1.8/tag before publication.
-
-### 5. Principles that changed a decision
+### 5. Principles that changed decisions
 
 | Implementer rule | Choice |
 |---|---|
-| 1 No NIH | Existing action/collector/destinations/installed Psych |
-| 2 No duplicate paths | One scoped transport; no second collector/publisher |
-| 3 Minimum | Two edited files, one inventory addition |
-| 4 No speculative abstractions | Direct YAML step, no helper/dependency/hook |
-| 5 Scope | Evidence before cause/fix |
-| 6 Verified | Actual failed-job report/binary correlation and defaults |
-| 7 Outline | Explicit step purpose |
-| 8 Small functions | No new function |
-| 9 Top-down | Retention follows native execution |
-| 10 Explicit errors | Failed build/upload remain failed |
-| 11 Shallow nesting | One condition |
-| 12 Side effects | Artifact action transports; script selects |
-| 13 Warnings | Existing raw-warning gates unchanged |
-| 14 Extraction | No helper for YAML declaration |
-| 15 Complexity | No added parser/wrapper complexity |
+| 1 No NIH | Spawn attributes/libc/SDK clang/existing public probe and gates |
+| 2 One path | Existing macOS launch correction, no alternate launcher/collector |
+| 3 Minimum | Five edits within43 paths; no mask reset/runtime patch/consumer/infra |
+| 4 No speculative abstraction | One native configuration boundary and concrete test support |
+| 5 Scope | Locked caught-only correction; deviations return before edits |
+| 6 Verified | Before-runtime witness/current native/published defaults |
+| 7 Outline | Caught defaults then existing atomic launch visible |
+| 8 Small steps | Query/configure/compiler/scoped state boundaries |
+| 9 Top-down | Callers and scenario before details |
+| 10 Explicit errors | Query errno/direct attribute error distinct; original/restore errors preserved |
+| 11 Shallow | Early platform/uncatchable/default/ignored guards and one loop |
+| 12 Side effects | Named native/config/compiler/scoped state boundaries |
+| 13 Warnings | Managed then normal AOT; C warning-as-error |
+| 14 Extraction | Real native/scoped lifetime boundaries, not metric-only |
+| 15 Complexity | Straight traversal; classic decisions measured at review |
 
 ### 6. Open questions and assumptions
 
-No unresolved architecture or implementation choice for retention. Cause remains unknown:
-current matrix38016928684 copied two reports but did not upload; canonical38016928681 passed.
-Actual faulting child thread/PC/UUID remain missing. No production correction, waiver, merge,
-publication or completion approved. Ordinary descendants remain the lifetime guarantee; deliberate
-escape/isolation/permissions/egress remain outside scope. Exact Runner source/digests below remain.
+None unresolved. Actual report/register/disassembly/source/repro supports cause; no crash-time saved
+handler memory snapshot. macOS native gates remain failed until corrected source passes. Missing
+compiler/failed witness/restoration error fails. Existing Runner exact source/digests, ordinary
+descendant guarantee/init ownership and all default facts remain below. Deliberate escape/sandbox/
+permissions/egress remain outside scope. Implementation/merge/publication/completion separately gated.
 
 ## Complete retained producer contract
 
-The following APIs, inventory, sequence and gates remain part of current r11. Earlier approval
-history is [recorded separately](phase-76.4-core-cloud-primitives_completed.md#retained-producer-approval-history-before-r11);
-it does not authorize the new correction. Already implemented producer behavior stays frozen.
-Windows expected-path normalization remains implemented; no signal-mask or production fix is
-justified by an unexplained native failure. Current r11's no-unchanged-rebuild rule governs this
-workflow-only correction, while the retained source-specific production evidence remains required.
+The following full inventory/APIs/sequence/gates remain part of current r12. Implemented behavior is
+retained; only five paths above change. Historical no-unchanged-rebuild/retention-only permissions
+do not apply to this production correction. Current-source verification is required.
 
 ## 1. Files
 
-Continue current clean0d0a338f on `adeen/phase-76-core-primitives`, base8d28dc1, same draftPR77.
+Continue current cleanc4176ba5 on `adeen/phase-76-core-primitives`, base8d28dc1, same draftPR77.
 All43 paths below are relative to `/Users/ameerdeen/progs/forge-mcl`. This is the complete current
-inventory. Only42–43 change after current plan approval.
+inventory. Only31,32,37,38,42 change after current r12 plan approval.
 
 | # | File | Purpose |
 |---|---|---|
@@ -168,18 +188,18 @@ inventory. Only42–43 change after current plan approval.
 | 28 | `eng/verify-core-package.sh` | Normal metadata/content/source/dependency verification |
 | 29 | `Makefile` | Existing Core version declaration0.1.8 |
 | 30 | `src/ForgeMission.Core/Adapters/ExecProcess.cs` | Owned lifetime boundary; bare Linux PID1 guard before allocating/launching |
-| 31 | `src/ForgeMission.Core/Adapters/ExecProcess.Posix.cs` | Retained atomic group/root; remove adopted-child scanning/reaping |
-| 32 | `src/ForgeMission.Core/Adapters/ExecProcess.PosixNative.cs` | Retained narrow imports; remove scan-only `getpgid` import |
+| 31 | `src/ForgeMission.Core/Adapters/ExecProcess.Posix.cs` | Retained atomic group/root plus macOS caught-disposition defaults |
+| 32 | `src/ForgeMission.Core/Adapters/ExecProcess.PosixNative.cs` | Retained narrow imports plus private Darwin sigaction/default-set ABI |
 | 33 | `src/ForgeMission.Core/Adapters/ExecProcess.Windows.cs` | Preexecution job ownership and joined handles |
 | 34 | `src/ForgeMission.Core/Adapters/ExecProcess.WindowsNative.cs` | Existing narrow Win32 declarations |
 | 35 | `src/ForgeMission.Core/Adapters/ExecProcessArguments.cs` | Preserved Unix resolution and literal Windows argv |
 | 36 | `tests/ForgeMission.Exec.Probe/ForgeMission.Exec.Probe.csproj` | Existing maintained public-Core-API native probe |
-| 37 | `tests/ForgeMission.Exec.Probe/Program.cs` | All-host assertions, exact-image init proof and bare-PID1 refusal |
-| 38 | `tests/ForgeMission.Exec.Probe/ExecProbeChild.cs` | Decisive pressure and retained controlled child modes |
+| 37 | `tests/ForgeMission.Exec.Probe/Program.cs` | All-host assertions/init/PID1 proof plus macOS public-adapter signal regression |
+| 38 | `tests/ForgeMission.Exec.Probe/ExecProbeChild.cs` | Decisive pressure/child modes plus native C disposition witness/scoped test state |
 | 39 | `tests/ForgeMission.Mcl.Tests/ForgeMission.Mcl.Tests.csproj` | Existing probe build reference, `ReferenceOutputAssembly=false` |
 | 40 | `ForgeMission.slnx` | Probe included in normal managed compilation |
 | 41 | `scripts/build.ps1` | Normal native gates; exact published-image proof and separate PID1 negative |
-| 42 | `scripts/README.md` | Correct native commands, image identity, scoped diagnostic retention and ownership/evidence distinctions |
+| 42 | `scripts/README.md` | Native commands/image/scoped diagnostics plus matched cause and disposition regression |
 | 43 | `.github/workflows/release.yml` | Failure-only macOS probe diagnostic artifact outside shipped-release pattern |
 
 No file beyond this43-path inventory, dependency, process framework, public factory or configuration knob. No Registry, CLI behavioral migration, Host, Runner, Client, infra or deployment change. Existing consumers remain pinned until their separately reviewed upgrades.
@@ -307,9 +327,9 @@ internal sealed class ExecProcessCleanupException : IOException;
 
 `PosixExecProcess` and `WindowsExecProcess` remain private implementations. The new Linux check is a guard in existing `ExecProcess.Start`, not a new public lifecycle seam.
 
-## 3. Sequence
+## 3. Retained complete producer sequence
 
-1. **Approval and source boundary.** After fresh full plan reviews and explicit approval, recheck branch/SHA and the exact four held modifications. Recheck Core0.1.8 availability and preserve all earlier evidence. Continue the same unfinished branch without rebasing or touching another repository. Record unique evidence directory, source, commands, warnings and stage times.
+1. **Approval and source boundary.** After fresh full plan reviews and explicit approval, recheck branch/SHA and the five authorized correction paths. Recheck Core0.1.8 availability and preserve all earlier evidence. Continue the same unfinished branch without rebasing or touching another repository. Record unique evidence directory, source, commands, warnings and stage times.
 
 2. **Retain package ABI/serialization.** Preserve the six-argument constructor and primary `[method: JsonConstructor]`. Existing generated metadata must round-trip omitted/null/empty assets with unchanged no-assets hash and nonempty bytes/ContentType/Sha256/Executable. Revalidate restored values. Do not introduce a public JSON context or compatibility reader.
 
@@ -375,7 +395,7 @@ internal sealed class ExecProcessCleanupException : IOException;
     ```
     No `--init`. Negative mode passes only after public failed-envelope/no-child proof; it does not execute the ordinary lifecycle suite. Docker unavailable/probe failure fails required Linuxx64 CI, never skips. No Runner/image edit.
 
-22. **Stabilize then freeze.** Run focused/full managed, Release/package and managed probe first, then commit/push same PR77 and normal final-source canonical/four-host native gates. Preserve failed logs and exact Reason/error evidence; do not invent the historical canonical failure’s cause. The existing branch-package public consumer remains production-source evidence; current retention-only correction does not rebuild unchanged source. Supervisor receives full43-path diff/evidence, conducts sequential complete reviews and owns CI follow-through, merge, normal publication, published/installed acceptance and closure.
+22. **Stabilize then freeze.** Apply the r12 correction sequence above, run fresh focused/full managed, Release/package, actual Client ABI, managed probe and a new distinct branch-package public consumer, then freeze/commit/push same PR77. Preserve actual failed reports and qualified causal evidence. Normal final-source canonical/four-host native gates and fresh complete sequential reviews follow. Supervisor owns merge, normal publication, published/installed acceptance and closure.
 
 ## 4. Verification
 
@@ -393,7 +413,7 @@ Every gate records exact current source, commands, exit codes, raw logs, warning
 | Linux ONNX | Existing normal Ubuntu Core publication adapter slice runs numeric, actual in-flight cancellation and real pipeline sibling tests without skip |
 | Branch consumer | Fresh unique local package/version/cache; package references only; exact nupkg/source/hash and API/JSON/exec/trace/numeric/cancellation observations |
 | Actual Client ABI | Real selected published Client0.9.3 DLL through current composition, Create/Open/Reconnect, recorded DLL/hash, no rebuild |
-| Normal publication | Merged source, immutable Core0.1.8/core-v0.1.8 route, package ownership/private visibility, README/license/nuspec source and Parser/Scout0.1.0 dependencies |
+| Normal publication | Merged source, normal workflow_dispatch on main, immutable Core0.1.8 (tag trigger is optional), package ownership/private visibility, README/license/nuspec source and Parser/Scout0.1.0 dependencies |
 | Published default package | Supervisor independently restores normal0.1.8 into another fresh cache and exercises public APIs; no substituted DLL/local cache contamination |
 | Installed Project/Chat | Clean merged-main normal `make install`, complete native payload; disposable `forge project create`, actual piped Chat, normal login/API and absent build/endpoint overrides |
 | Installed local regression | Same normal provider/config: `forge init`/`forge run`, real Hands Write→Read independently verified, outside sentinel unchanged, tool-free execution and cancelled-session cleanup |
@@ -423,7 +443,7 @@ Unchanged fixtures:
 
 Keep Python3.13/onnx1.19.0 test-only generation provenance; runtime tests need only normal native ONNX package.
 
-Read-only readiness facts: Core inventory returned0.1.7 through0.1.0, with0.1.8 absent; supervisor independently observed release tag404. Recheck immediately before mutation/publication. Current production source remains unchanged at0d0a338f; exact tree identity is recorded. Prior managed/native observations and hosting acceptance retain only their named source/layer; failed macOS matrix and normal publication/default gates remain open.
+Read-only readiness facts: Core inventory returned0.1.7 through0.1.0, with0.1.8 absent; supervisor independently observed release tag404. Recheck immediately before mutation/publication. Baselinec4176ba5 production tree is recorded; r12 changes production and requires fresh evidence. Prior managed/native observations and hosting acceptance retain only their named source/layer; failed macOS matrix and normal publication/default gates remain open.
 
 The producer default is normal published Core plus installed CLI regressions. Exact-image native verification is controlled component proof; later cloud content/protocol/client tasks remain open.
 
@@ -433,7 +453,7 @@ The producer default is normal published Core plus installed CLI regressions. Ex
 |---|---|
 | 1 No NIH | Reuse verified tini, existing parser/diagnostics/pipes/native ONNX/build/publication owners |
 | 2 No duplicate paths | Remove Core orphan reaper; keep one generic adapter and exact existing image entrypoint |
-| 3 Minimum needed | Complete43-path producer inventory; only README/workflow delta, no consumer/runtime image/protocol/deployment work |
+| 3 Minimum needed | Complete43-path producer inventory; five private-launch/probe/README edits, no consumer/runtime image/protocol/deployment work |
 | 4 No speculative abstractions | Direct private PID1 guard; no process framework, factory, capacity knob or serialization reader |
 | 5 Stay in scope | Apply locked init split and resolved pressure obligation; deviations return before edits |
 | 6 Verified means done | Require final-source native, published-package and installed-default observations |
@@ -455,4 +475,4 @@ The verified published image has exact immutable index above, source `17080b73a8
 
 Ordinary descendants are the lifecycle guarantee. Deliberate group/job escape, sandboxing, permissions and egress remain outside scope. Init reaps adopted orphans; Core retains and reaps its own direct root. Required Docker/native/ABI/immutable-version failures return visibly and cannot be replaced by an override or inherited PASS.
 
-The supervisor header records current implementation approval. Merge, publication and completion remain gated.
+The supervisor header records current approval state; no edit until explicit PLAN APPROVED. Merge, publication and completion remain gated.
