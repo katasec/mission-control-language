@@ -4,7 +4,7 @@
 reviews/checks; normal published image0.20.6 deployed through reviewed Make what-if/apply.
 Supervisor observed actual init/source identity and installed default Project/Chat PASS.
 [Complete evidence and timing](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance).
-Core remains open; obtain its full revised plan before mechanism edits.
+Core remains open; its full revised correction plan is approved and implementation is in progress.
 Parent: [Phase 76](phase-76-unified-cloud-run.md). Blocked consumer:
 [Core producer](phase-76.4-core-cloud-primitives.md).
 
@@ -141,4 +141,4 @@ failure/security/default gates and closure dependency before lock. Merge and acc
 | Item | State |
 |---|---|
 | Hosting delivery | Verified; [publication, both product PRs, native and default evidence](phase-76.5-runner-process-hosting_completed.md#default-path-acceptance) |
-| Downstream Core | Full revised plan required; exact published image digest and retained gates above apply |
+| Downstream Core | Full revised plan approved; exact published image digest and retained gates above apply |
