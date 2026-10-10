@@ -1,6 +1,11 @@
 # Phase 76.4 — implementer correction plan, round 7
 
-**Status: PLAN APPROVED** 2026-10-09 23:27:01 UTC after fresh full simplicity and ownership reviews and the supervisor's independent check. Round 7 retains its 42 files and contracts; only the private retained-group cleanup observation below changes. Approval covers this complete bounded plan; merge/publication/acceptance remain gated.
+**Status: HISTORICAL APPROVAL — mechanism edits frozen.** Round7 was approved 2026-10-09
+23:27:01 UTC. Actual native Linux PID1 failed; the [locked hosting correction](phase-76.5-runner-process-hosting.md)
+supersedes its raw-PID1/adopted-reap choice. Deliver hosting first, then obtain a full revised Core
+plan and approval before further mechanism edits. Existing four-file test correction is held
+uncommitted; all merge/publication/default gates remain open. The complete prior plan below is
+retained only until the revised plan replaces it; it grants no current mechanism-edit authority.
 [Task/design](phase-76.4-core-cloud-primitives.md). Prior approvals and review findings are recorded in [completion evidence](phase-76.4-core-cloud-primitives_completed.md).
 
 ## 1. Files
