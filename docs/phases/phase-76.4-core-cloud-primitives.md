@@ -188,5 +188,5 @@ be marked complete by this package probe.
 | Implementer plan | [Prior r7](phase-76.4-core-cloud-primitives-plan.md) approval is historical; hosting design supersedes PID1 mechanism; full revision required after hosting |
 | Independent plan reviews | Fresh complete r7 simplicity/ownership PASS; [full current verdicts/timing](phase-76.4-core-cloud-primitives_completed.md#complete-round-7-clarification--full-reviews-and-approval) |
 | Plan approval / implementation | Correction handbackdc03b7b at23:38:49 UTC; all42 paths match scope; clean/pushed draftPR77; [managed/package evidence](phase-76.4-core-cloud-primitives_completed.md#corrected-frozen-source--code-reviewnative-pending) |
-| Code review / native CI | Full r2 reviews found two verification gaps; local r4 correction passes. Linux x64 native host PASS, bare PID1 FAIL; Windows/Linux ARM64 native PASS atdc03b7b. Final revised-source gates and fresh full reviews remain required. |
+| Code review / native CI | Full r2 reviews found two verification gaps; local r4 correction passes. Atdc03b7b canonical macOS1054PASS/10skips/AOT0warnings; four-host Linux x64 host PASS/bare PID1 FAIL, other3 native PASS. Final revised-source gates/fresh full reviews remain required. |
 | Published/default acceptance | Required; not performed |

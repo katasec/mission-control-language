@@ -111,3 +111,13 @@ codex/ branch. No placement change. Actual image/default evidence remains pendin
 Supervisor independently checked full plan, actual workflow/Dockerfile/runtime startup, infra
 AGENTS/README/layer, unchanged dependencies/authority, failure/negative/default evidence and
 six-path scope. **PLAN APPROVED00:06:49 UTC**; same implementer receives bounded handoff.
+
+| Stage | Assignment start UTC | Observed end UTC | Observation |
+|---|---|---|---|
+| Plan / same implementer r8 | 2026-10-10 00:00:19 | 2026-10-10 00:03:08 | Complete six-file read-only plan |
+| Plan review / simplicity r6 | 2026-10-10 00:04:46 | 2026-10-10 00:05:17 | Full11 PASS; observed start00:05:02 |
+| Plan review / ownership r6 | 2026-10-10 00:05:31 | 2026-10-10 00:06:14 | Full18/gates PASS; observed start00:05:49 |
+| Plan approval / supervisor | 2026-10-10 00:06:49 | 2026-10-10 00:06:49 | Explicit bounded approval; same implementer r5 handoff |
+
+Design/plan record merged in [documentation PR378](https://github.com/katasec/mission-control-language/pull/378),
+main`b78a3ce200929030e60143795eb76036255cd046`. This is not runtime completion.
