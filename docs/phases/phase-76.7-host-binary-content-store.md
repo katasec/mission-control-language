@@ -1,12 +1,13 @@
 # Phase 76.7 — Host binary content storage primitive
 
 **Status:** DESIGN LOCKED2026-10-10 05:56:22UTC after complete current simplicity r2 and ownership r1 PASS.
-The [implementer plan](phase-76.7-host-binary-content-store-plan.md) is in sequential review;
-no product edits authorized. A narrow malformed-receipt/bounded-metadata-read clarification
-recorded05:58:30UTC is included in both current plan reviews before approval.
+The [implementer plan](phase-76.7-host-binary-content-store-plan.md) is APPROVED06:04:00UTC after
+both complete current plan reviews and supervisor checks. A narrow malformed-receipt/bounded-read
+clarification recorded05:58:30UTC was included in both current plan reviews. Only that five-file
+plan is authorized for implementation; no broader runtime behavior is approved by this increment.
 Scope start2026-10-10 05:38:26UTC after content producer docs PR381 merged05:38:05UTC as
 `fd059b844657d046686d827da8d08743d01c39af`. Product baseline forge-conversations clean main
-`d4d013e577e4e57f3eaf3310527094b5d2dfa851`; no product edits authorized yet.
+`d4d013e577e4e57f3eaf3310527094b5d2dfa851`.
 
 ## Scope
 
