@@ -21,7 +21,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | Source audit confirms Host admission, binary reads, Runner input/package staging and output transport already merged; do not rebuild the historical [admission design](phase-76.9-host-input-admission.md). [Output continuation design](phase-76.10-output-continuations.md) is under review. |
+| Current documentation handoff | Source audit confirms Host admission, binary reads, Runner input/package staging and output transport already merged; do not rebuild the historical [admission design](phase-76.9-host-input-admission.md). [Output continuation design](phase-76.10-output-continuations.md) is locked and its reviewed producer plan is approved. |
 | Current cloud implementation | Mission package preparation is published as MissionRegistry0.1.1. Client PR15 prepares local/OCI sources and has complete local/review evidence, but its CI cannot read the private package until the package's Actions access grants `katasec/forge-client` Read. |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
@@ -76,7 +76,8 @@ and ownership reviews pass. CI remains blocked because the private MissionRegist
 granted GitHub Actions read access to `katasec/forge-client`. Grant that access, rerun CI, then merge
 and publish Client0.10.1 before starting the dependent CLI consumer. Host admission and Runner
 materialisation already merged; [output continuation preservation](phase-76.10-output-continuations.md)
-is the next scoped cloud increment, with current independent design review pending. AOT remains
+is the current scoped cloud increment; its Contracts/Host producer plan passed current reviews
+and implementation is authorized. AOT remains
 the final whole-phase gate.
 
 ## Supervisor autonomy

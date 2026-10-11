@@ -839,8 +839,10 @@ a delivery error (duplicates side effects); interpret JSON/PDF on stdout (breaks
 
 Open work: plan and deliver the bounded implementation spokes from this locked design.
 Exact OCI0.5.0 and Core0.1.8 are published and accepted. The bounded
-[Core producer](phase-76.4-core-cloud-primitives.md) is verified; define the next small Host-owned
-increment from these locked contracts. Later consumer plans remain unapproved.
+[Core producer](phase-76.4-core-cloud-primitives.md) is verified. Admission, package/input staging
+and output transport also merged; the next cloud increment is
+[output continuation preservation](phase-76.10-output-continuations.md). Later consumer plans
+remain subject to their own approval.
 
 ## Current work
 
@@ -852,7 +854,7 @@ increment from these locked contracts. Later consumer plans remain unapproved.
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
 | Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md), [content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md) and [publisher metadata prerequisite](phase-76.8-publisher-metadata.md) verified. |
 | Shared Client preparation | PR15 `05c68cb9` has full managed local evidence (318 Debug + 318 Release tests, zero warnings) and final simplicity/ownership PASS. GitHub Actions currently receives 403 from the private MissionRegistry package; grant `katasec/forge-client` package Read, rerun CI, merge and publish before the CLI consumer. |
-| Next Host dependency | Existing turn/grain/outbox path needs normalized inputs and canonical content lookup/adoption/expiry; current storage alone cannot admit files. Host Core0.1.1 must consume published0.1.8 validation; Platform/Runner/Client require exact published Contracts updates. No execution compatibility inferred from additive JSON. |
+| Current Host/Runner dependency | Source audit: Host admission, canonical binary reads, Runner package/input staging and output transport are merged (Host `7a303fab`, Runner `fbf2882d`, Platform `85469dd`). Preserve produced files across pauses next; [current bounded design and plan](phase-76.10-output-continuations.md). This source observation does not close unified default-path acceptance. |
 | Cloud default-path acceptance | Required; not performed |
 
 ## Timing

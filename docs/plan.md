@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-10)
+## Now (2026-10-11)
 
 | | |
 |---|---|
-| **NEXT STEP** | Grant the Client workflow read access to its published private Registry dependency, then complete [unified cloud mission execution](phases/phase-76-unified-cloud-run.md) verification and delivery in dependency order. |
+| **NEXT STEP** | Continue reviewed implementation and default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md); Client publication also awaits its package Read grant. |
 
 ## Active phases
 

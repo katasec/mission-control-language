@@ -1,7 +1,7 @@
 # Phase 76.10 — Outputs across execution segments
 
-**Status:** supervisor design locked after full current simplicity r2 and ownership r1 PASS on
-2026-10-11; Contracts/Host producer implementation plan pending. Parent:
+**Status:** corrected design supervisor-locked after full current simplicity r4 and ownership r2
+PASS; Contracts/Host producer plan r2 approved after full current reviews, implementation starting. Parent:
 [Phase 76 contracts](phase-76.2-unified-cloud-run-contracts.md#artifact-staging-execution-and-outputs).
 
 ## Scope and acceptance
@@ -83,8 +83,11 @@ only when there are no canonical output artifacts for that run; an empty array i
 that case. For a new pause with outputs, Host requires set equality with the run's accepted binary
 Artifact facts: exact path and descriptor, producing attempt and step-key hash. No omitted,
 duplicate, foreign-run, invented or changed output is accepted. Earlier non-binary artifact facts
-do not count as produced files. Exact pause retries preserve the same reference; changed content
-under the same pause identity conflicts through existing body/receipt rules.
+do not count as produced files. Strengthen the existing outstanding-request duplicate guard to
+compare the stored request and both opaque-continuation/manifest references, not ToolRequestId
+alone. Only exact equality is an accepted replay; changed or missing references reject without
+failing the active run. Changed content under the same body identity also conflicts through the
+existing body/receipt rules. No second receipt mechanism is introduced.
 
 Host's existing progress intake commits/verifies the manifest body before the grain. The grain
 checks canonical artifacts before accepting the Hands request. Reuse the existing
@@ -118,7 +121,7 @@ semantics remain unchanged; this is transport metadata, not a user setting or a 
 | Gate | Decision / observation |
 |---|---|
 | Security/data | Persistent Host/ephemeral Runner ownership is operator-locked. The already-approved GetMissionContent public query uses existing platform-key authentication and Host ownership checks. No new queue, store, credentials or cross-store access. Internal manifest metadata extends the existing approved continuation contract. |
-| Invalid pause | Host intake handles malformed/incomplete/oversized bodies through its existing Error + Failed recorder. Add an internal trailing ConversationProgressOutcome.InvalidProducedFiles outcome for a current correlated pause whose manifest fails canonical membership; ProgressHandler uses that typed result to invoke the same recorder. Ordinary stale, duplicate or wrong-run rejection stays Rejected and must not fail the active run. Blob/Orleans outages propagate for normal broker redelivery. |
+| Invalid pause | For Hands pause intake failures, pass the original pause and a trailing Host-only `IntakeFailureReason` on `ConversationProgressInput` through the grain's existing run, command and duplicate guards. Only a current correlated new pause returns the trailing `ConversationProgressOutcome.InvalidMissionPause`, without accepting the pause. Canonical manifest mismatches return the same outcome after correlation. ProgressHandler invokes the existing Error + Failed recorder only for that typed outcome. Ordinary stale, duplicate or wrong-run rejection must not fail the active run; exact accepted retries retain their existing outcome. Non-pause intake behaviour remains unchanged. Blob/Orleans outages propagate for normal broker redelivery. |
 | Invalid resume | Runner's existing ConversationBodyReadException path abandons both corrupt-content and transport failures for normal broker retries before the provider boundary; after max deliveries its dead-letter handler records Error + Failed. No immediate corruption-specific terminal shortcut, silent empty workspace or provider rerun. |
 | Limits | Runner counts restored files before collecting another output; Host independently enforces its existing canonical artifact totals. Over-limit output fails and earlier artifacts remain readable. |
 | Recovery | Exact pending facts reuse existing outbox publication; exact continuation reads immutable Host content. A failed content read never substitutes a local file or stages new content. |
@@ -163,10 +166,16 @@ Core checkpoint (duplicates Host content); trust arbitrary manifest entries (byp
 artifact membership); rebuild counters from the new scratch alone (loses cumulative limits).
 
 Open design questions: none. Parent execution/storage policy is already locked; this task adds
-no permission policy. Current independent design reviews passed; this grants no executable-edit
-approval until the bounded implementation plan passes its own reviews.
+no permission policy. The intake correction closes a gap found during planning: the existing
+recorder receives only RunId and cannot itself distinguish a stale pause in the current run.
+Correlation therefore remains grain-owned and precedes any manifest read or terminal failure.
+Corrected-artifact reviews passed; the bounded Contracts/Host plan is approved. Other consumer
+plans remain subject to their own reviews and approval.
 
 ## Review and timing
+
+[Contracts/Host producer plan](phase-76.10.1-output-continuation-producer.md) — r2 approved after
+full current simplicity and ownership PASS; implementation starting.
 
 | Stage / role / round | Start (UTC) | End (UTC) | Evidence |
 |---|---|---|---|
@@ -174,6 +183,9 @@ approval until the bounded implementation plan passes its own reviews.
 | Review design / simplicity / r1 | 2026-10-11 12:14:00 | 2026-10-11 12:14:51 | REVISE: query dependency, typed failure, read retries and output bounds |
 | Review design / simplicity / r2 | 2026-10-11 12:15:54 | 2026-10-11 12:16:08 | Full 11-check PASS on corrected artifact |
 | Review design / ownership / r1 | 2026-10-11 12:17:00 | 2026-10-11 12:18:04 | Full 11-behaviour PASS; no owner gains unrelated work |
+| Review design / simplicity / r3 | 2026-10-11 12:24:23 | 2026-10-11 12:24:54 | REVISE: existing duplicate guard matches ID only |
+| Review design / simplicity / r4 | 2026-10-11 12:26:07 | 2026-10-11 12:26:14 | Full11-check PASS; exact replay/reference guard explicit |
+| Review design / ownership / r2 | 2026-10-11 12:26:50 | 2026-10-11 12:27:07 | Full14-behaviour PASS on corrected design |
 
 Product/default-path observations remain pending. Tokens are N/A; unavailable timestamps are not
 reconstructed.
