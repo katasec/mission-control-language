@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Continue reviewed implementation and default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md); Client publication also awaits its package Read grant. |
+| **NEXT STEP** | Complete reviewed implementation and installed default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md); the real cloud baseline passes. |
 
 ## Active phases
 

@@ -1,7 +1,7 @@
 # Phase 76.10.1 — Contracts/Host output continuation producer
 
-**Status:** PLAN APPROVED by supervisor on2026-10-11 after full current simplicity r2 and
-ownership r2 PASS; same implementer authorized for the exact producer scope. Parent:
+**Status:** Approved producer implemented on draft PR27 at `a17137a`; managed146/146 and normal
+package audit PASS. Sequential code reviews and full CI pending; not merged or deployed. Parent:
 [output continuation design](phase-76.10-output-continuations.md).
 
 ## Scope
@@ -55,8 +55,9 @@ All paths below are relative to the owning repo. Every change reuses the parent'
 | Tests | Existing DispatchProxy, AzuriteFixture, TestBodies, launch helpers and fake dispatcher; no production test abstraction |
 | Release | Existing package workflow, immutable/private guards and audit script |
 
-Current dependencies stay unchanged. Host already consumes published Core0.1.8; cached package
-nuspec identifies forge-mcl commit `03dd4dbf114a4bca4d25597c858008e393d716b8`. Authenticated
+Current dependencies stay unchanged. Host consumes published Core0.1.8; actual remote package
+nuspec identifies forge-mcl commit `1ecef9aee2b6a1667c558711ea4904037d8f05c9`. A stale local
+cache was repaired through normal restore; [resolved evidence](phase-76-unified-cloud-run_completed.md#resolved-local-core-cache). Authenticated
 package metadata lists Contracts0.1.0–0.12.0;0.13.0 is unused. Recheck before publication.
 
 ### Sequence
