@@ -5,8 +5,8 @@
 > (`48eaa1b`), Platform upload (`85469dd`) and Runner materialisation (`07ca039`) on their owning
 > main branches. Later package-asset and output transport increments are also merged. The interim
 > Runner guard below was removed by materialisation and must not be restored. This source audit
-> is not new deployment/default-path acceptance. Next cloud gap:
-> [outputs across execution segments](phase-76.10-output-continuations.md).
+> is not new deployment/default-path acceptance. The remaining priority is the Client and CLI path
+> that invokes the existing cloud conversation API.
 
 ## Scope
 

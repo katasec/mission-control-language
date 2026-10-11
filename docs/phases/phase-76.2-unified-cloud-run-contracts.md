@@ -840,9 +840,8 @@ a delivery error (duplicates side effects); interpret JSON/PDF on stdout (breaks
 Open work: plan and deliver the bounded implementation spokes from this locked design.
 Exact OCI0.5.0 and Core0.1.8 are published and accepted. The bounded
 [Core producer](phase-76.4-core-cloud-primitives.md) is verified. Admission, package/input staging
-and output transport also merged; the next cloud increment is
-[output continuation preservation](phase-76.10-output-continuations.md). Later consumer plans
-remain subject to their own approval.
+and output transport also merged. The remaining priority is the Client session and CLI path that
+uses the existing cloud conversation API; later work remains subject to its own approval.
 
 ## Current work
 
@@ -854,7 +853,7 @@ remain subject to their own approval.
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
 | Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md), [content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md) and [publisher metadata prerequisite](phase-76.8-publisher-metadata.md) verified. |
 | Shared Client preparation | PR15 merged at `f8ed16f` after approved package Read grant and green CI; actual Client0.10.1 inspected. Publisher metadata post-check remains open; [evidence](phase-76-unified-cloud-run_completed.md#client-preparation-delivery). |
-| Current Host/Runner dependency | Source audit: Host admission, canonical binary reads, Runner package/input staging and output transport are merged (Host `7a303fab`, Runner `fbf2882d`, Platform `85469dd`). Preserve produced files across pauses next; [current bounded design and plan](phase-76.10-output-continuations.md). This source observation does not close unified default-path acceptance. |
+| Current Host/Runner dependency | Source audit: Host admission, canonical binary reads, Runner package/input staging and output transport are merged (Host `7a303fab`, Runner `fbf2882d`, Platform `85469dd`). This source observation does not close unified default-path acceptance. |
 | Cloud default-path acceptance | Real service-path baseline PASS with exact durable output; installed unified CLI and full behavior matrix remain open ([evidence](phase-76-unified-cloud-run_completed.md#real-cloud-baseline)). |
 
 ## Timing
