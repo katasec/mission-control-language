@@ -21,11 +21,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | OCI, hosting, Core, [content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md), output transport, and publisher metadata are verified; [Host admission](phase-76.9-host-input-admission.md) is the next Host increment. |
+| Current documentation handoff | Source audit confirms Host admission, binary reads, Runner input/package staging and output transport already merged; do not rebuild the historical [admission design](phase-76.9-host-input-admission.md). [Output continuation design](phase-76.10-output-continuations.md) is under review. |
 | Current cloud implementation | Mission package preparation is published as MissionRegistry0.1.1. Client PR15 prepares local/OCI sources and has complete local/review evidence, but its CI cannot read the private package until the package's Actions access grants `katasec/forge-client` Read. |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | [Core producer](phase-76.4-core-cloud-primitives.md) and deployed Host/Runner content/output transport are verified; Client preparation is awaiting package-feed access, Host admission and later Runner/CLI execution consumers remain; unified default-path acceptance not started |
+| Cloud implementation and acceptance | [Core producer](phase-76.4-core-cloud-primitives.md) and deployed Host/Runner content/output transport are verified; Client preparation awaits package-feed access; output continuations, later Client/CLI consumers and unified default-path acceptance remain |
 | Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) verified: merged/published0.20.6, normal Make deployment, actual process/source and installed ChatPASS |
 
 ## Dependency-ordered work
@@ -74,8 +74,10 @@ Client PR15 (`05c68cb9`) prepares local and immutable OCI missions, including bo
 validation. Its focused checks plus Debug and Release suites pass (318 each); required simplicity
 and ownership reviews pass. CI remains blocked because the private MissionRegistry package has not
 granted GitHub Actions read access to `katasec/forge-client`. Grant that access, rerun CI, then merge
-and publish Client0.10.1 before starting the dependent CLI consumer. [Host admission](phase-76.9-host-input-admission.md)
-remains the next Host increment. AOT remains the final whole-phase gate.
+and publish Client0.10.1 before starting the dependent CLI consumer. Host admission and Runner
+materialisation already merged; [output continuation preservation](phase-76.10-output-continuations.md)
+is the next scoped cloud increment, with current independent design review pending. AOT remains
+the final whole-phase gate.
 
 ## Supervisor autonomy
 

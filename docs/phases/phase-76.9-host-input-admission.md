@@ -1,8 +1,12 @@
 # Phase 76.9 — Host input admission
 
-> **Status: supervisor design under review.** This is the next bounded Host Phase 76 increment. It
-> makes a named binary input part of the existing Mission Conversation turn transition. It does
-> not make the Runner execute named inputs yet.
+> **Status: implementation already merged; this design records its original admission boundary.**
+> Source audit on 2026-10-11 confirmed Host admission (`3537011`), canonical binary reads
+> (`48eaa1b`), Platform upload (`85469dd`) and Runner materialisation (`07ca039`) on their owning
+> main branches. Later package-asset and output transport increments are also merged. The interim
+> Runner guard below was removed by materialisation and must not be restored. This source audit
+> is not new deployment/default-path acceptance. Next cloud gap:
+> [outputs across execution segments](phase-76.10-output-continuations.md).
 
 ## Scope
 
@@ -43,7 +47,7 @@ next Phase 76 increment.
 
 ## Locked design
 
-The parent [Phase 76.2 contract](phase-76.2-unified-cloud-run-contracts.md#content-admission-and-launch-claim-check)
+The parent [Phase 76.2 contract](phase-76.2-unified-cloud-run-contracts.md#named-inputs-binary-content-and-transfer)
 defines content identity, limits and the admission invariant. This task applies only the input
 half of that contract. The Host remains the only owner of durable bytes and canonical
 conversation state; ForgeAPI authenticates the caller and sends ingress messages, but receives
@@ -230,6 +234,10 @@ AOT remains a final whole-Phase 76 artifact gate after complete execution works;
 development test for this increment.
 
 ## Build order
+
+Historical delivery order, retained to explain the original producer/consumer boundary; do not
+execute this list again against current main. The source milestones above supersede its interim
+Runner instructions.
 
 1. In `forge-conversations`, add Contracts transport values, generated JSON and ingress serializer/parser tests; update the Host intake, command adapter/grain and focused managed tests. Pin the published Core 0.1.8 package rather than copying its input validator.
 2. Complete the required reviews, merge and publish the Contracts-bearing Conversations change through its normal publisher guard. Record the exact package version and successful package visibility verification.
