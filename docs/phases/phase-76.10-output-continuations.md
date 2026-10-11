@@ -1,7 +1,8 @@
 # Phase 76.10 — Outputs across execution segments
 
 **Status:** corrected design supervisor-locked after full current simplicity r4 and ownership r2
-PASS; Contracts/Host producer plan r2 approved after full current reviews, implementation starting. Parent:
+PASS; Contracts/Host producer merged on PR27, normal package publication running. Runner consumer
+is [scoped for its plan](phase-76.10.2-output-continuation-runner.md). Parent:
 [Phase 76 contracts](phase-76.2-unified-cloud-run-contracts.md#artifact-staging-execution-and-outputs).
 
 ## Scope and acceptance
@@ -175,7 +176,7 @@ plans remain subject to their own reviews and approval.
 ## Review and timing
 
 [Contracts/Host producer plan](phase-76.10.1-output-continuation-producer.md) — r2 approved after
-full current simplicity and ownership PASS; implementation starting.
+full current simplicity and ownership PASS; PR27 implementation and current review evidence there.
 
 | Stage / role / round | Start (UTC) | End (UTC) | Evidence |
 |---|---|---|---|

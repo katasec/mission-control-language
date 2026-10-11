@@ -1,7 +1,8 @@
 # Phase 76.10.1 — Contracts/Host output continuation producer
 
-**Status:** Approved producer implemented on draft PR27 at `a17137a`; managed146/146 and normal
-package audit PASS. Sequential code reviews and full CI pending; not merged or deployed. Parent:
+**Status:** PR27 merged at `d58dcc3` after full current code reviews and CI (56 focused storage,
+395 full tests, zero warnings). Normal main publication38141225203 is running; actual package
+inspection and paired runtime deployment remain pending. Parent:
 [output continuation design](phase-76.10-output-continuations.md).
 
 ## Scope
@@ -137,3 +138,15 @@ guard correction; full current reviews passed and supervisor approval is recorde
 | Plan / implementer / r2 |2026-10-11 12:30:10|2026-10-11 12:30:15|Complete persisted artifact adopted, exact replay/query tests explicit|
 | Review plan / simplicity / r2 |2026-10-11 12:30:48|2026-10-11 12:30:57|Full11-check PASS on complete current plan|
 | Review plan / ownership / r2 |2026-10-11 12:31:29|2026-10-11 12:31:44|Full12-behaviour PASS including canonical event Attempt|
+| Review code / simplicity and style / r1 |2026-10-11 12:45:54|2026-10-11 12:47:51|Full checklists PASS at a17137a; independent build/focused/package audit|
+| Review code / ownership / r1 |2026-10-11 12:48:35|2026-10-11 12:48:53|Full placement PASS; supervisor correctness finding confirmed|
+| Implement / implementer / r3 |2026-10-11 12:49:37|2026-10-11 12:51:24|Canonical bijection correction; regression RED→GREEN,147 focused tests, package audit|
+| Review code / simplicity and style / r2 |2026-10-11 12:51:58|2026-10-11 12:52:16|Both full checklists PASS at ca6bb4b|
+| Review code / ownership / r2 |2026-10-11 12:53:09|2026-10-11 12:53:27|Full current placement PASS and correctness correction confirmed|
+| Product merge |2026-10-11 12:56:46|2026-10-11 12:56:46|PR27 merge d58dcc320d1c4312b4b9e6405348f70b91ca65bb; current-head CI38140847398 SUCCESS|
+
+Supervisor correction within approved exact-set scope: duplicate canonical facts `[A,A]` could
+incorrectly match unique manifest `[A,B]`. The corrected existing comparison establishes a complete
+bijection including path/descriptor/attempt; regression failed before and passes after the fix.
+Both full current code reviews passed; CI38140847398 verified the corrected head. Raw current
+evidence: `/tmp/phase76-producer-r3-20261011T125000Z`.
