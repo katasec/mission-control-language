@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-10)
+## Now (2026-10-11)
 
 | | |
 |---|---|
-| **NEXT STEP** | Continue [unified cloud mission execution](phases/phase-76-unified-cloud-run.md) implementation and verification in dependency order from the locked design. |
+| **NEXT STEP** | Complete reviewed implementation and installed default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md); the real cloud baseline passes. |
 
 ## Active phases
 
