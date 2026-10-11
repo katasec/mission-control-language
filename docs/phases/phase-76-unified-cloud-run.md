@@ -6,8 +6,7 @@
 the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary user-vetted code
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
-Katasec.OciClient0.5.0, and accepted from a fresh restored-package Native AOT consumer. Core0.1.8 is merged, normally published and accepted through fresh remote-package and installed default checks; the Runner hosting prerequisite is verified. Later consumer tasks, deployment
-and unified runtime acceptance remain open.
+Katasec.OciClient0.5.0, and accepted from a fresh restored-package Native AOT consumer. Core0.1.8 is merged, normally published and accepted through fresh remote-package and installed default checks; the Runner hosting prerequisite is verified. Registry mission preparation0.1.1 is published; the shared Client preparation consumer is review-complete on PR15 but cannot pass GitHub CI until the private Registry package grants that workflow read access. Later consumer tasks, deployment and unified runtime acceptance remain open.
 
 ## Intent
 
@@ -22,11 +21,11 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 |---|---|
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
-| Current documentation handoff | OCI, hosting, Core, [content contracts0.9.0](phase-76.6-mission-content-contracts.md) and [Host binary storage](phase-76.7-host-binary-content-store.md) verified; admission/canonical lifecycle next. |
-| Current cloud implementation | Source inspection only; [baseline and limits](phase-76.1-unified-cloud-run-requirements.md#current-baseline--observed-not-the-new-contract) |
+| Current documentation handoff | OCI, hosting, Core, [content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md), output transport, and publisher metadata are verified; [Host admission](phase-76.9-host-input-admission.md) is the next Host increment. |
+| Current cloud implementation | Mission package preparation is published as MissionRegistry0.1.1. Client PR15 prepares local/OCI sources and has complete local/review evidence, but its CI cannot read the private package until the package's Actions access grants `katasec/forge-client` Read. |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
-| Cloud implementation and acceptance | [Core producer](phase-76.4-core-cloud-primitives.md) verified; Host, Runner and Client consumers remain; unified default-path acceptance not started |
+| Cloud implementation and acceptance | [Core producer](phase-76.4-core-cloud-primitives.md) and deployed Host/Runner content/output transport are verified; Client preparation is awaiting package-feed access, Host admission and later Runner/CLI execution consumers remain; unified default-path acceptance not started |
 | Process-hosting prerequisite | [Runner init](phase-76.5-runner-process-hosting.md) verified: merged/published0.20.6, normal Make deployment, actual process/source and installed ChatPASS |
 
 ## Dependency-ordered work
@@ -68,18 +67,15 @@ AOT last"** remains the final whole-phase gate.
 
 ## Next
 
-OCI, [Runner hosting](phase-76.5-runner-process-hosting.md) and [Core](phase-76.4-core-cloud-primitives.md)
-are verified. [Content contracts0.9.0](phase-76.6-mission-content-contracts.md) are published and
-accepted through a fresh managed consumer. [Host binary storage](phase-76.7-host-binary-content-store.md)
-is merged and verified with local functional checks and full managed CI. Scope Host admission,
-canonical references and lifecycle next; persistent user files are not yet active.
-The [publisher metadata prerequisite](phase-76.8-publisher-metadata.md) is merged and verified;
-future Contracts releases use the same mandatory guard. Host admission/lifecycle source investigation
-continues without executable edits.
-Future consumers adopt exact
-published OCI0.5.0/Core0.1.8 packages. Follow the
-[current design state](phase-76.2-unified-cloud-run-contracts.md#current-work); implementation
-must not infer missing contracts.
+OCI, [Runner hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md),
+[content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md),
+publisher metadata, Registry0.1.1 and deployed Host/Runner content/output transport are verified.
+Client PR15 (`05c68cb9`) prepares local and immutable OCI missions, including bounded bundle/lock
+validation. Its focused checks plus Debug and Release suites pass (318 each); required simplicity
+and ownership reviews pass. CI remains blocked because the private MissionRegistry package has not
+granted GitHub Actions read access to `katasec/forge-client`. Grant that access, rerun CI, then merge
+and publish Client0.10.1 before starting the dependent CLI consumer. [Host admission](phase-76.9-host-input-admission.md)
+remains the next Host increment. AOT remains the final whole-phase gate.
 
 ## Supervisor autonomy
 

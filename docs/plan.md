@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Continue [unified cloud mission execution](phases/phase-76-unified-cloud-run.md) implementation and verification in dependency order from the locked design. |
+| **NEXT STEP** | Grant the Client workflow read access to its published private Registry dependency, then complete [unified cloud mission execution](phases/phase-76-unified-cloud-run.md) verification and delivery in dependency order. |
 
 ## Active phases
 

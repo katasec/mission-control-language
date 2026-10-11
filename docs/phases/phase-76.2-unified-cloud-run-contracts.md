@@ -851,6 +851,7 @@ increment from these locked contracts. Later consumer plans remain unapproved.
 | Independent design reviews | Round 7 simplicity and ownership PASS on the complete revised artifact; no inherited prior verdict |
 | Independent OCI prerequisite | [Complete: published 0.5.0 and supervisor acceptance](phase-76.3-oci-integrity-auth_completed.md) |
 | Implementation approval | [Hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-core-cloud-primitives.md), [content contracts0.9.0](phase-76.6-mission-content-contracts.md), [Host binary storage](phase-76.7-host-binary-content-store.md) and [publisher metadata prerequisite](phase-76.8-publisher-metadata.md) verified. |
+| Shared Client preparation | PR15 `05c68cb9` has full managed local evidence (318 Debug + 318 Release tests, zero warnings) and final simplicity/ownership PASS. GitHub Actions currently receives 403 from the private MissionRegistry package; grant `katasec/forge-client` package Read, rerun CI, merge and publish before the CLI consumer. |
 | Next Host dependency | Existing turn/grain/outbox path needs normalized inputs and canonical content lookup/adoption/expiry; current storage alone cannot admit files. Host Core0.1.1 must consume published0.1.8 validation; Platform/Runner/Client require exact published Contracts updates. No execution compatibility inferred from additive JSON. |
 | Cloud default-path acceptance | Required; not performed |
 
