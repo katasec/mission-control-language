@@ -3,6 +3,23 @@
 These observations close their named checks only. The parent phase and installed unified CLI
 acceptance remain open.
 
+## Hosted catalog CLI cloud execution
+
+**COMPLETE (2026-10-11).** forge-mcl
+[PR 79](https://github.com/katasec/forge-mcl/pull/79), merge
+`bcef529950b881f94426b5008eccdb86cebe00de`, changed
+`forge run <handle> <prompt>` to use the configured `api.endpoint` and existing authenticated
+`ExecuteMission` request/response path. The hosted API remains the endpoint default and the saved
+platform key remains the credential source.
+
+All required PR checks passed, including the four native build hosts and macOS ARM64 CLI package
+verification. Before merge, a real `dotnet run ... vanilla` call returned the exact expected
+sentinel. This closes the bounded hosted-catalog CLI implementation and functional check.
+
+It does not close installed-artifact default-path acceptance or the separate unified scope for
+arbitrary local/OCI mission packages, named file inputs and durable Hands execution. Those remain
+open in the active phase.
+
 ## Real cloud baseline
 
 On2026-10-11, the supervisor ran a temporary managed service-path probe using actual published

@@ -4,11 +4,11 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-11)
+## Now (2026-10-12)
 
 | | |
 |---|---|
-| **NEXT STEP** | Complete reviewed implementation and installed default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md); the real cloud baseline passes. |
+| **NEXT STEP** | Hosted-catalog `forge run <handle> <prompt>` cloud execution is merged and verified. Complete the separate local/OCI package, durable Hands and installed default-path work for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md). |
 
 ## Active phases
 
@@ -17,7 +17,7 @@
 | [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
 | [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 | [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | OCI dependency accepted and generic execution design locked; implementation is in progress. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Hosted-catalog CLI cloud execution is complete; arbitrary local/OCI packages, durable Hands and installed acceptance remain. |
 
 ## Design docs
 
