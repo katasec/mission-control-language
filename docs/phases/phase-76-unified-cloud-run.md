@@ -7,6 +7,10 @@ the former image-owned-only policy. On 2026-10-10 the operator chose arbitrary u
 and deferred execution permissions, then approved persistent Conversation Host content and ephemeral
 Runner execution. Revised executable contracts passed full current reviews and are supervisor-locked. The independent OCI integrity/authentication prerequisite is merged, published as
 Katasec.OciClient0.5.0, and accepted from a fresh restored-package Native AOT consumer. Core0.1.8 is merged, normally published and accepted through fresh remote-package and installed default checks; the Runner hosting prerequisite is verified. Registry mission preparation0.1.1 and Client preparation0.10.1 are published. A real default-cloud mission completed with exact durable output; installed unified CLI acceptance remains open.
+The bounded hosted-catalog CLI increment is complete: forge-mcl
+[PR 79](https://github.com/katasec/forge-mcl/pull/79) merged `forge run <handle> <prompt>` cloud
+execution and verified an actual `vanilla` response. This does not close the separate arbitrary
+local/OCI package, durable Hands or installed unified-command scope.
 
 ## Intent
 
@@ -22,8 +26,8 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | Product decisions | All four decision areas settled; [locked requirements](phase-76.1-unified-cloud-run-requirements.md#four-product-decisions) |
 | Prior requirements verification | 2026-10-09: `git diff --check` and local Markdown/JSON check PASS (31 local links/anchors, two JSON examples, balanced fences, top-level phase index). Product tests/default-path acceptance N/A for that requirements-only task. |
 | Current documentation handoff | Source audit confirms Host admission, binary reads, Runner input/package staging and output transport already merged; the [admission design](phase-76.9-host-input-admission.md) records the merged input behavior. |
-| Current cloud implementation | Client PR15 merged and0.10.1 is published; the publisher's final metadata check remains open. Real cloud mission PASS; [observations and provenance](phase-76-unified-cloud-run_completed.md). |
-| Hosted catalog CLI increment | Complete: `forge run <handle> <prompt>` reads `api.endpoint`, reuses the existing saved-key `ExecuteMission` request/response stream, and passed `dotnet run … vanilla` with exact output. |
+| Current cloud implementation | Client PR15 merged and0.10.1 is published; its package bytes and GitHub metadata are independently verified. The Client publisher workflow's final metadata guard remains open, separate from the completed Conversations publisher-metadata prerequisite. Real cloud mission PASS; [observations and provenance](phase-76-unified-cloud-run_completed.md). |
+| Hosted catalog CLI increment | **COMPLETE:** forge-mcl [PR 79](https://github.com/katasec/forge-mcl/pull/79), merge `bcef529950b881f94426b5008eccdb86cebe00de`, added `forge run <handle> <prompt>` through the configured `api.endpoint` and existing saved-key `ExecuteMission` stream. All required PR checks passed and a real `dotnet run ... vanilla` returned the exact expected output; [evidence](phase-76-unified-cloud-run_completed.md#hosted-catalog-cli-cloud-execution). |
 | Unified CLI | Still open: arbitrary local/OCI package admission and durable Hands execution are not part of the hosted catalog increment. |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
@@ -74,9 +78,12 @@ OCI, [Runner hosting](phase-76.5-runner-process-hosting.md), [Core](phase-76.4-c
 publisher metadata, Registry0.1.1 and deployed Host/Runner content/output transport are verified.
 Client PR15 merged after the operator-approved package Read grant and green CI. The real cloud
 service baseline passes ([evidence](phase-76-unified-cloud-run_completed.md#real-cloud-baseline)),
-but installed `forge run` still executes locally. The next work is the shared Client session and
-CLI path that calls the existing cloud conversation API, followed by installed default-path
-acceptance. Native AOT remains the final whole-phase gate.
+and the hosted-catalog CLI cloud path is complete
+([evidence](phase-76-unified-cloud-run_completed.md#hosted-catalog-cli-cloud-execution)).
+The next work is explicitly narrower than that completed increment: shared Client session and CLI
+support for arbitrary local/OCI packages, named inputs and durable Hands through the cloud
+conversation API, followed by installed default-path acceptance. Native AOT remains the final
+whole-phase gate.
 
 ## Supervisor autonomy
 
