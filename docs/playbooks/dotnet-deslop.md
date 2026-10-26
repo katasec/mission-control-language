@@ -1,6 +1,6 @@
 # Dotnet De-slop — Stage 1: Behavior-Preserving Cleanup
 
-> **Status: working draft — tested once (forge-mcl), refining.** The **first stage** of a
+> **v1.** The **first stage** of a
 > multi-stage de-slop. This stage is *behavior-preserving cleanup* — "clean the floor" so
 > signal separates from noise before any design work. Point it at a folder; skill/persona
 > lenses **discover** issues; you **address** them one at a time, **coarse → fine**, over
@@ -42,6 +42,7 @@ Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet
 | `{repo}` | Target repo — e.g. `forge-mcl` |
 | `{scope}` | Folder to clean — e.g. `src/ForgeMission.Cli` |
 | `{branch}` | Branch the carves land on — e.g. `adeen/dotnet-deslop-test-1` |
+| `{hub}` | Path to this hub checkout (holds the personas + design docs) — e.g. `~/progs/mission-control-language` |
 
 **Produced by discovery (per backlog row) — you never type these:**
 
@@ -120,9 +121,9 @@ You are the IMPLEMENTER for ONE carve in the Dotnet De-slop Playbook.
 Repo: {repo}   Branch: {branch}   Scope: {scope}
 
 Read and follow (do not restate):
-- /Users/ameerdeen/progs/mission-control-language/personas/implementer.md
-- /Users/ameerdeen/progs/mission-control-language/docs/design/code-style.md
-- /Users/ameerdeen/progs/mission-control-language/docs/design/engineering-philosophy.md
+- {hub}/personas/implementer.md
+- {hub}/docs/design/code-style.md
+- {hub}/docs/design/engineering-philosophy.md
 
 Skill: invoke `csharp-refactoring` to drive the change.
 
