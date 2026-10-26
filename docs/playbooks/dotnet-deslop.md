@@ -14,6 +14,17 @@
 >
 > Uses [personas](../../personas/README.md) + dotnet/skills. Agent-agnostic (Copilot or Claude Code).
 
+## Prerequisites
+
+Install the skill packs first (global, all skills, for whichever agent you run):
+
+```bash
+npx skills add dotnet/skills --global --agent claude-code codex github-copilot --skill '*' -y
+npx skills add microsoft/skills --global --agent claude-code codex github-copilot --skill '*' -y
+```
+
+Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet-webapi` · `crap-score` · `test-anti-patterns` · `test-smell-detection` · `code-testing`. The `*-reviewer` lenses are in-repo [personas](../../personas/README.md) — no install.
+
 ## Core rules
 
 - **One issue per carve** — fix one backlog item per pass, then stop. Not "clean the file."
