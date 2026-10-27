@@ -249,3 +249,203 @@ Phase 1 backlog complete: rows 0–20 (16 folded into 18). Final gate next.
 `dotnet test --filter "Category=Integration"` on `0be6a51`: 1 passed / 3 failed / 6 skipped (5 m 4 s).
 - Skipped (credentials not set): Grok ×2, DirectExpertRunner ×2, CopilotSdk, ClaudeCode_LiveRoundTrip.
 - Failed ×3 (`ClaudeCode_MultiToolTask…`, `ClaudeCode_TwoTurn…`, `ForgeClaude_OneShotPrompt…`): same cause in each. The mission step got `HTTP 401 invalid_api_key` from the OpenAI API, because the key it sent was the claude CLI's `sk-ant-o…` token. These are pre-existing: Stage 1's baseline (2026-10-25) recorded the same 401/500 live failures, and run 5 changed no file outside `src/ForgeMission.Cli` (Serve/Core/ChatClients unchanged since `fd50eef`). Routed as R16.
+
+---
+
+# Phase 2: App-type idioms & project shape (started 15:06, playbook at hub `d28d487`)
+- Base `0be6a51` (end of Phase 1). Row 0 harness already in place from Phase 1.
+- Baseline: build 0 warnings · `Category!=Integration`: 1109 passed / 3 failed (`TuiColourLiteralTests` ×2, `PipelineRunnerTests.MissingApiKey_ThrowsClearly`, same as Phase 1) · 15:06–15:08.
+- Lenses (parallel, read-only): project layout + build config · CLI/endpoint idioms · serialization · data access · trim/AOT.
+- The R16 fix runs in a separate session and worktree (`forge-mcl-fix-key-leak`), so it doesn't touch this branch.
+
+Phase:        2 · row 1
+Issue:        TryReadFile takes no token; catch-all turns cancellation into Die
+Practice:     token → File.ReadAllTextAsync; OCE excluded from catch; init/validate/mcp thread action tokens
+Reference:    SCL how-to-parse-and-invoke (Asynchronous actions)
+Commits:      c85aa90
+Behavior:     platform: Ctrl+C during the read → 130 (race, not pinned)
+Verify:       build 0 warnings · 1112 passed / 3 baseline · pin MissionReadFailureTests (new, 3 cases)
+Check:        PASS
+Duration:     ~7 min (15:17–15:18)
+
+Phase:        2 · row 2
+Issue:        TryBuildMissionServerAsync + connect seam take no token
+Practice:     token param on both; action tokens passed from serve/claude/connect vscode
+Commits:      f928397
+Behavior:     platform: Ctrl+C during the read → 130 (race, not pinned)
+Verify:       build 0 warnings · 1112 passed / 3 baseline · pins ForgeServeTests unchanged (claude path needs the real CLI: not pinned)
+Check:        PASS
+Duration:     ~6 min (to 15:21)
+
+Phase:        2 · row 3
+Issue:        Health poll hand-rolls a DateTime deadline, ignores the token (R7)
+Practice:     linked CTS + CancelAfter(60 s); token to SendAsync/Task.Delay; expiry → false
+Commits:      1b429fa
+Behavior:     platform: Ctrl+C cancels the poll; in-flight probe cancelled at the deadline (race)
+Verify:       build 0 warnings · 1113 passed / 3 baseline · new pin (print-env healthy path; 60 s give-up not pinned)
+Check:        PASS (2 optional nits not taken)
+Duration:     ~8 min (to 15:26)
+
+Phase:        2 · row 14 (lane 2, branch stage2-p2-lane2)
+Issue:        forge exe packable by default
+Practice:     IsPackable=false
+Commits:      08dd943 (lane 2; cherry-picked at merge)
+Behavior:     platform: dotnet pack skips the project (was NU5026 failure)
+Verify:       build 0 warnings · 1109 passed / 3 baseline · AOT publish green · pin: property true → false
+Check:        PASS (inline: one property + comment; no subagent for a trivial row)
+Duration:     ~11 min (publish-dominated)
+
+Phase:        2 · row 4
+Issue:        --print-env hand-rolls a Ctrl+C wait (R6)
+Practice:     Task.Delay(Infinite, actionToken) + ConfigureAwaitOptions.SuppressThrowing; WaitForCtrlCAsync deleted
+Commits:      8decff2
+Behavior:     platform: SIGTERM ends --print-env like Ctrl+C (exit 0, teardown runs; was SCL forced exit). Ctrl+C exit 0 pinned, unchanged
+Verify:       build 0 warnings · 1113 passed / 3 baseline · pin extended (exit 0 after SIGINT, run on HEAD first)
+Check:        PASS
+Duration:     ~6 min (to 15:29)
+
+Phase:        2 · rows 5, 7, 8 (trivial, batched in one agent turn; committed separately by hunk)
+Commits:      713ed09 (5: claude server DisposeAsync) · 6f55190 (7: list experts non-async + ListExpertsTests) · 2235bdf (8: provider-name CompletionSources + test)
+Behavior:     5 none · 7 none · 8 platform: tab completion
+Verify:       build 0 warnings · 1116 passed / 3 baseline
+Check:        PASS ×3 (nit not taken: the scaffold description lists provider names; changing it changes help output)
+Rule slip:    3 offline probes run outside the harness (no network, no credentials) → P9
+Duration:     ~10 min for the three (to 15:34)
+
+Phase:        2 · row 6
+Issue:        Port-in-use detected by message text
+Practice:     catch IOException when inner is AddressInUseException (serve, connect vscode)
+Commits:      d027b1b
+Behavior:     none (a localized bind message is now still recognized)
+Verify:       build 0 warnings · 1118 passed / 3 baseline · new pin (taken port → exit 1 + message), run on HEAD first
+Check:        PASS (comment nit fixed by the supervisor)
+Duration:     ~8 min (to 15:38)
+
+Phase:        2 · row 9
+Issue:        Defaults hand-rolled with ?? in actions; help shows none
+Practice:     DefaultValueFactory on 9 options/arguments; ResolveMission (now a no-op) deleted
+Commits:      a1a5adf
+Behavior:     platform: help shows [default: …]. --experts kept (rule beats the row: its relative default is printed to stdout)
+Verify:       build 0 warnings · 1125 passed / 3 baseline · pin DefaultPathTests (7 rows), run on HEAD first
+Check:        FAIL (ResolveMission left as a no-op) → corrected → PASS (inline re-check). Stale mirror test MissionFileResolutionTests → R35 (Phase 3)
+Duration:     ~14 min (to 15:46)
+
+Phase:        2 · row 10
+Issue:        Deliberate exits travel as ForgeExitException instead of the action's int
+Behavior:     STOP: "Converting Die/ForgeExitException to int returns changes the app's own output on two paths (MCP per-call BuildRunners failure text; expert diagnostics stop at the first error). Keeping it identical needs a second, throwing error path." Proposed split: (1) agent/webui (2) leaf commands + sentinel TryParse/TryLoadExperts + stop flag (3) init/EnsureInitializedAsync (4) serve/claude/connect (5) mcp, which needs an author decision (6) delete ForgeExitException.
+Routed:       R36 (row), R37 (MCP per-call failure), R38 (validate exit code, unverified)
+Probe:        one harness probe (temporary test, deleted); tree clean
+Duration:     ~9 min (to 15:48)
+
+Phase:        2 · row 11
+Issue:        Login HTTP calls take no token (R13, R15); whoami discards it
+Practice:     action token → SendAsync/PostAsync/ReadAsStringAsync (CA2016)
+Commits:      785d26b
+Behavior:     platform: Ctrl+C aborts the request at once (130, same output; timing only)
+Verify:       build 0 warnings · 1128 passed / 3 baseline · pins: whoami row + login Ctrl+C theory (3 wait points), run on HEAD first
+Check:        PASS
+Duration:     ~8 min (to 15:54)
+
+Phase:        2 · row 15 (lane 2)
+Issue:        Native linker args via a hand-written target on ILC-internal LinkNative, host-OS gated; machine-specific args
+Practice:     LinkerArg ItemGroup on $(RuntimeIdentifier.StartsWith('osx')); each arg proved by a publish without it → kept -L/opt/homebrew/lib only
+Commits:      2555f65 (lane 2)
+Behavior:     platform: args follow the target RID, not the host OS
+Verify:       build 0 warnings · 1109 passed / 3 baseline · AOT publish green · published binary --version/--help identical; otool -L unchanged
+Check:        PASS (inline: csproj −10/+4)
+Note:         the published binary was run by hand in an isolated env (empty env, scratch HOME, dead proxy). The harness runs the dll, not the AOT binary → P9
+Routed:       R39
+Duration:     ~28 min (5 AOT publishes)
+
+Phase:        2 · row 12
+Issue:        Success body buffered as a string, then deserialized
+Practice:     ReadAsStringAsync on failure only; ReadFromJsonAsync(JsonTypeInfo, ct) on success
+Commits:      95650b0
+Behavior:     platform: strict UTF-8 on success bodies
+Verify:       build 0 warnings · 1132 passed / 3 baseline · pins: exact whoami stdout + 4-row bad-answer theory, run on HEAD first
+Check:        PASS
+Duration:     ~9 min (to 15:58)
+
+Phase:        2 · row 16 (lane 2)
+Issue:        P/Invoke via DllImport
+Practice:     [LibraryImport] on a partial class
+Commits:      7aa1b00 (lane 2)
+Behavior:     none
+Verify:       build 0 warnings · 1110 passed / 3 baseline · pin TypeAheadTests (new), run on HEAD first · publish deferred to row 17 (P10)
+Check:        PASS (inline: 4-line swap + comment; the test reaches Discard via the repo's existing ForgeText.Type helper)
+Duration:     ~8 min
+
+Phase:        2 · row 13
+Issue:        settings.json rewrite truncates before writing
+Practice:     temp file in .vscode/ + File.Move(overwrite: true) (row said File.Replace; the Check's smaller form needs no exists-branch)
+Commits:      b4b8bb7
+Behavior:     platform: rename-over (default perms, a symlink becomes a file, the dir must be writable); JSON bytes unchanged
+Verify:       build 0 warnings · 1134 passed / 3 baseline · new pin (2 rows), run on HEAD first
+Check:        FAIL (two helpers + exists-branch) → corrected (one File.Move block) → PASS (inline)
+Duration:     ~14 min (to 16:05)
+
+Lane 1 is finished (rows 1–13: 12 committed, row 10 routed). Group E (rows 18–21) moves from lane 2 to the main checkout, which is now idle. Lane 2 keeps Group D (row 17). Their file sets are disjoint.
+
+Phase:        2 · row 18
+Issue:        MCP schema hand-built with StringBuilder; EscapeJson incomplete; JsonDocument undisposed
+Practice:     Utf8JsonWriter → ArrayBufferWriter; using JsonDocument + Clone
+Commits:      1da994e
+Behavior:     platform: full escaping; bytes unchanged
+Verify:       build 0 warnings · 1135 passed / 3 baseline · pin (exact inputSchema), run on HEAD first
+Check:        PASS (nit not taken: the handshake is repeated in 2 tests → Phase 3)
+Duration:     ~9 min (to 16:10)
+
+Phase:        2 · row 19
+Issue:        ForgeExec awaits I/O without the token it holds (R13)
+Practice:     token to every awaited I/O call in ForgeExec.cs (stream read, download, upload, hash)
+Commits:      2aad1bf
+Behavior:     platform: Ctrl+C → 130 at once
+Verify:       build 0 warnings · 1136 passed / 3 baseline · new pin (stream read), run on HEAD first; harness gains HoldOpen
+Check:        PASS
+Scope:        the row named only the stream read; the supervisor widened it twice (download, upload) to cover the whole unit → P12
+Duration:     ~16 min (to 16:17)
+
+Phase:        2 · rows 20, 21 (batched, committed separately by file)
+Commits:      a488a88 (20: EditFile.Save temp + File.Move) · 8c727d0 (21: EnumerateFiles count)
+Behavior:     20 platform: rename-over (default perms, a symlink becomes a file, the folder must be writable); bytes unchanged · 21 none
+Verify:       build 0 warnings · 1137 passed / 3 baseline · pins: FileEditorTests extended; CleanCommandTests (new)
+Check:        PASS ×2 (nit not taken: the dead `?? ""`)
+Duration:     ~10 min for both (to 16:23)
+
+Phase:        2 · row 17 (lane 2)
+Issue:        IL3050/IL2104/IL3053 suppressed project-wide
+Behavior:     STOP: "All surfaced trim/AOT warnings come from assemblies outside src/ForgeMission.Cli: 4 × IL3050 in ForgeMission.Core (its field-level UnconditionalSuppressMessage does not cover the ..cctor that ILC reports) and IL2104/IL3053 summarising 36 YamlDotNet warnings. None can be fixed inside the Cli scope, and the ILCompiler 10.0.12 targets offer nothing documented narrower than today's NoWarn." → R42. Partial carve in progress: delete the dead IlcSuppressWarnings and correct the comment.
+Publish:      HEAD (with row 16's LibraryImport) publishes green, 0 IL warnings → row 16 covered
+Duration:     ~21 min (3 publishes)
+
+Phase:        2 · row 17 partial (lane 2)
+Commits:      db32fe6 (lane 2)
+Practice:     delete the dead IlcSuppressWarnings; the comment names the real sources; NoWarn unchanged
+Verify:       build 0 warnings · NoWarn effective value identical before/after · full suite runs after the merge (csproj-only, no code change)
+Check:        PASS (inline: −3/+2 lines)
+Rest:         STOP → R42
+Duration:     ~4 min
+Group D done: 14 ✅ 15 ✅ 16 ✅ 17 partial ✅ + routed. Lane 2 to be cherry-picked after row 22 commits.
+
+Phase:        2 · row 22
+Issue:        Actions write to Console instead of SCL's invocation writers
+Behavior:     partial carve (actions only; Die/ReportDiagnostic STOPped as plumbing)
+Check:        FAIL: "a second way to write output, and nothing uses it" (no code sets non-default writers; the harness reads process streams) → smallest fix: route the row. Carve discarded by the supervisor; rows 22–25 → R43. Lesson P13.
+Duration:     ~12 min (to 16:29)
+
+Merge:        lane 2 cherry-picked onto the branch: 14 cba3bd2 · 15 1376b77 · 16 a014f23 · 17 partial 5c05bc9 (lane shas 08dd943, 2555f65, 7aa1b00, db32fe6). No conflicts. Full suite running.
+
+Phase:        2 · row 26
+Issue:        Namespaces don't match folders; two global types
+Practice:     file-scoped folder namespaces; IDE0130 enforced for this project (.editorconfig + EnforceCodeStyleInBuild)
+Commits:      7724552
+Behavior:     none (logger category via ILogger<Program>, unchanged; JSON contexts moved with their DTOs)
+Verify:       build 0 warnings · 1138 passed / 3 baseline · AOT publish green · enforcement proven by a deliberate wrong namespace (reverted)
+Check:        PASS (nit not taken: the redundant default line in .editorconfig documents intent)
+Duration:     ~17 min (to 16:46)
+
+Phase:        2 · rows 27, 28, 29 (from re-discover; batched, committed separately)
+Commits:      40b9aba (27) · 3b70a4b (28) · 6554ddf (29)
+Verify:       build 0 warnings · 1141 passed / 3 baseline (before the Check fix); after it, build 0 warnings and the 39 affected tests pass
+Check:        27 FAIL (FileStreamOptions blocks spelled out File.Create's defaults) → supervisor applied File.Create(path, 4096, FileOptions.Asynchronous) → PASS · 28 PASS · 29 PASS (assert made OS-neutral)
+Duration:     carve ~4 min, verify and check ~3 min, fix and commit ~1 min (18:24–18:32)

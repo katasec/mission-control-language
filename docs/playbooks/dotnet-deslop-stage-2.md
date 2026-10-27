@@ -100,15 +100,17 @@ Skills this playbook invokes: `csharp-expert` · `microsoft-docs` · `csharp-ref
 **Run start (once):**
 1. **Live-test filter.** Find the trait that marks tests needing live services or credentials
    (e.g. `[Trait("Category", "Integration")]`) and record the filter in the run-log header —
-   `{test-filter}`, e.g. `Category!=Integration`. Every in-loop test run uses it; live tests run
-   once, at the final gate.
+   `{test-filter}`, e.g. `Category!=Integration`. Every test run uses it. Live tests exercise the
+   app, not the playbook: they are never part of a run and are left to whoever works on the app.
 2. **Baseline.** `dotnet build -warnaserror && dotnet test --filter "{test-filter}"` from `{repo}`;
    record the failing tests in the run-log header. A carve passes only if it adds no failure to it.
 3. **Row 0 — shared test harness** (one carve, before any other): a process runner, an isolated
    HOME, local HTTP stubs, and a **non-forwarding proxy that every probe and test is forced
    through** (`HTTP_PROXY`/`HTTPS_PROXY`), so no carve can reach a live service even by mistake.
    Row 0 also moves the repo's existing ad-hoc process runners onto the harness (assertions
-   unchanged): the guard only holds if the harness is the only way tests run the app.
+   unchanged): the guard only holds if the harness is the only way tests run the app. It also
+   gives ad-hoc probes a one-line entry, so a quick probe through the harness is as easy as
+   running the app by hand.
    Every later carve extends this harness; none copies it.
 
 Then three phases, in order. **Each phase: Discover → Address → re-discover to confirm.**
@@ -153,6 +155,12 @@ for it in a way Microsoft doesn't recommend.
   for a subcommand of this app.
 - When options bind from configuration, say which source they bind from (the root or a named
   section) and what can then reach the setting (e.g. unprefixed env vars, `appsettings.json`).
+- A row that adopts a platform extension point (output writers, factories, providers) names its
+  consumer: the code that sets a non-default value. With no consumer, it isn't a row.
+- A row that removes an exception type lists every catch site, not only the throw sites.
+- A "pass the token" row covers every awaited call in the unit (file or class), not just the
+  ones seen.
+- When two platform APIs fit, prescribe the one with fewer branches.
 - Before prescribing a build setting, check its effective value (`dotnet msbuild -getProperty`);
   don't report a default the SDK already applies.
 - Name each location by symbol and file (lines may drift).
@@ -168,6 +176,9 @@ Name the skills you actually invoked.
    for this phase's areas as rows (cite the Stage-1 issue #).
 3. Route — don't drop — into `routed.md`, each with its destination:
    - impact `app: …` → **later stage (author territory)**, with the stated change;
+   - an extension-point row with no named consumer → **later stage**, "no consumer";
+   - a row that removes an exception caught as control flow that shapes output → split by
+     command now, or route;
    - outside this phase's areas → **the Stage-2 phase that owns it**;
    - Stage-1 STOPs that are product/feature/cross-repo decisions → **later stage**.
 
@@ -210,9 +221,13 @@ Work the backlog top to bottom. For each issue: **pin → swap → verify → ch
   row in the group goes to the same agent as a follow-up (the next backlog row, filled the same
   way) — it already holds the code and the rules. A new group starts a new agent.
 - **Fast loop, full gate.** Carve agents build and run only the tests they touched plus their
-  pins; the supervisor runs the full filtered suite at Verify. Live tests run once, at the end.
+  pins; the supervisor runs the full filtered suite at Verify.
 - **Trivial rows** (one-line settings) in the same group may be done in one agent turn, still
-  one commit per row.
+  one commit per row. The supervisor checks trivial rows inline, without a Check subagent.
+- **Build-config rows** for a natively compiled app also run a publish, once per group rather
+  than per row, unless the row changes linking or trimming.
+- **Idle lanes take the next group.** When one lane finishes, the next group whose files are
+  disjoint from the running lanes starts there.
 
 | Step | What | Gate |
 |---|---|---|
@@ -304,13 +319,6 @@ practice) and re-checks; a second FAIL routes the row to the later stage with th
 
 When the phase backlog is empty, re-run Discover for that phase to confirm clean, then
 advance to the next phase.
-
-**Final gate (once, at the end of the run, with the operator's OK):** run the live tests
-(`dotnet test` with the inverse of `{test-filter}`) — they use the operator's real
-credentials, so ask first. Compare against the run's changed files: a failure in code the run
-never touched is pre-existing and routed; a test that fails before reaching changed code
-doesn't prove that code either way — say so in the summary.
-
 ---
 
 ## Where results live
