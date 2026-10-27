@@ -16,7 +16,8 @@ The tests for `{scope}` (the same folder Stages 1 and 2 ran on), in `{repo}`. Ot
 - **Duplicate or near-copy tests:** keep one, delete the rest.
 - **Tests of code that no longer exists**, such as a private mirror of removed product code.
 - **Copied test helpers** where a shared one exists: switch callers to the shared one, then
-  delete the copies.
+  delete the copies. This includes copies inside one file (a helper that repeats another
+  helper in the same class), inline copies of a shared helper's body, and fields nothing reads.
 
 ## Rule
 
@@ -33,6 +34,7 @@ Same loop as [Stage 2](dotnet-deslop-stage-2.md#address-one-issue-at-a-time), wi
    earlier stages routed here.
 2. **Address:** one row per deletion (or per helper consolidation), each verified, checked
    and committed.
-3. **Re-discover** to confirm nothing redundant is left.
+3. **Re-discover** once to confirm nothing redundant is left. Fix what it finds, then stop:
+   no third pass.
 
 Results live in the same run folder as Stage 2, as `stage-3-backlog.md`.

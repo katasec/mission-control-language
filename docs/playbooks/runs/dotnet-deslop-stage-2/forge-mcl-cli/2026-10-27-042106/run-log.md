@@ -449,3 +449,14 @@ Commits:      40b9aba (27) · 3b70a4b (28) · 6554ddf (29)
 Verify:       build 0 warnings · 1141 passed / 3 baseline (before the Check fix); after it, build 0 warnings and the 39 affected tests pass
 Check:        27 FAIL (FileStreamOptions blocks spelled out File.Create's defaults) → supervisor applied File.Create(path, 4096, FileOptions.Asynchronous) → PASS · 28 PASS · 29 PASS (assert made OS-neutral)
 Duration:     carve ~4 min, verify and check ~3 min, fix and commit ~1 min (18:24–18:32)
+
+---
+
+# Stage 3: test reduction (playbook `dotnet-deslop-stage-3.md`)
+- Base `6554ddf`. Baseline 1141 passed / 3 failed.
+- Discover (one blind lens): 18:55:03–19:01:26 (6 min 23 s), 47 files, 16 rows. It found both items Phase 2 had seen (the ResolveMission mirror and the copied LoadForge) without being told.
+- Rows 1–16: one implementer, 19:12–19:24 (12 min), 16 commits. Suite 1134 passed / 3 baseline failures (−7 tests, as deleted). 0 warnings.
+- Re-discover: 19:24–19:31 (7 min), 8 findings: 7 copied helpers or unread fields the first pass missed, mostly copies inside one file; 1 suggested duplicate rejected (different scenario).
+- Rows 17–23: first implementer stopped on an expired login with no edits; rerun 22:12–22:15, 7 commits, suite unchanged (1134 / 3). 0 warnings.
+- Totals: 23 commits; 7 tests deleted; ~37 copied helpers and unread fields removed; test lines −369 / +85.
+- Lesson folded into the Stage 3 playbook: helper copies inside one file, inline copies and unread fields count; re-discover runs once, then stop.
