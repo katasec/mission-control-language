@@ -3,8 +3,8 @@
 > **v1.** The **second stage** of a multi-stage de-slop. Runs on the clean floor
 > [Stage 1](dotnet-deslop.md) leaves. Hand-rolled plumbing is replaced by the facility .NET
 > provides, used the way Microsoft recommends. Point it at a folder; area lenses **discover**
-> deviations; you **address** them one at a time, **coarse → fine**, over three internal
-> phases (composition → app-type idioms → tests).
+> deviations; you **address** them one at a time, **coarse → fine**, over two internal
+> phases (composition → app-type idioms). Test reduction is [Stage 3](dotnet-deslop-stage-3.md).
 >
 > **Rule: if .NET provides it, use theirs — the way Microsoft recommends.** Like cloud shared
 > responsibility: the platform (DI, config, logging, HTTP, serialization, cancellation,
@@ -21,6 +21,7 @@
 > |---|---|---|
 > | 1 — Cleanup | retained | relocation only |
 > | **2 — Platform Best Practices** | **app's own retained** | hand-rolled plumbing → platform facilities, with their semantics |
+> | 3 — Test reduction | retained | redundant tests removed |
 > | later — author territory | changes | bugs in our code, features, product decisions |
 >
 > If adopting a practice would change the **app's own** behavior, it **STOPs and records why,
@@ -113,7 +114,7 @@ Skills this playbook invokes: `csharp-expert` · `microsoft-docs` · `csharp-ref
    running the app by hand.
    Every later carve extends this harness; none copies it.
 
-Then three phases, in order. **Each phase: Discover → Address → re-discover to confirm.**
+Then two phases, in order. **Each phase: Discover → Address → re-discover to confirm.**
 Each phase runs **one lens per area**, all using `csharp-expert` (routes to the specialist for
 the app type) and `microsoft-docs` (grounds the prescription), plus the phase's specialists.
 
@@ -121,7 +122,6 @@ the app type) and `microsoft-docs` (grounds the prescription), plus the phase's 
 |---|---|---|
 | **1 — Composition** | DI + `HttpClient` registration · configuration + options · logging · cancellation | — |
 | **2 — App-type idioms & project shape** | project/folder layout + build config · endpoint/CLI idioms · serialization · data access · trim/AOT | `dotnet-webapi`, `optimizing-ef-core-queries`, `directory-build-organization`, `msbuild-modernization`, `dotnet-aot-compat` |
-| **3 — Tests** | test project layout · isolation + fixtures · test smells | `scaffold-dotnet-test-project`, `test-anti-patterns`, `test-smell-detection`, `code-testing` |
 
 ---
 
@@ -272,7 +272,7 @@ RULES (non-negotiable):
   If the swap changes a signature, pin through the public entry point (process/harness) so
   the pin runs on HEAD first; if that isn't possible, say so in RETURN.
 - Scope is THIS issue only. Don't fix other backlog items you notice; list them instead.
-- Do NOT delete tests (that's Phase 3) — except a test your own carve turned into an exact
+- Do NOT delete tests (that's Stage 3) — except a test your own carve turned into an exact
   copy of another; merge those.
 - A difference that only shows up in a race is not a STOP: report it under platform semantics.
 - Do NOT change repository state: no stash, pop, checkout, reset, clean or commit. To compare
@@ -329,7 +329,6 @@ In this hub, grouped by playbook → target → **timestamped run**:
 docs/playbooks/runs/dotnet-deslop-stage-2/<repo>-<scope-slug>/<YYYY-MM-DD-HHMMSS>/
   phase-1-backlog.md   ← discovered practices, ticked off as carved
   phase-2-backlog.md
-  phase-3-backlog.md
   routed.md            ← findings routed elsewhere, each with its destination
   questions.md         ← open questions: default taken, rows touched; answered at run end
   run-log.md           ← baseline in the header; one run record appended per carve
