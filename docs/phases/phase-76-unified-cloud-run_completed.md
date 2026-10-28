@@ -23,6 +23,8 @@ file call, so "no CLI-built policy" in the design means reusing chat's policy, n
 | Gotcha | Root tools attach only to experts with `role: agent`. Without it, the conversation is still `projectWorkspace` but the model gets no tools. It may then fake tool-call text and claim success |
 | CI | All four platform builds and "Verify package and macOS ARM64 CLI" passed; the verify job takes about 40 minutes |
 | From `main` | Build of `3c527ae`: exit 0; `hands-check.txt` = `MAIN_OK_F80061D3` (`xxd`); `GetConversation` for `625249e8-1b7f-59f9-a0e1-2e4a07b874d2`: `completed`, `projectWorkspace`, `lastSequence` 16, Write `succeeded`, `/etc/hosts` `failed: resolves outside the workspace roots` |
+| Installed binary | `make install` → `~/.local/bin/forge` `0.18.0-dev.2+3c527aefb98c…` (Native AOT, verified by the install). The operator ran `forge run ./mission.mcl "HELLO_FROM_INSTALLED"` in `~/forge-hands-test`: `hands-check.txt` = `HELLO_FROM_INSTALLED` (20 bytes, `xxd`); `GetConversation` for `b1bf09fd-d76d-52b1-869a-8146b48883fc`: `completed`, `projectWorkspace`, 16 events, Write `succeeded`, `/etc/hosts` `failed: resolves outside the workspace roots` |
+| Cloud storage | Read-only `az` on `stforgeconvdev`: table `forgeconversationevents` partition `v1\|<tenant>\|b1bf09fd…` has 16 event rows (`0-…`), 16 command/tool rows (`1-…`) and `s-state`; container `forgeconversationartifacts` has 14 body blobs under `<tenant>/b1bf09fd…/bodies/`. Event rows hold `EventJson` and point long text to blobs through `Bodies` |
 
 ## Durable run increment
 
