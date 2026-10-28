@@ -3,6 +3,26 @@
 These observations close their named checks only. The parent phase and installed unified CLI
 acceptance remain open.
 
+## Hands by default increment
+
+**IN REVIEW (2026-10-29).** forge-mcl [PR 83](https://github.com/katasec/forge-mcl/pull/83), branch
+`adeen/forge-run-hands-default`, commit `b295786`. `forge run` admits every durable conversation as
+`ProjectWorkspace`, rooted at the project folder. It acknowledges chat's Hands attachment before
+submitting the turn and feeds it every followed event. The run uses `ForgeChat.PolicyFor(true)`
+(file auto-approved; ProjectWorkspace registers no terminal provider). An empty policy denies every
+file call, so "no CLI-built policy" in the design means reusing chat's policy, not passing none.
+`--project` defaults to `./forge.project.json`. The dead local `ForgeRun` is deleted.
+
+| Check | Observation |
+|---|---|
+| Tests | `ForgeDurableRunTests` (4: attach before submit, events reach the attachment, undeclared mission fails before any Host call, project-file default) plus `ForgeChatTests`: 46 passed. The full project: 1 failure, `PipelineRunnerTests.MissingApiKey_ThrowsClearly`, caused only by `MCL_API_KEY` set in the local shell. Build: zero warnings |
+| Mutation | Removing `hands.OnEvent` makes the attach/event test fail |
+| Live run (branch build, hosted dev) | Scratch project, mission `HandsCheck@1`: exit 0; `hands-check.txt` holds exactly `HANDS_OK_FA64C7E0` (17 bytes, `xxd`) |
+| Stored after exit | `GetConversation` for `66c30419-a238-54f8-96b3-8090c6ea7e6a`: `completed`, `missionConversation`, `projectWorkspace`, `lastSequence` 16; `missionHandsRequested` Write → `missionHandsResult succeeded`; Read `/etc/hosts` → `failed: '/etc/hosts' resolves outside the workspace roots` |
+| Skills | `csharp-refactoring`, `dotnet-test:code-testing`, `simplify` (applied: one project read, plain `RunProject`, `@1` hint only for an unknown mission), `security-review` (no findings ≥ 8; noted: a mission can write `.git/hooks` inside a git project folder), `code-review` low (no findings), `run` |
+| Gotcha | Root tools attach only to experts with `role: agent`. Without it, the conversation is still `projectWorkspace` but the model gets no tools. It may then fake tool-call text and claim success |
+| Not yet observed | Merge, required CI on the merged head, and the rerun from `main` |
+
 ## Durable run increment
 
 **COMPLETE (2026-10-28).** forge-mcl [PR 82](https://github.com/katasec/forge-mcl/pull/82),

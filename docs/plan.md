@@ -14,7 +14,7 @@
 
 | Phase | Status |
 |---|---|
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Durable `forge run --project` is complete; Hands by default is the selected next increment. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Durable `forge run --project` is complete; Hands by default is in review. |
 
 ## Design docs
 
