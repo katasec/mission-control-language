@@ -110,8 +110,10 @@ refusal passed on 2026-10-05; [Phase 68 observations](../phases/phase-68-cli-pro
 ### `forge run` Hands default — Phase 76
 
 Replaces the Phase 73 default below. Owned by
-[Phase 76](../phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run);
-not yet implemented.
+[Phase 76](../phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run).
+Implemented and accepted from a build of merged `main` (forge-mcl `3c527ae`);
+[observations](../phases/phase-76-unified-cloud-run_completed.md#hands-by-default-increment). Acceptance
+of the installed binary is still in the backlog.
 
 | Part | Default fact |
 |---|---|

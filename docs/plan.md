@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | The only selected work: [Hands by default for `forge run`](phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run). Everything else is in [backlog.md](backlog.md). |
+| **NEXT STEP** | No work is selected. Hands by default for `forge run` is [complete](phases/phase-76-unified-cloud-run_completed.md#hands-by-default-increment); choose the next item from [backlog.md](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Durable `forge run --project` is complete; Hands by default is the selected next increment. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Durable `forge run` with Hands by default is complete; named file inputs and installed acceptance are in the backlog. |
 
 ## Design docs
 
