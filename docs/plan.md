@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | Hosted-catalog `forge run <handle> <prompt>` cloud execution is merged and verified. Complete the separate local/OCI package, durable Hands and installed default-path work for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md). |
+| **NEXT STEP** | `forge run` now runs local/OCI missions as cloud conversations. Next: Hands by default for `forge run`, then named file inputs and installed default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md). |
 
 ## Active phases
 

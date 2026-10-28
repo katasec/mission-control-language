@@ -3,6 +3,22 @@
 These observations close their named checks only. The parent phase and installed unified CLI
 acceptance remain open.
 
+## Durable run increment
+
+**COMPLETE (2026-10-28).** forge-mcl [PR 82](https://github.com/katasec/forge-mcl/pull/82),
+merge `8cfd7955d6ccf43e1a2c16d3c45d8427f2a5417e`, added `forge run --project <file> <mission> <prompt>`.
+It moves `Katasec.Forge.Client` to 0.10.1 (and `Conversations.Contracts` to 0.12.0), prepares the
+package, creates a mission conversation, submits one named-input turn and prints the final reply.
+The run is admitted NoHands. The turn carries no workspace body: the edge converter
+(`ConversationIngressBodies.SubmitMissionTurn`) and the Host reject one.
+
+| Check | Observation |
+|---|---|
+| Live cloud run | `missions/elevator-pitch` with the `fp-sample1` project: exit 0, real reply, conversation `9eae38e6-1539-5c37-8d00-95dfbee4705e` |
+| Stored after exit | Separate `POST /api/GetConversation`: `completed`, `missionConversation`, project `ad427dd9-…`, `lastSequence` 6, mission `QuickPitch` |
+| CI | All four platform builds and "Verify package and macOS ARM64 CLI" passed on the merged head |
+| Fixed on the way | `TuiColourLiteralTests` read the deleted `ForgeConfig.cs` (replaced by `Services/ForgeSettings.cs` in `bef8f7b`), so it failed on `main`; the PR repoints it |
+
 ## Hosted catalog CLI cloud execution
 
 **COMPLETE (2026-10-11).** forge-mcl
