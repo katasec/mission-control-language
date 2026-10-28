@@ -4,20 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-12)
+## Now (2026-10-29)
 
 | | |
 |---|---|
-| **NEXT STEP** | `forge run` now runs local/OCI missions as cloud conversations. Next: Hands by default for `forge run`, then named file inputs and installed default-path acceptance for [unified cloud mission execution](phases/phase-76-unified-cloud-run.md). |
+| **NEXT STEP** | The only selected work: [Hands by default for `forge run`](phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run). Everything else is in [backlog.md](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
-| [71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
-| [72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Hosted-catalog CLI cloud execution is complete; arbitrary local/OCI packages, durable Hands and installed acceptance remain. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Durable `forge run --project` is complete; Hands by default is the selected next increment. |
 
 ## Design docs
 

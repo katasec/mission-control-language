@@ -29,7 +29,7 @@ the final response is opaque text. Cloud conversations and runs remain durably l
 | Current cloud implementation | Client PR15 merged and0.10.1 is published; its package bytes and GitHub metadata are independently verified. The Client publisher workflow's final metadata guard remains open, separate from the completed Conversations publisher-metadata prerequisite. Real cloud mission PASS; [observations and provenance](phase-76-unified-cloud-run_completed.md). |
 | Hosted catalog CLI increment | **COMPLETE:** forge-mcl [PR 79](https://github.com/katasec/forge-mcl/pull/79), merge `bcef529950b881f94426b5008eccdb86cebe00de`, added `forge run <handle> <prompt>` through the configured `api.endpoint` and existing saved-key `ExecuteMission` stream. All required PR checks passed and a real `dotnet run ... vanilla` returned the exact expected output; [evidence](phase-76-unified-cloud-run_completed.md#hosted-catalog-cli-cloud-execution). |
 | Durable run increment | **COMPLETE:** forge-mcl [PR 82](https://github.com/katasec/forge-mcl/pull/82), merge `8cfd795`, added `forge run --project <file> <mission.mcl\|oci-ref> <prompt>` as a cloud mission conversation (NoHands); [evidence](phase-76-unified-cloud-run_completed.md#durable-run-increment). |
-| Unified CLI | Still open: Hands by default is the [next increment](#next-increment--hands-by-default-for-forge-run); named file inputs and installed default-path acceptance follow. |
+| Unified CLI | Still open: Hands by default is the [next increment](#next-increment--hands-by-default-for-forge-run) and the only selected work. Named file inputs and installed default-path acceptance are in the [backlog](../backlog.md#paused-phases-and-later-phase-76-work-moved-from-planmd-2026-10-29). |
 | Contract design | Revised generic design locked after full round 7 PASS; [contracts and current work](phase-76.2-unified-cloud-run-contracts.md#current-work) |
 | OCI prerequisite | Published 0.5.0 accepted; [API contract](phase-76.3-oci-integrity-auth.md), [product PR/publication/default evidence](phase-76.3-oci-integrity-auth_completed.md) |
 | Cloud implementation and acceptance | [Core producer](phase-76.4-core-cloud-primitives.md), Client preparation and deployed Host/Runner transport are verified; Client session/CLI consumers and installed unified default-path acceptance remain |
@@ -102,7 +102,8 @@ waived for this increment by the operator; one author, with the skills below.
 | Root | The project folder (the folder of `forge.project.json`), as in `forge chat`. Declared `folders` are not used yet. |
 | Project file | `--project` defaults to `./forge.project.json`. With no project file, `forge run <handle>` keeps the one-shot `ExecuteMission` path for hosted handles. |
 | Mission declaration | The run's root mission must be declared as `<Mission>@1` in `forge.project.json`, because Hands acknowledgement checks the pin against the declaration (`RequirePortablePin`). A missing declaration is a clear error. Later fix: a run-specific acknowledge in forge-client. |
-| Chat | Unchanged here. Moving `forge chat` to the same rule is a follow-up. |
+| Chat | Unchanged here. Moving `forge chat` to the same rule is in the backlog. |
+| Precedent | [Phase 73](phase-73-forge-run-hands.md) made Hands the default for the old local `forge run` (no flag, Bob owns policy). That path is no longer reachable: nothing calls `Services/ForgeRun.cs` since forge-mcl PR 79. This increment does not use or delete it; that cleanup is in the backlog. |
 
 **Design** (all pieces exist on forge-mcl `main` and forge-client 0.10.1; no client or server change)
 
@@ -112,7 +113,13 @@ waived for this increment by the operator; one author, with the skills below.
 4. `ChatHandsAttachment` is reused unchanged: `Begin` before submit, `OnEvent` for every followed event, disposed on exit or Ctrl-C.
 5. The turn is still submitted without a workspace body, which the edge and Host require.
 
-**Skills to use**
+**Skills — required, hard stop**
+
+> **STOP before writing any code if you cannot invoke every skill in this table.** Check that
+> each one appears in your available skills and can be invoked. If any is missing, do not
+> substitute your own judgement, a different skill or a manual equivalent. Tell the operator
+> which skills are missing and wait. Each skill must actually be invoked at its stage; reading
+> this table is not a substitute. Record in the completion evidence that each skill ran.
 
 | Stage | Skill | Why |
 |---|---|---|

@@ -3,6 +3,22 @@
 > Deferred work, design candidates, and external conditions. These items are **not active work**;
 > move one back to [plan.md](plan.md) only when it is deliberately selected.
 
+## Paused phases and later Phase 76 work (moved from plan.md 2026-10-29)
+
+The operator selected one item only: [Hands by default for `forge run`](phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run).
+These were active or queued before that and are paused, with their status as last recorded.
+
+| Item | Status / pointer |
+|------|------------------|
+| [Phase 70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
+| [Phase 71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
+| [Phase 72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
+| Phase 76 — named file inputs for `forge run` | After the Hands increment. Client 0.10.1 already has `UploadInputAsync` and named `Artifacts` on `SubmitAsync`; the CLI does not use them yet. [Phase 76](phases/phase-76-unified-cloud-run.md). |
+| Phase 76 — installed default-path acceptance and Native AOT | The final whole-phase gates, after the CLI work is complete. [Phase 76](phases/phase-76-unified-cloud-run.md). |
+| Run-specific Hands acknowledge in forge-client | Removes the rule that a run's mission must be declared as `<Mission>@1` in `forge.project.json`: today `AcknowledgeAsync` checks the pin against the chat declaration (`RequirePortablePin`). |
+| `forge chat` on the Hands-by-default rule | Chat still has `--hands` and a CLI consent prompt; move it to the same rule as `forge run` so both commands share one authorization owner (Hands). |
+| Unreachable local `forge run` Hands path | Since forge-mcl PR 79 replaced `forge run` with the hosted path, nothing calls `Services/ForgeRun.cs` (`RunAsync`, `CreateHands`), so the [Phase 73](phases/phase-73-forge-run-hands.md) local run and its recorded default are no longer reachable. Delete the dead code, or reuse it, and correct the Phase 73 default facts. |
+
 ## Product and platform candidates
 
 | Item | Status / pointer |
