@@ -103,7 +103,7 @@ waived for this increment by the operator; one author, with the skills below.
 | Project file | `--project` defaults to `./forge.project.json`. With no project file, `forge run <handle>` keeps the one-shot `ExecuteMission` path for hosted handles. |
 | Mission declaration | The run's root mission must be declared as `<Mission>@1` in `forge.project.json`, because Hands acknowledgement checks the pin against the declaration (`RequirePortablePin`). A missing declaration is a clear error. Later fix: a run-specific acknowledge in forge-client. |
 | Chat | Unchanged here. Moving `forge chat` to the same rule is in the backlog. |
-| Precedent | [Phase 73](phase-73-forge-run-hands.md) made Hands the default for the old local `forge run` (no flag, Bob owns policy). That path is no longer reachable: nothing calls `Services/ForgeRun.cs` since forge-mcl PR 79. This increment does not use or delete it; that cleanup is in the backlog. |
+| Precedent and dead code | [Phase 73](phase-73-forge-run-hands.md) made Hands the default for the old local `forge run` (no flag, Bob owns policy); this increment carries that contract to the cloud run. The local path is unreachable (nothing calls `Services/ForgeRun.cs` since forge-mcl PR 79), so **this increment deletes it**: `Services/ForgeRun.cs`, `tests/ForgeMission.Mcl.Tests/Cli/ForgeRunTests.cs` (it tests only that class) and its row in `src/ForgeMission.Cli/README.md`. The Phase 73 [default](../design/default-path-acceptance.md#forge-run-hands-default--phase-76) is marked superseded. |
 
 **Design** (all pieces exist on forge-mcl `main` and forge-client 0.10.1; no client or server change)
 
@@ -112,6 +112,9 @@ waived for this increment by the operator; one author, with the skills below.
 3. `MissionHands.AcknowledgeAsync` with the created launch's version id, number and hash returns the attachment.
 4. `ChatHandsAttachment` is reused unchanged: `Begin` before submit, `OnEvent` for every followed event, disposed on exit or Ctrl-C.
 5. The turn is still submitted without a workspace body, which the edge and Host require.
+6. Delete the unreachable local run: `Services/ForgeRun.cs`, `ForgeRunTests.cs` and the CLI README row.
+
+Expected size: about 30 lines added and about 250 removed. Chat, forge-client and the server are unchanged.
 
 **Skills — required, hard stop**
 
@@ -123,7 +126,7 @@ waived for this increment by the operator; one author, with the skills below.
 
 | Stage | Skill | Why |
 |---|---|---|
-| Before writing | `csharp-refactoring` | Sharing `ChatHandsAttachment` and the policy helper between `chat` and `run` must not change chat's behaviour. |
+| Before writing | `csharp-refactoring` | Deleting the dead local run and reusing `ChatHandsAttachment` from `run` must not change chat's behaviour. |
 | Tests | `dotnet-test:code-testing` | The durable run has no tests of its own: Hands attaches before submit, events reach the attachment, a missing declaration gives a clear error. |
 | After writing | `simplify` | Remove duplicated follow and print logic between `ForgeChat` and `ForgeDurableRun`. |
 | After writing | `security-review` | Hands by default with no prompt is a real security change. |
@@ -136,7 +139,8 @@ because Native AOT stays the final whole-phase gate.
 **Done when:** on forge-mcl `main`, `forge run` from a scratch project folder runs a mission that
 writes a file. The file's bytes are checked independently. The conversation, including its Hands
 request and result events, is readable through `GetConversation` after the CLI exits. A request
-outside the project folder is denied. Required CI checks pass.
+outside the project folder is denied. `Services/ForgeRun.cs` and `ForgeRunTests.cs` are gone and
+the solution builds with zero warnings. Required CI checks pass.
 
 ## Supervisor autonomy
 

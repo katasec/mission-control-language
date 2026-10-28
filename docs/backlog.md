@@ -17,7 +17,6 @@ These were active or queued before that and are paused, with their status as las
 | Phase 76 — installed default-path acceptance and Native AOT | The final whole-phase gates, after the CLI work is complete. [Phase 76](phases/phase-76-unified-cloud-run.md). |
 | Run-specific Hands acknowledge in forge-client | Removes the rule that a run's mission must be declared as `<Mission>@1` in `forge.project.json`: today `AcknowledgeAsync` checks the pin against the chat declaration (`RequirePortablePin`). |
 | `forge chat` on the Hands-by-default rule | Chat still has `--hands` and a CLI consent prompt; move it to the same rule as `forge run` so both commands share one authorization owner (Hands). |
-| Unreachable local `forge run` Hands path | Since forge-mcl PR 79 replaced `forge run` with the hosted path, nothing calls `Services/ForgeRun.cs` (`RunAsync`, `CreateHands`), so the [Phase 73](phases/phase-73-forge-run-hands.md) local run and its recorded default are no longer reachable. Delete the dead code, or reuse it, and correct the Phase 73 default facts. |
 
 ## Product and platform candidates
 
