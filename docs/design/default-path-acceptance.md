@@ -107,7 +107,24 @@ refusal passed on 2026-10-05; [Phase 68 observations](../phases/phase-68-cli-pro
 
 ## New or changed defaults
 
+### `forge run` Hands default — Phase 76
+
+Replaces the Phase 73 default below. Owned by
+[Phase 76](../phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run);
+not yet implemented.
+
+| Part | Default fact |
+|---|---|
+| Invocation | `forge run <mission.mcl\|oci-ref> <prompt>` in a folder with `forge.project.json`; no Hands flag and no consent prompt. |
+| Reasoning | The cloud: a mission conversation in the Conversation Host, readable after the CLI exits. |
+| Authority | Hands decides each request. Root is the project folder; `ProjectWorkspace` profile (Read/Write/Edit), no terminal tools. |
+| Fallback | With no project file, `forge run <handle>` uses the one-shot hosted `ExecuteMission` path, with no conversation and no Hands. |
+| Action / result | A real mission writes a file whose bytes are checked independently; an outside-root request is denied; the conversation, including its Hands request and result events, reads back through `GetConversation`. |
+
 ### `forge run` Hands default — Phase 73
+
+**Superseded by the Phase 76 default above.** Since forge-mcl PR 79 replaced `forge run` with
+the hosted path, this local run has been unreachable; Phase 76 deletes its code.
 
 Implemented and accepted on installed merged main; [actual observations](../phases/phase-73-forge-run-hands_completed.md#installed-default-path-acceptance). [Phase 73](../phases/phase-73-forge-run-hands.md) owns the change
 and evidence; the table defines the required acceptance path before implementation.

@@ -54,6 +54,10 @@ Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet
 
 ## How it runs
 
+**Run start (once):** the supervisor runs `dotnet build -warnaserror && dotnet test` from
+`{repo}` and records the failing tests in the run-log header. That is the **baseline**; a
+carve passes only if it adds no failure to it.
+
 Three phases, in order. **Each phase: Discover → Address → re-discover to confirm.**
 Earlier phases change what later ones find, so don't skip ahead.
 
@@ -112,7 +116,7 @@ commit — never batch (a big multi-issue diff is unreviewable, which is how slo
 | Step | What | Gate |
 |---|---|---|
 | Carve | run the carve prompt below (one subagent) | behavior-preserving; stops before commit |
-| Verify | `dotnet build -warnaserror && dotnet test` from `{repo}` | 0 warnings, tests green |
+| Verify | `dotnet build -warnaserror && dotnet test` from `{repo}` | 0 warnings; no new failures vs baseline |
 | Check | one `/code-review` glance at the diff (cheap insurance) | no new bugs |
 | Commit | one issue, small commit; a forced behavior change gets its own commit | tree clean → next issue |
 **Carve prompt (one issue → one subagent). Every blank fills from the backlog row + run header — nothing invented:**
