@@ -110,7 +110,7 @@ refusal passed on 2026-10-05; [Phase 68 observations](../phases/phase-68-cli-pro
 ### `forge run` Hands default — Phase 76
 
 Replaces the Phase 73 default below. Owned by
-[Phase 76](../phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run).
+[Phase 76](../phases/phase-76-unified-cloud-run.md).
 Implemented and accepted from a build of merged `main` (forge-mcl `3c527ae`);
 accepted again on the installed Native AOT binary `0.18.0-dev.2+3c527ae` (2026-10-29);
 [observations](../phases/phase-76-unified-cloud-run_completed.md#hands-by-default-increment). The
@@ -121,7 +121,7 @@ whole-phase installed and Native AOT gate is still in the backlog.
 | Invocation | `forge run <mission.mcl\|oci-ref> <prompt>` in a folder with `forge.project.json`; no Hands flag and no consent prompt. |
 | Reasoning | The cloud: a mission conversation in the Conversation Host, readable after the CLI exits. |
 | Authority | Hands decides each request. Root is the project folder; `ProjectWorkspace` profile (Read/Write/Edit), no terminal tools. |
-| Fallback | With no project file, `forge run <handle>` uses the one-shot hosted `ExecuteMission` path, with no conversation and no Hands. |
+| Fallback | With no project file, `forge run <handle>` uses the one-shot hosted `ExecuteMission` path, with no conversation and no Hands. Phase 76 decision 4 deletes this fallback. |
 | Action / result | A real mission writes a file whose bytes are checked independently; an outside-root request is denied; the conversation, including its Hands request and result events, reads back through `GetConversation`. |
 
 ### `forge run` Hands default — Phase 73

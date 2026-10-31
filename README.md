@@ -405,12 +405,14 @@ Supported providers: `openai`, `anthropic`, `azure`, `ollama`. Run `forge provid
 
 ## Execution
 
+Missions run in the cloud. `forge run` needs a signed-in platform key (`forge login`) and a
+`forge.project.json` in the current folder (`forge project create`).
+
 ```bash
 forge init                                    # resolve experts, write mcl.lock
 forge validate                                # parse and validate the mission file
-forge run                                     # run the mission
-forge run --steps                             # stream each expert's output live
-forge run --var goal="Redesign for ARM64"     # override a let binding at runtime
+forge run ./mission.mcl "<prompt>"            # run a local mission in the cloud
+forge run <oci-ref> "<prompt>"                # run a published mission
 forge clean                                   # purge ~/.forge/experts cache
 forge registry login ghcr.io --token <pat>   # save registry credentials
 forge list experts                           # list local experts
@@ -418,22 +420,16 @@ forge provider list                          # list supported providers
 forge provider scaffold <name>               # print a ready-to-paste forge.toml block
 ```
 
-Output routing:
+The run is a durable cloud conversation. Hands is on: the mission may read, write and edit files
+in the project folder, nowhere else. Today the run's mission must also be declared as
+`<Mission>@1` in `forge.project.json`; [Phase 76](docs/phases/phase-76-unified-cloud-run.md)
+removes that rule.
+
+The final answer goes to stdout and diagnostics go to stderr:
 
 ```bash
-forge run                        # stdout
-forge run > report.md            # redirect
-forge run | pbcopy               # pipe
+forge run ./mission.mcl "<prompt>" > answer.md
 ```
-
-Or declare the destination in the mission file:
-
-```fsharp
-output(BuildOperatorDesign)                 // stdout (default)
-output(BuildOperatorDesign, "./report.md")  // write to file
-```
-
-Status messages always go to stderr and never pollute the output stream.
 
 ### Chat in the cloud — `forge chat`
 
@@ -575,18 +571,16 @@ Critics and reviewers that find issues always pass their output downstream — t
 ```bash
 export MCL_API_KEY=sk-...   # OpenAI key (default provider in all examples)
 
+forge login                 # sign in once
 cd missions/elevator-pitch
 forge init                  # resolve experts, write mcl.lock
 forge validate              # parse and validate
-forge run                   # single expert, single pass — simplest possible mission
+forge project create        # writes forge.project.json; then declare the mission as <Mission>@1
+forge run ./mission.mcl "<prompt>"   # single expert, single pass — simplest possible mission
 ```
 
-For sequential composition with adversarial review:
-
-```bash
-cd missions/elevator-pitch-refined
-forge init && forge run     # drafter → critic → reviser → judge
-```
+For sequential composition with adversarial review, run `missions/elevator-pitch-refined` the
+same way (drafter → critic → reviser → judge).
 
 Or try the showcase missions:
 
@@ -596,8 +590,9 @@ cd missions/parallel-synthesis  # parallel experts + synthesiser
 cd missions/loop-demo           # quality-convergence loop with retry
 cd missions/rule-gate-demo      # deterministic rule gate + loop feedback
 cd missions/sdlc-agent          # mission composition — sub-missions as steps
-forge init && forge run
 ```
+
+Run each the same way as above.
 
 Provider and model are configured in each mission's `forge.toml`. To switch to Anthropic, swap the `[providers.default]` block — the commented alternative is already in each example file.
 

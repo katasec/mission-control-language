@@ -5,8 +5,7 @@
 > **Superseded (2026-10-29).** forge-mcl PR 79 replaced `forge run` with the hosted path, so
 > this local run is unreachable; nothing calls `Services/ForgeRun.cs`. Hands by default now
 > belongs to the cloud run in
-> [Phase 76](phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run),
-> which also deletes this code. The record below is historical.
+> [Phase 76](phase-76-unified-cloud-run.md), which deleted this code (forge-mcl PR 83). The record below is historical.
 
 Product merged in [forge-mcl PR68](https://github.com/katasec/forge-mcl/pull/68).
 Managed checks, complete independent reviews, canonical zero-warning Native AOT and installed
