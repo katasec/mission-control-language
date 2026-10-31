@@ -37,4 +37,4 @@ one-shot or durable. It measures usage for every run segment and sends settlemen
 |---|---|
 | ForgeUI holds `authbilling_db` for two sign-in writes | Backlog: move `forge login` key issuance to ForgeAPI |
 | ForgeUI holds `rooms_db` (Rooms context inside the edge) | Backlog: extract Rooms as a tier-2 service |
-| Rooms and `forge exec` call forge-runner over HTTP `/run` | Backlog: move them to the bus; delete `/run` |
+| Rooms calls forge-runner over HTTP `/run` | Backlog: move them to the bus; delete `/run` |
