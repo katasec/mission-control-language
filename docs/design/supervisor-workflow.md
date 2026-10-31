@@ -25,8 +25,8 @@
   A deliberate behavior change gets its own labelled commit.
 - **Delete before add.** Remove the dead or duplicated path the change replaces in the same task.
 - **No net complexity.** The change is no more complex than what it replaces; the Check enforces it.
-- **The supervisor owns repo state and evidence.** Subagents never stash, reset, checkout, clean or
-  commit. A subagent's claim is not evidence: the supervisor reads the diff and runs the gates.
+- **The supervisor owns repo state and evidence.** Subagents run no git command at all, not even
+  `git rm` or `git mv`; they edit files only. A subagent's claim is not evidence: the supervisor reads the diff and runs the gates.
 - **Stay in scope.** Findings outside the row are listed, not fixed, and routed to the spoke or
   backlog by name.
 
@@ -55,15 +55,18 @@ Tag each assignment `[<stage>:<role>:r<N>] <task>`; round 1 may omit `r1`. Stage
 
 | Stage | Who | Skills | Gate |
 |---|---|---|---|
-| 0. Select | supervisor | — | One task from the spoke, its decisions cited, a one-line `Done when`. Baseline recorded: `dotnet build -warnaserror` and `dotnet test` from each touched repo, failing tests listed. |
+| 0. Select | supervisor | — | One task from the spoke, its decisions cited, a one-line `Done when`. Baseline recorded: `dotnet build -warnaserror` and `dotnet test --filter "Category!=Integration"` from each touched repo, failing tests listed. |
 | 1. Discover | lenses, parallel, read-only | `csharp-expert`, `microsoft-docs`; `dotnet-webapi`, `dotnet-aot-compat` or others where the area needs them | A backlog: one row per carve, with exact symbols and files, code to reuse, code to delete, and the Microsoft Learn page for any platform facility. Sequenced foundation-first. |
 | 2. Pin | implementer | `code-testing` | Tests pin the behavior the row must keep; they pass on `HEAD`. Reuse the repo's test harness; never copy it. |
 | 3. Carve | implementer | `csharp-refactoring` | The row's change only; builds with zero warnings; affected tests and pins pass. Not committed. |
-| 4. Verify | supervisor | — | `git status` shows only the carve. Full build `-warnaserror` and test suite: no failure added to the baseline; pins unchanged. |
+| 4. Verify | supervisor | — | `git status` shows only the carve. Full build `-warnaserror` and test suite with the baseline's filter: no failure added to the baseline; pins unchanged. |
 | 5. Check | check, read-only | `simplify`; `code-review` (low); `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
 | 6. Commit | supervisor | — | One row, one commit; the next row starts on a clean tree. |
 | 7. Live | supervisor | `run` | When the backlog is empty: the real CLI or service on the [default path](default-path-acceptance.md), with the action and observation recorded. |
 | 8. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the spoke's `_completed`; every touched repo on a clean, current `main`. |
+
+Tests marked `Category=Integration` call live services with real credentials, so no gate runs
+them; the Live stage is the live check.
 
 Native AOT is checked once, after the managed loop is stable, as the final artifact gate; not on
 every row. If previously passing code fails, compare the checkout, commands, dependencies and
@@ -98,7 +101,8 @@ ROW #{n}: {row}
   Symbols: {symbols}   Reuse: {reuse}   Delete: {delete}   Reference: {reference}
   Next rows (stay out of their lane): {next rows}
 RULES: this row only; pin first, the pins pass on HEAD; if the row needs a decision the spoke
-doesn't make, STOP and report it verbatim; don't change repository state; zero warnings.
+doesn't make, STOP and report it verbatim; run no git command (delete files with `rm`, not
+`git rm`); zero warnings.
 RETURN ONLY: files changed · 3-5 line summary · skills invoked · build and test results ·
 behavior changed (none | what) · STOP reason (or none) · other issues noticed (not fixed)
 ```
