@@ -1,203 +1,129 @@
 # Supervisor workflow
 
-> **Status: governing implementation workflow.** Provider-neutral: the agent the operator works in
-> (Claude, Codex, or another) is the supervisor and uses its own subagents. The supervisor owns
-> design; a fixed team of three subagents runs sequentially and is reused across stages and revisions. Each assignment carries its
-> [persona](../../personas/README.md) inline. Independent reviews and explicit approvals remain required.
+> **Status: governing implementation workflow (rewritten 2026-10-31).** Modelled on what worked in
+> the [dotnet de-slop playbooks](../playbooks/dotnet-deslop.md): named dotnet skills at every stage,
+> one small change per commit, tests pinned before a change, and a read-only check for added
+> complexity. The earlier design → plan → review-rounds loop is gone; it produced long contract
+> documents and invented design. Provider-neutral: the agent the operator works in is the
+> supervisor and uses its own subagents.
 
-## Task quality
+## Core rules
 
-**Quality over quantity.** You are assessed on each task's quality, not phase completion, code
-volume, commit count or checked-off items. The phase provides context; the assigned task is the
-work to finish. Break that work into smaller working steps where possible without inventing
-features to create steps. Complete and demonstrate one assigned task, then stop after its closure;
-do not automatically continue through the phase.
-
-## Shape
-
-```mermaid
-flowchart TD
-    S[0 Scope: supervisor] --> D[1 Design: supervisor]
-    D --> DR{Sequential simplicity + ownership reviews} --> DA[Supervisor locks design]
-    DA --> P[2 Plan: implementer]
-    P --> PR{Sequential simplicity + ownership reviews} --> PA[Supervisor approves plan]
-    PA --> I[3 Implement: same implementer]
-    I --> CR{Sequential simplicity/style + ownership reviews} --> RD[4 Ready to merge]
-    RD --> M[5 Merge, publish, deploy] --> A[6 Accept on default path] --> C[7 Closure]
-```
+- **Skills are a hard stop.** Each stage names its skills. Before starting, check that every one
+  can be invoked. If one is missing, stop and tell the operator; never substitute your own judgement,
+  another skill or a manual equivalent. Every subagent return names the skills it actually invoked.
+- **Microsoft prescribes; we don't invent.** Where .NET provides a facility, use it the way
+  Microsoft recommends (`csharp-expert` routes to the specialist, `microsoft-docs` grounds it). Where
+  our code already does it, reuse it. New code fills only a gap that neither covers.
+- **Decisions come from the spoke or the operator.** The task's spoke states the decisions. A
+  change that needs a decision the spoke doesn't make **STOPs**, and the reason is recorded verbatim
+  and taken to the operator. Never infer it from git history, deleted documents or a subagent's
+  suggestion.
+- **One row, one commit.** Work is a backlog of rows, each describable in one sentence and landable
+  in one green commit. Never batch rows; a big multi-issue diff is how slop gets in.
+- **Pin, then change.** Tests that pin what must not change are written first and pass on `HEAD`.
+  A deliberate behavior change gets its own labelled commit.
+- **Delete before add.** Remove the dead or duplicated path the change replaces in the same task.
+- **No net complexity.** The change is no more complex than what it replaces; the Check enforces it.
+- **The supervisor owns repo state and evidence.** Subagents never stash, reset, checkout, clean or
+  commit. A subagent's claim is not evidence: the supervisor reads the diff and runs the gates.
+- **Stay in scope.** Findings outside the row are listed, not fixed, and routed to the spoke or
+  backlog by name.
 
 ## Roles
 
 | Role | Persona | Does | Never |
 |---|---|---|---|
-| Supervisor | This document + [designer](../../personas/designer.md) | Investigates, writes design/planning docs, combines findings, approves, accepts. | Edits product code, delegates its decision, or treats a subagent's claim as evidence. |
-| Implementer | [implementer](../../personas/implementer.md) | Investigates, plans; after approval, makes only the approved change. | Edits before approval, broadens scope, approves or accepts its own work. |
-| Simplicity/style reviewer | [simplicity](../../personas/simplicity-reviewer.md) + [code style](../../personas/code-style-reviewer.md) | Independently checks simplicity at every review stage and code style at code review. | Authors the design/plan/code, edits, or approves. |
-| Ownership reviewer | [ownership](../../personas/ownership-reviewer.md) | Independently checks ownership at every review stage. | Authors the design/plan/code, edits, or approves. |
-
-## Team capacity
-
-Use **three subagent threads per bounded task**, in addition to the supervisor. Run **one subagent
-at a time**. Reuse each role's thread for investigation, its next stage, and every revision; resume
-or send a follow-up to that agent rather than spawning a replacement. Investigation is performed
-by the supervisor or the implementer; reviewers may gather facts for their independent checks.
-There is no separate investigator or designer launch. Do not give reviewers authorship to save a
-thread. Existing tasks may reuse eligible role agents already assigned to that task.
-
-This bounds both simultaneous work and new thread creation. Phase 70 hit `agent thread limit
-reached`, including a sequential fresh-review attempt; the exposed tools did not establish a way
-to release capacity. The exact limit is not assumed. Reuse avoids requiring another launch for
-every stage and correction; it does not prove a saturated session has recovered. If a required
-role cannot run, keep the approval gate open and checkpoint for a fresh session rather than
-substituting the supervisor for an independent reviewer.
+| Supervisor | this document | Selects the task, builds the backlog, fills prompts from it, verifies, commits, merges, accepts. | Edits product code, decides a design question the spoke leaves open, or accepts a claim without checking it. |
+| Lens | the stage's skills; [ownership](../../personas/ownership-reviewer.md) when placement is in question | Discovers, read-only, and returns a table. | Edits. |
+| Implementer | [implementer](../../personas/implementer.md) | Carves one row at a time; the same agent takes the next row of its group. | Commits, widens scope, or settles a decision by inference. |
+| Check | [simplicity](../../personas/simplicity-reviewer.md) + [code style](../../personas/code-style-reviewer.md) | Reviews the uncommitted diff, read-only: PASS or FAIL with evidence. | Authors or edits. |
 
 ## Persona rule
 
-Every subagent assignment includes the **full text** of each applicable persona file after its
-stage tag. A link is not enough: rules that live only in a linked file get skipped. Reviewers' per-check verdicts show every guardrail was
-covered; the supervisor as designer and the implementer list only the principles that changed a
-decision, and which.
+Every subagent assignment includes the **full text** of each persona it uses, after its stage tag.
+A link is not enough: rules that live only in a linked file get skipped.
 
 ## Stage tags
 
-Tag each **assignment**, including follow-ups, with `[<stage>:<role>:r<N>] <task>`; round 1
-may omit `r1`. Name the three threads for their stable task and role, not a new stage or round.
-A correction includes the latest complete artifact/diff, previous findings, and required changes.
-Every reviewer rechecks the current artifact against its full checklist; an earlier PASS is not
-carried forward as a current verdict. Do not ask a reviewer to check only the correction.
+Tag each assignment `[<stage>:<role>:r<N>] <task>`; round 1 may omit `r1`. Stages: `select`,
+`discover`, `pin`, `carve`, `verify`, `check`, `live`, `close`. Roles: `supervisor`, `lens`,
+`implementer`, `check`. Timing uses the assignment boundaries, per
+[task-timing](../../tools/task-timing/README.md).
 
-Stages: `investigate`, `design`, `review-design`, `plan`, `review-plan`, `implement`, `review-code`.
-Roles: `supervisor`, `implementer`, `simplicity`, `ownership`, `style`. At code review, the
-simplicity/style agent returns **two separate verdict tables**, one per persona. Timing uses
-explicit assignment start/end boundaries, including supervisor design, per
-[task-timing](../../tools/task-timing/README.md); thread lifetime is not stage duration.
+## Loop
 
-## Required loop
+| Stage | Who | Skills | Gate |
+|---|---|---|---|
+| 0. Select | supervisor | — | One task from the spoke, its decisions cited, a one-line `Done when`. Baseline recorded: `dotnet build -warnaserror` and `dotnet test` from each touched repo, failing tests listed. |
+| 1. Discover | lenses, parallel, read-only | `csharp-expert`, `microsoft-docs`; `dotnet-webapi`, `dotnet-aot-compat` or others where the area needs them | A backlog: one row per carve, with exact symbols and files, code to reuse, code to delete, and the Microsoft Learn page for any platform facility. Sequenced foundation-first. |
+| 2. Pin | implementer | `code-testing` | Tests pin the behavior the row must keep; they pass on `HEAD`. Reuse the repo's test harness; never copy it. |
+| 3. Carve | implementer | `csharp-refactoring` | The row's change only; builds with zero warnings; affected tests and pins pass. Not committed. |
+| 4. Verify | supervisor | — | `git status` shows only the carve. Full build `-warnaserror` and test suite: no failure added to the baseline; pins unchanged. |
+| 5. Check | check, read-only | `simplify`; `code-review` (low); `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
+| 6. Commit | supervisor | — | One row, one commit; the next row starts on a clean tree. |
+| 7. Live | supervisor | `run` | When the backlog is empty: the real CLI or service on the [default path](default-path-acceptance.md), with the action and observation recorded. |
+| 8. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the spoke's `_completed`; every touched repo on a clean, current `main`. |
 
-0. **Scope.** The supervisor records the user's requirement word for word, scope and non-goals,
-   `Done when`, default path, and applicable Security Architecture, Engineering Philosophy and UI
-   gates. User-visible work names
-   its reference images, viewports, owned slice, states, theme selector and light/dark token map;
-   other visible elements are deferred or omitted. Type-1 decisions go to the operator. The
-   supervisor or existing implementer checks what already works across the affected repos and
-   explains why any supporting change is needed for the request. Plans and reviewer suggestions
-   do not authorize extra work; ask the operator before expanding scope.
-1. **Design.** The supervisor applies the full designer persona and writes the design in the spoke,
-   naming each affected repo by absolute path from the
-   [README repository list](../../README.md#where-the-code-lives). The simplicity reviewer checks
-   it, then the ownership reviewer. The supervisor combines findings, revises, and obtains new
-   verdicts from those same reviewers before explicitly locking the design. Required types,
-   contracts and behavior must be defined; an open architecture, ownership, failure or visual
-   question blocks approval. Skip when the spoke already locks the design; record why.
-2. **Plan.** One implementer receives the plan assignment and does not edit. The simplicity and
-   ownership reviewers check the plan sequentially; the supervisor also checks compatibility,
-   security, Native AOT, default path and UI gates. Check that the exact dependency packages contain
-   the needed APIs, rather than assuming a published version includes newly merged source. The
-   supervisor then sends one combined correction (answered by a
-   revised plan, `plan:r2`) or explicit approval. A point failing twice returns to Design.
-3. **Implement.** The same implementer receives the approved plan and explicit `PLAN APPROVED`;
-   a deviation, including a visual mismatch, returns to the supervisor. The simplicity/style
-   reviewer checks both full checklists against the diff, then the ownership reviewer checks it.
-   The supervisor dismisses findings with a reason or returns them as one correction within the
-   approved plan (`implement:r2`); a fix outside the plan goes back to Plan.
-4. **Ready to merge.** The supervisor completes the readiness checklist below.
-5. **Merge, publish, deploy.** Before invoking a workflow, check its purpose and the exact artifact
-   it will use. Merge the product PRs (code, infrastructure, configuration) and
-   publish or deploy through the normal route, so the default path uses the real artifacts.
-6. **Accept.** The supervisor runs the default-path acceptance below. A failure is fixed through
-   this loop, not routed around.
-7. **Closure.** See [Closure](#closure).
+Native AOT is checked once, after the managed loop is stable, as the final artifact gate; not on
+every row. If previously passing code fails, compare the checkout, commands, dependencies and
+environment with the passing run before blaming the code.
 
-Documentation-only tasks are edited and validated by the supervisor; product design, plan and
-code-review stages, product tests/AOT, and default-path acceptance are N/A, explicitly recorded.
-They do not launch an unused product team for timing. Phase 50 moves follow their own protocol.
+Documentation-only tasks are edited and validated by the supervisor; the product stages are N/A
+and recorded as such.
 
-## Assignments
+## Prompts
 
-Each subagent assignment is its stage tag, the applicable persona's full text, then the task.
-Code review for the simplicity/style agent includes both full personas and requires both tables.
-The supervisor uses this design checklist itself:
+Fill every blank from the backlog row or the run header. Nothing invented.
 
+**Discover (one per lens):**
 ```text
-DESIGN — SUPERVISOR. Write design documentation only; do not edit product code.
-Read: [active spoke], [README of every touched component]
-Requirement: [word for word]
-Scope, non-goals, locked decisions: [...]
-Done when: [verbatim]
-Record the output defined in the designer persona.
+[discover:lens] Lens: {area}. Repo: {repo}  Branch: {branch}  Task: {task}. Read-only. Don't edit.
+Decisions (do not reopen): {spoke decisions for this task}
+Skills: invoke `csharp-expert` (it routes to the specialist){, plus {skills}}. Ground every
+platform facility in Microsoft Learn via `microsoft-docs`.
+Find what must change for {task}: existing code to reuse, code to delete, and where .NET already
+provides the facility. One prescription per row, never "A or B".
+Return ONLY a table: row | symbols (file:lines) | reuse | delete | Learn reference | needs a decision? (none | what)
+Name the skills you actually invoked.
 ```
 
+**Carve (one row):**
 ```text
-PLAN ONLY — do not create or modify any file until I approve the plan.
-Read: AGENTS.md, docs/design/default-path-acceptance.md, [active spoke], [component READMEs]
-Task: [bounded outcome and component fit]
-Scope and non-goals: [...]
-UI, if user-visible: [reference images, viewports, states, owned and omitted elements, theme
-selector, light/dark token map, contrast pairs]. Map every owned element; invent nothing.
-Done when: [verbatim]
-Return the plan output defined in the persona.
+[carve:implementer] {persona: implementer, full text}
+Repo: {repo}  Branch: {branch}
+Read and follow: {hub}/docs/design/code-style.md, {hub}/docs/design/engineering-philosophy.md
+Skills: `code-testing` for the pins, `csharp-refactoring` for the change.
+ROW #{n}: {row}
+  Symbols: {symbols}   Reuse: {reuse}   Delete: {delete}   Reference: {reference}
+  Next rows (stay out of their lane): {next rows}
+RULES: this row only; pin first, the pins pass on HEAD; if the row needs a decision the spoke
+doesn't make, STOP and report it verbatim; don't change repository state; zero warnings.
+RETURN ONLY: files changed · 3-5 line summary · skills invoked · build and test results ·
+behavior changed (none | what) · STOP reason (or none) · other issues noticed (not fixed)
 ```
 
+**Check (after Verify):**
 ```text
-REVIEW — READ-ONLY. Role: [simplicity | ownership | simplicity and code style] reviewer.
-Requirement: [word for word]
-Under review: [design text | plan text | branch and repos to diff]
-Check whether each change is needed for the requirement as well as correct.
-Return the output defined in each assigned persona, with evidence from the current artifact/code/diff.
+[check:check] {personas: simplicity-reviewer and code-style-reviewer, full text}
+Repo: {repo}. Read-only. Under review: the uncommitted diff for row #{n}: {row}
+Skills: invoke `simplify` and `code-review` (low){, and `security-review`}.
+Is the change no more complex than what it replaces, needed for this row, and free of a second
+path to anything? Return PASS or FAIL, each persona's verdict table with evidence from the diff,
+and for FAIL the smallest change that would make it PASS. Name the skills you invoked.
 ```
 
+## Records
+
+Per task, in the spoke's run folder or `_completed` file: the baseline, the backlog with rows ticked
+as committed, and one line per row:
+
 ```text
-[approved plan]
-PLAN APPROVED. Implement only this plan. Do not broaden scope or settle a new design question by
-inference; stop and report a material deviation. UI work matches the named references and uses the
-named theme and semantic tokens only, no component-local visual values. Return the completion
-summary with actual evidence. Do not mark the task complete.
+Row:      #{n} {row}
+Commit:   <sha>
+Skills:   <invoked>
+Verify:   build 0 warnings · tests <n passed> · no new failures vs baseline · pins unchanged
+Check:    PASS | FAIL → corrected → PASS
 ```
-
-**Completion summary** (implementer): task; what changed, per file; verification commands and
-results; positive and negative paths; principles that changed a decision; deviations; open
-questions; `Done when` evidence per condition.
-
-## Checklists
-
-**Ready to merge** — a named observation for each applicable item:
-
-Use non-AOT builds and tests during the local development cycle. Run Native AOT publish after
-implementation and managed checks have stabilized, as the final artifact gate; do not repeat it
-for every development iteration. A later source correction requires current-source final evidence.
-This changes verification timing, not the zero-warning or installed-default acceptance requirements.
-
-If previously passing code fails, compare the checkout, commands, dependencies and environment
-with the successful run before blaming the code. Record observed differences; do not label an
-unexplained failure a defect in the old code or ask the operator to waive it before investigating.
-
-- every code-review ⚠️ is fixed or dismissed with a reason;
-- only the approved scope changed, and component fit still holds;
-- public, wire, persistence, ownership, credential and failure boundaries match the design;
-- focused, full and Native AOT checks pass, with zero warnings;
-- UI work matches its references in a live browser check of the branch, at every owned viewport
-  and state, using theme tokens only, light and dark;
-- branch and commits meet the continuity protocol.
-
-**Accept** — after merge and publish or deploy:
-
-- the supervisor demonstrates the requested behavior on the published default path for every
-  user-visible, runtime, integration or deployment change
-  ([Default-Path Acceptance](default-path-acceptance.md)) and records the action and result;
-  merged code and passing helper tests alone do not establish completion, and controlled evidence
-  is labelled and never substituted;
-- packaged UI parity holds where applicable.
-
-## Closure
-
-1. Record the explicit stage-boundary table defined in
-   [task-timing](../../tools/task-timing/README.md), with every product PR. The end-to-end span starts
-   with scope and ends at the last product merge; report later acceptance separately.
-2. Put the table in the task's completion record, in the spoke docs PR that closes the task, and
-   merge it. That closure PR is not part of the product timing span.
-3. End every touched repo on a clean, current `main` with no task worktrees.
-
-A **documentation-only task** has no product PR: its timing ends at completed documentation
-validation. Include that boundary table and the N/A product gates in its one PR.
 
 The former [Claude/Codex workflow](claude-codex-workflow.md) is retired and grants no exception.
