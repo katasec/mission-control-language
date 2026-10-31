@@ -121,7 +121,7 @@ whole-phase installed and Native AOT gate is still in the backlog.
 | Invocation | `forge run <mission.mcl\|oci-ref> <prompt>` in a folder with `forge.project.json`; no Hands flag and no consent prompt. |
 | Reasoning | The cloud: a mission conversation in the Conversation Host, readable after the CLI exits. |
 | Authority | Hands decides each request. Root is the project folder; `ProjectWorkspace` profile (Read/Write/Edit), no terminal tools. |
-| Fallback | With no project file, `forge run <handle>` uses the one-shot hosted `ExecuteMission` path, with no conversation and no Hands. Phase 76 decision 4 deletes this fallback. |
+| No project | Without `--project` or `./forge.project.json`, `forge run` exits 1 with `Project file not found: <path>. Run \`forge project create\`.` before sign-in or any network call. There is no one-shot fallback and no `forge exec` (forge-mcl PR 84). |
 | Action / result | A real mission writes a file whose bytes are checked independently; an outside-root request is denied; the conversation, including its Hands request and result events, reads back through `GetConversation`. |
 
 ### `forge run` Hands default — Phase 73

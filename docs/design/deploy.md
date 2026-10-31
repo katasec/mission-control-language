@@ -136,15 +136,6 @@ plain non-interactive shell. Piping through `pwsh -NoLogo -Command "..."` explic
 it either. Root cause not fixed — if a session hits this, don't retry in a loop (diagnosed already);
 hand any needed shell/git commands to the user to run themselves.
 
-### pwsh mangles an unquoted leading `@` on native-command arguments
-
-Confirmed 2026-07-19: `forge exec @websearch "..."` fails in pwsh with a confusing "Required argument
-missing" from the CLI's own arg parser — pwsh consumes/mangles the bare `@websearch` token before it
-reaches the process. Works fine in bash/zsh. Workarounds: quote it (`"@websearch"`) or drop the `@`
-entirely (`forge exec websearch "..."` — the CLI strips a leading `@` if present, so both forms are
-equivalent; `websearch` is the form documented in `forge exec --help` specifically because pwsh is the
-default shell here). Not a forge bug — a native pwsh argument-passing quirk with `@`-prefixed tokens.
-
 ## Test before you ship (no prod auth needed)
 
 Verify locally against the browser preview tooling **before** cutting an image. Full loop + gotchas:

@@ -4,6 +4,22 @@ Evidence for the finished increments (forge-mcl PRs 79, 82 and 83). Decisions an
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
 
+## Require a project, delete forge exec
+
+**COMPLETE (2026-10-31).** forge-mcl [PR 84](https://github.com/katasec/forge-mcl/pull/84), the first
+task under the rewritten [supervisor workflow](../design/supervisor-workflow.md). Without `--project`
+or `./forge.project.json`, `forge run` exits 1 with `Project file not found: <path>. Run \`forge
+project create\`.` before sign-in or any network call. `forge exec`, `ForgeExec.cs`, the exec
+contracts, the `forge-exec` HTTP client and the exec-only tests are deleted (926 lines). Hosted
+catalog handles such as `vanilla` no longer resolve; a mission is a `.mcl` path or an OCI reference.
+
+| Check | Observation |
+|---|---|
+| Rows | Pin `70fc5dd` (endpoint tests moved to `project create`, passing on the old code first) · behavior `47ec723` · delete `099bbf0` (Check FAIL once: dead `HoldOpen` stub option; corrected) · docs `d667080` |
+| Tests | Build `-warnaserror` 0 warnings. `dotnet test --filter "Category!=Integration"`: 1114 passed; only the baseline `PipelineRunnerTests.MissingApiKey_ThrowsClearly` failed |
+| Live (branch build) | No project: exit 1, empty stdout, the message. `forge exec Noop hi`: "Unrecognized command or argument 'exec'". Scratch project: exit 0, `hands-check.txt` = `BRANCH_OK_BB750DB4` (`xxd`), `/etc/hosts` refused as outside the workspace roots, conversation `308961ea-6f4b-50af-b386-0102e87d4535` |
+| Skills | `csharp-expert`, `microsoft-docs` (discover); `code-testing` (pin); `csharp-refactoring` (carve); `simplify`, `code-review` low (check); `run` (live) |
+
 ## Hands by default increment
 
 **COMPLETE (2026-10-29).** forge-mcl [PR 83](https://github.com/katasec/forge-mcl/pull/83), merge
