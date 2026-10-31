@@ -3,27 +3,25 @@
 > Deferred work, design candidates, and external conditions. These items are **not active work**;
 > move one back to [plan.md](plan.md) only when it is deliberately selected.
 
-## Paused phases and later Phase 76 work (moved from plan.md 2026-10-29)
+## Paused phases (moved from plan.md 2026-10-29)
 
-The operator selected one item only: [Hands by default for `forge run`](phases/phase-76-unified-cloud-run.md#next-increment--hands-by-default-for-forge-run).
-These were active or queued before that and are paused, with their status as last recorded.
+Paused with their status as last recorded. Phase 76's own next steps are listed in its
+authoritative [spoke](phases/phase-76-unified-cloud-run.md#next-steps), not here.
 
 | Item | Status / pointer |
 |------|------------------|
 | [Phase 70 — TUI text interaction](phases/phase-70-tui-text-interaction.md) | Rich selection implementation is reviewed; merge, installed-artifact verification and operator manual acceptance remain. |
 | [Phase 71 — Chat project file paths](phases/phase-71-chat-project-file.md) | Operator accepted same-folder chats; Client/CLI merged and package published; formal default-path provenance pending. |
 | [Phase 72 — Supervisor comparison](phases/phase-72-supervisor-comparison.md) | Independent native runs verified; operator output review and further comparisons remain open. |
-| Phase 76 — named file inputs for `forge run` | After the Hands increment. Client 0.10.1 already has `UploadInputAsync` and named `Artifacts` on `SubmitAsync`; the CLI does not use them yet. [Phase 76](phases/phase-76-unified-cloud-run.md). |
-| Phase 76 — installed default-path acceptance and Native AOT | The final whole-phase gates, after the CLI work is complete. [Phase 76](phases/phase-76-unified-cloud-run.md). |
-| Run-specific Hands acknowledge in forge-client | Removes the rule that a run's mission must be declared as `<Mission>@1` in `forge.project.json`: today `AcknowledgeAsync` checks the pin against the chat declaration (`RequirePortablePin`). |
-| `forge chat` on the Hands-by-default rule | Chat still has `--hands` and a CLI consent prompt; move it to the same rule as `forge run` so both commands share one authorization owner (Hands). |
 
 ## Product and platform candidates
 
 | Item | Status / pointer |
 |------|------------------|
+| Runner isolation for code steps | Recorded 2026-10-31; needs its own focused session. A Runner `exec` step inherits the Runner's whole environment (provider API keys from Key Vault) through forge-mcl `ExecExpertRunner.cs:96-123`, can obtain the Runner's managed-identity token (`DefaultAzureCredential`, `SettlementEntryPoint.cs:34`), and shares the container with other users' runs; `Dockerfile.runner` sets no `USER`. Durable admission accepts `exec` from any package (`DurableMissionPackageValidator.cs:156`). Reference design: keep credentials out of wherever generated code runs, and run it in a separate sandbox ([Anthropic Managed Agents](https://www.anthropic.com/engineering/managed-agents); Azure Container Apps dynamic sessions is the reuse candidate). |
+| Registry login checks the token and switches the default | Deferred 2026-10-31. Today `forge registry login <host> --token` only saves the token under the host in `~/.forge/credentials.json`. |
+| forge-client publisher metadata guard | The publisher workflow's final metadata check failed on run 38139995534 for Client 0.10.1 (2026-10-11), although the package published correctly. Repair the guard; do not republish 0.10.1. |
 | Parallel Hands tool calls | Deferred by operator 2026-10-08. Extend Core's single-call pause/resume contract to correlated batches and let Hands order conflicting mutations; [Phase 73](phases/phase-73-forge-run-hands.md) delivers successive single calls only. |
-| Reconcile Forge Chat Hands paths | Operator identified duplicated plain/Hands chat paths as tech debt on 2026-10-08. Design one chat execution path when selected; outside the local-run change in [Phase 73](phases/phase-73-forge-run-hands.md). |
 | MXC underneath Hands | Future execution-containment backend, discussed 2026-10-08; assess the Microsoft .NET SDK within Bob's providers, including cancellation and Native AOT. [Phase 73](phases/phase-73-forge-run-hands.md) does not add MXC or terminal tools. |
 | CLI test assembly configuration | Found during [Phase 73](phases/phase-73-forge-run-hands.md): legacy reflection tests hard-code Debug `forge.dll`, while others use the test configuration. A complete Release suite collides on the same assembly identity. Reconcile test loading separately; current verification uses the normal full Debug suite plus Release build/AOT. |
 | Fast development cycles without AOT | Added2026-10-06 (Ameer). Assess a fast managed build/run/test loop so development iterations do not require or wait for AOT compilation. Reserve AOT for final verification and publishing after development is finished. Current local checks already use managed builds; assess interactive chat as well as the complete build/run/test feedback path. [Assessment context](evidence/phase-70/verification-report.md#future-assessment--development-checks-and-release-compilation); no current delivery gate change. |

@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-10-29)
+## Now (2026-10-31)
 
 | | |
 |---|---|
-| **NEXT STEP** | No work is selected. Hands by default for `forge run` is [complete](phases/phase-76-unified-cloud-run_completed.md#hands-by-default-increment); choose the next item from [backlog.md](backlog.md). |
+| **NEXT STEP** | No work is selected. Pick the next Phase 76 step from its [next steps](phases/phase-76-unified-cloud-run.md#next-steps), or an item from [backlog.md](backlog.md). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Durable `forge run` with Hands by default is complete; named file inputs and installed acceptance are in the backlog. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Intent re-decided 2026-10-31; durable `forge run` with Hands works; next steps not selected. |
 
 ## Design docs
 
