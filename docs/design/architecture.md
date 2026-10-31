@@ -222,7 +222,6 @@ Thin entry point. Reads `forge.toml` (via `ForgeTomlReader`), builds the runner 
 | `forge webui start/stop` | Start/stop Open WebUI connected to the agent |
 | `forge chat [--hands]` | Chat with the default Chat mission in the cloud (TUI on a terminal, line mode when piped); `--hands` lets it read, write and edit files in the project folder — see [How conversations work](how-conversations-work.md#4-clients-and-turns) |
 | `forge login` / `forge logout` / `forge whoami` | Sign in through the browser and store a platform key / remove it / show the signed-in user and credit balance |
-| `forge exec` | Run a hosted mission once and print the answer |
 | `forge claude` | Launch Claude Code talking to a forge mission |
 | `forge connect vscode` | Wire an editor's Claude Code extension to a forge mission |
 | `forge mcp` | Expose a mission as a stdio MCP server |
