@@ -1,6 +1,6 @@
 # Phase 77 — forge's own Anthropic client
 
-> **Status: Tasks 1–2 done 2026-11-02; tryAGI is out of forge (CLI v0.22.0), ChatClients 0.2.0 published.** Next: Task 3.
+> **Status: complete 2026-11-02.** tryAGI is out of forge (CLI v0.22.0) and the hosted runner (`forge-runner:0.22.0`); every Done-when item verified. Evidence: [completed](phase-77-anthropic-client_completed.md).
 
 ## Problem
 
@@ -210,7 +210,7 @@ cover them.
 |---|---|---|
 | 1 — `Katasec.Anthropic.Models` split + [type additions](#type-additions) + tests; publish 0.2.0 | oai-server-dotnet | done 2026-11-02: [PR 2](https://github.com/katasec/oai-server-dotnet/pull/2) merged `eb0d0dc`; publish [run 41379330917](https://github.com/katasec/oai-server-dotnet/actions/runs/41379330917) passed, `v0.2.0` released with all 4 packages, `Katasec.Anthropic.Models` 0.2.0 listed in GitHub Packages; build `-warnaserror` 0 warnings; tests 9 + 28 passed; actionlint exit 0; packed nuspec has no dependencies. Default path N/A (package only). `forge serve` tests on 0.2.0 run in Task 2. |
 | 2 — `AnthropicChatClient`, mapping, stream, error; delete tryAGI + `AnthropicTextStream`; Serve on AnthropicServer 0.2.0; ChatClients 0.2.0; Done-when 1–4 | forge-mcl | done 2026-11-02: [PR 86](https://github.com/katasec/forge-mcl/pull/86) merged `f8a8452`, CLI v0.22.0 released; [PR 87](https://github.com/katasec/forge-mcl/pull/87) fixed the stale package check (v0.22.1); ChatClients 0.2.0 published by [run 41387590538](https://github.com/katasec/forge-mcl/actions/runs/41387590538). **1:** `ChatClientsTests` 50 passed (existing Anthropic wire tests unchanged but the inner type; new `output_config` pin passed on tryAGI first; 4 tests cover the 7 behaviours); full suite 1,119 passed, 0 failed (env-dependent `MissingApiKey_ThrowsClearly` deleted by operator). **2:** 20 `forge serve` Anthropic endpoint tests pass on AnthropicServer 0.2.0 (AITools 0.2.0 too). **3:** `tryAGI.Anthropic` removed; dSYM `_Anthropic_Anthropic_` symbols 314,025 → 0. **4:** osx-arm64 publish, same laptop and command: 154,491,864 → 58,924,680 bytes; `IlcCompile` 416.8 → 51.1 s (the 356 s baseline was an earlier run); CI macOS build job 46 m 19 s ([run 41232468740](https://github.com/katasec/forge-mcl/actions/runs/41232468740)) → 3 m 47 s ([run 41383278375](https://github.com/katasec/forge-mcl/actions/runs/41383278375)), whole run 47 m → 5 m. Live (lower layer, not default path): plain, streamed and streamed-tool calls to `api.anthropic.com` with `claude-haiku-4-5-20251001` returned text, the tool call and usage; a bad model gave `… Details: model: …`. |
-| 3 — forge-runner ChatClients 0.2.0 bump + image; forge-infra image tag + `500-app`; Done-when 5 | forge-runner, forge-infra | not started (needs 2) |
+| 3 — forge-runner ChatClients 0.2.0 bump + image; forge-infra image tag + `500-app`; Done-when 5 | forge-runner, forge-infra | done 2026-11-02: runner 0.22.0 deployed; default path PASS (stream + ledger tokens, `--hands` read, too-long details). See [completed](phase-77-anthropic-client_completed.md#task-3--hosted-rollout-and-default-path-acceptance). |
 
 ### Skills per task — required, not optional
 
