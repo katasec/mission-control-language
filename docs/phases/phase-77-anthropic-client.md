@@ -211,10 +211,26 @@ cover them.
 | 2 — `AnthropicChatClient`, mapping, stream, error; delete tryAGI + `AnthropicTextStream`; Serve on AnthropicServer 0.2.0; ChatClients 0.2.0; Done-when 1–4 | forge-mcl | not started (needs 1) |
 | 3 — forge-runner ChatClients 0.2.0 bump + image; forge-infra image tag + `500-app`; Done-when 5 | forge-runner, forge-infra | not started (needs 2) |
 
-### Skills per task
+### Skills per task — required, not optional
 
-Load these before starting the task. `checkpoint` runs at the end of every session, as the repo
-rules require.
+Every skill listed for a task is a **prerequisite** for that task. Code written without the
+listed skills loaded is rejected as unreviewed slop, whatever its tests say. `checkpoint` runs at
+the end of every session, as the repo rules require.
+
+**Pre-check (first action of every task, before reading code or writing anything):**
+
+1. List the skills for the task from the table below.
+2. Confirm that each one is available in this session's skill list, then load each one.
+3. If any skill is missing or fails to load, **stop at once**. Do not start the task or attempt a
+   partial version. Report this error and nothing else:
+
+   ```text
+   Phase 77 Task <N> blocked: required skills missing: <skill>, <skill>.
+   Install or enable them, then restart the task.
+   ```
+
+4. Record the loaded skills in the task's PR description (`Skills loaded: …`). A reviewer rejects
+   a PR for this phase that lacks the line, or that names fewer skills than the table.
 
 | Task | Skill | Use it for |
 |---|---|---|
