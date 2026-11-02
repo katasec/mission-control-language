@@ -210,3 +210,25 @@ cover them.
 | 1 — `Katasec.Anthropic.Models` split + [type additions](#type-additions) + tests; publish 0.2.0 | oai-server-dotnet | not started |
 | 2 — `AnthropicChatClient`, mapping, stream, error; delete tryAGI + `AnthropicTextStream`; Serve on AnthropicServer 0.2.0; ChatClients 0.2.0; Done-when 1–4 | forge-mcl | not started (needs 1) |
 | 3 — forge-runner ChatClients 0.2.0 bump + image; forge-infra image tag + `500-app`; Done-when 5 | forge-runner, forge-infra | not started (needs 2) |
+
+### Skills per task
+
+Load these before starting the task. `checkpoint` runs at the end of every session, as the repo
+rules require.
+
+| Task | Skill | Use it for |
+|---|---|---|
+| 1 | `claude-api` | Exact Anthropic field names and shapes: `tool_choice`, tool results, cache usage, error body, SSE `error` event |
+| 1 | `csharp-refactoring` | Moving the types and JSON context into the new package and namespace without changing the server's behaviour |
+| 1 | `dotnet-aot-compat` | `IsAotCompatible` on the new package; every new type registered in `AnthropicJsonContext` |
+| 1 | `authoring-github-workflows` | Adding the models pack line to `publish.yml` |
+| 1 | `code-testing`, `run-tests` | Serialization tests for the added fields, and that the server's JSON output is unchanged |
+| 2 | `claude-api` | Request mapping, `tool_choice`, `output_config`, the streaming event order, thinking events, errors |
+| 2 | `dotnet-aot-compat` | Keeping zero trim/AOT warnings under `-warnaserror`, including tool-argument serialization |
+| 2 | `code-testing`, `run-tests` | The new `ChatClientsTests` cases in [Done when](#done-when) item 1, and the full existing suite |
+| 2 | `code-review` | Reviewing the diff before the PR, together with the [supervisor workflow](../design/supervisor-workflow.md) reviewers |
+| 3 | `run-tests` | forge-runner tests on ChatClients 0.2.0 |
+| 3 | `run` | Driving the installed `forge chat` and `forge chat --hands` for the default-path checks in [Done when](#done-when) item 5 |
+
+Task 3's deploy uses no skill. It uses only the forge-infra `make` targets (`500-app-what-if`, then
+`500-app`), following the [Deploy Runbook](../design/deploy.md).
