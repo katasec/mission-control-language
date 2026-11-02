@@ -6,8 +6,9 @@
 > file, this file wins. Evidence for finished work is in
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
-**Status (2026-10-31):** The intent was re-decided with the operator, one item at a time, and is
-locked below. What works today is listed with evidence. No next step is selected yet.
+**Status (2026-11-02):** The intent was re-decided with the operator, one item at a time, and is
+locked below. What works today is listed with evidence. Next: delete approved-mission pinning
+and `missions` (decision 2a).
 
 ## Intent
 
@@ -23,6 +24,7 @@ assume the folder they were started in is the one repository, Forge works across
 | 1a | The project file is `forge.project.json`, or `--project <file>`. |
 | 1b | Hands may touch only the folders listed in `folders`. A new project lists `"."`, the project folder, by default. A folder that is not listed is not reachable. An empty `folders` means no Hands access; there is no compatibility fallback, and existing local projects are edited by hand (operator, 2026-11-02). Both the run's workspace and the client Hands session use the declared roots. A relative path resolves against the first listed folder; an absolute path may target any listed folder (forge-mcl `WorkspaceGuard.TryResolve`). |
 | 2 | **One client execution path.** `forge chat` and `forge run` call the same forge-client code to open the project, create the conversation, attach Hands, submit and follow. They differ only as surfaces: chat renders in the TUI and keeps many turns on one conversation; run prints to the terminal and exits after one turn. No flag, mode, prompt or check exists in one and not the other. Any mission may run. The approved-mission pinning and the `missions` list are deleted, so the project file holds `projectId` and `folders` only. |
+| 2a | Deleting pinning is deletion only (operator, 2026-11-02). forge-client loses the mission version lifecycle (drafts, candidates, evaluation cases, publishing, Approved versions: `MissionVersionService`, `MissionAuthoringService` and their contracts), which existed only for forge-desktop; forge-desktop never worked and pins Client 0.1.0, so it is not changed. Reconnect loses its checks against `missions` (`RequireChatReference`, `RequirePortablePin`) and finds the conversation by the mission reference given; the Conversation Host's stored launch keeps a conversation on one mission. `ProjectDeclaration` loses `Missions` and `[JsonUnmappedMemberHandling(Disallow)]`, so an old file loads and `missions` is skipped. forge-mcl loses its `missions` uses and the chat APPROVED pill. Nothing is added. |
 | 3 | The client returns the complete turn: every expert step with its attempt number and output, Hands requests and results, errors, and the final answer, selected by the client. The caller decides what to show. Run prints the final answer to stdout unchanged (a trailing newline added) and diagnostics to stderr. The full record stays in the Conversation Host whatever is displayed. |
 | 4 | Every run needs a project file; without one, `forge run` fails with a clear message. `forge exec`, `--mode` and the stateless one-shot `ExecuteMission` path are deleted. One verbose flag renders the turn's detail to stderr. The conversation ID is printed to stderr. |
 | 5 | A mission package may contain arbitrary code (`exec`, `onnx` and similar) mixed with `llm` steps. Code steps run in the cloud Runner as part of the brain. Hands governs tool calls on the client only. Chat and run do not decide what may execute. There is no "contains code" marker; if one is ever needed, it is an OCI annotation. Scripts run through their interpreter (`python3 ocr.py`), so Forge carries no execute bit: the `Executable` asset flag is deleted. |

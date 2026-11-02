@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 76](phases/phase-76-unified-cloud-run.md): select its next steps. |
+| **NEXT STEP** | [Phase 76](phases/phase-76-unified-cloud-run.md): delete approved-mission pinning. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Intent re-decided 2026-10-31; durable `forge run` with Hands works; Hands limited to declared folders (1b); next steps not selected. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Intent re-decided 2026-10-31; durable `forge run` with Hands works; Hands limited to declared folders; deleting approved-mission pinning. |
 
 ## Design docs
 
