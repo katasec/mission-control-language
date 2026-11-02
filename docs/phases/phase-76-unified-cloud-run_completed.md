@@ -4,6 +4,30 @@ Evidence for the finished increments (forge-mcl PRs 79, 82 and 83). Decisions an
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
 
+## Hands reach only declared folders (1b)
+
+Decision 1b, locked 2026-11-02 with no compatibility fallback. forge-client
+[PR 16](https://github.com/katasec/forge-client/pull/16) (`f42d39c`): new projects write
+`folders: ["."]`; the client Hands session uses the declared roots; empty means no providers.
+Published `Katasec.Forge.Hands` 0.2.0 and `Katasec.Forge.Client` 0.11.0; both publish runs failed
+only their post-push visibility check, and both packages were then confirmed private, linked to
+`katasec/forge-client` and listed. forge-mcl [PR 88](https://github.com/katasec/forge-mcl/pull/88)
+(`7b74925`): `ForgeDurableRun` sends `ReadRunProject(projectFile).Workspace`; CLI v0.23.0 released.
+Tests: forge-client 320 passed, forge-mcl 1,119 passed, 0 warnings.
+
+| Fact | Observation |
+|---|---|
+| Artifact | `make install` from merged main: `0.22.1-dev.2+7b749252fb23b8399093277751e6e15de2cdcb24` |
+| Defaults | No endpoint override; saved login; current-directory `forge.project.json` |
+| Starting state | Disposable scratch project from `forge project create`, which wrote `"folders":["."]`; then `missions: ["HandsCheck@1"]` and `folders` edited per case; `outside.txt` in the project folder |
+| Action | `forge run ./mission.mcl "<token>"`: write `hands-check.txt`, then read `<project>/outside.txt` by absolute path |
+| Outcome | **PASS.** `["sub"]`: exit 0; `sub/hands-check.txt` = `FOLDERS_OK_3K9` (`xxd`), nothing in the project folder; `outside.txt` refused "outside the allowed workspace roots" (conversation `9e1a68ae-9124-5e31-9303-2dc8da1df4d4`). `[]`: exit 0, NoHands, no tools offered, no file written (conversation `40cb6000-a874-5f86-aea2-edcc39795f4e`). |
+
+Local projects with `folders: []` were edited to `["."]` by hand: `~/forge-hands-test`,
+`~/Forge/Projects/chat`, `~/progs/forge-hands-test`, `~/progs/fp-sample1`, `~/progs/fp-sample2`.
+`fp-sample1` is the `katasec/fp-sample1` repo; its working copy already differed from the committed
+sample, so nothing was committed there.
+
 ## Require a project, delete forge exec
 
 **COMPLETE (2026-10-31).** forge-mcl [PR 84](https://github.com/katasec/forge-mcl/pull/84), the first

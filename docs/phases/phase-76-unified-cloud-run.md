@@ -44,6 +44,7 @@ make, ask the operator; do not infer it from git history or from deleted documen
 | `forge run --project <file> <mission.mcl\|oci-ref> <prompt>` as a durable cloud conversation (PR 82) | [completed](phase-76-unified-cloud-run_completed.md#durable-run-increment) |
 | Hands on by default for that run, rooted at the project folder (PR 83), checked from `main` and on the installed binary | [completed](phase-76-unified-cloud-run_completed.md#hands-by-default-increment) |
 | Every run needs a project; `forge exec` and the one-shot path are deleted (PR 84), decision 4 except the verbose flag | [completed](phase-76-unified-cloud-run_completed.md#require-a-project-delete-forge-exec) |
+| Hands reach only the declared `folders`; new projects list `"."`; empty means no access (decision 1b; forge-client PR 16, forge-mcl PR 88, CLI v0.23.0) | [completed](phase-76-unified-cloud-run_completed.md#hands-reach-only-declared-folders-1b) |
 
 ## Gaps between the decisions and `main`
 
@@ -51,7 +52,6 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 
 | Decision | What `main` does instead |
 |---|---|
-| 1b | `ForgeDurableRun.cs:51` sends one root, the project folder, and ignores `folders`. forge-client `ProjectService.ReadRunProject` reads `folders` but nothing calls it. Project creation writes empty `folders` (`ProjectService.cs:155`). |
 | 2 | forge-client `RequirePortablePin` makes a run's mission be declared as `<Mission>@1`. Chat has `--hands`, a consent prompt and `ChatMode` choosing NoHands or ProjectWorkspace. `ForgeChat.cs` and `ForgeDurableRun.cs` each drive their own open, create, acknowledge and follow. Run builds its Hands policy with `ForgeChat.PolicyFor(true)` in the CLI. |
 | 3 | `ForgeDurableRun.cs:68` keeps the last `ParticipantMessage` of any kind; the TUI picks the final answer its own way. A failed run could print an intermediate step as the answer. |
 | 4 | No verbose flag. |
@@ -65,9 +65,9 @@ Native AOT and installed default-path acceptance of the whole phase come last.
 
 | Step | Decisions | Repositories |
 |---|---|---|
-| Delete approved-mission pinning and `missions`; project creation writes `folders: ["."]` | 1b, 2 | forge-client, forge-mcl |
+| Delete approved-mission pinning and `missions` | 2 | forge-client, forge-mcl |
 | One client turn call used by chat and run, final answer selected by the client; chat Hands always on; Hands policy out of the CLI | 2, 3 | forge-client, forge-mcl |
-| Hands roots from `folders`; the mission is told the absolute roots | 1b, 1c | forge-client, forge-mcl |
+| The mission is told the absolute roots | 1c | forge-client, forge-mcl |
 | Write config defaults on first use; `oci.endpoint` | 8 | forge-mcl |
 | Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
 | Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
