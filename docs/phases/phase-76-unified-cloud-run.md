@@ -21,8 +21,7 @@ assume the folder they were started in is the one repository, Forge works across
 | # | Decision |
 |---|---|
 | 1a | The project file is `forge.project.json`, or `--project <file>`. |
-| 1b | Hands may touch only the folders listed in `folders`. A new project lists `"."`, the project folder, by default. A folder that is not listed is not reachable. An empty `folders` means no Hands access; there is no compatibility fallback, and existing local projects are edited by hand (operator, 2026-11-02). Both the run's workspace and the client Hands session use the declared roots. |
-| 1c | The mission is told the absolute paths of the roots. A relative path resolves against the first listed folder; an absolute path may target any root (forge-mcl `WorkspaceGuard.TryResolve`, reused unchanged). This matches Codex `--add-dir` and the Claude Agent SDK `additionalDirectories`, except that the saved project list replaces "cwd plus extra folders". |
+| 1b | Hands may touch only the folders listed in `folders`. A new project lists `"."`, the project folder, by default. A folder that is not listed is not reachable. An empty `folders` means no Hands access; there is no compatibility fallback, and existing local projects are edited by hand (operator, 2026-11-02). Both the run's workspace and the client Hands session use the declared roots. A relative path resolves against the first listed folder; an absolute path may target any listed folder (forge-mcl `WorkspaceGuard.TryResolve`). |
 | 2 | **One client execution path.** `forge chat` and `forge run` call the same forge-client code to open the project, create the conversation, attach Hands, submit and follow. They differ only as surfaces: chat renders in the TUI and keeps many turns on one conversation; run prints to the terminal and exits after one turn. No flag, mode, prompt or check exists in one and not the other. Any mission may run. The approved-mission pinning and the `missions` list are deleted, so the project file holds `projectId` and `folders` only. |
 | 3 | The client returns the complete turn: every expert step with its attempt number and output, Hands requests and results, errors, and the final answer, selected by the client. The caller decides what to show. Run prints the final answer to stdout unchanged (a trailing newline added) and diagnostics to stderr. The full record stays in the Conversation Host whatever is displayed. |
 | 4 | Every run needs a project file; without one, `forge run` fails with a clear message. `forge exec`, `--mode` and the stateless one-shot `ExecuteMission` path are deleted. One verbose flag renders the turn's detail to stderr. The conversation ID is printed to stderr. |
@@ -67,7 +66,6 @@ Native AOT and installed default-path acceptance of the whole phase come last.
 |---|---|---|
 | Delete approved-mission pinning and `missions` | 2 | forge-client, forge-mcl |
 | One client turn call used by chat and run, final answer selected by the client; chat Hands always on; Hands policy out of the CLI | 2, 3 | forge-client, forge-mcl |
-| The mission is told the absolute roots | 1c | forge-client, forge-mcl |
 | Write config defaults on first use; `oci.endpoint` | 8 | forge-mcl |
 | Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
 | Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
