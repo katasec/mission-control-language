@@ -1,6 +1,6 @@
 # Phase 77 — forge's own Anthropic client
 
-> **Status: design locked 2026-11-02; no task started.** Next: Task 1.
+> **Status: Task 1 done 2026-11-02 (`Katasec.Anthropic.Models` 0.2.0 published).** Next: Task 2.
 
 ## Problem
 
@@ -65,10 +65,11 @@ flowchart LR
 | `AnthropicRequest` | `ToolChoice` (new `AnthropicToolChoice { Type, Name?, DisableParallelToolUse? }`) | `tool_choice` → `type`, `name`, `disable_parallel_tool_use` |
 | `AnthropicRequest` | `StopSequences` `List<string>?`, `Temperature` `float?`, `TopP` `float?`, `TopK` `int?` | `stop_sequences`, `temperature`, `top_p`, `top_k` |
 | `AnthropicRequest` | Make `Tools` nullable with WhenWritingNull, so a call without tools does not send `"tools":[]`. The server reads null as no tools. | `tools` |
+| `AnthropicRequest` | Add WhenWritingNull to the existing `System`, `Thinking` and `OutputConfig`, so the client never sends them as JSON `null` (operator, 2026-11-02, during Task 1). The server only reads requests, so its output is unchanged. | `system`, `thinking`, `output_config` |
 | `AnthropicContentBlock` | `ToolUseId` `string?`, `Content` `JsonElement?`, `IsError` `bool?` | `tool_use_id`, `content`, `is_error` |
 | `AnthropicUsage` | `CacheCreationInputTokens` `int?`, `CacheReadInputTokens` `int?` | `cache_creation_input_tokens`, `cache_read_input_tokens` |
 | new `AnthropicErrorResponse` | `Type`, `Error { Type, Message }` | `{"type":"error","error":{"type","message"}}` |
-| new `AnthropicStreamError` | `Type`, `Error` (same shape) | SSE `event: error` |
+| `AnthropicErrorResponse` (reused) | The same type also reads the SSE `event: error` data; there is no separate stream type (operator, 2026-11-02, during Task 1) | SSE `event: error` |
 | `AnthropicJsonContext` | Register every new type, plus `List<string>` and `List<AnthropicContentBlock>` (already present) | — |
 
 `AnthropicContentBlock.Text` defaults to `string.Empty`. The client must set it to `null` on
@@ -207,7 +208,7 @@ cover them.
 
 | Task | Repo | Status |
 |---|---|---|
-| 1 — `Katasec.Anthropic.Models` split + [type additions](#type-additions) + tests; publish 0.2.0 | oai-server-dotnet | not started |
+| 1 — `Katasec.Anthropic.Models` split + [type additions](#type-additions) + tests; publish 0.2.0 | oai-server-dotnet | done 2026-11-02: [PR 2](https://github.com/katasec/oai-server-dotnet/pull/2) merged `eb0d0dc`; publish [run 41379330917](https://github.com/katasec/oai-server-dotnet/actions/runs/41379330917) passed, `v0.2.0` released with all 4 packages, `Katasec.Anthropic.Models` 0.2.0 listed in GitHub Packages; build `-warnaserror` 0 warnings; tests 9 + 28 passed; actionlint exit 0; packed nuspec has no dependencies. Default path N/A (package only). `forge serve` tests on 0.2.0 run in Task 2. |
 | 2 — `AnthropicChatClient`, mapping, stream, error; delete tryAGI + `AnthropicTextStream`; Serve on AnthropicServer 0.2.0; ChatClients 0.2.0; Done-when 1–4 | forge-mcl | not started (needs 1) |
 | 3 — forge-runner ChatClients 0.2.0 bump + image; forge-infra image tag + `500-app`; Done-when 5 | forge-runner, forge-infra | not started (needs 2) |
 

@@ -8,14 +8,14 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 77](phases/phase-77-anthropic-client.md): start the first task. |
+| **NEXT STEP** | [Phase 77](phases/phase-77-anthropic-client.md): next task. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
 | [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Intent re-decided 2026-10-31; durable `forge run` with Hands works; next steps not selected. |
-| [77 — forge's own Anthropic client](phases/phase-77-anthropic-client.md) | Design locked 2026-11-02; replaces tryAGI.Anthropic; not started. |
+| [77 — forge's own Anthropic client](phases/phase-77-anthropic-client.md) | Design locked 2026-11-02; replaces tryAGI.Anthropic; in progress. |
 
 ## Design docs
 
