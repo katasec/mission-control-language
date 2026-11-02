@@ -15,7 +15,7 @@
 | Phase | Status |
 |---|---|
 | [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Intent re-decided 2026-10-31; durable `forge run` with Hands works; next steps not selected. |
-| [77 — forge's own Anthropic client](phases/phase-77-anthropic-client.md) | Design locked 2026-11-02; replaces tryAGI.Anthropic; in progress. |
+| [77 — forge's own Anthropic client](phases/phase-77-anthropic-client.md) | Replaces tryAGI.Anthropic; removed from the CLI 2026-11-02; hosted rollout next. |
 
 ## Design docs
 
