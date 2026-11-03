@@ -43,6 +43,7 @@ make, ask the operator; do not infer it from git history or from deleted documen
 
 | Increment | Evidence |
 |---|---|
+| **Cloud execution is done for both commands.** `forge chat` and `forge run` each run their mission in the cloud as a durable Conversation Host conversation. What remains is client code only: they reach it through different code paths (see Gaps, decision 2). Do not rebuild cloud execution. | Operator, 2026-11-03; chat `ReconnectAsync` (forge-mcl `ForgeChat.cs:192`), run `CreateSelectedAsync` (`ForgeDurableRun.cs:52`) |
 | `forge run --project <file> <mission.mcl\|oci-ref> <prompt>` as a durable cloud conversation (PR 82) | [completed](phase-76-unified-cloud-run_completed.md#durable-run-increment) |
 | Hands on by default for that run, rooted at the project folder (PR 83), checked from `main` and on the installed binary | [completed](phase-76-unified-cloud-run_completed.md#hands-by-default-increment) |
 | Every run needs a project; `forge exec` and the one-shot path are deleted (PR 84), decision 4 except the verbose flag | [completed](phase-76-unified-cloud-run_completed.md#require-a-project-delete-forge-exec) |
@@ -54,7 +55,7 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 
 | Decision | What `main` does instead |
 |---|---|
-| 2 | forge-client `RequirePortablePin` makes a run's mission be declared as `<Mission>@1`. Chat has `--hands`, a consent prompt and `ChatMode` choosing NoHands or ProjectWorkspace. `ForgeChat.cs` and `ForgeDurableRun.cs` each drive their own open, create, acknowledge and follow. Run builds its Hands policy with `ForgeChat.PolicyFor(true)` in the CLI. |
+| 2 | Both already run in the cloud; the gap is the client path. forge-client `RequirePortablePin` makes a run's mission be declared as `<Mission>@1`. Shared already: `OpenChatAsync`, `ForgeChat.AttachHandsAsync`, `ForgeChat.FollowTurnAsync`. Different: chat is fixed to `Chat`/`ChatHands`, reconnects (`ReconnectAsync`), asks Hands consent (`--hands`, `HandsAllowed`, `PolicyFor(mode.HasHands)`) and submits text; run prepares any mission (`PrepareSelectedPackageAsync`), creates a conversation (`CreateSelectedAsync`), has Hands always on (`PolicyFor(true)` in the CLI) and submits named inputs (checked 2026-11-03, forge-mcl `7b74925`). |
 | 3 | `ForgeDurableRun.cs:68` keeps the last `ParticipantMessage` of any kind; the TUI picks the final answer its own way. A failed run could print an intermediate step as the answer. |
 | 4 | No verbose flag. |
 | 5 | The `Executable` flag is carried by forge-client, the Host contract `DurableMissionAsset`, Core `DurableMissionAssetInput` and the Runner. |
