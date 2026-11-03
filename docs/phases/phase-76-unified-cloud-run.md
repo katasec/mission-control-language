@@ -6,8 +6,8 @@
 > file, this file wins. Evidence for finished work is in
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
-**Status (2026-11-04):** Chat and run share one client path (CLI v0.25.0). Next: pick one of the
-remaining steps below with the operator.
+**Status (2026-11-04):** Config defaults written on first use; `oci.endpoint` (CLI v0.26.0). Next:
+delete the `Executable` asset flag (decision 5).
 
 ## Intent
 
@@ -50,6 +50,7 @@ make, ask the operator; do not infer it from git history or from deleted documen
 | Hands reach only the declared `folders`; new projects list `"."`; empty means no access (decision 1b; forge-client PR 16, forge-mcl PR 88, CLI v0.23.0) | [completed](phase-76-unified-cloud-run_completed.md#hands-reach-only-declared-folders-1b) |
 | Pinning and `missions` deleted: the project file is `projectId` + `folders`, an old `missions` key is ignored, any mission runs (decisions 2, 2a; forge-client PRs 17–19, forge-mcl PR 89, CLI v0.24.0) | [completed](phase-76-unified-cloud-run_completed.md#delete-pinning-and-the-missions-list-step-1) |
 | One client path: chat and run open through `ProjectConversation` (`ContinueChatAsync` / `StartAsync`) and run turns through `RunTurnAsync`; the client picks the final answer; no `--hands`, consent or Chat/ChatHands split; local history for both (decisions 2, 2b, 2c, 3; forge-client PR 20, forge-mcl PR 90, CLI v0.25.0) | [completed](phase-76-unified-cloud-run_completed.md#one-client-path-for-chat-and-run-step-2) |
+| Config defaults on first use: `forge` adds missing `api.endpoint` and `oci.endpoint` to `~/.forge/config.json` and keeps present settings; `oci.endpoint` replaces the `OciBase` constant; an unwritable config stops `forge` at startup (decision 8; forge-mcl PR 91, CLI v0.26.0) | [completed](phase-76-unified-cloud-run_completed.md#config-defaults-on-first-use-decision-8) |
 
 ## Gaps between the decisions and `main`
 
@@ -59,7 +60,6 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 |---|---|
 | 4 | No verbose flag. |
 | 5 | The `Executable` flag is carried by forge-client, the Host contract `DurableMissionAsset`, Core `DurableMissionAssetInput` and the Runner. |
-| 8 | Nothing is written on first use; `oci.endpoint` does not exist. |
 
 ## Next steps
 
@@ -68,6 +68,5 @@ Native AOT and installed default-path acceptance of the whole phase come last.
 
 | Step | Decisions | Repositories |
 |---|---|---|
-| Write config defaults on first use; `oci.endpoint` | 8 | forge-mcl |
 | Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
 | Verbose flag renders the turn's detail | 3, 4 | forge-mcl |

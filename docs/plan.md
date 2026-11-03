@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 76](phases/phase-76-unified-cloud-run.md): pick the next step with the operator. |
+| **NEXT STEP** | [Phase 76](phases/phase-76-unified-cloud-run.md): delete the `Executable` asset flag. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Chat and run run in the cloud on one client path; any mission runs (CLI v0.25.0). |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Chat and run run in the cloud on one client path; any mission runs; config defaults (CLI v0.26.0). |
 
 ## Design docs
 

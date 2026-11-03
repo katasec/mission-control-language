@@ -4,6 +4,27 @@ Evidence for the finished increments. Decisions and open work are in
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
 
+## Config defaults on first use (decision 8)
+
+2026-11-04. forge-mcl [PR 91](https://github.com/katasec/forge-mcl/pull/91) (`c8ecfe4`), three rows,
+each passed Verify and Check: a pin that a fully qualified OCI reference ignores the base;
+`ForgeOciSettings` (`oci.endpoint`, default `ghcr.io/katasec`) replaces `OciBase` in `forge run`;
+`ForgeSettings.WriteDefaults` in `Program.BuildHost` adds missing defaults, keeps present settings,
+leaves a malformed file to the host's load error, and exits 1 with `error: Cannot update <path>:
+<reason>` when it cannot (operator, 2026-11-04). 1,108 passed, 0 warnings; AOT publish 0 IL
+warnings; CI green on four platforms; CLI v0.26.0 released.
+
+| Fact | Observation |
+|---|---|
+| Artifact | Release v0.26.0 `forge-osx-arm64.zip` (checksum OK): `0.26.0+c8ecfe4d28a198f3829f84d121eed1f8e6ca1480` |
+| No config file | `forge --help`, exit 0; `~/.forge/config.json` = `api.endpoint` `https://api.forge.katasec.com`, `oci.endpoint` `ghcr.io/katasec` |
+| Existing settings | Starting from `{ "theme": "dark" }`: theme kept, both endpoints added |
+| Second run | File unchanged (same checksum) |
+| Default path | `forge run ./scribe.mcl "Say ok."` in `~/Forge/Projects/p76-live-0127`: `conversation: 15fd70ba-0ada-5049-87d7-1a210b5ba177`, `Ok.` |
+
+Not checked live: the unwritable-config stop (unit-tested with a read-only `~/.forge` in the
+harness home).
+
 ## One client path for chat and run (step 2)
 
 Decisions 2, 2b, 2c and 3, 2026-11-04. Supervisor workflow; each row passed Verify and Check.
