@@ -112,6 +112,8 @@ behavior changed (none | what) · STOP reason (or none) · other issues noticed 
 [check:check] {personas: simplicity-reviewer, code-style-reviewer and ownership-reviewer, full text}
 Repo: {repo}. Read-only. Under review: the uncommitted diff for row #{n}: {row}
 Skills: invoke `simplify` and `code-review` (low){, and `security-review`}.
+Run every skill against {repo} only: work in {repo} and review `git -C {repo} diff HEAD`. State
+the repo and diff each skill reviewed; a skill result about any other repo does not count.
 Is the change no more complex than what it replaces, needed for this row, free of a second path
 to anything, and is each behaviour in the component the atlas says owns it (derive the owner
 before reading the diff)? Return PASS or FAIL, each persona's verdict table with evidence from the diff,
