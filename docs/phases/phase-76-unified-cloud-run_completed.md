@@ -4,6 +4,44 @@ Evidence for the finished increments. Decisions and open work are in
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
 
+## One client path for chat and run (step 2)
+
+Decisions 2, 2b, 2c and 3, 2026-11-04. Supervisor workflow; each row passed Verify and Check.
+
+- forge-client [PR 20](https://github.com/katasec/forge-client/pull/20) (`47072da`), rows C1–C10:
+  one files-only Hands policy in Client Runtime; one `Chat` mission with the agent-role
+  `Assistant` expert (ChatHands deleted); project create and run build their launch with one
+  `Launch`; a missing project names `forge project create`; the Hands driver moved in from the
+  CLI and reports failures instead of throwing; `ContinueChatAsync` / `StartAsync` share one open
+  step (session, local history, Hands) behind `ProjectConversation`; `RunTurnAsync(commandId, …)`
+  / `ResumeAsync` share one turn and the client picks the final answer; dispose stops following
+  without cancelling the turn; reconnect, project open, acknowledge and the public Hands service
+  deleted. Client 0.15.0, Contracts 0.6.0, Hands 0.4.0 published by `workflow_dispatch` from
+  `main` (all three listed; the post-publish visibility step failed as before). 153 tests passed,
+  0 warnings.
+- forge-mcl [PR 90](https://github.com/katasec/forge-mcl/pull/90) (`e3ca8a4`): M0 pinned run and
+  line-mode output; M1 moved run, line-mode chat and the TUI onto `ProjectConversation` and deleted
+  `--hands`, consent, the CLI Hands policy and driver and the CLI missing-project checks (net about
+  −500 lines; one commit because the new packages removed the old APIs). 1,096 passed, 0
+  warnings; CI green on four platforms; CLI v0.25.0 released.
+- Native AOT: the v0.25.0 release run generated native code on osx-arm64, linux-arm64, linux-x64
+  and win-arm64 with 0 trim or AOT warnings.
+
+| Fact | Observation |
+|---|---|
+| Artifact | Release v0.25.0 `forge-osx-arm64.zip` (checksum OK), installed to `~/.local/bin`: `0.25.0+e3ca8a4f9466b21138fc4fbe04926f33b12569b4` |
+| Defaults | No endpoint override; saved login; new project `~/Forge/Projects/p76-live-0127` from `forge project create` (`folders: ["."]`) |
+| Chat | `forge chat` (line mode): asked for `chat-proof.txt`; `Write chat-proof.txt → succeeded`, file holds `written by forge chat`; a second launch answered `chat-proof.txt` (same conversation) |
+| Run | `forge run ./scribe.mcl "Create a file named run-proof.txt…"` (mission not declared anywhere): exit 0 in 4 s; stdout the final answer; stderr `conversation: 03659665-11d0-509f-9b3e-a4a5b627bdaa`; file holds `written by forge run`; a second run made a new conversation |
+| Local history | `~/.forge/sessions/0b534815…/` holds the chat conversation and both run conversations |
+| No project | chat: `chat stopped: No forge.project.json found in the current directory. Run \`forge project create\` to create one.`; run: `run failed: ` + the same text |
+| `--hands` | `Unrecognized command or argument '--hands'.` |
+
+Accepted deviations: a missing project is reported after sign-in (and, for run, after the mission
+file is read); `Project: <home>` prints after the open; if a TUI send fails twice before Forge
+echoes it, it is reported as a failed send; Ctrl-C in the TUI's 250 ms reconnect gap does not
+cancel the turn. Not checked live: the TUI (unit-tested only).
+
 ## Delete pinning and the missions list (step 1)
 
 Decisions 2 and 2a, 2026-11-03. The project file holds `projectId` and `folders`; an old `missions`

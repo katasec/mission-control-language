@@ -6,8 +6,8 @@
 > file, this file wins. Evidence for finished work is in
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
-**Status (2026-11-03):** Pinning and the `missions` list are deleted; any mission runs (CLI v0.24.0).
-Next: one client path for chat and run (decisions 2, 2b, 2c, 3).
+**Status (2026-11-04):** Chat and run share one client path (CLI v0.25.0). Next: pick one of the
+remaining steps below with the operator.
 
 ## Intent
 
@@ -43,12 +43,13 @@ make, ask the operator; do not infer it from git history or from deleted documen
 
 | Increment | Evidence |
 |---|---|
-| **Cloud execution is done for both commands.** `forge chat` and `forge run` each run their mission in the cloud as a durable Conversation Host conversation. What remains is client code only: they reach it through different code paths (see Gaps, decision 2). Do not rebuild cloud execution. | Operator, 2026-11-03; chat `ReconnectAsync` (forge-mcl `ForgeChat.cs:192`), run `CreateSelectedAsync` (`ForgeDurableRun.cs:52`) |
+| **Cloud execution is done for both commands.** `forge chat` and `forge run` each run their mission in the cloud as a durable Conversation Host conversation. Do not rebuild cloud execution. | Operator, 2026-11-03 |
 | `forge run --project <file> <mission.mcl\|oci-ref> <prompt>` as a durable cloud conversation (PR 82) | [completed](phase-76-unified-cloud-run_completed.md#durable-run-increment) |
 | Hands on by default for that run, rooted at the project folder (PR 83), checked from `main` and on the installed binary | [completed](phase-76-unified-cloud-run_completed.md#hands-by-default-increment) |
 | Every run needs a project; `forge exec` and the one-shot path are deleted (PR 84), decision 4 except the verbose flag | [completed](phase-76-unified-cloud-run_completed.md#require-a-project-delete-forge-exec) |
 | Hands reach only the declared `folders`; new projects list `"."`; empty means no access (decision 1b; forge-client PR 16, forge-mcl PR 88, CLI v0.23.0) | [completed](phase-76-unified-cloud-run_completed.md#hands-reach-only-declared-folders-1b) |
 | Pinning and `missions` deleted: the project file is `projectId` + `folders`, an old `missions` key is ignored, any mission runs (decisions 2, 2a; forge-client PRs 17–19, forge-mcl PR 89, CLI v0.24.0) | [completed](phase-76-unified-cloud-run_completed.md#delete-pinning-and-the-missions-list-step-1) |
+| One client path: chat and run open through `ProjectConversation` (`ContinueChatAsync` / `StartAsync`) and run turns through `RunTurnAsync`; the client picks the final answer; no `--hands`, consent or Chat/ChatHands split; local history for both (decisions 2, 2b, 2c, 3; forge-client PR 20, forge-mcl PR 90, CLI v0.25.0) | [completed](phase-76-unified-cloud-run_completed.md#one-client-path-for-chat-and-run-step-2) |
 
 ## Gaps between the decisions and `main`
 
@@ -56,8 +57,6 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 
 | Decision | What `main` does instead |
 |---|---|
-| 2 | Both already run in the cloud; the gap is the client path. Shared already: `OpenChatAsync`, `ForgeChat.AttachHandsAsync`, `ForgeChat.FollowTurnAsync`. Different: chat is fixed to `Chat`/`ChatHands`, reconnects (`ReconnectAsync`, now matched on mission name), asks Hands consent (`--hands`, `HandsAllowed`, `PolicyFor(mode.HasHands)`) and submits text; run prepares any mission (`PrepareSelectedPackageAsync`), creates a conversation (`CreateSelectedAsync`), has Hands always on (`PolicyFor(true)` in the CLI) and submits named inputs (checked 2026-11-03, forge-mcl `7b74925`). |
-| 3 | `ForgeDurableRun.cs:68` keeps the last `ParticipantMessage` of any kind; the TUI picks the final answer its own way. A failed run could print an intermediate step as the answer. |
 | 4 | No verbose flag. |
 | 5 | The `Executable` flag is carried by forge-client, the Host contract `DurableMissionAsset`, Core `DurableMissionAssetInput` and the Runner. |
 | 8 | Nothing is written on first use; `oci.endpoint` does not exist. |
@@ -67,11 +66,8 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 Candidates, each about the size of PR 82 or 83. None is selected; pick them with the operator.
 Native AOT and installed default-path acceptance of the whole phase come last.
 
-
-
 | Step | Decisions | Repositories |
 |---|---|---|
-| One client turn call used by chat and run, final answer selected by the client; chat continues its conversation, run creates one; delete consent, `--hands` and the Chat/ChatHands split; project create makes the chat conversation Hands-capable; Hands policy out of the CLI | 2, 2b, 2c, 3 | forge-client, forge-mcl |
 | Write config defaults on first use; `oci.endpoint` | 8 | forge-mcl |
 | Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
 | Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
