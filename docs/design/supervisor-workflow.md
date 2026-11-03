@@ -35,9 +35,9 @@
 | Role | Persona | Does | Never |
 |---|---|---|---|
 | Supervisor | this document | Selects the task, builds the backlog, fills prompts from it, verifies, commits, merges, accepts. | Edits product code, decides a design question the spoke leaves open, or accepts a claim without checking it. |
-| Lens | the stage's skills; [ownership](../../personas/ownership-reviewer.md) when placement is in question | Discovers, read-only, and returns a table. | Edits. |
+| Lens | the stage's skills | Discovers, read-only, and returns a table. | Edits. |
 | Implementer | [implementer](../../personas/implementer.md) | Carves one row at a time; the same agent takes the next row of its group. | Commits, widens scope, or settles a decision by inference. |
-| Check | [simplicity](../../personas/simplicity-reviewer.md) + [code style](../../personas/code-style-reviewer.md) | Reviews the uncommitted diff, read-only: PASS or FAIL with evidence. | Authors or edits. |
+| Check | [simplicity](../../personas/simplicity-reviewer.md) + [code style](../../personas/code-style-reviewer.md) + [ownership](../../personas/ownership-reviewer.md) | Reviews the uncommitted diff, read-only: PASS or FAIL with evidence. | Authors or edits. |
 
 ## Persona rule
 
@@ -60,7 +60,7 @@ Tag each assignment `[<stage>:<role>:r<N>] <task>`; round 1 may omit `r1`. Stage
 | 2. Pin | implementer | `code-testing` | Tests pin the behavior the row must keep; they pass on `HEAD`. Reuse the repo's test harness; never copy it. |
 | 3. Carve | implementer | `csharp-refactoring` | The row's change only; builds with zero warnings; affected tests and pins pass. Not committed. |
 | 4. Verify | supervisor | — | `git status` shows only the carve. Full build `-warnaserror` and test suite with the baseline's filter: no failure added to the baseline; pins unchanged. |
-| 5. Check | check, read-only | `simplify`; `code-review` (low); `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
+| 5. Check | check, read-only | `simplify`; `code-review` (low); `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, each behaviour in the component the atlas says owns it, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
 | 6. Commit | supervisor | — | One row, one commit; the next row starts on a clean tree. |
 | 7. Live | supervisor | `run` | When the backlog is empty: the real CLI or service on the [default path](default-path-acceptance.md), with the action and observation recorded. |
 | 8. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the spoke's `_completed`; every touched repo on a clean, current `main`. |
@@ -109,11 +109,12 @@ behavior changed (none | what) · STOP reason (or none) · other issues noticed 
 
 **Check (after Verify):**
 ```text
-[check:check] {personas: simplicity-reviewer and code-style-reviewer, full text}
+[check:check] {personas: simplicity-reviewer, code-style-reviewer and ownership-reviewer, full text}
 Repo: {repo}. Read-only. Under review: the uncommitted diff for row #{n}: {row}
 Skills: invoke `simplify` and `code-review` (low){, and `security-review`}.
-Is the change no more complex than what it replaces, needed for this row, and free of a second
-path to anything? Return PASS or FAIL, each persona's verdict table with evidence from the diff,
+Is the change no more complex than what it replaces, needed for this row, free of a second path
+to anything, and is each behaviour in the component the atlas says owns it (derive the owner
+before reading the diff)? Return PASS or FAIL, each persona's verdict table with evidence from the diff,
 and for FAIL the smallest change that would make it PASS. Name the skills you invoked.
 ```
 
