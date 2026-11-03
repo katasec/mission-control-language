@@ -1,8 +1,40 @@
 # Phase 76 — Verified observations
 
-Evidence for the finished increments (forge-mcl PRs 79, 82 and 83). Decisions and open work are in
+Evidence for the finished increments. Decisions and open work are in
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
+
+## Delete pinning and the missions list (step 1)
+
+Decisions 2 and 2a, 2026-11-03. The project file holds `projectId` and `folders`; an old `missions`
+key is ignored; any mission runs.
+
+- forge-client [PR 17](https://github.com/katasec/forge-client/pull/17) (`3c30765`): deleted dead
+  code around pinning (version lifecycle, authoring, Desktop project model, old session layer);
+  8,542 lines removed, 426 added. Client 0.12.0, Contracts 0.3.0, Hands 0.3.0.
+- forge-client [PR 18](https://github.com/katasec/forge-client/pull/18) (`9a4ff01`): deleted
+  `Missions`, `Disallow`, `RequireChatReference`, `RequirePortablePin` and `ReconnectAsync`.
+  Published as Client 0.13.0 / Contracts 0.4.0, which forge-mcl cannot use: chat still needs
+  reconnect. Do not depend on those two versions.
+- forge-client [PR 19](https://github.com/katasec/forge-client/pull/19) (`ec9503a`): restored
+  `ReconnectAsync`, matched on project and mission name instead of `missions`. Client 0.14.0 and
+  Contracts 0.5.0 published by `workflow_dispatch` from `main`; both confirmed listed. Tags
+  `client-v0.14.0` and `client-contracts-v0.5.0` were pushed by mistake on `9a4ff01` and triggered
+  nothing; deleting them needs the operator.
+- forge-mcl [PR 89](https://github.com/katasec/forge-mcl/pull/89) (`aa2245e`): new packages; run's
+  "Declare `<Mission>@1`" refusal and the chat APPROVED pill deleted. CLI v0.24.0 released.
+- Tests: forge-client 138 passed; forge-mcl 1,116 passed (CI filter), 0 warnings;
+  `Published_client_creates_opens_and_reconnects_chat_against_current_core` passed on Client 0.14.0.
+
+| Fact | Observation |
+|---|---|
+| Artifact | Release v0.24.0 `forge-osx-arm64.zip` (checksum OK), installed to `~/.local/bin`: `0.24.0+aa2245ed840a07920661d1067c2f1cc47f761362` |
+| Defaults | No endpoint override; saved login; current-directory `forge.project.json` |
+| Starting state | `~/Forge/Projects/chat/forge.project.json` with `"missions": ["Chat@1", "ChatHands@1"]` and `folders: ["."]` |
+| Action | `forge run ~/progs/mission-control-language/missions/elevator-pitch/mission.mcl "an app that turns voice memos into tasks"` (mission `QuickPitch`, not declared) |
+| Outcome | **PASS.** Exit 0 in 32.6 s; the pitch printed to stdout; stderr `conversation: 54154aee-ee0c-5991-8285-19b1719bfa8f`; project file unchanged. |
+
+Not checked on the installed binary: `forge chat`.
 
 ## Hands reach only declared folders (1b)
 
