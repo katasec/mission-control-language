@@ -7,7 +7,7 @@
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
 **Status (2026-11-03):** Pinning and the `missions` list are deleted; any mission runs (CLI v0.24.0).
-Next: one client path for chat and run (decisions 2, 2b, 3).
+Next: one client path for chat and run (decisions 2, 2b, 2c, 3).
 
 ## Intent
 
@@ -25,6 +25,7 @@ assume the folder they were started in is the one repository, Forge works across
 | 2 | **One client execution path.** `forge chat` and `forge run` call the same forge-client code to open the project, create the conversation, attach Hands, submit and follow. They differ only as surfaces: chat renders in the TUI and keeps many turns on one conversation; run prints to the terminal and exits after one turn. No flag, mode, prompt or check exists in one and not the other. Any mission may run. The approved-mission pinning and the `missions` list are deleted, so the project file holds `projectId` and `folders` only. |
 | 2a | Deleting pinning is deletion only (operator, 2026-11-02). forge-client loses the mission version lifecycle (drafts, candidates, evaluation cases, publishing, Approved versions, submissions: `MissionVersionService`, `MissionAuthoringService`, `MissionSubmissionService`, the approval/evaluation calls on `MissionConversationService`, their contracts and tests) and the old Desktop project model (`obj/forge/project.state.json`, `ProjectManifest`, `ProjectService.Create`/`Open`/`Draft`/`SelectMission`, `ProjectContentService`, `MissionCatalog`, `RunHistoryService`, `ProjectMissionHistoryReader`). Both existed only for forge-desktop, which never worked and pins Client 0.1.0, so forge-desktop is not changed. The Hands execution tests stay; their setup moves to the existing portable attach helper. forge-mcl loses the chat APPROVED pill. Nothing is added. |
 | 2b | Conversations and Hands (operator, 2026-11-03; replaces the 2026-11-02 wording). `forge chat` continues the project's conversation, as it always has; `forge run` starts a new one each launch. That is the only step where they differ; everything after it is the shared path. Hands is not an option: it is always there, and `folders` is its only permission. There is no consent prompt, no `--hands`, and no Chat versus ChatHands split: chat runs one built-in mission named `Chat`, whose expert is the tool-capable one (today's `ChatHands` content). No mission name says "Hands"; Hands is default behaviour, not a mission feature (operator, 2026-11-03). `forge project create` creates the chat conversation Hands-capable from `folders`, the same rule as run (`CreateSelectedAsync`: roots present means ProjectWorkspace). Existing projects whose stored chat conversation is NoHands are deleted, not migrated. `ProjectDeclaration` loses `Missions` and `[JsonUnmappedMemberHandling(Disallow)]` (done, CLI v0.24.0). A missing project fails with a message naming `forge project create`, like `go run` outside a module. |
+| 2c | Shared turn and local history (operator, 2026-11-03). The shared path submits one turn and follows it until it ends; chat and run both call it. The TUI's long-lived stream (live text, sleep when idle, catch up on wake) stays display code in the CLI, built on the same forge-client event stream. The local history copy under `~/.forge/sessions` is written by the shared open step in forge-client (`ApplicationSessionService.BindChatAsync`), so chat and run both get it from one implementation, never a copy per command. |
 | 3 | The client returns the complete turn: every expert step with its attempt number and output, Hands requests and results, errors, and the final answer, selected by the client. The caller decides what to show. Run prints the final answer to stdout unchanged (a trailing newline added) and diagnostics to stderr. The full record stays in the Conversation Host whatever is displayed. |
 | 4 | Every run needs a project file; without one, `forge run` fails with a clear message. `forge exec`, `--mode` and the stateless one-shot `ExecuteMission` path are deleted. One verbose flag renders the turn's detail to stderr. The conversation ID is printed to stderr. |
 | 5 | A mission package may contain arbitrary code (`exec`, `onnx` and similar) mixed with `llm` steps. Code steps run in the cloud Runner as part of the brain. Hands governs tool calls on the client only. Chat and run do not decide what may execute. There is no "contains code" marker; if one is ever needed, it is an OCI annotation. Scripts run through their interpreter (`python3 ocr.py`), so Forge carries no execute bit: the `Executable` asset flag is deleted. |
@@ -66,13 +67,11 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 Candidates, each about the size of PR 82 or 83. None is selected; pick them with the operator.
 Native AOT and installed default-path acceptance of the whole phase come last.
 
-**Open before the one-path step:** when chat creates its own conversation (2b), which mission does
-`forge chat` run? Today it is fixed to `Chat`/`ChatHands` and reconnects to the conversation
-`forge project create` made. Not decided; ask the operator.
+
 
 | Step | Decisions | Repositories |
 |---|---|---|
-| One client turn call used by chat and run, final answer selected by the client; chat continues its conversation, run creates one; delete consent, `--hands` and the Chat/ChatHands split; project create makes the chat conversation Hands-capable; Hands policy out of the CLI | 2, 2b, 3 | forge-client, forge-mcl |
+| One client turn call used by chat and run, final answer selected by the client; chat continues its conversation, run creates one; delete consent, `--hands` and the Chat/ChatHands split; project create makes the chat conversation Hands-capable; Hands policy out of the CLI | 2, 2b, 2c, 3 | forge-client, forge-mcl |
 | Write config defaults on first use; `oci.endpoint` | 8 | forge-mcl |
 | Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
 | Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
