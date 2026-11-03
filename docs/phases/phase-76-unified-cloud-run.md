@@ -6,8 +6,8 @@
 > file, this file wins. Evidence for finished work is in
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
-**Status (2026-11-04):** Chat and run share one client path (CLI v0.25.0). Next: pick one of the
-remaining steps below with the operator.
+**Status (2026-11-04):** Config defaults written on first use; `oci.endpoint` (CLI v0.26.0). Next:
+delete the `Executable` asset flag (decision 5).
 
 ## Intent
 
@@ -31,7 +31,7 @@ assume the folder they were started in is the one repository, Forge works across
 | 5 | A mission package may contain arbitrary code (`exec`, `onnx` and similar) mixed with `llm` steps. Code steps run in the cloud Runner as part of the brain. Hands governs tool calls on the client only. Chat and run do not decide what may execute. There is no "contains code" marker; if one is ever needed, it is an OCI annotation. Scripts run through their interpreter (`python3 ocr.py`), so Forge carries no execute bit: the `Executable` asset flag is deleted. |
 | 6 | The Conversation Host owns durable state: the event log, mission content, input bytes and output files. The Runner keeps only temporary scratch and re-reads what it needs from the Host. This is the brain/session split in Anthropic's [Managed Agents design](https://www.anthropic.com/engineering/managed-agents). |
 | 7 | `forge run <mission> "<prompt>"` sends the prompt to the mission's one parameter, the same input chat sends each turn. Additional named inputs (`--input name=value`, `--input name=@file`) are built only when a mission in use needs them, through forge-client's existing `UploadInputAsync` and named `Artifacts`. |
-| 8 | On first use, `forge` writes `~/.forge/config.json` with its defaults and keeps settings already present. The file holds `api.endpoint` (default `https://api.forge.katasec.com`) and `oci.endpoint` (default `ghcr.io/katasec`), which replaces the `OciBase` constant in `ForgeDurableRun.cs`. A fully qualified OCI reference works without changing the default. |
+| 8 | On first use, `forge` writes `~/.forge/config.json` with its defaults and keeps settings already present. The file holds `api.endpoint` (default `https://api.forge.katasec.com`) and `oci.endpoint` (default `ghcr.io/katasec`), which replaces the `OciBase` constant in `ForgeDurableRun.cs`. A fully qualified OCI reference works without changing the default. If the file cannot be written, `forge` stops at startup with an error: it needs its config file (operator, 2026-11-04). |
 
 ## Not required
 
@@ -50,6 +50,7 @@ make, ask the operator; do not infer it from git history or from deleted documen
 | Hands reach only the declared `folders`; new projects list `"."`; empty means no access (decision 1b; forge-client PR 16, forge-mcl PR 88, CLI v0.23.0) | [completed](phase-76-unified-cloud-run_completed.md#hands-reach-only-declared-folders-1b) |
 | Pinning and `missions` deleted: the project file is `projectId` + `folders`, an old `missions` key is ignored, any mission runs (decisions 2, 2a; forge-client PRs 17–19, forge-mcl PR 89, CLI v0.24.0) | [completed](phase-76-unified-cloud-run_completed.md#delete-pinning-and-the-missions-list-step-1) |
 | One client path: chat and run open through `ProjectConversation` (`ContinueChatAsync` / `StartAsync`) and run turns through `RunTurnAsync`; the client picks the final answer; no `--hands`, consent or Chat/ChatHands split; local history for both (decisions 2, 2b, 2c, 3; forge-client PR 20, forge-mcl PR 90, CLI v0.25.0) | [completed](phase-76-unified-cloud-run_completed.md#one-client-path-for-chat-and-run-step-2) |
+| Config defaults on first use: `forge` adds missing `api.endpoint` and `oci.endpoint` to `~/.forge/config.json` and keeps present settings; `oci.endpoint` replaces the `OciBase` constant; an unwritable config stops `forge` at startup (decision 8; forge-mcl PR 91, CLI v0.26.0) | [completed](phase-76-unified-cloud-run_completed.md#config-defaults-on-first-use-decision-8) |
 
 ## Gaps between the decisions and `main`
 
@@ -59,7 +60,6 @@ Checked against the code on 2026-10-31, after forge-mcl PR 84.
 |---|---|
 | 4 | No verbose flag. |
 | 5 | The `Executable` flag is carried by forge-client, the Host contract `DurableMissionAsset`, Core `DurableMissionAssetInput` and the Runner. |
-| 8 | Nothing is written on first use; `oci.endpoint` does not exist. |
 
 ## Next steps
 
@@ -68,6 +68,5 @@ Native AOT and installed default-path acceptance of the whole phase come last.
 
 | Step | Decisions | Repositories |
 |---|---|---|
-| Write config defaults on first use; `oci.endpoint` | 8 | forge-mcl |
 | Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
 | Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
