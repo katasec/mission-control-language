@@ -4,17 +4,17 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-11-02)
+## Now (2026-11-03)
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 76](phases/phase-76-unified-cloud-run.md): delete approved-mission pinning. |
+| **NEXT STEP** | [Phase 76](phases/phase-76-unified-cloud-run.md): one client path for chat and run. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Intent re-decided 2026-10-31; durable `forge run` with Hands works; Hands limited to declared folders; deleting approved-mission pinning. |
+| [76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | Chat and run run in the cloud; any mission runs; chat and run still use different client paths. |
 
 ## Design docs
 
