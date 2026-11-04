@@ -4,6 +4,8 @@ Evidence for the finished increments. Decisions and open work are in
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
 
+Post-incident review of where the phase's time went: [phase-76-pir.md](phase-76-pir.md).
+
 ## Whole-phase check (2026-11-04)
 
 Installed CLI v0.30.0 (`0.30.0+68c0846`, checksum OK), saved login, default endpoints, new project
