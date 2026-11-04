@@ -6,8 +6,8 @@
 > file, this file wins. Evidence for finished work is in
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
-**Status (2026-11-04):** Config defaults written on first use; `oci.endpoint` (CLI v0.26.0). Next:
-delete the `Executable` asset flag (decision 5).
+**Status (2026-11-04):** Complete. Every decision is on `main` and accepted on the installed CLI
+(v0.30.0) on the default path; see the whole-phase check in the completed file.
 
 ## Intent
 
@@ -28,7 +28,7 @@ assume the folder they were started in is the one repository, Forge works across
 | 2c | Shared turn and local history (operator, 2026-11-03). The shared path submits one turn and follows it until it ends; chat and run both call it. The TUI's long-lived stream (live text, sleep when idle, catch up on wake) stays display code in the CLI, built on the same forge-client event stream. The local history copy under `~/.forge/sessions` is written by the shared open step in forge-client (`ApplicationSessionService.BindChatAsync`), so chat and run both get it from one implementation, never a copy per command. |
 | 3 | The client returns the complete turn: every expert step with its attempt number and output, Hands requests and results, errors, and the final answer, selected by the client. The caller decides what to show. Run prints the final answer to stdout unchanged (a trailing newline added) and diagnostics to stderr. The full record stays in the Conversation Host whatever is displayed. |
 | 4 | Every run needs a project file; without one, `forge run` fails with a clear message. `forge exec`, `--mode` and the stateless one-shot `ExecuteMission` path are deleted. One verbose flag renders the turn's detail to stderr. The conversation ID is printed to stderr. |
-| 5 | A mission package may contain arbitrary code (`exec`, `onnx` and similar) mixed with `llm` steps. Code steps run in the cloud Runner as part of the brain. Hands governs tool calls on the client only. Chat and run do not decide what may execute. There is no "contains code" marker; if one is ever needed, it is an OCI annotation. Scripts run through their interpreter (`python3 ocr.py`), so Forge carries no execute bit: the `Executable` asset flag is deleted. |
+| 5 | A mission package may contain arbitrary code (`exec`, `onnx` and similar) mixed with `llm` steps. Code steps run in the cloud Runner as part of the brain. Hands governs tool calls on the client only. Chat and run do not decide what may execute. There is no "contains code" marker; if one is ever needed, it is an OCI annotation. Scripts run through their interpreter (`python3 ocr.py`), so Forge carries no execute bit: the `Executable` asset flag is deleted. Removing it from the package hash changes the hash of every package that carries assets; that break is accepted, with no compatibility path. OCI extraction no longer applies the files' execute bits either (operator, 2026-11-04). Core keeps `DurableMissionAssetInput.Executable` as an ignored, documented-dead field: deleting it breaks the published Client binary that forge-mcl's CLI uses while it builds Core from source, so it goes when that cycle is fixed (operator, 2026-11-04). |
 | 6 | The Conversation Host owns durable state: the event log, mission content, input bytes and output files. The Runner keeps only temporary scratch and re-reads what it needs from the Host. This is the brain/session split in Anthropic's [Managed Agents design](https://www.anthropic.com/engineering/managed-agents). |
 | 7 | `forge run <mission> "<prompt>"` sends the prompt to the mission's one parameter, the same input chat sends each turn. Additional named inputs (`--input name=value`, `--input name=@file`) are built only when a mission in use needs them, through forge-client's existing `UploadInputAsync` and named `Artifacts`. |
 | 8 | On first use, `forge` writes `~/.forge/config.json` with its defaults and keeps settings already present. The file holds `api.endpoint` (default `https://api.forge.katasec.com`) and `oci.endpoint` (default `ghcr.io/katasec`), which replaces the `OciBase` constant in `ForgeDurableRun.cs`. A fully qualified OCI reference works without changing the default. If the file cannot be written, `forge` stops at startup with an error: it needs its config file (operator, 2026-11-04). |
@@ -51,22 +51,13 @@ make, ask the operator; do not infer it from git history or from deleted documen
 | Pinning and `missions` deleted: the project file is `projectId` + `folders`, an old `missions` key is ignored, any mission runs (decisions 2, 2a; forge-client PRs 17–19, forge-mcl PR 89, CLI v0.24.0) | [completed](phase-76-unified-cloud-run_completed.md#delete-pinning-and-the-missions-list-step-1) |
 | One client path: chat and run open through `ProjectConversation` (`ContinueChatAsync` / `StartAsync`) and run turns through `RunTurnAsync`; the client picks the final answer; no `--hands`, consent or Chat/ChatHands split; local history for both (decisions 2, 2b, 2c, 3; forge-client PR 20, forge-mcl PR 90, CLI v0.25.0) | [completed](phase-76-unified-cloud-run_completed.md#one-client-path-for-chat-and-run-step-2) |
 | Config defaults on first use: `forge` adds missing `api.endpoint` and `oci.endpoint` to `~/.forge/config.json` and keeps present settings; `oci.endpoint` replaces the `OciBase` constant; an unwritable config stops `forge` at startup (decision 8; forge-mcl PR 91, CLI v0.26.0) | [completed](phase-76-unified-cloud-run_completed.md#config-defaults-on-first-use-decision-8) |
+| No execute bit: Contracts, Core, OCI pull, forge-client and the Runner carry none; scripts run through their interpreter (decision 5; forge-conversations PRs 28–29, forge-mcl PRs 92–93, forge-client PR 21, forge-runner PR 32, Host 0.10.3, Runner 0.23.0) | [completed](phase-76-unified-cloud-run_completed.md#no-execute-bit-decision-5) |
+| `forge run --verbose` renders the turn to stderr (decisions 3, 4; forge-mcl PR 94, CLI v0.29.0) | [completed](phase-76-unified-cloud-run_completed.md#verbose-flag-decisions-3-and-4) |
 
 ## Gaps between the decisions and `main`
 
-Checked against the code on 2026-10-31, after forge-mcl PR 84.
-
-| Decision | What `main` does instead |
-|---|---|
-| 4 | No verbose flag. |
-| 5 | The `Executable` flag is carried by forge-client, the Host contract `DurableMissionAsset`, Core `DurableMissionAssetInput` and the Runner. |
+None (2026-11-04).
 
 ## Next steps
 
-Candidates, each about the size of PR 82 or 83. None is selected; pick them with the operator.
-Native AOT and installed default-path acceptance of the whole phase come last.
-
-| Step | Decisions | Repositories |
-|---|---|---|
-| Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
-| Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
+None. Follow-up work found during the phase is in the [backlog](../backlog.md).

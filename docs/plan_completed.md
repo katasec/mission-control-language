@@ -24,6 +24,7 @@ need to review historical decisions; a fresh agent orienting on "what's next" do
 
 | Phase | Description | Status |
 |-------|-------------|--------|
+| [Phase 76 — Unified cloud mission execution](phases/phase-76-unified-cloud-run.md) | `forge chat` and `forge run` on one client path; any local or OCI mission runs in the cloud; Hands from `folders`. | Verified 2026-11-04 on installed CLI v0.30.0; [whole-phase check](phases/phase-76-unified-cloud-run_completed.md#whole-phase-check-2026-11-04). |
 | [Phase 77 — forge's own Anthropic client](phases/phase-77-anthropic-client.md) | Replace tryAGI.Anthropic with an AOT-safe client on shared `Katasec.Anthropic.Models`. | Verified 2026-11-02; CLI 154.5 → 58.9 MB, macOS CI build 46 → 4 min; runner 0.22.0 deployed; [default-path evidence](phases/phase-77-anthropic-client_completed.md). |
 | [Phase 75 — Shared CLI merge releases](phases/phase-75-cli-merge-releases.md) | Portable Make/script builds, Git identities and semver releases on merge. | Verified 2026-10-08; PR71/PR72 merged, v0.10.0/v0.10.1 published; [four-host and default-artifact evidence](phases/phase-75-cli-merge-releases_completed.md). |
 | [Phase 74 — Responses provider integration](phases/phase-74-responses-provider.md) | Existing SDK Responses adapter and generic tool continuation; preserved code-writing comparison. | Verified 2026-10-08; PR70 merged; [native/default acceptance and session inventory](phases/phase-74-responses-provider_completed.md). |
