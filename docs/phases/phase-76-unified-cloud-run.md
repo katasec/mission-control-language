@@ -6,8 +6,8 @@
 > file, this file wins. Evidence for finished work is in
 > [phase-76-unified-cloud-run_completed.md](phase-76-unified-cloud-run_completed.md).
 
-**Status (2026-11-04):** Config defaults written on first use; `oci.endpoint` (CLI v0.26.0). Next:
-delete the `Executable` asset flag (decision 5).
+**Status (2026-11-04):** Complete. Every decision is on `main` and accepted on the installed CLI
+(v0.30.0) on the default path; see the whole-phase check in the completed file.
 
 ## Intent
 
@@ -51,22 +51,13 @@ make, ask the operator; do not infer it from git history or from deleted documen
 | Pinning and `missions` deleted: the project file is `projectId` + `folders`, an old `missions` key is ignored, any mission runs (decisions 2, 2a; forge-client PRs 17–19, forge-mcl PR 89, CLI v0.24.0) | [completed](phase-76-unified-cloud-run_completed.md#delete-pinning-and-the-missions-list-step-1) |
 | One client path: chat and run open through `ProjectConversation` (`ContinueChatAsync` / `StartAsync`) and run turns through `RunTurnAsync`; the client picks the final answer; no `--hands`, consent or Chat/ChatHands split; local history for both (decisions 2, 2b, 2c, 3; forge-client PR 20, forge-mcl PR 90, CLI v0.25.0) | [completed](phase-76-unified-cloud-run_completed.md#one-client-path-for-chat-and-run-step-2) |
 | Config defaults on first use: `forge` adds missing `api.endpoint` and `oci.endpoint` to `~/.forge/config.json` and keeps present settings; `oci.endpoint` replaces the `OciBase` constant; an unwritable config stops `forge` at startup (decision 8; forge-mcl PR 91, CLI v0.26.0) | [completed](phase-76-unified-cloud-run_completed.md#config-defaults-on-first-use-decision-8) |
+| No execute bit: Contracts, Core, OCI pull, forge-client and the Runner carry none; scripts run through their interpreter (decision 5; forge-conversations PRs 28–29, forge-mcl PRs 92–93, forge-client PR 21, forge-runner PR 32, Host 0.10.3, Runner 0.23.0) | [completed](phase-76-unified-cloud-run_completed.md#no-execute-bit-decision-5) |
+| `forge run --verbose` renders the turn to stderr (decisions 3, 4; forge-mcl PR 94, CLI v0.29.0) | [completed](phase-76-unified-cloud-run_completed.md#verbose-flag-decisions-3-and-4) |
 
 ## Gaps between the decisions and `main`
 
-Checked against the code on 2026-10-31, after forge-mcl PR 84.
-
-| Decision | What `main` does instead |
-|---|---|
-| 4 | No verbose flag. |
-| 5 | The `Executable` flag is carried by forge-client, the Host contract `DurableMissionAsset`, Core `DurableMissionAssetInput` and the Runner. |
+None (2026-11-04).
 
 ## Next steps
 
-Candidates, each about the size of PR 82 or 83. None is selected; pick them with the operator.
-Native AOT and installed default-path acceptance of the whole phase come last.
-
-| Step | Decisions | Repositories |
-|---|---|---|
-| Delete the `Executable` asset flag | 5 | forge-client, forge-conversations, forge-mcl, forge-runner |
-| Verbose flag renders the turn's detail | 3, 4 | forge-mcl |
+None. Follow-up work found during the phase is in the [backlog](../backlog.md).

@@ -4,6 +4,55 @@ Evidence for the finished increments. Decisions and open work are in
 the authoritative [Phase 76](phase-76-unified-cloud-run.md) file. Older evidence for slop-era work
 was deleted on 2026-10-31 with the documents it belonged to.
 
+## Whole-phase check (2026-11-04)
+
+Installed CLI v0.30.0 (`0.30.0+68c0846`, checksum OK), saved login, default endpoints, new project
+`~/Forge/Projects/p76-phase-0524` from `forge project create`. Native AOT: the v0.29.0 and v0.30.0
+release runs generated native code on four platforms with 0 trim or AOT warnings.
+
+| Check | Observation |
+|---|---|
+| `forge chat`, Hands writes a file | `Write chat.txt → succeeded`; file holds `phase check` |
+| `forge chat` continues | second launch answered `chat.txt` |
+| `forge run` local script mission | `count.mcl`, `count.py` mode 644, run by `python3` in the hosted Runner: `words=3`, exit 0 |
+| `forge run --verbose` | turn detail on stderr, `words=2` on stdout |
+| `forge run` published OCI mission | `forge run forge-mission-vanilla:0.2.0 "Reply with the single word: ok"` → `ok`, conversation `dc77d5a7-b9e6-5834-bc84-5de2b0015b30` |
+| No project / missing mission | one `run failed: …` line naming the cause |
+
+Two pre-existing faults surfaced and were fixed during the check:
+
+- ForgeAPI read `CreateMissionConversation` with Contracts 0.10.0, which predates package assets,
+  so it dropped them and the Host rejected the hash. No mission with its own script files had run on
+  the hosted path. forge-platform [PR 19](https://github.com/katasec/forge-platform/pull/19)
+  (Contracts 0.14.0; `GetMissionContent` stays unexposed because the Host has no read route),
+  ForgeAPI 0.8.1 deployed with `make 550-api` (revision `--0000015`, Healthy, 100% traffic).
+- OCI bundle extraction rejected standard tar directory entries, so no published OCI mission could
+  run. Reproduced locally with the real published layer and a fresh `tar`; forge-mcl
+  [PR 95](https://github.com/katasec/forge-mcl/pull/95): directory entries pass the same path rules
+  and are skipped (MissionRegistry 0.1.3, CLI v0.30.0).
+
+## Verbose flag (decisions 3 and 4)
+
+forge-mcl [PR 94](https://github.com/katasec/forge-mcl/pull/94) (`a86adc7`): `forge run --verbose`
+renders the turn's events to stderr with chat's line-mode formatter; stdout stays the final answer;
+without the flag output is unchanged (M0 pins). CLI v0.29.0.
+
+## No execute bit (decision 5)
+
+2026-11-04, operator calls: accept the asset-hash break; OCI pull carries no execute bit; two Core
+releases became one plus a dead field (`DurableMissionAssetInput.Executable`, ignored) because
+forge-mcl's CLI builds Core from source but uses the published Client.
+
+| Repo | PR | Published or deployed |
+|---|---|---|
+| forge-conversations | [28](https://github.com/katasec/forge-conversations/pull/28), [29](https://github.com/katasec/forge-conversations/pull/29) | Contracts 0.14.0; Host image 0.10.3 (`sha256:ab04e816…`) |
+| forge-mcl | [92](https://github.com/katasec/forge-mcl/pull/92), [93](https://github.com/katasec/forge-mcl/pull/93) | Core 0.1.9, MissionRegistry 0.1.2, CLI v0.28.0 |
+| forge-client | [21](https://github.com/katasec/forge-client/pull/21) | Client 0.16.0 |
+| forge-runner | [32](https://github.com/katasec/forge-runner/pull/32) | Runner image 0.23.0 |
+| forge-infra | [53](https://github.com/katasec/forge-infra/pull/53) | `make 525-conversation-app` (Host `--0000018`) and `make 500-app` (Runner `--0000049`), both Healthy at 100% after image-only what-if |
+
+Live proof: the script mission above (mode 644) ran in the hosted Runner through `python3`.
+
 ## Config defaults on first use (decision 8)
 
 2026-11-04. forge-mcl [PR 91](https://github.com/katasec/forge-mcl/pull/91) (`c8ecfe4`), three rows,
