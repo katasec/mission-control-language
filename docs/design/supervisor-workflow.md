@@ -12,6 +12,10 @@
 - **Skills are a hard stop.** Each stage names its skills. Before starting, check that every one
   can be invoked. If one is missing, stop and tell the operator; never substitute your own judgement,
   another skill or a manual equivalent. Every subagent return names the skills it actually invoked.
+- **Check and Live skills are this repo's copies** in [`skills/`](../../skills/), not a tool's
+  built-in skill of the same name: `simplify` = `code-simplification`, `code-review` =
+  `code-review-and-quality`, `security-review` = `security-and-hardening`, `run` = `run`. Read and
+  follow `{hub}/skills/<skill>/SKILL.md`; in Check, report findings and apply nothing.
 - **Microsoft prescribes; we don't invent.** Where .NET provides a facility, use it the way
   Microsoft recommends (`csharp-expert` routes to the specialist, `microsoft-docs` grounds it). Where
   our code already does it, reuse it. New code fills only a gap that neither covers.
@@ -47,7 +51,7 @@ A link is not enough: rules that live only in a linked file get skipped.
 ## Stage tags
 
 Tag each assignment `[<stage>:<role>:r<N>] <task>`; round 1 may omit `r1`. Stages: `select`,
-`discover`, `pin`, `carve`, `verify`, `check`, `live`, `close`. Roles: `supervisor`, `lens`,
+`preflight`, `discover`, `pin`, `carve`, `verify`, `check`, `commit`, `live`, `close`. Roles: `supervisor`, `lens`,
 `implementer`, `check`. Timing uses the assignment boundaries, per
 [task-timing](../../tools/task-timing/README.md).
 
@@ -55,15 +59,16 @@ Tag each assignment `[<stage>:<role>:r<N>] <task>`; round 1 may omit `r1`. Stage
 
 | Stage | Who | Skills | Gate |
 |---|---|---|---|
-| 0. Select | supervisor | — | One task from the spoke, its decisions cited, a one-line `Done when`. Baseline recorded: `dotnet build -warnaserror` and `dotnet test --filter "Category!=Integration"` from each touched repo, failing tests listed. |
-| 1. Discover | lenses, parallel, read-only | `csharp-expert`, `microsoft-docs`; `dotnet-webapi`, `dotnet-aot-compat` or others where the area needs them | A backlog: one row per carve, with exact symbols and files, code to reuse, code to delete, and the Microsoft Learn page for any platform facility. Sequenced foundation-first. |
-| 2. Pin | implementer | `code-testing` | Tests pin the behavior the row must keep; they pass on `HEAD`. Reuse the repo's test harness; never copy it. |
-| 3. Carve | implementer | `csharp-refactoring` | The row's change only; builds with zero warnings; affected tests and pins pass. Not committed. |
-| 4. Verify | supervisor | — | `git status` shows only the carve. Full build `-warnaserror` and test suite with the baseline's filter: no failure added to the baseline; pins unchanged. |
-| 5. Check | check, read-only | `simplify`; `code-review` (low); `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, each behaviour in the component the atlas says owns it, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
-| 6. Commit | supervisor | — | One row, one commit; the next row starts on a clean tree. |
-| 7. Live | supervisor | `run` | When the backlog is empty: the real CLI or service on the [default path](default-path-acceptance.md), with the action and observation recorded. |
-| 8. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the spoke's `_completed`; every touched repo on a clean, current `main`. |
+| 0. Select | supervisor | — | One task from the spoke, its decisions cited, a one-line `Done when`. |
+| 1. Preflight | supervisor | — | `dotnet build -warnaserror` and `dotnet test --filter "Category!=Integration"` pass in every touched repo. Any failure, flaky test or warning stops the task. Record it in `backlog.md` and report what was found on exit, so a person or a later agent can pick it up. |
+| 2. Discover | lenses, parallel, read-only | `csharp-expert`, `microsoft-docs`; `dotnet-webapi`, `dotnet-aot-compat` or others where the area needs them | A backlog: one row per carve, with exact symbols and files, code to reuse, code to delete, and the Microsoft Learn page for any platform facility. Sequenced foundation-first. |
+| 3. Pin | implementer | `code-testing` | Tests pin the behavior the row must keep; they pass on `HEAD`. Reuse the repo's test harness; never copy it. |
+| 4. Carve | implementer | `csharp-refactoring` | The row's change only; builds with zero warnings; affected tests and pins pass. Not committed. |
+| 5. Verify | supervisor | — | `git status` shows only the carve. Full build `-warnaserror` and test suite with Preflight's filter: no failures; pins unchanged. |
+| 6. Check | check, read-only | `simplify`; `code-review`; `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, each behaviour in the component the atlas says owns it, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
+| 7. Commit | supervisor | — | One row, one commit; the next row starts on a clean tree. |
+| 8. Live | supervisor | `run` | When the backlog is empty: the real CLI or service on the [default path](default-path-acceptance.md), with the action and observation recorded. |
+| 9. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the spoke's `_completed`; every touched repo on a clean, current `main`. |
 
 Tests marked `Category=Integration` call live services with real credentials, so no gate runs
 them; the Live stage is the live check.
@@ -111,7 +116,7 @@ behavior changed (none | what) · STOP reason (or none) · other issues noticed 
 ```text
 [check:check] {personas: simplicity-reviewer, code-style-reviewer and ownership-reviewer, full text}
 Repo: {repo}. Read-only. Under review: the uncommitted diff for row #{n}: {row}
-Skills: invoke `simplify` and `code-review` (low){, and `security-review`}.
+Skills: invoke `simplify` and `code-review`{, and `security-review`}.
 Run every skill against {repo} only: work in {repo} and review `git -C {repo} diff HEAD`. State
 the repo and diff each skill reviewed; a skill result about any other repo does not count.
 Is the change no more complex than what it replaces, needed for this row, free of a second path
@@ -122,14 +127,14 @@ and for FAIL the smallest change that would make it PASS. Name the skills you in
 
 ## Records
 
-Per task, in the spoke's run folder or `_completed` file: the baseline, the backlog with rows ticked
+Per task, in the spoke's run folder or `_completed` file: the Preflight result, the backlog with rows ticked
 as committed, and one line per row:
 
 ```text
 Row:      #{n} {row}
 Commit:   <sha>
 Skills:   <invoked>
-Verify:   build 0 warnings · tests <n passed> · no new failures vs baseline · pins unchanged
+Verify:   build 0 warnings · tests <n passed> · no failures · pins unchanged
 Check:    PASS | FAIL → corrected → PASS
 ```
 
