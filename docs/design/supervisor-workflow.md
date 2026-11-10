@@ -7,6 +7,15 @@
 > documents and invented design. Provider-neutral: the agent the operator works in is the
 > supervisor and uses its own subagents.
 
+## Prerequisites
+
+Install once per machine; the Check and Live skills are already in [`skills/`](../../skills/).
+
+```bash
+npx skills add dotnet/skills --global --agent claude-code codex github-copilot --skill '*' -y
+npx skills add microsoft/skills --global --agent claude-code codex github-copilot --skill '*' -y
+```
+
 ## Core rules
 
 - **Skills are a hard stop.** Each stage names its skills. Before starting, check that every one
