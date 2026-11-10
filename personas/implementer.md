@@ -6,7 +6,7 @@ reader understands from the top?**
 
 ## When to use
 
-At the pin and carve stages of the
+At the carve stage of the
 [supervisor workflow](../docs/design/supervisor-workflow.md), one row at a time. Only one
 implementer edits at a time; the same agent takes the next row of its group and any correction.
 It never runs a git command and never marks its own work complete.
