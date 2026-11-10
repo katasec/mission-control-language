@@ -9,7 +9,8 @@
 
 ## Prerequisites
 
-Install once per machine; the Check and Live skills are already in [`skills/`](../../skills/).
+All skills are plain `SKILL.md` files that work in any agent. Install once per machine; the Check
+and Live skills are already in [`skills/`](../../skills/).
 
 ```bash
 npx skills add dotnet/skills --global --agent claude-code codex github-copilot --skill '*' -y
@@ -125,7 +126,8 @@ behavior changed (none | what) · STOP reason (or none) · other issues noticed 
 ```text
 [check:check] {personas: simplicity-reviewer, code-style-reviewer and ownership-reviewer, full text}
 Repo: {repo}. Read-only. Under review: the uncommitted diff for row #{n}: {row}
-Skills: invoke `simplify` and `code-review`{, and `security-review`}.
+Skills: read and follow {hub}/skills/code-simplification/SKILL.md and
+{hub}/skills/code-review-and-quality/SKILL.md{, and {hub}/skills/security-and-hardening/SKILL.md}.
 Run every skill against {repo} only: work in {repo} and review `git -C {repo} diff HEAD`. State
 the repo and diff each skill reviewed; a skill result about any other repo does not count.
 Is the change no more complex than what it replaces, needed for this row, free of a second path
