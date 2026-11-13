@@ -4,21 +4,23 @@
 > [plan_completed.md](plan_completed.md); deferred candidates and external conditions are in
 > [backlog.md](backlog.md). Neither is part of the current plan.
 
-## Now (2026-11-03)
+## Now (2026-11-14)
 
 | | |
 |---|---|
-| **NEXT STEP** | Pick the next phase with the operator (Phase 76 is complete). |
+| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): product doc written; next, the cleanup audit of every Forge repo. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
+| [Phase 79 — Product focus](phases/phase-79-product-focus.md) | Designing: product doc first, then cleanup audit, deletion and deslop. |
 
 ## Design docs
 
 | Doc | Description |
 |-----|-------------|
+| [Product](design/product.md) | What Forge is, the loop, stage 1, and the test for every keep/delete decision. |
 | [How conversations work](design/how-conversations-work.md) | Current conversation design reference. |
 | [Backlog](backlog.md) | Deferred candidates, paused work, and external conditions. |
 | [Completed / Resolved Archive](plan_completed.md) | Verified completed work and superseded plans. |
