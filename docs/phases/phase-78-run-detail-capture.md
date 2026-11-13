@@ -12,6 +12,32 @@ their own runs: steps, model calls, tool calls, the Hands output, expert handoff
 totals. Nothing is sampled and nothing is dropped. OpenTelemetry stays an optional operator export,
 fed from the same points.
 
+## Mockups (high-level reference, not final)
+
+Shared by the operator on 2026-11-14 to show the intended flow: Discuss → Missions → Prepare run →
+Runs → run detail → Jobs detail. They are references for this phase, **not** the binding visual
+reference that [Q1](#5-open-questions) asks for. The Jobs detail screen (7) is the one this phase
+captures data for.
+
+| # | Screen | Image |
+|---|---|---|
+| 1 | Discuss: chat and work item draft | [1-discuss.webp](../images/phase-78/1-discuss.webp) |
+| 2 | Missions list | [2-missions.webp](../images/phase-78/2-missions.webp) |
+| 3 | Prepare run | [3-prepare-run.webp](../images/phase-78/3-prepare-run.webp) |
+| 4 | Runs, grouped by status | [4-runs.webp](../images/phase-78/4-runs.webp) |
+| 5 | Run that needs input | [5-run-needs-input.webp](../images/phase-78/5-run-needs-input.webp) |
+| 6 | Run ready for review | [6-run-ready-for-review.webp](../images/phase-78/6-run-ready-for-review.webp) |
+| 7 | Jobs detail: turns, expert messages, Hands output, tool calls | [7-jobs-detail.webp](../images/phase-78/7-jobs-detail.webp) |
+
+![Jobs detail](../images/phase-78/7-jobs-detail.webp)
+
+**Out of scope here, to be managed later:** the mockups also show things this phase does not
+capture: run control (Pause/Stop), human decisions (the "Decision needed" card, captured decisions,
+the source discussion), acceptance criteria and their verification results, commits and pull
+requests, and a "needs your input" run status. They also leave open what a "phase" is (turn 03 on
+screen 7 spans three experts), use different phase lists on different screens, and say both "Runs"
+and "Jobs".
+
 ## Live evidence (2026-11-10)
 
 Installed CLI `0.30.0+68c0846`, default endpoint, a fresh project at
