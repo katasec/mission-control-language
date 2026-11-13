@@ -31,7 +31,7 @@ Summary; the authoritative version is [product.md](../design/product.md).
 
 | # | Step | Done when | Status |
 |---|---|---|---|
-| 1 | **Product doc**: the loop, the fundamentals, the focused UX, what is in and out | `docs/design/product.md` merged and linked from `plan.md`; every open question below answered | Written: [product.md](../design/product.md); done once merged |
+| 1 | **Product doc**: the loop, the fundamentals, the focused UX, what is in and out | `docs/design/product.md` merged and linked from `plan.md`; every open question below answered | Done: [product.md](../design/product.md), merged with this phase spoke |
 | 2 | **Cleanup audit**, read-only: every Forge repo's code, tests and docs marked keep / delete / unsure against the product doc, with a reason; includes `backlog.md` | One table per repo, recorded in this spoke | Pending |
 | 3 | **Operator approval** of the audit; every "unsure" row decided | Approved tables in this spoke | Pending |
 | 4 | **Delete**: one PR per repo, local-only code first. Delete rather than archive; git history is the archive | Each repo's PR merged with its build and tests green | Pending |
