@@ -13,6 +13,36 @@ Per repo: forge-mcl 29–36%, forge-rooms 29–~55%, forge-platform 31–33%, fo
 forge-infra 25%, forge-client 6%, forge-conversations 4%. This repo: ~92% of doc lines go.
 Deslop (step 6) is expected to cut a further 10–20% of what survives (estimate, not measured).
 
+## GitHub Actions impacts
+
+Every workflow in the Forge repos, checked 2026-11-14 against the agreed deletes. Goal: keep every
+remaining workflow working, not improve it. Each repo's delete PR updates its rows here and proves
+them.
+
+| Repo | Workflow | Impact | Action in that repo's delete |
+|---|---|---|---|
+| forge-mcl | `publish-terminal-extensions-package.yml` | Publishes a deleted package | Delete workflow (package deprecated in step 5) |
+| forge-mcl | `publish-docker-package.yml` | Publishes a deleted package (D1) | Delete workflow |
+| forge-mcl | `publish-serve-package.yml` | Publishes a deleted package (D1) | Delete workflow |
+| forge-mcl | `release.yml` | Builds the CLI; has Exec probe steps and probe evidence upload (D4) | Remove probe steps; keep `libonnxruntime` (ONNX kept); prove by a CLI release run |
+| forge-mcl | `publish-{core,parser,chatclients,missionregistry,scout}-package.yml` | Test filters name namespaces; none deleted | No change; prove the next publish passes |
+| forge-mcl | — | **No PR CI exists** | Proof is the local build, full tests and AOT publish (`scripts/build.ps1`) |
+| forge-client | `ci.yml` | Builds and tests the whole solution | Must stay green on the delete PR |
+| forge-client | `publish-{client,client-contracts,hands}-package.yml` | Always-failing visibility step (already agreed to remove) | Remove that step; prove one publish run |
+| forge-conversations | `publish-conversations-packages.yml` | Packs `ConversationPresentation` (deleted) | Remove the Presentation pack and verify lines |
+| forge-platform | `forge-api-image.yml`, `billing-image.yml` | Build the images; API A deletion changes the ForgeAPI image | Prove one image build |
+| forge-platform | `publish-billing{,-contracts}-package.yml` | No impact | None |
+| forge-rooms | `forge-ui-image.yml` | Builds `Dockerfile.forgeui`, which includes the Rooms projects and the migration bundle | Update Dockerfile and slnx with the Rooms deletion; prove one image build |
+| forge-runner | `forge-runner-image.yml` | Image changes (no `missions/`, no tesseract/poppler); a comment mentions Rooms | Prove one image build (two arch) and the process-hosting probe |
+| forge-runner | `forge-runner-nuget.yml` | Packs the `Katasec.Forge.Runner` host package (deleted) | Remove that pack; keep Contracts |
+| forge-infra | `infra-validate.yml` | Compiles the kept Bicep layers | Must stay green after Kind removal |
+| forge-infra | `infra-deploy.yml` | Manual deploy; no deleted layer in its options | None |
+| mission-control-language | — | No workflows | None |
+
+Not fixed here (would be optimizing): forge-mcl's publish workflows share the always-failing
+visibility step (backlog row "Publish workflow final check"); forge-platform has no PR test
+workflow.
+
 ## How to read
 
 - **KEEP (trim)** = keep the component, but remove the parts listed.
