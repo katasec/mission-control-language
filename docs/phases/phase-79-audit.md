@@ -5,11 +5,28 @@
 > of 2026-11-14. Nothing has been deleted. "Inferred" = no caller found, not proven. This file is
 > active work: it is deleted when step 4 is done.
 
+## Size
+
+Whole files and folders only (in-file trims not counted), measured 2026-11-14:
+~23,500 of ~101,800 code lines in clear deletes (23%), ~27,000–30,000 with D1 and D4 (~30%).
+Per repo: forge-mcl 29–36%, forge-rooms 29–~55%, forge-platform 31–33%, forge-runner ~30%,
+forge-infra 25%, forge-client 6%, forge-conversations 4%. This repo: ~92% of doc lines go.
+Deslop (step 6) is expected to cut a further 10–20% of what survives (estimate, not measured).
+
 ## How to read
 
 - **KEEP (trim)** = keep the component, but remove the parts listed.
 - **UNSURE** rows map to a numbered decision in [Decisions needed](#decisions-needed).
 - Rows are grouped by folder or project, not per file.
+
+## Review progress (step 3)
+
+Walked through per repo with the operator, one question at a time.
+
+| Repo | Clear deletes | Notes |
+|---|---|---|
+| forge-mcl | **Agreed** (2026-11-14) | ONNX kept; D1 delete (incl. Serve, Docker); D4 yes |
+| forge-client | **Agreed** (2026-11-14) | Local history copy deleted (a recorder export can replace it later); D2, D3 still open |
 
 ## Decisions needed
 
@@ -18,10 +35,10 @@ with that decision.
 
 | # | Decision | Rows it settles | Answer |
 |---|---|---|---|
-| D1 | Do the local-runtime commands stay: `forge serve`, `forge claude`, `forge connect vscode` (and the `/v1` wire doors behind them)? MCP already covers "Forge inside the user's own agent". | forge-mcl Serve/claude/connect, MissionServerFactory, EnrichmentCache, ForgeMission.Docker, agent/webui, Dockerfile; runner MissionDoorClient, RunnerRegistry, MemberIdHeader; platform WireProxy + `/v1`; this repo's agents/, clients/python, README sections, Phase 42.x | — |
+| D1 | Do the local-runtime commands stay: `forge serve`, `forge claude`, `forge connect vscode` (and the `/v1` wire doors behind them)? MCP already covers "Forge inside the user's own agent". | forge-mcl Serve/claude/connect, MissionServerFactory, EnrichmentCache, ForgeMission.Docker, agent/webui, Dockerfile; runner MissionDoorClient, RunnerRegistry, MemberIdHeader; platform WireProxy + `/v1`; this repo's agents/, clients/python, README sections, Phase 42.x | **Delete** (operator, 2026-11-14). Every row marked D1 becomes DELETE. Also deleted: the `ForgeMission.Serve` library (`Katasec.Forge.Mcl.Serve`) and its server tests, because its only consumers are `forge serve` and the runner's `/v1` doors; `ForgeMission.Docker` (only other consumer is the archived forge-desktop). `MissionServerBuilder` stays, trimmed, because `forge mcp` uses it. |
 | D2 | `forge project create`: only write `forge.project.json`, or keep creating a hosted Chat conversation? | client StarterChatLaunch, StarterMissions, ChatProjectCreationTests; CLI output "Run `forge chat`" | — |
 | D3 | Keep Hands crash recovery (`RecoverMissionHandsInFlight`) for `forge run`? | conversations grain/route; platform route | — |
-| D4 | Exec and terminal: apply the operator's existing decision B (standard `Process`, branch `adeen/phase-78-exec-process` in this repo), and delete the unreachable macOS terminal provider? | forge-mcl ExecProcess*, Exec.Probe, build/release probe steps; client ProjectBoundTerminalProvider, terminal profile + tests; runner python3 | — |
+| D4 | Exec and terminal: apply the operator's existing decision B (standard `Process`, branch `adeen/phase-78-exec-process` in this repo), and delete the unreachable macOS terminal provider? | forge-mcl ExecProcess*, Exec.Probe, build/release probe steps; client ProjectBoundTerminalProvider, terminal profile + tests; runner python3 | **Yes** (operator, 2026-11-14): apply the 11-02 decision B (standard `Process`), deleting `ExecProcess*`, the Exec probe and its build/release steps; also delete the macOS sandbox terminal provider, the terminal profile member and their tests (unreachable, judged slop). Runner keeps python3 (exec missions are Python scripts). |
 | D5 | Names: rename the `forge-rooms` repo and solution; keep or rename DB `forge_rooms`, `kv-forgerooms-dev`, `crforgeroomsdev`, compose names? | forge-rooms, forge-infra | — |
 | D6 | ForgeUI DB history: add one migration that drops the Rooms tables (keeps prod data), or squash to a fresh identity migration? | forge-rooms Migrations/ | — |
 | D7 | Keep the PWA assets (manifest, service worker, offline page)? | forge-rooms wwwroot | — |
@@ -35,6 +52,11 @@ is a [Phase 78](phase-78-run-detail-capture.md) design question, not a cleanup d
 stay until Phase 78 settles it.
 
 ## Cross-repo order
+
+**One repo at a time** (operator, 2026-11-14): delete one repo's agreed list on a branch, prove it
+(`build -warnaserror`, full tests, AOT publish for forge-mcl, and a real `forge run` against the
+default cloud endpoint), merge, then start the next. A failure points at one delete.
+
 
 1. **forge-mcl:** move `ForgeChat.Print` into `run --verbose` and strip Theme from `ForgeSettings`,
    then delete the chat TUI (tag `forge-chat-final` first).
@@ -72,12 +94,13 @@ stay until Phase 78 settles it.
 | `src/ForgeMission.Cli/README.md` | CLI doc | KEEP (rewrite) | ~62 chat/TUI mentions |
 | `src/ForgeMission.Parser/` | MCL grammar | KEEP | Language |
 | `src/ForgeMission.Core/` (Runtime, Manifest, Resolution, Experts, Rules, Tools, Adapters) | Mission runtime | KEEP | Used by client, Host, runner; deslop in step 6 |
-| Core ONNX: `OnnxExpertRunner`, ONNX branches, `Microsoft.ML.OnnxRuntime` | ONNX expert kind | DELETE | Phase 22 deferred; not in product |
+| Core ONNX: `OnnxExpertRunner`, ONNX branches, `Microsoft.ML.OnnxRuntime` | ONNX expert kind | KEEP (operator, 2026-11-14) | Non-LLM expert kind stays in the language |
 | `Core/Runtime/EnrichmentCache.cs`, `Adapters/MissionServerFactory.cs` | Serve-path internals | UNSURE (D1) | Only serve/claude use them |
 | `Core/Runtime/AgenticSession.cs`, `Tools/BashToolExecutor.cs`, `Tools/WorkspaceTerminalProvider.cs` | In-proc agent session, terminal tools | UNSURE (D1/D4) | No consumer outside forge-mcl (inferred dead) |
 | `Core/Adapters/ExecExpertRunner.cs` | `kind: exec` | KEEP | Used by runner |
 | `Core/Adapters/ExecProcess*.cs`, `tests/ForgeMission.Exec.Probe/`, probe/pid1 steps in build.ps1 + release.yml | Custom process spawning + proof | UNSURE (D4) | Operator decision B replaces it |
-| `src/ForgeMission.ChatClients/`, `MissionRegistry/`, `Scout/`, `Serve/` | Providers, OCI, search, wire mapping | KEEP | Used by runner/client/platform |
+| `src/ForgeMission.ChatClients/`, `MissionRegistry/`, `Scout/` | Providers, OCI, search | KEEP | Used by runner/client/platform |
+| `src/ForgeMission.Serve/` + its publish workflow and verify script | Wire mapping for `/v1` | DELETE (D1) | Only consumers: `forge serve` and the runner doors |
 | `src/ForgeMission.Docker/` + publish workflow, verify script, Makefile targets; `Dockerfile`, `.dockerignore` | Docker helpers, `forge agent` image | DELETE (D1) | Only agent/webui/claude and Desktop use them |
 | Publish workflows for core/parser/chatclients/missionregistry/scout/serve, `release.yml`, their `eng/verify-*` | Package + CLI release | KEEP | Drop probe lines if D4 |
 | `scripts/` | Build/release | KEEP (trim) | Remove probe steps and chat test filters |
@@ -88,8 +111,8 @@ stay until Phase 78 settles it.
 | `Cli/CtrlCTests.cs`, `ForgeConfigTests.cs` | Mixed | KEEP (trim) | Drop chat and theme rows |
 | Kept-CLI tests (ForgeDurableRun, ForgeProject, PlatformLogin, McpCommand, ListExperts, MissionFileResolution, MissionReadFailure, ProviderScaffold, CleanCommand, DefaultPath, Harness) | | KEEP | Drop agent/serve/webui rows from DefaultPath |
 | `ForgeServeTests`, Integration ClaudeCode/ForgeClaudeLauncher/WireCapture/MockClaudeHost/CopilotSdk | serve/claude tests | UNSURE (D1) | |
-| Integration Anthropic/OAI server fixtures, ConvergedServe, RequestClassifier, InMemorySessionStore, anthropic-wire fixtures | Serve-library tests | KEEP | Serve library used by runner |
-| `OnnxExpertRunnerTests`, `Fixtures/onnx/` | | DELETE | ONNX |
+| Integration Anthropic/OAI server fixtures, ConvergedServe, RequestClassifier, InMemorySessionStore, anthropic-wire fixtures | Serve-library tests | DELETE (D1) | Serve library deleted |
+| `OnnxExpertRunnerTests`, `Fixtures/onnx/` | | KEEP | ONNX kept |
 | `ExecExpertRunnerTests` | | KEEP | Known broken-pipe flake |
 | `DockerCliTests`, `DockerPrereqCheckerTests` | | DELETE (D1) | Follow Docker library |
 | `AgenticSessionTests`, `BashToolExecutorTests`, `Missions/agentic` | | UNSURE (D1/D4) | Follow those types |

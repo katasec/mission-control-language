@@ -1,8 +1,9 @@
 # Phase 79 — Product focus: define, clean up, deslop
 
-> **Status: steps 1–2 done (2026-11-14).** Product: [product.md](../design/product.md). Audit:
-> [phase-79-audit.md](phase-79-audit.md). Next: step 3, operator decisions D1–D11. No deletion
-> starts before step 3 is approved.
+> **Status: steps 1–2 done; steps 3–4 run per repo (2026-11-14).** Product:
+> [product.md](../design/product.md). Audit and decisions: [phase-79-audit.md](phase-79-audit.md).
+> **Next:** delete forge-mcl's agreed list (its decisions are all answered); see
+> [Incremental deletes](#incremental-deletes).
 
 ## Goal
 
@@ -34,15 +35,42 @@ Summary; the authoritative version is [product.md](../design/product.md).
 |---|---|---|---|
 | 1 | **Product doc**: the loop, the fundamentals, the focused UX, what is in and out | `docs/design/product.md` merged and linked from `plan.md`; every open question below answered | Done: [product.md](../design/product.md), merged with this phase spoke |
 | 2 | **Cleanup audit**, read-only: every Forge repo's code, tests and docs marked keep / delete / unsure against the product doc, with a reason; includes `backlog.md` | One table per repo, recorded in [phase-79-audit.md](phase-79-audit.md) | Done (2026-11-14): [phase-79-audit.md](phase-79-audit.md) |
-| 3 | **Operator approval** of the audit; every "unsure" row decided | Decisions D1–D11 answered in [phase-79-audit.md](phase-79-audit.md#decisions-needed) | In progress |
-| 4 | **Delete**: one PR per repo, local-only code first. Delete rather than archive; git history is the archive | Each repo's PR merged with its build and tests green | Pending |
+| 3 | **Operator approval** of the audit, **per repo**, just before that repo's delete; every "unsure" row in it decided | That repo's list agreed and its decisions answered in [phase-79-audit.md](phase-79-audit.md#decisions-needed) | In progress: forge-mcl and forge-client agreed |
+| 4 | **Delete, one repo at a time** (see [Incremental deletes](#incremental-deletes)). Delete rather than archive; git history is the archive | Every row in the incremental table merged and proven | Pending: forge-mcl is next |
 | 5 | **Hosted teardown** of removed surfaces through `forge-infra` `make` targets, what-if first; published packages deprecated, not deleted | Named resources gone, confirmed by a what-if showing no drift | Pending |
 | 6 | **Clean-room assessment** per kept component: run the [deslop playbook](../playbooks/dotnet-deslop.md) Discover stage read-only; mostly local findings → deslop in place, wrong structure → rewrite clean using existing tests and contracts as the spec | A decision per component, recorded here | Pending |
 | 7 | **Execute** the deslop or clean-room decisions | Per component, defined in step 6 | Pending |
 | 8 | **Build stage 1** on the clean code: Phase 78 recorder, the ForgeUI viewer, the supervisor workflow ported to MCL, the parity check | The stage-1 condition in [Q9](#open-questions) | Pending |
 
+## Incremental deletes
+
+Operator rule (2026-11-14): **one repo at a time, proven before the next.** Agree the repo's list
+with the operator (one question at a time), delete it on an `adeen/` branch, prove it, merge, then
+move on. A failure then points at one delete, not a pile of them.
+
+**Proof for every repo** (all must pass before merge):
+1. `dotnet build -warnaserror` and the full test suite of the repo (plus Native AOT publish for
+   forge-mcl).
+2. **A real `forge run`** of a small mission from a CLI built from the changed code, against the
+   default cloud endpoint, with Hands writing a file in the project folder. For repos that deploy
+   (forge-runner, forge-platform, forge-conversations, forge-rooms), the run goes through the newly
+   deployed service, via the forge-infra `make` targets with what-if first.
+3. Every consumer repo still builds against any package version this repo publishes.
+
+| # | Repo | Decisions needed first | List | Status |
+|---|---|---|---|---|
+| 1 | forge-mcl | D1, D4 | [audit](phase-79-audit.md#forge-mcl) | **Agreed; ready.** Tag `forge-chat-final` first; move `ForgeChat.Print` into `run --verbose`; strip Theme; then delete |
+| 2 | forge-client | D2, D3 | [audit](phase-79-audit.md#forge-client) | List agreed; D2, D3 open. Needs #1 merged (forge-mcl stops calling chat APIs) |
+| 3 | forge-rooms (ForgeUI) | D5, D6, D7 | [audit](phase-79-audit.md#forge-rooms-forgeui) | Not reviewed. Extract the account model before deleting Rooms |
+| 4 | forge-platform | D3 | [audit](phase-79-audit.md#forge-platform) | Not reviewed. Lockstep with a Contracts bump in #5 |
+| 5 | forge-conversations | D3, D10 | [audit](phase-79-audit.md#forge-conversations) | Not reviewed |
+| 6 | forge-runner | — | [audit](phase-79-audit.md#forge-runner) | Not reviewed. Needs #3 and #4 merged (they stop calling `/run`); move `RunWorkspace` first |
+| 7 | forge-infra | D8, D9 | [audit](phase-79-audit.md#forge-infra) | Not reviewed. Live teardown is step 5 |
+| 8 | mission-control-language | D11 | [audit](phase-79-audit.md#mission-control-language-this-repo) | Not reviewed. Fold decisions into design docs before deleting |
+
 ## Rules
 
+- **Ask one question at a time** when reviewing with the operator.
 - **Docs keep rule:** a doc stays only if it describes current truth the product needs or active
   work. Finished-phase narratives, superseded designs, old evidence, trails and spikes are deleted.
 - **Deletion before deslop, deslop before new code.** Step 6 runs on what survives step 4; stage 1

@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): audit done; next, operator decisions on it. |
+| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): incremental deletes, one repo at a time; forge-mcl is next. |
 
 ## Active phases
 
