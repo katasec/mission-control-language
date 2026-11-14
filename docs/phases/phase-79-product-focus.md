@@ -56,6 +56,9 @@ move on. A failure then points at one delete, not a pile of them.
    (forge-runner, forge-platform, forge-conversations, forge-rooms), the run goes through the newly
    deployed service, via the forge-infra `make` targets with what-if first.
 3. Every consumer repo still builds against any package version this repo publishes.
+4. Every GitHub Actions workflow the repo's delete touches (see
+   [GitHub Actions impacts](phase-79-audit.md#github-actions-impacts)) is updated and runs green;
+   workflows for deleted packages are removed.
 
 | # | Repo | Decisions needed first | List | Status |
 |---|---|---|---|---|
