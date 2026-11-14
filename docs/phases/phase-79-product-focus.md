@@ -1,7 +1,8 @@
 # Phase 79 — Product focus: define, clean up, deslop
 
-> **Status: step 1 done (2026-11-14).** The product is in [product.md](../design/product.md). Next:
-> step 2, the read-only cleanup audit. No deletion starts before step 3 is approved.
+> **Status: steps 1–2 done (2026-11-14).** Product: [product.md](../design/product.md). Audit:
+> [phase-79-audit.md](phase-79-audit.md). Next: step 3, operator decisions D1–D11. No deletion
+> starts before step 3 is approved.
 
 ## Goal
 
@@ -32,8 +33,8 @@ Summary; the authoritative version is [product.md](../design/product.md).
 | # | Step | Done when | Status |
 |---|---|---|---|
 | 1 | **Product doc**: the loop, the fundamentals, the focused UX, what is in and out | `docs/design/product.md` merged and linked from `plan.md`; every open question below answered | Done: [product.md](../design/product.md), merged with this phase spoke |
-| 2 | **Cleanup audit**, read-only: every Forge repo's code, tests and docs marked keep / delete / unsure against the product doc, with a reason; includes `backlog.md` | One table per repo, recorded in this spoke | Pending |
-| 3 | **Operator approval** of the audit; every "unsure" row decided | Approved tables in this spoke | Pending |
+| 2 | **Cleanup audit**, read-only: every Forge repo's code, tests and docs marked keep / delete / unsure against the product doc, with a reason; includes `backlog.md` | One table per repo, recorded in [phase-79-audit.md](phase-79-audit.md) | Done (2026-11-14): [phase-79-audit.md](phase-79-audit.md) |
+| 3 | **Operator approval** of the audit; every "unsure" row decided | Decisions D1–D11 answered in [phase-79-audit.md](phase-79-audit.md#decisions-needed) | In progress |
 | 4 | **Delete**: one PR per repo, local-only code first. Delete rather than archive; git history is the archive | Each repo's PR merged with its build and tests green | Pending |
 | 5 | **Hosted teardown** of removed surfaces through `forge-infra` `make` targets, what-if first; published packages deprecated, not deleted | Named resources gone, confirmed by a what-if showing no drift | Pending |
 | 6 | **Clean-room assessment** per kept component: run the [deslop playbook](../playbooks/dotnet-deslop.md) Discover stage read-only; mostly local findings → deslop in place, wrong structure → rewrite clean using existing tests and contracts as the spec | A decision per component, recorded here | Pending |
