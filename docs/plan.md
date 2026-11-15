@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): incremental deletes, one repo at a time; forge-platform is next. |
+| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): incremental deletes, one repo at a time; forge-conversations is next. |
 
 ## Active phases
 
