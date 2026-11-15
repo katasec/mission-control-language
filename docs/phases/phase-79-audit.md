@@ -30,7 +30,7 @@ them.
 | forge-client | `ci.yml` | Builds and tests the whole solution | Must stay green on the delete PR |
 | forge-client | `publish-{client,client-contracts,hands}-package.yml` | Always-failing visibility step (already agreed to remove) | Remove that step; prove one publish run |
 | forge-conversations | `publish-conversations-packages.yml` | Packs `ConversationPresentation` (deleted) | Remove the Presentation pack and verify lines |
-| forge-platform | `forge-api-image.yml`, `billing-image.yml` | Build the images; API A deletion changes the ForgeAPI image | Prove one image build |
+| forge-platform | `forge-api-image.yml`, `billing-image.yml` | Build the images; API A deletion changes the ForgeAPI image | **Done (2026-11-15)**: only comments changed in `forge-api-image.yml`; actionlint clean; forge-api 0.9.0 built green from the branch ([run 43693815495](https://github.com/katasec/forge-platform/actions/runs/43693815495)). `billing-image.yml` untouched (Billing service code unchanged) |
 | forge-platform | `publish-billing{,-contracts}-package.yml` | No impact | None |
 | forge-rooms | `forge-ui-image.yml` | Builds `Dockerfile.forgeui`, which includes the Rooms projects and the migration bundle | **Done (2026-11-15)**: Dockerfile bundles from `ForgeUI.Accounts`, slnx renamed; actionlint clean; forge-ui 0.8.0 built green from the branch ([run 43689183603](https://github.com/katasec/forge-rooms/actions/runs/43689183603)) |
 | forge-runner | `forge-runner-image.yml` | Image changes (no `missions/`, no tesseract/poppler); a comment mentions Rooms | Prove one image build (two arch) and the process-hosting probe |
@@ -58,6 +58,7 @@ Walked through per repo with the operator, one question at a time.
 | forge-mcl | **Agreed** (2026-11-14) | ONNX kept; D1 delete (incl. Serve, Docker); D4 yes |
 | forge-client | **Agreed** (2026-11-14) | Local history copy deleted (a recorder export can replace it later); D2, D3 still open |
 | forge-rooms | **Agreed** (2026-11-15) | All Rooms code deleted; `/` shows the Account page until the Phase 78 viewer exists (no Runs nav yet); D5, D6, D7 answered |
+| forge-platform | **Agreed** (2026-11-15) | API A and `/v1` deleted (ForgeAPI no longer calls the runner); every ForgeAPI route without a caller deleted, incl. the three forge-client#22 stopped calling; run reads: keep only `ListMissionConversations` |
 
 ## Decisions needed
 
@@ -78,9 +79,11 @@ with that decision.
 | D10 | Dev data: purge stored Project/Evaluation conversation rows, or keep the enum members readable? | conversations `ConversationPurpose`, event kinds | — |
 | D11 | Docs and demos in this repo: rewrite or delete `desktop-interaction-principles.md`; fold or delete the UNSURE design docs; move MCL demos, `editors/vscode`, `html/` to forge-mcl or delete; keep or drop the Phase 22/26/30/37/39 candidates | mission-control-language Table 1 and 2 | — |
 
-The viewer's read path (ForgeAPI `ListProjectRuns`/`GetProjectRun` vs `ListMissionConversations`)
-is a [Phase 78](phase-78-run-detail-capture.md) design question, not a cleanup decision. Those rows
-stay until Phase 78 settles it.
+The viewer's read path (ForgeAPI `ListProjectRuns`/`GetProjectRun` vs `ListMissionConversations`):
+**settled for ForgeAPI** (operator, 2026-11-15). The [Phase 78](phase-78-run-detail-capture.md) design
+reads runs with `ListMissionConversations` (Runs list) plus `GetConversation` and
+`StreamConversationEvents` (detail), so ForgeAPI keeps `ListMissionConversations` and deletes
+`ListProjectRuns`, `GetProjectRun`, `ListProjectRunEvents` and `GetProjectCommand`.
 
 ## Cross-repo order
 
@@ -212,13 +215,15 @@ the `ProjectConversation` header properties. `forge mcp` uses no client package.
 | Path | What | Verdict | Reason |
 |---|---|---|---|
 | API A: `MissionEndpoints.cs`, `MissionExecutionService.cs`, `MissionCatalog.cs` (+ boot probe), `RunStore.cs`, `ArtifactStore.cs`, `Messages.cs` + their tests | One-shot API | DELETE | No caller in any repo (confirmed) |
-| `WireProxy.cs` + `/v1` + `RunnerBaseUrl` + `WireProxyTests` | Hosted Claude Code wire | UNSURE (D1) | No caller in these repos |
+| `WireProxy.cs` + `/v1` + `RunnerBaseUrl` + `WireProxyTests` | Hosted Claude Code wire | DELETE (D1) | No caller in any repo (checked 2026-11-15); ForgeAPI then never calls the runner. Its response-copy helper moves to the Host queries |
 | `Program.cs` | Host | KEEP (trim) | |
 | `PlatformKeyAuth.cs`, `ApiJson.cs` | Auth, errors | KEEP | |
-| `Conversations/ConversationEndpoints.cs` kept routes (CreateMissionConversation, SubmitMissionTurn, Retry/Cancel, Hands routes, UploadMissionInput, GetConversation, GetMissionHandsWork, StreamConversationEvents) | `forge run` path | KEEP | All used by forge-client |
-| Routes StartConversation, SubmitConversationCommand, SubmitToolResult, CreateProjectMissionContainer, StartProjectMissionRun, StartEvaluation, GetEvaluation | | DELETE | No callers; lockstep with Contracts |
-| Route RecoverMissionHandsInFlight | | UNSURE (D3) | |
-| Queries ListProjectRuns, GetProjectRun, ListProjectRunEvents, GetProjectCommand, ListMissionConversations | Run reads | UNSURE (Phase 78) | Viewer read path |
+| `Conversations/ConversationEndpoints.cs` kept routes: CreateMissionConversation, SubmitMissionTurn, CancelMissionTurn, AttachMissionHands, DetachMissionHands, SubmitMissionHandsResult, ClaimMissionHandsWork, CancelMissionHandsAttempt, GetConversation, GetMissionHandsWork, StreamConversationEvents | `forge run` path | KEEP | The 11 routes forge-client (Client 0.17.0) calls |
+| Routes RetryMissionTurn, UploadMissionInput, BeginMissionHandsConfirmation | | DELETE (operator, 2026-11-15) | forge-client#22 removed their last caller |
+| Routes StartConversation, SubmitConversationCommand, SubmitToolResult, CreateProjectMissionContainer, StartProjectMissionRun, StartEvaluation, GetEvaluation | | DELETE | No callers. Contract types stay until forge-conversations (repo 5) drops them |
+| Route RecoverMissionHandsInFlight | | DELETE (D3) | |
+| Queries ListProjectRuns, GetProjectRun, ListProjectRunEvents, GetProjectCommand | Desktop project-run reads | DELETE (operator, 2026-11-15) | Phase 78 does not read them |
+| Query ListMissionConversations | Run list | KEEP (operator, 2026-11-15) | Phase 78 Runs list; no caller yet |
 | Bus, edge registration/results, Host queries | | KEEP (trim) | |
 | `ForgeMission.Billing/*`, `Billing.Service/*`, `Billing.Contracts/*` + tests | Accounts, keys, pricing, settlement | KEEP | ForgeUI, `forge login`, runner settlement |
 | Dockerfiles, image + package workflows | | KEEP | No PR test workflow exists: step-4 proof is a local `dotnet test` |
