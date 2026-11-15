@@ -10,7 +10,7 @@ This repo holds plans, agent rules, agents, and missions. The code lives in thes
 |---|---|
 | [`forge-mcl`](https://github.com/katasec/forge-mcl) | MCL language, CLI (`forge`), generic execution support |
 | [`forge-runner`](https://github.com/katasec/forge-runner) | Stateless hosted mission execution |
-| [`forge-conversations`](https://github.com/katasec/forge-conversations) | Durable conversation admission, state, and dispatch |
+| [`forge-conversations`](https://github.com/katasec/forge-conversations) | Conversation Host (each `forge run`'s durable event log, Hands coordination, dispatch to forge-runner) and its Contracts package |
 | [`forge-platform`](https://github.com/katasec/forge-platform) | ForgeAPI (the cloud edge for `forge run`), platform keys, billing, ledger |
 | [`forge-rooms`](https://github.com/katasec/forge-rooms) | ForgeUI web app: sign-in, `forge login` platform keys, account page; will host the read-only run viewer (Phase 78). Repo keeps its old name for now |
 | [`forge-client`](https://github.com/katasec/forge-client) | Local Forge client packages: `Katasec.Forge.Client`, `Katasec.Forge.Client.Contracts`, `Katasec.Forge.Hands` (Bob) |
