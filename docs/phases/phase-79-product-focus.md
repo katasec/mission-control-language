@@ -63,7 +63,7 @@ move on. A failure then points at one delete, not a pile of them.
 | # | Repo | Decisions needed first | List | Status |
 |---|---|---|---|---|
 | 1 | forge-mcl | D1, D4 | [audit](phase-79-audit.md#forge-mcl) | **Done (2026-11-15)**: [forge-mcl#96](https://github.com/katasec/forge-mcl/pull/96), tag `forge-chat-final`. ~21k lines (44%) deleted; all four proofs pass. Kept in Core for consumers: `MissionChatClient`/`EnrichmentCache` and `AgentToolDeclarations.Bash` (forge-runner, #6), ask-first and the terminal capability (forge-client, #2). `ToolExecutorRegistry` and the Read/Edit/Write executors are now dead: step 6 |
-| 2 | forge-client | D2, D3 | [audit](phase-79-audit.md#forge-client) | List agreed; D2, D3 open. Needs #1 merged (forge-mcl stops calling chat APIs) |
+| 2 | forge-client | D2, D3 | [audit](phase-79-audit.md#forge-client) | **Agreed; ready** (D2, D3 answered 2026-11-15). #1 merged |
 | 3 | forge-rooms (ForgeUI) | D5, D6, D7 | [audit](phase-79-audit.md#forge-rooms-forgeui) | Not reviewed. Extract the account model before deleting Rooms |
 | 4 | forge-platform | D3 | [audit](phase-79-audit.md#forge-platform) | Not reviewed. Lockstep with a Contracts bump in #5 |
 | 5 | forge-conversations | D3, D10 | [audit](phase-79-audit.md#forge-conversations) | Not reviewed |
