@@ -12,7 +12,7 @@ This repo holds plans, agent rules, agents, and missions. The code lives in thes
 | [`forge-runner`](https://github.com/katasec/forge-runner) | Stateless hosted mission execution |
 | [`forge-conversations`](https://github.com/katasec/forge-conversations) | Durable conversation admission, state, and dispatch |
 | [`forge-platform`](https://github.com/katasec/forge-platform) | API, accounts, platform keys, billing, ledger |
-| [`forge-rooms`](https://github.com/katasec/forge-rooms) | Collaboration domain and browser product (Rooms, ForgeUI) |
+| [`forge-rooms`](https://github.com/katasec/forge-rooms) | ForgeUI web app: sign-in, `forge login` platform keys, account page; will host the read-only run viewer (Phase 78). Repo keeps its old name for now |
 | [`forge-client`](https://github.com/katasec/forge-client) | Local Forge client packages: `Katasec.Forge.Client`, `Katasec.Forge.Client.Contracts`, `Katasec.Forge.Hands` (Bob) |
 | [`forge-desktop`](https://github.com/katasec/forge-desktop) | Desktop application and supervision; consumes the forge-client packages |
 | [`forge-infra`](https://github.com/katasec/forge-infra) | Azure deployment configuration |

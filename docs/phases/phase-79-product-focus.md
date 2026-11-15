@@ -1,8 +1,8 @@
 # Phase 79 — Product focus: define, clean up, deslop
 
-> **Status: steps 1–2 done; steps 3–4 run per repo; forge-mcl deleted (2026-11-15).** Product:
+> **Status: steps 1–2 done; steps 3–4 run per repo; forge-mcl, forge-client and forge-rooms deleted (2026-11-15).** Product:
 > [product.md](../design/product.md). Audit and decisions: [phase-79-audit.md](phase-79-audit.md).
-> **Next:** answer forge-client's D2 and D3, then delete its agreed list; see
+> **Next:** forge-platform (repo 4): agree its list with the operator, then delete it; see
 > [Incremental deletes](#incremental-deletes).
 
 ## Goal
@@ -35,8 +35,8 @@ Summary; the authoritative version is [product.md](../design/product.md).
 |---|---|---|---|
 | 1 | **Product doc**: the loop, the fundamentals, the focused UX, what is in and out | `docs/design/product.md` merged and linked from `plan.md`; every open question below answered | Done: [product.md](../design/product.md), merged with this phase spoke |
 | 2 | **Cleanup audit**, read-only: every Forge repo's code, tests and docs marked keep / delete / unsure against the product doc, with a reason; includes `backlog.md` | One table per repo, recorded in [phase-79-audit.md](phase-79-audit.md) | Done (2026-11-14): [phase-79-audit.md](phase-79-audit.md) |
-| 3 | **Operator approval** of the audit, **per repo**, just before that repo's delete; every "unsure" row in it decided | That repo's list agreed and its decisions answered in [phase-79-audit.md](phase-79-audit.md#decisions-needed) | In progress: forge-mcl and forge-client agreed |
-| 4 | **Delete, one repo at a time** (see [Incremental deletes](#incremental-deletes)). Delete rather than archive; git history is the archive | Every row in the incremental table merged and proven | In progress: forge-mcl and forge-client done; forge-rooms next |
+| 3 | **Operator approval** of the audit, **per repo**, just before that repo's delete; every "unsure" row in it decided | That repo's list agreed and its decisions answered in [phase-79-audit.md](phase-79-audit.md#decisions-needed) | In progress: forge-mcl, forge-client and forge-rooms agreed |
+| 4 | **Delete, one repo at a time** (see [Incremental deletes](#incremental-deletes)). Delete rather than archive; git history is the archive | Every row in the incremental table merged and proven | In progress: forge-mcl, forge-client and forge-rooms done; forge-platform next |
 | 5 | **Hosted teardown** of removed surfaces through `forge-infra` `make` targets, what-if first; published packages deprecated, not deleted | Named resources gone, confirmed by a what-if showing no drift | Pending |
 | 6 | **Clean-room assessment** per kept component: run the [deslop playbook](../playbooks/dotnet-deslop.md) Discover stage read-only; mostly local findings → deslop in place, wrong structure → rewrite clean using existing tests and contracts as the spec | A decision per component, recorded here | Pending |
 | 7 | **Execute** the deslop or clean-room decisions | Per component, defined in step 6 | Pending |
@@ -64,7 +64,7 @@ move on. A failure then points at one delete, not a pile of them.
 |---|---|---|---|---|
 | 1 | forge-mcl | D1, D4 | [audit](phase-79-audit.md#forge-mcl) | **Done (2026-11-15)**: [forge-mcl#96](https://github.com/katasec/forge-mcl/pull/96), tag `forge-chat-final`. ~21k lines (44%) deleted; all four proofs pass. Kept in Core for consumers: `MissionChatClient`/`EnrichmentCache` and `AgentToolDeclarations.Bash` (forge-runner, #6), ask-first and the terminal capability (forge-client, #2). `ToolExecutorRegistry` and the Read/Edit/Write executors are now dead: step 6 |
 | 2 | forge-client | D2, D3 | [audit](phase-79-audit.md#forge-client) | **Done (2026-11-15)**: [forge-client#22](https://github.com/katasec/forge-client/pull/22) (Client 0.17.0, Contracts 0.7.0, Hands 0.5.0 published) and [forge-mcl#97](https://github.com/katasec/forge-mcl/pull/97). ~1.6k lines (26%) deleted; all four proofs pass. `project create` only writes `forge.project.json`. UNSURE answers: Contracts package kept separate; `Microsoft.AspNetCore.App` replaced by `Microsoft.Extensions.Http` (the CLI now declares Hosting and Http itself). forge-client no longer uses Core's terminal capability; it still passes an always-deny `ICapabilityConfirmationHandler` because Core's dispatcher requires one: step 6 |
-| 3 | forge-rooms (ForgeUI) | D5, D6, D7 | [audit](phase-79-audit.md#forge-rooms-forgeui) | Not reviewed. Extract the account model before deleting Rooms |
+| 3 | forge-rooms (ForgeUI) | D5, D6, D7 | [audit](phase-79-audit.md#forge-rooms-forgeui) | **Done (2026-11-15)**: [forge-rooms#4](https://github.com/katasec/forge-rooms/pull/4) and [forge-infra#55](https://github.com/katasec/forge-infra/pull/55); forge-ui 0.8.0 live, the 450-migrate job ran `DropRooms`. ~5.7k lines (54%) deleted; all four proofs pass (build 0 warnings + 4/4 tests; `forge whoami`, `forge login` and real `forge run`s through the new ForgeUI before and after the migration; no package consumers; actionlint clean and one green image build). Account model is now `ForgeUI.Accounts`. Left for later: the old `ledger_entries`/`platform_keys` copies in `forge_rooms` (drop disabled since 42.6); `Katasec.Forge.ConversationPresentation` has no consumer (#5); ForgeUI no longer calls the runner (#6); unused ForgeUI env `RunnerBaseUrl`, `ConnectionStrings__ReadConnection` (#7) |
 | 4 | forge-platform | D3 | [audit](phase-79-audit.md#forge-platform) | Not reviewed. Lockstep with a Contracts bump in #5 |
 | 5 | forge-conversations | D3, D10 | [audit](phase-79-audit.md#forge-conversations) | Not reviewed |
 | 6 | forge-runner | — | [audit](phase-79-audit.md#forge-runner) | Not reviewed. Needs #3 and #4 merged (they stop calling `/run`); move `RunWorkspace` first |
