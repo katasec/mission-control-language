@@ -101,7 +101,7 @@ same shape occurred.
 
 **Status honesty matters more than the format.** "Done" means verified — a test result, a live log
 line, a deployed artifact confirmed by a real check — not "written" or "code merged." A doc that
-says a database is deployed because the Bicep was authored, when the DB was never actually applied,
+says a database is deployed because the Terraform was written, when the DB was never actually applied,
 is worse than no doc at all — it actively misleads the next agent into skipping verification.
 
 **Plan routing:** `docs/plan.md` contains selected active work only; move deferred work to
@@ -287,22 +287,24 @@ Bash-doesn't-inherit-pwsh trap, the pull-through-pwsh recipe) is in
 ## Deploying the hosted app (forge-infra)
 
 The hosted app (ForgeUI, ForgeAPI, the runner, the Conversation Host, Billing) reaches Azure only through the **separate repo
-`katasec/forge-infra`** (layered Bicep + Makefile, checked out at `~/progs/forge-infra`).
+`katasec/forge-infra`** (Terraform in `dev/terraform`, delivered by gitops, checked out at `~/progs/forge-infra`).
+Bicep and the `make <layer>` deploy targets are retired — do not write Bicep or use them.
 
-- **Only use the `make` targets** (for example `100-base`, `150-ci`, `300-data`, `400-appenv`, `450-migrate`,
-  `500-app`, `550-api`, each with a `-what-if` twin; an image change is a `main.bicepparam` edit
-  followed by `<layer>-what-if` and `<layer>`) — never raw `az deployment` commands or
-  a hand-rolled script. Layer order and full command reference are
-  `forge-infra/README.md`'s job, not duplicated here.
-- **Run `make <layer>-what-if` before any secret-bearing or app-layer deploy** (`300-data`,
-  `500-app`) — no exceptions.
-- **Deploying a migration job definition and starting a migration are two separate deliberate
-  steps** — `make 450-migrate` only updates the job definition, it never runs it. This split is
-  the structural fix for a prior dev-DB-wipe incident (see
+- **Every infra change is a forge-infra PR** that edits `dev/terraform`. The PR's `terraform plan`
+  comment is the review; merging to `main` runs `terraform apply`. An image rollout is a tag bump in
+  `dev/terraform/images.tf`.
+- **Never change dev resources outside Terraform** — no `az deployment`, portal edits, or `az`
+  writes to Terraform-managed resources, and never a local `terraform apply`/`destroy`. The next
+  apply reverts out-of-band changes.
+- **A plan is not a deployment.** "Deployed" means the PR merged and the `terraform apply` run on
+  `main` passed.
+- **Updating the migration job definition and starting a migration are two separate deliberate
+  steps** — bumping `migrate` in `images.tf` only updates the job definition, it never runs it. This
+  split is the structural fix for a prior dev-DB-wipe incident (see
   [phase-42.6 completed doc](docs/phases/phase-42.6-hosted-endpoint-ttfa_completed.md#migration-job-db-wipe--defused-2026-07-18-structurally-fixed-2026-07-19))
   — do not re-couple them.
-- Topology, gotchas, and the full command reference: [Deploy Runbook](docs/design/deploy.md),
-  which itself defers to `forge-infra/README.md` as the source of truth for commands.
+- Topology, gotchas, and the full flow: [Deploy Runbook](docs/design/deploy.md), which defers to
+  `forge-infra/README.md` and `forge-infra/AGENTS.md` as the source of truth.
 
 ---
 

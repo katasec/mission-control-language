@@ -277,6 +277,12 @@ never the deployment proof.
 
 ### Azure development infrastructure
 
+> **Historical (Bicep era).** The layer layout, Make targets and what-if steps below record how
+> this was first built. Since 2026-11-16 these resources live in forge-infra `dev/terraform`
+> (`data.tf`, `messaging.tf`, `apps.tf`) and change only through a PR whose merge applies it;
+> the Kind tooling is `make kind-up` / `kind-down` / `kind-status` in `dev/kind`. See
+> [Deploy Runbook](deploy.md).
+
 Azure infrastructure is a required deliverable of the durable-conversation work, not a later
 configuration detail. The current dev resource group has no Storage account and no Service Bus
 namespace, so neither dependency exists yet.

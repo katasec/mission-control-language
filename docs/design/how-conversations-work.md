@@ -705,8 +705,8 @@ dropped.
 | Typed "not the current attachment" claim reject | The Host refuses a non-current attachment with the same untyped reason as other refusals (`ConversationGrain.cs:646-648`), so only the most recently attached `--hands` window can execute. Backlog. |
 | Turn cancel and the runner | The runner is not told; inference: it finishes its work and its later facts are rejected ([section 1](#1-a-turns-life)). |
 | Desktop client upgrade | Desktop is on Contracts 0.4.0 and does not execute hands. Backlog. |
-| Host replica count is 1 | The design is correct for N silos (tested with 2); scaling out is a separate decision (`forge-infra/dev/525-conversation-app/main.bicep:116-117`). |
-| Runner processes one conversation at a time per replica | `MaxConcurrentSessions = 1` (`forge-runner/…/Conversations/AzureServiceBusMissionCommandConsumer.cs:91`); 1–3 replicas, minimum 1 so the queue consumer always runs (`forge-infra/dev/500-app/main.bicep:233-234`). Inference: replicas scale on HTTP traffic, not queue length. |
+| Host replica count is 1 | The design is correct for N silos (tested with 2); scaling out is a separate decision (`forge-infra/dev/terraform/apps.tf`, `conversation_host` `min_replicas`/`max_replicas`). |
+| Runner processes one conversation at a time per replica | `MaxConcurrentSessions = 1` (`forge-runner/…/Conversations/AzureServiceBusMissionCommandConsumer.cs:91`); 1–3 replicas, minimum 1 so the queue consumer always runs (`forge-infra/dev/terraform/apps.tf`, `runner` `min_replicas`/`max_replicas`). Inference: replicas scale on HTTP traffic, not queue length. |
 | Orphan body blobs | A body blob committed but never referenced by a grain commit stays (Phase 54 B4). Staged blocks never committed expire after 7 days (Phase 54 B7). |
 | Resends after the 10-minute duplicate-detection window | Not deduplicated by the queue; inference: the runner's session state (same `CommandId`) turns a late resend into a no-op or `Interrupted`. |
 | Not covered live | Two `--hands` windows; the TUI reconnect notice; hands Write/Edit and cancel mid-tool. |
