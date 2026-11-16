@@ -33,8 +33,8 @@ them.
 | forge-platform | `forge-api-image.yml`, `billing-image.yml` | Build the images; API A deletion changes the ForgeAPI image | **Done (2026-11-15)**: only comments changed in `forge-api-image.yml`; actionlint clean; forge-api 0.9.0 built green from the branch ([run 43693815495](https://github.com/katasec/forge-platform/actions/runs/43693815495)). `billing-image.yml` untouched (Billing service code unchanged) |
 | forge-platform | `publish-billing{,-contracts}-package.yml` | No impact | None |
 | forge-rooms | `forge-ui-image.yml` | Builds `Dockerfile.forgeui`, which includes the Rooms projects and the migration bundle | **Done (2026-11-15)**: Dockerfile bundles from `ForgeUI.Accounts`, slnx renamed; actionlint clean; forge-ui 0.8.0 built green from the branch ([run 43689183603](https://github.com/katasec/forge-rooms/actions/runs/43689183603)) |
-| forge-runner | `forge-runner-image.yml` | Image changes (no `missions/`, no tesseract/poppler); a comment mentions Rooms | Prove one image build (two arch) and the process-hosting probe |
-| forge-runner | `forge-runner-nuget.yml` | Packs the `Katasec.Forge.Runner` host package (deleted) | Remove that pack; keep Contracts |
+| forge-runner | `forge-runner-image.yml` | Image changes (no `missions/`, no tesseract/poppler); a comment mentions Rooms | **Done (2026-11-16)**: tesseract/poppler and the public ghcr push removed, build-push down to `packages: read`; actionlint clean; two-arch verify green on [forge-runner#33](https://github.com/katasec/forge-runner/pull/33); forge-runner 0.24.0 published from main (run 43809795028) |
+| forge-runner | `forge-runner-nuget.yml` | Packs the `Katasec.Forge.Runner` host package (deleted) | **Done (2026-11-16)**: host pack removed (`IsPackable` false); Runner.Contracts 0.4.0 published (run 43809915776) |
 | forge-infra | `infra-validate.yml` | Compiles the kept Bicep layers | Must stay green after Kind removal |
 | forge-infra | `infra-deploy.yml` | Manual deploy; no deleted layer in its options | None |
 | mission-control-language | — | No workflows | None |
@@ -60,6 +60,7 @@ Walked through per repo with the operator, one question at a time.
 | forge-rooms | **Agreed** (2026-11-15) | All Rooms code deleted; `/` shows the Account page until the Phase 78 viewer exists (no Runs nav yet); D5, D6, D7 answered |
 | forge-platform | **Agreed** (2026-11-15) | API A and `/v1` deleted (ForgeAPI no longer calls the runner); every ForgeAPI route without a caller deleted, incl. the three forge-client#22 stopped calling; run reads: keep only `ListMissionConversations` |
 | forge-conversations | **Agreed** (2026-11-15) | Project-run, Evaluation and Presentation deleted; generic StartConversation/SubmitConversationCommand/SubmitToolResult path deleted (Hands `ContinueAfterTool` kept); RetryMissionTurn and BeginMissionHandsConfirmation deleted; named inputs kept (upload path restored in forge-client 0.18.0 / forge-api 0.10.0); D3 reversed to keep recovery; D10 answered |
+| forge-runner | **Agreed** (2026-11-16) | Operator rule "delete everything not used", applied item by item with code and live-traffic evidence; the OCI mission registry in forge-mcl stays (only the runner's own registry and baked missions go); `/artifacts` and RunnerWebSearch deleted (the queue path uses neither); tesseract/poppler removed; Contracts 0.4.0 prove-only for Billing |
 
 ## Decisions needed
 
