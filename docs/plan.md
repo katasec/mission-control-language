@@ -8,13 +8,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): incremental deletes, one repo at a time; forge-conversations is next. |
+| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): incremental deletes, one repo at a time; repos 1–7 done (~38.6k lines, ~37%, deleted; forge-infra is now Terraform with gitops); mission-control-language (repo 8, decision D11) is next. |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [Phase 79 — Product focus](phases/phase-79-product-focus.md) | Designing: product doc first, then cleanup audit, deletion and deslop. |
+| [Phase 79 — Product focus](phases/phase-79-product-focus.md) | In progress: step 4, incremental deletes. Repos 1–7 done; mission-control-language (repo 8) next. |
 
 ## Design docs
 
