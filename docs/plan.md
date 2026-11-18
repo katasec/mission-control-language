@@ -7,13 +7,13 @@
 
 | | |
 |---|---|
-| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): the per-repo deletes are done in all repos; next is the hosted cleanup through forge-infra (see the spoke's Next line). |
+| **NEXT STEP** | [Phase 79](phases/phase-79-product-focus.md): deletes and hosted cleanup are done; next is the clean-room assessment of each kept component (see the spoke's Next line). |
 
 ## Active phases
 
 | Phase | Status |
 |---|---|
-| [Phase 79 — Product focus](phases/phase-79-product-focus.md) | In progress: per-repo deletes done; hosted cleanup next. |
+| [Phase 79 — Product focus](phases/phase-79-product-focus.md) | In progress: deletes and hosted cleanup done; clean-room assessment next. |
 
 ## Design docs
 
