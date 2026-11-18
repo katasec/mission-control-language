@@ -2,7 +2,7 @@
 
 > **Status: steps 1–2 done; steps 3–4 run per repo; forge-mcl, forge-client, forge-rooms and forge-platform deleted (2026-11-15); forge-conversations and forge-runner deleted (2026-11-16).** Product:
 > [product.md](../design/product.md). Audit and decisions: [phase-79-audit.md](phase-79-audit.md).
-> **Next:** step 5, hosted teardown. Steps 1–4 and their stragglers are done.
+> **Next:** step 6, clean-room assessment. Steps 1–5 are done.
 
 ## Goal
 
@@ -36,7 +36,7 @@ Summary; the authoritative version is [product.md](../design/product.md).
 | 2 | **Cleanup audit**, read-only: every Forge repo's code, tests and docs marked keep / delete / unsure against the product doc, with a reason; includes `backlog.md` | One table per repo, recorded in [phase-79-audit.md](phase-79-audit.md) | Done (2026-11-14): [phase-79-audit.md](phase-79-audit.md) |
 | 3 | **Operator approval** of the audit, **per repo**, just before that repo's delete; every "unsure" row in it decided | That repo's list agreed and its decisions answered in [phase-79-audit.md](phase-79-audit.md#decisions-needed) | In progress: forge-mcl, forge-client, forge-rooms, forge-platform, forge-conversations and forge-runner agreed |
 | 4 | **Delete, one repo at a time** (see [Incremental deletes](#incremental-deletes)). Delete rather than archive; git history is the archive | Every row in the incremental table merged and proven | **Done (2026-11-19)**: all 8 rows merged and proven |
-| 5 | **Hosted teardown** of removed surfaces through forge-infra Terraform PRs (delete from code, plan on the PR, apply on merge); published packages deprecated, not deleted | Named resources gone, confirmed by a what-if showing no drift | Pending |
+| 5 | **Hosted teardown** of removed surfaces through forge-infra Terraform PRs (delete from code, plan on the PR, apply on merge); published packages deprecated, not deleted | Named resources gone, confirmed by a what-if showing no drift | **Done (2026-11-19)**: [forge-infra#66](https://github.com/katasec/forge-infra/pull/66) deleted the legacy `mission-command` and `conversation-progress` queues, the unused worker identity, 8 Kind-only SAS rules (local auth off on `sb-forge-conversation-dev`), the old `gh-app-image` CI credential and 10 role assignments; [#68](https://github.com/katasec/forge-infra/pull/68) kept storage shared-key access on (azurerm reads table ACLs with the key). Plan on #68: "No changes". Real `forge run` before and after, Hands wrote the file (conversations `544e3f6d-545b-57c3-975b-ee7effd7c565`, `700a6bc6-93a8-519e-9630-cc1bda4fdab8`). Package deprecation dropped: GitHub Packages has no NuGet deprecate (operator, 2026-11-19) |
 | 6 | **Clean-room assessment** per kept component: run the [deslop playbook](../playbooks/dotnet-deslop.md) Discover stage read-only; mostly local findings → deslop in place, wrong structure → rewrite clean using existing tests and contracts as the spec | A decision per component, recorded here | Pending |
 | 7 | **Execute** the deslop or clean-room decisions | Per component, defined in step 6 | Pending |
 | 8 | **Build stage 1** on the clean code: Phase 78 recorder, the ForgeUI viewer, the supervisor workflow ported to MCL, the parity check | The stage-1 condition in [Q9](#open-questions) | Pending |
