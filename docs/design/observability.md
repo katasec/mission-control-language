@@ -1,13 +1,12 @@
 # Observability — Traces, Metrics, Logs (OpenTelemetry)
 
-> **Scope:** cross-cutting. Instruments the **mission engine** (`PipelineRunner`) and **Forge
-> Rooms** (Phase 38). Wire the *seam* up front; defer the *machinery* (backends, sampling).
+> **Scope:** cross-cutting. Instruments the **mission engine** (`PipelineRunner`) and the hosted
+> services. Wire the *seam* up front; defer the *machinery* (backends, sampling).
 > **Standard:** OpenTelemetry (OTel) — vendor-neutral, .NET-native, three signals: traces,
 > metrics, logs.
 >
-> **Implementation status (2026-07-09):** first tracing lane is **live in the containerized runner**
-> (`ForgeMission.Runner`, first shipped in image `0.4.2`; dev runs `forge-runner:0.19.0` from the
-> forge-runner repo, telemetry in `RunnerTelemetry.cs`). Per run it emits: a `mission.run` span (`forge.mission.ref`
+> **Implementation status:** the first tracing lane is **live in forge-runner**
+> (`RunnerTelemetry.cs`). Per run it emits: a `mission.run` span (`forge.mission.ref`
 > / `forge.provider` / `gen_ai.request.model`), the `gen_ai.*` span from `UseOpenTelemetry` on the
 > provider `IChatClient` (model + token usage), and the **outbound-HTTP span whose `server.address`
 > is the real provider endpoint** (`api.openai.com` vs `api.x.ai` vs `api.anthropic.com`) — the ground
@@ -16,8 +15,7 @@
 > prompts/answers/keys in spans) — verified in local + prod traces. Exporter: **console** always on
 > (visible in container logs); **OTLP** self-configures from `OTEL_EXPORTER_OTLP_ENDPOINT`.
 > **Known follow-up:** console + AspNetCore instrumentation makes every `/health` probe emit a span,
-> flooding ACA logs — switch to OTLP + filter `/health`,`/missions` probe spans for durable prod use
-> (see [38.7 §9](../phases/phase-38.7-hosting-deployment.md)). `PipelineRunner` engine-lane
+> flooding ACA logs — switch to OTLP + filter `/health` probe spans for durable prod use. `PipelineRunner` engine-lane
 > instrumentation (below) is still the design target, not yet wired.
 
 ---
@@ -91,7 +89,7 @@ A small, **stable, versioned** set of names — a contract dashboards and querie
 changes like a schema migration.
 
 **Spans:** `mission.run` (root) → `mission.step` (child, per expert).
-Attributes: `mission.name`, `room.id`, `run.id`, `expert.name`, `expert.kind`
+Attributes: `mission.name`, `conversation.id`, `run.id`, `expert.name`, `expert.kind`
 (`llm`/`exec`/`rule`/`onnx`/`json_extract`), `step.status` (`pass`/`fail`), `loop.iteration`,
 `trust.verdict`. Retries recorded as span **events**.
 
@@ -125,7 +123,7 @@ OTLP → file → …) are swapped in the host's `Program.cs` with **zero call-s
    compile-time checked. Plain `ILogger<T>` is fine in the non-AOT host; source-gen is the Core
    discipline.
 3. **Scopes for correlation** — wrap a mission run in `logger.BeginScope` carrying `run.id` /
-   `room.id` so every log inside the run carries those keys automatically.
+   `conversation.id` so every log inside the run carries those keys automatically.
 4. **Trace ↔ log correlation via OTel** — wire logging through the OTel logs provider
    (`logging.AddOpenTelemetry(...)`). `ILogger` records become OTel log records **auto-correlated
    with the active `Activity`** (trace/span id stamped in) and exported alongside traces/metrics.

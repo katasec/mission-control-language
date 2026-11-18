@@ -5,7 +5,7 @@
 > here instead of re-describing the flow, so the steps don't drift into copies that disagree.
 >
 > For the *why* (infra design, credential posture, stand-up history), see
-> [Phase 38.7 — Hosting & Deployment](../phases/phase-38.7-hosting-deployment.md); this doc is the
+> Phase 38.7 — Hosting & Deployment; this doc is the
 > operational how-to that sits on top of it.
 
 ## TL;DR — ship a hosted-app change
@@ -33,9 +33,9 @@ Container Apps environment (`cae-forge-dev`), one registry
 
 | Hosted app | Source repo | `images.tf` key | Terraform file | Replicas | Ingress |
 |---|---|---|---|---|---|
-| ForgeUI (`ca-forge-ui-dev`): Rooms, OIDC sign-in, SignalR | forge-rooms `src/ForgeUI` | `ui` | `apps.tf` | 0–3 | Public, `forge.katasec.com` |
+| ForgeUI (`ca-forge-ui-dev`): account page, OIDC sign-in, Blazor Server | forge-rooms `src/ForgeUI` | `ui` | `apps.tf` | 0–3 | Public, `forge.katasec.com` |
 | forge-runner (`ca-forge-runner-dev`): mission execution, provider keys | forge-runner | `runner` | `apps.tf` | 1–3 (always one, so the queue consumer runs) | Internal |
-| ForgeAPI: platform-key edge for `forge` CLI and Desktop | forge-platform `src/ForgeMission.Api` | `api` | `apps.tf` | 0–3 | Public, `api.forge.katasec.com` |
+| ForgeAPI: platform-key edge for the `forge` CLI | forge-platform `src/ForgeMission.Api` | `api` | `apps.tf` | 0–3 | Public, `api.forge.katasec.com` |
 | Billing service: keys, ledger, balances (`authbilling_db`) | forge-platform `src/ForgeMission.Billing.Service` | `billing` | `billing.tf` | 1–2 | Internal |
 | Conversation Host: conversations (Orleans, Table/Blob) | forge-conversations `src/ForgeMission.ConversationHost` | `conversation_host` | `apps.tf` | 1 | Internal |
 
@@ -135,7 +135,7 @@ hand any needed shell/git commands to the user to run themselves.
 ## Test before you ship (no prod auth needed)
 
 Verify locally against the browser preview tooling **before** cutting an image. Full loop + gotchas:
-[Phase 40 hub §6](../phases/phase-40-forge-ui-shell.md#6-building-running--verifying-locally) and
+Phase 40 hub §6 and
 [UI Design System §11](ui-design-system.md#11-running-it-locally-and-two-gotchas-that-will-bite-you). In
 short: `preview_start forge-ui` (config in forge-rooms [`.claude/launch.json`](https://github.com/katasec/forge-rooms/blob/main/.claude/launch.json), HTTP
 `:5286`), dev sign-in `/auth/dev?user=alice`, verify at 375/768/1024 + dark. Real OIDC login needs
@@ -155,7 +155,7 @@ HTTPS (`https://localhost:7177`) — only relevant for the PWA install/login tes
    itself carries no runtime secrets — they're injected at run time.
 5. **DB migrations never run automatically.** The `migrate` job is manual-trigger only, separate
    from the apps — an app rollout alone never touches schema. (An earlier coupled version of this
-   caused a dev DB wipe in 2026-07-18; see [Phase 42.6](../phases/phase-42.6-hosted-endpoint-ttfa.md).)
+   caused a dev DB wipe in 2026-07-18; see Phase 42.6.)
 6. **Provider keys live on the runner, not the app.** `@claude`/`@grok`/`@openai` bind only when the
    runner has their key; a mission whose key is empty simply isn't advertised.
 7. **Don't infer Azure permissions from one denied call.** A 403 on one API (e.g. ACA log reads) says
@@ -200,8 +200,8 @@ cold while editing `dev/terraform`.
 - **Deploy flow (source of truth):** `forge-infra/README.md` and `forge-infra/AGENTS.md` — gitops
   rules, Terraform layout, image-update recipe.
 - Infra design, credential posture, full stand-up history + decision log →
-  [Phase 38.7 — Hosting & Deployment](../phases/phase-38.7-hosting-deployment.md).
-- Current authbilling_db / hosted-`/v1` work → [Phase 42.6](../phases/phase-42.6-hosted-endpoint-ttfa.md).
+  Phase 38.7 — Hosting & Deployment.
+- Current authbilling_db / hosted-`/v1` work → Phase 42.6.
 - Observability / OTel exporter follow-up → [Observability](observability.md).
 - IaC repo: `katasec/forge-infra` (Terraform in `dev/terraform`; `terraform-plan.yml` comments the
   plan on PRs, `terraform-apply.yml` applies on merge to `main`).

@@ -30,119 +30,37 @@ verification.
 
 ## Current default facts
 
-### Forge Desktop — local durable conversations
-
-The Desktop default is an explicit process and endpoint map. A value that is deliberately assigned
-by the operating system is a default too; it is not an invitation to invent a stable port.
-
-| Component / owner | Default fact | Configuration that would change it | Defining authority |
-|---|---|---|---|
-| Desktop Supervisor | The published artifact is `dist/forge-desktop/ForgeMission.Desktop`, launched with **zero arguments**. It owns startup/cleanup of the Application Host and any Runtime children it starts. | Its one positional Application Host URL argument is a development/test convenience and is not the normal launch. | [`ForgeMission.Desktop/Program.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Desktop/Program.cs) |
-| Mission Runtime resolver | With `MissionRuntime:Mode` absent, mode is `cloud`. With both `MissionRuntime:BaseUrl` and `FORGE_API_ENDPOINT` absent, the endpoint is `https://api.forge.katasec.com`. | `MissionRuntime:Mode`, `MissionRuntime:BaseUrl`, or `FORGE_API_ENDPOINT`. | [`MissionRuntimeResolver.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Orchestration/MissionRuntimeResolver.cs) |
-| Conversation Runtime resolver | With `ConversationRuntime:BaseUrl` absent or blank, the endpoint is ForgeAPI, `https://api.forge.katasec.com/`; readiness is `GET /health` there. The Desktop calls ForgeAPI's conversation messages (`POST /api/{Name}`) with the platform key from `forge login` as `Bearer`. `FORGE_API_ENDPOINT` does not change it. | `ConversationRuntime:BaseUrl` / `ConversationRuntime__BaseUrl`. | forge-desktop `ConversationRuntimeResolver.cs` (Phase 52.1 Task 8) |
-| Local Kind | **Unsupported for the durable Desktop path** since Phase 52.1: the Desktop no longer starts a Kind tunnel, the Conversation Host requires the cloud ingress namespace, and a local Host would join the cloud Orleans cluster (shared membership table). Returns with `forge dev start` / unauthenticated local mode ([backlog](../backlog.md)). | — | [Phase 52.1](../phases/phase-52.1-cloud-conversations.md) |
-| Application Host, owned by Supervisor | It listens on an **OS-assigned loopback port** (`http://127.0.0.1:0`), then reports the resulting address to its Supervisor, which gives it to the native Host. The port is intentionally dynamic per launch. | No fixed public configuration; changing this ownership/ready-address protocol changes the default. | [`ForgeMission.Application.Host/Program.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Application.Host/Program.cs) and [`ApplicationHostProcess.cs`](https://github.com/katasec/forge-desktop/blob/main/src/ForgeMission.Desktop/ApplicationHostProcess.cs) |
-| Cloud service provenance | The Conversation Host, forge-runner, Billing, and ForgeAPI run in `cae-forge-dev`, deployed only through forge-infra `make` targets from merged `main`; image versions are recorded in the phase's completion record. | Direct image loading or `kubectl`/`az` edits are troubleshooting, never default-path evidence. | [Deploy Runbook](deploy.md) |
-| Project state | A task names a dedicated disposable Project or an explicitly approved existing Project. It does not mutate an unrelated Project to obtain a test result. | A different starting state must be designed and documented by that task. | This acceptance rule |
-
-The Supervisor internally passes its resolved Runtime addresses to the Application Host. That is owned
-startup wiring, not a user override. Passing evidence records the published Desktop process,
-zero-argument launch, absent external configuration changes, the normal route and service
-provenance, the Project action initiated through the product surface, and the durable/user-visible
-result. A health check alone is insufficient.
-
-For the MAUI Desktop on Windows and macOS, the published artifact must come from the canonical
-GitHub Actions Desktop build (or its unchanged draft-release attachment). The trigger/download
-procedure is owned by [Phase 48](../phases/phase-48-maui-desktop-host-spike.md#standard-bundle-steps);
-do not rebuild locally and call that release-artifact acceptance. Windows and macOS acceptance is
-complete; see [the Phase 48 completion record](../phases/phase-48-maui-desktop-host-spike_completed.md).
-
-### `forge chat` and `forge chat --hands`
+### The `forge` CLI
 
 | Part | Default | Override (not default-path evidence) | Source |
 |---|---|---|---|
 | Artifact | `forge` from `make install` on forge-mcl `main`, or the complete platform ZIP from forge-mcl's published GitHub Release built at merged main. Make invokes shared PowerShell scripts locally and in CI. Extract all native sidecars. macOS keeps the existing Homebrew OpenSSL/Brotli prerequisites. | A `dotnet run` or a branch build proves a lower layer only. | forge-mcl `Makefile` / [CLI release README](https://github.com/katasec/forge-mcl#cli-releases) |
-| Build identity | Default local install derives `X.Y.Z-dev.N+<full-sha>` from the nearest CLI tag and commit distance, including `dev.0` on an exact tag. A release prints `X.Y.Z+<full-sha>` at its exact immutable tag. Merged PRs release automatically: minor by default, `release:patch` for a bug fix; major requires a separate explicit operator request/approval. | `RELEASE_TAG`, `RID`, `CLI_OUTPUT`; these must be absent for normal laptop acceptance. A dirty local tree adds `.dirty`. | [Phase 75](../phases/phase-75-cli-merge-releases.md), forge-mcl [version/build/release scripts](https://github.com/katasec/forge-mcl/tree/main/scripts) |
-| Endpoint | ForgeAPI `https://api.forge.katasec.com`, platform key from `forge login` as `Bearer`. | `FORGE_API_ENDPOINT`. | forge-mcl `ForgeExec.cs:24-26`, `ForgeChat.cs` |
-| Project | Current-directory `forge.project.json` with stable `projectId`, declared mission/version references and relative folders. Missing file exits 1 before login/network. No creation or ancestor search. | `--project <file>` opens the exact declaration with any filename; directories are rejected. | [Phase 71](../phases/phase-71-chat-project-file.md) |
-| Mission and conversation | Plain selects declared `Chat@Version` / `NoHands`; `--hands` selects `ChatHands@Version` / `ProjectWorkspace` and asks fresh file consent every launch. Shared Client reconnects to the newest equivalent existing authenticated hosted pin; no match or ambiguous pin stops. No lock or authoring ledger is required. | No implicit starter creation, migration or terminal-access mode. | [How conversations work §4](how-conversations-work.md#one-conversation-per-chat-mode) |
-| History projection | Full authoritative server replay from zero. Write-only profile files under platform-user-home `.forge/sessions/<projectId:N>/<conversationId:N>/`; deletion or corruption rebuilds next opening. Local write failure shows a notice and server chat continues. | No cache display, offline mode or saved-display cursor. | [Phase 64 contracts](../phases/phase-64.1-portable-chat-contracts.md#locked-contracts) |
-| Mode | TUI on a terminal; piped (line) mode when input or output is redirected. Interactive macOS opens a dedicated Ghostty window; operator confirmed Cmd+A works after v0.9.5 installation. Detailed physical matrix remains unspecified. | — | [How conversations work §4](how-conversations-work.md#4-clients-and-turns), [Mac launch contract](../phases/phase-70.3-mac-select-all.md#default-path-and-done-when) |
-| Terminal (from Phase 56 Task 2) | Ghostty, not inside tmux; the TUI needs kitty graphics. Any other terminal stops at start-up with a named message. | Kitty is supported but not the default. | [Phase 56 G8](../phases/phase-56-tui-graphics.md) |
-| Theme | No `~/.forge/config.json` (or no `theme` key): **dark** (Phase 56 Task 2b, 2026-10-02). | `{ "theme": "light" }` in `~/.forge/config.json`. | [Phase 56 G10](../phases/phase-56-tui-graphics.md) |
+| Build identity | Default local install derives `X.Y.Z-dev.N+<full-sha>` from the nearest CLI tag and commit distance, including `dev.0` on an exact tag. A release prints `X.Y.Z+<full-sha>` at its exact immutable tag. Merged PRs release automatically: minor by default, `release:patch` for a bug fix; major requires a separate explicit operator request/approval. | `RELEASE_TAG`, `RID`, `CLI_OUTPUT`; these must be absent for normal laptop acceptance. A dirty local tree adds `.dirty`. | Phase 75, forge-mcl [version/build/release scripts](https://github.com/katasec/forge-mcl/tree/main/scripts) |
+| Endpoint | ForgeAPI `https://api.forge.katasec.com` (`api.endpoint` in `~/.forge/config.json`, written with defaults on first use), platform key from `forge login` as `Bearer`. | A changed `api.endpoint`. | [`forge run` decisions](how-conversations-work.md#forge-run-decisions) |
+| Project | Current-directory `forge.project.json` with a stable `projectId` and relative `folders` (a new project lists `"."`). No ancestor search. | `--project <file>` opens that exact file. | forge-client `ProjectService.cs` |
 
-Current defaults passed installed acceptance on 2026-10-04: missing file, portable clone,
-full replay, projection rebuild/failure, line and Ghostty turns, scoped read and fresh refusal.
-See [Phase 64 observations](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance).
-The GitHub-built v0.9.1 ZIP path is verified by native extracted-payload checks on all three hosts,
-matching remote checksums and normal authenticated macOS hosted replay; see
-[Phase 65 release evidence](../phases/phase-65-cli-release-copy_completed.md#published-release).
-The simplified workflow published v0.9.2 automatically from normal main with all native checks
-green and matching published checksums; [Phase 66 distribution evidence](../phases/phase-66-simple-cli-release_completed.md#release-acceptance).
-Linux ARM64 joined the release matrix in v0.9.3: native host checks, sidecar packaging and all
-eight published assets verified; [Phase 67 evidence](../phases/phase-67-linux-arm64-release_completed.md#release-acceptance).
-Shared Make/script builds and merged-PR releases passed on 2026-10-08: default minor `v0.10.0`,
-labelled patch `v0.10.1`, all four native hosts and eight remote assets. Clean-main laptop install
-prints `0.10.1-dev.0+8d28dc1ff8f127facfd708b1c89369179e98cf18`; the independently downloaded
-published macOS ZIP runs with `0.10.1+8d28dc1ff8f127facfd708b1c89369179e98cf18` and a matching
-checksum. See [Phase 75 default-artifact evidence](../phases/phase-75-cli-merge-releases_completed.md#published-default-artifact-acceptance).
-
-**Desktop hands are broken, upgrade deferred.** Desktop still uses Conversations.Contracts 0.4.0 and
-reads the hands work item from the claim reply, which is status-only since Host 0.7 (B13). Desktop
-hands therefore cannot be default-path evidence until the Desktop client upgrade
-([backlog](../backlog.md)) lands.
-
-### `forge project create [folder]`
-
-| Part | Default fact | Source |
-|---|---|---|
-| Artifact and login | Same installed Native AOT CLI, saved platform login and absent endpoint override as `forge chat` above. | forge-mcl `ForgeProject.cs` |
-| Folder | Current directory when omitted; an explicit folder must already exist. | [Phase 68 contract](../phases/phase-68-cli-project-creation.md) |
-| Local declaration | Projects atomically publishes one `forge.project.json` with a stable GUID, `missions: ["Chat@1"]`, and empty folders; no authoring assets or private state. | forge-client `ProjectService.InitializeChatProjectAsync` |
-| Hosted admission | Missions builds immutable plain Chat v1 and sends existing authenticated `POST /api/CreateMissionConversation`; no hands grant or automatic turn. | forge-client `MissionConversationService.CreateChatProjectAsync` |
-| Retry | An exact starter declaration is preserved byte-for-byte and reuses deterministic command/version IDs, resolving to the same hosted conversation. Other declarations/private state are refused. | [Phase 68 failure contract](../phases/phase-68-cli-project-creation.md#failure-containment) |
-
-Installed create, stable retry, real Chat turn, portable clone replay and unrelated-declaration
-refusal passed on 2026-10-05; [Phase 68 observations](../phases/phase-68-cli-project-creation_completed.md#installed-default-path-acceptance).
-
-## New or changed defaults
-
-### `forge run` Hands default — Phase 76
-
-Replaces the Phase 73 default below. Owned by
-[Phase 76](../phases/phase-76-unified-cloud-run.md).
-Implemented and accepted from a build of merged `main` (forge-mcl `3c527ae`);
-accepted again on the installed Native AOT binary `0.18.0-dev.2+3c527ae` (2026-10-29);
-[observations](../phases/phase-76-unified-cloud-run_completed.md#hands-by-default-increment). The
-whole-phase installed and Native AOT gate is still in the backlog.
+### `forge run`
 
 | Part | Default fact |
 |---|---|
 | Invocation | `forge run <mission.mcl\|oci-ref> <prompt>` in a folder with `forge.project.json`; no Hands flag and no consent prompt. |
-| Reasoning | The cloud: a mission conversation in the Conversation Host, readable after the CLI exits. |
-| Authority | Hands decides each request. Root is the project folder; `ProjectWorkspace` profile (Read/Write/Edit), no terminal tools. |
-| No project | Without `--project` or `./forge.project.json`, `forge run` exits 1 with `Project file not found: <path>. Run \`forge project create\`.` before sign-in or any network call. There is no one-shot fallback and no `forge exec` (forge-mcl PR 84). |
-| Action / result | A real mission writes a file whose bytes are checked independently; an outside-root request is denied; the conversation, including its Hands request and result events, reads back through `GetConversation`. |
+| No project | `forge run` exits 1 with `No forge.project.json found in the current directory. Run \`forge project create\` to create one.` |
+| Reasoning | The cloud: a new mission conversation in the Conversation Host for each launch, readable after the CLI exits. |
+| Authority | Hands may touch only the declared `folders` (`ProjectWorkspace`: Read/Write/Edit, no terminal tools); no folders means no Hands. |
+| Cloud services | ForgeAPI, the Conversation Host, forge-runner and Billing in `cae-forge-dev`, deployed only by a merged forge-infra Terraform PR whose `terraform apply` passed; image tags are in forge-infra `dev/terraform/images.tf`. |
+| Action / result | A real mission writes a file whose bytes are checked independently; the conversation id is printed to stderr and the final answer to stdout. |
 
-### `forge run` Hands default — Phase 73
+Last passed 2026-11-18 (Phase 79): a CLI built from forge-mcl `4a364da`, default endpoint, Hands
+wrote `phase79-proof.txt` (conversation `ea6195a6-249e-5891-9ca0-269409315a49`).
 
-**Superseded by the Phase 76 default above.** Since forge-mcl PR 79 replaced `forge run` with
-the hosted path, this local run has been unreachable; Phase 76 deletes its code.
-
-Implemented and accepted on installed merged main; [actual observations](../phases/phase-73-forge-run-hands_completed.md#installed-default-path-acceptance). [Phase 73](../phases/phase-73-forge-run-hands.md) owns the change
-and evidence; the table defines the required acceptance path before implementation.
+### `forge project create [folder]`
 
 | Part | Default fact |
 |---|---|
-| Artifact | Installed Native AOT `forge` from merged-main `make install`, with normal native sidecars/prerequisites. |
-| Invocation | `forge init` then `forge run`, without a Hands mode flag; every run uses one Bob session and Core root-tool pause/resume. |
-| Authority | Canonical current working directory, even when the mission argument is elsewhere; fixed `ProjectWorkspace` profile, file AutoApproved, default AutoDenied, no terminal tools or interactive/piped policy split. Invoking run grants scoped file operations. |
-| Provider | Normal local mission/experts/`forge.toml` and exported provider credentials; no fake provider, endpoint injection or provider test override for acceptance. |
-| Starting state | Dedicated disposable cwd and an outside sentinel; no unrelated checkout/project mutation. |
-| Action / result | Real provider Write → Read returns independently verified bytes; outside-root request leaves sentinel unchanged; tool-free run completes through the same path; cancellation exits nonzero after session disposal. |
+| Folder | Current directory when omitted; an explicit folder must already exist. |
+| Result | Writes one `forge.project.json` with a stable GUID and `folders: ["."]`; nothing hosted is created. |
 
-Existing trusted `kind: exec` experts and explicit output declarations remain outside the model-tool
-boundary. This default does not claim whole-run OS sandboxing.
+## Changing a default
 
 Before a task changes a supported path—or introduces a new one—the active spoke must add or revise
 its default facts: artifact, configuration that must be absent/present, dependency route and

@@ -1,9 +1,0 @@
-mission ReviewCode = {
-    CodeAnalyser
-    -> MetricsExtractor
-    -> CodeReviewer
-    -> FindingsExtractor
-    -> ReportWriter
-}
-
-output(ReviewCode)

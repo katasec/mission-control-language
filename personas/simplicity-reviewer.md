@@ -43,12 +43,12 @@ Verify against the actual diff, never from memory or the implementer's summary.
 A short verdict table, one row per check, each with a ✅ or ⚠️ and a file:line where it matters.
 Then one line: what to remove or merge to make it simpler. No padding, no praise, no hedging.
 
-Example (Phase 60, forge chat start page, 2026-10-03):
+Example (illustrative):
 
 | Check | Verdict |
 |---|---|
-| New apps or libraries | ✅ None in the final version (a first attempt built a second full-screen app; it was deleted). Uses XenoAtom's built-in `OptionList` |
-| Multiple code paths | ✅ One app, one startup; `ForgeChat.cs` untouched |
-| Copy-paste | ⚠️ `ChatScreen.ShowStart` mirrors `ShowEditor`; should be one method |
-| Redundant definitions | ⚠️ `StartTitle` duplicates `FallbackStrong`; `StartRowDescription` duplicates `Label` |
-| Size versus requirement | ✅ About 95 product lines for one page |
+| New apps or libraries | ✅ None; uses the existing forge-client follow |
+| Multiple code paths | ✅ One `forge run` path; no flag or mode |
+| Copy-paste | ⚠️ A new `@file` size check repeats the one in `RunInputs`; should be one method |
+| Redundant definitions | ⚠️ A second input-size constant duplicates the content store's limit |
+| Size versus requirement | ✅ About 60 product lines for one option |

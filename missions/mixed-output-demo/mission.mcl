@@ -1,7 +1,0 @@
-mission AnalyseSentiment = {
-    SentimentAnalyser
-    -> VerdictExtractor
-    -> SummaryWriter
-}
-
-output(AnalyseSentiment)

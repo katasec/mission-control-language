@@ -2,7 +2,7 @@
 
 > **Status: governing design gate, 2026-08-13.** Applies to every new or changed Forge
 > architecture, infrastructure, service, datastore, identity, queue, and external endpoint. It
-> operationalises the [Phase 42 north-star topology](../phases/phase-42-forge-cloud.md#3a-deployment-topology--the-north-star-locked-2026-07-18).
+> operationalises the [topology decisions](#topology-decisions) locked in Phase 42 (2026-07-18).
 
 ## Non-negotiable invariants (Type 1)
 
@@ -25,11 +25,25 @@ The logical model is independent of today's deployment substrate. Cilium/NSG pol
 private endpoints, identity RBAC, and service authentication are enforcement mechanisms; the
 invariant is the rule they must enforce.
 
+## Topology decisions
+
+Locked 2026-07-18 (Phase 42 north star). The invariants above generalise them; these are the
+concrete placements still in force.
+
+- **ForgeAPI and ForgeUI are separate tier-1 services.** ForgeAPI is the stateless,
+  platform-key-authenticated edge for machine clients (`forge`); ForgeUI is the browser surface with
+  OIDC-cookie auth. They scale, deploy and fail independently.
+- **The runner stays internal: no public ingress, no datastore credentials.** It executes mission
+  code (`kind: exec`), so it is the highest-value compromise target and must never hold a route to
+  the ledger. Its only secrets are the provider keys it uses.
+- **ForgeAPI stays Native AOT-clean** (`CreateSlimBuilder`, JSON source generation, raw Npgsql
+  rather than EF Core).
+
 ## Tier model
 
 | Tier | Purpose | May call | Must not hold |
 |---|---|---|---|
-| 1 — presentation / edge | CDN/WAF, browser/Desktop/API entry, authentication and routing. | Tier 2 services (queries), and tier-2 boundary queues in one direction only (see [queue classes](#service-bus-queue-classes)). | Tier 3 credentials/RBAC, direct datastore paths, or any right on a tier-3 queue. |
+| 1 — presentation / edge | CDN/WAF, browser and API entry, authentication and routing. | Tier 2 services (queries), and tier-2 boundary queues in one direction only (see [queue classes](#service-bus-queue-classes)). | Tier 3 credentials/RBAC, direct datastore paths, or any right on a tier-3 queue. |
 | 2 — application | Bounded-context services, mission workers, domain operations. | Its Tier 3 store; explicit internal Tier 2 contracts. | Another context's store credentials or public data endpoints. |
 | 3 — data / durable transport | Per-context database, Table/Blob, cache, broker. | Nothing as an initiator. | Public ingress or shared, unconstrained credentials. |
 

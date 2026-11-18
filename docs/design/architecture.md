@@ -211,23 +211,36 @@ Thin entry point. Reads `forge.toml` (via `ForgeTomlReader`), builds the runner 
 | Command | Description |
 |---------|-------------|
 | `forge init` | Resolve expert sources from `forge.toml`, populate `~/.forge/experts/`, write `mcl.lock` |
-| `forge run` | Run the mission in the current directory |
+| `forge run` | Run a mission in the cloud as a new durable conversation; needs `forge.project.json` (see [How conversations work](how-conversations-work.md#forge-run-decisions)) |
+| `forge project create` | Write `forge.project.json` in the current folder |
 | `forge validate` | Parse and validate — all experts exist and pipeline is well-formed |
 | `forge list experts` | List available experts |
 | `forge expert init <Name>` | Scaffold a new expert directory |
 | `forge provider list` | List known providers with required fields |
 | `forge provider scaffold <name>` | Print a ready-to-paste `forge.toml` provider block |
-| `forge serve` | Expose the mission as an OpenAI-compatible endpoint |
-| `forge agent start/stop` | Start/stop the agent container (Docker) |
-| `forge webui start/stop` | Start/stop Open WebUI connected to the agent |
-| `forge chat [--hands]` | Chat with the default Chat mission in the cloud (TUI on a terminal, line mode when piped); `--hands` lets it read, write and edit files in the project folder — see [How conversations work](how-conversations-work.md#4-clients-and-turns) |
 | `forge login` / `forge logout` / `forge whoami` | Sign in through the browser and store a platform key / remove it / show the signed-in user and credit balance |
-| `forge claude` | Launch Claude Code talking to a forge mission |
-| `forge connect vscode` | Wire an editor's Claude Code extension to a forge mission |
 | `forge mcp` | Expose a mission as a stdio MCP server |
 | `forge publish` | Package a mission directory into an OCI artifact and push it |
 | `forge registry login` | Save registry credentials to `~/.forge/credentials.json` |
 | `forge clean` | Remove cached OCI experts from `~/.forge/experts` |
+
+
+### 7. MCP server — `forge mcp`
+
+`forge mcp <mission.mcl>` starts a **stdio MCP server** that exposes one mission as one tool, so
+any MCP client (Claude Desktop, Claude Code) can call it. This repo dogfoods it: `.mcp.json` serves
+[`missions/what-is-next`](../../missions/what-is-next/).
+
+- **Stdio, inside `forge`.** The client starts the process and owns the pipe: no port, no
+  discovery, and no second runtime such as a Node.js sidecar. The Native AOT binary stays the only
+  dependency.
+- **Tool shape.** Tool name is the mission name; each mission parameter or `let` binding becomes a
+  JSON-schema property; the response is one text block with the same markdown `forge run` prints.
+- **One call, one response.** MCP fits missions that are pure functions (inputs → output); there is
+  no multi-turn session.
+- **Package:** official `ModelContextProtocol` SDK, with `JsonTypeInfo` source-generated schemas;
+  zero ILC warnings under AOT publish.
+- **Not built:** a multi-mission server (`forge mcp <folder>` exposing a toolset).
 
 ---
 

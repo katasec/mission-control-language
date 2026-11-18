@@ -3,9 +3,9 @@
 A reviewer persona that stops a feature from being added to component X when component Y owns it.
 That one placement mistake is what creates duplicate paths and blurs single responsibility. It
 answers one question:
-**is each new behaviour in the component the atlas says owns it?**
+**is each new behaviour in the component whose README says it owns it?**
 
-The reviewer derives the owner itself, from the atlas, before looking at where the implementer put
+The reviewer derives the owner itself, from the component READMEs, before looking at where the implementer put
 the code. Then it compares. A mismatch fails the review.
 
 ## When to use
@@ -17,7 +17,6 @@ behaviour: a class, method, endpoint, contract, project or package.
 
 | Source | What it gives |
 |---|---|
-| [Forge Desktop component atlas](https://github.com/katasec/forge-desktop/blob/main/src/README.md) (`~/progs/forge-desktop/src/README.md`) | System map and one inventory row per project, across all repos |
 | Component README (`<project>/README.md`) | **Why this exists**, **Owns**, **Does not own**, **Change admission** |
 | Repo READMEs (`~/progs/forge-*/README.md`) | Repo-level purpose; see the [repository map](../AGENTS.md#where-the-code-lives) |
 
@@ -25,7 +24,7 @@ behaviour: a class, method, endpoint, contract, project or package.
 
 1. **List the behaviours.** From the requirement (not the diff), write each new behaviour as one
    plain line: "resolve the conversation endpoint", "retry a failed send".
-2. **Derive the owner, blind.** For each behaviour, read the atlas and the candidate READMEs, and
+2. **Derive the owner, blind.** For each behaviour, read the repo and candidate component READMEs, and
    pick the component whose **Why this exists** and **Owns** cover it. Do this before reading the
    implementer's plan or diff, so their choice can't anchor yours.
 3. **Classify the result:**
@@ -33,7 +32,7 @@ behaviour: a class, method, endpoint, contract, project or package.
    | Outcome | When | Verdict |
    |---|---|---|
    | **Existing owner Y** (most cases) | Y's **Why** or **Owns** covers the behaviour | Code must land in Y. Anywhere else fails. |
-   | **New component** (rare) | No existing **Why** covers it, and adding it to the nearest component would give that component a second job | Allowed only with a README (**Why / Owns / Does not own**) and an atlas row |
+   | **New component** (rare) | No existing **Why** covers it, and adding it to the nearest component would give that component a second job | Allowed only with a README (**Why / Owns / Does not own**) |
    | **Wrongly new** | A new component is proposed, but some Y already covers the behaviour | Fails: it is a duplicate path |
 
    A new component is the fallback. Accept one only after showing that no existing **Why** fits.
@@ -44,7 +43,7 @@ behaviour: a class, method, endpoint, contract, project or package.
    only after reading the code shows both paths do the same job.
 6. **Check the owner has one job.** Read each owning component's **Why this exists**. If it joins
    unrelated duties ("resolves endpoints *and* renders status"), or the change only fits by reading
-   **Why** loosely, flag it: the component itself needs splitting, so the atlas can't be trusted
+   **Why** loosely, flag it: the component itself needs splitting, so its README can't be trusted
    for placement here. Classes and methods inside a component are out of scope; the
    [Simplicity Reviewer](simplicity-reviewer.md) and [code style](../docs/design/code-style.md)
    cover those.
@@ -59,8 +58,8 @@ Example (illustrative):
 
 | Behaviour | Derived owner | Landed in | Verdict |
 |---|---|---|---|
-| Resolve conversation endpoint | `ForgeMission.Orchestration` | `ForgeMission.Orchestration` | ✅ |
-| Retry a failed conversation send | `forge-client` Application adapter (owns remote protocol behaviour) | `ForgeMission.Orchestration/ConversationRuntimeBootstrap.cs:88` | ⚠️ Wrong owner; Orchestration's README excludes remote protocol behaviour |
-| Cache room membership | New component? No: `ForgeMission.Rooms` owns membership facts | New `ForgeMission.Membership` project | ⚠️ Wrongly new; duplicate path |
+| Read `~/.forge/config.json` defaults | forge-mcl CLI (owns local configuration) | forge-mcl `ForgeMission.Cli` | ✅ |
+| Reconnect a dropped event stream | forge-client `ProjectConversation` (owns the follow) | forge-mcl `ForgeDurableRun.cs`, a retry loop around the turn | ⚠️ Wrong owner; the CLI only prepares and prints |
+| Track Hands attachments | New component? No: the Conversation Host owns attachments | New `ForgeMission.Attachments` project in forge-client | ⚠️ Wrongly new; duplicate path |
 
-Move the retry into the forge-client Application adapter; delete `ForgeMission.Membership` and use `ForgeMission.Rooms`.
+Move the reconnect into `ProjectConversation`; delete `ForgeMission.Attachments` and read the Host's state.

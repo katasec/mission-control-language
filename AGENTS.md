@@ -16,9 +16,8 @@ for the grammar and syntax decisions.
 
 ## Where the code lives
 
-This repo holds no product source. It is agent mission control: plans, agent rules, agents, and
-missions. Each component lives in its own repo — see the
-[repository map](docs/phases/phase-50-repository-extraction.md) for status and detail.
+This repo holds no product source. It is agent mission control: plans, agent rules, design docs,
+personas, skills and tools. Each component lives in its own repo:
 
 | Repo | Purpose |
 |---|---|
@@ -26,9 +25,8 @@ missions. Each component lives in its own repo — see the
 | [`forge-runner`](https://github.com/katasec/forge-runner) | Stateless hosted mission execution |
 | [`forge-conversations`](https://github.com/katasec/forge-conversations) | Durable conversation admission, state, and dispatch |
 | [`forge-platform`](https://github.com/katasec/forge-platform) | API, accounts, platform keys, billing, ledger |
-| [`forge-rooms`](https://github.com/katasec/forge-rooms) | Collaboration domain and browser product (Rooms, ForgeUI) |
+| [`forge-rooms`](https://github.com/katasec/forge-rooms) | ForgeUI web app: sign-in, accounts, the run viewer (Phase 78) |
 | [`forge-client`](https://github.com/katasec/forge-client) | Local Forge client packages: `Katasec.Forge.Client`, `Katasec.Forge.Client.Contracts`, `Katasec.Forge.Hands` (Bob) |
-| [`forge-desktop`](https://github.com/katasec/forge-desktop) | Desktop application and supervision; consumes the forge-client packages |
 | [`forge-infra`](https://github.com/katasec/forge-infra) | Azure deployment configuration |
 | `mission-control-language` (this repo) | Agent mission control |
 
@@ -50,8 +48,8 @@ cleanup. Do not expand the scope to every local repository or infer membership f
    and read its README and the nearest component README for every affected path.
 3. Read [docs/plan.md](docs/plan.md) — the active-work hub. It's a **light table of contents**:
    links + a one-line status per active phase, nothing more. It answers only "what is next?".
-   Read [docs/backlog.md](docs/backlog.md) or [docs/plan_completed.md](docs/plan_completed.md)
-   only when the task requires deferred or historical context.
+   Read [docs/backlog.md](docs/backlog.md) only when the task requires deferred context; history
+   is in git.
 4. Read the spoke doc for the current phase — linked from `docs/plan.md` — for the actual detail:
    design, decisions, task status.
 5. Read [docs/design/how-conversations-work.md](docs/design/how-conversations-work.md) for how
@@ -105,37 +103,24 @@ says a database is deployed because the Terraform was written, when the DB was n
 is worse than no doc at all — it actively misleads the next agent into skipping verification.
 
 **Plan routing:** `docs/plan.md` contains selected active work only; move deferred work to
-[docs/backlog.md](docs/backlog.md) and verified or superseded work to
-[docs/plan_completed.md](docs/plan_completed.md). A superseded plan must name and link to its
-replacement rather than silently disappear.
+[docs/backlog.md](docs/backlog.md) and delete verified or superseded work (git history keeps it).
+A superseded plan's replacement says what it replaces.
 
-### Spoke shape — lookup table, not narrative; completed work moves out
+### Spoke shape — lookup table, not narrative; completed work is deleted
 
 A spoke's active body should read as a **lookup table**: what's done (one line + evidence pointer),
 what's blocked and why, what's next. Not a chronological log of everything that happened while
-building it. The point is to minimize what has to be loaded and re-derived from — a wall of
-narrative is exactly what produces the failure this rule set keeps naming: a status or decision that
-*reads* settled because it's mixed in with a hundred other lines, when it was never actually closed
-out.
+building it. A wall of narrative produces the failure this rule set keeps naming: a status or
+decision that *reads* settled because it's mixed in with a hundred other lines, when it was never
+actually closed out.
 
-**When a task, investigation, or decision is genuinely done and verified**, move its narrative
-detail out of the spoke into a sibling `phase-N[.M]-<slug>_completed.md`, and leave a one-line
-pointer in the active spoke (`Task 4 — done, see phase-42.6-hosted-endpoint-ttfa_completed.md#task-4`).
-This is not archival for its own sake — it means a fresh agent (or session) doesn't load
-already-resolved history into context by default, and doesn't have to read 600 lines to find the ~50
-that are still open. Move to `_completed`:
-- Finished, verified tasks — keep the one-line status + evidence pointer in the active spoke; the
-  full build narrative (what was tried, gotchas, verification detail) goes in `_completed`.
-- Resolved investigations/incidents (a bug that's fixed, a DB-wipe root-caused and structurally
-  prevented) — the postmortem narrative goes in `_completed`; the active spoke keeps only "fixed,
-  see `_completed` for the investigation" if it's even still relevant to mention.
-- Superseded design sections — once a redesign is itself the current truth, the old design's
-  writeup (kept today as "what this supersedes") goes in `_completed`, not the active doc.
+**When a task, investigation, or decision is genuinely done and verified, delete its narrative.**
+Leave one line with the evidence pointer (PR, commit, log line, conversation id); git keeps the
+rest. There are no `_completed` files. Before deleting, move any decision still in force into the
+relevant `docs/design/` file.
 
-**Stays in the active spoke, never moves to `_completed`:** anything a *future, not-yet-done* task
-depends on — locked decisions, type/DTO definitions still being built against, the "Done when"
-condition, open gaps blocking the next task. A completed task's evidence can move out; the design it
-was built on cannot, if later tasks still reference it.
+**Never delete what a future task depends on:** locked decisions, type/DTO definitions still being
+built against, the "Done when" condition, open gaps blocking the next task.
 
 ---
 
@@ -205,11 +190,6 @@ this repo (and vice versa) so the repo copy doesn't drift stale.
 
 ## How work is structured
 
-> **Exception — Phase 50 repository extraction.** The gates below (design first, security,
-> engineering philosophy, default-path acceptance, supervisor workflow) apply to all work *except*
-> Phase 50 moves. Those change no behaviour; follow only the
-> [Phase 50 protocol](docs/phases/phase-50-repository-extraction.md#extraction-protocol).
-
 ### Design first
 Design decisions are captured in `docs/design/` or the relevant phase spoke before implementation
 **starts, not partway through it.** An open architecture question, a deferred decision, or a
@@ -219,15 +199,12 @@ documented, raise it and get it resolved before handing off any implementation w
 a task that's handed off can run start-to-finish, unblocked, without stopping mid-build to ask a
 design question that should have been closed out beforehand.
 
-For every user-visible Desktop or ForgeUI change, read
-[Desktop Interaction Principles](docs/design/desktop-interaction-principles.md) and the
-[UI Design System](docs/design/ui-design-system.md) before design or implementation. They govern
-the binding visual reference, responsive evidence, and theme/token ownership; the task assignment
-must name them explicitly rather than leaving their relevance to inference.
+For every user-visible ForgeUI change, read the [UI Design System](docs/design/ui-design-system.md)
+before design or implementation; it owns themes and tokens, and the task assignment must name it.
 
 **Browser verification is the supervisor's responsibility.** For a user-visible web-rendered
 surface, the supervisor personally inspects the running HTTP surface with browser tooling and
-compares it with the binding reference before recording visual acceptance. An implementer's
+compares it with the agreed mockup before recording visual acceptance. An implementer's
 screenshot, code review, or automated test is supporting evidence only; none can substitute for
 that live inspection.
 
@@ -300,8 +277,8 @@ Bicep and the `make <layer>` deploy targets are retired — do not write Bicep o
   `main` passed.
 - **Updating the migration job definition and starting a migration are two separate deliberate
   steps** — bumping `migrate` in `images.tf` only updates the job definition, it never runs it. This
-  split is the structural fix for a prior dev-DB-wipe incident (see
-  [phase-42.6 completed doc](docs/phases/phase-42.6-hosted-endpoint-ttfa_completed.md#migration-job-db-wipe--defused-2026-07-18-structurally-fixed-2026-07-19))
+  split is the structural fix for a prior dev-DB-wipe incident (see the
+  [Deploy Runbook](docs/design/deploy.md))
   — do not re-couple them.
 - Topology, gotchas, and the full flow: [Deploy Runbook](docs/design/deploy.md), which defers to
   `forge-infra/README.md` and `forge-infra/AGENTS.md` as the source of truth.
@@ -356,18 +333,15 @@ Bicep and the `make <layer>` deploy targets are retired — do not write Bicep o
 ## Project structure
 
 ```
-README.md        — what MCL is and why it exists
+README.md        — what this repo is, and the repo list
 AGENTS.md        — this file (canonical; CLAUDE.md symlinks here)
 docs/
   plan.md        — active-work hub: current phases only
-  backlog.md     — deferred candidates, paused work, and external conditions
-  plan_completed.md — verified completed work and superseded-plan mappings
+  backlog.md     — deferred candidates and external conditions
   design/        — cross-cutting design decisions
   phases/        — one hub + spokes per phase, task lists and statuses
-agents/          — agent definitions
 personas/        — subagent personas for the supervisor workflow (designer, implementer, reviewers)
-missions/        — example + built-in missions
+missions/        — what-is-next (served over MCP by .mcp.json); example missions live in forge-mcl
 skills/          — repo copies of agent skills (e.g. checkpoint)
-tools/           — supervisor tools (tui-capture: live Ghostty checks; task-timing: design-to-merge timing)
-clients/, editors/, html/ — to be placed (Phase 50 row 7)
+tools/           — supervisor tools (task-timing: design-to-merge timing; supervisor-test, supervisor-code-test: comparison harnesses)
 ```
