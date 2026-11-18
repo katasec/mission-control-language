@@ -1,8 +1,0 @@
-[providers.default]
-provider = "openai"
-model    = "gpt-4o-mini"
-apiKey   = env("MCL_API_KEY")
-
-[execution]
-backend        = "process"
-defaultTimeout = "30s"

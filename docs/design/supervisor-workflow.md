@@ -66,7 +66,7 @@ Tag each assignment `[<stage>:<role>:r<N>] <task>`; round 1 may omit `r1`. Stage
 | 5. Check | check, read-only | `simplify`; `code-review`; `security-review` when Hands, credentials, network or execution are touched | PASS: no net complexity, no second path to anything, each behaviour in the component the atlas says owns it, no change outside the row. On FAIL, one correction to the same implementer; a second FAIL goes to the operator. |
 | 6. Commit | supervisor | — | One row, one commit; the next row starts on a clean tree. |
 | 7. Live | supervisor | `run` | When the backlog is empty: the real CLI or service on the [default path](default-path-acceptance.md), with the action and observation recorded. |
-| 8. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the spoke's `_completed`; every touched repo on a clean, current `main`. |
+| 8. Close | supervisor | — | PR merged after its checks pass; published or deployed through the normal route; evidence as one line in the active spoke; every touched repo on a clean, current `main`. |
 
 Tests marked `Category=Integration` call live services with real credentials, so no gate runs
 them; the Live stage is the live check.
@@ -126,7 +126,7 @@ and for FAIL the smallest change that would make it PASS. Name the skills you in
 
 ## Records
 
-Per task, in the spoke's run folder or `_completed` file: the Preflight result, the backlog with rows ticked
+Per task, in the spoke's run folder or the active spoke: the Preflight result, the backlog with rows ticked
 as committed, and one line per row:
 
 ```text
@@ -137,4 +137,4 @@ Verify:   build 0 warnings · tests <n passed> · no failures
 Check:    PASS | FAIL → corrected → PASS
 ```
 
-The former [Claude/Codex workflow](claude-codex-workflow.md) is retired and grants no exception.
+The former Claude/Codex workflow is retired and grants no exception.

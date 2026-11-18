@@ -1,24 +1,37 @@
 # How conversations work
 
-> **Status: current, 2026-10-01** (reviewed against the code; the 23 diagrams present at review parse with Mermaid 11; the chat-modes diagram added later has not been parse-checked). This doc explains a Forge conversation from end to end: a turn,
-> storage, live events, clients, hands, and failure. It replaces the stale parts of
-> [durable-conversations.md](durable-conversations.md) (`MissionRunGrain`, grain-storage
-> checkpoints, `PendingTransition`). It matches Conversation Host 0.8.0 (one replica), forge-runner
-> 0.19.0 (`Katasec.Forge.Mcl.Core` 0.1.3; at least one replica always runs), ForgeAPI 0.7.0,
-> `Katasec.Forge.Conversations.Contracts` 0.7.0, `Katasec.Forge.Client` 0.6.0 with
-> `Katasec.Forge.Client.Contracts` 0.1.0 (client-side `Katasec.Forge.Mcl.Core` 0.1.0/0.1.1; the path
-> guard runs in the client ClientRuntime on Core 0.1.0), and `forge` from forge-mcl `main` after
-> Phase 53.9.
+> **Status:** sections 1–3, 5 and 6 were reviewed against the code on 2026-10-01 (Conversation Host
+> 0.8.0, forge-runner 0.19.0, ForgeAPI 0.7.0); line numbers in them may have drifted since. The
+> `forge run` decisions and section 4 were reviewed on 2026-11-18 against forge-mcl `4a364da` and
+> forge-client `main`. This doc explains a Forge conversation from end to end: a turn, storage,
+> live events, the client, Hands, and failure.
 
 Repos are named by their short name (`forge-conversations`, `forge-runner`, …). Paths without a
 repo prefix are in `forge-conversations/src/ForgeMission.ConversationHost/`; other paths name their
 repo. An *inference* is a claim not checked in code or live; it is marked where it appears.
 
+## `forge run` decisions
+
+Locked by the operator in Phase 76 (2026-11-02 to 2026-11-15) and still in force. If code and this
+table disagree, ask the operator; do not infer from git history.
+
+| Decision | Rule |
+|---|---|
+| Project file | Every run needs `forge.project.json` (or `--project <file>`); without one, `forge run` stops with a clear message. `forge project create` writes it. There is no mission version pinning and no `<Mission>@1` declaration. |
+| Hands folders | Hands may touch only the folders listed in `folders`; a new project lists `"."`. An unlisted folder is unreachable; an empty list means no Hands access, with no fallback. A relative path resolves against the first listed folder; an absolute path may target any listed folder (forge-mcl `WorkspaceGuard.TryResolve`). Hands is always on; `folders` is its only permission, with no consent prompt or flag. |
+| One client path | `forge run` opens the project, creates a new conversation each launch, attaches Hands, submits one turn and follows it to the end through forge-client. No flag, mode or check lives only in the CLI. The local history copy under `~/.forge/sessions` is written by forge-client's open step. |
+| Complete turn | The client returns every expert step (attempt and output), Hands requests and results, errors and the final answer; the caller chooses what to show. `forge run` prints the final answer to stdout unchanged (plus a newline), diagnostics and the conversation ID to stderr, and one verbose flag renders the turn's detail to stderr. The full record stays in the Conversation Host. |
+| Code steps | A mission may mix `exec`, `onnx` and similar code steps with `llm` steps. Code runs in the cloud runner as part of the brain; Hands governs client tool calls only. There is no "contains code" marker. |
+| State ownership | The Conversation Host owns durable state: event log, mission content, input bytes, output files. The runner keeps only scratch and re-reads from the Host (the brain/session split of Anthropic's [Managed Agents design](https://www.anthropic.com/engineering/managed-agents)). |
+| Inputs | `forge run <mission> "<prompt>"` fills the mission's one parameter. Named inputs (`--input name=value`, `--input name=@file`) go through forge-client's `UploadInputAsync` and named `Artifacts`; `@file` is one file up to 100 MiB, and a folder is refused. `--input` cannot name the root input. |
+| Config file | On first use `forge` writes `~/.forge/config.json` with `api.endpoint` (default `https://api.forge.katasec.com`) and `oci.endpoint` (default `ghcr.io/katasec`), keeping settings already there. A fully qualified OCI reference works without changing it. If the file cannot be written, `forge` stops at startup. |
+| Deleted | `forge exec`, `--mode`, the stateless one-shot `ExecuteMission` path, and forge-client's mission version lifecycle (drafts, candidates, evaluations, approvals, submissions). |
+
 ## Overview
 
 ```mermaid
 flowchart LR
-  CLI["forge chat / Desktop<br/>Katasec.Forge.Client"] -->|"HTTPS POST /api/{Message}<br/>platform key"| API["ForgeAPI edge"]
+  CLI["forge run<br/>Katasec.Forge.Client"] -->|"HTTPS POST /api/{Message}<br/>platform key"| API["ForgeAPI edge"]
   API -->|"SSE events"| CLI
   API -->|"commands + body chunks"| ING[["conversation-ingress"]]
   ING --> HOST["Conversation Host<br/>ConversationGrain"]
@@ -36,7 +49,7 @@ flowchart LR
 
 | Part | Owns | Talks to |
 |---|---|---|
-| Client (`forge chat`, Desktop) | Local project, hands (Bob), rendering | ForgeAPI only (`/api/{MessageName}`) |
+| Client (`forge run`) | Local project, Hands (Bob), printing | ForgeAPI only (`/api/{MessageName}`) |
 | ForgeAPI edge | Nothing durable; auth, credit check, body chunking | Ingress/reply queues; direct Host queries (`forge-platform/src/ForgeMission.Api/Conversations/ConversationEndpoints.cs`) |
 | Conversation Host | Every conversation: state, events, bodies, live fan-out | Table, Blob, all four conversation queues |
 | forge-runner | Nothing durable except Service Bus session state | Command and progress queues; Host body route |
@@ -55,7 +68,7 @@ sent; to **drain** the outbox is to send every owed command and record each as s
 
 ```mermaid
 sequenceDiagram
-  participant C as forge chat
+  participant C as forge run
   participant A as ForgeAPI
   participant H as Host ConversationGrain
   participant S as Table + Blob
@@ -282,244 +295,46 @@ harmless: the step's final `ParticipantMessage` is the durable record.
 
 ---
 
-## 4. Clients and turns
+## 4. The `forge run` client
 
-This section covers `forge chat` on forge-mcl `main` after Phase 64
-([katasec/forge-mcl#55](https://github.com/katasec/forge-mcl/pull/55)). Paths in this section are
-in `forge-mcl/src/ForgeMission.Cli/` unless they name another repo.
-
-**Portable startup acceptance: PASS, 2026-10-04**
-([record](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance)):
-installed plain line/TUI turns, declaration-only clone, cache reconstruction/failure, scoped
-hands read and fresh approval/refusal. The earlier multi-window evidence below remains historical.
-
-**Live acceptance: PASS, 2026-10-01**
-([record](../phases/phase-53.9-tui-live-sessions_completed.md)). Two TUIs on one conversation
-streamed in step: `LINE-03`, `LINE-20` and `LINE-40` appeared at +6.8, +9.1 and +11.7 s in both.
-Ctrl-D in one window mid-reply exited 0 with no exception, and the other window kept streaming.
-Not covered live: two `--hands` windows and the reconnect notice (unit tests only).
-
-| Mode | When | Stream |
-|---|---|---|
-| TUI | A terminal on both input and output | One live stream with deltas, open to exit |
-| Piped (line) | Input or output redirected | Follows only its own turn, no deltas, exits on EOF |
-
-### One conversation per chat mode
+`forge run` (forge-mcl `src/ForgeMission.Cli/Commands/ForgeDurableRun.cs`) prepares the mission
+package, then hands everything else to forge-client's shared path
+(`src/ForgeMission.Application/Missions/ProjectConversation.cs`); the rules are in
+[`forge run` decisions](#forge-run-decisions).
 
 ```mermaid
 flowchart LR
-  P["Project"] --> C1["Chat conversation<br/>Answerer, NoHands"]
-  P --> C2["ChatHands conversation<br/>Assistant, ProjectWorkspace"]
-  L["forge chat launch"] --> Q{"latest conversation<br/>on my mode's mission?"}
-  Q -->|"yes"| R["reopen it, replay its history"]
-  Q -->|"no"| N["stop: no hosted chat for declared mission version"]
+  P["prepare package<br/>parse --input"] --> S["StartAsync: new conversation,<br/>Hands attached to declared folders"]
+  S --> T["SubmitMissionTurn<br/>(named inputs uploaded first)"]
+  T --> F["follow the attempt's events<br/>until a terminal RunStatus"]
+  F --> O["final answer → stdout<br/>conversation id → stderr"]
 ```
 
-`forge chat` and `forge chat --hands` use two separate conversations in the same project, because a
-conversation's hands profile is fixed for life. On launch, Projects opens the current folder's
-`forge.project.json`, and Missions resolves its exact declared name/version against the authenticated
-hosted list. The newest equivalent immutable launch wins; distinct launches under the same reference
-are an error. Its authenticated snapshot supplies the actual package, profile and provider display.
-No hosted match stops explicitly; chat does not create a Project or publish a starter. Each mode keeps
-its own history. Before
-[katasec/forge-mcl#31](https://github.com/katasec/forge-mcl/pull/31) the CLI looked only at the
-project's single latest conversation, so switching modes started an empty conversation on every
-launch. Two windows share a conversation, and stream each other's turns, only when they are in the
-same mode; a plain window and a `--hands` window are separate chats. Verified live 2026-10-01:
-alternating plain → `--hands` → plain, each run replayed its own history.
-
-The Project declaration's stable ID carries identity across folder copies. Hosted chat requires
-neither `mcl.lock` nor `obj/forge/project.state.json`. Always replay complete hosted history from
-zero: sequence numbers are cursors within that conversation, not ordering across conversations or
-a remembered display position from the previous invocation. Sessions writes reconstructable
-`session.json` and durable `messages.jsonl` under platform-user-home
-`.forge/sessions/<projectId:N>/<conversationId:N>/`. Disk is never read for display, identity or
-consent. Publish at stream disposal and joined shutdown; a local write failure emits one visible
-notice and disables that recorder while server chat continues.
-
-### One live stream per window
-
-```mermaid
-flowchart LR
-  subgraph W1["TUI window 1"]
-    L1["LiveAsync: one stream,<br/>deltas on, open to Ctrl-D"]
-  end
-  subgraph W2["TUI window 2"]
-    L2["LiveAsync"]
-  end
-  H["Host SSE<br/>via ForgeAPI"] -->|"every event of every turn"| L1
-  H -->|"every event of every turn"| L2
-  W1 -->|"SubmitMissionTurn only"| API["ForgeAPI"]
-```
-
-On open, the TUI reads the snapshot, replays history up to `LastSequence`, then starts one stream
-after that cursor with `includeDeltas: true`. The stream runs until Ctrl-D and never ends on a turn
-(`ends: _ => false`) (`Tui/ChatTui.cs:105-126`). So every window shows every turn live, whichever
-window sent it. The Host fan-out ([section 3](#3-live-events)) already supports many readers.
-
-### Submit only posts; the stream shows the turn
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant T as TUI window
-  participant A as ForgeAPI and Host
-  U->>T: Enter
-  T->>T: show message + pending reply at once
-  T->>A: SubmitMissionTurn with CommandId
-  A-->>T: SubmitMissionTurnResponse, TurnId + TurnAttemptId
-  T->>T: own turn = that attempt
-  A-->>T: stream - UserMessage, ParticipantStarted, deltas, message, RunStatus
-  T->>T: terminal RunStatus for own attempt clears own turn
-```
-
-Enter shows the message and a pending reply straight away and queues the submit for the next UI
-step (`Tui/ChatTui.cs:186-194`). The submit stores the response as this window's **own turn**
-(`Tui/ChatTui.cs:135`). The turn's events arrive only through the live stream; when the stream
-shows the own attempt's end, the own turn is cleared (`Tui/ChatTui.cs:231-235`). A submit Forge
-refuses puts the text back in the composer with an error.
-
-### One turn at a time
-
-```mermaid
-stateDiagram-v2
-  [*] --> Idle: snapshot has no active run
-  [*] --> Running: snapshot has an active run
-  Idle --> Running: stream shows UserMessage from any window
-  Running --> Idle: stream shows terminal RunStatus
-  note right of Running
-    Enter is ignored, text stays in the composer
-  end note
-```
-
-Enter does nothing while the conversation is opening, while a call is in flight (`_busy`, or a
-message already queued), or while any window's turn runs (`Tui/ChatTui.cs:188`). "A turn runs" is
-`TurnRunning`: a `UserMessage` starts one, a terminal `RunStatus` ends one, and the start value
-comes from the snapshot (`Tui/ChatTui.cs:109, 265-270`). The Host enforces the same rule
-(`RunAlreadyActive`, `ConversationGrain.cs:305`); the client rule keeps a second window from
-trying.
-
-### Another window's message
-
-```mermaid
-flowchart LR
-  E["live UserMessage"] --> Q{"sent from<br/>this window?"}
-  Q -->|"yes"| A["already shown with<br/>its pending reply"]
-  Q -->|"no"| B["show it, then a pending reply"]
-  B --> C["ParticipantStarted replaces<br/>the pending reply with a card"]
-```
-
-`Transcript.ApplyLive` checks whether the `UserMessage` id matches a message this window sent
-(the command id is the event id). If not, it appends a pending reply, which the participant's
-started card replaces (`Tui/Transcript.cs:60-66`).
-
-### Ctrl-C stops only this window's turn
-
-```mermaid
-flowchart TB
-  K["Ctrl-C"] --> O{"own turn, or<br/>submit in flight?"}
-  O -->|"no"| N["nothing"]
-  O -->|"yes"| F["mark stop"]
-  F --> W{"submit result"}
-  W -->|"still in flight"| W2["wait for next UI step"] --> W
-  W -->|"refused"| R["clear the stop,<br/>text back in composer"]
-  W -->|"accepted"| C["cancel hands attempt,<br/>then CancelMissionTurn"]
-  C --> S["stream shows how the turn ended"]
-```
-
-Ctrl-C does nothing for a turn another window sent, or a turn already running when this window
-opened (`Tui/ChatTui.cs:198-201`). Pressed before the submit returns, the stop waits for the
-response, then runs on the next UI step (`Tui/ChatTui.cs:93-97`). It cancels a running file
-operation first, then the turn (`Tui/ChatTui.cs:150-161`). If the submit is refused, the pending
-stop is cleared, so it cannot apply to a later turn. The submit's `finally` applies `KeepsStop(stopRequested, hasOwnTurn)` (`ChatTui.cs`, forge-mcl [#30](https://github.com/katasec/forge-mcl/pull/30)).
-
-### Hands run only for this window's turn
-
-```mermaid
-flowchart LR
-  E["live event"] --> B{"RunId == own<br/>TurnAttemptId?"}
-  B -->|"yes"| H["ChatHandsAttachment.OnEvent<br/>MissionHandsRequested starts Execute"]
-  B -->|"no"| S["show the tool line only"]
-```
-
-Only events of the own turn reach the hands attachment (`BelongsToOwnTurn`,
-`Tui/ChatTui.cs:228-229, 260-261`); the Host stamps each turn's events with its attempt id as
-`RunId`. Another window's tool request is shown, not executed.
-
-**Two `--hands` windows: only the most recently attached one can execute.** Each window attaches
-on open, and a new attachment replaces the current one unless a tool call is in flight
-([section 5](#attachment-handoff)). The Host refuses a claim from any other attachment
-(`ConversationGrain.cs:646-648`), with the same untyped reason as a missing or cancelled request.
-So the own-turn rule only stops windows from claiming each other's work; it does not let the older
-window run its own tools. The older window's own tool requests fail with that untyped reason. A
-typed reject is in the backlog.
-
-**One exception on open:** `Begin` checks once for a request already waiting for the new
-attachment and executes it (`ChatHandsAttachment.cs:25-30`). By construction this window did not
-send that request: it belongs to another window or a previous session. Piped mode goes further:
-its hands handler is not filtered, so while it follows a turn that was already running when it
-opened (another window's), it executes that turn's tool requests (`ForgeChat.cs:295-302`).
+1. **One conversation per launch.** `StartAsync` opens the project, creates a new mission
+   conversation whose launch is pinned to `ProjectWorkspace` when the project lists folders and
+   `NoHands` when it lists none (`MissionConversationService.cs:46-56`), and attaches Hands.
+2. **One turn.** The client submits one `SubmitMissionTurn` with a fresh command id. Named inputs
+   (`--input`) are uploaded as content first (`UploadInputAsync`).
+3. **Follow.** The client streams the conversation's events from its cursor. Only events stamped
+   with this turn's attempt id (`RunId`) are shown and collected; every event also reaches the
+   Hands driver. A delta is shown only after its step started on the same connection, and never
+   moves the cursor. The turn ends at a terminal `RunStatus` (`Completed`, `Rejected`,
+   `Interrupted`, `Failed`).
+4. **Result.** On `Completed` the final answer is the last top-level `ParticipantMessage`; it is
+   printed to stdout and the exit code is 0. Otherwise the exit code is 1. `--verbose` prints every
+   event to stderr (`RunTranscript.cs`); without it only error events are printed.
 
 ### Reconnect
 
-```mermaid
-sequenceDiagram
-  participant T as TUI StreamAsync
-  participant A as ForgeAPI and Host
-  T->>A: events after cursor
-  A--xT: transport failure, HttpRequestException or IOException
-  T->>T: show "connection lost, reconnecting" once
-  T->>T: wait 250 ms
-  T->>A: events after the same cursor
-  A-->>T: next event clears the lost flag
-```
+A stream that closes cleanly is reopened from the cursor after a short delay, so no durable event
+is lost or repeated. A transport failure is thrown and ends the run with `run failed: …` (backlog:
+Follow reconnects).
 
-The TUI and piped mode share one loop, `ForgeChat.StreamAsync` (`ForgeChat.cs:363-394`). A stream
-that closes is reopened from the cursor after 250 ms. In the TUI, a transport failure also
-reconnects and adds one notice line; no second notice is added until an event arrives
-(`Tui/ChatTui.cs:240-245`). A delta is shown only after its step started on the same connection,
-so a reconnect mid-reply shows no partial text until the final message.
+### Ctrl-C
 
-### Ctrl-D exits cleanly
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant Q as Quit command
-  participant L as UI loop UpdateAsync
-  U->>Q: Ctrl-D
-  Q->>Q: cancel the session token
-  L->>L: busy step ends, cancelled
-  L->>L: next step waits for the live stream to end
-  L->>L: then cancels any running file operation
-  L-->>L: return Stop, UI thread ran until here
-```
-
-The TUI replaces the app's own quit command (`Tui/ChatTui.cs:203-214`). Before 53.9, Ctrl-D
-stopped the terminal app at once; a `finally` then cancelled the session and a pending await
-resumed onto the stopped dispatcher, which crashed with `InvalidOperationException: Dispatcher is
-not attached to a running TerminalApp`. Now Ctrl-D only cancels the session. The UI loop calls its
-next step only after the busy step has ended; that step waits for the live stream, then cancels
-hands, and only then stops (`Tui/ChatTui.cs:76-80, 174-179`). A turn still running keeps running
-on Forge.
-
-### Piped mode (unchanged)
-
-```mermaid
-flowchart LR
-  OPEN["replay to snapshot.LastSequence"] --> RUN{"a turn<br/>still running?"}
-  RUN -->|"yes"| F1["follow it"] --> READ
-  RUN -->|"no"| READ["read a line"]
-  READ -->|"EOF, Ctrl-D"| EXIT["exit 0"]
-  READ --> SUB["SubmitMissionTurn"] --> F2["FollowTurnAsync on own<br/>TurnAttemptId, no deltas"]
-  F2 -->|"run ends"| READ
-  F2 -->|"Ctrl-C"| CAN["cancel hands attempt,<br/>CancelMissionTurn, exit 130"]
-```
-
-Piped mode follows only its own turn through `FollowTurnAsync`, which is `StreamAsync` ending at
-that attempt's end. A transport failure there is thrown, not retried (`ForgeChat.cs:291-352`).
-Phase 54 and 55 acceptance runs used piped mode (codeword recall, the 404,863-byte message, a turn
-across a Host restart, the hands Read).
+Ctrl-C cancels the run's token. The client first cancels any Hands operation in flight, then cancels
+this turn attempt on the Host (`MissionConversationService.CancelAsync`), then exits. Disposing the conversation stops following,
+stops Hands and closes the session; it does not cancel a turn on the Host.
 
 ---
 
@@ -532,36 +347,17 @@ local client (Bob, in forge-client) executes.
 
 | Profile | Tools the runner declares | Used by |
 |---|---|---|
-| `NoHands` | none | `forge chat` (`Chat` mission), evaluations |
-| `ProjectWorkspace` | Read, Write, Edit | `forge chat --hands` (`ChatHands` mission) |
+| `NoHands` | none | `forge run` when the project lists no folders |
+| `ProjectWorkspace` | Read, Write, Edit | `forge run` when the project lists folders (a new project lists `"."`) |
 | `ProjectWorkspaceAndTerminal` | Read, Write, Edit, Bash | defined; no default client uses it |
 
 The runner declares tools with Core's `AgentToolDeclarations`, which have real JSON schemas
-(`file_path` required) (`forge-runner/…/Conversations/GenericDurableMissionExecutor.cs:62-68`). Core
-gives tools only to `role: agent` experts (`forge-mcl/src/ForgeMission.Core/Runtime/PipelineRunner.cs:888`),
-so the existing `ChatHands` package uses the `Assistant` expert. A mission conversation's launch,
+(`file_path` required) (`forge-runner/…/Conversations/GenericDurableMissionExecutor.cs`). Core
+gives tools only to `role: agent` experts (`forge-mcl/src/ForgeMission.Core/Runtime/PipelineRunner.cs`). A mission conversation's launch,
 and so its profile, is pinned at creation; every hands attachment must match that immutable pin
 (`ConversationGrain.DecideMissionConversationCreate` and `DecideAttachMissionHands`).
 
-### Fresh file approval (`forge chat --hands`)
-
-```mermaid
-flowchart TB
-  S["forge chat --hands"] --> F["authenticate declared ChatHands pin<br/>require ProjectWorkspace"]
-  F --> I{"interactive?"}
-  I -->|"no"| P["stop: fresh terminal consent required"]
-  I -->|"yes"| Q["Allow Forge to read, write and edit<br/>files in folder? y/N"]
-  Q -->|"y"| A["acknowledge actual hosted pin<br/>fresh scoped attachment and chat"]
-  Q -->|"N or EOF"| D["stop without tool attachment"]
-```
-
-Every launch asks again. A portable session initially has `NoHands`; declaration IDs, profile
-files and earlier approval grant no tools. The CLI refuses a pin outside its file-only mode before
-consent. After approval, shared Missions re-reads the declaration and authenticated snapshot,
-checks the exact admitted Project/name/version and acknowledged pin, and attaches Bob using the
-actual hosted launch. File operations remain scoped to the admitted Project folder; terminal
-capability stays denied. This replaces the previous one-time authoring approval described in the
-[Phase 55 historical record](../phases/phase-55-forge-chat-hands_completed.md).
+There is no consent prompt and no flag: the project's `folders` are the only permission.
 
 ### Attachment handoff
 
@@ -585,7 +381,7 @@ attachment that is not current is refused (`ConversationGrain.cs:646-648`).
 sequenceDiagram
   participant R as forge-runner
   participant H as Host
-  participant C as forge chat + Bob
+  participant C as forge run + Bob
   C->>H: AttachMissionHands, attachment id + launch
   R->>R: model calls Read, Core pauses with a continuation
   R->>H: MissionHandsRequested + continuation body, WaitingForHands
@@ -604,21 +400,15 @@ sequenceDiagram
 | Attach | One current attachment; see [handoff](#attachment-handoff) | `ConversationGrain.cs:432-494` |
 | Request | Host accepts a request only if it matches the active start command and the pinned launch | `ConversationGrain.cs:800-818` |
 | Claim then read (B13) | Command replies never carry bodies (they ride the 256 KB reply queue). The claim returns status and the request id; Bob reads the work item by query | `ConversationGrain.cs:629-663`; `forge-client/src/ForgeMission.Application/Missions/MissionHandsConversationService.cs:214-228` |
-| Execute | Driven by the event stream: each `MissionHandsRequested` starts one Execute off the stream loop (in the TUI, only for the window's own turn, [section 4](#hands-run-only-for-this-windows-turn)); one check after attach for a request already waiting | `forge-mcl/src/ForgeMission.Cli/ChatHandsAttachment.cs:7-37` |
-| Path guard | Relative paths resolve under the project root; anything resolving outside is refused; symlinks are followed on every existing ancestor. A path guard, not an OS sandbox | `forge-mcl/src/ForgeMission.Core/Tools/WorkspaceGuard.cs` (used by forge-client ClientRuntime via `LocalDiskWorkspace`) |
+| Execute | Driven by the event stream: every followed event reaches the Hands driver, and each `MissionHandsRequested` starts one Execute | `forge-client/src/ForgeMission.Application/Missions/MissionHandsDriver.cs` |
+| Path guard | Relative paths resolve under the first declared folder; anything resolving outside is refused; symlinks are followed on every existing ancestor. A path guard, not an OS sandbox | `forge-mcl/src/ForgeMission.Core/Tools/WorkspaceGuard.cs` (used by forge-client ClientRuntime via `LocalDiskWorkspace`) |
 | Result | The result commit owes exactly one deterministic `ContinueAfterTool` | `ConversationGrain.cs:534-592` |
 | Resume | Runner refuses a resume if the run is not `WaitingForHands`, or the package hash or engine build changed | `forge-runner/…/Conversations/MissionCommandProcessor.cs:145-162` |
 | Fingerprint | Core hashes tool schemas in compact JSON at pause and at resume, so schema whitespace cannot break a continuation (fixed in Core 0.1.3) | `forge-mcl/src/ForgeMission.Core/Runtime/PipelineRunner.cs:741-749` |
-| Exit mid-tool | Ctrl-C cancels the hands attempt on the Host, then the local operation | `forge-mcl/src/ForgeMission.Cli/ChatHandsAttachment.cs:39-73` |
+| Exit mid-tool | Ctrl-C cancels the local Hands operation, then the turn attempt on the Host | `forge-client/…/Missions/ProjectConversation.cs` (`RunAsync`) |
 
-`forge chat --hands` runs in its own conversation, separate from plain `forge chat` ([section 4](#one-conversation-per-chat-mode)).
-
-Proven live on the installed default path by [Phase 64](../phases/phase-64.1-portable-chat-contracts_completed.md#installed-default-path-acceptance):
-scoped Read with exact file content returned, TUI succeeded status, fresh prompt on reopening and
-refusal. Write, Edit, cancel mid-tool and two `--hands` windows remain covered by tests only.
-
-**Desktop is deferred.** Desktop only acknowledges hands and never calls Execute, and it still
-uses Contracts 0.4.0 (backlog: Desktop client upgrade).
+Proven live on the default path with `forge run` (Phase 79, 2026-11-18): Hands wrote
+`phase79-proof.txt` in the project folder (conversation `ea6195a6-249e-5891-9ca0-269409315a49`).
 
 ---
 
@@ -702,11 +492,10 @@ dropped.
 
 | Gap | Note |
 |---|---|
-| Typed "not the current attachment" claim reject | The Host refuses a non-current attachment with the same untyped reason as other refusals (`ConversationGrain.cs:646-648`), so only the most recently attached `--hands` window can execute. Backlog. |
+| Typed "not the current attachment" claim reject | The Host refuses a non-current attachment with the same untyped reason as other refusals (`ConversationGrain.cs`), so a client cannot tell them apart. Backlog. |
 | Turn cancel and the runner | The runner is not told; inference: it finishes its work and its later facts are rejected ([section 1](#1-a-turns-life)). |
-| Desktop client upgrade | Desktop is on Contracts 0.4.0 and does not execute hands. Backlog. |
 | Host replica count is 1 | The design is correct for N silos (tested with 2); scaling out is a separate decision (`forge-infra/dev/terraform/apps.tf`, `conversation_host` `min_replicas`/`max_replicas`). |
 | Runner processes one conversation at a time per replica | `MaxConcurrentSessions = 1` (`forge-runner/…/Conversations/AzureServiceBusMissionCommandConsumer.cs:91`); 1–3 replicas, minimum 1 so the queue consumer always runs (`forge-infra/dev/terraform/apps.tf`, `runner` `min_replicas`/`max_replicas`). Inference: replicas scale on HTTP traffic, not queue length. |
 | Orphan body blobs | A body blob committed but never referenced by a grain commit stays (Phase 54 B4). Staged blocks never committed expire after 7 days (Phase 54 B7). |
 | Resends after the 10-minute duplicate-detection window | Not deduplicated by the queue; inference: the runner's session state (same `CommandId`) turns a late resend into a no-op or `Interrupted`. |
-| Not covered live | Two `--hands` windows; the TUI reconnect notice; hands Write/Edit and cancel mid-tool. |
+| Not covered live | A transport failure mid-follow; Hands Edit and cancel mid-tool. |

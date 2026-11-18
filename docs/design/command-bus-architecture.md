@@ -22,7 +22,7 @@ Clients reach an edge over HTTP; everything behind the edge is decoupled through
 | Tier | Component | Owns | Touches |
 |---|---|---|---|
 | 1 — edge | ForgeAPI | Nothing | Auth; ingress send; reply listen; queries to tier-2 owners |
-| 1 — edge | ForgeUI | Nothing (target; Rooms extraction is later) | Same pattern |
+| 1 — edge | ForgeUI | Nothing (target; see deviations) | Same pattern |
 | 2 | Conversation Host | Conversations: Azure Table + Blob | Ingress listen, reply send, internal work queues |
 | 2 | forge-runner | Nothing durable | Internal work queues; financial send |
 | 2 | Billing service | `authbilling_db` (keys, ledger, balances) | Financial listen; answers queries |
@@ -36,5 +36,4 @@ one-shot or durable. It measures usage for every run segment and sends settlemen
 | Deviation | Removed by |
 |---|---|
 | ForgeUI holds `authbilling_db` for two sign-in writes | Backlog: move `forge login` key issuance to ForgeAPI |
-| ForgeUI holds `rooms_db` (Rooms context inside the edge) | Backlog: extract Rooms as a tier-2 service |
-| Rooms calls forge-runner over HTTP `/run` | Backlog: move them to the bus; delete `/run` |
+| ForgeUI holds the `members` accounts table (`forge_rooms` database) inside the edge | Not yet scheduled |

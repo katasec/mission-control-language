@@ -77,7 +77,7 @@ conversation `298823aa-b84b-5413-994f-d5be87dd9454`. Its
 | Latest-failure banner | `Error` events; `MissionHandsResult` with a failed outcome | — (can be derived) | — |
 | Pause | — | `ConversationRunStatus` has no Paused value. Turn cancel exists. | `ConversationContracts.cs:82-93` |
 | Compare turns | — | — (can be derived from stored rounds) | — |
-| Run list (Jobs) | `ListMissionConversations(ProjectId)` → `MissionConversationSummary`. Every `forge run` makes a new conversation. | No caller in forge-client; no counts | `ConversationContracts.cs:477-480`; [phase-76](phase-76-unified-cloud-run_completed.md) |
+| Run list (Jobs) | `ListMissionConversations(ProjectId)` → `MissionConversationSummary`. Every `forge run` makes a new conversation. | No caller in forge-client; no counts | `ConversationContracts.cs:477-480`; phase-76 |
 
 ### Findings that change the agreed direction
 
@@ -142,7 +142,7 @@ merged text, so model behaviour does not change.
 | Detail on demand | New flag `detail=true` on the Host events and SSE routes, forwarded by ForgeAPI as `IncludeDetail` (the same pattern as `IncludeDeltas`). Without it the hydrator **skips the new body slots**, so chat clients pay nothing extra. | `ConversationEndpoints.cs:277-280` (forge-platform) |
 | Run list | `ListMissionConversations(ProjectId)` as it is; counts come from the read model on open. A summary column is Q7. | `ConversationContracts.cs:477-480` |
 | Ownership | No new access model. Every Host route is member-scoped through `X-Forge-Member-Id`, which only the edge sets, and the address is built from the member, so another member's conversation reads as not found. | Host `ConversationEndpoints.cs:503-522` |
-| Jobs read model | A shared Application contract in forge-client (`RunDetail` built by folding events), so a TUI and a GUI share one fold ([presentation parity](../design/engineering-philosophy.md#presentation-surface-parity-gate)) | — |
+| Jobs read model | A shared Application contract in forge-client (`RunDetail` built by folding events), so every client (the CLI and the ForgeUI viewer) shares one fold | — |
 
 ### Architecture-security gate
 
@@ -171,7 +171,7 @@ merged text, so model behaviour does not change.
 | Smell | Answer |
 |---|---|
 | New mechanism? | No. It reuses `OnTrace`, the context-bag runtime keys, body slots, member scoping and SSE. |
-| New knob? | One read flag, `detail`, needed so the default chat stream does not carry detail. |
+| New knob? | One read flag, `detail`, needed so the default `forge run` stream does not carry detail. |
 | Ambient state? | Avoided. The model call is attached to the step result, not to an `AsyncLocal`. |
 | Duplicate owner? | Tool results stay Host-recorded only. Tokens are measured once per call, in Core's existing call site. |
 
@@ -203,7 +203,7 @@ Release order follows the package graph: Core → Contracts → Host/runner/clie
 
 | # | Question | Recommendation |
 |---|---|---|
-| Q1 | Where does the Jobs screen live? Desktop is on Contracts 0.4.0, its Hands are broken and its run history was deleted (forge-client `917d66f`). ForgeUI (forge-rooms) does not use the Host. | Build the shared read model first. Choose the surface with the operator, then bind the mockup as the [visual reference](../design/desktop-interaction-principles.md#visual-reference-acceptance-gate--non-negotiable) (saved under `docs/images/phase-78/`). |
+| Q1 | Where does the Jobs screen live? | **Answered** ([Phase 79 Q2](phase-79-product-focus.md#open-questions)): in ForgeUI. The mockups are saved under `docs/images/phase-78/`. |
 | Q2 | Size: keep the 4 MiB body cap for model requests and stdout, or route large output through the existing content store (100 MiB, `MissionContentContracts.cs:31-33`)? | Keep 4 MiB in v1 and fail loudly. Revisit with real sizes. |
 | Q3 | Retention: there is no TTL or delete path today for events or bodies. Detail multiplies storage. Each round re-sends the whole history, so request bodies grow quadratically. | Decide retention before enabling capture outside dev. Content-hash dedupe of request bodies is a later option. |
 | Q4 | Terminal: there is no default path with the terminal profile, so exit code and stdout/stderr have no default-path producer. | Either scope v1 to file tools and model calls, or name the surface that grants `ProjectWorkspaceAndTerminal` as part of this phase. |
@@ -213,6 +213,7 @@ Release order follows the package graph: Core → Contracts → Host/runner/clie
 | Q8 | Request bodies include the expert system prompts. Is that acceptable for published missions whose prompts the author might not want shown? | Inference: the runner of a mission already holds its package. Needs an operator answer. |
 | Q9 | Pause: there is no Paused status, and the runner is not told about a cancel. | Out of scope. It is a new run-control behaviour and needs its own design. |
 | Q10 | Compare turns | Out of scope for v1. The stored rounds make it possible later. |
+| Q11 | Central workflow telemetry (from the backlog, 2026-10-05): task timing is rebuilt today from each CLI's session logs ([task-timing](../../tools/task-timing/README.md)), so Codex runs are invisible. Which component owns stage timing and tokens, and does the per-step trace reach the Host's events? | Decide with this phase's read model. |
 
 ## 6. Default path
 
@@ -225,7 +226,7 @@ Jobs surface's own default is added once Q1 is answered.
 ## Done when
 
 1. The installed `forge run` of a mission with two LLM agents and one `exec` step, a succeeded Write, a succeeded Read and a failed Read, run against the deployed services, reads back through ForgeAPI with `IncludeDetail`. Every `ParticipantStarted`, `ParticipantMessage` and `Error` has `Step` (with the correct StepKey); every LLM message has `Model` with non-zero tokens and a request body that contains the user prompt; every `MissionHandsResult` has `Execution.DurationMs`.
-2. The same read **without** `IncludeDetail` is byte-identical in shape to today's, and the installed `forge chat` still writes `messages.jsonl`.
+2. The same read **without** `IncludeDetail` is byte-identical in shape to today's, and the installed `forge run` still writes its local history copy under `~/.forge/sessions`.
 3. A model request body over 4 MiB fails the step with a named reason. This is a negative-path test at the runner layer.
 4. A detail read with another member's id returns 404.
 5. The Jobs read model, built from the run in step 1, shows 3 turns, 3 tool calls, 1 failure and Hands time equal to Σ `DurationMs`. Then the chosen surface passes its visual-reference gate (Q1).

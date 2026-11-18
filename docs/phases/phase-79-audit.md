@@ -76,10 +76,10 @@ with that decision.
 | D5 | Names: rename the `forge-rooms` repo and solution; keep or rename DB `forge_rooms`, `kv-forgerooms-dev`, `crforgeroomsdev`, compose names? | forge-rooms, forge-infra | **Rename in code only** (operator, 2026-11-15): solution → `ForgeUI.slnx`; the kept account code goes in one project `ForgeUI.Accounts` (member, DB context, migrations). Azure names (`forge_rooms` DB, `kv-forgerooms-dev`, `crforgeroomsdev`) and compose names stay: renaming them rebuilds live resources for no user gain. The GitHub repo keeps the name `forge-rooms` for now; renaming it later is its own step, together with the forge-infra 150-ci federated credential. |
 | D6 | ForgeUI DB history: add one migration that drops the Rooms tables (keeps prod data), or squash to a fresh identity migration? | forge-rooms Migrations/ | **One drop migration** (operator, 2026-11-15): keep the history and add one migration that drops the four Rooms tables, deletes agent rows from `members` and drops its `kind` column; every person's member id is kept (billing and keys point at it). Order: deploy ForgeUI without Rooms, prove it, then deploy the 450-migrate job definition and start it. Between the two, a first-ever sign-up fails (no `kind` value); existing sign-ins and `forge login` keep working (they only look the member up). |
 | D7 | Keep the PWA assets (manifest, service worker, offline page)? | forge-rooms wwwroot | **Delete** (operator, 2026-11-15): manifest, service worker, offline page, `install-hint.js` and the PWA icons go; the favicon stays. The operator clears site data once after the deploy to drop the old registered worker. |
-| D8 | Keep the xAI key in the runner (only if a `forge.toml` provider or the `search` kind needs it)? | forge-infra 500-app; Grok search tests backlog row | — |
-| D9 | Remove Kind/local mode everywhere (Azurite stays for tests)? | forge-infra 350 Kind files, SAS rules, deploymentScript; conversations connection-string branch; backlog `forge dev start`, Local Host isolation | — |
+| D8 | Keep the xAI key in the runner (only if a `forge.toml` provider or the `search` kind needs it)? | forge-infra 500-app; Grok search tests backlog row | **Remove** (operator, 2026-11-18): the runner no longer reads it; delete the Grok search tests backlog row |
+| D9 | Remove Kind/local mode everywhere (Azurite stays for tests)? | forge-infra 350 Kind files, SAS rules, deploymentScript; conversations connection-string branch; backlog `forge dev start`, Local Host isolation | **Remove** (operator, 2026-11-18): Kind is unsupported and scaled to 0; delete `dev/kind/` and the `forge dev start` and Local Host isolation backlog rows |
 | D10 | Dev data: purge stored Project/Evaluation conversation rows, or keep the enum members readable? | conversations `ConversationPurpose`, event kinds | **Delete the unused values, purge 9 rows** (operator, 2026-11-15). Live store (read 2026-11-15): 117 `missionConversation`, 7 `evaluation`, 2 `projectMission` conversations; 0 rows of `approval`, `toolRequested`, `toolResult`, `missionHandsAwaitingToolConfirmation`, `missionHandsInterrupted`. Delete purposes ProjectControl, ProjectMission, Evaluation (keep MissionRun, MissionConversation) and event kinds Approval, ToolRequested, ToolResult, MissionHandsAwaitingToolConfirmation; keep MissionHandsInterrupted. Purpose is stored as a number in the grain state: store it by name if a one-time rewrite is reasonable, otherwise pin each kept member's stored value with a comment. Every kept member of both enums gets one line naming the feature that writes it. Purge only the 7 evaluation and 2 projectMission conversations. |
-| D11 | Docs and demos in this repo: rewrite or delete `desktop-interaction-principles.md`; fold or delete the UNSURE design docs; move MCL demos, `editors/vscode`, `html/` to forge-mcl or delete; keep or drop the Phase 22/26/30/37/39 candidates | mission-control-language Table 1 and 2 | — |
+| D11 | Docs and demos in this repo: rewrite or delete `desktop-interaction-principles.md`; fold or delete the UNSURE design docs; move MCL demos, `editors/vscode`, `html/` to forge-mcl or delete; keep or drop the Phase 22/26/30/37/39 candidates | mission-control-language Table 1 and 2 | Decided (2026-11-18): desktop-interaction-principles.md → delete (gate and principles too); `docs/why.md` → move to forge-mcl; forge-architecture.md → delete; decisions-v0.7.md → move to forge-mcl; observability.md → keep, trim Rooms and stale versions; sdlc-meta-mission.md → delete (missions/sdlc-agent is the built example); research.md → move to forge-mcl; methodology.md → delete; `missions/` language demos and `missions/concepts` → move all to a new forge-mcl `missions/` with their README sections; `editors/vscode` → move to forge-mcl; `html/` and `.claude/launch.json` → delete; Phase 22 → keep backlog row, trim spoke to what is open; Phase 26 → move hub + tree-sitter and LSP spokes to forge-mcl, delete done spokes and backlog row; Phase 30 → delete hub and spokes 1–9 (built as `missions/concepts`), move spoke 10 to forge-mcl, drop backlog row; Phase 37 → move to forge-mcl, drop backlog row; Phase 39 → delete hub and 39.5/39.6 plans, keep 39.7 and repoint the backlog row as "Exec secret isolation (multi-user gate)" |
 
 The viewer's read path (ForgeAPI `ListProjectRuns`/`GetProjectRun` vs `ListMissionConversations`):
 **settled for ForgeAPI** (operator, 2026-11-15). The [Phase 78](phase-78-run-detail-capture.md) design
@@ -331,9 +331,9 @@ the `ProjectConversation` header properties. `forge mcp` uses no client package.
 | design: claude-codex-workflow, durable-conversations, forge-desktop-client-runtime, forge-desktop-dark-…(+assets), mission-chat-experience-v1 (+assets), forge_tui_* mockups, tui-graphics, room-artifacts, persistence, model-request-payloads, interaction-modes, maf, marcus-neurosymbolic | DELETE | Superseded, Desktop, TUI, Rooms, spikes |
 | Phases 1–21, 23, 24, 25, 27, 28, 29, 31, 32, 34–36, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 50, 51, 52, 53, 54–62, 63, 64, 65–69, 70, 71, 73, 74, 75, 77 (and sub-phases) | DELETE | Finished, superseded, Desktop, Rooms or TUI. Fold first: Phase 42 north-star → security-architecture |
 | Phases 22, 26, 30, 37, 39 | UNSURE (D11) | Deferred candidates |
-| Phase 33 (forge-mcp) | UNSURE | MCP has no design doc; fold, then delete |
+| Phase 33 (forge-mcp, mcl-context) | DELETE (operator, 2026-11-18) | Fold the `forge mcp` design into architecture.md first; mcl-context goes with no fold |
 | Phase 72 hub | KEEP | Parity harness (Q9); delete its `_completed` |
-| Phase 76 | UNSURE | Fold locked `forge run` decisions into a design doc, then delete |
+| Phase 76 (incl. `_completed`, PIR) | DELETE (operator, 2026-11-18) | Fold locked `forge run` decisions into how-conversations-work.md first |
 | Phases 78, 79 | KEEP | Active (78's Desktop and chat lines are stale) |
 | Every `*_completed.md` | DELETE | Q5 |
 | `agents/` | UNSURE (D1) | `forge serve` demo |
@@ -343,7 +343,7 @@ the `ProjectConversation` header properties. `forge mcp` uses no client package.
 | `missions/family-halaqa`, `janus`, `naive` | DELETE | Rooms/Desktop starters |
 | `missions/` language demos, `missions/concepts` | UNSURE (D11) | Move to forge-mcl or delete |
 | `tools/task-timing`, `tools/supervisor-test`, `tools/supervisor-code-test` (harness) | KEEP | Supervisor workflow, parity check |
-| `tools/supervisor-code-test/evidence/` | UNSURE | Old evidence unless the parity check reuses it |
+| `tools/supervisor-code-test/evidence/` | KEEP (operator, 2026-11-18) | The harness README's sample; step 8 parity check can reuse it |
 | `tools/tui-capture` | DELETE | TUI |
 | `clients/python` | UNSURE (D1) | `forge serve` client |
 | `editors/vscode`, `html/` (+ `.claude/launch.json`) | UNSURE (D11) | |
@@ -358,14 +358,14 @@ the `ProjectConversation` header properties. `forge mcp` uses no client package.
 | **MERGE** | The three publish-check rows into one; the two ExecExpertRunner flake rows into one |
 | **FOLD** | Central workflow telemetry → Phase 78; Phase 72 → Phase 79 step 8 |
 | **DELETE** | Phases 70, 71; forge-desktop on new client; Piped hands idle-shutdown; Phase 45.5; Explorer OCI; Desktop client upgrade; Phase 46; chat editor follow-ups; Ghostty window; Open links from chat; Piped chat prints twice; SSE heartbeat (rejected); Phase 50 row 7; Phase 51; Phases 27, 29, 31, 41, 42, 42.6 5b; Unauthenticated local runtime; Rooms to command bus; Extract Rooms; API B continuation; Desktop Supervisor orphans; Rooms "Not verified"; Desktop post-run polling; Desktop run-history name; `/transport` enums; Starter mission reply (Janus); Local ForgeAPI; Streamed tool calls (absorbed); Backfill 0-token turns; Phase 52 spokes; Phases 34, 35; Phase 43.17; Phase 43 follow-ups |
-| **UNSURE** | Resume a conversation; Follow reconnects; Hands after Ctrl-C; Local SDK advisory; MXC under Hands; Typed attachment reject; Phases 22, 26, 30, 37, 39 (D11); `forge dev start` and Local Host isolation (D9); Host trusts client-claimed approval; Durable run control; Grok search tests (D8); Debate/governance/guardrails |
+| **Decided (operator, 2026-11-18)** | KEEP: Follow reconnects (reword for `forge run`), MXC under Hands, Typed attachment reject, Host trusts client-claimed approval, Durable run control. DELETE: Resume a conversation, Hands after Ctrl-C, Local SDK advisory, Grok search tests (D8), `forge dev start` and Local Host isolation (D9). MOVE to forge-mcl with Phase 37: Debate/governance/guardrails. Phases 22, 26, 30, 37, 39: see D11 |
 
 ### Agent-rule and link edits
 
 - **Fold before deleting:** the migration-job split is already in deploy.md (retarget the AGENTS.md
   link only); Phase 76's locked `forge run` decisions → a design doc; Phase 42's north-star → 
-  security-architecture; plan_completed's resolved language decisions and decisions-v0.7 →
-  language.md; MCP wrapper (Phase 33) → a design doc.
+  security-architecture; plan_completed's resolved language decisions →
+  language.md (decisions-v0.7 moves to forge-mcl, D11); MCP wrapper (Phase 33) → architecture.md.
 - **AGENTS.md:** forge-desktop row and "(Rooms, ForgeUI)"; Phase 50 repo-map link and exception
   block; orientation step 3, plan routing and the `_completed` spoke-shape section (Q5); the
   Desktop/ForgeUI rule pointing at desktop-interaction-principles; project-structure lines.

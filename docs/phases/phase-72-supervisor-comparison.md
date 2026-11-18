@@ -6,7 +6,7 @@
 |---|---|
 | Proposal | Native MCL harness approved and independently exercised |
 | Approval | Operator approved proceeding on 2026-10-07 |
-| Evidence | Both default scripts complete; eight tests and instrumented MCL run pass; see [verification](phase-72-supervisor-comparison_completed.md) |
+| Evidence | Both default scripts complete; eight tests and instrumented MCL run pass; see verification |
 | Next | Compare measured MCL stage intervals with native supervisor intervals; choose the next prompt/refinement |
 
 ## Scope and design
@@ -61,7 +61,7 @@ tiers/stores, UI and deployment are N/A. Default acceptance is the existing zero
 from outside the repo; done when the real run has an initial marker, nine post-step markers,
 nonnegative intervals, preserved design/review/final JSON and a readable timing report. A focused
 test checks timestamp arithmetic and lossless JSON/fence payload handoff. Verified; see
-[per-stage timing evidence](phase-72-supervisor-comparison_completed.md#per-stage-timing-verification--2026-10-07).
+per-stage timing evidence.
 
 ## Model and capability boundaries
 

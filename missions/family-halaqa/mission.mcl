@@ -1,7 +1,0 @@
-mission FamilyHalaqa(request) loop(2) = {
-    Planner
-    -> Editor
-    -> Verifier
-}
-
-output(FamilyHalaqa)

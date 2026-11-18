@@ -33,7 +33,7 @@ being longer; it's thorough when nothing needed is missing and nothing unneeded 
   subsystem) doesn't belong in this task's "Done when"; note it as a dependency elsewhere instead. A
   multi-step process that's really one decision with a fallback should read as one step, not three.
   Padding a spec to look thorough is the same mistake as a prose wall or an inflated table, just
-  reformatted — caught concretely in [43.15](../phases/phase-43.15-janus-inter-agent-mission.md),
+  reformatted — caught concretely in 43.15,
   where "Done when" originally listed a criterion (`Implementer` executing real tool calls) that
   belonged to a different, already-owned phase.
 - **When in doubt, cut.** Trim before sending rather than after being asked to.

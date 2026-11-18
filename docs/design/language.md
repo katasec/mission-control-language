@@ -214,7 +214,7 @@ Two things carry across attempts, and which one applies depends on what's in the
 
 Research-backed default: `loop(2)` or `loop(3)`.
 
-### Multi-agent deliberation — `debate {}` *(not yet implemented — planned for Phase 26+)*
+### Multi-agent deliberation — `debate {}` *(not implemented: the parser refuses it)*
 
 > **`debate {}` is reserved syntax but not yet implemented.** The runtime raises a clear
 > error if you use it: *"debate {} is not yet implemented — use parallel {} for
@@ -322,6 +322,15 @@ they're not language identifiers — they're map keys. Reserved runtime keys (`o
 `max_loops`, `attempt`) and any user-domain key produced by an `exec`/`onnx`/`json_extract` step's
 output are all `snake_case` by convention. This has always been true in practice; stating it here
 makes it an explicit contract rather than something inferred from example missions.
+
+### Runtime decisions
+
+- **Parallel steps** run with `Task.WhenAll` and a linked `CancellationTokenSource`, so the first
+  failure cancels the rest (fail-fast). Channel-based streaming is not built.
+- **The context bag** is `Dictionary<string, object>`: strings plus `double` for non-LLM steps; LLM
+  interpolation calls `.ToString()`. A strongly typed envelope is not built.
+- **Mission composition** dispatches recursively when a step name matches a `MissionDeclaration`:
+  explicit parameter binding, an isolated child context, failure propagation, any depth.
 
 ## Variables and context
 

@@ -1,7 +1,7 @@
 # Phase 39.7 — Secret Isolation from Execution (No Ambient Provider Keys)
 
-> **Status: Design / security backlog (not started)** · **Parent:** [Phase 39 — Metered Runtime & Marketplace](phase-39-metered-runtime-marketplace.md)
-> **Relates to:** [Phase 39.5 — Custom Missions & Experts](phase-39-metered-runtime-marketplace.md) (trust enforcement), [Phase 32 — `kind: exec`](phase-32-exec-expert-kind.md)
+> **Status: Design / security backlog (not started)** · **Parent:** Phase 39 — Metered Runtime & Marketplace
+> **Relates to:** Phase 39.5 — Custom Missions & Experts (trust enforcement), Phase 32 — `kind: exec`
 > **Raised:** 2026-07-09, during the `@openai`/`@claude` provider-routing investigation.
 > **Done when:** in the environment where a `kind: exec` step runs, **no platform provider key is
 > present in the process environment — by construction, not by scrubbing** — and an untrusted/custom
@@ -99,7 +99,7 @@ today `ForgeTomlReader.ResolveValue` reads `Environment.GetEnvironmentVariable`)
 
 ## Relationship to Phase 43.7
 
-[43.7](phase-43.7-workspace-provider.md) (Forge Desktop's workspace-provider abstraction, raised
+43.7 (Forge Desktop's workspace-provider abstraction, raised
 2026-07-25) independently arrived at the same mechanism this spoke's Option B describes — swap
 where a `kind: exec`-shaped child process actually runs — while designing a process-host capability
 for `AgenticSession`'s `Bash` tool. **The interface shape may end up shared; the timeline and

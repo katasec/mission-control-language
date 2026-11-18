@@ -2,7 +2,7 @@
 
 The approved native MCL and Codex runners completed independently on 2026-10-07. The previous
 Codex-backed MCL experiment and its comparison data remain discarded. This first sample does not
-establish timing or quality equivalence; see the [verification record](../../docs/phases/phase-72-supervisor-comparison_completed.md).
+establish timing or quality equivalence; see the verification record.
 
 Run the same build request independently through native Codex orchestration and an MCL mission:
 
