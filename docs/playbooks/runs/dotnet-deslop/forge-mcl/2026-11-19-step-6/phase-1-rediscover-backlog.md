@@ -32,21 +32,25 @@ forge-client or forge-conversations (checked by grep). Dropped after checking: "
 
 ## Behaviour changes (each its own flagged commit)
 
-| # | Issue | Locations | Lenses |
-|---|---|---|---|
-| B4 | `forge validate` exits 0 after an expert-load error and crashes on several errors (aggregate) | MissionDevCommands.cs:141-148; Program.cs:33-37 | style+idiom |
-| B5 | One expert `kind` vocabulary: an unknown or wrong-case kind (`kind: Exec`) silently runs as an LLM step | PipelineRunner.cs:767-779; ExpertLoader.cs:375-412; DurableMissionPackageValidator.cs:156 | style+idiom |
-| B6 | An unparseable `timeout`/`defaultTimeout` silently becomes 30s; reject at load | ExecExpertRunner.cs:37,261-273; ForgeTomlReader.cs:163 | style |
-| B7 | A judge step whose reply is not JSON passes verification | DirectExpertRunner.cs:80-92; StepEnvelope.cs:8 | style |
-| B8 | MCL error codes collide (MCL010, MCL011 each mean two things); one enum owner | MclError.cs; ExpertResolver.cs; ExpertLoader.cs:248-258; Cli | idiom+ownership |
-| B9 | `forge init --refresh` does nothing (both pullers ignore `refresh`): remove the option | OciExpertPuller.cs:8-10; MissionDevCommands.cs:22,72-84 | all three |
-| B10 | `forge publish` parses its target with a second grammar (`SplitTaggedTarget`) and can push names `forge run` refuses to pull; use `OciReference.Resolve` | OciReference.cs:41-54; HostedMissionCommands.cs:72-75 | ownership |
-| B11 | `ProviderCatalog` omits `xai`, so `forge provider scaffold xai` is refused; scaffold text moves to the CLI | ProviderCatalog.cs; ProviderCommand.cs | ownership |
-| B12 | `forge clean` ignores the missions cache and does eviction in the CLI; move it behind `ForgeCache` | CleanCommand.cs:18-35; ForgeCache.cs | ownership |
-| B13 | `ExpertLoader.LoadAll` silently drops a duplicate expert name | ExpertLoader.cs:35-53 | style |
-| B14 | Culture-dependent `float.Parse`/`ToString("F4")`/`Number.ToString()` | OnnxExpertRunner.cs:34,43; ContextBuilder.cs:44 | idiom |
-| B15 | `ExpertResolver.ToLockPath` matches home by `StartsWith` with no separator check (`/Users/xyz` under home `/Users/xy` gives `~//…`) | ExpertResolver.cs | found in carve 8 |
-| B16 | Malformed YAML frontmatter reports `Operation is not valid due to the current state of the object.` instead of the YAML error | ExpertLoader (Core) | found in carve 6 |
+**Done (B4–B17)**: merged in [forge-mcl#107](https://github.com/katasec/forge-mcl/pull/107) (merge `48fad4c`, v0.41.0), one commit per row plus three review fixes (B6 timeout limit, B12 error path, B4 claim narrowed). Build 0 warnings, 647 passed / 3 skipped, AOT 0 warnings. HEAD packed locally as 9.9.9-local: forge-runner, forge-conversations and forge-client build with 0 warnings; their only test failures are the architecture tests that assert the pinned package version. Real `forge run` from CLI `0.41.0+48fad4c`, Hands wrote the file: conversation `6bb6353d-e1fe-5311-993d-aa167b64b8a8`. **Open: B18.**
+
+| # | Issue | Locations | Lenses | Fix (locked) |
+|---|---|---|---|---|
+| B4 | `forge validate` exits 0 after an expert-load error and crashes on several errors (aggregate) | MissionDevCommands.cs:141-148; Program.cs:33-37 | style+idiom | `ResolveLockedExperts` catches both load exceptions via `ReportExpertLoadFailure`; any load error makes `forge validate` exit 1, with every error of the failing expert listed (all experts: B18) |
+| B5 | One expert `kind` vocabulary: an unknown or wrong-case kind (`kind: Exec`) silently runs as an LLM step | PipelineRunner.cs:767-779; ExpertLoader.cs:375-412; DurableMissionPackageValidator.cs:156 | style+idiom | One `ExpertKinds` vocabulary in Core (lowercase, exact match); `ExpertLoader` rejects an unknown or wrong-case `kind` with the allowed list; runner and validator switch on it |
+| B6 | An unparseable `timeout`/`defaultTimeout` silently becomes 30s; reject at load | ExecExpertRunner.cs:37,261-273; ForgeTomlReader.cs:163 | style | `ExpertLoader` and `ForgeTomlReader` reject an unparseable `timeout`/`defaultTimeout` naming the value; the runner only reads parsed values |
+| B7 | A judge step whose reply is not JSON passes verification | DirectExpertRunner.cs:80-92; StepEnvelope.cs:8 | style | A judge reply that is not a JSON verdict fails verification, with the parse error as feedback |
+| B8 | MCL error codes collide (MCL010, MCL011 each mean two things); one enum owner | MclError.cs; ExpertResolver.cs; ExpertLoader.cs:248-258; Cli | idiom+ownership | All codes in `MclErrorCode`, one meaning each: MCL011 stays "no upstream step declares the key"; CLI "OCI pull failed" becomes MCL013; literals use the enum |
+| B9 | `forge init --refresh` does nothing (both pullers ignore `refresh`): remove the option | OciExpertPuller.cs:8-10; MissionDevCommands.cs:22,72-84 | all three | Remove `--refresh` from `forge init` and the unused `refresh` parameter from both pullers |
+| B10 | `forge publish` parses its target with a second grammar (`SplitTaggedTarget`) and can push names `forge run` refuses to pull; use `OciReference.Resolve` | OciReference.cs:41-54; HostedMissionCommands.cs:72-75 | ownership | `forge publish` parses with `OciReference.Resolve` (a tag is required); delete `SplitTaggedTarget` |
+| B11 | `ProviderCatalog` omits `xai`, so `forge provider scaffold xai` is refused; scaffold text moves to the CLI | ProviderCatalog.cs; ProviderCommand.cs | ownership | `ProviderCatalog` moves from ChatClients to the CLI (its only user) and gains `xai`; ChatClients needs a version bump at next publish |
+| B12 | `forge clean` ignores the missions cache and does eviction in the CLI; move it behind `ForgeCache` | CleanCommand.cs:18-35; ForgeCache.cs | ownership | `ForgeCache.Clear(registry?)` removes the experts and missions caches; `forge clean` calls it and prints the count |
+| B13 | `ExpertLoader.LoadAll` silently drops a duplicate expert name | ExpertLoader.cs:35-53 | style | `ExpertLoader.LoadAll` rejects a duplicate expert name, naming both files |
+| B14 | Culture-dependent `float.Parse`/`ToString("F4")`/`Number.ToString()` | OnnxExpertRunner.cs:34,43; ContextBuilder.cs:44 | idiom | Parse and format with `CultureInfo.InvariantCulture` |
+| B15 | `ExpertResolver.ToLockPath` matches home by `StartsWith` with no separator check (`/Users/xyz` under home `/Users/xy` gives `~//…`) | ExpertResolver.cs | found in carve 8 | Match home only when the path equals it or starts with home plus a separator |
+| B16 | Malformed YAML frontmatter reports `Operation is not valid due to the current state of the object.` instead of the YAML error | ExpertLoader (Core) | found in carve 6 | Report the YAML parser error (message and line) for malformed frontmatter |
+| B17 | HTTP and exec judges treat a missing `status` as pass (exec: any status but `fail` passes); a non-JSON HTTP body throws instead of failing | HttpExpertRunner.cs:28; ExecExpertRunner.cs:205-211 | found in B7 | A judge whose reply has no `pass`/`fail` status fails verification with the reason, as B7 does for LLM judges; non-judges unchanged |
+| B18 | With an `mcl.lock`, `ExpertResolver.ResolveAll` stops at the first expert that fails to load, so `forge validate` lists only that expert's errors (without a lock, `LoadAll` lists all) | ExpertResolver.cs:24-63 | review of B4–B17 | Collect every expert's errors into one `AggregateExpertLoadException`. Cross-repo: forge-client `MissionConversationService` calls `ResolveAll` and its test expects a single `ExpertLoadException`, so check forge-client's handling at its next Core upgrade |
 
 ## Design items (owner decision first; not carved)
 
