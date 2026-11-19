@@ -31,9 +31,9 @@ forge-mcl, forge-runner or forge-client; the rest are behaviour-preserving carve
 
 | # | Issue | Locations |
 |---|---|---|
-| B1 | `CredentialStore` turns a corrupt credentials file into an empty one, then overwrites it on save | Core/Resolution/CredentialStore.cs:119-143 |
-| B2 | MCP handler: `Die` throws inside `CallToolHandler`, so its error branch never runs | Cli/Services/MissionServerBuilder.cs; McpCommand.cs:137-139 |
-| B3 | `forge project create` ignores Ctrl+C | Cli/Commands/ForgeProject.cs:21,26,62-63 |
+| B1 ✅ `b126683` | `CredentialStore` turns a corrupt credentials file into an empty one, then overwrites it on save | Core/Resolution/CredentialStore.cs:119-143 |
+| B2 ✅ `0cf3db7` | MCP handler: `Die` throws inside `CallToolHandler`, so its error branch never runs | Cli/Services/MissionServerBuilder.cs; McpCommand.cs:137-139 |
+| B3 ✅ `a9a14c9` | `forge project create` ignores Ctrl+C | Cli/Commands/ForgeProject.cs:21,26,62-63 |
 
 ## Out of Stage 1 (needs design; recorded verbatim, not scoped here)
 
