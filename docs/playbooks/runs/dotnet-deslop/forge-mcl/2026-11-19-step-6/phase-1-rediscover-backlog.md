@@ -32,7 +32,9 @@ forge-client or forge-conversations (checked by grep). Dropped after checking: "
 
 ## Behaviour changes (each its own flagged commit)
 
-**Done (B4–B17)**: merged in [forge-mcl#107](https://github.com/katasec/forge-mcl/pull/107) (merge `48fad4c`, v0.41.0), one commit per row plus three review fixes (B6 timeout limit, B12 error path, B4 claim narrowed). Build 0 warnings, 647 passed / 3 skipped, AOT 0 warnings. HEAD packed locally as 9.9.9-local: forge-runner, forge-conversations and forge-client build with 0 warnings; their only test failures are the architecture tests that assert the pinned package version. Real `forge run` from CLI `0.41.0+48fad4c`, Hands wrote the file: conversation `6bb6353d-e1fe-5311-993d-aa167b64b8a8`. **Open: B18.**
+**Done (B4–B17)**: merged in [forge-mcl#107](https://github.com/katasec/forge-mcl/pull/107) (merge `48fad4c`, v0.41.0), one commit per row plus three review fixes (B6 timeout limit, B12 error path, B4 claim narrowed). Build 0 warnings, 647 passed / 3 skipped, AOT 0 warnings. HEAD packed locally as 9.9.9-local: forge-runner, forge-conversations and forge-client build with 0 warnings; their only test failures are the architecture tests that assert the pinned package version. Real `forge run` from CLI `0.41.0+48fad4c`, Hands wrote the file: conversation `6bb6353d-e1fe-5311-993d-aa167b64b8a8`.
+
+**Done (B18)**: merged in [forge-mcl#108](https://github.com/katasec/forge-mcl/pull/108) (merge `b82368f`, v0.42.0). Build 0 warnings, 650 passed / 3 skipped, AOT 0 warnings; forge-client builds against HEAD packed locally (only the version-pin architecture tests fail). Installed CLI `0.42.0+b82368f`: `forge validate` on a locked mission with two broken experts lists both and exits 1; real `forge run` conversation `d098ae22-b014-5edd-9c49-6c0e309dd9a2`. All behaviour rows done.
 
 | # | Issue | Locations | Lenses | Fix (locked) |
 |---|---|---|---|---|
@@ -50,7 +52,7 @@ forge-client or forge-conversations (checked by grep). Dropped after checking: "
 | B15 | `ExpertResolver.ToLockPath` matches home by `StartsWith` with no separator check (`/Users/xyz` under home `/Users/xy` gives `~//…`) | ExpertResolver.cs | found in carve 8 | Match home only when the path equals it or starts with home plus a separator |
 | B16 | Malformed YAML frontmatter reports `Operation is not valid due to the current state of the object.` instead of the YAML error | ExpertLoader (Core) | found in carve 6 | Report the YAML parser error (message and line) for malformed frontmatter |
 | B17 | HTTP and exec judges treat a missing `status` as pass (exec: any status but `fail` passes); a non-JSON HTTP body throws instead of failing | HttpExpertRunner.cs:28; ExecExpertRunner.cs:205-211 | found in B7 | A judge whose reply has no `pass`/`fail` status fails verification with the reason, as B7 does for LLM judges; non-judges unchanged |
-| B18 | With an `mcl.lock`, `ExpertResolver.ResolveAll` stops at the first expert that fails to load, so `forge validate` lists only that expert's errors (without a lock, `LoadAll` lists all) | ExpertResolver.cs:24-63 | review of B4–B17 | Collect every expert's errors into one `AggregateExpertLoadException`. Cross-repo: forge-client `MissionConversationService` calls `ResolveAll` and its test expects a single `ExpertLoadException`, so check forge-client's handling at its next Core upgrade |
+| B18 | With an `mcl.lock`, `ExpertResolver.ResolveAll` stops at the first expert that fails to load, so `forge validate` lists only that expert's errors (without a lock, `LoadAll` lists all) | ExpertResolver.cs:24-63 | review of B4–B17 | Collect every expert's errors; several throw one `AggregateExpertLoadException`, a single error keeps its own exception and message (forge-client `MissionConversationService` calls `ResolveAll`, shows `exception.Message`, and its test expects `ExpertLoadException`) |
 
 ## Design items (owner decision first; not carved)
 
