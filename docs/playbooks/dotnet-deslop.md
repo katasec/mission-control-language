@@ -28,7 +28,8 @@ Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet
 ## Core rules
 
 - **One issue per carve** — fix one backlog item per pass, then stop. Not "clean the file."
-- **Each carve ends green and committed** — build `-warnaserror` + tests pass, then commit.
+- **Each carve ends building and committed** — incremental build `-warnaserror`, then commit.
+  Tests run once per group of about 4 carves.
 - **Refactors preserve behavior** — behavior changes go in their own commit, labeled.
 - **Coarse before fine** — structure first; it reshapes everything, so later lenses run on
   the new shape, not the old mess.
@@ -118,9 +119,12 @@ commit — never batch (a big multi-issue diff is unreviewable, which is how slo
 | Step | What | Gate |
 |---|---|---|
 | Carve | run the carve prompt below (one subagent) | behavior-preserving; stops before commit |
-| Verify | `dotnet build -warnaserror && dotnet test` from `{repo}` | 0 warnings; no new failures vs baseline |
-| Check | one `/code-review` glance at the diff (cheap insurance) | no new bugs |
+| Build | incremental `dotnet build -warnaserror` from `{repo}` | 0 warnings, 0 errors |
 | Commit | one issue, small commit; a forced behavior change gets its own commit | tree clean → next issue |
+| Group test | after each group of about 4 carves: `dotnet test -warnaserror` (builds and tests in one step; no separate build first) | no new failures vs baseline |
+
+No local AOT publish: the CI release build does it. At the end of the phase: PR, merge, release,
+install, and one real `forge run`.
 **Carve prompt (one issue → one subagent). Every blank fills from the backlog row + run header — nothing invented:**
 ```
 You are the IMPLEMENTER for ONE carve in the Dotnet De-slop Playbook.
@@ -140,13 +144,13 @@ ISSUE TO CARVE — backlog run {run-id}, phase {phase}:
 
 RULES (non-negotiable):
 - Behavior-preserving ONLY. If a behavior change is unavoidable, STOP and report it — never bundle it.
-- Scope is THIS issue only. Don't fix other backlog items you notice; list them instead.
+- Scope is THIS issue only. Ignore anything else you notice; do not fix or report it.
 - Keep existing tests green. Do NOT delete tests (that's Phase 3). Add a characterization test only if the carve is risky.
 - House style: progressive disclosure, small named functions, explicit errors, <=2 nesting, side effects isolated, zero warnings.
 
 DO:
 1. Make the change at {locations}, moving behavior to {owner}.
-2. Run from {repo}:  dotnet build -warnaserror && dotnet test
+2. Run from {repo}:  dotnet build -warnaserror   (incremental; tests run per group)
 3. Do NOT commit.
 
 RETURN ONLY:
