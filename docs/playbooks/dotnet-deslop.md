@@ -58,7 +58,9 @@ Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet
 `{repo}` and records the failing tests in the run-log header. That is the **baseline**; a
 carve passes only if it adds no failure to it.
 
-Three phases, in order. **Each phase: Discover → Address → re-discover to confirm.**
+Three phases, in order. **Each phase: one Discover scan → Address → Verify.** Discover runs once per phase. Verify
+checks only that each issue in the phase backlog is resolved; it does not look for new issues and
+cannot add work.
 Earlier phases change what later ones find, so don't skip ahead.
 
 | Phase | Discover with | Fixes |
@@ -104,7 +106,7 @@ it into per-unit carves (one command/class at a time) as sub-rows.
 
 Order by **dependency, then severity** — not severity alone. An enabler issue (e.g.
 introduce DI) comes before the issues that ride on it (extracting commands, moving owners).
-Record the order in the backlog; later phases re-discover, so this order is per-phase.
+Record the order in the backlog; each phase has its own Discover, so this order is per-phase.
 
 A backlog row **is** an issue. The ordered backlog is the work for this phase.
 
@@ -152,10 +154,9 @@ RETURN ONLY:
 - 3-5 line summary: what moved where
 - Build result (warnings) + test result (pass/fail)
 - Any forced behavior change, flagged (or "none")
-- Other backlog issues noticed (don't fix them)
 ```
-When the phase backlog is empty, re-run Discover for that phase to confirm clean, then
-advance to the next phase.
+When the phase backlog is empty, run Verify: check each backlog item is resolved, and nothing
+else. Then advance to the next phase. Do not run Discover again for that phase.
 
 ---
 
