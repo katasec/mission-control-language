@@ -37,10 +37,12 @@ Dropped after checking: "`HttpExpertRunner`'s `HttpClient?` parameter has no cal
 
 ## Behaviour changes (each its own flagged commit)
 
+B19 and B20 merged in [forge-mcl#109](https://github.com/katasec/forge-mcl/pull/109) (merge `c53d4a4`, v0.43.0): build 0 warnings, 655 passed / 3 skipped, AOT publish clean, CI green on 4 platforms; the B19 test and the B20 cancel-kill and output-limit tests fail on the old code; real `forge run` from the installed CLI `0.43.0+c53d4a4`, Hands wrote the file: conversation `80277c94-099c-5787-89fe-c5534c6f2155`.
+
 | # | Issue | Locations | Sev | Lenses |
 |---|---|---|---|---|
-| B19 | ✓ A Hands Edit with `old_string: ""` loops forever: `IndexOf("", i)` returns `i` and `index += 0`, so the dispatcher spins at full CPU. The model controls the value | CapabilityDispatcher.cs:105,191-201 | High | idiom |
-| B20 | ✓ `LocalDiskWorkspace.ExecuteAsync` child lifetime: caller cancel never kills the shell; after a timeout kill the output tasks and exit are never awaited; output unbounded (exec runner caps it); stdin inherited; `catch (Exception)` around `Start` | LocalDiskWorkspace.cs:50-93 | High | idiom+style |
+| B19 | ✓ A Hands Edit with `old_string: ""` loops forever: `IndexOf("", i)` returns `i` and `index += 0`, so the dispatcher spins at full CPU. The model controls the value. **Done** ([forge-mcl#109](https://github.com/katasec/forge-mcl/pull/109)): an empty `old_string` returns a tool error before the file is resolved | CapabilityDispatcher.cs:105,191-201 | High | idiom |
+| B20 | ✓ `LocalDiskWorkspace.ExecuteAsync` child lifetime: caller cancel never kills the shell; after a timeout kill the output tasks and exit are never awaited; output unbounded (exec runner caps it); stdin inherited; `catch (Exception)` around `Start`. **Done** ([forge-mcl#109](https://github.com/katasec/forge-mcl/pull/109)): the exec runner's child lifetime moved into one internal Core `ChildProcess` that the terminal now uses; cancel and timeout kill and join the shell; stdin closed; stdout and stderr capped at 4 MiB each; only `Win32Exception`/`InvalidOperationException` at start become a tool error | LocalDiskWorkspace.cs:50-93 | High | idiom+style |
 | B21 | ✓ `MclParser.TryParse` lets `ParseException` (AST builder) and `OverflowException` (`int.Parse` on `INT`) escape, so the CLI shows an unhandled stack trace instead of a diagnostic | MclParser.cs:33-54; MclAstBuilder.cs:47,55,72-75,119,151,166,171; CliHelpers.cs:36-46 | Medium | idiom |
 | B22 | ✓ Empty YAML document: `Deserialize<T>` returns null, so an expert with `---\n---` or an empty `mcl.lock` throws `NullReferenceException` instead of a diagnostic | ExpertLoader.cs:367,376; LockFile.cs:69-70; ExpertResolver.cs:25 | Medium | idiom |
 | B23 | ✓ forge.toml: `Split('#')[0]` runs before quotes are parsed, so a quoted value containing `#` (URL fragment, API key) is cut off | ForgeTomlReader.cs:52,266 | Medium | idiom |
