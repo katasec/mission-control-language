@@ -114,7 +114,9 @@ Skills this playbook invokes: `csharp-expert` · `microsoft-docs` · `csharp-ref
    running the app by hand.
    Every later carve extends this harness; none copies it.
 
-Then two phases, in order. **Each phase: Discover → Address → re-discover to confirm.**
+Then two phases, in order. **Each phase: one Discover scan → Address → Verify.** Discover runs once per phase. Verify
+checks only that each issue in the phase backlog is resolved; it does not look for new issues and
+cannot add work.
 Each phase runs **one lens per area**, all using `csharp-expert` (routes to the specialist for
 the app type) and `microsoft-docs` (grounds the prescription), plus the phase's specialists.
 
@@ -299,7 +301,6 @@ RETURN ONLY:
 - Build result (warnings) + test result (pass/fail, any failure outside the baseline: {baseline}); pinned tests unchanged (yes/no)
 - Platform semantics adopted (or "none")
 - STOP reason, verbatim (or "none")
-- Other backlog issues noticed (don't fix them)
 ```
 **Check prompt (after Verify, before Commit; one read-only subagent):**
 ```
@@ -317,8 +318,8 @@ the smallest change that would make it PASS.
 On FAIL: the supervisor sends one correction to the same implementer (simplify within the
 practice) and re-checks; a second FAIL routes the row to the later stage with the reason.
 
-When the phase backlog is empty, re-run Discover for that phase to confirm clean, then
-advance to the next phase.
+When the phase backlog is empty, run Verify: check each backlog item is resolved, and nothing
+else. Then advance to the next phase. Do not run Discover again for that phase.
 ---
 
 ## Where results live
