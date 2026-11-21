@@ -21,9 +21,10 @@ Install the skill packs first (global, all skills, for whichever agent you run):
 ```bash
 npx skills add dotnet/skills --global --agent claude-code codex github-copilot --skill '*' -y
 npx skills add microsoft/skills --global --agent claude-code codex github-copilot --skill '*' -y
+npx skills add katasec/dotnet-skills --global --agent claude-code codex github-copilot --skill '*' -y
 ```
 
-Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet-webapi` · `crap-score` · `test-anti-patterns` · `test-smell-detection` · `code-testing`. The `*-reviewer` lenses are in-repo [personas](../../personas/README.md) — no install.
+Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet-webapi` · `crap-score` · `find-duplicate-methods` · `test-anti-patterns` · `test-smell-detection` · `code-testing`. The `*-reviewer` lenses are in-repo [personas](../../personas/README.md) — no install.
 
 ## Core rules
 
@@ -66,8 +67,8 @@ Earlier phases change what later ones find, so don't skip ahead.
 
 | Phase | Discover with | Fixes |
 |---|---|---|
-| **1 — Structure & idiom** | `csharp-expert` (entry) + `dotnet-webapi` where relevant + `ownership-reviewer` + `code-style-reviewer` | folder/project structure, DI, idiomatic patterns, ownership/placement, dup paths that are really ownership mistakes |
-| **2 — Redundancy & complexity** | `csharp-refactoring` + `crap-score`/complexity gate (>15) + `simplicity-reviewer` | collapse remaining dup, split god-methods, cut cyclomatic complexity |
+| **1 — Structure & idiom** | `csharp-expert` (entry) + `dotnet-webapi` where relevant + `ownership-reviewer` + `code-style-reviewer` | folder/project structure, DI, idiomatic patterns, ownership/placement |
+| **2 — Redundancy & complexity** | `find-duplicate-methods` (the only duplicate finder) + `crap-score`/complexity gate (>15) + `simplicity-reviewer` (knobs, abstractions, legacy paths) | collapse duplicates, split god-methods, cut cyclomatic complexity |
 | **3 — Tests** | `test-anti-patterns` + `test-smell-detection` → `code-testing` | remove slop tests, strengthen the rest |
 
 **Tests as safety net:** in P1/P2 the existing suite is your net — keep it green, don't
