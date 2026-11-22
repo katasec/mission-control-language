@@ -45,3 +45,8 @@ runner, which uses its own Core package, so it proves the CLI release, not the c
 | 6 | One-line forwarder `IsPlainTextLlm` | `StreamsStep` | `b5d628c` | build 0 warnings |
 | 7 | `PauseAsync` renaming locals | `attempt.X` | `b865c91` | tests 673 passed / 3 skipped |
 | B1 | `CanReachAgent` own recursion, expert-first, no cycle stop | `ReachableSteps`, mission first | `89c8af9` (behaviour change) | tests 673 passed / 3 skipped |
+
+Phase 2 delivery: forge-mcl PR [#116](https://github.com/katasec/forge-mcl/pull/116) merged as `d8598be`
+after all 5 checks finished green. Release CLI published `v0.50.0`; installed `forge` prints
+`0.50.0+d8598be…`. Real run in `~/forge-hands-test` → conversation
+`2e0e214a-5f08-5d44-990a-f7e9ad2700a6`: Write succeeded, out-of-workspace Read refused.
