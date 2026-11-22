@@ -24,7 +24,7 @@ npx skills add microsoft/skills --global --agent claude-code codex github-copilo
 npx skills add katasec/dotnet-skills --global --agent claude-code codex github-copilot --skill '*' -y
 ```
 
-Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet-webapi` · `crap-score` · `find-duplicate-methods` · `test-anti-patterns` · `test-smell-detection` · `code-testing`. The `*-reviewer` lenses are in-repo [personas](../../personas/README.md) — no install.
+Skills this playbook invokes: `csharp-expert` · `csharp-refactoring` · `dotnet-webapi` · `coverage-analysis` · `find-duplicate-methods` · `test-anti-patterns` · `test-smell-detection` · `test-gap-analysis` · `code-testing`. The `*-reviewer` lenses are in-repo [personas](../../personas/README.md) — no install.
 
 ## Core rules
 
@@ -68,8 +68,13 @@ Earlier phases change what later ones find, so don't skip ahead.
 | Phase | Discover with | Fixes |
 |---|---|---|
 | **1 — Structure & idiom** | `csharp-expert` (entry) + `dotnet-webapi` where relevant + `ownership-reviewer` + `code-style-reviewer` | folder/project structure, DI, idiomatic patterns, ownership/placement |
-| **2 — Redundancy & complexity** | `find-duplicate-methods` (the only duplicate finder) + `crap-score`/complexity gate (>15) + `simplicity-reviewer` (knobs, abstractions, legacy paths) | collapse duplicates, split god-methods, cut cyclomatic complexity |
-| **3 — Tests** | `test-anti-patterns` + `test-smell-detection` → `code-testing` | remove slop tests, strengthen the rest |
+| **2 — Redundancy & complexity** | `find-duplicate-methods` (the only duplicate finder) + `coverage-analysis` (project-wide CRAP; complexity gate >15) + `simplicity-reviewer` (knobs, abstractions, legacy paths) | collapse duplicates, split god-methods, cut cyclomatic complexity |
+| **3 — Tests** | `test-anti-patterns` + `test-smell-detection` + `test-gap-analysis` (logic no test would catch breaking) → `code-testing` | remove slop tests, strengthen the rest, add the missing ones |
+
+A row an earlier phase defers to Phase 3 ("add tests") becomes a Phase 3 backlog row as it is; the
+Phase 3 lenses do not have to rediscover it.
+
+**Known gaps:** what these lenses miss today is listed in [Lens Gaps](dotnet-deslop-lens-gaps.md).
 
 **Tests as safety net:** in P1/P2 the existing suite is your net — keep it green, don't
 delete tests; add characterization tests in-carve if a move is risky. Test *cleanup* is P3.
@@ -89,6 +94,9 @@ is the entry point for the idiom lens (it routes to the specialist that owns eac
 **Prompt (per lens):**
 ```
 Use {lens} on {scope} in {repo}. Read-only. Find {phase focus for this lens}. Don't edit.
+There is no diff: read every file in {scope} in full. There is no requirement: the README of
+the component that holds {scope} states what the code is for. Read callers in other repos where
+a finding depends on how the code is used.
 Return ONLY a table: issue | locations (file:lines) | severity | suspected owner | lens.
 Name the skill/persona you actually invoked.
 ```
