@@ -20,6 +20,10 @@ the ownership review. Receive both full personas and return a separate table for
 | **Small functions** | Length and number of jobs per changed function | Over ~40 lines, or one function doing two named steps |
 | **Top-down order** | Entry points versus helpers | Helpers above the code that calls them |
 | **Explicit errors** | `catch`, discarded results, logging | `_ = fn()`, swallowed exceptions, log-and-continue that reports success |
+| **One failure contract** | How each public entry point reports failure | The same failure thrown in one place and returned as a result in another |
+| **No mode flags** | `bool` (or enum) parameters that pick a code path | One method that behaves differently, e.g. errors or streaming, depending on a flag |
+| **One way to get a dependency** | How a class obtains collaborators | Some injected and others `new`-ed inside the same class for the same role |
+| **Helpers near their callers** | Section headings and where each helper sits | A helper filed under a section unrelated to the code that calls it |
 | **Shallow nesting** | Branch depth | More than 2 levels; missing early returns |
 | **Separate side effects** | Database, network, file and process calls | I/O mixed into decision logic |
 | **Zero warnings** | Build and Native AOT publish output | Any warning, including ILC/trim warnings |
