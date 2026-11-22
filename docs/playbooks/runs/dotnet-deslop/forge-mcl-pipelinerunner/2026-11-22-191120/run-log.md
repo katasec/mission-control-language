@@ -23,3 +23,25 @@ branch `adeen/deslop-pipelinerunner` · base `main` `ca2e762` · baseline: build
 | 13 | Comment wraps, restating comment, using order | in place | `d0d7055` | tests 673 passed / 3 skipped |
 
 No behaviour-change commits.
+
+Phase 1 delivery: forge-mcl PR [#115](https://github.com/katasec/forge-mcl/pull/115) merged as `7ce5b2f`
+(merge commit; PR CI 4 builds + test passed, though the merge landed before the Windows build
+finished because `main` is unprotected). Release CLI published `v0.49.0`; installed
+`~/.local/bin/forge` prints `0.49.0+7ce5b2f…`. Real run: `forge run --verbose ./mission.mcl` in
+`~/forge-hands-test` (default endpoint) → conversation `60b87b6c-f05e-5bda-9a50-ddd00d3f4438`:
+Write succeeded, out-of-workspace Read refused, summary returned. That run executes on the hosted
+runner, which uses its own Core package, so it proves the CLI release, not the changed
+`PipelineRunner`; the local suite (673 passed) covers that.
+
+## Phase 2 — redundancy & complexity
+
+| # | Issue | Owner chosen | Commit | Verify |
+|---|---|---|---|---|
+| 1 | List-shaped `From` for one call | `PipelineToolCallConversion.From(call)` | `e2be8e9` | build 0 warnings |
+| 2 | Tool-in-scope rule at pause and resume | `PipelineContinuationIdentity.Declares` | `58b112b` | build 0 warnings |
+| 3 | Two fail-reason formatters | `FailReason` | `e2d3707` | build 0 warnings |
+| 4 | Sub-mission step written twice | `RunSubMissionAsync` → `SubMissionOutcome` | `1a7bfd2` | tests 673 passed / 3 skipped |
+| 5 | `ExecuteParallelAsync` complexity 20 | `MergeBranches` | `9bb83da` | build 0 warnings |
+| 6 | One-line forwarder `IsPlainTextLlm` | `StreamsStep` | `b5d628c` | build 0 warnings |
+| 7 | `PauseAsync` renaming locals | `attempt.X` | `b865c91` | tests 673 passed / 3 skipped |
+| B1 | `CanReachAgent` own recursion, expert-first, no cycle stop | `ReachableSteps`, mission first | `89c8af9` (behaviour change) | tests 673 passed / 3 skipped |
